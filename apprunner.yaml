@@ -1,0 +1,31 @@
+version: 1.0
+runtime: docker
+build:
+  dockerfile: Dockerfile.production
+run:
+  runtime-version: latest
+  network:
+    port: 3000
+    env: PORT
+  env:
+    - name: RAILS_ENV
+      value: production
+    - name: RAILS_MASTER_KEY
+      value: your_master_key_here
+    - name: RAILS_SERVE_STATIC_FILES
+      value: "true"
+    - name: RAILS_LOG_TO_STDOUT
+      value: "true"
+    - name: AWS_ACCESS_KEY_ID
+      value: your_aws_access_key_id_here
+    - name: AWS_SECRET_ACCESS_KEY
+      value: your_aws_secret_access_key_here
+    - name: AWS_REGION
+      value: ap-northeast-1
+    - name: AWS_S3_BUCKET
+      value: your_s3_bucket_name_here
+    - name: ALLOWED_HOSTS
+      value: your_app_runner_url_here
+  # Persistent storage for SQLite databases (using EFS)
+  # Note: Configure EFS volume in AWS App Runner console
+  # Mount path: /app/storage

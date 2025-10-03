@@ -1,0 +1,65 @@
+# Multi-stage build for production
+FROM ruby:3.3.6-slim as builder
+
+# Install system dependencies (including SQLite)
+RUN apt-get update -qq && apt-get install -y \
+    build-essential \
+    libsqlite3-dev \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /app
+
+# Copy Gemfile and Gemfile.lock
+COPY Gemfile Gemfile.lock ./
+
+# Install gems
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install
+
+# Copy the rest of the application
+COPY . .
+
+# Create storage directory for SQLite databases
+RUN mkdir -p storage
+
+# Precompile assets (with dummy master key if needed)
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
+
+# Production stage
+FROM ruby:3.3.6-slim
+
+# Install runtime dependencies (including SQLite)
+RUN apt-get update -qq && apt-get install -y \
+    libsqlite3-0 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN useradd -m -u 1000 appuser
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application from builder stage
+COPY --from=builder --chown=appuser:appuser /app /app
+
+# Create storage directory with proper permissions
+RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
+
+# Switch to non-root user
+USER appuser
+
+# Expose port 3000
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/up || exit 1
+
+# Start the Rails server and Solid Queue worker
+CMD ["sh", "-c", "bundle exec rails db:prepare && bundle exec rails solid_queue:start & bundle exec rails server -b 0.0.0.0 -e production"]
