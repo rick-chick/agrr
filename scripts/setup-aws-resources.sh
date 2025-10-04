@@ -71,6 +71,7 @@ fi
 S3_BUCKET_PREFIX="agrr-${ACCOUNT_ID}"
 PRODUCTION_BUCKET="${S3_BUCKET_PREFIX}-production"
 TEST_BUCKET="${S3_BUCKET_PREFIX}-test"
+ECR_REPOSITORY_NAME="agrr"
 
 print_header "AWS Resources Setup for App Runner"
 print_status "Region: $REGION"
@@ -235,6 +236,12 @@ check_resource_policies_exist() {
     policy_arn="arn:aws:iam::${ACCOUNT_ID}:policy/AGRR-AppRunner-Policy"
     if ! aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &>/dev/null; then
         policies_needed+=("AGRR-AppRunner-Policy")
+    fi
+    
+    # Check if AGRR-ECR-Policy exists and is attached
+    policy_arn="arn:aws:iam::${ACCOUNT_ID}:policy/AGRR-ECR-Policy"
+    if ! aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &>/dev/null; then
+        policies_needed+=("AGRR-ECR-Policy")
     fi
     
     if [ ${#policies_needed[@]} -gt 0 ]; then
@@ -461,6 +468,66 @@ EOF
     print_status "S3 bucket policy created ✓"
 }
 
+# Create ECR repository
+create_ecr_repository() {
+    local repository_name="$1"
+    
+    print_status "Creating ECR repository: $repository_name"
+    
+    # Check if repository already exists
+    if aws ecr describe-repositories --profile "$AWS_PROFILE" --region "$REGION" --repository-names "$repository_name" &>/dev/null; then
+        print_warning "ECR repository $repository_name already exists"
+        return 0
+    fi
+    
+    # Create repository
+    local create_result
+    if create_result=$(aws ecr create-repository \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" \
+        --repository-name "$repository_name" \
+        --image-scanning-configuration scanOnPush=true \
+        --encryption-configuration encryptionType=AES256 2>&1); then
+        print_status "ECR repository created successfully ✓"
+        
+        # Set lifecycle policy to keep only recent images
+        local lifecycle_policy='{
+            "rules": [
+                {
+                    "rulePriority": 1,
+                    "description": "Keep last 10 images",
+                    "selection": {
+                        "tagStatus": "any",
+                        "countType": "imageCountMoreThan",
+                        "countNumber": 10
+                    },
+                    "action": {
+                        "type": "expire"
+                    }
+                }
+            ]
+        }'
+        
+        if aws ecr put-lifecycle-policy \
+            --profile "$AWS_PROFILE" \
+            --region "$REGION" \
+            --repository-name "$repository_name" \
+            --lifecycle-policy-text "$lifecycle_policy" &>/dev/null; then
+            print_status "ECR lifecycle policy configured ✓"
+        fi
+    else
+        if echo "$create_result" | grep -q "RepositoryAlreadyExistsException"; then
+            print_warning "ECR repository $repository_name already exists"
+        else
+            print_error "Failed to create ECR repository: $create_result"
+            return 1
+        fi
+    fi
+    
+    local repository_uri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${repository_name}"
+    print_status "ECR repository URI: $repository_uri"
+}
+
 # Create S3 policy (Level 2: Resource Operation Policy)
 create_s3_policy() {
     local policy_name="AGRR-S3-Policy"
@@ -616,6 +683,70 @@ create_apprunner_policy() {
     print_status "✅ App Runner policy configured"
 }
 
+# Create ECR policy (Level 2: Resource Operation Policy)
+create_ecr_policy() {
+    local policy_name="AGRR-ECR-Policy"
+    local policy_document='{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ManageECRRepository",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:CreateRepository",
+                "ecr:DescribeRepositories",
+                "ecr:DeleteRepository",
+                "ecr:PutLifecyclePolicy",
+                "ecr:GetLifecyclePolicy",
+                "ecr:PutImageTagMutability",
+                "ecr:PutImageScanningConfiguration"
+            ],
+            "Resource": "arn:aws:ecr:'${REGION}':'${ACCOUNT_ID}':repository/agrr*"
+        },
+        {
+            "Sid": "PushPullImages",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetRepositoryPolicy",
+                "ecr:DescribeRepositories",
+                "ecr:ListImages",
+                "ecr:DescribeImages",
+                "ecr:BatchGetImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload",
+                "ecr:PutImage"
+            ],
+            "Resource": "*"
+        }
+    ]
+}'
+    
+    local policy_arn="arn:aws:iam::${ACCOUNT_ID}:policy/${policy_name}"
+    
+    if ! aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &> /dev/null; then
+        print_status "Creating ECR policy: $policy_name"
+        aws iam create-policy \
+            --profile "$AWS_PROFILE" \
+            --policy-name "$policy_name" \
+            --policy-document "$policy_document" \
+            --description "ECR repository management for AGRR application (agrr* repositories only)"
+    else
+        print_status "ECR policy already exists: $policy_name"
+    fi
+    
+    print_status "Attaching ECR policy to user: $USER_NAME"
+    aws iam attach-user-policy \
+        --profile "$AWS_PROFILE" \
+        --user-name "$USER_NAME" \
+        --policy-arn "$policy_arn"
+    
+    print_status "✅ ECR policy configured"
+}
+
 # Create IAM role for App Runner
 create_iam_role() {
     local role_name="AppRunnerServiceRole"
@@ -652,12 +783,13 @@ create_iam_role() {
         fi
     fi
     
-    # Create and attach policy for S3 access
-    local s3_policy_document=$(cat <<EOF
+    # Create and attach policy for S3 and ECR access
+    local s3_ecr_policy_document=$(cat <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "S3Access",
             "Effect": "Allow",
             "Action": [
                 "s3:GetObject",
@@ -669,31 +801,58 @@ create_iam_role() {
                 "arn:aws:s3:::${S3_BUCKET_PREFIX}-*",
                 "arn:aws:s3:::${S3_BUCKET_PREFIX}-*/*"
             ]
+        },
+        {
+            "Sid": "ECRAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECRRepositoryAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeRepositories",
+                "ecr:ListImages",
+                "ecr:DescribeImages"
+            ],
+            "Resource": "arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/agrr*"
         }
     ]
 }
 EOF
 )
     
-    # Check if S3AccessPolicy already exists
+    # Check if S3ECRAccessPolicy already exists (or old S3AccessPolicy)
+    local policy_name="S3ECRAccessPolicy"
     if [ "$role_exists" = true ]; then
-        if aws iam get-role-policy --profile "$AWS_PROFILE" --role-name "$role_name" --policy-name "S3AccessPolicy" &>/dev/null; then
-            print_status "S3AccessPolicy already attached to role, updating..."
+        # Check for new policy name first
+        if aws iam get-role-policy --profile "$AWS_PROFILE" --role-name "$role_name" --policy-name "$policy_name" &>/dev/null; then
+            print_status "$policy_name already attached to role, updating..."
+        # Check for old policy name and migrate
+        elif aws iam get-role-policy --profile "$AWS_PROFILE" --role-name "$role_name" --policy-name "S3AccessPolicy" &>/dev/null; then
+            print_status "Migrating S3AccessPolicy to S3ECRAccessPolicy..."
+            aws iam delete-role-policy --profile "$AWS_PROFILE" --role-name "$role_name" --policy-name "S3AccessPolicy" &>/dev/null || true
         else
-            print_status "Attaching S3AccessPolicy to existing role..."
+            print_status "Attaching $policy_name to existing role..."
         fi
     else
-        print_status "Attaching S3AccessPolicy to new role..."
+        print_status "Attaching $policy_name to new role..."
     fi
     
     if aws iam put-role-policy \
         --profile "$AWS_PROFILE" \
         --role-name "$role_name" \
-        --policy-name "S3AccessPolicy" \
-        --policy-document "$s3_policy_document" 2>&1; then
-        print_status "S3 access policy configured ✓"
+        --policy-name "$policy_name" \
+        --policy-document "$s3_ecr_policy_document" 2>&1; then
+        print_status "S3 and ECR access policy configured ✓"
     else
-        print_error "Failed to attach S3 policy to role"
+        print_error "Failed to attach S3ECR policy to role"
         return 1
     fi
 }
@@ -704,15 +863,23 @@ generate_env_config() {
     
     local env_file=".env.aws"
     
+    local ecr_uri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}"
+    
     cat > "$env_file" <<EOF
 # AWS Configuration
 AWS_REGION=$REGION
+AWS_ACCOUNT_ID=$ACCOUNT_ID
 AWS_S3_BUCKET=$PRODUCTION_BUCKET
 AWS_S3_BUCKET_TEST=$TEST_BUCKET
+
+# ECR Configuration
+ECR_REPOSITORY_NAME=$ECR_REPOSITORY_NAME
+ECR_REPOSITORY_URI=$ecr_uri
 
 # App Runner Configuration
 SERVICE_NAME_PRODUCTION=agrr-production
 SERVICE_NAME_TEST=agrr-test
+IAM_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerServiceRole
 
 
 # Required for deployment
@@ -780,6 +947,7 @@ setup_all() {
         create_s3_policy
         create_iam_policy
         create_apprunner_policy
+        create_ecr_policy
         print_status "✅ Resource operation policies created and attached!"
     else
         print_status "All policies already configured"
@@ -797,6 +965,10 @@ setup_all() {
     create_s3_bucket "$PRODUCTION_BUCKET" "production"
     create_s3_bucket "$TEST_BUCKET" "test"
     
+    # Create ECR repository
+    print_status "Creating ECR repository..."
+    create_ecr_repository "$ECR_REPOSITORY_NAME"
+    
     # Generate environment configuration
     print_status "Generating environment configuration..."
     generate_env_config
@@ -806,11 +978,13 @@ setup_all() {
     print_status "📁 Environment configuration: .env.aws"
     print_status ""
     print_status "Created resources:"
-    print_status "  - IAM Policies: AGRR-S3-Policy, AGRR-IAM-Policy, AGRR-AppRunner-Policy"
-    print_status "  - IAM Role: AppRunnerServiceRole"
+    print_status "  - IAM Policies: AGRR-S3-Policy, AGRR-IAM-Policy, AGRR-AppRunner-Policy, AGRR-ECR-Policy"
+    print_status "  - IAM Role: AppRunnerServiceRole (with S3 and ECR access)"
     print_status "  - S3 Buckets: $PRODUCTION_BUCKET, $TEST_BUCKET"
+    print_status "  - ECR Repository: ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}"
     print_status ""
     print_status "🚀 Ready for deployment!"
+    print_status "   Run: ./scripts/aws-deploy.sh [production|aws_test] deploy"
 }
 
 # Main execution

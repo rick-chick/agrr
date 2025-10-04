@@ -4,7 +4,7 @@
 
 PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられるRailsアプリケーションです。
 
-📖 **[クイックスタート](QUICKSTART.md)** | 📖 **[テストガイド](TEST_GUIDE.md)**
+📖 **[テストガイド](docs/TEST_GUIDE.md)** | 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md)**
 
 ## 🚀 主な特徴
 
@@ -169,7 +169,7 @@ docker-compose down
 docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
 ```
 
-詳細は [TEST_GUIDE.md](TEST_GUIDE.md) を参照してください。
+詳細は [TEST_GUIDE.md](docs/TEST_GUIDE.md) を参照してください。
 
 ## API エンドポイント
 
@@ -199,95 +199,41 @@ POST   /api/v1/files          # ファイルアップロード
 DELETE /api/v1/files/:id      # ファイル削除
 ```
 
-## ☁️ AWS デプロイ
+## ☁️ AWS デプロイ（クイックスタート）
 
-### 必要なAWSリソース
+### 最小ステップでデプロイ
 
-#### 最小構成（コスト重視）
+#### 前提条件
 
-1. **S3 バケット** - ファイル保存用
-2. **App Runner サービス** - アプリケーション実行
-3. **EFS（Elastic File System）** - SQLiteデータベースの永続化
+- AWS CLIがインストール済み（`aws --version`）
+- AWS認証情報が設定済み（`aws configure`）
+- Dockerがインストール済み
 
-#### オプション
-
-- **CloudFront** - CDN（さらなる高速化）
-- **Route 53** - 独自ドメイン
-
-### デプロイ手順
-
-#### 1. S3バケットの作成
+#### 1. セットアップ（初回のみ）
 
 ```bash
-# S3バケットを作成
-aws s3 mb s3://your-app-bucket-name --region ap-northeast-1
-
-# バケットのCORS設定（必要に応じて）
-aws s3api put-bucket-cors --bucket your-app-bucket-name --cors-configuration file://cors.json
+# AWSリソースを自動作成（S3、IAM、App Runner用リソース）
+./scripts/setup-aws-resources.sh setup
 ```
 
-#### 2. EFSの作成
+これだけで以下が自動作成されます：
+- ✅ S3バケット（production/test）
+- ✅ IAMロールとポリシー
+- ✅ `.env.aws` 設定ファイル
+
+#### 2. デプロイ
 
 ```bash
-# EFSファイルシステムを作成（App Runner VPC内）
-# AWS Consoleから作成することを推奨
-# マウントパス: /app/storage
+# 本番環境へデプロイ
+./scripts/aws-deploy.sh production deploy
+
+# テスト環境へデプロイ
+./scripts/aws-deploy.sh aws_test deploy
 ```
 
-#### 3. App Runnerサービスの作成
+**それだけです！** 🎉
 
-**テスト環境:**
-
-```bash
-# apprunner-test.yamlを使用
-aws apprunner create-service --cli-input-yaml file://apprunner-test.yaml
-```
-
-**本番環境:**
-
-```bash
-# apprunner.yamlを使用
-aws apprunner create-service --cli-input-yaml file://apprunner.yaml
-```
-
-#### 4. 環境変数の設定
-
-App Runnerの環境変数に以下を設定：
-
-**本番環境 (production):**
-```bash
-RAILS_ENV=production
-RAILS_MASTER_KEY=<your_master_key>
-RAILS_SERVE_STATIC_FILES=true
-RAILS_LOG_TO_STDOUT=true
-AWS_ACCESS_KEY_ID=<your_access_key>
-AWS_SECRET_ACCESS_KEY=<your_secret_key>
-AWS_REGION=ap-northeast-1
-AWS_S3_BUCKET=<your_bucket_name>
-ALLOWED_HOSTS=<your_app_runner_url>
-```
-
-**テスト環境 (aws_test):**
-```bash
-RAILS_ENV=aws_test
-RAILS_MASTER_KEY=<your_master_key>
-RAILS_SERVE_STATIC_FILES=true
-RAILS_LOG_TO_STDOUT=true
-RAILS_LOG_LEVEL=debug
-AWS_ACCESS_KEY_ID=<your_access_key>
-AWS_SECRET_ACCESS_KEY=<your_secret_key>
-AWS_REGION=ap-northeast-1
-AWS_S3_BUCKET=<your_test_bucket_name>
-AWS_S3_BUCKET_TEST=<your_test_bucket_name>
-ALLOWED_HOSTS=<your_test_app_runner_url>
-```
-
-#### 5. EFS マウント設定
-
-App RunnerコンソールまたはCLIで、EFSボリュームをマウント：
-
-- **マウントパス**: `/app/storage`
-- **アクセスポイント**: （必要に応じて作成）
+詳細な手順は **[AWS_DEPLOY.md](docs/AWS_DEPLOY.md)** を参照してください
 
 ## 💡 コスト最適化のポイント
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# AWS CLI Deployment Script for App Runner
-# Supports both manual deployment and automated CI/CD
+# AWS App Runner ECR-based Deployment Script
+# Builds Docker images locally, pushes to ECR, and deploys to App Runner
 set -e
 
 # Colors for output
@@ -34,17 +34,38 @@ print_header() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 ENVIRONMENT=${1:-production}
-SERVICE_NAME="agrr-${ENVIRONMENT}"
 REGION=${AWS_REGION:-ap-northeast-1}
 AWS_PROFILE=${AWS_PROFILE:-default}
 
-# App Runner configuration files
-if [ "$ENVIRONMENT" = "aws_test" ]; then
-    APPRUNNER_CONFIG="apprunner-test.yaml"
-    SERVICE_NAME="agrr-test"
-else
-    APPRUNNER_CONFIG="apprunner.yaml"
+# Load .env.aws if exists
+ENV_AWS_FILE="$PROJECT_ROOT/.env.aws"
+if [ -f "$ENV_AWS_FILE" ]; then
+    # Export variables from .env.aws
+    set -a
+    source "$ENV_AWS_FILE"
+    set +a
 fi
+
+# Get AWS Account ID (required for resource identification)
+ACCOUNT_ID=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text 2>/dev/null || echo "${AWS_ACCOUNT_ID:-}")
+
+# Set defaults based on setup-aws-resources.sh outputs
+# These match what setup-aws-resources.sh creates
+ECR_REPOSITORY_NAME="${ECR_REPOSITORY_NAME:-agrr}"
+IAM_ROLE_ARN="${IAM_ROLE_ARN:-arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerServiceRole}"
+
+# Override with environment-specific values
+if [ "$ENVIRONMENT" = "aws_test" ]; then
+    SERVICE_NAME="${SERVICE_NAME_TEST:-agrr-test}"
+    S3_BUCKET="${AWS_S3_BUCKET_TEST:-agrr-${ACCOUNT_ID}-test}"
+else
+    SERVICE_NAME="${SERVICE_NAME_PRODUCTION:-agrr-production}"
+    S3_BUCKET="${AWS_S3_BUCKET:-agrr-${ACCOUNT_ID}-production}"
+fi
+
+# Optional environment variables with reasonable defaults
+RAILS_MASTER_KEY="${RAILS_MASTER_KEY:-}"
+ALLOWED_HOSTS="${ALLOWED_HOSTS:-}"
 
 print_header "AWS App Runner CLI Deployment"
 print_status "Environment: $ENVIRONMENT"
@@ -71,11 +92,7 @@ check_prerequisites() {
         exit 1
     fi
     
-    local caller_identity=$(aws sts get-caller-identity --profile "$AWS_PROFILE")
-    local account_id=$(echo "$caller_identity" | jq -r '.Account')
-    local user_arn=$(echo "$caller_identity" | jq -r '.Arn')
-    print_status "AWS Account: $account_id"
-    print_status "AWS User: $user_arn"
+    print_status "AWS credentials configured for profile: $AWS_PROFILE"
     
     # Check Docker
     if ! command -v docker &> /dev/null; then
@@ -96,93 +113,256 @@ check_prerequisites() {
 
 # Check required environment variables
 check_environment_variables() {
-    print_header "Checking Environment Variables"
+    print_header "Checking Configuration"
     
-    local required_vars=("AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_REGION" "AWS_S3_BUCKET")
-    
-    if [ "$ENVIRONMENT" = "production" ]; then
-        required_vars+=("RAILS_MASTER_KEY" "ALLOWED_HOSTS")
-    fi
-    
-    local missing_vars=()
-    for var in "${required_vars[@]}"; do
-        if [ -z "${!var}" ]; then
-            missing_vars+=("$var")
-        fi
-    done
-    
-    if [ ${#missing_vars[@]} -ne 0 ]; then
-        print_error "Missing required environment variables:"
-        for var in "${missing_vars[@]}"; do
-            echo "  - $var"
-        done
-        echo ""
-        print_warning "Set these variables in your environment or .env file"
-        print_status "Example: export AWS_S3_BUCKET=your-bucket-name"
+    # Only check for AWS Account ID (absolutely required)
+    if [ -z "$ACCOUNT_ID" ]; then
+        print_error "Cannot determine AWS Account ID."
+        print_error "Please ensure AWS credentials are configured: aws configure --profile $AWS_PROFILE"
         exit 1
     fi
     
-    print_status "All required environment variables are set ✓"
+    print_status "AWS Account ID: $ACCOUNT_ID"
+    print_status "ECR Repository: $ECR_REPOSITORY_NAME"
+    print_status "IAM Role: $IAM_ROLE_ARN"
+    print_status "S3 Bucket: $S3_BUCKET"
+    print_status "Service Name: $SERVICE_NAME"
+    
+    # Show warnings for optional but recommended variables
+    echo ""
+    if [ -z "${RAILS_MASTER_KEY}" ]; then
+        print_warning "RAILS_MASTER_KEY is not set."
+        print_warning "  → Rails application may not start properly."
+        print_warning "  → Set it in .env.aws: RAILS_MASTER_KEY=your_key_here"
+    else
+        print_status "RAILS_MASTER_KEY: *** (set)"
+    fi
+    
+    if [ -z "${ALLOWED_HOSTS}" ]; then
+        print_warning "ALLOWED_HOSTS is not set."
+        print_warning "  → Set after first deployment using the App Runner URL."
+        print_warning "  → Example: ALLOWED_HOSTS=yourapp.awsapprunner.com"
+    else
+        print_status "ALLOWED_HOSTS: $ALLOWED_HOSTS"
+    fi
+    
+    # Check if .env.aws exists
+    if [ ! -f "$ENV_AWS_FILE" ]; then
+        echo ""
+        print_warning ".env.aws file not found."
+        print_warning "Using default resource names based on Account ID."
+        print_warning "Run './scripts/setup-aws-resources.sh setup' to create resources and configuration."
+    fi
+    
+    echo ""
+    print_status "✓ Configuration check completed"
+}
+
+# Build Docker image
+build_docker_image() {
+    print_header "Building Docker Image"
+    
+    local image_tag="$1"
+    
+    print_status "Building image: $image_tag"
+    print_status "Using Dockerfile: Dockerfile.production"
+    
+    cd "$PROJECT_ROOT"
+    
+    if docker build -f Dockerfile.production -t "$image_tag" .; then
+        print_status "Docker image built successfully ✓"
+    else
+        print_error "Docker build failed"
+        exit 1
+    fi
+}
+
+# Push Docker image to ECR
+push_to_ecr() {
+    print_header "Pushing Image to ECR"
+    
+    local ecr_repository="$1"
+    local image_tag="$2"
+    
+    # Login to ECR
+    print_status "Logging in to ECR..."
+    if aws ecr get-login-password --profile "$AWS_PROFILE" --region "$REGION" | \
+       docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"; then
+        print_status "ECR login successful ✓"
+    else
+        print_error "ECR login failed"
+        exit 1
+    fi
+    
+    # Tag the image for ECR
+    local ecr_image_uri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ecr_repository}:${image_tag}"
+    local ecr_image_latest="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ecr_repository}:latest"
+    
+    print_status "Tagging image: $ecr_image_uri"
+    docker tag "agrr:${image_tag}" "$ecr_image_uri"
+    docker tag "agrr:${image_tag}" "$ecr_image_latest"
+    
+    # Push the image
+    print_status "Pushing image to ECR..."
+    if docker push "$ecr_image_uri" && docker push "$ecr_image_latest"; then
+        print_status "Image pushed successfully ✓"
+        print_status "Image URI: $ecr_image_uri"
+        echo "$ecr_image_uri"
+    else
+        print_error "Failed to push image to ECR"
+        exit 1
+    fi
 }
 
 # Create or update App Runner service
 deploy_service() {
     print_header "Deploying to AWS App Runner"
     
+    local ecr_image_uri="$1"
+    
     # Check if service exists
-    local service_arn
-    if service_arn=$(aws apprunner describe-service --profile "$AWS_PROFILE" --service-arn "arn:aws:apprunner:${REGION}:$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text):service/${SERVICE_NAME}" 2>/dev/null | jq -r '.Service.ServiceArn' 2>/dev/null); then
+    local service_arn="arn:aws:apprunner:${REGION}:${ACCOUNT_ID}:service/${SERVICE_NAME}"
+    
+    if aws apprunner describe-service --profile "$AWS_PROFILE" --service-arn "$service_arn" &>/dev/null; then
         print_status "Service exists. Updating existing service..."
-        update_service
+        update_service "$ecr_image_uri" "$service_arn"
     else
         print_status "Service does not exist. Creating new service..."
-        create_service
+        create_service "$ecr_image_uri"
     fi
 }
 
 # Create new App Runner service
 create_service() {
-    print_status "Creating new App Runner service: $SERVICE_NAME"
+    local ecr_image_uri="$1"
     
-    # Validate apprunner config file exists
-    if [ ! -f "$PROJECT_ROOT/$APPRUNNER_CONFIG" ]; then
-        print_error "App Runner config file not found: $APPRUNNER_CONFIG"
-        exit 1
+    print_status "Creating new App Runner service: $SERVICE_NAME"
+    print_status "Using ECR image: $ecr_image_uri"
+    
+    # Build environment variables JSON with defaults
+    local env_vars='[
+        {"Name":"RAILS_ENV","Value":"'$ENVIRONMENT'"},
+        {"Name":"RAILS_SERVE_STATIC_FILES","Value":"true"},
+        {"Name":"RAILS_LOG_TO_STDOUT","Value":"true"},
+        {"Name":"AWS_REGION","Value":"'$REGION'"},
+        {"Name":"AWS_S3_BUCKET","Value":"'$S3_BUCKET'"}
+    ]'
+    
+    # Add optional environment variables if they are set
+    if [ -n "${RAILS_MASTER_KEY}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_MASTER_KEY","Value":"'${RAILS_MASTER_KEY}'"}]')
+    fi
+    if [ -n "${ALLOWED_HOSTS}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"ALLOWED_HOSTS","Value":"'${ALLOWED_HOSTS}'"}]')
+    fi
+    if [ "$ENVIRONMENT" = "aws_test" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_LOG_LEVEL","Value":"debug"}]')
     fi
     
-    # Create the service
+    print_status "Environment variables configured:"
+    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"'
+    
+    # Create the service with ECR image
     local create_result
-    if create_result=$(aws apprunner create-service --profile "$AWS_PROFILE" --cli-input-yaml "file://$PROJECT_ROOT/$APPRUNNER_CONFIG" 2>&1); then
+    if create_result=$(aws apprunner create-service \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" \
+        --service-name "$SERVICE_NAME" \
+        --source-configuration '{
+            "ImageRepository": {
+                "ImageIdentifier": "'$ecr_image_uri'",
+                "ImageRepositoryType": "ECR",
+                "ImageConfiguration": {
+                    "Port": "3000",
+                    "RuntimeEnvironmentVariables": '$env_vars'
+                }
+            },
+            "AutoDeploymentsEnabled": false
+        }' \
+        --instance-configuration '{
+            "Cpu": "1024",
+            "Memory": "2048",
+            "InstanceRoleArn": "'$IAM_ROLE_ARN'"
+        }' 2>&1); then
+        
         print_status "Service creation initiated successfully ✓"
         
         # Extract service ARN from response
-        local service_arn=$(echo "$create_result" | jq -r '.Service.ServiceArn' 2>/dev/null || echo "$create_result" | grep -o 'arn:aws:apprunner:[^[:space:]]*' | head -1)
+        local service_arn=$(echo "$create_result" | jq -r '.Service.ServiceArn' 2>/dev/null)
         
-        if [ -n "$service_arn" ]; then
+        if [ -n "$service_arn" ] && [ "$service_arn" != "null" ]; then
             print_status "Service ARN: $service_arn"
             wait_for_deployment "$service_arn"
         else
             print_warning "Could not extract service ARN. Check AWS console for status."
+            echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result"
         fi
     else
         print_error "Failed to create service:"
-        echo "$create_result"
+        echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result"
         exit 1
     fi
 }
 
 # Update existing App Runner service
 update_service() {
-    print_status "Starting deployment for existing service..."
+    local ecr_image_uri="$1"
+    local service_arn="$2"
     
-    local service_arn="arn:aws:apprunner:${REGION}:$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text):service/${SERVICE_NAME}"
+    print_status "Updating existing service: $SERVICE_NAME"
+    print_status "Using ECR image: $ecr_image_uri"
     
-    # Start deployment
-    if aws apprunner start-deployment --profile "$AWS_PROFILE" --service-arn "$service_arn" &> /dev/null; then
-        print_status "Deployment started successfully ✓"
+    # Build environment variables JSON with defaults
+    local env_vars='[
+        {"Name":"RAILS_ENV","Value":"'$ENVIRONMENT'"},
+        {"Name":"RAILS_SERVE_STATIC_FILES","Value":"true"},
+        {"Name":"RAILS_LOG_TO_STDOUT","Value":"true"},
+        {"Name":"AWS_REGION","Value":"'$REGION'"},
+        {"Name":"AWS_S3_BUCKET","Value":"'$S3_BUCKET'"}
+    ]'
+    
+    # Add optional environment variables if they are set
+    if [ -n "${RAILS_MASTER_KEY}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_MASTER_KEY","Value":"'${RAILS_MASTER_KEY}'"}]')
+    fi
+    if [ -n "${ALLOWED_HOSTS}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"ALLOWED_HOSTS","Value":"'${ALLOWED_HOSTS}'"}]')
+    fi
+    if [ "$ENVIRONMENT" = "aws_test" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_LOG_LEVEL","Value":"debug"}]')
+    fi
+    
+    print_status "Environment variables configured:"
+    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"'
+    
+    # Update the service
+    local update_result
+    if update_result=$(aws apprunner update-service \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" \
+        --service-arn "$service_arn" \
+        --source-configuration '{
+            "ImageRepository": {
+                "ImageIdentifier": "'$ecr_image_uri'",
+                "ImageRepositoryType": "ECR",
+                "ImageConfiguration": {
+                    "Port": "3000",
+                    "RuntimeEnvironmentVariables": '$env_vars'
+                }
+            },
+            "AutoDeploymentsEnabled": false
+        }' \
+        --instance-configuration '{
+            "Cpu": "1024",
+            "Memory": "2048",
+            "InstanceRoleArn": "'$IAM_ROLE_ARN'"
+        }' 2>&1); then
+        
+        print_status "Service update initiated successfully ✓"
         wait_for_deployment "$service_arn"
     else
-        print_error "Failed to start deployment for service: $service_arn"
+        print_error "Failed to update service:"
+        echo "$update_result" | jq '.' 2>/dev/null || echo "$update_result"
         exit 1
     fi
 }
@@ -283,7 +463,7 @@ list_services() {
 delete_service() {
     print_header "Deleting App Runner Service"
     
-    local service_arn="arn:aws:apprunner:${REGION}:$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text):service/${SERVICE_NAME}"
+    local service_arn="arn:aws:apprunner:${REGION}:${ACCOUNT_ID}:service/${SERVICE_NAME}"
     
     print_warning "Are you sure you want to delete service: $SERVICE_NAME?"
     read -p "Type 'yes' to confirm: " confirmation
@@ -303,7 +483,7 @@ delete_service() {
 
 # Show usage
 show_usage() {
-    echo "AWS App Runner CLI Deployment Script"
+    echo "AWS App Runner ECR-based Deployment Script"
     echo ""
     echo "Usage: $0 [environment] [command]"
     echo ""
@@ -312,20 +492,44 @@ show_usage() {
     echo "  production  - Deploy to AWS production environment (default)"
     echo ""
     echo "Commands:"
-    echo "  deploy      - Create or update service (default)"
-    echo "  list        - List existing services"
-    echo "  delete      - Delete service"
+    echo "  deploy      - Build Docker image, push to ECR, and deploy to App Runner (default)"
+    echo "  list        - List existing App Runner services"
+    echo "  delete      - Delete App Runner service"
     echo "  info        - Show service information"
     echo ""
     echo "Examples:"
-    echo "  $0 production deploy     # Deploy to production"
-    echo "  $0 aws_test list         # List services"
+    echo "  $0 production deploy     # Build, push, and deploy to production"
+    echo "  $0 aws_test deploy       # Build, push, and deploy to test environment"
+    echo "  $0 production info       # Show production service info"
     echo "  $0 production delete     # Delete production service"
     echo ""
-echo "Environment Variables Required:"
-echo "  AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET"
-echo "  RAILS_MASTER_KEY, ALLOWED_HOSTS (for production)"
-echo "  AWS_PROFILE (optional, defaults to 'default')"
+    echo "Prerequisites:"
+    echo "  1. Run './scripts/setup-aws-resources.sh setup' first to create:"
+    echo "     - IAM roles and policies"
+    echo "     - S3 buckets"
+    echo "     - ECR repository"
+    echo "     - .env.aws configuration file"
+    echo ""
+    echo "  2. Optional: Set environment variables in .env.aws or shell:"
+    echo "     - RAILS_MASTER_KEY (recommended for production)"
+    echo "     - ALLOWED_HOSTS (set after first deployment with App Runner URL)"
+    echo ""
+    echo "Default Values (if not set in .env.aws):"
+    echo "  - ECR_REPOSITORY_NAME: agrr"
+    echo "  - IAM_ROLE_ARN: arn:aws:iam::\${ACCOUNT_ID}:role/AppRunnerServiceRole"
+    echo "  - AWS_S3_BUCKET: agrr-\${ACCOUNT_ID}-production"
+    echo "  - AWS_S3_BUCKET_TEST: agrr-\${ACCOUNT_ID}-test"
+    echo "  - SERVICE_NAME_PRODUCTION: agrr-production"
+    echo "  - SERVICE_NAME_TEST: agrr-test"
+    echo ""
+    echo "How it works:"
+    echo "  1. Loads configuration from .env.aws (or uses defaults)"
+    echo "  2. Builds Docker image from Dockerfile.production"
+    echo "  3. Pushes image to ECR with timestamp tag"
+    echo "  4. Creates or updates App Runner service with the new image"
+    echo "  5. Monitors deployment progress"
+    echo ""
+    echo "Note: This script uses ECR-based deployment, not source code repository."
 }
 
 # Main execution
@@ -336,7 +540,20 @@ main() {
         "deploy")
             check_prerequisites
             check_environment_variables
-            deploy_service
+            
+            # Generate image tag based on environment and timestamp
+            local timestamp=$(date +%Y%m%d-%H%M%S)
+            local image_tag="${ENVIRONMENT}-${timestamp}"
+            
+            # Build Docker image
+            build_docker_image "agrr:${image_tag}"
+            
+            # Push to ECR
+            local ecr_image_uri
+            ecr_image_uri=$(push_to_ecr "$ECR_REPOSITORY_NAME" "$image_tag")
+            
+            # Deploy to App Runner
+            deploy_service "$ecr_image_uri"
             ;;
         "list")
             check_prerequisites
@@ -348,7 +565,8 @@ main() {
             ;;
         "info")
             check_prerequisites
-            print_service_info "arn:aws:apprunner:${REGION}:$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text):service/${SERVICE_NAME}"
+            local service_arn="arn:aws:apprunner:${REGION}:${ACCOUNT_ID}:service/${SERVICE_NAME}"
+            print_service_info "$service_arn"
             ;;
         "help"|"-h"|"--help")
             show_usage

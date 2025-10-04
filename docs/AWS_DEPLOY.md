@@ -1,6 +1,14 @@
 # AWS CLI デプロイガイド
 
-AWS CLIを使用してApp Runnerにアプリケーションをデプロイする方法を説明します。
+AWS CLIを使用してApp Runnerにアプリケーションをデプロイする完全ガイドです。
+
+## 📋 目次
+
+- [クイックスタート](#クイックスタート)
+- [AWSプロファイル設定](#awsプロファイル設定)
+- [ECRベースデプロイ](#ecrベースデプロイ)
+- [詳細手順](#詳細手順)
+- [トラブルシューティング](#トラブルシューティング)
 
 ## 🚀 クイックスタート
 
@@ -40,9 +48,9 @@ aws configure --profile agrr-admin
 
 # プロファイルを環境変数で指定
 export AWS_PROFILE=agrr-admin
-
-# 詳細は [AWS_PROFILE_SETUP.md](AWS_PROFILE_SETUP.md) を参照
 ```
+
+詳細は [AWSプロファイル設定](#awsプロファイル設定) セクションを参照してください
 
 ### 3. AWSリソースの作成
 
@@ -363,10 +371,272 @@ jobs:
 - [Docker Documentation](https://docs.docker.com/)
 - [Rails Deployment Guide](https://guides.rubyonrails.org/deployment.html)
 
+---
+
+## 🔧 AWSプロファイル設定
+
+### プロファイルの作成
+
+```bash
+# 新しいプロファイルを作成
+aws configure --profile agrr-admin
+
+# プロンプトに従って入力:
+# AWS Access Key ID: [your-access-key]
+# AWS Secret Access Key: [your-secret-key]
+# Default region name: ap-northeast-1
+# Default output format: json
+```
+
+### プロファイルの確認
+
+```bash
+# 設定されたプロファイルを確認
+aws configure list-profiles
+
+# 特定のプロファイルの設定を確認
+aws configure list --profile agrr-admin
+
+# プロファイルでの認証確認
+aws sts get-caller-identity --profile agrr-admin
+```
+
+### 環境変数での使用
+
+```bash
+# プロファイルを環境変数で指定
+export AWS_PROFILE=agrr-admin
+
+# デプロイスクリプトを実行
+./scripts/aws-deploy.sh production deploy
+```
+
+### デプロイでの使用例
+
+#### 基本的な使用方法
+
+```bash
+# 環境変数でプロファイルを指定
+AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh production deploy
+
+# テスト環境へのデプロイ
+AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh aws_test deploy
+```
+
+#### AWSリソース作成での使用
+
+```bash
+# プロファイルを指定してAWSリソースを作成
+AWS_PROFILE=agrr-admin ./scripts/setup-aws-resources.sh setup
+```
+
+#### 複数プロファイルの管理
+
+```bash
+# 本番環境用プロファイル
+AWS_PROFILE=agrr-prod ./scripts/aws-deploy.sh production deploy
+
+# テスト環境用プロファイル
+AWS_PROFILE=agrr-test ./scripts/aws-deploy.sh aws_test deploy
+
+# 開発環境用プロファイル
+AWS_PROFILE=agrr-dev ./scripts/setup-aws-resources.sh setup
+```
+
+### プロファイル設定のベストプラクティス
+
+#### 1. プロファイル命名規則
+
+```
+agrr-prod     # 本番環境
+agrr-test     # テスト環境
+agrr-dev      # 開発環境
+agrr-admin    # 管理者権限
+```
+
+#### 2. 権限の分離
+
+```bash
+# 本番環境用（最小権限）
+aws configure --profile agrr-prod
+# - App Runner サービス作成/更新権限
+# - S3 バケットアクセス権限
+
+# 管理者用（全権限）
+aws configure --profile agrr-admin
+# - IAM ロール作成権限
+# - S3 バケット作成権限
+```
+
+#### 3. セキュリティ設定
+
+```bash
+# プロファイルの権限確認
+aws iam get-user --profile agrr-admin
+aws iam list-attached-user-policies --user-name your-username --profile agrr-admin
+
+# アクセスキーのローテーション
+aws iam create-access-key --profile agrr-admin
+aws iam delete-access-key --access-key-id old-key-id --profile agrr-admin
+```
+
+### プロファイルのトラブルシューティング
+
+#### プロファイルが見つからない
+
+```bash
+# エラー: The config profile (agrr-admin) could not be found
+# 解決方法:
+aws configure list-profiles  # プロファイル一覧確認
+aws configure --profile agrr-admin  # プロファイル作成
+```
+
+#### 権限不足エラー
+
+```bash
+# エラー: User is not authorized to perform: apprunner:CreateService
+# 解決方法:
+# 1. IAMユーザーに必要な権限を追加
+# 2. 管理者プロファイルを使用
+AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh production deploy
+```
+
+#### リージョン不一致エラー
+
+```bash
+# エラー: An error occurred (InvalidRegion) when calling the CreateService operation
+# 解決方法:
+aws configure --profile agrr-admin  # リージョンを ap-northeast-1 に設定
+# または環境変数で指定
+AWS_REGION=ap-northeast-1 AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh production deploy
+```
+
+---
+
+## 📦 ECRベースデプロイ
+
+このプロジェクトはECRベースのデプロイメント方式を使用しています。ローカルでビルドしたDockerイメージをECRにプッシュし、App Runnerでデプロイします。
+
+### デプロイメントフロー
+
+```
+1. setup-aws-resources.sh
+   ├─ IAMポリシー作成（S3, IAM, AppRunner, ECR）
+   ├─ IAMロール作成（AppRunnerServiceRole）
+   ├─ S3バケット作成（production, test）
+   ├─ ECRリポジトリ作成
+   └─ .env.aws 設定ファイル生成
+
+2. aws-deploy.sh
+   ├─ Dockerイメージビルド（Dockerfile.production）
+   ├─ ECRへログイン
+   ├─ イメージをECRへプッシュ
+   └─ App Runnerサービス作成/更新
+```
+
+### ビルドプロセス
+
+#### 1. Dockerイメージのビルド
+
+```bash
+docker build -f Dockerfile.production -t agrr:production-20241004-143000 .
+```
+
+#### 2. ECRへのログイン
+
+```bash
+aws ecr get-login-password | docker login --username AWS --password-stdin \
+  ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+```
+
+#### 3. イメージのタグ付けとプッシュ
+
+```bash
+docker tag agrr:production-20241004-143000 \
+  ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/agrr:production-20241004-143000
+
+docker tag agrr:production-20241004-143000 \
+  ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/agrr:latest
+
+docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/agrr:production-20241004-143000
+docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/agrr:latest
+```
+
+#### 4. App Runnerサービスの作成/更新
+
+ECRイメージURIを指定してApp Runnerサービスを作成します:
+
+```json
+{
+  "SourceConfiguration": {
+    "ImageRepository": {
+      "ImageIdentifier": "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/agrr:production-20241004-143000",
+      "ImageRepositoryType": "ECR",
+      "ImageConfiguration": {
+        "Port": "3000",
+        "RuntimeEnvironmentVariables": [
+          {"Name": "RAILS_ENV", "Value": "production"},
+          {"Name": "AWS_S3_BUCKET", "Value": "agrr-{account-id}-production"}
+        ]
+      }
+    }
+  },
+  "InstanceConfiguration": {
+    "Cpu": "1024",
+    "Memory": "2048",
+    "InstanceRoleArn": "arn:aws:iam::{account-id}:role/AppRunnerServiceRole"
+  }
+}
+```
+
+### デフォルト値について
+
+`aws-deploy.sh`は以下のデフォルト値を使用します：
+
+| 項目 | デフォルト値 |
+|------|-------------|
+| ECRリポジトリ名 | `agrr` |
+| IAMロール | `arn:aws:iam::{account-id}:role/AppRunnerServiceRole` |
+| S3バケット（production） | `agrr-{account-id}-production` |
+| S3バケット（test） | `agrr-{account-id}-test` |
+| サービス名（production） | `agrr-production` |
+| サービス名（test） | `agrr-test` |
+
+これらは`setup-aws-resources.sh`が作成するリソース名と一致しているため、**追加設定なしでデプロイ可能**です。
+
+### ECRデプロイのメリット
+
+| 項目 | 旧方式（YAML/GitHub） | 新方式（ECR） |
+|------|---------------------|-------------|
+| ソース | GitHubリポジトリ | ECRコンテナレジストリ |
+| ビルド場所 | App Runner内 | ローカル |
+| デプロイ方法 | yamlファイル | CLIパラメータ |
+| 自動デプロイ | GitHub push時 | 手動実行 |
+| ビルド時間 | 遅い | 速い（事前ビルド済み） |
+| コスト | ビルド時間課金 | ストレージ課金 |
+| ロールバック | 困難 | イメージタグ指定で簡単 |
+
+### セキュリティのベストプラクティス
+
+1. **IAMロールの最小権限原則**
+   - すべてのポリシーがリソーススコープ（`agrr-*`, `AppRunnerServiceRole*`）に制限されています
+
+2. **ECRイメージスキャン**
+   - イメージプッシュ時に自動的に脆弱性スキャンが実行されます
+
+3. **イメージライフサイクル管理**
+   - 最新10個のイメージのみ保持し、古いイメージは自動削除されます
+
+4. **環境変数の管理**
+   - `.env.aws`ファイルは`.gitignore`に追加し、リポジトリにコミットしないでください
+   - 本番環境の`RAILS_MASTER_KEY`は厳重に管理してください
+
+---
+
 ## 🔧 関連ドキュメント
 
-- **[AWS_PROFILE_SETUP.md](AWS_PROFILE_SETUP.md)** - AWSプロファイル設定ガイド
 - **[TEST_GUIDE.md](TEST_GUIDE.md)** - テスト実行ガイド
+- **[README.md](../README.md)** - プロジェクト概要
 
 ---
 
