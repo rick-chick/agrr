@@ -84,3 +84,4 @@ coverage/
 .env.aws
 apprunner-test.yaml
 scripts/agrr-policy-management.json
+aws/

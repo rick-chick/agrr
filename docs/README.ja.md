@@ -206,13 +206,13 @@ DELETE /api/v1/files/:id      # ファイル削除
 
 ### デプロイ手順
 
-詳細は [README.md](README.md) の「AWS デプロイ」セクションを参照してください。
+詳細は **[AWS_DEPLOY.md](AWS_DEPLOY.md)** を参照してください。
 
 ## 📚 ドキュメント
 
 - **[README.md](README.md)** - 英語版（詳細）
 - **[TEST_GUIDE.md](TEST_GUIDE.md)** - テスト詳細ガイド
-- **[QUICKSTART.md](QUICKSTART.md)** - クイックスタート
+- **[AWS_DEPLOY.md](AWS_DEPLOY.md)** - AWS CLIデプロイガイド
 - **[.devcontainer/README.md](.devcontainer/README.md)** - Dev Containers ガイド
 
 ## 🔧 トラブルシューティング
