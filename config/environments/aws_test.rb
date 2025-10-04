@@ -92,6 +92,7 @@ Rails.application.configure do
   config.hosts.concat(allowed_hosts) unless allowed_hosts.empty?
 
   # Use Solid Cable for Action Cable (SQLite-based)
-  config.action_cable.adapter = :solid_cable
+  # Note: Action Cable adapter should be configured in config/cable.yml instead
+  # config.action_cable.adapter = :solid_cable
 end
 
