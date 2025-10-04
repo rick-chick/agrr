@@ -299,10 +299,13 @@ show_policy_management_permission_request() {
         {
             "Sid": "AttachPoliciesToSelf",
             "Effect": "Allow",
-            "Action": [
-                "iam:AttachUserPolicy",
-                "iam:ListAttachedUserPolicies"
-            ],
+            "Action": "iam:AttachUserPolicy",
+            "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
+        },
+        {
+            "Sid": "ListUserPolicies",
+            "Effect": "Allow",
+            "Action": "iam:ListAttachedUserPolicies",
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
         }
     ]
@@ -337,10 +340,13 @@ EOF
         {
             "Sid": "AttachPoliciesToSelf",
             "Effect": "Allow",
-            "Action": [
-                "iam:AttachUserPolicy",
-                "iam:ListAttachedUserPolicies"
-            ],
+            "Action": "iam:AttachUserPolicy",
+            "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
+        },
+        {
+            "Sid": "ListUserPolicies",
+            "Effect": "Allow",
+            "Action": "iam:ListAttachedUserPolicies",
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
         }
     ]
@@ -957,6 +963,8 @@ setup_all() {
         create_apprunner_policy
         create_ecr_policy
         print_status "✅ Resource operation policies created and attached!"
+        print_status "Waiting for IAM policy changes to propagate..."
+        sleep 10
     else
         print_status "All policies already configured"
     fi
