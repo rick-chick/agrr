@@ -51,7 +51,9 @@ print_header() {
 # Configuration
 REGION=${AWS_REGION:-ap-northeast-1}
 AWS_PROFILE=${AWS_PROFILE:-default}
-ACCOUNT_ID=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text 2>/dev/null || echo "")
+# Capture AWS credentials check error
+AWS_CREDS_ERROR=$(mktemp)
+ACCOUNT_ID=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text 2>"$AWS_CREDS_ERROR" || echo "")
 
 # Get current IAM user name automatically
 if [ -z "${AWS_IAM_USER:-}" ]; then
@@ -96,8 +98,14 @@ check_prerequisites() {
     # Check AWS credentials
     if [ -z "$ACCOUNT_ID" ]; then
         print_error "AWS credentials not configured for profile '$AWS_PROFILE'. Please run 'aws configure --profile $AWS_PROFILE'"
+        if [ -s "$AWS_CREDS_ERROR" ]; then
+            print_error "AWS CLI Error Details:"
+            cat "$AWS_CREDS_ERROR" >&2
+        fi
+        rm -f "$AWS_CREDS_ERROR"
         exit 1
     fi
+    rm -f "$AWS_CREDS_ERROR"
     
     # Check jq
     if ! command -v jq &> /dev/null; then
