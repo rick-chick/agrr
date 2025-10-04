@@ -81,3 +81,6 @@ coverage/
 # Ignore test results
 /test-results/
 /coverage/
+.env.aws
+apprunner-test.yaml
+scripts/agrr-policy-management.json
