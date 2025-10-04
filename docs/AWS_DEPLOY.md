@@ -5,6 +5,7 @@ AWS CLIを使用してApp Runnerにアプリケーションをデプロイする
 ## 📋 目次
 
 - [クイックスタート](#クイックスタート)
+- [コマンドリファレンス](#コマンドリファレンス)
 - [AWSプロファイル設定](#awsプロファイル設定)
 - [ECRベースデプロイ](#ecrベースデプロイ)
 - [詳細手順](#詳細手順)
@@ -95,6 +96,130 @@ export AWS_PROFILE=agrr-admin
 export AWS_IAM_USER=aggr-admin
 ./scripts/aws-deploy.sh production deploy
 ```
+
+## 📖 コマンドリファレンス
+
+### aws-deploy.sh
+
+デプロイスクリプトの完全なリファレンスです。
+
+#### 使用方法
+
+```bash
+./scripts/aws-deploy.sh [environment] [command]
+```
+
+#### 引数
+
+##### Environment（環境）
+
+| 引数 | 説明 | サービス名 | S3バケット |
+|------|------|-----------|-----------|
+| `production` | 本番環境（**デフォルト**） | agrr-production | agrr-{ACCOUNT_ID}-production |
+| `aws_test` | テスト環境 | agrr-test | agrr-{ACCOUNT_ID}-test |
+
+##### Command（コマンド）
+
+| コマンド | 説明 |
+|---------|------|
+| `deploy` | Dockerイメージをビルド、ECRにプッシュ、App Runnerにデプロイ（**デフォルト**） |
+| `list` | 既存のApp Runnerサービス一覧を表示 |
+| `info` | サービスの詳細情報（URL、ステータス、設定など）を表示 |
+| `delete` | App Runnerサービスを削除 |
+| `help` / `-h` / `--help` | ヘルプメッセージを表示 |
+
+#### 使用例
+
+```bash
+# 本番環境にデプロイ（引数省略 = production deploy）
+./scripts/aws-deploy.sh
+
+# 本番環境にデプロイ（明示的）
+./scripts/aws-deploy.sh production deploy
+
+# テスト環境にデプロイ
+./scripts/aws-deploy.sh aws_test deploy
+
+# 本番環境のサービス情報を表示
+./scripts/aws-deploy.sh production info
+
+# サービス一覧を表示
+./scripts/aws-deploy.sh production list
+
+# 本番環境のサービスを削除
+./scripts/aws-deploy.sh production delete
+
+# ヘルプを表示
+./scripts/aws-deploy.sh help
+```
+
+#### 環境変数
+
+スクリプトは以下の環境変数を使用します（`.env.aws` またはシェルで設定）：
+
+| 環境変数 | 説明 | デフォルト |
+|---------|------|-----------|
+| `AWS_PROFILE` | 使用するAWSプロファイル | default |
+| `AWS_REGION` | デプロイ先のAWSリージョン | ap-northeast-1 |
+| `RAILS_MASTER_KEY` | Rails暗号化キー（本番推奨） | - |
+| `ALLOWED_HOSTS` | 許可するホスト（App Runner URL） | - |
+| `ECR_REPOSITORY_NAME` | ECRリポジトリ名 | agrr |
+| `IAM_ROLE_ARN` | App Runner用IAMロール | arn:aws:iam::{ACCOUNT_ID}:role/AppRunnerServiceRole |
+| `SERVICE_NAME_PRODUCTION` | 本番環境のサービス名 | agrr-production |
+| `SERVICE_NAME_TEST` | テスト環境のサービス名 | agrr-test |
+
+#### プロファイルを使用した実行例
+
+```bash
+# プロファイルを指定してデプロイ
+AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh production deploy
+
+# 環境変数で事前設定
+export AWS_PROFILE=agrr-admin
+./scripts/aws-deploy.sh production deploy
+```
+
+### setup-aws-resources.sh
+
+AWSリソース作成スクリプトのリファレンスです。
+
+#### 使用方法
+
+```bash
+./scripts/setup-aws-resources.sh [command]
+```
+
+#### コマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `setup` | 全リソースを一括作成（IAM権限、S3、IAMロール、EFS、.env.aws） |
+| `permissions` | IAM権限のみ設定（自動でfixも実行） |
+| `fix` | 権限不足エラーのクイックフィックス |
+| `s3` | S3バケットのみ作成 |
+| `iam` | IAMロールとポリシーのみ作成 |
+| `efs` | EFSのみ作成 |
+
+#### 使用例
+
+```bash
+# 全リソースを作成（初回推奨）
+./scripts/setup-aws-resources.sh setup
+
+# IAM権限のみ設定
+./scripts/setup-aws-resources.sh permissions
+
+# S3バケットのみ作成
+./scripts/setup-aws-resources.sh s3
+```
+
+#### 環境変数
+
+| 環境変数 | 説明 | デフォルト |
+|---------|------|-----------|
+| `AWS_PROFILE` | 使用するAWSプロファイル | default |
+| `AWS_REGION` | リソースを作成するリージョン | ap-northeast-1 |
+| `AWS_IAM_USER` | IAMユーザー名（権限設定用） | 自動検出 |
 
 ## 📋 詳細手順
 
