@@ -57,6 +57,31 @@
       background: #c82333;
     }
     
+    .btn {
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: background 0.2s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+    
+    .btn:hover {
+      background: #0056b3;
+    }
+    
+    .btn-success {
+      background: #28a745;
+    }
+    
+    .btn-success:hover {
+      background: #1e7e34;
+    }
+    
     .container {
       max-width: 1200px;
       margin: 2rem auto;
@@ -160,10 +185,14 @@
         </div>
         
         <div class="feature-card">
-          <h3 class="feature-title">🌱 Agricultural Resources</h3>
+          <h3 class="feature-title">🌱 圃場管理</h3>
           <p class="feature-description">
-            Access agricultural data and resources to help optimize your farming operations.
+            圃場の位置情報を地図で管理し、農作業を効率化しましょう。
           </p>
+          <div style="margin-top: 1rem;">
+            <%= link_to "圃場一覧", fields_path, class: "btn", style: "margin-right: 0.5rem;" %>
+            <%= link_to "新しい圃場", new_field_path, class: "btn btn-success" %>
+          </div>
         </div>
       </div>
     </div>
