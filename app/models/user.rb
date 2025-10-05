@@ -3,6 +3,7 @@
 class User < ApplicationRecord
   # Associations
   has_many :sessions, dependent: :destroy
+  has_many :fields, dependent: :destroy
 
   # Validations
   validates :email, presence: true, 
@@ -10,8 +11,8 @@ class User < ApplicationRecord
                     uniqueness: { case_sensitive: false }
   validates :name, presence: true, length: { maximum: 50 }
   validates :google_id, presence: true, uniqueness: true
-  validates :avatar_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), 
-                                   message: "must be a valid URL" },
+  validates :avatar_url, format: { with: /\A(#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}|\/assets\/.*\.svg)\z/, 
+                                   message: "must be a valid URL or local SVG asset" },
                          allow_blank: true
 
   # Normalize email before validation
