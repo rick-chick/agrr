@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  name: "北側の田んぼ"
+  latitude: 35.6812
+  longitude: 139.7671
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>
+
+two:
+  user: one
+  name: "南側の畑"
+  latitude: 35.6762
+  longitude: 139.6503
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+three:
+  user: two
+  name: "東側の果樹園"
+  latitude: 36.2048
+  longitude: 138.2529
+  created_at: <%= 3.days.ago %>
+  updated_at: <%= 3.days.ago %>

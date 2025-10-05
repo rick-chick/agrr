@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  email: "user1@example.com"
+  name: "User One"
+  google_id: "google_123456789"
+  avatar_url: "https://example.com/avatar1.jpg"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+two:
+  email: "user2@example.com"
+  name: "User Two"
+  google_id: "google_987654321"
+  avatar_url: "https://example.com/avatar2.jpg"
+  created_at: <%= 2.weeks.ago %>
+  updated_at: <%= 2.weeks.ago %>
