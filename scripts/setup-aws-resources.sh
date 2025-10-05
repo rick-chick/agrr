@@ -286,7 +286,10 @@ show_policy_management_permission_request() {
             "Action": [
                 "iam:CreatePolicy",
                 "iam:GetPolicy",
-                "iam:DeletePolicy"
+                "iam:DeletePolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:DeletePolicyVersion"
             ],
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:policy/AGRR-*"
         },
@@ -297,9 +300,12 @@ show_policy_management_permission_request() {
             "Resource": "*"
         },
         {
-            "Sid": "AttachPoliciesToSelf",
+            "Sid": "AttachDetachPoliciesToSelf",
             "Effect": "Allow",
-            "Action": "iam:AttachUserPolicy",
+            "Action": [
+                "iam:AttachUserPolicy",
+                "iam:DetachUserPolicy"
+            ],
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
         },
         {
@@ -327,7 +333,10 @@ EOF
             "Action": [
                 "iam:CreatePolicy",
                 "iam:GetPolicy",
-                "iam:DeletePolicy"
+                "iam:DeletePolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:DeletePolicyVersion"
             ],
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:policy/AGRR-*"
         },
@@ -338,9 +347,12 @@ EOF
             "Resource": "*"
         },
         {
-            "Sid": "AttachPoliciesToSelf",
+            "Sid": "AttachDetachPoliciesToSelf",
             "Effect": "Allow",
-            "Action": "iam:AttachUserPolicy",
+            "Action": [
+                "iam:AttachUserPolicy",
+                "iam:DetachUserPolicy"
+            ],
             "Resource": "arn:aws:iam::${ACCOUNT_ID}:user/${USER_NAME}"
         },
         {
@@ -620,26 +632,98 @@ create_iam_policy() {
                 "iam:DeleteRole",
                 "iam:PutRolePolicy",
                 "iam:DeleteRolePolicy",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
                 "iam:PassRole",
                 "iam:ListRolePolicies",
                 "iam:GetRolePolicy"
             ],
-            "Resource": "arn:aws:iam::'${ACCOUNT_ID}':role/AppRunnerServiceRole*"
+            "Resource": [
+                "arn:aws:iam::'${ACCOUNT_ID}':role/AppRunnerServiceRole*",
+                "arn:aws:iam::'${ACCOUNT_ID}':role/AppRunnerECRAccessRole"
+            ]
+        },
+        {
+            "Sid": "CreateServiceLinkedRole",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole",
+                "iam:GetRole"
+            ],
+            "Resource": "arn:aws:iam::'${ACCOUNT_ID}':role/aws-service-role/apprunner.amazonaws.com/AWSServiceRoleForAppRunner"
         }
     ]
 }'
     
     local policy_arn="arn:aws:iam::${ACCOUNT_ID}:policy/${policy_name}"
     
-    if ! aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &> /dev/null; then
+    # Check if policy exists and needs update
+    if aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &> /dev/null; then
+        print_status "IAM policy exists, checking if update is needed..."
+        
+        # Get current policy document
+        local current_version=$(aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --query 'Policy.DefaultVersionId' --output text 2>&1)
+        if [ $? -ne 0 ]; then
+            print_error "Failed to get policy version: $current_version"
+            return 1
+        fi
+        
+        local current_doc=$(aws iam get-policy-version --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --version-id "$current_version" --query 'PolicyVersion.Document' --output json 2>&1)
+        if [ $? -ne 0 ]; then
+            print_error "Failed to get policy document: $current_doc"
+            return 1
+        fi
+        
+        # Normalize and compare policies
+        local current_normalized=$(echo "$current_doc" | jq -S -c)
+        local new_normalized=$(echo "$policy_document" | jq -S -c)
+        
+        if [ "$current_normalized" != "$new_normalized" ]; then
+            print_status "Policy content has changed. Recreating..."
+            
+            # Debug: Show differences (commented out by default)
+            # print_status "Current policy statements:"
+            # echo "$current_doc" | jq '.Statement[].Sid'
+            # print_status "New policy statements:"
+            # echo "$policy_document" | jq '.Statement[].Sid'
+            
+            # Detach from user
+            aws iam detach-user-policy \
+                --profile "$AWS_PROFILE" \
+                --user-name "$USER_NAME" \
+                --policy-arn "$policy_arn" 2>/dev/null || true
+            
+            # Delete all non-default versions
+            local versions=$(aws iam list-policy-versions --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --query 'Versions[?!IsDefaultVersion].VersionId' --output text)
+            for version in $versions; do
+                aws iam delete-policy-version --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --version-id "$version" 2>/dev/null || true
+            done
+            
+            # Delete policy
+            aws iam delete-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn"
+            print_status "Old policy deleted"
+            
+            # Create new policy
+            aws iam create-policy \
+                --profile "$AWS_PROFILE" \
+                --policy-name "$policy_name" \
+                --policy-document "$policy_document" \
+                --description "IAM role management for AGRR AppRunner service (AppRunnerServiceRole* only)"
+            print_status "New policy created"
+            
+            # Wait for IAM changes to propagate
+            print_status "Waiting for IAM policy changes to propagate..."
+            sleep 5
+        else
+            print_status "IAM policy is up to date"
+        fi
+    else
         print_status "Creating IAM policy: $policy_name"
         aws iam create-policy \
             --profile "$AWS_PROFILE" \
             --policy-name "$policy_name" \
             --policy-document "$policy_document" \
             --description "IAM role management for AGRR AppRunner service (AppRunnerServiceRole* only)"
-    else
-        print_status "IAM policy already exists: $policy_name"
     fi
     
     print_status "Attaching IAM policy to user: $USER_NAME"
@@ -665,11 +749,19 @@ create_apprunner_policy() {
                 "apprunner:DescribeService",
                 "apprunner:UpdateService",
                 "apprunner:DeleteService",
-                "apprunner:ListServices",
                 "apprunner:TagResource",
                 "apprunner:UntagResource",
                 "apprunner:ListTagsForResource"
             ],
+            "Resource": [
+                "arn:aws:apprunner:'${REGION}':'${ACCOUNT_ID}':service/agrr-production/*",
+                "arn:aws:apprunner:'${REGION}':'${ACCOUNT_ID}':service/agrr-test/*"
+            ]
+        },
+        {
+            "Sid": "ListAppRunnerServices",
+            "Effect": "Allow",
+            "Action": "apprunner:ListServices",
             "Resource": "*"
         }
     ]
@@ -677,15 +769,67 @@ create_apprunner_policy() {
     
     local policy_arn="arn:aws:iam::${ACCOUNT_ID}:policy/${policy_name}"
     
-    if ! aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &> /dev/null; then
+    # Check if policy exists and needs update
+    if aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" &> /dev/null; then
+        print_status "App Runner policy exists, checking if update is needed..."
+        
+        # Get current policy document
+        local current_version=$(aws iam get-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --query 'Policy.DefaultVersionId' --output text 2>&1)
+        if [ $? -ne 0 ]; then
+            print_error "Failed to get policy version: $current_version"
+            return 1
+        fi
+        
+        local current_doc=$(aws iam get-policy-version --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --version-id "$current_version" --query 'PolicyVersion.Document' --output json 2>&1)
+        if [ $? -ne 0 ]; then
+            print_error "Failed to get policy document: $current_doc"
+            return 1
+        fi
+        
+        # Normalize and compare policies
+        local current_normalized=$(echo "$current_doc" | jq -S -c)
+        local new_normalized=$(echo "$policy_document" | jq -S -c)
+        
+        if [ "$current_normalized" != "$new_normalized" ]; then
+            print_status "Policy content has changed. Recreating..."
+            
+            # Detach from user
+            aws iam detach-user-policy \
+                --profile "$AWS_PROFILE" \
+                --user-name "$USER_NAME" \
+                --policy-arn "$policy_arn" 2>/dev/null || true
+            
+            # Delete all non-default versions
+            local versions=$(aws iam list-policy-versions --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --query 'Versions[?!IsDefaultVersion].VersionId' --output text)
+            for version in $versions; do
+                aws iam delete-policy-version --profile "$AWS_PROFILE" --policy-arn "$policy_arn" --version-id "$version" 2>/dev/null || true
+            done
+            
+            # Delete policy
+            aws iam delete-policy --profile "$AWS_PROFILE" --policy-arn "$policy_arn"
+            print_status "Old policy deleted"
+            
+            # Create new policy
+            aws iam create-policy \
+                --profile "$AWS_PROFILE" \
+                --policy-name "$policy_name" \
+                --policy-document "$policy_document" \
+                --description "App Runner service management for AGRR application (agrr-* services only)"
+            print_status "New policy created"
+            
+            # Wait for IAM changes to propagate
+            print_status "Waiting for IAM policy changes to propagate..."
+            sleep 5
+        else
+            print_status "App Runner policy is up to date"
+        fi
+    else
         print_status "Creating App Runner policy: $policy_name"
         aws iam create-policy \
             --profile "$AWS_PROFILE" \
             --policy-name "$policy_name" \
             --policy-document "$policy_document" \
-            --description "App Runner service management for AGRR application"
-    else
-        print_status "App Runner policy already exists: $policy_name"
+            --description "App Runner service management for AGRR application (agrr-* services only)"
     fi
     
     print_status "Attaching App Runner policy to user: $USER_NAME"
@@ -718,10 +862,15 @@ create_ecr_policy() {
             "Resource": "arn:aws:ecr:'${REGION}':'${ACCOUNT_ID}':repository/agrr*"
         },
         {
+            "Sid": "GetAuthorizationToken",
+            "Effect": "Allow",
+            "Action": "ecr:GetAuthorizationToken",
+            "Resource": "*"
+        },
+        {
             "Sid": "PushPullImages",
             "Effect": "Allow",
             "Action": [
-                "ecr:GetAuthorizationToken",
                 "ecr:BatchCheckLayerAvailability",
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:GetRepositoryPolicy",
@@ -734,7 +883,7 @@ create_ecr_policy() {
                 "ecr:CompleteLayerUpload",
                 "ecr:PutImage"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ecr:'${REGION}':'${ACCOUNT_ID}':repository/agrr*"
         }
     ]
 }'
@@ -871,6 +1020,87 @@ EOF
     fi
 }
 
+# Create App Runner service-linked role
+create_apprunner_service_linked_role() {
+    print_header "Creating App Runner Service-Linked Role"
+    
+    # Check if service-linked role already exists
+    if aws iam get-role --profile "$AWS_PROFILE" --role-name "AWSServiceRoleForAppRunner" &>/dev/null; then
+        print_status "App Runner service-linked role already exists ✓"
+        return 0
+    fi
+    
+    print_status "Creating service-linked role for App Runner..."
+    if aws iam create-service-linked-role \
+        --profile "$AWS_PROFILE" \
+        --aws-service-name apprunner.amazonaws.com 2>&1 | tee /tmp/apprunner-slr-creation.log; then
+        print_status "App Runner service-linked role created successfully ✓"
+    else
+        # Check if the error is because it already exists
+        if grep -q "has been taken in this account" /tmp/apprunner-slr-creation.log 2>/dev/null; then
+            print_status "App Runner service-linked role already exists ✓"
+            rm -f /tmp/apprunner-slr-creation.log
+            return 0
+        else
+            print_warning "Failed to create App Runner service-linked role"
+            print_warning "This may require additional permissions: iam:CreateServiceLinkedRole"
+            print_warning "You can manually create it with:"
+            print_warning "  aws iam create-service-linked-role --aws-service-name apprunner.amazonaws.com"
+            rm -f /tmp/apprunner-slr-creation.log
+            return 1
+        fi
+    fi
+    rm -f /tmp/apprunner-slr-creation.log
+}
+
+# Create IAM role for App Runner ECR access
+create_ecr_access_role() {
+    print_header "Creating IAM Role for App Runner ECR Access"
+    
+    local role_name="AppRunnerECRAccessRole"
+    
+    # Check if role already exists
+    if aws iam get-role --profile "$AWS_PROFILE" --role-name "$role_name" &>/dev/null; then
+        print_status "ECR access role $role_name already exists ✓"
+    else
+        print_status "Creating ECR access role: $role_name"
+        
+        # Create role with trust policy for App Runner
+        local trust_policy='{
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": "build.apprunner.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                }
+            ]
+        }'
+        
+        if aws iam create-role \
+            --profile "$AWS_PROFILE" \
+            --role-name "$role_name" \
+            --assume-role-policy-document "$trust_policy" \
+            --description "Allows App Runner to access ECR for pulling container images" &>/dev/null; then
+            print_status "ECR access role created ✓"
+        else
+            print_error "Failed to create ECR access role"
+            return 1
+        fi
+    fi
+    
+    # Attach AWS managed policy for ECR read access
+    print_status "Attaching ECR read-only policy..."
+    aws iam attach-role-policy \
+        --profile "$AWS_PROFILE" \
+        --role-name "$role_name" \
+        --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly" &>/dev/null || true
+    
+    print_status "✅ ECR access role configured: arn:aws:iam::${ACCOUNT_ID}:role/${role_name}"
+}
+
 # Generate environment configuration
 generate_env_config() {
     print_header "Generating Environment Configuration"
@@ -894,7 +1124,7 @@ ECR_REPOSITORY_URI=$ecr_uri
 SERVICE_NAME_PRODUCTION=agrr-production
 SERVICE_NAME_TEST=agrr-test
 IAM_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerServiceRole
-
+ECR_ACCESS_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerECRAccessRole
 
 # Required for deployment
 # RAILS_MASTER_KEY=your_rails_master_key_here
@@ -956,25 +1186,29 @@ setup_all() {
     # Step 2: Create resource operation policies (if not exists) and attach to user
     print_header "Step 2: Setting Up Resource Operation Policies"
     
-    if ! check_resource_policies_exist; then
-        print_status "Creating resource operation policies..."
-        create_s3_policy
-        create_iam_policy
-        create_apprunner_policy
-        create_ecr_policy
-        print_status "✅ Resource operation policies created and attached!"
-        print_status "Waiting for IAM policy changes to propagate..."
-        sleep 10
-    else
-        print_status "All policies already configured"
-    fi
+    # Always run policy creation/update functions
+    # They will check if update is needed and handle accordingly
+    print_status "Checking and updating resource operation policies..."
+    create_s3_policy
+    create_iam_policy
+    create_apprunner_policy
+    create_ecr_policy
+    print_status "✅ Resource operation policies configured!"
     
     # Step 3: Create actual AWS resources
     print_header "Step 3: Creating AWS Resources"
     
-    # Create IAM role for App Runner service
-    print_status "Creating IAM role for App Runner..."
+    # Create App Runner service-linked role (required for first-time use)
+    print_status "Creating App Runner service-linked role..."
+    create_apprunner_service_linked_role || print_warning "Service-linked role creation failed, but continuing..."
+    
+    # Create IAM role for App Runner service (runtime permissions)
+    print_status "Creating IAM role for App Runner service..."
     create_iam_role
+    
+    # Create IAM role for ECR access (image pull permissions)
+    print_status "Creating IAM role for ECR access..."
+    create_ecr_access_role
     
     # Create S3 buckets
     print_status "Creating S3 buckets..."
@@ -995,7 +1229,10 @@ setup_all() {
     print_status ""
     print_status "Created resources:"
     print_status "  - IAM Policies: AGRR-S3-Policy, AGRR-IAM-Policy, AGRR-AppRunner-Policy, AGRR-ECR-Policy"
-    print_status "  - IAM Role: AppRunnerServiceRole (with S3 and ECR access)"
+    print_status "  - IAM Roles:"
+    print_status "    • AWSServiceRoleForAppRunner (service-linked role)"
+    print_status "    • AppRunnerServiceRole (runtime - S3 and ECR access)"
+    print_status "    • AppRunnerECRAccessRole (image pull - ECR read-only)"
     print_status "  - S3 Buckets: $PRODUCTION_BUCKET, $TEST_BUCKET"
     print_status "  - ECR Repository: ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}"
     print_status ""

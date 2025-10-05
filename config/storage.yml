@@ -22,7 +22,7 @@ amazon:
   access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) %>
   secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
   region: <%= ENV.fetch("AWS_REGION", "ap-northeast-1") %>
-  bucket: <%= ENV.fetch("AWS_S3_BUCKET") %>
+  bucket: <%= ENV.fetch("AWS_S3_BUCKET", "default-bucket") %>
 
 # Use environment variables for AWS credentials in production and test environments
 amazon_env:
@@ -30,7 +30,7 @@ amazon_env:
   access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
   secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
   region: <%= ENV.fetch("AWS_REGION", "ap-northeast-1") %>
-  bucket: <%= ENV["AWS_S3_BUCKET"] %>
+  bucket: <%= ENV.fetch("AWS_S3_BUCKET", "default-bucket") %>
 
 # AWS Test environment - S3 with test bucket
 amazon_test:

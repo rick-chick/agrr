@@ -8,6 +8,7 @@ RUN apt-get update -qq && apt-get install -y \
     libyaml-dev \
     curl \
     ca-certificates \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -24,11 +25,18 @@ RUN bundle config set --local deployment 'true' && \
 # Copy the rest of the application
 COPY . .
 
+# Fix line endings to prevent shebang warnings
+RUN find /app -name "*.rb" -type f -exec dos2unix {} \; 2>/dev/null || true
+
 # Create storage directory for SQLite databases
 RUN mkdir -p storage
 
+
 # Precompile assets (with dummy master key if needed)
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
+
+# Create Solid Queue tables (for schema validation)
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails db:create db:migrate
 
 # Production stage
 FROM ruby:3.3.9-slim
@@ -50,6 +58,11 @@ WORKDIR /app
 # Copy the application from builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
 
+# Ensure gems are available in the final stage
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install
+
 # Create storage directory with proper permissions
 RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
 
@@ -64,4 +77,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3000/up || exit 1
 
 # Start the Rails server and Solid Queue worker
-CMD ["sh", "-c", "bundle exec rails db:prepare && bundle exec rails solid_queue:start & bundle exec rails server -b 0.0.0.0 -e production"]
+CMD ["/app/scripts/start_app.sh"]

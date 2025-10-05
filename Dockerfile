@@ -1,10 +1,11 @@
 # Use the official Ruby image as the base image
-FROM ruby:3.3.6-slim
+FROM ruby:3.3.9-slim
 
-# Install system dependencies (including SQLite)
+# Install system dependencies (including SQLite and YAML)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libsqlite3-dev \
+    libyaml-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

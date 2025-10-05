@@ -13,21 +13,21 @@ NC='\033[0m' # No Color
 
 # Function to print colored output
 print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${GREEN}[INFO]${NC} $1" >&2
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
 print_header() {
-    echo -e "${BLUE}========================================${NC}"
-    echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}========================================${NC}" >&2
+    echo -e "${BLUE}$1${NC}" >&2
+    echo -e "${BLUE}========================================${NC}" >&2
 }
 
 # Configuration
@@ -53,6 +53,7 @@ ACCOUNT_ID=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Accoun
 # These match what setup-aws-resources.sh creates
 ECR_REPOSITORY_NAME="${ECR_REPOSITORY_NAME:-agrr}"
 IAM_ROLE_ARN="${IAM_ROLE_ARN:-arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerServiceRole}"
+ECR_ACCESS_ROLE_ARN="${ECR_ACCESS_ROLE_ARN:-arn:aws:iam::${ACCOUNT_ID}:role/AppRunnerECRAccessRole}"
 
 # Override with environment-specific values
 if [ "$ENVIRONMENT" = "aws_test" ]; then
@@ -65,6 +66,7 @@ fi
 
 # Optional environment variables with reasonable defaults
 RAILS_MASTER_KEY="${RAILS_MASTER_KEY:-}"
+SECRET_KEY_BASE="${SECRET_KEY_BASE:-}"
 ALLOWED_HOSTS="${ALLOWED_HOSTS:-}"
 
 print_header "AWS App Runner CLI Deployment"
@@ -129,13 +131,19 @@ check_environment_variables() {
     print_status "Service Name: $SERVICE_NAME"
     
     # Show warnings for optional but recommended variables
-    echo ""
-    if [ -z "${RAILS_MASTER_KEY}" ]; then
-        print_warning "RAILS_MASTER_KEY is not set."
+    echo "" >&2
+    if [ -z "${RAILS_MASTER_KEY}" ] && [ -z "${SECRET_KEY_BASE}" ]; then
+        print_warning "Neither RAILS_MASTER_KEY nor SECRET_KEY_BASE is set."
         print_warning "  → Rails application may not start properly."
-        print_warning "  → Set it in .env.aws: RAILS_MASTER_KEY=your_key_here"
+        print_warning "  → Set SECRET_KEY_BASE in .env.aws: SECRET_KEY_BASE=your_key_here"
+        print_warning "  → Or RAILS_MASTER_KEY if using encrypted credentials"
     else
-        print_status "RAILS_MASTER_KEY: *** (set)"
+        if [ -n "${SECRET_KEY_BASE}" ]; then
+            print_status "SECRET_KEY_BASE: *** (set)"
+        fi
+        if [ -n "${RAILS_MASTER_KEY}" ]; then
+            print_status "RAILS_MASTER_KEY: *** (set)"
+        fi
     fi
     
     if [ -z "${ALLOWED_HOSTS}" ]; then
@@ -148,13 +156,13 @@ check_environment_variables() {
     
     # Check if .env.aws exists
     if [ ! -f "$ENV_AWS_FILE" ]; then
-        echo ""
+        echo "" >&2
         print_warning ".env.aws file not found."
         print_warning "Using default resource names based on Account ID."
         print_warning "Run './scripts/setup-aws-resources.sh setup' to create resources and configuration."
     fi
     
-    echo ""
+    echo "" >&2
     print_status "✓ Configuration check completed"
 }
 
@@ -169,7 +177,7 @@ build_docker_image() {
     
     cd "$PROJECT_ROOT"
     
-    if docker build -f Dockerfile.production -t "$image_tag" .; then
+    if docker build -f Dockerfile.production -t "$image_tag" . >&2 2>&1; then
         print_status "Docker image built successfully ✓"
     else
         print_error "Docker build failed"
@@ -186,8 +194,8 @@ push_to_ecr() {
     
     # Login to ECR
     print_status "Logging in to ECR..."
-    if aws ecr get-login-password --profile "$AWS_PROFILE" --region "$REGION" | \
-       docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"; then
+    if aws ecr get-login-password --profile "$AWS_PROFILE" --region "$REGION" 2>&1 | \
+       docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com" >&2 2>&1; then
         print_status "ECR login successful ✓"
     else
         print_error "ECR login failed"
@@ -199,12 +207,12 @@ push_to_ecr() {
     local ecr_image_latest="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ecr_repository}:latest"
     
     print_status "Tagging image: $ecr_image_uri"
-    docker tag "agrr:${image_tag}" "$ecr_image_uri"
-    docker tag "agrr:${image_tag}" "$ecr_image_latest"
+    docker tag "agrr:${image_tag}" "$ecr_image_uri" >&2 2>&1
+    docker tag "agrr:${image_tag}" "$ecr_image_latest" >&2 2>&1
     
     # Push the image
     print_status "Pushing image to ECR..."
-    if docker push "$ecr_image_uri" && docker push "$ecr_image_latest"; then
+    if docker push "$ecr_image_uri" >&2 2>&1 && docker push "$ecr_image_latest" >&2 2>&1; then
         print_status "Image pushed successfully ✓"
         print_status "Image URI: $ecr_image_uri"
         echo "$ecr_image_uri"
@@ -249,6 +257,9 @@ create_service() {
     ]'
     
     # Add optional environment variables if they are set
+    if [ -n "${SECRET_KEY_BASE}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"SECRET_KEY_BASE","Value":"'${SECRET_KEY_BASE}'"}]')
+    fi
     if [ -n "${RAILS_MASTER_KEY}" ]; then
         env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_MASTER_KEY","Value":"'${RAILS_MASTER_KEY}'"}]')
     fi
@@ -260,7 +271,40 @@ create_service() {
     fi
     
     print_status "Environment variables configured:"
-    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"'
+    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"' >&2
+    
+    # Convert environment variables array to dict format (AWS App Runner expects dict)
+    local env_vars_dict=$(echo "$env_vars" | jq 'map({(.Name): .Value}) | add')
+    
+    # Build source configuration JSON using jq
+    local source_config=$(jq -n \
+        --arg image "$ecr_image_uri" \
+        --arg access_role "$ECR_ACCESS_ROLE_ARN" \
+        --argjson envvars "$env_vars_dict" \
+        '{
+            "ImageRepository": {
+                "ImageIdentifier": $image,
+                "ImageRepositoryType": "ECR",
+                "ImageConfiguration": {
+                    "Port": "3000",
+                    "RuntimeEnvironmentVariables": $envvars,
+                    "StartCommand": "/app/scripts/start_app.sh"
+                }
+            },
+            "AuthenticationConfiguration": {
+                "AccessRoleArn": $access_role
+            },
+            "AutoDeploymentsEnabled": false
+        }')
+    
+    # Build instance configuration JSON using jq
+    local instance_config=$(jq -n \
+        --arg role "$IAM_ROLE_ARN" \
+        '{
+            "Cpu": "1024",
+            "Memory": "2048",
+            "InstanceRoleArn": $role
+        }')
     
     # Create the service with ECR image
     local create_result
@@ -268,22 +312,9 @@ create_service() {
         --profile "$AWS_PROFILE" \
         --region "$REGION" \
         --service-name "$SERVICE_NAME" \
-        --source-configuration '{
-            "ImageRepository": {
-                "ImageIdentifier": "'$ecr_image_uri'",
-                "ImageRepositoryType": "ECR",
-                "ImageConfiguration": {
-                    "Port": "3000",
-                    "RuntimeEnvironmentVariables": '$env_vars'
-                }
-            },
-            "AutoDeploymentsEnabled": false
-        }' \
-        --instance-configuration '{
-            "Cpu": "1024",
-            "Memory": "2048",
-            "InstanceRoleArn": "'$IAM_ROLE_ARN'"
-        }' 2>&1); then
+        --source-configuration "$source_config" \
+        --instance-configuration "$instance_config" \
+        --health-check-configuration '{"Protocol":"HTTP","Path":"/up","Interval":10,"Timeout":5,"HealthyThreshold":2,"UnhealthyThreshold":5}' 2>&1); then
         
         print_status "Service creation initiated successfully ✓"
         
@@ -295,11 +326,11 @@ create_service() {
             wait_for_deployment "$service_arn"
         else
             print_warning "Could not extract service ARN. Check AWS console for status."
-            echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result"
+            echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result" >&2
         fi
     else
         print_error "Failed to create service:"
-        echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result"
+        echo "$create_result" | jq '.' 2>/dev/null || echo "$create_result" >&2
         exit 1
     fi
 }
@@ -322,6 +353,9 @@ update_service() {
     ]'
     
     # Add optional environment variables if they are set
+    if [ -n "${SECRET_KEY_BASE}" ]; then
+        env_vars=$(echo "$env_vars" | jq '. += [{"Name":"SECRET_KEY_BASE","Value":"'${SECRET_KEY_BASE}'"}]')
+    fi
     if [ -n "${RAILS_MASTER_KEY}" ]; then
         env_vars=$(echo "$env_vars" | jq '. += [{"Name":"RAILS_MASTER_KEY","Value":"'${RAILS_MASTER_KEY}'"}]')
     fi
@@ -333,7 +367,40 @@ update_service() {
     fi
     
     print_status "Environment variables configured:"
-    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"'
+    echo "$env_vars" | jq -r '.[] | "  - \(.Name): \(if .Name == "RAILS_MASTER_KEY" then "***" else .Value end)"' >&2
+    
+    # Convert environment variables array to dict format (AWS App Runner expects dict)
+    local env_vars_dict=$(echo "$env_vars" | jq 'map({(.Name): .Value}) | add')
+    
+    # Build source configuration JSON using jq
+    local source_config=$(jq -n \
+        --arg image "$ecr_image_uri" \
+        --arg access_role "$ECR_ACCESS_ROLE_ARN" \
+        --argjson envvars "$env_vars_dict" \
+        '{
+            "ImageRepository": {
+                "ImageIdentifier": $image,
+                "ImageRepositoryType": "ECR",
+                "ImageConfiguration": {
+                    "Port": "3000",
+                    "RuntimeEnvironmentVariables": $envvars,
+                    "StartCommand": "/app/scripts/start_app.sh"
+                }
+            },
+            "AuthenticationConfiguration": {
+                "AccessRoleArn": $access_role
+            },
+            "AutoDeploymentsEnabled": false
+        }')
+    
+    # Build instance configuration JSON using jq
+    local instance_config=$(jq -n \
+        --arg role "$IAM_ROLE_ARN" \
+        '{
+            "Cpu": "1024",
+            "Memory": "2048",
+            "InstanceRoleArn": $role
+        }')
     
     # Update the service
     local update_result
@@ -341,28 +408,15 @@ update_service() {
         --profile "$AWS_PROFILE" \
         --region "$REGION" \
         --service-arn "$service_arn" \
-        --source-configuration '{
-            "ImageRepository": {
-                "ImageIdentifier": "'$ecr_image_uri'",
-                "ImageRepositoryType": "ECR",
-                "ImageConfiguration": {
-                    "Port": "3000",
-                    "RuntimeEnvironmentVariables": '$env_vars'
-                }
-            },
-            "AutoDeploymentsEnabled": false
-        }' \
-        --instance-configuration '{
-            "Cpu": "1024",
-            "Memory": "2048",
-            "InstanceRoleArn": "'$IAM_ROLE_ARN'"
-        }' 2>&1); then
+        --source-configuration "$source_config" \
+        --instance-configuration "$instance_config" \
+        --health-check-configuration '{"Protocol":"HTTP","Path":"/up","Interval":10,"Timeout":5,"HealthyThreshold":2,"UnhealthyThreshold":5}' 2>&1); then
         
         print_status "Service update initiated successfully ✓"
         wait_for_deployment "$service_arn"
     else
         print_error "Failed to update service:"
-        echo "$update_result" | jq '.' 2>/dev/null || echo "$update_result"
+        echo "$update_result" | jq '.' 2>/dev/null || echo "$update_result" >&2
         exit 1
     fi
 }
@@ -393,10 +447,23 @@ wait_for_deployment() {
                 "CREATE_FAILED"|"UPDATE_FAILED"|"DELETE_FAILED")
                     print_error "Deployment failed with status: $status"
                     print_error "Operation Summary: $operation_summary"
+                    
+                    # Get more detailed error information
+                    print_error "Fetching detailed error information..."
+                    local health_check=$(echo "$service_status" | jq -r '.Service.HealthCheckConfiguration' 2>/dev/null)
+                    local source_config=$(echo "$service_status" | jq -r '.Service.SourceConfiguration' 2>/dev/null)
+                    
+                    # Try to get recent events/logs
+                    echo "$service_status" | jq '.Service | {Status, HealthCheckConfiguration, AutoScalingConfiguration}' >&2 2>/dev/null || true
+                    
                     return 1
                     ;;
                 "CREATE_IN_PROGRESS"|"UPDATE_IN_PROGRESS"|"DELETE_IN_PROGRESS")
                     print_status "Deployment in progress... ($status)"
+                    # Check for any error messages in operation summary
+                    if [ "$operation_summary" != "null" ] && [ -n "$operation_summary" ]; then
+                        print_warning "Operation details: $operation_summary"
+                    fi
                     ;;
                 *)
                     print_status "Current status: $status"
@@ -424,11 +491,11 @@ print_service_info() {
         local service_url=$(echo "$service_info" | jq -r '.Service.ServiceUrl' 2>/dev/null)
         local status=$(echo "$service_info" | jq -r '.Service.Status' 2>/dev/null)
         
-        echo "Service Name: $SERVICE_NAME"
-        echo "Service ARN: $service_arn"
-        echo "Service URL: $service_url"
-        echo "Status: $status"
-        echo ""
+        echo "Service Name: $SERVICE_NAME" >&2
+        echo "Service ARN: $service_arn" >&2
+        echo "Service URL: $service_url" >&2
+        echo "Status: $status" >&2
+        echo "" >&2
         
         if [ -n "$service_url" ] && [ "$service_url" != "null" ]; then
             print_status "🚀 Your application is available at: $service_url"
@@ -452,7 +519,7 @@ list_services() {
     
     local services
     if services=$(aws apprunner list-services --profile "$AWS_PROFILE" --region "$REGION" 2>/dev/null); then
-        echo "$services" | jq -r '.ServiceSummaryList[] | "\(.ServiceName) - \(.Status) - \(.ServiceUrl // "N/A")"' 2>/dev/null || echo "$services"
+        echo "$services" | jq -r '.ServiceSummaryList[] | "\(.ServiceName) - \(.Status) - \(.ServiceUrl // "N/A")"' 2>/dev/null >&2 || echo "$services" >&2
     else
         print_error "Failed to list services"
         exit 1
@@ -483,53 +550,55 @@ delete_service() {
 
 # Show usage
 show_usage() {
-    echo "AWS App Runner ECR-based Deployment Script"
-    echo ""
-    echo "Usage: $0 [environment] [command]"
-    echo ""
-    echo "Environments:"
-    echo "  aws_test    - Deploy to AWS test environment"
-    echo "  production  - Deploy to AWS production environment (default)"
-    echo ""
-    echo "Commands:"
-    echo "  deploy      - Build Docker image, push to ECR, and deploy to App Runner (default)"
-    echo "  list        - List existing App Runner services"
-    echo "  delete      - Delete App Runner service"
-    echo "  info        - Show service information"
-    echo ""
-    echo "Examples:"
-    echo "  $0 production deploy     # Build, push, and deploy to production"
-    echo "  $0 aws_test deploy       # Build, push, and deploy to test environment"
-    echo "  $0 production info       # Show production service info"
-    echo "  $0 production delete     # Delete production service"
-    echo ""
-    echo "Prerequisites:"
-    echo "  1. Run './scripts/setup-aws-resources.sh setup' first to create:"
-    echo "     - IAM roles and policies"
-    echo "     - S3 buckets"
-    echo "     - ECR repository"
-    echo "     - .env.aws configuration file"
-    echo ""
-    echo "  2. Optional: Set environment variables in .env.aws or shell:"
-    echo "     - RAILS_MASTER_KEY (recommended for production)"
-    echo "     - ALLOWED_HOSTS (set after first deployment with App Runner URL)"
-    echo ""
-    echo "Default Values (if not set in .env.aws):"
-    echo "  - ECR_REPOSITORY_NAME: agrr"
-    echo "  - IAM_ROLE_ARN: arn:aws:iam::\${ACCOUNT_ID}:role/AppRunnerServiceRole"
-    echo "  - AWS_S3_BUCKET: agrr-\${ACCOUNT_ID}-production"
-    echo "  - AWS_S3_BUCKET_TEST: agrr-\${ACCOUNT_ID}-test"
-    echo "  - SERVICE_NAME_PRODUCTION: agrr-production"
-    echo "  - SERVICE_NAME_TEST: agrr-test"
-    echo ""
-    echo "How it works:"
-    echo "  1. Loads configuration from .env.aws (or uses defaults)"
-    echo "  2. Builds Docker image from Dockerfile.production"
-    echo "  3. Pushes image to ECR with timestamp tag"
-    echo "  4. Creates or updates App Runner service with the new image"
-    echo "  5. Monitors deployment progress"
-    echo ""
-    echo "Note: This script uses ECR-based deployment, not source code repository."
+    cat >&2 <<EOF
+AWS App Runner ECR-based Deployment Script
+
+Usage: $0 [environment] [command]
+
+Environments:
+  aws_test    - Deploy to AWS test environment
+  production  - Deploy to AWS production environment (default)
+
+Commands:
+  deploy      - Build Docker image, push to ECR, and deploy to App Runner (default)
+  list        - List existing App Runner services
+  delete      - Delete App Runner service
+  info        - Show service information
+
+Examples:
+  $0 production deploy     # Build, push, and deploy to production
+  $0 aws_test deploy       # Build, push, and deploy to test environment
+  $0 production info       # Show production service info
+  $0 production delete     # Delete production service
+
+Prerequisites:
+  1. Run './scripts/setup-aws-resources.sh setup' first to create:
+     - IAM roles and policies
+     - S3 buckets
+     - ECR repository
+     - .env.aws configuration file
+
+  2. Optional: Set environment variables in .env.aws or shell:
+     - RAILS_MASTER_KEY (recommended for production)
+     - ALLOWED_HOSTS (set after first deployment with App Runner URL)
+
+Default Values (if not set in .env.aws):
+  - ECR_REPOSITORY_NAME: agrr
+  - IAM_ROLE_ARN: arn:aws:iam::\${ACCOUNT_ID}:role/AppRunnerServiceRole
+  - AWS_S3_BUCKET: agrr-\${ACCOUNT_ID}-production
+  - AWS_S3_BUCKET_TEST: agrr-\${ACCOUNT_ID}-test
+  - SERVICE_NAME_PRODUCTION: agrr-production
+  - SERVICE_NAME_TEST: agrr-test
+
+How it works:
+  1. Loads configuration from .env.aws (or uses defaults)
+  2. Builds Docker image from Dockerfile.production
+  3. Pushes image to ECR with timestamp tag
+  4. Creates or updates App Runner service with the new image
+  5. Monitors deployment progress
+
+Note: This script uses ECR-based deployment, not source code repository.
+EOF
 }
 
 # Main execution
