@@ -2,13 +2,7 @@ development:
   adapter: async
 
 test:
-  adapter: test
-
-docker:
   adapter: async
-
-aws_test:
-  adapter: solid_cable
 
 production:
   adapter: solid_cable

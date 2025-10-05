@@ -1,18 +1,8 @@
+# frozen_string_literal: true
+
 require_relative "boot"
 
-# Load only necessary Rails components to avoid PostgreSQL adapter loading
-require "rails"
-require "active_model/railtie"
-require "active_record/railtie"
-require "active_job/railtie"
-require "action_controller/railtie"
-require "action_mailer/railtie"
-require "action_view/railtie"
-require "active_storage/engine"
-require "action_cable/engine"
-require "solid_queue/engine"
-require "sprockets/railtie"
-require "rails/test_unit/railtie"
+require "rails/all"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -23,7 +13,31 @@ module Agrr
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 
-    # Full-stack Rails app (not API-only)
-    config.api_only = false
+    # Configuration for the application, engines, and railties goes here.
+    #
+    # These settings can be overridden in specific environments using the files
+    # in config/environments, which are processed later.
+    #
+    # config.time_zone = "Central Time (US & Canada)"
+    # config.eager_load_paths << Rails.root.join("extras")
+
+    # Use SQLite for caching
+    config.cache_store = :solid_cache_store
+
+    # Use SQLite for background jobs
+    config.active_job.queue_adapter = :solid_queue
+
+    # Action Cable configuration is now in config/cable.yml
+
+    # Don't generate system test files.
+    config.generators.system_tests = nil
+
+    # Configure CORS
+    config.middleware.insert_before 0, Rack::Cors do
+      allow do
+        origins '*'
+        resource '*', headers: :any, methods: [:get, :post, :put, :patch, :delete, :options, :head]
+      end
+    end
   end
 end

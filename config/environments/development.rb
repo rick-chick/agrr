@@ -77,4 +77,11 @@ Rails.application.configure do
   # Allow local hosts during development
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"
+
+  # Google OAuth development configuration
+  config.after_initialize do
+    # Set development OAuth credentials (replace with your actual credentials)
+    ENV['GOOGLE_CLIENT_ID'] ||= 'your_google_client_id_here'
+    ENV['GOOGLE_CLIENT_SECRET'] ||= 'your_google_client_secret_here'
+  end
 end

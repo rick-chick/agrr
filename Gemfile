@@ -45,6 +45,11 @@ gem "dotenv-rails"
 # CORS support
 gem "rack-cors"
 
+# OAuth authentication
+gem "omniauth"
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
+
 # Enhance SQLite for production use
 # gem "litestack"
 

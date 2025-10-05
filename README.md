@@ -4,7 +4,7 @@
 
 PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられるRailsアプリケーションです。
 
-📖 **[テストガイド](docs/TEST_GUIDE.md)** | 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md)**
+📖 **[テストガイド](docs/TEST_GUIDE.md)** | 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md)** | 📖 **[Google OAuth設定ガイド](docs/GOOGLE_OAUTH_SETUP.md)**
 
 ## 📋 目次
 
@@ -27,6 +27,7 @@ PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられ�
 ## 🚀 主な特徴
 
 - **Rails 8.0** - 最新のRailsフレームワーク
+- **Google OAuth 2.0認証** - セキュアな認証システム
 - **SQLite** - 開発から本番まで全環境で使用（データベース）
 - **Solid Queue** - SQLiteベースのバックグラウンドジョブ処理
 - **Solid Cache** - SQLiteベースのキャッシュシステム
@@ -58,6 +59,7 @@ PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられ�
 
 ## ✨ 機能
 
+- **Google OAuth 2.0認証** - セキュアな認証システム
 - Active Storageを使ったファイルアップロード
 - S3へのファイル保存（AWS環境）
 - ローカルファイル保存（開発環境）
@@ -143,7 +145,16 @@ GET /api/v1/health
 }
 ```
 
-### ファイル管理
+### 認証
+
+```
+GET    /auth/login                    # ログインページ
+GET    /auth/google_oauth2           # Google OAuth 開始
+GET    /auth/google_oauth2/callback  # OAuth コールバック
+DELETE /auth/logout                  # ログアウト
+```
+
+### ファイル管理（認証必要）
 
 ```
 GET    /api/v1/files          # ファイル一覧
@@ -176,9 +187,18 @@ DELETE /api/v1/files/:id      # ファイル削除
 │   │   ├── api/v1/
 │   │   │   ├── base_controller.rb
 │   │   │   └── files_controller.rb
-│   │   └── application_controller.rb
-│   └── models/
-│       └── application_record.rb
+│   │   ├── auth_controller.rb          # OAuth認証
+│   │   ├── home_controller.rb          # ダッシュボード
+│   │   └── application_controller.rb   # 認証機能付きベース
+│   ├── models/
+│   │   ├── user.rb                     # ユーザーモデル
+│   │   ├── session.rb                  # セッションモデル
+│   │   └── application_record.rb
+│   └── views/
+│       ├── auth/
+│       │   └── login.html.erb          # ログインページ
+│       └── home/
+│           └── index.html.erb          # ダッシュボード
 ├── config/
 │   ├── environments/
 │   │   ├── development.rb
@@ -187,14 +207,31 @@ DELETE /api/v1/files/:id      # ファイル削除
 │   │   └── production.rb
 │   ├── initializers/
 │   │   ├── active_storage.rb
-│   │   └── aws.rb
+│   │   ├── aws.rb
+│   │   ├── omniauth.rb                 # OAuth設定
+│   │   └── security.rb                 # セキュリティ設定
 │   ├── storage.yml
-│   └── database.yml
+│   ├── database.yml
+│   └── routes.rb                       # OAuthルーティング
+├── db/migrate/
+│   ├── 20250101000001_create_users.rb  # ユーザーテーブル
+│   └── 20250101000002_create_sessions.rb # セッションテーブル
+├── test/
+│   ├── models/
+│   │   ├── user_test.rb                # ユーザーモデルテスト
+│   │   └── session_test.rb             # セッションモデルテスト
+│   ├── controllers/
+│   │   ├── auth_controller_test.rb     # 認証コントローラーテスト
+│   │   └── security_test.rb            # セキュリティテスト
+│   └── integration/
+│       └── oauth_integration_test.rb   # OAuth統合テスト
 ├── scripts/
 │   ├── aws-deploy.sh
 │   ├── setup-aws-resources.sh
 │   ├── setup-dev.sh
 │   └── start_app.sh
+├── docs/
+│   └── GOOGLE_OAUTH_SETUP.md           # OAuth設定ガイド
 ├── Dockerfile
 ├── Dockerfile.production
 ├── docker-compose.yml
