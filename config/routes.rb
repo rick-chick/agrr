@@ -21,6 +21,9 @@ Rails.application.routes.draw do
     get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
   end
 
+  # Fields routes
+  resources :fields
+
   # API routes
   namespace :api do
     namespace :v1 do
