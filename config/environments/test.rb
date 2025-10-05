@@ -65,8 +65,9 @@ Rails.application.configure do
   # Use SQLite for queue in test
   config.active_job.queue_adapter = :solid_queue
 
-  # Use SQLite for Action Cable in test
-  config.action_cable.adapter = :solid_cable
+  # Disable Action Cable in test
+  config.action_cable.disable_request_forgery_protection = true
+  config.action_cable.mount_path = nil
 
   # Google OAuth test configuration
   config.after_initialize do
