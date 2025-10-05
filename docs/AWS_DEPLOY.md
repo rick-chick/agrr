@@ -4,15 +4,8 @@ AWS CLIを使用してApp Runnerにアプリケーションをデプロイする
 
 ## 📋 目次
 
-- [クイックスタート](#クイックスタート)
-- [開発環境セットアップ](#開発環境セットアップ)
-- [AWS認証情報の設定](#aws認証情報の設定)
-- [AWSリソースの作成](#awsリソースの作成)
-- [環境変数の設定](#環境変数の設定)
-- [デプロイ実行](#デプロイ実行)
+- [開発・デプロイの全体フロー](#開発デプロイの全体フロー)
 - [コマンドリファレンス](#コマンドリファレンス)
-- [詳細手順](#詳細手順)
-- [設定ファイル](#設定ファイル)
 - [トラブルシューティング](#トラブルシューティング)
 - [コスト最適化](#コスト最適化)
 - [セキュリティ設定](#セキュリティ設定)
@@ -22,39 +15,36 @@ AWS CLIを使用してApp Runnerにアプリケーションをデプロイする
 - [ECRベースデプロイ](#ecrベースデプロイ)
 - [参考資料](#参考資料)
 
-## 🚀 クイックスタート
+## 🎯 開発・デプロイの全体フロー
 
-### 1. 前提条件
+### 開発開始時の手順
 
+#### **1. 前提条件の確認**
 ```bash
-# 必要なツールをインストール
-# AWS CLI
-aws --version  # v2.x 推奨
-
-# Docker
+# 必要なツールの確認
+aws --version          # v2.x 推奨
 docker --version
-
-# jq (JSONパーサー)
 jq --version
 ```
 
-## 🔧 開発環境セットアップ
+#### **2. 開発環境のセットアップ**
 
-### Method 1: GitHub Codespaces ⭐ (最推奨)
-
+**Method 1: GitHub Codespaces（推奨）**
 ```bash
 # GitHubリポジトリで:
 Code → Codespaces → Create codespace on main
 
-# 自動的に全てセットアップされます！
-# ターミナルで即座に実行:
+# 自動セットアップ後、即座に実行可能:
 bundle exec rails test
 rails server
 ```
 
-### Method 2: Docker Compose
-
+**Method 2: Docker Compose**
 ```bash
+# リポジトリをクローン
+git clone https://github.com/your-username/agrr.git
+cd agrr
+
 # 開発サーバー起動
 docker-compose up
 
@@ -63,78 +53,57 @@ docker-compose exec web bundle exec rails console
 docker-compose exec web bundle exec rails test
 ```
 
-## 🔐 AWS認証情報の設定
-
-### 方法1: デフォルトプロファイル
-
+#### **3. 開発開始**
 ```bash
-# AWS CLIの設定
-aws configure
+# テスト実行
+docker-compose exec web bundle exec rails test
 
-# または環境変数で設定
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_REGION=ap-northeast-1
+# サーバー起動
+docker-compose up
+
+# ブラウザで http://localhost:3000 にアクセス
 ```
 
-### 方法2: プロファイルを使用（推奨）
+---
 
+### AWSデプロイ時の手順
+
+#### **1. AWS認証情報の設定**
 ```bash
-# プロファイルを作成
+# プロファイルを作成（推奨）
 aws configure --profile agrr-admin
 
-# プロファイルを環境変数で指定
-export AWS_PROFILE=agrr-admin
+# またはデフォルトプロファイル
+aws configure
 ```
 
-詳細は [AWSプロファイル設定](#awsプロファイル設定) セクションを参照してください
-
-## 🏗 AWSリソースの作成
-
+#### **2. AWSリソースの作成（初回のみ）**
 ```bash
-# 必要なAWSリソースとIAM権限を自動作成
+# 必要なAWSリソースを自動作成
 AWS_IAM_USER=agrr-admin ./scripts/setup-aws-resources.sh setup
 
-# これにより以下が作成されます:
-# - IAM権限の設定 (S3, App Runner, EFS, IAM)
+# 作成されるもの:
+# - IAM権限設定
 # - S3バケット (production/test)
 # - IAMロール
 # - EFS (永続ストレージ)
 # - .env.aws 設定ファイル
 ```
 
-## ⚙️ 環境変数の設定
-
-`.env.aws`ファイルを編集して必要な値を設定:
-
+#### **3. 環境変数の設定**
+`.env.aws`ファイルを編集:
 ```bash
-# .env.aws の例
+# 重要な設定項目
 AWS_REGION=ap-northeast-1
 AWS_ACCOUNT_ID=123456789012
-
-# S3バケット設定
 AWS_S3_BUCKET=agrr-123456789012-production
 AWS_S3_BUCKET_TEST=agrr-123456789012-test
-
-# ECR設定
-ECR_REPOSITORY_NAME=agrr
-ECR_REPOSITORY_URI=123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/agrr
-
-# App Runner設定
-SERVICE_NAME_PRODUCTION=agrr-production
-SERVICE_NAME_TEST=agrr-test
-IAM_ROLE_ARN=arn:aws:iam::123456789012:role/AppRunnerServiceRole
-ECR_ACCESS_ROLE_ARN=arn:aws:iam::123456789012:role/AppRunnerECRAccessRole
-
-# 本番環境用の追加設定
 RAILS_MASTER_KEY=your_rails_master_key_here
-ALLOWED_HOSTS=your-app-runner-url.awsapprunner.com
 ```
 
-## 🚀 デプロイ実行
-
+#### **4. デプロイ実行**
 ```bash
-# 本番環境にデプロイ（プロファイル使用）
+# 本番環境にデプロイ
 AWS_PROFILE=agrr-admin AWS_IAM_USER=agrr-admin ./scripts/aws-deploy.sh production deploy
 
 # テスト環境にデプロイ
@@ -145,6 +114,72 @@ export AWS_PROFILE=agrr-admin
 export AWS_IAM_USER=agrr-admin
 ./scripts/aws-deploy.sh production deploy
 ```
+
+#### **5. デプロイ確認**
+```bash
+# サービス情報を確認
+./scripts/aws-deploy.sh production info
+
+# ヘルスチェック
+curl https://your-app-runner-url.awsapprunner.com/api/v1/health
+```
+
+---
+
+### 日常の開発フロー
+
+#### **開発時**
+```bash
+# 1. 開発サーバー起動
+docker-compose up
+
+# 2. テスト実行
+docker-compose exec web bundle exec rails test
+
+# 3. コード編集
+# 4. テスト再実行
+# 5. コミット・プッシュ
+```
+
+#### **デプロイ時**
+```bash
+# 1. テスト確認
+docker-compose exec web bundle exec rails test
+
+# 2. デプロイ実行
+./scripts/aws-deploy.sh production deploy
+
+# 3. 動作確認
+curl https://your-app-runner-url.awsapprunner.com/api/v1/health
+```
+
+---
+
+### 重要なポイント
+
+#### **開発環境**
+- GitHub Codespaces推奨
+- Docker Composeで統一
+- ローカルの `bin/rails` は使用しない
+
+#### **AWSデプロイ**
+- 初回のみリソース作成スクリプト実行
+- 環境変数は `.env.aws` で管理
+- プロファイル名は `agrr-admin` で統一
+
+#### **トラブルシューティング**
+```bash
+# AWS認証エラー
+aws configure --profile agrr-admin
+
+# S3バケットが存在しない
+./scripts/setup-aws-resources.sh s3
+
+# デプロイ状況確認
+./scripts/aws-deploy.sh production info
+```
+
+---
 
 ## 📚 コマンドリファレンス
 
@@ -178,46 +213,6 @@ export AWS_IAM_USER=agrr-admin
 
 **コマンド**: `setup`, `permissions`, `fix`, `s3`, `iam`, `efs`
 
-## 📝 詳細手順
-
-### AWSリソースの個別作成
-
-```bash
-# 必要なリソースを個別に作成
-./scripts/setup-aws-resources.sh s3      # S3バケット
-./scripts/setup-aws-resources.sh iam     # IAMロール
-./scripts/setup-aws-resources.sh efs     # EFS
-```
-
-### デプロイコマンド
-
-```bash
-# サービスの管理
-./scripts/aws-deploy.sh production deploy    # デプロイ
-./scripts/aws-deploy.sh production list      # 一覧表示
-./scripts/aws-deploy.sh production info      # 情報表示
-./scripts/aws-deploy.sh production delete    # 削除
-```
-
-## ⚙️ 設定ファイル
-
-### ECRベースデプロイメント
-
-このプロジェクトはECRベースのデプロイメント方式を使用しています。YAMLファイルによる設定は非推奨です。
-
-**推奨方法:**
-```bash
-# 本番環境デプロイ
-./scripts/aws-deploy.sh production deploy
-
-# テスト環境デプロイ
-./scripts/aws-deploy.sh aws_test deploy
-```
-
-**非推奨方法:**
-- `apprunner.yaml` や `apprunner-test.yaml` を使用した設定
-- GitHub連携による自動デプロイ
-- ソースコードベースのデプロイ
 
 ## 🔧 トラブルシューティング
 
