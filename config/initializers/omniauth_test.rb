@@ -13,7 +13,7 @@ if Rails.env.development?
     info: {
       email: 'developer@agrr.dev',
       name: '開発者',
-      image: 'https://via.placeholder.com/50x50.png?text=DEV'
+      image: '/assets/dev-avatar.svg'
     },
     credentials: {
       token: 'mock_token_dev_001',
@@ -29,7 +29,7 @@ if Rails.env.development?
     info: {
       email: 'farmer@agrr.dev',
       name: '農家太郎',
-      image: 'https://via.placeholder.com/50x50.png?text=FARM'
+      image: '/assets/farm-avatar.svg'
     },
     credentials: {
       token: 'mock_token_farmer_002',
@@ -45,7 +45,7 @@ if Rails.env.development?
     info: {
       email: 'researcher@agrr.dev',
       name: '研究員花子',
-      image: 'https://via.placeholder.com/50x50.png?text=RES'
+      image: '/assets/res-avatar.svg'
     },
     credentials: {
       token: 'mock_token_researcher_003',
