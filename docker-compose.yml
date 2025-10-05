@@ -13,11 +13,6 @@ services:
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
-      - POSTGRES_DB=
-      - POSTGRES_HOST=
-      - POSTGRES_PORT=
-      - POSTGRES_USER=
-      - POSTGRES_PASSWORD=
     command: bash -lc "rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0"
     stdin_open: true
     tty: true

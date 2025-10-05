@@ -5,11 +5,22 @@ AWS CLIを使用してApp Runnerにアプリケーションをデプロイする
 ## 📋 目次
 
 - [クイックスタート](#クイックスタート)
+- [開発環境セットアップ](#開発環境セットアップ)
+- [AWS認証情報の設定](#aws認証情報の設定)
+- [AWSリソースの作成](#awsリソースの作成)
+- [環境変数の設定](#環境変数の設定)
+- [デプロイ実行](#デプロイ実行)
 - [コマンドリファレンス](#コマンドリファレンス)
+- [詳細手順](#詳細手順)
+- [設定ファイル](#設定ファイル)
+- [トラブルシューティング](#トラブルシューティング)
+- [コスト最適化](#コスト最適化)
+- [セキュリティ設定](#セキュリティ設定)
+- [監視とメトリクス](#監視とメトリクス)
+- [CI/CD統合](#cicd統合)
 - [AWSプロファイル設定](#awsプロファイル設定)
 - [ECRベースデプロイ](#ecrベースデプロイ)
-- [詳細手順](#詳細手順)
-- [トラブルシューティング](#トラブルシューティング)
+- [参考資料](#参考資料)
 
 ## 🚀 クイックスタート
 
@@ -27,9 +38,34 @@ docker --version
 jq --version
 ```
 
-### 2. AWS認証情報の設定
+## 🔧 開発環境セットアップ
 
-#### 方法1: デフォルトプロファイル
+### Method 1: GitHub Codespaces ⭐ (最推奨)
+
+```bash
+# GitHubリポジトリで:
+Code → Codespaces → Create codespace on main
+
+# 自動的に全てセットアップされます！
+# ターミナルで即座に実行:
+bundle exec rails test
+rails server
+```
+
+### Method 2: Docker Compose
+
+```bash
+# 開発サーバー起動
+docker-compose up
+
+# 別のターミナルでコマンド実行
+docker-compose exec web bundle exec rails console
+docker-compose exec web bundle exec rails test
+```
+
+## 🔐 AWS認証情報の設定
+
+### 方法1: デフォルトプロファイル
 
 ```bash
 # AWS CLIの設定
@@ -41,7 +77,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret_key
 export AWS_REGION=ap-northeast-1
 ```
 
-#### 方法2: プロファイルを使用（推奨）
+### 方法2: プロファイルを使用（推奨）
 
 ```bash
 # プロファイルを作成
@@ -53,11 +89,11 @@ export AWS_PROFILE=agrr-admin
 
 詳細は [AWSプロファイル設定](#awsプロファイル設定) セクションを参照してください
 
-### 3. AWSリソースの作成
+## 🏗 AWSリソースの作成
 
 ```bash
 # 必要なAWSリソースとIAM権限を自動作成
-AWS_IAM_USER=aggr-admin ./scripts/setup-aws-resources.sh setup
+AWS_IAM_USER=agrr-admin ./scripts/setup-aws-resources.sh setup
 
 # これにより以下が作成されます:
 # - IAM権限の設定 (S3, App Runner, EFS, IAM)
@@ -67,332 +103,164 @@ AWS_IAM_USER=aggr-admin ./scripts/setup-aws-resources.sh setup
 # - .env.aws 設定ファイル
 ```
 
-### 4. 環境変数の設定
+## ⚙️ 環境変数の設定
 
 `.env.aws`ファイルを編集して必要な値を設定:
 
 ```bash
 # .env.aws の例
 AWS_REGION=ap-northeast-1
-AWS_S3_BUCKET=agrr-123456789-production
-AWS_S3_BUCKET_TEST=agrr-123456789-test
+AWS_ACCOUNT_ID=123456789012
+
+# S3バケット設定
+AWS_S3_BUCKET=agrr-123456789012-production
+AWS_S3_BUCKET_TEST=agrr-123456789012-test
+
+# ECR設定
+ECR_REPOSITORY_NAME=agrr
+ECR_REPOSITORY_URI=123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/agrr
+
+# App Runner設定
+SERVICE_NAME_PRODUCTION=agrr-production
+SERVICE_NAME_TEST=agrr-test
+IAM_ROLE_ARN=arn:aws:iam::123456789012:role/AppRunnerServiceRole
+ECR_ACCESS_ROLE_ARN=arn:aws:iam::123456789012:role/AppRunnerECRAccessRole
 
 # 本番環境用の追加設定
 RAILS_MASTER_KEY=your_rails_master_key_here
 ALLOWED_HOSTS=your-app-runner-url.awsapprunner.com
 ```
 
-### 5. デプロイ実行
+## 🚀 デプロイ実行
 
 ```bash
 # 本番環境にデプロイ（プロファイル使用）
-AWS_PROFILE=agrr-admin AWS_IAM_USER=aggr-admin ./scripts/aws-deploy.sh production deploy
+AWS_PROFILE=agrr-admin AWS_IAM_USER=agrr-admin ./scripts/aws-deploy.sh production deploy
 
 # テスト環境にデプロイ
-AWS_PROFILE=agrr-admin AWS_IAM_USER=aggr-admin ./scripts/aws-deploy.sh aws_test deploy
+AWS_PROFILE=agrr-admin AWS_IAM_USER=agrr-admin ./scripts/aws-deploy.sh aws_test deploy
 
 # または環境変数で事前設定
 export AWS_PROFILE=agrr-admin
-export AWS_IAM_USER=aggr-admin
+export AWS_IAM_USER=agrr-admin
 ./scripts/aws-deploy.sh production deploy
 ```
 
-## 📖 コマンドリファレンス
+## 📚 コマンドリファレンス
 
 ### aws-deploy.sh
 
-デプロイスクリプトの完全なリファレンスです。
-
-#### 使用方法
-
 ```bash
+# 基本的な使用方法
 ./scripts/aws-deploy.sh [environment] [command]
+
+# 使用例
+./scripts/aws-deploy.sh production deploy    # 本番環境にデプロイ
+./scripts/aws-deploy.sh aws_test deploy      # テスト環境にデプロイ
+./scripts/aws-deploy.sh production info      # サービス情報表示
+./scripts/aws-deploy.sh production delete    # サービス削除
 ```
 
-#### 引数
-
-##### Environment（環境）
-
-| 引数 | 説明 | サービス名 | S3バケット |
-|------|------|-----------|-----------|
-| `production` | 本番環境（**デフォルト**） | agrr-production | agrr-{ACCOUNT_ID}-production |
-| `aws_test` | テスト環境 | agrr-test | agrr-{ACCOUNT_ID}-test |
-
-##### Command（コマンド）
-
-| コマンド | 説明 |
-|---------|------|
-| `deploy` | Dockerイメージをビルド、ECRにプッシュ、App Runnerにデプロイ（**デフォルト**） |
-| `list` | 既存のApp Runnerサービス一覧を表示 |
-| `info` | サービスの詳細情報（URL、ステータス、設定など）を表示 |
-| `delete` | App Runnerサービスを削除 |
-| `help` / `-h` / `--help` | ヘルプメッセージを表示 |
-
-#### 使用例
-
-```bash
-# 本番環境にデプロイ（引数省略 = production deploy）
-./scripts/aws-deploy.sh
-
-# 本番環境にデプロイ（明示的）
-./scripts/aws-deploy.sh production deploy
-
-# テスト環境にデプロイ
-./scripts/aws-deploy.sh aws_test deploy
-
-# 本番環境のサービス情報を表示
-./scripts/aws-deploy.sh production info
-
-# サービス一覧を表示
-./scripts/aws-deploy.sh production list
-
-# 本番環境のサービスを削除
-./scripts/aws-deploy.sh production delete
-
-# ヘルプを表示
-./scripts/aws-deploy.sh help
-```
-
-#### 環境変数
-
-スクリプトは以下の環境変数を使用します（`.env.aws` またはシェルで設定）：
-
-| 環境変数 | 説明 | デフォルト |
-|---------|------|-----------|
-| `AWS_PROFILE` | 使用するAWSプロファイル | default |
-| `AWS_REGION` | デプロイ先のAWSリージョン | ap-northeast-1 |
-| `RAILS_MASTER_KEY` | Rails暗号化キー（本番推奨） | - |
-| `ALLOWED_HOSTS` | 許可するホスト（App Runner URL） | - |
-| `ECR_REPOSITORY_NAME` | ECRリポジトリ名 | agrr |
-| `IAM_ROLE_ARN` | App Runner用IAMロール | arn:aws:iam::{ACCOUNT_ID}:role/AppRunnerServiceRole |
-| `SERVICE_NAME_PRODUCTION` | 本番環境のサービス名 | agrr-production |
-| `SERVICE_NAME_TEST` | テスト環境のサービス名 | agrr-test |
-
-#### プロファイルを使用した実行例
-
-```bash
-# プロファイルを指定してデプロイ
-AWS_PROFILE=agrr-admin ./scripts/aws-deploy.sh production deploy
-
-# 環境変数で事前設定
-export AWS_PROFILE=agrr-admin
-./scripts/aws-deploy.sh production deploy
-```
+**環境**: `production`（デフォルト）, `aws_test`  
+**コマンド**: `deploy`（デフォルト）, `list`, `info`, `delete`
 
 ### setup-aws-resources.sh
 
-AWSリソース作成スクリプトのリファレンスです。
-
-#### 使用方法
-
 ```bash
+# 基本的な使用方法
 ./scripts/setup-aws-resources.sh [command]
+
+# 使用例
+./scripts/setup-aws-resources.sh setup         # 全リソース作成（初回推奨）
+./scripts/setup-aws-resources.sh permissions   # IAM権限設定
+./scripts/setup-aws-resources.sh s3            # S3バケット作成
 ```
 
-#### コマンド
+**コマンド**: `setup`, `permissions`, `fix`, `s3`, `iam`, `efs`
 
-| コマンド | 説明 |
-|---------|------|
-| `setup` | 全リソースを一括作成（IAM権限、S3、IAMロール、EFS、.env.aws） |
-| `permissions` | IAM権限のみ設定（自動でfixも実行） |
-| `fix` | 権限不足エラーのクイックフィックス |
-| `s3` | S3バケットのみ作成 |
-| `iam` | IAMロールとポリシーのみ作成 |
-| `efs` | EFSのみ作成 |
-
-#### 使用例
-
-```bash
-# 全リソースを作成（初回推奨）
-./scripts/setup-aws-resources.sh setup
-
-# IAM権限のみ設定
-./scripts/setup-aws-resources.sh permissions
-
-# S3バケットのみ作成
-./scripts/setup-aws-resources.sh s3
-```
-
-#### 環境変数
-
-| 環境変数 | 説明 | デフォルト |
-|---------|------|-----------|
-| `AWS_PROFILE` | 使用するAWSプロファイル | default |
-| `AWS_REGION` | リソースを作成するリージョン | ap-northeast-1 |
-| `AWS_IAM_USER` | IAMユーザー名（権限設定用） | 自動検出 |
-
-## 📋 詳細手順
+## 📝 詳細手順
 
 ### AWSリソースの個別作成
 
 ```bash
-# IAM権限設定（自動でfixも実行）
-AWS_IAM_USER=aggr-admin ./scripts/setup-aws-resources.sh permissions
-
-# 権限不足エラーのクイックフィックス（単体実行用）
-AWS_IAM_USER=aggr-admin ./scripts/setup-aws-resources.sh fix
-
-# S3バケットのみ作成
-./scripts/setup-aws-resources.sh s3
-
-# IAM権限とロールのみ作成
-./scripts/setup-aws-resources.sh iam
-
-# EFSのみ作成
-./scripts/setup-aws-resources.sh efs
+# 必要なリソースを個別に作成
+./scripts/setup-aws-resources.sh s3      # S3バケット
+./scripts/setup-aws-resources.sh iam     # IAMロール
+./scripts/setup-aws-resources.sh efs     # EFS
 ```
 
 ### デプロイコマンド
 
 ```bash
-# 新しいサービスを作成
+# サービスの管理
+./scripts/aws-deploy.sh production deploy    # デプロイ
+./scripts/aws-deploy.sh production list      # 一覧表示
+./scripts/aws-deploy.sh production info      # 情報表示
+./scripts/aws-deploy.sh production delete    # 削除
+```
+
+## ⚙️ 設定ファイル
+
+### ECRベースデプロイメント
+
+このプロジェクトはECRベースのデプロイメント方式を使用しています。YAMLファイルによる設定は非推奨です。
+
+**推奨方法:**
+```bash
+# 本番環境デプロイ
 ./scripts/aws-deploy.sh production deploy
 
-# 既存サービスの一覧表示
-./scripts/aws-deploy.sh production list
-
-# サービス情報の表示
-./scripts/aws-deploy.sh production info
-
-# サービスの削除
-./scripts/aws-deploy.sh production delete
+# テスト環境デプロイ
+./scripts/aws-deploy.sh aws_test deploy
 ```
 
-## 🔧 設定ファイル
+**非推奨方法:**
+- `apprunner.yaml` や `apprunner-test.yaml` を使用した設定
+- GitHub連携による自動デプロイ
+- ソースコードベースのデプロイ
 
-### apprunner.yaml (本番環境)
+## 🔧 トラブルシューティング
 
-```yaml
-version: 1.0
-runtime: docker
-build:
-  dockerfile: Dockerfile.production
-run:
-  runtime-version: latest
-  network:
-    port: 3000
-    env: PORT
-  env:
-    - name: RAILS_ENV
-      value: production
-    - name: RAILS_MASTER_KEY
-      value: your_master_key_here
-    - name: AWS_ACCESS_KEY_ID
-      value: your_aws_access_key_id_here
-    - name: AWS_SECRET_ACCESS_KEY
-      value: your_aws_secret_access_key_here
-    - name: AWS_REGION
-      value: ap-northeast-1
-    - name: AWS_S3_BUCKET
-      value: your_s3_bucket_name_here
-```
-
-### apprunner-test.yaml (テスト環境)
-
-```yaml
-version: 1.0
-runtime: docker
-build:
-  dockerfile: Dockerfile.production
-run:
-  runtime-version: latest
-  network:
-    port: 3000
-    env: PORT
-  env:
-    - name: RAILS_ENV
-      value: aws_test
-    - name: AWS_S3_BUCKET_TEST
-      value: your_s3_test_bucket_name_here
-    # その他の設定は本番環境と同様
-```
-
-## 🛠 トラブルシューティング
-
-### よくあるエラーと解決方法
-
-#### 1. AWS認証エラー
+### よくあるエラー
 
 ```bash
-# エラー: Unable to locate credentials
-# 解決方法:
+# AWS認証エラー
 aws configure
-# または環境変数を設定
-export AWS_ACCESS_KEY_ID=your_key
-export AWS_SECRET_ACCESS_KEY=your_secret
-```
 
-#### 2. S3バケットが存在しない
-
-```bash
-# エラー: The specified bucket does not exist
-# 解決方法:
+# S3バケットが存在しない
 ./scripts/setup-aws-resources.sh s3
-```
 
-#### 3. IAM権限不足
+# IAM権限不足
+# 管理者権限を持つユーザーで実行
 
-```bash
-# エラー: User is not authorized to perform: apprunner:CreateService
-# 解決方法: IAMユーザーにApp Runnerの権限を追加
-# または管理者権限を持つユーザーで実行
-```
-
-#### 4. Dockerイメージビルドエラー
-
-```bash
-# エラー: Docker build failed
-# 解決方法:
-# 1. Dockerfile.productionの存在確認
-# 2. 必要なファイルがコピーされているか確認
-# 3. Dockerデーモンが起動しているか確認
+# Dockerイメージビルドエラー
+# Dockerfile.productionの存在確認
 ```
 
 ### デバッグ方法
 
-#### 1. デプロイ状況の確認
-
 ```bash
-# サービスの詳細情報を表示
+# デプロイ状況の確認
 ./scripts/aws-deploy.sh production info
 
-# AWS CLIで直接確認
-aws apprunner describe-service --service-arn your-service-arn
-```
-
-#### 2. ログの確認
-
-```bash
-# App Runnerのログを確認 (AWS Console)
-# または CloudWatch Logs で確認
-aws logs describe-log-groups --log-group-name-prefix /aws/apprunner
-```
-
-#### 3. ヘルスチェック
-
-```bash
-# デプロイ後のヘルスチェック
+# ヘルスチェック
 curl https://your-app-runner-url.awsapprunner.com/api/v1/health
 ```
 
 ## 💰 コスト最適化
 
-### 月額コスト見積もり
+**月額コスト見積もり**: $2.35-5.35
 
-| リソース | 使用量 | 月額コスト |
-|----------|--------|------------|
-| App Runner | 1 vCPU, 2 GB RAM | $2-5 |
-| EFS | 1 GB | $0.30 |
-| S3 | 1 GB | $0.023 |
-| **合計** | | **$2.35-5.35** |
+- App Runner: $2-5
+- EFS: $0.30
+- S3: $0.023
 
-### コスト削減のポイント
+**コスト削減のポイント**:
+- App Runnerの自動スケーリング
+- EFSの最適化
+- S3のライフサイクル設定
 
-1. **App Runnerの自動スケーリング**: 使用量に応じて自動的にスケールダウン
-2. **EFSの最適化**: 必要最小限のストレージサイズ
-3. **S3のライフサイクル**: 古いファイルの自動削除
-
-## 🔐 セキュリティ設定
+## 🔒 セキュリティ設定
 
 ### 1. IAMポリシー
 
@@ -436,7 +304,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret_key
 # App Runnerの環境変数設定で使用
 ```
 
-## 📊 監視とメトリクス
+## 📈 監視とメトリクス
 
 ### 1. CloudWatchメトリクス
 
@@ -460,7 +328,7 @@ aws cloudwatch put-metric-alarm \
     --comparison-operator GreaterThanThreshold
 ```
 
-## 🚀 CI/CD統合
+## 🔄 CI/CD統合
 
 ### GitHub Actionsでの自動デプロイ
 
@@ -498,7 +366,7 @@ jobs:
 
 ---
 
-## 🔧 AWSプロファイル設定
+## 🔐 AWSプロファイル設定
 
 ### プロファイルの作成
 

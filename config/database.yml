@@ -1,33 +1,33 @@
 # SQLite. Versions 3.8.0 and up are supported.
 # With Rails 8 and proper configuration, SQLite is production-ready.
 
-development:
-  url: sqlite3:storage/development.sqlite3
+default: &default
   adapter: sqlite3
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: storage/development.sqlite3
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  url: sqlite3:storage/test.sqlite3
-  adapter: sqlite3
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  <<: *default
+  database: storage/test.sqlite3
 
 # Docker environment (for local development with Docker)
 docker:
-  adapter: sqlite3
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  <<: *default
   database: storage/docker.sqlite3
 
 # AWS Test environment (SQLite with persistent storage)
 aws_test:
-  adapter: sqlite3
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  <<: *default
   database: storage/aws_test.sqlite3
 
 # AWS Production environment (SQLite with persistent storage)
 production:
-  adapter: sqlite3
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: <%= ENV.fetch("PRODUCTION_SQLITE_PATH", "storage/production.sqlite3") %>
+  <<: *default
+  database: storage/production.sqlite3
