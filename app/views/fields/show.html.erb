@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= @field.display_name %> - AGRR</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  
+  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">AGRR</div>
+    <div class="user-info">
+      <a href="<%= root_path %>" class="nav-link">ホーム</a>
+      <%= link_to "圃場", fields_path, class: "nav-link" %>
+      <% if current_user.avatar_url.present? %>
+        <img src="<%= current_user.avatar_url %>" alt="User Avatar" class="user-avatar">
+      <% end %>
+      <span><%= current_user.name %></span>
+      <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
+    </div>
+  </div>
+  
+  <div class="container">
+    <% if flash[:notice] %>
+      <div class="alert"><%= flash[:notice] %></div>
+    <% end %>
+    
+    <div class="page-header">
+      <h1 class="page-title"><%= @field.display_name %></h1>
+      <div>
+        <%= link_to "編集", edit_field_path(@field), class: "btn btn-secondary" %>
+      </div>
+    </div>
+    
+    <div class="field-card">
+      <div class="field-info">
+        <div class="info-item">
+          <span class="info-label">📝 名前:</span>
+          <span class="info-value"><%= @field.name %></span>
+        </div>
+        
+        <% if @field.has_coordinates? %>
+          <div class="info-item">
+            <span class="info-label">📍 緯度:</span>
+            <span class="info-value"><%= @field.latitude %></span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-label">📍 経度:</span>
+            <span class="info-value"><%= @field.longitude %></span>
+          </div>
+        <% else %>
+          <div class="info-item">
+            <span class="info-label">📍 位置:</span>
+            <span class="info-value">位置情報が設定されていません</span>
+          </div>
+        <% end %>
+        
+        <div class="info-item">
+          <span class="info-label">📅 作成日:</span>
+          <span class="info-value"><%= @field.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label">📅 更新日:</span>
+          <span class="info-value"><%= @field.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <%= link_to "圃場一覧に戻る", fields_path, class: "btn" %>
+        <%= link_to "編集", edit_field_path(@field), class: "btn btn-secondary" %>
+        <%= button_to "削除", @field, method: :delete, 
+                    class: "btn btn-danger", 
+                    confirm: "この圃場を削除しますか？" %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

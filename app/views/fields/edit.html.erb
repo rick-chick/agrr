@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>圃場編集 - AGRR</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  
+  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "fields", "data-turbo-track": "reload" %>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="/leaflet.css"/>
+  
+  <!-- Leaflet JavaScript -->
+  <script src="/leaflet.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">AGRR</div>
+    <div class="user-info">
+      <a href="<%= root_path %>" class="nav-link">ホーム</a>
+      <%= link_to "圃場", fields_path, class: "nav-link" %>
+      <% if current_user.avatar_url.present? %>
+        <img src="<%= current_user.avatar_url %>" alt="User Avatar" class="user-avatar">
+      <% end %>
+      <span><%= current_user.name %></span>
+      <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
+    </div>
+  </div>
+  
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">圃場を編集</h1>
+    </div>
+    
+    <div class="form-card">
+      <%= form_with model: @field, local: true do |form| %>
+        <% if @field.errors.any? %>
+          <div style="color: #dc3545; margin-bottom: 1rem;">
+            <h4><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h4>
+            <ul>
+              <% @field.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+        
+        <div class="form-group">
+          <%= form.label :name, "圃場名", class: "form-label" %>
+          <%= form.text_field :name, class: "form-control", placeholder: "例: 北側の田んぼ" %>
+          <div class="form-text">圃場の名前を入力してください</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📍 位置情報</label>
+          <div class="map-container">
+            <div id="map"></div>
+            <div class="map-placeholder" id="map-placeholder">
+              <div>🗺️ 地図を読み込み中...</div>
+            </div>
+          </div>
+          <div class="coordinates-input">
+            <div>
+              <%= form.label :latitude, "緯度", class: "form-label" %>
+              <%= form.number_field :latitude, step: :any, class: "form-control", placeholder: "35.6762" %>
+              <div class="form-text">例: 35.6762 (東京駅付近)</div>
+            </div>
+            <div>
+              <%= form.label :longitude, "経度", class: "form-label" %>
+              <%= form.number_field :longitude, step: :any, class: "form-control", placeholder: "139.6503" %>
+              <div class="form-text">例: 139.6503 (東京駅付近)</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="actions">
+          <%= form.submit "更新", class: "btn" %>
+          <%= link_to "キャンセル", @field, class: "btn btn-secondary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</body>
+</html>
