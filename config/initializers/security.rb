@@ -26,7 +26,7 @@ Rails.application.configure do
     policy.object_src  :none
     policy.script_src  :self, "https://accounts.google.com"
     policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
-    policy.connect_src :self, "https://accounts.google.com"
+    policy.connect_src :self, "https://accounts.google.com", "https://tile.openstreetmap.org"
     
     # For OAuth redirects
     policy.form_action :self, "https://accounts.google.com"
