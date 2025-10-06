@@ -1,0 +1,40 @@
+<h1>作物詳細</h1>
+
+<p>
+  <strong>名前:</strong> <%= @crop.name %>
+</p>
+<p>
+  <strong>品種:</strong> <%= @crop.variety %>
+</p>
+<p>
+  <strong>種類:</strong> <%= @crop.is_reference ? '参照' : 'ユーザ' %>
+</p>
+
+<h2>生育ステージ</h2>
+<% if @crop.crop_stages.any? %>
+  <ol>
+    <% @crop.crop_stages.order(:order).each do |stage| %>
+      <li>
+        <strong><%= stage.name %></strong> (順序: <%= stage.order %>)
+        <ul>
+          <% if stage.temperature_requirement %>
+            <li>温度: 基準=<%= stage.temperature_requirement.base_temperature %>, 最適=<%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>, 低ストレス=<%= stage.temperature_requirement.low_stress_threshold %>, 高ストレス=<%= stage.temperature_requirement.high_stress_threshold %>, 霜=<%= stage.temperature_requirement.frost_threshold %>, 不稔リスク=<%= stage.temperature_requirement.sterility_risk_threshold %></li>
+          <% end %>
+          <% if stage.sunshine_requirement %>
+            <li>日照: 最低=<%= stage.sunshine_requirement.minimum_sunshine_hours %>h, 目標=<%= stage.sunshine_requirement.target_sunshine_hours %>h</li>
+          <% end %>
+          <% if stage.thermal_requirement %>
+            <li>積算温度(GDD): 必要量=<%= stage.thermal_requirement.required_gdd %></li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
+  </ol>
+<% else %>
+  <p>ステージは未登録です。</p>
+<% end %>
+
+<p>
+  <%= link_to '編集', edit_crop_path(@crop) %> |
+  <%= link_to '一覧へ戻る', crops_path %>
+</p>

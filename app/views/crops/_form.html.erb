@@ -1,0 +1,31 @@
+<%= form_with(model: @crop) do |f| %>
+  <% if @crop.errors.any? %>
+    <div class="errors">
+      <h3><%= pluralize(@crop.errors.count, 'error') %> prohibited this crop from being saved:</h3>
+      <ul>
+        <% @crop.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, '名前' %><br>
+    <%= f.text_field :name, required: true %>
+  </div>
+
+  <div>
+    <%= f.label :variety, '品種' %><br>
+    <%= f.text_field :variety %>
+  </div>
+
+  <div>
+    <%= f.label :is_reference, '参照作物（管理者のみ）' %><br>
+    <%= f.check_box :is_reference, disabled: !admin_user? %>
+  </div>
+
+  <div>
+    <%= f.submit %>
+  </div>
+<% end %>

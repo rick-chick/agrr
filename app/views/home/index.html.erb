@@ -194,6 +194,17 @@
             <%= link_to "新しい農場", new_farm_path, class: "btn btn-success" %>
           </div>
         </div>
+
+        <div class="feature-card">
+          <h3 class="feature-title">🌾 作物管理</h3>
+          <p class="feature-description">
+            作物と生育ステージ要件を管理します。参照作物は管理者のみ作成・編集可能です。
+          </p>
+          <div style="margin-top: 1rem;">
+            <%= link_to "作物一覧", crops_path, class: "btn", style: "margin-right: 0.5rem;" %>
+            <%= link_to "新しい作物", new_crop_path, class: "btn btn-success" %>
+          </div>
+        </div>
       </div>
     </div>
   </div>

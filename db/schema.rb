@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_06_032545) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_06_070000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,6 +37,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_032545) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "crop_stages", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.string "name", null: false
+    t.integer "order", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id", "order"], name: "index_crop_stages_on_crop_id_and_order", unique: true
+    t.index ["crop_id"], name: "index_crop_stages_on_crop_id"
+  end
+
+  create_table "crops", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "name", null: false
+    t.string "variety"
+    t.boolean "is_reference", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_crops_on_user_id"
   end
 
   create_table "farms", force: :cascade do |t|
@@ -177,6 +197,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_032545) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "sunshine_requirements", force: :cascade do |t|
+    t.integer "crop_stage_id", null: false
+    t.float "minimum_sunshine_hours"
+    t.float "target_sunshine_hours"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_stage_id"], name: "index_sunshine_requirements_on_crop_stage_id"
+  end
+
+  create_table "temperature_requirements", force: :cascade do |t|
+    t.integer "crop_stage_id", null: false
+    t.float "base_temperature"
+    t.float "optimal_min"
+    t.float "optimal_max"
+    t.float "low_stress_threshold"
+    t.float "high_stress_threshold"
+    t.float "frost_threshold"
+    t.float "sterility_risk_threshold"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_stage_id"], name: "index_temperature_requirements_on_crop_stage_id"
+  end
+
+  create_table "thermal_requirements", force: :cascade do |t|
+    t.integer "crop_stage_id", null: false
+    t.float "required_gdd"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_stage_id"], name: "index_thermal_requirements_on_crop_stage_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "name", null: false
@@ -191,8 +242,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_032545) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "crop_stages", "crops"
+  add_foreign_key "crops", "users"
   add_foreign_key "farms", "users"
   add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "sunshine_requirements", "crop_stages"
+  add_foreign_key "temperature_requirements", "crop_stages"
+  add_foreign_key "thermal_requirements", "crop_stages"
 end

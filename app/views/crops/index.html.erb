@@ -1,0 +1,30 @@
+<h1>作物一覧</h1>
+
+<p>
+  <%= link_to '新規作物', new_crop_path, class: 'btn btn-primary' %>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>名前</th>
+      <th>品種</th>
+      <th>種類</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @crops.each do |crop| %>
+      <tr>
+        <td><%= crop.name %></td>
+        <td><%= crop.variety %></td>
+        <td><%= crop.is_reference ? '参照' : 'ユーザ' %></td>
+        <td>
+          <%= link_to '表示', crop_path(crop) %> |
+          <%= link_to '編集', edit_crop_path(crop) %> |
+          <%= link_to '削除', crop_path(crop), method: :delete, data: { confirm: '削除してよろしいですか？' } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -26,6 +26,9 @@ Rails.application.routes.draw do
     resources :fields
   end
 
+  # Crops (HTML) routes
+  resources :crops
+
   # API routes
   namespace :api do
     namespace :v1 do
@@ -37,6 +40,7 @@ Rails.application.routes.draw do
       resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
         resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
       end
+      resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
     end
   end
 
