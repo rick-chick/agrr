@@ -8,20 +8,31 @@ const defaultLat = 35.6812;
 const defaultLng = 139.7671;
 
 function initMap() {
-  // Get current coordinates from form (for edit page) or use default
-  const latElement = document.getElementById('field_latitude');
-  const lngElement = document.getElementById('field_longitude');
+  // Get current coordinates from form - support both farm and field forms
+  let latElement = document.getElementById('field_latitude');
+  let lngElement = document.getElementById('field_longitude');
+  
+  // If field form elements not found, try farm form elements
+  if (!latElement || !lngElement) {
+    latElement = document.getElementById('farm_latitude');
+    lngElement = document.getElementById('farm_longitude');
+  }
+  
+  // If still not found, try by name attribute
+  if (!latElement || !lngElement) {
+    latElement = document.querySelector('input[name*="[latitude]"]');
+    lngElement = document.querySelector('input[name*="[longitude]"]');
+  }
   
   // Check if elements exist before accessing their values
   if (!latElement || !lngElement) {
-    console.error('Required form elements not found: field_latitude or field_longitude');
-    console.log('Available elements with "field" in ID:', 
-      Array.from(document.querySelectorAll('[id*="field"]')).map(el => el.id));
+    console.error('Required form elements not found: latitude or longitude fields');
     return;
   }
   
-  const currentLat = parseFloat(latElement.value) || defaultLat;
-  const currentLng = parseFloat(lngElement.value) || defaultLng;
+  // Safely get values with null checks
+  const currentLat = latElement ? (parseFloat(latElement.value) || defaultLat) : defaultLat;
+  const currentLng = lngElement ? (parseFloat(lngElement.value) || defaultLng) : defaultLng;
   
   // Initialize map
   map = L.map('map').setView([currentLat, currentLng], 13);
@@ -42,9 +53,9 @@ function initMap() {
     marker = L.marker([currentLat, currentLng]).addTo(map);
   }
   
-  // Set initial form values
-  latElement.value = currentLat;
-  lngElement.value = currentLng;
+  // Set initial form values safely
+  if (latElement) latElement.value = currentLat;
+  if (lngElement) lngElement.value = currentLng;
   
   // Handle map clicks
   map.on('click', function(e) {
@@ -57,27 +68,41 @@ function initMap() {
     }
     marker = L.marker([lat, lng]).addTo(map);
     
-    // Update form values
-    latElement.value = lat.toFixed(8);
-    lngElement.value = lng.toFixed(8);
+    // Update form values safely
+    if (latElement) latElement.value = lat.toFixed(8);
+    if (lngElement) lngElement.value = lng.toFixed(8);
   });
   
-  // Handle form value changes
-  latElement.addEventListener('change', updateMarker);
-  lngElement.addEventListener('change', updateMarker);
+  // Handle form value changes safely
+  if (latElement) latElement.addEventListener('change', updateMarker);
+  if (lngElement) lngElement.addEventListener('change', updateMarker);
 }
 
 function updateMarker() {
-  const latElement = document.getElementById('field_latitude');
-  const lngElement = document.getElementById('field_longitude');
+  // Get current coordinates from form - support both farm and field forms
+  let latElement = document.getElementById('field_latitude');
+  let lngElement = document.getElementById('field_longitude');
+  
+  // If field form elements not found, try farm form elements
+  if (!latElement || !lngElement) {
+    latElement = document.getElementById('farm_latitude');
+    lngElement = document.getElementById('farm_longitude');
+  }
+  
+  // If still not found, try by name attribute
+  if (!latElement || !lngElement) {
+    latElement = document.querySelector('input[name*="[latitude]"]');
+    lngElement = document.querySelector('input[name*="[longitude]"]');
+  }
   
   if (!latElement || !lngElement) {
     console.error('Required form elements not found in updateMarker');
     return;
   }
   
-  const lat = parseFloat(latElement.value);
-  const lng = parseFloat(lngElement.value);
+  // Safely get values with null checks
+  const lat = latElement ? parseFloat(latElement.value) : NaN;
+  const lng = lngElement ? parseFloat(lngElement.value) : NaN;
   
   if (!isNaN(lat) && !isNaN(lng)) {
     if (marker) {

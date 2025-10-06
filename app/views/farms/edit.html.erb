@@ -64,12 +64,12 @@
           <div class="coordinates-input">
             <div>
               <%= form.label :latitude, "緯度", class: "form-label" %>
-              <%= form.number_field :latitude, step: :any, class: "form-control", placeholder: "35.6762" %>
+              <%= form.number_field :latitude, step: :any, class: "form-control", placeholder: "35.6762", id: "farm_latitude" %>
               <div class="form-text">例: 35.6762 (東京駅付近)</div>
             </div>
             <div>
               <%= form.label :longitude, "経度", class: "form-label" %>
-              <%= form.number_field :longitude, step: :any, class: "form-control", placeholder: "139.6503" %>
+              <%= form.number_field :longitude, step: :any, class: "form-control", placeholder: "139.6503", id: "farm_longitude" %>
               <div class="form-text">例: 139.6503 (東京駅付近)</div>
             </div>
           </div>
