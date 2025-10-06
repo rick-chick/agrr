@@ -1,6 +1,7 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
+  farm: one
   user: one
   name: "北側の田んぼ"
   latitude: 35.6812
@@ -9,6 +10,7 @@ one:
   updated_at: <%= 1.day.ago %>
 
 two:
+  farm: one
   user: one
   name: "南側の畑"
   latitude: 35.6762
@@ -17,6 +19,7 @@ two:
   updated_at: <%= 2.days.ago %>
 
 three:
+  farm: two
   user: two
   name: "東側の果樹園"
   latitude: 36.2048

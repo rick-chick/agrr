@@ -3,6 +3,7 @@
 class User < ApplicationRecord
   # Associations
   has_many :sessions, dependent: :destroy
+  has_many :farms, dependent: :destroy
   has_many :fields, dependent: :destroy
 
   # Validations

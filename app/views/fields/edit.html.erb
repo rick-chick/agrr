@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>圃場編集 - AGRR</title>
+  <title>圃場編集 - <%= @farm.display_name %> - AGRR</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
@@ -20,7 +20,7 @@
     <div class="logo">AGRR</div>
     <div class="user-info">
       <a href="<%= root_path %>" class="nav-link">ホーム</a>
-      <%= link_to "圃場", fields_path, class: "nav-link" %>
+      <%= link_to "農場", farms_path, class: "nav-link" %>
       <% if current_user.avatar_url.present? %>
         <img src="<%= current_user.avatar_url %>" alt="User Avatar" class="user-avatar">
       <% end %>
@@ -30,12 +30,24 @@
   </div>
   
   <div class="container">
+    <div class="breadcrumb">
+      <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
+      <span class="breadcrumb-separator">></span>
+      <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
+      <span class="breadcrumb-separator">></span>
+      <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
+      <span class="breadcrumb-separator">></span>
+      <%= link_to @field.display_name, farm_field_path(@farm, @field), class: "breadcrumb-link" %>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-current">編集</span>
+    </div>
+    
     <div class="page-header">
-      <h1 class="page-title">圃場を編集</h1>
+      <h1 class="page-title"><%= @farm.display_name %> - 圃場を編集</h1>
     </div>
     
     <div class="form-card">
-      <%= form_with model: @field, local: true do |form| %>
+      <%= form_with model: [@farm, @field], local: true do |form| %>
         <% if @field.errors.any? %>
           <div style="color: #dc3545; margin-bottom: 1rem;">
             <h4><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h4>
@@ -64,12 +76,12 @@
           <div class="coordinates-input">
             <div>
               <%= form.label :latitude, "緯度", class: "form-label" %>
-              <%= form.number_field :latitude, step: :any, class: "form-control", placeholder: "35.6762" %>
+              <%= form.number_field :latitude, step: :any, class: "form-control", placeholder: "35.6762", id: "field_latitude" %>
               <div class="form-text">例: 35.6762 (東京駅付近)</div>
             </div>
             <div>
               <%= form.label :longitude, "経度", class: "form-label" %>
-              <%= form.number_field :longitude, step: :any, class: "form-control", placeholder: "139.6503" %>
+              <%= form.number_field :longitude, step: :any, class: "form-control", placeholder: "139.6503", id: "field_longitude" %>
               <div class="form-text">例: 139.6503 (東京駅付近)</div>
             </div>
           </div>
@@ -77,7 +89,7 @@
         
         <div class="actions">
           <%= form.submit "更新", class: "btn" %>
-          <%= link_to "キャンセル", @field, class: "btn btn-secondary" %>
+          <%= link_to "キャンセル", farm_field_path(@farm, @field), class: "btn btn-secondary" %>
         </div>
       <% end %>
     </div>

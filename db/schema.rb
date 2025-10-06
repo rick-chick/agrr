@@ -39,13 +39,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_123838) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "fields", force: :cascade do |t|
+  create_table "farms", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
     t.decimal "latitude", precision: 10, scale: 8
     t.decimal "longitude", precision: 11, scale: 8
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_farms_on_user_id"
+  end
+
+  create_table "fields", force: :cascade do |t|
+    t.integer "farm_id", null: false
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.decimal "latitude", precision: 10, scale: 8
+    t.decimal "longitude", precision: 11, scale: 8
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name", unique: true
+    t.index ["farm_id"], name: "index_fields_on_farm_id"
     t.index ["user_id", "name"], name: "index_fields_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_fields_on_user_id"
   end
@@ -175,6 +190,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_123838) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "farms", "users"
+  add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
   add_foreign_key "sessions", "users"
 end

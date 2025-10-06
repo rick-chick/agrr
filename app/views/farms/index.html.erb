@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title><%= @farm.display_name %> - 圃場一覧 - AGRR</title>
+  <title>農場一覧 - AGRR</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
@@ -27,38 +27,34 @@
       <div class="alert"><%= flash[:notice] %></div>
     <% end %>
     
-    <div class="breadcrumb">
-      <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <span class="breadcrumb-current">圃場一覧</span>
-    </div>
-    
     <div class="page-header">
-      <h1 class="page-title"><%= @farm.display_name %> - 圃場一覧</h1>
-      <%= link_to "新しい圃場を追加", new_farm_field_path(@farm), class: "btn btn-success" %>
+      <h1 class="page-title">農場一覧</h1>
+      <%= link_to "新しい農場を追加", new_farm_path, class: "btn btn-success" %>
     </div>
     
-    <% if @fields.any? %>
+    <% if @farms.any? %>
       <div class="fields-grid">
-        <% @fields.each do |field| %>
+        <% @farms.each do |farm| %>
           <div class="field-card">
-            <h3 class="field-name"><%= field.display_name %></h3>
-            <% if field.has_coordinates? %>
+            <h3 class="field-name"><%= farm.display_name %></h3>
+            <% if farm.has_coordinates? %>
               <div class="field-coordinates">
-                📍 緯度: <%= field.latitude %><br>
-                📍 経度: <%= field.longitude %>
+                📍 緯度: <%= farm.latitude %><br>
+                📍 経度: <%= farm.longitude %>
               </div>
             <% else %>
               <div class="field-coordinates">📍 位置情報が設定されていません</div>
             <% end %>
+            <div class="field-info">
+              <p>圃場数: <%= farm.fields.count %>個</p>
+            </div>
             <div class="field-actions">
-              <%= link_to "詳細", farm_field_path(@farm, field), class: "btn btn-small" %>
-              <%= link_to "編集", edit_farm_field_path(@farm, field), class: "btn btn-small btn-secondary" %>
-              <%= button_to "削除", farm_field_path(@farm, field), method: :delete, 
+              <%= link_to "詳細", farm, class: "btn btn-small" %>
+              <%= link_to "圃場一覧", farm_fields_path(farm), class: "btn btn-small btn-info" %>
+              <%= link_to "編集", edit_farm_path(farm), class: "btn btn-small btn-secondary" %>
+              <%= button_to "削除", farm, method: :delete, 
                           class: "btn btn-small btn-danger", 
-                          confirm: "この圃場を削除しますか？" %>
+                          confirm: "この農場を削除しますか？" %>
             </div>
           </div>
         <% end %>
@@ -66,11 +62,12 @@
     <% else %>
       <div class="empty-state">
         <div class="empty-state-icon">🌾</div>
-        <h3>まだ圃場が登録されていません</h3>
-        <p>最初の圃場を追加して始めましょう。</p>
-        <%= link_to "圃場を追加", new_farm_field_path(@farm), class: "btn btn-success" %>
+        <h3>まだ農場が登録されていません</h3>
+        <p>最初の農場を追加して始めましょう。</p>
+        <%= link_to "農場を追加", new_farm_path, class: "btn btn-success" %>
       </div>
     <% end %>
   </div>
 </body>
 </html>
+

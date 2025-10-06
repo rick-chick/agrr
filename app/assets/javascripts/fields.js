@@ -9,8 +9,19 @@ const defaultLng = 139.7671;
 
 function initMap() {
   // Get current coordinates from form (for edit page) or use default
-  const currentLat = parseFloat(document.getElementById('field_latitude').value) || defaultLat;
-  const currentLng = parseFloat(document.getElementById('field_longitude').value) || defaultLng;
+  const latElement = document.getElementById('field_latitude');
+  const lngElement = document.getElementById('field_longitude');
+  
+  // Check if elements exist before accessing their values
+  if (!latElement || !lngElement) {
+    console.error('Required form elements not found: field_latitude or field_longitude');
+    console.log('Available elements with "field" in ID:', 
+      Array.from(document.querySelectorAll('[id*="field"]')).map(el => el.id));
+    return;
+  }
+  
+  const currentLat = parseFloat(latElement.value) || defaultLat;
+  const currentLng = parseFloat(lngElement.value) || defaultLng;
   
   // Initialize map
   map = L.map('map').setView([currentLat, currentLng], 13);
@@ -32,8 +43,8 @@ function initMap() {
   }
   
   // Set initial form values
-  document.getElementById('field_latitude').value = currentLat;
-  document.getElementById('field_longitude').value = currentLng;
+  latElement.value = currentLat;
+  lngElement.value = currentLng;
   
   // Handle map clicks
   map.on('click', function(e) {
@@ -47,18 +58,26 @@ function initMap() {
     marker = L.marker([lat, lng]).addTo(map);
     
     // Update form values
-    document.getElementById('field_latitude').value = lat.toFixed(8);
-    document.getElementById('field_longitude').value = lng.toFixed(8);
+    latElement.value = lat.toFixed(8);
+    lngElement.value = lng.toFixed(8);
   });
   
   // Handle form value changes
-  document.getElementById('field_latitude').addEventListener('change', updateMarker);
-  document.getElementById('field_longitude').addEventListener('change', updateMarker);
+  latElement.addEventListener('change', updateMarker);
+  lngElement.addEventListener('change', updateMarker);
 }
 
 function updateMarker() {
-  const lat = parseFloat(document.getElementById('field_latitude').value);
-  const lng = parseFloat(document.getElementById('field_longitude').value);
+  const latElement = document.getElementById('field_latitude');
+  const lngElement = document.getElementById('field_longitude');
+  
+  if (!latElement || !lngElement) {
+    console.error('Required form elements not found in updateMarker');
+    return;
+  }
+  
+  const lat = parseFloat(latElement.value);
+  const lng = parseFloat(lngElement.value);
   
   if (!isNaN(lat) && !isNaN(lng)) {
     if (marker) {

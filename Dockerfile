@@ -12,20 +12,27 @@ RUN apt-get update -qq && apt-get install -y \
 # Set the working directory
 WORKDIR /app
 
-# Copy Gemfile and Gemfile.lock
-COPY Gemfile Gemfile.lock ./
+# Copy Gemfile and Gemfile.lock (if exists)
+COPY Gemfile ./
+COPY Gemfile.lock* ./
 
-# Install gems
-RUN bundle install
+# Install gems and ensure they're properly installed
+RUN bundle config set --local deployment 'false' && \
+    bundle config set --local without '' && \
+    bundle install
 
 # Copy the rest of the application
 COPY . .
 
-# Create storage directory for SQLite databases
-RUN mkdir -p storage
+# Create storage directory for SQLite databases and tmp directories
+RUN mkdir -p storage tmp/cache tmp/pids tmp/sockets
 
 # Create a non-root user and set permissions
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app && chown -R appuser:appuser /usr/local/bundle
+# Ensure bundle cache directory is writable
+RUN mkdir -p /usr/local/bundle/cache && chown -R appuser:appuser /usr/local/bundle/cache
+# Fix tmp directory permissions
+RUN chown -R appuser:appuser /app/tmp
 USER appuser
 
 # Expose port 3000
