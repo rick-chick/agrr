@@ -52,7 +52,13 @@ class FarmsController < ApplicationController
   private
 
   def set_farm
-    @farm = current_user.farms.find(params[:id])
+    if admin_user?
+      # Admin can access any farm
+      @farm = Farm.find(params[:id])
+    else
+      # Regular users can only access their own farms
+      @farm = current_user.farms.find(params[:id])
+    end
   rescue ActiveRecord::RecordNotFound
     redirect_to farms_path, alert: '指定された農場が見つかりません。'
   end

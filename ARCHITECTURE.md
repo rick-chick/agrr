@@ -4,6 +4,38 @@
 
 このプロジェクトはClean Architectureに基づいて設計されています。層の依存関係を明確にし、テスタビリティと保守性を向上させています。
 
+## アセット管理アーキテクチャ
+
+### 二重管理システム
+
+本プロジェクトでは、アセット管理に二重管理システムを採用しています：
+
+- **jsbundling-rails**: サードパーティライブラリ管理
+- **Propshaft**: アプリケーション固有アセット管理
+
+### 管理範囲
+
+#### jsbundling-rails（ライブラリ管理）
+```
+app/javascript/application.js     ← import "leaflet"
+app/assets/builds/application.js  ← バンドル済み（Leaflet含む）
+node_modules/leaflet/dist/images/ ← ライブラリ画像
+```
+
+#### Propshaft（アプリ固有管理）
+```
+app/assets/javascripts/fields.js  ← アプリ固有機能
+app/assets/stylesheets/fields.css ← アプリ固有スタイル
+app/assets/images/dev-avatar.svg  ← アプリ固有画像
+```
+
+### 設計原則
+
+1. **責任の明確化**: ライブラリとアプリ固有が完全分離
+2. **管理の統一**: 各システムが明確な役割を持つ
+3. **設定の簡素化**: 複雑なメタタグやカスタム設定不要
+4. **保守性の向上**: ライブラリ更新時の影響範囲が明確
+
 ## 層構造
 
 ```
@@ -87,3 +119,23 @@ lib/
 - `GET /api/v1/farms/:farm_id/fields/:id` - 圃場詳細
 - `PUT /api/v1/farms/:farm_id/fields/:id` - 圃場更新
 - `DELETE /api/v1/farms/:farm_id/fields/:id` - 圃場削除
+
+## 技術スタック
+
+### バックエンド
+- **Rails 8**: Web フレームワーク
+- **Propshaft**: アセットパイプライン（アプリ固有）
+- **jsbundling-rails**: JavaScript バンドリング（ライブラリ）
+- **esbuild**: JavaScript バンドラー
+- **SQLite**: データベース
+- **Docker**: コンテナ化
+
+### フロントエンド
+- **Leaflet**: 地図ライブラリ（npm管理）
+- **Vanilla JavaScript**: アプリ固有機能（Propshaft管理）
+- **CSS**: アプリ固有スタイル（Propshaft管理）
+
+### 開発・デプロイ
+- **Docker Compose**: 開発環境
+- **AWS App Runner**: 本番環境
+- **GitHub Actions**: CI/CD（予定）

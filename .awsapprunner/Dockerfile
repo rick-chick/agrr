@@ -1,11 +1,14 @@
 # AWS App Runner optimized Dockerfile
 FROM ruby:3.2.0-slim
 
-# Install system dependencies
+# Install system dependencies (including Node.js)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libpq-dev \
     curl \
+    gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -19,8 +22,15 @@ RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install
 
+# Copy package.json and install Node.js dependencies
+COPY package.json ./
+RUN npm install
+
 # Copy the rest of the application
 COPY . .
+
+# Build JavaScript assets
+RUN npm run build
 
 # Precompile assets
 RUN RAILS_ENV=production bundle exec rails assets:precompile

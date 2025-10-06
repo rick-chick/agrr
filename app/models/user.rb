@@ -19,6 +19,19 @@ class User < ApplicationRecord
   # Normalize email before validation
   before_validation :normalize_email
 
+  # Admin methods
+  def admin?
+    admin
+  end
+
+  def make_admin!
+    update!(admin: true)
+  end
+
+  def remove_admin!
+    update!(admin: false)
+  end
+
   # Class method to find or create user from OmniAuth hash
   def self.from_omniauth(auth_hash)
     # Validate required fields from auth hash

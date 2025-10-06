@@ -248,4 +248,49 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".farm-card"
     assert_select ".farm-name", @farm.name
   end
+
+  test "admin user should be able to access other user's farm" do
+    # Create admin user
+    admin_user = users(:one)  # admin: true
+    admin_session = Session.create_for_user(admin_user)
+    cookies[:session_id] = admin_session.session_id
+
+    # Create another user's farm
+    other_user = users(:two)  # admin: false
+    other_farm = Farm.create!(
+      user: other_user,
+      name: "Other User's Farm",
+      latitude: 35.6812,
+      longitude: 139.7671
+    )
+
+    # Admin should be able to access other user's farm
+    get farm_path(other_farm)
+    assert_response :success
+    assert_select "h1", other_farm.name
+  end
+
+  test "regular user should not be able to access other user's farm" do
+    # Create regular user
+    regular_user = users(:two)  # admin: false
+    regular_session = Session.create_for_user(regular_user)
+    cookies[:session_id] = regular_session.session_id
+
+    # Create another user's farm
+    other_user = User.create!(
+      email: 'other@example.com',
+      name: 'Other User',
+      google_id: "google_#{SecureRandom.hex(8)}"
+    )
+    other_farm = Farm.create!(
+      user: other_user,
+      name: "Other User's Farm",
+      latitude: 35.6812,
+      longitude: 139.7671
+    )
+
+    # Regular user should not be able to access other user's farm
+    get farm_path(other_farm)
+    assert_redirected_to farms_path
+  end
 end

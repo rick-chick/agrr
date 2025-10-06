@@ -39,3 +39,4 @@ class FieldShowNoMapTest < ActionDispatch::IntegrationTest
     assert_select ".field-coordinates", text: /位置情報なし/
   end
 end
+

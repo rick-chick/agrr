@@ -59,8 +59,9 @@ Rails.application.configure do
   # Suppress logger output for asset requests.
   config.assets.quiet = true
   
-  # Enable live compilation of assets
+  # Enable live asset compilation in development
   config.assets.debug = true
+  config.assets.digest = true
   config.assets.compile = true
 
   # Raises error for missing translations.
@@ -81,6 +82,16 @@ Rails.application.configure do
   # Allow local hosts during development
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"
+
+  # Content Security Policy for development
+  config.content_security_policy do |policy|
+    policy.default_src :self, :https
+    policy.font_src    :self, :https, :data
+    policy.img_src     :self, :https, :data
+    policy.object_src  :none
+    policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval
+    policy.style_src   :self, :https, :unsafe_inline
+  end
 
   # Google OAuth development configuration
   config.after_initialize do

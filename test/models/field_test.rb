@@ -5,11 +5,11 @@ require "test_helper"
 class FieldTest < ActiveSupport::TestCase
   def setup
     @user = users(:one)
+    @farm = farms(:one)
     @field = Field.new(
+      farm: @farm,
       user: @user,
-      name: "テスト圃場",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "テスト圃場"
     )
   end
 
@@ -27,37 +27,6 @@ class FieldTest < ActiveSupport::TestCase
     assert_not @field.valid?
   end
 
-  test "latitude should be present" do
-    @field.latitude = nil
-    assert_not @field.valid?
-  end
-
-  test "latitude should be within valid range" do
-    @field.latitude = -91
-    assert_not @field.valid?
-    
-    @field.latitude = 91
-    assert_not @field.valid?
-    
-    @field.latitude = 35.6812
-    assert @field.valid?
-  end
-
-  test "longitude should be present" do
-    @field.longitude = nil
-    assert_not @field.valid?
-  end
-
-  test "longitude should be within valid range" do
-    @field.longitude = -181
-    assert_not @field.valid?
-    
-    @field.longitude = 181
-    assert_not @field.valid?
-    
-    @field.longitude = 139.7671
-    assert @field.valid?
-  end
 
   test "name should be unique per user" do
     duplicate_field = @field.dup
@@ -77,24 +46,6 @@ class FieldTest < ActiveSupport::TestCase
     assert_equal @user, @field.user
   end
 
-  test "coordinates method should return array" do
-    expected_coordinates = [@field.latitude, @field.longitude]
-    assert_equal expected_coordinates, @field.coordinates
-  end
-
-  test "has_coordinates? should return true when both coordinates present" do
-    assert @field.has_coordinates?
-  end
-
-  test "has_coordinates? should return false when latitude missing" do
-    @field.latitude = nil
-    assert_not @field.has_coordinates?
-  end
-
-  test "has_coordinates? should return false when longitude missing" do
-    @field.longitude = nil
-    assert_not @field.has_coordinates?
-  end
 
   test "display_name should return name when present" do
     assert_equal @field.name, @field.display_name
@@ -114,17 +65,15 @@ class FieldTest < ActiveSupport::TestCase
     )
     
     field1 = Field.create!(
+      farm: @farm,
       user: @user,
-      name: "User 1 Field",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "User 1 Field"
     )
     
     field2 = Field.create!(
+      farm: @farm,
       user: user2,
-      name: "User 2 Field",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "User 2 Field"
     )
     
     user1_fields = Field.by_user(@user)
@@ -134,17 +83,15 @@ class FieldTest < ActiveSupport::TestCase
 
   test "recent scope should order by created_at desc" do
     field1 = Field.create!(
+      farm: @farm,
       user: @user,
-      name: "Field 1",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "Field 1"
     )
     
     field2 = Field.create!(
+      farm: @farm,
       user: @user,
-      name: "Field 2",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "Field 2"
     )
     
     recent_fields = Field.recent

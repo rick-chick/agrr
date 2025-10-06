@@ -31,3 +31,4 @@ class Farm < ApplicationRecord
   end
 end
 
+

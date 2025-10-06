@@ -193,12 +193,16 @@ body {
   border-radius: 6px;
   margin-bottom: 1rem;
   position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
 #map {
   height: 100%;
   width: 100%;
   border-radius: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .map-placeholder {

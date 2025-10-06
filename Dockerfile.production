@@ -1,7 +1,7 @@
 # Multi-stage build for production
 FROM ruby:3.3.9-slim AS builder
 
-# Install system dependencies (including SQLite)
+# Install system dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libsqlite3-dev \
@@ -9,6 +9,9 @@ RUN apt-get update -qq && apt-get install -y \
     curl \
     ca-certificates \
     dos2unix \
+    gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -22,15 +25,21 @@ RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install
 
+# Copy package.json and install Node.js dependencies
+COPY package.json ./
+RUN npm install
+
 # Copy the rest of the application
 COPY . .
 
 # Fix line endings to prevent shebang warnings
 RUN find /app -name "*.rb" -type f -exec dos2unix {} \; 2>/dev/null || true
 
+# Build JavaScript assets
+RUN npm run build
+
 # Create storage directory for SQLite databases
 RUN mkdir -p storage
-
 
 # Precompile assets (with dummy master key if needed)
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
@@ -41,12 +50,15 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails db:create db:mi
 # Production stage
 FROM ruby:3.3.9-slim
 
-# Install runtime dependencies (including SQLite)
+# Install runtime dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
     libyaml-0-2 \
     curl \
     ca-certificates \
+    gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
@@ -62,6 +74,10 @@ COPY --from=builder --chown=appuser:appuser /app /app
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install
+
+# Install Node.js dependencies for runtime (if needed)
+COPY package.json ./
+RUN npm install --production
 
 # Create storage directory with proper permissions
 RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage

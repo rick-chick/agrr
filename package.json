@@ -1,0 +1,13 @@
+{
+  "name": "app",
+  "private": true,
+  "scripts": {
+    "build": "npx esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --external:*.png --external:*.jpg --external:*.jpeg --external:*.gif --external:*.svg"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10"
+  }
+}

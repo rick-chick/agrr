@@ -5,16 +5,21 @@ require "test_helper"
 class FieldsControllerTest < ActionDispatch::IntegrationTest
   def setup
     @user = create_authenticated_user
-    @field = Field.create!(
+    @farm = Farm.create!(
       user: @user,
-      name: "テスト圃場",
+      name: "テスト農場",
       latitude: 35.6812,
       longitude: 139.7671
+    )
+    @field = Field.create!(
+      farm: @farm,
+      user: @user,
+      name: "テスト圃場"
     )
   end
 
   test "should get index when authenticated" do
-    get fields_path
+    get farm_fields_path(@farm)
     assert_response :success
     assert_select "h1", "圃場一覧"
   end

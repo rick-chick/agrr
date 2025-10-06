@@ -6,8 +6,11 @@ ruby "3.3.9"
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.0"
 
-# The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
-gem "sprockets-rails"
+# Use Propshaft for asset pipeline (Rails 8 default)
+gem "propshaft"
+
+# Use jsbundling-rails for JavaScript bundling
+gem "jsbundling-rails"
 
 # Use SQLite3 as the database for Active Record (production-ready with Rails 8)
 gem "sqlite3", ">= 2.1"

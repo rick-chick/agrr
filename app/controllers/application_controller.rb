@@ -39,6 +39,20 @@ class ApplicationController < ActionController::Base
   def logged_in?
     current_user.present?
   end
+
+  def admin_user?
+    current_user&.admin?
+  end
+
+  def authenticate_admin!
+    return if admin_user?
+    
+    if request.format.json?
+      render json: { error: 'Admin access required.' }, status: :forbidden
+    else
+      redirect_to root_path, alert: 'Admin access required.'
+    end
+  end
   
-  helper_method :current_user, :logged_in?
+  helper_method :current_user, :logged_in?, :admin_user?
 end

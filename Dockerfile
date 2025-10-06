@@ -1,16 +1,23 @@
 # Use the official Ruby image as the base image
 FROM ruby:3.3.9-slim
 
-# Install system dependencies (including SQLite and YAML)
+# Install system dependencies (including SQLite, YAML, and Node.js)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libsqlite3-dev \
     libyaml-dev \
     curl \
+    gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
+
+# Copy package.json and install Node.js dependencies
+COPY package.json ./
+RUN npm install
 
 # Copy Gemfile and Gemfile.lock (if exists)
 COPY Gemfile ./
@@ -26,6 +33,9 @@ COPY . .
 
 # Create storage directory for SQLite databases and tmp directories
 RUN mkdir -p storage tmp/cache tmp/pids tmp/sockets
+
+# Build JavaScript assets
+RUN npm run build
 
 # Create a non-root user and set permissions
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app && chown -R appuser:appuser /usr/local/bundle
