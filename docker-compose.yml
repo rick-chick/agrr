@@ -13,10 +13,7 @@ services:
       - bundle_cache:/usr/local/bundle/cache
       - /app/tmp
       - /app/log
-      - /app/node_modulesfields-0cb573cf4fdb0e32815790f0e5ee53ce6f8b3bd6cbd2d9dceb383d8fc54d84c2.js:12 Uncaught TypeError: Cannot read properties of null (reading 'value')
-    at initMap (fields-0cb573cf4fdb0e32815790f0e5ee53ce6f8b3bd6cbd2d9dceb383d8fc54d84c2.js:12:74)
-    at HTMLDocument.<anonymous> (fields-0cb573cf4fdb0e32815790f0e5ee53ce6f8b3bd6cbd2d9dceb383d8fc54d84c2.js:76:5)
-
+      - /app/node_modules
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
