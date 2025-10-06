@@ -33,6 +33,10 @@ Rails.application.routes.draw do
       get 'health', to: 'base#health_check'
       # File management endpoints
       resources :files, only: [:index, :show, :create, :destroy]
+      # Farm and Field management endpoints
+      resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
+        resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
+      end
     end
   end
 
