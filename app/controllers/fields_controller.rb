@@ -66,6 +66,6 @@ class FieldsController < ApplicationController
   end
 
   def field_params
-    params.require(:field).permit(:name, :latitude, :longitude, :description)
+    params.require(:field).permit(:name, :description)
   end
 end

@@ -82,7 +82,7 @@ class Api::V1::Fields::FieldApiController < ApplicationController
         end
 
         def field_params
-          params.require(:field).permit(:name, :latitude, :longitude, :description)
+          params.require(:field).permit(:name, :description)
         end
 
         def field_to_json(field)
@@ -90,11 +90,7 @@ class Api::V1::Fields::FieldApiController < ApplicationController
             id: field.id,
             farm_id: field.farm_id,
             name: field.name,
-            latitude: field.latitude,
-            longitude: field.longitude,
             description: field.description,
-            coordinates: field.coordinates,
-            has_coordinates: field.has_coordinates?,
             display_name: field.display_name,
             created_at: field.created_at,
             updated_at: field.updated_at
