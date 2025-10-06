@@ -19,15 +19,15 @@ class Field < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   # Instance methods
+  def display_name
+    name.presence || "圃場 ##{id}"
+  end
+
   def coordinates
     [latitude, longitude]
   end
 
   def has_coordinates?
     latitude.present? && longitude.present?
-  end
-
-  def display_name
-    name.presence || "圃場 ##{id}"
   end
 end

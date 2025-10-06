@@ -54,11 +54,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_123838) do
     t.integer "farm_id", null: false
     t.integer "user_id", null: false
     t.string "name", null: false
-    t.decimal "latitude", precision: 10, scale: 8
-    t.decimal "longitude", precision: 11, scale: 8
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "latitude", precision: 10, scale: 8
+    t.decimal "longitude", precision: 11, scale: 8
     t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name", unique: true
     t.index ["farm_id"], name: "index_fields_on_farm_id"
     t.index ["user_id", "name"], name: "index_fields_on_user_id_and_name", unique: true
