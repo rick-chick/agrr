@@ -193,4 +193,163 @@ class CropsSystemTest < ApplicationSystemTestCase
     assert_text "最初の作物を追加して始めましょう"
     assert_selector "a", text: "作物を追加"
   end
+
+  test "adding crop stages dynamically with JavaScript" do
+    sign_in_as(@user)
+    visit new_crop_path
+    
+    # Fill in basic crop information
+    fill_in "名前", with: "テスト作物"
+    fill_in "品種", with: "テスト品種"
+    
+    # Initially, there should be no crop stages
+    assert_selector ".crop-stage-item", count: 0
+    
+    # Click the add crop stage button
+    click_button "+ 生育ステージを追加"
+    
+    # A new crop stage should appear
+    assert_selector ".crop-stage-item", count: 1
+    
+    # Fill in the first stage
+    within first(".crop-stage-item") do
+      fill_in "ステージ名", with: "発芽期"
+      fill_in "順序", with: "0"
+      
+      # Fill in temperature requirements
+      all("input[placeholder='例：5.0']").first.set("5.0")  # base_temperature
+      all("input[placeholder='例：15.0']").first.set("15.0") # optimal_min
+      all("input[placeholder='例：25.0']").first.set("25.0") # optimal_max
+      all("input[placeholder='例：10.0']").first.set("10.0") # low_stress_threshold
+      all("input[placeholder='例：30.0']").first.set("30.0") # high_stress_threshold
+      all("input[placeholder='例：0.0']").first.set("0.0")   # frost_threshold
+      all("input[placeholder='例：35.0']").first.set("35.0") # sterility_risk_threshold
+      
+      # Fill in sunshine requirements
+      all("input[placeholder='例：4.0']").first.set("4.0")   # minimum_sunshine_hours
+      all("input[placeholder='例：8.0']").first.set("8.0")   # target_sunshine_hours
+    end
+    
+    # Add a second stage
+    click_button "+ 生育ステージを追加"
+    assert_selector ".crop-stage-item", count: 2
+    
+    # Fill in the second stage
+    within all(".crop-stage-item").last do
+      fill_in "ステージ名", with: "栄養成長期"
+      fill_in "順序", with: "1"
+    end
+    
+    # Submit the form
+    click_button "作物を作成"
+    
+    # Verify crop was created with stages
+    assert_text "作物が正常に作成されました"
+    assert_text "テスト作物"
+    assert_text "発芽期"
+    assert_text "栄養成長期"
+    
+    # Verify temperature requirements are displayed
+    assert_text "温度要件"
+    assert_text "最低限界温度: 5.0°C"
+    assert_text "最適温度: 15.0〜25.0°C"
+    
+    # Verify sunshine requirements are displayed
+    assert_text "日照要件"
+    assert_text "最低日照時間: 4.0時間"
+    assert_text "目標日照時間: 8.0時間"
+  end
+
+  test "removing crop stages dynamically" do
+    sign_in_as(@user)
+    
+    # Create a crop with existing stages
+    crop = Crop.create!(
+      name: "削除テスト作物",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    stage1 = crop.crop_stages.create!(name: "発芽期", order: 0)
+    stage2 = crop.crop_stages.create!(name: "栄養成長期", order: 1)
+    
+    visit edit_crop_path(crop)
+    
+    # Both stages should be visible
+    assert_selector ".crop-stage-item", count: 2
+    assert_text "発芽期"
+    assert_text "栄養成長期"
+    
+    # Remove the first stage
+    within first(".crop-stage-item") do
+      click_button "削除"
+    end
+    
+    # The first stage should be hidden
+    assert_selector ".crop-stage-item", visible: :all, count: 2
+    assert_selector ".crop-stage-item", visible: :visible, count: 1
+    
+    # Submit the form
+    click_button "作物を更新"
+    
+    assert_text "作物が正常に更新されました"
+    
+    # Verify the stage was deleted
+    assert_no_text "発芽期"
+    assert_text "栄養成長期"
+  end
+
+  test "adding new stages to existing crop" do
+    sign_in_as(@user)
+    
+    # Create a crop with one existing stage
+    crop = Crop.create!(
+      name: "追加テスト作物",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    crop.crop_stages.create!(name: "発芽期", order: 0)
+    
+    visit edit_crop_path(crop)
+    
+    # One stage should exist
+    assert_selector ".crop-stage-item", count: 1
+    
+    # Add a new stage
+    click_button "+ 生育ステージを追加"
+    
+    # Two stages should be visible now
+    assert_selector ".crop-stage-item", count: 2
+    
+    # Fill in the new stage
+    within all(".crop-stage-item").last do
+      fill_in "ステージ名", with: "開花期"
+      fill_in "順序", with: "1"
+    end
+    
+    # Submit the form
+    click_button "作物を更新"
+    
+    assert_text "作物が正常に更新されました"
+    
+    # Verify both stages are present
+    assert_text "発芽期"
+    assert_text "開花期"
+  end
+
+  test "JavaScript functionality - button exists and is clickable" do
+    sign_in_as(@user)
+    visit new_crop_path
+    
+    # Verify the add button exists
+    assert_selector "button#add-crop-stage", text: "+ 生育ステージを追加"
+    
+    # Verify the container exists
+    assert_selector "#crop-stages"
+    
+    # The button should be clickable (not disabled)
+    button = find("button#add-crop-stage")
+    assert_not button.disabled?
+  end
 end

@@ -22,7 +22,8 @@ function waitForLeaflet(callback, maxAttempts = 100) {
   setTimeout(() => waitForLeaflet(callback, maxAttempts - 1), 100);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+// Turbo対応: turbo:loadイベントでページ読み込み時とTurbo遷移時の両方で地図を初期化
+document.addEventListener('turbo:load', function() {
   // 地図要素が存在する場合のみ初期化
   const mapElement = document.getElementById('map');
   if (!mapElement) {
@@ -31,6 +32,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Leafletの読み込み完了を待つ
   waitForLeaflet(initializeMapComponents);
+});
+
+// Turboキャッシュ前に地図をクリーンアップ
+document.addEventListener('turbo:before-cache', function() {
+  if (map) {
+    console.log('Cleaning up map before Turbo cache');
+    map.remove();
+    map = null;
+    marker = null;
+    isInitialized = false;
+  }
 });
 
 // 地図の初期化

@@ -6,30 +6,10 @@
 </div>
     
     <% if @farms.any? %>
-      <div class="fields-grid">
+      <div class="fields-grid" id="farms">
         <% @farms.each do |farm| %>
-          <div class="field-card">
-            <h3 class="field-name"><%= farm.display_name %></h3>
-            <% if farm.has_coordinates? %>
-              <div class="field-coordinates">
-                📍 緯度: <%= farm.latitude %><br>
-                📍 経度: <%= farm.longitude %>
-              </div>
-            <% else %>
-              <div class="field-coordinates">📍 位置情報が設定されていません</div>
-            <% end %>
-            <div class="field-info">
-              <p>圃場数: <%= farm.fields.count %>個</p>
-            </div>
-            <div class="field-actions">
-              <%= link_to "詳細", farm, class: "btn btn-small" %>
-              <%= link_to "圃場一覧", farm_fields_path(farm), class: "btn btn-small btn-info" %>
-              <%= link_to "編集", edit_farm_path(farm), class: "btn btn-small btn-secondary" %>
-              <%= button_to "削除", farm, method: :delete, 
-                          class: "btn btn-small btn-danger", 
-                          confirm: "この農場を削除しますか？" %>
-            </div>
-          </div>
+          <%= turbo_stream_from farm %>
+          <%= render "farm_card_wrapper", farm: farm %>
         <% end %>
       </div>
     <% else %>

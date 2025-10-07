@@ -79,6 +79,29 @@ Rails.application.configure do
   # Use local file storage for development
   # config.active_storage.service = :local
 
+  # Use async adapter for background jobs in development (simpler than Solid Queue)
+  # APの軽量化優先：最小限のスレッド数でAPへの影響を最小化
+  config.active_job.queue_adapter = :async
+  config.active_job.async_queue_size = 1
+  
+  # 特定のキューに対してスレッド数を制限
+  config.after_initialize do
+    if Rails.env.development?
+      # 天気データ取得ジョブを順次実行
+      Rails.application.config.active_job.queue_adapter = ActiveJob::QueueAdapters::AsyncAdapter.new(
+        min_threads: 1,
+        max_threads: 1,
+        queues: {
+          'weather_data_sequential' => 1,
+          'default' => 1
+        }
+      )
+    end
+  end
+
+  # Set log level to info to see background job logs
+  config.log_level = :info
+
   # Allow local hosts during development
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"

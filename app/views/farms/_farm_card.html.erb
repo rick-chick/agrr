@@ -1,0 +1,38 @@
+<div class="field-card">
+  <h3 class="field-name"><%= farm.display_name %></h3>
+  <% if farm.has_coordinates? %>
+    <div class="field-coordinates">
+      📍 緯度: <%= farm.latitude %><br>
+      📍 経度: <%= farm.longitude %>
+    </div>
+  <% else %>
+    <div class="field-coordinates">📍 位置情報が設定されていません</div>
+  <% end %>
+  <div class="field-info">
+    <p>圃場数: <%= farm.fields.count %>個</p>
+    <p>
+      <strong>天気データ:</strong>
+      <span class="weather-status weather-status-<%= farm.weather_data_status %>">
+        <%= farm.weather_data_status_text %>
+      </span>
+      <% if farm.fetching? && farm.weather_data_total_years > 0 %>
+        <div class="progress-bar">
+          <div class="progress-fill" data-progress="<%= farm.weather_data_progress %>"></div>
+        </div>
+      <% end %>
+      <% if farm.failed? && farm.weather_data_last_error.present? %>
+        <small class="error-message"><%= farm.weather_data_last_error.truncate(100) %></small>
+      <% end %>
+    </p>
+  </div>
+  <div class="field-actions">
+    <%= link_to "詳細", farm, class: "btn btn-small", data: { turbo_frame: "_top" } %>
+    <%= link_to "圃場一覧", farm_fields_path(farm), class: "btn btn-small btn-info", data: { turbo_frame: "_top" } %>
+    <%= link_to "編集", edit_farm_path(farm), class: "btn btn-small btn-secondary", data: { turbo_frame: "_top" } %>
+    <%= button_to "削除", farm, method: :delete, 
+                class: "btn btn-small btn-danger", 
+                data: { turbo_frame: "_top" },
+                form: { data: { turbo_confirm: "この農場を削除しますか？" } } %>
+  </div>
+</div>
+

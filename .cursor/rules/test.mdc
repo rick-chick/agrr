@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+dockerでテストすること。ただしdockerc-compose.ymlにテスト機能を追加してとは頼んではいない。

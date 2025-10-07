@@ -4,15 +4,17 @@ require "application_system_test_case"
 
 class FarmsSystemTest < ApplicationSystemTestCase
   def setup
+    super
     @user = users(:one)
     @session = sessions(:one)
-    
-    # Set session cookie
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: @session.session_id,
-      domain: 'localhost'
-    )
+  end
+
+  def login_as(user = nil, session = nil)
+    #  Test環境でモックログインエンドポイントを使用
+    # これにより、正しくクッキーが設定される
+    visit '/auth/test/mock_login'
+    # ログインが完了するまで待機
+    assert_text "Mock login successful"
   end
 
   test "visiting the farms index" do
@@ -242,6 +244,107 @@ class FarmsSystemTest < ApplicationSystemTestCase
     # Verify Leaflet files are loaded
     assert_selector "link[href='/leaflet.css']"
     assert_selector "script[src='/leaflet.js']"
+  end
+
+  test "map displays when navigating to new farm page via Turbo" do
+    # ログイン
+    login_as(@user, @session)
+    
+    # デバッグ: ログインが成功したことを確認
+    # puts page.body
+    
+    # まず農場一覧ページにアクセス
+    visit farms_path
+    
+    # デバッグ: ページの内容を確認
+    # puts page.body
+    # save_screenshot('/app/tmp/test_debug.png')
+    
+    assert_selector "h1", text: "農場一覧"
+    
+    # Turbo経由で新規農場作成ページに遷移
+    click_link "農場を追加"
+    assert_selector "h1", text: "新しい農場を追加"
+    
+    # 地図のコンテナが存在することを確認
+    assert_selector "#map", visible: true
+    
+    # JavaScriptが実行されるまで少し待つ
+    sleep 1
+    
+    # 地図が実際に初期化されているか確認（プレースホルダーが非表示になっているはず）
+    # Leafletが正常に読み込まれている場合、map-placeholderは非表示になる
+    placeholder = page.find("#map-placeholder", visible: :all)
+    
+    # プレースホルダーが非表示になっていることを確認
+    # （地図が正常に表示されている場合）
+    # または、エラーメッセージが表示されていないことを確認
+    refute placeholder.visible?, "地図のプレースホルダーが表示されたままです。地図が初期化されていない可能性があります。"
+  end
+
+  test "map displays when navigating to edit farm page via Turbo" do
+    # ログイン
+    login_as(@user, @session)
+    
+    # ログイン後のユーザーを取得（モックログインで作成されたユーザー）
+    logged_in_user = User.find_by(google_id: 'google_12345678')
+    
+    # テスト用の農場を作成
+    farm = Farm.create!(
+      user: logged_in_user,
+      name: "編集テスト農場",
+      latitude: 35.6812,
+      longitude: 139.7671
+    )
+    
+    # 農場の編集ページに直接アクセス
+    visit edit_farm_path(farm)
+    
+    assert_selector "h1", text: "農場を編集"
+    
+    # 地図のコンテナが存在することを確認
+    assert_selector "#map", visible: true
+    
+    # JavaScriptが実行されるまで少し待つ
+    sleep 1
+    
+    # 地図が実際に初期化されているか確認
+    placeholder = page.find("#map-placeholder", visible: :all)
+    
+    # プレースホルダーが非表示になっていることを確認
+    # 直接アクセス（非Turbo遷移）でも地図が正しく表示されることを確認
+    refute placeholder.visible?, "地図のプレースホルダーが表示されたままです。地図が初期化されていない可能性があります。"
+  end
+
+  test "map displays after Turbo navigation back and forth" do
+    # ログイン
+    login_as(@user, @session)
+    
+    # 農場一覧ページから開始
+    visit farms_path
+    assert_selector "h1", text: "農場一覧"
+    
+    # 新規作成ページに遷移
+    click_link "農場を追加"
+    assert_selector "h1", text: "新しい農場を追加"
+    
+    # 地図が初期化されているか確認
+    sleep 1
+    placeholder = page.find("#map-placeholder", visible: :all)
+    refute placeholder.visible?, "最初のTurbo遷移後に地図が初期化されていません"
+    
+    # 戻る
+    click_link "キャンセル"
+    assert_selector "h1", text: "農場一覧"
+    
+    # 再度新規作成ページに遷移
+    click_link "農場を追加"
+    assert_selector "h1", text: "新しい農場を追加"
+    sleep 1
+    
+    # 地図が再度初期化されているか確認
+    placeholder = page.find("#map-placeholder", visible: :all)
+    refute placeholder.visible?, "2回目のTurbo遷移後に地図が初期化されていません"
   end
 
   private

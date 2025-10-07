@@ -17,10 +17,20 @@ class WeatherLocation < ApplicationRecord
 
   # Class methods
   def self.find_or_create_by_coordinates(latitude:, longitude:, elevation: nil, timezone: nil)
-    find_or_create_by!(latitude: latitude, longitude: longitude) do |location|
-      location.elevation = elevation
-      location.timezone = timezone || 'UTC'
-    end
+    # 既存のレコードを検索
+    location = find_by(latitude: latitude, longitude: longitude)
+    return location if location
+    
+    # 存在しない場合は作成（競合状態を考慮）
+    create!(
+      latitude: latitude,
+      longitude: longitude,
+      elevation: elevation,
+      timezone: timezone || 'UTC'
+    )
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    # 別のジョブが同時に作成した場合は再取得
+    find_by!(latitude: latitude, longitude: longitude)
   end
 
   # Instance methods

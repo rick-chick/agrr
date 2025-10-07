@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_07_114528) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_07_225738) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -66,8 +66,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_07_114528) do
     t.decimal "longitude", precision: 11, scale: 8
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "weather_data_status", default: "pending", null: false
+    t.integer "weather_data_fetched_years", default: 0, null: false
+    t.integer "weather_data_total_years", default: 0, null: false
+    t.text "weather_data_last_error"
+    t.datetime "last_broadcast_at"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_farms_on_user_id"
+    t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
   end
 
   create_table "fields", force: :cascade do |t|
@@ -95,6 +101,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_07_114528) do
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["session_id"], name: "index_sessions_on_session_id", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "solid_cable_messages", force: :cascade do |t|
+    t.binary "channel", limit: 1024, null: false
+    t.binary "payload", limit: 536870912, null: false
+    t.datetime "created_at", null: false
+    t.integer "channel_hash", limit: 8, null: false
+    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
+    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
+    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|

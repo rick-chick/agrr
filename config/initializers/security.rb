@@ -34,6 +34,10 @@ Rails.application.configure do
 
   # Generate nonces for inline scripts if needed
   config.content_security_policy_nonce_generator = ->(request) { SecureRandom.base64(16) }
+  
+  # Only apply nonce to scripts, not styles
+  # This allows inline styles (used by JavaScript) while protecting against script injection
+  config.content_security_policy_nonce_directives = %w[script-src]
 end
 
 # Rate limiting configuration (would use rack-attack gem in production)

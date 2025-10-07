@@ -12,6 +12,10 @@ gem "propshaft"
 # Use jsbundling-rails for JavaScript bundling
 gem "jsbundling-rails"
 
+# Hotwire's SPA-like page accelerator and realtime updates
+gem "turbo-rails"
+gem "stimulus-rails"
+
 # Use SQLite3 as the database for Active Record (production-ready with Rails 8)
 gem "sqlite3", ">= 2.1"
 

@@ -1,0 +1,16 @@
+<div class="requirement-fields">
+  <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :minimum_sunshine_hours, '最低日照時間 (時間)', class: 'form-label' %>
+      <%= f.number_field :minimum_sunshine_hours, class: 'form-control', step: 0.1, placeholder: '例：4.0' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :target_sunshine_hours, '目標日照時間 (時間)', class: 'form-label' %>
+      <%= f.number_field :target_sunshine_hours, class: 'form-control', step: 0.1, placeholder: '例：8.0' %>
+    </div>
+  </div>
+</div>
+

@@ -62,8 +62,8 @@ Rails.application.configure do
   # Use SQLite for caching in test
   config.cache_store = :solid_cache_store
 
-  # Use SQLite for queue in test
-  config.active_job.queue_adapter = :solid_queue
+  # Use test adapter for queue in test
+  config.active_job.queue_adapter = :test
 
   # Disable Action Cable in test
   config.action_cable.disable_request_forgery_protection = true

@@ -28,8 +28,10 @@ class FarmsController < ApplicationController
     @farm = current_user.farms.build(farm_params)
 
     if @farm.save
+      Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
       redirect_to @farm, notice: '農場が正常に作成されました。'
     else
+      Rails.logger.warn "⚠️  Failed to create farm: #{@farm.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_entity
     end
   end

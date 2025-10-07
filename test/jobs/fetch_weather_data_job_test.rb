@@ -104,5 +104,36 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     assert_equal 1, WeatherLocation.count
     assert_equal 3, WeatherDatum.count
   end
+
+  test "has retry configuration" do
+    # リトライ機能の定数が設定されていることを確認
+    assert_equal 5, FetchWeatherDataJob::MAX_RETRY_ATTEMPTS
+  end
+
+  test "handles API errors gracefully" do
+    skip "Test requires agrr command" unless File.exist?(Rails.root.join('lib', 'core', 'agrr'))
+
+    user = users(:one)
+    farm = Farm.create!(
+      name: "Test Farm",
+      latitude: 999.0,  # 不正な緯度でエラーを発生させる
+      longitude: 999.0,  # 不正な経度でエラーを発生させる
+      user: user,
+      weather_data_status: 'fetching',
+      weather_data_total_years: 1,
+      weather_data_fetched_years: 0
+    )
+
+    # エラーが発生することを確認
+    assert_raises(StandardError) do
+      FetchWeatherDataJob.perform_now(
+        latitude: farm.latitude,
+        longitude: farm.longitude,
+        start_date: Date.new(2025, 9, 1),
+        end_date: Date.new(2025, 9, 1),
+        farm_id: farm.id
+      )
+    end
+  end
 end
 

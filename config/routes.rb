@@ -14,8 +14,8 @@ Rails.application.routes.draw do
   get '/auth/failure', to: 'auth#failure'
   delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
   
-  # Development test routes
-  if Rails.env.development?
+  # Development and test routes
+  if Rails.env.development? || Rails.env.test?
     get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
     get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
     get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'

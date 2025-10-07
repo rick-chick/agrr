@@ -70,7 +70,34 @@ class CropsController < ApplicationController
   end
 
   def crop_params
-    params.require(:crop).permit(:name, :variety, :is_reference)
+    params.require(:crop).permit(
+      :name, 
+      :variety, 
+      :is_reference,
+      crop_stages_attributes: [
+        :id,
+        :name,
+        :order,
+        :_destroy,
+        temperature_requirement_attributes: [
+          :id,
+          :base_temperature,
+          :optimal_min,
+          :optimal_max,
+          :low_stress_threshold,
+          :high_stress_threshold,
+          :frost_threshold,
+          :sterility_risk_threshold,
+          :_destroy
+        ],
+        sunshine_requirement_attributes: [
+          :id,
+          :minimum_sunshine_hours,
+          :target_sunshine_hours,
+          :_destroy
+        ]
+      ]
+    )
   end
 end
 

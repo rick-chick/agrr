@@ -1,3 +1,5 @@
 ---
 alwaysApply: true
 ---
+Propshatはapp/assets、jsbinderはvender/assets。Propshaftがライブラリのassetsを管理してはならない
+rails8なのでモデルに情報が少ない。常にwebで仕様を検索すること。
