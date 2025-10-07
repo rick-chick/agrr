@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_06_070000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_07_114528) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -240,6 +240,30 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_070000) do
     t.index ["google_id"], name: "index_users_on_google_id", unique: true
   end
 
+  create_table "weather_data", force: :cascade do |t|
+    t.integer "weather_location_id", null: false
+    t.date "date"
+    t.decimal "temperature_max"
+    t.decimal "temperature_min"
+    t.decimal "temperature_mean"
+    t.decimal "precipitation"
+    t.decimal "sunshine_hours"
+    t.decimal "wind_speed"
+    t.integer "weather_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["weather_location_id"], name: "index_weather_data_on_weather_location_id"
+  end
+
+  create_table "weather_locations", force: :cascade do |t|
+    t.decimal "latitude"
+    t.decimal "longitude"
+    t.decimal "elevation"
+    t.string "timezone"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "crop_stages", "crops"
@@ -251,4 +275,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_070000) do
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"
   add_foreign_key "thermal_requirements", "crop_stages"
+  add_foreign_key "weather_data", "weather_locations"
 end

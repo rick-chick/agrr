@@ -2,3 +2,5 @@
 // ライブラリ管理: npm/jsbundling-rails
 import "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./crop_form";
+import "./fields";
