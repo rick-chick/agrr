@@ -1,40 +1,91 @@
-<h1>作物詳細</h1>
+<% content_for :title, "#{@crop.name} - AGRR" %>
 
-<p>
-  <strong>名前:</strong> <%= @crop.name %>
-</p>
-<p>
-  <strong>品種:</strong> <%= @crop.variety %>
-</p>
-<p>
-  <strong>種類:</strong> <%= @crop.is_reference ? '参照' : 'ユーザ' %>
-</p>
-
-<h2>生育ステージ</h2>
-<% if @crop.crop_stages.any? %>
-  <ol>
-    <% @crop.crop_stages.order(:order).each do |stage| %>
-      <li>
-        <strong><%= stage.name %></strong> (順序: <%= stage.order %>)
-        <ul>
-          <% if stage.temperature_requirement %>
-            <li>温度: 基準=<%= stage.temperature_requirement.base_temperature %>, 最適=<%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>, 低ストレス=<%= stage.temperature_requirement.low_stress_threshold %>, 高ストレス=<%= stage.temperature_requirement.high_stress_threshold %>, 霜=<%= stage.temperature_requirement.frost_threshold %>, 不稔リスク=<%= stage.temperature_requirement.sterility_risk_threshold %></li>
-          <% end %>
-          <% if stage.sunshine_requirement %>
-            <li>日照: 最低=<%= stage.sunshine_requirement.minimum_sunshine_hours %>h, 目標=<%= stage.sunshine_requirement.target_sunshine_hours %>h</li>
-          <% end %>
-          <% if stage.thermal_requirement %>
-            <li>積算温度(GDD): 必要量=<%= stage.thermal_requirement.required_gdd %></li>
-          <% end %>
-        </ul>
-      </li>
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= @crop.name %></h1>
+    <div class="crop-detail-type <%= @crop.is_reference ? 'reference' : 'user' %>">
+      <%= @crop.is_reference ? '参照作物' : 'ユーザ作物' %>
+    </div>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">📝 名前:</span>
+      <span class="info-value"><%= @crop.name %></span>
+    </div>
+    
+    <% if @crop.variety.present? %>
+      <div class="info-item">
+        <span class="info-label">🌱 品種:</span>
+        <span class="info-value"><%= @crop.variety %></span>
+      </div>
     <% end %>
-  </ol>
-<% else %>
-  <p>ステージは未登録です。</p>
-<% end %>
-
-<p>
-  <%= link_to '編集', edit_crop_path(@crop) %> |
-  <%= link_to '一覧へ戻る', crops_path %>
-</p>
+    
+    <div class="info-item">
+      <span class="info-label">📅 作成日:</span>
+      <span class="info-value"><%= @crop.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 更新日:</span>
+      <span class="info-value"><%= @crop.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+    </div>
+  </div>
+  
+  <div class="stages-section">
+    <h2 class="stages-title">生育ステージ</h2>
+    <% if @crop.crop_stages.any? %>
+      <ol class="stages-list">
+        <% @crop.crop_stages.order(:order).each do |stage| %>
+          <li class="stage-item">
+            <div class="stage-name"><%= stage.name %></div>
+            <div class="stage-order">順序: <%= stage.order %></div>
+            
+            <% if stage.temperature_requirement || stage.sunshine_requirement %>
+              <div class="stage-requirements">
+                <% if stage.temperature_requirement %>
+                  <div class="requirement-item">
+                    <div class="requirement-label">🌡️ 温度要件</div>
+                    <div class="requirement-value">
+                      基準温度: <%= stage.temperature_requirement.base_temperature %>°C<br>
+                      最適温度: <%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>°C<br>
+                      低ストレス閾値: <%= stage.temperature_requirement.low_stress_threshold %>°C<br>
+                      高ストレス閾値: <%= stage.temperature_requirement.high_stress_threshold %>°C<br>
+                      霜閾値: <%= stage.temperature_requirement.frost_threshold %>°C<br>
+                      不稔リスク閾値: <%= stage.temperature_requirement.sterility_risk_threshold %>°C
+                    </div>
+                  </div>
+                <% end %>
+                
+                <% if stage.sunshine_requirement %>
+                  <div class="requirement-item">
+                    <div class="requirement-label">☀️ 日照要件</div>
+                    <div class="requirement-value">
+                      最低日照時間: <%= stage.sunshine_requirement.minimum_sunshine_hours %>時間<br>
+                      目標日照時間: <%= stage.sunshine_requirement.target_sunshine_hours %>時間
+                    </div>
+                  </div>
+                <% end %>
+                
+              </div>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+    <% else %>
+      <div class="no-stages">
+        <div class="empty-state-icon">🌱</div>
+        <h3>まだ生育ステージが登録されていません</h3>
+        <p>この作物の生育ステージを追加してください。</p>
+      </div>
+    <% end %>
+  </div>
+  
+  <div class="actions">
+    <%= link_to "作物一覧に戻る", crops_path, class: "btn" %>
+    <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
+    <%= button_to "削除", @crop, method: :delete, 
+                class: "btn btn-danger", 
+                confirm: "この作物を削除しますか？" %>
+  </div>
+</div>

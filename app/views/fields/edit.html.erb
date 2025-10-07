@@ -1,71 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>圃場編集 - <%= @farm.display_name %> - AGRR</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  
-  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
-  
-</head>
-<body>
-  <div class="header">
-    <div class="logo">AGRR</div>
-    <div class="user-info">
-      <a href="<%= root_path %>" class="nav-link">ホーム</a>
-      <%= link_to "農場", farms_path, class: "nav-link" %>
-      <% if current_user.avatar_url.present? %>
-        <%= image_tag current_user.avatar_url, alt: "User Avatar", class: "user-avatar" %>
-      <% end %>
-      <span><%= current_user.name %></span>
-      <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
-    </div>
-  </div>
-  
-  <div class="container">
-    <div class="breadcrumb">
-      <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to @field.display_name, farm_field_path(@farm, @field), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <span class="breadcrumb-current">編集</span>
+<% content_for :title, "圃場編集 - #{@farm.display_name} - AGRR" %>
+
+<div class="breadcrumb">
+  <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <%= link_to @field.display_name, farm_field_path(@farm, @field), class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <span class="breadcrumb-current">編集</span>
+</div>
+
+<div class="page-header">
+  <h1 class="page-title"><%= @farm.display_name %> - 圃場を編集</h1>
+</div>
+
+<div class="form-card">
+  <%= form_with model: [@farm, @field], local: true do |form| %>
+    <% if @field.errors.any? %>
+      <div style="color: #dc3545; margin-bottom: 1rem;">
+        <h4><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h4>
+        <ul>
+          <% @field.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    
+    <div class="form-group">
+      <%= form.label :name, "圃場名", class: "form-label" %>
+      <%= form.text_field :name, class: "form-control", placeholder: "例: 北側の田んぼ" %>
+      <div class="form-text">圃場の名前を入力してください</div>
     </div>
     
-    <div class="page-header">
-      <h1 class="page-title"><%= @farm.display_name %> - 圃場を編集</h1>
-    </div>
     
-    <div class="form-card">
-      <%= form_with model: [@farm, @field], local: true do |form| %>
-        <% if @field.errors.any? %>
-          <div style="color: #dc3545; margin-bottom: 1rem;">
-            <h4><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h4>
-            <ul>
-              <% @field.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
-              <% end %>
-            </ul>
-          </div>
-        <% end %>
-        
-        <div class="form-group">
-          <%= form.label :name, "圃場名", class: "form-label" %>
-          <%= form.text_field :name, class: "form-control", placeholder: "例: 北側の田んぼ" %>
-          <div class="form-text">圃場の名前を入力してください</div>
-        </div>
-        
-        
-        <div class="actions">
-          <%= form.submit "更新", class: "btn" %>
-          <%= link_to "キャンセル", farm_field_path(@farm, @field), class: "btn btn-secondary" %>
-        </div>
-      <% end %>
+    <div class="actions">
+      <%= form.submit "更新", class: "btn" %>
+      <%= link_to "キャンセル", farm_field_path(@farm, @field), class: "btn btn-secondary" %>
     </div>
-  </div>
-</body>
-</html>
+  <% end %>
+</div>

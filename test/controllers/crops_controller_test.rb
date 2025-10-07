@@ -4,8 +4,8 @@ require 'test_helper'
 
 class CropsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @user = users(:one)
-    @admin = users(:admin)
+    @user = users(:two)  # 一般ユーザー
+    @admin = users(:one) # 管理者ユーザー
   end
 
   test "index shows visible crops for signed in user" do
@@ -17,11 +17,17 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   test "create user crop" do
     sign_in_as(@user)
     assert_difference("Crop.count", +1) do
-      post crops_path, params: { crop: { name: "稲", variety: "コシヒカリ", is_reference: false } }
+      post crops_path, params: { crop: { name: "稲", variety: "コシヒカリ" } }
     end
+    assert_redirected_to crop_path(Crop.last)
     follow_redirect!
     assert_response :success
-    assert_match "作物が正常に作成されました。", @response.body
+    
+    crop = Crop.last
+    assert_equal "稲", crop.name
+    assert_equal "コシヒカリ", crop.variety
+    assert_equal false, crop.is_reference
+    assert_equal @user.id, crop.user_id
   end
 
   test "non-admin cannot create reference crop" do
@@ -56,7 +62,96 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
     get crop_path(crop)
     assert_response :success
-    assert_match "作物詳細", @response.body
+    assert_match crop.name, @response.body
+  end
+
+  test "show crop with stages" do
+    sign_in_as(@user)
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    
+    # Create a crop stage
+    stage = crop.crop_stages.create!(
+      name: "発芽期",
+      order: 1
+    )
+    
+    # Create temperature requirement separately
+    stage.create_temperature_requirement!(
+      base_temperature: 10,
+      optimal_min: 15,
+      optimal_max: 25,
+      low_stress_threshold: 5,
+      high_stress_threshold: 30,
+      frost_threshold: 0,
+      sterility_risk_threshold: 35
+    )
+    
+    get crop_path(crop)
+    assert_response :success
+    assert_match "発芽期", @response.body
+    assert_match "温度要件", @response.body
+  end
+
+  test "edit crop" do
+    sign_in_as(@user)
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    get edit_crop_path(crop)
+    assert_response :success
+    assert_match "編集", @response.body
+  end
+
+  test "update crop" do
+    sign_in_as(@user)
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    patch crop_path(crop), params: { crop: { name: "米", variety: "コシヒカリ" } }
+    assert_redirected_to crop_path(crop)
+    crop.reload
+    assert_equal "米", crop.name
+    assert_equal "コシヒカリ", crop.variety
+  end
+
+  test "delete crop" do
+    sign_in_as(@user)
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    assert_difference("Crop.count", -1) do
+      delete crop_path(crop)
+    end
+    assert_redirected_to crops_path
+  end
+
+  test "new crop page" do
+    sign_in_as(@user)
+    get new_crop_path
+    assert_response :success
+    assert_match "新しい作物を追加", @response.body
+  end
+
+  test "crop validation - name required" do
+    sign_in_as(@user)
+    assert_no_difference("Crop.count") do
+      post crops_path, params: { crop: { name: "", variety: "コシヒカリ" } }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "admin can update reference flag" do
+    sign_in_as(@admin)
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    patch crop_path(crop), params: { crop: { is_reference: true } }
+    assert_redirected_to crop_path(crop)
+    crop.reload
+    assert_equal true, crop.is_reference
+  end
+
+  test "unauthorized access to crops" do
+    get crops_path
+    assert_redirected_to auth_login_path
+  end
+
+  test "unauthorized access to specific crop" do
+    crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
+    get crop_path(crop)
+    assert_redirected_to auth_login_path
   end
 end
 

@@ -1,37 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>農場編集 - AGRR</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  
-  <!-- アプリケーション固有: Propshaft -->
-  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
-  
-  <!-- jsbundling-rails: Leafletを含むアプリケーションバンドル -->
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "fields", "data-turbo-track": "reload" %>
-</head>
-<body>
-  <div class="header">
-    <div class="logo">AGRR</div>
-    <div class="user-info">
-      <a href="<%= root_path %>" class="nav-link">ホーム</a>
-      <%= link_to "農場", farms_path, class: "nav-link" %>
-      <% if current_user.avatar_url.present? %>
-        <%= image_tag current_user.avatar_url, alt: "User Avatar", class: "user-avatar" %>
-      <% end %>
-      <span><%= current_user.name %></span>
-      <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
-    </div>
-  </div>
-  
-  <div class="container">
-    <div class="page-header">
-      <h1 class="page-title">農場を編集</h1>
-    </div>
+<% content_for :title, "農場編集 - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title">農場を編集</h1>
+</div>
     
     <div class="form-card">
       <%= form_with model: @farm, local: true do |form| %>
@@ -80,7 +51,4 @@
         </div>
       <% end %>
     </div>
-  </div>
-</body>
-</html>
 

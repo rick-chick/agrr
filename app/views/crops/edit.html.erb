@@ -1,8 +1,7 @@
-<h1>作物の編集</h1>
+<% content_for :title, "#{@crop.name}を編集 - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title"><%= @crop.name %>を編集</h1>
+</div>
 
 <%= render 'form' %>
-
-<p>
-  <%= link_to '詳細へ戻る', @crop %> |
-  <%= link_to '一覧へ戻る', crops_path %>
-</p>

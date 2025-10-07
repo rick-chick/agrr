@@ -1,42 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>新しい圃場 - <%= @farm.display_name %> - AGRR</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  
-  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
-  
-</head>
-<body>
-  <div class="header">
-    <div class="logo">AGRR</div>
-    <div class="user-info">
-      <a href="<%= root_path %>" class="nav-link">ホーム</a>
-      <%= link_to "農場", farms_path, class: "nav-link" %>
-      <% if current_user.avatar_url.present? %>
-        <%= image_tag current_user.avatar_url, alt: "User Avatar", class: "user-avatar" %>
-      <% end %>
-      <span><%= current_user.name %></span>
-      <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
-    </div>
-  </div>
-  
-  <div class="container">
-    <div class="breadcrumb">
-      <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
-      <span class="breadcrumb-separator">></span>
-      <span class="breadcrumb-current">新しい圃場</span>
-    </div>
-    
-    <div class="page-header">
-      <h1 class="page-title"><%= @farm.display_name %> - 新しい圃場を追加</h1>
-    </div>
+<% content_for :title, "新しい圃場 - #{@farm.display_name} - AGRR" %>
+
+<div class="breadcrumb">
+  <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
+  <span class="breadcrumb-separator">></span>
+  <span class="breadcrumb-current">新しい圃場</span>
+</div>
+
+<div class="page-header">
+  <h1 class="page-title"><%= @farm.display_name %> - 新しい圃場を追加</h1>
+</div>
     
     <div class="form-card">
       <%= form_with model: [@farm, @field], local: true do |form| %>
@@ -64,6 +40,3 @@
         </div>
       <% end %>
     </div>
-  </div>
-</body>
-</html>
