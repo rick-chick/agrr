@@ -43,6 +43,32 @@ class FetchWeatherDataJob < ApplicationJob
     year = start_date.year
     retry_info = executions > 1 ? " (リトライ #{executions - 1}/#{MAX_RETRY_ATTEMPTS})" : ""
     
+    # 既にデータが存在するかチェック
+    weather_location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+    if weather_location
+      expected_days = (start_date..end_date).count
+      existing_count = WeatherDatum.where(
+        weather_location: weather_location,
+        date: start_date..end_date
+      ).count
+      
+      if existing_count == expected_days
+        Rails.logger.info "⏭️  #{farm_info} Skipping #{year} - data already exists (#{existing_count}/#{expected_days} days)"
+        
+        # 進捗を更新
+        if farm_id
+          farm = Farm.find_by(id: farm_id)
+          if farm
+            farm.increment_weather_data_progress!
+            progress = farm.weather_data_progress
+            Rails.logger.info "📊 #{farm_info} Progress: #{progress}% (#{farm.weather_data_fetched_years}/#{farm.weather_data_total_years} years)"
+          end
+        end
+        
+        return
+      end
+    end
+    
     Rails.logger.info "🌤️  #{farm_info} Fetching weather data for #{year}#{retry_info} (#{latitude}, #{longitude})"
     
     # agrrコマンドを実行して気象データを取得
