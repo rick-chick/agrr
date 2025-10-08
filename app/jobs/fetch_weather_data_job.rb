@@ -9,8 +9,13 @@ class FetchWeatherDataJob < ApplicationJob
   MAX_RETRY_ATTEMPTS = 5
 
   # APIエラーやネットワークエラーに対してリトライする
-  # 指数バックオフで最大5回までリトライ（待機時間: 3秒、9秒、27秒、81秒、243秒）
-  retry_on StandardError, wait: ->(executions) { 3 * (3 ** executions) }, attempts: MAX_RETRY_ATTEMPTS do |job, exception|
+  # 指数バックオフ + ジッター（ランダム性）で最大5回までリトライ
+  # 基本待機時間: 3秒、9秒、27秒、81秒、243秒 + ランダム(0-50%)
+  retry_on StandardError, wait: ->(executions) { 
+    base_delay = 3 * (3 ** executions)
+    jitter = rand(0.0..0.5) * base_delay
+    (base_delay + jitter).to_i
+  }, attempts: MAX_RETRY_ATTEMPTS do |job, exception|
     # 最終リトライでも失敗した場合の処理
     farm_id = job.arguments.first[:farm_id]
     year = job.arguments.first[:start_date].year
@@ -70,6 +75,9 @@ class FetchWeatherDataJob < ApplicationJob
     end
     
     Rails.logger.info "🌤️  #{farm_info} Fetching weather data for #{year}#{retry_info} (#{latitude}, #{longitude})"
+    
+    # API負荷軽減のため短い待機時間を入れる
+    sleep(0.5)
     
     # agrrコマンドを実行して気象データを取得
     weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
