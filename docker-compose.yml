@@ -29,6 +29,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
       - bundle_data:/usr/local/bundle
