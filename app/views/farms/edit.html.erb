@@ -7,7 +7,7 @@
     <div class="form-card">
       <%= form_with model: @farm, local: true do |form| %>
         <% if @farm.errors.any? %>
-          <div style="color: #dc3545; margin-bottom: 1rem;">
+          <div class="error" style="color: #dc3545; margin-bottom: 1rem;">
             <h4><%= pluralize(@farm.errors.count, "error") %> prohibited this farm from being saved:</h4>
             <ul>
               <% @farm.errors.full_messages.each do |message| %>

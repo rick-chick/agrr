@@ -76,7 +76,10 @@ class FarmTest < ActiveSupport::TestCase
   test "enqueues weather data jobs for each year from 2000 to current year after create" do
     start_year = 2000
     end_year = Date.today.year
-    expected_jobs = end_year - start_year + 1
+    total_years = end_year - start_year + 1
+    block_size = 5
+    # 5年ブロックごとにジョブを作成するため、ブロック数を計算
+    expected_jobs = ((total_years - 1) / block_size) + 1
 
     assert_enqueued_jobs expected_jobs, only: FetchWeatherDataJob do
       Farm.create!(

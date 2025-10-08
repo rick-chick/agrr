@@ -6,7 +6,7 @@
 </div>
     
     <% if @farms.any? %>
-      <div class="fields-grid" id="farms">
+      <div class="farms-grid" id="farms">
         <% @farms.each do |farm| %>
           <%= turbo_stream_from farm %>
           <%= render "farm_card_wrapper", farm: farm %>
@@ -14,7 +14,7 @@
       </div>
     <% else %>
       <div class="empty-state">
-        <div class="empty-state-icon">🌾</div>
+        <div class="empty-state-icon">🚜</div>
         <h3>まだ農場が登録されていません</h3>
         <p>最初の農場を追加して始めましょう。</p>
         <%= link_to "農場を追加", new_farm_path, class: "btn btn-success" %>

@@ -202,7 +202,7 @@ class Farm < ApplicationRecord
   def broadcast_now
     Rails.logger.info "🔍 [Farm##{id}] broadcast_now called - target: #{dom_id(self)}"
     
-    # broadcast_replace_later_to の代わりに broadcast_replace_to を試す
+    # 一覧画面のカード更新
     broadcast_replace_to(
       self,
       target: dom_id(self),
@@ -210,12 +210,20 @@ class Farm < ApplicationRecord
       locals: { farm: self }
     )
     
-    Rails.logger.info "🔍 [Farm##{id}] broadcast_replace_to completed"
+    # 詳細画面の天気セクション更新
+    broadcast_replace_to(
+      self,
+      target: dom_id(self, :weather_section),
+      partial: "farms/farm_weather_section",
+      locals: { farm: self, fields_count: fields.count }
+    )
+    
+    Rails.logger.info "🔍 [Farm##{id}] broadcast_replace_to completed (both index and show)"
   end
   
   # ActiveRecordのdom_idヘルパーを使えるようにする
-  def dom_id(record)
-    ActionView::RecordIdentifier.dom_id(record)
+  def dom_id(record, prefix = nil)
+    ActionView::RecordIdentifier.dom_id(record, prefix)
   end
 end
 

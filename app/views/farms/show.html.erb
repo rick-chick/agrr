@@ -1,76 +1,19 @@
 <% content_for :title, "#{@farm.display_name} - AGRR" %>
 
 <div class="page-header">
-  <h1 class="page-title"><%= @farm.display_name %></h1>
+  <h1 class="page-title farm-name"><%= @farm.display_name %></h1>
   <div>
     <%= link_to "圃場一覧", farm_fields_path(@farm), class: "btn btn-info" %>
     <%= link_to "編集", edit_farm_path(@farm), class: "btn btn-secondary" %>
   </div>
 </div>
+
+<%= turbo_stream_from @farm %>
     
-    <div class="field-card">
-      <div class="field-info">
-        <div class="info-item">
-          <span class="info-label">📝 名前:</span>
-          <span class="info-value"><%= @farm.name %></span>
-        </div>
-        
-        <% if @farm.has_coordinates? %>
-          <div class="info-item">
-            <span class="info-label">📍 緯度:</span>
-            <span class="info-value"><%= @farm.latitude %></span>
-          </div>
-          
-          <div class="info-item">
-            <span class="info-label">📍 経度:</span>
-            <span class="info-value"><%= @farm.longitude %></span>
-          </div>
-        <% else %>
-          <div class="info-item">
-            <span class="info-label">📍 位置:</span>
-            <span class="info-value">位置情報が設定されていません</span>
-          </div>
-        <% end %>
-        
-        <div class="info-item">
-          <span class="info-label">🌾 圃場数:</span>
-          <span class="info-value"><%= @fields.count %>個</span>
-        </div>
-        
-        <div class="info-item">
-          <span class="info-label">📅 作成日:</span>
-          <span class="info-value"><%= @farm.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
-        </div>
-        
-        <div class="info-item">
-          <span class="info-label">📅 更新日:</span>
-          <span class="info-value"><%= @farm.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
-        </div>
-      </div>
-      
-      <!-- Weather Data Chart Section -->
-      <% if @farm.weather_data_status == 'completed' %>
-        <div class="weather-section" data-farm-id="<%= @farm.id %>">
-          <h3>📊 温度データ</h3>
-          <div class="chart-controls">
-            <label for="chart-period">期間選択:</label>
-            <select id="chart-period" class="chart-period-select">
-              <option value="30">過去30日</option>
-              <option value="90">過去90日</option>
-              <option value="180">過去180日</option>
-              <option value="365" selected>過去1年</option>
-            </select>
-          </div>
-          <div class="chart-container">
-            <canvas id="temperatureChart" data-farm-id="<%= @farm.id %>"></canvas>
-          </div>
-        </div>
-      <% elsif @farm.weather_data_status == 'fetching' %>
-        <div class="weather-section">
-          <h3>📊 温度データ</h3>
-          <p class="info-message">天気データを取得中です... (<%= @farm.weather_data_progress %>%)</p>
-        </div>
-      <% end %>
+<div class="farm-card">
+  <div id="<%= dom_id(@farm, :weather_section) %>">
+    <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>
+  </div>
       
       <% if @fields.any? %>
         <div class="fields-section">
