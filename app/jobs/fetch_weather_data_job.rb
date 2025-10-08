@@ -9,8 +9,8 @@ class FetchWeatherDataJob < ApplicationJob
   MAX_RETRY_ATTEMPTS = 5
 
   # APIエラーやネットワークエラーに対してリトライする
-  # 指数バックオフで最大5回までリトライ（待機時間: 3秒、18秒、83秒、258秒、633秒）
-  retry_on StandardError, wait: :exponentially_longer, attempts: MAX_RETRY_ATTEMPTS do |job, exception|
+  # 指数バックオフで最大5回までリトライ（待機時間: 3秒、9秒、27秒、81秒、243秒）
+  retry_on StandardError, wait: ->(executions) { 3 * (3 ** executions) }, attempts: MAX_RETRY_ATTEMPTS do |job, exception|
     # 最終リトライでも失敗した場合の処理
     farm_id = job.arguments.first[:farm_id]
     year = job.arguments.first[:start_date].year
