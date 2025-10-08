@@ -17,7 +17,7 @@
       </span>
       <% if farm.fetching? && farm.weather_data_total_years > 0 %>
         <div class="progress-bar">
-          <div class="progress-fill" data-progress="<%= farm.weather_data_progress %>"></div>
+          <div class="progress-fill" data-progress="<%= farm.weather_data_progress %>" style="width: <%= farm.weather_data_progress %>%"></div>
         </div>
       <% end %>
       <% if farm.failed? && farm.weather_data_last_error.present? %>

@@ -48,7 +48,7 @@ class WeatherChartFlowTest < ActionDispatch::IntegrationTest
     # 1. 農場一覧ページにアクセス
     get farms_path
     assert_response :success
-    assert_select '.field-card', minimum: 1
+    assert_select '.farm-card', minimum: 1
     
     # 2. 農場詳細ページにアクセス
     get farm_path(@farm)
@@ -114,5 +114,59 @@ class WeatherChartFlowTest < ActionDispatch::IntegrationTest
     # 進捗メッセージが表示される
     assert_select '.weather-section'
     assert_select '.info-message', text: /取得中/
+  end
+  
+  test "progress bar has correct attributes for JavaScript updates" do
+    fetching_farm = Farm.new(
+      name: "進捗バーテスト農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user
+    )
+    fetching_farm.save!(validate: false)
+    fetching_farm.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_fetched_years: 3,
+      weather_data_total_years: 6
+    )
+    
+    get farm_path(fetching_farm)
+    assert_response :success
+    
+    # 進捗バーが表示される
+    assert_select '.progress-bar'
+    
+    # data-progress属性が設定されている
+    assert_select '.progress-fill[data-progress="50"]'
+    
+    # style属性も設定されている（初期表示用）
+    assert_select '.progress-fill[style*="width: 50%"]'
+  end
+  
+  test "farm card shows progress bar with correct attributes" do
+    fetching_farm = Farm.new(
+      name: "カード進捗バーテスト農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user
+    )
+    fetching_farm.save!(validate: false)
+    fetching_farm.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_fetched_years: 2,
+      weather_data_total_years: 5
+    )
+    
+    get farms_path
+    assert_response :success
+    
+    # 農場カードに進捗バーが表示される
+    assert_select '.farm-card .progress-bar'
+    
+    # data-progress属性が設定されている
+    assert_select '.farm-card .progress-fill[data-progress="40"]'
+    
+    # style属性も設定されている（初期表示用）
+    assert_select '.farm-card .progress-fill[style*="width: 40%"]'
   end
 end
