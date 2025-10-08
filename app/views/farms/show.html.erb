@@ -11,9 +11,7 @@
 <%= turbo_stream_from @farm %>
     
 <div class="farm-card">
-  <div id="<%= dom_id(@farm, :weather_section) %>">
-    <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>
-  </div>
+  <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>
       
       <% if @fields.any? %>
         <div class="fields-section">
