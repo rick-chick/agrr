@@ -68,17 +68,19 @@ class Farm < ApplicationRecord
   def start_weather_data_fetch!
     start_year = 2000
     end_year = Date.today.year
+    block_size = 5
     total_years = end_year - start_year + 1
+    total_blocks = ((total_years - 1) / block_size) + 1  # 切り上げ
 
     update!(
       weather_data_status: 'fetching',
       weather_data_fetched_years: 0,
-      weather_data_total_years: total_years,
+      weather_data_total_years: total_blocks,  # ブロック数ベースで管理
       weather_data_last_error: nil
     )
   end
 
-  # 天気データ取得の1年分が完了
+  # 天気データ取得の1ブロック分が完了
   def increment_weather_data_progress!
     new_fetched = weather_data_fetched_years + 1
     
@@ -122,30 +124,44 @@ class Farm < ApplicationRecord
 
     start_year = 2000
     end_year = Date.today.year
+    block_size = 5  # 5年ブロック
+    
+    # 5年ブロックの数を計算
+    blocks = []
+    current_year = start_year
+    while current_year <= end_year
+      block_end_year = [current_year + block_size - 1, end_year].min
+      blocks << {
+        start_year: current_year,
+        end_year: block_end_year,
+        start_date: Date.new(current_year, 1, 1),
+        end_date: [Date.new(block_end_year, 12, 31), Date.today].min
+      }
+      current_year += block_size
+    end
+    
     total_years = end_year - start_year + 1
+    total_blocks = blocks.size
     
     Rails.logger.info "🌾 [Farm##{id}] Starting weather data fetch for '#{name}' at #{coordinates_string}"
-    Rails.logger.info "📅 [Farm##{id}] Period: #{start_year}-#{end_year} (#{total_years} years)"
+    Rails.logger.info "📅 [Farm##{id}] Period: #{start_year}-#{end_year} (#{total_years} years in #{total_blocks} blocks)"
     
-    # ステータスを初期化
+    # ステータスを初期化（ブロック数ベースで進捗管理）
     start_weather_data_fetch!
 
-    # 年ごとに分割して取得
-    (start_year..end_year).each_with_index do |year, index|
-      year_start = Date.new(year, 1, 1)
-      year_end = [Date.new(year, 12, 31), Date.today].min
-
-      # 0.2秒間隔でジョブを実行
-      FetchWeatherDataJob.set(wait: index * 0.2.seconds).perform_later(
+    # 5年ブロックごとに分割して取得
+    blocks.each_with_index do |block, index|
+      # 1秒間隔でジョブを実行（API負荷軽減）
+      FetchWeatherDataJob.set(wait: index * 1.0.seconds).perform_later(
         farm_id: id,
         latitude: latitude,
         longitude: longitude,
-        start_date: year_start,
-        end_date: year_end
+        start_date: block[:start_date],
+        end_date: block[:end_date]
       )
     end
 
-    Rails.logger.info "✅ [Farm##{id}] Enqueued #{total_years} weather data jobs for '#{name}'"
+    Rails.logger.info "✅ [Farm##{id}] Enqueued #{total_blocks} weather data jobs (#{total_years} years) for '#{name}'"
   end
 
   def coordinates_string

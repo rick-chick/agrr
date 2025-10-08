@@ -18,9 +18,11 @@ class FetchWeatherDataJob < ApplicationJob
   }, attempts: MAX_RETRY_ATTEMPTS do |job, exception|
     # 最終リトライでも失敗した場合の処理
     farm_id = job.arguments.first[:farm_id]
-    year = job.arguments.first[:start_date].year
+    start_date = job.arguments.first[:start_date]
+    end_date = job.arguments.first[:end_date]
+    period_str = start_date.year == end_date.year ? "#{start_date.year}" : "#{start_date.year}-#{end_date.year}"
     
-    Rails.logger.error "❌ [Farm##{farm_id}] Failed to fetch weather data for #{year} after #{job.executions} attempts"
+    Rails.logger.error "❌ [Farm##{farm_id}] Failed to fetch weather data for #{period_str} after #{job.executions} attempts"
     Rails.logger.error "   Final error: #{exception.message}"
     
     if farm_id
@@ -32,9 +34,11 @@ class FetchWeatherDataJob < ApplicationJob
   # データ検証エラーなど、リトライしても意味がないエラーは即座に破棄
   discard_on ActiveRecord::RecordInvalid do |job, exception|
     farm_id = job.arguments.first[:farm_id]
-    year = job.arguments.first[:start_date].year
+    start_date = job.arguments.first[:start_date]
+    end_date = job.arguments.first[:end_date]
+    period_str = start_date.year == end_date.year ? "#{start_date.year}" : "#{start_date.year}-#{end_date.year}"
     
-    Rails.logger.error "❌ [Farm##{farm_id}] Invalid data for #{year}: #{exception.message}"
+    Rails.logger.error "❌ [Farm##{farm_id}] Invalid data for #{period_str}: #{exception.message}"
     
     if farm_id
       farm = Farm.find_by(id: farm_id)
@@ -45,7 +49,7 @@ class FetchWeatherDataJob < ApplicationJob
   # 指定された緯度経度と期間の気象データを取得してデータベースに保存
   def perform(latitude:, longitude:, start_date:, end_date:, farm_id: nil)
     farm_info = farm_id ? "[Farm##{farm_id}]" : ""
-    year = start_date.year
+    period_str = start_date.year == end_date.year ? "#{start_date.year}" : "#{start_date.year}-#{end_date.year}"
     retry_info = executions > 1 ? " (リトライ #{executions - 1}/#{MAX_RETRY_ATTEMPTS})" : ""
     
     # 既にデータが存在するかチェック
@@ -58,7 +62,7 @@ class FetchWeatherDataJob < ApplicationJob
       ).count
       
       if existing_count == expected_days
-        Rails.logger.info "⏭️  #{farm_info} Skipping #{year} - data already exists (#{existing_count}/#{expected_days} days)"
+        Rails.logger.info "⏭️  #{farm_info} Skipping #{period_str} - data already exists (#{existing_count}/#{expected_days} days)"
         
         # 進捗を更新
         if farm_id
@@ -66,7 +70,7 @@ class FetchWeatherDataJob < ApplicationJob
           if farm
             farm.increment_weather_data_progress!
             progress = farm.weather_data_progress
-            Rails.logger.info "📊 #{farm_info} Progress: #{progress}% (#{farm.weather_data_fetched_years}/#{farm.weather_data_total_years} years)"
+            Rails.logger.info "📊 #{farm_info} Progress: #{progress}% (#{farm.weather_data_fetched_years}/#{farm.weather_data_total_years} blocks)"
           end
         end
         
@@ -74,7 +78,7 @@ class FetchWeatherDataJob < ApplicationJob
       end
     end
     
-    Rails.logger.info "🌤️  #{farm_info} Fetching weather data for #{year}#{retry_info} (#{latitude}, #{longitude})"
+    Rails.logger.info "🌤️  #{farm_info} Fetching weather data for #{period_str}#{retry_info} (#{latitude}, #{longitude})"
     
     # API負荷軽減のため短い待機時間を入れる
     sleep(0.5)
@@ -123,15 +127,15 @@ class FetchWeatherDataJob < ApplicationJob
       if farm
         farm.increment_weather_data_progress!
         progress = farm.weather_data_progress
-        Rails.logger.info "📊 #{farm_info} Progress: #{progress}% (#{farm.weather_data_fetched_years}/#{farm.weather_data_total_years} years)"
+        Rails.logger.info "📊 #{farm_info} Progress: #{progress}% (#{farm.weather_data_fetched_years}/#{farm.weather_data_total_years} blocks)"
       end
     end
 
-    Rails.logger.info "✅ #{farm_info} Saved #{data_count} weather records for #{year}"
+    Rails.logger.info "✅ #{farm_info} Saved #{data_count} weather records for #{period_str}"
   rescue => e
     # エラーログを出力（リトライの場合は警告レベル、それ以外はエラーレベル）
     log_level = executions < MAX_RETRY_ATTEMPTS ? :warn : :error
-    Rails.logger.public_send(log_level, "⚠️  #{farm_info} Failed to fetch weather data for #{year}: #{e.message}")
+    Rails.logger.public_send(log_level, "⚠️  #{farm_info} Failed to fetch weather data for #{period_str}: #{e.message}")
     Rails.logger.public_send(log_level, "   Backtrace: #{e.backtrace.first(3).join("\n   ")}")
     
     # 例外を再raiseして、retry_onに処理を委ねる
