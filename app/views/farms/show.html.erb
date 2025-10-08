@@ -48,6 +48,30 @@
         </div>
       </div>
       
+      <!-- Weather Data Chart Section -->
+      <% if @farm.weather_data_status == 'completed' %>
+        <div class="weather-section" data-farm-id="<%= @farm.id %>">
+          <h3>📊 温度データ</h3>
+          <div class="chart-controls">
+            <label for="chart-period">期間選択:</label>
+            <select id="chart-period" class="chart-period-select">
+              <option value="30">過去30日</option>
+              <option value="90">過去90日</option>
+              <option value="180">過去180日</option>
+              <option value="365" selected>過去1年</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="temperatureChart" data-farm-id="<%= @farm.id %>"></canvas>
+          </div>
+        </div>
+      <% elsif @farm.weather_data_status == 'fetching' %>
+        <div class="weather-section">
+          <h3>📊 温度データ</h3>
+          <p class="info-message">天気データを取得中です... (<%= @farm.weather_data_progress %>%)</p>
+        </div>
+      <% end %>
+      
       <% if @fields.any? %>
         <div class="fields-section">
           <h3>圃場一覧</h3>

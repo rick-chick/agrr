@@ -873,3 +873,60 @@ body {
   font-size: 12px;
   margin-top: 0.5rem;
 }
+
+/* Weather Chart Styles */
+.weather-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.weather-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.chart-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-controls label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.chart-period-select {
+  padding: 8px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.chart-period-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  padding: 1rem 0;
+}
+
+.info-message {
+  color: #666;
+  font-size: 0.95rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  text-align: center;
+}

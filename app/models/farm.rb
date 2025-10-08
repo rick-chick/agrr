@@ -3,6 +3,7 @@
 class Farm < ApplicationRecord
   # Associations
   belongs_to :user
+  belongs_to :weather_location, optional: true
   has_many :fields, dependent: :destroy
 
   # Enums

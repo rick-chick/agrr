@@ -6,12 +6,13 @@ SimpleCov.start 'rails' do
   add_filter '/vendor/'
   add_filter '/tmp/'
   
-  # Focus on crop-related files for this test run
-  add_filter do |source_file|
-    !source_file.filename.include?('crop') && 
-    !source_file.filename.include?('application') &&
-    !source_file.filename.include?('auth')
-  end
+  # Include weather-related files in coverage
+  # (コメントアウト: すべてのファイルを対象にする)
+  # add_filter do |source_file|
+  #   !source_file.filename.include?('crop') && 
+  #   !source_file.filename.include?('application') &&
+  #   !source_file.filename.include?('auth')
+  # end
   
   add_group 'Controllers', 'app/controllers'
   add_group 'Models', 'app/models'

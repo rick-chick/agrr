@@ -24,6 +24,8 @@ Rails.application.routes.draw do
   # Farms and Fields routes (nested)
   resources :farms do
     resources :fields
+    # Weather data endpoint for charts
+    get 'weather_data', to: 'farms/weather_data#index'
   end
 
   # Crops (HTML) routes

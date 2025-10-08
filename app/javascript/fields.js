@@ -14,7 +14,20 @@ function waitForLeaflet(callback, maxAttempts = 100) {
     console.error('Leaflet library failed to load after maximum attempts');
     const errorPlaceholder = document.getElementById('map-placeholder');
     if (errorPlaceholder) {
-      errorPlaceholder.innerHTML = '<div>⚠️ 地図の読み込みに失敗しました</div>';
+      errorPlaceholder.style.display = 'block';
+      errorPlaceholder.innerHTML = `
+        <div>
+          <div style="margin-bottom: 10px;">⚠️ 地図ライブラリの読み込みに失敗しました</div>
+          <button type="button" onclick="location.reload()" class="btn btn-small">
+            🔄 ページを再読み込み
+          </button>
+        </div>
+      `;
+    }
+    // 地図要素を非表示にする
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+      mapElement.style.display = 'none';
     }
     return;
   }
@@ -68,10 +81,11 @@ function initializeMapComponents() {
       map = null;
     }
     
-    // 地図コンテナをクリア
+    // 地図コンテナをクリアして表示
     const mapElement = document.getElementById('map');
     if (mapElement) {
       mapElement.innerHTML = '';
+      mapElement.style.display = 'block';
     }
     
     // LeafletのアイコンパスをCDNから設定
@@ -177,11 +191,37 @@ function initializeMapComponents() {
     
   } catch (error) {
     console.error('Error initializing map:', error);
-    // エラー時はプレースホルダーを表示
+    
+    // エラー時に地図インスタンスとフラグをリセット
+    if (map) {
+      try {
+        map.remove();
+      } catch (e) {
+        console.warn('Failed to remove map instance:', e);
+      }
+      map = null;
+    }
+    marker = null;
+    isInitialized = false;
+    
+    // エラー時はプレースホルダーを表示（再試行ボタン付き）
     const placeholder = document.getElementById('map-placeholder');
     if (placeholder) {
       placeholder.style.display = 'block';
-      placeholder.innerHTML = '<div>❌ 地図の読み込みに失敗しました</div>';
+      placeholder.innerHTML = `
+        <div>
+          <div style="margin-bottom: 10px;">❌ 地図の読み込みに失敗しました</div>
+          <button type="button" onclick="retryMapInitialization()" class="btn btn-small">
+            🔄 再試行
+          </button>
+        </div>
+      `;
+    }
+    
+    // 地図要素を非表示にする（空の要素が表示されないように）
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+      mapElement.style.display = 'none';
     }
   }
 }
@@ -264,3 +304,27 @@ function isValidCoordinate(lat, lng) {
          lat >= -90 && lat <= 90 && 
          lng >= -180 && lng <= 180;
 }
+
+// 地図の再初期化（エラー時の再試行用）
+window.retryMapInitialization = function() {
+  console.log('Retrying map initialization...');
+  
+  // 地図要素が存在することを確認
+  const mapElement = document.getElementById('map');
+  if (!mapElement) {
+    console.error('Map element not found');
+    return;
+  }
+  
+  // プレースホルダーを「読み込み中」に戻す
+  const placeholder = document.getElementById('map-placeholder');
+  if (placeholder) {
+    placeholder.innerHTML = '<div>🗺️ 地図を読み込み中...</div>';
+  }
+  
+  // 強制的に初期化フラグをリセット
+  isInitialized = false;
+  
+  // Leafletの読み込み完了を待って再初期化
+  waitForLeaflet(initializeMapComponents);
+};

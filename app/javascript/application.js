@@ -6,3 +6,4 @@ import "leaflet/dist/leaflet.css";
 import "./crop_form";
 import "./fields";
 import "./progress_bar";
+import "./temperature_chart";

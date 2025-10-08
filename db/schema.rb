@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_07_225738) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_08_100000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -71,9 +71,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_07_225738) do
     t.integer "weather_data_total_years", default: 0, null: false
     t.text "weather_data_last_error"
     t.datetime "last_broadcast_at"
+    t.integer "weather_location_id"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
+    t.index ["weather_location_id"], name: "index_farms_on_weather_location_id"
   end
 
   create_table "fields", force: :cascade do |t|
@@ -285,6 +287,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_07_225738) do
   add_foreign_key "crop_stages", "crops"
   add_foreign_key "crops", "users"
   add_foreign_key "farms", "users"
+  add_foreign_key "farms", "weather_locations"
   add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
   add_foreign_key "sessions", "users"

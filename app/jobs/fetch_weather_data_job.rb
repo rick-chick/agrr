@@ -100,6 +100,15 @@ class FetchWeatherDataJob < ApplicationJob
       timezone: location_data['timezone']
     )
 
+    # Farmとweather_locationを関連付け（まだ関連付けられていない場合）
+    if farm_id
+      farm = Farm.find_by(id: farm_id)
+      if farm && farm.weather_location_id.nil?
+        farm.update_column(:weather_location_id, weather_location.id)
+        Rails.logger.info "🔗 [Farm##{farm_id}] Linked to WeatherLocation##{weather_location.id}"
+      end
+    end
+
     # 気象データを保存
     data_count = 0
     weather_data['data']['data'].each do |daily_data|
