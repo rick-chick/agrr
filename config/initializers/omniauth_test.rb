@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# OmniAuth test mode configuration for development
-if Rails.env.development?
+# OmniAuth test mode configuration for development and test
+if Rails.env.development? || Rails.env.test?
   # Enable OmniAuth test mode
   OmniAuth.config.test_mode = true
   
@@ -13,7 +13,7 @@ if Rails.env.development?
     info: {
       email: 'developer@agrr.dev',
       name: '開発者',
-      image: '/assets/dev-avatar.svg'
+      image: 'dev-avatar.svg'
     },
     credentials: {
       token: 'mock_token_dev_001',
@@ -29,7 +29,7 @@ if Rails.env.development?
     info: {
       email: 'farmer@agrr.dev',
       name: '農家太郎',
-      image: '/assets/farm-avatar.svg'
+      image: 'farm-avatar.svg'
     },
     credentials: {
       token: 'mock_token_farmer_002',
@@ -45,7 +45,7 @@ if Rails.env.development?
     info: {
       email: 'researcher@agrr.dev',
       name: '研究員花子',
-      image: '/assets/res-avatar.svg'
+      image: 'res-avatar.svg'
     },
     credentials: {
       token: 'mock_token_researcher_003',

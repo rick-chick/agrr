@@ -37,6 +37,9 @@ RUN mkdir -p storage tmp/cache tmp/pids tmp/sockets
 # Build JavaScript assets
 RUN npm run build
 
+# Precompile Rails assets (Propshaft)
+RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+
 # Create a non-root user and set permissions
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app && chown -R appuser:appuser /usr/local/bundle
 # Ensure bundle cache directory is writable

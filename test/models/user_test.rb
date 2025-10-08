@@ -121,5 +121,61 @@ class UserTest < ActiveSupport::TestCase
       User.from_omniauth(auth_hash)
     end
   end
+
+  test "process_avatar_url should extract filename from local asset path" do
+    # ローカルアセットパスからファイル名を抽出
+    assert_equal 'dev-avatar.svg', User.process_avatar_url('/assets/dev-avatar.svg')
+    assert_equal 'farm-avatar.svg', User.process_avatar_url('/assets/farm-avatar.svg')
+  end
+
+  test "process_avatar_url should keep external URLs unchanged" do
+    # 外部URLはそのまま保持
+    external_url = 'https://lh3.googleusercontent.com/a/example'
+    assert_equal external_url, User.process_avatar_url(external_url)
+  end
+
+  test "process_avatar_url should handle nil" do
+    # nilはnilを返す
+    assert_nil User.process_avatar_url(nil)
+  end
+
+  test "process_avatar_url should handle blank string" do
+    # 空文字列はnilを返す
+    assert_nil User.process_avatar_url('')
+  end
+
+  test "from_omniauth should convert local avatar paths to filenames" do
+    auth_hash = {
+      'provider' => 'google_oauth2',
+      'uid' => 'google_local_avatar',
+      'info' => {
+        'email' => 'local@example.com',
+        'name' => 'Local Avatar User',
+        'image' => '/assets/dev-avatar.svg'
+      }
+    }
+
+    user = User.from_omniauth(auth_hash)
+    assert_equal 'dev-avatar.svg', user.avatar_url
+  end
+
+  test "avatar_url validation should accept SVG filenames" do
+    @user.avatar_url = 'dev-avatar.svg'
+    assert @user.valid?
+    
+    @user.avatar_url = 'farm-avatar.svg'
+    assert @user.valid?
+  end
+
+  test "avatar_url validation should reject full paths" do
+    @user.avatar_url = '/assets/dev-avatar.svg'
+    assert_not @user.valid?
+    assert_includes @user.errors[:avatar_url], "must be a valid URL or SVG filename"
+  end
+
+  test "avatar_url validation should accept external URLs" do
+    @user.avatar_url = 'https://lh3.googleusercontent.com/a/example'
+    assert @user.valid?
+  end
 end
 

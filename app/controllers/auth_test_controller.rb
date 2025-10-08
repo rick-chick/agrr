@@ -42,11 +42,21 @@ class AuthTestController < ApplicationController
     # Get mock auth data
     auth_hash = OmniAuth.config.mock_auth[auth_key]
     
+    # Process avatar URL using User model's method
+    # This converts '/assets/dev-avatar.svg' to 'dev-avatar.svg'
+    processed_avatar_url = User.process_avatar_url(auth_hash['info']['image'])
+    
     # Create or find user
     user = User.find_or_create_by(google_id: auth_hash['uid']) do |u|
       u.email = auth_hash['info']['email']
       u.name = auth_hash['info']['name']
-      u.avatar_url = auth_hash['info']['image']
+      u.avatar_url = processed_avatar_url
+    end
+    
+    # Check if user was successfully persisted
+    unless user.persisted?
+      redirect_to auth_login_path, alert: "Failed to create user: #{user.errors.full_messages.join(', ')}"
+      return
     end
     
     # Create session

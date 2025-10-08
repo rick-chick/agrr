@@ -52,14 +52,14 @@ class AvatarDisplayTest < ActionDispatch::IntegrationTest
 
   test "user with different avatar should display correctly" do
     # Update user to use farm avatar
-    @user.update!(avatar_url: '/assets/farm-avatar.svg')
+    @user.update!(avatar_url: 'farm-avatar.svg')
     
     get fields_path
     assert_response :success
     
-    # Check that farm avatar is displayed
+    # Check that farm avatar is displayed (with digest)
     assert_select "img.user-avatar", count: 1
-    assert_select "img[src='/assets/farm-avatar.svg']", count: 1
+    assert_select "img.user-avatar[src*='farm-avatar']", count: 1
   end
 
   test "user without avatar should not display avatar image" do

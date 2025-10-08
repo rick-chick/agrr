@@ -54,7 +54,7 @@ module ActiveSupport
         email: 'test@example.com',
         name: 'Test User',
         google_id: "google_#{SecureRandom.hex(8)}",
-        avatar_url: '/assets/dev-avatar.svg'
+        avatar_url: 'dev-avatar.svg'
       )
       session = Session.create_for_user(user)
       cookies[:session_id] = session.session_id

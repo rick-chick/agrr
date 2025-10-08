@@ -56,7 +56,7 @@ class Asset404ErrorsTest < ActionDispatch::IntegrationTest
       email: 'avatar@example.com',
       name: 'Avatar User',
       google_id: "google_#{SecureRandom.hex(8)}",
-      avatar_url: '/assets/dev-avatar.svg'
+      avatar_url: 'dev-avatar.svg'
     )
     
     session = Session.create_for_user(user_with_avatar)
@@ -65,8 +65,8 @@ class Asset404ErrorsTest < ActionDispatch::IntegrationTest
     get farms_path
     assert_response :success
     
-    # Check that the page references the avatar file
-    assert_select "img[src='/assets/dev-avatar.svg']"
+    # Check that the page references the avatar file (with digest)
+    assert_select "img.user-avatar[src*='dev-avatar']"
   end
 
   test "fields.js should load with leaflet placeholder" do

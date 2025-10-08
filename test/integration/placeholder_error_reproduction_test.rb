@@ -106,17 +106,18 @@ class PlaceholderErrorReproductionTest < ActionDispatch::IntegrationTest
 
   test "should demonstrate fix by updating to local avatar" do
     # 修正をシミュレート: 外部プレースホルダーをローカルSVGに変更
-    @user_with_external_avatar.update!(avatar_url: '/assets/res-avatar.svg')
+    @user_with_external_avatar.update!(avatar_url: 'res-avatar.svg')
     
     get fields_path
     assert_response :success
     
     # 修正後: 外部プレースホルダー参照が消え、ローカルSVGが使用される
     assert_no_match /via\.placeholder\.com/, response.body, "External placeholder should be removed after fix"
-    assert_select "img[src='/assets/res-avatar.svg']", count: 1
+    assert_select "img.user-avatar[src*='res-avatar']", count: 1
     
-    # ローカルSVGファイルがアクセス可能であることを確認
-    get '/assets/res-avatar.svg'
+    # ローカルSVGファイルがアクセス可能であることを確認（digest付きパスで）
+    avatar_path = ActionController::Base.helpers.image_path('res-avatar.svg')
+    get avatar_path
     assert_response :success
     assert_equal "image/svg+xml", response.content_type
   end
