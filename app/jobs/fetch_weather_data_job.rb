@@ -49,8 +49,8 @@ class FetchWeatherDataJob < ApplicationJob
     weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     
     unless weather_data['success']
-      Rails.logger.warn "⚠️  #{farm_info} Weather API returned unsuccessful response for #{year}"
-      return
+      error_message = weather_data['error'] || 'Unknown error from weather API'
+      raise StandardError, "Weather API returned unsuccessful response: #{error_message}"
     end
 
     # WeatherLocationを作成または取得
