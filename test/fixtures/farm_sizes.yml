@@ -11,3 +11,15 @@ two:
   area_sqm: 20
   display_order: 2
   active: false
+
+small:
+  name: 小規模（100㎡）
+  area_sqm: 100
+  display_order: 1
+  active: true
+
+medium:
+  name: 中規模（500㎡）
+  area_sqm: 500
+  display_order: 2
+  active: true

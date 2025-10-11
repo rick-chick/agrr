@@ -1,4 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-# This fixture is intentionally empty
+tomato:
+  name: トマト
+  variety: 桃太郎
+  is_reference: true
+  user_id: null
 
+cucumber:
+  name: キュウリ
+  variety: null
+  is_reference: true
+  user_id: null
+
+lettuce:
+  name: レタス
+  variety: null
+  is_reference: true
+  user_id: null

@@ -177,5 +177,93 @@ class UserTest < ActiveSupport::TestCase
     @user.avatar_url = 'https://lh3.googleusercontent.com/a/example'
     assert @user.valid?
   end
+
+  # Anonymous user tests
+  test "anonymous user should be valid without email, name, or google_id" do
+    anonymous = User.new(is_anonymous: true)
+    assert anonymous.valid?
+  end
+
+  test "anonymous user should not require email" do
+    anonymous = User.new(is_anonymous: true, email: nil)
+    assert anonymous.valid?
+  end
+
+  test "anonymous user should not require name" do
+    anonymous = User.new(is_anonymous: true, name: nil)
+    assert anonymous.valid?
+  end
+
+  test "anonymous user should not require google_id" do
+    anonymous = User.new(is_anonymous: true, google_id: nil)
+    assert anonymous.valid?
+  end
+
+  test "non-anonymous user should require email" do
+    user = User.new(is_anonymous: false, name: "Test", google_id: "123")
+    assert_not user.valid?
+    assert_includes user.errors[:email], "can't be blank"
+  end
+
+  test "non-anonymous user should require name" do
+    user = User.new(is_anonymous: false, email: "test@example.com", google_id: "123")
+    assert_not user.valid?
+    assert_includes user.errors[:name], "can't be blank"
+  end
+
+  test "non-anonymous user should require google_id" do
+    user = User.new(is_anonymous: false, email: "test@example.com", name: "Test")
+    assert_not user.valid?
+    assert_includes user.errors[:google_id], "can't be blank"
+  end
+
+  test "is_anonymous? should return true for anonymous user" do
+    anonymous = User.new(is_anonymous: true)
+    assert anonymous.is_anonymous?
+  end
+
+  test "is_anonymous? should return false for non-anonymous user" do
+    assert_not @user.is_anonymous?
+  end
+
+  test "anonymous? should return true for anonymous user" do
+    anonymous = User.new(is_anonymous: true)
+    assert anonymous.anonymous?
+  end
+
+  test "anonymous? should return false for non-anonymous user" do
+    assert_not @user.anonymous?
+  end
+
+  test "anonymous_user should return or create anonymous user" do
+    # Clear class variable for testing
+    User.instance_variable_set(:@anonymous_user, nil)
+    
+    anonymous = User.anonymous_user
+    assert anonymous.is_anonymous?
+    assert anonymous.persisted?
+    
+    # Should return the same instance on subsequent calls
+    same_anonymous = User.anonymous_user
+    assert_equal anonymous.id, same_anonymous.id
+  end
+
+  test "multiple anonymous users with different emails should be allowed" do
+    anonymous1 = User.create!(is_anonymous: true, email: "anon1@example.com")
+    anonymous2 = User.create!(is_anonymous: true, email: "anon2@example.com")
+    
+    assert anonymous1.valid?
+    assert anonymous2.valid?
+    assert_not_equal anonymous1.id, anonymous2.id
+  end
+
+  test "multiple anonymous users with nil email should be allowed" do
+    anonymous1 = User.create!(is_anonymous: true, email: nil)
+    anonymous2 = User.create!(is_anonymous: true, email: nil)
+    
+    assert anonymous1.valid?
+    assert anonymous2.valid?
+    assert_not_equal anonymous1.id, anonymous2.id
+  end
 end
 

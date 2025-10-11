@@ -12,13 +12,22 @@ class ApplicationController < ActionController::Base
     return @current_user if defined?(@current_user)
     
     session_id = cookies[:session_id]
-    return @current_user = nil unless session_id
+    unless session_id
+      # 未ログインの場合はアノニマスユーザーを返す
+      return @current_user = User.anonymous_user
+    end
     
     # Validate session ID format for security
-    return @current_user = nil unless Session.valid_session_id?(session_id)
+    unless Session.valid_session_id?(session_id)
+      # セッションIDが無効な場合はアノニマスユーザーを返す
+      return @current_user = User.anonymous_user
+    end
     
     session = Session.active.find_by(session_id: session_id)
-    return @current_user = nil unless session
+    unless session
+      # セッションが見つからない場合はアノニマスユーザーを返す
+      return @current_user = User.anonymous_user
+    end
     
     # Extend session if it's close to expiring
     session.extend_expiration if session.expires_at < 1.week.from_now
@@ -27,7 +36,8 @@ class ApplicationController < ActionController::Base
   end
   
   def authenticate_user!
-    return if current_user
+    # アノニマスユーザーの場合は認証が必要
+    return if current_user && !current_user.anonymous?
     
     if request.format.json?
       render json: { error: 'Please log in to access this resource.' }, status: :unauthorized
@@ -37,7 +47,7 @@ class ApplicationController < ActionController::Base
   end
   
   def logged_in?
-    current_user.present?
+    current_user.present? && !current_user.anonymous?
   end
 
   def admin_user?

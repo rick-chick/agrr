@@ -9,15 +9,35 @@ class User < ApplicationRecord
   # Validations
   validates :email, presence: true, 
                     format: { with: URI::MailTo::EMAIL_REGEXP },
-                    uniqueness: { case_sensitive: false }
-  validates :name, presence: true, length: { maximum: 50 }
-  validates :google_id, presence: true, uniqueness: true
+                    uniqueness: { case_sensitive: false, conditions: -> { where(is_anonymous: false) } },
+                    unless: :is_anonymous?
+  validates :name, presence: true, length: { maximum: 50 }, unless: :is_anonymous?
+  validates :google_id, presence: true, uniqueness: { conditions: -> { where(is_anonymous: false) } }, unless: :is_anonymous?
   validates :avatar_url, format: { with: /\A(#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}|[a-zA-Z0-9_-]+\.svg)\z/, 
                                    message: "must be a valid URL or SVG filename" },
                          allow_blank: true
 
   # Normalize email before validation
-  before_validation :normalize_email
+  before_validation :normalize_email, unless: :is_anonymous?
+
+  # Anonymous user methods
+  def is_anonymous?
+    is_anonymous
+  end
+
+  def anonymous?
+    is_anonymous?
+  end
+
+  # Class method to create or get anonymous user
+  def self.anonymous_user
+    @anonymous_user ||= find_or_create_by!(is_anonymous: true) do |user|
+      user.email = nil
+      user.name = nil
+      user.google_id = nil
+      user.admin = false
+    end
+  end
 
   # Admin methods
   def admin?

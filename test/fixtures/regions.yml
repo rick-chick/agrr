@@ -9,3 +9,13 @@ two:
   name: Region Two
   country_code: R2
   active: false
+
+tokyo:
+  name: 東京
+  country_code: JP
+  active: true
+
+osaka:
+  name: 大阪
+  country_code: JP
+  active: true

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  namespace :admin do
+    resources :farm_sizes
+    resources :regions
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -31,6 +35,19 @@ Rails.application.routes.draw do
   # Crops (HTML) routes
   resources :crops
 
+  # Free Plans (無料ユーザー向け作付け計画) routes
+  resources :free_plans, only: [:new, :create, :show] do
+    member do
+      get :calculating
+    end
+    collection do
+      get :select_farm_size
+      get :select_crop
+      get :calculating_all, path: 'calculating'
+      get :results
+    end
+  end
+
   # API routes
   namespace :api do
     namespace :v1 do
@@ -46,6 +63,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Root route
-  root "home#index"
+  # Root route - 簡単作付け計画をトップページに設定
+  root "free_plans#new"
 end
