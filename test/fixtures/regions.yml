@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: Region One
+  country_code: R1
+  active: false
+
+two:
+  name: Region Two
+  country_code: R2
+  active: false

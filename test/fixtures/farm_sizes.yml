@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: FarmSize One
+  area_sqm: 10
+  display_order: 1
+  active: false
+
+two:
+  name: FarmSize Two
+  area_sqm: 20
+  display_order: 2
+  active: false
