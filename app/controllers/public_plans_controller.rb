@@ -22,13 +22,18 @@ class PublicPlansController < ApplicationController
     @farm_sizes = FARM_SIZES
     
     session[:public_plan] = { farm_id: @farm.id }
+    Rails.logger.debug "✅ [PublicPlans] セッション保存: #{session[:public_plan].inspect}"
   rescue ActiveRecord::RecordNotFound
     redirect_to public_plans_path, alert: '栽培地域を選択してください。'
   end
   
   # Step 3: 作物選択
   def select_crop
+    Rails.logger.debug "🔍 [PublicPlans] セッション確認: #{session[:public_plan].inspect}"
+    Rails.logger.debug "🔍 [PublicPlans] session_data: #{session_data.inspect}"
+    
     unless session_data[:farm_id]
+      Rails.logger.warn "⚠️  [PublicPlans] farm_id がセッションにありません"
       redirect_to public_plans_path, alert: '最初からやり直してください。' and return
     end
     
@@ -121,7 +126,7 @@ class PublicPlansController < ApplicationController
   end
   
   def session_data
-    session[:public_plan] || {}
+    (session[:public_plan] || {}).with_indifferent_access
   end
   
   def crop_ids
