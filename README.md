@@ -13,6 +13,7 @@ PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられ�
 - [環境構成](#環境構成)
 - [機能](#機能)
 - [セットアップ](#セットアップ)
+  - [参照データの準備](#参照データreference-dataの準備)
 - [開発環境での実行](#開発環境での実行)
 - [開発プロセス](#開発プロセス)
 - [テスト](#テスト)
@@ -75,6 +76,59 @@ PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられ�
 
 - 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md#開発環境セットアップ)** - 開発環境の構築方法
 - 📖 **[テストガイド](docs/TEST_GUIDE.md#推奨開発環境)** - テスト環境の構築方法
+
+### 🌱 参照データ（Reference Data）の準備
+
+AGRRでは、参照農場（全都道府県47地域）と参照作物（15種類）のデータを使用します。
+これらのデータには天気情報とAI生成の作物情報が含まれますが、取得に時間がかかるため、**2段階のセットアップ**が必要です。
+
+#### 通常の開発者向け（高速セットアップ）
+
+既にフィクスチャファイルがリポジトリに含まれている場合、以下のコマンドだけで完了します：
+
+```bash
+# 基本シードを実行（数秒で完了）
+docker compose run --rm web rails db:seed
+```
+
+このコマンドで以下がインポートされます：
+- 管理者ユーザー
+- 47都道府県の参照農場（位置情報 + 2000年以降の天気データ）
+- 15種類の参照作物（基本情報 + AI生成の栽培情報）
+
+#### 初回セットアップ（管理者・一度だけ実行）
+
+フィクスチャファイルが存在しない場合、管理者が以下の手順でデータを生成します：
+
+```bash
+# 1. 基本シードを実行（基本情報のみ）
+docker compose run --rm web rails db:seed
+
+# 2. ターミナル1: Webサーバーを起動
+docker compose up web
+
+# 3. ターミナル2: Solid Queueを起動
+docker compose run --rm web bundle exec rails solid_queue:start
+
+# 4. ターミナル3: 参照農場の天気データを取得（10-30分）
+docker compose run --rm web bin/fetch_reference_weather_data
+
+# 5. ターミナル3: 参照作物のAI情報を取得（5-15分）
+docker compose run --rm web bin/fetch_reference_crop_info
+
+# 6. フィクスチャファイルをコミット
+git add db/fixtures/
+git commit -m "Add reference weather and crop data"
+git push
+```
+
+以後、他の開発者は`rails db:seed`だけで完全なデータを取得できます。
+
+**注意事項**:
+- **Webサーバーが起動している必要があります**（スクリプトはAPI経由でデータ取得）
+- 天気データ取得には Solid Queue が起動している必要があります
+- AI作物情報取得には AI API キー（環境変数）が必要な場合があります
+- 内部APIエンドポイント（`/api/v1/internal/*`）は開発・テスト環境のみ有効
 
 ## 🚀 開発環境での実行
 

@@ -2,11 +2,8 @@
 
 Rails.application.routes.draw do
   namespace :admin do
-    resources :farm_sizes
-    resources :default_farms, only: [:index, :show, :edit, :update, :destroy]
-    
     # 管理画面のルート
-    root to: redirect('/admin/default_farms')
+    root to: redirect('/crops')
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -16,7 +13,7 @@ Rails.application.routes.draw do
 
   # Authentication routes
   get '/auth/login', to: 'auth#login', as: 'auth_login'
-  get '/auth/google_oauth2', to: 'auth#google_oauth2'
+  # /auth/google_oauth2 is handled by OmniAuth middleware
   get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
   get '/auth/failure', to: 'auth#failure'
   delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
@@ -39,6 +36,7 @@ Rails.application.routes.draw do
   resources :crops
 
   # Free Plans (無料ユーザー向け作付け計画) routes
+  get '/free_plans', to: 'free_plans#new', as: 'free_plans'
   resources :free_plans, only: [:new, :create, :show] do
     member do
       get :calculating
@@ -65,9 +63,14 @@ Rails.application.routes.draw do
       resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
       # AI作物情報取得・保存エンドポイント
       post 'crops/ai_create', to: 'crops#ai_create'
+      
+      # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
+      post 'internal/farms/:farm_id/fetch_weather_data', to: 'internal#fetch_weather_data'
+      get 'internal/farms/:farm_id/weather_status', to: 'internal#weather_status'
+      get 'internal/farms/:farm_id/weather_data', to: 'internal#get_weather_data'
     end
   end
 
-  # Root route - 簡単作付け計画をトップページに設定
-  root "free_plans#new"
+  # Home page
+  root "home#index"
 end

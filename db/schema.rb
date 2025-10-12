@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_11_230830) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -87,8 +87,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_230830) do
     t.text "weather_data_last_error"
     t.datetime "last_broadcast_at"
     t.integer "weather_location_id"
-    t.boolean "is_default", default: false, null: false
-    t.index ["is_default"], name: "index_farms_on_is_default", where: "is_default = true"
+    t.boolean "is_reference", default: false, null: false
+    t.index ["is_reference"], name: "index_farms_on_is_reference", where: "is_reference = true"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
@@ -304,6 +304,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_230830) do
     t.integer "weather_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["weather_location_id", "date"], name: "index_weather_data_on_location_and_date", unique: true
     t.index ["weather_location_id"], name: "index_weather_data_on_weather_location_id"
   end
 
