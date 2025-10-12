@@ -5,7 +5,15 @@ class FarmsController < ApplicationController
 
   # GET /farms
   def index
-    @farms = current_user.farms.recent
+    if admin_user?
+      # 管理者は自分の農場とデフォルト農場の両方を表示
+      @farms = current_user.farms.recent
+      @default_farms = Farm.default_farms
+    else
+      # 通常ユーザーは自分の農場のみ
+      @farms = current_user.farms.recent
+      @default_farms = []
+    end
   end
 
   # GET /farms/:id

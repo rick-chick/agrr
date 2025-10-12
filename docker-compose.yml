@@ -9,6 +9,7 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - storage_dev_data:/app/storage  # 開発用永続ストレージ
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
       - /app/tmp
@@ -17,6 +18,7 @@ services:
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
+      - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
     command: bash -lc "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0"
     stdin_open: true
     tty: true
@@ -32,6 +34,7 @@ services:
     entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
+      - storage_test_data:/app/storage  # テスト専用ストレージ（開発環境と完全分離）
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
     environment:
@@ -64,3 +67,5 @@ services:
 volumes:
   bundle_data:
   bundle_cache:
+  storage_dev_data:   # 開発環境用永続ストレージ
+  storage_test_data:  # テスト環境用永続ストレージ（完全分離）

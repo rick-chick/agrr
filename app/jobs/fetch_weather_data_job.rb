@@ -111,13 +111,18 @@ class FetchWeatherDataJob < ApplicationJob
 
     # 気象データを保存
     data_count = 0
-    weather_data['data']['data'].each do |daily_data|
+    saved_count = 0
+    updated_count = 0
+    
+    weather_data['data']['data'].each_with_index do |daily_data, index|
       date = Date.parse(daily_data['time'])
       
       record = WeatherDatum.find_or_initialize_by(
         weather_location: weather_location,
         date: date
       )
+      
+      was_new_record = record.new_record?
       
       record.temperature_max = daily_data['temperature_2m_max']
       record.temperature_min = daily_data['temperature_2m_min']
@@ -126,9 +131,18 @@ class FetchWeatherDataJob < ApplicationJob
       record.sunshine_hours = daily_data['sunshine_hours']
       record.wind_speed = daily_data['wind_speed_10m']
       record.weather_code = daily_data['weather_code']
+      
+      # 最初と最後のレコードの詳細をログ
+      if index == 0 || index == weather_data['data']['data'].length - 1
+        Rails.logger.debug "💾 [Weather Data ##{index + 1}] date=#{date}, temp=#{record.temperature_min}~#{record.temperature_max}°C, precip=#{record.precipitation}mm, sunshine=#{record.sunshine_hours}h, new_record=#{was_new_record}"
+      end
+      
       record.save!
       data_count += 1
+      was_new_record ? saved_count += 1 : updated_count += 1
     end
+    
+    Rails.logger.info "💾 [Weather Data Summary] Total: #{data_count}, New: #{saved_count}, Updated: #{updated_count}"
 
     # Farmのステータスを更新
     if farm_id
@@ -165,13 +179,30 @@ class FetchWeatherDataJob < ApplicationJob
       '--json'
     ]
 
+    Rails.logger.debug "🔧 [AGRR Command] #{command.join(' ')}"
+    
     stdout, stderr, status = Open3.capture3(*command)
 
     unless status.success?
+      Rails.logger.error "❌ [AGRR Error] Command failed: #{command.join(' ')}"
+      Rails.logger.error "   stderr: #{stderr}"
       raise "Failed to fetch weather data from agrr: #{stderr}"
     end
 
-    JSON.parse(stdout)
+    # agrrコマンドの生の出力をログに記録（最初の500文字のみ）
+    Rails.logger.debug "📥 [AGRR Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
+    
+    parsed_data = JSON.parse(stdout)
+    
+    # データ構造を検証
+    Rails.logger.debug "📊 [AGRR Data] success: #{parsed_data['success']}"
+    Rails.logger.debug "📊 [AGRR Data] data_count: #{parsed_data.dig('data', 'data')&.count || 0}"
+    if parsed_data.dig('data', 'data')&.any?
+      first_record = parsed_data['data']['data'].first
+      Rails.logger.debug "📊 [AGRR Sample] First record: #{first_record.inspect}"
+    end
+    
+    parsed_data
   end
 
 end

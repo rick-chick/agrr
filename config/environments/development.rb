@@ -100,7 +100,7 @@ Rails.application.configure do
   end
 
   # Set log level to info to see background job logs
-  config.log_level = :info
+  config.log_level = :debug # デバッグログを有効化（問題の切り分け用）
 
   # Allow local hosts during development
   config.hosts << "localhost"
