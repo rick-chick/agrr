@@ -17,10 +17,10 @@
       <a href="<%= root_path %>" class="nav-link">ホーム</a>
       <%= link_to "農場", farms_path, class: "nav-link" %>
       <%= link_to "作物", crops_path, class: "nav-link" %>
-      <% if current_user&.avatar_url.present? %>
-        <%= image_tag current_user.avatar_url, alt: "User Avatar", class: "user-avatar" %>
-      <% end %>
-      <% if current_user %>
+      <% if logged_in? %>
+        <% if current_user.avatar_url.present? %>
+          <%= image_tag current_user.avatar_url, alt: "User Avatar", class: "user-avatar" %>
+        <% end %>
         <span><%= current_user.name %></span>
         <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "logout-btn" %>
       <% end %>

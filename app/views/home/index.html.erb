@@ -1,71 +1,455 @@
-<% content_for :title, "Dashboard - AGRR" %>
-    
-    <div class="welcome-card">
-      <h1 class="welcome-title">Welcome to AGRR!</h1>
-      <p class="welcome-message">
-        Hello <%= @user.name %>! You have successfully logged in with Google OAuth.
+<% content_for :title, "AGRR - 農業計画支援システム" %>
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGRR - 農業計画支援システム</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* ナビゲーションバー */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d5016;
+      text-decoration: none;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: #555;
+      font-weight: 500;
+      transition: color 0.3s;
+      padding: 0.5rem 1rem;
+    }
+
+    .nav-link:hover {
+      color: #2d5016;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    /* ヒーローセクション */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+      padding-top: 80px;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,197.3C1248,203,1344,149,1392,122.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+      background-size: cover;
+    }
+
+    .hero-content {
+      text-align: center;
+      color: white;
+      z-index: 1;
+      padding: 2rem;
+      max-width: 900px;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .hero-subtitle {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+      animation: fadeInUp 1s ease-out 0.2s both;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out 0.4s both;
+    }
+
+    .hero-button {
+      background: white;
+      color: #667eea;
+      padding: 1rem 2.5rem;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-button-outline {
+      background: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+
+    .hero-button-outline:hover {
+      background: white;
+      color: #667eea;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 機能セクション */
+    .features {
+      padding: 6rem 2rem;
+      background: white;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #2d5016;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 4rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      padding: 2rem;
+      border-radius: 15px;
+      background: #f8f9fa;
+      transition: transform 0.3s, box-shadow 0.3s;
+      text-align: center;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #2d5016;
+    }
+
+    .feature-description {
+      color: #666;
+      line-height: 1.8;
+    }
+
+    /* CTAセクション */
+    .cta {
+      padding: 6rem 2rem;
+      background: linear-gradient(135deg, #2d5016 0%, #4a7c23 100%);
+      color: white;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-description {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+
+    /* フッター */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: #aaa;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-link:hover {
+      color: white;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.5rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1.2rem;
+      }
+
+      .navbar {
+        padding: 1rem;
+      }
+
+      .navbar-nav {
+        gap: 0.5rem;
+      }
+
+      .nav-link {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ナビゲーションバー -->
+  <nav class="navbar">
+    <a href="<%= root_path %>" class="navbar-brand">🌾 AGRR</a>
+    <div class="navbar-nav">
+      <% if logged_in? %>
+        <%= link_to "農場", farms_path, class: "nav-link" %>
+        <%= link_to "作物", crops_path, class: "nav-link" %>
+        <% if current_user.admin? %>
+          <%= link_to "管理", admin_root_path, class: "nav-link" %>
+        <% end %>
+        <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "btn-secondary", style: "border: none; cursor: pointer;" %>
+      <% else %>
+        <%= link_to "ログイン", auth_login_path, class: "btn-primary" %>
+      <% end %>
+    </div>
+  </nav>
+
+  <!-- ヒーローセクション -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">🌱 農業をもっとスマートに</h1>
+      <p class="hero-subtitle">
+        気象データとAIを活用した最適な作付け計画で、<br>
+        あなたの農業を次のレベルへ
       </p>
-      
-      <div class="features">
-        <div class="feature-card">
-          <h3 class="feature-title">🔐 Secure Authentication</h3>
-          <p class="feature-description">
-            Your account is secured with Google OAuth 2.0 authentication. 
-            No passwords to remember, just your Google account.
-          </p>
-        </div>
-        
-        <div class="feature-card">
-          <h3 class="feature-title">📁 File Management</h3>
-          <p class="feature-description">
-            Upload and manage your files with our secure file storage system. 
-            Files are stored safely in the cloud.
-          </p>
-        </div>
-        
-        <div class="feature-card">
-          <h3 class="feature-title">🌱 農場・圃場管理</h3>
-          <p class="feature-description">
-            農場と圃場の位置情報を地図で管理し、農作業を効率化しましょう。
-          </p>
-          <div style="margin-top: 1rem;">
-            <%= link_to "農場一覧", farms_path, class: "btn", style: "margin-right: 0.5rem;" %>
-            <%= link_to "新しい農場", new_farm_path, class: "btn btn-success" %>
-          </div>
-        </div>
-
-        <div class="feature-card">
-          <h3 class="feature-title">🌾 作物管理</h3>
-          <p class="feature-description">
-            作物と生育ステージ要件を管理します。参照作物は管理者のみ作成・編集可能です。
-          </p>
-          <div style="margin-top: 1rem;">
-            <%= link_to "作物一覧", crops_path, class: "btn", style: "margin-right: 0.5rem;" %>
-            <%= link_to "新しい作物", new_crop_path, class: "btn btn-success" %>
-          </div>
-        </div>
-
-        <div class="feature-card">
-          <h3 class="feature-title">🎁 簡単作付け計画</h3>
-          <p class="feature-description">
-            会員登録なしで、簡単な作付け計画を作成できます。地域、農場サイズ、作物を選ぶだけ！
-          </p>
-          <div style="margin-top: 1rem;">
-            <%= link_to "今すぐ作成", new_free_plan_path, class: "btn btn-success" %>
-          </div>
-        </div>
-
-        <% if admin_user? %>
-          <div class="feature-card">
-            <h3 class="feature-title">⚙️ 管理者メニュー</h3>
-            <p class="feature-description">
-              地域、農場サイズ、参照作物などのマスタデータを管理します。
-            </p>
-            <div style="margin-top: 1rem;">
-              <%= link_to "地域管理", admin_regions_path, class: "btn", style: "margin-right: 0.5rem;" %>
-              <%= link_to "農場サイズ管理", admin_farm_sizes_path, class: "btn" %>
-            </div>
-          </div>
+      <div class="hero-buttons">
+        <%= link_to "無料で作付け計画を作成", free_plans_path, class: "hero-button" %>
+        <% unless logged_in? %>
+          <%= link_to "Googleでサインイン", "/auth/google_oauth2", class: "hero-button hero-button-outline", data: { turbo: false } %>
         <% end %>
       </div>
     </div>
+  </section>
+
+  <!-- 機能セクション -->
+  <section class="features">
+    <h2 class="section-title">AGRRの特徴</h2>
+    <p class="section-subtitle">データドリブンで農業計画をサポート</p>
+    
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌤️</div>
+        <h3 class="feature-title">気象データ分析</h3>
+        <p class="feature-description">
+          過去20年以上の気象データを分析し、最適な作付け時期を提案します。
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3 class="feature-title">AI作物提案</h3>
+        <p class="feature-description">
+          AIが地域の気候や土壌条件に最適な作物を提案。収益性も考慮します。
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">作付け計画最適化</h3>
+        <p class="feature-description">
+          農場サイズと作物の組み合わせを最適化し、効率的な計画を立案します。
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <h3 class="feature-title">圃場管理</h3>
+        <p class="feature-description">
+          複数の圃場を地図上で管理。各圃場の状態を一目で把握できます。
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3 class="feature-title">成長予測</h3>
+        <p class="feature-description">
+          積算温度（GDD）を活用し、作物の成長段階を予測します。
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">☁️</div>
+        <h3 class="feature-title">クラウド管理</h3>
+        <p class="feature-description">
+          データはクラウドで安全に管理。どこからでもアクセス可能です。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTAセクション -->
+  <section class="cta">
+    <h2 class="cta-title">今すぐ始めましょう</h2>
+    <p class="cta-description">
+      ログイン不要で作付け計画を試せます。<br>
+      より高度な機能をご利用の場合は、アカウント登録をお願いします。
+    </p>
+    <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+      <%= link_to "無料で計画を作成", free_plans_path, class: "hero-button" %>
+      <% unless logged_in? %>
+        <%= link_to "アカウント登録", auth_login_path, class: "hero-button hero-button-outline" %>
+      <% end %>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <%= link_to "ホーム", root_path, class: "footer-link" %>
+        <%= link_to "無料プラン", free_plans_path, class: "footer-link" %>
+        <% if current_user&.admin? %>
+          <%= link_to "管理画面", admin_root_path, class: "footer-link" %>
+        <% end %>
+      </div>
+      <p style="color: #666;">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
