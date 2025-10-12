@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+class FieldsAllocator
+  attr_reader :total_area, :crops
+  
+  def initialize(total_area, crops)
+    @total_area = total_area.to_f
+    @crops = Array(crops)
+  end
+  
+  def allocate
+    base_area = (total_area / field_count).floor
+    remainder = (total_area - (base_area * field_count)).round
+    
+    prioritized_crops.map.with_index do |crop, index|
+      # 余りを優先順位順に1㎡ずつ分配
+      # 最初の remainder 個の圃場に +1㎡
+      additional_area = if index < remainder
+        1.0
+      else
+        0.0
+      end
+      
+      {
+        crop: crop,
+        area: base_area + additional_area
+      }
+    end
+  end
+  
+  def field_count
+    @field_count ||= calculate_field_count
+  end
+  
+  private
+  
+  def calculate_field_count
+    @crops.count.downto(1).find do |count|
+      (total_area / count) >= max_area_per_unit
+    end || 1
+  end
+  
+  def max_area_per_unit
+    @max_area_per_unit ||= @crops.map(&:area_per_unit).compact.max || 10.0
+  end
+  
+  def prioritized_crops
+    @crops.sort_by { |c| -(c.area_per_unit || 0) }.take(field_count)
+  end
+end
+

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_12_115435) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -63,6 +63,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
 
+  create_table "cultivation_plans", force: :cascade do |t|
+    t.integer "farm_id", null: false
+    t.integer "user_id"
+    t.string "session_id"
+    t.float "total_area", null: false
+    t.string "status", default: "pending", null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
+    t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
+    t.index ["status"], name: "index_cultivation_plans_on_status"
+    t.index ["user_id"], name: "index_cultivation_plans_on_user_id"
+  end
+
   create_table "farm_sizes", force: :cascade do |t|
     t.string "name", null: false
     t.integer "area_sqm", null: false
@@ -95,6 +110,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
     t.index ["weather_location_id"], name: "index_farms_on_weather_location_id"
   end
 
+  create_table "field_cultivations", force: :cascade do |t|
+    t.integer "cultivation_plan_id", null: false
+    t.integer "field_id", null: false
+    t.integer "crop_id", null: false
+    t.float "area", null: false
+    t.date "start_date"
+    t.date "completion_date"
+    t.integer "cultivation_days"
+    t.float "estimated_cost"
+    t.string "status", default: "pending", null: false
+    t.text "optimization_result"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id"], name: "index_field_cultivations_on_crop_id"
+    t.index ["cultivation_plan_id", "field_id"], name: "index_field_cultivations_on_cultivation_plan_id_and_field_id"
+    t.index ["cultivation_plan_id"], name: "index_field_cultivations_on_cultivation_plan_id"
+    t.index ["field_id"], name: "index_field_cultivations_on_field_id"
+    t.index ["status"], name: "index_field_cultivations_on_status"
+  end
+
   create_table "fields", force: :cascade do |t|
     t.integer "farm_id", null: false
     t.integer "user_id", null: false
@@ -104,6 +139,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
     t.datetime "updated_at", null: false
     t.decimal "latitude", precision: 10, scale: 8
     t.decimal "longitude", precision: 11, scale: 8
+    t.float "area"
+    t.float "daily_fixed_cost"
     t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name", unique: true
     t.index ["farm_id"], name: "index_fields_on_farm_id"
     t.index ["user_id", "name"], name: "index_fields_on_user_id_and_name", unique: true
@@ -321,8 +358,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_101720) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "crop_stages", "crops"
   add_foreign_key "crops", "users"
+  add_foreign_key "cultivation_plans", "farms"
+  add_foreign_key "cultivation_plans", "users"
   add_foreign_key "farms", "users"
   add_foreign_key "farms", "weather_locations"
+  add_foreign_key "field_cultivations", "crops"
+  add_foreign_key "field_cultivations", "cultivation_plans"
+  add_foreign_key "field_cultivations", "fields"
   add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
   add_foreign_key "free_crop_plans", "crops"
