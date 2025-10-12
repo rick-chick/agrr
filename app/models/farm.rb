@@ -5,6 +5,7 @@ class Farm < ApplicationRecord
   belongs_to :user
   belongs_to :weather_location, optional: true
   has_many :fields, dependent: :destroy
+  has_many :free_crop_plans, dependent: :restrict_with_error
 
   # Enums
   enum :weather_data_status, {
@@ -14,6 +15,13 @@ class Farm < ApplicationRecord
     failed: 'failed'
   }, default: 'pending'
 
+  # Callbacks
+  before_validation :normalize_longitude
+  before_update :reset_weather_data_if_coordinates_changed
+  after_create_commit :enqueue_weather_data_fetch
+  after_update_commit :enqueue_weather_data_fetch_if_coordinates_changed
+  after_update_commit :broadcast_refresh_if_needed
+  
   # Validations
   validates :name, presence: true, length: { maximum: 100 }
   validates :name, uniqueness: { scope: :user_id, case_sensitive: false }
@@ -21,14 +29,36 @@ class Farm < ApplicationRecord
                        numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, 
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
-
-  # Callbacks
-  after_create_commit :enqueue_weather_data_fetch
-  after_update_commit :broadcast_refresh_if_needed
+  
+  # デフォルト農場はアノニマスユーザーにのみ設定可能（複数のデフォルト農場を許可）
+  validate :default_farm_must_belong_to_anonymous_user
 
   # Scopes
   scope :by_user, ->(user) { where(user: user) }
   scope :recent, -> { order(created_at: :desc) }
+  scope :default_farms, -> { where(is_default: true).order(:name) }
+  scope :default_farm, -> { find_by(is_default: true) }
+
+  # Class methods
+  def self.default_farm
+    find_by(is_default: true)
+  end
+
+  def self.find_or_create_default_farm!
+    default_farm || create_default_farm!
+  end
+
+  def self.create_default_farm!
+    anonymous_user = User.anonymous_user
+    
+    create!(
+      user: anonymous_user,
+      name: "デフォルト農場",
+      latitude: 35.6812,   # 東京の緯度
+      longitude: 139.7671, # 東京の経度
+      is_default: true
+    )
+  end
 
   # Instance methods
   def coordinates
@@ -41,6 +71,10 @@ class Farm < ApplicationRecord
 
   def display_name
     name.presence || "農場 ##{id}"
+  end
+
+  def default_farm?
+    is_default
   end
 
   # 天気データ取得の進捗率（0-100）
@@ -118,6 +152,43 @@ class Farm < ApplicationRecord
   end
 
   private
+
+  # 経度を-180〜180の範囲に正規化（Leaflet対応）
+  def normalize_longitude
+    return unless longitude.present?
+    
+    # 経度を-180〜180の範囲に正規化
+    # 例: 190° → -170°, -190° → 170°
+    normalized = ((longitude + 180) % 360) - 180
+    self.longitude = normalized
+  end
+
+  # デフォルト農場はアノニマスユーザーに属する必要がある（複数のデフォルト農場を地域ごとに許可）
+  def default_farm_must_belong_to_anonymous_user
+    if is_default && user && !user.anonymous?
+      errors.add(:is_default, "デフォルト農場はアノニマスユーザーにのみ設定できます")
+    end
+  end
+
+  # 緯度経度が変更された場合、天気データをリセット
+  def reset_weather_data_if_coordinates_changed
+    if (latitude_changed? || longitude_changed?) && persisted?
+      Rails.logger.info "🔄 [Farm##{id}] Coordinates changed, resetting weather data"
+      self.weather_location_id = nil
+      self.weather_data_status = 'pending'
+      self.weather_data_fetched_years = 0
+      self.weather_data_total_years = 0
+      self.weather_data_last_error = nil
+    end
+  end
+
+  # 緯度経度が変更された場合、新しい天気データ取得をトリガー
+  def enqueue_weather_data_fetch_if_coordinates_changed
+    if saved_change_to_latitude? || saved_change_to_longitude?
+      Rails.logger.info "🌍 [Farm##{id}] Coordinates changed, enqueueing new weather data fetch"
+      enqueue_weather_data_fetch
+    end
+  end
 
   # 農場作成時に2000年からの天気カレンダーを取得
   def enqueue_weather_data_fetch

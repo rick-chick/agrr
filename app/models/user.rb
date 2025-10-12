@@ -30,8 +30,9 @@ class User < ApplicationRecord
   end
 
   # Class method to create or get anonymous user
+  # スレッドセーフのため、キャッシュせずに毎回DBから取得
   def self.anonymous_user
-    @anonymous_user ||= find_or_create_by!(is_anonymous: true) do |user|
+    find_or_create_by!(is_anonymous: true) do |user|
       user.email = nil
       user.name = nil
       user.google_id = nil

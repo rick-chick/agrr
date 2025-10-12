@@ -4,7 +4,7 @@ module Domain
   module Crop
     module Entities
       class CropEntity
-        attr_reader :id, :user_id, :name, :variety, :is_reference, :created_at, :updated_at
+        attr_reader :id, :user_id, :name, :variety, :is_reference, :area_per_unit, :revenue_per_area, :agrr_crop_id, :created_at, :updated_at
 
         def initialize(attributes)
           @id = attributes[:id]
@@ -12,6 +12,9 @@ module Domain
           @name = attributes[:name]
           @variety = attributes[:variety]
           @is_reference = attributes[:is_reference]
+          @area_per_unit = attributes[:area_per_unit]
+          @revenue_per_area = attributes[:revenue_per_area]
+          @agrr_crop_id = attributes[:agrr_crop_id]
           @created_at = attributes[:created_at]
           @updated_at = attributes[:updated_at]
 
