@@ -51,6 +51,13 @@ class AuthTestController < ApplicationController
       u.email = auth_hash['info']['email']
       u.name = auth_hash['info']['name']
       u.avatar_url = processed_avatar_url
+      # 開発者（developer）は管理者権限を付与
+      u.admin = (auth_key == :google_oauth2)
+    end
+    
+    # 既存ユーザーの場合も管理者権限を更新
+    if user.persisted? && auth_key == :google_oauth2 && !user.admin?
+      user.update!(admin: true)
     end
     
     # Check if user was successfully persisted

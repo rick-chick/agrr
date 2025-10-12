@@ -5,7 +5,7 @@ one:
   name: テスト農場1
   latitude: 35.6812
   longitude: 139.7671
-  is_default: false
+  is_reference: false
   weather_data_status: pending
   created_at: <%= 1.week.ago %>
   updated_at: <%= 1.week.ago %>
@@ -15,7 +15,7 @@ two:
   name: テスト農場2
   latitude: 35.6762
   longitude: 139.6503
-  is_default: false
+  is_reference: false
   weather_data_status: pending
   created_at: <%= 2.weeks.ago %>
   updated_at: <%= 2.weeks.ago %>

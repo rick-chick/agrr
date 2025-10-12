@@ -57,13 +57,15 @@
       
       <div id="crop-stages">
         <%= f.fields_for :crop_stages do |stage_form| %>
-          <%= render 'crop_stage_fields', f: stage_form %>
+          <%= render 'crop_stage_fields', f: stage_form, crop: @crop %>
         <% end %>
       </div>
 
-      <div class="form-group">
-        <button type="button" id="add-crop-stage" class="btn btn-secondary">+ 生育ステージを追加</button>
-      </div>
+      <% if !@crop.is_reference || admin_user? %>
+        <div class="form-group">
+          <button type="button" id="add-crop-stage" class="btn btn-secondary">+ 生育ステージを追加</button>
+        </div>
+      <% end %>
     </div>
 
     <div class="actions">

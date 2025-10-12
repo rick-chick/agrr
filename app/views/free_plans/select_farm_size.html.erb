@@ -46,11 +46,11 @@
       
       <div class="enhanced-grid">
         <% @farm_sizes.each do |farm_size| %>
-          <%= link_to select_crop_free_plans_path(farm_size_id: farm_size.id), class: "enhanced-selection-card" do %>
+          <%= link_to select_crop_free_plans_path(farm_size_id: farm_size[:id]), class: "enhanced-selection-card" do %>
             <div class="enhanced-card-icon">🏡</div>
-            <div class="enhanced-card-title"><%= farm_size.name %></div>
-            <div class="enhanced-card-highlight"><%= farm_size.display_area %></div>
-            <div class="enhanced-card-detail"><%= number_with_delimiter(farm_size.area_sqm) %>平方メートル</div>
+            <div class="enhanced-card-title"><%= farm_size[:name] %></div>
+            <div class="enhanced-card-highlight"><%= farm_size[:area_sqm] %>㎡</div>
+            <div class="enhanced-card-detail"><%= farm_size[:description] %></div>
           <% end %>
         <% end %>
       </div>

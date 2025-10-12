@@ -1,11 +1,21 @@
 # frozen_string_literal: true
 
+# Farm（農場）モデル
+#
+# is_reference フラグについて:
+#   - true: システムが提供する参照用農場（栽培地域）
+#     - 管理者のみが管理画面で表示・編集可能
+#     - 一般ユーザーからは見えない（無料プラン作成時の地域選択でのみ使用）
+#     - アノニマスユーザーに所属する必要がある
+#   - false: ユーザーが作成した個人の農場
+#     - 作成したユーザーのみが管理可能
+#
 class Farm < ApplicationRecord
   # Associations
   belongs_to :user
   belongs_to :weather_location, optional: true
   has_many :fields, dependent: :destroy
-  has_many :free_crop_plans, dependent: :restrict_with_error
+  has_many :free_crop_plans, dependent: :destroy
 
   # Enums
   enum :weather_data_status, {
@@ -30,35 +40,14 @@ class Farm < ApplicationRecord
   validates :longitude, presence: true, 
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
   
-  # デフォルト農場はアノニマスユーザーにのみ設定可能（複数のデフォルト農場を許可）
-  validate :default_farm_must_belong_to_anonymous_user
+  # 参照農場はアノニマスユーザーにのみ設定可能（複数の参照農場を許可）
+  validate :reference_farm_must_belong_to_anonymous_user
 
   # Scopes
   scope :by_user, ->(user) { where(user: user) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :default_farms, -> { where(is_default: true).order(:name) }
-  scope :default_farm, -> { find_by(is_default: true) }
-
-  # Class methods
-  def self.default_farm
-    find_by(is_default: true)
-  end
-
-  def self.find_or_create_default_farm!
-    default_farm || create_default_farm!
-  end
-
-  def self.create_default_farm!
-    anonymous_user = User.anonymous_user
-    
-    create!(
-      user: anonymous_user,
-      name: "デフォルト農場",
-      latitude: 35.6812,   # 東京の緯度
-      longitude: 139.7671, # 東京の経度
-      is_default: true
-    )
-  end
+  scope :reference, -> { where(is_reference: true).order(:name) }
+  scope :user_owned, -> { where(is_reference: false) }
 
   # Instance methods
   def coordinates
@@ -73,8 +62,8 @@ class Farm < ApplicationRecord
     name.presence || "農場 ##{id}"
   end
 
-  def default_farm?
-    is_default
+  def reference?
+    is_reference
   end
 
   # 天気データ取得の進捗率（0-100）
@@ -163,10 +152,10 @@ class Farm < ApplicationRecord
     self.longitude = normalized
   end
 
-  # デフォルト農場はアノニマスユーザーに属する必要がある（複数のデフォルト農場を地域ごとに許可）
-  def default_farm_must_belong_to_anonymous_user
-    if is_default && user && !user.anonymous?
-      errors.add(:is_default, "デフォルト農場はアノニマスユーザーにのみ設定できます")
+  # 参照農場はアノニマスユーザーに属する必要がある（複数の参照農場を地域ごとに許可）
+  def reference_farm_must_belong_to_anonymous_user
+    if is_reference && user && !user.anonymous?
+      errors.add(:is_reference, "参照農場はアノニマスユーザーにのみ設定できます")
     end
   end
 

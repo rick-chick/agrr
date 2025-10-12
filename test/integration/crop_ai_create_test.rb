@@ -6,6 +6,8 @@ class CropAiCreateTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:two)  # non-admin user
     sign_in_as(@user)
+    # AGRRコマンドをモック化して高速化
+    stub_all_agrr_commands
   end
 
   test "AI create endpoint exists" do

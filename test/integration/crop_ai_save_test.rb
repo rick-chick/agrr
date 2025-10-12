@@ -6,13 +6,15 @@ class CropAiSaveTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:two)  # non-admin user
     sign_in_as(@user)
+    # AGRRコマンドをモック化して高速化
+    stub_all_agrr_commands
   end
 
   test "new crop page has AI save button" do
     get new_crop_path
     assert_response :success
     
-    assert_select 'button#ai-save-crop-btn', text: /AIで作物情報を保存/
+    assert_select 'button#ai-save-crop-btn', text: /AIで作物情報を取得・保存/
     assert_select 'div#ai-save-status'
   end
 

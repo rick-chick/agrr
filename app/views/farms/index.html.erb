@@ -5,16 +5,24 @@
   <%= link_to "新しい農場を追加", new_farm_path, class: "btn btn-success" %>
 </div>
 
-<% if admin_user? && @default_farms.any? %>
-  <!-- 栽培地域農場（管理者のみ表示） -->
+<!-- デバッグ情報（開発環境のみ） -->
+<% if Rails.env.development? %>
+  <div style="background: #fff3cd; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+    <strong>デバッグ:</strong>
+    admin_user? = <%= admin_user? %>,
+    current_user.admin = <%= current_user.admin %>,
+    @reference_farms.count = <%= @reference_farms.count %>,
+    @farms.count = <%= @farms.count %>
+  </div>
+<% end %>
+
+<% if @reference_farms.any? %>
+  <!-- 参照農場（管理者のみ表示） -->
   <div style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h2 style="font-size: 1.5rem; font-weight: 600; color: #2d3748;">栽培地域農場 (<%= @default_farms.count %>件)</h2>
-      <%= link_to "管理画面で管理", admin_default_farms_path, class: "btn btn-primary", style: "font-size: 0.875rem;" %>
-    </div>
+    <h2 style="font-size: 1.5rem; font-weight: 600; color: #2d3748; margin-bottom: 1rem;">参照農場（栽培地域） (<%= @reference_farms.count %>件)</h2>
     
     <div class="farms-grid">
-      <% @default_farms.each do |farm| %>
+      <% @reference_farms.each do |farm| %>
         <%= render "farm_card_wrapper", farm: farm %>
       <% end %>
     </div>

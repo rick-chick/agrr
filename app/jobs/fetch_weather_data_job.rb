@@ -109,40 +109,42 @@ class FetchWeatherDataJob < ApplicationJob
       end
     end
 
-    # 気象データを保存
-    data_count = 0
-    saved_count = 0
-    updated_count = 0
+    # 気象データをバッチ保存（upsert_allで一括処理）
+    all_records = []
     
     weather_data['data']['data'].each_with_index do |daily_data, index|
       date = Date.parse(daily_data['time'])
       
-      record = WeatherDatum.find_or_initialize_by(
-        weather_location: weather_location,
-        date: date
-      )
+      record_attrs = {
+        weather_location_id: weather_location.id,
+        date: date,
+        temperature_max: daily_data['temperature_2m_max'],
+        temperature_min: daily_data['temperature_2m_min'],
+        temperature_mean: daily_data['temperature_2m_mean'],
+        precipitation: daily_data['precipitation_sum'],
+        sunshine_hours: daily_data['sunshine_hours'],
+        wind_speed: daily_data['wind_speed_10m'],
+        weather_code: daily_data['weather_code'],
+        updated_at: Time.current
+      }
       
-      was_new_record = record.new_record?
-      
-      record.temperature_max = daily_data['temperature_2m_max']
-      record.temperature_min = daily_data['temperature_2m_min']
-      record.temperature_mean = daily_data['temperature_2m_mean']
-      record.precipitation = daily_data['precipitation_sum']
-      record.sunshine_hours = daily_data['sunshine_hours']
-      record.wind_speed = daily_data['wind_speed_10m']
-      record.weather_code = daily_data['weather_code']
+      all_records << record_attrs
       
       # 最初と最後のレコードの詳細をログ
       if index == 0 || index == weather_data['data']['data'].length - 1
-        Rails.logger.debug "💾 [Weather Data ##{index + 1}] date=#{date}, temp=#{record.temperature_min}~#{record.temperature_max}°C, precip=#{record.precipitation}mm, sunshine=#{record.sunshine_hours}h, new_record=#{was_new_record}"
+        Rails.logger.debug "💾 [Weather Data ##{index + 1}] date=#{date}, temp=#{record_attrs[:temperature_min]}~#{record_attrs[:temperature_max]}°C"
       end
-      
-      record.save!
-      data_count += 1
-      was_new_record ? saved_count += 1 : updated_count += 1
     end
     
-    Rails.logger.info "💾 [Weather Data Summary] Total: #{data_count}, New: #{saved_count}, Updated: #{updated_count}"
+    # upsert_allで一括挿入・更新（既存データは上書き）
+    result = WeatherDatum.upsert_all(
+      all_records,
+      unique_by: [:weather_location_id, :date],
+      update_only: [:temperature_max, :temperature_min, :temperature_mean, :precipitation, :sunshine_hours, :wind_speed, :weather_code, :updated_at]
+    )
+    
+    data_count = all_records.size
+    Rails.logger.info "💾 [Weather Data Summary] Total: #{data_count} records upserted in single batch"
 
     # Farmのステータスを更新
     if farm_id

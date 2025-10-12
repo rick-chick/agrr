@@ -5,16 +5,13 @@ class AuthController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:google_oauth2_callback, :failure]
   
   # Public endpoints
-  skip_before_action :authenticate_user!, only: [:login, :google_oauth2, :google_oauth2_callback, :failure]
+  skip_before_action :authenticate_user!, only: [:login, :google_oauth2_callback, :failure]
 
   def login
     # Display login page with Google OAuth button
   end
 
-  def google_oauth2
-    # Redirect to Google OAuth
-    redirect_to '/auth/google_oauth2'
-  end
+  # /auth/google_oauth2 is handled by OmniAuth middleware, no action needed
 
   def google_oauth2_callback
     begin

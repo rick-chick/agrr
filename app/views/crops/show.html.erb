@@ -97,9 +97,20 @@
   
   <div class="actions">
     <%= link_to "作物一覧に戻る", crops_path, class: "btn" %>
-    <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
-    <%= button_to "削除", @crop, method: :delete, 
-                class: "btn btn-danger", 
-                confirm: "この作物を削除しますか？" %>
+    <% if @crop.is_reference %>
+      <%# 参照作物は管理者のみ編集・削除可能 %>
+      <% if admin_user? %>
+        <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
+        <%= button_to "削除", @crop, method: :delete, 
+                    class: "btn btn-danger", 
+                    confirm: "この作物を削除しますか？" %>
+      <% end %>
+    <% else %>
+      <%# ユーザー作物は所有者が編集・削除可能 %>
+      <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
+      <%= button_to "削除", @crop, method: :delete, 
+                  class: "btn btn-danger", 
+                  confirm: "この作物を削除しますか？" %>
+    <% end %>
   </div>
 </div>

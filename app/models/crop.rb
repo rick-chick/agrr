@@ -1,15 +1,23 @@
 # frozen_string_literal: true
 
-# 作物モデル
+# Crop（作物）モデル
 #
 # Attributes:
 #   name: 作物名（必須）
 #   variety: 品種名（任意）
-#   is_reference: 参照作物フラグ（管理者のみ作成可能）
+#   is_reference: 参照作物フラグ
 #   area_per_unit: 単位あたりの栽培面積（㎡）- 正の数値のみ
 #   revenue_per_area: 面積あたりの収益（円/㎡）- 0以上の数値のみ
 #   agrr_crop_id: agrrコマンドから取得した作物ID（更新時の識別に使用）
 #   user_id: 所有ユーザー（参照作物の場合はnull）
+#
+# is_reference フラグについて:
+#   - true: システムが提供する参照用作物
+#     - 管理画面で編集・削除可能
+#     - 一般ユーザーも作物管理画面で参照（閲覧）可能
+#     - user_idはnull（システム所有）
+#   - false: ユーザーが作成した個人の作物
+#     - 作成したユーザーのみが管理可能
 class Crop < ApplicationRecord
   belongs_to :user, optional: true
   has_many :crop_stages, dependent: :destroy

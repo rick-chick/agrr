@@ -37,7 +37,7 @@ class GenerateFreeCropPlanJob < ApplicationJob
     {
       planting_windows: generate_planting_windows(crop, region),
       harvest_windows: generate_harvest_windows(crop, region),
-      recommendations: generate_recommendations(crop, region, free_crop_plan.farm_size)
+      recommendations: generate_recommendations(crop, region, free_crop_plan.area_sqm)
     }
   end
   
@@ -120,13 +120,13 @@ class GenerateFreeCropPlanJob < ApplicationJob
     end
   end
   
-  def generate_recommendations(crop, region, farm_size)
+  def generate_recommendations(crop, region, area_sqm)
     recommendations = []
     
     # 農場サイズに応じた推奨事項
-    if farm_size.area_sqm < 20
+    if area_sqm < 20
       recommendations << "小規模農場では、集約的な栽培が可能です。畝間を詰めて栽培密度を上げることができます。"
-    elsif farm_size.area_sqm < 100
+    elsif area_sqm < 100
       recommendations << "中規模農場では、輪作計画を立てることをお勧めします。"
     else
       recommendations << "大規模農場では、機械化を検討すると効率が上がります。"

@@ -23,13 +23,13 @@ class PublicPlansController < ApplicationController
     
     session[:public_plan] = { farm_id: @farm.id }
   rescue ActiveRecord::RecordNotFound
-    redirect_to new_public_plan_path, alert: '栽培地域を選択してください。'
+    redirect_to public_plans_path, alert: '栽培地域を選択してください。'
   end
   
   # Step 3: 作物選択
   def select_crop
     unless session_data[:farm_id]
-      redirect_to new_public_plan_path, alert: '最初からやり直してください。' and return
+      redirect_to public_plans_path, alert: '最初からやり直してください。' and return
     end
     
     @farm = Farm.find(session_data[:farm_id])
@@ -44,13 +44,13 @@ class PublicPlansController < ApplicationController
     session_data[:total_area] = @farm_size[:area_sqm]
     session[:public_plan] = session_data
   rescue ActiveRecord::RecordNotFound
-    redirect_to new_public_plan_path, alert: '最初からやり直してください。'
+    redirect_to public_plans_path, alert: '最初からやり直してください。'
   end
   
   # Step 4: 作付け計画作成（計算開始）
   def create
     unless session_data[:farm_id] && session_data[:total_area]
-      redirect_to new_public_plan_path, alert: '最初からやり直してください。' and return
+      redirect_to public_plans_path, alert: '最初からやり直してください。' and return
     end
     
     farm = Farm.find(session_data[:farm_id])
@@ -78,10 +78,10 @@ class PublicPlansController < ApplicationController
       
       redirect_to optimizing_public_plans_path
     else
-      redirect_to new_public_plan_path, alert: "計画作成に失敗しました: #{result.errors.join(', ')}"
+      redirect_to public_plans_path, alert: "計画作成に失敗しました: #{result.errors.join(', ')}"
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to new_public_plan_path, alert: '最初からやり直してください。'
+    redirect_to public_plans_path, alert: '最初からやり直してください。'
   end
   
   # Step 5: 最適化進捗画面（広告表示）
@@ -108,7 +108,7 @@ class PublicPlansController < ApplicationController
     plan_id = session_data[:plan_id]
     
     unless plan_id
-      redirect_to new_public_plan_path, alert: '作付け計画が見つかりません。'
+      redirect_to public_plans_path, alert: '作付け計画が見つかりません。'
       return nil
     end
     

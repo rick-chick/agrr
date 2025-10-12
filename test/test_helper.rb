@@ -28,8 +28,14 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "minitest/mock"
 
+# Load test support files
+Dir[Rails.root.join('test', 'support', '**', '*.rb')].each { |f| require f }
+
 module ActiveSupport
   class TestCase
+    # Include AGRR mock helper
+    include AgrrMockHelper
+    
     # Run tests in parallel with specified workers
     # parallelize(workers: :number_of_processors) # Disabled for SimpleCov
 
