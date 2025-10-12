@@ -6,8 +6,12 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
-  <!-- Core Design System (includes all components and features) -->
+  <!-- Core Design System (must be first) -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <!-- Component styles -->
+  <%= stylesheet_link_tag "navbar", "data-turbo-track": "reload" %>
+  <!-- Feature-specific styles -->
+  <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
   <style>

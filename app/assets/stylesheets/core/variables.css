@@ -208,6 +208,23 @@
   --container-lg: 1024px;
   --container-xl: 1280px;
   --container-2xl: 1536px;
+  --container-max-width: 1280px;
+  --container-padding: 2rem;
+  
+  /* ============================================
+     レイアウト定数
+     ============================================ */
+  
+  --navbar-height: 80px;
+  
+  /* ============================================
+     追加のエイリアス（互換性のため）
+     ============================================ */
+  
+  --z-navbar: var(--z-index-sticky);
+  --color-border-light: var(--color-gray-200);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
 }
 
 /* ============================================
