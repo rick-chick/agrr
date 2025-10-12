@@ -4,17 +4,26 @@ require "application_system_test_case"
 
 class FreePlansTest < ApplicationSystemTestCase
   setup do
-    @region = Region.create!(name: "日本", country_code: "JP", active: true)
-    @farm_size = FarmSize.create!(name: "小規模", area_sqm: 20, display_order: 1, active: true)
-    @crop1 = Crop.create!(name: "トマト", variety: "大玉", is_reference: true, user_id: nil)
-    @crop2 = Crop.create!(name: "ジャガイモ", variety: "男爵", is_reference: true, user_id: nil)
-    @crop3 = Crop.create!(name: "玉ねぎ", variety: "黄玉ねぎ", is_reference: true, user_id: nil)
+    # Regionモデルは削除されたため、デフォルト農場を作成
+    anonymous_user = User.anonymous_user
+    @farm = Farm.create!(
+      user: anonymous_user,
+      name: "日本（東京）",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      is_default: true
+    )
+    # fixtureの農場サイズと作物を使用
+    @farm_size = farm_sizes(:small)
+    @crop1 = crops(:tomato)
+    @crop2 = crops(:cucumber)
+    @crop3 = crops(:lettuce)
   end
 
   test "JavaScriptがロードされてカウンターが動作する" do
     # Step 1-2: 地域と農場サイズを選択
     visit new_free_plan_path
-    click_on @region.name
+    click_on @farm.name
     click_on @farm_size.name
     
     # Step 3: 作物選択画面
@@ -75,19 +84,13 @@ class FreePlansTest < ApplicationSystemTestCase
     assert_not submit_button.disabled?
   end
 
-  test "JavaScriptのupdate関数が存在する" do
-    visit new_free_plan_path
-    click_on @region.name
-    click_on @farm_size.name
-    
-    # JavaScriptの関数が定義されているか
-    script_result = page.evaluate_script("typeof update === 'function'")
-    assert script_result, "update関数が定義されていません"
-  end
+  # Note: JavaScriptはIIFEでカプセル化されているため、直接関数をテストできない
+  # 代わりに、「JavaScriptがロードされてカウンターが動作する」テストで機能を検証
+  # test "JavaScriptのupdate関数が存在する" - スキップ（カプセル化されたプライベート関数のため）
 
   test "チェックボックスが正しくレンダリングされる" do
     visit new_free_plan_path
-    click_on @region.name
+    click_on @farm.name
     click_on @farm_size.name
     
     # チェックボックスの数
@@ -108,12 +111,12 @@ class FreePlansTest < ApplicationSystemTestCase
 
   test "カウンターとボタンの要素が存在する" do
     visit new_free_plan_path
-    click_on @region.name
+    click_on @farm.name
     click_on @farm_size.name
     
     # 必須要素の存在確認
-    assert_selector "#counter", "カウンター要素が見つかりません"
-    assert_selector "#submitBtn", "送信ボタンが見つかりません"
-    assert_selector "#hint", "ヒント要素が見つかりません"
+    assert_selector "#counter"
+    assert_selector "#submitBtn"
+    assert_selector "#hint"
   end
 end
