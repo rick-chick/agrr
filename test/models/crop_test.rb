@@ -176,4 +176,78 @@ class CropTest < ActiveSupport::TestCase
     
     assert crop2.valid?
   end
+
+  test "should save crop with area_per_unit" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      area_per_unit: 100.0
+    )
+    
+    assert_equal 100.0, crop.area_per_unit
+  end
+
+  test "should save crop with revenue_per_area" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      area_per_unit: 100.0,
+      revenue_per_area: 500000.0
+    )
+    
+    assert_equal 100.0, crop.area_per_unit
+    assert_equal 500000.0, crop.revenue_per_area
+  end
+
+  test "should allow nil revenue_per_area" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      area_per_unit: 100.0,
+      revenue_per_area: nil
+    )
+    
+    assert_equal 100.0, crop.area_per_unit
+    assert_nil crop.revenue_per_area
+  end
+
+  test "should not allow negative area_per_unit" do
+    crop = Crop.new(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      area_per_unit: -10.0
+    )
+    
+    assert_not crop.valid?
+    assert_includes crop.errors[:area_per_unit], "must be greater than 0"
+  end
+
+  test "should not allow negative revenue_per_area" do
+    crop = Crop.new(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      revenue_per_area: -1000.0
+    )
+    
+    assert_not crop.valid?
+    assert_includes crop.errors[:revenue_per_area], "must be greater than or equal to 0"
+  end
+
+  test "should allow zero revenue_per_area" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      area_per_unit: 100.0,
+      revenue_per_area: 0.0
+    )
+    
+    assert crop.valid?
+    assert_equal 0.0, crop.revenue_per_area
+  end
 end

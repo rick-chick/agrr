@@ -135,5 +135,68 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
       )
     end
   end
+  
+  test "updates farm progress when job completes" do
+    skip "Test requires agrr command" unless File.exist?(Rails.root.join('lib', 'core', 'agrr'))
+
+    user = users(:one)
+    farm = Farm.new(
+      name: "Progress Test Farm",
+      latitude: 35.6762,
+      longitude: 139.6503,
+      user: user
+    )
+    farm.save!(validate: false)
+    farm.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_total_years: 3,
+      weather_data_fetched_years: 0
+    )
+
+    assert_equal 0, farm.weather_data_fetched_years
+    assert_equal 0, farm.weather_data_progress
+
+    # First job
+    FetchWeatherDataJob.perform_now(
+      latitude: farm.latitude,
+      longitude: farm.longitude,
+      start_date: Date.new(2025, 9, 1),
+      end_date: Date.new(2025, 9, 7),
+      farm_id: farm.id
+    )
+
+    farm.reload
+    assert_equal 1, farm.weather_data_fetched_years
+    assert_equal 33, farm.weather_data_progress
+    assert_equal 'fetching', farm.weather_data_status
+
+    # Second job
+    FetchWeatherDataJob.perform_now(
+      latitude: farm.latitude,
+      longitude: farm.longitude,
+      start_date: Date.new(2025, 9, 8),
+      end_date: Date.new(2025, 9, 14),
+      farm_id: farm.id
+    )
+
+    farm.reload
+    assert_equal 2, farm.weather_data_fetched_years
+    assert_equal 67, farm.weather_data_progress
+    assert_equal 'fetching', farm.weather_data_status
+
+    # Third job (should complete)
+    FetchWeatherDataJob.perform_now(
+      latitude: farm.latitude,
+      longitude: farm.longitude,
+      start_date: Date.new(2025, 9, 15),
+      end_date: Date.new(2025, 9, 21),
+      farm_id: farm.id
+    )
+
+    farm.reload
+    assert_equal 3, farm.weather_data_fetched_years
+    assert_equal 100, farm.weather_data_progress
+    assert_equal 'completed', farm.weather_data_status
+  end
 end
 

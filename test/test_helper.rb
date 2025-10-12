@@ -36,6 +36,12 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # テスト開始前にアノニマスユーザーを作成
+    setup do
+      User.instance_variable_set(:@anonymous_user, nil)
+      User.anonymous_user
+    end
+
     # Add more helper methods to be used by all tests here...
     
     # OAuth test helpers

@@ -169,4 +169,171 @@ class WeatherChartFlowTest < ActionDispatch::IntegrationTest
     # style属性も設定されている（初期表示用）
     assert_select '.farm-card .progress-fill[style*="width: 40%"]'
   end
+  
+  test "progress bar not shown when progress is 100% in detail view" do
+    # 進捗100%の農場（まだfetchingステータス）
+    farm_100_percent = Farm.new(
+      name: "進捗100%農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user
+    )
+    farm_100_percent.save!(validate: false)
+    farm_100_percent.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_fetched_years: 5,
+      weather_data_total_years: 5
+    )
+    
+    get farm_path(farm_100_percent)
+    assert_response :success
+    
+    # 進捗が100%なので進捗バーは表示されない
+    assert_select '.weather-section'
+    assert_select '.progress-bar', count: 0
+    
+    # 完了間近のメッセージが表示される
+    assert_select '.info-message', text: /完了/
+  end
+  
+  test "progress bar not shown when progress is 100% in list view" do
+    # 進捗100%の農場（まだfetchingステータス）
+    farm_100_percent = Farm.new(
+      name: "リスト進捗100%農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user
+    )
+    farm_100_percent.save!(validate: false)
+    farm_100_percent.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_fetched_years: 5,
+      weather_data_total_years: 5
+    )
+    
+    get farms_path
+    assert_response :success
+    
+    # 農場カードに進捗バーが表示されない
+    assert_select '.farm-card .progress-bar', count: 0
+    
+    # 完了間近のメッセージが表示される
+    assert_select '.farm-card .info-message', text: /完了/
+  end
+  
+  test "increment_weather_data_progress updates progress correctly" do
+    test_farm = Farm.new(
+      name: "進捗更新テスト農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user
+    )
+    test_farm.save!(validate: false)
+    test_farm.update_columns(
+      weather_data_status: 'fetching',
+      weather_data_fetched_years: 0,
+      weather_data_total_years: 5
+    )
+    
+    # 最初の進捗更新
+    test_farm.increment_weather_data_progress!
+    test_farm.reload
+    assert_equal 1, test_farm.weather_data_fetched_years
+    assert_equal 20, test_farm.weather_data_progress
+    assert_equal 'fetching', test_farm.weather_data_status
+    
+    # 2回目の進捗更新
+    test_farm.increment_weather_data_progress!
+    test_farm.reload
+    assert_equal 2, test_farm.weather_data_fetched_years
+    assert_equal 40, test_farm.weather_data_progress
+    assert_equal 'fetching', test_farm.weather_data_status
+    
+    # 3回目の進捗更新
+    test_farm.increment_weather_data_progress!
+    test_farm.reload
+    assert_equal 3, test_farm.weather_data_fetched_years
+    assert_equal 60, test_farm.weather_data_progress
+    assert_equal 'fetching', test_farm.weather_data_status
+    
+    # 4回目の進捗更新
+    test_farm.increment_weather_data_progress!
+    test_farm.reload
+    assert_equal 4, test_farm.weather_data_fetched_years
+    assert_equal 80, test_farm.weather_data_progress
+    assert_equal 'fetching', test_farm.weather_data_status
+    
+    # 最後の進捗更新（完了）
+    test_farm.increment_weather_data_progress!
+    test_farm.reload
+    assert_equal 5, test_farm.weather_data_fetched_years
+    assert_equal 100, test_farm.weather_data_progress
+    assert_equal 'completed', test_farm.weather_data_status
+  end
+  
+  test "updating farm coordinates resets weather data and triggers new fetch" do
+    # 天気データが完了している農場を作成
+    completed_farm = Farm.new(
+      name: "完了済み農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user,
+      weather_location: @weather_location
+    )
+    completed_farm.save!(validate: false)
+    completed_farm.update_columns(
+      weather_data_status: 'completed',
+      weather_data_fetched_years: 5,
+      weather_data_total_years: 5
+    )
+    
+    assert_equal @weather_location.id, completed_farm.weather_location_id
+    assert_equal 'completed', completed_farm.weather_data_status
+    
+    # 緯度経度を更新（新しい天気データ取得が自動的に始まる）
+    completed_farm.update!(
+      latitude: 34.0,
+      longitude: 135.0
+    )
+    
+    # weather_locationとの関連が切れる
+    assert_nil completed_farm.weather_location_id
+    
+    # 新しい天気データ取得が始まるため、ステータスはfetchingになる
+    assert_equal 'fetching', completed_farm.weather_data_status
+    
+    # 進捗は新しい取得用に初期化される
+    assert_equal 0, completed_farm.weather_data_fetched_years
+    assert completed_farm.weather_data_total_years > 0, "Total years should be set for new fetch"
+  end
+  
+  test "updating farm name does not reset weather data" do
+    # 天気データが完了している農場を作成
+    completed_farm = Farm.new(
+      name: "元の名前",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user,
+      weather_location: @weather_location
+    )
+    completed_farm.save!(validate: false)
+    completed_farm.update_columns(
+      weather_data_status: 'completed',
+      weather_data_fetched_years: 5,
+      weather_data_total_years: 5
+    )
+    
+    original_location_id = completed_farm.weather_location_id
+    
+    # 名前だけを更新
+    completed_farm.update!(name: "新しい名前")
+    
+    # weather_locationとの関連は維持される
+    assert_equal original_location_id, completed_farm.weather_location_id
+    
+    # ステータスは変わらない
+    assert_equal 'completed', completed_farm.weather_data_status
+    assert_equal 5, completed_farm.weather_data_fetched_years
+    assert_equal 5, completed_farm.weather_data_total_years
+  end
 end

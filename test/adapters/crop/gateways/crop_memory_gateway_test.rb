@@ -23,6 +23,28 @@ class Adapters::Crop::Gateways::CropMemoryGatewayTest < ActiveSupport::TestCase
     assert crop.is_a?(Domain::Crop::Entities::CropEntity)
   end
 
+  test "should create crop with area and revenue fields" do
+    crop_data = @crop_data.merge(
+      area_per_unit: 100.0,
+      revenue_per_area: 500000.0
+    )
+    crop = @gateway.create(crop_data)
+    assert_not_nil crop
+    assert_equal 100.0, crop.area_per_unit
+    assert_equal 500000.0, crop.revenue_per_area
+  end
+
+  test "should create crop with nil revenue_per_area" do
+    crop_data = @crop_data.merge(
+      area_per_unit: 100.0,
+      revenue_per_area: nil
+    )
+    crop = @gateway.create(crop_data)
+    assert_not_nil crop
+    assert_equal 100.0, crop.area_per_unit
+    assert_nil crop.revenue_per_area
+  end
+
   test "should find crop by id" do
     created = @gateway.create(@crop_data)
     found = @gateway.find_by_id(created.id)
@@ -43,6 +65,13 @@ class Adapters::Crop::Gateways::CropMemoryGatewayTest < ActiveSupport::TestCase
     created = @gateway.create(@crop_data)
     updated = @gateway.update(created.id, { name: "稲(更新)" })
     assert_equal "稲(更新)", updated.name
+  end
+
+  test "should update area and revenue fields" do
+    created = @gateway.create(@crop_data.merge(area_per_unit: 100.0, revenue_per_area: 500000.0))
+    updated = @gateway.update(created.id, { area_per_unit: 150.0, revenue_per_area: 600000.0 })
+    assert_equal 150.0, updated.area_per_unit
+    assert_equal 600000.0, updated.revenue_per_area
   end
 
   test "should delete crop" do

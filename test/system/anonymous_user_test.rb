@@ -16,15 +16,24 @@ class AnonymousUserTest < ApplicationSystemTestCase
   end
   
   test "anonymous user can start free plan creation flow" do
-    # 地域のfixtureがあることを前提
-    region = regions(:tokyo)
+    # デフォルト農場を作成
+    User.instance_variable_set(:@anonymous_user, nil)
+    anonymous_user = User.anonymous_user
+    Farm.where(is_default: true).destroy_all
+    farm = Farm.create!(
+      user: anonymous_user,
+      name: "東京",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      is_default: true
+    )
     
     # Step 1: トップページにアクセス
     visit root_path
     assert_selector "h1", text: "🌱 作付け計画作成"
     
-    # Step 2: 地域を選択（リンクカードをクリック）
-    click_link region.name
+    # Step 2: 地域（デフォルト農場）を選択（リンクカードをクリック）
+    click_link farm.name
     
     # Step 3: 農場サイズ選択ページに遷移することを確認
     assert_selector "h1", text: "🌱 作付け計画作成"
