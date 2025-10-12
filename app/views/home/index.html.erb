@@ -44,5 +44,28 @@
             <%= link_to "新しい作物", new_crop_path, class: "btn btn-success" %>
           </div>
         </div>
+
+        <div class="feature-card">
+          <h3 class="feature-title">🎁 簡単作付け計画</h3>
+          <p class="feature-description">
+            会員登録なしで、簡単な作付け計画を作成できます。地域、農場サイズ、作物を選ぶだけ！
+          </p>
+          <div style="margin-top: 1rem;">
+            <%= link_to "今すぐ作成", new_free_plan_path, class: "btn btn-success" %>
+          </div>
+        </div>
+
+        <% if admin_user? %>
+          <div class="feature-card">
+            <h3 class="feature-title">⚙️ 管理者メニュー</h3>
+            <p class="feature-description">
+              地域、農場サイズ、参照作物などのマスタデータを管理します。
+            </p>
+            <div style="margin-top: 1rem;">
+              <%= link_to "地域管理", admin_regions_path, class: "btn", style: "margin-right: 0.5rem;" %>
+              <%= link_to "農場サイズ管理", admin_farm_sizes_path, class: "btn" %>
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>

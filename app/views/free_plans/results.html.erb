@@ -1,0 +1,120 @@
+<%# encoding: UTF-8 %>
+<div class="free-plans-wrapper">
+  <div class="free-plans-container">
+    <!-- Header -->
+    <div class="free-plans-header">
+      <h1>🎉 作付け計画が完成しました！</h1>
+      <p><%= @free_crop_plans.count %>種類の作物の作付け計画が完成しました</p>
+    </div>
+    
+    <!-- Success Badge -->
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="display: inline-flex; align-items: center; background: white; color: #00b894; padding: 1.5rem 3rem; border-radius: 60px; font-size: 1.3rem; font-weight: 700; box-shadow: 0 12px 48px rgba(0, 184, 148, 0.3);">
+        <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20" style="margin-right: 1rem;">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <%= @free_crop_plans.count %>種類の計画作成完了
+      </div>
+    </div>
+    
+    <!-- Crop Plans Grid -->
+    <div class="enhanced-grid" style="margin-bottom: 2rem;">
+      <% @free_crop_plans.each do |plan| %>
+        <div class="content-card" style="padding: 2rem; transition: all 0.3s ease;">
+          <!-- Card Header -->
+          <div style="text-align: center; padding-bottom: 1.5rem; border-bottom: 2px solid #f8f9fa; margin-bottom: 1.5rem;">
+            <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🌾</div>
+            <h3 style="font-size: 1.6rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;"><%= plan.crop.name %></h3>
+            <% if plan.crop.variety.present? %>
+              <p style="font-size: 0.95rem; color: #6c757d;"><%= plan.crop.variety %></p>
+            <% end %>
+          </div>
+          
+          <!-- Plan Summary -->
+          <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.85rem; color: #6c757d; font-weight: 600;">🌍 地域</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #333;"><%= plan.farm.name %></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.85rem; color: #6c757d; font-weight: 600;">📏 農場</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #333;"><%= plan.farm_size.display_area %></span>
+            </div>
+          </div>
+          
+          <% if plan.plan_data.present? %>
+            <!-- Planting Info -->
+            <% if plan.plan_data['planting_windows'].present? && plan.plan_data['planting_windows'].first.present? %>
+              <div style="display: flex; align-items: flex-start; padding: 1.25rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%); border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
+                <div style="font-size: 1.8rem; margin-right: 1rem;">🌱</div>
+                <div>
+                  <div style="font-size: 0.85rem; color: #667eea; font-weight: 700; margin-bottom: 0.25rem;">播種時期</div>
+                  <div style="font-size: 0.95rem; font-weight: 600; color: #333;">
+                    <%= plan.plan_data['planting_windows'].first['start_date'] %> ～ 
+                    <%= plan.plan_data['planting_windows'].first['end_date'] %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            
+            <!-- Harvest Info -->
+            <% if plan.plan_data['harvest_windows'].present? && plan.plan_data['harvest_windows'].first.present? %>
+              <div style="display: flex; align-items: flex-start; padding: 1.25rem; background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(85, 239, 196, 0.05) 100%); border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid #00b894;">
+                <div style="font-size: 1.8rem; margin-right: 1rem;">🌾</div>
+                <div>
+                  <div style="font-size: 0.85rem; color: #00b894; font-weight: 700; margin-bottom: 0.25rem;">収穫時期</div>
+                  <div style="font-size: 0.95rem; font-weight: 600; color: #333;">
+                    <%= plan.plan_data['harvest_windows'].first['start_date'] %> ～ 
+                    <%= plan.plan_data['harvest_windows'].first['end_date'] %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+          
+          <!-- View Details Link -->
+          <div style="text-align: center;">
+            <%= link_to free_plan_path(plan), class: "btn-gradient", style: "display: inline-flex; padding: 0.75rem 2rem; font-size: 1rem;" do %>
+              詳細を見る →
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- Advertisement Card -->
+    <div class="content-card" style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border: none; margin-bottom: 2rem;">
+      <div style="text-align: center; color: #856404; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">
+        スポンサー広告
+      </div>
+      <div style="background: white; border-radius: 12px; padding: 3rem; min-height: 200px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div style="text-align: center; color: #999;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">広告スペース</div>
+          <div style="font-size: 0.9rem;">728 x 90 (Leaderboard)</div>
+          <p style="margin-top: 1rem; font-size: 0.85rem;">
+            Google AdSense や他の広告ネットワークのコードを配置
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CTA Card -->
+    <div class="content-card" style="text-align: center; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: none;">
+      <h3 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">🚀 もっと詳しい分析が必要ですか？</h3>
+      <p style="font-size: 1.15rem; color: #666; margin-bottom: 2rem; line-height: 1.6;">
+        会員登録（無料）すると、作物の詳細比較、<br>
+        気候データの可視化、カスタマイズ可能な作付け計画などが利用できます。
+      </p>
+      <%= link_to auth_login_path, class: "btn-gradient", style: "font-size: 1.3rem; padding: 1.5rem 4rem;" do %>
+        無料で会員登録 →
+      <% end %>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <%= link_to new_free_plan_path, class: "btn-white" do %>
+        ← 新しい計画を作成
+      <% end %>
+    </div>
+  </div>
+</div>

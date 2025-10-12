@@ -3,7 +3,10 @@
 Rails.application.routes.draw do
   namespace :admin do
     resources :farm_sizes
-    resources :regions
+    resources :default_farms, only: [:index, :show, :edit, :update, :destroy]
+    
+    # 管理画面のルート
+    root to: redirect('/admin/default_farms')
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -60,6 +63,8 @@ Rails.application.routes.draw do
         resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
       end
       resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
+      # AI作物情報取得・保存エンドポイント
+      post 'crops/ai_create', to: 'crops#ai_create'
     end
   end
 
