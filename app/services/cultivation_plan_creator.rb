@@ -47,7 +47,7 @@ class CultivationPlanCreator
     field = Field.create!(
       farm: @farm,
       user: @user,
-      name: "#{allocation[:crop].name} - 圃場#{index + 1}",
+      name: "#{allocation[:crop].name} - 圃場#{index + 1} (#{Time.current.strftime('%Y%m%d%H%M%S')})",
       area: allocation[:area],
       daily_fixed_cost: calculate_daily_cost(allocation[:area])
     )
