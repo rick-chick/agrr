@@ -79,24 +79,24 @@
 </div>
 
 <!-- Fixed Bottom Bar -->
-<div style="position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15); z-index: 1000;">
-  <div style="max-width: 900px; margin: 0 auto; padding: 1.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
-      <div style="display: flex; align-items: center; gap: 1.5rem;">
-        <%= link_to select_farm_size_public_plans_path(farm_id: @farm.id), class: "btn-white", style: "padding: 0.75rem 1.5rem; font-size: 1rem;" do %>
+<div class="fixed-bottom-bar">
+  <div class="fixed-bottom-bar-container">
+    <div class="fixed-bottom-bar-content">
+      <div class="fixed-bottom-bar-left">
+        <%= link_to select_farm_size_public_plans_path(farm_id: @farm.id), class: "btn-white back-button" do %>
           ← 戻る
         <% end %>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <span style="font-size: 0.875rem; color: #718096; font-weight: 600;">選択済み</span>
-          <div id="counter" style="width: 48px; height: 48px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-size: 1.5rem; font-weight: 900; transition: all 0.3s ease;">0</div>
-          <span style="font-size: 1.2rem; font-weight: 700; color: #2d3748;">種類</span>
+        <div class="selection-counter-group">
+          <span class="counter-label">選択済み</span>
+          <div id="counter" class="counter-badge">0</div>
+          <span class="counter-unit">種類</span>
         </div>
       </div>
-      <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient" style="font-size: 1.1rem; padding: 1rem 2.5rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s ease;" disabled>
+      <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient submit-button" disabled>
         ✓ 選択した作物で計画を作成
       </button>
     </div>
-    <div id="hint" style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: #e53e3e;">
+    <div id="hint" class="hint-message">
       ⚠️ 作物を1つ以上選択してください
     </div>
   </div>
@@ -151,6 +151,181 @@
     opacity: 1;
     background: #4299e1;
     border-color: #4299e1;
+  }
+  
+  /* Fixed Bottom Bar Styles */
+  .fixed-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+  }
+  
+  .fixed-bottom-bar-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+  }
+  
+  .fixed-bottom-bar-content {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 44px;
+  }
+  
+  .fixed-bottom-bar-left {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .back-button {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+  
+  .selection-counter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .counter-label {
+    font-size: 0.875rem;
+    color: #718096;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  
+  .counter-badge {
+    width: 44px;
+    height: 44px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    font-size: 1.5rem;
+    font-weight: 900;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+  
+  .counter-unit {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d3748;
+    white-space: nowrap;
+  }
+  
+  .submit-button {
+    font-size: 1.1rem !important;
+    padding: 1rem 2rem !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .hint-message {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: #e53e3e;
+  }
+  
+  /* Responsive Design for Small Screens */
+  @media (max-width: 768px) {
+    .fixed-bottom-bar-container {
+      padding: 0.75rem 1rem;
+    }
+    
+    .fixed-bottom-bar-content {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .fixed-bottom-bar-left {
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      gap: 0.75rem;
+    }
+    
+    .back-button {
+      padding: 0.625rem 1.25rem !important;
+      font-size: 0.9rem !important;
+      min-height: 44px;
+    }
+    
+    .selection-counter-group {
+      gap: 0.5rem;
+    }
+    
+    .counter-label {
+      font-size: 0.8rem;
+    }
+    
+    .counter-badge {
+      width: 44px;
+      height: 44px;
+      font-size: 1.3rem;
+    }
+    
+    .counter-unit {
+      font-size: 1rem;
+    }
+    
+    .submit-button {
+      width: 100%;
+      font-size: 1rem !important;
+      padding: 0.875rem 1.5rem !important;
+      min-height: 44px;
+    }
+    
+    .hint-message {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .counter-label,
+    .counter-unit {
+      display: none;
+    }
+    
+    .selection-counter-group {
+      position: relative;
+    }
+    
+    .selection-counter-group::before {
+      content: "選択: ";
+      font-size: 0.75rem;
+      color: #718096;
+      font-weight: 600;
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
   }
 </style>
 

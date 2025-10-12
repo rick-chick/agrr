@@ -2037,7 +2037,9 @@ body {
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  min-height: 44px;
 }
 
 .btn-gradient:hover {
@@ -2383,7 +2385,9 @@ body {
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  min-height: 44px;
 }
 
 .btn-gradient:hover {
@@ -2405,7 +2409,9 @@ body {
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  min-height: 44px;
 }
 
 .btn-white:hover {
@@ -2536,6 +2542,7 @@ body {
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
     box-sizing: border-box;
+    min-height: 44px;
   }
 }
 
