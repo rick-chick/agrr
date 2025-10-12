@@ -1,10 +1,16 @@
 <%# encoding: UTF-8 %>
 <div class="free-plans-wrapper" style="padding-bottom: 0;">
   <div class="free-plans-container">
-    <!-- Header -->
-    <div class="free-plans-header">
-      <h1>🌱 作付け計画を最適化中...</h1>
-      <p><%= @cultivation_plan.farm.name %>の気候データと<%= @cultivation_plan.field_cultivations.count %>種類の作物を分析しています</p>
+    <!-- Compact Header -->
+    <div class="compact-header-card">
+      <div class="compact-header-title">
+        <span class="title-icon">🌱</span>
+        <span class="title-text">作付け計画</span>
+        <span class="status-badge optimizing">最適化中</span>
+      </div>
+      <div class="compact-subtitle">
+        <%= @cultivation_plan.farm.name %> · <%= @cultivation_plan.field_cultivations.count %>種類の作物
+      </div>
     </div>
     
     <!-- Main Content: Advertisement -->
@@ -39,7 +45,7 @@
 <!-- Fixed Bottom Progress Bar -->
 <div style="position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15); z-index: 1000; border-top: 4px solid #4299e1;">
   <div style="max-width: 900px; margin: 0 auto; padding: 1.5rem;">
-    <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 0.875rem; color: #718096; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
         最適化状況
       </div>
@@ -49,29 +55,8 @@
     </div>
     
     <!-- Progress Bar -->
-    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 1rem;">
+    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 0.75rem;">
       <div style="width: <%= @cultivation_plan.optimization_progress %>%; height: 100%; background: linear-gradient(90deg, #4299e1 0%, #48bb78 100%); transition: width 0.5s ease;"></div>
-    </div>
-    
-    <!-- Compact Progress List -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
-      <% @cultivation_plan.field_cultivations.each do |fc| %>
-        <div style="display: flex; align-items: center; padding: 0.75rem; background: <%= fc.status_completed? ? '#f0fff4' : '#f8f9fa' %>; border-radius: 8px; border: 1px solid <%= fc.status_completed? ? '#48bb78' : '#e2e8f0' %>;">
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: <%= fc.status_completed? ? '#48bb78' : '#e2e8f0' %>; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; color: <%= fc.status_completed? ? 'white' : '#a0aec0' %>; font-size: 1rem; font-weight: 700;">
-            <% if fc.status_completed? %>
-              ✓
-            <% else %>
-              <div style="width: 16px; height: 16px; border: 2px solid #fff; border-top: 2px solid #4299e1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <% end %>
-          </div>
-          <div style="flex: 1;">
-            <div style="font-size: 0.9rem; font-weight: 600; color: #2d3748;"><%= fc.crop.name %></div>
-            <div style="font-size: 0.75rem; color: #718096;">
-              <%= fc.status_completed? ? '最適化完了' : '最適化中...' %>
-            </div>
-          </div>
-        </div>
-      <% end %>
     </div>
   </div>
 </div>
