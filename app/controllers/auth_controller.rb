@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
+  layout 'auth', only: [:login]
+  
   # Skip CSRF protection for OAuth endpoints
   skip_before_action :verify_authenticity_token, only: [:google_oauth2_callback, :failure]
   
