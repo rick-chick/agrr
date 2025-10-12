@@ -44,23 +44,16 @@
       <h2 class="content-card-title">📏 農場のサイズを選択してください</h2>
       <p class="content-card-subtitle">あなたの農場の広さに最も近いものを選択してください</p>
       
-      <%= form_with url: select_crop_public_plans_path, method: :get, data: { controller: "farm-size-selection" } do |f| %>
-        <%= hidden_field_tag :farm_size_id, nil, data: { farm_size_selection_target: "sizeInput" } %>
-        
-        <div class="enhanced-grid">
-          <% @farm_sizes.each do |farm_size| %>
-            <a href="#" 
-               class="enhanced-selection-card" 
-               data-size-id="<%= farm_size[:id] %>"
-               data-action="click->farm-size-selection#selectSize">
-              <div class="enhanced-card-icon">🏡</div>
-              <div class="enhanced-card-title"><%= farm_size[:name] %></div>
-              <div class="enhanced-card-highlight"><%= farm_size[:area_sqm] %>㎡</div>
-              <div class="enhanced-card-detail"><%= farm_size[:description] %></div>
-            </a>
+      <div class="enhanced-grid">
+        <% @farm_sizes.each do |farm_size| %>
+          <%= link_to select_crop_public_plans_path(farm_size_id: farm_size[:id]), class: "enhanced-selection-card" do %>
+            <div class="enhanced-card-icon">🏡</div>
+            <div class="enhanced-card-title"><%= farm_size[:name] %></div>
+            <div class="enhanced-card-highlight"><%= farm_size[:area_sqm] %>㎡</div>
+            <div class="enhanced-card-detail"><%= farm_size[:description] %></div>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
       
       <div class="action-buttons">
         <%= link_to public_plans_path, class: "btn-white" do %>
