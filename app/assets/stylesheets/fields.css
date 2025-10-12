@@ -1736,7 +1736,8 @@ body {
 .free-plans-wrapper {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
-  padding: 2rem 0;
+  padding: 1rem 0 0 0;
+  box-sizing: border-box;
 }
 
 .free-plans-container {
@@ -2095,7 +2096,8 @@ body {
 .free-plans-wrapper {
   background: #f8f9fa;
   min-height: 100vh;
-  padding: 1.5rem 0;
+  padding: 1rem 0 0 0;
+  box-sizing: border-box;
 }
 
 .free-plans-container {
