@@ -1,0 +1,251 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# 参照農場の天気データ取得スクリプト（API版）
+#
+# 使用方法:
+#   bin/fetch_reference_weather_data                           # 全参照農場の天気データを取得
+#   bin/fetch_reference_weather_data --farm-name "北海道・札幌"  # 特定の農場のみ
+#   bin/fetch_reference_weather_data --api-url http://localhost:3000  # カスタムAPI URL
+#
+# 前提条件:
+#   - rails db:seed が実行済み（参照農場がDBに存在する）
+#   - Webサーバーが起動している（docker compose up web または rails server）
+#   - Solid Queue が起動している（バックグラウンドジョブ処理用）
+#
+# 処理内容:
+#   1. DBから参照農場を取得
+#   2. 各農場について API経由で天気データ取得を開始
+#   3. ジョブの完了を待機（進捗表示）
+#   4. DBから全天気データを読み取り、JSONに出力
+#   5. db/fixtures/reference_weather.json に保存
+
+require 'fileutils'
+require 'json'
+
+# Railsの環境を読み込む前にnet/httpをロード
+require 'net/http'
+require 'uri'
+
+require_relative '../config/environment'
+
+# ログ出力用のカラー定義
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# API Client
+class AgrrApiClient
+  def initialize(base_url)
+    @base_url = base_url
+  end
+
+  def fetch_weather_data(farm_id)
+    uri = URI("#{@base_url}/api/v1/internal/farms/#{farm_id}/fetch_weather_data")
+    request = Net::HTTP::Post.new(uri)
+    request['Content-Type'] = 'application/json'
+    
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      http.request(request)
+    end
+    
+    JSON.parse(response.body)
+  rescue => e
+    { 'error' => e.message }
+  end
+
+  def weather_status(farm_id)
+    uri = URI("#{@base_url}/api/v1/internal/farms/#{farm_id}/weather_status")
+    response = Net::HTTP.get(uri)
+    JSON.parse(response)
+  rescue => e
+    { 'error' => e.message }
+  end
+
+  def get_weather_data(farm_id)
+    uri = URI("#{@base_url}/api/v1/internal/farms/#{farm_id}/weather_data")
+    response = Net::HTTP.get(uri)
+    JSON.parse(response)
+  rescue => e
+    { 'error' => e.message }
+  end
+end
+
+# オプション解析
+farm_name_filter = nil
+api_url = 'http://localhost:3000'
+
+ARGV.each_with_index do |arg, i|
+  case arg
+  when '--farm-name'
+    farm_name_filter = ARGV[i + 1] if ARGV[i + 1]
+  when '--api-url'
+    api_url = ARGV[i + 1] if ARGV[i + 1]
+  end
+end
+
+# ヘッダー
+ColorLogger.log("\n" + "=" * 60, :blue)
+ColorLogger.log("参照農場の天気データ取得スクリプト（API版）", :blue)
+ColorLogger.log("=" * 60, :blue)
+puts ""
+ColorLogger.info("API URL: #{api_url}")
+puts ""
+
+# APIクライアント
+api_client = AgrrApiClient.new(api_url)
+
+# 1. DBから参照農場を取得
+ColorLogger.info("参照農場を検索中...")
+farms = Farm.where(is_reference: true)
+farms = farms.where(name: farm_name_filter) if farm_name_filter
+
+if farms.empty?
+  ColorLogger.error("参照農場が見つかりません。先に 'rails db:seed' を実行してください。")
+  exit 1
+end
+
+ColorLogger.success("#{farms.count}件の参照農場を発見しました")
+puts ""
+
+# 2. 各農場の天気データを取得
+farms.each_with_index do |farm, index|
+  ColorLogger.log("\n[#{index + 1}/#{farms.count}] 処理中: #{farm.name} (ID: #{farm.id})", :blue)
+  puts "  位置: #{farm.latitude}, #{farm.longitude}"
+  
+  # API経由で天気データ取得を開始
+  result = api_client.fetch_weather_data(farm.id)
+  
+  if result['error']
+    ColorLogger.error("  APIエラー: #{result['error']}")
+    next
+  end
+  
+  if result['message'] == 'Weather data already exists'
+    ColorLogger.success("  天気データ取得済み (#{result['weather_data_count']}件のレコード)")
+    next
+  end
+  
+  ColorLogger.info("  天気データを取得中（数分かかります）...")
+  
+  # ジョブが完了するまで待機
+  last_progress = -1
+  loop do
+    sleep 2
+    
+    status_result = api_client.weather_status(farm.id)
+    
+    if status_result['error']
+      ColorLogger.error("  ステータス取得エラー: #{status_result['error']}")
+      break
+    end
+    
+    status = status_result['status']
+    progress = status_result['progress']
+    
+    # 進捗が変わった時のみ表示
+    if progress != last_progress
+      print "\r  進捗: #{progress}% (#{status_result['fetched_blocks']}/#{status_result['total_blocks']} ブロック) [#{status}]"
+      last_progress = progress
+    end
+    
+    break if status == 'completed'
+    
+    if status == 'failed'
+      puts ""
+      ColorLogger.error("  失敗: #{status_result['last_error']}")
+      ColorLogger.warning("  この農場はスキップします")
+      break
+    end
+  end
+  
+  puts ""
+  
+  if status_result && status_result['status'] == 'completed'
+    weather_count = status_result['weather_data_count'] || 0
+    ColorLogger.success("  天気データ取得完了: #{weather_count}件のレコード")
+  end
+end
+
+puts ""
+ColorLogger.log("=" * 60, :blue)
+
+# 3. API経由でデータを取得してJSONに変換
+ColorLogger.info("データをJSON形式にエクスポート中...")
+output = {}
+
+farms.reload.each do |farm|
+  data_result = api_client.get_weather_data(farm.id)
+  
+  if data_result['error']
+    ColorLogger.warning("  #{farm.name}: #{data_result['error']}（スキップ）")
+    next
+  end
+  
+  unless data_result['success']
+    ColorLogger.warning("  #{farm.name}: データ取得失敗（スキップ）")
+    next
+  end
+  
+  output[farm.name] = {
+    name: farm.name,
+    latitude: farm.latitude,
+    longitude: farm.longitude,
+    is_reference: farm.is_reference,
+    weather_location: data_result['weather_location'],
+    weather_data: data_result['weather_data']
+  }
+  
+  ColorLogger.success("  #{farm.name}: #{data_result['count']}件のデータをエクスポート")
+end
+
+if output.empty?
+  ColorLogger.error("エクスポートするデータがありません")
+  exit 1
+end
+
+# 4. ファイルに保存
+fixture_path = Rails.root.join('db/fixtures/reference_weather.json')
+FileUtils.mkdir_p(File.dirname(fixture_path))
+File.write(fixture_path, JSON.pretty_generate(output))
+
+puts ""
+ColorLogger.log("=" * 60, :green)
+ColorLogger.success("完了！")
+ColorLogger.log("=" * 60, :green)
+puts ""
+puts "📄 保存先: #{fixture_path}"
+puts "📊 農場数: #{output.keys.count}"
+puts "📊 総天気レコード数: #{output.values.sum { |v| v[:weather_data].count }}"
+puts ""
+ColorLogger.info("次のステップ:")
+puts "  1. ファイルを確認: cat #{fixture_path} | head -n 50"
+puts "  2. Gitにコミット: git add #{fixture_path}"
+puts "  3. 以後は 'rails db:seed' で高速にデータ投入が可能になります"
+puts ""
