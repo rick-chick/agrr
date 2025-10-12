@@ -1,10 +1,16 @@
 <%# encoding: UTF-8 %>
 <div class="free-plans-wrapper">
   <div class="free-plans-container">
-    <!-- Header -->
-    <div class="free-plans-header">
-      <h1>🎉 作付け計画が完成しました！</h1>
-      <p><%= @cultivation_plan.field_cultivations.count %>種類の作物の最適な栽培期間が決定しました</p>
+    <!-- Compact Header -->
+    <div class="compact-header-card success">
+      <div class="compact-header-title">
+        <span class="title-icon">🎉</span>
+        <span class="title-text">作付け計画</span>
+        <span class="status-badge completed">完成</span>
+      </div>
+      <div class="compact-subtitle">
+        <%= @cultivation_plan.field_cultivations.count %>種類の作物の最適な栽培期間が決定しました
+      </div>
     </div>
     
     <!-- Success Badge -->
