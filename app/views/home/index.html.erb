@@ -340,9 +340,6 @@
       <% if logged_in? %>
         <%= link_to "農場", farms_path, class: "nav-link" %>
         <%= link_to "作物", crops_path, class: "nav-link" %>
-        <% if current_user.admin? %>
-          <%= link_to "管理", admin_root_path, class: "nav-link" %>
-        <% end %>
         <%= button_to "ログアウト", auth_logout_path, method: :delete, class: "btn-secondary", style: "border: none; cursor: pointer;" %>
       <% else %>
         <%= link_to "ログイン", auth_login_path, class: "btn-primary" %>
@@ -444,9 +441,6 @@
       <div class="footer-links">
         <%= link_to "ホーム", root_path, class: "footer-link" %>
         <%= link_to "無料プラン", free_plans_path, class: "footer-link" %>
-        <% if current_user&.admin? %>
-          <%= link_to "管理画面", admin_root_path, class: "footer-link" %>
-        <% end %>
       </div>
       <p style="color: #666;">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
     </div>
