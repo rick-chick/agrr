@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'open3'
+require 'tempfile'
+
 module Agrr
   class BaseGateway
     class ExecutionError < StandardError; end
@@ -7,19 +10,29 @@ module Agrr
     
     private
     
-    def execute_command(*args)
+    def execute_command(*args, parse_json: true)
       Rails.logger.debug "🔧 [AGRR] Executing: #{args.join(' ')}"
       
       stdout, stderr, status = Open3.capture3(*args)
       
+      # stderrがあればログに出力（エラーでなくても）
+      if stderr.present?
+        Rails.logger.info "📝 [AGRR] stderr: #{stderr}"
+      end
+      
       unless status.success?
-        Rails.logger.error "❌ [AGRR] Command failed: #{stderr}"
+        Rails.logger.error "❌ [AGRR] Command failed (exit code: #{status.exitstatus})"
+        Rails.logger.error "stderr: #{stderr}"
+        Rails.logger.error "stdout: #{stdout}" if stdout.present?
         raise ExecutionError, stderr
       end
+      
+      return stdout unless parse_json
       
       JSON.parse(stdout)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ [AGRR] Failed to parse JSON: #{e.message}"
+      Rails.logger.error "stdout: #{stdout&.first(500)}"
       raise ParseError, "Failed to parse JSON: #{e.message}"
     end
     

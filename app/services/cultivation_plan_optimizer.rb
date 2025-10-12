@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class CultivationPlanOptimizer
+  class WeatherDataNotFoundError < StandardError; end
+  
   def initialize(cultivation_plan)
     @cultivation_plan = cultivation_plan
-    @weather_gateway = Agrr::WeatherGateway.new
     @prediction_gateway = Agrr::PredictionGateway.new
     @optimization_gateway = Agrr::OptimizationGateway.new
   end
@@ -31,12 +32,33 @@ class CultivationPlanOptimizer
   def prepare_weather_data
     farm = @cultivation_plan.farm
     
-    # 過去90日の実績データ
-    historical = @weather_gateway.fetch(
+    # DBから天気データを取得
+    weather_location = WeatherLocation.find_by(
       latitude: farm.latitude,
-      longitude: farm.longitude,
-      days: 90
+      longitude: farm.longitude
     )
+    
+    unless weather_location
+      raise WeatherDataNotFoundError, 
+            "Weather location not found for coordinates: #{farm.latitude}, #{farm.longitude}. " \
+            "Please run weather data import batch first."
+    end
+    
+    # 過去90日の実績データをDBから取得
+    start_date = Date.current - 90.days
+    end_date = Date.current - 1.day
+    historical_data = weather_location.weather_data_for_period(start_date, end_date)
+    
+    if historical_data.empty?
+      raise WeatherDataNotFoundError,
+            "No historical weather data found for period #{start_date} to #{end_date}. " \
+            "Please run weather data import batch first."
+    end
+    
+    Rails.logger.info "✅ [AGRR] Historical weather data loaded from DB: #{historical_data.count} records"
+    
+    # DBデータをAGRR形式に変換
+    historical = format_weather_data_for_agrr(weather_location, historical_data)
     
     # 未来730日（2年分）の予測データ
     future = @prediction_gateway.predict(
@@ -46,6 +68,27 @@ class CultivationPlanOptimizer
     
     # データをマージ
     merge_weather_data(historical, future)
+  end
+  
+  def format_weather_data_for_agrr(weather_location, weather_data)
+    {
+      'latitude' => weather_location.latitude,
+      'longitude' => weather_location.longitude,
+      'elevation' => weather_location.elevation || 0.0,
+      'timezone' => weather_location.timezone,
+      'data' => weather_data.map do |datum|
+        {
+          'time' => datum.date.to_s,
+          'temperature_2m_max' => datum.temperature_max,
+          'temperature_2m_min' => datum.temperature_min,
+          'temperature_2m_mean' => datum.temperature_mean,
+          'precipitation_sum' => datum.precipitation || 0.0,
+          'sunshine_duration' => datum.sunshine_hours ? datum.sunshine_hours * 3600 : 0.0, # 時間→秒
+          'wind_speed_10m_max' => datum.wind_speed || 0.0,
+          'weather_code' => datum.weather_code || 0
+        }
+      end
+    }
   end
   
   def merge_weather_data(historical, future)
