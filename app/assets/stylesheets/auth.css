@@ -10,6 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 80px; /* Account for header */
 }
 
 .login-container {
@@ -23,7 +24,7 @@
 }
 
 /* Logo and Branding */
-.logo {
+.login-logo {
   font-size: 2.5rem;
   font-weight: bold;
   color: #333;
@@ -198,7 +199,7 @@
     width: 95%;
   }
 
-  .logo {
+  .login-logo {
     font-size: 2rem;
   }
 
