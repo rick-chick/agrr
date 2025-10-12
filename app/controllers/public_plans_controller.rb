@@ -46,8 +46,11 @@ class PublicPlansController < ApplicationController
     end
     
     @crops = Crop.reference.order(:name)
-    session_data[:total_area] = @farm_size[:area_sqm]
-    session[:public_plan] = session_data
+    session[:public_plan] = session_data.merge(
+      total_area: @farm_size[:area_sqm],
+      farm_size_id: @farm_size[:id]
+    )
+    Rails.logger.debug "✅ [PublicPlans] セッション更新: #{session[:public_plan].inspect}"
   rescue ActiveRecord::RecordNotFound
     redirect_to public_plans_path, alert: '最初からやり直してください。'
   end
