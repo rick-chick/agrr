@@ -268,12 +268,11 @@ app/assets/stylesheets/
 - [x] メインエントリーポイント（application.css）
 - [x] レイアウトファイルへの適用
 - [x] 動作確認とテスト
-- [x] インラインスタイルの外部化（navbar, home）
-- [x] components/navbar.css 作成（206行）
-- [x] features/home.css 作成（335行）
 
 ### 🔄 進行中
-- [ ] 既存CSSへのデザイントークン適用（auth.css等）
+- [ ] fields.cssの分割とコンポーネント化
+- [ ] インラインスタイルの削除（navbar, home）
+- [ ] 既存CSSへのデザイントークン適用
 
 ### 📝 今後の予定
 - [ ] コンポーネントライブラリの構築
