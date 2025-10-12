@@ -1,0 +1,179 @@
+<style>
+  /* ナビゲーションバー（home/index.html.erbと同じスタイル） */
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem 2rem;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2d5016;
+    text-decoration: none;
+  }
+
+  .navbar-nav {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+    transition: color 0.3s;
+    padding: 0.5rem 1rem;
+  }
+
+  .nav-link:hover {
+    color: #2d5016;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    background: #667eea;
+    color: white;
+  }
+
+  /* アイコンボタン */
+  .btn-icon {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    padding: 0.5rem;
+    border-radius: 50%;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-icon:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-icon-logout {
+    background: white;
+    color: #dc3545;
+    border: 2px solid #dc3545;
+  }
+
+  .btn-icon-logout:hover {
+    background: #dc3545;
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  }
+
+  /* レスポンシブ */
+  @media (max-width: 768px) {
+    .navbar {
+      padding: 1rem;
+    }
+
+    .navbar-nav {
+      gap: 0.5rem;
+    }
+
+    .nav-link {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+    }
+
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+</style>
+
+<!-- ナビゲーションバー -->
+<nav class="navbar">
+  <a href="<%= root_path %>" class="navbar-brand">🌾 AGRR</a>
+  <div class="navbar-nav">
+    <% if logged_in? %>
+      <%= link_to "農場", farms_path, class: "nav-link" %>
+      <%= link_to "作物", crops_path, class: "nav-link" %>
+      <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: "ログアウト", data: { turbo_confirm: "ログアウトしますか？" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      <% end %>
+    <% else %>
+      <%= link_to auth_login_path, class: "btn-icon", title: "ログイン" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <polyline points="10 17 15 12 10 7"></polyline>
+          <line x1="15" y1="12" x2="3" y2="12"></line>
+        </svg>
+      <% end %>
+    <% end %>
+  </div>
+</nav>
+
