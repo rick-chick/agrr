@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Api::V1::Crops::CropApiController < ApplicationController
+class Api::V1::Crops::CropApiController < Api::V1::BaseController
         before_action :authenticate_user!
         before_action :set_interactors
 
@@ -26,12 +26,14 @@ class Api::V1::Crops::CropApiController < ApplicationController
 
         # POST /api/v1/crops
         def create
-          is_reference = crop_params[:is_reference] || false
+          is_reference = ActiveModel::Type::Boolean.new.cast(crop_params['is_reference'])
           if is_reference && !current_user.admin?
             return render json: { error: "Only admin can create reference crops" }, status: :forbidden
           end
 
-          attrs = crop_params.merge(user_id: (is_reference ? nil : current_user.id))
+          user_id = is_reference ? nil : current_user.id
+          attrs = crop_params.to_h.symbolize_keys.merge(user_id: user_id)
+          
           result = @create_interactor.call(attrs)
           if result.success?
             render json: crop_to_json(result.data), status: :created
@@ -42,11 +44,11 @@ class Api::V1::Crops::CropApiController < ApplicationController
 
         # PUT /api/v1/crops/:id
         def update
-          if crop_params.key?(:is_reference) && !current_user.admin?
+          if crop_params.key?('is_reference') && !current_user.admin?
             return render json: { error: "Only admin can change reference flag" }, status: :forbidden
           end
 
-          result = @update_interactor.call(params[:id], crop_params)
+          result = @update_interactor.call(params[:id], crop_params.to_h.symbolize_keys)
           if result.success?
             render json: crop_to_json(result.data)
           else
@@ -76,7 +78,7 @@ class Api::V1::Crops::CropApiController < ApplicationController
         end
 
         def crop_params
-          params.require(:crop).permit(:name, :variety, :is_reference)
+          params.require(:crop).permit(:name, :variety, :is_reference, :area_per_unit, :revenue_per_area, :agrr_crop_id)
         end
 
         def crop_to_json(crop)
@@ -85,6 +87,9 @@ class Api::V1::Crops::CropApiController < ApplicationController
             crop_name: crop.name,
             variety: crop.variety,
             is_reference: crop.reference?,
+            area_per_unit: crop.area_per_unit,
+            revenue_per_area: crop.revenue_per_area,
+            agrr_crop_id: crop.agrr_crop_id,
             stages: (crop.respond_to?(:stages) ? crop.stages.map { |stage| stage_to_json(stage) } : [])
           }
         end

@@ -23,6 +23,26 @@
     </div>
 
     <div class="form-group">
+      <%= f.label :area_per_unit, '単位あたりの面積（㎡）', class: 'form-label' %>
+      <%= f.number_field :area_per_unit, step: :any, class: 'form-control' %>
+      <div class="form-text">1単位あたりの栽培面積を入力してください（任意）</div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :revenue_per_area, '面積あたりの収益（円/㎡）', class: 'form-label' %>
+      <%= f.number_field :revenue_per_area, step: :any, class: 'form-control' %>
+      <div class="form-text">1㎡あたりの収益を入力してください（任意）</div>
+    </div>
+
+    <div class="form-group">
+      <button type="button" id="ai-save-crop-btn" class="btn btn-ai" data-controller="crop-ai">
+        🤖 AIで作物情報を取得・保存
+      </button>
+      <div id="ai-save-status" class="form-text" style="display: none;"></div>
+      <div class="form-text">作物名を入力してボタンをクリックすると、AIが面積・収益などの情報を自動的に取得して保存します</div>
+    </div>
+
+    <div class="form-group">
       <div class="checkbox-group">
         <%= f.check_box :is_reference, disabled: !admin_user?, class: 'form-control' %>
         <%= f.label :is_reference, '参照作物（管理者のみ）', class: 'form-label' %>

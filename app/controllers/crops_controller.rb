@@ -74,6 +74,9 @@ class CropsController < ApplicationController
       :name, 
       :variety, 
       :is_reference,
+      :area_per_unit,
+      :revenue_per_area,
+      :agrr_crop_id,
       crop_stages_attributes: [
         :id,
         :name,

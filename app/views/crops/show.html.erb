@@ -21,6 +21,20 @@
       </div>
     <% end %>
     
+    <% if @crop.area_per_unit.present? %>
+      <div class="info-item">
+        <span class="info-label">📏 単位あたりの面積:</span>
+        <span class="info-value"><%= @crop.area_per_unit %> ㎡</span>
+      </div>
+    <% end %>
+    
+    <% if @crop.revenue_per_area.present? %>
+      <div class="info-item">
+        <span class="info-label">💰 面積あたりの収益:</span>
+        <span class="info-value"><%= number_to_currency(@crop.revenue_per_area, unit: '¥', precision: 0) %>/㎡</span>
+      </div>
+    <% end %>
+    
     <div class="info-item">
       <span class="info-label">📅 作成日:</span>
       <span class="info-value"><%= @crop.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>

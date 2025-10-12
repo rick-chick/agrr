@@ -4,6 +4,8 @@ module Api
   module V1
     class BaseController < ApplicationController
       # API versioning base controller
+      # Skip CSRF verification for API endpoints (use token-based auth instead)
+      skip_before_action :verify_authenticity_token
       before_action :authenticate_request, except: [:health_check]
 
       def health_check
