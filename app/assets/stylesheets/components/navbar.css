@@ -1,0 +1,223 @@
+/* ============================================
+   AGRR Design System - Navbar Component
+   Created: 2025-10-13
+   Purpose: ナビゲーションバーのスタイル（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Main Navbar
+   ============================================ */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-base);
+  padding: var(--space-4) var(--space-6);
+  z-index: var(--z-index-sticky);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.navbar-brand:hover {
+  color: var(--color-primary-light);
+}
+
+.navbar-nav {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+/* ============================================
+   Navigation Links
+   ============================================ */
+
+.nav-link {
+  text-decoration: none;
+  color: var(--color-gray-700);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-base);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-base);
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+  background: var(--color-gray-50);
+}
+
+/* ============================================
+   Button Styles (Primary & Secondary)
+   ============================================ */
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-secondary {
+  background: var(--color-white);
+  color: var(--color-secondary);
+  border: var(--border-width-2) solid var(--color-secondary);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
+  display: inline-block;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--color-secondary);
+  color: var(--color-white);
+}
+
+/* ============================================
+   Icon Buttons
+   ============================================ */
+
+.btn-icon {
+  background: var(--color-white);
+  color: var(--color-secondary);
+  border: var(--border-width-2) solid var(--color-secondary);
+  padding: 0;
+  margin: 0;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--color-secondary);
+  color: var(--color-white);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Logout Button Variant */
+.btn-icon-logout {
+  background: var(--color-white);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-icon-logout:hover {
+  background: var(--color-error);
+  color: var(--color-white);
+  box-shadow: var(--shadow-error);
+}
+
+/* ============================================
+   Form Reset (for button_to)
+   ============================================ */
+
+.navbar-nav form {
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: var(--space-4);
+  }
+
+  .navbar-nav {
+    gap: var(--space-2);
+  }
+
+  .nav-link {
+    padding: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: var(--space-3);
+  }
+  
+  .navbar-brand {
+    font-size: var(--font-size-xl);
+  }
+  
+  .navbar-nav {
+    gap: var(--space-1);
+  }
+  
+  .nav-link {
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .btn-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
