@@ -356,7 +356,7 @@
         あなたの農業を次のレベルへ
       </p>
       <div class="hero-buttons">
-        <%= link_to "無料で作付け計画を作成", free_plans_path, class: "hero-button" %>
+        <%= link_to "無料で作付け計画を作成", new_public_plan_path, class: "hero-button" %>
         <% unless logged_in? %>
           <%= link_to "Googleでサインイン", "/auth/google_oauth2", class: "hero-button hero-button-outline", data: { turbo: false } %>
         <% end %>
@@ -428,7 +428,7 @@
       より高度な機能をご利用の場合は、アカウント登録をお願いします。
     </p>
     <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-      <%= link_to "無料で計画を作成", free_plans_path, class: "hero-button" %>
+      <%= link_to "無料で計画を作成", new_public_plan_path, class: "hero-button" %>
       <% unless logged_in? %>
         <%= link_to "アカウント登録", auth_login_path, class: "hero-button hero-button-outline" %>
       <% end %>
@@ -440,7 +440,7 @@
     <div class="footer-content">
       <div class="footer-links">
         <%= link_to "ホーム", root_path, class: "footer-link" %>
-        <%= link_to "無料プラン", free_plans_path, class: "footer-link" %>
+        <%= link_to "作付け計画作成", new_public_plan_path, class: "footer-link" %>
       </div>
       <p style="color: #666;">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
     </div>
