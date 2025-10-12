@@ -44,30 +44,49 @@ class CultivationPlanOptimizer
             "Please run weather data import batch first."
     end
     
-    # 過去90日の実績データをDBから取得
-    start_date = Date.current - 90.days
-    end_date = Date.current - 1.day
-    historical_data = weather_location.weather_data_for_period(start_date, end_date)
+    # 過去20年分の実績データをARIMAモデルのトレーニング用に取得
+    training_start_date = Date.current - 20.years
+    training_end_date = Date.current - 1.day
+    training_data = weather_location.weather_data_for_period(training_start_date, training_end_date)
     
-    if historical_data.empty?
+    if training_data.empty?
       raise WeatherDataNotFoundError,
-            "No historical weather data found for period #{start_date} to #{end_date}. " \
+            "No training weather data found for period #{training_start_date} to #{training_end_date}. " \
             "Please run weather data import batch first."
     end
     
-    Rails.logger.info "✅ [AGRR] Historical weather data loaded from DB: #{historical_data.count} records"
+    Rails.logger.info "✅ [AGRR] Training data loaded from DB: #{training_data.count} records (#{training_start_date} to #{training_end_date})"
     
-    # DBデータをAGRR形式に変換
-    historical = format_weather_data_for_agrr(weather_location, historical_data)
+    # 今年1年間の実績データを取得
+    current_year_start = Date.new(Date.current.year, 1, 1)
+    current_year_end = Date.current - 1.day
+    current_year_data = weather_location.weather_data_for_period(current_year_start, current_year_end)
     
-    # 未来730日（2年分）の予測データ
+    if current_year_data.empty?
+      raise WeatherDataNotFoundError,
+            "No current year weather data found for period #{current_year_start} to #{current_year_end}. " \
+            "Please run weather data import batch first."
+    end
+    
+    Rails.logger.info "✅ [AGRR] Current year data loaded from DB: #{current_year_data.count} records (#{current_year_start} to #{current_year_end})"
+    
+    # トレーニングデータをAGRR形式に変換
+    training_formatted = format_weather_data_for_agrr(weather_location, training_data)
+    
+    # 来年1年間（365日）の予測データ
+    next_year_days = 365
     future = @prediction_gateway.predict(
-      historical_data: historical,
-      days: 730
+      historical_data: training_formatted,
+      days: next_year_days
     )
     
-    # データをマージ
-    merge_weather_data(historical, future)
+    Rails.logger.info "✅ [AGRR] Prediction completed for next year: #{next_year_days} days"
+    
+    # 今年の実データをAGRR形式に変換
+    current_year_formatted = format_weather_data_for_agrr(weather_location, current_year_data)
+    
+    # 今年の実データ + 来年の予測データをマージ（合計2年分）
+    merge_weather_data(current_year_formatted, future)
   end
   
   def format_weather_data_for_agrr(weather_location, weather_data)
