@@ -49,6 +49,18 @@ Rails.application.routes.draw do
     end
   end
 
+  # Cultivation Plans (新しい作付け計画システム) routes
+  resources :cultivation_plans, path: 'plans', only: [] do
+    collection do
+      get :new
+      get :select_farm_size
+      get :select_crop
+      post :create
+      get :optimizing
+      get :results
+    end
+  end
+
   # API routes
   namespace :api do
     namespace :v1 do
