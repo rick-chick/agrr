@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
+# @deprecated このモデルは非推奨です。代わりに CultivationPlan と FieldCultivation を使用してください。
+# 既存データの互換性のためにのみ保持されています。
 class FreeCropPlan < ApplicationRecord
   # Associations
   belongs_to :farm
-  belongs_to :farm_size
   belongs_to :crop
 
   # Enums
@@ -17,6 +18,7 @@ class FreeCropPlan < ApplicationRecord
   # Validations
   validates :status, presence: true
   validates :session_id, length: { maximum: 255 }
+  validates :area_sqm, presence: true, numericality: { greater_than: 0, only_integer: true }
 
   # Scopes
   scope :by_session, ->(session_id) { where(session_id: session_id) }
