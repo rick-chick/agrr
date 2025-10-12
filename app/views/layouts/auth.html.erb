@@ -6,15 +6,16 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
+  <!-- Core Design System (must be first) -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <!-- Feature-specific styles -->
   <%= stylesheet_link_tag "fields", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
   <style>
+    /* Layout-specific adjustments using design tokens */
     body {
-      margin: 0;
-      padding: 0;
       padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
     }
   </style>
