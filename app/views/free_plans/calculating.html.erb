@@ -1,17 +1,21 @@
 <div class="container">
   <div style="max-width: 900px; margin: 0 auto;">
     <div class="calculating-container">
-      <!-- Spinner -->
-      <div class="spinner"></div>
-      
-      <h2 class="calculating-title">🌱 作付け計画を作成中...</h2>
-      <p class="calculating-description">
-        <%= @free_crop_plan.farm.name %>の気候データと<br>
-        <%= @free_crop_plan.crop.name %>の栽培条件を分析しています
-      </p>
+      <!-- Header with compact spinner -->
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="display: inline-flex; align-items: center; gap: 1rem; background: white; padding: 1.25rem 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+          <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
+          <div style="text-align: left;">
+            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #333;">🌱 作付け計画を作成中...</h2>
+            <p style="margin: 0; font-size: 0.85rem; color: #718096;">
+              <%= @free_crop_plan.farm.name %> - <%= @free_crop_plan.crop.name %>を分析しています
+            </p>
+          </div>
+        </div>
+      </div>
       
       <!-- Selection Summary -->
-      <div class="summary-box" style="max-width: 500px; margin: 0 auto 2rem;">
+      <div class="summary-box" style="max-width: 500px; margin: 0 auto 1.5rem;">
         <h3>選択内容</h3>
         <div class="summary-item">
           <span class="summary-label">地域:</span>
@@ -42,7 +46,7 @@
         </div>
       </div>
       
-      <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+      <p style="color: #666; font-size: 0.85rem; margin-top: 1rem; text-align: center;">
         💡 計算には数秒かかる場合があります<br>
         このページは自動的に更新されます
       </p>
