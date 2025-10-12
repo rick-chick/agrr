@@ -17,24 +17,18 @@
 @import url("core/reset.css");
 
 /* ============================================
-   Component Styles - 全ページで使用する汎用コンポーネント
+   Component Styles - 再利用可能なコンポーネント
    ============================================ */
 
-@import url("components/buttons.css");
-@import url("components/cards.css");
-@import url("components/forms.css");
-@import url("components/tables.css");
+@import url("components/navbar.css");
 
 /* ============================================
-   Feature-specific Styles
-   各レイアウトで必要なものを個別に指定
+   Feature-specific Styles - ページ固有のスタイル
    ============================================ */
 
-/* Note: 機能別CSSは各レイアウトで個別に読み込み */
-/* - auth.css: 認証ページ用 */
-/* - features/public-plans.css: 公開計画用 */
-/* - features/fields-crops.css: 圃場・作物用 */
-/* - features/weather.css: 気象データ用 */
+@import url("features/home.css");
+
+/* Note: auth.css などレガシーファイルはレイアウトで個別読み込み */
 
 /* ============================================
    Utility Classes - 汎用クラス

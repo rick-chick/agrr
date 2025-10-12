@@ -6,9 +6,9 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
-  <!-- Core Design System (must be first) -->
+  <!-- Core Design System (includes all components and features) -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <!-- Feature-specific styles -->
+  <!-- Auth-specific styles -->
   <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
