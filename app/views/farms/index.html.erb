@@ -4,6 +4,27 @@
   <h1 class="page-title">農場一覧</h1>
   <%= link_to "新しい農場を追加", new_farm_path, class: "btn btn-success" %>
 </div>
+
+<% if admin_user? && @default_farms.any? %>
+  <!-- 栽培地域農場（管理者のみ表示） -->
+  <div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.5rem; font-weight: 600; color: #2d3748;">栽培地域農場 (<%= @default_farms.count %>件)</h2>
+      <%= link_to "管理画面で管理", admin_default_farms_path, class: "btn btn-primary", style: "font-size: 0.875rem;" %>
+    </div>
+    
+    <div class="farms-grid">
+      <% @default_farms.each do |farm| %>
+        <%= render "farm_card_wrapper", farm: farm %>
+      <% end %>
+    </div>
+  </div>
+  
+  <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e2e8f0;">
+  
+  <!-- 自分の農場 -->
+  <h2 style="font-size: 1.5rem; font-weight: 600; color: #2d3748; margin-bottom: 1rem;">自分の農場 (<%= @farms.count %>件)</h2>
+<% end %>
     
     <% if @farms.any? %>
       <div class="farms-grid" id="farms">
