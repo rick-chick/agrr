@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class Api::V1::Farms::FarmApiController < ApplicationController
-        before_action :authenticate_user!
+class Api::V1::Farms::FarmApiController < Api::V1::BaseController
         before_action :set_interactors
 
         # GET /api/v1/farms

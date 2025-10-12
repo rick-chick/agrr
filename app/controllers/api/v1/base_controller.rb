@@ -6,7 +6,10 @@ module Api
       # API versioning base controller
       # Skip CSRF verification for API endpoints (use token-based auth instead)
       skip_before_action :verify_authenticity_token
-      before_action :authenticate_request, except: [:health_check]
+      
+      # ApplicationControllerの認証をスキップし、API専用の認証を使用
+      skip_before_action :authenticate_user!
+      before_action :authenticate_api_request, except: [:health_check]
 
       def health_check
         render json: {
@@ -21,9 +24,15 @@ module Api
 
       private
 
-      def authenticate_request
-        # Add authentication logic here
-        # For now, we'll skip authentication for demo purposes
+      def authenticate_api_request
+        # C案: エンドポイントごとに認証を分ける
+        # CRUD操作は認証必須
+        # current_userがアノニマスユーザーの場合は401を返す
+        if current_user.anonymous?
+          render json: { error: 'Please log in to access this resource.' }, status: :unauthorized
+          return false
+        end
+        
         true
       end
     end

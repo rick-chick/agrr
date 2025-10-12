@@ -71,6 +71,16 @@ module ActiveSupport
       session = Session.create_for_user(user)
       cookies[:session_id] = session.session_id
     end
+    
+    # IntegrationTest用のヘルパーメソッド
+    def create_session_for(user)
+      session = Session.create_for_user(user)
+      session.session_id
+    end
+    
+    def session_cookie_header(session_id)
+      { 'Cookie' => "session_id=#{session_id}" }
+    end
   end
 end
 

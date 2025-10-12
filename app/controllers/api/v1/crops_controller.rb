@@ -6,6 +6,8 @@ require 'json'
 module Api
   module V1
     class CropsController < Api::V1::BaseController
+      # ai_createは認証不要（無料プラン機能の一部）
+      skip_before_action :authenticate_api_request, only: [:ai_create]
       before_action :set_interactors, only: [:ai_create]
 
       # POST /api/v1/crops/ai_create

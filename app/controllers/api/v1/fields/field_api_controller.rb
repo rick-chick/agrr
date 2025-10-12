@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class Api::V1::Fields::FieldApiController < ApplicationController
-        before_action :authenticate_user!
+class Api::V1::Fields::FieldApiController < Api::V1::BaseController
         before_action :set_interactors
         before_action :set_farm
 
