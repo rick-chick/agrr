@@ -1,0 +1,154 @@
+<%# encoding: UTF-8 %>
+<div class="free-plans-wrapper">
+  <div class="free-plans-container">
+    <!-- Header -->
+    <div class="free-plans-header">
+      <h1>🌱 作付け計画作成</h1>
+      <p>地域、農場サイズ、作物を選んで作付け計画を作成しましょう</p>
+    </div>
+    
+    <!-- Progress Steps Card -->
+    <div class="progress-steps-card">
+      <div class="enhanced-progress-steps">
+        <div class="enhanced-step-item completed">
+          <div class="enhanced-step-circle">✓</div>
+          <span class="enhanced-step-label">地域選択</span>
+        </div>
+        <div class="enhanced-step-item completed">
+          <div class="enhanced-step-circle">✓</div>
+          <span class="enhanced-step-label">農場サイズ</span>
+        </div>
+        <div class="enhanced-step-item active">
+          <div class="enhanced-step-circle">3</div>
+          <span class="enhanced-step-label">作物選択</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Summary Card -->
+    <div class="enhanced-summary-card">
+      <div class="enhanced-summary-title">選択内容</div>
+      <div class="enhanced-summary-items">
+        <div class="enhanced-summary-row">
+          <div class="enhanced-summary-icon">🌍</div>
+          <div class="enhanced-summary-content">
+            <div class="enhanced-summary-label">地域</div>
+            <div class="enhanced-summary-value"><%= @farm.name %></div>
+          </div>
+        </div>
+        <div class="enhanced-summary-row">
+          <div class="enhanced-summary-icon">🏡</div>
+          <div class="enhanced-summary-content">
+            <div class="enhanced-summary-label">農場サイズ</div>
+            <div class="enhanced-summary-value"><%= @farm_size[:name] %> (<%= @farm_size[:area_sqm] %>㎡)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Content Card -->
+    <div class="content-card">
+      <h2 class="content-card-title">🌾 栽培したい作物を選択してください</h2>
+      <p class="content-card-subtitle">複数選択可能です。カードをクリックして選択してください。</p>
+      
+      <%= form_with url: public_plans_path, method: :post, id: "cropForm", data: { turbo: false } do |f| %>
+        <div class="enhanced-grid">
+          <% @crops.each do |crop| %>
+            <div class="crop-item">
+              <input type="checkbox" 
+                     name="crop_ids[]" 
+                     value="<%= crop.id %>" 
+                     id="crop_<%= crop.id %>" 
+                     class="crop-check">
+              <label for="crop_<%= crop.id %>" class="crop-card">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🥬</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #2d3748; margin-bottom: 0.5rem;"><%= crop.name %></div>
+                <% if crop.variety.present? %>
+                  <div style="font-size: 0.875rem; color: #718096;"><%= crop.variety %></div>
+                <% end %>
+                <div class="check-mark">✓</div>
+              </label>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Spacer -->
+        <div style="height: 200px;"></div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Fixed Bottom Bar -->
+<div style="position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15); z-index: 1000;">
+  <div style="max-width: 900px; margin: 0 auto; padding: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.875rem; color: #718096; font-weight: 600;">選択済み</span>
+        <div id="counter" style="width: 48px; height: 48px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-size: 1.5rem; font-weight: 900; transition: all 0.3s ease;">0</div>
+        <span style="font-size: 1.2rem; font-weight: 700; color: #2d3748;">種類</span>
+      </div>
+      <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient" style="font-size: 1.1rem; padding: 1rem 2.5rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s ease;" disabled>
+        ✓ 選択した作物で計画を作成
+      </button>
+    </div>
+    <div id="hint" style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: #e53e3e;">
+      ⚠️ 作物を1つ以上選択してください
+    </div>
+  </div>
+</div>
+
+<style nonce="<%= content_security_policy_nonce %>">
+  .crop-check { display: none; }
+  
+  .crop-card {
+    display: block;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  
+  .crop-card:hover {
+    border-color: #4299e1;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+  }
+  
+  .check-mark {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.2s;
+  }
+  
+  .crop-check:checked + .crop-card {
+    background: #ebf8ff;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+  }
+  
+  .crop-check:checked + .crop-card .check-mark {
+    opacity: 1;
+    background: #4299e1;
+    border-color: #4299e1;
+  }
+</style>
+
+<!-- JavaScript is loaded from app/javascript/crop_selection.js via application.js -->
+

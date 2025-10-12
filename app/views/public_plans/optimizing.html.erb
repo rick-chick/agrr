@@ -1,0 +1,111 @@
+<%# encoding: UTF-8 %>
+<div class="free-plans-wrapper">
+  <div class="free-plans-container">
+    <!-- Header -->
+    <div class="free-plans-header">
+      <h1>🌱 作付け計画を最適化中...</h1>
+      <p><%= @cultivation_plan.farm.name %>の気候データと<%= @cultivation_plan.field_cultivations.count %>種類の作物を分析しています</p>
+    </div>
+    
+    <!-- Main Content: Advertisement -->
+    <div class="content-card" style="min-height: 500px;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div class="spinner" style="margin: 2rem auto;"></div>
+        <h2 style="font-size: 1.8rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">
+          最適化を実行中です
+        </h2>
+        <p style="font-size: 1rem; color: #718096;">
+          agrrコマンドで2年間の最適な栽培期間を計算しています...
+        </p>
+      </div>
+      
+      <!-- Large Advertisement Space -->
+      <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border-radius: 16px; padding: 2rem; margin: 2rem auto; max-width: 800px;">
+        <div style="text-align: center; color: #856404; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">
+          スポンサー広告
+        </div>
+        <div style="background: white; border-radius: 12px; padding: 4rem; min-height: 400px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <div style="text-align: center; color: #999;">
+            <div style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">広告スペース</div>
+            <div style="font-size: 1.2rem; color: #bbb; margin-bottom: 1.5rem;">728 x 90</div>
+            <p style="margin-top: 1.5rem; font-size: 0.95rem; line-height: 1.6; color: #aaa;">
+              Google AdSense や他の広告ネットワークのコードを配置<br>
+              収益化のメインエリア
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; color: #718096; font-size: 0.95rem; margin-top: 2rem;">
+        💡 最適化が完了すると自動的に結果画面に移動します
+      </div>
+    </div>
+    
+    <!-- Spacer for fixed progress bar -->
+    <div style="height: 180px;"></div>
+  </div>
+</div>
+
+<!-- Fixed Bottom Progress Bar -->
+<div style="position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15); z-index: 1000; border-top: 4px solid #4299e1;">
+  <div style="max-width: 900px; margin: 0 auto; padding: 1.5rem;">
+    <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 0.875rem; color: #718096; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+        最適化状況
+      </div>
+      <div style="font-size: 0.875rem; color: #2d3748; font-weight: 600;">
+        <%= @cultivation_plan.field_cultivations.status_completed.count %> / <%= @cultivation_plan.field_cultivations.count %> 完了
+      </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 1rem;">
+      <div style="width: <%= @cultivation_plan.optimization_progress %>%; height: 100%; background: linear-gradient(90deg, #4299e1 0%, #48bb78 100%); transition: width 0.5s ease;"></div>
+    </div>
+    
+    <!-- Compact Progress List -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+      <% @cultivation_plan.field_cultivations.each do |fc| %>
+        <div style="display: flex; align-items: center; padding: 0.75rem; background: <%= fc.status_completed? ? '#f0fff4' : '#f8f9fa' %>; border-radius: 8px; border: 1px solid <%= fc.status_completed? ? '#48bb78' : '#e2e8f0' %>;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: <%= fc.status_completed? ? '#48bb78' : '#e2e8f0' %>; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; color: <%= fc.status_completed? ? 'white' : '#a0aec0' %>; font-size: 1rem; font-weight: 700;">
+            <% if fc.status_completed? %>
+              ✓
+            <% else %>
+              <div style="width: 16px; height: 16px; border: 2px solid #fff; border-top: 2px solid #4299e1; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <% end %>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 0.9rem; font-weight: 600; color: #2d3748;"><%= fc.crop.name %></div>
+            <div style="font-size: 0.75rem; color: #718096;">
+              <%= fc.status_completed? ? '最適化完了' : '最適化中...' %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #e2e8f0;
+    border-top: 6px solid #4299e1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+</style>
+
+<!-- Auto-reload Script -->
+<script>
+  setTimeout(function() {
+    window.location.reload();
+  }, 3000);
+</script>
+

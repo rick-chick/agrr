@@ -1,0 +1,66 @@
+<%# encoding: UTF-8 %>
+<div class="free-plans-wrapper">
+  <div class="free-plans-container">
+    <!-- Header -->
+    <div class="free-plans-header">
+      <h1>🌱 作付け計画作成</h1>
+      <p>地域、農場サイズ、作物を選んで作付け計画を作成しましょう</p>
+    </div>
+    
+    <!-- Progress Steps Card -->
+    <div class="progress-steps-card">
+      <div class="enhanced-progress-steps">
+        <div class="enhanced-step-item completed">
+          <div class="enhanced-step-circle">✓</div>
+          <span class="enhanced-step-label">地域選択</span>
+        </div>
+        <div class="enhanced-step-item active">
+          <div class="enhanced-step-circle">2</div>
+          <span class="enhanced-step-label">農場サイズ</span>
+        </div>
+        <div class="enhanced-step-item">
+          <div class="enhanced-step-circle">3</div>
+          <span class="enhanced-step-label">作物選択</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Summary Card -->
+    <div class="enhanced-summary-card">
+      <div class="enhanced-summary-title">選択内容</div>
+      <div class="enhanced-summary-items">
+        <div class="enhanced-summary-row">
+          <div class="enhanced-summary-icon">🌍</div>
+          <div class="enhanced-summary-content">
+            <div class="enhanced-summary-label">地域</div>
+            <div class="enhanced-summary-value"><%= @farm.name %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Content Card -->
+    <div class="content-card">
+      <h2 class="content-card-title">📏 農場のサイズを選択してください</h2>
+      <p class="content-card-subtitle">あなたの農場の広さに最も近いものを選択してください</p>
+      
+      <div class="enhanced-grid">
+        <% @farm_sizes.each do |farm_size| %>
+          <%= link_to select_crop_public_plans_path(farm_size_id: farm_size[:id]), class: "enhanced-selection-card" do %>
+            <div class="enhanced-card-icon">🏡</div>
+            <div class="enhanced-card-title"><%= farm_size[:name] %></div>
+            <div class="enhanced-card-highlight"><%= farm_size[:area_sqm] %>㎡</div>
+            <div class="enhanced-card-detail"><%= farm_size[:description] %></div>
+          <% end %>
+        <% end %>
+      </div>
+      
+      <div class="action-buttons">
+        <%= link_to new_public_plan_path, class: "btn-white" do %>
+          ← 地域選択に戻る
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
