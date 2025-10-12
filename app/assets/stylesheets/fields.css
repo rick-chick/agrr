@@ -1733,10 +1733,10 @@ body {
 }
 
 /* Enhanced Free Plans Design */
-.free-plans-wrapper {
+.public-plans-wrapper {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
-  padding: 8rem 0 0 0;
+  padding: 0.75rem 0 0 0;
   box-sizing: border-box;
 }
 
@@ -2250,10 +2250,10 @@ body {
 /* Improved Free Plans Design - Clean & Professional */
 
 /* Main Wrapper */
-.free-plans-wrapper {
+.public-plans-wrapper {
   background: #f8f9fa;
   min-height: 100vh;
-  padding: 8rem 0 0 0;
+  padding: 0.75rem 0 0 0;
   box-sizing: border-box;
 }
 
@@ -2640,8 +2640,8 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .free-plans-wrapper {
-    padding: 7rem 0 1rem 0;
+  .public-plans-wrapper {
+    padding: 0.5rem 0 1rem 0;
   }
   
   .free-plans-container {
