@@ -35,22 +35,8 @@ Rails.application.routes.draw do
   # Crops (HTML) routes
   resources :crops
 
-  # Free Plans (無料ユーザー向け作付け計画) routes
-  get '/free_plans', to: 'free_plans#new', as: 'free_plans'
-  resources :free_plans, only: [:new, :create, :show] do
-    member do
-      get :calculating
-    end
-    collection do
-      get :select_farm_size
-      get :select_crop
-      get :calculating_all, path: 'calculating'
-      get :results
-    end
-  end
-
-  # Cultivation Plans (新しい作付け計画システム) routes
-  resources :cultivation_plans, path: 'plans', only: [] do
+  # Public Plans (公開作付け計画 - 認証不要) routes
+  resources :public_plans, only: [] do
     collection do
       get :new
       get :select_farm_size
@@ -60,6 +46,18 @@ Rails.application.routes.draw do
       get :results
     end
   end
+
+  # Free Plans (旧システム - リダイレクト用)
+  get '/free_plans', to: redirect('/public_plans/new')
+  get '/free_plans/*path', to: redirect('/public_plans/new')
+  
+  # 将来の実装用: Plans (個人用作付け計画 - 認証必須)
+  # resources :plans, only: [] do
+  #   collection do
+  #     get :new
+  #     post :create
+  #   end
+  # end
 
   # API routes
   namespace :api do
