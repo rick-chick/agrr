@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_11_230830) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -56,6 +56,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
     t.boolean "is_reference", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "area_per_unit"
+    t.float "revenue_per_area"
+    t.string "agrr_crop_id"
+    t.index ["agrr_crop_id"], name: "index_crops_on_agrr_crop_id"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
 
@@ -83,6 +87,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
     t.text "weather_data_last_error"
     t.datetime "last_broadcast_at"
     t.integer "weather_location_id"
+    t.boolean "is_default", default: false, null: false
+    t.index ["is_default"], name: "index_farms_on_is_default", where: "is_default = true"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
@@ -105,7 +111,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
   end
 
   create_table "free_crop_plans", force: :cascade do |t|
-    t.integer "region_id", null: false
+    t.integer "farm_id", null: false
     t.integer "farm_size_id", null: false
     t.integer "crop_id", null: false
     t.string "status", default: "pending", null: false
@@ -114,20 +120,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["crop_id"], name: "index_free_crop_plans_on_crop_id"
+    t.index ["farm_id"], name: "index_free_crop_plans_on_farm_id"
     t.index ["farm_size_id"], name: "index_free_crop_plans_on_farm_size_id"
-    t.index ["region_id"], name: "index_free_crop_plans_on_region_id"
     t.index ["session_id"], name: "index_free_crop_plans_on_session_id"
     t.index ["status"], name: "index_free_crop_plans_on_status"
-  end
-
-  create_table "regions", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "country_code", null: false
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["active"], name: "index_regions_on_active"
-    t.index ["name"], name: "index_regions_on_name", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -330,7 +326,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_11_074223) do
   add_foreign_key "fields", "users"
   add_foreign_key "free_crop_plans", "crops"
   add_foreign_key "free_crop_plans", "farm_sizes"
-  add_foreign_key "free_crop_plans", "regions"
+  add_foreign_key "free_crop_plans", "farms"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"
