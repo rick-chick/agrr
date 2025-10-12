@@ -2095,7 +2095,7 @@ body {
 .free-plans-wrapper {
   background: #f8f9fa;
   min-height: 100vh;
-  padding: 3rem 0;
+  padding: 1.5rem 0;
 }
 
 .free-plans-container {
@@ -2107,28 +2107,28 @@ body {
 /* Header */
 .free-plans-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
 }
 
 .free-plans-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #2d3748;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .free-plans-header p {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #718096;
 }
 
 /* Progress Steps */
 .progress-steps-card {
   background: white;
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 10px;
+  padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .enhanced-progress-steps {
@@ -2136,14 +2136,14 @@ body {
   justify-content: space-between;
   align-items: center;
   position: relative;
-  max-width: 500px;
+  max-width: 450px;
   margin: 0 auto;
 }
 
 .enhanced-progress-steps::before {
   content: '';
   position: absolute;
-  top: 20px;
+  top: 16px;
   left: 15%;
   right: 15%;
   height: 2px;
@@ -2161,8 +2161,8 @@ body {
 }
 
 .enhanced-step-circle {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: #e2e8f0;
   color: #a0aec0;
@@ -2170,13 +2170,13 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 0.5rem;
+  font-size: 14px;
+  margin-bottom: 0.375rem;
   transition: all 0.2s ease;
 }
 
 .enhanced-step-label {
-  font-size: 13px;
+  font-size: 11px;
   color: #718096;
   font-weight: 600;
 }
@@ -2202,46 +2202,46 @@ body {
 /* Summary Card */
 .enhanced-summary-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 10px;
+  padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   border-left: 4px solid #4299e1;
 }
 
 .enhanced-summary-title {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #4299e1;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .enhanced-summary-items {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .enhanced-summary-row {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
+  padding: 0.625rem;
   background: #f7fafc;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .enhanced-summary-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: #4299e1;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 0.75rem;
+  margin-right: 0.625rem;
   color: white;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .enhanced-summary-content {
@@ -2249,7 +2249,7 @@ body {
 }
 
 .enhanced-summary-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #718096;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -2257,7 +2257,7 @@ body {
 }
 
 .enhanced-summary-value {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #2d3748;
 }
@@ -2265,40 +2265,40 @@ body {
 /* Content Card */
 .content-card {
   background: white;
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 10px;
+  padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .content-card-title {
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #2d3748;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   text-align: center;
 }
 
 .content-card-subtitle {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #718096;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 /* Selection Cards */
 .enhanced-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
-  margin: 1.5rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin: 1.25rem 0;
 }
 
 .enhanced-selection-card {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 2rem 1.5rem;
+  border-radius: 10px;
+  padding: 1.5rem 1.25rem;
   text-align: center;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -2314,32 +2314,32 @@ body {
 }
 
 .enhanced-card-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .enhanced-card-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #2d3748;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .enhanced-card-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #718096;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .enhanced-card-highlight {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: #4299e1;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
 }
 
 .enhanced-card-detail {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #a0aec0;
 }
 
@@ -2381,13 +2381,13 @@ body {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .btn-gradient {
   background: #4299e1;
   color: white;
-  padding: 0.875rem 2rem;
+  padding: 0.75rem 1.75rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -2410,7 +2410,7 @@ body {
 .btn-white {
   background: white;
   color: #4299e1;
-  padding: 0.875rem 2rem;
+  padding: 0.75rem 1.75rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -2476,23 +2476,76 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .free-plans-wrapper {
-    padding: 2rem 0;
+    padding: 1rem 0;
+  }
+  
+  .free-plans-container {
+    padding: 0 1rem;
+  }
+  
+  .free-plans-header {
+    margin-bottom: 1rem;
   }
   
   .free-plans-header h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
+  }
+  
+  .free-plans-header p {
+    font-size: 0.875rem;
+  }
+  
+  .progress-steps-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .enhanced-step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .enhanced-step-label {
+    font-size: 10px;
+  }
+  
+  .enhanced-summary-card {
+    padding: 0.875rem;
+    margin-bottom: 1rem;
+  }
+  
+  .content-card {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .content-card-title {
+    font-size: 1.25rem;
+  }
+  
+  .content-card-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
   }
   
   .enhanced-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .enhanced-selection-card {
+    padding: 1.25rem 1rem;
   }
   
   .action-buttons {
     flex-direction: column;
   }
   
-  .content-card {
-    padding: 1.5rem;
+  .btn-gradient,
+  .btn-white {
+    width: 100%;
+    justify-content: center;
   }
 }
 
