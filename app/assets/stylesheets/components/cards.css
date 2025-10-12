@@ -1,0 +1,323 @@
+/* ============================================
+   AGRR Design System - Card Components
+   Created: 2025-10-12
+   Purpose: 統一されたカードコンポーネント
+   ============================================ */
+
+/* ============================================
+   Base Card Styles
+   ============================================ */
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Form Card
+   ============================================ */
+
+.form-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+}
+
+/* ============================================
+   Field & Crop Cards
+   ============================================ */
+
+.field-card,
+.crop-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+  transition: all var(--transition-base);
+}
+
+.field-card:hover,
+.crop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.field-name,
+.crop-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.field-coordinates,
+.crop-variety {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+}
+
+.field-actions,
+.crop-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ============================================
+   Crop Type Badge
+   ============================================ */
+
+.crop-type {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-4);
+}
+
+.crop-type.reference {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.crop-type.user {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* ============================================
+   Detail Cards
+   ============================================ */
+
+.crop-detail-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+}
+
+.crop-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-8);
+}
+
+.crop-detail-title {
+  font-size: var(--font-size-4xl);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.crop-detail-type {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.crop-detail-type.reference {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.crop-detail-type.user {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* ============================================
+   Info Cards
+   ============================================ */
+
+.crop-basic-info,
+.field-info {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+}
+
+.info-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.info-value {
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Welcome & Feature Cards
+   ============================================ */
+
+.welcome-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: var(--font-size-4xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.welcome-message {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-8);
+}
+
+.feature-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  transition: all var(--transition-base);
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+  font-size: var(--font-size-5xl);
+  margin-bottom: var(--space-4);
+}
+
+.feature-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.feature-description {
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ============================================
+   Content Card
+   ============================================ */
+
+.content-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-8);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.content-card-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+.content-card-subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================
+   Grids
+   ============================================ */
+
+.fields-grid,
+.crops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-5);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: var(--font-size-6xl);
+  margin-bottom: var(--space-4);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .fields-grid,
+  .crops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-card {
+    padding: var(--space-4);
+    margin-bottom: var(--space-5);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .content-card-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .content-card-subtitle {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-5);
+  }
+}
+
+@media (max-width: 480px) {
+  .content-card {
+    padding: var(--space-3);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
