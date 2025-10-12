@@ -62,8 +62,25 @@ class CropsController < ApplicationController
 
   def set_crop
     @crop = Crop.find(params[:id])
-    unless admin_user? || @crop.is_reference || @crop.user_id == current_user.id
-      redirect_to crops_path, alert: '権限がありません。'
+    
+    # アクションに応じた権限チェック
+    action = params[:action].to_sym
+    
+    if action.in?([:edit, :update, :destroy])
+      # 編集・更新・削除は以下の場合のみ許可
+      # - 管理者（すべての作物を編集可能）
+      # - ユーザー作物の所有者
+      unless admin_user? || (!@crop.is_reference && @crop.user_id == current_user.id)
+        redirect_to crops_path, alert: '権限がありません。'
+      end
+    elsif action == :show
+      # 詳細表示は以下の場合に許可
+      # - 参照作物（誰でも閲覧可能）
+      # - 自分の作物
+      # - 管理者
+      unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
+        redirect_to crops_path, alert: '権限がありません。'
+      end
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to crops_path, alert: '指定された作物が見つかりません。'

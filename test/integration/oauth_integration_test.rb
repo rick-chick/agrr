@@ -11,12 +11,14 @@ class OauthIntegrationTest < ActionDispatch::IntegrationTest
 
   def setup
     OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
+    # Save original mock auth
+    @original_mock_auth = OmniAuth.config.mock_auth[:google_oauth2]
   end
 
   def teardown
     OmniAuth.config.test_mode = false
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
+    # Restore original mock auth
+    OmniAuth.config.mock_auth[:google_oauth2] = @original_mock_auth
   end
 
   test "complete OAuth flow for new user" do
@@ -31,11 +33,10 @@ class OauthIntegrationTest < ActionDispatch::IntegrationTest
       }
     )
 
-    # Start OAuth flow (test環境ではGoogleにリダイレクトしない)
-
-    # Complete OAuth callback
+    # Start OAuth flow and complete callback
     assert_difference 'User.count', 1 do
-      get '/auth/google_oauth2/callback'
+      get '/auth/google_oauth2'
+      follow_redirect!
     end
 
     assert_response :redirect
@@ -84,7 +85,8 @@ class OauthIntegrationTest < ActionDispatch::IntegrationTest
 
     # Complete OAuth callback
     assert_no_difference 'User.count' do
-      get '/auth/google_oauth2/callback'
+      get '/auth/google_oauth2'
+      follow_redirect!
     end
 
     assert_response :redirect
@@ -105,7 +107,8 @@ class OauthIntegrationTest < ActionDispatch::IntegrationTest
     # Mock failed OAuth response
     OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
 
-    get '/auth/google_oauth2/callback'
+    get '/auth/google_oauth2'
+    follow_redirect!
     assert_response :redirect
     assert_equal '/auth/failure', redirect_url
 
@@ -125,7 +128,8 @@ class OauthIntegrationTest < ActionDispatch::IntegrationTest
 
     assert_no_difference 'User.count' do
       assert_no_difference 'Session.count' do
-        get '/auth/google_oauth2/callback'
+        get '/auth/google_oauth2'
+        follow_redirect!
       end
     end
 

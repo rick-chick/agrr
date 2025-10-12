@@ -6,7 +6,6 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     ENV['GOOGLE_CLIENT_ID'], 
     ENV['GOOGLE_CLIENT_SECRET'],
     {
-      name: :google,
       scope: 'email,profile',
       prompt: 'select_account',
       image_aspect_ratio: 'square',
@@ -18,7 +17,12 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 
 # Configure OmniAuth for security
-OmniAuth.config.allowed_request_methods = [:post]
+# Allow GET requests in test/dev, POST only in production
+if Rails.env.test? || Rails.env.development?
+  OmniAuth.config.allowed_request_methods = [:get, :post]
+else
+  OmniAuth.config.allowed_request_methods = [:post]
+end
 OmniAuth.config.silence_get_warning = true
 
 # Set secure callback URL

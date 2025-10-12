@@ -16,6 +16,13 @@ class AuthControllerTest < ActionDispatch::IntegrationTest
       google_id: 'google123456789',
       avatar_url: 'https://example.com/avatar.jpg'
     )
+    # Save original mock auth
+    @original_mock_auth = OmniAuth.config.mock_auth[:google_oauth2]
+  end
+
+  def teardown
+    # Restore original mock auth
+    OmniAuth.config.mock_auth[:google_oauth2] = @original_mock_auth
   end
 
   test "should get login page" do
@@ -43,10 +50,9 @@ class AuthControllerTest < ActionDispatch::IntegrationTest
       }
     )
 
-    # Mock session
-    session[:user_id] = @user.id
-
-    get '/auth/google_oauth2/callback'
+    # Trigger OAuth flow (test mode automatically redirects to callback)
+    get '/auth/google_oauth2'
+    follow_redirect!
     assert_response :redirect
     assert_equal '/', redirect_url
   end
@@ -56,7 +62,8 @@ class AuthControllerTest < ActionDispatch::IntegrationTest
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
 
-    get '/auth/google_oauth2/callback'
+    get '/auth/google_oauth2'
+    follow_redirect!
     assert_response :redirect
     assert_equal '/auth/failure', redirect_url
   end
@@ -94,7 +101,8 @@ class AuthControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference 'User.count', 1 do
       assert_difference 'Session.count', 1 do
-        get '/auth/google_oauth2/callback'
+        get '/auth/google_oauth2'
+        follow_redirect!
       end
     end
 
@@ -121,7 +129,8 @@ class AuthControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_no_difference 'User.count' do
-      get '/auth/google_oauth2/callback'
+      get '/auth/google_oauth2'
+      follow_redirect!
     end
 
     @user.reload

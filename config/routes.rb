@@ -36,12 +36,11 @@ Rails.application.routes.draw do
   resources :crops
 
   # Public Plans (公開作付け計画 - 認証不要) routes
-  resources :public_plans, only: [] do
+  resources :public_plans, only: [:create] do
     collection do
-      get :new
+      get :new, path: ''  # GET /public_plans → public_plans#new (public_plans_path)
       get :select_farm_size
       get :select_crop
-      post :create
       get :optimizing
       get :results
     end

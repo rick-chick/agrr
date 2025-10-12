@@ -6,13 +6,13 @@ class FarmsController < ApplicationController
   # GET /farms
   def index
     if admin_user?
-      # 管理者は自分の農場とデフォルト農場の両方を表示
+      # 管理者は自分の農場と参照農場の両方を表示
       @farms = current_user.farms.recent
-      @default_farms = Farm.default_farms
+      @reference_farms = Farm.reference
     else
       # 通常ユーザーは自分の農場のみ
       @farms = current_user.farms.recent
-      @default_farms = []
+      @reference_farms = []
     end
   end
 
@@ -55,6 +55,11 @@ class FarmsController < ApplicationController
 
   # DELETE /farms/:id
   def destroy
+    if @farm.free_crop_plans.any?
+      redirect_to @farm, alert: "この農場は#{@farm.free_crop_plans.count}件の作付け計画で使用されているため削除できません。"
+      return
+    end
+    
     @farm.destroy
     redirect_to farms_path, notice: '農場が削除されました。'
   end

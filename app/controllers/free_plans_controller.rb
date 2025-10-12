@@ -6,22 +6,23 @@ class FreePlansController < ApplicationController
   
   before_action :set_free_crop_plan, only: %i[calculating show]
   
-  # Step 1: 栽培地域（デフォルト農場）選択
+  # 農場サイズの定数定義（広さ順）
+  FARM_SIZES = [
+    { id: 'home_garden', name: '家庭菜園', area_sqm: 30, description: '自宅の庭やベランダでの菜園' },
+    { id: 'community_garden', name: '市民農園', area_sqm: 50, description: '一般的な市民農園の区画' },
+    { id: 'rental_farm', name: '貸農地', area_sqm: 300, description: '本格的な農業や貸農園' }
+  ].freeze
+  
+  # Step 1: 栽培地域（参照農場）選択
   def new
-    # デフォルト農場を一覧表示（これが栽培地域となる）
-    @farms = Farm.default_farms
-    
-    # デフォルト農場が1つもない場合は作成
-    if @farms.empty?
-      Farm.find_or_create_default_farm!
-      @farms = Farm.default_farms
-    end
+    # 参照農場を一覧表示（これが栽培地域となる）
+    @farms = Farm.reference
   end
   
   # Step 2: 農場サイズ選択
   def select_farm_size
     @farm = Farm.find(params[:farm_id])
-    @farm_sizes = FarmSize.active.by_display_order
+    @farm_sizes = FARM_SIZES
     
     # セッションに農場IDを保存
     session[:free_plan_farm_id] = @farm.id
@@ -32,11 +33,17 @@ class FreePlansController < ApplicationController
   # Step 3: 作物選択
   def select_crop
     @farm = Farm.find(session[:free_plan_farm_id])
-    @farm_size = FarmSize.find(params[:farm_size_id])
+    farm_size_id = params[:farm_size_id]
+    @farm_size = FARM_SIZES.find { |fs| fs[:id] == farm_size_id }
+    
+    unless @farm_size
+      redirect_to new_free_plan_path, alert: '農場サイズを選択してください。' and return
+    end
+    
     @crops = Crop.reference.recent
     
     # セッションに農場サイズIDを保存
-    session[:free_plan_farm_size_id] = @farm_size.id
+    session[:free_plan_farm_size_id] = farm_size_id
   rescue ActiveRecord::RecordNotFound
     redirect_to new_free_plan_path, alert: '最初からやり直してください。'
   end
@@ -44,7 +51,12 @@ class FreePlansController < ApplicationController
   # Step 4: 作付け計画作成（計算開始）
   def create
     @farm = Farm.find(session[:free_plan_farm_id])
-    @farm_size = FarmSize.find(session[:free_plan_farm_size_id])
+    farm_size_id = session[:free_plan_farm_size_id]
+    @farm_size = FARM_SIZES.find { |fs| fs[:id] == farm_size_id }
+    
+    unless @farm_size
+      redirect_to new_free_plan_path, alert: '農場サイズを選択してください。' and return
+    end
     
     # 複数の作物IDを取得
     crop_ids = params[:crop_ids].presence || []
@@ -59,7 +71,7 @@ class FreePlansController < ApplicationController
       crop = Crop.find(crop_id)
       free_crop_plan = FreeCropPlan.create(
         farm: @farm,
-        farm_size: @farm_size,
+        area_sqm: @farm_size[:area_sqm],
         crop: crop,
         session_id: request.session_options[:id]
       )
@@ -97,8 +109,8 @@ class FreePlansController < ApplicationController
       return
     end
     
-    # N+1クエリ対策: farm, farm_size, cropをeager load
-    @free_crop_plans = FreeCropPlan.where(id: plan_ids).includes(:farm, :farm_size, :crop)
+    # N+1クエリ対策: farm, cropをeager load
+    @free_crop_plans = FreeCropPlan.where(id: plan_ids).includes(:farm, :crop)
     
     if @free_crop_plans.empty?
       redirect_to new_free_plan_path, alert: '作付け計画が見つかりません。最初からやり直してください。'
@@ -120,8 +132,8 @@ class FreePlansController < ApplicationController
       return
     end
     
-    # N+1クエリ対策: farm, farm_size, cropをeager load
-    @free_crop_plans = FreeCropPlan.where(id: plan_ids).includes(:farm, :farm_size, :crop)
+    # N+1クエリ対策: farm, cropをeager load
+    @free_crop_plans = FreeCropPlan.where(id: plan_ids).includes(:farm, :crop)
     
     if @free_crop_plans.empty?
       redirect_to new_free_plan_path, alert: '作付け計画が見つかりません。'
