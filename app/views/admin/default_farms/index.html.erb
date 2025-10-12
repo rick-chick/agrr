@@ -1,0 +1,100 @@
+<%# encoding: UTF-8 %>
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">栽培地域農場管理</h1>
+    </div>
+
+    <!-- デフォルト農場（栽培地域として使用） -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">栽培地域として使用中 (<%= @default_farms.count %>件)</h2>
+      
+      <% if @default_farms.any? %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% @default_farms.each do |farm| %>
+            <div class="bg-white shadow-md rounded-lg p-4 border-2 border-green-500">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-xl font-bold text-gray-900"><%= farm.name %></h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  栽培地域
+                </span>
+              </div>
+              
+              <dl class="text-sm text-gray-600 space-y-1">
+                <div>
+                  <dt class="inline font-semibold">所有者:</dt>
+                  <dd class="inline"><%= farm.user.anonymous? ? "アノニマスユーザー" : farm.user.name %></dd>
+                </div>
+                <div>
+                  <dt class="inline font-semibold">位置:</dt>
+                  <dd class="inline"><%= farm.latitude.round(4) %>, <%= farm.longitude.round(4) %></dd>
+                </div>
+                <div>
+                  <dt class="inline font-semibold">作成日:</dt>
+                  <dd class="inline"><%= l(farm.created_at.to_date, format: :long) %></dd>
+                </div>
+              </dl>
+              
+              <div class="mt-4 flex gap-2">
+                <%= link_to "詳細", admin_default_farm_path(farm), class: "text-blue-500 hover:text-blue-700 text-sm font-medium" %>
+                <%= link_to "編集", edit_admin_default_farm_path(farm), class: "text-green-500 hover:text-green-700 text-sm font-medium" %>
+                <%= link_to "削除", admin_default_farm_path(farm), method: :delete, data: { confirm: "#{farm.name}を削除してもよろしいですか？" }, class: "text-red-500 hover:text-red-700 text-sm font-medium" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+          <p class="text-gray-600">栽培地域として設定されている農場がありません。</p>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- その他の農場（アノニマスユーザー所有） -->
+    <% if @other_farms.any? %>
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">その他の農場 (<%= @other_farms.count %>件)</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% @other_farms.each do |farm| %>
+            <div class="bg-white shadow-md rounded-lg p-4">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-xl font-bold text-gray-900"><%= farm.name %></h3>
+              </div>
+              
+              <dl class="text-sm text-gray-600 space-y-1">
+                <div>
+                  <dt class="inline font-semibold">所有者:</dt>
+                  <dd class="inline"><%= farm.user.anonymous? ? "アノニマスユーザー" : farm.user.name %></dd>
+                </div>
+                <div>
+                  <dt class="inline font-semibold">位置:</dt>
+                  <dd class="inline"><%= farm.latitude.round(4) %>, <%= farm.longitude.round(4) %></dd>
+                </div>
+                <div>
+                  <dt class="inline font-semibold">作成日:</dt>
+                  <dd class="inline"><%= l(farm.created_at.to_date, format: :long) %></dd>
+                </div>
+              </dl>
+              
+              <div class="mt-4 flex gap-2">
+                <%= link_to "詳細", admin_default_farm_path(farm), class: "text-blue-500 hover:text-blue-700 text-sm font-medium" %>
+                <%= link_to "削除", admin_default_farm_path(farm), method: :delete, data: { confirm: "#{farm.name}を削除してもよろしいですか？" }, class: "text-red-500 hover:text-red-700 text-sm font-medium" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- サマリー -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <h3 class="font-semibold text-blue-900 mb-2">サマリー</h3>
+      <p class="text-blue-700 text-sm">
+        アノニマスユーザーの農場: 合計 <%= @farms.count %>件
+        （栽培地域: <%= @default_farms.count %>件、その他: <%= @other_farms.count %>件）
+      </p>
+    </div>
+  </div>
+</div>
+

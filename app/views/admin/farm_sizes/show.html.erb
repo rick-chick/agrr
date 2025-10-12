@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @farm_size %>
+
+<div>
+  <%= link_to "Edit this farm size", edit_admin_farm_size_path(@farm_size) %> |
+  <%= link_to "Back to farm sizes", admin_farm_sizes_path %>
+
+  <%= button_to "Destroy this farm size", [:admin, @farm_size], method: :delete %>
+</div>
