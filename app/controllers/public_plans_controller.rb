@@ -13,7 +13,7 @@ class PublicPlansController < ApplicationController
   
   # Step 1: 栽培地域（参照農場）選択
   def new
-    @farms = Farm.reference.order(:name)
+    @farms = Farm.reference  # 北から南の順（緯度降順）
   end
   
   # Step 2: 農場サイズ選択

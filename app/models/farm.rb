@@ -46,7 +46,7 @@ class Farm < ApplicationRecord
   # Scopes
   scope :by_user, ->(user) { where(user: user) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :reference, -> { where(is_reference: true).order(:name) }
+  scope :reference, -> { where(is_reference: true).order(latitude: :desc) }  # 北から南の順
   scope :user_owned, -> { where(is_reference: false) }
 
   # Instance methods
