@@ -5,6 +5,139 @@
    ============================================ */
 
 /* ============================================
+   Layout Adjustments
+   ============================================ */
+
+.optimizing-wrapper {
+  padding-bottom: 0;
+}
+
+.optimizing-spacer {
+  height: 100px;
+}
+
+/* ============================================
+   Advertisement Section
+   ============================================ */
+
+.optimizing-ad-wrapper {
+  background: var(--gradient-warning);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+.optimizing-ad-label {
+  text-align: center;
+  color: #856404;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-4);
+}
+
+.optimizing-ad-content {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.optimizing-ad-placeholder {
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.optimizing-ad-title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-weight-bold);
+}
+
+.optimizing-ad-size {
+  font-size: var(--font-size-base);
+  color: #bbb;
+  margin-bottom: var(--space-4);
+}
+
+.optimizing-ad-note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: #aaa;
+}
+
+.optimizing-info-text {
+  text-align: center;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-base);
+  margin-top: var(--space-5);
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Fixed Bottom Progress Bar
+   ============================================ */
+
+.fixed-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-white);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-index-sticky);
+  border-top: var(--border-width-4) solid var(--color-info);
+}
+
+.fixed-progress-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-5);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-header-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progress-header-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  margin-top: var(--space-3);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-info) 0%, var(--color-success) 100%);
+  transition: width 0.5s ease;
+}
+
+/* ============================================
    Spinner Animation
    ============================================ */
 
@@ -37,5 +170,34 @@
   width: 40px;
   height: 40px;
   border-width: 4px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .optimizing-ad-content {
+    padding: var(--space-5);
+    min-height: 200px;
+  }
+
+  .fixed-progress-container {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .optimizing-ad-wrapper {
+    padding: var(--space-4);
+  }
+
+  .optimizing-ad-content {
+    padding: var(--space-4);
+  }
+
+  .fixed-progress-container {
+    padding: var(--space-3);
+  }
 }
 
