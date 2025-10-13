@@ -1,0 +1,256 @@
+/* ============================================
+   Button Component System
+   Created: 2025-10-13
+   Purpose: 統一されたボタンコンポーネント（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Base Button
+   ============================================ */
+
+.btn {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+  line-height: var(--line-height-tight);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   Button Variants - Color
+   ============================================ */
+
+.btn-primary {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  background: var(--color-info-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: var(--color-gray-500);
+  color: var(--color-white);
+  margin-right: var(--space-4);
+}
+
+.btn-secondary:hover {
+  background: var(--color-gray-700);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.btn-success:hover {
+  background: var(--color-success-dark);
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: var(--color-white);
+}
+
+.btn-danger:hover {
+  background: var(--color-error-dark);
+}
+
+.btn-info {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+.btn-info:hover {
+  background: var(--color-info-dark);
+}
+
+.btn-warning {
+  background: var(--color-warning);
+  color: var(--color-white);
+}
+
+.btn-warning:hover {
+  background: var(--color-warning-dark);
+}
+
+/* ============================================
+   Button Variants - Style
+   ============================================ */
+
+/* Gradient Button (AI/Premium features) */
+.btn-gradient {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+}
+
+/* White/Outline Button */
+.btn-white {
+  background: var(--color-white);
+  color: var(--color-info);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border: var(--border-width-2) solid var(--color-info);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+
+.btn-white:hover {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+/* AI Button (Special gradient for AI features) */
+.btn-ai {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-ai:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-ai:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Link Button (for table actions) */
+.btn-link {
+  background: var(--color-info);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-base);
+  transition: background var(--transition-fast);
+}
+
+.btn-link:hover {
+  background: var(--color-info-dark);
+}
+
+/* ============================================
+   Button Sizes
+   ============================================ */
+
+.btn-sm,
+.btn-small {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-lg);
+}
+
+.btn-xl {
+  padding: var(--space-5) var(--space-10);
+  font-size: var(--font-size-xl);
+}
+
+/* ============================================
+   Button Groups
+   ============================================ */
+
+.btn-group {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.btn-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .btn-gradient,
+  .btn-white {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+    box-sizing: border-box;
+    min-height: 44px;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-gradient,
+  .btn-white {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-xs);
+    white-space: normal;
+    text-align: center;
+    min-height: 44px;
+  }
+}
+
