@@ -16,15 +16,17 @@ module Agrr
       input_file = write_temp_file(historical_data, prefix: 'weather_input')
       output_file = Tempfile.new(['weather_output', '.json'])
       
-      # デバッグ用にファイルを保存
-      debug_dir = Rails.root.join('tmp/debug')
-      FileUtils.mkdir_p(debug_dir)
-      debug_input_path = debug_dir.join("prediction_input_#{Time.current.to_i}.json")
-      FileUtils.cp(input_file.path, debug_input_path)
+      # デバッグ用にファイルを保存（本番環境以外のみ）
+      unless Rails.env.production?
+        debug_dir = Rails.root.join('tmp/debug')
+        FileUtils.mkdir_p(debug_dir)
+        debug_input_path = debug_dir.join("prediction_input_#{Time.current.to_i}.json")
+        FileUtils.cp(input_file.path, debug_input_path)
+        Rails.logger.info "📁 [AGRR] Debug input saved to: #{debug_input_path}"
+      end
       
       begin
         Rails.logger.info "📁 [AGRR] Input file: #{input_file.path} (#{File.size(input_file.path)} bytes)"
-        Rails.logger.info "📁 [AGRR] Debug input saved to: #{debug_input_path}"
         Rails.logger.info "📁 [AGRR] Output file: #{output_file.path}"
         
         execute_command(
@@ -40,12 +42,15 @@ module Agrr
         output_file.rewind
         output_content = output_file.read
         
-        # デバッグ用に出力ファイルも保存
-        debug_output_path = debug_dir.join("prediction_output_#{Time.current.to_i}.json")
-        File.write(debug_output_path, output_content)
+        # デバッグ用に出力ファイルも保存（本番環境以外のみ）
+        unless Rails.env.production?
+          debug_dir = Rails.root.join('tmp/debug')
+          debug_output_path = debug_dir.join("prediction_output_#{Time.current.to_i}.json")
+          File.write(debug_output_path, output_content)
+          Rails.logger.info "📁 [AGRR] Debug output saved to: #{debug_output_path}"
+        end
         
         Rails.logger.info "📊 [AGRR] Output file size: #{output_content.bytesize} bytes"
-        Rails.logger.info "📁 [AGRR] Debug output saved to: #{debug_output_path}"
         
         if output_content.empty?
           Rails.logger.error "❌ [AGRR] Output file is empty (command succeeded but produced no output)"
@@ -54,9 +59,18 @@ module Agrr
         end
         
         raw_result = JSON.parse(output_content)
+        Rails.logger.info "📊 [AGRR] Raw predictions count: #{raw_result['predictions']&.count || 0}"
         
         # AGRR予測結果を完全な天気データ形式に変換
         transformed_result = transform_predictions_to_weather_data(raw_result, historical_data)
+        
+        # デバッグ用に変換後のデータも保存（本番環境以外のみ）
+        unless Rails.env.production?
+          debug_dir = Rails.root.join('tmp/debug')
+          debug_transformed_path = debug_dir.join("prediction_transformed_#{Time.current.to_i}.json")
+          File.write(debug_transformed_path, transformed_result.to_json)
+          Rails.logger.info "📁 [AGRR] Debug transformed saved to: #{debug_transformed_path}"
+        end
         
         Rails.logger.info "✅ [AGRR] Prediction completed: #{transformed_result['data']&.count || 0} records"
         transformed_result

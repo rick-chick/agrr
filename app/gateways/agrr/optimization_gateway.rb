@@ -19,20 +19,22 @@ module Agrr
         Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
       end
       
-      # デバッグ用にファイルを保存
-      debug_dir = Rails.root.join('tmp/debug')
-      FileUtils.mkdir_p(debug_dir)
-      debug_weather_path = debug_dir.join("optimization_weather_#{Time.current.to_i}.json")
-      debug_field_path = debug_dir.join("optimization_field_#{Time.current.to_i}.json")
-      FileUtils.cp(weather_file.path, debug_weather_path)
-      FileUtils.cp(field_file.path, debug_field_path)
-      Rails.logger.info "📁 [AGRR] Debug weather saved to: #{debug_weather_path}"
-      Rails.logger.info "📁 [AGRR] Debug field saved to: #{debug_field_path}"
-      
-      if crop_req_file
-        debug_crop_req_path = debug_dir.join("optimization_crop_requirement_#{Time.current.to_i}.json")
-        FileUtils.cp(crop_req_file.path, debug_crop_req_path)
-        Rails.logger.info "📁 [AGRR] Debug crop requirement saved to: #{debug_crop_req_path}"
+      # デバッグ用にファイルを保存（本番環境以外のみ）
+      unless Rails.env.production?
+        debug_dir = Rails.root.join('tmp/debug')
+        FileUtils.mkdir_p(debug_dir)
+        debug_weather_path = debug_dir.join("optimization_weather_#{Time.current.to_i}.json")
+        debug_field_path = debug_dir.join("optimization_field_#{Time.current.to_i}.json")
+        FileUtils.cp(weather_file.path, debug_weather_path)
+        FileUtils.cp(field_file.path, debug_field_path)
+        Rails.logger.info "📁 [AGRR] Debug weather saved to: #{debug_weather_path}"
+        Rails.logger.info "📁 [AGRR] Debug field saved to: #{debug_field_path}"
+        
+        if crop_req_file
+          debug_crop_req_path = debug_dir.join("optimization_crop_requirement_#{Time.current.to_i}.json")
+          FileUtils.cp(crop_req_file.path, debug_crop_req_path)
+          Rails.logger.info "📁 [AGRR] Debug crop requirement saved to: #{debug_crop_req_path}"
+        end
       end
       
       begin
