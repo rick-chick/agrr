@@ -121,7 +121,7 @@ class PublicPlansController < ApplicationController
     end
     
     CultivationPlan
-      .includes(field_cultivations: [:field, :crop])
+      .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
       .find(plan_id)
   rescue ActiveRecord::RecordNotFound
     redirect_to new_public_plan_path, alert: '作付け計画が見つかりません。'
