@@ -294,7 +294,7 @@ class CropTest < ActiveSupport::TestCase
     assert_equal 28.0, result[:stages][1][:optimal_temp_max]
   end
 
-  test "to_agrr_requirement should handle crop without stages" do
+  test "to_agrr_requirement should raise error when crop has no stages" do
     crop = Crop.create!(
       name: "rice",
       variety: "Koshihikari",
@@ -302,12 +302,12 @@ class CropTest < ActiveSupport::TestCase
       is_reference: false
     )
     
-    result = crop.to_agrr_requirement
+    error = assert_raises(StandardError) do
+      crop.to_agrr_requirement
+    end
     
-    assert_equal "rice", result[:crop_name]
-    assert_equal "Koshihikari", result[:variety]
-    assert_equal 0.0, result[:gdd_requirement]
-    assert_equal [], result[:stages]
+    assert_match /has no growth stages/, error.message
+    assert_match /rice/, error.message
   end
 
   test "to_agrr_requirement should handle nil variety" do
@@ -324,7 +324,7 @@ class CropTest < ActiveSupport::TestCase
     assert_equal "", result[:variety]
   end
 
-  test "to_agrr_requirement should handle stages without requirements" do
+  test "to_agrr_requirement should raise error when base_temperature is nil" do
     crop = Crop.create!(
       name: "rice",
       variety: "Koshihikari",
@@ -332,12 +332,67 @@ class CropTest < ActiveSupport::TestCase
       is_reference: false
     )
     
-    crop.crop_stages.create!(name: "germination", order: 1)
+    stage = crop.crop_stages.create!(name: "germination", order: 1)
+    stage.create_temperature_requirement!(
+      base_temperature: nil,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage.create_thermal_requirement!(required_gdd: 200.0)
     
-    result = crop.to_agrr_requirement
+    error = assert_raises(StandardError) do
+      crop.to_agrr_requirement
+    end
     
-    assert_equal 1, result[:stages].length
-    assert_equal "germination", result[:stages][0][:name]
-    assert_equal 0.0, result[:stages][0][:gdd_requirement]
+    assert_match /invalid base_temperature/, error.message
+    assert_match /rice/, error.message
+  end
+
+  test "to_agrr_requirement should raise error when base_temperature is zero" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    stage = crop.crop_stages.create!(name: "germination", order: 1)
+    stage.create_temperature_requirement!(
+      base_temperature: 0.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage.create_thermal_requirement!(required_gdd: 200.0)
+    
+    error = assert_raises(StandardError) do
+      crop.to_agrr_requirement
+    end
+    
+    assert_match /invalid base_temperature/, error.message
+    assert_match /0.0/, error.message
+  end
+
+  test "to_agrr_requirement should raise error when base_temperature is negative" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    stage = crop.crop_stages.create!(name: "germination", order: 1)
+    stage.create_temperature_requirement!(
+      base_temperature: -5.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage.create_thermal_requirement!(required_gdd: 200.0)
+    
+    error = assert_raises(StandardError) do
+      crop.to_agrr_requirement
+    end
+    
+    assert_match /invalid base_temperature/, error.message
+    assert_match /-5.0/, error.message
   end
 end
