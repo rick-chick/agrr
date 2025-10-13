@@ -95,5 +95,91 @@ class CropAiCreateTest < ActionDispatch::IntegrationTest
     # どちらの場合でも、500エラーにならないことを確認
     assert_not_equal 500, response.status
   end
+  
+  test "AI create does not update reference crops" do
+    # 参照作物を作成（トマトが参照作物として存在）
+    reference_crop = Crop.create!(
+      name: "トマト",
+      variety: "参照品種",
+      is_reference: true,
+      user_id: nil,
+      area_per_unit: 100.0,
+      revenue_per_area: 5000.0
+    )
+    
+    # ユーザーが同名の作物をAIで作成
+    assert_difference('Crop.count', 1) do
+      post '/api/v1/crops/ai_create',
+           params: { name: "トマト", variety: "ユーザー品種" },
+           as: :json
+    end
+    
+    assert_response :created
+    
+    json_response = JSON.parse(response.body)
+    user_crop = Crop.find(json_response['crop_id'])
+    
+    # 新しいユーザー作物が作成されたことを確認
+    assert_equal "トマト", user_crop.name
+    assert_equal @user.id, user_crop.user_id
+    assert_equal false, user_crop.is_reference
+    assert_equal "ユーザー品種", user_crop.variety
+    
+    # 参照作物が変更されていないことを確認
+    reference_crop.reload
+    assert_equal true, reference_crop.is_reference
+    assert_nil reference_crop.user_id
+    assert_equal "参照品種", reference_crop.variety
+    assert_equal 100.0, reference_crop.area_per_unit
+    assert_equal 5000.0, reference_crop.revenue_per_area
+  end
+  
+  test "AI create updates existing user crop, not reference crop" do
+    # 参照作物を作成
+    reference_crop = Crop.create!(
+      name: "ナス",
+      is_reference: true,
+      user_id: nil,
+      area_per_unit: 80.0,
+      revenue_per_area: 4000.0,
+      agrr_crop_id: "nasu_ref"
+    )
+    
+    # 同じユーザーの既存作物を作成
+    user_crop = Crop.create!(
+      name: "ナス",
+      variety: "旧品種",
+      is_reference: false,
+      user_id: @user.id,
+      area_per_unit: 50.0,
+      revenue_per_area: 3000.0,
+      agrr_crop_id: "nasu_user"
+    )
+    
+    # ユーザーが同名の作物をAIで再作成（更新）
+    assert_no_difference('Crop.count') do
+      post '/api/v1/crops/ai_create',
+           params: { name: "ナス", variety: "新品種" },
+           as: :json
+    end
+    
+    assert_response :ok
+    
+    json_response = JSON.parse(response.body)
+    assert_equal user_crop.id, json_response['crop_id']
+    
+    # ユーザー作物が更新されたことを確認
+    user_crop.reload
+    assert_equal "新品種", user_crop.variety
+    assert_equal @user.id, user_crop.user_id
+    assert_equal false, user_crop.is_reference
+    
+    # 参照作物が変更されていないことを確認
+    reference_crop.reload
+    assert_equal true, reference_crop.is_reference
+    assert_nil reference_crop.user_id
+    assert_equal 80.0, reference_crop.area_per_unit
+    assert_equal 4000.0, reference_crop.revenue_per_area
+  end
 end
 
