@@ -250,4 +250,94 @@ class CropTest < ActiveSupport::TestCase
     assert crop.valid?
     assert_equal 0.0, crop.revenue_per_area
   end
+
+  test "to_agrr_requirement should return valid hash structure" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    stage1 = crop.crop_stages.create!(name: "germination", order: 1)
+    stage1.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage1.create_thermal_requirement!(required_gdd: 200.0)
+    
+    stage2 = crop.crop_stages.create!(name: "flowering", order: 2)
+    stage2.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 22.0,
+      optimal_max: 28.0
+    )
+    stage2.create_thermal_requirement!(required_gdd: 800.0)
+    
+    result = crop.to_agrr_requirement
+    
+    assert_equal "rice", result[:crop_name]
+    assert_equal "Koshihikari", result[:variety]
+    assert_equal 10.0, result[:base_temperature]
+    assert_equal 1000.0, result[:gdd_requirement] # 200 + 800
+    
+    assert_equal 2, result[:stages].length
+    assert_equal "germination", result[:stages][0][:name]
+    assert_equal 200.0, result[:stages][0][:gdd_requirement]
+    assert_equal 20.0, result[:stages][0][:optimal_temp_min]
+    assert_equal 30.0, result[:stages][0][:optimal_temp_max]
+    
+    assert_equal "flowering", result[:stages][1][:name]
+    assert_equal 800.0, result[:stages][1][:gdd_requirement]
+    assert_equal 22.0, result[:stages][1][:optimal_temp_min]
+    assert_equal 28.0, result[:stages][1][:optimal_temp_max]
+  end
+
+  test "to_agrr_requirement should handle crop without stages" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    result = crop.to_agrr_requirement
+    
+    assert_equal "rice", result[:crop_name]
+    assert_equal "Koshihikari", result[:variety]
+    assert_equal 0.0, result[:gdd_requirement]
+    assert_equal [], result[:stages]
+  end
+
+  test "to_agrr_requirement should handle nil variety" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: nil,
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    result = crop.to_agrr_requirement
+    
+    assert_equal "rice", result[:crop_name]
+    assert_equal "", result[:variety]
+  end
+
+  test "to_agrr_requirement should handle stages without requirements" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    crop.crop_stages.create!(name: "germination", order: 1)
+    
+    result = crop.to_agrr_requirement
+    
+    assert_equal 1, result[:stages].length
+    assert_equal "germination", result[:stages][0][:name]
+    assert_equal 0.0, result[:stages][0][:gdd_requirement]
+  end
 end

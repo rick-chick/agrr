@@ -32,6 +32,40 @@ class Crop < ApplicationRecord
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
+
+  # agrr CLI の crop-requirement-file フォーマットに変換
+  # @return [Hash] agrr CLI が期待する作物要件のハッシュ
+  def to_agrr_requirement
+    # crop_stagesをorderでソート
+    sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement).order(:order)
+    
+    # 最初のステージの base_temperature を取得（全ステージで共通と仮定）
+    base_temp = sorted_stages.first&.temperature_requirement&.base_temperature
+    
+    # 全ステージの required_gdd を合計
+    total_gdd = sorted_stages.sum { |stage| stage.thermal_requirement&.required_gdd || 0.0 }
+    
+    # stages 配列を構築
+    stages_array = sorted_stages.map do |stage|
+      temp_req = stage.temperature_requirement
+      thermal_req = stage.thermal_requirement
+      
+      {
+        name: stage.name,
+        gdd_requirement: thermal_req&.required_gdd || 0.0,
+        optimal_temp_min: temp_req&.optimal_min,
+        optimal_temp_max: temp_req&.optimal_max
+      }.compact # nil値を除去
+    end
+    
+    {
+      crop_name: name,
+      variety: variety || "",
+      base_temperature: base_temp,
+      gdd_requirement: total_gdd,
+      stages: stages_array
+    }.compact # nil値を除去
+  end
 end
 
 

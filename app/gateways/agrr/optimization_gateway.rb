@@ -2,7 +2,7 @@
 
 module Agrr
   class OptimizationGateway < BaseGateway
-    def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:)
+    def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil)
       Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{variety}"
       
       field_config = build_field_config(field_area, daily_fixed_cost)
@@ -10,6 +10,14 @@ module Agrr
       
       weather_file = write_temp_file(weather_data, prefix: 'weather')
       field_file = write_temp_file(field_config, prefix: 'field')
+      crop_req_file = nil
+      
+      # Cropモデルが指定されている場合、crop-requirement-file を作成
+      if crop
+        crop_requirement = crop.to_agrr_requirement
+        crop_req_file = write_temp_file(crop_requirement, prefix: 'crop_requirement')
+        Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
+      end
       
       # デバッグ用にファイルを保存
       debug_dir = Rails.root.join('tmp/debug')
@@ -21,8 +29,14 @@ module Agrr
       Rails.logger.info "📁 [AGRR] Debug weather saved to: #{debug_weather_path}"
       Rails.logger.info "📁 [AGRR] Debug field saved to: #{debug_field_path}"
       
+      if crop_req_file
+        debug_crop_req_path = debug_dir.join("optimization_crop_requirement_#{Time.current.to_i}.json")
+        FileUtils.cp(crop_req_file.path, debug_crop_req_path)
+        Rails.logger.info "📁 [AGRR] Debug crop requirement saved to: #{debug_crop_req_path}"
+      end
+      
       begin
-        result = execute_command(
+        command_args = [
           agrr_path,
           'optimize-period',
           'optimize',
@@ -31,9 +45,17 @@ module Agrr
           '--evaluation-start', evaluation_start.to_s,
           '--evaluation-end', evaluation_end.to_s,
           '--weather-file', weather_file.path,
-          '--field-config', field_file.path,
-          '--format', 'json'
-        )
+          '--field-config', field_file.path
+        ]
+        
+        # crop-requirement-file オプションを追加
+        if crop_req_file
+          command_args += ['--crop-requirement-file', crop_req_file.path]
+        end
+        
+        command_args += ['--format', 'json']
+        
+        result = execute_command(*command_args)
         
         parsed = parse_optimization_result(result)
         Rails.logger.info "✅ [AGRR] Optimization completed: start=#{parsed[:start_date]}, days=#{parsed[:days]}"
@@ -44,6 +66,10 @@ module Agrr
         weather_file.unlink
         field_file.close
         field_file.unlink
+        if crop_req_file
+          crop_req_file.close
+          crop_req_file.unlink
+        end
       end
     end
     
