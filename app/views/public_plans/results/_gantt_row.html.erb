@@ -1,0 +1,131 @@
+<%# app/views/public_plans/results/_gantt_row.html.erb %>
+<%# ガントチャートの1行（1圃場・1作物） %>
+
+<%
+  # Helper methods
+  def calculate_month_index(date, plan_start)
+    return nil unless date
+    ((date.year - plan_start.year) * 12) + date.month
+  end
+  
+  def crop_class(crop_name)
+    crop_name.to_s.parameterize
+  end
+  
+  def crop_emoji(crop_name)
+    emojis = {
+      'トマト' => '🍅',
+      'キュウリ' => '🥒',
+      'ナス' => '🍆',
+      'ピーマン' => '🫑',
+      'レタス' => '🥬',
+      'キャベツ' => '🥬',
+      'ニンジン' => '🥕',
+      'ダイコン' => '🥕',
+      'ホウレンソウ' => '🥬',
+      'イチゴ' => '🍓',
+      'メロン' => '🍈',
+      'スイカ' => '🍉',
+      '米' => '🌾',
+      '小麦' => '🌾',
+      '大豆' => '🫘'
+    }
+    emojis[crop_name.to_s] || '🌱'
+  end
+  
+  def render_stage_gradient(field_cultivation)
+    # optimization_result から stages を取得
+    stages = field_cultivation.optimization_result&.dig('raw', 'stages') || []
+    return '' if stages.empty?
+    
+    # ステージごとの色
+    stage_colors = {
+      '発芽' => '#90EE90',
+      '成長' => '#32CD32',
+      '開花' => '#FFB6C1',
+      '結実' => '#FF6347',
+      '収穫' => '#FFD700'
+    }
+    
+    # 各ステージの割合を計算
+    total_days = field_cultivation.cultivation_days || 1
+    gradients = stages.map do |stage|
+      stage_name = stage['name'] || stage[:name]
+      stage_days = stage['days'] || stage[:days] || 0
+      percentage = (stage_days.to_f / total_days * 100).round(2)
+      color = stage_colors[stage_name] || '#CCCCCC'
+      "#{color} #{percentage}%"
+    end
+    
+    "linear-gradient(90deg, #{gradients.join(', ')})"
+  end
+%>
+
+<tr class="gantt-row" 
+    data-field-cultivation-id="<%= field_cultivation.id %>"
+    data-crop-name="<%= field_cultivation.crop_display_name %>"
+    data-field-name="<%= field_cultivation.field_display_name %>">
+  
+  <%# 左側の固定列（圃場・作物情報） %>
+  <td class="gantt-sticky-col gantt-field-info">
+    <div class="field-info-content">
+      <div class="field-name">
+        <span class="field-icon">🏞️</span>
+        <span class="field-text"><%= field_cultivation.field_display_name %></span>
+      </div>
+      <div class="crop-name">
+        <span class="crop-icon"><%= crop_emoji(field_cultivation.crop_display_name) %></span>
+        <span class="crop-text"><%= field_cultivation.crop_display_name %></span>
+      </div>
+      <div class="area-info">
+        <%= number_with_delimiter(field_cultivation.area.to_i) %>㎡
+      </div>
+    </div>
+  </td>
+  
+  <%# 24ヶ月分のセル %>
+  <% if field_cultivation.start_date && field_cultivation.completion_date %>
+    <% 
+      start_month = calculate_month_index(field_cultivation.start_date, plan_start_date)
+      end_month = calculate_month_index(field_cultivation.completion_date, plan_start_date)
+      duration_months = end_month - start_month + 1
+    %>
+    
+    <%# 栽培開始前の空セル %>
+    <% (1...start_month).each do %>
+      <td class="gantt-empty-cell"></td>
+    <% end %>
+    
+    <%# 栽培期間のセル（結合） %>
+    <td colspan="<%= duration_months %>" 
+        class="gantt-cultivation-bar <%= crop_class(field_cultivation.crop_display_name) %>"
+        style="background: <%= render_stage_gradient(field_cultivation) %>;">
+      <div class="bar-content">
+        <div class="bar-dates">
+          <span class="bar-start-date" title="播種日">
+            <span class="date-marker">▲</span>
+            <span class="date-text"><%= field_cultivation.start_date.strftime('%-m/%-d') %></span>
+          </span>
+          <span class="bar-duration">
+            <%= field_cultivation.cultivation_days %>日
+          </span>
+          <span class="bar-end-date" title="収穫日">
+            <span class="date-text"><%= field_cultivation.completion_date.strftime('%-m/%-d') %></span>
+            <span class="date-marker">▲</span>
+          </span>
+        </div>
+      </div>
+    </td>
+    
+    <%# 栽培終了後の空セル %>
+    <% ((end_month + 1)..24).each do %>
+      <td class="gantt-empty-cell"></td>
+    <% end %>
+  <% else %>
+    <%# データがない場合 %>
+    <% (1..24).each do %>
+      <td class="gantt-empty-cell gantt-no-data"></td>
+    <% end %>
+  <% end %>
+</tr>
+

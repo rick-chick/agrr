@@ -10,3 +10,4 @@ import "./fields";
 import "./progress_bar";
 import "./optimizing";
 import "./temperature_chart";
+import "./cultivation_results";

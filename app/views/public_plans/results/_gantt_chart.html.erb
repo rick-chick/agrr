@@ -1,0 +1,92 @@
+<%# app/views/public_plans/results/_gantt_chart.html.erb %>
+<%# ガントチャート全体（テーブル構造） %>
+
+<div class="gantt-section">
+  <h2 class="gantt-title">
+    <span class="gantt-title-icon">📊</span>
+    <span class="gantt-title-text">栽培スケジュール</span>
+  </h2>
+  
+  <div class="gantt-scroll-hint">
+    <span class="scroll-hint-icon">👆</span>
+    <span class="scroll-hint-text">横にスワイプ・スクロールできます</span>
+  </div>
+  
+  <div class="gantt-container">
+    <table class="gantt-table">
+      <thead>
+        <tr class="gantt-header-year">
+          <th class="gantt-sticky-col" rowspan="2">圃場 / 作物</th>
+          <th colspan="12" class="gantt-year-header year-2024">2024年</th>
+          <th colspan="12" class="gantt-year-header year-2025">2025年</th>
+        </tr>
+        <tr class="gantt-header-month">
+          <%# 2024年の月 %>
+          <% (1..12).each do |month| %>
+            <th class="gantt-month-header"><%= month %>月</th>
+          <% end %>
+          <%# 2025年の月 %>
+          <% (1..12).each do |month| %>
+            <th class="gantt-month-header"><%= month %>月</th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <%# 各圃場・作物の行 %>
+        <% cultivation_plan.field_cultivations.each do |field_cultivation| %>
+          <%= render 'public_plans/results/gantt_row', 
+                     field_cultivation: field_cultivation,
+                     plan_start_date: Date.new(2024, 1, 1),
+                     plan_end_date: Date.new(2025, 12, 31) %>
+        <% end %>
+        
+        <%# 今日のマーカー行 %>
+        <tr class="gantt-today-marker-row">
+          <td class="gantt-sticky-col gantt-today-label">
+            <span class="today-marker-icon">📍</span>
+            <span class="today-marker-text">今日</span>
+          </td>
+          <% current_year = Date.current.year %>
+          <% current_month = Date.current.month %>
+          <% (1..24).each do |month_index| %>
+            <% year = month_index <= 12 ? 2024 : 2025 %>
+            <% month = month_index <= 12 ? month_index : month_index - 12 %>
+            <% is_current = (year == current_year && month == current_month) %>
+            <td class="<%= 'gantt-today-cell' if is_current %>">
+              <% if is_current %>
+                <div class="today-marker">▲</div>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="gantt-legend">
+    <div class="legend-title">ステージ凡例:</div>
+    <div class="legend-items">
+      <span class="legend-item">
+        <span class="legend-color stage-germination"></span>
+        <span class="legend-text">発芽</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-color stage-growth"></span>
+        <span class="legend-text">成長</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-color stage-flowering"></span>
+        <span class="legend-text">開花</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-color stage-fruiting"></span>
+        <span class="legend-text">結実</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-color stage-harvest"></span>
+        <span class="legend-text">収穫</span>
+      </span>
+    </div>
+  </div>
+</div>
+

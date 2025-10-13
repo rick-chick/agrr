@@ -1,0 +1,67 @@
+<%# app/views/public_plans/results/_detail_info_tab.html.erb %>
+<%# 基本情報タブ - JavaScriptからデータを注入 %>
+
+<div class="info-tab-content">
+  <%# 基本情報グリッド %>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-card-icon">🏞️</div>
+      <div class="info-card-label">圃場</div>
+      <div class="info-card-value" data-field="field_name">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">🌱</div>
+      <div class="info-card-label">作物</div>
+      <div class="info-card-value" data-field="crop_name">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">📏</div>
+      <div class="info-card-label">面積</div>
+      <div class="info-card-value" data-field="area">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">📅</div>
+      <div class="info-card-label">播種日</div>
+      <div class="info-card-value" data-field="start_date">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">📅</div>
+      <div class="info-card-label">収穫日</div>
+      <div class="info-card-value" data-field="completion_date">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">⏱️</div>
+      <div class="info-card-label">栽培日数</div>
+      <div class="info-card-value" data-field="cultivation_days">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">🌡️</div>
+      <div class="info-card-label">積算温度</div>
+      <div class="info-card-value" data-field="gdd">-</div>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-icon">💰</div>
+      <div class="info-card-label">推定コスト</div>
+      <div class="info-card-value" data-field="estimated_cost">-</div>
+    </div>
+  </div>
+  
+  <%# ステージタイムライン %>
+  <div class="stages-timeline-section">
+    <h4 class="timeline-title">栽培ステージ</h4>
+    <div class="stages-timeline" data-field="stages_timeline">
+      <%# JavaScriptで動的に生成 %>
+      <div class="timeline-placeholder">
+        <p>ステージ情報を読み込んでいます...</p>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,70 @@
+<%# app/views/public_plans/results/_detail_temperature_tab.html.erb %>
+<%# 気温分析タブ - Chart.jsでグラフ描画 %>
+
+<div class="temperature-tab-content">
+  <%# 気温推移グラフ %>
+  <div class="chart-section">
+    <h4 class="chart-title">
+      <span class="chart-title-icon">🌡️</span>
+      <span class="chart-title-text">栽培期間中の気温推移</span>
+    </h4>
+    <div class="chart-container">
+      <canvas id="temperatureChart"></canvas>
+    </div>
+  </div>
+  
+  <%# 統計サマリー %>
+  <div class="stats-grid">
+    <div class="stat-card stat-success">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-label">最適温度範囲内</div>
+        <div class="stat-value" data-field="optimal_days">-</div>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-warning">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-content">
+        <div class="stat-label">高温リスク日</div>
+        <div class="stat-value" data-field="high_temp_days">-</div>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-info">
+      <div class="stat-icon">❄️</div>
+      <div class="stat-content">
+        <div class="stat-label">低温リスク日</div>
+        <div class="stat-value" data-field="low_temp_days">-</div>
+      </div>
+    </div>
+  </div>
+  
+  <%# 積算温度（GDD）グラフ %>
+  <div class="chart-section">
+    <h4 class="chart-title">
+      <span class="chart-title-icon">📈</span>
+      <span class="chart-title-text">積算温度（GDD）の推移</span>
+    </h4>
+    <div class="chart-container">
+      <canvas id="gddChart"></canvas>
+    </div>
+  </div>
+  
+  <%# GDDサマリー %>
+  <div class="gdd-summary">
+    <div class="gdd-summary-item">
+      <span class="gdd-label">目標積算温度:</span>
+      <span class="gdd-value" data-field="target_gdd">-</span>
+    </div>
+    <div class="gdd-summary-item">
+      <span class="gdd-label">実際の積算温度:</span>
+      <span class="gdd-value gdd-actual" data-field="actual_gdd">-</span>
+    </div>
+    <div class="gdd-summary-item">
+      <span class="gdd-label">目標達成日:</span>
+      <span class="gdd-value" data-field="gdd_achievement_date">-</span>
+    </div>
+  </div>
+</div>
+

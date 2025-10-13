@@ -1,0 +1,41 @@
+<%# app/views/public_plans/results/_header.html.erb %>
+<%# 作付け計画完成画面のヘッダー・サマリー表示 %>
+
+<div class="gantt-results-header">
+  <div class="gantt-results-header-main">
+    <div class="gantt-results-header-icon">🎉</div>
+    <h1 class="gantt-results-header-title">作付け計画完成</h1>
+    <div class="gantt-results-header-badge">完成</div>
+  </div>
+  
+  <div class="gantt-results-header-summary">
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">🌍</span>
+      <span class="gantt-summary-label">地域</span>
+      <span class="gantt-summary-value"><%= cultivation_plan.farm.name %></span>
+    </div>
+    
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">📏</span>
+      <span class="gantt-summary-label">総面積</span>
+      <span class="gantt-summary-value"><%= number_with_delimiter(cultivation_plan.total_area.to_i) %>㎡</span>
+    </div>
+    
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">🏞️</span>
+      <span class="gantt-summary-label">圃場数</span>
+      <span class="gantt-summary-value"><%= cultivation_plan.field_cultivations.count %>圃場</span>
+    </div>
+    
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">💰</span>
+      <span class="gantt-summary-label">推定総コスト</span>
+      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.field_cultivations.sum(&:estimated_cost).to_i) %></span>
+    </div>
+  </div>
+  
+  <div class="gantt-results-header-subtitle">
+    <%= cultivation_plan.field_cultivations.count %>圃場の最適な栽培期間が決定しました
+  </div>
+</div>
+
