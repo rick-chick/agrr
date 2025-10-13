@@ -200,11 +200,15 @@ class CultivationPlanOptimizer
       user_id: @cultivation_plan.user_id
     )
     
-    if crop
-      Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
-    else
-      Rails.logger.info "🤖 [AGRR] No Crop model found, will use LLM to generate requirements"
+    # Cropモデルが見つからない場合はエラー
+    unless crop
+      error_message = "Crop not found: name='#{crop_info[:name]}', variety='#{crop_info[:variety]}'. " \
+                      "Please register the crop with detailed growth stages in the Crop management page before optimization."
+      Rails.logger.error "❌ [AGRR] #{error_message}"
+      raise StandardError, error_message
     end
+    
+    Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
     
     result = @optimization_gateway.optimize(
       crop_name: crop_info[:name],
@@ -214,7 +218,7 @@ class CultivationPlanOptimizer
       daily_fixed_cost: field_info[:daily_fixed_cost],
       evaluation_start: Date.current,
       evaluation_end: evaluation_end,
-      crop: crop  # Cropモデルを渡す（nil の場合は LLM で自動生成）
+      crop: crop  # Cropモデルを渡す（必須）
     )
     
     field_cultivation.complete_with_result!(result)
