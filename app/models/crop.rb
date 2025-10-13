@@ -35,12 +35,23 @@ class Crop < ApplicationRecord
 
   # agrr CLI の crop-requirement-file フォーマットに変換
   # @return [Hash] agrr CLI が期待する作物要件のハッシュ
+  # @raise [StandardError] base_temperature が未設定または0の場合
   def to_agrr_requirement
     # crop_stagesをorderでソート
     sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement).order(:order)
     
+    # 生育ステージが未設定の場合はエラー
+    if sorted_stages.empty?
+      raise StandardError, "Crop '#{name}' has no growth stages. Please add growth stages with temperature and thermal requirements."
+    end
+    
     # 最初のステージの base_temperature を取得（全ステージで共通と仮定）
     base_temp = sorted_stages.first&.temperature_requirement&.base_temperature
+    
+    # base_temperature が未設定または0の場合はエラー
+    if base_temp.nil? || base_temp <= 0
+      raise StandardError, "Crop '#{name}' has invalid base_temperature (#{base_temp}). Please set a valid base_temperature (> 0) in the first growth stage."
+    end
     
     # 全ステージの required_gdd を合計
     total_gdd = sorted_stages.sum { |stage| stage.thermal_requirement&.required_gdd || 0.0 }
@@ -64,7 +75,7 @@ class Crop < ApplicationRecord
       base_temperature: base_temp,
       gdd_requirement: total_gdd,
       stages: stages_array
-    }.compact # nil値を除去
+    }
   end
 end
 

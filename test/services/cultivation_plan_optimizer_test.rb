@@ -188,6 +188,22 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
     # OptimizationGatewayがエラーを返す場合のテスト
   end
 
+  test "should raise error when crop not found" do
+    # Cropを削除
+    @crop.destroy!
+    
+    optimizer = CultivationPlanOptimizer.new(@cultivation_plan)
+    result = optimizer.call
+    
+    assert_equal false, result
+    @cultivation_plan.reload
+    assert_equal 'failed', @cultivation_plan.status
+    assert_match /Crop not found/, @cultivation_plan.error_message
+    assert_match /トマト/, @cultivation_plan.error_message
+    assert_match /桃太郎/, @cultivation_plan.error_message
+    assert_match /Please register the crop/, @cultivation_plan.error_message
+  end
+
   private
 
   def create_weather_data
