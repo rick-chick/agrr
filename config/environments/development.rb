@@ -63,6 +63,10 @@ Rails.application.configure do
   config.assets.debug = true
   config.assets.digest = true
   config.assets.compile = true
+  
+  # Propshaft configuration for development
+  config.assets.prefix = '/assets'
+  config.assets.unknown_asset_fallback = true
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

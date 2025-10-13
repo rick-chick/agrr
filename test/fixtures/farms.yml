@@ -10,6 +10,14 @@ one:
   created_at: <%= 1.week.ago %>
   updated_at: <%= 1.week.ago %>
 
+test_farm:
+  user: one
+  name: テスト農場
+  latitude: 35.0
+  longitude: 139.0
+  is_reference: true
+  weather_data_status: completed
+
 two:
   user: two
   name: テスト農場2

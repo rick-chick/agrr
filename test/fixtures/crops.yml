@@ -5,15 +5,24 @@ tomato:
   variety: 桃太郎
   is_reference: true
   user_id: null
+  area_per_unit: 1.0
+  revenue_per_area: 1000.0
+  agrr_crop_id: tomato
 
 cucumber:
   name: キュウリ
   variety: null
   is_reference: true
   user_id: null
+  area_per_unit: 0.8
+  revenue_per_area: 800.0
+  agrr_crop_id: cucumber
 
 lettuce:
   name: レタス
   variety: null
   is_reference: true
   user_id: null
+  area_per_unit: 0.5
+  revenue_per_area: 600.0
+  agrr_crop_id: lettuce

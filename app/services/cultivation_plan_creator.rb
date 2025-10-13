@@ -44,18 +44,31 @@ class CultivationPlanCreator
   end
   
   def create_field_cultivation(allocation, index)
-    field = Field.create!(
-      farm: @farm,
-      user: @user,
-      name: "#{allocation[:crop].name} - 圃場#{index + 1} (#{Time.current.strftime('%Y%m%d%H%M%S')})",
+    crop = allocation[:crop]
+    
+    # 作付け計画専用の圃場を作成
+    plan_field = CultivationPlanField.create!(
+      cultivation_plan: @cultivation_plan,
+      name: "#{crop.name} - 圃場#{index + 1}",
       area: allocation[:area],
       daily_fixed_cost: calculate_daily_cost(allocation[:area])
     )
     
+    # 作付け計画専用の作物を作成（スナップショット）
+    plan_crop = CultivationPlanCrop.create!(
+      cultivation_plan: @cultivation_plan,
+      name: crop.name,
+      variety: crop.variety,
+      area_per_unit: crop.area_per_unit,
+      revenue_per_area: crop.revenue_per_area,
+      agrr_crop_id: crop.agrr_crop_id
+    )
+    
+    # FieldCultivationを作成
     FieldCultivation.create!(
       cultivation_plan: @cultivation_plan,
-      field: field,
-      crop: allocation[:crop],
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
       area: allocation[:area]
     )
   end
