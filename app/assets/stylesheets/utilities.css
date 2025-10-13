@@ -21,12 +21,17 @@
 /* Container */
 .container {
   width: 100%;
-  max-width: 1280px; /* var(--container-xl) */
+  max-width: var(--container-xl);
   margin-left: auto;
   margin-right: auto;
-  padding-left: 24px; /* var(--space-5) */
-  padding-right: 24px; /* var(--space-5) */
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
   box-sizing: border-box;
+}
+
+/* Body layout adjustments */
+body {
+  padding-top: var(--navbar-height); /* ナビゲーションバーの高さ分の余白 */
 }
 
 .container-sm {

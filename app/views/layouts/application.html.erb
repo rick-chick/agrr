@@ -6,26 +6,28 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
-  <!-- Bundled JavaScript and CSS (includes Leaflet) -->
+  <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
-  <!-- Core Design System -->
+  <!-- Core Design System - 必ず最初に読み込む -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
+  
+  <!-- Utility CSS classes -->
+  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
+  
   <!-- Components -->
   <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "components/cards", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "components/farm-cards", "data-turbo-track": "reload" %>
   <!-- Feature-specific styles -->
   <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
   
-  <style>
-    /* Layout-specific adjustments using design tokens */
-    body {
-      padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
-    }
-  </style>
+  <!-- Bundled JavaScript (includes Leaflet) -->
+  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  
 </head>
 <body>
   <%= render "shared/navbar" %>

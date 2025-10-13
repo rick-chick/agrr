@@ -30,9 +30,10 @@
           <!-- Card Header -->
           <div class="results-card-header">
             <div class="results-crop-icon">🌾</div>
-            <h3 class="results-crop-name"><%= fc.crop.name %></h3>
-            <% if fc.crop.variety.present? %>
-              <p class="results-crop-variety"><%= fc.crop.variety %></p>
+            <h3 class="results-crop-name"><%= fc.crop_display_name %></h3>
+            <% crop_variety = fc.crop_info[:variety] %>
+            <% if crop_variety.present? %>
+              <p class="results-crop-variety"><%= crop_variety %></p>
             <% end %>
           </div>
           

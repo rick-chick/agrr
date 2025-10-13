@@ -178,6 +178,14 @@
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   
   /* ============================================
+     Layout Dimensions
+     ============================================ */
+  
+  --navbar-height: 80px;
+  --navbar-padding-vertical: var(--space-4);
+  --navbar-padding-horizontal: var(--space-6);
+  
+  /* ============================================
      Z-Index スタック
      ============================================ */
   

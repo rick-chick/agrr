@@ -121,12 +121,15 @@ class CultivationPlanOptimizer
   def optimize_field_cultivation(field_cultivation, weather_data)
     field_cultivation.start_optimizing!
     
+    crop_info = field_cultivation.crop_info
+    field_info = field_cultivation.field_info
+    
     result = @optimization_gateway.optimize(
-      crop_name: field_cultivation.crop.name,
-      variety: field_cultivation.crop.variety || 'general',
+      crop_name: crop_info[:name],
+      variety: crop_info[:variety] || 'general',
       weather_data: weather_data,
       field_area: field_cultivation.area,
-      daily_fixed_cost: field_cultivation.field.daily_fixed_cost,
+      daily_fixed_cost: field_info[:daily_fixed_cost],
       evaluation_start: Date.current,
       evaluation_end: Date.current + 2.years
     )

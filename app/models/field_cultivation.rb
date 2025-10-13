@@ -3,8 +3,12 @@
 class FieldCultivation < ApplicationRecord
   # == Associations ========================================================
   belongs_to :cultivation_plan
-  belongs_to :field
-  belongs_to :crop
+  belongs_to :cultivation_plan_field
+  belongs_to :cultivation_plan_crop
+  
+  # 既存のFieldやCropテーブルへの参照も残す（後方互換性のため）
+  belongs_to :field, optional: true
+  belongs_to :crop, optional: true
   
   # == Validations =========================================================
   validates :area, presence: true, numericality: { greater_than: 0 }
@@ -34,10 +38,60 @@ class FieldCultivation < ApplicationRecord
   
   # == Delegates ===========================================================
   delegate :farm, to: :cultivation_plan
-  delegate :name, to: :crop, prefix: true
-  delegate :name, to: :field, prefix: true
   
   # == Instance Methods ====================================================
+  
+  # 作物名を返す
+  def crop_display_name
+    cultivation_plan_crop&.display_name || crop&.name || '不明'
+  end
+  
+  # 圃場名を返す
+  def field_display_name
+    cultivation_plan_field&.display_name || field&.name || '不明'
+  end
+  
+  # 作物情報を取得
+  def crop_info
+    if cultivation_plan_crop
+      {
+        name: cultivation_plan_crop.name,
+        variety: cultivation_plan_crop.variety,
+        area_per_unit: cultivation_plan_crop.area_per_unit,
+        revenue_per_area: cultivation_plan_crop.revenue_per_area,
+        agrr_id: cultivation_plan_crop.agrr_crop_id
+      }
+    elsif crop
+      {
+        name: crop.name,
+        variety: crop.variety,
+        area_per_unit: crop.area_per_unit,
+        revenue_per_area: crop.revenue_per_area,
+        agrr_id: crop.agrr_crop_id
+      }
+    else
+      {}
+    end
+  end
+  
+  # 圃場情報を取得
+  def field_info
+    if cultivation_plan_field
+      {
+        name: cultivation_plan_field.name,
+        area: cultivation_plan_field.area,
+        daily_fixed_cost: cultivation_plan_field.daily_fixed_cost
+      }
+    elsif field
+      {
+        name: field.name,
+        area: field.area,
+        daily_fixed_cost: field.daily_fixed_cost
+      }
+    else
+      {}
+    end
+  end
   
   def start_optimizing!
     update!(status: :optimizing)

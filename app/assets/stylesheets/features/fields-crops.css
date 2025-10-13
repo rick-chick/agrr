@@ -47,12 +47,15 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-6);
-  /* breadcrumbがない場合、同等のスペースを確保 */
+}
+
+/* containerの最初の要素としてpage-headerがある場合、上部にスペースを確保 */
+.container > .page-header:first-child {
   margin-top: calc(var(--font-size-sm) * 1.5 + var(--space-4));
 }
 
 /* breadcrumbがある場合は上部マージンをリセット */
-.breadcrumb + .page-header {
+.container > .breadcrumb + .page-header {
   margin-top: 0;
 }
 
@@ -97,10 +100,12 @@
   color: var(--text-secondary);
 }
 
+
 /* ============================================
-   Fields Grid & Cards
+   Grids - Farm, Field, Crop
    ============================================ */
 
+.farms-grid,
 .fields-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -520,6 +525,7 @@
    ============================================ */
 
 @media (max-width: 768px) {
+  .farms-grid,
   .fields-grid,
   .crops-grid {
     grid-template-columns: 1fr;

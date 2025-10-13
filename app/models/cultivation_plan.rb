@@ -4,9 +4,9 @@ class CultivationPlan < ApplicationRecord
   # == Associations ========================================================
   belongs_to :farm
   belongs_to :user, optional: true
+  has_many :cultivation_plan_fields, dependent: :destroy
+  has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
-  has_many :fields, through: :field_cultivations
-  has_many :crops, through: :field_cultivations
   
   # == Validations =========================================================
   validates :total_area, presence: true, numericality: { greater_than: 0 }
