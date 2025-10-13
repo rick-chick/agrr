@@ -8,4 +8,5 @@ import "./crop_form";
 import "./crop_selection";
 import "./fields";
 import "./progress_bar";
+import "./optimizing";
 // import "./temperature_chart"; // 一時的にコメントアウト（chart.jsの問題）
