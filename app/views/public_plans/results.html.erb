@@ -1,139 +1,58 @@
 <%# encoding: UTF-8 %>
+<%# app/views/public_plans/results.html.erb %>
+<%# 作付け計画完成画面 - ガントチャート形式 %>
+
 <div class="public-plans-wrapper">
-  <div class="free-plans-container">
-    <!-- Compact Header -->
-    <div class="compact-header-card success">
-      <div class="compact-header-title">
-        <span class="title-icon">🎉</span>
-        <span class="title-text">作付け計画</span>
-        <span class="status-badge completed">完成</span>
-      </div>
-      <div class="compact-subtitle">
-        <%= @cultivation_plan.field_cultivations.count %>種類の作物の最適な栽培期間が決定しました
-      </div>
-    </div>
+  <div class="cultivation-results-container">
     
-    <!-- Success Badge -->
-    <div class="results-success-wrapper">
-      <div class="results-success-badge">
-        <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20" class="results-success-icon">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        <%= @cultivation_plan.field_cultivations.count %>種類の計画作成完了
-      </div>
-    </div>
+    <%# ヘッダー・サマリー %>
+    <%= render 'public_plans/results/header', cultivation_plan: @cultivation_plan %>
     
-    <!-- Crop Plans Grid -->
-    <div class="enhanced-grid results-grid">
-      <% @cultivation_plan.field_cultivations.each do |fc| %>
-        <div class="content-card results-crop-card">
-          <!-- Card Header -->
-          <div class="results-card-header">
-            <div class="results-crop-icon">🌾</div>
-            <h3 class="results-crop-name"><%= fc.crop_display_name %></h3>
-            <% crop_variety = fc.crop_info[:variety] %>
-            <% if crop_variety.present? %>
-              <p class="results-crop-variety"><%= crop_variety %></p>
-            <% end %>
-          </div>
-          
-          <!-- Plan Summary -->
-          <div class="results-summary-box">
-            <div class="results-summary-row">
-              <span class="results-summary-label">🌍 地域</span>
-              <span class="results-summary-value"><%= @cultivation_plan.farm.name %></span>
-            </div>
-            <div class="results-summary-row">
-              <span class="results-summary-label">📏 圃場面積</span>
-              <span class="results-summary-value"><%= fc.area.to_i %>㎡</span>
-            </div>
-          </div>
-          
-          <% if fc.status_completed? && fc.start_date.present? %>
-            <!-- Optimized Planting Date -->
-            <div class="results-info-box planting">
-              <div class="results-info-box-icon">🌱</div>
-              <div>
-                <div class="results-info-box-label">最適な播種日</div>
-                <div class="results-info-box-value">
-                  <%= fc.start_date.strftime('%Y年%m月%d日') %>
-                </div>
-                <div class="results-info-box-detail">
-                  <%= fc.year_label %>の計画
-                </div>
-              </div>
-            </div>
-            
-            <!-- Optimized Harvest Date -->
-            <div class="results-info-box harvest">
-              <div class="results-info-box-icon">🌾</div>
-              <div>
-                <div class="results-info-box-label">最適な収穫日</div>
-                <div class="results-info-box-value">
-                  <%= fc.completion_date.strftime('%Y年%m月%d日') %>
-                </div>
-                <div class="results-info-box-detail">
-                  栽培日数: <%= fc.cultivation_days %>日
-                </div>
-              </div>
-            </div>
-            
-            <!-- Cost Estimate -->
-            <% if fc.estimated_cost.present? %>
-              <div class="results-info-box cost">
-                <div class="results-info-box-icon">💰</div>
-                <div>
-                  <div class="results-info-box-label">推定コスト</div>
-                  <div class="results-info-box-value">
-                    ¥<%= number_with_delimiter(fc.estimated_cost.to_i) %>
-                  </div>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <!-- Fallback: 簡易計画情報 -->
-            <div class="results-fallback">
-              <p>最適化計算中、またはデータが利用できません</p>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+    <%# ガントチャート %>
+    <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
     
-    <!-- Advertisement Card -->
-    <div class="content-card results-ad-card">
-      <div class="results-ad-label">
+    <%# 詳細パネル（初期状態は非表示） %>
+    <%= render 'public_plans/results/detail_panel', cultivation_plan: @cultivation_plan %>
+    
+    <%# 広告エリア %>
+    <div class="gantt-ad-card">
+      <div class="gantt-ad-label">
         スポンサー広告
       </div>
-      <div class="results-ad-content">
-        <div class="results-ad-placeholder">
-          <div class="results-ad-placeholder-title">広告スペース</div>
-          <div class="results-ad-placeholder-size">728 x 90 (Leaderboard)</div>
-          <p class="results-ad-placeholder-note">
+      <div class="gantt-ad-content">
+        <div class="gantt-ad-placeholder">
+          <div class="gantt-ad-placeholder-title">広告スペース</div>
+          <div class="gantt-ad-placeholder-size">728 x 90 (Leaderboard)</div>
+          <p class="gantt-ad-placeholder-note">
             Google AdSense や他の広告ネットワークのコードを配置
           </p>
         </div>
       </div>
     </div>
     
-    <!-- CTA Card -->
-    <div class="content-card results-cta-card">
-      <h3 class="results-cta-title">🚀 もっと詳しい分析が必要ですか？</h3>
-      <p class="results-cta-description">
+    <%# CTAカード %>
+    <div class="gantt-cta-card">
+      <h3 class="gantt-cta-title">🚀 もっと詳しい分析が必要ですか？</h3>
+      <p class="gantt-cta-description">
         会員登録（無料）すると、作物の詳細比較、<br>
         気候データの可視化、カスタマイズ可能な作付け計画などが利用できます。
       </p>
-      <%= link_to auth_login_path, class: "btn-gradient results-cta-button" do %>
+      <%= link_to auth_login_path, class="gantt-cta-button" do %>
         無料で会員登録 →
       <% end %>
     </div>
     
-    <!-- Action Buttons -->
+    <%# アクションボタン %>
     <div class="action-buttons">
       <%= link_to public_plans_path, class: "btn-white" do %>
         ← 新しい計画を作成
       <% end %>
     </div>
+    
   </div>
 </div>
 
+<%# JavaScript読み込み - defer属性でページ読み込み後に実行 %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
+<%= javascript_include_tag "cultivation_results", defer: true %>

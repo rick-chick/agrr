@@ -58,6 +58,9 @@ Rails.application.routes.draw do
   #   end
   # end
 
+  # ActionCable for WebSocket
+  mount ActionCable.server => '/cable'
+  
   # API routes
   namespace :api do
     namespace :v1 do
@@ -72,6 +75,11 @@ Rails.application.routes.draw do
       resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
       # AI作物情報取得・保存エンドポイント
       post 'crops/ai_create', to: 'crops#ai_create'
+      
+      # Public Plans API（認証不要）
+      namespace :public_plans do
+        resources :field_cultivations, only: [:show]
+      end
       
       # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
       post 'internal/farms/:farm_id/fetch_weather_data', to: 'internal#fetch_weather_data'
