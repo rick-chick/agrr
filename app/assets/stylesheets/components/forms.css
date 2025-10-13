@@ -1,0 +1,275 @@
+/* ============================================
+   Form Component System
+   Created: 2025-10-13
+   Purpose: 統一されたフォームコンポーネント（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Form Card (Container)
+   ============================================ */
+
+.form-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+}
+
+/* ============================================
+   Form Group
+   ============================================ */
+
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.form-label {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-base);
+}
+
+.form-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+  display: block;
+}
+
+/* ============================================
+   Form Controls
+   ============================================ */
+
+.form-control {
+  width: 100%;
+  padding: var(--space-3);
+  border: var(--border-width-2) solid var(--border-color-base);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+  font-family: var(--font-family-base);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.form-control:hover {
+  border-color: var(--color-gray-400);
+}
+
+.form-control.is-invalid {
+  border-color: var(--color-error);
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* ============================================
+   Error Messages
+   ============================================ */
+
+.error-message {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-1);
+  display: block;
+}
+
+.errors {
+  background: #f8d7da;
+  color: #721c24;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  border: var(--border-width-1) solid #f5c6cb;
+}
+
+.errors h3 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.errors ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+/* ============================================
+   Checkbox & Radio Groups
+   ============================================ */
+
+.checkbox-group,
+.radio-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.checkbox-group input[type="checkbox"],
+.radio-group input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+.checkbox-group label,
+.radio-group label {
+  margin: 0;
+  font-weight: var(--font-weight-normal);
+  cursor: pointer;
+}
+
+/* ============================================
+   Form Actions
+   ============================================ */
+
+.form-actions,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ============================================
+   Form Sections (for complex forms)
+   ============================================ */
+
+.form-section {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: var(--border-width-2) solid var(--border-color-light);
+}
+
+.section-title {
+  font-size: var(--font-size-2xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ============================================
+   Nested Fields (for dynamic forms)
+   ============================================ */
+
+.nested-fields {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  border: var(--border-width-2) solid var(--border-color-base);
+}
+
+.nested-fields-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-width-1) solid var(--color-gray-300);
+}
+
+.nested-title {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.nested-section {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-white);
+  border-radius: var(--radius-base);
+  border: var(--border-width-1) solid var(--color-gray-300);
+}
+
+.nested-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-4) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-width-1) solid var(--border-color-light);
+  font-weight: var(--font-weight-medium);
+}
+
+.requirement-fields {
+  background: transparent;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.crop-stage-item {
+  position: relative;
+}
+
+.destroy-flag {
+  display: none;
+}
+
+/* ============================================
+   Coordinates Input (Map-based forms)
+   ============================================ */
+
+.coordinates-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .form-card {
+    padding: var(--space-4);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .coordinates-input {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions,
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .form-actions > *,
+  .actions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-card {
+    padding: var(--space-3);
+  }
+
+  .form-control {
+    padding: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  .nested-fields {
+    padding: var(--space-3);
+  }
+}
+
