@@ -7,7 +7,7 @@
 
 <!-- デバッグ情報（開発環境のみ） -->
 <% if Rails.env.development? %>
-  <div class="debug-info">
+  <div class="debug-box">
     <strong>デバッグ:</strong>
     admin_user? = <%= admin_user? %>,
     current_user.admin = <%= current_user.admin %>,
@@ -18,8 +18,8 @@
 
 <% if @reference_farms.any? %>
   <!-- 参照農場（管理者のみ表示） -->
-  <div class="farms-section">
-    <h2 class="farms-section-title">参照農場（栽培地域） (<%= @reference_farms.count %>件)</h2>
+  <div class="mb-6">
+    <h2 class="section-header">参照農場（栽培地域） (<%= @reference_farms.count %>件)</h2>
     
     <div class="farms-grid">
       <% @reference_farms.each do |farm| %>
@@ -28,10 +28,10 @@
     </div>
   </div>
   
-  <hr class="farms-divider">
+  <hr class="section-divider">
   
   <!-- 自分の農場 -->
-  <h2 class="farms-section-title">自分の農場 (<%= @farms.count %>件)</h2>
+  <h2 class="section-header">自分の農場 (<%= @farms.count %>件)</h2>
 <% end %>
     
     <% if @farms.any? %>

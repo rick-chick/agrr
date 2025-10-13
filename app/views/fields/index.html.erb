@@ -19,11 +19,14 @@
       <div class="field-card">
         <h3 class="field-name"><%= field.display_name %></h3>
         <div class="field-actions">
-          <%= link_to "詳細", farm_field_path(@farm, field), class: "btn btn-small" %>
-          <%= link_to "編集", edit_farm_field_path(@farm, field), class: "btn btn-small btn-secondary" %>
-          <%= button_to "削除", farm_field_path(@farm, field), method: :delete, 
-                      class: "btn btn-small btn-danger", 
-                      confirm: "この圃場を削除しますか？" %>
+          <%= link_to "詳細", farm_field_path(@farm, field), class: "btn btn-info btn-sm" %>
+          <%= link_to "編集", edit_farm_field_path(@farm, field), class: "btn btn-secondary btn-sm" %>
+          <%= link_to "削除", farm_field_path(@farm, field), method: :delete, 
+                      class: "btn btn-error btn-sm", 
+                      data: { 
+                        turbo_method: :delete,
+                        turbo_confirm: "この圃場を削除しますか？"
+                      } %>
         </div>
       </div>
     <% end %>

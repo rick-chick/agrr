@@ -10,16 +10,29 @@
    ============================================ */
 
 /* ============================================
-   Note: Rails 8 Propshaftでは@importは使用しません
-   
-   すべてのCSSファイルはレイアウトファイルで個別に読み込まれます：
-   - Core: variables.css, reset.css
-   - Components: buttons.css, forms.css, navbar.css
-   - Features: 各ページ固有のCSS
-   - Layouts: 各レイアウト固有のCSS
-   
-   このファイルは共通ユーティリティクラスのみを提供します。
+   Core Styles - 必ず最初に読み込む
    ============================================ */
+
+@import url("core/variables.css");
+@import url("core/reset.css");
+
+/* ============================================
+   Component Styles - 再利用可能なコンポーネント
+   ============================================ */
+
+@import url("components/navbar.css");
+@import url("components/buttons.css");
+@import url("components/farm-cards.css");
+@import url("components/cards.css");
+
+/* ============================================
+   Feature-specific Styles
+   既存のCSSファイルは互換性のため維持
+   今後は段階的にデザイントークンへ移行
+   ============================================ */
+
+/* Note: auth.css と fields.css は個別に読み込まれます */
+/* レイアウトファイルで必要に応じて個別指定 */
 
 /* ============================================
    Utility Classes - 汎用クラス
@@ -114,6 +127,10 @@
 .pb-5 { padding-bottom: var(--space-5) !important; }
 .pb-6 { padding-bottom: var(--space-6) !important; }
 
+/* Margin utilities */
+.m-0 { margin: var(--space-0) !important; }
+.mb-6 { margin-bottom: var(--space-6) !important; }
+
 /* Text Utilities */
 .text-left { text-align: left !important; }
 .text-center { text-align: center !important; }
@@ -146,6 +163,29 @@
 .d-inline-block { display: inline-block !important; }
 .d-flex { display: flex !important; }
 .d-grid { display: grid !important; }
+
+/* Debug Info Box */
+.debug-box {
+  background: #fff3cd;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-base);
+}
+
+/* Section Headers */
+.section-header {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-800);
+  margin-bottom: var(--space-4);
+}
+
+/* Divider */
+.section-divider {
+  margin: var(--space-6) 0;
+  border: none;
+  border-top: var(--border-width-2) solid var(--color-gray-200);
+}
 
 /* Flex Utilities */
 .flex-row { flex-direction: row !important; }

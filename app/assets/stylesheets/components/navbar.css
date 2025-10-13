@@ -60,89 +60,33 @@
 }
 
 /* ============================================
-   Button Styles (Navbar specific)
-   Note: 将来的には共通ボタンコンポーネントに統合予定
+   Navbar-specific Button Overrides
+   Note: 基本のボタンスタイルは components/buttons.css を使用
    ============================================ */
 
-.btn-primary {
-  background: var(--gradient-primary);
-  color: var(--color-white);
-  padding: var(--space-3) var(--space-5);
+/* Navbar buttons use rounded style */
+.navbar .btn-primary,
+.navbar .btn-secondary {
   border-radius: var(--radius-full);
-  text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  display: inline-block;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
-}
-
-.btn-secondary {
-  background: var(--color-white);
-  color: var(--color-secondary);
-  border: var(--border-width-2) solid var(--color-secondary);
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-full);
-  text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  transition: all var(--transition-fast);
-  display: inline-block;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  background: var(--color-secondary);
-  color: var(--color-white);
 }
 
 /* ============================================
-   Icon Buttons
+   Navbar-specific Icon Button Overrides
    ============================================ */
 
-.btn-icon {
-  background: var(--color-white);
-  color: var(--color-secondary);
-  border: var(--border-width-2) solid var(--color-secondary);
-  padding: 0;
-  margin: 0;
+/* Navbar icon buttons use rounded style */
+.navbar .btn-icon {
   border-radius: var(--radius-full);
-  text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
 }
 
-.btn-icon:hover {
-  background: var(--color-secondary);
-  color: var(--color-white);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
-}
-
-.btn-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* Logout button variant */
-.btn-icon-logout {
+/* Logout button variant for navbar */
+.navbar .btn-icon-logout {
   background: var(--color-white);
   color: var(--color-error);
-  border: var(--border-width-2) solid var(--color-error);
+  border-color: var(--color-error);
 }
 
-.btn-icon-logout:hover {
+.navbar .btn-icon-logout:hover {
   background: var(--color-error);
   color: var(--color-white);
   box-shadow: var(--shadow-error);
@@ -176,21 +120,7 @@
     font-size: var(--font-size-sm);
   }
   
-  .btn-primary,
-  .btn-secondary {
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-sm);
-  }
-
-  .btn-icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .btn-icon svg {
-    width: 18px;
-    height: 18px;
-  }
+  /* Button sizes are handled by components/buttons.css */
 }
 
 @media (max-width: 480px) {

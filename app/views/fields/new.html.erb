@@ -17,8 +17,8 @@
     <div class="form-card">
       <%= form_with model: [@farm, @field], local: true do |form| %>
         <% if @field.errors.any? %>
-          <div style="color: #dc3545; margin-bottom: 1rem;">
-            <h4><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h4>
+          <div class="errors">
+            <h3><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h3>
             <ul>
               <% @field.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
@@ -35,7 +35,7 @@
         
         
         <div class="actions">
-          <%= form.submit "圃場を作成", class: "btn" %>
+          <%= form.submit "圃場を作成", class: "btn btn-success" %>
           <%= link_to "キャンセル", farm_fields_path(@farm), class: "btn btn-secondary" %>
         </div>
       <% end %>

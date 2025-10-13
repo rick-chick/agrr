@@ -37,10 +37,10 @@
   </div>
   
   <div class="actions">
-    <%= link_to "圃場一覧に戻る", farm_fields_path(@farm), class: "btn" %>
+    <%= link_to "圃場一覧に戻る", farm_fields_path(@farm), class: "btn btn-secondary" %>
     <%= link_to "編集", edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
     <%= button_to "削除", farm_field_path(@farm, @field), method: :delete, 
-                class: "btn btn-danger", 
+                class: "btn btn-error", 
                 confirm: "この圃場を削除しますか？" %>
   </div>
 </div>
