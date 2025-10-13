@@ -7,6 +7,10 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <!-- Bundled JavaScript and CSS (includes Leaflet) -->
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+    
     <!-- Core Design System -->
     <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
@@ -16,7 +20,6 @@
     <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
     <!-- Layout-specific styles -->
     <%= stylesheet_link_tag "layouts/admin", "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
   <body>

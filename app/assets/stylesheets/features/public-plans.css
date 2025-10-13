@@ -1305,3 +1305,53 @@
   }
 }
 
+/* ============================================
+   Button Styles for Fixed Bottom Bar
+   ============================================ */
+
+.btn-white {
+  background: white;
+  color: var(--color-gray-700);
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-white:hover {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-gradient {
+  background: var(--color-success);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-gradient:not(:disabled):hover {
+  background: var(--color-success-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+}
+
+.btn-gradient:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-gradient:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+}
+
