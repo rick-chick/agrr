@@ -1,0 +1,331 @@
+/* ============================================
+   Results Page (作付け計画結果)
+   Created: 2025-10-13
+   Purpose: 計画結果ページのスタイル（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Success Badge
+   ============================================ */
+
+.results-success-wrapper {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.results-success-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-white);
+  color: var(--color-success);
+  padding: var(--space-5) var(--space-8);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 12px 48px rgba(0, 184, 148, 0.3);
+}
+
+.results-success-icon {
+  margin-right: var(--space-4);
+}
+
+/* ============================================
+   Crop Plans Grid
+   ============================================ */
+
+.results-grid {
+  margin-bottom: var(--space-6);
+}
+
+.results-crop-card {
+  padding: var(--space-6);
+  transition: all var(--transition-fast);
+}
+
+.results-crop-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Card Header
+   ============================================ */
+
+.results-card-header {
+  text-align: center;
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-width-2) solid var(--color-gray-50);
+  margin-bottom: var(--space-5);
+}
+
+.results-crop-icon {
+  font-size: var(--font-size-6xl);
+  margin-bottom: var(--space-2);
+}
+
+.results-crop-name {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.results-crop-variety {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Plan Summary Box
+   ============================================ */
+
+.results-summary-box {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.results-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.results-summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.results-summary-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.results-summary-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Optimized Date Boxes
+   ============================================ */
+
+.results-info-box {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  border-left: var(--border-width-4) solid;
+}
+
+.results-info-box-icon {
+  font-size: var(--font-size-3xl);
+  margin-right: var(--space-4);
+}
+
+.results-info-box-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.results-info-box-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.results-info-box-detail {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* Planting Date (播種日) */
+.results-info-box.planting {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-left-color: var(--color-secondary);
+}
+
+.results-info-box.planting .results-info-box-label {
+  color: var(--color-secondary);
+}
+
+/* Harvest Date (収穫日) */
+.results-info-box.harvest {
+  background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(85, 239, 196, 0.05) 100%);
+  border-left-color: #00b894;
+}
+
+.results-info-box.harvest .results-info-box-label {
+  color: #00b894;
+}
+
+/* Cost (コスト) */
+.results-info-box.cost {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 159, 67, 0.05) 100%);
+  border-left-color: #ff6b6b;
+  margin-bottom: var(--space-5);
+}
+
+.results-info-box.cost .results-info-box-label {
+  color: #ff6b6b;
+}
+
+/* ============================================
+   Fallback Message
+   ============================================ */
+
+.results-fallback {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Advertisement Card
+   ============================================ */
+
+.results-ad-card {
+  background: var(--gradient-warning);
+  border: none;
+  margin-bottom: var(--space-6);
+}
+
+.results-ad-label {
+  text-align: center;
+  color: #856404;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-4);
+}
+
+.results-ad-content {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}
+
+.results-ad-placeholder {
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.results-ad-placeholder-title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.results-ad-placeholder-size {
+  font-size: var(--font-size-base);
+}
+
+.results-ad-placeholder-note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   CTA Card
+   ============================================ */
+
+.results-cta-card {
+  text-align: center;
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-gray-200) 100%);
+  border: none;
+}
+
+.results-cta-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.results-cta-description {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+  line-height: var(--line-height-relaxed);
+}
+
+.results-cta-button {
+  font-size: var(--font-size-xl);
+  padding: var(--space-5) var(--space-10);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .results-success-badge {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--font-size-lg);
+  }
+
+  .results-crop-card {
+    padding: var(--space-4);
+  }
+
+  .results-crop-icon {
+    font-size: var(--font-size-5xl);
+  }
+
+  .results-crop-name {
+    font-size: var(--font-size-xl);
+  }
+
+  .results-info-box {
+    padding: var(--space-4);
+  }
+
+  .results-info-box-icon {
+    font-size: var(--font-size-2xl);
+    margin-right: var(--space-3);
+  }
+
+  .results-cta-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .results-cta-description {
+    font-size: var(--font-size-base);
+  }
+
+  .results-cta-button {
+    font-size: var(--font-size-lg);
+    padding: var(--space-4) var(--space-8);
+  }
+}
+
+@media (max-width: 480px) {
+  .results-success-badge {
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--font-size-base);
+  }
+
+  .results-crop-card {
+    padding: var(--space-3);
+  }
+
+  .results-ad-content {
+    padding: var(--space-6);
+  }
+
+  .results-cta-card {
+    padding: var(--space-4);
+  }
+}
+

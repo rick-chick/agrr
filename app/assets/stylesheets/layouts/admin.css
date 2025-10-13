@@ -1,0 +1,147 @@
+/* ============================================
+   Admin Layout
+   Created: 2025-10-13
+   Purpose: 管理画面のレイアウトスタイル（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Body & Container
+   ============================================ */
+
+body {
+  padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
+  background-color: var(--color-gray-50);
+}
+
+.admin-container {
+  max-width: var(--container-xl);
+  margin: var(--space-6) auto;
+  padding: 0 var(--space-6);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.btn {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-info);
+  color: var(--color-white);
+  text-decoration: none;
+  border-radius: var(--radius-base);
+  border: none;
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: background-color var(--transition-fast);
+}
+
+.btn:hover {
+  background-color: var(--color-info-dark);
+}
+
+.btn-danger {
+  background-color: var(--color-error);
+}
+
+.btn-danger:hover {
+  background-color: var(--color-error-dark);
+}
+
+.btn-success {
+  background-color: var(--color-success);
+}
+
+.btn-success:hover {
+  background-color: var(--color-success-dark);
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+
+table {
+  width: 100%;
+  background: var(--color-white);
+  border-collapse: collapse;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+table th {
+  background-color: var(--color-gray-100);
+  padding: var(--space-4);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+table td {
+  padding: var(--space-4);
+  border-top: var(--border-width-1) solid var(--color-gray-200);
+  color: var(--text-primary);
+}
+
+table tbody tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+/* ============================================
+   Alerts
+   ============================================ */
+
+.alert {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-width-1) solid transparent;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: var(--color-success);
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: var(--color-error);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .admin-container {
+    margin: var(--space-4) auto;
+    padding: 0 var(--space-4);
+  }
+
+  table {
+    font-size: var(--font-size-sm);
+  }
+
+  table th,
+  table td {
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding-top: 60px;
+  }
+
+  .admin-container {
+    padding: 0 var(--space-3);
+  }
+
+  .btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+}
+
