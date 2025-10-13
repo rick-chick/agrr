@@ -11,9 +11,6 @@
     <%# ガントチャート %>
     <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
     
-    <%# 詳細パネル（初期状態は非表示） %>
-    <%= render 'public_plans/results/detail_panel', cultivation_plan: @cultivation_plan %>
-    
     <%# 広告エリア %>
     <div class="gantt-ad-card">
       <div class="gantt-ad-label">
@@ -30,18 +27,6 @@
       </div>
     </div>
     
-    <%# CTAカード %>
-    <div class="gantt-cta-card">
-      <h3 class="gantt-cta-title">🚀 もっと詳しい分析が必要ですか？</h3>
-      <p class="gantt-cta-description">
-        会員登録（無料）すると、作物の詳細比較、<br>
-        気候データの可視化、カスタマイズ可能な作付け計画などが利用できます。
-      </p>
-      <%= link_to auth_login_path, class="gantt-cta-button" do %>
-        無料で会員登録 →
-      <% end %>
-    </div>
-    
     <%# アクションボタン %>
     <div class="action-buttons">
       <%= link_to public_plans_path, class: "btn-white" do %>
@@ -52,7 +37,5 @@
   </div>
 </div>
 
-<%# JavaScript読み込み - defer属性でページ読み込み後に実行 %>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
-<%= javascript_include_tag "cultivation_results", defer: true %>
+<%# Chart.js は npm で管理され application.js にバンドル済み %>
+<%# cultivation_results.js も application.js にバンドル済み %>
