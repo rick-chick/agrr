@@ -1,0 +1,550 @@
+/* ============================================
+   Fields & Crops Features
+   Created: 2025-10-13
+   Purpose: Fields（圃場）とCrops（作物）のスタイル
+   Note: 旧fields.cssから必要な部分のみを抽出・再構築
+   ============================================ */
+
+/* ============================================
+   Breadcrumb Navigation
+   ============================================ */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.breadcrumb-link {
+  color: var(--color-info);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-link:hover {
+  color: var(--color-info-dark);
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  margin: 0 var(--space-2);
+  color: var(--text-tertiary);
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.page-title {
+  font-size: var(--font-size-3xl);
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+}
+
+/* ============================================
+   Map Container
+   ============================================ */
+
+.map-container {
+  height: 300px;
+  border: var(--border-width-2) solid var(--border-color-base);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-base);
+  position: relative;
+  z-index: 1;
+}
+
+.map-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Fields Grid & Cards
+   ============================================ */
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-5);
+}
+
+.field-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.field-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.field-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.field-coordinates {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-4);
+}
+
+.field-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.field-info {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* ============================================
+   Crops Grid & Cards
+   ============================================ */
+
+.crops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-5);
+}
+
+.crop-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.crop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.crop-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.crop-variety {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-2);
+}
+
+.crop-type {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-4);
+}
+
+.crop-type.reference {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.crop-type.user {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.crop-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ============================================
+   Crop Detail Page
+   ============================================ */
+
+.crop-detail-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+}
+
+.crop-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+}
+
+.crop-detail-title {
+  font-size: var(--font-size-3xl);
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+}
+
+.crop-detail-type {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.crop-detail-type.reference {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.crop-detail-type.user {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.crop-basic-info {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-base);
+}
+
+.info-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.info-value {
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Crop Stages
+   ============================================ */
+
+.stages-section {
+  margin-top: var(--space-6);
+}
+
+.stages-title {
+  font-size: var(--font-size-2xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stages-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stage-item {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  border-left: var(--border-width-4) solid var(--color-info);
+}
+
+.stage-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.stage-order {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-4);
+}
+
+.stage-requirements {
+  margin-top: var(--space-4);
+}
+
+.requirement-item {
+  background: var(--color-white);
+  padding: var(--space-3);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-2);
+  border: var(--border-width-1) solid var(--border-color-light);
+}
+
+.requirement-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.requirement-value {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+.no-stages {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--space-6);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+}
+
+/* ============================================
+   Weather Data Status
+   ============================================ */
+
+.weather-status {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-left: var(--space-2);
+}
+
+.weather-status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.weather-status-fetching {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.weather-status-completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.weather-status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* ============================================
+   Weather Chart
+   ============================================ */
+
+.weather-section {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  border: var(--border-width-2) solid var(--border-color-light);
+}
+
+.weather-section h3 {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.chart-controls {
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chart-controls label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+}
+
+.chart-period-select {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-2) solid var(--border-color-base);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.chart-period-select:focus {
+  outline: none;
+  border-color: var(--color-info);
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  padding: var(--space-4) 0;
+}
+
+.info-message {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  padding: var(--space-4);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-base);
+  text-align: center;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-info), var(--color-info-dark));
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+/* ============================================
+   Empty States
+   ============================================ */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: var(--font-size-5xl);
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+.empty-fields {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Nested Form Fields (Crop Stages)
+   ============================================ */
+
+.crop-stage-item {
+  position: relative;
+  margin-bottom: var(--space-4);
+}
+
+.nested-fields-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-width-1) solid var(--color-gray-300);
+}
+
+.nested-title {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.requirement-fields {
+  background: transparent;
+}
+
+.destroy-flag {
+  display: none;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .fields-grid,
+  .crops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .map-container {
+    height: 250px;
+  }
+
+  .chart-container {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .field-card,
+  .crop-card {
+    padding: var(--space-4);
+  }
+
+  .map-container {
+    height: 200px;
+  }
+
+  .weather-section {
+    padding: var(--space-4);
+  }
+}
+
