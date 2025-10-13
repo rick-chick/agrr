@@ -1,5 +1,5 @@
 <%# encoding: UTF-8 %>
-<div class="public-plans-wrapper pb-0">
+<div class="public-plans-wrapper pb-0" data-cultivation-plan-id="<%= @cultivation_plan.id %>">
   <div class="free-plans-container">
     <!-- Compact Header -->
     <div class="compact-header-card">
@@ -46,17 +46,18 @@
 <div class="fixed-progress-bar">
   <div class="fixed-progress-container">
     <div class="progress-header">
-      <div class="progress-label">
-        最適化状況
+      <div class="progress-label-with-spinner">
+        <span class="spinner spinner-sm" id="loading-spinner"></span>
+        <div class="progress-info">
+          <div class="progress-phase-message" id="phase-message">
+            <%= @cultivation_plan.optimization_phase_message || '最適化を準備しています...' %>
+          </div>
+          <div class="progress-duration-hint">約3分程度かかります</div>
+        </div>
       </div>
-      <div class="progress-count">
-        <%= @cultivation_plan.field_cultivations.status_completed.count %> / <%= @cultivation_plan.field_cultivations.count %> 完了
+      <div class="progress-elapsed-time">
+        ⏳ <span id="elapsed-time">0秒</span>
       </div>
-    </div>
-    
-    <!-- Progress Bar -->
-    <div class="progress-bar-wrapper">
-      <div class="progress-bar-fill" style="width: <%= @cultivation_plan.optimization_progress %>%;"></div>
     </div>
   </div>
 </div>
