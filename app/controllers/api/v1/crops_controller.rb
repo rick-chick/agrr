@@ -33,12 +33,15 @@ module Api
           agrr_crop_id = data['crop_id']  # agrrが返すcrop_id
           Rails.logger.info "📊 [AI Crop] Retrieved data: agrr_id=#{agrr_crop_id}, area=#{data['area_per_unit']}, revenue=#{data['revenue_per_area']}, stages=#{data['stages']&.count || 0}"
 
-          # 2. agrr_crop_idで作物を探す（最優先）
-          existing_crop = ::Crop.find_by(agrr_crop_id: agrr_crop_id) if agrr_crop_id.present?
+          # 2. agrr_crop_idで作物を探す（最優先、ユーザー作物のみ）
+          if agrr_crop_id.present?
+            existing_crop = ::Crop.find_by(agrr_crop_id: agrr_crop_id, user_id: current_user.id, is_reference: false)
+          end
           
-          # 3. agrr_crop_idで見つからない場合、そのユーザーから見える作物を名前で探す（後方互換性）
+          # 3. agrr_crop_idで見つからない場合、そのユーザーの作物を名前で探す（後方互換性）
+          # 参照作物は更新対象外（ユーザー作物のみ更新可能）
           if existing_crop.nil?
-            existing_crop = ::Crop.where("(is_reference = ? OR user_id = ?) AND name = ?", true, current_user.id, crop_name).first
+            existing_crop = ::Crop.where(user_id: current_user.id, is_reference: false, name: crop_name).first
           end
           
           if existing_crop
