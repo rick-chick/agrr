@@ -1,0 +1,41 @@
+/* ============================================
+   Optimizing Page
+   Created: 2025-10-13
+   Purpose: 最適化進行中ページのスタイル
+   ============================================ */
+
+/* ============================================
+   Spinner Animation
+   ============================================ */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid var(--color-gray-200);
+  border-top: 6px solid var(--color-info);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+/* Utility class for larger spinners */
+.spinner-lg {
+  width: 80px;
+  height: 80px;
+  border-width: 8px;
+}
+
+.spinner-sm {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+

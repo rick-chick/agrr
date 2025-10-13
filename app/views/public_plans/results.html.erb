@@ -14,9 +14,9 @@
     </div>
     
     <!-- Success Badge -->
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <div style="display: inline-flex; align-items: center; background: white; color: #00b894; padding: 1.5rem 3rem; border-radius: 60px; font-size: 1.3rem; font-weight: 700; box-shadow: 0 12px 48px rgba(0, 184, 148, 0.3);">
-        <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20" style="margin-right: 1rem;">
+    <div class="results-success-wrapper">
+      <div class="results-success-badge">
+        <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20" class="results-success-icon">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
         </svg>
         <%= @cultivation_plan.field_cultivations.count %>種類の計画作成完了
@@ -24,54 +24,54 @@
     </div>
     
     <!-- Crop Plans Grid -->
-    <div class="enhanced-grid" style="margin-bottom: 2rem;">
+    <div class="enhanced-grid results-grid">
       <% @cultivation_plan.field_cultivations.each do |fc| %>
-        <div class="content-card" style="padding: 2rem; transition: all 0.3s ease;">
+        <div class="content-card results-crop-card">
           <!-- Card Header -->
-          <div style="text-align: center; padding-bottom: 1.5rem; border-bottom: 2px solid #f8f9fa; margin-bottom: 1.5rem;">
-            <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🌾</div>
-            <h3 style="font-size: 1.6rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;"><%= fc.crop.name %></h3>
+          <div class="results-card-header">
+            <div class="results-crop-icon">🌾</div>
+            <h3 class="results-crop-name"><%= fc.crop.name %></h3>
             <% if fc.crop.variety.present? %>
-              <p style="font-size: 0.95rem; color: #6c757d;"><%= fc.crop.variety %></p>
+              <p class="results-crop-variety"><%= fc.crop.variety %></p>
             <% end %>
           </div>
           
           <!-- Plan Summary -->
-          <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span style="font-size: 0.85rem; color: #6c757d; font-weight: 600;">🌍 地域</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #333;"><%= @cultivation_plan.farm.name %></span>
+          <div class="results-summary-box">
+            <div class="results-summary-row">
+              <span class="results-summary-label">🌍 地域</span>
+              <span class="results-summary-value"><%= @cultivation_plan.farm.name %></span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.85rem; color: #6c757d; font-weight: 600;">📏 圃場面積</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #333;"><%= fc.area.to_i %>㎡</span>
+            <div class="results-summary-row">
+              <span class="results-summary-label">📏 圃場面積</span>
+              <span class="results-summary-value"><%= fc.area.to_i %>㎡</span>
             </div>
           </div>
           
           <% if fc.status_completed? && fc.start_date.present? %>
             <!-- Optimized Planting Date -->
-            <div style="display: flex; align-items: flex-start; padding: 1.25rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%); border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #667eea;">
-              <div style="font-size: 1.8rem; margin-right: 1rem;">🌱</div>
+            <div class="results-info-box planting">
+              <div class="results-info-box-icon">🌱</div>
               <div>
-                <div style="font-size: 0.85rem; color: #667eea; font-weight: 700; margin-bottom: 0.25rem;">最適な播種日</div>
-                <div style="font-size: 1.1rem; font-weight: 600; color: #333;">
+                <div class="results-info-box-label">最適な播種日</div>
+                <div class="results-info-box-value">
                   <%= fc.start_date.strftime('%Y年%m月%d日') %>
                 </div>
-                <div style="font-size: 0.8rem; color: #718096; margin-top: 0.25rem;">
+                <div class="results-info-box-detail">
                   <%= fc.year_label %>の計画
                 </div>
               </div>
             </div>
             
             <!-- Optimized Harvest Date -->
-            <div style="display: flex; align-items: flex-start; padding: 1.25rem; background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(85, 239, 196, 0.05) 100%); border-radius: 12px; margin-bottom: 1rem; border-left: 4px solid #00b894;">
-              <div style="font-size: 1.8rem; margin-right: 1rem;">🌾</div>
+            <div class="results-info-box harvest">
+              <div class="results-info-box-icon">🌾</div>
               <div>
-                <div style="font-size: 0.85rem; color: #00b894; font-weight: 700; margin-bottom: 0.25rem;">最適な収穫日</div>
-                <div style="font-size: 1.1rem; font-weight: 600; color: #333;">
+                <div class="results-info-box-label">最適な収穫日</div>
+                <div class="results-info-box-value">
                   <%= fc.completion_date.strftime('%Y年%m月%d日') %>
                 </div>
-                <div style="font-size: 0.8rem; color: #718096; margin-top: 0.25rem;">
+                <div class="results-info-box-detail">
                   栽培日数: <%= fc.cultivation_days %>日
                 </div>
               </div>
@@ -79,11 +79,11 @@
             
             <!-- Cost Estimate -->
             <% if fc.estimated_cost.present? %>
-              <div style="display: flex; align-items: flex-start; padding: 1.25rem; background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 159, 67, 0.05) 100%); border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid #ff6b6b;">
-                <div style="font-size: 1.8rem; margin-right: 1rem;">💰</div>
+              <div class="results-info-box cost">
+                <div class="results-info-box-icon">💰</div>
                 <div>
-                  <div style="font-size: 0.85rem; color: #ff6b6b; font-weight: 700; margin-bottom: 0.25rem;">推定コスト</div>
-                  <div style="font-size: 1.1rem; font-weight: 600; color: #333;">
+                  <div class="results-info-box-label">推定コスト</div>
+                  <div class="results-info-box-value">
                     ¥<%= number_with_delimiter(fc.estimated_cost.to_i) %>
                   </div>
                 </div>
@@ -91,7 +91,7 @@
             <% end %>
           <% else %>
             <!-- Fallback: 簡易計画情報 -->
-            <div style="text-align: center; padding: 2rem; color: #718096;">
+            <div class="results-fallback">
               <p>最適化計算中、またはデータが利用できません</p>
             </div>
           <% end %>
@@ -100,15 +100,15 @@
     </div>
     
     <!-- Advertisement Card -->
-    <div class="content-card" style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); border: none; margin-bottom: 2rem;">
-      <div style="text-align: center; color: #856404; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">
+    <div class="content-card results-ad-card">
+      <div class="results-ad-label">
         スポンサー広告
       </div>
-      <div style="background: white; border-radius: 12px; padding: 3rem; min-height: 200px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <div style="text-align: center; color: #999;">
-          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">広告スペース</div>
-          <div style="font-size: 0.9rem;">728 x 90 (Leaderboard)</div>
-          <p style="margin-top: 1rem; font-size: 0.85rem;">
+      <div class="results-ad-content">
+        <div class="results-ad-placeholder">
+          <div class="results-ad-placeholder-title">広告スペース</div>
+          <div class="results-ad-placeholder-size">728 x 90 (Leaderboard)</div>
+          <p class="results-ad-placeholder-note">
             Google AdSense や他の広告ネットワークのコードを配置
           </p>
         </div>
@@ -116,13 +116,13 @@
     </div>
     
     <!-- CTA Card -->
-    <div class="content-card" style="text-align: center; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: none;">
-      <h3 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">🚀 もっと詳しい分析が必要ですか？</h3>
-      <p style="font-size: 1.15rem; color: #666; margin-bottom: 2rem; line-height: 1.6;">
+    <div class="content-card results-cta-card">
+      <h3 class="results-cta-title">🚀 もっと詳しい分析が必要ですか？</h3>
+      <p class="results-cta-description">
         会員登録（無料）すると、作物の詳細比較、<br>
         気候データの可視化、カスタマイズ可能な作付け計画などが利用できます。
       </p>
-      <%= link_to auth_login_path, class: "btn-gradient", style: "font-size: 1.3rem; padding: 1.5rem 4rem;" do %>
+      <%= link_to auth_login_path, class: "btn-gradient results-cta-button" do %>
         無料で会員登録 →
       <% end %>
     </div>
