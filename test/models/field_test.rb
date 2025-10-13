@@ -98,4 +98,57 @@ class FieldTest < ActiveSupport::TestCase
     assert_equal field2, recent_fields.first
     assert_equal field1, recent_fields.second
   end
+
+  test "area should be positive" do
+    @field.area = -1
+    assert_not @field.valid?
+    
+    @field.area = 0
+    assert_not @field.valid?
+    
+    @field.area = 100
+    assert @field.valid?
+  end
+
+  test "area can be nil" do
+    @field.area = nil
+    assert @field.valid?
+  end
+
+  test "daily_fixed_cost should be non-negative" do
+    @field.daily_fixed_cost = -1
+    assert_not @field.valid?
+    
+    @field.daily_fixed_cost = 0
+    assert @field.valid?
+    
+    @field.daily_fixed_cost = 5000
+    assert @field.valid?
+  end
+
+  test "daily_fixed_cost can be nil" do
+    @field.daily_fixed_cost = nil
+    assert @field.valid?
+  end
+
+  test "to_agrr_config should return proper configuration" do
+    @field.save!
+    config = @field.to_agrr_config
+    
+    assert_equal @field.id.to_s, config[:field_id]
+    assert_equal @field.name, config[:name]
+    assert_equal @field.area, config[:area]
+    assert_equal @field.daily_fixed_cost, config[:daily_fixed_cost]
+  end
+
+  test "to_agrr_config should handle fields with area and cost" do
+    @field.area = 1000.0
+    @field.daily_fixed_cost = 5000.0
+    @field.save!
+    
+    config = @field.to_agrr_config
+    
+    assert_equal 1000.0, config[:area]
+    assert_equal 5000.0, config[:daily_fixed_cost]
+  end
 end
