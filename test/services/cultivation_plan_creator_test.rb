@@ -85,8 +85,6 @@ class CultivationPlanCreatorTest < ActiveSupport::TestCase
     assert_equal 2, plan.cultivation_plan_crops.count
     
     plan.field_cultivations.each do |fc|
-      assert_nil fc.field_id
-      assert_nil fc.crop_id
       assert_not_nil fc.cultivation_plan_field
       assert_not_nil fc.cultivation_plan_crop
     end

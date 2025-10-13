@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_13_030000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_13_030001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -135,8 +135,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_030000) do
 
   create_table "field_cultivations", force: :cascade do |t|
     t.integer "cultivation_plan_id", null: false
-    t.integer "field_id"
-    t.integer "crop_id"
     t.float "area", null: false
     t.date "start_date"
     t.date "completion_date"
@@ -148,12 +146,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_030000) do
     t.datetime "updated_at", null: false
     t.integer "cultivation_plan_field_id"
     t.integer "cultivation_plan_crop_id"
-    t.index ["crop_id"], name: "index_field_cultivations_on_crop_id"
     t.index ["cultivation_plan_crop_id"], name: "index_field_cultivations_on_cultivation_plan_crop_id"
     t.index ["cultivation_plan_field_id"], name: "index_field_cultivations_on_cultivation_plan_field_id"
-    t.index ["cultivation_plan_id", "field_id"], name: "index_field_cultivations_on_cultivation_plan_id_and_field_id"
     t.index ["cultivation_plan_id"], name: "index_field_cultivations_on_cultivation_plan_id"
-    t.index ["field_id"], name: "index_field_cultivations_on_field_id"
+    t.index ["cultivation_plan_id"], name: "index_field_cultivations_on_cultivation_plan_id_and_field_id"
     t.index ["status"], name: "index_field_cultivations_on_status"
   end
 
@@ -391,11 +387,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_030000) do
   add_foreign_key "cultivation_plans", "users"
   add_foreign_key "farms", "users"
   add_foreign_key "farms", "weather_locations"
-  add_foreign_key "field_cultivations", "crops"
   add_foreign_key "field_cultivations", "cultivation_plan_crops"
   add_foreign_key "field_cultivations", "cultivation_plan_fields"
   add_foreign_key "field_cultivations", "cultivation_plans"
-  add_foreign_key "field_cultivations", "fields", on_delete: :nullify
   add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
   add_foreign_key "free_crop_plans", "crops"
