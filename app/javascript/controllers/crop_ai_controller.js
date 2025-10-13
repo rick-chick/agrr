@@ -7,6 +7,7 @@ export default class extends Controller {
     this.statusDiv = document.getElementById('ai-save-status')
     this.nameField = document.querySelector('input[name="crop[name]"]')
     this.varietyField = document.querySelector('input[name="crop[variety]"]')
+    this.adPopup = document.getElementById('ad-popup-overlay')
     
     this.button.addEventListener('click', this.saveCrop.bind(this))
   }
@@ -28,6 +29,9 @@ export default class extends Controller {
     this.button.textContent = '🤖 AIで情報を取得中...'
     this.showStatus('AIで作物情報を取得しています...', 'info')
     
+    // Show advertisement popup
+    this.showAdPopup()
+    
     try {
       const csrfToken = document.querySelector('[name="csrf-token"]')?.content
       
@@ -47,23 +51,22 @@ export default class extends Controller {
       const data = await response.json()
       
       if (response.ok) {
-        // 成功時：取得した情報を表示
-        let message = `✓ 作物「${data.crop_name}」の情報を取得して保存しました！`
-        if (data.area_per_unit || data.revenue_per_area) {
-          message += `\n面積: ${data.area_per_unit || 'N/A'}㎡, 収益: ${data.revenue_per_area || 'N/A'}円/㎡`
-        }
-        this.showStatus(message, 'success')
+        // 成功時：広告を閉じて作物詳細画面に遷移
+        this.showStatus(`✓ 作物「${data.crop_name}」の情報を取得して保存しました！`, 'success')
         
-        // Redirect to the crop show page after 2 seconds
+        // Wait a moment to show success message, then redirect
         setTimeout(() => {
+          this.hideAdPopup()
           window.location.href = `/crops/${data.crop_id}`
-        }, 2000)
+        }, 1500)
       } else {
+        this.hideAdPopup()
         this.showStatus(`エラー: ${data.error || '作物情報の取得に失敗しました'}`, 'error')
         this.resetButton()
       }
     } catch (error) {
       console.error('Error in AI crop creation:', error)
+      this.hideAdPopup()
       this.showStatus('ネットワークエラーが発生しました', 'error')
       this.resetButton()
     }
@@ -80,6 +83,22 @@ export default class extends Controller {
   resetButton() {
     this.button.disabled = false
     this.button.textContent = '🤖 AIで作物情報を取得・保存'
+  }
+  
+  showAdPopup() {
+    if (this.adPopup) {
+      this.adPopup.classList.add('show')
+      // Prevent body scroll when popup is open
+      document.body.style.overflow = 'hidden'
+    }
+  }
+  
+  hideAdPopup() {
+    if (this.adPopup) {
+      this.adPopup.classList.remove('show')
+      // Restore body scroll
+      document.body.style.overflow = ''
+    }
   }
 }
 
