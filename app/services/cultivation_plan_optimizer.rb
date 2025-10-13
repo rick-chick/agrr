@@ -11,31 +11,41 @@ class CultivationPlanOptimizer
   
   def call
     @cultivation_plan.start_optimizing!
+    @current_phase = nil
     
-    weather_info = prepare_weather_data
-    
-    # 最適化フェーズ
-    @cultivation_plan.phase_optimizing!
-    
-    field_cultivations = @cultivation_plan.field_cultivations.to_a
-    field_cultivations.each do |field_cultivation|
-      optimize_field_cultivation(field_cultivation, weather_info[:data], weather_info[:available_days])
+    begin
+      weather_info = prepare_weather_data
+      
+      # 最適化フェーズ
+      @current_phase = 'optimizing'
+      @cultivation_plan.phase_optimizing!
+      
+      field_cultivations = @cultivation_plan.field_cultivations.to_a
+      field_cultivations.each do |field_cultivation|
+        optimize_field_cultivation(field_cultivation, weather_info[:data], weather_info[:available_days])
+      end
+      
+      @cultivation_plan.phase_completed!
+      @cultivation_plan.complete!
+      Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
+      true
+    rescue StandardError => e
+      Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed at phase: #{@current_phase || 'unknown'}"
+      Rails.logger.error "Error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      
+      # フェーズに応じたエラーメッセージを設定
+      @cultivation_plan.phase_failed!(@current_phase || 'unknown')
+      @cultivation_plan.fail!(e.message)
+      false
     end
-    
-    @cultivation_plan.phase_completed!
-    Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
-    true
-  rescue StandardError => e
-    Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
-    @cultivation_plan.fail!(e.message)
-    false
   end
   
   private
   
   def prepare_weather_data
     # フェーズ: 気象データ取得
+    @current_phase = 'fetching_weather'
     @cultivation_plan.phase_fetching_weather!
     
     farm = @cultivation_plan.farm
@@ -90,16 +100,22 @@ class CultivationPlanOptimizer
     training_formatted = format_weather_data_for_agrr(weather_location, training_data)
     
     # フェーズ: 気象データ予測
+    @current_phase = 'predicting_weather'
     @cultivation_plan.phase_predicting_weather!
     
-    # 来年1年間（365日）の予測データ
-    prediction_days = 365
+    # 次の年の12月31日までの予測データ
+    next_year = Date.current.year + 1
+    target_end_date = Date.new(next_year, 12, 31)
+    prediction_days = (target_end_date - Date.current).to_i
+    
+    Rails.logger.info "🔮 [AGRR] Predicting weather until #{target_end_date} (#{prediction_days} days)"
+    
     future = @prediction_gateway.predict(
       historical_data: training_formatted,
       days: prediction_days
     )
     
-    Rails.logger.info "✅ [AGRR] Prediction completed for next #{prediction_days} days"
+    Rails.logger.info "✅ [AGRR] Prediction completed for next #{prediction_days} days (until #{target_end_date})"
     
     # 今年の実データをAGRR形式に変換
     current_year_formatted = format_weather_data_for_agrr(weather_location, current_year_data)
@@ -108,11 +124,10 @@ class CultivationPlanOptimizer
     merged_data = merge_weather_data(current_year_formatted, future)
     
     # 気象データの実際の範囲を計算
-    # 今年の残り日数 + 予測日数
-    days_until_end_of_year = (Date.current.end_of_year - Date.current).to_i + 1
+    # 今年の実データ + 次の年の12月31日までの予測データ
     total_weather_days = current_year_data.count + prediction_days
     
-    Rails.logger.info "✅ [AGRR] Total weather data available: #{total_weather_days} days (current year: #{current_year_data.count} + prediction: #{prediction_days})"
+    Rails.logger.info "✅ [AGRR] Total weather data available: #{total_weather_days} days (current year: #{current_year_data.count} + prediction until #{target_end_date}: #{prediction_days})"
     
     # 気象データ範囲を返す
     {
@@ -170,6 +185,27 @@ class CultivationPlanOptimizer
     
     Rails.logger.info "🗓️  [AGRR] Evaluation period: #{Date.current} to #{evaluation_end} (#{available_days} days)"
     
+    # CultivationPlanCropからCropモデルを検索
+    # 名前と品種が一致する参照作物を優先的に検索
+    crop = Crop.find_by(
+      name: crop_info[:name],
+      variety: crop_info[:variety],
+      is_reference: true
+    )
+    
+    # 参照作物が見つからない場合、ユーザーの作物も検索
+    crop ||= Crop.find_by(
+      name: crop_info[:name],
+      variety: crop_info[:variety],
+      user_id: @cultivation_plan.user_id
+    )
+    
+    if crop
+      Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
+    else
+      Rails.logger.info "🤖 [AGRR] No Crop model found, will use LLM to generate requirements"
+    end
+    
     result = @optimization_gateway.optimize(
       crop_name: crop_info[:name],
       variety: crop_info[:variety] || 'general',
@@ -177,7 +213,8 @@ class CultivationPlanOptimizer
       field_area: field_cultivation.area,
       daily_fixed_cost: field_info[:daily_fixed_cost],
       evaluation_start: Date.current,
-      evaluation_end: evaluation_end
+      evaluation_end: evaluation_end,
+      crop: crop  # Cropモデルを渡す（nil の場合は LLM で自動生成）
     )
     
     field_cultivation.complete_with_result!(result)
