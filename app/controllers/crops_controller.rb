@@ -5,7 +5,12 @@ class CropsController < ApplicationController
 
   # GET /crops
   def index
-    @crops = Crop.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+    # 管理者は参照作物も表示、一般ユーザーは自分の作物のみ
+    if admin_user?
+      @crops = Crop.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+    else
+      @crops = Crop.where(user_id: current_user.id).recent
+    end
   end
 
   # GET /crops/:id

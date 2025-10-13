@@ -3,9 +3,9 @@
 <div class="crop-detail-card">
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @crop.name %></h1>
-    <div class="crop-detail-type <%= @crop.is_reference ? 'reference' : 'user' %>">
-      <%= @crop.is_reference ? '参照作物' : 'ユーザ作物' %>
-    </div>
+    <% if admin_user? && @crop.is_reference %>
+      <div class="crop-detail-type reference">参照作物</div>
+    <% end %>
   </div>
   
   <div class="crop-basic-info">
