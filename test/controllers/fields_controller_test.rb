@@ -36,7 +36,8 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "テスト農場 - 新しい圃場を追加"
     assert_select "form"
     assert_select "input[name='field[name]']"
-    # Note: 現在の実装では座標入力フィールドはない
+    assert_select "input[name='field[area]']"
+    assert_select "input[name='field[daily_fixed_cost]']"
   end
 
   test "should redirect to login when not authenticated for new" do
@@ -61,6 +62,23 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert", "圃場が正常に作成されました。"
   end
 
+  test "should create field with area and daily_fixed_cost" do
+    assert_difference('Field.count') do
+      post farm_fields_path(@farm), params: {
+        field: {
+          name: "新しい圃場",
+          area: 1000.0,
+          daily_fixed_cost: 5000.0
+        }
+      }
+    end
+    
+    new_field = Field.last
+    assert_equal 1000.0, new_field.area
+    assert_equal 5000.0, new_field.daily_fixed_cost
+    assert_redirected_to farm_field_path(@farm, new_field)
+  end
+
   test "should not create field with invalid attributes" do
     assert_no_difference('Field.count') do
       post farm_fields_path(@farm), params: {
@@ -74,6 +92,34 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     
     assert_response :unprocessable_entity
     # フォームが再表示されることを確認
+    assert_select "form"
+  end
+
+  test "should not create field with invalid area" do
+    assert_no_difference('Field.count') do
+      post farm_fields_path(@farm), params: {
+        field: {
+          name: "新しい圃場",
+          area: -100
+        }
+      }
+    end
+    
+    assert_response :unprocessable_entity
+    assert_select "form"
+  end
+
+  test "should not create field with invalid daily_fixed_cost" do
+    assert_no_difference('Field.count') do
+      post farm_fields_path(@farm), params: {
+        field: {
+          name: "新しい圃場",
+          daily_fixed_cost: -1000
+        }
+      }
+    end
+    
+    assert_response :unprocessable_entity
     assert_select "form"
   end
 
@@ -112,11 +158,14 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get edit when authenticated and field belongs to user" do
+    @field.update!(area: 1000.0, daily_fixed_cost: 5000.0)
     get edit_farm_field_path(@farm, @field)
     assert_response :success
     assert_select "h1", text: /圃場を編集/
     assert_select "form"
     assert_select "input[name='field[name]'][value='#{@field.name}']"
+    assert_select "input[name='field[area]']"
+    assert_select "input[name='field[daily_fixed_cost]']"
   end
 
   test "should update field with valid attributes" do
@@ -133,6 +182,20 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "更新された圃場", @field.name
     assert_equal 36.2048, @field.latitude
     assert_equal 138.2529, @field.longitude
+  end
+
+  test "should update field with area and daily_fixed_cost" do
+    patch farm_field_path(@farm, @field), params: {
+      field: {
+        area: 1500.0,
+        daily_fixed_cost: 6000.0
+      }
+    }
+    
+    assert_redirected_to farm_field_path(@farm, @field)
+    @field.reload
+    assert_equal 1500.0, @field.area
+    assert_equal 6000.0, @field.daily_fixed_cost
   end
 
   test "should not update field with invalid attributes" do

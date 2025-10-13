@@ -24,6 +24,19 @@
       <span class="info-value"><%= @field.name %></span>
     </div>
     
+    <% if @field.area.present? %>
+    <div class="info-item">
+      <span class="info-label">📏 面積:</span>
+      <span class="info-value"><%= number_with_delimiter(@field.area, delimiter: ',') %> ㎡</span>
+    </div>
+    <% end %>
+    
+    <% if @field.daily_fixed_cost.present? %>
+    <div class="info-item">
+      <span class="info-label">💰 日次固定費用:</span>
+      <span class="info-value">¥<%= number_with_delimiter(@field.daily_fixed_cost.to_i, delimiter: ',') %> / 日</span>
+    </div>
+    <% end %>
     
     <div class="info-item">
       <span class="info-label">📅 作成日:</span>
