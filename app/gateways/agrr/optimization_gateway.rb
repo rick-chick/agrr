@@ -5,11 +5,21 @@ module Agrr
     def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:)
       Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{variety}"
       
+      field_config = build_field_config(field_area, daily_fixed_cost)
+      Rails.logger.info "📊 [AGRR] Field config: #{field_config.to_json}"
+      
       weather_file = write_temp_file(weather_data, prefix: 'weather')
-      field_file = write_temp_file(
-        build_field_config(field_area, daily_fixed_cost),
-        prefix: 'field'
-      )
+      field_file = write_temp_file(field_config, prefix: 'field')
+      
+      # デバッグ用にファイルを保存
+      debug_dir = Rails.root.join('tmp/debug')
+      FileUtils.mkdir_p(debug_dir)
+      debug_weather_path = debug_dir.join("optimization_weather_#{Time.current.to_i}.json")
+      debug_field_path = debug_dir.join("optimization_field_#{Time.current.to_i}.json")
+      FileUtils.cp(weather_file.path, debug_weather_path)
+      FileUtils.cp(field_file.path, debug_field_path)
+      Rails.logger.info "📁 [AGRR] Debug weather saved to: #{debug_weather_path}"
+      Rails.logger.info "📁 [AGRR] Debug field saved to: #{debug_field_path}"
       
       begin
         result = execute_command(
@@ -41,9 +51,10 @@ module Agrr
     
     def build_field_config(area, daily_fixed_cost)
       {
-        field_id: SecureRandom.uuid,
-        area: area,
-        daily_fixed_cost: daily_fixed_cost
+        'name' => "Field-#{SecureRandom.hex(4)}",
+        'field_id' => SecureRandom.uuid,
+        'area' => area,
+        'daily_fixed_cost' => daily_fixed_cost
       }
     end
     
@@ -51,10 +62,10 @@ module Agrr
       optimal = raw_result['optimal_periods']&.first || raw_result
       
       {
-        start_date: Date.parse(optimal['start_date']),
+        start_date: Date.parse(optimal['optimal_start_date']),
         completion_date: Date.parse(optimal['completion_date']),
-        days: optimal['days'],
-        cost: optimal['cost'],
+        days: optimal['growth_days'],
+        cost: optimal['total_cost'],
         gdd: optimal['gdd'],
         raw: raw_result
       }
