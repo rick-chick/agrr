@@ -131,15 +131,20 @@ class CropsSystemTest < ApplicationSystemTestCase
     
     click_on "新しい作物を追加"
     
-    fill_in "名前", with: "参照作物"
-    # Checkbox should be disabled for non-admin
-    ref_checkbox = find("#crop_is_reference", visible: false)
-    assert ref_checkbox.disabled?
+    fill_in "名前", with: "通常作物"
     
-    # Try to submit anyway
+    # Checkbox should not be visible for non-admin
+    assert_no_selector "#crop_is_reference", visible: :all
+    
+    # Create a normal crop
     click_on "作物を作成"
     
-    assert_text "参照作物は管理者のみ作成できます"
+    assert_text "作物が正常に作成されました"
+    
+    # Verify it's not a reference crop
+    crop = Crop.find_by(name: "通常作物")
+    assert_not_nil crop
+    assert_equal false, crop.is_reference
   end
 
   test "crop validation errors" do
@@ -154,9 +159,7 @@ class CropsSystemTest < ApplicationSystemTestCase
     assert_text "can't be blank"
   end
 
-  test "crop type display" do
-    sign_in_as(@user)
-    
+  test "crop type display for regular user" do
     # Create user crop
     user_crop = Crop.create!(
       name: "ユーザ作物",
@@ -167,17 +170,42 @@ class CropsSystemTest < ApplicationSystemTestCase
     # Create reference crop
     ref_crop = Crop.create!(
       name: "参照作物",
-      user_id: @admin.id,
+      user_id: nil,
       is_reference: true
     )
     
+    # Test as regular user - should only see their own crops
+    sign_in_as(@user)
+    visit crops_path
+    
+    assert_text "ユーザ作物"
+    assert_no_text "参照作物"  # Regular users don't see reference crops
+    assert_no_selector ".crop-type.reference"  # No reference badge visible
+  end
+  
+  test "crop type display for admin" do
+    # Create user crop
+    user_crop = Crop.create!(
+      name: "ユーザ作物",
+      user_id: @admin.id,
+      is_reference: false
+    )
+    
+    # Create reference crop
+    ref_crop = Crop.create!(
+      name: "参照作物",
+      user_id: nil,
+      is_reference: true
+    )
+    
+    # Test as admin - should see both
+    sign_in_as(@admin)
     visit crops_path
     
     assert_text "ユーザ作物"
     assert_text "参照作物"
     
-    # Check type badges
-    assert_selector ".crop-type.user", text: "ユーザ作物"
+    # Admin should see reference badge for reference crop
     assert_selector ".crop-type.reference", text: "参照作物"
   end
 

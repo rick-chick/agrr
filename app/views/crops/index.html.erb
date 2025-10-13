@@ -13,9 +13,9 @@
         <% if crop.variety.present? %>
           <div class="crop-variety">品種: <%= crop.variety %></div>
         <% end %>
-        <div class="crop-type <%= crop.is_reference ? 'reference' : 'user' %>">
-          <%= crop.is_reference ? '参照作物' : 'ユーザ作物' %>
-        </div>
+        <% if admin_user? && crop.is_reference %>
+          <div class="crop-type reference">参照作物</div>
+        <% end %>
         <div class="crop-actions">
           <%= link_to "詳細", crop_path(crop), class: "btn btn-info btn-sm" %>
           <% if crop.is_reference %>

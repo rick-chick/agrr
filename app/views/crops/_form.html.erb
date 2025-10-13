@@ -42,15 +42,14 @@
       <div class="form-text">作物名を入力してボタンをクリックすると、AIが面積・収益などの情報を自動的に取得して保存します</div>
     </div>
 
-    <div class="form-group">
-      <div class="checkbox-group">
-        <%= f.check_box :is_reference, disabled: !admin_user?, class: 'form-control' %>
-        <%= f.label :is_reference, '参照作物（管理者のみ）', class: 'form-label' %>
+    <% if admin_user? %>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <%= f.check_box :is_reference, class: 'form-control' %>
+          <%= f.label :is_reference, '参照作物（管理者のみ）', class: 'form-label' %>
+        </div>
       </div>
-      <% unless admin_user? %>
-        <div class="form-text">参照作物の設定は管理者のみ可能です</div>
-      <% end %>
-    </div>
+    <% end %>
 
     <div class="form-section">
       <h3 class="section-title">生育ステージ</h3>
