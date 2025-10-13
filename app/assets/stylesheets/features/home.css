@@ -187,6 +187,13 @@
   opacity: 0.95;
 }
 
+.cta-buttons {
+  display: flex;
+  gap: var(--space-5);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ============================================
    Footer
    ============================================ */
@@ -219,6 +226,10 @@
 
 .footer-link:hover {
   color: var(--color-white);
+}
+
+.footer-copyright {
+  color: #666;
 }
 
 /* ============================================

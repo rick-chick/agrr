@@ -38,7 +38,7 @@
       <button type="button" id="ai-save-crop-btn" class="btn btn-ai" data-controller="crop-ai">
         🤖 AIで作物情報を取得・保存
       </button>
-      <div id="ai-save-status" class="form-text" style="display: none;"></div>
+      <div id="ai-save-status" class="form-text d-none"></div>
       <div class="form-text">作物名を入力してボタンをクリックすると、AIが面積・収益などの情報を自動的に取得して保存します</div>
     </div>
 
@@ -70,7 +70,7 @@
 
     <div class="actions">
       <%= f.submit class: 'btn btn-success' %>
-      <%= link_to 'キャンセル', @crop.persisted? ? crop_path(@crop) : crops_path, class: 'btn' %>
+      <%= link_to 'キャンセル', @crop.persisted? ? crop_path(@crop) : crops_path, class: 'btn btn-secondary' %>
     </div>
   <% end %>
 </div>

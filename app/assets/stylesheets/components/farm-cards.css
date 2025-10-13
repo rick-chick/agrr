@@ -1,0 +1,163 @@
+/* ============================================
+   Farm Cards Component
+   Created: 2025-01-27
+   Purpose: 農場カードのスタイル定義
+   ============================================ */
+
+/* ============================================
+   Farm Card Layout
+   ============================================ */
+
+.farm-card {
+  background: var(--bg-card);
+  border: var(--border-width-1) solid var(--border-color-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.farm-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.farm-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
+}
+
+.farm-coordinates {
+  background: var(--color-gray-50);
+  padding: var(--space-3);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.farm-info {
+  margin-bottom: var(--space-5);
+}
+
+.farm-info p {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.farm-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Farm Actions - Button Layout
+   ============================================ */
+
+.farm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Button_to フォームのスタイル調整 */
+.farm-actions form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+.farm-actions form button {
+  margin: 0;
+}
+
+/* ============================================
+   Weather Status
+   ============================================ */
+
+.weather-status {
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.weather-status-success {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+}
+
+.weather-status-fetching {
+  background: var(--color-warning-light);
+  color: var(--color-warning-dark);
+}
+
+.weather-status-failed {
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+}
+
+.weather-status-pending {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  transition: width var(--transition-slow);
+}
+
+/* Messages */
+.info-message {
+  color: var(--color-info);
+  font-style: italic;
+}
+
+.error-message {
+  color: var(--color-error);
+  font-style: italic;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .farm-card {
+    padding: var(--space-4);
+  }
+  
+  .farm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .farm-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .farm-name {
+    font-size: var(--font-size-lg);
+  }
+  
+  .farm-coordinates {
+    font-size: var(--font-size-xs);
+    padding: var(--space-2);
+  }
+}

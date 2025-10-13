@@ -101,7 +101,7 @@
       ログイン不要で作付け計画を試せます。<br>
       より高度な機能をご利用の場合は、アカウント登録をお願いします。
     </p>
-    <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+    <div class="cta-buttons">
       <%= link_to "無料で計画を作成", public_plans_path, class: "hero-button" %>
       <% unless logged_in? %>
         <%= link_to "アカウント登録", auth_login_path, class: "hero-button hero-button-outline" %>
@@ -116,7 +116,7 @@
         <%= link_to "ホーム", root_path, class: "footer-link" %>
         <%= link_to "作付け計画作成", public_plans_path, class: "footer-link" %>
       </div>
-      <p style="color: #666;">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
+      <p class="footer-copyright">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
     </div>
   </footer>
 </body>

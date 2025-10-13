@@ -1,0 +1,110 @@
+/* ============================================
+   Card Components
+   Created: 2025-01-27
+   Purpose: 各種カードコンポーネントの共通スタイル
+   ============================================ */
+
+/* ============================================
+   Generic Card Layout
+   ============================================ */
+
+.field-card,
+.crop-card {
+  background: var(--bg-card);
+  border: var(--border-width-1) solid var(--border-color-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.field-card:hover,
+.crop-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.field-name,
+.crop-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
+}
+
+/* ============================================
+   Card Actions - Button Layout
+   ============================================ */
+
+.field-actions,
+.crop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Button_to フォームのスタイル調整 */
+.field-actions form,
+.crop-actions form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+.field-actions form button,
+.crop-actions form button {
+  margin: 0;
+}
+
+/* ============================================
+   Card Type Indicators
+   ============================================ */
+
+.crop-type {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  display: inline-block;
+}
+
+.crop-type.reference {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+}
+
+.crop-type.user {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .field-card,
+  .crop-card {
+    padding: var(--space-4);
+  }
+  
+  .field-actions,
+  .crop-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .field-actions .btn,
+  .crop-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .field-name,
+  .crop-name {
+    font-size: var(--font-size-base);
+  }
+}

@@ -3,7 +3,7 @@
     <h4 class="nested-title">生育ステージ</h4>
     <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
     <% if !local_assigns[:crop]&.is_reference || admin_user? %>
-      <button type="button" class="btn btn-danger btn-sm remove-crop-stage">削除</button>
+      <button type="button" class="btn btn-error btn-sm remove-crop-stage">削除</button>
     <% end %>
   </div>
 
