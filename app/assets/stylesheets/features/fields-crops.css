@@ -47,6 +47,13 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-6);
+  /* breadcrumbがない場合、同等のスペースを確保 */
+  margin-top: calc(var(--font-size-sm) * 1.5 + var(--space-4));
+}
+
+/* breadcrumbがある場合は上部マージンをリセット */
+.breadcrumb + .page-header {
+  margin-top: 0;
 }
 
 .page-title {
