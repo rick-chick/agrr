@@ -11,20 +11,35 @@ module Agrr
     private
     
     def execute_command(*args, parse_json: true)
-      Rails.logger.debug "🔧 [AGRR] Executing: #{args.join(' ')}"
+      Rails.logger.info "🔧 [AGRR] Executing: #{args.join(' ')}"
       
       stdout, stderr, status = Open3.capture3(*args)
       
-      # stderrがあればログに出力（エラーでなくても）
+      # 実行結果を常に詳細ログ出力
+      Rails.logger.info "📊 [AGRR] Exit code: #{status.exitstatus}"
+      
+      if stdout.present?
+        Rails.logger.info "📝 [AGRR] stdout (#{stdout.bytesize} bytes): #{stdout.first(500)}#{stdout.bytesize > 500 ? '...' : ''}"
+      else
+        Rails.logger.info "📝 [AGRR] stdout: (empty)"
+      end
+      
       if stderr.present?
-        Rails.logger.info "📝 [AGRR] stderr: #{stderr}"
+        Rails.logger.warn "⚠️ [AGRR] stderr (#{stderr.bytesize} bytes): #{stderr}"
+      else
+        Rails.logger.info "📝 [AGRR] stderr: (empty)"
+      end
+      
+      # Exit code 0でもstdoutがエラーメッセージの場合はエラーとして扱う
+      if stdout.present? && stdout.strip.start_with?('Error', '❌')
+        Rails.logger.error "❌ [AGRR] Command returned error message in stdout (exit code: #{status.exitstatus})"
+        error_message = stdout.lines.first&.strip || stdout
+        raise ExecutionError, "Command returned error: #{error_message}"
       end
       
       unless status.success?
         Rails.logger.error "❌ [AGRR] Command failed (exit code: #{status.exitstatus})"
-        Rails.logger.error "stderr: #{stderr}"
-        Rails.logger.error "stdout: #{stdout}" if stdout.present?
-        raise ExecutionError, stderr
+        raise ExecutionError, "Command failed (exit #{status.exitstatus}): #{stderr.presence || stdout.presence || 'Unknown error'}"
       end
       
       return stdout unless parse_json
@@ -32,7 +47,12 @@ module Agrr
       JSON.parse(stdout)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ [AGRR] Failed to parse JSON: #{e.message}"
-      Rails.logger.error "stdout: #{stdout&.first(500)}"
+      Rails.logger.error "stdout (first 500 chars): #{stdout&.first(500)}"
+      # stdoutにエラーメッセージが含まれている場合は、より分かりやすいエラーを投げる
+      if stdout&.include?('Error')
+        error_line = stdout.lines.first&.strip || stdout
+        raise ParseError, "Command returned error instead of JSON: #{error_line}"
+      end
       raise ParseError, "Failed to parse JSON: #{e.message}"
     end
     
