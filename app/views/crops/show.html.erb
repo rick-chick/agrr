@@ -35,11 +35,14 @@
       </div>
     <% end %>
     
-    <% if @crop.groups.present? && @crop.groups.any? %>
-      <div class="info-item">
-        <span class="info-label">🏷️ グループ:</span>
-        <span class="info-value"><%= @crop.groups.join(', ') %></span>
-      </div>
+    <% if @crop.groups.present? %>
+      <% groups_array = @crop.groups.is_a?(Array) ? @crop.groups : [@crop.groups] %>
+      <% if groups_array.any? %>
+        <div class="info-item">
+          <span class="info-label">🏷️ グループ:</span>
+          <span class="info-value"><%= groups_array.join(', ') %></span>
+        </div>
+      <% end %>
     <% end %>
     
     <div class="info-item">
