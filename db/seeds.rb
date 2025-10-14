@@ -290,50 +290,50 @@ end
 
 puts "✅ Created #{field_count} sample fields"
 
-# Interaction Rules（作物相互作用ルール - 連作障害）
+# Interaction Rules（作物相互作用ルール - 連作）
 puts "Creating interaction rules (continuous cultivation)..."
 
 # 参照作物のgroupsから科を抽出してユニークな科のリストを作成
 unique_families = Crop.reference.pluck(:groups).flatten.compact.uniq.sort
 
-# 連作障害の影響度を科ごとに定義（一般的な農業知識に基づく）
+# 連作の影響度を科ごとに定義（一般的な農業知識に基づく）
 # impact_ratio: 1.0未満は収益減少、値が小さいほど障害が強い
 continuous_cultivation_impacts = {
   "ナス科" => {
     impact_ratio: 0.6,
-    description: "ナス科の連作障害（非常に強い、収益40%減少）- トマト、ナス、ジャガイモ、ピーマンなど"
+    description: "ナス科の連作（非常に強い、収益40%減少）- トマト、ナス、ジャガイモ、ピーマンなど"
   },
   "ウリ科" => {
     impact_ratio: 0.65,
-    description: "ウリ科の連作障害（非常に強い、収益35%減少）- キュウリ、カボチャ、スイカ、メロンなど"
+    description: "ウリ科の連作（非常に強い、収益35%減少）- キュウリ、カボチャ、スイカ、メロンなど"
   },
   "アブラナ科" => {
     impact_ratio: 0.75,
-    description: "アブラナ科の連作障害（強い、収益25%減少）- キャベツ、白菜、大根、ブロッコリーなど"
+    description: "アブラナ科の連作（強い、収益25%減少）- キャベツ、白菜、大根、ブロッコリーなど"
   },
   "キク科" => {
     impact_ratio: 0.75,
-    description: "キク科の連作障害（強い、収益25%減少）- レタス、ゴボウ、春菊など"
+    description: "キク科の連作（強い、収益25%減少）- レタス、ゴボウ、春菊など"
   },
   "セリ科" => {
     impact_ratio: 0.8,
-    description: "セリ科の連作障害（中程度、収益20%減少）- ニンジン、セロリ、パセリ、三つ葉など"
+    description: "セリ科の連作（中程度、収益20%減少）- ニンジン、セロリ、パセリ、三つ葉など"
   },
   "ネギ科" => {
     impact_ratio: 0.85,
-    description: "ネギ科の連作障害（軽い、収益15%減少）- 玉ねぎ、長ネギ、ニラ、ニンニクなど"
+    description: "ネギ科の連作（軽い、収益15%減少）- 玉ねぎ、長ネギ、ニラ、ニンニクなど"
   },
   "ヒユ科" => {
     impact_ratio: 0.9,
-    description: "ヒユ科の連作障害（軽い、収益10%減少）- ほうれん草、ビートなど"
+    description: "ヒユ科の連作（軽い、収益10%減少）- ほうれん草、ビートなど"
   },
   "イネ科" => {
     impact_ratio: 0.95,
-    description: "イネ科の連作障害（ほとんどなし、収益5%減少）- とうもろこし、麦、イネなど"
+    description: "イネ科の連作（ほとんどなし、収益5%減少）- とうもろこし、麦、イネなど"
   }
 }
 
-# 実際に存在する科に対してのみ連作障害ルールを作成
+# 実際に存在する科に対してのみ連作ルールを作成
 interaction_rules_data = []
 unique_families.each do |family|
   if continuous_cultivation_impacts.key?(family)
@@ -348,7 +348,7 @@ unique_families.each do |family|
       description: impact[:description]
     }
   else
-    # 定義されていない科は中程度の連作障害として扱う
+    # 定義されていない科は中程度の連作として扱う
     interaction_rules_data << {
       rule_type: "continuous_cultivation",
       source_group: family,
@@ -356,7 +356,7 @@ unique_families.each do |family|
       impact_ratio: 0.8,
       is_directional: true,
       is_reference: true,
-      description: "#{family}の連作障害（中程度、収益20%減少）"
+      description: "#{family}の連作（中程度、収益20%減少）"
     }
   end
 end
