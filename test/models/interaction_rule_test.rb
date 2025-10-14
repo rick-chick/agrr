@@ -68,33 +68,33 @@ class InteractionRuleTest < ActiveSupport::TestCase
 
   test "should allow is_directional to be false" do
     rule = InteractionRule.create!(
-      rule_type: "companion_planting",
+      rule_type: "continuous_cultivation",
       source_group: "Solanaceae",
-      target_group: "Lamiaceae",
-      impact_ratio: 1.15,
+      target_group: "Solanaceae",
+      impact_ratio: 0.7,
       is_directional: false,
-      description: "Tomato and basil companion planting"
+      description: "Bidirectional continuous cultivation penalty"
     )
     assert_equal false, rule.is_directional
   end
 
   test "should accept valid impact_ratio values" do
     rule = InteractionRule.create!(
-      rule_type: "beneficial_rotation",
-      source_group: "Fabaceae",
-      target_group: "Poaceae",
-      impact_ratio: 1.2
+      rule_type: "continuous_cultivation",
+      source_group: "Solanaceae",
+      target_group: "Solanaceae",
+      impact_ratio: 0.6
     )
-    assert_equal 1.2, rule.impact_ratio
+    assert_equal 0.6, rule.impact_ratio
   end
 
   test "should accept zero impact_ratio" do
     rule = InteractionRule.create!(
-      rule_type: "allelopathy",
-      source_group: "Juglandaceae",
-      target_group: "other_plants",
+      rule_type: "continuous_cultivation",
+      source_group: "Solanaceae",
+      target_group: "Solanaceae",
       impact_ratio: 0.0,
-      description: "Walnut prevents cultivation"
+      description: "Severe continuous cultivation prevents cultivation"
     )
     assert rule.valid?
     assert_equal 0.0, rule.impact_ratio
@@ -125,21 +125,21 @@ class InteractionRuleTest < ActiveSupport::TestCase
 
   test "should persist all attributes after reload" do
     rule = InteractionRule.create!(
-      rule_type: "soil_compatibility",
-      source_group: "field_001",
-      target_group: "Fabaceae",
-      impact_ratio: 1.2,
+      rule_type: "continuous_cultivation",
+      source_group: "Solanaceae",
+      target_group: "Solanaceae",
+      impact_ratio: 0.65,
       is_directional: true,
-      description: "Field 001 is suitable for legumes"
+      description: "Continuous cultivation penalty for Solanaceae"
     )
     
     rule.reload
-    assert_equal "soil_compatibility", rule.rule_type
-    assert_equal "field_001", rule.source_group
-    assert_equal "Fabaceae", rule.target_group
-    assert_equal 1.2, rule.impact_ratio
+    assert_equal "continuous_cultivation", rule.rule_type
+    assert_equal "Solanaceae", rule.source_group
+    assert_equal "Solanaceae", rule.target_group
+    assert_equal 0.65, rule.impact_ratio
     assert_equal true, rule.is_directional
-    assert_equal "Field 001 is suitable for legumes", rule.description
+    assert_equal "Continuous cultivation penalty for Solanaceae", rule.description
   end
 
   test "should update attributes" do
@@ -179,19 +179,21 @@ class InteractionRuleTest < ActiveSupport::TestCase
     assert_equal "Continuous cultivation penalty", json["description"]
   end
 
-  test "should handle multiple rules with same groups but different types" do
+  test "should handle multiple rules with same type and groups" do
     rule1 = InteractionRule.create!(
       rule_type: "continuous_cultivation",
       source_group: "Solanaceae",
       target_group: "Solanaceae",
-      impact_ratio: 0.7
+      impact_ratio: 0.7,
+      description: "Standard continuous cultivation penalty"
     )
     
     rule2 = InteractionRule.create!(
-      rule_type: "allelopathy",
+      rule_type: "continuous_cultivation",
       source_group: "Solanaceae",
       target_group: "Solanaceae",
-      impact_ratio: 0.9
+      impact_ratio: 0.6,
+      description: "Severe continuous cultivation penalty"
     )
     
     assert_not_equal rule1.id, rule2.id
