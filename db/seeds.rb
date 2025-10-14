@@ -181,6 +181,7 @@ if crop_fixture_path.exist?
   crop_fixture.each do |crop_name, crop_data|
     crop = Crop.find_or_create_by!(name: crop_name, variety: crop_data['variety'], is_reference: true) do |c|
       c.user_id = nil
+      c.groups = crop_data['groups']
       c.area_per_unit = crop_data['area_per_unit']
       c.revenue_per_area = crop_data['revenue_per_area']
     end
