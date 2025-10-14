@@ -5,19 +5,21 @@ module Agrr
     def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil)
       Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{variety}"
       
+      # Cropモデルは必須
+      unless crop
+        raise ArgumentError, "crop parameter is required for optimization"
+      end
+      
       field_config = build_field_config(field_area, daily_fixed_cost)
       Rails.logger.info "📊 [AGRR] Field config: #{field_config.to_json}"
       
       weather_file = write_temp_file(weather_data, prefix: 'weather')
       field_file = write_temp_file(field_config, prefix: 'field')
-      crop_req_file = nil
       
-      # Cropモデルが指定されている場合、crop-requirement-file を作成
-      if crop
-        crop_requirement = crop.to_agrr_requirement
-        crop_req_file = write_temp_file(crop_requirement, prefix: 'crop_requirement')
-        Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
-      end
+      # Cropモデルから作物プロファイルを生成
+      crop_requirement = crop.to_agrr_requirement
+      crop_file = write_temp_file(crop_requirement, prefix: 'crop_profile')
+      Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
       
       # デバッグ用にファイルを保存（本番環境以外のみ）
       unless Rails.env.production?
@@ -25,37 +27,27 @@ module Agrr
         FileUtils.mkdir_p(debug_dir)
         debug_weather_path = debug_dir.join("optimization_weather_#{Time.current.to_i}.json")
         debug_field_path = debug_dir.join("optimization_field_#{Time.current.to_i}.json")
+        debug_crop_path = debug_dir.join("optimization_crop_#{Time.current.to_i}.json")
         FileUtils.cp(weather_file.path, debug_weather_path)
         FileUtils.cp(field_file.path, debug_field_path)
+        FileUtils.cp(crop_file.path, debug_crop_path)
         Rails.logger.info "📁 [AGRR] Debug weather saved to: #{debug_weather_path}"
         Rails.logger.info "📁 [AGRR] Debug field saved to: #{debug_field_path}"
-        
-        if crop_req_file
-          debug_crop_req_path = debug_dir.join("optimization_crop_requirement_#{Time.current.to_i}.json")
-          FileUtils.cp(crop_req_file.path, debug_crop_req_path)
-          Rails.logger.info "📁 [AGRR] Debug crop requirement saved to: #{debug_crop_req_path}"
-        end
+        Rails.logger.info "📁 [AGRR] Debug crop saved to: #{debug_crop_path}"
       end
       
       begin
         command_args = [
           agrr_path,
-          'optimize-period',
           'optimize',
-          '--crop', crop_name,
-          '--variety', variety.to_s,
+          'period',
+          '--crop-file', crop_file.path,
           '--evaluation-start', evaluation_start.to_s,
           '--evaluation-end', evaluation_end.to_s,
           '--weather-file', weather_file.path,
-          '--field-config', field_file.path
+          '--field-file', field_file.path,
+          '--format', 'json'
         ]
-        
-        # crop-requirement-file オプションを追加
-        if crop_req_file
-          command_args += ['--crop-requirement-file', crop_req_file.path]
-        end
-        
-        command_args += ['--format', 'json']
         
         result = execute_command(*command_args)
         
@@ -68,10 +60,8 @@ module Agrr
         weather_file.unlink
         field_file.close
         field_file.unlink
-        if crop_req_file
-          crop_req_file.close
-          crop_req_file.unlink
-        end
+        crop_file.close
+        crop_file.unlink
       end
     end
     

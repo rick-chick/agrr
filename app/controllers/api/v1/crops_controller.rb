@@ -25,13 +25,22 @@ module Api
           Rails.logger.info "🤖 [AI Crop] Querying crop info for: #{crop_name}"
           crop_info = fetch_crop_info_from_agrr(crop_name)
 
-          unless crop_info['success']
-            return render json: { error: '作物情報の取得に失敗しました' }, status: :unprocessable_entity
+          # エラーチェック（エラー時は success: false が返る）
+          if crop_info['success'] == false
+            error_msg = crop_info['error'] || '作物情報の取得に失敗しました'
+            return render json: { error: error_msg }, status: :unprocessable_entity
           end
 
-          data = crop_info['data']
-          agrr_crop_id = data['crop_id']  # agrrが返すcrop_id
-          Rails.logger.info "📊 [AI Crop] Retrieved data: agrr_id=#{agrr_crop_id}, area=#{data['area_per_unit']}, revenue=#{data['revenue_per_area']}, stages=#{data['stages']&.count || 0}"
+          # 正常時は crop と stage_requirements がトップレベルに存在
+          crop_data = crop_info['crop']
+          stage_requirements = crop_info['stage_requirements']
+          
+          unless crop_data
+            return render json: { error: '作物情報が不正な形式です' }, status: :unprocessable_entity
+          end
+          
+          agrr_crop_id = crop_data['crop_id']  # agrrが返すcrop_id
+          Rails.logger.info "📊 [AI Crop] Retrieved data: agrr_id=#{agrr_crop_id}, area=#{crop_data['area_per_unit']}, revenue=#{crop_data['revenue_per_area']}, stages=#{stage_requirements&.count || 0}"
 
           # 2. agrr_crop_idで作物を探す（最優先、ユーザー作物のみ）
           if agrr_crop_id.present?
@@ -51,15 +60,15 @@ module Api
             
             existing_crop.update!(
               agrr_crop_id: agrr_crop_id,  # agrr_crop_idを保存/更新
-              variety: variety.present? ? variety : (data['variety'] || existing_crop.variety),
-              area_per_unit: data['area_per_unit'],
-              revenue_per_area: data['revenue_per_area']
+              variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
+              area_per_unit: crop_data['area_per_unit'],
+              revenue_per_area: crop_data['revenue_per_area']
             )
             
             # 既存のステージを削除して新しいステージを保存
             existing_crop.crop_stages.destroy_all
-            if data['stages'].present?
-              saved_stages = save_crop_stages(existing_crop.id, data['stages'])
+            if stage_requirements.present?
+              saved_stages = save_crop_stages(existing_crop.id, stage_requirements)
               Rails.logger.info "🌱 [AI Crop] Updated #{saved_stages} stages for crop##{existing_crop.id}"
             end
             
@@ -70,7 +79,7 @@ module Api
               variety: existing_crop.variety,
               area_per_unit: existing_crop.area_per_unit,
               revenue_per_area: existing_crop.revenue_per_area,
-              stages_count: data['stages']&.count || 0,
+              stages_count: stage_requirements&.count || 0,
               is_reference: existing_crop.is_reference,
               message: "作物「#{existing_crop.name}」を最新情報で更新しました"
             }, status: :ok
@@ -84,9 +93,9 @@ module Api
           attrs = {
             user_id: user_id,
             name: crop_name,
-            variety: variety || data['variety'],
-            area_per_unit: data['area_per_unit'],
-            revenue_per_area: data['revenue_per_area'],
+            variety: variety || crop_data['variety'],
+            area_per_unit: crop_data['area_per_unit'],
+            revenue_per_area: crop_data['revenue_per_area'],
             is_reference: is_reference,
             agrr_crop_id: agrr_crop_id  # agrr_crop_idを保存
           }
@@ -98,8 +107,8 @@ module Api
             Rails.logger.info "✅ [AI Crop] Created crop##{crop_entity.id}: #{crop_entity.name}"
 
             # 4. 生育ステージも保存
-            if data['stages'].present?
-              saved_stages = save_crop_stages(crop_entity.id, data['stages'])
+            if stage_requirements.present?
+              saved_stages = save_crop_stages(crop_entity.id, stage_requirements)
               Rails.logger.info "🌱 [AI Crop] Saved #{saved_stages} stages for crop##{crop_entity.id}"
             end
 
@@ -110,7 +119,7 @@ module Api
               variety: crop_entity.variety,
               area_per_unit: crop_entity.area_per_unit,
               revenue_per_area: crop_entity.revenue_per_area,
-              stages_count: data['stages']&.count || 0,
+              stages_count: stage_requirements&.count || 0,
               message: "AIで作物「#{crop_entity.name}」の情報を取得して作成しました"
             }, status: :created
           else
@@ -137,7 +146,6 @@ module Api
         command = [
           agrr_path,
           'crop',
-          'crop',
           '--query', crop_name,
           '--json'
         ]
@@ -158,11 +166,19 @@ module Api
         parsed_data = JSON.parse(stdout)
 
         # データ構造を検証
-        Rails.logger.debug "📊 [AGRR Crop Data] success: #{parsed_data['success']}"
-        Rails.logger.debug "📊 [AGRR Crop Data] crop_name: #{parsed_data.dig('data', 'crop_name')}"
-        Rails.logger.debug "📊 [AGRR Crop Data] area_per_unit: #{parsed_data.dig('data', 'area_per_unit')}"
-        Rails.logger.debug "📊 [AGRR Crop Data] revenue_per_area: #{parsed_data.dig('data', 'revenue_per_area')}"
-        Rails.logger.debug "📊 [AGRR Crop Data] stages_count: #{parsed_data.dig('data', 'stages')&.count || 0}"
+        if parsed_data['success'] == false
+          # エラーレスポンスの場合
+          Rails.logger.error "📊 [AGRR Crop Error] #{parsed_data['error']} (code: #{parsed_data['code']})"
+        else
+          # 正常レスポンスの場合
+          crop_data = parsed_data['crop']
+          stage_requirements = parsed_data['stage_requirements']
+          Rails.logger.debug "📊 [AGRR Crop Data] crop_id: #{crop_data&.dig('crop_id')}"
+          Rails.logger.debug "📊 [AGRR Crop Data] name: #{crop_data&.dig('name')}"
+          Rails.logger.debug "📊 [AGRR Crop Data] area_per_unit: #{crop_data&.dig('area_per_unit')}"
+          Rails.logger.debug "📊 [AGRR Crop Data] revenue_per_area: #{crop_data&.dig('revenue_per_area')}"
+          Rails.logger.debug "📊 [AGRR Crop Data] stages_count: #{stage_requirements&.count || 0}"
+        end
 
         parsed_data
       end
@@ -171,17 +187,20 @@ module Api
       def save_crop_stages(crop_id, stages_data)
         saved_count = 0
         
-        stages_data.each do |stage_data|
+        stages_data.each do |stage_requirement|
+          # stage_requirementの構造: { "stage": {...}, "temperature": {...}, "thermal": {...}, "sunshine": {...} }
+          stage_info = stage_requirement['stage']
+          
           # CropStageを作成
           stage = ::CropStage.create!(
             crop_id: crop_id,
-            name: stage_data['name'],
-            order: stage_data['order']
+            name: stage_info['name'],
+            order: stage_info['order']
           )
           
           # 温度要件を作成
-          if stage_data['temperature'].present?
-            temp_data = stage_data['temperature']
+          if stage_requirement['temperature'].present?
+            temp_data = stage_requirement['temperature']
             ::TemperatureRequirement.create!(
               crop_stage_id: stage.id,
               base_temperature: temp_data['base_temperature'],
@@ -195,8 +214,8 @@ module Api
           end
           
           # 日照要件を作成
-          if stage_data['sunshine'].present?
-            sunshine_data = stage_data['sunshine']
+          if stage_requirement['sunshine'].present?
+            sunshine_data = stage_requirement['sunshine']
             ::SunshineRequirement.create!(
               crop_stage_id: stage.id,
               minimum_sunshine_hours: sunshine_data['minimum_sunshine_hours'],
@@ -205,8 +224,8 @@ module Api
           end
           
           # 熱量要件を作成
-          if stage_data['thermal'].present?
-            thermal_data = stage_data['thermal']
+          if stage_requirement['thermal'].present?
+            thermal_data = stage_requirement['thermal']
             ::ThermalRequirement.create!(
               crop_stage_id: stage.id,
               required_gdd: thermal_data['required_gdd']

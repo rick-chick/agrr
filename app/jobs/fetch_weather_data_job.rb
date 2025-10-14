@@ -86,13 +86,14 @@ class FetchWeatherDataJob < ApplicationJob
     # agrrコマンドを実行して気象データを取得
     weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     
-    unless weather_data['success']
-      error_message = weather_data['error'] || 'Unknown error from weather API'
-      raise StandardError, "Weather API returned unsuccessful response: #{error_message}"
+    # データが空でないことを確認
+    unless weather_data && weather_data['data']&.any?
+      error_message = 'No weather data returned from agrr command'
+      raise StandardError, "Weather API returned empty data: #{error_message}"
     end
 
     # WeatherLocationを作成または取得
-    location_data = weather_data['data']['location']
+    location_data = weather_data['location']
     weather_location = WeatherLocation.find_or_create_by_coordinates(
       latitude: location_data['latitude'],
       longitude: location_data['longitude'],
@@ -112,7 +113,7 @@ class FetchWeatherDataJob < ApplicationJob
     # 気象データをバッチ保存（upsert_allで一括処理）
     all_records = []
     
-    weather_data['data']['data'].each_with_index do |daily_data, index|
+    weather_data['data'].each_with_index do |daily_data, index|
       date = Date.parse(daily_data['time'])
       
       record_attrs = {
@@ -178,6 +179,7 @@ class FetchWeatherDataJob < ApplicationJob
       '--location', "#{latitude},#{longitude}",
       '--start-date', start_date.to_s,
       '--end-date', end_date.to_s,
+      '--data-source', 'jma',
       '--json'
     ]
 
@@ -197,10 +199,10 @@ class FetchWeatherDataJob < ApplicationJob
     parsed_data = JSON.parse(stdout)
     
     # データ構造を検証
-    Rails.logger.debug "📊 [AGRR Data] success: #{parsed_data['success']}"
-    Rails.logger.debug "📊 [AGRR Data] data_count: #{parsed_data.dig('data', 'data')&.count || 0}"
-    if parsed_data.dig('data', 'data')&.any?
-      first_record = parsed_data['data']['data'].first
+    Rails.logger.debug "📊 [AGRR Data] data_count: #{parsed_data['data']&.count || 0}"
+    Rails.logger.debug "📊 [AGRR Data] location: #{parsed_data['location']&.slice('latitude', 'longitude')}"
+    if parsed_data['data']&.any?
+      first_record = parsed_data['data'].first
       Rails.logger.debug "📊 [AGRR Sample] First record: #{first_record.inspect}"
     end
     

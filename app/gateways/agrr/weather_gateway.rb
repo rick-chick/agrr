@@ -10,6 +10,7 @@ module Agrr
         'weather',
         '--location', "#{latitude},#{longitude}",
         '--days', days.to_s,
+        '--data-source', 'jma',
         '--json'
       )
       

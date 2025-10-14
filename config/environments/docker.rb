@@ -65,8 +65,11 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
 
-  # Uncomment if you wish to allow Action Cable access from any origin.
-  # config.action_cable.disable_request_forgery_protection = true
+  # ActionCable configuration for Docker WebSocket
+  config.action_cable.url = "ws://localhost:3000/cable"
+  config.action_cable.mount_path = "/cable"
+  config.action_cable.allowed_request_origins = [/.*/] # Docker環境では全て許可
+  config.action_cable.disable_request_forgery_protection = false
 
   # Raise error when a before_action's only/except options reference missing actions (Rails 6.1 doesn't have this)
   # config.action_controller.raise_on_missing_callback_actions = true
