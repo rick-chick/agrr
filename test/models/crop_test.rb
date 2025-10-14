@@ -395,4 +395,95 @@ class CropTest < ActiveSupport::TestCase
     assert_match /invalid base_temperature/, error.message
     assert_match /-5.0/, error.message
   end
+
+  # グループ機能のテスト
+  test "should save crop with empty groups by default" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    assert_equal [], crop.groups
+  end
+
+  test "should save crop with single group" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["穀物"]
+    )
+    
+    assert_equal ["穀物"], crop.groups
+  end
+
+  test "should save crop with multiple groups" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["穀物", "水田作物", "主食"]
+    )
+    
+    assert_equal ["穀物", "水田作物", "主食"], crop.groups
+  end
+
+  test "should persist groups after reload" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["穀物", "水田作物"]
+    )
+    
+    crop.reload
+    assert_equal ["穀物", "水田作物"], crop.groups
+  end
+
+  test "should update groups" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["穀物"]
+    )
+    
+    crop.update!(groups: ["穀物", "水田作物", "主食"])
+    assert_equal ["穀物", "水田作物", "主食"], crop.groups
+  end
+
+  test "should clear groups when set to empty array" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["穀物", "水田作物"]
+    )
+    
+    crop.update!(groups: [])
+    assert_equal [], crop.groups
+  end
+
+  test "should include groups in to_agrr_requirement" do
+    crop = Crop.create!(
+      name: "rice",
+      variety: "Koshihikari",
+      user_id: @user.id,
+      is_reference: false,
+      groups: ["grain", "paddy"]
+    )
+    
+    stage = crop.crop_stages.create!(name: "germination", order: 1)
+    stage.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage.create_thermal_requirement!(required_gdd: 200.0)
+    
+    result = crop.to_agrr_requirement
+    
+    assert_equal ["grain", "paddy"], result['crop']['groups']
+  end
 end

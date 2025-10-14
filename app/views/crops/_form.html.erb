@@ -35,6 +35,12 @@
     </div>
 
     <div class="form-group">
+      <%= f.label :groups, 'グループ', class: 'form-label' %>
+      <%= f.text_field :groups, value: @crop.groups.join(', '), class: 'form-control', placeholder: '例: 穀物, 水田作物, 主食' %>
+      <div class="form-text">作物のグループをカンマ区切りで入力してください（任意）</div>
+    </div>
+
+    <div class="form-group">
       <button type="button" id="ai-save-crop-btn" class="btn btn-ai" data-controller="crop-ai">
         🤖 AIで作物情報を取得・保存
       </button>

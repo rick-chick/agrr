@@ -62,7 +62,8 @@ module Api
               agrr_crop_id: agrr_crop_id,  # agrr_crop_idを保存/更新
               variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
               area_per_unit: crop_data['area_per_unit'],
-              revenue_per_area: crop_data['revenue_per_area']
+              revenue_per_area: crop_data['revenue_per_area'],
+              groups: crop_data['groups'] || []
             )
             
             # 既存のステージを削除して新しいステージを保存
@@ -97,7 +98,8 @@ module Api
             area_per_unit: crop_data['area_per_unit'],
             revenue_per_area: crop_data['revenue_per_area'],
             is_reference: is_reference,
-            agrr_crop_id: agrr_crop_id  # agrr_crop_idを保存
+            agrr_crop_id: agrr_crop_id,  # agrr_crop_idを保存
+            groups: crop_data['groups'] || []
           }
 
           result = @create_interactor.call(attrs)
