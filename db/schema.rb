@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_15_072038) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
     t.float "area_per_unit"
     t.float "revenue_per_area"
     t.string "agrr_crop_id"
+    t.text "groups"
     t.index ["agrr_crop_id"], name: "index_crops_on_agrr_crop_id"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
@@ -97,6 +98,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
     t.datetime "updated_at", null: false
     t.string "optimization_phase"
     t.text "optimization_phase_message"
+    t.date "planning_start_date"
+    t.date "planning_end_date"
     t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
     t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
     t.index ["status"], name: "index_cultivation_plans_on_status"
@@ -186,6 +189,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
     t.index ["farm_size_id"], name: "index_free_crop_plans_on_farm_size_id"
     t.index ["session_id"], name: "index_free_crop_plans_on_session_id"
     t.index ["status"], name: "index_free_crop_plans_on_status"
+  end
+
+  create_table "interaction_rules", force: :cascade do |t|
+    t.string "rule_type", null: false
+    t.string "source_group", null: false
+    t.string "target_group", null: false
+    t.decimal "impact_ratio", precision: 5, scale: 2, null: false
+    t.boolean "is_directional", default: true, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.boolean "is_reference", default: false, null: false
+    t.index ["is_reference"], name: "index_interaction_rules_on_is_reference"
+    t.index ["rule_type", "source_group", "target_group"], name: "index_interaction_rules_on_type_and_groups"
+    t.index ["rule_type"], name: "index_interaction_rules_on_rule_type"
+    t.index ["source_group"], name: "index_interaction_rules_on_source_group"
+    t.index ["target_group"], name: "index_interaction_rules_on_target_group"
+    t.index ["user_id", "is_reference"], name: "index_interaction_rules_on_user_id_and_is_reference"
+    t.index ["user_id"], name: "index_interaction_rules_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -330,6 +353,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
     t.float "sterility_risk_threshold"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "max_temperature"
     t.index ["crop_stage_id"], name: "index_temperature_requirements_on_crop_stage_id"
   end
 
@@ -397,6 +421,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
   add_foreign_key "free_crop_plans", "crops"
   add_foreign_key "free_crop_plans", "farm_sizes"
   add_foreign_key "free_crop_plans", "farms"
+  add_foreign_key "interaction_rules", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"

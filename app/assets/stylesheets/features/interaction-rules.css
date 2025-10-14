@@ -1,0 +1,270 @@
+/* ============================================
+   Interaction Rules Feature
+   Created: 2025-10-15
+   Purpose: 連作ルール管理画面のスタイル
+   Note: インラインスタイルを排除し、デザインシステムに準拠
+   ============================================ */
+
+/* ============================================
+   Rules Section
+   ============================================ */
+
+.rules-section {
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================
+   Rules Table
+   ============================================ */
+
+.rules-table {
+  overflow-x: auto;
+  margin-bottom: var(--space-6);
+}
+
+.rules-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.rules-table thead {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.rules-table th,
+.rules-table td {
+  padding: var(--space-4);
+  text-align: left;
+  border-bottom: var(--border-width-1) solid var(--border-color-light);
+}
+
+.rules-table th {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.rules-table td {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.rules-table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.rules-table tbody tr:hover {
+  background: var(--color-gray-50);
+}
+
+.rules-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rules-table td:last-child {
+  white-space: nowrap;
+}
+
+/* ============================================
+   Rule Detail Card
+   ============================================ */
+
+.rule-detail-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.detail-row {
+  display: flex;
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width-1) solid var(--border-color-light);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  flex: 0 0 200px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.detail-value {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+/* ============================================
+   Badge Components
+   ============================================ */
+
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.badge-info {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+}
+
+.badge-success {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+}
+
+/* ============================================
+   Text Utilities (Specific to Rules)
+   ============================================ */
+
+.text-muted {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   Form Components (Rules-specific)
+   ============================================ */
+
+.form-check {
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+}
+
+.form-check-input {
+  margin-right: var(--space-2);
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.form-check-label {
+  font-weight: var(--font-weight-normal);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+/* ============================================
+   Alert Components
+   ============================================ */
+
+.alert {
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-radius: var(--radius-md);
+  border: var(--border-width-1) solid transparent;
+}
+
+.alert-danger {
+  background: #fee;
+  border-color: #fcc;
+  color: #c33;
+}
+
+.alert h3 {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.alert ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.alert ul li {
+  margin-bottom: var(--space-1);
+}
+
+/* ============================================
+   Form Actions
+   ============================================ */
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .rules-table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .rules-table th,
+  .rules-table td {
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    padding: var(--space-4) 0;
+  }
+  
+  .detail-label {
+    flex: none;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .detail-value {
+    font-size: var(--font-size-sm);
+  }
+  
+  .rule-detail-card {
+    padding: var(--space-4);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .form-actions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .rules-table th,
+  .rules-table td {
+    padding: var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  /* 操作列のボタンを縦並びに */
+  .rules-table td:last-child {
+    white-space: normal;
+  }
+  
+  .rules-table td:last-child .btn {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--space-1);
+  }
+  
+  .rules-table td:last-child .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+

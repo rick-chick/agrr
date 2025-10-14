@@ -1,0 +1,84 @@
+<% content_for :title, "ルール詳細 - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title">ルール詳細</h1>
+  <div>
+    <% if @interaction_rule.is_reference %>
+      <% if admin_user? %>
+        <%= link_to "編集", edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
+      <% end %>
+    <% else %>
+      <%= link_to "編集", edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
+      <%= link_to "削除", interaction_rule_path(@interaction_rule), 
+                  class: "btn btn-error", 
+                  data: { 
+                    turbo_method: :delete,
+                    turbo_confirm: "このルールを削除しますか？"
+                  } %>
+    <% end %>
+    <%= link_to "一覧に戻る", interaction_rules_path, class: "btn btn-ghost" %>
+  </div>
+</div>
+
+<div class="rule-detail-card">
+  <% if admin_user? && @interaction_rule.is_reference %>
+    <div class="mb-4">
+      <span class="badge badge-info">システム標準ルール</span>
+    </div>
+  <% end %>
+  
+  <div class="detail-row">
+    <div class="detail-label">ルール種類</div>
+    <div class="detail-value"><%= @interaction_rule.rule_type %></div>
+  </div>
+
+  <div class="detail-row">
+    <div class="detail-label">影響元グループ</div>
+    <div class="detail-value"><%= @interaction_rule.source_group %></div>
+  </div>
+
+  <div class="detail-row">
+    <div class="detail-label">影響先グループ</div>
+    <div class="detail-value"><%= @interaction_rule.target_group %></div>
+  </div>
+
+  <div class="detail-row">
+    <div class="detail-label">影響係数</div>
+    <div class="detail-value">
+      <%= @interaction_rule.impact_ratio %>
+      <span class="text-muted">
+        <% if @interaction_rule.impact_ratio < 1 %>
+          (<%= ((1 - @interaction_rule.impact_ratio) * 100).round %>%減少)
+        <% elsif @interaction_rule.impact_ratio > 1 %>
+          (+<%= ((@interaction_rule.impact_ratio - 1) * 100).round %>%増加)
+        <% else %>
+          (影響なし)
+        <% end %>
+      </span>
+    </div>
+  </div>
+
+  <div class="detail-row">
+    <div class="detail-label">方向性</div>
+    <div class="detail-value">
+      <%= @interaction_rule.is_directional ? '方向性あり (→)' : '双方向 (↔)' %>
+    </div>
+  </div>
+
+  <% if @interaction_rule.description.present? %>
+    <div class="detail-row">
+      <div class="detail-label">説明</div>
+      <div class="detail-value"><%= @interaction_rule.description %></div>
+    </div>
+  <% end %>
+
+  <div class="detail-row">
+    <div class="detail-label">作成日時</div>
+    <div class="detail-value"><%= l(@interaction_rule.created_at, format: :long) %></div>
+  </div>
+
+  <div class="detail-row">
+    <div class="detail-label">更新日時</div>
+    <div class="detail-value"><%= l(@interaction_rule.updated_at, format: :long) %></div>
+  </div>
+</div>

@@ -35,6 +35,9 @@ Rails.application.routes.draw do
   # Crops (HTML) routes
   resources :crops
 
+  # Interaction Rules (連作ルール) routes
+  resources :interaction_rules
+
   # Public Plans (公開作付け計画 - 認証不要) routes
   resources :public_plans, only: [:create] do
     collection do
