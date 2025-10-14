@@ -26,11 +26,17 @@ class Crop < ApplicationRecord
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
 
   # groupsをJSON配列としてシリアライズ
+  # Temporarily use coder: JSON only (without type: Array) to allow data migration
   serialize :groups, coder: JSON
 
   # デフォルト値を設定
   after_initialize do
-    self.groups ||= []
+    # Handle both String and Array cases during migration
+    if groups.is_a?(String)
+      self.groups = [groups]
+    else
+      self.groups ||= []
+    end
   end
 
   validates :name, presence: true
