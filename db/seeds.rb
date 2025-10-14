@@ -251,38 +251,10 @@ if crop_fixture_path.exist?
   
   puts "✅ Created #{Crop.reference.count} reference crops with AI data"
   puts "   Total crop stages: #{CropStage.joins(:crop).where(crops: { is_reference: true }).count}"
-  
 else
-  # フィクスチャファイルがない場合、基本情報のみ作成
-  puts "⚠️  Crop fixture not found. Creating crops without AI data."
+  puts "⚠️  Crop fixture not found at #{crop_fixture_path}"
   puts "   Run 'bin/fetch_reference_crop_info' to generate fixture with complete crop information."
-  
-  reference_crops = [
-    { name: 'トマト', variety: '大玉', is_reference: true },
-    { name: 'ジャガイモ', variety: '男爵', is_reference: true },
-    { name: '玉ねぎ', variety: '黄玉ねぎ', is_reference: true },
-    { name: 'キャベツ', variety: '春キャベツ', is_reference: true },
-    { name: 'ニンジン', variety: '五寸ニンジン', is_reference: true },
-    { name: 'レタス', variety: '結球レタス', is_reference: true },
-    { name: 'ほうれん草', variety: '一般', is_reference: true },
-    { name: 'ナス', variety: '千両二号', is_reference: true },
-    { name: 'キュウリ', variety: '白イボ', is_reference: true },
-    { name: 'ピーマン', variety: '京みどり', is_reference: true },
-    { name: '大根', variety: '青首大根', is_reference: true },
-    { name: 'ブロッコリー', variety: '一般', is_reference: true },
-    { name: '白菜', variety: '結球白菜', is_reference: true },
-    { name: 'とうもろこし', variety: 'スイートコーン', is_reference: true },
-    { name: 'かぼちゃ', variety: '西洋かぼちゃ', is_reference: true }
-  ]
-  
-  reference_crops.each do |crop_data|
-    Crop.find_or_create_by!(name: crop_data[:name], variety: crop_data[:variety], is_reference: true) do |crop|
-      crop.user_id = nil
-      crop.is_reference = crop_data[:is_reference]
-    end
-  end
-  
-  puts "✅ Created #{Crop.reference.count} reference crops (basic info only)"
+  puts "   Skipping reference crop creation."
 end
 
 # Fields（圃場）
