@@ -4,7 +4,7 @@
 #
 # Attributes:
 #   rule_type: ルールタイプ（必須）
-#     - continuous_cultivation: 連作障害
+#     - continuous_cultivation: 連作
 #     - beneficial_rotation: 有益な輪作
 #     - companion_planting: コンパニオンプランツ
 #     - allelopathy: アレロパシー（他感作用）
@@ -25,7 +25,7 @@
 #   is_reference: 参照ルールフラグ
 #
 # is_reference フラグについて:
-#   - true: システムが提供する参照用ルール（標準の連作障害・輪作効果など）
+#   - true: システムが提供する参照用ルール（標準の連作・輪作効果など）
 #     - 管理者のみが管理画面で表示・編集可能
 #     - 一般ユーザーからは見えない（作付け計画時に自動適用）
 #     - user_idはnull（システム所有）
