@@ -365,8 +365,8 @@
 }
 
 .weather-status-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--color-warning-light);
+  color: var(--color-warning-dark);
 }
 
 .weather-status-fetching {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_13_033141) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_13_072347) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -95,6 +95,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_13_033141) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "optimization_phase"
+    t.text "optimization_phase_message"
     t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
     t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
     t.index ["status"], name: "index_cultivation_plans_on_status"

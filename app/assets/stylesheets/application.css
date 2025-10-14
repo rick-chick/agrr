@@ -63,9 +63,9 @@
 }
 
 .alert-warning {
-  background-color: #fff3cd;
-  border-color: #ffeaa7;
-  color: #856404;
+  background-color: var(--color-warning-light);
+  border-color: var(--color-warning);
+  color: var(--color-warning-dark);
 }
 
 .alert-danger,
@@ -147,7 +147,7 @@
 
 /* Debug Info Box */
 .debug-box {
-  background: #fff3cd;
+  background: var(--color-warning-light);
   padding: var(--space-4);
   margin-bottom: var(--space-4);
   border-radius: var(--radius-base);

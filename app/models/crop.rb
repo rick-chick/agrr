@@ -33,48 +33,73 @@ class Crop < ApplicationRecord
   scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
 
-  # agrr CLI の crop-requirement-file フォーマットに変換
+  # agrr CLI の crop-requirement-file フォーマットに変換（新形式）
   # @return [Hash] agrr CLI が期待する作物要件のハッシュ
-  # @raise [StandardError] base_temperature が未設定または0の場合
+  # @raise [StandardError] 必須データが未設定の場合
   def to_agrr_requirement
     # crop_stagesをorderでソート
-    sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement).order(:order)
+    sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement).order(:order)
     
     # 生育ステージが未設定の場合はエラー
     if sorted_stages.empty?
       raise StandardError, "Crop '#{name}' has no growth stages. Please add growth stages with temperature and thermal requirements."
     end
     
-    # 最初のステージの base_temperature を取得（全ステージで共通と仮定）
-    base_temp = sorted_stages.first&.temperature_requirement&.base_temperature
-    
-    # base_temperature が未設定または0の場合はエラー
-    if base_temp.nil? || base_temp <= 0
-      raise StandardError, "Crop '#{name}' has invalid base_temperature (#{base_temp}). Please set a valid base_temperature (> 0) in the first growth stage."
+    # stage_requirements 配列を構築（新形式）
+    stage_requirements = sorted_stages.map do |stage|
+      temp_req = stage.temperature_requirement
+      thermal_req = stage.thermal_requirement
+      sunshine_req = stage.sunshine_requirement
+      
+      # 必須チェック
+      unless temp_req && thermal_req
+        raise StandardError, "Crop '#{name}' stage '#{stage.name}' is missing required temperature or thermal requirements."
+      end
+      
+      stage_hash = {
+        'stage' => {
+          'name' => stage.name,
+          'order' => stage.order
+        },
+        'temperature' => {
+          'base_temperature' => temp_req.base_temperature,
+          'optimal_min' => temp_req.optimal_min,
+          'optimal_max' => temp_req.optimal_max,
+          'low_stress_threshold' => temp_req.low_stress_threshold,
+          'high_stress_threshold' => temp_req.high_stress_threshold,
+          'frost_threshold' => temp_req.frost_threshold
+        },
+        'thermal' => {
+          'required_gdd' => thermal_req.required_gdd
+        }
+      }
+      
+      # 日照要件がある場合のみ追加
+      if sunshine_req
+        stage_hash['sunshine'] = {
+          'minimum_sunshine_hours' => sunshine_req.minimum_sunshine_hours,
+          'target_sunshine_hours' => sunshine_req.target_sunshine_hours
+        }
+      end
+      
+      stage_hash
     end
     
     # 全ステージの required_gdd を合計
     total_gdd = sorted_stages.sum { |stage| stage.thermal_requirement&.required_gdd || 0.0 }
     
-    # stages 配列を構築
-    stages_array = sorted_stages.map do |stage|
-      temp_req = stage.temperature_requirement
-      thermal_req = stage.thermal_requirement
-      
-      {
-        name: stage.name,
-        gdd_requirement: thermal_req&.required_gdd || 0.0,
-        optimal_temp_min: temp_req&.optimal_min,
-        optimal_temp_max: temp_req&.optimal_max
-      }.compact # nil値を除去
-    end
-    
+    # crop情報を構築
     {
-      crop_name: name,
-      variety: variety || "",
-      base_temperature: base_temp,
-      gdd_requirement: total_gdd,
-      stages: stages_array
+      'crop' => {
+        'crop_id' => agrr_crop_id || name.downcase.gsub(/\s+/, '_'),
+        'name' => name,
+        'variety' => variety || 'general',
+        'area_per_unit' => area_per_unit || 0.25,
+        'revenue_per_area' => revenue_per_area || 5000.0,
+        'max_revenue' => (revenue_per_area || 5000.0) * 100,  # 仮の最大収益
+        'groups' => []  # グループ情報は将来的に追加
+      },
+      'stage_requirements' => stage_requirements
     }
   end
 end

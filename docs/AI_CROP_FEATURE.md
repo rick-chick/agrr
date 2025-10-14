@@ -62,7 +62,7 @@ POST /api/v1/crops/ai_create
 
 #### 処理フロー
 1. 作物名を受け取る
-2. `agrr crop crop --query "作物名" --json` を実行
+2. `agrr crop --query "作物名" --json` を実行
 3. 取得したJSONをパース（`crop_id`, `area_per_unit`, `revenue_per_area`, `stages`）
 4. **agrr_crop_idで既存作物を検索**
    - 見つかった → **更新**（参照作物でもユーザー作物でも）
@@ -88,7 +88,7 @@ stdout, stderr, status = Open3.capture3(*command)
 #### ログ出力（更新の場合）
 ```
 🤖 [AI Crop] Querying crop info for: トマト
-🔧 [AGRR Crop Query] /app/lib/core/agrr crop crop --query トマト --json
+🔧 [AGRR Crop Query] /app/lib/core/agrr crop --query トマト --json
 📥 [AGRR Crop Output] {"success": true, "data": {...}}
 📊 [AGRR Crop Data] Retrieved data: agrr_id=トマト, area=0.2, revenue=1500.0, stages=4
 🔄 [AI Crop] Existing crop found: トマト (DB_ID: 14, agrr_id: トマト, is_reference: true)
@@ -99,7 +99,7 @@ stdout, stderr, status = Open3.capture3(*command)
 #### ログ出力（新規作成の場合）
 ```
 🤖 [AI Crop] Querying crop info for: ピーマン
-🔧 [AGRR Crop Query] /app/lib/core/agrr crop crop --query ピーマン --json
+🔧 [AGRR Crop Query] /app/lib/core/agrr crop --query ピーマン --json
 📊 [AGRR Crop Data] Retrieved data: agrr_id=ピーマン, area=0.15, revenue=800.0, stages=3
 🆕 [AI Crop] Creating new crop: ピーマン (agrr_id: ピーマン)
 ✅ [AI Crop] Created crop#25: ピーマン
@@ -143,7 +143,7 @@ curl -X POST http://localhost:3000/api/v1/crops/ai_create \
 
 ```bash
 # Dockerコンテナ内で実行
-docker-compose exec web /app/lib/core/agrr crop crop --query "トマト" --json
+docker-compose exec web /app/lib/core/agrr crop --query "トマト" --json
 ```
 
 ## 🧪 テスト
@@ -215,7 +215,7 @@ docker-compose logs -f web | grep -E "(AI Crop|AGRR Crop)"
 
 ### agrrコマンドの直接実行
 ```bash
-docker-compose exec web /app/lib/core/agrr crop crop --query "トマト" --json | python3 -m json.tool
+docker-compose exec web /app/lib/core/agrr crop --query "トマト" --json | python3 -m json.tool
 ```
 
 ### Railsコンソールで確認
@@ -261,7 +261,7 @@ JSON::ParserError: unexpected token
 **確認:**
 agrrコマンドの出力を確認
 ```bash
-docker-compose exec web /app/lib/core/agrr crop crop --query "トマト" --json
+docker-compose exec web /app/lib/core/agrr crop --query "トマト" --json
 ```
 
 ### 問題3: データが保存されない

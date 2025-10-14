@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     volumes:
@@ -12,7 +15,7 @@ services:
       - storage_dev_data:/app/storage  # 開発用永続ストレージ
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
-      - /app/tmp
+      # - /app/tmp  # デバッグファイルをホストと共有するためコメントアウト
       - /app/log
       - /app/node_modules
     environment:
@@ -31,6 +34,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app

@@ -315,7 +315,7 @@
 │                      9. 作付け計画の最適化                                     │
 │                      ═══════════════════                                     │
 │                                                                              │
-│                  🎯 agrr optimize-period コマンド                             │
+│                  🎯 agrr optimize period コマンド                             │
 │           (Agrr::OptimizationGateway#optimize)                               │
 │                                                                              │
 │   入力データ：                                                                 │
@@ -580,7 +580,7 @@ merge_weather_data(current_year_formatted, future)
 
 **合計: 284 + 365 = 649日分（約2年分）**
 
-### 9. 作付け最適化: `agrr optimize-period` 🎯
+### 9. 作付け最適化: `agrr optimize period` 🎯
 
 **実装:**
 - `Agrr::OptimizationGateway#optimize`

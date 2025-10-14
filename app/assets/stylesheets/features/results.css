@@ -187,56 +187,6 @@
 }
 
 /* ============================================
-   Advertisement Card
-   ============================================ */
-
-.results-ad-card {
-  background: var(--gradient-warning);
-  border: none;
-  margin-bottom: var(--space-6);
-}
-
-.results-ad-label {
-  text-align: center;
-  color: #856404;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: var(--space-4);
-}
-
-.results-ad-content {
-  background: var(--color-white);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
-}
-
-.results-ad-placeholder {
-  text-align: center;
-  color: var(--text-tertiary);
-}
-
-.results-ad-placeholder-title {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-2);
-}
-
-.results-ad-placeholder-size {
-  font-size: var(--font-size-base);
-}
-
-.results-ad-placeholder-note {
-  margin-top: var(--space-4);
-  font-size: var(--font-size-sm);
-}
-
-/* ============================================
    CTA Card
    ============================================ */
 
@@ -318,10 +268,6 @@
 
   .results-crop-card {
     padding: var(--space-3);
-  }
-
-  .results-ad-content {
-    padding: var(--space-6);
   }
 
   .results-cta-card {
