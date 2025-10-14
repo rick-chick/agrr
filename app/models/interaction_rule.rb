@@ -5,11 +5,8 @@
 # Attributes:
 #   rule_type: ルールタイプ（必須）
 #     - continuous_cultivation: 連作
-#     - beneficial_rotation: 有益な輪作
-#     - companion_planting: コンパニオンプランツ
-#     - allelopathy: アレロパシー（他感作用）
-#     - soil_compatibility: 土壌適合性
-#     - climate_compatibility: 気候適合性
+#     将来的な拡張:
+#     - companion_planting: 混植（コンパニオンプランツ）
 #   source_group: 影響を与える元のグループ名（必須）
 #   target_group: 影響を受ける対象のグループ名（必須）
 #   impact_ratio: 影響係数（必須、0以上の数値）

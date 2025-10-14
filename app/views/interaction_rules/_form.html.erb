@@ -13,12 +13,8 @@
   <div class="form-group">
     <%= form.label :rule_type, "ルール種類", class: "form-label" %>
     <%= form.select :rule_type, [
-      ['連作', 'continuous_cultivation'],
-      ['有益な輪作', 'beneficial_rotation'],
-      ['コンパニオンプランツ', 'companion_planting'],
-      ['アレロパシー', 'allelopathy'],
-      ['土壌適合性', 'soil_compatibility'],
-      ['気候適合性', 'climate_compatibility']
+      ['連作', 'continuous_cultivation']
+      # 将来的な拡張: ['混植', 'companion_planting']
     ], { include_blank: '選択してください' }, { class: "form-control" } %>
   </div>
 
