@@ -33,15 +33,22 @@ class CultivationPlanOptimizer
       # 全フィールドと作物情報を収集
       fields_data, crops_data, field_cultivation_map = prepare_allocation_data(planning_end)
       
+      # interaction_rulesを取得
+      interaction_rules = prepare_interaction_rules
+      
       # 1回のallocate呼び出しで全フィールドを最適化
       Rails.logger.info "🚀 [AGRR] Starting single allocation for #{fields_data.count} fields and #{crops_data.count} crops"
+      if interaction_rules&.any?
+        Rails.logger.info "📋 [AGRR] Using #{interaction_rules.count} interaction rules"
+      end
       
       allocation_result = @allocation_gateway.allocate(
         fields: fields_data,
         crops: crops_data,
         weather_data: weather_info[:data],
         planning_start: planning_start,
-        planning_end: planning_end
+        planning_end: planning_end,
+        interaction_rules: interaction_rules
       )
       
       # 結果を各field_cultivationに分配
@@ -197,6 +204,29 @@ class CultivationPlanOptimizer
       longitude: historical['longitude'],
       data: (historical['data'] || []) + (future['data'] || [])
     }
+  end
+  
+  def prepare_interaction_rules
+    # ユーザーがいる場合はユーザー所有のルールと参照ルールを取得
+    # ユーザーがいない場合（匿名ユーザー）は参照ルールのみを取得
+    rules = if @cultivation_plan.user_id
+      InteractionRule.where(
+        "(user_id = ? AND is_reference = ?) OR is_reference = ?",
+        @cultivation_plan.user_id,
+        false,
+        true
+      )
+    else
+      InteractionRule.reference
+    end
+    
+    # AGRR形式の配列に変換
+    rules_array = InteractionRule.to_agrr_format_array(rules)
+    
+    return nil if rules_array.empty?
+    
+    # AGRR CLIは配列を期待しているので、そのまま返す
+    rules_array
   end
   
   def prepare_allocation_data(evaluation_end)

@@ -2,7 +2,7 @@
 
 module Agrr
   class OptimizationGateway < BaseGateway
-    def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil)
+    def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, interaction_rules: nil)
       Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{variety}"
       
       # Cropモデルは必須
@@ -49,6 +49,18 @@ module Agrr
           '--format', 'json'
         ]
         
+        # オプションのinteraction-rules-fileを追加
+        if interaction_rules
+          rules_file = write_temp_file(interaction_rules, prefix: 'interaction_rules')
+          command_args += ['--interaction-rules-file', rules_file.path]
+          
+          unless Rails.env.production?
+            debug_rules_path = debug_dir.join("optimization_rules_#{Time.current.to_i}.json")
+            FileUtils.cp(rules_file.path, debug_rules_path)
+            Rails.logger.info "📁 [AGRR] Debug rules saved to: #{debug_rules_path}"
+          end
+        end
+        
         result = execute_command(*command_args)
         
         parsed = parse_optimization_result(result)
@@ -62,6 +74,10 @@ module Agrr
         field_file.unlink
         crop_file.close
         crop_file.unlink
+        if interaction_rules && rules_file
+          rules_file.close
+          rules_file.unlink
+        end
       end
     end
     
