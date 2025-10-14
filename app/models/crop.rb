@@ -10,6 +10,7 @@
 #   revenue_per_area: 面積あたりの収益（円/㎡）- 0以上の数値のみ
 #   agrr_crop_id: agrrコマンドから取得した作物ID（更新時の識別に使用）
 #   user_id: 所有ユーザー（参照作物の場合はnull）
+#   groups: 作物グループ（複数の文字列、JSON配列として保存）
 #
 # is_reference フラグについて:
 #   - true: システムが提供する参照用作物
@@ -23,6 +24,14 @@ class Crop < ApplicationRecord
   has_many :crop_stages, dependent: :destroy
 
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
+
+  # groupsをJSON配列としてシリアライズ
+  serialize :groups, coder: JSON
+
+  # デフォルト値を設定
+  after_initialize do
+    self.groups ||= []
+  end
 
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
@@ -67,7 +76,8 @@ class Crop < ApplicationRecord
           'optimal_max' => temp_req.optimal_max,
           'low_stress_threshold' => temp_req.low_stress_threshold,
           'high_stress_threshold' => temp_req.high_stress_threshold,
-          'frost_threshold' => temp_req.frost_threshold
+          'frost_threshold' => temp_req.frost_threshold,
+          'max_temperature' => temp_req.max_temperature
         },
         'thermal' => {
           'required_gdd' => thermal_req.required_gdd
@@ -97,7 +107,7 @@ class Crop < ApplicationRecord
         'area_per_unit' => area_per_unit || 0.25,
         'revenue_per_area' => revenue_per_area || 5000.0,
         'max_revenue' => (revenue_per_area || 5000.0) * 100,  # 仮の最大収益
-        'groups' => []  # グループ情報は将来的に追加
+        'groups' => groups || []
       },
       'stage_requirements' => stage_requirements
     }

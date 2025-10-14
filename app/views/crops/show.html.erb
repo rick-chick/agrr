@@ -35,6 +35,13 @@
       </div>
     <% end %>
     
+    <% if @crop.groups.present? && @crop.groups.any? %>
+      <div class="info-item">
+        <span class="info-label">🏷️ グループ:</span>
+        <span class="info-value"><%= @crop.groups.join(', ') %></span>
+      </div>
+    <% end %>
+    
     <div class="info-item">
       <span class="info-label">📅 作成日:</span>
       <span class="info-value"><%= @crop.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
@@ -66,7 +73,8 @@
                       低ストレス閾値: <%= stage.temperature_requirement.low_stress_threshold %>°C<br>
                       高ストレス閾値: <%= stage.temperature_requirement.high_stress_threshold %>°C<br>
                       霜閾値: <%= stage.temperature_requirement.frost_threshold %>°C<br>
-                      不稔リスク閾値: <%= stage.temperature_requirement.sterility_risk_threshold %>°C
+                      不稔リスク閾値: <%= stage.temperature_requirement.sterility_risk_threshold %>°C<br>
+                      最大限界温度: <%= stage.temperature_requirement.max_temperature %>°C
                     </div>
                   </div>
                 <% end %>

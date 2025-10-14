@@ -40,6 +40,12 @@
       <%= f.label :sterility_risk_threshold, '不稔リスク閾値 (°C)', class: 'form-label' %>
       <%= f.number_field :sterility_risk_threshold, class: 'form-control', step: 0.1, placeholder: '例：35.0' %>
     </div>
+
+    <div class="form-group">
+      <%= f.label :max_temperature, '最大限界温度 (°C)', class: 'form-label' %>
+      <%= f.number_field :max_temperature, class: 'form-control', step: 0.1, placeholder: '例：42.0' %>
+      <small class="form-text text-muted">生育が停止する温度</small>
+    </div>
   </div>
 </div>
 

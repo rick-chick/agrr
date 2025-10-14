@@ -37,6 +37,11 @@ class CropsController < ApplicationController
     @crop.user_id = nil if is_reference
     @crop.user_id ||= current_user.id
 
+    # groupsをカンマ区切りテキストから配列に変換
+    if params.dig(:crop, :groups).is_a?(String)
+      @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
+    end
+
     if @crop.save
       redirect_to @crop, notice: '作物が正常に作成されました。'
     else
@@ -48,6 +53,11 @@ class CropsController < ApplicationController
   def update
     if crop_params.key?(:is_reference) && !admin_user?
       return redirect_to @crop, alert: '参照フラグは管理者のみ変更できます。'
+    end
+
+    # groupsをカンマ区切りテキストから配列に変換
+    if params.dig(:crop, :groups).is_a?(String)
+      @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
     end
 
     if @crop.update(crop_params)
@@ -99,6 +109,7 @@ class CropsController < ApplicationController
       :area_per_unit,
       :revenue_per_area,
       :agrr_crop_id,
+      :groups,
       crop_stages_attributes: [
         :id,
         :name,
@@ -113,6 +124,7 @@ class CropsController < ApplicationController
           :high_stress_threshold,
           :frost_threshold,
           :sterility_risk_threshold,
+          :max_temperature,
           :_destroy
         ],
         sunshine_requirement_attributes: [

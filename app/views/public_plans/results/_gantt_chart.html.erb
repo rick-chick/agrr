@@ -2,9 +2,10 @@
 <%# ガントチャート全体（テーブル構造） %>
 
 <%
-  # 栽培スケジュール期間の計算
-  plan_start_date = Date.current.beginning_of_month  # 今月の1日
-  plan_end_date = Date.new(Date.current.year + 1, 12, 31)  # 来年の12/31
+  # 栽培スケジュール期間の計算（cultivation_planに保存された期間を使用）
+  # フォールバック: 保存された期間がない場合は今日から来年12/31まで
+  plan_start_date = cultivation_plan.planning_start_date || Date.current
+  plan_end_date = cultivation_plan.planning_end_date || Date.new(Date.current.year + 1, 12, 31)
   
   # 表示する年と月の配列を生成
   start_year = plan_start_date.year

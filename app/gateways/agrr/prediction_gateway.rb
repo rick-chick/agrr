@@ -2,8 +2,8 @@
 
 module Agrr
   class PredictionGateway < BaseGateway
-    def predict(historical_data:, days:)
-      Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days"
+    def predict(historical_data:, days:, model: 'lightgbm')
+      Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days using #{model.upcase} model"
       
       # 入力データの検証
       data_count = historical_data.dig('data')&.count || 0
@@ -35,6 +35,7 @@ module Agrr
           '--input', input_file.path,
           '--output', output_file.path,
           '--days', days.to_s,
+          '--model', model,
           parse_json: false
         )
         

@@ -230,8 +230,8 @@
                                     │ JSON data
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      7. ARIMA時系列予測                                       │
-│                      ═══════════════                                         │
+│                      7. LightGBM時系列予測                                    │
+│                      ══════════════════                                      │
 │                                                                              │
 │                  🔮 agrr predict コマンド                                     │
 │           (Agrr::PredictionGateway#predict)                                  │
@@ -239,6 +239,7 @@
 │   入力データ：                                                                 │
 │   ・過去20年分のトレーニングデータ（7,305日分）                                 │
 │   ・予測日数: 365日（来年1年間）                                               │
+│   ・モデル: LightGBM                                                          │
 │                                                                              │
 │   処理：                                                                      │
 │   1. 一時ファイルにJSON書き込み                                                │
@@ -248,11 +249,12 @@
 │      agrr predict \                                                          │
 │        --input /tmp/weather_input_xxx.json \                                 │
 │        --output /tmp/weather_output_xxx.json \                               │
-│        --days 365                                                            │
+│        --days 365 \                                                          │
+│        --model lightgbm                                                      │
 │                                                                              │
-│   3. ARIMAモデルによる予測                                                    │
-│      ・自己回帰和分移動平均モデル                                               │
-│      ・季節性を考慮（SARIMA）                                                  │
+│   3. LightGBMモデルによる予測                                                 │
+│      ・勾配ブースティング決定木                                                 │
+│      ・長期予測に最適（最大1年）                                               │
 │      ・20年分のパターンから学習                                                │
 │      ・来年365日分を予測                                                       │
 │                                                                              │
@@ -520,7 +522,7 @@ current_year_formatted = format_weather_data_for_agrr(weather_location, current_
 - DB形式 → AGRR JSON形式
 - `sunshine_hours`（時間） → `sunshine_duration`（秒）に変換
 
-### 7. ARIMA時系列予測: `agrr predict` 🔮
+### 7. LightGBM時系列予測: `agrr predict` 🔮
 
 **実装:**
 - `Agrr::PredictionGateway#predict`
@@ -530,7 +532,8 @@ current_year_formatted = format_weather_data_for_agrr(weather_location, current_
 ```ruby
 future = prediction_gateway.predict(
   historical_data: training_formatted,  # 20年分のデータ
-  days: 365                             # 来年1年間を予測
+  days: 365,                            # 来年1年間を予測
+  model: 'lightgbm'                     # LightGBMモデルを使用
 )
 ```
 
@@ -539,14 +542,20 @@ future = prediction_gateway.predict(
 agrr predict \
   --input /tmp/weather_input_xxx.json \
   --output /tmp/weather_output_xxx.json \
-  --days 365
+  --days 365 \
+  --model lightgbm
 ```
 
-**ARIMAモデル:**
-- **自己回帰和分移動平均モデル**
-- 季節性を考慮（SARIMA）
+**LightGBMモデル:**
+- **勾配ブースティング決定木**
+- 長期予測に最適（最大1年）
+- 90日以上のデータが必要
 - 過去20年のパターンから学習
 - 来年365日分を予測
+
+**利用可能なモデル:**
+- `arima`: 短期予測（30-90日）に適している
+- `lightgbm`: 長期予測（最大1年）に適している（デフォルト）
 
 **予測データ:**
 - 期間: 2025年10月12日 ～ 2026年10月11日
@@ -661,7 +670,8 @@ curl -X POST http://localhost:3000/api/v1/internal/farms/1/fetch_weather_data
 - 全47地域の初回取得: 約30～45分
 
 ### 予測時間
-- ARIMA予測（365日）: 約5～10秒
+- LightGBM予測（365日）: 約3～8秒
+- ARIMA予測（30～90日）: 約5～10秒
 - 最適化計算: 約10～30秒/作物
 
 ## 🎯 まとめ
@@ -671,7 +681,7 @@ curl -X POST http://localhost:3000/api/v1/internal/farms/1/fetch_weather_data
 1. **信頼性の高いデータソース**: Open-Meteo API（無料・商用可）
 2. **効率的な取得**: バイナリコマンド + バックグラウンドジョブ
 3. **コンパクトな保存**: SQLiteで軽量・高速
-4. **高度な予測**: ARIMA時系列モデル（20年学習）
+4. **高度な予測**: LightGBM時系列モデル（20年学習、長期予測対応）
 5. **実用的な設計**: 今年実データ + 来年予測 = 2年分
 
 これにより、ユーザーは信頼性の高い天気予測データに基づいて、最適な作付け計画を立てることができます。

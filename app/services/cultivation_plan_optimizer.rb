@@ -6,7 +6,7 @@ class CultivationPlanOptimizer
   def initialize(cultivation_plan)
     @cultivation_plan = cultivation_plan
     @prediction_gateway = Agrr::PredictionGateway.new
-    @optimization_gateway = Agrr::OptimizationGateway.new
+    @allocation_gateway = Agrr::AllocationGateway.new
   end
   
   def call
@@ -20,10 +20,32 @@ class CultivationPlanOptimizer
       @current_phase = 'optimizing'
       @cultivation_plan.phase_optimizing!
       
-      field_cultivations = @cultivation_plan.field_cultivations.to_a
-      field_cultivations.each do |field_cultivation|
-        optimize_field_cultivation(field_cultivation, weather_info[:data], weather_info[:available_days])
-      end
+      # 計画期間を設定
+      planning_start = Date.current
+      planning_end = weather_info[:target_end_date]
+      
+      # cultivation_planに計画期間を保存
+      @cultivation_plan.update!(
+        planning_start_date: planning_start,
+        planning_end_date: planning_end
+      )
+      
+      # 全フィールドと作物情報を収集
+      fields_data, crops_data, field_cultivation_map = prepare_allocation_data(planning_end)
+      
+      # 1回のallocate呼び出しで全フィールドを最適化
+      Rails.logger.info "🚀 [AGRR] Starting single allocation for #{fields_data.count} fields and #{crops_data.count} crops"
+      
+      allocation_result = @allocation_gateway.allocate(
+        fields: fields_data,
+        crops: crops_data,
+        weather_data: weather_info[:data],
+        planning_start: planning_start,
+        planning_end: planning_end
+      )
+      
+      # 結果を各field_cultivationに分配
+      distribute_allocation_results(allocation_result, field_cultivation_map)
       
       @cultivation_plan.phase_completed!
       @cultivation_plan.complete!
@@ -62,8 +84,9 @@ class CultivationPlanOptimizer
             "Please run weather data import batch first."
     end
     
-    # 過去20年分の実績データをARIMAモデルのトレーニング用に取得
-    training_start_date = Date.current - 20.years
+    # 過去1年分の実績データをLightGBMモデルのトレーニング用に取得
+    # LightGBMは1年分のデータで季節性パターンを学習可能
+    training_start_date = Date.current - 1.year
     training_end_date = Date.current - 1.day
     training_data = weather_location.weather_data_for_period(training_start_date, training_end_date)
     
@@ -74,6 +97,7 @@ class CultivationPlanOptimizer
     end
     
     # 最低限必要なデータ量をチェック（1年分 = 365日）
+    # LightGBMモデルは1年分のデータで季節性パターンを学習可能
     minimum_required_days = 365
     if training_data.count < minimum_required_days
       raise WeatherDataNotFoundError,
@@ -112,7 +136,8 @@ class CultivationPlanOptimizer
     
     future = @prediction_gateway.predict(
       historical_data: training_formatted,
-      days: prediction_days
+      days: prediction_days,
+      model: 'lightgbm'
     )
     
     Rails.logger.info "✅ [AGRR] Prediction completed for next #{prediction_days} days (until #{target_end_date})"
@@ -129,10 +154,10 @@ class CultivationPlanOptimizer
     
     Rails.logger.info "✅ [AGRR] Total weather data available: #{total_weather_days} days (current year: #{current_year_data.count} + prediction until #{target_end_date}: #{prediction_days})"
     
-    # 気象データ範囲を返す
+    # 気象データと計画期間の終了日を返す
     {
       data: merged_data,
-      available_days: total_weather_days
+      target_end_date: target_end_date
     }
   end
   
@@ -174,58 +199,101 @@ class CultivationPlanOptimizer
     }
   end
   
-  def optimize_field_cultivation(field_cultivation, weather_data, available_days)
-    field_cultivation.start_optimizing!
+  def prepare_allocation_data(evaluation_end)
+    Rails.logger.info "🗓️  [AGRR] Evaluation period: #{Date.current} to #{evaluation_end}"
     
-    crop_info = field_cultivation.crop_info
-    field_info = field_cultivation.field_info
+    field_cultivations = @cultivation_plan.field_cultivations.to_a
+    fields_data = []
+    crops_data = []
+    field_cultivation_map = {}
+    crop_id_map = {}
     
-    # 利用可能な気象データの範囲で評価期間を設定
-    evaluation_end = Date.current + available_days.days
-    
-    Rails.logger.info "🗓️  [AGRR] Evaluation period: #{Date.current} to #{evaluation_end} (#{available_days} days)"
-    
-    # CultivationPlanCropからCropモデルを検索
-    # 名前と品種が一致する参照作物を優先的に検索
-    crop = Crop.find_by(
-      name: crop_info[:name],
-      variety: crop_info[:variety],
-      is_reference: true
-    )
-    
-    # 参照作物が見つからない場合、ユーザーの作物も検索
-    crop ||= Crop.find_by(
-      name: crop_info[:name],
-      variety: crop_info[:variety],
-      user_id: @cultivation_plan.user_id
-    )
-    
-    # Cropモデルが見つからない場合はエラー
-    unless crop
-      error_message = "Crop not found: name='#{crop_info[:name]}', variety='#{crop_info[:variety]}'. " \
-                      "Please register the crop with detailed growth stages in the Crop management page before optimization."
-      Rails.logger.error "❌ [AGRR] #{error_message}"
-      raise StandardError, error_message
+    field_cultivations.each do |fc|
+      fc.start_optimizing!
+      
+      crop_info = fc.crop_info
+      field_info = fc.field_info
+      
+      # Cropモデルを検索
+      crop = Crop.find_by(
+        name: crop_info[:name],
+        variety: crop_info[:variety],
+        is_reference: true
+      )
+      
+      crop ||= Crop.find_by(
+        name: crop_info[:name],
+        variety: crop_info[:variety],
+        user_id: @cultivation_plan.user_id
+      )
+      
+      unless crop
+        error_message = "Crop not found: name='#{crop_info[:name]}', variety='#{crop_info[:variety]}'. " \
+                        "Please register the crop with detailed growth stages in the Crop management page before optimization."
+        Rails.logger.error "❌ [AGRR] #{error_message}"
+        raise StandardError, error_message
+      end
+      
+      Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
+      
+      # フィールドデータを作成
+      field_id = "field_#{fc.id}"
+      fields_data << {
+        'field_id' => field_id,
+        'name' => field_info[:name],
+        'area' => fc.area,
+        'daily_fixed_cost' => field_info[:daily_fixed_cost]
+      }
+      
+      # 作物データを作成（重複を避ける）
+      crop_key = "#{crop_info[:name]}_#{crop_info[:variety]}"
+      unless crop_id_map[crop_key]
+        crop_requirement = crop.to_agrr_requirement
+        crops_data << crop_requirement
+        crop_id_map[crop_key] = crop_requirement['crop']['crop_id']
+      end
+      
+      # マッピング情報を保存
+      field_cultivation_map[field_id] = {
+        field_cultivation: fc,
+        crop_id: crop_id_map[crop_key]
+      }
     end
     
-    Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
+    [fields_data, crops_data, field_cultivation_map]
+  end
+  
+  def distribute_allocation_results(allocation_result, field_cultivation_map)
+    field_schedules = allocation_result[:field_schedules] || []
     
-    result = @optimization_gateway.optimize(
-      crop_name: crop_info[:name],
-      variety: crop_info[:variety] || 'general',
-      weather_data: weather_data,
-      field_area: field_cultivation.area,
-      daily_fixed_cost: field_info[:daily_fixed_cost],
-      evaluation_start: Date.current,
-      evaluation_end: evaluation_end,
-      crop: crop  # Cropモデルを渡す（必須）
-    )
-    
-    field_cultivation.complete_with_result!(result)
-  rescue StandardError => e
-    Rails.logger.error "❌ FieldCultivation ##{field_cultivation.id} optimization failed: #{e.message}"
-    field_cultivation.fail_with_error!(e.message)
-    raise
+    field_schedules.each do |schedule|
+      field_id = schedule['field_id']
+      map_entry = field_cultivation_map[field_id]
+      next unless map_entry
+      
+      fc = map_entry[:field_cultivation]
+      
+      # スケジュールが空の場合
+      if schedule['schedules'].blank?
+        fc.fail_with_error!('No optimal schedule found')
+        next
+      end
+      
+      # 最初のスケジュールを使用（複数ある場合は最適なもの）
+      best_schedule = schedule['schedules'].first
+      
+      result = {
+        start_date: Date.parse(best_schedule['start_date']),
+        completion_date: Date.parse(best_schedule['completion_date']),
+        days: best_schedule['growth_days'],
+        cost: best_schedule['total_cost'],
+        gdd: best_schedule['gdd'],
+        raw: best_schedule
+      }
+      
+      fc.complete_with_result!(result)
+      Rails.logger.info "✅ [AGRR] FieldCultivation ##{fc.id} completed: #{result[:start_date]} - #{result[:completion_date]}"
+    end
   end
 end
 

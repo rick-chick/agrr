@@ -24,7 +24,8 @@ module Adapters
             is_reference: crop_data.fetch(:is_reference, false),
             area_per_unit: crop_data[:area_per_unit],
             revenue_per_area: crop_data[:revenue_per_area],
-            agrr_crop_id: crop_data[:agrr_crop_id]
+            agrr_crop_id: crop_data[:agrr_crop_id],
+            groups: crop_data[:groups] || []
           )
           entity_from_record(record)
         end
@@ -38,6 +39,7 @@ module Adapters
           update_attributes[:area_per_unit] = crop_data[:area_per_unit] if crop_data.key?(:area_per_unit)
           update_attributes[:revenue_per_area] = crop_data[:revenue_per_area] if crop_data.key?(:revenue_per_area)
           update_attributes[:agrr_crop_id] = crop_data[:agrr_crop_id] if crop_data.key?(:agrr_crop_id)
+          update_attributes[:groups] = crop_data[:groups] if crop_data.key?(:groups)
           record.update!(update_attributes)
           entity_from_record(record.reload)
         end
@@ -91,6 +93,7 @@ module Adapters
             area_per_unit: record.area_per_unit,
             revenue_per_area: record.revenue_per_area,
             agrr_crop_id: record.agrr_crop_id,
+            groups: record.groups,
             created_at: record.created_at,
             updated_at: record.updated_at
           ).tap do |entity|
