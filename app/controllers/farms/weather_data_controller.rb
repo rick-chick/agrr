@@ -5,8 +5,13 @@ module Farms
     before_action :set_farm
 
     # GET /farms/:farm_id/weather_data
-    # パラメータ: start_date, end_date (オプション)
+    # パラメータ: start_date, end_date (オプション), predict (オプション)
     def index
+      # 予測モードの場合
+      if params[:predict] == 'true'
+        return predict_weather_data
+      end
+
       # デフォルトで過去1年間のデータを取得
       end_date = params[:end_date]&.to_date || Date.today
       start_date = params[:start_date]&.to_date || (end_date - 1.year)
@@ -90,6 +95,107 @@ module Farms
     end
 
     private
+
+    def predict_weather_data
+      Rails.logger.info "🔮 Weather prediction request for Farm##{@farm.id}"
+      
+      # Farmに関連付けられたWeatherLocationを使用
+      weather_location = @farm.weather_location
+      
+      if weather_location.nil?
+        Rails.logger.warn "⚠️  Farm##{@farm.id} has no weather_location association"
+        weather_location = find_weather_location_for_farm(@farm)
+      end
+      
+      if weather_location.nil?
+        render json: {
+          success: false,
+          message: 'この農場の天気データがまだ取得されていません。'
+        }
+        return
+      end
+      
+      # 過去1年分のデータを取得（予測のための履歴データ）
+      end_date = Date.today
+      start_date = end_date - 1.year
+      
+      historical_data = weather_location.weather_data
+        .where(date: start_date..end_date)
+        .order(:date)
+        .select(:date, :temperature_max, :temperature_min, :temperature_mean, :precipitation)
+      
+      if historical_data.empty?
+        render json: {
+          success: false,
+          message: '予測に必要な履歴データが不足しています。'
+        }
+        return
+      end
+      
+      # 履歴データをPredictionGateway用のフォーマットに変換
+      formatted_data = {
+        'data' => historical_data.map do |datum|
+          {
+            'time' => datum.date.to_s,
+            'temperature_2m_max' => datum.temperature_max,
+            'temperature_2m_min' => datum.temperature_min,
+            'temperature_2m_mean' => datum.temperature_mean,
+            'precipitation_sum' => datum.precipitation || 0.0
+          }
+        end
+      }
+      
+      # 翌1年（365日）を予測
+      days_to_predict = 365
+      prediction_gateway = Agrr::PredictionGateway.new
+      
+      begin
+        prediction_result = prediction_gateway.predict(
+          historical_data: formatted_data,
+          days: days_to_predict,
+          model: 'lightgbm'
+        )
+        
+        # 予測データを整形
+        prediction_data = prediction_result['data'].map do |datum|
+          {
+            date: datum['time'],
+            temperature_max: datum['temperature_2m_max'],
+            temperature_min: datum['temperature_2m_min'],
+            temperature_mean: datum['temperature_2m_mean'],
+            precipitation: datum['precipitation_sum'],
+            is_prediction: true
+          }
+        end
+        
+        # 予測の終了日を計算
+        prediction_end_date = Date.today + days_to_predict.days
+        
+        render json: {
+          success: true,
+          farm: {
+            id: @farm.id,
+            name: @farm.display_name,
+            latitude: @farm.latitude,
+            longitude: @farm.longitude
+          },
+          period: {
+            start_date: Date.today + 1.day,
+            end_date: prediction_end_date
+          },
+          is_prediction: true,
+          data: prediction_data
+        }
+      rescue => e
+        Rails.logger.error "❌ Prediction failed: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        
+        render json: {
+          success: false,
+          message: "予測の実行に失敗しました: #{e.message}"
+        }, status: :internal_server_error
+      end
+    end
 
     def set_farm
       if admin_user?
