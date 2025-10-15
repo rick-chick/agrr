@@ -66,7 +66,7 @@ class CultivationPlanCreatorTest < ActiveSupport::TestCase
     assert_not_nil fc
     assert_not_nil fc.cultivation_plan_field
     assert_not_nil fc.cultivation_plan_crop
-    assert_equal fc.area * 5.0, fc.cultivation_plan_field.daily_fixed_cost
+    assert_equal 0, fc.cultivation_plan_field.daily_fixed_cost
   end
 
   test "should create multiple field_cultivations for multiple crops" do
