@@ -92,6 +92,28 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_match "温度要件", @response.body
   end
 
+  test "show crop with thermal requirement (GDD)" do
+    sign_in_as(@user)
+    crop = Crop.create!(name: "トマト", user_id: @user.id, is_reference: false)
+    
+    # Create a crop stage with thermal requirement
+    stage = crop.crop_stages.create!(
+      name: "育苗期",
+      order: 1
+    )
+    
+    # Create thermal requirement (GDD)
+    stage.create_thermal_requirement!(
+      required_gdd: 800.0
+    )
+    
+    get crop_path(crop)
+    assert_response :success
+    assert_match "育苗期", @response.body
+    assert_match "熱要件（GDD）", @response.body
+    assert_match "800.0", @response.body
+  end
+
   test "edit crop" do
     sign_in_as(@user)
     crop = Crop.create!(name: "稲", user_id: @user.id, is_reference: false)
@@ -108,6 +130,37 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     crop.reload
     assert_equal "米", crop.name
     assert_equal "コシヒカリ", crop.variety
+  end
+
+  test "create crop with thermal requirement (GDD)" do
+    sign_in_as(@user)
+    assert_difference("Crop.count", +1) do
+      assert_difference("CropStage.count", +1) do
+        assert_difference("ThermalRequirement.count", +1) do
+          post crops_path, params: { 
+            crop: { 
+              name: "トマト", 
+              variety: "桃太郎",
+              crop_stages_attributes: {
+                "0" => {
+                  name: "育苗期",
+                  order: 1,
+                  thermal_requirement_attributes: {
+                    required_gdd: 800.0
+                  }
+                }
+              }
+            } 
+          }
+        end
+      end
+    end
+    
+    crop = Crop.last
+    assert_equal "トマト", crop.name
+    stage = crop.crop_stages.first
+    assert_not_nil stage.thermal_requirement
+    assert_equal 800.0, stage.thermal_requirement.required_gdd
   end
 
   test "delete crop" do

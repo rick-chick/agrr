@@ -27,6 +27,13 @@
   </div>
 
   <div class="nested-section">
+    <h5 class="nested-subtitle">🌡️ 熱要件（GDD）</h5>
+    <%= f.fields_for :thermal_requirement do |thermal_form| %>
+      <%= render 'thermal_requirement_fields', f: thermal_form %>
+    <% end %>
+  </div>
+
+  <div class="nested-section">
     <h5 class="nested-subtitle">☀️ 日照要件</h5>
     <%= f.fields_for :sunshine_requirement do |sun_form| %>
       <%= render 'sunshine_requirement_fields', f: sun_form %>
