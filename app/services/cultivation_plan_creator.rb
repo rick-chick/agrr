@@ -78,7 +78,7 @@ class CultivationPlanCreator
   end
   
   def calculate_daily_cost(area)
-    0  # コストなし
+    area * 1.0  # 1円/㎡/日
   end
 end
 

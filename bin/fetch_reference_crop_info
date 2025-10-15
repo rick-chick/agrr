@@ -22,11 +22,11 @@
 require 'fileutils'
 require 'json'
 
-# Railsの環境を読み込む前にnet/httpをロード
+require_relative '../config/environment'
+
+# Railsの環境を読み込んだ後にnet/httpをロード
 require 'net/http'
 require 'uri'
-
-require_relative '../config/environment'
 
 # ログ出力用のカラー定義
 class ColorLogger
@@ -181,6 +181,7 @@ crops.reload.each do |crop|
     is_reference: crop.is_reference,
     area_per_unit: crop.area_per_unit,
     revenue_per_area: crop.revenue_per_area,
+    groups: crop.groups,
     crop_stages: crop.crop_stages.order(:order).map do |stage|
       stage_hash = {
         name: stage.name,

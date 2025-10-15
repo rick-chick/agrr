@@ -186,6 +186,13 @@ if crop_fixture_path.exist?
       c.revenue_per_area = crop_data['revenue_per_area']
     end
     
+    # 既存レコードの場合も、groupsなどの属性を更新
+    crop.update!(
+      groups: crop_data['groups'],
+      area_per_unit: crop_data['area_per_unit'],
+      revenue_per_area: crop_data['revenue_per_area']
+    )
+    
     # CropStagesを作成
     crop_data['crop_stages']&.each do |stage_data|
       stage = crop.crop_stages.find_or_create_by!(order: stage_data['order']) do |s|
