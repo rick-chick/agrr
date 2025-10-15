@@ -40,14 +40,9 @@ Rails.application.configure do
   config.content_security_policy_nonce_directives = %w[script-src]
 end
 
-# Rate limiting configuration (would use rack-attack gem in production)
-Rails.application.config.middleware.insert_before 0, Rack::Attack if Rails.env.production?
-
-# Configure Rack::Attack for rate limiting
-if Rails.env.production?
-  Rails.application.configure do
-    config.middleware.use Rack::Attack
-  end
+# Rate limiting configuration (rack-attack gem in production)
+if defined?(Rack::Attack) && Rails.env.production?
+  Rails.application.config.middleware.insert_before 0, Rack::Attack
 
   # Rate limiting rules
   Rack::Attack.throttle('auth/ip', limit: 5, period: 1.minute) do |req|
