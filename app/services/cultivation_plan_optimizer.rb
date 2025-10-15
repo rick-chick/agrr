@@ -137,7 +137,8 @@ class CultivationPlanOptimizer
     # 次の年の12月31日までの予測データ
     next_year = Date.current.year + 1
     target_end_date = Date.new(next_year, 12, 31)
-    prediction_days = (target_end_date - Date.current).to_i
+    # 両端を含む日数を計算（開始日から終了日まで）
+    prediction_days = (target_end_date - Date.current).to_i + 1
     
     Rails.logger.info "🔮 [AGRR] Predicting weather until #{target_end_date} (#{prediction_days} days)"
     
@@ -170,9 +171,9 @@ class CultivationPlanOptimizer
   
   def format_weather_data_for_agrr(weather_location, weather_data)
     {
-      'latitude' => weather_location.latitude,
-      'longitude' => weather_location.longitude,
-      'elevation' => weather_location.elevation || 0.0,
+      'latitude' => weather_location.latitude.to_f,
+      'longitude' => weather_location.longitude.to_f,
+      'elevation' => (weather_location.elevation || 0.0).to_f,
       'timezone' => weather_location.timezone,
       'data' => weather_data.filter_map do |datum|
         # Skip records with missing temperature data
@@ -181,17 +182,19 @@ class CultivationPlanOptimizer
         # Calculate mean from max/min if missing
         temp_mean = datum.temperature_mean
         if temp_mean.nil?
-          temp_mean = (datum.temperature_max + datum.temperature_min) / 2.0
+          temp_mean = (datum.temperature_max.to_f + datum.temperature_min.to_f) / 2.0
+        else
+          temp_mean = temp_mean.to_f
         end
         
         {
           'time' => datum.date.to_s,
-          'temperature_2m_max' => datum.temperature_max,
-          'temperature_2m_min' => datum.temperature_min,
+          'temperature_2m_max' => datum.temperature_max.to_f,
+          'temperature_2m_min' => datum.temperature_min.to_f,
           'temperature_2m_mean' => temp_mean,
-          'precipitation_sum' => datum.precipitation || 0.0,
-          'sunshine_duration' => datum.sunshine_hours ? datum.sunshine_hours * 3600 : 0.0, # 時間→秒
-          'wind_speed_10m_max' => datum.wind_speed || 0.0,
+          'precipitation_sum' => (datum.precipitation || 0.0).to_f,
+          'sunshine_duration' => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0, # 時間→秒
+          'wind_speed_10m_max' => (datum.wind_speed || 0.0).to_f,
           'weather_code' => datum.weather_code || 0
         }
       end
@@ -292,34 +295,33 @@ class CultivationPlanOptimizer
       }
     end
     
-    # revenue_per_areaの平均を計算（均等配分の基準値）
-    revenue_values = crops_collection.values.map { |crop| crop.revenue_per_area || 5000.0 }
-    average_revenue_per_area = revenue_values.sum / revenue_values.size.to_f
+    # 農場全体の面積と作物数を取得
+    total_area = @cultivation_plan.total_area
+    crop_count = crops_collection.size
     
-    Rails.logger.info "📊 [AGRR] Revenue per area - Average: ¥#{average_revenue_per_area.round(2)}/㎡"
+    Rails.logger.info "📊 [AGRR] Total area: #{total_area}㎡, Crop count: #{crop_count}"
+    Rails.logger.info "📊 [AGRR] Average area per crop: #{(total_area / crop_count.to_f).round(2)}㎡"
     
-    # 第2パス: max_revenueを調整して作物データを作成
+    # 第2パス: max_revenueを各作物ごとに計算して作物データを作成
     crops_collection.each do |crop_key, crop|
       crop_requirement = crop.to_agrr_requirement
       
       # revenue_per_areaを取得（デフォルト値: 5000.0）
       revenue_per_area = crop.revenue_per_area || 5000.0
       
-      # 調整係数を計算: 平均値 / 当該作物の値
-      # 高収益作物は係数が小さく（max_revenueが抑えられる）
-      # 低収益作物は係数が大きく（max_revenueが高くなる）
-      adjustment_factor = average_revenue_per_area / revenue_per_area
-      
-      # 元のmax_revenueに調整係数を適用
+      # 元のmax_revenue
       original_max_revenue = crop_requirement['crop']['max_revenue']
-      adjusted_max_revenue = original_max_revenue * adjustment_factor
+      
+      # max_revenue = (revenue_per_area × total_area) ÷ crop_count
+      # これにより、各作物が平均的に (total_area ÷ crop_count) の面積に制限される
+      adjusted_max_revenue = (revenue_per_area * total_area) / crop_count.to_f
       
       # 調整後の値を設定
       crop_requirement['crop']['max_revenue'] = adjusted_max_revenue
       
       Rails.logger.info "🔧 [AGRR] Crop '#{crop.name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
-                        "adjustment_factor: #{adjustment_factor.round(3)}, " \
-                        "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)}"
+                        "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)} " \
+                        "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡)"
       
       crops_data << crop_requirement
       crop_id_map[crop_key] = crop_requirement['crop']['crop_id']
@@ -344,26 +346,35 @@ class CultivationPlanOptimizer
       
       fc = map_entry[:field_cultivation]
       
-      # スケジュールが空の場合
-      if schedule['schedules'].blank?
+      # allocationsが空の場合
+      if schedule['allocations'].blank?
         fc.fail_with_error!('No optimal schedule found')
         next
       end
       
-      # 最初のスケジュールを使用（複数ある場合は最適なもの）
-      best_schedule = schedule['schedules'].first
+      allocations = schedule['allocations']
+      
+      # 複数のallocationsがある場合は、全期間を結合
+      # 最初の栽培開始日と最後の栽培終了日を使用
+      start_dates = allocations.map { |a| Date.parse(a['start_date']) }
+      end_dates = allocations.map { |a| Date.parse(a['completion_date']) }
+      total_days = allocations.sum { |a| a['growth_days'] }
+      total_cost = allocations.sum { |a| a['total_cost'] }
       
       result = {
-        start_date: Date.parse(best_schedule['start_date']),
-        completion_date: Date.parse(best_schedule['completion_date']),
-        days: best_schedule['growth_days'],
-        cost: best_schedule['total_cost'],
-        gdd: best_schedule['gdd'],
-        raw: best_schedule
+        start_date: start_dates.min,
+        completion_date: end_dates.max,
+        days: total_days,
+        cost: total_cost,
+        raw: {
+          allocations: allocations,
+          allocation_count: allocations.size
+        }
       }
       
       fc.complete_with_result!(result)
-      Rails.logger.info "✅ [AGRR] FieldCultivation ##{fc.id} completed: #{result[:start_date]} - #{result[:completion_date]}"
+      Rails.logger.info "✅ [AGRR] FieldCultivation ##{fc.id} completed: #{allocations.size} allocations, " \
+                        "#{result[:start_date]} - #{result[:completion_date]} (#{total_days} days total)"
     end
   end
 end

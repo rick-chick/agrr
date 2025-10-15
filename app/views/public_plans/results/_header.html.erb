@@ -30,7 +30,7 @@
     <div class="gantt-summary-item">
       <span class="gantt-summary-icon">💰</span>
       <span class="gantt-summary-label">推定総コスト</span>
-      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.field_cultivations.sum(&:estimated_cost).to_i) %></span>
+      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.field_cultivations.sum { |fc| fc.estimated_cost || 0 }.to_i) %></span>
     </div>
   </div>
   

@@ -32,7 +32,7 @@
         class="gantt-cultivation-bar <%= crop_class(field_cultivation.crop_display_name) %>">
       <div class="bar-content">
         <span class="bar-period">
-          <%= field_cultivation.start_date.strftime('%-m/%-d') %> 〜 <%= field_cultivation.completion_date.strftime('%-m/%-d') %>
+          <%= field_cultivation.start_date.strftime('%Y/%-m/%-d') %> 〜 <%= field_cultivation.completion_date.strftime('%Y/%-m/%-d') %>
         </span>
       </div>
     </td>
