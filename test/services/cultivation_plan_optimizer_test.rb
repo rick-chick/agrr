@@ -37,7 +37,8 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
       name: "トマト",
       variety: "桃太郎",
       is_reference: true,
-      area_per_unit: 10.0
+      area_per_unit: 10.0,
+      revenue_per_area: 5000.0
     )
     
     # 作物の生育ステージを作成
@@ -201,6 +202,162 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
     # Cropが見つからない場合、または生育ステージがない場合のエラーメッセージ
     assert_match /(Crop not found|has no growth stages)/, @cultivation_plan.error_message
     assert_match /トマト/, @cultivation_plan.error_message
+  end
+
+  test "should adjust max_revenue based on revenue_per_area for equal area distribution" do
+    # 重複する古い作物を削除（テストデータのクリーンアップ）
+    Crop.where(name: ["トマト", "メロン", "レタス"]).where.not(id: @crop.id).destroy_all
+    
+    # 既存のトマトを確認（setup()で作成済み）
+    @crop.reload
+    assert_equal 2, @crop.crop_stages.count, "Tomato should have 2 growth stages"
+    
+    # データベースに保存されているか確認
+    db_crop = Crop.includes(:crop_stages).find(@crop.id)
+    assert_equal 2, db_crop.crop_stages.count, "Tomato in DB should have 2 growth stages"
+    
+    # 高収益作物を作成（トマトの2倍）
+    high_revenue_crop = Crop.create!(
+      name: "メロン",
+      variety: "プリンス",
+      is_reference: true,
+      area_per_unit: 10.0,
+      revenue_per_area: 10000.0  # トマトの2倍
+    )
+    
+    # 生育ステージを作成
+    stage1 = high_revenue_crop.crop_stages.create!(name: "発芽期", order: 1)
+    stage1.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage1.create_thermal_requirement!(required_gdd: 200.0)
+    
+    stage2 = high_revenue_crop.crop_stages.create!(name: "開花期", order: 2)
+    stage2.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 22.0,
+      optimal_max: 28.0
+    )
+    stage2.create_thermal_requirement!(required_gdd: 800.0)
+    
+    # 低収益作物を作成（トマトの半分）
+    low_revenue_crop = Crop.create!(
+      name: "レタス",
+      variety: "サニー",
+      is_reference: true,
+      area_per_unit: 10.0,
+      revenue_per_area: 2500.0  # トマトの半分
+    )
+    
+    # 生育ステージを作成
+    stage1_low = low_revenue_crop.crop_stages.create!(name: "発芽期", order: 1)
+    stage1_low.create_temperature_requirement!(
+      base_temperature: 5.0,
+      optimal_min: 15.0,
+      optimal_max: 25.0
+    )
+    stage1_low.create_thermal_requirement!(required_gdd: 150.0)
+    
+    stage2_low = low_revenue_crop.crop_stages.create!(name: "成長期", order: 2)
+    stage2_low.create_temperature_requirement!(
+      base_temperature: 5.0,
+      optimal_min: 18.0,
+      optimal_max: 23.0
+    )
+    stage2_low.create_thermal_requirement!(required_gdd: 350.0)
+    
+    # デフォルト収益作物（元々のトマト: 5000.0円/㎡）
+    # revenue_per_areaが未設定なので5000.0がデフォルト値として使われる
+    
+    # 新しい圃場と作物を追加
+    plan_field_high = CultivationPlanField.create!(
+      cultivation_plan: @cultivation_plan,
+      name: "高収益圃場",
+      area: 100.0,
+      daily_fixed_cost: 500.0
+    )
+    
+    plan_crop_high = CultivationPlanCrop.create!(
+      cultivation_plan: @cultivation_plan,
+      name: high_revenue_crop.name,
+      variety: high_revenue_crop.variety
+    )
+    
+    FieldCultivation.create!(
+      cultivation_plan: @cultivation_plan,
+      cultivation_plan_field: plan_field_high,
+      cultivation_plan_crop: plan_crop_high,
+      area: 100.0,
+      status: :pending
+    )
+    
+    plan_field_low = CultivationPlanField.create!(
+      cultivation_plan: @cultivation_plan,
+      name: "低収益圃場",
+      area: 100.0,
+      daily_fixed_cost: 500.0
+    )
+    
+    plan_crop_low = CultivationPlanCrop.create!(
+      cultivation_plan: @cultivation_plan,
+      name: low_revenue_crop.name,
+      variety: low_revenue_crop.variety
+    )
+    
+    FieldCultivation.create!(
+      cultivation_plan: @cultivation_plan,
+      cultivation_plan_field: plan_field_low,
+      cultivation_plan_crop: plan_crop_low,
+      area: 100.0,
+      status: :pending
+    )
+    
+    # prepare_allocation_dataを直接テスト
+    optimizer = CultivationPlanOptimizer.new(@cultivation_plan)
+    fields_data, crops_data, field_cultivation_map = optimizer.send(:prepare_allocation_data, Date.current + 1.year)
+    
+    # 3作物が作成されていることを確認
+    assert_equal 3, crops_data.count
+    
+    # 平均 revenue_per_area = (5000 + 10000 + 2500) / 3 = 5833.33
+    # 調整係数:
+    #   トマト (5000): 5833.33 / 5000 = 1.167
+    #   メロン (10000): 5833.33 / 10000 = 0.583
+    #   レタス (2500): 5833.33 / 2500 = 2.333
+    
+    # 各作物のmax_revenueを確認
+    tomato_crop = crops_data.find { |c| c['crop']['name'] == 'トマト' }
+    melon_crop = crops_data.find { |c| c['crop']['name'] == 'メロン' }
+    lettuce_crop = crops_data.find { |c| c['crop']['name'] == 'レタス' }
+    
+    assert_not_nil tomato_crop
+    assert_not_nil melon_crop
+    assert_not_nil lettuce_crop
+    
+    # max_revenueが調整されていることを確認
+    # 高収益作物（メロン）のmax_revenueが抑えられている
+    # 低収益作物（レタス）のmax_revenueが高くなっている
+    # 調整後のmax_revenueは近い値になるはず
+    
+    tomato_max = tomato_crop['crop']['max_revenue']
+    melon_max = melon_crop['crop']['max_revenue']
+    lettuce_max = lettuce_crop['crop']['max_revenue']
+    
+    # メロンのmax_revenueがトマトより小さいか同程度であることを確認（高収益作物なので抑制）
+    assert melon_max <= tomato_max * 1.2, "High revenue crop (melon) should have suppressed max_revenue"
+    
+    # レタスのmax_revenueがトマトより大きいか同程度であることを確認（低収益作物なので増強）
+    assert lettuce_max >= tomato_max * 0.8, "Low revenue crop (lettuce) should have boosted max_revenue"
+    
+    # 3作物のmax_revenueが比較的近い値になっていることを確認（均等化の効果）
+    max_values = [tomato_max, melon_max, lettuce_max]
+    average_max = max_values.sum / max_values.size.to_f
+    max_values.each do |val|
+      deviation = (val - average_max).abs / average_max
+      assert deviation < 0.5, "max_revenue values should be relatively close (within 50% deviation)"
+    end
   end
 
   private

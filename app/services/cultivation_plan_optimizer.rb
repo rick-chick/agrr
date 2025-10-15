@@ -237,25 +237,29 @@ class CultivationPlanOptimizer
     crops_data = []
     field_cultivation_map = {}
     crop_id_map = {}
+    crops_collection = {}  # 作物の収集用（重複排除 + revenue_per_area計算用）
     
+    # 第1パス: 全作物を収集し、revenue_per_areaを集計
     field_cultivations.each do |fc|
       fc.start_optimizing!
       
       crop_info = fc.crop_info
       field_info = fc.field_info
       
-      # Cropモデルを検索
-      crop = Crop.find_by(
-        name: crop_info[:name],
-        variety: crop_info[:variety],
-        is_reference: true
-      )
+      # Cropモデルを検索（関連データをeager load）
+      crop = Crop.includes(crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement])
+                 .find_by(
+                   name: crop_info[:name],
+                   variety: crop_info[:variety],
+                   is_reference: true
+                 )
       
-      crop ||= Crop.find_by(
-        name: crop_info[:name],
-        variety: crop_info[:variety],
-        user_id: @cultivation_plan.user_id
-      )
+      crop ||= Crop.includes(crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement])
+                   .find_by(
+                     name: crop_info[:name],
+                     variety: crop_info[:variety],
+                     user_id: @cultivation_plan.user_id
+                   )
       
       unless crop
         error_message = "Crop not found: name='#{crop_info[:name]}', variety='#{crop_info[:variety]}'. " \
@@ -275,19 +279,56 @@ class CultivationPlanOptimizer
         'daily_fixed_cost' => field_info[:daily_fixed_cost]
       }
       
-      # 作物データを作成（重複を避ける）
+      # 作物を収集（重複を避ける）
       crop_key = "#{crop_info[:name]}_#{crop_info[:variety]}"
-      unless crop_id_map[crop_key]
-        crop_requirement = crop.to_agrr_requirement
-        crops_data << crop_requirement
-        crop_id_map[crop_key] = crop_requirement['crop']['crop_id']
+      unless crops_collection[crop_key]
+        crops_collection[crop_key] = crop
       end
       
-      # マッピング情報を保存
+      # マッピング情報を保存（crop_idは後で設定）
       field_cultivation_map[field_id] = {
         field_cultivation: fc,
-        crop_id: crop_id_map[crop_key]
+        crop_key: crop_key
       }
+    end
+    
+    # revenue_per_areaの平均を計算（均等配分の基準値）
+    revenue_values = crops_collection.values.map { |crop| crop.revenue_per_area || 5000.0 }
+    average_revenue_per_area = revenue_values.sum / revenue_values.size.to_f
+    
+    Rails.logger.info "📊 [AGRR] Revenue per area - Average: ¥#{average_revenue_per_area.round(2)}/㎡"
+    
+    # 第2パス: max_revenueを調整して作物データを作成
+    crops_collection.each do |crop_key, crop|
+      crop_requirement = crop.to_agrr_requirement
+      
+      # revenue_per_areaを取得（デフォルト値: 5000.0）
+      revenue_per_area = crop.revenue_per_area || 5000.0
+      
+      # 調整係数を計算: 平均値 / 当該作物の値
+      # 高収益作物は係数が小さく（max_revenueが抑えられる）
+      # 低収益作物は係数が大きく（max_revenueが高くなる）
+      adjustment_factor = average_revenue_per_area / revenue_per_area
+      
+      # 元のmax_revenueに調整係数を適用
+      original_max_revenue = crop_requirement['crop']['max_revenue']
+      adjusted_max_revenue = original_max_revenue * adjustment_factor
+      
+      # 調整後の値を設定
+      crop_requirement['crop']['max_revenue'] = adjusted_max_revenue
+      
+      Rails.logger.info "🔧 [AGRR] Crop '#{crop.name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
+                        "adjustment_factor: #{adjustment_factor.round(3)}, " \
+                        "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)}"
+      
+      crops_data << crop_requirement
+      crop_id_map[crop_key] = crop_requirement['crop']['crop_id']
+    end
+    
+    # field_cultivation_mapにcrop_idを設定
+    field_cultivation_map.each do |field_id, map_entry|
+      map_entry[:crop_id] = crop_id_map[map_entry[:crop_key]]
+      map_entry.delete(:crop_key)
     end
     
     [fields_data, crops_data, field_cultivation_map]
