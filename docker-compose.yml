@@ -22,7 +22,7 @@ services:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
       - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
-    command: bash -lc "rm -f /app/tmp/pids/server.pid && bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0"
+    command: bash -lc "rm -f /app/tmp/pids/server.pid && bundle exec rails db:migrate && bundle exec rails db:seed && bundle exec rails server -b 0.0.0.0"
     stdin_open: true
     tty: true
     dns:
