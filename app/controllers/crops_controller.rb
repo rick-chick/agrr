@@ -127,6 +127,11 @@ class CropsController < ApplicationController
           :max_temperature,
           :_destroy
         ],
+        thermal_requirement_attributes: [
+          :id,
+          :required_gdd,
+          :_destroy
+        ],
         sunshine_requirement_attributes: [
           :id,
           :minimum_sunshine_hours,

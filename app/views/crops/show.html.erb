@@ -65,7 +65,7 @@
             <div class="stage-name"><%= stage.name %></div>
             <div class="stage-order">順序: <%= stage.order %></div>
             
-            <% if stage.temperature_requirement || stage.sunshine_requirement %>
+            <% if stage.temperature_requirement || stage.thermal_requirement || stage.sunshine_requirement %>
               <div class="stage-requirements">
                 <% if stage.temperature_requirement %>
                   <div class="requirement-item">
@@ -78,6 +78,15 @@
                       霜閾値: <%= stage.temperature_requirement.frost_threshold %>°C<br>
                       不稔リスク閾値: <%= stage.temperature_requirement.sterility_risk_threshold %>°C<br>
                       最大限界温度: <%= stage.temperature_requirement.max_temperature %>°C
+                    </div>
+                  </div>
+                <% end %>
+                
+                <% if stage.thermal_requirement %>
+                  <div class="requirement-item">
+                    <div class="requirement-label">🌡️ 熱要件（GDD）</div>
+                    <div class="requirement-value">
+                      必要積算温度: <%= stage.thermal_requirement.required_gdd %>°C・日
                     </div>
                   </div>
                 <% end %>

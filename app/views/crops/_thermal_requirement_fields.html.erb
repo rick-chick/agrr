@@ -1,0 +1,12 @@
+<div class="nested-fields">
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :required_gdd, '必要積算温度 (GDD, °C・日)', class: 'form-label' %>
+      <%= f.number_field :required_gdd, class: 'form-control', step: 0.1, placeholder: '例：800.0' %>
+      <div class="form-text">
+        このステージに必要な生育度日（Growing Degree Days）を入力してください。
+      </div>
+    </div>
+  </div>
+</div>
+
