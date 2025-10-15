@@ -44,7 +44,9 @@ module Agrr
       
       return stdout unless parse_json
       
-      JSON.parse(stdout)
+      # AGRR CLIが警告メッセージをstdoutに出力する場合があるので、JSONの部分だけを抽出
+      json_content = extract_json_from_output(stdout)
+      JSON.parse(json_content)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ [AGRR] Failed to parse JSON: #{e.message}"
       Rails.logger.error "stdout (first 500 chars): #{stdout&.first(500)}"
@@ -54,6 +56,24 @@ module Agrr
         raise ParseError, "Command returned error instead of JSON: #{error_line}"
       end
       raise ParseError, "Failed to parse JSON: #{e.message}"
+    end
+    
+    # stdoutからJSONの部分だけを抽出する
+    # AGRR CLIが警告メッセージをstdoutに出力する場合があるため、最初の{から最後の}までを抽出
+    def extract_json_from_output(output)
+      # 最初の { を見つける
+      start_index = output.index('{')
+      return output unless start_index
+      
+      # 最初の { から最後まで取得
+      json_part = output[start_index..-1]
+      
+      # 最後の } を見つける
+      end_index = json_part.rindex('}')
+      return json_part unless end_index
+      
+      # { から } までを抽出
+      json_part[0..end_index]
     end
     
     def agrr_path

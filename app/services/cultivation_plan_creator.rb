@@ -49,7 +49,7 @@ class CultivationPlanCreator
     # 作付け計画専用の圃場を作成
     plan_field = CultivationPlanField.create!(
       cultivation_plan: @cultivation_plan,
-      name: "#{crop.name} - 圃場#{index + 1}",
+      name: "圃場#{index + 1}",
       area: allocation[:area],
       daily_fixed_cost: calculate_daily_cost(allocation[:area])
     )
