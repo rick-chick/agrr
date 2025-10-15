@@ -8,24 +8,18 @@ class TemperatureChart {
   constructor() {
     this.chart = null;
     this.farmId = null;
-    this.init();
-  }
-
-  init() {
-    // ページ読み込み時にチャートを初期化
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.setupChart());
-    } else {
-      this.setupChart();
-    }
-
-    // Turboナビゲーション後の初期化
-    document.addEventListener('turbo:load', () => this.setupChart());
+    this.isInitialized = false;
   }
 
   setupChart() {
     const canvas = document.getElementById('temperatureChart');
     if (!canvas) return;
+
+    // 既存のチャートを破棄
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
 
     // data属性から農場IDを取得（より確実）
     this.farmId = canvas.dataset.farmId;
@@ -49,22 +43,42 @@ class TemperatureChart {
     
     console.log('Chart initialized for Farm ID:', this.farmId);
 
-    // 期間選択のイベントリスナーを設定
+    // 期間選択のイベントリスナーを設定（重複を防ぐため、古いリスナーを削除）
     const periodSelect = document.getElementById('chart-period');
     if (periodSelect) {
-      periodSelect.addEventListener('change', (e) => {
-        this.loadChartData(parseInt(e.target.value));
+      // 既存のイベントリスナーを削除するため、新しい要素に置き換える
+      const newPeriodSelect = periodSelect.cloneNode(true);
+      periodSelect.parentNode.replaceChild(newPeriodSelect, periodSelect);
+      
+      newPeriodSelect.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value === 'next_365') {
+          this.loadPredictionData();
+        } else {
+          this.loadChartData(parseInt(value));
+        }
       });
     }
 
     // 初期データを読み込み
-    const initialPeriod = periodSelect ? parseInt(periodSelect.value) : 365;
-    this.loadChartData(initialPeriod);
+    const currentSelect = document.getElementById('chart-period');
+    const initialPeriod = currentSelect ? currentSelect.value : '365';
+    if (initialPeriod === 'next_365') {
+      this.loadPredictionData();
+    } else {
+      this.loadChartData(parseInt(initialPeriod));
+    }
   }
 
   async loadChartData(days) {
     if (!this.farmId) {
       console.error('Farm ID is not set');
+      return;
+    }
+
+    // daysパラメータのバリデーション
+    if (isNaN(days) || days <= 0) {
+      console.error('Invalid days parameter:', days);
       return;
     }
 
@@ -95,14 +109,46 @@ class TemperatureChart {
       }
 
       console.log(`Loaded ${result.data.length} weather data points`);
-      this.renderChart(result.data);
+      this.renderChart(result.data, false);
     } catch (error) {
       console.error('Error loading chart data:', error);
       this.showError('データの読み込みに失敗しました。');
     }
   }
 
-  renderChart(data) {
+  async loadPredictionData() {
+    if (!this.farmId) {
+      console.error('Farm ID is not set');
+      return;
+    }
+
+    try {
+      console.log('Loading prediction data...');
+      const url = `/farms/${this.farmId}/weather_data?predict=true`;
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('Failed to load prediction data:', result.message);
+        this.showError(result.message);
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        console.warn('No prediction data available');
+        this.showError('予測データがありません。');
+        return;
+      }
+
+      console.log(`Loaded ${result.data.length} prediction data points`);
+      this.renderChart(result.data, true);
+    } catch (error) {
+      console.error('Error loading prediction data:', error);
+      this.showError('予測データの読み込みに失敗しました。');
+    }
+  }
+
+  renderChart(data, isPrediction = false) {
     const canvas = document.getElementById('temperatureChart');
     if (!canvas) return;
 
@@ -119,6 +165,12 @@ class TemperatureChart {
     const tempMin = data.map(d => d.temperature_min);
     const tempMean = data.map(d => d.temperature_mean);
 
+    // 予測データの場合はスタイルを変更
+    const borderDash = isPrediction ? [5, 5] : [];
+    const pointStyle = isPrediction ? 'circle' : false;
+    const pointRadius = isPrediction ? 2 : 0;
+    const titleText = isPrediction ? '温度推移（予測）' : '温度推移';
+
     // チャートの作成
     this.chart = new Chart(ctx, {
       type: 'line',
@@ -131,7 +183,11 @@ class TemperatureChart {
             borderColor: 'rgb(255, 99, 132)',
             backgroundColor: 'rgba(255, 99, 132, 0.1)',
             tension: 0.3,
-            fill: false
+            fill: false,
+            borderDash: borderDash,
+            pointStyle: pointStyle,
+            pointRadius: pointRadius,
+            pointBackgroundColor: 'rgb(255, 99, 132)'
           },
           {
             label: '平均気温 (°C)',
@@ -139,7 +195,11 @@ class TemperatureChart {
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.1)',
             tension: 0.3,
-            fill: false
+            fill: false,
+            borderDash: borderDash,
+            pointStyle: pointStyle,
+            pointRadius: pointRadius,
+            pointBackgroundColor: 'rgb(75, 192, 192)'
           },
           {
             label: '最低気温 (°C)',
@@ -147,7 +207,11 @@ class TemperatureChart {
             borderColor: 'rgb(54, 162, 235)',
             backgroundColor: 'rgba(54, 162, 235, 0.1)',
             tension: 0.3,
-            fill: false
+            fill: false,
+            borderDash: borderDash,
+            pointStyle: pointStyle,
+            pointRadius: pointRadius,
+            pointBackgroundColor: 'rgb(54, 162, 235)'
           }
         ]
       },
@@ -161,11 +225,16 @@ class TemperatureChart {
           },
           title: {
             display: true,
-            text: '温度推移'
+            text: titleText
           },
           tooltip: {
             mode: 'index',
             intersect: false,
+            callbacks: {
+              afterLabel: function(context) {
+                return isPrediction ? '（予測値）' : '';
+              }
+            }
           }
         },
         scales: {
@@ -207,6 +276,24 @@ class TemperatureChart {
   }
 }
 
-// アプリケーション起動時にTemperatureChartを初期化
-new TemperatureChart();
+// シングルトンインスタンス
+let chartInstance = null;
+
+// Turboナビゲーション対応の初期化
+function initializeChart() {
+  if (!chartInstance) {
+    chartInstance = new TemperatureChart();
+  }
+  chartInstance.setupChart();
+}
+
+// ページ読み込み時とTurboナビゲーション後に初期化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeChart);
+} else {
+  initializeChart();
+}
+
+document.addEventListener('turbo:load', initializeChart);
+document.addEventListener('turbo:render', initializeChart);
 

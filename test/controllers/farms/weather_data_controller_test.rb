@@ -184,5 +184,96 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
     assert json['success']
     assert_equal 0, json['data'].length
   end
+  
+  test "should get prediction data when predict parameter is true" do
+    # PredictionGatewayのモックを作成
+    mock_prediction_result = {
+      'data' => 10.times.map do |i|
+        {
+          'time' => (Date.today + (i + 1).days).to_s,
+          'temperature_2m_max' => 28.0 + rand(-3.0..3.0),
+          'temperature_2m_min' => 18.0 + rand(-3.0..3.0),
+          'temperature_2m_mean' => 23.0 + rand(-2.0..2.0),
+          'precipitation_sum' => rand(0.0..5.0)
+        }
+      end
+    }
+    
+    # PredictionGatewayのインスタンスをモック
+    mock_gateway = Minitest::Mock.new
+    mock_gateway.expect(:predict, mock_prediction_result) do |args|
+      args[:historical_data].is_a?(Hash) &&
+      args[:days].is_a?(Integer) &&
+      args[:model].is_a?(String)
+    end
+    
+    # PredictionGatewayのnewメソッドをスタブ
+    Agrr::PredictionGateway.stub(:new, mock_gateway) do
+      get farm_weather_data_path(@farm, predict: 'true')
+      assert_response :success
+      
+      json = JSON.parse(@response.body)
+      assert json['success'], "Expected success but got: #{json['message']}"
+      assert json['is_prediction'], "Expected is_prediction to be true"
+      assert_equal @farm.id, json['farm']['id']
+      assert_equal 10, json['data'].length
+      
+      # データ構造の検証
+      first_data = json['data'].first
+      assert_includes first_data.keys, 'date'
+      assert_includes first_data.keys, 'temperature_max'
+      assert_includes first_data.keys, 'temperature_min'
+      assert_includes first_data.keys, 'temperature_mean'
+      assert_includes first_data.keys, 'precipitation'
+      assert first_data['is_prediction'], "Expected is_prediction flag in data"
+    end
+    
+    # モックが期待通りに呼ばれたか検証
+    mock_gateway.verify
+  end
+  
+  test "should return error when prediction fails" do
+    # PredictionGatewayのインスタンスをモック（エラーを投げる）
+    mock_gateway = Minitest::Mock.new
+    
+    # expectメソッドでエラーを投げるにはdefine_singletonメソッドを使う必要がある
+    def mock_gateway.predict(*args, **kwargs)
+      raise StandardError, "Prediction model error"
+    end
+    
+    # PredictionGatewayのnewメソッドをスタブ
+    Agrr::PredictionGateway.stub(:new, mock_gateway) do
+      get farm_weather_data_path(@farm, predict: 'true')
+      assert_response :internal_server_error
+      
+      json = JSON.parse(@response.body)
+      assert_not json['success']
+      assert_includes json['message'], '予測の実行に失敗しました'
+    end
+  end
+  
+  test "should return error when farm has no historical data for prediction" do
+    # 天気データがない農場を作成
+    farm_no_data = Farm.new(
+      name: "データなし農場",
+      latitude: 35.6812,
+      longitude: 139.7671,
+      user: @user,
+      weather_location: WeatherLocation.create!(
+        latitude: 36.0,
+        longitude: 140.0,
+        elevation: 10.0,
+        timezone: 'Asia/Tokyo'
+      )
+    )
+    farm_no_data.save!(validate: false)
+    
+    get farm_weather_data_path(farm_no_data, predict: 'true')
+    assert_response :success
+    
+    json = JSON.parse(@response.body)
+    assert_not json['success']
+    assert_includes json['message'], '予測に必要な履歴データが不足しています'
+  end
 end
 
