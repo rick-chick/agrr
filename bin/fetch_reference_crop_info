@@ -189,23 +189,27 @@ crops.reload.each do |crop|
       
       if stage.temperature_requirement
         stage_hash[:temperature_requirement] = {
-          min_temperature: stage.temperature_requirement.min_temperature,
-          max_temperature: stage.temperature_requirement.max_temperature,
-          optimal_temperature: stage.temperature_requirement.optimal_temperature
+          base_temperature: stage.temperature_requirement.base_temperature,
+          optimal_min: stage.temperature_requirement.optimal_min,
+          optimal_max: stage.temperature_requirement.optimal_max,
+          low_stress_threshold: stage.temperature_requirement.low_stress_threshold,
+          high_stress_threshold: stage.temperature_requirement.high_stress_threshold,
+          frost_threshold: stage.temperature_requirement.frost_threshold,
+          sterility_risk_threshold: stage.temperature_requirement.sterility_risk_threshold,
+          max_temperature: stage.temperature_requirement.max_temperature
         }
       end
       
       if stage.sunshine_requirement
         stage_hash[:sunshine_requirement] = {
-          min_hours: stage.sunshine_requirement.min_hours,
-          optimal_hours: stage.sunshine_requirement.optimal_hours
+          minimum_sunshine_hours: stage.sunshine_requirement.minimum_sunshine_hours,
+          target_sunshine_hours: stage.sunshine_requirement.target_sunshine_hours
         }
       end
       
       if stage.thermal_requirement
         stage_hash[:thermal_requirement] = {
-          base_temperature: stage.thermal_requirement.base_temperature,
-          accumulated_temperature: stage.thermal_requirement.accumulated_temperature
+          required_gdd: stage.thermal_requirement.required_gdd
         }
       end
       
