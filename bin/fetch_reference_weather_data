@@ -54,7 +54,7 @@ class ColorLogger
 end
 
 # agrrコマンドでJMAから天気データを取得
-def fetch_weather_from_jma(latitude, longitude, days = 365)
+def fetch_weather_from_jma(latitude, longitude)
   agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
   
   unless File.exist?(agrr_path)
@@ -62,9 +62,9 @@ def fetch_weather_from_jma(latitude, longitude, days = 365)
     return nil
   end
   
-  # 過去のデータを取得（今日から指定日数前まで）
+  # 2000年1月1日から今日までのデータを取得
+  start_date = Date.new(2000, 1, 1)
   end_date = Date.today
-  start_date = end_date - days.days
   
   command = [
     agrr_path,
@@ -130,8 +130,8 @@ farms.each_with_index do |farm, index|
   ColorLogger.log("\n[#{index + 1}/#{farms.count}] 処理中: #{farm.name}", :blue)
   puts "  位置: #{farm.latitude}, #{farm.longitude}"
   
-  # JMAから天気データを取得（過去1年分）
-  weather_result = fetch_weather_from_jma(farm.latitude, farm.longitude, 365)
+  # JMAから天気データを取得（2000年1月1日〜今日まで）
+  weather_result = fetch_weather_from_jma(farm.latitude, farm.longitude)
   
   if weather_result.nil?
     ColorLogger.warning("  データ取得失敗（スキップ）")
