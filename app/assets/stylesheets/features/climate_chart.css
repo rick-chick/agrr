@@ -1,0 +1,250 @@
+/* app/assets/stylesheets/features/climate_chart.css */
+/* 気温・GDDチャート - モダンデザイン */
+
+/* ============================================
+   チャート表示コンテナ
+   ============================================ */
+.climate-chart-display {
+  width: 100%;
+  margin: 24px 0;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   チャートコンテナ
+   ============================================ */
+.climate-chart-container {
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.climate-chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+/* ============================================
+   ヘッダー
+   ============================================ */
+.climate-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.chart-title-icon {
+  font-size: 24px;
+}
+
+.chart-title-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crop-badge, .region-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.crop-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.region-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.date-range {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.chart-close-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.chart-close-btn:hover {
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================
+   チャートセクション
+   ============================================ */
+.temperature-chart-section,
+.gdd-chart-section {
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.gdd-chart-section {
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f9ff 100%);
+  border-color: #bfdbfe;
+}
+
+.chart-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-label-icon {
+  font-size: 18px;
+}
+
+.chart-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+}
+
+
+/* ============================================
+   ローディング・エラー
+   ============================================ */
+.climate-chart-loading,
+.climate-chart-error {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.climate-chart-error {
+  color: #e53e3e;
+}
+
+.error-details {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* ============================================
+   レスポンシブ
+   ============================================ */
+@media (max-width: 768px) {
+  .climate-chart-container {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .climate-chart-container::before {
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .climate-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .chart-title-text {
+    font-size: 18px;
+  }
+
+  .crop-badge, .region-badge {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+
+  .date-range {
+    font-size: 12px;
+  }
+
+  .chart-close-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+
+  .temperature-chart-section,
+  .gdd-chart-section {
+    padding: 16px;
+  }
+
+  .chart-section-title {
+    font-size: 14px;
+  }
+
+  .chart-canvas-wrapper {
+    min-height: 250px;
+  }
+
+}
+

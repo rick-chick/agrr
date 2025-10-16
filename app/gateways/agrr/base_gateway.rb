@@ -7,6 +7,7 @@ module Agrr
   class BaseGateway
     class ExecutionError < StandardError; end
     class ParseError < StandardError; end
+    class NoAllocationCandidatesError < StandardError; end
     
     private
     
@@ -34,12 +35,30 @@ module Agrr
       if stdout.present? && stdout.strip.start_with?('Error', '❌')
         Rails.logger.error "❌ [AGRR] Command returned error message in stdout (exit code: #{status.exitstatus})"
         error_message = stdout.lines.first&.strip || stdout
+        
+        # 特定のエラーメッセージに対して専用の例外を投げる
+        if error_message.include?('No valid allocation candidates could be generated')
+          raise NoAllocationCandidatesError, error_message
+        end
+        
+        # 重複エラーの場合は、より詳細なメッセージを表示
+        if error_message.include?('overlap') && error_message.include?('fallow period')
+          raise ExecutionError, "作物の栽培期間が重複しています（休閑期間28日を考慮）。圃場数を増やすか、作物の数を減らすか、計画期間を延長してください。\n詳細: #{error_message}"
+        end
+        
         raise ExecutionError, "Command returned error: #{error_message}"
       end
       
       unless status.success?
         Rails.logger.error "❌ [AGRR] Command failed (exit code: #{status.exitstatus})"
-        raise ExecutionError, "Command failed (exit #{status.exitstatus}): #{stderr.presence || stdout.presence || 'Unknown error'}"
+        error_output = stderr.presence || stdout.presence || 'Unknown error'
+        
+        # 特定のエラーメッセージに対して専用の例外を投げる
+        if error_output.include?('No valid allocation candidates could be generated')
+          raise NoAllocationCandidatesError, error_output
+        end
+        
+        raise ExecutionError, "Command failed (exit #{status.exitstatus}): #{error_output}"
       end
       
       return stdout unless parse_json

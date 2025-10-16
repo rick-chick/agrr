@@ -29,9 +29,23 @@
     
     <div class="gantt-summary-item">
       <span class="gantt-summary-icon">💰</span>
-      <span class="gantt-summary-label">推定総コスト</span>
-      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.field_cultivations.sum { |fc| fc.estimated_cost || 0 }.to_i) %></span>
+      <span class="gantt-summary-label">総コスト</span>
+      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.total_cost&.to_i || 0) %></span>
     </div>
+    
+    <% if cultivation_plan.total_revenue.present? %>
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">📈</span>
+      <span class="gantt-summary-label">総収益</span>
+      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.total_revenue.to_i) %></span>
+    </div>
+    
+    <div class="gantt-summary-item">
+      <span class="gantt-summary-icon">💎</span>
+      <span class="gantt-summary-label">総利益</span>
+      <span class="gantt-summary-value">¥<%= number_with_delimiter(cultivation_plan.total_profit&.to_i || 0) %></span>
+    </div>
+    <% end %>
   </div>
   
   <div class="gantt-results-header-subtitle">

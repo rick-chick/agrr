@@ -61,7 +61,7 @@ class CultivationPlanCreator
       variety: crop.variety,
       area_per_unit: crop.area_per_unit,
       revenue_per_area: crop.revenue_per_area,
-      agrr_crop_id: crop.agrr_crop_id
+      agrr_crop_id: crop.id  # CropのIDを保存（後で元の作物を取得するため）
     )
     
     # FieldCultivationを作成

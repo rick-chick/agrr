@@ -1,0 +1,291 @@
+/* app/assets/stylesheets/features/custom_gantt_chart.css */
+/* カスタムSVGガントチャート - スタイリッシュデザイン */
+
+/* ============================================
+   ガントチャートコンテナ
+   ============================================ */
+#gantt-chart-container {
+  width: 100%;
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  border: 1px solid #e5e7eb;
+}
+
+#gantt-chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-primary);
+  border-radius: 16px 16px 0 0;
+}
+
+/* ============================================
+   SVGガントチャート
+   ============================================ */
+.custom-gantt-chart {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ヘッダーラベル */
+.custom-gantt-chart .header-label {
+  user-select: none;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.custom-gantt-chart .month-label {
+  user-select: none;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.custom-gantt-chart .month-label:hover {
+  fill: var(--color-secondary);
+}
+
+.custom-gantt-chart .year-label {
+  user-select: none;
+  font-weight: 700;
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
+
+/* 圃場ラベル */
+.custom-gantt-chart .field-label {
+  user-select: none;
+  cursor: help;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-gantt-chart .field-label:hover {
+  fill: var(--color-secondary);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* 栽培バー */
+.custom-gantt-chart .cultivation-bar {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-gantt-chart .bar-bg {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.custom-gantt-chart .bar-bg:hover {
+  filter: 
+    brightness(1.05)
+    drop-shadow(0 4px 12px rgba(45, 80, 22, 0.3));
+  stroke-width: 3;
+  transform: translateY(-2px);
+}
+
+.custom-gantt-chart .bar-label {
+  user-select: none;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.custom-gantt-chart .bar-period {
+  user-select: none;
+  opacity: 0.85;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* ============================================
+   カスタムポップアップ
+   ============================================ */
+.gantt-custom-popup {
+  min-width: 320px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 10000;
+  animation: popupFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gantt-custom-popup .popup-header {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  box-shadow: var(--shadow-primary);
+}
+
+.gantt-custom-popup .popup-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gantt-custom-popup .popup-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: rotate(90deg) scale(1.1);
+}
+
+.gantt-custom-popup .popup-body {
+  padding: 24px;
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+}
+
+.gantt-custom-popup .popup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.gantt-custom-popup .popup-item:hover {
+  padding-left: 4px;
+  border-color: #667eea;
+}
+
+.gantt-custom-popup .popup-item:last-child {
+  border-bottom: none;
+}
+
+.gantt-custom-popup .popup-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.gantt-custom-popup .popup-value {
+  font-size: 15px;
+  color: #111827;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.2px;
+}
+
+.gantt-custom-popup .popup-value.profit {
+  color: var(--color-success-dark);
+  font-weight: 800;
+  font-size: 16px;
+  text-shadow: 0 1px 2px rgba(47, 133, 90, 0.1);
+}
+
+/* ============================================
+   スクロールバーのスタイリング
+   ============================================ */
+#gantt-chart-container::-webkit-scrollbar {
+  height: 12px;
+  background: #f3f4f6;
+  border-radius: 0 0 16px 16px;
+}
+
+#gantt-chart-container::-webkit-scrollbar-track {
+  background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 0 0 16px 16px;
+}
+
+#gantt-chart-container::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 6px;
+  border: 2px solid #f3f4f6;
+}
+
+#gantt-chart-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--color-secondary-dark) 0%, #653a8b 100%);
+  border-color: #e5e7eb;
+}
+
+/* ============================================
+   レスポンシブ
+   ============================================ */
+@media (max-width: 768px) {
+  #gantt-chart-container {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  #gantt-chart-container::before {
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .gantt-custom-popup {
+    min-width: 280px;
+    max-width: 90vw;
+    border-radius: 12px;
+  }
+
+  .gantt-custom-popup .popup-header {
+    padding: 16px 20px;
+    font-size: 15px;
+  }
+
+  .gantt-custom-popup .popup-body {
+    padding: 20px;
+  }
+
+  .gantt-custom-popup .popup-label {
+    font-size: 13px;
+  }
+  
+  .gantt-custom-popup .popup-value {
+    font-size: 14px;
+  }
+
+  .gantt-custom-popup .popup-value.profit {
+    font-size: 15px;
+  }
+
+  #gantt-chart-container::-webkit-scrollbar {
+    height: 8px;
+  }
+}
+

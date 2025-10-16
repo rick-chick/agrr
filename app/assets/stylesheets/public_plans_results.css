@@ -834,3 +834,113 @@
   }
 }
 
+/* ============================================
+   圃場グループ表示（同一圃場の複数栽培をまとめて表示）
+   ============================================ */
+.gantt-field-group {
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.gantt-field-group:hover {
+  background: var(--color-gray-50);
+}
+
+.field-group-header {
+  background: var(--color-primary-50) !important;
+  border-right: 2px solid var(--color-primary-200);
+  font-weight: var(--font-weight-semibold);
+}
+
+.field-cultivation-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
+  margin-top: var(--space-1);
+}
+
+.gantt-field-group-bar {
+  position: relative;
+  padding: 0;
+  background: var(--color-gray-100);
+  border-left: 1px solid var(--color-gray-300);
+  border-right: 1px solid var(--color-gray-300);
+  min-height: 60px;
+}
+
+.field-group-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+}
+
+.cultivation-bar {
+  position: absolute;
+  top: 8px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.cultivation-bar:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  z-index: 20 !important;
+}
+
+.cultivation-bar .bar-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: var(--space-2);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md);
+}
+
+.cultivation-bar .crop-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-800);
+  line-height: 1.2;
+  margin-bottom: var(--space-1);
+}
+
+.cultivation-bar .bar-period {
+  font-size: 10px;
+  color: var(--color-gray-600);
+  line-height: 1;
+}
+
+/* 複数栽培は同じ高さで横に並べる（期間が重なっていないため） */
+/* nth-child による強制的な縦ずらしは削除 */
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .gantt-field-group-bar {
+    min-height: 50px;
+  }
+  
+  .field-group-content {
+    min-height: 50px;
+  }
+  
+  .cultivation-bar {
+    height: 36px;
+    top: 6px;
+  }
+  
+  .cultivation-bar .crop-name {
+    font-size: var(--font-size-xs);
+  }
+  
+  .cultivation-bar .bar-period {
+    font-size: 9px;
+  }
+}
+

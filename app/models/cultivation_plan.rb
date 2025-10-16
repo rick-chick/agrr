@@ -8,6 +8,9 @@ class CultivationPlan < ApplicationRecord
   has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
   
+  # == Serialization =======================================================
+  serialize :predicted_weather_data, coder: JSON
+  
   # == Validations =========================================================
   validates :total_area, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending optimizing completed failed] }

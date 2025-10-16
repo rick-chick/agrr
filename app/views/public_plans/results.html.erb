@@ -11,6 +11,9 @@
     <%# ガントチャート %>
     <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
     
+    <%# 気温・GDDチャート表示エリア（作物クリック時に表示、climate_chart.jsが内容を生成） %>
+    <div id="climate-chart-display" style="display: none;"></div>
+    
     <%# 広告エリア %>
     <div class="gantt-ad-card">
       <div class="gantt-ad-label">
