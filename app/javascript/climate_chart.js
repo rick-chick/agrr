@@ -693,17 +693,7 @@ class ClimateChart {
               borderColor: 'rgba(239, 68, 68, 0.8)',
               borderWidth: 2,
               borderDash: [5, 5],
-              label: {
-                content: `🟠 高温限界: ${stage.high_stress_threshold}°C`,
-                display: true,
-                position: { x: 'center', y: 'end' },
-                color: '#dc2626',
-                font: { size: 9, weight: 'bold' },
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                padding: 3,
-                borderColor: 'rgba(239, 68, 68, 0.8)',
-                borderWidth: 1
-              }
+              label: { display: false }
             };
             
             // 高温限界線
@@ -729,17 +719,7 @@ class ClimateChart {
               borderColor: 'rgba(239, 68, 68, 0.8)',
               borderWidth: 2,
               borderDash: [5, 5],
-              label: {
-                content: `🟠 低温限界: ${stage.low_stress_threshold}°C`,
-                display: true,
-                position: { x: 'center', y: 'start' },
-                color: '#dc2626',
-                font: { size: 9, weight: 'bold' },
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                padding: 3,
-                borderColor: 'rgba(239, 68, 68, 0.8)',
-                borderWidth: 1
-              }
+              label: { display: false }
             };
             
             // 低温限界線
@@ -797,17 +777,7 @@ class ClimateChart {
             borderColor: 'rgba(239, 68, 68, 0.7)',
             borderWidth: 2,
             borderDash: [5, 5],
-            label: {
-              content: `🟠 高温限界: ${stage.high_stress_threshold}°C`,
-              display: true,
-              position: { x: 'center', y: 'end' },
-              color: '#dc2626',
-              font: { size: 8, weight: 'bold' },
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              padding: 2,
-              borderColor: 'rgba(239, 68, 68, 0.6)',
-              borderWidth: 1
-            }
+            label: { display: false }
           };
           
           // 高温限界線
@@ -833,17 +803,7 @@ class ClimateChart {
             borderColor: 'rgba(239, 68, 68, 0.7)',
             borderWidth: 2,
             borderDash: [5, 5],
-            label: {
-              content: `🟠 低温限界: ${stage.low_stress_threshold}°C`,
-              display: true,
-              position: { x: 'center', y: 'start' },
-              color: '#dc2626',
-              font: { size: 8, weight: 'bold' },
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              padding: 2,
-              borderColor: 'rgba(239, 68, 68, 0.6)',
-              borderWidth: 1
-            }
+            label: { display: false }
           };
           
           // 低温限界線
