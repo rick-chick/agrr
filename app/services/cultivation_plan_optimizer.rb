@@ -91,10 +91,11 @@ class CultivationPlanOptimizer
             "Please run weather data import batch first."
     end
     
-    # 過去1年分の実績データをLightGBMモデルのトレーニング用に取得
-    # LightGBMは1年分のデータで季節性パターンを学習可能
-    training_start_date = Date.current - 1.year
-    training_end_date = Date.current - 1.day
+    # 過去20年分の実績データをLightGBMモデルのトレーニング用に取得
+    # 長期データで季節性パターンと気候変動の傾向を学習可能
+    # 気象データは通常1-2日遅れで更新されるため、2日前までのデータを使用
+    training_start_date = Date.current - 20.years
+    training_end_date = Date.current - 2.days
     training_data = weather_location.weather_data_for_period(training_start_date, training_end_date)
     
     if training_data.empty?
@@ -103,20 +104,23 @@ class CultivationPlanOptimizer
             "Please run weather data import batch first."
     end
     
-    # 最低限必要なデータ量をチェック（1年分 = 365日）
-    # LightGBMモデルは1年分のデータで季節性パターンを学習可能
-    minimum_required_days = 365
+    # 最低限必要なデータ量をチェック（15年分 = 約5475日、閏年3-4回分を含む）
+    # LightGBMモデルは長期データで季節性パターンと気候変動の傾向を学習可能
+    # 気象データは通常1-2日遅れで更新されるため、実際には20年 - 2日分を取得
+    # 最低15年分あれば学習可能
+    minimum_required_days = 5470  # 15年 × 365日 = 5475日（閏年や日付ズレを考慮して-5日）
     if training_data.count < minimum_required_days
       raise WeatherDataNotFoundError,
-            "Insufficient training weather data: #{training_data.count} records found, but at least #{minimum_required_days} days required. " \
+            "Insufficient training weather data: #{training_data.count} records found, but at least #{minimum_required_days} days (approximately 15 years) required. " \
             "Please run weather data import batch to fetch historical data (#{training_start_date} to #{training_end_date})."
     end
     
     Rails.logger.info "✅ [AGRR] Training data loaded from DB: #{training_data.count} records (#{training_start_date} to #{training_end_date})"
     
     # 今年1年間の実績データを取得
+    # 気象データは通常1-2日遅れで更新されるため、2日前までのデータを使用
     current_year_start = Date.new(Date.current.year, 1, 1)
-    current_year_end = Date.current - 1.day
+    current_year_end = Date.current - 2.days
     current_year_data = weather_location.weather_data_for_period(current_year_start, current_year_end)
     
     if current_year_data.empty?
