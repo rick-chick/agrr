@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_15_072038) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_16_060156) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -100,6 +100,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_15_072038) do
     t.text "optimization_phase_message"
     t.date "planning_start_date"
     t.date "planning_end_date"
+    t.decimal "total_profit"
+    t.decimal "total_revenue"
+    t.decimal "total_cost"
+    t.decimal "optimization_time"
+    t.string "algorithm_used"
+    t.boolean "is_optimal"
+    t.text "optimization_summary"
+    t.text "predicted_weather_data"
     t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
     t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
     t.index ["status"], name: "index_cultivation_plans_on_status"

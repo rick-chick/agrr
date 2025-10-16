@@ -61,6 +61,33 @@ class CultivationPlanOptimizer
       @cultivation_plan.complete!
       Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
       true
+    rescue Agrr::BaseGateway::NoAllocationCandidatesError => e
+      Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed: No allocation candidates"
+      Rails.logger.error "Error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      
+      # ユーザーフレンドリーなエラーメッセージを作成
+      user_friendly_message = <<~MSG.strip
+        作付け計画の候補を生成できませんでした。以下の可能性があります：
+        
+        1. 計画期間内に作物が成熟しない
+           → 計画期間を延長するか、より短期間で収穫できる作物を選択してください
+        
+        2. 圃場の面積が不足している
+           → 圃場の面積を増やすか、作物の数を減らしてください
+        
+        3. 気象条件が適していない
+           → 選択した作物が気象条件に適していない可能性があります。別の作物を試してください
+        
+        4. 作物の収益設定が適切でない
+           → 作物の収益設定（revenue_per_area）を確認してください
+        
+        技術的な詳細: #{e.message}
+      MSG
+      
+      @cultivation_plan.phase_failed!(@current_phase || 'unknown')
+      @cultivation_plan.fail!(user_friendly_message)
+      false
     rescue StandardError => e
       Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed at phase: #{@current_phase || 'unknown'}"
       Rails.logger.error "Error: #{e.message}"
@@ -141,7 +168,8 @@ class CultivationPlanOptimizer
     @current_phase = 'predicting_weather'
     @cultivation_plan.phase_predicting_weather!
     
-    # 次の年の12月31日までの予測データ
+    # 1年後の12月31日までの予測データ
+    # ナスやキュウリなど、必要GDDが高い作物も成長完了できるように期間を延長
     next_year = Date.current.year + 1
     target_end_date = Date.new(next_year, 12, 31)
     # 両端を含む日数を計算（開始日から終了日まで）
@@ -168,6 +196,17 @@ class CultivationPlanOptimizer
     total_weather_days = current_year_data.count + prediction_days
     
     Rails.logger.info "✅ [AGRR] Total weather data available: #{total_weather_days} days (current year: #{current_year_data.count} + prediction until #{target_end_date}: #{prediction_days})"
+    
+    # 気象データを保存（後で気温・GDDチャート表示時に再利用）
+    # merged_dataはすでに{latitude, longitude, timezone, data: [...]}の構造を持っている
+    @cultivation_plan.update!(
+      predicted_weather_data: merged_data.merge(
+        'generated_at' => Time.current.iso8601,
+        'target_end_date' => target_end_date.to_s
+      )
+    )
+    
+    Rails.logger.info "✅ [AGRR] Weather data saved to CultivationPlan for future reuse"
     
     # 気象データと計画期間の終了日を返す
     {
@@ -287,8 +326,10 @@ class CultivationPlanOptimizer
     # 作物数を取得
     crop_count = crops_collection.size
     
-    # フィールド数を作物数/2に設定（最低1フィールド）
-    field_count = [(crop_count / 2.0).ceil, 1].max
+    # フィールド数を作物数と同じに設定（最低1フィールド）
+    # これにより、各作物が最低1つのフィールドを使用でき、
+    # 休閑期間を考慮した輪作が可能になる
+    field_count = [crop_count, 1].max
     
     # 農場全体の面積を取得
     total_area = @cultivation_plan.total_area
@@ -296,10 +337,10 @@ class CultivationPlanOptimizer
     # 各フィールドの面積を計算
     area_per_field = total_area / field_count.to_f
     
-    Rails.logger.info "📊 [AGRR] Total area: #{total_area}㎡, Crop count: #{crop_count}, Field count: #{field_count} (crop_count/2)"
+    Rails.logger.info "📊 [AGRR] Total area: #{total_area}㎡, Crop count: #{crop_count}, Field count: #{field_count} (1 field per crop)"
     Rails.logger.info "📊 [AGRR] Area per field: #{area_per_field.round(2)}㎡"
     
-    # フィールドデータを作成（作物数/2の数だけ）
+    # フィールドデータを作成（作物数と同じ数だけ）
     field_count.times do |i|
       field_id = "field_#{i + 1}"
       fields_data << {
@@ -320,16 +361,16 @@ class CultivationPlanOptimizer
       # 元のmax_revenue
       original_max_revenue = crop_requirement['crop']['max_revenue']
       
-      # max_revenue = (revenue_per_area × total_area × 2) ÷ crop_count
-      # 2倍にすることで、各作物が平均的に (total_area ÷ crop_count) × 2 の面積（2作分）を使用可能
-      adjusted_max_revenue = (revenue_per_area * total_area * 2) / crop_count.to_f
+      # max_revenue = (revenue_per_area × total_area × 3) ÷ crop_count
+      # 3倍にすることで、各作物が平均的に (total_area ÷ crop_count) × 3 の面積（3作分）を使用可能
+      adjusted_max_revenue = (revenue_per_area * total_area * 3) / crop_count.to_f
       
       # 調整後の値を設定
       crop_requirement['crop']['max_revenue'] = adjusted_max_revenue
       
       Rails.logger.info "🔧 [AGRR] Crop '#{crop.name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
                         "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)} " \
-                        "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡, 2 crops)"
+                        "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡, 3 crops)"
       
       crops_data << crop_requirement
     end

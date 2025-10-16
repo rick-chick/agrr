@@ -47,5 +47,6 @@ module Agrr
     # Propshaft configuration (Rails 8 default asset pipeline)
     config.assets.enabled = true
     config.assets.version = '1.0'
+    config.assets.paths << Rails.root.join('vendor/assets/stylesheets')
   end
 end

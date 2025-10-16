@@ -1,27 +1,25 @@
 <%# app/views/public_plans/results/_gantt_chart.html.erb %>
-<%# ガントチャート全体（テーブル構造） %>
+<%# Frappe Gantt を使用したガントチャート %>
 
 <%
-  # 栽培スケジュール期間の計算（cultivation_planに保存された期間を使用）
-  # フォールバック: 保存された期間がない場合は今日から来年12/31まで
+  # 栽培スケジュール期間の計算
   plan_start_date = cultivation_plan.planning_start_date || Date.current
   plan_end_date = cultivation_plan.planning_end_date || Date.new(Date.current.year + 1, 12, 31)
   
-  # 表示する年と月の配列を生成
-  start_year = plan_start_date.year
-  start_month = plan_start_date.month
-  end_year = plan_end_date.year
-  end_month = plan_end_date.month
-  
-  # 各年の月数を計算
-  years_months = {}
-  (start_year..end_year).each do |year|
-    first_month = (year == start_year) ? start_month : 1
-    last_month = (year == end_year) ? end_month : 12
-    years_months[year] = (first_month..last_month).to_a
+  # Frappe Gantt用のデータを準備
+  cultivation_data = cultivation_plan.field_cultivations.map do |fc|
+    {
+      id: fc.id,
+      field_name: fc.field_display_name,
+      crop_name: fc.crop_display_name,
+      start_date: fc.start_date.to_s,
+      completion_date: fc.completion_date.to_s,
+      cultivation_days: fc.cultivation_days,
+      area: fc.area,
+      estimated_cost: fc.estimated_cost,
+      profit: fc.optimization_result&.dig('profit')
+    }
   end
-  
-  total_months = years_months.values.flatten.count
 %>
 
 <div class="gantt-section">
@@ -32,37 +30,14 @@
   
   <div class="gantt-scroll-hint">
     <span class="scroll-hint-icon">👆</span>
-    <span class="scroll-hint-text">横にスワイプ・スクロールできます</span>
+    <span class="scroll-hint-text">栽培をクリックして詳細を表示</span>
   </div>
   
-  <div class="gantt-container">
-    <table class="gantt-table">
-      <thead>
-        <tr class="gantt-header-year">
-          <th class="gantt-sticky-col" rowspan="2">圃場 / 作物</th>
-          <% years_months.each do |year, months| %>
-            <th colspan="<%= months.count %>" class="gantt-year-header year-<%= year %>"><%= year %>年</th>
-          <% end %>
-        </tr>
-        <tr class="gantt-header-month">
-          <% years_months.each do |year, months| %>
-            <% months.each do |month| %>
-              <th class="gantt-month-header"><%= month %>月</th>
-            <% end %>
-          <% end %>
-        </tr>
-      </thead>
-      <tbody>
-        <%# 各圃場・作物の行 %>
-        <% cultivation_plan.field_cultivations.each do |field_cultivation| %>
-          <%= render 'public_plans/results/gantt_row', 
-                     field_cultivation: field_cultivation,
-                     plan_start_date: plan_start_date,
-                     plan_end_date: plan_end_date,
-                     total_months: total_months %>
-        <% end %>
-      </tbody>
-    </table>
+  <%# Frappe Gantt コンテナ %>
+  <div id="gantt-chart-container"
+       data-cultivations="<%= cultivation_data.to_json %>"
+       data-plan-start-date="<%= plan_start_date.to_s %>"
+       data-plan-end-date="<%= plan_end_date.to_s %>">
   </div>
 </div>
 

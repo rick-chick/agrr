@@ -123,14 +123,14 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
   end
 
   test "should raise WeatherDataNotFoundError when training data is insufficient" do
-    # 天気データを全削除して、100日分だけ作成（365日未満）
+    # 天気データを全削除して、100日分だけ作成（5470日未満）
     @weather_location.weather_data.destroy_all
     
     # 100日分のデータを作成
     100.times do |i|
       WeatherDatum.create!(
         weather_location: @weather_location,
-        date: Date.current - (i + 1).days,
+        date: Date.current - (i + 2).days,  # 2日前から遡る
         temperature_max: 20.0,
         temperature_min: 10.0,
         temperature_mean: 15.0,
@@ -147,14 +147,15 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
     assert_equal 'failed', @cultivation_plan.status
     assert_match /Insufficient training weather data/, @cultivation_plan.error_message
     assert_match /100 records found/, @cultivation_plan.error_message
-    assert_match /at least 365 days required/, @cultivation_plan.error_message
+    assert_match /at least 5470 days/, @cultivation_plan.error_message
+    assert_match /approximately 15 years/, @cultivation_plan.error_message
   end
 
   test "should raise WeatherDataNotFoundError when current year data is empty" do
     # 今年のデータだけ削除（過去データは残す）
-    # 注意: training_dataは過去1年分（Date.current - 1.year から Date.current - 1.day）なので、
-    # 今年のデータを削除すると、training_dataも不足する（重複期間があるため）
-    # 実際には Insufficient training weather data エラーが発生する
+    # training_dataは過去20年分（Date.current - 20.years から Date.current - 2.days）なので、
+    # 今年のデータ（1月1日から現在まで）を削除しても、training_dataには影響しない
+    # 実際には No current year weather data found エラーが発生する
     current_year_start = Date.new(Date.current.year, 1, 1)
     @weather_location.weather_data.where('date >= ?', current_year_start).destroy_all
     
@@ -166,9 +167,8 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
     assert_equal false, result
     @cultivation_plan.reload
     assert_equal 'failed', @cultivation_plan.status
-    # training_dataとcurrent_year_dataは重複しているため、
-    # 今年のデータを削除すると training_data 不足エラーが先に発生する
-    assert_match /Insufficient training weather data/, @cultivation_plan.error_message
+    # 今年のデータを削除すると、current_year_data 不足エラーが発生する
+    assert_match /No current year weather data found/, @cultivation_plan.error_message
   end
 
   test "should handle prediction gateway error" do
@@ -192,6 +192,80 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
   test "should handle optimization gateway error" do
     skip "Requires proper mocking of both gateways"
     # OptimizationGatewayがエラーを返す場合のテスト
+  end
+
+  test "should handle no allocation candidates error with user-friendly message" do
+    # 十分な気象データを用意して、AllocationGatewayのエラーに集中する
+    # 20年分のデータを作成（最低要件を満たす）
+    @weather_location.weather_data.destroy_all
+    start_date = Date.current - 20.years
+    end_date = Date.current - 1.day
+    
+    (start_date..end_date).each do |date|
+      WeatherDatum.create!(
+        weather_location: @weather_location,
+        date: date,
+        temperature_max: 20.0 + rand(-10.0..10.0),
+        temperature_min: 10.0 + rand(-10.0..5.0),
+        temperature_mean: 15.0 + rand(-10.0..7.0),
+        precipitation: rand(0.0..10.0),
+        sunshine_hours: rand(0.0..12.0)
+      )
+    end
+    
+    # 新しいテスト用の作物を作成（setupの作物とは独立）
+    test_crop = Crop.create!(
+      name: "テストトマト",
+      variety: "テスト桃太郎",
+      is_reference: true,
+      area_per_unit: 10.0,
+      revenue_per_area: 5000.0
+    )
+    
+    # 作物の生育ステージを作成
+    stage1 = test_crop.crop_stages.create!(name: "発芽期", order: 1)
+    stage1.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 20.0,
+      optimal_max: 30.0
+    )
+    stage1.create_thermal_requirement!(required_gdd: 200.0)
+    
+    stage2 = test_crop.crop_stages.create!(name: "開花期", order: 2)
+    stage2.create_temperature_requirement!(
+      base_temperature: 10.0,
+      optimal_min: 22.0,
+      optimal_max: 28.0
+    )
+    stage2.create_thermal_requirement!(required_gdd: 800.0)
+    
+    # FieldCultivationを新しい作物で更新
+    @field_cultivation.cultivation_plan_crop.update!(
+      name: test_crop.name,
+      variety: test_crop.variety
+    )
+    
+    # AllocationGatewayがNoAllocationCandidatesErrorを返す場合
+    mock_allocation_gateway = Minitest::Mock.new
+    mock_allocation_gateway.expect :allocate, nil do |**kwargs|
+      raise Agrr::BaseGateway::NoAllocationCandidatesError, 
+            "No valid allocation candidates could be generated. This may occur when: 1) crops cannot mature within the planning period, 2) field capacity is insufficient, or 3) weather conditions are unfavorable."
+    end
+    
+    Agrr::AllocationGateway.stub :new, mock_allocation_gateway do
+      optimizer = CultivationPlanOptimizer.new(@cultivation_plan)
+      result = optimizer.call
+      
+      assert_equal false, result
+      @cultivation_plan.reload
+      assert_equal 'failed', @cultivation_plan.status
+      
+      # ユーザーフレンドリーなエラーメッセージが設定されることを確認
+      assert_match /作付け計画の候補を生成できませんでした/, @cultivation_plan.error_message
+      assert_match /計画期間内に作物が成熟しない/, @cultivation_plan.error_message
+      assert_match /圃場の面積が不足している/, @cultivation_plan.error_message
+      assert_match /気象条件が適していない/, @cultivation_plan.error_message
+    end
   end
 
   test "should raise error when crop not found" do
@@ -368,13 +442,13 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
   private
 
   def create_weather_data
-    # 最低365日分のデータを作成（最低要件を満たす）
-    # 過去5年分のデータを毎日作成
-    # （今年のデータを削除するテストケースでも、去年のデータ365日分が残るようにするため）
-    # training_data期間は Date.current - 1.year から Date.current - 1.day まで（365日）
-    # 今年のデータを削除しても、去年のデータが365日分残る必要がある
-    start_date = Date.current - 5.years
-    end_date = Date.current - 1.day
+    # 最低15年分（5470日）のデータを作成（最低要件を満たす）
+    # 過去20年分のデータを毎日作成して余裕を持たせる
+    # （今年のデータを削除するテストケースでも、過去データが十分残るようにするため）
+    # training_data期間は Date.current - 20.years から Date.current - 2.days まで
+    # 気象データは通常1-2日遅れで更新されるため、2日前までのデータを使用
+    start_date = Date.current - 20.years
+    end_date = Date.current - 2.days
     
     (start_date..end_date).each do |date|
       WeatherDatum.create!(

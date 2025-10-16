@@ -113,7 +113,12 @@ class PublicPlansController < ApplicationController
   private
   
   def find_cultivation_plan
-    plan_id = session_data[:plan_id]
+    # テスト用: URLパラメータでplan_idを受け取る（開発・テスト環境のみ）
+    plan_id = if Rails.env.test? && params[:plan_id].present?
+      params[:plan_id]
+    else
+      session_data[:plan_id]
+    end
     
     unless plan_id
       redirect_to public_plans_path, alert: '作付け計画が見つかりません。'

@@ -7,6 +7,10 @@ import "leaflet/dist/leaflet.css";
 
 // Chart.jsをグローバルに登録（cultivation_results.jsとtemperature_chart.jsで使用）
 import Chart from 'chart.js/auto';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+// アノテーションプラグインを登録（Chart.js v4の正しい構文）
+Chart.register(annotationPlugin);
 window.Chart = Chart;
 
 import "./crop_form";
@@ -16,3 +20,5 @@ import "./progress_bar";
 import "./optimizing";
 import "./temperature_chart";
 import "./cultivation_results";
+import "./custom_gantt_chart";
+import "./climate_chart";
