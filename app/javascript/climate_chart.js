@@ -242,9 +242,9 @@ class ClimateChart {
               position: 'top',
               labels: {
                 filter: function(item, chart) {
-                  // 温度帯の凡例のみ表示し、実際のデータは非表示
-                  return item.text.includes('適正温度帯') || item.text.includes('限界温度帯') || 
-                         item.text === '最高気温' || item.text === '平均気温' || item.text === '最低気温';
+                  // グレーのダミーデータセットは非表示にし、必要な凡例のみ表示
+                  const allowed = ['最高気温', '平均気温', '最低気温', '🟢 適正温度帯', '🟠 限界温度帯（ストレス）'];
+                  return allowed.includes(item.text);
                 },
                 generateLabels: function(chart) {
                   const original = Chart.defaults.plugins.legend.labels.generateLabels;
