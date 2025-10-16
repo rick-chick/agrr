@@ -34,9 +34,6 @@
       </p>
       <div class="hero-buttons">
         <%= link_to "無料で作付け計画を作成", public_plans_path, class: "hero-button" %>
-        <% unless logged_in? %>
-          <%= link_to "Googleでサインイン", "/auth/google_oauth2", class: "hero-button hero-button-outline", data: { turbo: false } %>
-        <% end %>
       </div>
     </div>
   </section>
