@@ -31,7 +31,7 @@ class CultivationPlanOptimizer
       )
       
       # 全フィールドと作物情報を収集
-      fields_data, crops_data, field_cultivation_map = prepare_allocation_data(planning_end)
+      fields_data, crops_data = prepare_allocation_data(planning_end)
       
       # interaction_rulesを取得
       interaction_rules = prepare_interaction_rules
@@ -52,7 +52,10 @@ class CultivationPlanOptimizer
       )
       
       # 結果を各field_cultivationに分配
-      distribute_allocation_results(allocation_result, field_cultivation_map)
+      distribute_allocation_results(allocation_result)
+      
+      # 最適化結果をcultivation_planに反映
+      update_cultivation_plan_with_results(allocation_result)
       
       @cultivation_plan.phase_completed!
       @cultivation_plan.complete!
@@ -242,16 +245,13 @@ class CultivationPlanOptimizer
     field_cultivations = @cultivation_plan.field_cultivations.to_a
     fields_data = []
     crops_data = []
-    field_cultivation_map = {}
-    crop_id_map = {}
     crops_collection = {}  # 作物の収集用（重複排除 + revenue_per_area計算用）
     
-    # 第1パス: 全作物を収集し、revenue_per_areaを集計
+    # 第1パス: 全作物を収集
     field_cultivations.each do |fc|
       fc.start_optimizing!
       
       crop_info = fc.crop_info
-      field_info = fc.field_info
       
       # Cropモデルを検索（関連データをeager load）
       crop = Crop.includes(crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement])
@@ -277,34 +277,38 @@ class CultivationPlanOptimizer
       
       Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
       
-      # フィールドデータを作成
-      field_id = "field_#{fc.id}"
-      fields_data << {
-        'field_id' => field_id,
-        'name' => field_info[:name],
-        'area' => fc.area,
-        'daily_fixed_cost' => field_info[:daily_fixed_cost]
-      }
-      
       # 作物を収集（重複を避ける）
       crop_key = "#{crop_info[:name]}_#{crop_info[:variety]}"
       unless crops_collection[crop_key]
         crops_collection[crop_key] = crop
       end
-      
-      # マッピング情報を保存（crop_idは後で設定）
-      field_cultivation_map[field_id] = {
-        field_cultivation: fc,
-        crop_key: crop_key
-      }
     end
     
-    # 農場全体の面積と作物数を取得
-    total_area = @cultivation_plan.total_area
+    # 作物数を取得
     crop_count = crops_collection.size
     
-    Rails.logger.info "📊 [AGRR] Total area: #{total_area}㎡, Crop count: #{crop_count}"
-    Rails.logger.info "📊 [AGRR] Average area per crop: #{(total_area / crop_count.to_f).round(2)}㎡"
+    # フィールド数を作物数/2に設定（最低1フィールド）
+    field_count = [(crop_count / 2.0).ceil, 1].max
+    
+    # 農場全体の面積を取得
+    total_area = @cultivation_plan.total_area
+    
+    # 各フィールドの面積を計算
+    area_per_field = total_area / field_count.to_f
+    
+    Rails.logger.info "📊 [AGRR] Total area: #{total_area}㎡, Crop count: #{crop_count}, Field count: #{field_count} (crop_count/2)"
+    Rails.logger.info "📊 [AGRR] Area per field: #{area_per_field.round(2)}㎡"
+    
+    # フィールドデータを作成（作物数/2の数だけ）
+    field_count.times do |i|
+      field_id = "field_#{i + 1}"
+      fields_data << {
+        'field_id' => field_id,
+        'name' => "圃場#{i + 1}",
+        'area' => area_per_field,
+        'daily_fixed_cost' => 10.0  # デフォルト値
+      }
+    end
     
     # 第2パス: max_revenueを各作物ごとに計算して作物データを作成
     crops_collection.each do |crop_key, crop|
@@ -316,70 +320,122 @@ class CultivationPlanOptimizer
       # 元のmax_revenue
       original_max_revenue = crop_requirement['crop']['max_revenue']
       
-      # max_revenue = (revenue_per_area × total_area) ÷ crop_count
-      # これにより、各作物が平均的に (total_area ÷ crop_count) の面積に制限される
-      adjusted_max_revenue = (revenue_per_area * total_area) / crop_count.to_f
+      # max_revenue = (revenue_per_area × total_area × 2) ÷ crop_count
+      # 2倍にすることで、各作物が平均的に (total_area ÷ crop_count) × 2 の面積（2作分）を使用可能
+      adjusted_max_revenue = (revenue_per_area * total_area * 2) / crop_count.to_f
       
       # 調整後の値を設定
       crop_requirement['crop']['max_revenue'] = adjusted_max_revenue
       
       Rails.logger.info "🔧 [AGRR] Crop '#{crop.name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
                         "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)} " \
-                        "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡)"
+                        "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡, 2 crops)"
       
       crops_data << crop_requirement
-      crop_id_map[crop_key] = crop_requirement['crop']['crop_id']
     end
     
-    # field_cultivation_mapにcrop_idを設定
-    field_cultivation_map.each do |field_id, map_entry|
-      map_entry[:crop_id] = crop_id_map[map_entry[:crop_key]]
-      map_entry.delete(:crop_key)
-    end
-    
-    [fields_data, crops_data, field_cultivation_map]
+    [fields_data, crops_data]
   end
   
-  def distribute_allocation_results(allocation_result, field_cultivation_map)
+  def distribute_allocation_results(allocation_result)
+    # 既存のFieldCultivationを全て削除（最適化前のデータをクリア）
+    @cultivation_plan.field_cultivations.destroy_all
+    Rails.logger.info "🗑️  [AGRR] Cleared existing FieldCultivations for CultivationPlan ##{@cultivation_plan.id}"
+    
     field_schedules = allocation_result[:field_schedules] || []
     
     field_schedules.each do |schedule|
       field_id = schedule['field_id']
-      map_entry = field_cultivation_map[field_id]
-      next unless map_entry
-      
-      fc = map_entry[:field_cultivation]
       
       # allocationsが空の場合
       if schedule['allocations'].blank?
-        fc.fail_with_error!('No optimal schedule found')
+        Rails.logger.warn "⚠️  [AGRR] No allocations for field #{field_id}"
         next
       end
       
       allocations = schedule['allocations']
       
-      # 複数のallocationsがある場合は、全期間を結合
-      # 最初の栽培開始日と最後の栽培終了日を使用
-      start_dates = allocations.map { |a| Date.parse(a['start_date']) }
-      end_dates = allocations.map { |a| Date.parse(a['completion_date']) }
-      total_days = allocations.sum { |a| a['growth_days'] }
-      total_cost = allocations.sum { |a| a['total_cost'] }
+      # 各allocationに対して新しいFieldCultivationを作成
+      allocations.each_with_index do |allocation, index|
+        create_field_cultivation_from_allocation(allocation, field_id, index)
+      end
       
-      result = {
-        start_date: start_dates.min,
-        completion_date: end_dates.max,
-        days: total_days,
-        cost: total_cost,
-        raw: {
-          allocations: allocations,
-          allocation_count: allocations.size
-        }
-      }
-      
-      fc.complete_with_result!(result)
-      Rails.logger.info "✅ [AGRR] FieldCultivation ##{fc.id} completed: #{allocations.size} allocations, " \
-                        "#{result[:start_date]} - #{result[:completion_date]} (#{total_days} days total)"
+      Rails.logger.info "✅ [AGRR] Created #{allocations.size} FieldCultivations for field #{field_id}"
     end
+  end
+  
+  def create_field_cultivation_from_allocation(allocation, field_id, index)
+    # 作物情報を作成
+    crop_name = allocation['crop_name']
+    crop_variety = allocation['variety']
+    
+    # field_idから圃場名を取得（"field_1" -> "圃場1"）
+    field_number = field_id.split('_').last
+    field_name = "圃場#{field_number}"
+    
+    # 新しいFieldCultivationを作成
+    field_cultivation = @cultivation_plan.field_cultivations.create!(
+      cultivation_plan_field_id: create_or_find_cultivation_plan_field(field_name, allocation['area_used']),
+      cultivation_plan_crop_id: create_or_find_cultivation_plan_crop(crop_name, crop_variety),
+      area: allocation['area_used'],
+      start_date: Date.parse(allocation['start_date']),
+      completion_date: Date.parse(allocation['completion_date']),
+      cultivation_days: allocation['growth_days'],
+      estimated_cost: allocation['total_cost'],
+      status: :completed,
+      optimization_result: {
+        allocation_id: allocation['allocation_id'],
+        expected_revenue: allocation['expected_revenue'],
+        profit: allocation['profit'],
+        raw: allocation
+      }
+    )
+    
+    Rails.logger.info "🌱 [AGRR] Created FieldCultivation ##{field_cultivation.id}: #{crop_name} (#{crop_variety}) " \
+                      "#{allocation['start_date']} - #{allocation['completion_date']} " \
+                      "(#{allocation['area_used']}㎡, ¥#{allocation['profit']})"
+    
+    field_cultivation
+  end
+  
+  def create_or_find_cultivation_plan_field(field_name, area)
+    # CultivationPlanFieldを作成または検索
+    field = @cultivation_plan.cultivation_plan_fields.find_or_create_by!(
+      name: field_name
+    ) do |f|
+      f.area = area
+      f.daily_fixed_cost = 10.0  # デフォルト値
+    end
+    field.id
+  end
+  
+  def create_or_find_cultivation_plan_crop(crop_name, crop_variety)
+    # CultivationPlanCropを作成または検索
+    crop = @cultivation_plan.cultivation_plan_crops.find_or_create_by!(
+      name: crop_name,
+      variety: crop_variety
+    ) do |c|
+      c.area_per_unit = 1.0 # デフォルト値
+      c.revenue_per_area = 800.0 # デフォルト値
+    end
+    crop.id
+  end
+  
+  def update_cultivation_plan_with_results(allocation_result)
+    # 最適化結果のサマリーをcultivation_planに保存
+    @cultivation_plan.update!(
+      total_profit: allocation_result[:total_profit],
+      total_revenue: allocation_result[:total_revenue], 
+      total_cost: allocation_result[:total_cost],
+      optimization_time: allocation_result[:optimization_time],
+      algorithm_used: allocation_result[:algorithm_used],
+      is_optimal: allocation_result[:is_optimal],
+      optimization_summary: allocation_result[:summary].to_json
+    )
+    
+    Rails.logger.info "📊 [AGRR] CultivationPlan ##{@cultivation_plan.id} updated with optimization results: " \
+                      "profit=¥#{allocation_result[:total_profit]}, revenue=¥#{allocation_result[:total_revenue]}, " \
+                      "cost=¥#{allocation_result[:total_cost]}"
   end
 end
 
