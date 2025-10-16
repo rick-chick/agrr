@@ -8,6 +8,9 @@ class AuthController < ApplicationController
   
   # Public endpoints
   skip_before_action :authenticate_user!, only: [:login, :google_oauth2_callback, :failure]
+  
+  # Production環境では認証機能を無効化
+  before_action :check_production_environment
 
   def login
     # Display login page with Google OAuth button
@@ -72,6 +75,16 @@ class AuthController < ApplicationController
   end
 
   private
+  
+  def check_production_environment
+    if Rails.env.production?
+      if request.format.json?
+        render json: { error: 'Authentication is disabled in production environment.' }, status: :forbidden
+      else
+        redirect_to root_path, alert: 'Authentication is disabled in production environment.'
+      end
+    end
+  end
 
   def auth_failure_path
     '/auth/failure'
