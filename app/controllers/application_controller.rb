@@ -3,8 +3,8 @@
 class ApplicationController < ActionController::Base
   # Rails 8+ uses built-in forgery protection differently; explicit macro is unnecessary
   
-  # Authentication
-  before_action :authenticate_user!
+  # Authentication (disabled in production)
+  before_action :authenticate_user!, unless: -> { Rails.env.production? }
   
   private
   
@@ -36,6 +36,9 @@ class ApplicationController < ActionController::Base
   end
   
   def authenticate_user!
+    # Production環境では認証を強制しない（全員アノニマスユーザーとして扱う）
+    return if Rails.env.production?
+    
     # アノニマスユーザーの場合は認証が必要
     return if current_user && !current_user.anonymous?
     

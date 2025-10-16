@@ -106,7 +106,7 @@
     </p>
     <div class="cta-buttons">
       <%= link_to "無料で計画を作成", public_plans_path, class: "hero-button" %>
-      <% unless logged_in? %>
+      <% unless Rails.env.production? || logged_in? %>
         <%= link_to "アカウント登録", auth_login_path, class: "hero-button hero-button-outline" %>
       <% end %>
     </div>

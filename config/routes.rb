@@ -11,12 +11,14 @@ Rails.application.routes.draw do
   # Can be used by uptime monitors and load balancers.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Authentication routes
-  get '/auth/login', to: 'auth#login', as: 'auth_login'
-  # /auth/google_oauth2 is handled by OmniAuth middleware
-  get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
-  get '/auth/failure', to: 'auth#failure'
-  delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
+  # Authentication routes (disabled in production)
+  unless Rails.env.production?
+    get '/auth/login', to: 'auth#login', as: 'auth_login'
+    # /auth/google_oauth2 is handled by OmniAuth middleware
+    get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
+    get '/auth/failure', to: 'auth#failure'
+    delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
+  end
   
   # Development and test routes
   if Rails.env.development? || Rails.env.test?
@@ -81,7 +83,11 @@ Rails.application.routes.draw do
       
       # Public Plans API（認証不要）
       namespace :public_plans do
-        resources :field_cultivations, only: [:show]
+        resources :field_cultivations, only: [:show, :update] do
+          member do
+            get :climate_data
+          end
+        end
       end
       
       # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
