@@ -1,40 +1,40 @@
 <div class="nested-fields crop-stage-item">
   <div class="nested-fields-header">
-    <h4 class="nested-title">生育ステージ</h4>
+    <h4 class="nested-title"><%= t('crops.stage.title') %></h4>
     <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
     <% if !local_assigns[:crop]&.is_reference || admin_user? %>
-      <button type="button" class="btn btn-error btn-sm remove-crop-stage">削除</button>
+      <button type="button" class="btn btn-error btn-sm remove-crop-stage"><%= t('crops.stage.remove_button') %></button>
     <% end %>
   </div>
 
   <div class="form-row">
     <div class="form-group">
-      <%= f.label :name, 'ステージ名', class: 'form-label' %>
-      <%= f.text_field :name, class: 'form-control', placeholder: '例：発芽期、栄養成長期' %>
+      <%= f.label :name, t('crops.stage.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, class: 'form-control', placeholder: t('crops.stage.name_placeholder') %>
     </div>
 
     <div class="form-group">
-      <%= f.label :order, '順序', class: 'form-label' %>
-      <%= f.number_field :order, class: 'form-control', min: 0, placeholder: '0' %>
+      <%= f.label :order, t('crops.stage.order_label'), class: 'form-label' %>
+      <%= f.number_field :order, class: 'form-control', min: 0, placeholder: t('crops.stage.order_placeholder') %>
     </div>
   </div>
 
   <div class="nested-section">
-    <h5 class="nested-subtitle">🌡️ 温度要件</h5>
+    <h5 class="nested-subtitle"><%= t('crops.stage.temperature_section') %></h5>
     <%= f.fields_for :temperature_requirement do |temp_form| %>
       <%= render 'temperature_requirement_fields', f: temp_form %>
     <% end %>
   </div>
 
   <div class="nested-section">
-    <h5 class="nested-subtitle">🌡️ 熱要件（GDD）</h5>
+    <h5 class="nested-subtitle"><%= t('crops.stage.thermal_section') %></h5>
     <%= f.fields_for :thermal_requirement do |thermal_form| %>
       <%= render 'thermal_requirement_fields', f: thermal_form %>
     <% end %>
   </div>
 
   <div class="nested-section">
-    <h5 class="nested-subtitle">☀️ 日照要件</h5>
+    <h5 class="nested-subtitle"><%= t('crops.stage.sunshine_section') %></h5>
     <%= f.fields_for :sunshine_requirement do |sun_form| %>
       <%= render 'sunshine_requirement_fields', f: sun_form %>
     <% end %>
