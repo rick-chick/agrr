@@ -39,15 +39,15 @@ if [ $? -ne 0 ]; then
 fi
 echo "Database setup completed"
 
-# Check if database needs seeding
-echo "Step 3: Checking if seed is needed..."
-if bundle exec rails runner "exit(User.count == 0 ? 0 : 1)" 2>/dev/null; then
-    echo "Database is empty. Running seed..."
-    bundle exec rails db:seed
-    echo "Seed completed"
-else
-    echo "Database already has data. Skipping seed."
-fi
+# Check if database needs seeding (disabled for faster startup)
+echo "Step 3: Seed disabled for now (run manually after startup if needed)"
+# if bundle exec rails runner "exit(User.count == 0 ? 0 : 1)" 2>/dev/null; then
+#     echo "Database is empty. Running seed..."
+#     bundle exec rails db:seed
+#     echo "Seed completed"
+# else
+#     echo "Database already has data. Skipping seed."
+# fi
 
 echo "Step 4: Starting Solid Queue worker..."
 bundle exec rails solid_queue:start > /tmp/solid_queue.log 2>&1 &
