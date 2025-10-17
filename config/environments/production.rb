@@ -64,7 +64,6 @@ Rails.application.configure do
 
   # Use Solid Queue for background jobs (SQLite-based)
   config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
   config.active_job.queue_name_prefix = "agrr_production"
 
   config.action_mailer.perform_caching = false
@@ -84,6 +83,13 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   # Enable DNS rebinding protection and other features
+  # Allow localhost and App Runner internal IPs for health checks
+  config.hosts << "localhost"
+  config.hosts << ".awsapprunner.com"
+  config.hosts << /.*\.run\.app$/  # Google Cloud Run (format: service-hash-region.a.run.app)
+  config.hosts << "agrr.net"
+  config.hosts << "www.agrr.net"
+  config.hosts << /169\.254\.\d+\.\d+/  # App Runner internal health check IPs
   allowed_hosts = ENV.fetch("ALLOWED_HOSTS", "").split(",").reject(&:empty?)
   config.hosts.concat(allowed_hosts) unless allowed_hosts.empty?
 

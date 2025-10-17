@@ -33,7 +33,14 @@ aws_test:
   <<: *default
   database: storage/aws_test.sqlite3
 
-# AWS Production environment (SQLite with persistent storage)
+# Cloud Run Production environment (SQLite with separate files for better performance)
 production:
-  <<: *default
-  database: storage/production.sqlite3
+  primary:
+    <<: *default
+    database: /tmp/production.sqlite3
+  queue:
+    <<: *default
+    database: /tmp/production_queue.sqlite3
+  cache:
+    <<: *default
+    database: /tmp/production_cache.sqlite3

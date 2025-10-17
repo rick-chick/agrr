@@ -1,27 +1,64 @@
 #!/bin/bash
 
-echo "=== Starting Rails Application ==="
+echo "=== Starting Rails Application with Litestream ==="
 
-echo "Step 1: Database preparation..."
+# Use PORT environment variable (Cloud Run sets this dynamically)
+export PORT=${PORT:-3000}
+echo "Port: $PORT"
+
+# Restore databases from GCS if they exist
+echo "Step 1: Restoring databases from GCS..."
+
+# Restore main database
+if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production.sqlite3; then
+    echo "✓ Main database restored from GCS"
+else
+    echo "⚠ No main database replica found, starting fresh"
+fi
+
+# Restore queue database
+if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_queue.sqlite3; then
+    echo "✓ Queue database restored from GCS"
+else
+    echo "⚠ No queue database replica found, starting fresh"
+fi
+
+# Restore cache database (optional - cache can be recreated)
+if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_cache.sqlite3; then
+    echo "✓ Cache database restored from GCS"
+else
+    echo "⚠ No cache database replica found, will be created"
+fi
+
+echo "Step 2: Database setup..."
+# Prepare database (creates if needed and runs migrations)
 bundle exec rails db:prepare
 if [ $? -ne 0 ]; then
-    echo "ERROR: Database preparation failed"
+    echo "ERROR: Database setup failed"
     exit 1
 fi
-echo "Database preparation completed"
+echo "Database setup completed"
 
-echo "Step 2: Running Solid Queue migrations..."
-bundle exec rails db:migrate
-if [ $? -ne 0 ]; then
-    echo "ERROR: Solid Queue migrations failed"
-    exit 1
+# Check if database needs seeding
+echo "Step 3: Checking if seed is needed..."
+if bundle exec rails runner "exit(User.count == 0 ? 0 : 1)" 2>/dev/null; then
+    echo "Database is empty. Running seed..."
+    bundle exec rails db:seed
+    echo "Seed completed"
+else
+    echo "Database already has data. Skipping seed."
 fi
-echo "Solid Queue migrations completed"
 
-echo "Step 3: Starting Solid Queue worker..."
-bundle exec rails solid_queue:start &
+echo "Step 4: Starting Solid Queue worker..."
+bundle exec rails solid_queue:start > /tmp/solid_queue.log 2>&1 &
 SOLID_QUEUE_PID=$!
 echo "Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
+sleep 2
 
-echo "Step 4: Starting Rails server..."
-bundle exec rails server -b 0.0.0.0 -e production
+echo "Step 5: Starting Litestream replication..."
+litestream replicate -config /etc/litestream.yml &
+LITESTREAM_PID=$!
+echo "Litestream started (PID: $LITESTREAM_PID) - replicating all databases"
+
+echo "Step 6: Starting Rails server..."
+exec bundle exec rails server -b 0.0.0.0 -p $PORT -e production

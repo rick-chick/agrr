@@ -70,15 +70,19 @@ class PublicPlansController < ApplicationController
     end
     
     # Service で計画作成
+    session_id = session.id.to_s
+    Rails.logger.info "🔑 [PublicPlans#create] Using session_id: #{session_id}"
+    
     result = CultivationPlanCreator.new(
       farm: farm,
       total_area: total_area,
       crops: crops,
       user: current_user,
-      session_id: request.session_options[:id]
+      session_id: session_id
     ).call
     
     if result.success?
+      Rails.logger.info "✅ [PublicPlans#create] CultivationPlan created with session_id: #{result.cultivation_plan.session_id}"
       session[:public_plan] = { plan_id: result.cultivation_plan.id }
       
       # 非同期で最適化実行
@@ -129,7 +133,7 @@ class PublicPlansController < ApplicationController
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
       .find(plan_id)
   rescue ActiveRecord::RecordNotFound
-    redirect_to new_public_plan_path, alert: '作付け計画が見つかりません。'
+    redirect_to public_plans_path, alert: '作付け計画が見つかりません。'
     nil
   end
   

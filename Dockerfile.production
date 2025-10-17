@@ -44,21 +44,25 @@ RUN mkdir -p storage
 # Precompile assets (with dummy master key if needed)
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
 
-# Create Solid Queue tables (for schema validation)
-RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails db:create db:migrate
+# Note: Database setup is done at runtime by start_app.sh
+# This ensures migrations run with the actual production database
 
 # Production stage
 FROM ruby:3.3.9-slim
 
-# Install runtime dependencies (including SQLite and Node.js)
+# Install runtime dependencies (including SQLite, Node.js, and Litestream)
 RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
     libyaml-0-2 \
     curl \
     ca-certificates \
     gnupg \
+    wget \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
+    && wget https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
+    && dpkg -i litestream-v0.3.13-linux-amd64.deb \
+    && rm litestream-v0.3.13-linux-amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
@@ -69,6 +73,9 @@ WORKDIR /app
 
 # Copy the application from builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
+
+# Copy Litestream configuration
+COPY config/litestream.yml /etc/litestream.yml
 
 # Ensure gems are available in the final stage
 RUN bundle config set --local deployment 'true' && \
@@ -82,11 +89,12 @@ RUN npm install --production
 # Create storage directory with proper permissions
 RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
 
-# Switch to non-root user
-USER appuser
+# Run as root for gcsfuse (FUSE requires root or privileged mode)
+# USER appuser
 
-# Expose port 3000
+# Expose port (Cloud Run uses dynamic PORT)
 EXPOSE 3000
+ENV PORT=3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
