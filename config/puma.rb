@@ -28,6 +28,11 @@ pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
 
+# Run Solid Queue workers alongside Puma in production
+if ENV.fetch("RAILS_ENV", "development") != "development"
+  plugin :solid_queue
+end
+
 # Use single-process mode in development to avoid forking issues
 if ENV.fetch("RAILS_ENV", "development") == "development"
   workers 0
