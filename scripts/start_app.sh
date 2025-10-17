@@ -49,11 +49,7 @@ echo "Step 3: Seed disabled for now (run manually after startup if needed)"
 #     echo "Database already has data. Skipping seed."
 # fi
 
-echo "Step 4: Starting Solid Queue worker..."
-bundle exec rails solid_queue:start > /tmp/solid_queue.log 2>&1 &
-SOLID_QUEUE_PID=$!
-echo "Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
-sleep 2
+echo "Step 4: Solid Queue will be started by Puma plugin (no separate process needed)"
 
 echo "Step 5: Starting Litestream replication..."
 litestream replicate -config /etc/litestream.yml &
