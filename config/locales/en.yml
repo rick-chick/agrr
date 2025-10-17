@@ -1,0 +1,82 @@
+en:
+  # Common
+  common:
+    save: "Save"
+    cancel: "Cancel"
+    edit: "Edit"
+    delete: "Delete"
+    back: "Back"
+    confirm: "Confirm"
+    search: "Search"
+    create: "Create"
+    update: "Update"
+    show: "Show"
+    new: "New"
+    destroy: "Delete"
+    actions: "Actions"
+    submit: "Submit"
+    close: "Close"
+    loading: "Loading..."
+    yes: "Yes"
+    no: "No"
+
+  # Navigation
+  nav:
+    home: "Home"
+    farms: "Farm Management"
+    crops: "Crop Management"
+    plans: "Crop Plans"
+    public_plans: "Free Crop Plans"
+    about: "About AGRR"
+    contact: "Contact"
+    login: "Login"
+    logout: "Logout"
+    admin: "Admin"
+    language: "Language"
+
+  # Footer
+  footer:
+    about: "About AGRR"
+    privacy: "Privacy Policy"
+    terms: "Terms of Service"
+    contact: "Contact"
+    copyright: "© 2025 AGRR. All rights reserved."
+
+  # Flash messages
+  flash:
+    actions:
+      create:
+        notice: "%{resource_name} was successfully created"
+      update:
+        notice: "%{resource_name} was successfully updated"
+      destroy:
+        notice: "%{resource_name} was successfully deleted"
+
+  # Date/Time formats
+  date:
+    formats:
+      default: "%Y-%m-%d"
+      short: "%m/%d"
+      long: "%B %d, %Y"
+    day_names: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+    abbr_day_names: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+    month_names: [~, January, February, March, April, May, June, July, August, September, October, November, December]
+    abbr_month_names: [~, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+
+  time:
+    formats:
+      default: "%Y-%m-%d %H:%M"
+      short: "%m/%d %H:%M"
+      long: "%B %d, %Y %H:%M:%S"
+    am: "am"
+    pm: "pm"
+
+  # ActiveRecord
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "Validation failed: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "Cannot delete record because a dependent %{record} exists"
+          has_many: "Cannot delete record because dependent %{record} exist"
+
