@@ -4,7 +4,7 @@
 
 PostgreSQLやRedis不要！SQLiteとLitestreamだけで本番環境に耐えられる、コストパフォーマンスに優れたRailsアプリケーションです。
 
-📖 **[運用ガイド](docs/OPERATIONS_SUMMARY.md)** | 📖 **[クイックリファレンス](docs/QUICK_REFERENCE.md)** | 📖 **[Google OAuth設定](docs/GOOGLE_OAUTH_SETUP.md)**
+📖 **[ドキュメント一覧](docs/README.md)** | 📖 **[デプロイガイド](docs/operations/DEPLOYMENT_GUIDE.md)** | 📖 **[コマンド集](docs/operations/QUICK_REFERENCE.md)**
 
 ---
 
