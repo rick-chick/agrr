@@ -3,48 +3,48 @@
   
   <div class="form-row">
     <div class="form-group">
-      <%= f.label :base_temperature, '最低限界温度 (°C)', class: 'form-label' %>
-      <%= f.number_field :base_temperature, class: 'form-control', step: 0.1, placeholder: '例：5.0' %>
+      <%= f.label :base_temperature, t('crops.stage.temperature.base_temperature_label'), class: 'form-label' %>
+      <%= f.number_field :base_temperature, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.base_temperature_placeholder') %>
     </div>
 
     <div class="form-group">
-      <%= f.label :optimal_min, '最適温度 最小 (°C)', class: 'form-label' %>
-      <%= f.number_field :optimal_min, class: 'form-control', step: 0.1, placeholder: '例：15.0' %>
+      <%= f.label :optimal_min, t('crops.stage.temperature.optimal_min_label'), class: 'form-label' %>
+      <%= f.number_field :optimal_min, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.optimal_min_placeholder') %>
     </div>
 
     <div class="form-group">
-      <%= f.label :optimal_max, '最適温度 最大 (°C)', class: 'form-label' %>
-      <%= f.number_field :optimal_max, class: 'form-control', step: 0.1, placeholder: '例：25.0' %>
-    </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <%= f.label :low_stress_threshold, '低温ストレス閾値 (°C)', class: 'form-label' %>
-      <%= f.number_field :low_stress_threshold, class: 'form-control', step: 0.1, placeholder: '例：10.0' %>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :high_stress_threshold, '高温ストレス閾値 (°C)', class: 'form-label' %>
-      <%= f.number_field :high_stress_threshold, class: 'form-control', step: 0.1, placeholder: '例：30.0' %>
+      <%= f.label :optimal_max, t('crops.stage.temperature.optimal_max_label'), class: 'form-label' %>
+      <%= f.number_field :optimal_max, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.optimal_max_placeholder') %>
     </div>
   </div>
 
   <div class="form-row">
     <div class="form-group">
-      <%= f.label :frost_threshold, '霜害閾値 (°C)', class: 'form-label' %>
-      <%= f.number_field :frost_threshold, class: 'form-control', step: 0.1, placeholder: '例：0.0' %>
+      <%= f.label :low_stress_threshold, t('crops.stage.temperature.low_stress_label'), class: 'form-label' %>
+      <%= f.number_field :low_stress_threshold, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.low_stress_placeholder') %>
     </div>
 
     <div class="form-group">
-      <%= f.label :sterility_risk_threshold, '不稔リスク閾値 (°C)', class: 'form-label' %>
-      <%= f.number_field :sterility_risk_threshold, class: 'form-control', step: 0.1, placeholder: '例：35.0' %>
+      <%= f.label :high_stress_threshold, t('crops.stage.temperature.high_stress_label'), class: 'form-label' %>
+      <%= f.number_field :high_stress_threshold, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.high_stress_placeholder') %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :frost_threshold, t('crops.stage.temperature.frost_label'), class: 'form-label' %>
+      <%= f.number_field :frost_threshold, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.frost_placeholder') %>
     </div>
 
     <div class="form-group">
-      <%= f.label :max_temperature, '最大限界温度 (°C)', class: 'form-label' %>
-      <%= f.number_field :max_temperature, class: 'form-control', step: 0.1, placeholder: '例：42.0' %>
-      <small class="form-text text-muted">生育が停止する温度</small>
+      <%= f.label :sterility_risk_threshold, t('crops.stage.temperature.sterility_label'), class: 'form-label' %>
+      <%= f.number_field :sterility_risk_threshold, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.sterility_placeholder') %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :max_temperature, t('crops.stage.temperature.max_temperature_label'), class: 'form-label' %>
+      <%= f.number_field :max_temperature, class: 'form-control', step: 0.1, placeholder: t('crops.stage.temperature.max_temperature_placeholder') %>
+      <small class="form-text text-muted"><%= t('crops.stage.temperature.max_temperature_help') %></small>
     </div>
   </div>
 </div>
