@@ -1,317 +1,387 @@
-# AGRR - Rails 8 + SQLite + S3 + App Runner
+# AGRR - Rails 8 農業計画支援システム
 
-**Rails 8の最新機能を活用したコストパフォーマンスに優れたアプリケーション構成**
+**Rails 8 + SQLite + Litestream + Google Cloud Run**
 
-PostgreSQLやRedis不要！SQLiteとDockerだけで本番環境に耐えられるRailsアプリケーションです。
+PostgreSQLやRedis不要！SQLiteとLitestreamだけで本番環境に耐えられる、コストパフォーマンスに優れたRailsアプリケーションです。
 
-📖 **[テストガイド](docs/TEST_GUIDE.md)** | 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md)** | 📖 **[Google OAuth設定ガイド](docs/GOOGLE_OAUTH_SETUP.md)**
+📖 **[運用ガイド](docs/OPERATIONS_SUMMARY.md)** | 📖 **[クイックリファレンス](docs/QUICK_REFERENCE.md)** | 📖 **[Google OAuth設定](docs/GOOGLE_OAUTH_SETUP.md)**
 
-## 📋 目次
-
-- [主な特徴](#主な特徴)
-- [コスト削減のポイント](#コスト削減のポイント)
-- [環境構成](#環境構成)
-- [機能](#機能)
-- [セットアップ](#セットアップ)
-  - [参照データの準備](#参照データreference-dataの準備)
-- [開発環境での実行](#開発環境での実行)
-- [開発プロセス](#開発プロセス)
-- [テスト](#テスト)
-- [API エンドポイント](#api-エンドポイント)
-- [AWS デプロイ](#aws-デプロイ)
-- [CI/CD パイプライン](#cicd-パイプライン)
-- [コスト最適化のポイント](#コスト最適化のポイント)
-- [ファイル構成](#ファイル構成)
-- [トラブルシューティング](#トラブルシューティング)
-- [参考リソース](#参考リソース)
+---
 
 ## 🚀 主な特徴
 
-- **Rails 8.0** - 最新のRailsフレームワーク
-- **Google OAuth 2.0認証** - セキュアな認証システム
-- **SQLite** - 開発から本番まで全環境で使用（データベース）
-- **Solid Queue** - SQLiteベースのバックグラウンドジョブ処理
-- **Solid Cache** - SQLiteベースのキャッシュシステム
-- **Solid Cable** - SQLiteベースのAction Cable（WebSocket）
-- **Active Storage + S3** - 画像・ファイルの保存
-- **AWS App Runner** - サーバーレスデプロイ
-- **Litestack** - SQLiteの本番環境最適化
+### Rails 8の最新機能
+- **Solid Queue** - SQLiteベースのバックグラウンドジョブ
+- **Solid Cache** - SQLiteベースのキャッシュ
+- **Solid Cable** - SQLiteベースのWebSocket（Action Cable）
 
-## 💰 コスト削減のポイント
+### インフラ構成
+- **Google Cloud Run** - サーバーレスコンテナ実行環境
+- **Litestream** - SQLiteのCloud Storageへのリアルタイムレプリケーション
+- **Cloud Storage** - データベースバックアップ
+- **Artifact Registry** - Dockerイメージ保存
 
-- ❌ PostgreSQL/RDS不要
-- ❌ Redis/ElastiCache不要
-- ✅ SQLiteで全て実現（データベース、キャッシュ、ジョブキュー）
-- ✅ AWS App Runnerのみ（自動スケーリング）
-- ✅ S3（ファイル保存）
+### コスト最適化
+- ✅ PostgreSQL/Cloud SQL不要
+- ✅ Redis/Memorystore不要
+- ✅ SQLiteで全て実現（DB、キャッシュ、ジョブキュー）
+- ✅ アイドル時自動停止（min-instances=0）
 
-**推定コスト**: $5-10/月（小規模トラフィック時）
+**推定コスト**: 月額 **$1-6** （小規模トラフィック時）
 
-## 🏗 環境構成
+---
 
-このアプリケーションは4つの環境をサポートしています：
+## 🏗 アーキテクチャ
 
-| 環境 | 用途 | データベース | ファイル保存 |
-|------|------|--------------|--------------|
-| **development** | ローカル開発（No Docker） | SQLite | ローカルディスク |
-| **docker** | Docker開発環境 | SQLite | ローカルディスク |
-| **aws_test** | AWSテスト環境 | SQLite + EFS | S3 |
-| **production** | AWS本番環境 | SQLite + EFS | S3 |
+```
+ユーザー
+  ↓
+Google Cloud Run
+  └─ Rails 8 アプリケーション
+      ├─ SQLite (/tmp)
+      │   ├─ production.sqlite3 (メインDB)
+      │   ├─ production_queue.sqlite3 (Solid Queue)
+      │   └─ production_cache.sqlite3 (Solid Cache)
+      ├─ Solid Queue (バックグラウンドジョブ)
+      ├─ Solid Cache (キャッシュ)
+      └─ Litestream (レプリケーション)
+           ↓ リアルタイム同期（10-30秒間隔）
+      Cloud Storage (gs://agrr-production-db)
+```
+
+---
+
+## 📦 クイックスタート
+
+### 開発環境
+
+```bash
+# 1. リポジトリをクローン
+git clone <repository-url>
+cd agrr
+
+# 2. Docker環境を起動
+docker-compose up
+
+# 3. データベースセットアップ
+docker-compose run --rm web rails db:setup
+
+# 4. ブラウザで確認
+open http://localhost:3000
+```
+
+詳細は **[開発ガイド](#開発環境)** を参照
+
+---
+
+### 本番環境デプロイ
+
+```bash
+# 1. 環境変数を設定
+cp env.gcp.example .env.gcp
+# .env.gcpを編集
+
+# 2. デプロイ
+source .env.gcp
+./scripts/gcp-deploy.sh deploy
+```
+
+詳細は **[運用ガイド](docs/OPERATIONS_SUMMARY.md)** を参照
+
+---
+
+## 🌐 本番環境
+
+### サービス情報
+- **URL**: https://agrr-production-czyu2jck5q-an.a.run.app
+- **プラットフォーム**: Google Cloud Run
+- **リージョン**: asia-northeast1（東京）
+- **データベース**: SQLite + Litestream
+
+### リソース
+- **メモリ**: 2GB
+- **CPU**: 2コア
+- **インスタンス**: 0-1（自動スケール）
+- **タイムアウト**: 600秒
+
+---
 
 ## ✨ 機能
 
-- **Google OAuth 2.0認証** - セキュアな認証システム
-- Active Storageを使ったファイルアップロード
-- S3へのファイル保存（AWS環境）
-- ローカルファイル保存（開発環境）
-- SQLiteベースのバックグラウンドジョブ（Solid Queue）
-- SQLiteベースのキャッシュ（Solid Cache）
-- RESTful API
-- CORS対応
-- ヘルスチェックエンドポイント
-
-## 📦 セットアップ
-
-詳細なセットアップ手順は以下のドキュメントを参照してください：
-
-- 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md#開発環境セットアップ)** - 開発環境の構築方法
-- 📖 **[テストガイド](docs/TEST_GUIDE.md#推奨開発環境)** - テスト環境の構築方法
-
-### 🌱 参照データ（Reference Data）の準備
-
-AGRRでは、参照農場（全都道府県47地域）と参照作物（15種類）のデータを使用します。
-これらのデータには天気情報とAI生成の作物情報が含まれますが、取得に時間がかかるため、**2段階のセットアップ**が必要です。
-
-#### 通常の開発者向け（高速セットアップ）
-
-既にフィクスチャファイルがリポジトリに含まれている場合、以下のコマンドだけで完了します：
-
-```bash
-# 基本シードを実行（数秒で完了）
-docker compose run --rm web rails db:seed
-```
-
-このコマンドで以下がインポートされます：
-- 管理者ユーザー
-- 47都道府県の参照農場（位置情報 + 2000年以降の天気データ）
-- 15種類の参照作物（基本情報 + AI生成の栽培情報）
-
-#### 初回セットアップ（管理者・一度だけ実行）
-
-フィクスチャファイルが存在しない場合、管理者が以下の手順でデータを生成します：
-
-```bash
-# 1. 基本シードを実行（基本情報のみ）
-docker compose run --rm web rails db:seed
-
-# 2. ターミナル1: Webサーバーを起動
-docker compose up web
-
-# 3. ターミナル2: Solid Queueを起動
-docker compose run --rm web bundle exec rails solid_queue:start
-
-# 4. ターミナル3: 参照農場の天気データを取得（10-30分）
-docker compose run --rm web bin/fetch_reference_weather_data
-
-# 5. ターミナル3: 参照作物のAI情報を取得（5-15分）
-docker compose run --rm web bin/fetch_reference_crop_info
-
-# 6. フィクスチャファイルをコミット
-git add db/fixtures/
-git commit -m "Add reference weather and crop data"
-git push
-```
-
-以後、他の開発者は`rails db:seed`だけで完全なデータを取得できます。
-
-**注意事項**:
-- **Webサーバーが起動している必要があります**（スクリプトはAPI経由でデータ取得）
-- 天気データ取得には Solid Queue が起動している必要があります
-- AI作物情報取得には AI API キー（環境変数）が必要な場合があります
-- 内部APIエンドポイント（`/api/v1/internal/*`）は開発・テスト環境のみ有効
-
-## 🚀 開発環境での実行
-
-詳細な開発環境での実行方法は **[テストガイド](docs/TEST_GUIDE.md)** を参照してください。
-
-
-## 🔧 開発プロセス
-
-### テスト駆動開発 (TDD)
-
-```bash
-# 1. テストを書く
-# test/controllers/api/v1/example_controller_test.rb
-
-# 2. テストを実行（失敗することを確認）
-bundle exec rails test test/controllers/api/v1/example_controller_test.rb
-
-# 3. 最小限のコードを実装
-# app/controllers/api/v1/example_controller.rb
-
-# 4. テストを再実行（成功することを確認）
-bundle exec rails test test/controllers/api/v1/example_controller_test.rb
-
-# 5. リファクタリング
-```
-
-### Git ワークフロー
-
-```bash
-# 1. ブランチ作成
-git checkout -b feature/new-api-endpoint
-
-# 2. 開発・テスト
-# ... コードを書く ...
-bundle exec rails test
-
-# 3. コミット
-git add .
-git commit -m "Add new API endpoint with tests"
-
-# 4. プッシュ
-git push origin feature/new-api-endpoint
-
-# 5. プルリクエスト作成
-# GitHubでプルリクエストを作成
-```
-
-## 🧪 テスト
-
-詳細なテスト方法は **[テストガイド](docs/TEST_GUIDE.md)** を参照してください。
-
-## API エンドポイント
-
-### ヘルスチェック
-
-```
-GET /api/v1/health
-```
-
-レスポンス例:
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-01-01T00:00:00Z",
-  "environment": "development",
-  "database_connected": true,
-  "storage": "local"
-}
-```
-
 ### 認証
+- Google OAuth 2.0認証
+- セッション管理
+
+### 作付け計画
+- 圃場管理
+- 作物管理
+- 栽培計画の最適化
+- ガントチャート表示
+
+### 気象データ
+- 過去の気象データ取得
+- 将来予測
+- 気候グラフ表示
+
+### バックグラウンド処理
+- Solid Queueによる非同期ジョブ
+- 気象データ更新
+- AI予測処理
+
+---
+
+## 🛠 開発環境
+
+### 必要なもの
+- Docker & Docker Compose
+- Git
+
+### セットアップ
+
+```bash
+# 1. 依存関係のインストール
+docker-compose build
+
+# 2. データベース作成
+docker-compose run --rm web rails db:create db:migrate
+
+# 3. サンプルデータ投入
+docker-compose run --rm web rails db:seed
+
+# 4. サーバー起動
+docker-compose up
+```
+
+### テスト実行
+
+```bash
+# 全テスト実行
+docker-compose run --rm test
+
+# 特定のテスト実行
+docker-compose run --rm test bundle exec rails test test/controllers/public_plans_controller_test.rb
+```
+
+---
+
+## 🚀 デプロイ
+
+### 前提条件
+- Google Cloud Platform アカウント
+- gcloud CLI インストール済み
+- サービスアカウント設定済み
+
+### デプロイ手順
+
+```bash
+# 1. 環境変数設定
+source .env.gcp
+
+# 2. デプロイ実行
+./scripts/gcp-deploy.sh deploy
+```
+
+所要時間: 2-3分
+
+詳細は **[運用ガイド](docs/OPERATIONS_SUMMARY.md)** を参照
+
+---
+
+## 📊 運用
+
+### 日常運用
+
+```bash
+# デプロイ
+./scripts/gcp-deploy.sh deploy
+
+# ログ確認
+gcloud logging read "resource.type=cloud_run_revision" \
+  --limit=50 --project=agrr-475323
+
+# バックアップ確認
+gsutil ls -lh gs://agrr-production-db/
+```
+
+### メンテナンス
+
+```bash
+# 古いイメージ削除
+./scripts/cleanup-images.sh
+
+# 手動バックアップ
+gsutil -m cp -r gs://agrr-production-db/production.sqlite3 \
+  gs://agrr-production-db/manual-backup-$(date +%Y%m%d)/
+```
+
+詳細は **[クイックリファレンス](docs/QUICK_REFERENCE.md)** を参照
+
+---
+
+## 🔧 設定ファイル
+
+### 環境変数（.env.gcp）
+```bash
+PROJECT_ID=agrr-475323
+REGION=asia-northeast1
+SERVICE_NAME=agrr-production
+GCS_BUCKET=agrr-production-db
+RAILS_MASTER_KEY=<your-key>
+SECRET_KEY_BASE=<your-secret>
+ALLOWED_HOSTS=agrr.net,www.agrr.net,.run.app
+```
+
+### データベース（config/database.yml）
+```yaml
+production:
+  primary:
+    database: /tmp/production.sqlite3
+  queue:
+    database: /tmp/production_queue.sqlite3
+  cache:
+    database: /tmp/production_cache.sqlite3
+```
+
+### Litestream（config/litestream.yml）
+```yaml
+dbs:
+  - path: /tmp/production.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET}
+        sync-interval: 10s
+```
+
+---
+
+## 📁 ファイル構成
 
 ```
-GET    /auth/login                    # ログインページ
-GET    /auth/google_oauth2           # Google OAuth 開始
-GET    /auth/google_oauth2/callback  # OAuth コールバック
-DELETE /auth/logout                  # ログアウト
-```
-
-### ファイル管理（認証必要）
-
-```
-GET    /api/v1/files          # ファイル一覧
-GET    /api/v1/files/:id      # ファイル詳細
-POST   /api/v1/files          # ファイルアップロード
-DELETE /api/v1/files/:id      # ファイル削除
-```
-
-## ☁️ AWS デプロイ
-
-詳細なAWSデプロイ方法は **[AWSデプロイガイド](docs/AWS_DEPLOY.md)** を参照してください。
-
-## 🔄 CI/CD パイプライン
-
-詳細なCI/CD設定は以下のドキュメントを参照してください：
-
-- 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md#cicd統合)** - GitHub Actionsでの自動デプロイ
-- 📖 **[テストガイド](docs/TEST_GUIDE.md#cicd統合)** - テスト実行のCI/CD設定
-
-
-## 💡 コスト最適化のポイント
-
-詳細なコスト最適化については **[AWSデプロイガイド](docs/AWS_DEPLOY.md#コスト最適化)** を参照してください。
-
-## ファイル構成
-
-```
-├── app/
+agrr/
+├── app/                    # Railsアプリケーション
 │   ├── controllers/
-│   │   ├── api/v1/
-│   │   │   ├── base_controller.rb
-│   │   │   └── files_controller.rb
-│   │   ├── auth_controller.rb          # OAuth認証
-│   │   ├── home_controller.rb          # ダッシュボード
-│   │   └── application_controller.rb   # 認証機能付きベース
 │   ├── models/
-│   │   ├── user.rb                     # ユーザーモデル
-│   │   ├── session.rb                  # セッションモデル
-│   │   └── application_record.rb
-│   └── views/
-│       ├── auth/
-│       │   └── login.html.erb          # ログインページ
-│       └── home/
-│           └── index.html.erb          # ダッシュボード
+│   ├── views/
+│   ├── channels/          # Action Cable (WebSocket)
+│   └── javascript/
 ├── config/
-│   ├── environments/
-│   │   ├── development.rb
-│   │   ├── docker.rb
-│   │   ├── test.rb
-│   │   └── production.rb
-│   ├── initializers/
-│   │   ├── active_storage.rb
-│   │   ├── aws.rb
-│   │   ├── omniauth.rb                 # OAuth設定
-│   │   └── security.rb                 # セキュリティ設定
-│   ├── storage.yml
-│   ├── database.yml
-│   └── routes.rb                       # OAuthルーティング
-├── db/migrate/
-│   ├── 20250101000001_create_users.rb  # ユーザーテーブル
-│   └── 20250101000002_create_sessions.rb # セッションテーブル
-├── test/
-│   ├── models/
-│   │   ├── user_test.rb                # ユーザーモデルテスト
-│   │   └── session_test.rb             # セッションモデルテスト
-│   ├── controllers/
-│   │   ├── auth_controller_test.rb     # 認証コントローラーテスト
-│   │   └── security_test.rb            # セキュリティテスト
-│   └── integration/
-│       └── oauth_integration_test.rb   # OAuth統合テスト
+│   ├── database.yml       # 3ファイル分離構成
+│   ├── litestream.yml     # Litestream設定
+│   └── environments/
+│       └── production.rb  # Cloud Run用設定
+├── db/
+│   ├── migrate/          # メインDBマイグレーション
+│   ├── queue_migrate/    # Solid Queueマイグレーション
+│   └── cache_migrate/    # Solid Cacheマイグレーション
 ├── scripts/
-│   ├── aws-deploy.sh
-│   ├── setup-aws-resources.sh
-│   ├── setup-dev.sh
-│   └── start_app.sh
+│   ├── gcp-deploy.sh     # Cloud Runデプロイ
+│   ├── cleanup-images.sh # イメージクリーンアップ
+│   └── start_app.sh      # コンテナ起動スクリプト
 ├── docs/
-│   └── GOOGLE_OAUTH_SETUP.md           # OAuth設定ガイド
-├── Dockerfile
-├── Dockerfile.production
-├── docker-compose.yml
-└── README.md
+│   ├── OPERATIONS_SUMMARY.md  # 運用ガイド
+│   ├── QUICK_REFERENCE.md     # コマンド集
+│   ├── GOOGLE_OAUTH_SETUP.md  # OAuth設定
+│   └── archive/              # 古いドキュメント
+├── Dockerfile.production  # 本番用Dockerfile
+├── docker-compose.yml    # 開発環境
+└── README.md            # このファイル
 ```
 
-## 🔧 トラブルシューティング
+---
 
-詳細なトラブルシューティングは以下のドキュメントを参照してください：
+## 🔍 トラブルシューティング
 
-- 📖 **[AWSデプロイガイド](docs/AWS_DEPLOY.md#トラブルシューティング)** - AWS関連の問題
-- 📖 **[テストガイド](docs/TEST_GUIDE.md#トラブルシューティング)** - テスト関連の問題
+### サービスが起動しない
+```bash
+# ログ確認
+gcloud logging read "resource.labels.service_name=agrr-production" \
+  --limit=100 --project=agrr-475323
 
+# 前のリビジョンにロールバック
+gcloud run services update-traffic agrr-production \
+  --to-revisions <previous-revision>=100 \
+  --region asia-northeast1
+```
 
-## 📚 参考リソース
+### データが消えた
+```bash
+# Litestreamバックアップから復元
+gsutil ls gs://agrr-production-db/
 
-- [Rails 8 リリースノート](https://edgeguides.rubyonrails.org/8_0_release_notes.html)
-- [Solid Queue](https://github.com/rails/solid_queue)
-- [Solid Cache](https://github.com/rails/solid_cache)
-- [Litestack](https://github.com/oldmoe/litestack)
-- [AWS App Runner ドキュメント](https://docs.aws.amazon.com/apprunner/)
+# 手動バックアップから復元
+gsutil cp -r gs://agrr-production-db/manual-backup-YYYYMMDD/ \
+  gs://agrr-production-db/production.sqlite3/
+```
+
+---
+
+## 📚 ドキュメント
+
+### 運用関連
+- **[運用ガイド](docs/OPERATIONS_SUMMARY.md)** - 詳細な運用手順
+- **[クイックリファレンス](docs/QUICK_REFERENCE.md)** - よく使うコマンド集
+
+### 開発関連
+- **[Google OAuth設定](docs/GOOGLE_OAUTH_SETUP.md)** - 認証設定
+- **[開発履歴](docs/archive/)** - 過去のドキュメント
+
+---
+
+## 💰 コスト見積もり
+
+### 現在の構成（min-instances=0）
+```
+Cloud Run: $0.50-5.00/月
+Cloud Storage: $0.02-0.50/月
+Artifact Registry: $0.10/月
+──────────────────────────
+合計: $1-6/月
+```
+
+### 常時稼働（min-instances=1）
+```
+Cloud Run: $40-60/月
+Cloud Storage: $0.50/月
+──────────────────────────
+合計: $41-61/月
+```
+
+---
+
+## 📈 スケーリング
+
+### 現在の制約
+- **最大1インスタンス**（Litestream制約）
+- 同時接続: ~80リクエスト
+
+### スケールアップが必要な場合
+- **Cloud SQL（PostgreSQL）への移行**を検討
+- 月間PV > 10万、または同時接続 > 50が目安
+
+---
 
 ## 🤝 コントリビューション
 
-プルリクエストを歓迎します！大きな変更の場合は、まずissueを開いて変更内容を議論してください。
+プルリクエストを歓迎します！
+
+### 開発フロー
+1. ブランチ作成
+2. テスト作成・実装
+3. `docker-compose run --rm test` でテスト実行
+4. プルリクエスト作成
+
+---
 
 ## 📄 ライセンス
 
 MIT License
+
+---
+
+## 📞 リンク
+
+- [Cloud Run Console](https://console.cloud.google.com/run?project=agrr-475323)
+- [Cloud Storage](https://console.cloud.google.com/storage/browser/agrr-production-db?project=agrr-475323)
+- [本番環境URL](https://agrr-production-czyu2jck5q-an.a.run.app)
+
+**最終更新**: 2025-10-17
