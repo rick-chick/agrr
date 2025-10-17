@@ -1,15 +1,17 @@
 <%# encoding: UTF-8 %>
-<div class="public-plans-wrapper pb-0" data-cultivation-plan-id="<%= @cultivation_plan.id %>">
+<div class="public-plans-wrapper pb-0" 
+     data-cultivation-plan-id="<%= @cultivation_plan.id %>"
+     data-optimization-error-message="<%= t('.error_message') %>">
   <div class="free-plans-container">
     <!-- Compact Header -->
     <div class="compact-header-card">
       <div class="compact-header-title">
         <span class="title-icon">🌱</span>
-        <span class="title-text">作付け計画</span>
-        <span class="status-badge optimizing">最適化中</span>
+        <span class="title-text"><%= t('public_plans.title') %></span>
+        <span class="status-badge optimizing"><%= t('.status_badge') %></span>
       </div>
       <div class="compact-subtitle">
-        <%= @cultivation_plan.farm.name %> · <%= @cultivation_plan.field_cultivations.count %>種類の作物
+        <%= @cultivation_plan.farm.name %> · <%= t('.crops_count', count: @cultivation_plan.field_cultivations.count, default: "%{count}種類の作物") %>
       </div>
     </div>
     
@@ -17,7 +19,7 @@
     <div class="content-card">
       
       <div class="optimization-hint">
-        💡 最適化が完了すると自動的に結果画面に移動します
+        <%= t('.hint') %>
       </div>
       
       <!-- Google AdSense 広告 -->
@@ -37,13 +39,16 @@
         <span class="spinner spinner-sm" id="loading-spinner"></span>
         <div class="progress-info">
           <div class="progress-phase-message" id="phase-message">
-            <%= @cultivation_plan.optimization_phase_message || '最適化を準備しています...' %>
+            <%= @cultivation_plan.optimization_phase_message || t('.progress.default_message') %>
           </div>
-          <div class="progress-duration-hint">約1分程度かかります</div>
+          <div class="progress-duration-hint"><%= t('.progress.duration_hint') %></div>
         </div>
       </div>
-      <div class="progress-elapsed-time">
-        ⏳ <span id="elapsed-time">0秒</span>
+      <div class="progress-elapsed-time" 
+           id="elapsed-time"
+           data-elapsed-time-template="<%= t('.progress.elapsed_time', time: '%{time}') %>"
+           data-elapsed-time-minute-template="<%= t('.progress.elapsed_time_minute', minutes: '%{minutes}', seconds: '%{seconds}') %>">
+        <%= t('.progress.elapsed_time', time: '0') %>
       </div>
     </div>
   </div>
