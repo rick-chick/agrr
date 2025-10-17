@@ -265,7 +265,7 @@ class TemperatureChart {
             display: true,
             title: {
               display: true,
-              text: '温度 (°C)'
+              text: chartCanvas?.dataset.temperatureLabel || '温度 (°C)'
             }
           }
         },

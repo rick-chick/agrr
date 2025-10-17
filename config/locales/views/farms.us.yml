@@ -103,4 +103,5 @@ us:
       chart_temp_mean: "Mean Temperature (°C)"
       chart_temp_min: "Min Temperature (°C)"
       chart_date_label: "Date"
+      chart_temp_axis: "Temperature (°C)"
 
