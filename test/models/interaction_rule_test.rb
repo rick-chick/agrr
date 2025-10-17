@@ -199,5 +199,53 @@ class InteractionRuleTest < ActiveSupport::TestCase
     assert_not_equal rule1.id, rule2.id
     assert_equal 2, InteractionRule.where(source_group: "Solanaceae", target_group: "Solanaceae").count
   end
+
+  test "by_region scope should filter by region" do
+    rule_jp = InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "Solanaceae",
+      target_group: "Solanaceae",
+      impact_ratio: 0.7,
+      region: "jp"
+    )
+    
+    rule_us = InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "Brassicaceae",
+      target_group: "Brassicaceae",
+      impact_ratio: 0.8,
+      region: "us"
+    )
+    
+    rule_no_region = InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "Fabaceae",
+      target_group: "Fabaceae",
+      impact_ratio: 0.9
+    )
+    
+    jp_rules = InteractionRule.by_region("jp")
+    assert_includes jp_rules, rule_jp
+    assert_not_includes jp_rules, rule_us
+    assert_not_includes jp_rules, rule_no_region
+    
+    us_rules = InteractionRule.by_region("us")
+    assert_includes us_rules, rule_us
+    assert_not_includes us_rules, rule_jp
+  end
+
+  test "should save interaction_rule with region" do
+    rule = InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "Solanaceae",
+      target_group: "Solanaceae",
+      impact_ratio: 0.7,
+      region: "jp"
+    )
+    
+    assert_equal "jp", rule.region
+    rule.reload
+    assert_equal "jp", rule.region
+  end
 end
 

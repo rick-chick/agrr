@@ -24,7 +24,7 @@ end
 puts "✅ Created admin user: #{admin.email} (admin: #{admin.admin})"
 
 # Reference Farms（日本の主要農業地域）
-puts "Creating reference farms for Japan..."
+puts "Creating reference farms for Japan (region: jp)..."
 
 # フィクスチャファイルのパス
 weather_fixture_path = Rails.root.join('db/fixtures/reference_weather.json')
@@ -38,12 +38,16 @@ if weather_fixture_path.exist?
   sorted_farms = weather_fixture.sort_by { |farm_name, farm_data| -farm_data['latitude'].to_f }
   
   sorted_farms.each do |farm_name, farm_data|
-    # 農場を作成
+    # 農場を作成（日本の参照農場）
     farm = Farm.find_or_create_by!(name: farm_name, is_reference: true) do |f|
       f.user = User.anonymous_user
       f.latitude = farm_data['latitude']
       f.longitude = farm_data['longitude']
+      f.region = "jp"  # 日本の参照農場
     end
+    
+    # 既存レコードの場合もregionを更新
+    farm.update_column(:region, "jp") if farm.region.nil?
     
     # WeatherLocationを作成
     if farm_data['weather_location']
@@ -157,18 +161,22 @@ else
   ]
   
   reference_farms.each do |farm_data|
-    Farm.find_or_create_by!(name: farm_data[:name], is_reference: true) do |farm|
-      farm.user = User.anonymous_user
-      farm.latitude = farm_data[:latitude]
-      farm.longitude = farm_data[:longitude]
+    farm = Farm.find_or_create_by!(name: farm_data[:name], is_reference: true) do |f|
+      f.user = User.anonymous_user
+      f.latitude = farm_data[:latitude]
+      f.longitude = farm_data[:longitude]
+      f.region = "jp"  # 日本の参照農場
     end
+    
+    # 既存レコードの場合もregionを更新
+    farm.update_column(:region, "jp") if farm.region.nil?
   end
   
   puts "✅ Created #{Farm.where(is_reference: true).count} reference farms (basic info only)"
 end
 
-# Reference Crops（参照用作物）
-puts "Creating reference crops..."
+# Reference Crops（日本の参照用作物）
+puts "Creating reference crops for Japan (region: jp)..."
 
 # フィクスチャファイルのパス
 crop_fixture_path = Rails.root.join('db/fixtures/reference_crops.json')
@@ -184,13 +192,15 @@ if crop_fixture_path.exist?
       c.groups = crop_data['groups']
       c.area_per_unit = crop_data['area_per_unit']
       c.revenue_per_area = crop_data['revenue_per_area']
+      c.region = "jp"  # 日本の参照作物
     end
     
     # 既存レコードの場合も、groupsなどの属性を更新
     crop.update!(
       groups: crop_data['groups'],
       area_per_unit: crop_data['area_per_unit'],
-      revenue_per_area: crop_data['revenue_per_area']
+      revenue_per_area: crop_data['revenue_per_area'],
+      region: "jp"  # 日本の参照作物
     )
     
     # CropStagesを作成
@@ -284,21 +294,25 @@ reference_farms.each_with_index do |farm, farm_index|
   ]
   
   fields_data.first(farm_index % 2 + 2).each do |field_data|
-    Field.find_or_create_by!(farm: farm, name: field_data[:name]) do |field|
-      field.user = farm.user
-      field.area = field_data[:area]
-      field.daily_fixed_cost = field_data[:daily_fixed_cost]
-      field.latitude = farm.latitude + rand(-0.01..0.01) if farm.latitude
-      field.longitude = farm.longitude + rand(-0.01..0.01) if farm.longitude
+    field = Field.find_or_create_by!(farm: farm, name: field_data[:name]) do |f|
+      f.user = farm.user
+      f.area = field_data[:area]
+      f.daily_fixed_cost = field_data[:daily_fixed_cost]
+      f.latitude = farm.latitude + rand(-0.01..0.01) if farm.latitude
+      f.longitude = farm.longitude + rand(-0.01..0.01) if farm.longitude
+      f.region = "jp"  # 日本の参照圃場
     end
+    
+    # 既存レコードの場合もregionを更新
+    field.update_column(:region, "jp") if field.region.nil?
     field_count += 1
   end
 end
 
 puts "✅ Created #{field_count} sample fields"
 
-# Interaction Rules（作物相互作用ルール - 連作）
-puts "Creating interaction rules (continuous cultivation)..."
+# Interaction Rules（日本の作物相互作用ルール - 連作）
+puts "Creating interaction rules for Japan (region: jp)..."
 
 # 参照作物のgroupsから科を抽出してユニークな科のリストを作成
 unique_families = Crop.reference.pluck(:groups).flatten.compact.uniq.sort
@@ -369,17 +383,25 @@ unique_families.each do |family|
 end
 
 interaction_rules_data.each do |rule_data|
-  InteractionRule.find_or_create_by!(
+  rule = InteractionRule.find_or_create_by!(
     rule_type: rule_data[:rule_type],
     source_group: rule_data[:source_group],
-    target_group: rule_data[:target_group]
-  ) do |rule|
-    rule.impact_ratio = rule_data[:impact_ratio]
-    rule.is_directional = rule_data[:is_directional]
-    rule.is_reference = rule_data[:is_reference]
-    rule.user_id = nil  # 参照ルールはuser_idをnullに設定
-    rule.description = rule_data[:description]
+    target_group: rule_data[:target_group],
+    region: "jp"  # 日本の参照ルール
+  ) do |r|
+    r.impact_ratio = rule_data[:impact_ratio]
+    r.is_directional = rule_data[:is_directional]
+    r.is_reference = rule_data[:is_reference]
+    r.user_id = nil  # 参照ルールはuser_idをnullに設定
+    r.description = rule_data[:description]
   end
+  
+  # 既存レコードの場合も属性を更新
+  rule.update!(
+    impact_ratio: rule_data[:impact_ratio],
+    description: rule_data[:description],
+    region: "jp"  # 日本の参照ルール
+  )
 end
 
 puts "✅ Created #{InteractionRule.count} interaction rules"

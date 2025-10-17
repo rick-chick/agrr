@@ -15,6 +15,7 @@ class Field < ApplicationRecord
   # == Scopes ==============================================================
   scope :by_user, ->(user) { where(user: user) }
   scope :by_farm, ->(farm) { where(farm: farm) }
+  scope :by_region, ->(region) { where(region: region) }
   scope :anonymous, -> { where(user_id: nil) }
   scope :recent, -> { order(created_at: :desc) }
 
