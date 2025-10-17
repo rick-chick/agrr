@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title><%= content_for?(:title) ? yield(:title) : "作付け計画 - AGRR" %></title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
+  <%= render "shared/meta_tags" %>
   
   <!-- Bundled JavaScript and CSS (includes Leaflet) -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -39,6 +35,8 @@
   <%= render "shared/navbar" %>
 
   <%= yield %>
+  
+  <%= render "shared/footer" %>
 </body>
 </html>
 

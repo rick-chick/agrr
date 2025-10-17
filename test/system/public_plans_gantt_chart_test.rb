@@ -183,33 +183,8 @@ class PublicPlansGanttChartTest < ApplicationSystemTestCase
   end
   
   # ========================================
-  # 広告とCTA
+  # CTA
   # ========================================
-  
-  test "displays advertisement card" do
-    visit_results_page
-    
-    # デバッグ: 現在のパスを確認
-    puts "Current path: #{current_path}"
-    puts "Page body: #{page.body[0..500]}"
-    
-    # リダイレクトされた場合はスキップ
-    if current_path != results_public_plans_path
-      skip "Redirected from results page - session not set properly"
-    end
-    
-    assert_selector ".gantt-ad-card"
-    assert_text "スポンサー広告"
-    assert_selector ".gantt-ad-content"
-  end
-  
-  test "advertisement card has proper height" do
-    visit_results_page
-    
-    ad_content = find(".gantt-ad-content")
-    # min-height: 200pxが適用されていることを確認
-    assert ad_content[:style].nil? || !ad_content[:style].include?("height: 0")
-  end
   
   test "displays CTA card with login link" do
     visit_results_page

@@ -1,0 +1,24 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://agrr-production-czyu2jck5q-an.a.run.app/sitemap.xml
+
+# Disallow admin and API endpoints
+Disallow: /admin/
+Disallow: /api/
+
+# Disallow authentication endpoints (dev/test only)
+Disallow: /auth/
+
+# Allow important pages explicitly
+Allow: /
+Allow: /public_plans
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+

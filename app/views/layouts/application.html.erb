@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title><%= content_for?(:title) ? yield(:title) : "AGRR" %></title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
+  <%= render "shared/meta_tags" %>
   
   <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -45,5 +42,7 @@
     
     <%= yield %>
   </div>
+  
+  <%= render "shared/footer" %>
 </body>
 </html>

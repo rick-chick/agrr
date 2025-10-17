@@ -22,3 +22,6 @@ import "./temperature_chart";
 import "./cultivation_results";
 import "./custom_gantt_chart";
 import "./climate_chart";
+
+// Google Analytics 4 統合
+import "./integrations/analytics_integration";

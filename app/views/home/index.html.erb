@@ -1,13 +1,10 @@
-<% content_for :title, "AGRR - 農業計画支援システム" %>
+<% content_for :title, "AGRR - 農業をもっとスマートに | 農業計画支援システム" %>
+<% content_for :description, "AGRRは気象データとAIを活用した農業作付け計画支援システムです。無料で作付け計画を作成でき、圃場管理から栽培計画の最適化まで、持続可能な農業をサポートします。" %>
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGRR - 農業計画支援システム</title>
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
+  <%= render "shared/meta_tags" %>
   <!-- Bundled JavaScript and CSS (includes Leaflet) -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
@@ -109,15 +106,6 @@
     </div>
   </section>
 
-  <!-- フッター -->
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="footer-links">
-        <%= link_to "ホーム", root_path, class: "footer-link" %>
-        <%= link_to "作付け計画作成", public_plans_path, class: "footer-link" %>
-      </div>
-      <p class="footer-copyright">&copy; 2025 AGRR - Agricultural Resource & Research. All rights reserved.</p>
-    </div>
-  </footer>
+  <%= render "shared/footer" %>
 </body>
 </html>

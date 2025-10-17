@@ -1,0 +1,61 @@
+<footer style="background-color: #2E7D32; color: white; margin-top: 60px; padding: 40px 0 20px 0;">
+  <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px;">
+      <!-- About Section -->
+      <div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;">AGRR</h3>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: #e8f5e9;">
+          農業作付け計画支援システム<br>
+          持続可能な農業の実現を目指して
+        </p>
+      </div>
+      
+      <!-- Links Section -->
+      <div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;">サービス</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;">
+            <%= link_to '作付け計画を作成', public_plans_path, style: 'color: #e8f5e9; text-decoration: none; font-size: 0.9rem;' %>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <%= link_to 'AGRRについて', about_path, style: 'color: #e8f5e9; text-decoration: none; font-size: 0.9rem;' %>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Legal Section -->
+      <div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;">法的情報</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;">
+            <%= link_to 'プライバシーポリシー', privacy_path, style: 'color: #e8f5e9; text-decoration: none; font-size: 0.9rem;' %>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <%= link_to '利用規約', terms_path, style: 'color: #e8f5e9; text-decoration: none; font-size: 0.9rem;' %>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Contact Section -->
+      <div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;">お問い合わせ</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;">
+            <%= link_to 'お問い合わせフォーム', contact_path, style: 'color: #e8f5e9; text-decoration: none; font-size: 0.9rem;' %>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <a href="mailto:support@agrr.net" style="color: #e8f5e9; text-decoration: none; font-size: 0.9rem;">support@agrr.net</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Copyright -->
+    <div style="border-top: 1px solid #4CAF50; padding-top: 20px; text-align: center;">
+      <p style="margin: 0; font-size: 0.85rem; color: #c8e6c9;">
+        © <%= Time.current.year %> AGRR. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>
+

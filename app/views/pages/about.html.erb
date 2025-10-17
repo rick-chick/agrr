@@ -1,0 +1,65 @@
+<% content_for :title, "AGRRについて | 農業計画支援システム" %>
+<% content_for :description, "AGRRは気象データとAIを活用した農業作付け計画支援システムです。主な機能、特徴、開発コンセプトについてご紹介します。" %>
+
+<div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
+  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;">AGRRについて</h1>
+  
+  <div style="line-height: 1.8; color: #333;">
+    <section style="margin-bottom: 40px;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;">AGRRとは</h2>
+      <p style="margin-bottom: 15px;">AGRR（Agriculture Resource and Rotation planner）は、農業従事者の作付け計画を支援するWebアプリケーションです。圃場管理、作物情報の管理、気象データの活用により、効率的で持続可能な農業計画の立案をサポートします。</p>
+    </section>
+
+    <section style="margin-bottom: 40px;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;">主な機能</h2>
+      <div style="display: grid; gap: 20px;">
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;">🌾 作付け計画最適化</h3>
+          <p style="margin-bottom: 0;">圃場の条件、作物の特性、連作障害を考慮した最適な作付け計画を自動生成します。</p>
+        </div>
+        
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;">📍 圃場管理</h3>
+          <p style="margin-bottom: 0;">複数の圃場を地図上で管理し、各圃場の面積、位置情報、栽培履歴を記録できます。</p>
+        </div>
+        
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;">🌡️ 気象データ活用</h3>
+          <p style="margin-bottom: 0;">過去の気象データと将来予測を活用し、気候に適した作付け時期を提案します。</p>
+        </div>
+        
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;">📊 ガントチャート表示</h3>
+          <p style="margin-bottom: 0;">作付け計画を視覚的に表示し、年間の栽培スケジュールを一目で把握できます。</p>
+        </div>
+      </div>
+    </section>
+
+    <section style="margin-bottom: 40px;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;">AGRRの特徴</h2>
+      <p style="margin-bottom: 15px;">AGRRは、以下の特徴で農業従事者をサポートします：</p>
+      <ul style="margin-left: 20px;">
+        <li style="margin-bottom: 10px;"><strong>シンプルで使いやすい</strong> - 直感的な操作で誰でも簡単に作付け計画を作成できます</li>
+        <li style="margin-bottom: 10px;"><strong>データに基づく提案</strong> - 気象データと科学的知見に基づいた最適な計画を提案します</li>
+        <li style="margin-bottom: 10px;"><strong>持続可能な農業を支援</strong> - 連作障害を考慮した長期的な栽培計画が立てられます</li>
+        <li style="margin-bottom: 10px;"><strong>いつでもどこでも利用可能</strong> - インターネット環境があれば、スマートフォンやタブレットからもアクセスできます</li>
+        <li style="margin-bottom: 10px;"><strong>無料で始められる</strong> - 基本的な機能は無料でご利用いただけます</li>
+      </ul>
+    </section>
+
+    <section style="margin-bottom: 40px;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;">開発・運営</h2>
+      <p style="margin-bottom: 15px;">AGRRは、農業のDX（デジタルトランスフォーメーション）を推進し、より効率的で持続可能な農業の実現を目指して開発されています。</p>
+      <p style="margin-bottom: 15px;">サービスの改善や新機能の追加は継続的に行われており、ユーザーの皆様からのフィードバックを大切にしています。</p>
+    </section>
+
+    <section style="background-color: #e8f5e9; padding: 30px; border-radius: 8px; text-align: center;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;">お問い合わせ</h2>
+      <p style="margin-bottom: 20px;">サービスに関するご質問、ご要望、フィードバックは、お気軽にお寄せください。</p>
+      <%= link_to 'お問い合わせページへ', contact_path, style: 'display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;' %>
+    </section>
+
+    <p style="margin-top: 40px; text-align: center; color: #666;">© 2025 AGRR. All rights reserved.</p>
+  </div>
+</div>
+
