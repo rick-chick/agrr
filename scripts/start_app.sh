@@ -55,7 +55,7 @@ LITESTREAM_PID=$!
 echo "Litestream started (PID: $LITESTREAM_PID) - replicating all databases"
 
 echo "Step 5: Starting Solid Queue worker in background..."
-bundle exec rails solid_queue:start > /tmp/solid_queue.log 2>&1 &
+bundle exec rails solid_queue:start &
 SOLID_QUEUE_PID=$!
 echo "Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
 
