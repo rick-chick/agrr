@@ -9,6 +9,7 @@ import { createConsumer } from "@rails/actioncable"
   let fallbackTimer = null;
   let elapsedTimer = null;
   let startTime = null;
+  let currentPlanId = null;  // 現在接続中のplan_idを記録
   
   function initOptimizingWebSocket() {
     // optimizing.html.erb以外のページでは実行しない
@@ -27,7 +28,14 @@ import { createConsumer } from "@rails/actioncable"
       return;
     }
     
+    // 既に同じplan_idで接続している場合はスキップ
+    if (currentPlanId === cultivationPlanId && subscription) {
+      console.log('ℹ️ Already connected to plan:', cultivationPlanId);
+      return;
+    }
+    
     console.log('🔌 Connecting to OptimizationChannel for plan:', cultivationPlanId);
+    currentPlanId = cultivationPlanId;
     
     // コンシューマーを再利用
     if (!consumer) {
@@ -203,6 +211,7 @@ import { createConsumer } from "@rails/actioncable"
       consumer.disconnect();
       consumer = null;
     }
+    currentPlanId = null;  // リセット
   }
   
   // DOMが既にロードされている場合は即座に実行

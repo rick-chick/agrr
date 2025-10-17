@@ -15,7 +15,7 @@ Rails.application.config.session_store :cookie_store,
   key: '_agrr_session',
   secure: Rails.env.production?,
   httponly: true,
-  same_site: :strict
+  same_site: :lax  # :strict だとWebSocket接続でCookieが送信されない
 
 # Content Security Policy
 Rails.application.configure do
@@ -26,7 +26,8 @@ Rails.application.configure do
     policy.object_src  :none
     policy.script_src  :self, "https://accounts.google.com"
     policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
-    policy.connect_src :self, "https://accounts.google.com", "https://tile.openstreetmap.org"
+    # WebSocket接続のため wss: を追加
+    policy.connect_src :self, "wss:", "https://accounts.google.com", "https://tile.openstreetmap.org"
     
     # For OAuth redirects
     policy.form_action :self, "https://accounts.google.com"

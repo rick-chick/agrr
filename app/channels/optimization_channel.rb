@@ -5,23 +5,26 @@ class OptimizationChannel < ApplicationCable::Channel
     cultivation_plan = CultivationPlan.find(params[:cultivation_plan_id])
     
     # デバッグ情報をログに出力
-    Rails.logger.info "🔍 OptimizationChannel: plan.session_id=#{cultivation_plan.session_id}, connection.session_id=#{connection.session_id}"
+    Rails.logger.info "🔍 [OptimizationChannel#subscribed] plan_id=#{params[:cultivation_plan_id]}"
+    Rails.logger.info "🔍 [OptimizationChannel#subscribed] plan.session_id='#{cultivation_plan.session_id}' (type: #{cultivation_plan.session_id.class})"
+    Rails.logger.info "🔍 [OptimizationChannel#subscribed] connection.session_id='#{connection.session_id}' (type: #{connection.session_id.class})"
+    Rails.logger.info "🔍 [OptimizationChannel#subscribed] Match? #{cultivation_plan.session_id == connection.session_id}"
     
     # セッションIDで認可チェック（開発環境では警告のみ）
     if !authorized?(cultivation_plan)
       if Rails.env.production?
-        Rails.logger.warn "🚫 OptimizationChannel: Unauthorized access attempt for plan_id=#{params[:cultivation_plan_id]}"
+        Rails.logger.warn "🚫 [OptimizationChannel#subscribed] Unauthorized: plan.session_id='#{cultivation_plan.session_id}' != connection.session_id='#{connection.session_id}'"
         reject
         return
       else
         # 開発環境では警告のみ（接続は許可）
-        Rails.logger.warn "⚠️ OptimizationChannel: Session mismatch (allowed in dev): plan_id=#{params[:cultivation_plan_id]}"
+        Rails.logger.warn "⚠️ [OptimizationChannel#subscribed] Session mismatch (allowed in dev): plan_id=#{params[:cultivation_plan_id]}"
       end
     end
     
     stream_for cultivation_plan
     
-    Rails.logger.info "🔌 OptimizationChannel subscribed: plan_id=#{params[:cultivation_plan_id]}, session=#{connection.session_id}"
+    Rails.logger.info "✅ [OptimizationChannel#subscribed] Authorized! Streaming for plan_id=#{params[:cultivation_plan_id]}"
     
     # 既に完了している場合は即座に通知
     if cultivation_plan.status_completed?

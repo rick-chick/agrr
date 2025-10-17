@@ -4,8 +4,17 @@ require "test_helper"
 
 class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   def setup
+    # アノニマスユーザーを作成
+    @user = User.create!(
+      email: 'test@agrr.app',
+      name: 'Test User',
+      google_id: 'test123',
+      is_anonymous: true
+    )
+    
     # 参照農場を作成
     @farm = Farm.create!(
+      user: @user,
       name: "北海道・札幌",
       latitude: 43.0642,
       longitude: 141.3469,
@@ -39,7 +48,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cultivation_plan = create_completed_cultivation_plan
     
     # セッションに計画IDを設定
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-results-header"
@@ -50,7 +59,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display header with summary" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-results-header-title", "作付け計画完成"
@@ -60,7 +69,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display gantt chart" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-table"
@@ -72,7 +81,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cultivation_plan = create_completed_cultivation_plan
     fc = cultivation_plan.field_cultivations.first
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-row[data-field-cultivation-id='#{fc.id}']" do
@@ -85,7 +94,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cultivation_plan = create_completed_cultivation_plan
     fc = cultivation_plan.field_cultivations.first
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-cultivation-bar"
@@ -96,7 +105,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display detail panel" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".detail-panel"
@@ -107,7 +116,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display tab content templates" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select "#tab-info-content"
@@ -118,7 +127,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display info tab with cards" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select "#tab-info-content" do
@@ -129,7 +138,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display temperature tab with chart containers" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select "#tab-temperature-content" do
@@ -142,7 +151,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display stages tab" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select "#tab-stages-content" do
@@ -153,7 +162,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display advertisement card" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-ad-card"
@@ -163,7 +172,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display CTA card" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-cta-card"
@@ -174,7 +183,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should display action buttons" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".action-buttons"
@@ -188,15 +197,15 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   end
   
   test "results should redirect when plan not found" do
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: 999999 } }
+    get results_public_plans_path, params: { plan_id: 999999 }
     
-    assert_redirected_to new_public_plan_path
+    assert_redirected_to public_plans_path
   end
   
   test "results should redirect to optimizing if plan is not completed" do
     cultivation_plan = create_pending_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_redirected_to optimizing_public_plans_path
   end
@@ -204,7 +213,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "results should include Chart.js scripts" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select "script[src*='chart.js']"
@@ -218,7 +227,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "gantt chart should handle multiple field cultivations" do
     cultivation_plan = create_cultivation_plan_with_multiple_crops
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-row", count: 3
@@ -227,7 +236,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "gantt chart should display today marker" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-today-marker-row"
@@ -237,7 +246,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "gantt chart should display legend" do
     cultivation_plan = create_completed_cultivation_plan
     
-    get results_public_plans_path, params: {}, session: { public_plan: { plan_id: cultivation_plan.id } }
+    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
     
     assert_response :success
     assert_select ".gantt-legend"
@@ -273,6 +282,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # 圃場計画を作成
     plan = CultivationPlan.create!(
       farm: @farm,
+      user: @user,
+      session_id: 'test_session_123',
       total_area: 100.0,
       status: :completed
     )
@@ -328,6 +339,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   def create_pending_cultivation_plan
     plan = CultivationPlan.create!(
       farm: @farm,
+      user: @user,
+      session_id: 'test_session_123',
       total_area: 100.0,
       status: :pending
     )
@@ -360,6 +373,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   def create_cultivation_plan_with_multiple_crops
     plan = CultivationPlan.create!(
       farm: @farm,
+      user: @user,
+      session_id: 'test_session_123',
       total_area: 300.0,
       status: :completed
     )
