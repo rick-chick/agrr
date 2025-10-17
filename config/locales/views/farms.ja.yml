@@ -103,4 +103,5 @@ ja:
       chart_temp_mean: "平均気温 (°C)"
       chart_temp_min: "最低気温 (°C)"
       chart_date_label: "日付"
+      chart_temp_axis: "温度 (°C)"
 
