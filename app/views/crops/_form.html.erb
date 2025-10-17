@@ -2,7 +2,7 @@
   <%= form_with(model: @crop) do |f| %>
     <% if @crop.errors.any? %>
       <div class="errors">
-        <h3><%= pluralize(@crop.errors.count, 'error') %> prohibited this crop from being saved:</h3>
+        <h3><%= t('crops.form.errors.title', count: @crop.errors.count) %></h3>
         <ul>
           <% @crop.errors.full_messages.each do |message| %>
             <li><%= message %></li>
@@ -12,41 +12,41 @@
     <% end %>
 
     <div class="form-group">
-      <%= f.label :name, '名前', class: 'form-label' %>
+      <%= f.label :name, t('crops.form.name_label'), class: 'form-label' %>
       <%= f.text_field :name, required: true, class: 'form-control' %>
     </div>
 
     <div class="form-group">
-      <%= f.label :variety, '品種', class: 'form-label' %>
+      <%= f.label :variety, t('crops.form.variety_label'), class: 'form-label' %>
       <%= f.text_field :variety, class: 'form-control' %>
-      <div class="form-text">品種名を入力してください（任意）</div>
+      <div class="form-text"><%= t('crops.form.variety_help') %></div>
     </div>
 
     <div class="form-group">
-      <%= f.label :area_per_unit, '単位あたりの面積（㎡）', class: 'form-label' %>
+      <%= f.label :area_per_unit, t('crops.form.area_per_unit_label'), class: 'form-label' %>
       <%= f.number_field :area_per_unit, step: :any, class: 'form-control' %>
-      <div class="form-text">1単位あたりの栽培面積を入力してください（任意）</div>
+      <div class="form-text"><%= t('crops.form.area_per_unit_help') %></div>
     </div>
 
     <div class="form-group">
-      <%= f.label :revenue_per_area, '面積あたりの収益（円/㎡）', class: 'form-label' %>
+      <%= f.label :revenue_per_area, t('crops.form.revenue_per_area_label'), class: 'form-label' %>
       <%= f.number_field :revenue_per_area, step: :any, class: 'form-control' %>
-      <div class="form-text">1㎡あたりの収益を入力してください（任意）</div>
+      <div class="form-text"><%= t('crops.form.revenue_per_area_help') %></div>
     </div>
 
     <div class="form-group">
-      <%= f.label :groups, 'グループ', class: 'form-label' %>
+      <%= f.label :groups, t('crops.form.groups_label'), class: 'form-label' %>
       <% groups_value = @crop.groups.is_a?(Array) ? @crop.groups.join(', ') : @crop.groups.to_s %>
-      <%= f.text_field :groups, value: groups_value, class: 'form-control', placeholder: '例: 穀物, 水田作物, 主食' %>
-      <div class="form-text">作物のグループをカンマ区切りで入力してください（任意）</div>
+      <%= f.text_field :groups, value: groups_value, class: 'form-control', placeholder: t('crops.form.groups_placeholder') %>
+      <div class="form-text"><%= t('crops.form.groups_help') %></div>
     </div>
 
     <div class="form-group">
       <button type="button" id="ai-save-crop-btn" class="btn btn-ai" data-controller="crop-ai">
-        🤖 AIで作物情報を取得・保存
+        <%= t('crops.form.ai_button') %>
       </button>
       <div id="ai-save-status" class="form-text d-none"></div>
-      <div class="form-text">作物名を入力してボタンをクリックすると、AIが面積・収益などの情報を自動的に取得して保存します</div>
+      <div class="form-text"><%= t('crops.form.ai_help') %></div>
     </div>
 
     <!-- AI処理中の広告ポップアップ -->
@@ -54,13 +54,13 @@
       <div class="ad-popup-container">
         <div class="ad-popup-status">
           <div class="ad-popup-status-title">
-            🤖 AIで作物情報を取得中...
+            <%= t('crops.form.ai_processing_title') %>
           </div>
-          <p class="ad-popup-status-message">しばらくお待ちください。処理が完了すると作物詳細画面に自動で移動します。</p>
+          <p class="ad-popup-status-message"><%= t('crops.form.ai_processing_message') %></p>
         </div>
 
         <div class="ad-popup-progress">
-          <p class="ad-popup-progress-text">AI処理中...</p>
+          <p class="ad-popup-progress-text"><%= t('crops.form.ai_progress_text') %></p>
           <div class="ad-popup-progress-bar">
             <div class="ad-popup-progress-fill"></div>
           </div>
@@ -75,13 +75,13 @@
       <div class="form-group">
         <div class="checkbox-group">
           <%= f.check_box :is_reference, class: 'form-control' %>
-          <%= f.label :is_reference, '参照作物（管理者のみ）', class: 'form-label' %>
+          <%= f.label :is_reference, t('crops.form.is_reference_label'), class: 'form-label' %>
         </div>
       </div>
     <% end %>
 
     <div class="form-section">
-      <h3 class="section-title">生育ステージ</h3>
+      <h3 class="section-title"><%= t('crops.form.stages_section_title') %></h3>
       
       <div id="crop-stages">
         <%= f.fields_for :crop_stages do |stage_form| %>
@@ -91,14 +91,14 @@
 
       <% if !@crop.is_reference || admin_user? %>
         <div class="form-group">
-          <button type="button" id="add-crop-stage" class="btn btn-secondary">+ 生育ステージを追加</button>
+          <button type="button" id="add-crop-stage" class="btn btn-secondary"><%= t('crops.form.add_stage_button') %></button>
         </div>
       <% end %>
     </div>
 
     <div class="actions">
-      <%= f.submit class: 'btn btn-success' %>
-      <%= link_to 'キャンセル', @crop.persisted? ? crop_path(@crop) : crops_path, class: 'btn btn-secondary' %>
+      <%= f.submit t("crops.form.submit_#{@crop.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('crops.form.cancel'), @crop.persisted? ? crop_path(@crop) : crops_path, class: 'btn btn-secondary' %>
     </div>
   <% end %>
 </div>
