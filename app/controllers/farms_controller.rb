@@ -37,7 +37,7 @@ class FarmsController < ApplicationController
 
     if @farm.save
       Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
-      redirect_to @farm, notice: '農場が正常に作成されました。'
+      redirect_to @farm, notice: I18n.t('farms.flash.created')
     else
       Rails.logger.warn "⚠️  Failed to create farm: #{@farm.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_entity
@@ -47,7 +47,7 @@ class FarmsController < ApplicationController
   # PATCH/PUT /farms/:id
   def update
     if @farm.update(farm_params)
-      redirect_to @farm, notice: '農場が正常に更新されました。'
+      redirect_to @farm, notice: I18n.t('farms.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
@@ -56,12 +56,12 @@ class FarmsController < ApplicationController
   # DELETE /farms/:id
   def destroy
     if @farm.free_crop_plans.any?
-      redirect_to @farm, alert: "この農場は#{@farm.free_crop_plans.count}件の作付け計画で使用されているため削除できません。"
+      redirect_to @farm, alert: I18n.t('farms.flash.cannot_delete', count: @farm.free_crop_plans.count)
       return
     end
     
     @farm.destroy
-    redirect_to farms_path, notice: '農場が削除されました。'
+    redirect_to farms_path, notice: I18n.t('farms.flash.destroyed')
   end
 
   private
@@ -75,7 +75,7 @@ class FarmsController < ApplicationController
       @farm = current_user.farms.find(params[:id])
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to farms_path, alert: '指定された農場が見つかりません。'
+    redirect_to farms_path, alert: I18n.t('farms.flash.not_found')
   end
 
   def farm_params

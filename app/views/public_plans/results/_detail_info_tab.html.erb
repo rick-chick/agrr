@@ -6,60 +6,60 @@
   <div class="info-grid">
     <div class="info-card">
       <div class="info-card-icon">🏞️</div>
-      <div class="info-card-label">圃場</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.field') %></div>
       <div class="info-card-value" data-field="field_name">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">🌱</div>
-      <div class="info-card-label">作物</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.crop') %></div>
       <div class="info-card-value" data-field="crop_name">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">📏</div>
-      <div class="info-card-label">面積</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.area') %></div>
       <div class="info-card-value" data-field="area">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">📅</div>
-      <div class="info-card-label">播種日</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.planting_date') %></div>
       <div class="info-card-value" data-field="start_date">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">📅</div>
-      <div class="info-card-label">収穫日</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.harvest_date') %></div>
       <div class="info-card-value" data-field="completion_date">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">⏱️</div>
-      <div class="info-card-label">栽培日数</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.cultivation_days') %></div>
       <div class="info-card-value" data-field="cultivation_days">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">🌡️</div>
-      <div class="info-card-label">積算温度</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.gdd') %></div>
       <div class="info-card-value" data-field="gdd">-</div>
     </div>
     
     <div class="info-card">
       <div class="info-card-icon">💰</div>
-      <div class="info-card-label">推定コスト</div>
+      <div class="info-card-label"><%= t('public_plans.results.info.estimated_cost') %></div>
       <div class="info-card-value" data-field="estimated_cost">-</div>
     </div>
   </div>
   
   <%# ステージタイムライン %>
   <div class="stages-timeline-section">
-    <h4 class="timeline-title">栽培ステージ</h4>
+    <h4 class="timeline-title"><%= t('public_plans.results.info.stages_title') %></h4>
     <div class="stages-timeline" data-field="stages_timeline">
       <%# JavaScriptで動的に生成 %>
       <div class="timeline-placeholder">
-        <p>ステージ情報を読み込んでいます...</p>
+        <p><%= t('public_plans.results.info.stages_loading') %></p>
       </div>
     </div>
   </div>

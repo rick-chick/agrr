@@ -1,0 +1,104 @@
+ja:
+  crops:
+    flash:
+      created: "作物が正常に作成されました。"
+      updated: "作物が正常に更新されました。"
+      destroyed: "作物が削除されました。"
+      reference_only_admin: "参照作物は管理者のみ作成できます。"
+      reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
+      no_permission: "権限がありません。"
+      not_found: "指定された作物が見つかりません。"
+    
+    index:
+      title: "作物一覧"
+      new_crop: "新しい作物を追加"
+      reference_crops: "参照作物（共通データ）"
+      my_crops: "自分の作物"
+      count: "%{count}件"
+      actions:
+        show: "詳細"
+        edit: "編集"
+        delete: "削除"
+        delete_confirm: "本当にこの作物を削除しますか？"
+      empty:
+        icon: "🌱"
+        title: "まだ作物が登録されていません"
+        description: "最初の作物を追加して始めましょう。"
+        button: "作物を追加"
+      debug:
+        label: "デバッグ:"
+    
+    new:
+      title: "新しい作物を追加"
+    
+    edit:
+      title: "%{name}を編集"
+    
+    show:
+      reference_crop: "参照作物"
+      name: "名前"
+      variety: "品種"
+      area_per_unit: "単位あたりの面積"
+      revenue_per_area: "面積あたりの収益"
+      groups: "グループ"
+      created_at: "作成日"
+      updated_at: "更新日"
+      stages_title: "生育ステージ"
+      stage_order: "順序"
+      no_stages_title: "まだ生育ステージが登録されていません"
+      no_stages_description: "この作物の生育ステージを追加してください。"
+      temperature_requirement: "温度要件"
+      thermal_requirement: "熱要件（GDD）"
+      sunshine_requirement: "日照要件"
+      base_temperature: "最低限界温度"
+      optimal_temperature: "最適温度"
+      low_stress_threshold: "低ストレス閾値"
+      high_stress_threshold: "高ストレス閾値"
+      frost_threshold: "霜閾値"
+      sterility_risk_threshold: "不稔リスク閾値"
+      max_temperature: "最大限界温度"
+      required_gdd: "必要積算温度"
+      minimum_sunshine_hours: "最低日照時間"
+      target_sunshine_hours: "目標日照時間"
+      back_to_list: "作物一覧に戻る"
+      edit: "編集"
+      delete: "削除"
+      confirm_delete: "この作物を削除しますか？"
+      form:
+        name_label: "作物名"
+        name_placeholder: "例: トマト"
+        name_help: "作物の名前を入力してください"
+        scientific_name_label: "学名"
+        scientific_name_placeholder: "例: Solanum lycopersicum"
+        variety_label: "品種"
+        variety_placeholder: "例: 桃太郎"
+        family_label: "科"
+        family_placeholder: "例: ナス科"
+        planting_season_label: "植え付け時期"
+        planting_season_help: "推奨される植え付け時期"
+        harvest_season_label: "収穫時期"
+        harvest_season_help: "推奨される収穫時期"
+        growth_days_label: "成長日数"
+        growth_days_placeholder: "例: 90"
+        growth_days_help: "植え付けから収穫までのおおよその日数"
+        submit: "作物を作成"
+        cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    edit:
+      title: "作物を編集"
+      form:
+        submit: "作物を更新"
+        cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    show:
+      edit: "編集"
+      delete: "削除"
+      delete_confirm: "本当に削除しますか？"
+      back: "戻る"
+      basic_info: "基本情報"
+      growth_info: "成長情報"
+

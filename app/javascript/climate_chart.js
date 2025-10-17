@@ -40,7 +40,9 @@ class ClimateChart {
     this.currentFieldCultivationId = fieldCultivationId;
 
     // ローディング表示
-    container.innerHTML = '<div class="climate-chart-loading">データを読み込んでいます...</div>';
+    // ローディングメッセージをdata属性から取得
+    const loadingMessage = container.dataset.loadingMessage || 'Loading data...';
+    container.innerHTML = `<div class="climate-chart-loading">${loadingMessage}</div>`;
     container.style.display = 'block';
 
     try {
@@ -116,7 +118,7 @@ class ClimateChart {
         <div class="climate-chart-header">
           <div class="chart-title">
             <span class="chart-title-icon">🌡️</span>
-            <span class="chart-title-text">気象データと作物成長分析</span>
+            <span class="chart-title-text">${container.dataset.chartTitle || 'Climate Data and Crop Growth Analysis'}</span>
             <span class="crop-badge">${data.field_cultivation.crop_name}</span>
             <span class="region-badge">${data.farm.name}</span>
           </div>
@@ -130,7 +132,7 @@ class ClimateChart {
         <div class="temperature-chart-section">
           <h4 class="chart-section-title">
             <span class="chart-label-icon">🌡️</span>
-            日別気温（°C）
+            ${container.dataset.temperatureSection || '日別気温（°C）'}
           </h4>
           <div class="chart-canvas-wrapper">
             <canvas id="climateTemperatureChart"></canvas>
@@ -141,7 +143,7 @@ class ClimateChart {
         <div class="gdd-chart-section">
           <h4 class="chart-section-title">
             <span class="chart-label-icon">📈</span>
-            GDD推移（日別・積算・要求）
+            ${container.dataset.gddSection || 'GDD推移（日別・積算・要求）'}
           </h4>
           <div class="chart-canvas-wrapper">
             <canvas id="climateGddChart"></canvas>
@@ -183,6 +185,17 @@ class ClimateChart {
       chartAvailable: typeof Chart !== 'undefined'
     });
 
+    // data属性から翻訳を取得
+    const container = document.getElementById('climate-chart-display');
+    const labels = {
+      tempMax: container?.dataset.tempMax || '最高気温',
+      tempMean: container?.dataset.tempMean || '平均気温',
+      tempMin: container?.dataset.tempMin || '最低気温',
+      tempChartTitle: container?.dataset.tempChartTitle || '日別気温推移（適正温度帯・限界温度帯表示）',
+      optimalZone: container?.dataset.optimalZone || '🟢 適正温度帯',
+      stressZone: container?.dataset.stressZone || '🟠 限界温度帯（ストレス）'
+    };
+
     // 日付配列（表示は日付のみ）
     const dates = data.weather_data.map(d => this.formatDateLabel(d.date));
     
@@ -192,7 +205,7 @@ class ClimateChart {
     console.log('📊 Annotations details:', annotations);
 
     // 温度帯の凡例データを作成
-    const temperatureZoneLegend = this.createTemperatureZoneLegend(data);
+    const temperatureZoneLegend = this.createTemperatureZoneLegend(data, labels);
 
     try {
       this.temperatureChart = new Chart(ctx, {
@@ -201,7 +214,7 @@ class ClimateChart {
           labels: dates,
           datasets: [
             {
-              label: '最高気温',
+              label: labels.tempMax,
               data: data.weather_data.map(d => d.temperature_max),
               borderColor: '#ef4444',
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -209,7 +222,7 @@ class ClimateChart {
               tension: 0.1
             },
             {
-              label: '平均気温',
+              label: labels.tempMean,
               data: data.weather_data.map(d => d.temperature_mean),
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -217,7 +230,7 @@ class ClimateChart {
               tension: 0.1
             },
             {
-              label: '最低気温',
+              label: labels.tempMin,
               data: data.weather_data.map(d => d.temperature_min),
               borderColor: '#06b6d4',
               backgroundColor: 'rgba(6, 182, 212, 0.1)',
@@ -234,7 +247,7 @@ class ClimateChart {
           plugins: {
             title: {
               display: true,
-              text: '日別気温推移（適正温度帯・限界温度帯表示）',
+              text: labels.tempChartTitle,
               font: { size: 16, weight: 'bold' }
             },
             legend: {
@@ -243,7 +256,7 @@ class ClimateChart {
               labels: {
                 filter: function(item, chart) {
                   // グレーのダミーデータセットは非表示にし、必要な凡例のみ表示
-                  const allowed = ['最高気温', '平均気温', '最低気温', '🟢 適正温度帯', '🟠 限界温度帯（ストレス）'];
+                  const allowed = [labels.tempMax, labels.tempMean, labels.tempMin, labels.optimalZone, labels.stressZone];
                   return allowed.includes(item.text);
                 },
                 generateLabels: function(chart) {
@@ -463,6 +476,17 @@ class ClimateChart {
       return;
     }
 
+    // data属性から翻訳を取得
+    const container = document.getElementById('climate-chart-display');
+    const labels = {
+      dailyGdd: container?.dataset.dailyGdd || '日別GDD',
+      cumulativeGdd: container?.dataset.cumulativeGdd || '積算GDD',
+      requiredGdd: container?.dataset.requiredGdd || '要求GDD（ステップ）',
+      gddChartTitle: container?.dataset.gddChartTitle || 'GDD（積算温度）推移',
+      dateLabel: container?.dataset.dateLabel || '日付',
+      cumulativeRequiredLabel: container?.dataset.cumulativeRequiredLabel || '積算GDD / 要求GDD'
+    };
+
     const dates = data.gdd_data.map(d => this.formatDateLabel(d.date));
 
     try {
@@ -472,7 +496,7 @@ class ClimateChart {
           labels: dates,
           datasets: [
             {
-              label: '日別GDD',
+              label: labels.dailyGdd,
               data: data.gdd_data.map(d => d.gdd),
               backgroundColor: 'rgba(59, 130, 246, 0.04)',
               borderColor: '#3b82f6',
@@ -480,7 +504,7 @@ class ClimateChart {
               yAxisID: 'y'  // 左軸
             },
             {
-              label: '積算GDD',
+              label: labels.cumulativeGdd,
               data: data.gdd_data.map(d => d.cumulative_gdd),
               type: 'line',
               borderColor: '#22c55e',
@@ -491,7 +515,7 @@ class ClimateChart {
               yAxisID: 'y1'  // 右軸
             },
             {
-              label: '要求GDD（ステップ）',
+              label: labels.requiredGdd,
               data: this.createRequiredGddSteps(data.stages, dates),
               type: 'line',
               borderColor: '#8b5cf6',
@@ -510,7 +534,7 @@ class ClimateChart {
           plugins: {
             title: {
               display: true,
-              text: 'GDD（積算温度）推移',
+              text: labels.gddChartTitle,
               font: { size: 16, weight: 'bold' }
             },
             legend: {
@@ -521,7 +545,7 @@ class ClimateChart {
             x: {
               title: {
                 display: true,
-                text: '日付'
+                text: labels.dateLabel
               },
               afterBuildTicks: function(scale) {
                 const getLabel = (v) => scale.getLabelForValue ? scale.getLabelForValue(v) : v;
@@ -550,7 +574,7 @@ class ClimateChart {
               position: 'left',
               title: {
                 display: true,
-                text: '日別GDD'
+                text: labels.dailyGdd
               },
               beginAtZero: true
             },
@@ -559,7 +583,7 @@ class ClimateChart {
               position: 'right',
               title: {
                 display: true,
-                text: '積算GDD / 要求GDD'
+                text: labels.cumulativeRequiredLabel
               },
               beginAtZero: true,
               grid: {

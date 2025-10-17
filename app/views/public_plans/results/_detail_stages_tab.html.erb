@@ -4,44 +4,16 @@
 <div class="stages-tab-content">
   <div class="stages-intro">
     <p class="stages-intro-text">
-      各ステージの詳細な気温条件と積算温度の達成状況を確認できます。
+      <%= t('public_plans.results.stages.intro') %>
     </p>
   </div>
   
   <%# ステージリスト（JavaScriptで動的に生成） %>
   <div class="stages-list" data-field="stages_list">
-    <%# JavaScriptで以下のような構造を生成 %>
-    <%# 
-    <div class="stage-card">
-      <div class="stage-card-header">
-        <span class="stage-icon">🌱</span>
-        <span class="stage-name">発芽期</span>
-        <span class="stage-period">4/15 - 4/30 (15日)</span>
-      </div>
-      <div class="stage-card-body">
-        <div class="stage-stat">
-          <span class="stat-label">積算温度:</span>
-          <span class="stat-value">205℃日 / 200℃日 ✓</span>
-        </div>
-        <div class="stage-stat">
-          <span class="stat-label">平均気温:</span>
-          <span class="stat-value">16.2℃</span>
-        </div>
-        <div class="stage-stat">
-          <span class="stat-label">最適範囲:</span>
-          <span class="stat-value">15-25℃</span>
-        </div>
-        <div class="stage-stat">
-          <span class="stat-label">リスク:</span>
-          <span class="stat-value stat-success">なし ✓</span>
-        </div>
-      </div>
-    </div>
-    %>
     
     <div class="stages-placeholder">
       <div class="placeholder-icon">📊</div>
-      <p class="placeholder-text">ステージ情報を読み込んでいます...</p>
+      <p class="placeholder-text"><%= t('public_plans.results.stages.loading') %></p>
     </div>
   </div>
 </div>

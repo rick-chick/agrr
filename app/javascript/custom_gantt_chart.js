@@ -151,7 +151,9 @@ function renderTimelineHeader(svg, config, startDate, endDate, totalDays, chartW
     const monthDays = daysInMonth(month.year, month.month);
     const monthWidth = (monthDays / totalDays) * chartWidth;
 
-    // 月ラベル
+    // 月ラベル（data属性からフォーマットを取得）
+    const monthFormat = svg.dataset.monthFormat || '%{month}月';
+    const monthLabel = monthFormat.replace('%{month}', month.month);
     headerGroup.appendChild(createSVGElement('text', {
       x: currentX + (monthWidth / 2),
       y: 30,
@@ -160,7 +162,7 @@ function renderTimelineHeader(svg, config, startDate, endDate, totalDays, chartW
       'font-size': '13',
       'font-weight': '600',
       fill: '#1F2937'
-    }, `${month.month}月`));
+    }, monthLabel));
 
     // 年ラベル（1月のみ）
     if (month.month === 1 || (month.month === months[0].month && month === months[0])) {

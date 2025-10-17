@@ -1,0 +1,121 @@
+ja:
+  models:
+    farm:
+      weather_status:
+        pending: "取得待ち"
+        fetching: "取得中 (%{progress}%)"
+        completed: "完了"
+        failed: "失敗"
+        unknown: "不明"
+  
+  activerecord:
+    models:
+      farm: "農場"
+      field: "圃場"
+      crop: "作物"
+      cultivation_plan: "栽培計画"
+      field_cultivation: "圃場栽培"
+      interaction_rule: "連作ルール"
+      crop_stage: "作物ステージ"
+      user: "ユーザー"
+      session: "セッション"
+      weather_datum: "気象データ"
+      weather_location: "気象地点"
+      thermal_requirement: "温度要件"
+      temperature_requirement: "気温要件"
+      sunshine_requirement: "日照要件"
+    
+    attributes:
+      farm:
+        name: "名前"
+        latitude: "緯度"
+        longitude: "経度"
+        is_reference: "参照農場"
+        user_id: "ユーザー"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      
+      field:
+        name: "名前"
+        area_sqm: "面積（㎡）"
+        farm_id: "農場"
+        latitude: "緯度"
+        longitude: "経度"
+        geometry: "ジオメトリ"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      
+      crop:
+        name: "名前"
+        scientific_name: "学名"
+        variety: "品種"
+        family: "科"
+        is_reference: "参照作物"
+        planting_season: "植え付け時期"
+        harvest_season: "収穫時期"
+        growth_days: "成長日数"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      
+      cultivation_plan:
+        name: "計画名"
+        farm_id: "農場"
+        user_id: "ユーザー"
+        status: "ステータス"
+        total_area: "総面積"
+        optimization_status: "最適化ステータス"
+        optimization_started_at: "最適化開始時刻"
+        optimization_completed_at: "最適化完了時刻"
+        optimization_phase: "最適化フェーズ"
+        optimization_phase_message: "最適化フェーズメッセージ"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      
+      field_cultivation:
+        field_id: "圃場"
+        crop_id: "作物"
+        cultivation_plan_id: "栽培計画"
+        area_sqm: "面積（㎡）"
+        planting_date: "植え付け日"
+        harvest_date: "収穫日"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      
+      interaction_rule:
+        crop_a_id: "作物A"
+        crop_b_id: "作物B"
+        years: "間隔年数"
+        interaction_type: "相互作用タイプ"
+        description: "説明"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+    
+    errors:
+      models:
+        farm:
+          attributes:
+            name:
+              blank: "を入力してください"
+            latitude:
+              blank: "を入力してください"
+              not_a_number: "は数値で入力してください"
+            longitude:
+              blank: "を入力してください"
+              not_a_number: "は数値で入力してください"
+        
+        field:
+          attributes:
+            name:
+              blank: "を入力してください"
+            area_sqm:
+              blank: "を入力してください"
+              not_a_number: "は数値で入力してください"
+              greater_than: "は%{count}より大きい値にしてください"
+        
+        crop:
+          attributes:
+            name:
+              blank: "を入力してください"
+            scientific_name:
+              blank: "を入力してください"
+

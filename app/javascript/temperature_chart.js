@@ -169,7 +169,18 @@ class TemperatureChart {
     const borderDash = isPrediction ? [5, 5] : [];
     const pointStyle = isPrediction ? 'circle' : false;
     const pointRadius = isPrediction ? 2 : 0;
-    const titleText = isPrediction ? '温度推移（予測）' : '温度推移';
+    const chartCanvas = document.getElementById('temperatureChart');
+    const titleText = isPrediction ? 
+      (chartCanvas?.dataset.chartTitlePrediction || '温度推移（予測）') : 
+      (chartCanvas?.dataset.chartTitle || '温度推移');
+    
+    // ラベルをdata属性から取得
+    const labels_i18n = {
+      tempMax: chartCanvas?.dataset.tempMaxLabel || '最高気温 (°C)',
+      tempMean: chartCanvas?.dataset.tempMeanLabel || '平均気温 (°C)',
+      tempMin: chartCanvas?.dataset.tempMinLabel || '最低気温 (°C)',
+      dateLabel: chartCanvas?.dataset.dateLabel || '日付'
+    };
 
     // チャートの作成
     this.chart = new Chart(ctx, {
@@ -178,7 +189,7 @@ class TemperatureChart {
         labels: labels,
         datasets: [
           {
-            label: '最高気温 (°C)',
+            label: labels_i18n.tempMax,
             data: tempMax,
             borderColor: 'rgb(255, 99, 132)',
             backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -190,7 +201,7 @@ class TemperatureChart {
             pointBackgroundColor: 'rgb(255, 99, 132)'
           },
           {
-            label: '平均気温 (°C)',
+            label: labels_i18n.tempMean,
             data: tempMean,
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.1)',
@@ -202,7 +213,7 @@ class TemperatureChart {
             pointBackgroundColor: 'rgb(75, 192, 192)'
           },
           {
-            label: '最低気温 (°C)',
+            label: labels_i18n.tempMin,
             data: tempMin,
             borderColor: 'rgb(54, 162, 235)',
             backgroundColor: 'rgba(54, 162, 235, 0.1)',
@@ -242,7 +253,7 @@ class TemperatureChart {
             display: true,
             title: {
               display: true,
-              text: '日付'
+              text: labels_i18n.dateLabel
             },
             ticks: {
               maxTicksLimit: 15,

@@ -1,0 +1,13 @@
+us:
+  models:
+    cultivation_plan:
+      phases:
+        fetching_weather: "Fetching weather data..."
+        predicting_weather: "Predicting weather data..."
+        optimizing: "Optimizing..."
+        completed: "Optimization completed"
+      phase_failed:
+        fetching_weather: "Failed to fetch weather data"
+        predicting_weather: "Failed to predict weather data"
+        optimizing: "Optimization failed"
+        default: "Process failed"

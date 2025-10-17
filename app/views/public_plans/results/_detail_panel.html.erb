@@ -9,11 +9,11 @@
   <div class="detail-panel-container">
     <%# ヘッダー %>
     <div class="detail-panel-header">
-      <h3 id="panelTitle" class="detail-panel-title">
+      <h3 id="panelTitle" class="detail-panel-title" data-loading-text="<%= t('public_plans.results.detail.loading') %>">
         <span class="panel-title-icon">🏞️</span>
-        <span class="panel-title-text">詳細を読み込んでいます...</span>
+        <span class="panel-title-text"><%= t('public_plans.results.detail.loading') %></span>
       </h3>
-      <button class="detail-panel-close" id="closePanelBtn" type="button" aria-label="閉じる">
+      <button class="detail-panel-close" id="closePanelBtn" type="button" aria-label="<%= t('common.close') %>">
         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M6 18L18 6M6 6l12 12"/>
         </svg>
@@ -41,7 +41,7 @@
       <%# ローディング表示 %>
       <div class="detail-loading" id="panelLoading">
         <div class="loading-spinner"></div>
-        <p class="loading-text">データを読み込んでいます...</p>
+        <p class="loading-text"><%= t('public_plans.results.detail.loading_data') %></p>
       </div>
       
       <%# タブコンテンツ（JavaScriptで動的に切り替え） %>

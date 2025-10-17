@@ -33,7 +33,7 @@ class InteractionRulesController < ApplicationController
   def create
     is_reference = interaction_rule_params[:is_reference] || false
     if is_reference && !admin_user?
-      return redirect_to interaction_rules_path, alert: '参照ルールは管理者のみ作成できます。'
+      return redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.reference_only_admin')
     end
 
     @interaction_rule = InteractionRule.new(interaction_rule_params)
@@ -41,7 +41,7 @@ class InteractionRulesController < ApplicationController
     @interaction_rule.user_id ||= current_user.id
 
     if @interaction_rule.save
-      redirect_to @interaction_rule, notice: 'ルールが正常に作成されました。'
+      redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.created')
     else
       render :new, status: :unprocessable_entity
     end
@@ -50,11 +50,11 @@ class InteractionRulesController < ApplicationController
   # PATCH/PUT /interaction_rules/:id
   def update
     if interaction_rule_params.key?(:is_reference) && !admin_user?
-      return redirect_to @interaction_rule, alert: '参照フラグは管理者のみ変更できます。'
+      return redirect_to @interaction_rule, alert: I18n.t('interaction_rules.flash.reference_flag_admin_only')
     end
 
     if @interaction_rule.update(interaction_rule_params)
-      redirect_to @interaction_rule, notice: 'ルールが正常に更新されました。'
+      redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
@@ -63,7 +63,7 @@ class InteractionRulesController < ApplicationController
   # DELETE /interaction_rules/:id
   def destroy
     @interaction_rule.destroy
-    redirect_to interaction_rules_path, notice: 'ルールが削除されました。'
+    redirect_to interaction_rules_path, notice: I18n.t('interaction_rules.flash.destroyed')
   end
 
   private
@@ -85,18 +85,18 @@ class InteractionRulesController < ApplicationController
       # - 管理者（すべてのルールを編集可能）
       # - ユーザールールの所有者
       unless admin_user? || (!@interaction_rule.is_reference && @interaction_rule.user_id == current_user.id)
-        redirect_to interaction_rules_path, alert: '権限がありません。'
+        redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
       end
     elsif action == :show
       # 詳細表示は以下の場合に許可
       # - 管理者（参照ルールも含めすべて閲覧可能）
       # - 自分のルール
       unless @interaction_rule.user_id == current_user.id || admin_user?
-        redirect_to interaction_rules_path, alert: '権限がありません。'
+        redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
       end
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to interaction_rules_path, alert: '指定されたルールが見つかりません。'
+    redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.not_found')
   end
 
   def interaction_rule_params

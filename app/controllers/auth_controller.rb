@@ -24,7 +24,7 @@ class AuthController < ApplicationController
       auth_hash = request.env['omniauth.auth']
       
       if auth_hash.nil?
-        redirect_to auth_failure_path, alert: 'Authentication failed. No data received.'
+        redirect_to auth_failure_path, alert: I18n.t('auth.flash.no_data')
         return
       end
 
@@ -42,16 +42,16 @@ class AuthController < ApplicationController
           same_site: :strict
         }
         
-        redirect_to root_path, notice: 'Successfully logged in!'
+        redirect_to root_path, notice: I18n.t('auth.flash.login_success')
       else
-        redirect_to auth_failure_path, alert: 'Failed to create user account.'
+        redirect_to auth_failure_path, alert: I18n.t('auth.flash.create_user_failed')
       end
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error "OAuth callback error: #{e.message}"
-      redirect_to auth_failure_path, alert: 'Invalid user data received from Google.'
+      redirect_to auth_failure_path, alert: I18n.t('auth.flash.invalid_data')
     rescue StandardError => e
       Rails.logger.error "OAuth callback error: #{e.message}"
-      redirect_to auth_failure_path, alert: 'An unexpected error occurred during authentication.'
+      redirect_to auth_failure_path, alert: I18n.t('auth.flash.unexpected_error')
     end
   end
 
@@ -68,9 +68,9 @@ class AuthController < ApplicationController
       # Clear session cookie
       cookies.delete(:session_id)
       
-      redirect_to auth_login_path, notice: 'Logged out successfully.'
+      redirect_to auth_login_path, notice: I18n.t('auth.flash.logout_success')
     else
-      redirect_to auth_login_path, alert: 'You are not logged in.'
+      redirect_to auth_login_path, alert: I18n.t('auth.flash.not_logged_in')
     end
   end
 
@@ -81,7 +81,7 @@ class AuthController < ApplicationController
       if request.format.json?
         render json: { error: 'Authentication is disabled in production environment.' }, status: :forbidden
       else
-        redirect_to root_path, alert: 'Authentication is disabled in production environment.'
+        redirect_to root_path, alert: I18n.t('auth.flash.disabled_in_production')
       end
     end
   end

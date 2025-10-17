@@ -3,8 +3,8 @@
 <div class="page-header">
   <h1 class="page-title farm-name"><%= @farm.display_name %></h1>
   <div>
-    <%= link_to "圃場一覧", farm_fields_path(@farm), class: "btn btn-info" %>
-    <%= link_to "編集", edit_farm_path(@farm), class: "btn btn-secondary" %>
+    <%= link_to t('.fields_list'), farm_fields_path(@farm), class: "btn btn-info" %>
+    <%= link_to t('.edit'), edit_farm_path(@farm), class: "btn btn-secondary" %>
   </div>
 </div>
 
@@ -15,14 +15,14 @@
       
       <% if @fields.any? %>
         <div class="fields-section">
-          <h3>圃場一覧</h3>
+          <h3><%= t('.fields_list_title') %></h3>
           <div class="fields-grid">
             <% @fields.each do |field| %>
               <div class="field-card-small">
                 <h4><%= field.display_name %></h4>
                 <div class="field-actions">
-                  <%= link_to "詳細", farm_field_path(@farm, field), class: "btn btn-info btn-sm" %>
-                  <%= link_to "編集", edit_farm_field_path(@farm, field), class: "btn btn-secondary btn-sm" %>
+                  <%= link_to t('.detail'), farm_field_path(@farm, field), class: "btn btn-info btn-sm" %>
+                  <%= link_to t('.edit'), edit_farm_field_path(@farm, field), class: "btn btn-secondary btn-sm" %>
                 </div>
               </div>
             <% end %>
@@ -30,18 +30,18 @@
         </div>
       <% else %>
         <div class="empty-fields">
-          <p>まだ圃場が登録されていません。</p>
-          <%= link_to "最初の圃場を追加", new_farm_field_path(@farm), class: "btn btn-success" %>
+          <p><%= t('.no_fields') %></p>
+          <%= link_to t('.add_first_field'), new_farm_field_path(@farm), class: "btn btn-success" %>
         </div>
       <% end %>
       
       <div class="actions">
-        <%= link_to "農場一覧に戻る", farms_path, class: "btn btn-secondary" %>
-        <%= link_to "圃場一覧", farm_fields_path(@farm), class: "btn btn-info" %>
-        <%= link_to "編集", edit_farm_path(@farm), class: "btn btn-secondary" %>
-        <%= button_to "削除", @farm, method: :delete, 
+        <%= link_to t('.back_to_list'), farms_path, class: "btn btn-secondary" %>
+        <%= link_to t('.fields_list'), farm_fields_path(@farm), class: "btn btn-info" %>
+        <%= link_to t('.edit'), edit_farm_path(@farm), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @farm, method: :delete, 
                     class: "btn btn-error", 
-                    confirm: "この農場を削除しますか？" %>
+                    confirm: t('.delete_confirm') %>
       </div>
     </div>
 

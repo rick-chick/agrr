@@ -30,7 +30,7 @@ class FieldsController < ApplicationController
     @field.user = current_user
 
     if @field.save
-      redirect_to farm_field_path(@farm, @field), notice: '圃場が正常に作成されました。'
+      redirect_to farm_field_path(@farm, @field), notice: I18n.t('fields.flash.created')
     else
       render :new, status: :unprocessable_entity
     end
@@ -39,7 +39,7 @@ class FieldsController < ApplicationController
   # PATCH/PUT /farms/:farm_id/fields/:id
   def update
     if @field.update(field_params)
-      redirect_to farm_field_path(@farm, @field), notice: '圃場が正常に更新されました。'
+      redirect_to farm_field_path(@farm, @field), notice: I18n.t('fields.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
@@ -48,7 +48,7 @@ class FieldsController < ApplicationController
   # DELETE /farms/:farm_id/fields/:id
   def destroy
     @field.destroy
-    redirect_to farm_fields_path(@farm), notice: '圃場が削除されました。'
+    redirect_to farm_fields_path(@farm), notice: I18n.t('fields.flash.destroyed')
   end
 
   private
@@ -62,13 +62,13 @@ class FieldsController < ApplicationController
       @farm = current_user.farms.find(params[:farm_id])
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to farms_path, alert: '指定された農場が見つかりません。'
+    redirect_to farms_path, alert: I18n.t('fields.flash.farm_not_found')
   end
 
   def set_field
     @field = @farm.fields.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to farm_fields_path(@farm), alert: '指定された圃場が見つかりません。'
+    redirect_to farm_fields_path(@farm), alert: I18n.t('fields.flash.not_found')
   end
 
   def field_params

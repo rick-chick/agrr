@@ -3,10 +3,28 @@
 class ApplicationController < ActionController::Base
   # Rails 8+ uses built-in forgery protection differently; explicit macro is unnecessary
   
+  # I18n locale setting
+  around_action :switch_locale
+  
   # Authentication (disabled in production)
   before_action :authenticate_user!, unless: -> { Rails.env.production? }
   
   private
+  
+  def switch_locale(&action)
+    locale = params[:locale] || cookies[:locale] || I18n.default_locale
+    # Validate locale
+    locale = I18n.default_locale unless I18n.available_locales.map(&:to_s).include?(locale.to_s)
+    
+    # Save locale to cookie
+    cookies[:locale] = { value: locale.to_s, expires: 1.year.from_now }
+    
+    I18n.with_locale(locale, &action)
+  end
+  
+  def default_url_options
+    { locale: I18n.locale }
+  end
   
   def current_user
     return @current_user if defined?(@current_user)
@@ -43,9 +61,9 @@ class ApplicationController < ActionController::Base
     return if current_user && !current_user.anonymous?
     
     if request.format.json?
-      render json: { error: 'Please log in to access this resource.' }, status: :unauthorized
+      render json: { error: I18n.t('auth.messages.login_required') }, status: :unauthorized
     else
-      redirect_to auth_login_path, alert: 'Please log in to access this page.'
+      redirect_to auth_login_path, alert: I18n.t('auth.messages.login_required_page')
     end
   end
   
@@ -61,11 +79,18 @@ class ApplicationController < ActionController::Base
     return if admin_user?
     
     if request.format.json?
-      render json: { error: 'Admin access required.' }, status: :forbidden
+      render json: { error: I18n.t('auth.messages.admin_required') }, status: :forbidden
     else
-      redirect_to root_path, alert: 'Admin access required.'
+      redirect_to root_path, alert: I18n.t('auth.messages.admin_required')
     end
   end
   
-  helper_method :current_user, :logged_in?, :admin_user?
+  helper_method :current_user, :logged_in?, :admin_user?, :available_locales
+  
+  def available_locales
+    [
+      { code: 'ja', name: '日本語', flag: '🇯🇵' },
+      { code: 'us', name: 'English', flag: '🇺🇸' }
+    ]
+  end
 end

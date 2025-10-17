@@ -1,0 +1,13 @@
+ja:
+  jobs:
+    optimize_cultivation_plan:
+      completed: "最適化が完了しました"
+      failed: "最適化に失敗しました"
+      unexpected_error: "予期しないエラーが発生しました: %{message}"
+      errors:
+        growth_incomplete: "選択された作物が指定期間内に成長完了できません。より長い評価期間を設定するか、異なる作物を選択してください。"
+        missing_field: "入力データに必須フィールドが不足しています。システム管理者にお問い合わせください。"
+        file_error: "ファイルの読み込みに失敗しました。システム管理者にお問い合わせください。"
+        invalid_format: "入力データの形式が不正です。システム管理者にお問い合わせください。"
+        optimization_failed: "最適化処理に失敗しました: %{message}"
+

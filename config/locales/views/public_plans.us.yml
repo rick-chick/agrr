@@ -1,0 +1,128 @@
+us:
+  public_plans:
+    title: "Crop Planning"
+    
+    steps:
+      region: "Region"
+      size: "Size"
+      crop: "Crop"
+      completed: "✓"
+    
+    farm_sizes:
+      home_garden:
+        name: "Home Garden"
+        description: "Backyard or balcony garden"
+      community_garden:
+        name: "Community Garden"
+        description: "Typical community garden plot"
+      rental_farm:
+        name: "Rental Farm"
+        description: "Professional farming or rental farmland"
+    
+    errors:
+      select_region: "Please select a region."
+      select_farm_size: "Please select a farm size."
+      select_crop: "Please select at least one crop."
+      restart: "Please start over."
+      create_failed: "Failed to create plan: %{errors}"
+      not_found: "Crop plan not found."
+    
+    new:
+      title: "🌍 Select Your Growing Region"
+      subtitle: "Choose the region where your farm is located"
+      empty_message: "No regions available for selection at this time."
+    
+    select_farm_size:
+      title: "📏 Select Your Farm Size"
+      subtitle: "Choose the size closest to your farm area"
+      back_button: "← Back to Region Selection"
+      summary:
+        region: "Region"
+    
+    select_crop:
+      title: "🌾 Select Crops to Grow"
+      subtitle: "Multiple selection available. Click cards to select."
+      summary:
+        region: "Region"
+        farm_size: "Farm Size"
+      bottom_bar:
+        back_button: "← Back"
+        selected_label: "Selected"
+        selected_unit: "crops"
+        submit_button: "✓ Create Plan with Selected Crops"
+        hint: "⚠️ Please select at least one crop"
+    
+    optimizing:
+      title: "Crop Planning"
+      status_badge: "Optimizing"
+      crops_count: "%{count} crop types"
+      hint: "💡 You will be automatically redirected to the results when optimization is complete"
+      error_message: "Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan."
+      progress:
+        elapsed_time: "⏳ %{time} sec"
+        elapsed_time_minute: "%{minutes}:%{seconds}"
+        duration_hint: "Takes approximately 1 minute"
+        default_message: "Preparing optimization..."
+      phases:
+        initializing: "Preparing optimization..."
+        weather_data: "Fetching weather data..."
+        optimization: "Calculating optimal crop plan..."
+        finalizing: "Preparing results..."
+    
+    results:
+      create_new_plan: "← Create New Plan"
+      chart_title: "Climate Data and Crop Growth Analysis"
+      loading_data: "Loading data..."
+      
+      chart:
+        temperature_section: "Daily Temperature (°C)"
+        gdd_section: "GDD Trends (Daily・Cumulative・Required)"
+        temp_max: "Max Temperature"
+        temp_mean: "Mean Temperature"
+        temp_min: "Min Temperature"
+        temp_chart_title: "Daily Temperature Trends (Optimal and Stress Zones)"
+        optimal_zone: "🟢 Optimal Zone"
+        stress_zone: "🟠 Stress Zone"
+        daily_gdd: "Daily GDD"
+        cumulative_gdd: "Cumulative GDD"
+        required_gdd: "Required GDD (Steps)"
+        gdd_chart_title: "GDD (Growing Degree Days) Trends"
+        date_label: "Date"
+        cumulative_required_label: "Cumulative GDD / Required GDD"
+      
+      header:
+        title: "Crop Plan Completed"
+        badge: "Completed"
+        region: "Region"
+        total_area: "Total Area"
+        field_count: "Fields"
+        field_count_value: "%{count} fields"
+        total_cost: "Total Cost"
+        total_revenue: "Total Revenue"
+        total_profit: "Total Profit"
+        subtitle: "Optimal cultivation periods for %{count} fields have been determined"
+      
+      gantt:
+        title: "Cultivation Schedule"
+        hint: "Click on a cultivation to view details"
+        month_format: "Month %{month}"
+      
+      detail:
+        loading: "Loading details..."
+        loading_data: "Loading data..."
+      
+      info:
+        field: "Field"
+        crop: "Crop"
+        area: "Area"
+        planting_date: "Planting Date"
+        harvest_date: "Harvest Date"
+        cultivation_days: "Cultivation Days"
+        gdd: "Growing Degree Days"
+        estimated_cost: "Estimated Cost"
+        stages_title: "Growth Stages"
+        stages_loading: "Loading stage information..."
+      
+      stages:
+        intro: "You can check detailed temperature conditions and GDD achievement status for each stage."
+        loading: "Loading stage information..."

@@ -1,0 +1,87 @@
+us:
+  interaction_rules:
+    flash:
+      created: "Rule was successfully created."
+      updated: "Rule was successfully updated."
+      destroyed: "Rule was successfully deleted."
+      reference_only_admin: "Only administrators can create reference rules."
+      reference_flag_admin_only: "Only administrators can change the reference flag."
+      no_permission: "Permission denied."
+      not_found: "Rule not found."
+    
+    index:
+      title: "Crop Rotation Rules"
+      new_rule: "Add New Rule"
+      system_rules: "System Standard Rules"
+      my_rules: "My Rules"
+      table:
+        rule_type: "Rule Type"
+        source: "Source"
+        target: "Target"
+        impact: "Impact Ratio"
+        direction: "Direction"
+        actions: "Actions"
+        directional: "→"
+        bidirectional: "↔"
+      actions:
+        detail: "Details"
+        edit: "Edit"
+        delete: "Delete"
+        confirm_delete_system: "Are you sure you want to delete this system standard rule?"
+        confirm_delete: "Are you sure you want to delete this rule?"
+      empty:
+        icon: "📋"
+        title: "No rules registered yet"
+        description: "Add your first rule to get started."
+        button: "Add Rule"
+    
+    edit:
+      title: "Edit Rule"
+    
+    form:
+      rule_type_label: "Rule Type"
+      rule_type_continuous: "Continuous Cultivation"
+      rule_type_blank: "Please select"
+      source_group_label: "Source Group"
+      source_group_placeholder: "e.g., Solanaceae"
+      source_group_help: "Crop family name or field ID"
+      target_group_label: "Target Group"
+      target_group_placeholder: "e.g., Solanaceae"
+      target_group_help: "Crop family name or field ID"
+      impact_ratio_label: "Impact Ratio"
+      impact_ratio_placeholder: "e.g., 0.7"
+      impact_ratio_help: "1.0=no impact, 0.7=30% decrease, 1.2=20% increase"
+      direction_label: "Direction"
+      direction_true: "Directional (Source → Target)"
+      direction_false: "Bidirectional (Mutual impact)"
+      description_label: "Description (Optional)"
+      description_placeholder: "Enter description for this rule"
+      is_reference_label: "Set as system standard rule"
+      is_reference_help: "When checked, this becomes a standard rule automatically applied to all users"
+      submit_create: "Create Rule"
+      submit_update: "Update Rule"
+      cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
+    
+    show:
+      title: "Rule Details"
+      system_rule_badge: "System Standard Rule"
+      rule_type: "Rule Type"
+      source_group: "Source Group"
+      target_group: "Target Group"
+      impact_ratio: "Impact Ratio"
+      direction: "Direction"
+      directional: "Directional (→)"
+      bidirectional: "Bidirectional (↔)"
+      description: "Description"
+      created_at: "Created"
+      updated_at: "Updated"
+      decrease: "%{percent}% decrease"
+      increase: "+%{percent}% increase"
+      no_impact: "No impact"
+      edit: "Edit"
+      delete: "Delete"
+      confirm_delete: "Are you sure you want to delete this rule?"
+      back_to_list: "Back to List"
+

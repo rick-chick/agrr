@@ -1,0 +1,17 @@
+us:
+  auth:
+    flash:
+      no_data: "Authentication failed. No data received."
+      login_success: "Successfully logged in!"
+      create_user_failed: "Failed to create user account."
+      invalid_data: "Invalid user data received from Google."
+      unexpected_error: "An unexpected error occurred during authentication."
+      logout_success: "Logged out successfully."
+      not_logged_in: "You are not logged in."
+      disabled_in_production: "Authentication is disabled in production environment."
+    
+    messages:
+      login_required: "Please log in to access this resource."
+      login_required_page: "Please log in to access this page."
+      admin_required: "Admin access required."
+

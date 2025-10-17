@@ -1,0 +1,13 @@
+ja:
+  models:
+    cultivation_plan:
+      phases:
+        fetching_weather: "気象データを取得しています..."
+        predicting_weather: "気象データを予測しています..."
+        optimizing: "最適化処理中..."
+        completed: "最適化が完了しました"
+      phase_failed:
+        fetching_weather: "気象データの取得に失敗しました"
+        predicting_weather: "気象データの予測に失敗しました"
+        optimizing: "最適化に失敗しました"
+        default: "処理に失敗しました"

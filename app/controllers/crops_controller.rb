@@ -30,7 +30,7 @@ class CropsController < ApplicationController
   def create
     is_reference = crop_params[:is_reference] || false
     if is_reference && !admin_user?
-      return redirect_to crops_path, alert: '参照作物は管理者のみ作成できます。'
+      return redirect_to crops_path, alert: I18n.t('crops.flash.reference_only_admin')
     end
 
     @crop = Crop.new(crop_params)
@@ -43,7 +43,7 @@ class CropsController < ApplicationController
     end
 
     if @crop.save
-      redirect_to @crop, notice: '作物が正常に作成されました。'
+      redirect_to @crop, notice: I18n.t('crops.flash.created')
     else
       render :new, status: :unprocessable_entity
     end
@@ -52,7 +52,7 @@ class CropsController < ApplicationController
   # PATCH/PUT /crops/:id
   def update
     if crop_params.key?(:is_reference) && !admin_user?
-      return redirect_to @crop, alert: '参照フラグは管理者のみ変更できます。'
+      return redirect_to @crop, alert: I18n.t('crops.flash.reference_flag_admin_only')
     end
 
     # groupsをカンマ区切りテキストから配列に変換
@@ -61,7 +61,7 @@ class CropsController < ApplicationController
     end
 
     if @crop.update(crop_params)
-      redirect_to @crop, notice: '作物が正常に更新されました。'
+      redirect_to @crop, notice: I18n.t('crops.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
@@ -70,7 +70,7 @@ class CropsController < ApplicationController
   # DELETE /crops/:id
   def destroy
     @crop.destroy
-    redirect_to crops_path, notice: '作物が削除されました。'
+    redirect_to crops_path, notice: I18n.t('crops.flash.destroyed')
   end
 
   private
@@ -86,7 +86,7 @@ class CropsController < ApplicationController
       # - 管理者（すべての作物を編集可能）
       # - ユーザー作物の所有者
       unless admin_user? || (!@crop.is_reference && @crop.user_id == current_user.id)
-        redirect_to crops_path, alert: '権限がありません。'
+        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
       end
     elsif action == :show
       # 詳細表示は以下の場合に許可
@@ -94,11 +94,11 @@ class CropsController < ApplicationController
       # - 自分の作物
       # - 管理者
       unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
-        redirect_to crops_path, alert: '権限がありません。'
+        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
       end
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to crops_path, alert: '指定された作物が見つかりません。'
+    redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
   end
 
   def crop_params

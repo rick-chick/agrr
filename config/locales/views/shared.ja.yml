@@ -1,0 +1,23 @@
+ja:
+  shared:
+    navbar:
+      brand: "AGRR"
+      farms: "農場"
+      crops: "作物"
+      interaction_rules: "連作"
+      login: "ログイン"
+      logout: "ログアウト"
+      logout_confirm: "ログアウトしますか？"
+      
+    footer:
+      brand_description: "農業作付け計画支援システム\n持続可能な農業の実現を目指して"
+      services: "サービス"
+      create_plan: "作付け計画を作成"
+      about: "AGRRについて"
+      legal: "法的情報"
+      privacy_policy: "プライバシーポリシー"
+      terms: "利用規約"
+      contact_title: "お問い合わせ"
+      contact_form: "お問い合わせフォーム"
+      copyright: "© %{year} AGRR. All rights reserved."
+

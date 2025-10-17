@@ -86,19 +86,11 @@ import { createConsumer } from "@rails/actioncable"
             console.error('💡 Check server logs for detailed information');
           }
           
-          // より詳細で親切なエラーメッセージ
-          const message = [
-            '最適化状況の取得に失敗しました。',
-            '',
-            '以下のいずれかをお試しください：',
-            '• ページをリロード（F5キー）',
-            '• ブラウザのキャッシュをクリア',
-            '• しばらく時間をおいてから再度アクセス',
-            '',
-            '問題が解決しない場合は、新しい計画を作成してください。'
-          ].join('\n');
+          // より詳細で親切なエラーメッセージ（data属性から取得）
+          const errorMessage = document.documentElement.dataset.optimizationErrorMessage || 
+            'Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan.';
           
-          alert(message);
+          alert(errorMessage);
           
           // 5秒後に自動リロード（ユーザーが閉じない場合）
           setTimeout(() => {
@@ -185,11 +177,23 @@ import { createConsumer } from "@rails/actioncable"
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
       
+      // テンプレートを使用（data属性から取得、なければフォールバック）
+      const template = elapsedTimeElement.dataset.elapsedTimeTemplate || '⏳ %{time}';
+      let timeStr = '';
+      
       if (minutes > 0) {
-        elapsedTimeElement.textContent = `${minutes}分${seconds}秒`;
+        // 分表示用のテンプレートがあれば使用、なければデフォルト
+        const minuteTemplate = elapsedTimeElement.dataset.elapsedTimeMinuteTemplate;
+        if (minuteTemplate) {
+          timeStr = minuteTemplate.replace('%{minutes}', minutes).replace('%{seconds}', seconds);
+        } else {
+          timeStr = `${minutes}:${String(seconds).padStart(2, '0')}`;
+        }
       } else {
-        elapsedTimeElement.textContent = `${seconds}秒`;
+        timeStr = seconds.toString();
       }
+      
+      elapsedTimeElement.textContent = template.replace('%{time}', timeStr);
     }, 1000);
   }
   

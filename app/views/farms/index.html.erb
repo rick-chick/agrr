@@ -1,14 +1,14 @@
-<% content_for :title, "農場一覧 - AGRR" %>
+<% content_for :title, "#{t('.title')} - AGRR" %>
 
 <div class="page-header">
-  <h1 class="page-title">農場一覧</h1>
-  <%= link_to "新しい農場を追加", new_farm_path, class: "btn btn-success" %>
+  <h1 class="page-title"><%= t('.title') %></h1>
+  <%= link_to t('.new_farm'), new_farm_path, class: "btn btn-success" %>
 </div>
 
-<!-- デバッグ情報（開発環境のみ） -->
+<!-- Debug information (development only) -->
 <% if Rails.env.development? %>
   <div class="debug-box">
-    <strong>デバッグ:</strong>
+    <strong><%= t('.debug.label') %></strong>
     admin_user? = <%= admin_user? %>,
     current_user.admin = <%= current_user.admin %>,
     @reference_farms.count = <%= @reference_farms.count %>,
@@ -17,9 +17,9 @@
 <% end %>
 
 <% if @reference_farms.any? %>
-  <!-- 参照農場（管理者のみ表示） -->
+  <!-- Reference Farms (admin only) -->
   <div class="mb-6">
-    <h2 class="section-header">参照農場（栽培地域） (<%= @reference_farms.count %>件)</h2>
+    <h2 class="section-header"><%= t('.reference_farms') %> (<%= t('.count', count: @reference_farms.count) %>)</h2>
     
     <div class="farms-grid">
       <% @reference_farms.each do |farm| %>
@@ -30,8 +30,8 @@
   
   <hr class="section-divider">
   
-  <!-- 自分の農場 -->
-  <h2 class="section-header">自分の農場 (<%= @farms.count %>件)</h2>
+  <!-- My Farms -->
+  <h2 class="section-header"><%= t('.my_farms') %> (<%= t('.count', count: @farms.count) %>)</h2>
 <% end %>
     
     <% if @farms.any? %>
@@ -43,10 +43,10 @@
       </div>
     <% else %>
       <div class="empty-state">
-        <div class="empty-state-icon">🚜</div>
-        <h3>まだ農場が登録されていません</h3>
-        <p>最初の農場を追加して始めましょう。</p>
-        <%= link_to "農場を追加", new_farm_path, class: "btn btn-success" %>
+        <div class="empty-state-icon"><%= t('.empty.icon') %></div>
+        <h3><%= t('.empty.title') %></h3>
+        <p><%= t('.empty.description') %></p>
+        <%= link_to t('.empty.button'), new_farm_path, class: "btn btn-success" %>
       </div>
     <% end %>
 

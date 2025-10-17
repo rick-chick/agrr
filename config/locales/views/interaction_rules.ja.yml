@@ -1,0 +1,87 @@
+ja:
+  interaction_rules:
+    flash:
+      created: "ルールが正常に作成されました。"
+      updated: "ルールが正常に更新されました。"
+      destroyed: "ルールが削除されました。"
+      reference_only_admin: "参照ルールは管理者のみ作成できます。"
+      reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
+      no_permission: "権限がありません。"
+      not_found: "指定されたルールが見つかりません。"
+    
+    index:
+      title: "連作ルール一覧"
+      new_rule: "新しいルールを追加"
+      system_rules: "システム標準ルール"
+      my_rules: "マイルール"
+      table:
+        rule_type: "ルール種類"
+        source: "影響元"
+        target: "影響先"
+        impact: "影響係数"
+        direction: "方向性"
+        actions: "操作"
+        directional: "→"
+        bidirectional: "↔"
+      actions:
+        detail: "詳細"
+        edit: "編集"
+        delete: "削除"
+        confirm_delete_system: "このシステム標準ルールを削除しますか？"
+        confirm_delete: "このルールを削除しますか？"
+      empty:
+        icon: "📋"
+        title: "まだルールが登録されていません"
+        description: "最初のルールを追加して始めましょう。"
+        button: "ルールを追加"
+    
+    edit:
+      title: "ルール編集"
+    
+    form:
+      rule_type_label: "ルール種類"
+      rule_type_continuous: "連作"
+      rule_type_blank: "選択してください"
+      source_group_label: "影響元グループ"
+      source_group_placeholder: "例: Solanaceae"
+      source_group_help: "作物科名や圃場IDなど"
+      target_group_label: "影響先グループ"
+      target_group_placeholder: "例: Solanaceae"
+      target_group_help: "作物科名や圃場IDなど"
+      impact_ratio_label: "影響係数"
+      impact_ratio_placeholder: "例: 0.7"
+      impact_ratio_help: "1.0=影響なし、0.7=30%減少、1.2=20%増加"
+      direction_label: "方向性"
+      direction_true: "方向性あり（影響元 → 影響先）"
+      direction_false: "双方向（相互に影響）"
+      description_label: "説明（任意）"
+      description_placeholder: "このルールの説明を入力してください"
+      is_reference_label: "システム標準ルールとして設定"
+      is_reference_help: "チェックすると、すべてのユーザーに自動適用される標準ルールになります"
+      submit_create: "ルールを作成"
+      submit_update: "ルールを更新"
+      cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    show:
+      title: "ルール詳細"
+      system_rule_badge: "システム標準ルール"
+      rule_type: "ルール種類"
+      source_group: "影響元グループ"
+      target_group: "影響先グループ"
+      impact_ratio: "影響係数"
+      direction: "方向性"
+      directional: "方向性あり (→)"
+      bidirectional: "双方向 (↔)"
+      description: "説明"
+      created_at: "作成日時"
+      updated_at: "更新日時"
+      decrease: "%{percent}%減少"
+      increase: "+%{percent}%増加"
+      no_impact: "影響なし"
+      edit: "編集"
+      delete: "削除"
+      confirm_delete: "このルールを削除しますか？"
+      back_to_list: "一覧に戻る"
+

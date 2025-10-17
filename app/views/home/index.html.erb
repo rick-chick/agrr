@@ -1,8 +1,8 @@
-<% content_for :title, "AGRR - 農業をもっとスマートに | 農業計画支援システム" %>
-<% content_for :description, "AGRRは気象データとAIを活用した農業作付け計画支援システムです。無料で作付け計画を作成でき、圃場管理から栽培計画の最適化まで、持続可能な農業をサポートします。" %>
+<% content_for :title, t('.title') %>
+<% content_for :description, t('.description') %>
 
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="<%= I18n.locale %>">
 <head>
   <%= render "shared/meta_tags" %>
   <!-- Bundled JavaScript and CSS (includes Leaflet) -->
@@ -21,88 +21,84 @@
 <body>
   <%= render "shared/navbar" %>
 
-  <!-- ヒーローセクション -->
+  <!-- Hero Section -->
   <section class="hero">
     <div class="hero-content">
-      <h1 class="hero-title">🌱 農業をもっとスマートに</h1>
+      <h1 class="hero-title"><%= t('.hero.title') %></h1>
       <p class="hero-subtitle">
-        気象データとAIを活用した最適な作付け計画で、<br>
-        あなたの農業を次のレベルへ
+        <%= t('.hero.subtitle_html').html_safe %>
       </p>
       <div class="hero-buttons">
-        <%= link_to "無料で作付け計画を作成", public_plans_path, class: "hero-button" %>
+        <%= link_to t('.hero.cta_button'), public_plans_path, class: "hero-button" %>
       </div>
     </div>
   </section>
 
-  <!-- 機能セクション -->
+  <!-- Features Section -->
   <section class="features">
-    <h2 class="section-title">AGRRの特徴</h2>
-    <p class="section-subtitle">データドリブンで農業計画をサポート</p>
+    <h2 class="section-title"><%= t('.features.title') %></h2>
+    <p class="section-subtitle"><%= t('.features.subtitle') %></p>
     
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon">🌤️</div>
-        <h3 class="feature-title">気象データ分析</h3>
+        <div class="feature-icon"><%= t('.features.weather.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.weather.title') %></h3>
         <p class="feature-description">
-          過去20年以上の気象データを分析し、最適な作付け時期を提案します。
+          <%= t('.features.weather.description') %>
         </p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <h3 class="feature-title">AI作物提案</h3>
+        <div class="feature-icon"><%= t('.features.ai.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.ai.title') %></h3>
         <p class="feature-description">
-          AIが地域の気候や土壌条件に最適な作物を提案。収益性も考慮します。
+          <%= t('.features.ai.description') %>
         </p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3 class="feature-title">作付け計画最適化</h3>
+        <div class="feature-icon"><%= t('.features.optimization.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.optimization.title') %></h3>
         <p class="feature-description">
-          農場サイズと作物の組み合わせを最適化し、効率的な計画を立案します。
+          <%= t('.features.optimization.description') %>
         </p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">🗺️</div>
-        <h3 class="feature-title">圃場管理</h3>
+        <div class="feature-icon"><%= t('.features.field_management.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.field_management.title') %></h3>
         <p class="feature-description">
-          複数の圃場を地図上で管理。各圃場の状態を一目で把握できます。
+          <%= t('.features.field_management.description') %>
         </p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">📈</div>
-        <h3 class="feature-title">成長予測</h3>
+        <div class="feature-icon"><%= t('.features.growth_prediction.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.growth_prediction.title') %></h3>
         <p class="feature-description">
-          積算温度（GDD）を活用し、作物の成長段階を予測します。
+          <%= t('.features.growth_prediction.description') %>
         </p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">☁️</div>
-        <h3 class="feature-title">クラウド管理</h3>
+        <div class="feature-icon"><%= t('.features.cloud.icon') %></div>
+        <h3 class="feature-title"><%= t('.features.cloud.title') %></h3>
         <p class="feature-description">
-          データはクラウドで安全に管理。どこからでもアクセス可能です。
+          <%= t('.features.cloud.description') %>
         </p>
       </div>
     </div>
   </section>
 
-  <!-- CTAセクション -->
+  <!-- CTA Section -->
   <section class="cta">
-    <h2 class="cta-title">今すぐ始めましょう</h2>
+    <h2 class="cta-title"><%= t('.cta.title') %></h2>
     <p class="cta-description">
-      ログイン不要で作付け計画を試せます。<br>
-      より高度な機能をご利用の場合は、アカウント登録をお願いします。
+      <%= t('.cta.description_html').html_safe %>
     </p>
     <div class="cta-buttons">
-      <%= link_to "無料で計画を作成", public_plans_path, class: "hero-button" %>
-      <% unless Rails.env.production? || logged_in? %>
-        <%= link_to "アカウント登録", auth_login_path, class: "hero-button hero-button-outline" %>
-      <% end %>
+      <%= link_to t('.cta.button_primary'), public_plans_path, class: "hero-button" %>
+      <%= link_to t('.cta.button_secondary'), about_path, class: "hero-button hero-button-outline" %>
     </div>
   </section>
 

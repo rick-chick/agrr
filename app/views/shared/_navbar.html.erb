@@ -1,13 +1,13 @@
-<!-- ナビゲーションバー -->
+<!-- Navigation Bar -->
 <nav class="navbar">
-  <a href="<%= root_path %>" class="navbar-brand">🌾 AGRR</a>
+  <a href="<%= root_path %>" class="navbar-brand">🌾 <%= t('shared.navbar.brand') %></a>
   <div class="navbar-nav">
     <% unless Rails.env.production? %>
       <% if logged_in? %>
-        <%= link_to "農場", farms_path, class: "nav-link" %>
-        <%= link_to "作物", crops_path, class: "nav-link" %>
-        <%= link_to "連作", interaction_rules_path, class: "nav-link" %>
-        <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: "ログアウト", data: { turbo_confirm: "ログアウトしますか？" } do %>
+        <%= link_to t('shared.navbar.farms'), farms_path, class: "nav-link" %>
+        <%= link_to t('shared.navbar.crops'), crops_path, class: "nav-link" %>
+        <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: "nav-link" %>
+        <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: t('shared.navbar.logout'), data: { turbo_confirm: t('shared.navbar.logout_confirm') } do %>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
@@ -15,7 +15,7 @@
           </svg>
         <% end %>
       <% else %>
-        <%= link_to auth_login_path, class: "btn-icon", title: "ログイン" do %>
+        <%= link_to auth_login_path, class: "btn-icon", title: t('shared.navbar.login') do %>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
             <polyline points="10 17 15 12 10 7"></polyline>
@@ -24,6 +24,17 @@
         <% end %>
       <% end %>
     <% end %>
+    
+    <!-- Language Switcher -->
+    <div class="nav-locale-switcher">
+      <% available_locales.each do |locale| %>
+        <% if locale[:code] == I18n.locale.to_s %>
+          <span class="locale-current"><%= locale[:flag] %></span>
+        <% else %>
+          <%= link_to locale[:flag], url_for(locale: locale[:code]), class: "locale-link", title: locale[:name] %>
+        <% end %>
+      <% end %>
+    </div>
   </div>
 </nav>
 

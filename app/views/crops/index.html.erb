@@ -1,8 +1,8 @@
-<% content_for :title, "作物一覧 - AGRR" %>
+<% content_for :title, "#{t('.title')} - AGRR" %>
 
 <div class="page-header">
-  <h1 class="page-title">作物一覧</h1>
-  <%= link_to "新しい作物を追加", new_crop_path, class: "btn btn-success" %>
+  <h1 class="page-title"><%= t('.title') %></h1>
+  <%= link_to t('.new_crop'), new_crop_path, class: "btn btn-success" %>
 </div>
 
 <% if @crops.any? %>
@@ -11,32 +11,32 @@
       <div class="crop-card">
         <h3 class="crop-name"><%= crop.name %></h3>
         <% if crop.variety.present? %>
-          <div class="crop-variety">品種: <%= crop.variety %></div>
+          <div class="crop-variety"><%= t('activerecord.attributes.crop.variety') %>: <%= crop.variety %></div>
         <% end %>
         <% if admin_user? && crop.is_reference %>
-          <div class="crop-type reference">参照作物</div>
+          <div class="crop-type reference"><%= t('.reference_crops') %></div>
         <% end %>
         <div class="crop-actions">
-          <%= link_to "詳細", crop_path(crop), class: "btn btn-info btn-sm" %>
+          <%= link_to t('.actions.show'), crop_path(crop), class: "btn btn-info btn-sm" %>
           <% if crop.is_reference %>
-            <%# 参照作物は管理者のみ編集・削除可能 %>
+            <%# Reference crops: admin only %>
             <% if admin_user? %>
-              <%= link_to "編集", edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
-              <%= link_to "削除", crop_path(crop), method: :delete, 
+              <%= link_to t('.actions.edit'), edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
+              <%= link_to t('.actions.delete'), crop_path(crop), method: :delete, 
                           class: "btn btn-error btn-sm", 
                           data: { 
                             turbo_method: :delete,
-                            turbo_confirm: "この作物を削除しますか？"
+                            turbo_confirm: t('.actions.delete_confirm')
                           } %>
             <% end %>
           <% else %>
-            <%# ユーザー作物は所有者のみ編集・削除可能 %>
-            <%= link_to "編集", edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
-            <%= link_to "削除", crop_path(crop), method: :delete, 
+            <%# User crops: owner only %>
+            <%= link_to t('.actions.edit'), edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
+            <%= link_to t('.actions.delete'), crop_path(crop), method: :delete, 
                         class: "btn btn-error btn-sm", 
                         data: { 
                           turbo_method: :delete,
-                          turbo_confirm: "この作物を削除しますか？"
+                          turbo_confirm: t('.actions.delete_confirm')
                         } %>
           <% end %>
         </div>
@@ -45,9 +45,9 @@
   </div>
 <% else %>
   <div class="empty-state">
-    <div class="empty-state-icon">🌾</div>
-    <h3>まだ作物が登録されていません</h3>
-    <p>最初の作物を追加して始めましょう。</p>
-    <%= link_to "作物を追加", new_crop_path, class: "btn btn-success" %>
+    <div class="empty-state-icon"><%= t('.empty.icon') %></div>
+    <h3><%= t('.empty.title') %></h3>
+    <p><%= t('.empty.description') %></p>
+    <%= link_to t('.empty.button'), new_crop_path, class: "btn btn-success" %>
   </div>
 <% end %>

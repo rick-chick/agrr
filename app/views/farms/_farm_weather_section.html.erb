@@ -1,71 +1,78 @@
 <div id="<%= dom_id(farm, :weather_section) %>">
   <div class="field-info">
     <div class="info-item">
-      <span class="info-label">📝 名前:</span>
+      <span class="info-label">📝 <%= t('farms.weather_section.name') %>:</span>
       <span class="info-value"><%= farm.name %></span>
     </div>
     
     <% if farm.has_coordinates? %>
       <div class="info-item">
-        <span class="info-label">📍 緯度:</span>
+        <span class="info-label">📍 <%= t('farms.weather_section.latitude') %>:</span>
         <span class="info-value"><%= farm.latitude %></span>
       </div>
       
       <div class="info-item">
-        <span class="info-label">📍 経度:</span>
+        <span class="info-label">📍 <%= t('farms.weather_section.longitude') %>:</span>
         <span class="info-value"><%= farm.longitude %></span>
       </div>
     <% else %>
       <div class="info-item">
-        <span class="info-label">📍 位置:</span>
-        <span class="info-value">位置情報が設定されていません</span>
+        <span class="info-label">📍 <%= t('farms.weather_section.location') %>:</span>
+        <span class="info-value"><%= t('farms.weather_section.location_not_set') %></span>
       </div>
     <% end %>
     
     <div class="info-item">
-      <span class="info-label">🌾 圃場数:</span>
-      <span class="info-value"><%= fields_count %>個</span>
+      <span class="info-label">🌾 <%= t('farms.weather_section.fields_count') %>:</span>
+      <span class="info-value"><%= t('farms.weather_section.fields_count_value', count: fields_count) %></span>
     </div>
     
     <div class="info-item">
-      <span class="info-label">📅 作成日:</span>
-      <span class="info-value"><%= farm.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('farms.weather_section.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(farm.created_at, format: :long) %></span>
     </div>
     
     <div class="info-item">
-      <span class="info-label">📅 更新日:</span>
-      <span class="info-value"><%= farm.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('farms.weather_section.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(farm.updated_at, format: :long) %></span>
     </div>
   </div>
 
   <!-- Weather Data Chart Section -->
   <% if farm.weather_data_status == 'completed' %>
     <div class="weather-section" data-farm-id="<%= farm.id %>">
-      <h3>📊 温度データ</h3>
+      <h3>📊 <%= t('farms.weather_section.temperature_data') %></h3>
       <div class="chart-controls">
-        <label for="chart-period">期間選択:</label>
+        <label for="chart-period"><%= t('farms.weather_section.period_select') %>:</label>
         <select id="chart-period" class="chart-period-select">
-          <option value="30">過去30日</option>
-          <option value="90">過去90日</option>
-          <option value="180">過去180日</option>
-          <option value="365" selected>過去1年</option>
-          <option value="next_365">翌1年（予測）</option>
+          <option value="30"><%= t('farms.weather_section.period_30') %></option>
+          <option value="90"><%= t('farms.weather_section.period_90') %></option>
+          <option value="180"><%= t('farms.weather_section.period_180') %></option>
+          <option value="365" selected><%= t('farms.weather_section.period_365') %></option>
+          <option value="next_365"><%= t('farms.weather_section.period_next_365') %></option>
         </select>
       </div>
       <div class="chart-container">
-        <canvas id="temperatureChart" data-farm-id="<%= farm.id %>"></canvas>
+        <canvas id="temperatureChart" 
+                data-farm-id="<%= farm.id %>"
+                data-chart-title="<%= t('farms.weather_section.temperature_chart_title') %>"
+                data-chart-title-prediction="<%= t('farms.weather_section.temperature_chart_title_prediction') %>"
+                data-temp-max-label="<%= t('farms.weather_section.chart_temp_max') %>"
+                data-temp-mean-label="<%= t('farms.weather_section.chart_temp_mean') %>"
+                data-temp-min-label="<%= t('farms.weather_section.chart_temp_min') %>"
+                data-date-label="<%= t('farms.weather_section.chart_date_label') %>"></canvas>
       </div>
     </div>
   <% elsif farm.weather_data_status == 'fetching' %>
     <div class="weather-section">
-      <h3>📊 温度データ</h3>
+      <h3>📊 <%= t('farms.weather_section.temperature_data') %></h3>
       <% if farm.weather_data_progress >= 100 %>
         <p class="info-message">
-          データ処理完了間近です...
+          <%= t('farms.weather_section.processing_complete') %>
         </p>
       <% else %>
         <p class="info-message">
-          天気データを取得中です... (<%= farm.weather_data_progress %>%)
+          <%= t('farms.weather_section.fetching_progress', progress: farm.weather_data_progress) %>
         </p>
         <% if farm.weather_data_total_years > 0 %>
           <div class="progress-bar">
@@ -76,9 +83,9 @@
     </div>
   <% elsif farm.weather_data_status == 'failed' %>
     <div class="weather-section">
-      <h3>📊 温度データ</h3>
+      <h3>📊 <%= t('farms.weather_section.temperature_data') %></h3>
       <p class="error-message">
-        天気データの取得に失敗しました。
+        <%= t('farms.weather_section.fetch_failed') %>
         <% if farm.weather_data_last_error.present? %>
           <br><small><%= farm.weather_data_last_error %></small>
         <% end %>
@@ -86,8 +93,8 @@
     </div>
   <% else %>
     <div class="weather-section">
-      <h3>📊 温度データ</h3>
-      <p class="info-message">天気データを準備中です...</p>
+      <h3>📊 <%= t('farms.weather_section.temperature_data') %></h3>
+      <p class="info-message"><%= t('farms.weather_section.preparing') %></p>
     </div>
   <% end %>
 </div>

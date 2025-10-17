@@ -1,21 +1,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title><%= content_for?(:title) ? yield(:title) : "AGRR - 農業計画支援システム" %></title>
-<meta name="description" content="<%= content_for?(:description) ? yield(:description) : 'AGRRは気象データとAIを活用した農業作付け計画支援システムです。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。' %>">
-<meta name="keywords" content="農業,作付け計画,圃場管理,気象データ,AI,農業DX,栽培計画,連作障害,農業支援">
+<title><%= content_for?(:title) ? yield(:title) : t('meta.default.title') %></title>
+<meta name="description" content="<%= content_for?(:description) ? yield(:description) : t('meta.default.description') %>">
+<meta name="keywords" content="<%= t('meta.default.keywords') %>">
 <meta name="author" content="AGRR">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="<%= request.original_url %>">
-<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'AGRR - 農業計画支援システム' %>">
-<meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : '気象データとAIを活用した農業作付け計画支援システム' %>">
+<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : t('meta.default.title') %>">
+<meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : t('meta.default.og_description') %>">
 <meta property="og:site_name" content="AGRR">
+<meta property="og:locale" content="<%= I18n.locale == :ja ? 'ja_JP' : 'en_US' %>">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : 'AGRR - 農業計画支援システム' %>">
-<meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : '気象データとAIを活用した農業作付け計画支援システム' %>">
+<meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : t('meta.default.title') %>">
+<meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : t('meta.default.og_description') %>">
 
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="/favicon.ico">

@@ -1,7 +1,7 @@
-<% content_for :title, "#{@crop.name}を編集 - AGRR" %>
+<% content_for :title, "#{t('.title', name: @crop.name)} - AGRR" %>
 
 <div class="page-header">
-  <h1 class="page-title"><%= @crop.name %>を編集</h1>
+  <h1 class="page-title"><%= t('.title', name: @crop.name) %></h1>
 </div>
 
 <%= render 'form' %>

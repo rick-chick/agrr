@@ -1,7 +1,7 @@
 <%= form_with(model: interaction_rule, local: true) do |form| %>
   <% if interaction_rule.errors.any? %>
     <div class="alert alert-danger">
-      <h3><%= pluralize(interaction_rule.errors.count, "error") %> prohibited this rule from being saved:</h3>
+      <h3><%= t('interaction_rules.form.errors.title', count: interaction_rule.errors.count) %></h3>
       <ul>
         <% interaction_rule.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -11,46 +11,46 @@
   <% end %>
 
   <div class="form-group">
-    <%= form.label :rule_type, "ルール種類", class: "form-label" %>
+    <%= form.label :rule_type, t('interaction_rules.form.rule_type_label'), class: "form-label" %>
     <%= form.select :rule_type, [
-      ['連作', 'continuous_cultivation']
+      [t('interaction_rules.form.rule_type_continuous'), 'continuous_cultivation']
       # 将来的な拡張: ['混植', 'companion_planting']
-    ], { include_blank: '選択してください' }, { class: "form-control" } %>
+    ], { include_blank: t('interaction_rules.form.rule_type_blank') }, { class: "form-control" } %>
   </div>
 
   <div class="form-group">
-    <%= form.label :source_group, "影響元グループ", class: "form-label" %>
-    <%= form.text_field :source_group, class: "form-control", placeholder: "例: Solanaceae" %>
-    <small class="form-text text-muted">作物科名や圃場IDなど</small>
+    <%= form.label :source_group, t('interaction_rules.form.source_group_label'), class: "form-label" %>
+    <%= form.text_field :source_group, class: "form-control", placeholder: t('interaction_rules.form.source_group_placeholder') %>
+    <small class="form-text text-muted"><%= t('interaction_rules.form.source_group_help') %></small>
   </div>
 
   <div class="form-group">
-    <%= form.label :target_group, "影響先グループ", class: "form-label" %>
-    <%= form.text_field :target_group, class: "form-control", placeholder: "例: Solanaceae" %>
-    <small class="form-text text-muted">作物科名や圃場IDなど</small>
+    <%= form.label :target_group, t('interaction_rules.form.target_group_label'), class: "form-label" %>
+    <%= form.text_field :target_group, class: "form-control", placeholder: t('interaction_rules.form.target_group_placeholder') %>
+    <small class="form-text text-muted"><%= t('interaction_rules.form.target_group_help') %></small>
   </div>
 
   <div class="form-group">
-    <%= form.label :impact_ratio, "影響係数", class: "form-label" %>
-    <%= form.number_field :impact_ratio, step: 0.01, min: 0, class: "form-control", placeholder: "例: 0.7" %>
-    <small class="form-text text-muted">1.0=影響なし、0.7=30%減少、1.2=20%増加</small>
+    <%= form.label :impact_ratio, t('interaction_rules.form.impact_ratio_label'), class: "form-label" %>
+    <%= form.number_field :impact_ratio, step: 0.01, min: 0, class: "form-control", placeholder: t('interaction_rules.form.impact_ratio_placeholder') %>
+    <small class="form-text text-muted"><%= t('interaction_rules.form.impact_ratio_help') %></small>
   </div>
 
   <div class="form-group">
-    <%= form.label :is_directional, "方向性", class: "form-label" %>
+    <%= form.label :is_directional, t('interaction_rules.form.direction_label'), class: "form-label" %>
     <div class="form-check">
       <%= form.radio_button :is_directional, true, class: "form-check-input" %>
-      <%= form.label :is_directional_true, "方向性あり（影響元 → 影響先）", class: "form-check-label" %>
+      <%= form.label :is_directional_true, t('interaction_rules.form.direction_true'), class: "form-check-label" %>
     </div>
     <div class="form-check">
       <%= form.radio_button :is_directional, false, class: "form-check-input" %>
-      <%= form.label :is_directional_false, "双方向（相互に影響）", class: "form-check-label" %>
+      <%= form.label :is_directional_false, t('interaction_rules.form.direction_false'), class: "form-check-label" %>
     </div>
   </div>
 
   <div class="form-group">
-    <%= form.label :description, "説明（任意）", class: "form-label" %>
-    <%= form.text_area :description, rows: 3, class: "form-control", placeholder: "このルールの説明を入力してください" %>
+    <%= form.label :description, t('interaction_rules.form.description_label'), class: "form-label" %>
+    <%= form.text_area :description, rows: 3, class: "form-control", placeholder: t('interaction_rules.form.description_placeholder') %>
   </div>
 
   <% if admin_user? %>
@@ -58,14 +58,14 @@
       <%= form.label :is_reference, class: "form-label" %>
       <div class="form-check">
         <%= form.check_box :is_reference, class: "form-check-input" %>
-        <%= form.label :is_reference, "システム標準ルールとして設定", class: "form-check-label" %>
+        <%= form.label :is_reference, t('interaction_rules.form.is_reference_label'), class: "form-check-label" %>
       </div>
-      <small class="form-text text-muted">チェックすると、すべてのユーザーに自動適用される標準ルールになります</small>
+      <small class="form-text text-muted"><%= t('interaction_rules.form.is_reference_help') %></small>
     </div>
   <% end %>
 
   <div class="form-actions">
-    <%= form.submit class: "btn btn-success" %>
-    <%= link_to "キャンセル", interaction_rules_path, class: "btn btn-ghost" %>
+    <%= form.submit t("interaction_rules.form.submit_#{interaction_rule.new_record? ? 'create' : 'update'}"), class: "btn btn-success" %>
+    <%= link_to t('interaction_rules.form.cancel'), interaction_rules_path, class: "btn btn-ghost" %>
   </div>
 <% end %>

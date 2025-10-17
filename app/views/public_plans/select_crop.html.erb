@@ -5,22 +5,22 @@
     <div class="compact-header-card">
       <div class="compact-header-title">
         <span class="title-icon">🌱</span>
-        <span class="title-text">作付け計画</span>
+        <span class="title-text"><%= t('public_plans.title') %></span>
       </div>
       <div class="compact-progress">
         <div class="compact-step completed">
-          <div class="step-number">✓</div>
-          <span class="step-label">地域</span>
+          <div class="step-number"><%= t('public_plans.steps.completed') %></div>
+          <span class="step-label"><%= t('public_plans.steps.region') %></span>
         </div>
         <div class="compact-step-divider completed"></div>
         <div class="compact-step completed">
-          <div class="step-number">✓</div>
-          <span class="step-label">サイズ</span>
+          <div class="step-number"><%= t('public_plans.steps.completed') %></div>
+          <span class="step-label"><%= t('public_plans.steps.size') %></span>
         </div>
         <div class="compact-step-divider completed"></div>
         <div class="compact-step active">
           <div class="step-number">3</div>
-          <span class="step-label">作物</span>
+          <span class="step-label"><%= t('public_plans.steps.crop') %></span>
         </div>
       </div>
     </div>
@@ -31,14 +31,14 @@
         <div class="enhanced-summary-row">
           <div class="enhanced-summary-icon">🌍</div>
           <div class="enhanced-summary-content">
-            <div class="enhanced-summary-label">地域</div>
+            <div class="enhanced-summary-label"><%= t('.summary.region') %></div>
             <div class="enhanced-summary-value"><%= @farm.name %></div>
           </div>
         </div>
         <div class="enhanced-summary-row">
           <div class="enhanced-summary-icon">🏡</div>
           <div class="enhanced-summary-content">
-            <div class="enhanced-summary-label">農場サイズ</div>
+            <div class="enhanced-summary-label"><%= t('.summary.farm_size') %></div>
             <div class="enhanced-summary-value"><%= @farm_size[:name] %> (<%= @farm_size[:area_sqm] %>㎡)</div>
           </div>
         </div>
@@ -47,8 +47,8 @@
     
     <!-- Content Card -->
     <div class="content-card">
-      <h2 class="content-card-title">🌾 栽培したい作物を選択してください</h2>
-      <p class="content-card-subtitle">複数選択可能です。カードをクリックして選択してください。</p>
+      <h2 class="content-card-title"><%= t('.title') %></h2>
+      <p class="content-card-subtitle"><%= t('.subtitle') %></p>
       
       <%= form_with url: public_plans_path, method: :post, id: "cropForm", data: { turbo: false } do |f| %>
         <div class="enhanced-grid">
@@ -84,20 +84,20 @@
     <div class="fixed-bottom-bar-content">
       <div class="fixed-bottom-bar-left">
         <%= link_to select_farm_size_public_plans_path(farm_id: @farm.id), class: "btn-white back-button" do %>
-          ← 戻る
+          <%= t('.bottom_bar.back_button') %>
         <% end %>
         <div class="selection-counter-group">
-          <span class="counter-label">選択済み</span>
+          <span class="counter-label"><%= t('.bottom_bar.selected_label') %></span>
           <div id="counter" class="counter-badge">0</div>
-          <span class="counter-unit">種類</span>
+          <span class="counter-unit"><%= t('.bottom_bar.selected_unit') %></span>
         </div>
       </div>
       <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient submit-button" disabled>
-        ✓ 選択した作物で計画を作成
+        <%= t('.bottom_bar.submit_button') %>
       </button>
     </div>
     <div id="hint" class="hint-message">
-      ⚠️ 作物を1つ以上選択してください
+      <%= t('.bottom_bar.hint') %>
     </div>
   </div>
 </div>

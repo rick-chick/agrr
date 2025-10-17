@@ -1,0 +1,106 @@
+ja:
+  farms:
+    flash:
+      created: "農場が正常に作成されました。"
+      updated: "農場が正常に更新されました。"
+      destroyed: "農場が削除されました。"
+      cannot_delete: "この農場は%{count}件の作付け計画で使用されているため削除できません。"
+      not_found: "指定された農場が見つかりません。"
+    
+    index:
+      title: "農場一覧"
+      new_farm: "新しい農場を追加"
+      reference_farms: "参照農場（栽培地域）"
+      my_farms: "自分の農場"
+      count: "%{count}件"
+      empty:
+        icon: "🚜"
+        title: "まだ農場が登録されていません"
+        description: "最初の農場を追加して始めましょう。"
+        button: "農場を追加"
+      debug:
+        label: "デバッグ:"
+    
+    new:
+      title: "新しい農場を追加"
+      form:
+        name_label: "農場名"
+        name_placeholder: "例: 田中農園"
+        name_help: "農場の名前を入力してください"
+        location_label: "📍 位置情報"
+        map_loading: "🗺️ 地図を読み込み中..."
+        latitude_label: "緯度"
+        latitude_placeholder: "35.6762"
+        latitude_help: "例: 35.6762 (東京駅付近)"
+        longitude_label: "経度"
+        longitude_placeholder: "139.6503"
+        longitude_help: "例: 139.6503 (東京駅付近)"
+        submit: "農場を作成"
+        cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    edit:
+      title: "農場を編集"
+      form:
+        submit: "農場を更新"
+        cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    show:
+      edit: "編集"
+      delete: "削除"
+      delete_confirm: "本当に削除しますか？"
+      back: "戻る"
+      fields: "圃場"
+      add_field: "圃場を追加"
+      weather: "気象情報"
+      fields_list: "圃場一覧"
+      fields_list_title: "圃場一覧"
+      no_fields: "まだ圃場が登録されていません。"
+      add_first_field: "最初の圃場を追加"
+      back_to_list: "農場一覧に戻る"
+      detail: "詳細"
+    
+    card:
+      latitude: "緯度"
+      longitude: "経度"
+      location_not_set: "位置情報が設定されていません"
+      fields_count: "圃場数: %{count}個"
+      weather_data: "天気データ:"
+      processing_complete: "データ処理完了間近です..."
+      detail: "詳細"
+      fields_list: "圃場一覧"
+      edit: "編集"
+      delete: "削除"
+      confirm_delete: "この農場を削除しますか？"
+    
+    weather_section:
+      name: "名前"
+      latitude: "緯度"
+      longitude: "経度"
+      location: "位置"
+      location_not_set: "位置情報が設定されていません"
+      fields_count: "圃場数"
+      fields_count_value: "%{count}個"
+      created_at: "作成日"
+      updated_at: "更新日"
+      temperature_data: "温度データ"
+      period_select: "期間選択"
+      period_30: "過去30日"
+      period_90: "過去90日"
+      period_180: "過去180日"
+      period_365: "過去1年"
+      period_next_365: "翌1年（予測）"
+      processing_complete: "データ処理完了間近です..."
+      fetching_progress: "天気データを取得中です... (%{progress}%)"
+      fetch_failed: "天気データの取得に失敗しました。"
+      preparing: "天気データを準備中です..."
+      temperature_chart_title: "温度推移"
+      temperature_chart_title_prediction: "温度推移（予測）"
+      chart_temp_max: "最高気温 (°C)"
+      chart_temp_mean: "平均気温 (°C)"
+      chart_temp_min: "最低気温 (°C)"
+      chart_date_label: "日付"
+

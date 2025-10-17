@@ -48,5 +48,11 @@ module Agrr
     config.assets.enabled = true
     config.assets.version = '1.0'
     config.assets.paths << Rails.root.join('vendor/assets/stylesheets')
+
+    # I18n configuration
+    config.i18n.default_locale = :ja
+    config.i18n.available_locales = [:ja, :us]
+    config.i18n.fallbacks = [:us]
+    config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
   end
 end
