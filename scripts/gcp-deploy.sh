@@ -127,6 +127,7 @@ deploy_service() {
     
     # Create temporary env vars file in YAML format
     local env_file=$(mktemp)
+    local timestamp=$(date +%Y%m%d-%H%M%S)
     cat > "$env_file" <<EOF
 RAILS_ENV: "production"
 RAILS_SERVE_STATIC_FILES: "true"
@@ -135,6 +136,7 @@ RAILS_MASTER_KEY: "$RAILS_MASTER_KEY"
 SECRET_KEY_BASE: "$SECRET_KEY_BASE"
 GCS_BUCKET: "$GCS_BUCKET"
 ALLOWED_HOSTS: "$ALLOWED_HOSTS"
+DEPLOY_TIMESTAMP: "$timestamp"
 EOF
     
     print_status "Deploying $SERVICE_NAME..."
