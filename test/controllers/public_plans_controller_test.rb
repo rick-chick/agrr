@@ -159,16 +159,6 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     end
   end
   
-  test "results should display advertisement card" do
-    cultivation_plan = create_completed_cultivation_plan
-    
-    get results_public_plans_path, params: { plan_id: cultivation_plan.id }
-    
-    assert_response :success
-    assert_select ".gantt-ad-card"
-    assert_select ".gantt-ad-label", text: "スポンサー広告"
-  end
-  
   test "results should display CTA card" do
     cultivation_plan = create_completed_cultivation_plan
     

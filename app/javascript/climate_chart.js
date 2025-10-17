@@ -635,15 +635,16 @@ class ClimateChart {
       const currentCumulativeGdd = stage.cumulative_gdd_required;
       
       // このステージに該当する日付範囲を抽出（累積GDDベース）
-      // 重要: 範囲の境界は inclusive にする
+      // 重要: 範囲の境界は inclusive にして隙間をなくす
       let stageRecords;
       if (index === data.stages.length - 1) {
         // 最終ステージの場合は、終了まで含める
         stageRecords = data.gdd_data.filter(d => d.cumulative_gdd > prevCumulativeGdd);
       } else {
         // 中間ステージ: prevCumulativeGdd < cumulative_gdd <= currentCumulativeGdd
+        // 隙間をなくすため、境界を含める（>= と <= を使用）
         stageRecords = data.gdd_data.filter(d => 
-          d.cumulative_gdd > prevCumulativeGdd && d.cumulative_gdd <= currentCumulativeGdd
+          d.cumulative_gdd >= prevCumulativeGdd && d.cumulative_gdd <= currentCumulativeGdd
         );
       }
       
@@ -660,10 +661,14 @@ class ClimateChart {
           const color = stageColors[index % stageColors.length];
           
           // 適正温度範囲（色付きエリア）
+          // 隙間をなくすため、前のステージとの境界を調整
+          const adjustedStartIndex = index > 0 ? Math.max(0, startIndex - 1) : startIndex;
+          const adjustedEndIndex = endIndex;
+          
           annotations[`stage_optimal_${index}`] = {
             type: 'box',
-            xMin: startIndex,
-            xMax: endIndex,
+            xMin: adjustedStartIndex,
+            xMax: adjustedEndIndex,
             yMin: stage.optimal_temperature_min,
             yMax: stage.optimal_temperature_max,
             backgroundColor: color.optimal,
@@ -686,8 +691,8 @@ class ClimateChart {
           if (stage.high_stress_threshold) {
             annotations[`stage_high_stress_${index}`] = {
               type: 'line',
-              xMin: startIndex,
-              xMax: endIndex,
+              xMin: adjustedStartIndex,
+              xMax: adjustedEndIndex,
               yMin: stage.optimal_temperature_max,
               yMax: stage.optimal_temperature_max,
               borderColor: 'rgba(239, 68, 68, 0.8)',
@@ -699,8 +704,8 @@ class ClimateChart {
             // 高温限界線
             annotations[`stage_high_limit_${index}`] = {
               type: 'line',
-              xMin: startIndex,
-              xMax: endIndex,
+              xMin: adjustedStartIndex,
+              xMax: adjustedEndIndex,
               yMin: stage.high_stress_threshold,
               yMax: stage.high_stress_threshold,
               borderColor: 'rgba(239, 68, 68, 0.6)',
@@ -712,8 +717,8 @@ class ClimateChart {
           if (stage.low_stress_threshold) {
             annotations[`stage_low_stress_${index}`] = {
               type: 'line',
-              xMin: startIndex,
-              xMax: endIndex,
+              xMin: adjustedStartIndex,
+              xMax: adjustedEndIndex,
               yMin: stage.optimal_temperature_min,
               yMax: stage.optimal_temperature_min,
               borderColor: 'rgba(239, 68, 68, 0.8)',
@@ -725,8 +730,8 @@ class ClimateChart {
             // 低温限界線
             annotations[`stage_low_limit_${index}`] = {
               type: 'line',
-              xMin: startIndex,
-              xMax: endIndex,
+              xMin: adjustedStartIndex,
+              xMax: adjustedEndIndex,
               yMin: stage.low_stress_threshold,
               yMax: stage.low_stress_threshold,
               borderColor: 'rgba(239, 68, 68, 0.6)',
@@ -744,10 +749,14 @@ class ClimateChart {
         const color = stageColors[index % stageColors.length];
         
         // 適正温度範囲（色付きエリア）
+        // 隙間をなくすため、前のステージとの境界を調整
+        const adjustedStartIndex = index > 0 ? Math.max(0, startIndex - 1) : startIndex;
+        const adjustedEndIndex = endIndex;
+        
         annotations[`stage_optimal_${index}`] = {
           type: 'box',
-          xMin: startIndex,
-          xMax: endIndex,
+          xMin: adjustedStartIndex,
+          xMax: adjustedEndIndex,
           yMin: stage.optimal_temperature_min,
           yMax: stage.optimal_temperature_max,
           backgroundColor: color.optimal,
@@ -770,8 +779,8 @@ class ClimateChart {
         if (stage.high_stress_threshold) {
           annotations[`stage_high_stress_${index}`] = {
             type: 'line',
-            xMin: startIndex,
-            xMax: endIndex,
+            xMin: adjustedStartIndex,
+            xMax: adjustedEndIndex,
             yMin: stage.optimal_temperature_max,
             yMax: stage.optimal_temperature_max,
             borderColor: 'rgba(239, 68, 68, 0.7)',
@@ -783,8 +792,8 @@ class ClimateChart {
           // 高温限界線
           annotations[`stage_high_limit_${index}`] = {
             type: 'line',
-            xMin: startIndex,
-            xMax: endIndex,
+            xMin: adjustedStartIndex,
+            xMax: adjustedEndIndex,
             yMin: stage.high_stress_threshold,
             yMax: stage.high_stress_threshold,
             borderColor: 'rgba(239, 68, 68, 0.5)',
@@ -796,8 +805,8 @@ class ClimateChart {
         if (stage.low_stress_threshold) {
           annotations[`stage_low_stress_${index}`] = {
             type: 'line',
-            xMin: startIndex,
-            xMax: endIndex,
+            xMin: adjustedStartIndex,
+            xMax: adjustedEndIndex,
             yMin: stage.optimal_temperature_min,
             yMax: stage.optimal_temperature_min,
             borderColor: 'rgba(239, 68, 68, 0.7)',
@@ -809,8 +818,8 @@ class ClimateChart {
           // 低温限界線
           annotations[`stage_low_limit_${index}`] = {
             type: 'line',
-            xMin: startIndex,
-            xMax: endIndex,
+            xMin: adjustedStartIndex,
+            xMax: adjustedEndIndex,
             yMin: stage.low_stress_threshold,
             yMax: stage.low_stress_threshold,
             borderColor: 'rgba(239, 68, 68, 0.5)',

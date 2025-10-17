@@ -1,0 +1,46 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= content_for?(:title) ? yield(:title) : "AGRR - 農業計画支援システム" %></title>
+<meta name="description" content="<%= content_for?(:description) ? yield(:description) : 'AGRRは気象データとAIを活用した農業作付け計画支援システムです。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。' %>">
+<meta name="keywords" content="農業,作付け計画,圃場管理,気象データ,AI,農業DX,栽培計画,連作障害,農業支援">
+<meta name="author" content="AGRR">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="<%= request.original_url %>">
+<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'AGRR - 農業計画支援システム' %>">
+<meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : '気象データとAIを活用した農業作付け計画支援システム' %>">
+<meta property="og:site_name" content="AGRR">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : 'AGRR - 農業計画支援システム' %>">
+<meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : '気象データとAIを活用した農業作付け計画支援システム' %>">
+
+<!-- Favicon -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+<!-- Google Analytics 4 -->
+<% if Rails.env.production? %>
+  <%= javascript_include_tag "https://www.googletagmanager.com/gtag/js?id=G-WNLSL6W4ZT", async: true, nonce: true %>
+  <script nonce="<%= content_security_policy_nonce %>">
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WNLSL6W4ZT', {
+      'anonymize_ip': true,
+      'cookie_flags': 'SameSite=None;Secure'
+    });
+  </script>
+<% end %>
+
+<!-- Google AdSense -->
+<%= tag.script "", 
+    src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256",
+    async: true,
+    crossorigin: "anonymous",
+    nonce: content_security_policy_nonce %>
+
+<%= csrf_meta_tags %>
+<%= csp_meta_tag %>
+

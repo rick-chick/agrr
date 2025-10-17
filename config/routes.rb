@@ -97,6 +97,15 @@ Rails.application.routes.draw do
     end
   end
 
+  # Static pages
+  get '/privacy', to: 'pages#privacy', as: 'privacy'
+  get '/terms', to: 'pages#terms', as: 'terms'
+  get '/contact', to: 'pages#contact', as: 'contact'
+  get '/about', to: 'pages#about', as: 'about'
+  
+  # Sitemap
+  get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }
+
   # Home page
   root "home#index"
 end

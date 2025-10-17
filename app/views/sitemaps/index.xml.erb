@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Home Page -->
+  <url>
+    <loc><%= @base_url %>/</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Public Plans (Main Feature) -->
+  <url>
+    <loc><%= @base_url %>/public_plans</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- About Page -->
+  <url>
+    <loc><%= @base_url %>/about</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Contact Page -->
+  <url>
+    <loc><%= @base_url %>/contact</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc><%= @base_url %>/privacy</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Terms of Service -->
+  <url>
+    <loc><%= @base_url %>/terms</loc>
+    <lastmod><%= Time.current.to_date.to_s %></lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>
+
