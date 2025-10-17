@@ -51,7 +51,7 @@ class OptimizeCultivationPlanJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error "❌ [OptimizeCultivationPlanJob] Unexpected error for ##{cultivation_plan_id}: #{e.class} - #{e.message}"
     Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
-    cultivation_plan.fail!("予期しないエラーが発生しました: #{e.message}")
+    cultivation_plan.fail!(I18n.t('jobs.optimize_cultivation_plan.unexpected_error', message: e.message))
     broadcast_failure(cultivation_plan)
     raise # Re-raise for retry mechanism
   end
@@ -61,15 +61,15 @@ class OptimizeCultivationPlanJob < ApplicationJob
   def translate_agrr_error(error_message)
     case error_message
     when /No candidate reached 100% growth completion/
-      "選択された作物が指定期間内に成長完了できません。より長い評価期間を設定するか、異なる作物を選択してください。"
+      I18n.t('jobs.optimize_cultivation_plan.errors.growth_incomplete')
     when /Missing required field/
-      "入力データに必須フィールドが不足しています。システム管理者にお問い合わせください。"
+      I18n.t('jobs.optimize_cultivation_plan.errors.missing_field')
     when /FILE_ERROR/
-      "ファイルの読み込みに失敗しました。システム管理者にお問い合わせください。"
+      I18n.t('jobs.optimize_cultivation_plan.errors.file_error')
     when /Invalid input format/
-      "入力データの形式が不正です。システム管理者にお問い合わせください。"
+      I18n.t('jobs.optimize_cultivation_plan.errors.invalid_format')
     else
-      "最適化処理に失敗しました: #{error_message}"
+      I18n.t('jobs.optimize_cultivation_plan.errors.optimization_failed', message: error_message)
     end
   end
   
@@ -81,7 +81,7 @@ class OptimizeCultivationPlanJob < ApplicationJob
         progress: cultivation_plan.optimization_progress,
         phase: cultivation_plan.optimization_phase,
         phase_message: cultivation_plan.optimization_phase_message,
-        message: '最適化が完了しました'
+        message: I18n.t('jobs.optimize_cultivation_plan.completed')
       }
     )
   rescue => e
@@ -97,7 +97,7 @@ class OptimizeCultivationPlanJob < ApplicationJob
         progress: cultivation_plan.optimization_progress,
         phase: cultivation_plan.optimization_phase,
         phase_message: cultivation_plan.optimization_phase_message,
-        message: '最適化に失敗しました'
+        message: I18n.t('jobs.optimize_cultivation_plan.failed')
       }
     )
   rescue => e

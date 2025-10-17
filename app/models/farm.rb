@@ -72,19 +72,19 @@ class Farm < ApplicationRecord
     (weather_data_fetched_years.to_f / weather_data_total_years * 100).round
   end
 
-  # 天気データ取得状態の日本語表示
+  # 天気データ取得状態の表示
   def weather_data_status_text
     case weather_data_status
     when 'pending'
-      '取得待ち'
+      I18n.t('models.farm.weather_status.pending')
     when 'fetching'
-      "取得中 (#{weather_data_progress}%)"
+      I18n.t('models.farm.weather_status.fetching', progress: weather_data_progress)
     when 'completed'
-      '完了'
+      I18n.t('models.farm.weather_status.completed')
     when 'failed'
-      '失敗'
+      I18n.t('models.farm.weather_status.failed')
     else
-      '不明'
+      I18n.t('models.farm.weather_status.unknown')
     end
   end
 

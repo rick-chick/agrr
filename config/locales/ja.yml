@@ -1,0 +1,92 @@
+ja:
+  # 日付・時刻フォーマット
+  time:
+    formats:
+      long: "%Y年%m月%d日 %H:%M"
+      short: "%m/%d %H:%M"
+  date:
+    formats:
+      long: "%Y年%m月%d日"
+      short: "%m/%d"
+  
+  # 共通
+  common:
+    save: "保存"
+    cancel: "キャンセル"
+    edit: "編集"
+    delete: "削除"
+    back: "戻る"
+    confirm: "確認"
+    search: "検索"
+    create: "作成"
+    update: "更新"
+    show: "詳細"
+    new: "新規作成"
+    destroy: "削除"
+    actions: "操作"
+    submit: "送信"
+    close: "閉じる"
+    loading: "読み込み中..."
+    yes: "はい"
+    no: "いいえ"
+
+  # ナビゲーション
+  nav:
+    home: "ホーム"
+    farms: "圃場管理"
+    crops: "作物管理"
+    plans: "作付け計画"
+    public_plans: "無料作付け計画"
+    about: "AGRRについて"
+    contact: "お問い合わせ"
+    login: "ログイン"
+    logout: "ログアウト"
+    admin: "管理画面"
+    language: "言語"
+
+  # フッター
+  footer:
+    about: "AGRRについて"
+    privacy: "プライバシーポリシー"
+    terms: "利用規約"
+    contact: "お問い合わせ"
+    copyright: "© 2025 AGRR. All rights reserved."
+
+  # フラッシュメッセージ
+  flash:
+    actions:
+      create:
+        notice: "%{resource_name}を作成しました"
+      update:
+        notice: "%{resource_name}を更新しました"
+      destroy:
+        notice: "%{resource_name}を削除しました"
+
+  # 日付・時刻フォーマット
+  date:
+    formats:
+      default: "%Y年%m月%d日"
+      short: "%m/%d"
+      long: "%Y年%m月%d日(%a)"
+    day_names: [日曜日, 月曜日, 火曜日, 水曜日, 木曜日, 金曜日, 土曜日]
+    abbr_day_names: [日, 月, 火, 水, 木, 金, 土]
+    month_names: [~, 1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
+    abbr_month_names: [~, 1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
+
+  time:
+    formats:
+      default: "%Y年%m月%d日 %H:%M"
+      short: "%m/%d %H:%M"
+      long: "%Y年%m月%d日 %H:%M:%S"
+    am: "午前"
+    pm: "午後"
+
+  # ActiveRecord
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "バリデーションに失敗しました: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "%{record}が存在しているので削除できません"
+          has_many: "%{record}が存在しているので削除できません"
+

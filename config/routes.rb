@@ -1,111 +1,114 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  namespace :admin do
-    # 管理画面のルート
-    root to: redirect('/crops')
-  end
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by uptime monitors and load balancers.
-  get "up" => "rails/health#show", as: :rails_health_check
-
-  # Authentication routes (disabled in production)
-  unless Rails.env.production?
-    get '/auth/login', to: 'auth#login', as: 'auth_login'
-    # /auth/google_oauth2 is handled by OmniAuth middleware
-    get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
-    get '/auth/failure', to: 'auth#failure'
-    delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
-  end
-  
-  # Development and test routes
-  if Rails.env.development? || Rails.env.test?
-    get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
-    get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
-    get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
-  end
-
-  # Farms and Fields routes (nested)
-  resources :farms do
-    resources :fields
-    # Weather data endpoint for charts
-    get 'weather_data', to: 'farms/weather_data#index'
-  end
-
-  # Crops (HTML) routes
-  resources :crops
-
-  # Interaction Rules (連作ルール) routes
-  resources :interaction_rules
-
-  # Public Plans (公開作付け計画 - 認証不要) routes
-  resources :public_plans, only: [:create] do
-    collection do
-      get :new, path: ''  # GET /public_plans → public_plans#new (public_plans_path)
-      get :select_farm_size
-      get :select_crop
-      get :optimizing
-      get :results
+  # Locale switching
+  scope "(:locale)", locale: /ja|us/ do
+    namespace :admin do
+      # 管理画面のルート
+      root to: redirect('/crops')
     end
-  end
+    # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Free Plans (旧システム - リダイレクト用)
-  get '/free_plans', to: redirect('/public_plans/new')
-  get '/free_plans/*path', to: redirect('/public_plans/new')
-  
-  # 将来の実装用: Plans (個人用作付け計画 - 認証必須)
-  # resources :plans, only: [] do
-  #   collection do
-  #     get :new
-  #     post :create
-  #   end
-  # end
+    # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
+    # Can be used by uptime monitors and load balancers.
+    get "up" => "rails/health#show", as: :rails_health_check
 
-  # ActionCable for WebSocket
-  mount ActionCable.server => '/cable'
-  
-  # API routes
-  namespace :api do
-    namespace :v1 do
-      # Health check endpoint
-      get 'health', to: 'base#health_check'
-      # File management endpoints
-      resources :files, only: [:index, :show, :create, :destroy]
-      # Farm and Field management endpoints
-      resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
-        resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
+    # Authentication routes (disabled in production)
+    unless Rails.env.production?
+      get '/auth/login', to: 'auth#login', as: 'auth_login'
+      # /auth/google_oauth2 is handled by OmniAuth middleware
+      get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
+      get '/auth/failure', to: 'auth#failure'
+      delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
+    end
+    
+    # Development and test routes
+    if Rails.env.development? || Rails.env.test?
+      get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
+      get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
+      get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
+    end
+
+    # Farms and Fields routes (nested)
+    resources :farms do
+      resources :fields
+      # Weather data endpoint for charts
+      get 'weather_data', to: 'farms/weather_data#index'
+    end
+
+    # Crops (HTML) routes
+    resources :crops
+
+    # Interaction Rules (連作ルール) routes
+    resources :interaction_rules
+
+    # Public Plans (公開作付け計画 - 認証不要) routes
+    resources :public_plans, only: [:create] do
+      collection do
+        get :new, path: ''  # GET /public_plans → public_plans#new (public_plans_path)
+        get :select_farm_size
+        get :select_crop
+        get :optimizing
+        get :results
       end
-      resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
-      # AI作物情報取得・保存エンドポイント
-      post 'crops/ai_create', to: 'crops#ai_create'
-      
-      # Public Plans API（認証不要）
-      namespace :public_plans do
-        resources :field_cultivations, only: [:show, :update] do
-          member do
-            get :climate_data
+    end
+
+    # Free Plans (旧システム - リダイレクト用)
+    get '/free_plans', to: redirect('/public_plans/new')
+    get '/free_plans/*path', to: redirect('/public_plans/new')
+    
+    # 将来の実装用: Plans (個人用作付け計画 - 認証必須)
+    # resources :plans, only: [] do
+    #   collection do
+    #     get :new
+    #     post :create
+    #   end
+    # end
+
+    # ActionCable for WebSocket
+    mount ActionCable.server => '/cable'
+    
+    # API routes
+    namespace :api do
+      namespace :v1 do
+        # Health check endpoint
+        get 'health', to: 'base#health_check'
+        # File management endpoints
+        resources :files, only: [:index, :show, :create, :destroy]
+        # Farm and Field management endpoints
+        resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
+          resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
+        end
+        resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
+        # AI作物情報取得・保存エンドポイント
+        post 'crops/ai_create', to: 'crops#ai_create'
+        
+        # Public Plans API（認証不要）
+        namespace :public_plans do
+          resources :field_cultivations, only: [:show, :update] do
+            member do
+              get :climate_data
+            end
           end
         end
+        
+        # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
+        post 'internal/farms/:farm_id/fetch_weather_data', to: 'internal#fetch_weather_data'
+        get 'internal/farms/:farm_id/weather_status', to: 'internal#weather_status'
+        get 'internal/farms/:farm_id/weather_data', to: 'internal#get_weather_data'
       end
-      
-      # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
-      post 'internal/farms/:farm_id/fetch_weather_data', to: 'internal#fetch_weather_data'
-      get 'internal/farms/:farm_id/weather_status', to: 'internal#weather_status'
-      get 'internal/farms/:farm_id/weather_data', to: 'internal#get_weather_data'
     end
-  end
 
-  # Static pages
-  get '/privacy', to: 'pages#privacy', as: 'privacy'
-  get '/terms', to: 'pages#terms', as: 'terms'
-  get '/contact', to: 'pages#contact', as: 'contact'
-  get '/about', to: 'pages#about', as: 'about'
-  
-  # Sitemap
-  get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }
+    # Static pages
+    get '/privacy', to: 'pages#privacy', as: 'privacy'
+    get '/terms', to: 'pages#terms', as: 'terms'
+    get '/contact', to: 'pages#contact', as: 'contact'
+    get '/about', to: 'pages#about', as: 'about'
+    
+    # Sitemap
+    get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }
 
-  # Home page
-  root "home#index"
+    # Home page
+    root "home#index"
+  end # locale scope
 end

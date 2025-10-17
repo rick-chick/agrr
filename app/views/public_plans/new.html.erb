@@ -5,30 +5,30 @@
     <div class="compact-header-card">
       <div class="compact-header-title">
         <span class="title-icon">🌱</span>
-        <span class="title-text">作付け計画</span>
+        <span class="title-text"><%= t('public_plans.title') %></span>
       </div>
       <div class="compact-progress">
         <div class="compact-step active">
           <div class="step-number">1</div>
-          <span class="step-label">地域</span>
+          <span class="step-label"><%= t('public_plans.steps.region') %></span>
         </div>
         <div class="compact-step-divider"></div>
         <div class="compact-step">
           <div class="step-number">2</div>
-          <span class="step-label">サイズ</span>
+          <span class="step-label"><%= t('public_plans.steps.size') %></span>
         </div>
         <div class="compact-step-divider"></div>
         <div class="compact-step">
           <div class="step-number">3</div>
-          <span class="step-label">作物</span>
+          <span class="step-label"><%= t('public_plans.steps.crop') %></span>
         </div>
       </div>
     </div>
     
     <!-- Content Card -->
     <div class="content-card">
-      <h2 class="content-card-title">🌍 栽培地域を選択してください</h2>
-      <p class="content-card-subtitle">あなたの農場がある地域を選択してください</p>
+      <h2 class="content-card-title"><%= t('.title') %></h2>
+      <p class="content-card-subtitle"><%= t('.subtitle') %></p>
       
       <div class="enhanced-grid">
         <% @farms.each do |farm| %>
@@ -45,7 +45,7 @@
       <% if @farms.empty? %>
         <div class="empty-selection">
           <div class="empty-selection-icon">🌍</div>
-          <p>現在、選択可能な栽培地域がありません。</p>
+          <p><%= t('.empty_message') %></p>
         </div>
       <% end %>
     </div>

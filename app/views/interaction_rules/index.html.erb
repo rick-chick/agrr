@@ -1,23 +1,23 @@
-<% content_for :title, "連作ルール一覧 - AGRR" %>
+<% content_for :title, "#{t('.title')} - AGRR" %>
 
 <div class="page-header">
-  <h1 class="page-title">連作ルール一覧</h1>
-  <%= link_to "新しいルールを追加", new_interaction_rule_path, class: "btn btn-success" %>
+  <h1 class="page-title"><%= t('.title') %></h1>
+  <%= link_to t('.new_rule'), new_interaction_rule_path, class: "btn btn-success" %>
 </div>
 
 <% if admin_user? && @reference_rules.any? %>
   <div class="rules-section">
-    <h2 class="section-header">システム標準ルール</h2>
+    <h2 class="section-header"><%= t('.system_rules') %></h2>
     <div class="rules-table">
       <table>
         <thead>
           <tr>
-            <th>ルール種類</th>
-            <th>影響元</th>
-            <th>影響先</th>
-            <th>影響係数</th>
-            <th>方向性</th>
-            <th>操作</th>
+            <th><%= t('.table.rule_type') %></th>
+            <th><%= t('.table.source') %></th>
+            <th><%= t('.table.target') %></th>
+            <th><%= t('.table.impact') %></th>
+            <th><%= t('.table.direction') %></th>
+            <th><%= t('.table.actions') %></th>
           </tr>
         </thead>
         <tbody>
@@ -27,15 +27,15 @@
               <td><%= rule.source_group %></td>
               <td><%= rule.target_group %></td>
               <td><%= rule.impact_ratio %></td>
-              <td><%= rule.is_directional ? '→' : '↔' %></td>
+              <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
               <td>
-                <%= link_to "詳細", interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
-                <%= link_to "編集", edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
-                <%= link_to "削除", interaction_rule_path(rule), 
+                <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
+                <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
+                <%= link_to t('.actions.delete'), interaction_rule_path(rule), 
                             class: "btn btn-error btn-sm", 
                             data: { 
                               turbo_method: :delete,
-                              turbo_confirm: "このシステム標準ルールを削除しますか？"
+                              turbo_confirm: t('.actions.confirm_delete_system')
                             } %>
               </td>
             </tr>
@@ -49,18 +49,18 @@
 <% if @interaction_rules.any? %>
   <div class="rules-section">
     <% if admin_user? && @reference_rules.any? %>
-      <h2 class="section-header">マイルール</h2>
+      <h2 class="section-header"><%= t('.my_rules') %></h2>
     <% end %>
     <div class="rules-table">
       <table>
         <thead>
           <tr>
-            <th>ルール種類</th>
-            <th>影響元</th>
-            <th>影響先</th>
-            <th>影響係数</th>
-            <th>方向性</th>
-            <th>操作</th>
+            <th><%= t('.table.rule_type') %></th>
+            <th><%= t('.table.source') %></th>
+            <th><%= t('.table.target') %></th>
+            <th><%= t('.table.impact') %></th>
+            <th><%= t('.table.direction') %></th>
+            <th><%= t('.table.actions') %></th>
           </tr>
         </thead>
         <tbody>
@@ -71,15 +71,15 @@
               <td><%= rule.source_group %></td>
               <td><%= rule.target_group %></td>
               <td><%= rule.impact_ratio %></td>
-              <td><%= rule.is_directional ? '→' : '↔' %></td>
+              <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
               <td>
-                <%= link_to "詳細", interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
-                <%= link_to "編集", edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
-                <%= link_to "削除", interaction_rule_path(rule), 
+                <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
+                <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
+                <%= link_to t('.actions.delete'), interaction_rule_path(rule), 
                             class: "btn btn-error btn-sm", 
                             data: { 
                               turbo_method: :delete,
-                              turbo_confirm: "このルールを削除しますか？"
+                              turbo_confirm: t('.actions.confirm_delete')
                             } %>
               </td>
             </tr>
@@ -90,9 +90,9 @@
   </div>
 <% else %>
   <div class="empty-state">
-    <div class="empty-state-icon">📋</div>
-    <h3>まだルールが登録されていません</h3>
-    <p>最初のルールを追加して始めましょう。</p>
-    <%= link_to "ルールを追加", new_interaction_rule_path, class: "btn btn-success" %>
+    <div class="empty-state-icon"><%= t('.empty.icon') %></div>
+    <h3><%= t('.empty.title') %></h3>
+    <p><%= t('.empty.description') %></p>
+    <%= link_to t('.empty.button'), new_interaction_rule_path, class: "btn btn-success" %>
   </div>
 <% end %>

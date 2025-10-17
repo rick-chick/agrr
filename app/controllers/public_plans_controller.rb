@@ -5,11 +5,22 @@ class PublicPlansController < ApplicationController
   layout 'public'
   
   # 農場サイズの定数定義
-  FARM_SIZES = [
-    { id: 'home_garden', name: '家庭菜園', area_sqm: 30, description: '自宅の庭やベランダ' },
-    { id: 'community_garden', name: '市民農園', area_sqm: 50, description: '一般的な市民農園の区画' },
-    { id: 'rental_farm', name: '貸農地', area_sqm: 300, description: '本格的な農業や貸農園' }
-  ].freeze
+  def self.farm_sizes
+    [
+      { id: 'home_garden', area_sqm: 30 },
+      { id: 'community_garden', area_sqm: 50 },
+      { id: 'rental_farm', area_sqm: 300 }
+    ]
+  end
+  
+  def farm_sizes_with_i18n
+    self.class.farm_sizes.map do |size|
+      size.merge(
+        name: I18n.t("public_plans.farm_sizes.#{size[:id]}.name"),
+        description: I18n.t("public_plans.farm_sizes.#{size[:id]}.description")
+      )
+    end
+  end
   
   # Step 1: 栽培地域（参照農場）選択
   def new
@@ -19,12 +30,12 @@ class PublicPlansController < ApplicationController
   # Step 2: 農場サイズ選択
   def select_farm_size
     @farm = Farm.find(params[:farm_id])
-    @farm_sizes = FARM_SIZES
+    @farm_sizes = farm_sizes_with_i18n
     
     session[:public_plan] = { farm_id: @farm.id }
     Rails.logger.debug "✅ [PublicPlans] セッション保存: #{session[:public_plan].inspect}"
   rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: '栽培地域を選択してください。'
+    redirect_to public_plans_path, alert: I18n.t('public_plans.errors.select_region')
   end
   
   # Step 3: 作物選択
@@ -34,15 +45,15 @@ class PublicPlansController < ApplicationController
     
     unless session_data[:farm_id]
       Rails.logger.warn "⚠️  [PublicPlans] farm_id がセッションにありません"
-      redirect_to public_plans_path, alert: '最初からやり直してください。' and return
+      redirect_to public_plans_path, alert: I18n.t('public_plans.errors.restart') and return
     end
     
     @farm = Farm.find(session_data[:farm_id])
-    @farm_size = FARM_SIZES.find { |fs| fs[:id] == params[:farm_size_id] }
+    @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == params[:farm_size_id] }
     
     unless @farm_size
       redirect_to select_farm_size_public_plans_path(farm_id: @farm.id), 
-                  alert: '農場サイズを選択してください。' and return
+                  alert: I18n.t('public_plans.errors.select_farm_size') and return
     end
     
     @crops = Crop.reference.order(:name)
@@ -52,13 +63,13 @@ class PublicPlansController < ApplicationController
     )
     Rails.logger.debug "✅ [PublicPlans] セッション更新: #{session[:public_plan].inspect}"
   rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: '最初からやり直してください。'
+    redirect_to public_plans_path, alert: I18n.t('public_plans.errors.restart')
   end
   
   # Step 4: 作付け計画作成（計算開始）
   def create
     unless session_data[:farm_id] && session_data[:total_area]
-      redirect_to public_plans_path, alert: '最初からやり直してください。' and return
+      redirect_to public_plans_path, alert: I18n.t('public_plans.errors.restart') and return
     end
     
     farm = Farm.find(session_data[:farm_id])
@@ -66,7 +77,7 @@ class PublicPlansController < ApplicationController
     crops = Crop.where(id: crop_ids)
     
     if crops.empty?
-      redirect_to select_crop_public_plans_path, alert: '作物を1つ以上選択してください。' and return
+      redirect_to select_crop_public_plans_path, alert: I18n.t('public_plans.errors.select_crop') and return
     end
     
     # Service で計画作成
@@ -90,10 +101,10 @@ class PublicPlansController < ApplicationController
       
       redirect_to optimizing_public_plans_path
     else
-      redirect_to public_plans_path, alert: "計画作成に失敗しました: #{result.errors.join(', ')}"
+      redirect_to public_plans_path, alert: I18n.t('public_plans.errors.create_failed', errors: result.errors.join(', '))
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: '最初からやり直してください。'
+    redirect_to public_plans_path, alert: I18n.t('public_plans.errors.restart')
   end
   
   # Step 5: 最適化進捗画面（広告表示）
@@ -125,7 +136,7 @@ class PublicPlansController < ApplicationController
     end
     
     unless plan_id
-      redirect_to public_plans_path, alert: '作付け計画が見つかりません。'
+      redirect_to public_plans_path, alert: I18n.t('public_plans.errors.not_found')
       return nil
     end
     
@@ -133,7 +144,7 @@ class PublicPlansController < ApplicationController
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
       .find(plan_id)
   rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: '作付け計画が見つかりません。'
+    redirect_to public_plans_path, alert: I18n.t('public_plans.errors.not_found')
     nil
   end
   

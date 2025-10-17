@@ -1,0 +1,17 @@
+ja:
+  auth:
+    flash:
+      no_data: "認証に失敗しました。データを受信できませんでした。"
+      login_success: "ログインに成功しました！"
+      create_user_failed: "ユーザーアカウントの作成に失敗しました。"
+      invalid_data: "Googleから無効なユーザーデータを受信しました。"
+      unexpected_error: "認証中に予期しないエラーが発生しました。"
+      logout_success: "ログアウトしました。"
+      not_logged_in: "ログインしていません。"
+      disabled_in_production: "本番環境では認証が無効になっています。"
+    
+    messages:
+      login_required: "このリソースにアクセスするにはログインしてください。"
+      login_required_page: "このページにアクセスするにはログインしてください。"
+      admin_required: "管理者権限が必要です。"
+

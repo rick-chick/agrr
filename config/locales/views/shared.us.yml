@@ -1,0 +1,23 @@
+us:
+  shared:
+    navbar:
+      brand: "AGRR"
+      farms: "Farms"
+      crops: "Crops"
+      interaction_rules: "Rotations"
+      login: "Login"
+      logout: "Logout"
+      logout_confirm: "Are you sure you want to logout?"
+      
+    footer:
+      brand_description: "Agricultural Crop Planning Support System\nAiming for Sustainable Agriculture"
+      services: "Services"
+      create_plan: "Create Crop Plan"
+      about: "About AGRR"
+      legal: "Legal"
+      privacy_policy: "Privacy Policy"
+      terms: "Terms of Service"
+      contact_title: "Contact"
+      contact_form: "Contact Form"
+      copyright: "© %{year} AGRR. All rights reserved."
+

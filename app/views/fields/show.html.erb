@@ -1,11 +1,11 @@
 <% content_for :title, "#{@field.display_name} - AGRR" %>
 
 <div class="breadcrumb">
-  <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
+  <%= link_to t('.breadcrumb.farms'), farms_path, class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
   <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
-  <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
+  <%= link_to t('.breadcrumb.fields'), farm_fields_path(@farm), class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
   <span class="breadcrumb-current"><%= @field.display_name %></span>
 </div>
@@ -13,47 +13,47 @@
 <div class="page-header">
   <h1 class="page-title"><%= @field.display_name %></h1>
   <div>
-    <%= link_to "編集", edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
+    <%= link_to t('.edit'), edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
   </div>
 </div>
 
 <div class="field-card">
   <div class="field-info">
     <div class="info-item">
-      <span class="info-label">📝 名前:</span>
+      <span class="info-label">📝 <%= t('.name') %>:</span>
       <span class="info-value"><%= @field.name %></span>
     </div>
     
     <% if @field.area.present? %>
     <div class="info-item">
-      <span class="info-label">📏 面積:</span>
+      <span class="info-label">📏 <%= t('.area') %>:</span>
       <span class="info-value"><%= number_with_delimiter(@field.area, delimiter: ',') %> ㎡</span>
     </div>
     <% end %>
     
     <% if @field.daily_fixed_cost.present? %>
     <div class="info-item">
-      <span class="info-label">💰 日次固定費用:</span>
-      <span class="info-value">¥<%= number_with_delimiter(@field.daily_fixed_cost.to_i, delimiter: ',') %> / 日</span>
+      <span class="info-label">💰 <%= t('.daily_cost') %>:</span>
+      <span class="info-value"><%= t('.daily_cost_value', amount: number_with_delimiter(@field.daily_fixed_cost.to_i, delimiter: ',')) %></span>
     </div>
     <% end %>
     
     <div class="info-item">
-      <span class="info-label">📅 作成日:</span>
-      <span class="info-value"><%= @field.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@field.created_at, format: :long) %></span>
     </div>
     
     <div class="info-item">
-      <span class="info-label">📅 更新日:</span>
-      <span class="info-value"><%= @field.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@field.updated_at, format: :long) %></span>
     </div>
   </div>
   
   <div class="actions">
-    <%= link_to "圃場一覧に戻る", farm_fields_path(@farm), class: "btn btn-secondary" %>
-    <%= link_to "編集", edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
-    <%= button_to "削除", farm_field_path(@farm, @field), method: :delete, 
+    <%= link_to t('.back_to_list'), farm_fields_path(@farm), class: "btn btn-secondary" %>
+    <%= link_to t('.edit'), edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
+    <%= button_to t('.delete'), farm_field_path(@farm, @field), method: :delete, 
                 class: "btn btn-error", 
-                confirm: "この圃場を削除しますか？" %>
+                confirm: t('.confirm_delete') %>
   </div>
 </div>

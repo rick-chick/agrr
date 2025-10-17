@@ -4,33 +4,33 @@
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @crop.name %></h1>
     <% if admin_user? && @crop.is_reference %>
-      <div class="crop-detail-type reference">参照作物</div>
+      <div class="crop-detail-type reference"><%= t('.reference_crop') %></div>
     <% end %>
   </div>
   
   <div class="crop-basic-info">
     <div class="info-item">
-      <span class="info-label">📝 名前:</span>
+      <span class="info-label">📝 <%= t('.name') %>:</span>
       <span class="info-value"><%= @crop.name %></span>
     </div>
     
     <% if @crop.variety.present? %>
       <div class="info-item">
-        <span class="info-label">🌱 品種:</span>
+        <span class="info-label">🌱 <%= t('.variety') %>:</span>
         <span class="info-value"><%= @crop.variety %></span>
       </div>
     <% end %>
     
     <% if @crop.area_per_unit.present? %>
       <div class="info-item">
-        <span class="info-label">📏 単位あたりの面積:</span>
+        <span class="info-label">📏 <%= t('.area_per_unit') %>:</span>
         <span class="info-value"><%= @crop.area_per_unit %> ㎡</span>
       </div>
     <% end %>
     
     <% if @crop.revenue_per_area.present? %>
       <div class="info-item">
-        <span class="info-label">💰 面積あたりの収益:</span>
+        <span class="info-label">💰 <%= t('.revenue_per_area') %>:</span>
         <span class="info-value"><%= number_to_currency(@crop.revenue_per_area, unit: '¥', precision: 0) %>/㎡</span>
       </div>
     <% end %>
@@ -39,64 +39,64 @@
       <% groups_array = @crop.groups.is_a?(Array) ? @crop.groups : [@crop.groups] %>
       <% if groups_array.any? %>
         <div class="info-item">
-          <span class="info-label">🏷️ グループ:</span>
+          <span class="info-label">🏷️ <%= t('.groups') %>:</span>
           <span class="info-value"><%= groups_array.join(', ') %></span>
         </div>
       <% end %>
     <% end %>
     
     <div class="info-item">
-      <span class="info-label">📅 作成日:</span>
-      <span class="info-value"><%= @crop.created_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@crop.created_at, format: :long) %></span>
     </div>
     
     <div class="info-item">
-      <span class="info-label">📅 更新日:</span>
-      <span class="info-value"><%= @crop.updated_at.strftime("%Y年%m月%d日 %H:%M") %></span>
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@crop.updated_at, format: :long) %></span>
     </div>
   </div>
   
   <div class="stages-section">
-    <h2 class="stages-title">生育ステージ</h2>
+    <h2 class="stages-title"><%= t('.stages_title') %></h2>
     <% if @crop.crop_stages.any? %>
       <ol class="stages-list">
         <% @crop.crop_stages.order(:order).each do |stage| %>
           <li class="stage-item">
             <div class="stage-name"><%= stage.name %></div>
-            <div class="stage-order">順序: <%= stage.order %></div>
+            <div class="stage-order"><%= t('.stage_order') %>: <%= stage.order %></div>
             
             <% if stage.temperature_requirement || stage.thermal_requirement || stage.sunshine_requirement %>
               <div class="stage-requirements">
                 <% if stage.temperature_requirement %>
                   <div class="requirement-item">
-                    <div class="requirement-label">🌡️ 温度要件</div>
+                    <div class="requirement-label">🌡️ <%= t('.temperature_requirement') %></div>
                     <div class="requirement-value">
-                      最低限界温度: <%= stage.temperature_requirement.base_temperature %>°C<br>
-                      最適温度: <%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>°C<br>
-                      低ストレス閾値: <%= stage.temperature_requirement.low_stress_threshold %>°C<br>
-                      高ストレス閾値: <%= stage.temperature_requirement.high_stress_threshold %>°C<br>
-                      霜閾値: <%= stage.temperature_requirement.frost_threshold %>°C<br>
-                      不稔リスク閾値: <%= stage.temperature_requirement.sterility_risk_threshold %>°C<br>
-                      最大限界温度: <%= stage.temperature_requirement.max_temperature %>°C
+                      <%= t('.base_temperature') %>: <%= stage.temperature_requirement.base_temperature %>°C<br>
+                      <%= t('.optimal_temperature') %>: <%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>°C<br>
+                      <%= t('.low_stress_threshold') %>: <%= stage.temperature_requirement.low_stress_threshold %>°C<br>
+                      <%= t('.high_stress_threshold') %>: <%= stage.temperature_requirement.high_stress_threshold %>°C<br>
+                      <%= t('.frost_threshold') %>: <%= stage.temperature_requirement.frost_threshold %>°C<br>
+                      <%= t('.sterility_risk_threshold') %>: <%= stage.temperature_requirement.sterility_risk_threshold %>°C<br>
+                      <%= t('.max_temperature') %>: <%= stage.temperature_requirement.max_temperature %>°C
                     </div>
                   </div>
                 <% end %>
                 
                 <% if stage.thermal_requirement %>
                   <div class="requirement-item">
-                    <div class="requirement-label">🌡️ 熱要件（GDD）</div>
+                    <div class="requirement-label">🌡️ <%= t('.thermal_requirement') %></div>
                     <div class="requirement-value">
-                      必要積算温度: <%= stage.thermal_requirement.required_gdd %>°C・日
+                      <%= t('.required_gdd') %>: <%= stage.thermal_requirement.required_gdd %>°C・日
                     </div>
                   </div>
                 <% end %>
                 
                 <% if stage.sunshine_requirement %>
                   <div class="requirement-item">
-                    <div class="requirement-label">☀️ 日照要件</div>
+                    <div class="requirement-label">☀️ <%= t('.sunshine_requirement') %></div>
                     <div class="requirement-value">
-                      最低日照時間: <%= stage.sunshine_requirement.minimum_sunshine_hours %>時間<br>
-                      目標日照時間: <%= stage.sunshine_requirement.target_sunshine_hours %>時間
+                      <%= t('.minimum_sunshine_hours') %>: <%= stage.sunshine_requirement.minimum_sunshine_hours %>時間<br>
+                      <%= t('.target_sunshine_hours') %>: <%= stage.sunshine_requirement.target_sunshine_hours %>時間
                     </div>
                   </div>
                 <% end %>
@@ -109,28 +109,28 @@
     <% else %>
       <div class="no-stages">
         <div class="empty-state-icon">🌱</div>
-        <h3>まだ生育ステージが登録されていません</h3>
-        <p>この作物の生育ステージを追加してください。</p>
+        <h3><%= t('.no_stages_title') %></h3>
+        <p><%= t('.no_stages_description') %></p>
       </div>
     <% end %>
   </div>
   
   <div class="actions">
-    <%= link_to "作物一覧に戻る", crops_path, class: "btn btn-secondary" %>
+    <%= link_to t('.back_to_list'), crops_path, class: "btn btn-secondary" %>
     <% if @crop.is_reference %>
       <%# 参照作物は管理者のみ編集・削除可能 %>
       <% if admin_user? %>
-        <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
-        <%= button_to "削除", @crop, method: :delete, 
+        <%= link_to t('.edit'), edit_crop_path(@crop), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @crop, method: :delete, 
                     class: "btn btn-error", 
-                    confirm: "この作物を削除しますか？" %>
+                    confirm: t('.confirm_delete') %>
       <% end %>
     <% else %>
       <%# ユーザー作物は所有者が編集・削除可能 %>
-      <%= link_to "編集", edit_crop_path(@crop), class: "btn btn-secondary" %>
-      <%= button_to "削除", @crop, method: :delete, 
+      <%= link_to t('.edit'), edit_crop_path(@crop), class: "btn btn-secondary" %>
+      <%= button_to t('.delete'), @crop, method: :delete, 
                   class: "btn btn-error", 
-                  confirm: "この作物を削除しますか？" %>
+                  confirm: t('.confirm_delete') %>
     <% end %>
   </div>
 </div>

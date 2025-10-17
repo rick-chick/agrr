@@ -5,22 +5,22 @@
     <div class="compact-header-card">
       <div class="compact-header-title">
         <span class="title-icon">🌱</span>
-        <span class="title-text">作付け計画</span>
+        <span class="title-text"><%= t('public_plans.title') %></span>
       </div>
       <div class="compact-progress">
         <div class="compact-step completed">
-          <div class="step-number">✓</div>
-          <span class="step-label">地域</span>
+          <div class="step-number"><%= t('public_plans.steps.completed') %></div>
+          <span class="step-label"><%= t('public_plans.steps.region') %></span>
         </div>
         <div class="compact-step-divider completed"></div>
         <div class="compact-step active">
           <div class="step-number">2</div>
-          <span class="step-label">サイズ</span>
+          <span class="step-label"><%= t('public_plans.steps.size') %></span>
         </div>
         <div class="compact-step-divider"></div>
         <div class="compact-step">
           <div class="step-number">3</div>
-          <span class="step-label">作物</span>
+          <span class="step-label"><%= t('public_plans.steps.crop') %></span>
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
         <div class="enhanced-summary-row">
           <div class="enhanced-summary-icon">🌍</div>
           <div class="enhanced-summary-content">
-            <div class="enhanced-summary-label">地域</div>
+            <div class="enhanced-summary-label"><%= t('.summary.region') %></div>
             <div class="enhanced-summary-value"><%= @farm.name %></div>
           </div>
         </div>
@@ -40,8 +40,8 @@
     
     <!-- Content Card -->
     <div class="content-card">
-      <h2 class="content-card-title">📏 農場のサイズを選択してください</h2>
-      <p class="content-card-subtitle">あなたの農場の広さに最も近いものを選択してください</p>
+      <h2 class="content-card-title"><%= t('.title') %></h2>
+      <p class="content-card-subtitle"><%= t('.subtitle') %></p>
       
       <div class="enhanced-grid">
         <% @farm_sizes.each do |farm_size| %>
@@ -56,7 +56,7 @@
       
       <div class="action-buttons">
         <%= link_to public_plans_path, class: "btn-white" do %>
-          ← 地域選択に戻る
+          <%= t('.back_button') %>
         <% end %>
       </div>
     </div>

@@ -1,0 +1,104 @@
+us:
+  crops:
+    flash:
+      created: "Crop was successfully created."
+      updated: "Crop was successfully updated."
+      destroyed: "Crop was successfully deleted."
+      reference_only_admin: "Only administrators can create reference crops."
+      reference_flag_admin_only: "Only administrators can change the reference flag."
+      no_permission: "Permission denied."
+      not_found: "Crop not found."
+    
+    index:
+      title: "Crops"
+      new_crop: "Add New Crop"
+      reference_crops: "Reference Crops (Common Data)"
+      my_crops: "My Crops"
+      count: "%{count} items"
+      actions:
+        show: "Details"
+        edit: "Edit"
+        delete: "Delete"
+        delete_confirm: "Are you sure you want to delete this crop?"
+      empty:
+        icon: "🌱"
+        title: "No crops registered yet"
+        description: "Add your first crop to get started."
+        button: "Add Crop"
+      debug:
+        label: "Debug:"
+    
+    new:
+      title: "Add New Crop"
+    
+    edit:
+      title: "Edit %{name}"
+    
+    show:
+      reference_crop: "Reference Crop"
+      name: "Name"
+      variety: "Variety"
+      area_per_unit: "Area per Unit"
+      revenue_per_area: "Revenue per Area"
+      groups: "Groups"
+      created_at: "Created"
+      updated_at: "Updated"
+      stages_title: "Growth Stages"
+      stage_order: "Order"
+      no_stages_title: "No growth stages registered yet"
+      no_stages_description: "Please add growth stages for this crop."
+      temperature_requirement: "Temperature Requirements"
+      thermal_requirement: "Thermal Requirements (GDD)"
+      sunshine_requirement: "Sunshine Requirements"
+      base_temperature: "Base Temperature"
+      optimal_temperature: "Optimal Temperature"
+      low_stress_threshold: "Low Stress Threshold"
+      high_stress_threshold: "High Stress Threshold"
+      frost_threshold: "Frost Threshold"
+      sterility_risk_threshold: "Sterility Risk Threshold"
+      max_temperature: "Maximum Temperature"
+      required_gdd: "Required GDD"
+      minimum_sunshine_hours: "Minimum Sunshine Hours"
+      target_sunshine_hours: "Target Sunshine Hours"
+      back_to_list: "Back to Crops"
+      edit: "Edit"
+      delete: "Delete"
+      confirm_delete: "Are you sure you want to delete this crop?"
+      form:
+        name_label: "Crop Name"
+        name_placeholder: "e.g., Tomato"
+        name_help: "Enter the name of the crop"
+        scientific_name_label: "Scientific Name"
+        scientific_name_placeholder: "e.g., Solanum lycopersicum"
+        variety_label: "Variety"
+        variety_placeholder: "e.g., Momotaro"
+        family_label: "Family"
+        family_placeholder: "e.g., Solanaceae"
+        planting_season_label: "Planting Season"
+        planting_season_help: "Recommended planting season"
+        harvest_season_label: "Harvest Season"
+        harvest_season_help: "Recommended harvest season"
+        growth_days_label: "Growth Days"
+        growth_days_placeholder: "e.g., 90"
+        growth_days_help: "Approximate days from planting to harvest"
+        submit: "Create Crop"
+        cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
+    
+    edit:
+      title: "Edit Crop"
+      form:
+        submit: "Update Crop"
+        cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
+    
+    show:
+      edit: "Edit"
+      delete: "Delete"
+      delete_confirm: "Are you sure you want to delete this crop?"
+      back: "Back"
+      basic_info: "Basic Information"
+      growth_info: "Growth Information"
+

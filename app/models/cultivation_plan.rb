@@ -61,31 +61,31 @@ class CultivationPlan < ApplicationRecord
   end
   
   def phase_fetching_weather!
-    update_phase!('fetching_weather', '気象データを取得しています...')
+    update_phase!('fetching_weather', I18n.t('models.cultivation_plan.phases.fetching_weather'))
   end
   
   def phase_predicting_weather!
-    update_phase!('predicting_weather', '気象データを予測しています...')
+    update_phase!('predicting_weather', I18n.t('models.cultivation_plan.phases.predicting_weather'))
   end
   
   def phase_optimizing!
-    update_phase!('optimizing', '最適化処理中...')
+    update_phase!('optimizing', I18n.t('models.cultivation_plan.phases.optimizing'))
   end
   
   def phase_completed!
-    update_phase!('completed', '最適化が完了しました')
+    update_phase!('completed', I18n.t('models.cultivation_plan.phases.completed'))
   end
   
   def phase_failed!(phase_name)
     message = case phase_name
               when 'fetching_weather'
-                '気象データの取得に失敗しました'
+                I18n.t('models.cultivation_plan.phase_failed.fetching_weather')
               when 'predicting_weather'
-                '気象データの予測に失敗しました'
+                I18n.t('models.cultivation_plan.phase_failed.predicting_weather')
               when 'optimizing'
-                '最適化処理に失敗しました'
+                I18n.t('models.cultivation_plan.phase_failed.optimizing')
               else
-                '処理に失敗しました'
+                I18n.t('models.cultivation_plan.phase_failed.default')
               end
     update_phase!('failed', message)
   end

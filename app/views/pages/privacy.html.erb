@@ -1,55 +1,52 @@
-<% content_for :title, "プライバシーポリシー | AGRR" %>
-<% content_for :description, "AGRRのプライバシーポリシーです。個人情報の収集、利用、管理方法について詳しく説明しています。" %>
+<% content_for :title, "#{t('pages.privacy.title')} | AGRR" %>
+<% content_for :description, t('pages.privacy.description', default: "AGRRのプライバシーポリシーです。個人情報の収集、利用、管理方法について詳しく説明しています。") %>
 
 <div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;">プライバシーポリシー</h1>
+  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;"><%= t('.heading') %></h1>
   
   <div style="line-height: 1.8; color: #333;">
-    <p style="margin-bottom: 20px;">AGRR（以下「当サービス」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。本プライバシーポリシーは、当サービスがどのように情報を収集、使用、保護するかを説明します。</p>
+    <p style="margin-bottom: 20px;"><%= t('.intro_html').html_safe %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">1. 収集する情報</h2>
-    <p style="margin-bottom: 15px;">当サービスは、以下の情報を収集する場合があります：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section1.title') %></h2>
+    <p style="margin-bottom: 15px;"><%= t('.section1.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">Google OAuth認証を通じて取得する情報（メールアドレス、氏名、プロフィール画像）</li>
-      <li style="margin-bottom: 10px;">ユーザーが入力した圃場情報、作物情報、栽培計画データ</li>
-      <li style="margin-bottom: 10px;">アクセスログ、IPアドレス、ブラウザ情報</li>
-      <li style="margin-bottom: 10px;">Cookie及び類似技術により収集される情報</li>
+      <% t('.section1.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">2. 情報の利用目的</h2>
-    <p style="margin-bottom: 15px;">収集した情報は以下の目的で利用します：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section2.title') %></h2>
+    <p style="margin-bottom: 15px;"><%= t('.section2.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">サービスの提供、運営、改善</li>
-      <li style="margin-bottom: 10px;">ユーザーサポートの提供</li>
-      <li style="margin-bottom: 10px;">セキュリティの維持</li>
-      <li style="margin-bottom: 10px;">統計データの作成および分析</li>
-      <li style="margin-bottom: 10px;">法令に基づく対応</li>
+      <% t('.section2.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">3. 情報の第三者提供</h2>
-    <p style="margin-bottom: 20px;">当サービスは、以下の場合を除き、ユーザーの個人情報を第三者に提供しません：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section3.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section3.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">ユーザーの同意がある場合</li>
-      <li style="margin-bottom: 10px;">法令に基づく場合</li>
-      <li style="margin-bottom: 10px;">人の生命、身体または財産の保護のために必要がある場合</li>
+      <% t('.section3.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">4. Google Analyticsの使用</h2>
-    <p style="margin-bottom: 20px;">当サービスは、サイトの利用状況を把握するためにGoogle Analyticsを使用しています。Google Analyticsはクッキーを使用してユーザーの情報を収集しますが、個人を特定する情報は含まれません。詳細は<a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color: #2E7D32; text-decoration: underline;">Googleプライバシーポリシー</a>をご確認ください。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section4.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section4.content_html').html_safe %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">5. Google AdSenseの使用</h2>
-    <p style="margin-bottom: 20px;">当サービスは、Google AdSenseを使用して広告を配信しています。Google AdSenseは、Cookieを使用してユーザーの興味に基づいた広告を表示します。Cookieを無効にすることで、パーソナライズ広告の表示を無効にできます。詳細は<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener" style="color: #2E7D32; text-decoration: underline;">Google広告設定</a>をご確認ください。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section5.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section5.content_html').html_safe %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">6. セキュリティ</h2>
-    <p style="margin-bottom: 20px;">当サービスは、個人情報の保護のために適切なセキュリティ対策を実施しています。ただし、インターネット上のデータ送信の完全な安全性を保証することはできません。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section6.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section6.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">7. プライバシーポリシーの変更</h2>
-    <p style="margin-bottom: 20px;">当サービスは、必要に応じて本プライバシーポリシーを変更することがあります。変更後のプライバシーポリシーは、本ページに掲載した時点で効力を生じます。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section7.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section7.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">8. お問い合わせ</h2>
-    <p style="margin-bottom: 20px;">プライバシーポリシーに関するお問い合わせは、<%= link_to 'お問い合わせページ', contact_path, style: 'color: #2E7D32; text-decoration: underline;' %>よりご連絡ください。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.section8.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.section8.content_html', contact_link: link_to(t('.section8.contact_link_text'), contact_path, style: 'color: #2E7D32; text-decoration: underline;')).html_safe %></p>
 
-    <p style="margin-top: 40px; text-align: right; color: #666;">最終更新日: 2025年10月17日</p>
+    <p style="margin-top: 40px; text-align: right; color: #666;"><%= t('.last_updated') %></p>
   </div>
 </div>
 

@@ -1,0 +1,121 @@
+us:
+  models:
+    farm:
+      weather_status:
+        pending: "Pending"
+        fetching: "Fetching (%{progress}%)"
+        completed: "Completed"
+        failed: "Failed"
+        unknown: "Unknown"
+  
+  activerecord:
+    models:
+      farm: "Farm"
+      field: "Field"
+      crop: "Crop"
+      cultivation_plan: "Cultivation Plan"
+      field_cultivation: "Field Cultivation"
+      interaction_rule: "Rotation Rule"
+      crop_stage: "Crop Stage"
+      user: "User"
+      session: "Session"
+      weather_datum: "Weather Data"
+      weather_location: "Weather Location"
+      thermal_requirement: "Thermal Requirement"
+      temperature_requirement: "Temperature Requirement"
+      sunshine_requirement: "Sunshine Requirement"
+    
+    attributes:
+      farm:
+        name: "Name"
+        latitude: "Latitude"
+        longitude: "Longitude"
+        is_reference: "Reference Farm"
+        user_id: "User"
+        created_at: "Created At"
+        updated_at: "Updated At"
+      
+      field:
+        name: "Name"
+        area_sqm: "Area (sqm)"
+        farm_id: "Farm"
+        latitude: "Latitude"
+        longitude: "Longitude"
+        geometry: "Geometry"
+        created_at: "Created At"
+        updated_at: "Updated At"
+      
+      crop:
+        name: "Name"
+        scientific_name: "Scientific Name"
+        variety: "Variety"
+        family: "Family"
+        is_reference: "Reference Crop"
+        planting_season: "Planting Season"
+        harvest_season: "Harvest Season"
+        growth_days: "Growth Days"
+        created_at: "Created At"
+        updated_at: "Updated At"
+      
+      cultivation_plan:
+        name: "Plan Name"
+        farm_id: "Farm"
+        user_id: "User"
+        status: "Status"
+        total_area: "Total Area"
+        optimization_status: "Optimization Status"
+        optimization_started_at: "Optimization Started At"
+        optimization_completed_at: "Optimization Completed At"
+        optimization_phase: "Optimization Phase"
+        optimization_phase_message: "Optimization Phase Message"
+        created_at: "Created At"
+        updated_at: "Updated At"
+      
+      field_cultivation:
+        field_id: "Field"
+        crop_id: "Crop"
+        cultivation_plan_id: "Cultivation Plan"
+        area_sqm: "Area (sqm)"
+        planting_date: "Planting Date"
+        harvest_date: "Harvest Date"
+        created_at: "Created At"
+        updated_at: "Updated At"
+      
+      interaction_rule:
+        crop_a_id: "Crop A"
+        crop_b_id: "Crop B"
+        years: "Interval Years"
+        interaction_type: "Interaction Type"
+        description: "Description"
+        created_at: "Created At"
+        updated_at: "Updated At"
+    
+    errors:
+      models:
+        farm:
+          attributes:
+            name:
+              blank: "can't be blank"
+            latitude:
+              blank: "can't be blank"
+              not_a_number: "must be a number"
+            longitude:
+              blank: "can't be blank"
+              not_a_number: "must be a number"
+        
+        field:
+          attributes:
+            name:
+              blank: "can't be blank"
+            area_sqm:
+              blank: "can't be blank"
+              not_a_number: "must be a number"
+              greater_than: "must be greater than %{count}"
+        
+        crop:
+          attributes:
+            name:
+              blank: "can't be blank"
+            scientific_name:
+              blank: "can't be blank"
+

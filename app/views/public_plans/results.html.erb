@@ -12,12 +12,29 @@
     <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
     
     <%# 気温・GDDチャート表示エリア（作物クリック時に表示、climate_chart.jsが内容を生成） %>
-    <div id="climate-chart-display" style="display: none;"></div>
+    <div id="climate-chart-display" 
+         style="display: none;" 
+         data-chart-title="<%= t('public_plans.results.chart_title') %>"
+         data-loading-message="<%= t('public_plans.results.loading_data') %>"
+         data-temperature-section="<%= t('public_plans.results.chart.temperature_section') %>"
+         data-gdd-section="<%= t('public_plans.results.chart.gdd_section') %>"
+         data-temp-max="<%= t('public_plans.results.chart.temp_max') %>"
+         data-temp-mean="<%= t('public_plans.results.chart.temp_mean') %>"
+         data-temp-min="<%= t('public_plans.results.chart.temp_min') %>"
+         data-temp-chart-title="<%= t('public_plans.results.chart.temp_chart_title') %>"
+         data-optimal-zone="<%= t('public_plans.results.chart.optimal_zone') %>"
+         data-stress-zone="<%= t('public_plans.results.chart.stress_zone') %>"
+         data-daily-gdd="<%= t('public_plans.results.chart.daily_gdd') %>"
+         data-cumulative-gdd="<%= t('public_plans.results.chart.cumulative_gdd') %>"
+         data-required-gdd="<%= t('public_plans.results.chart.required_gdd') %>"
+         data-gdd-chart-title="<%= t('public_plans.results.chart.gdd_chart_title') %>"
+         data-date-label="<%= t('public_plans.results.chart.date_label') %>"
+         data-cumulative-required-label="<%= t('public_plans.results.chart.cumulative_required_label') %>"></div>
     
     <%# アクションボタン %>
     <div class="action-buttons">
       <%= link_to public_plans_path, class: "btn-white" do %>
-        ← 新しい計画を作成
+        <%= t('.create_new_plan') %>
       <% end %>
     </div>
     

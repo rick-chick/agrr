@@ -1,0 +1,169 @@
+us:
+  pages:
+    about:
+      title: "About AGRR"
+      description: "AGRR is an agricultural crop planning support system that leverages weather data and AI. Learn about our main features, characteristics, and development concept."
+      heading: "About AGRR"
+      what_is:
+        title: "What is AGRR"
+        content: "AGRR (Agriculture Resource and Rotation planner) is a web application that assists farmers with crop planning. It supports efficient and sustainable agricultural planning through field management, crop information management, and weather data utilization."
+      features_section:
+        title: "Main Features"
+        items:
+          - icon: "🌾"
+            title: "Crop Plan Optimization"
+            description: "Automatically generates optimal crop plans considering field conditions, crop characteristics, and crop rotation issues."
+          - icon: "📍"
+            title: "Field Management"
+            description: "Manage multiple fields on a map and record area, location information, and cultivation history for each field."
+          - icon: "🌡️"
+            title: "Weather Data Utilization"
+            description: "Leverages historical weather data and future predictions to suggest optimal planting times suitable for the climate."
+          - icon: "📊"
+            title: "Gantt Chart Display"
+            description: "Visually displays crop plans, allowing you to grasp the annual cultivation schedule at a glance."
+      characteristics:
+        title: "AGRR Characteristics"
+        intro: "AGRR supports farmers with the following features:"
+        items:
+          - "<strong>Simple and Easy to Use</strong> - Anyone can easily create crop plans with intuitive operations"
+          - "<strong>Data-Driven Recommendations</strong> - Proposes optimal plans based on weather data and scientific knowledge"
+          - "<strong>Supports Sustainable Agriculture</strong> - Enables long-term cultivation planning considering crop rotation issues"
+          - "<strong>Accessible Anytime, Anywhere</strong> - Can be accessed from smartphones and tablets with an internet connection"
+          - "<strong>Free to Start</strong> - Basic features are available for free"
+      development:
+        title: "Development & Operations"
+        paragraph1: "AGRR is developed to promote agricultural DX (Digital Transformation) and realize more efficient and sustainable agriculture."
+        paragraph2: "Service improvements and new feature additions are ongoing, and we value feedback from all our users."
+      contact_section:
+        title: "Contact"
+        message: "Please feel free to send us your questions, requests, and feedback about the service."
+        button_text: "Go to Contact Page"
+      copyright: "© 2025 AGRR. All rights reserved."
+    
+    contact:
+      title: "Contact Us"
+      description: "Contact AGRR here. Feel free to reach out with questions about the service, requests, technical support, and more."
+      heading: "Contact Us"
+      intro: "Please contact us using the following method regarding AGRR."
+      email_section_title: "Email Contact"
+      email_intro: "Please contact us at the following email address:"
+      email_note: "* We typically respond within 1-3 business days."
+      notes_title: "Notes for Inquiries"
+      notes:
+        - "Please include your name (or handle name)"
+        - "Please describe your inquiry in as much detail as possible"
+        - "If an error occurred, it would be helpful to include error messages or screenshots"
+        - "Please confirm your reply email address"
+      faq_title: "Frequently Asked Questions"
+      faq_intro: "Before contacting us, please check the following FAQ:"
+      faq_items:
+        - "Cannot log in → Please check your Google authentication settings"
+        - "Data not saving → Please check if browser cookies are enabled"
+        - "Weather data not displaying → Please check if field location information is set correctly"
+      footer_message: "We look forward to your feedback and requests for service improvement."
+    
+    privacy:
+      title: "Privacy Policy"
+      description: "AGRR's privacy policy. Details on how we collect, use, and manage personal information."
+      heading: "Privacy Policy"
+      intro_html: "AGRR (hereinafter \"the Service\") respects user privacy and is committed to protecting personal information. This Privacy Policy explains how the Service collects, uses, and protects information."
+      section1:
+        title: "1. Information We Collect"
+        intro: "The Service may collect the following information:"
+        items:
+          - "Information obtained through Google OAuth authentication (email address, name, profile picture)"
+          - "Field information, crop information, and cultivation plan data entered by users"
+          - "Access logs, IP addresses, browser information"
+          - "Information collected through cookies and similar technologies"
+      section2:
+        title: "2. Purpose of Use"
+        intro: "Collected information is used for the following purposes:"
+        items:
+          - "Providing, operating, and improving the Service"
+          - "Providing user support"
+          - "Maintaining security"
+          - "Creating and analyzing statistical data"
+          - "Responding to legal requirements"
+      section3:
+        title: "3. Third-Party Disclosure"
+        intro: "The Service will not provide users' personal information to third parties, except in the following cases:"
+        items:
+          - "When user consent has been obtained"
+          - "When required by law"
+          - "When necessary to protect life, body, or property"
+      section4:
+        title: "4. Use of Google Analytics"
+        content_html: "The Service uses Google Analytics to understand site usage. Google Analytics collects user information using cookies, but does not include personally identifiable information. For details, please see the <a href=\"https://policies.google.com/privacy\" target=\"_blank\" rel=\"noopener\" style=\"color: #2E7D32; text-decoration: underline;\">Google Privacy Policy</a>."
+      section5:
+        title: "5. Use of Google AdSense"
+        content_html: "The Service uses Google AdSense to deliver advertisements. Google AdSense uses cookies to display ads based on user interests. You can disable personalized ads by disabling cookies. For details, please see <a href=\"https://policies.google.com/technologies/ads\" target=\"_blank\" rel=\"noopener\" style=\"color: #2E7D32; text-decoration: underline;\">Google Ad Settings</a>."
+      section6:
+        title: "6. Security"
+        content: "The Service implements appropriate security measures to protect personal information. However, we cannot guarantee the complete security of data transmission over the Internet."
+      section7:
+        title: "7. Changes to Privacy Policy"
+        content: "The Service may change this Privacy Policy as necessary. The revised Privacy Policy will take effect when posted on this page."
+      section8:
+        title: "8. Contact"
+        content_html: "For inquiries regarding the Privacy Policy, please contact us via %{contact_link}."
+        contact_link_text: "Contact Page"
+      last_updated: "Last updated: October 17, 2025"
+    
+    terms:
+      title: "Terms of Service"
+      description: "AGRR's terms of service. Details on service usage conditions, prohibited actions, and disclaimers."
+      heading: "Terms of Service"
+      intro: "These Terms of Service (\"Terms\") define the conditions for using AGRR (\"the Service\"). By using the Service, users are deemed to have agreed to these Terms."
+      article1:
+        title: "Article 1 (Application)"
+        content: "These Terms define the conditions for using the Service and apply to all relationships between users and the Service operator."
+      article2:
+        title: "Article 2 (Service Content)"
+        intro: "The Service provides the following features:"
+        items:
+          - "Assistance in creating agricultural crop plans"
+          - "Field management functions"
+          - "Crop information management"
+          - "Weather data display"
+          - "Cultivation plan optimization"
+      article3:
+        title: "Article 3 (Accounts)"
+        content: "Users can use the Service through Google authentication. Users are responsible for properly managing their account information."
+      article4:
+        title: "Article 4 (Prohibited Activities)"
+        intro: "Users must not engage in the following activities:"
+        items:
+          - "Activities that violate laws or public order and morals"
+          - "Activities that interfere with Service operations"
+          - "Activities that infringe on the rights of other users or third parties"
+          - "Using the Service through unauthorized access or other improper means"
+          - "Activities that threaten Service security"
+          - "Registering false information"
+      article5:
+        title: "Article 5 (Intellectual Property Rights)"
+        content: "Intellectual property rights related to the Service belong to the Service operator or legitimate rights holders. Intellectual property rights for data posted by users belong to the users, but users grant permission to use such data to the extent necessary for Service operation and improvement."
+      article6:
+        title: "Article 6 (Disclaimer)"
+        intro: "The Service assumes no responsibility for the following:"
+        items:
+          - "Accuracy, completeness, or usefulness of the Service"
+          - "Damages arising from use of the Service"
+          - "Accuracy of weather data or crop plans"
+          - "Disputes between users or between users and third parties"
+        note: "The Service provides reference information for agricultural planning and does not guarantee actual cultivation results."
+      article7:
+        title: "Article 7 (Service Changes and Termination)"
+        content: "The Service may change or terminate the Service content without prior notice to users. The Service assumes no responsibility for any damages arising from such changes or termination."
+      article8:
+        title: "Article 8 (Changes to Terms)"
+        content: "The Service may change these Terms as necessary. Revised Terms will take effect when posted on this page."
+      article9:
+        title: "Article 9 (Governing Law and Jurisdiction)"
+        content: "These Terms are governed by Japanese law, and disputes regarding these Terms shall be subject to the exclusive jurisdiction of the court having jurisdiction over the location of the Service operator."
+      article10:
+        title: "Article 10 (Contact)"
+        content_html: "For inquiries regarding these Terms, please contact us via %{contact_link}."
+        contact_link_text: "Contact Page"
+      effective_date: "Effective date: October 17, 2025"
+

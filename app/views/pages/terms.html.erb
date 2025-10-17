@@ -1,65 +1,59 @@
-<% content_for :title, "利用規約 | AGRR" %>
-<% content_for :description, "AGRRの利用規約です。サービスの利用条件、禁止事項、免責事項について詳しく説明しています。" %>
+<% content_for :title, "#{t('pages.terms.title')} | AGRR" %>
+<% content_for :description, t('pages.terms.description', default: "AGRRの利用規約です。サービスの利用条件、禁止事項、免責事項について詳しく説明しています。") %>
 
 <div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;">利用規約</h1>
+  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;"><%= t('.heading') %></h1>
   
   <div style="line-height: 1.8; color: #333;">
-    <p style="margin-bottom: 20px;">本利用規約（以下「本規約」）は、AGRR（以下「当サービス」）の利用条件を定めるものです。ユーザーは、当サービスを利用することで、本規約に同意したものとみなされます。</p>
+    <p style="margin-bottom: 20px;"><%= t('.intro') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第1条（適用）</h2>
-    <p style="margin-bottom: 20px;">本規約は、当サービスの利用に関する条件を定めるものであり、ユーザーと当サービス運営者との間の一切の関係に適用されます。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article1.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article1.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第2条（サービスの内容）</h2>
-    <p style="margin-bottom: 15px;">当サービスは、以下の機能を提供します：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article2.title') %></h2>
+    <p style="margin-bottom: 15px;"><%= t('.article2.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">農業作付け計画の作成支援</li>
-      <li style="margin-bottom: 10px;">圃場管理機能</li>
-      <li style="margin-bottom: 10px;">作物情報の管理</li>
-      <li style="margin-bottom: 10px;">気象データの表示</li>
-      <li style="margin-bottom: 10px;">栽培計画の最適化</li>
+      <% t('.article2.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第3条（アカウント）</h2>
-    <p style="margin-bottom: 20px;">ユーザーは、Google認証を通じて当サービスを利用することができます。ユーザーは、自己のアカウント情報を適切に管理する責任を負います。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article3.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article3.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第4条（禁止事項）</h2>
-    <p style="margin-bottom: 15px;">ユーザーは、以下の行為を行ってはなりません：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article4.title') %></h2>
+    <p style="margin-bottom: 15px;"><%= t('.article4.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">法令または公序良俗に違反する行為</li>
-      <li style="margin-bottom: 10px;">当サービスの運営を妨害する行為</li>
-      <li style="margin-bottom: 10px;">他のユーザーまたは第三者の権利を侵害する行為</li>
-      <li style="margin-bottom: 10px;">不正アクセスその他不正な手段により当サービスを利用する行為</li>
-      <li style="margin-bottom: 10px;">当サービスのセキュリティを脅かす行為</li>
-      <li style="margin-bottom: 10px;">虚偽の情報を登録する行為</li>
+      <% t('.article4.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第5条（知的財産権）</h2>
-    <p style="margin-bottom: 20px;">当サービスに関する知的財産権は、当サービス運営者または正当な権利者に帰属します。ユーザーが投稿したデータの知的財産権はユーザーに帰属しますが、当サービスの運営・改善のために必要な範囲で使用することを許諾するものとします。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article5.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article5.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第6条（免責事項）</h2>
-    <p style="margin-bottom: 15px;">当サービスは以下について一切の責任を負いません：</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article6.title') %></h2>
+    <p style="margin-bottom: 15px;"><%= t('.article6.intro') %></p>
     <ul style="margin-left: 20px; margin-bottom: 20px;">
-      <li style="margin-bottom: 10px;">当サービスの正確性、完全性、有用性</li>
-      <li style="margin-bottom: 10px;">当サービスの利用により生じた損害</li>
-      <li style="margin-bottom: 10px;">気象データや作付け計画の精度</li>
-      <li style="margin-bottom: 10px;">ユーザー間またはユーザーと第三者との間のトラブル</li>
+      <% t('.article6.items').each do |item| %>
+        <li style="margin-bottom: 10px;"><%= item %></li>
+      <% end %>
     </ul>
-    <p style="margin-bottom: 20px;">当サービスは、農業計画の参考情報を提供するものであり、実際の栽培結果を保証するものではありません。</p>
+    <p style="margin-bottom: 20px;"><%= t('.article6.note') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第7条（サービスの変更・終了）</h2>
-    <p style="margin-bottom: 20px;">当サービスは、ユーザーへの事前通知なく、サービスの内容を変更または終了することができます。これにより生じた損害について、当サービスは一切の責任を負いません。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article7.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article7.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第8条（利用規約の変更）</h2>
-    <p style="margin-bottom: 20px;">当サービスは、必要に応じて本規約を変更することができます。変更後の利用規約は、本ページに掲載した時点で効力を生じます。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article8.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article8.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第9条（準拠法・管轄裁判所）</h2>
-    <p style="margin-bottom: 20px;">本規約は日本法に準拠し、本規約に関する紛争については、当サービス運営者の所在地を管轄する裁判所を専属的合意管轄裁判所とします。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article9.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article9.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;">第10条（お問い合わせ）</h2>
-    <p style="margin-bottom: 20px;">本規約に関するお問い合わせは、<%= link_to 'お問い合わせページ', contact_path, style: 'color: #2E7D32; text-decoration: underline;' %>よりご連絡ください。</p>
+    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article10.title') %></h2>
+    <p style="margin-bottom: 20px;"><%= t('.article10.content_html', contact_link: link_to(t('.article10.contact_link_text'), contact_path, style: 'color: #2E7D32; text-decoration: underline;')).html_safe %></p>
 
-    <p style="margin-top: 40px; text-align: right; color: #666;">制定日: 2025年10月17日</p>
+    <p style="margin-top: 40px; text-align: right; color: #666;"><%= t('.effective_date') %></p>
   </div>
 </div>
 

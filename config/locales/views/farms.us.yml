@@ -1,0 +1,106 @@
+us:
+  farms:
+    flash:
+      created: "Farm was successfully created."
+      updated: "Farm was successfully updated."
+      destroyed: "Farm was successfully deleted."
+      cannot_delete: "This farm cannot be deleted because it is used by %{count} crop plans."
+      not_found: "Farm not found."
+    
+    index:
+      title: "Farms"
+      new_farm: "Add New Farm"
+      reference_farms: "Reference Farms (Growing Regions)"
+      my_farms: "My Farms"
+      count: "%{count} items"
+      empty:
+        icon: "🚜"
+        title: "No farms registered yet"
+        description: "Add your first farm to get started."
+        button: "Add Farm"
+      debug:
+        label: "Debug:"
+    
+    new:
+      title: "Add New Farm"
+      form:
+        name_label: "Farm Name"
+        name_placeholder: "e.g., Tanaka Farm"
+        name_help: "Enter the name of your farm"
+        location_label: "📍 Location"
+        map_loading: "🗺️ Loading map..."
+        latitude_label: "Latitude"
+        latitude_placeholder: "35.6762"
+        latitude_help: "e.g., 35.6762 (near Tokyo Station)"
+        longitude_label: "Longitude"
+        longitude_placeholder: "139.6503"
+        longitude_help: "e.g., 139.6503 (near Tokyo Station)"
+        submit: "Create Farm"
+        cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
+    
+    edit:
+      title: "Edit Farm"
+      form:
+        submit: "Update Farm"
+        cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
+    
+    show:
+      edit: "Edit"
+      delete: "Delete"
+      delete_confirm: "Are you sure you want to delete this farm?"
+      back: "Back"
+      fields: "Fields"
+      add_field: "Add Field"
+      weather: "Weather Information"
+      fields_list: "Fields"
+      fields_list_title: "Fields List"
+      no_fields: "No fields registered yet."
+      add_first_field: "Add First Field"
+      back_to_list: "Back to Farm List"
+      detail: "Details"
+    
+    card:
+      latitude: "Latitude"
+      longitude: "Longitude"
+      location_not_set: "Location not set"
+      fields_count: "Fields: %{count}"
+      weather_data: "Weather Data:"
+      processing_complete: "Data processing almost complete..."
+      detail: "Details"
+      fields_list: "Fields"
+      edit: "Edit"
+      delete: "Delete"
+      confirm_delete: "Are you sure you want to delete this farm?"
+    
+    weather_section:
+      name: "Name"
+      latitude: "Latitude"
+      longitude: "Longitude"
+      location: "Location"
+      location_not_set: "Location not set"
+      fields_count: "Fields"
+      fields_count_value: "%{count}"
+      created_at: "Created"
+      updated_at: "Updated"
+      temperature_data: "Temperature Data"
+      period_select: "Period"
+      period_30: "Past 30 Days"
+      period_90: "Past 90 Days"
+      period_180: "Past 180 Days"
+      period_365: "Past 1 Year"
+      period_next_365: "Next 1 Year (Forecast)"
+      processing_complete: "Data processing almost complete..."
+      fetching_progress: "Fetching weather data... (%{progress}%)"
+      fetch_failed: "Failed to fetch weather data."
+      preparing: "Preparing weather data..."
+      temperature_chart_title: "Temperature Trends"
+      temperature_chart_title_prediction: "Temperature Trends (Forecast)"
+      chart_temp_max: "Max Temperature (°C)"
+      chart_temp_mean: "Mean Temperature (°C)"
+      chart_temp_min: "Min Temperature (°C)"
+      chart_date_label: "Date"
+

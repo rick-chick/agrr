@@ -2,22 +2,22 @@
   <h3 class="farm-name"><%= farm.display_name %></h3>
   <% if farm.has_coordinates? %>
     <div class="farm-coordinates">
-      📍 緯度: <%= farm.latitude %><br>
-      📍 経度: <%= farm.longitude %>
+      📍 <%= t('farms.card.latitude') %>: <%= farm.latitude %><br>
+      📍 <%= t('farms.card.longitude') %>: <%= farm.longitude %>
     </div>
   <% else %>
-    <div class="farm-coordinates">📍 位置情報が設定されていません</div>
+    <div class="farm-coordinates">📍 <%= t('farms.card.location_not_set') %></div>
   <% end %>
   <div class="farm-info">
-    <p>圃場数: <%= farm.fields.count %>個</p>
+    <p><%= t('farms.card.fields_count', count: farm.fields.count) %></p>
     <p>
-      <strong>天気データ:</strong>
+      <strong><%= t('farms.card.weather_data') %></strong>
       <span class="weather-status weather-status-<%= farm.weather_data_status %>">
         <%= farm.weather_data_status_text %>
       </span>
       <% if farm.fetching? && farm.weather_data_total_years > 0 %>
         <% if farm.weather_data_progress >= 100 %>
-          <small class="info-message">データ処理完了間近です...</small>
+          <small class="info-message"><%= t('farms.card.processing_complete') %></small>
         <% else %>
           <div class="progress-bar">
             <div class="progress-fill" data-progress="<%= farm.weather_data_progress %>" style="width: <%= farm.weather_data_progress %>%"></div>
@@ -30,15 +30,15 @@
     </p>
   </div>
   <div class="farm-actions">
-    <%= link_to "詳細", farm, class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to "圃場一覧", farm_fields_path(farm), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to "編集", edit_farm_path(farm), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to "削除", farm, method: :delete, 
+    <%= link_to t('farms.card.detail'), farm, class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.fields_list'), farm_fields_path(farm), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.edit'), edit_farm_path(farm), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.delete'), farm, method: :delete, 
                 class: "btn btn-error btn-sm", 
                 data: { 
                   turbo_frame: "_top",
                   turbo_method: :delete,
-                  turbo_confirm: "この農場を削除しますか？"
+                  turbo_confirm: t('farms.card.confirm_delete')
                 } %>
   </div>
 </div>
