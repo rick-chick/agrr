@@ -486,4 +486,48 @@ class CropTest < ActiveSupport::TestCase
     
     assert_equal ["grain", "paddy"], result['crop']['groups']
   end
+
+  test "by_region scope should filter by region" do
+    crop_jp = Crop.create!(
+      name: "Rice JP",
+      user_id: @user.id,
+      is_reference: false,
+      region: "jp"
+    )
+    
+    crop_us = Crop.create!(
+      name: "Corn US",
+      user_id: @user.id,
+      is_reference: false,
+      region: "us"
+    )
+    
+    crop_no_region = Crop.create!(
+      name: "Wheat",
+      user_id: @user.id,
+      is_reference: false
+    )
+    
+    jp_crops = Crop.by_region("jp")
+    assert_includes jp_crops, crop_jp
+    assert_not_includes jp_crops, crop_us
+    assert_not_includes jp_crops, crop_no_region
+    
+    us_crops = Crop.by_region("us")
+    assert_includes us_crops, crop_us
+    assert_not_includes us_crops, crop_jp
+  end
+
+  test "should save crop with region" do
+    crop = Crop.create!(
+      name: "稲",
+      user_id: @user.id,
+      is_reference: false,
+      region: "jp"
+    )
+    
+    assert_equal "jp", crop.region
+    crop.reload
+    assert_equal "jp", crop.region
+  end
 end

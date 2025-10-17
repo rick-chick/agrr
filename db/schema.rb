@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_16_150000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_17_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -60,7 +60,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_150000) do
     t.float "revenue_per_area"
     t.string "agrr_crop_id"
     t.text "groups"
+    t.string "region"
     t.index ["agrr_crop_id"], name: "index_crops_on_agrr_crop_id"
+    t.index ["region"], name: "index_crops_on_region"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
 
@@ -139,7 +141,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_150000) do
     t.datetime "last_broadcast_at"
     t.integer "weather_location_id"
     t.boolean "is_reference", default: false, null: false
+    t.string "region"
     t.index ["is_reference"], name: "index_farms_on_is_reference", where: "is_reference = true"
+    t.index ["region"], name: "index_farms_on_region"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
@@ -177,8 +181,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_150000) do
     t.decimal "longitude", precision: 11, scale: 8
     t.float "area"
     t.float "daily_fixed_cost"
+    t.string "region"
     t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name", unique: true
     t.index ["farm_id"], name: "index_fields_on_farm_id"
+    t.index ["region"], name: "index_fields_on_region"
     t.index ["user_id", "name"], name: "index_fields_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_fields_on_user_id"
   end
@@ -210,7 +216,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_150000) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.boolean "is_reference", default: false, null: false
+    t.string "region"
     t.index ["is_reference"], name: "index_interaction_rules_on_is_reference"
+    t.index ["region"], name: "index_interaction_rules_on_region"
     t.index ["rule_type", "source_group", "target_group"], name: "index_interaction_rules_on_type_and_groups"
     t.index ["rule_type"], name: "index_interaction_rules_on_rule_type"
     t.index ["source_group"], name: "index_interaction_rules_on_source_group"

@@ -99,6 +99,37 @@ class FieldTest < ActiveSupport::TestCase
     assert_equal field1, recent_fields.second
   end
 
+  test "by_region scope should filter by region" do
+    field_jp = Field.create!(
+      farm: @farm,
+      user: @user,
+      name: "JP Field",
+      region: "jp"
+    )
+    
+    field_us = Field.create!(
+      farm: @farm,
+      user: @user,
+      name: "US Field",
+      region: "us"
+    )
+    
+    field_no_region = Field.create!(
+      farm: @farm,
+      user: @user,
+      name: "No Region Field"
+    )
+    
+    jp_fields = Field.by_region("jp")
+    assert_includes jp_fields, field_jp
+    assert_not_includes jp_fields, field_us
+    assert_not_includes jp_fields, field_no_region
+    
+    us_fields = Field.by_region("us")
+    assert_includes us_fields, field_us
+    assert_not_includes us_fields, field_jp
+  end
+
   test "area should be positive" do
     @field.area = -1
     assert_not @field.valid?
