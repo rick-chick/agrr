@@ -49,12 +49,35 @@ echo "Step 3: Seed disabled for now (run manually after startup if needed)"
 #     echo "Database already has data. Skipping seed."
 # fi
 
-echo "Step 4: Solid Queue will be started by Puma plugin (no separate process needed)"
-
-echo "Step 5: Starting Litestream replication..."
+echo "Step 4: Starting Litestream replication..."
 litestream replicate -config /etc/litestream.yml &
 LITESTREAM_PID=$!
 echo "Litestream started (PID: $LITESTREAM_PID) - replicating all databases"
 
+echo "Step 5: Starting Solid Queue worker in background..."
+bundle exec rails solid_queue:start > /tmp/solid_queue.log 2>&1 &
+SOLID_QUEUE_PID=$!
+echo "Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
+
+# Wait a moment for worker to initialize
+sleep 3
+
 echo "Step 6: Starting Rails server..."
-exec bundle exec rails server -b 0.0.0.0 -p $PORT -e production
+bundle exec rails server -b 0.0.0.0 -p $PORT -e production &
+RAILS_PID=$!
+echo "Rails server started (PID: $RAILS_PID)"
+
+# Cleanup function
+cleanup() {
+    echo "Shutting down services..."
+    kill -TERM $RAILS_PID 2>/dev/null || true
+    kill -TERM $SOLID_QUEUE_PID 2>/dev/null || true
+    kill -TERM $LITESTREAM_PID 2>/dev/null || true
+    exit 0
+}
+
+# Register cleanup on signals
+trap cleanup SIGTERM SIGINT SIGHUP
+
+# Wait for all background processes
+wait $RAILS_PID $SOLID_QUEUE_PID $LITESTREAM_PID
