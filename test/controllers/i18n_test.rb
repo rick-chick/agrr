@@ -9,19 +9,20 @@ class I18nTest < ActionDispatch::IntegrationTest
     assert_equal :ja, I18n.locale
   end
   
-  test "should switch to English locale via URL parameter" do
-    get root_path(locale: :en)
+  test "should switch to English locale via URL path" do
+    get root_path(locale: :us)
     assert_response :success
-    assert_equal :en, I18n.locale
+    # レスポンスの内容で確認
+    assert_select "h1.hero-title", text: /Make Agriculture Smarter/
   end
   
   test "should persist locale in cookies" do
-    get root_path(locale: :en)
-    assert_equal "en", cookies[:locale]
+    get root_path(locale: :us)
+    assert_equal "us", cookies[:locale]
     
-    # 次のリクエストでもlocaleが維持される
+    # 次のリクエストでもlocaleが維持される（Cookieから）
     get about_path
-    assert_equal :en, I18n.locale
+    assert_select "h1", text: /About AGRR/
   end
   
   test "should display Japanese navigation" do
@@ -31,7 +32,7 @@ class I18nTest < ActionDispatch::IntegrationTest
   end
   
   test "should display English navigation" do
-    get root_path(locale: :en)
+    get root_path(locale: :us)
     assert_response :success
     assert_select ".navbar-brand", text: /AGRR/
   end
@@ -43,7 +44,7 @@ class I18nTest < ActionDispatch::IntegrationTest
   end
   
   test "should display English home page content" do
-    get root_path(locale: :en)
+    get root_path(locale: :us)
     assert_response :success
     assert_select "h1.hero-title", text: /Make Agriculture Smarter/
   end
@@ -55,7 +56,7 @@ class I18nTest < ActionDispatch::IntegrationTest
   end
   
   test "should display English public plans page" do
-    get public_plans_path(locale: :en)
+    get public_plans_path(locale: :us)
     assert_response :success
     assert_select "h2.content-card-title", text: /Select Your Growing Region/
   end
@@ -66,8 +67,8 @@ class I18nTest < ActionDispatch::IntegrationTest
   end
   
   test "should include locale in generated URLs" do
-    get root_path(locale: :en)
-    assert_select "a[href*='locale=en']"
+    get root_path(locale: :us)
+    assert_select "a[href*='/us']"
   end
 end
 
