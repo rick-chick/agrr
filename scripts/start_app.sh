@@ -8,14 +8,23 @@ echo "Port: $PORT"
 
 # Restore database from GCS if it exists
 echo "Step 1: Restoring database from GCS..."
+DB_RESTORED=false
 if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production.sqlite3; then
     echo "✓ Database restored from GCS"
+    DB_RESTORED=true
 else
     echo "⚠ No database replica found, starting fresh"
 fi
 
 echo "Step 2: Database setup..."
-bundle exec rails db:prepare
+if [ "$DB_RESTORED" = true ]; then
+    echo "Running migrations only (DB already exists)..."
+    bundle exec rails db:migrate
+else
+    echo "Preparing new database (migrations + data seeding)..."
+    bundle exec rails db:prepare
+fi
+
 if [ $? -ne 0 ]; then
     echo "ERROR: Database setup failed"
     exit 1
