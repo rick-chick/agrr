@@ -15,8 +15,8 @@
       <div style="display: grid; gap: 20px;">
         <% t('.features_section.items').each do |item| %>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;"><%= item['icon'] %> <%= item['title'] %></h3>
-            <p style="margin-bottom: 0;"><%= item['description'] %></p>
+            <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;"><%= item[:icon] %> <%= item[:title] %></h3>
+            <p style="margin-bottom: 0;"><%= item[:description] %></p>
           </div>
         <% end %>
       </div>
