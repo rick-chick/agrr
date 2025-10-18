@@ -55,6 +55,34 @@ AGRRプロジェクトのドキュメントは、用途別に整理されてい�
 
 ---
 
+## 🌍 地域別データ管理
+
+### Region Data
+
+1. **[region/DATA_CREATION_GUIDE.md](region/DATA_CREATION_GUIDE.md)** ⭐️
+   - 新しい地域データを作成するための完全ガイド
+   - 他のLLMや開発者が再現できるステップバイステップ手順書
+
+2. **[region/US_SUMMARY.md](region/US_SUMMARY.md)**
+   - US region実装の詳細サマリー
+   - 実際の実施結果と教訓
+
+3. **[region/README.md](region/README.md)**
+   - Region機能の概要とドキュメント一覧
+
+### Region機能仕様
+
+4. **[region/feature.md](region/feature.md)**
+   - Region機能の仕様書
+
+5. **[region/requirements.md](region/requirements.md)**
+   - Region機能の要件定義
+
+6. **[region/seed_data.md](region/seed_data.md)**
+   - シードデータの仕様
+
+---
+
 ## 🔍 機能・実装の詳細
 
 ### 主要機能
@@ -140,6 +168,14 @@ docs/
 │   ├── TEST_GUIDE.md           # テストガイド
 │   ├── DEBUG_GUIDE.md          # デバッグ方法
 │   └── ERROR_HANDLING_GUIDE.md # エラー処理
+│
+├── region/                      # 地域別データ管理
+│   ├── README.md               # 概要とドキュメント一覧
+│   ├── DATA_CREATION_GUIDE.md  # ⭐️ データ作成ガイド
+│   ├── US_SUMMARY.md           # US region実装サマリー
+│   ├── feature.md              # Region機能仕様
+│   ├── requirements.md         # 要件定義
+│   └── seed_data.md            # シードデータ仕様
 │
 ├── features/                    # 機能実装の記録
 │   ├── AI_CROP_FEATURE.md
