@@ -83,6 +83,7 @@ ja:
         temp_chart_title: "日別気温推移（適正温度帯・限界温度帯表示）"
         optimal_zone: "🟢 適正温度帯"
         stress_zone: "🟠 限界温度帯（ストレス）"
+        stage_optimal_label: "適正:"
         daily_gdd: "日別GDD"
         cumulative_gdd: "積算GDD"
         required_gdd: "要求GDD（ステップ）"

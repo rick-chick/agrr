@@ -83,6 +83,7 @@ us:
         temp_chart_title: "Daily Temperature Trends (Optimal and Stress Zones)"
         optimal_zone: "🟢 Optimal Zone"
         stress_zone: "🟠 Stress Zone"
+        stage_optimal_label: "Optimal:"
         daily_gdd: "Daily GDD"
         cumulative_gdd: "Cumulative GDD"
         required_gdd: "Required GDD (Steps)"
