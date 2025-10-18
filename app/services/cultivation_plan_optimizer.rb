@@ -256,17 +256,22 @@ class CultivationPlanOptimizer
   end
   
   def prepare_interaction_rules
+    # 農場の地域を取得
+    farm_region = @cultivation_plan.farm.region
+    
     # ユーザーがいる場合はユーザー所有のルールと参照ルールを取得
     # ユーザーがいない場合（匿名ユーザー）は参照ルールのみを取得
+    # さらに、農場の地域でフィルタリング
     rules = if @cultivation_plan.user_id
       InteractionRule.where(
-        "(user_id = ? AND is_reference = ?) OR is_reference = ?",
+        "((user_id = ? AND is_reference = ?) OR is_reference = ?) AND region = ?",
         @cultivation_plan.user_id,
         false,
-        true
+        true,
+        farm_region
       )
     else
-      InteractionRule.reference
+      InteractionRule.reference.where(region: farm_region)
     end
     
     # AGRR形式の配列に変換

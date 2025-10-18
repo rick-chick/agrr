@@ -24,7 +24,14 @@ class PublicPlansController < ApplicationController
   
   # Step 1: 栽培地域（参照農場）選択
   def new
-    @farms = Farm.reference  # 北から南の順（緯度降順）
+    # URLのlocaleから地域を自動取得（/ja → jp, /us → us）
+    # デフォルト: jp
+    region = locale_to_region(I18n.locale)
+    
+    # 選択された地域の参照農場のみ取得
+    @farms = Farm.reference.where(region: region).to_a
+    
+    Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
   
   # Step 2: 農場サイズ選択
@@ -56,7 +63,8 @@ class PublicPlansController < ApplicationController
                   alert: I18n.t('public_plans.errors.select_farm_size') and return
     end
     
-    @crops = Crop.reference.order(:name)
+    # 選択された農場の地域の作物のみ取得
+    @crops = Crop.reference.where(region: @farm.region).order(:name)
     session[:public_plan] = session_data.merge(
       total_area: @farm_size[:area_sqm],
       farm_size_id: @farm_size[:id]
@@ -126,6 +134,18 @@ class PublicPlansController < ApplicationController
   end
   
   private
+  
+  # localeから地域コードに変換（/ja → jp, /us → us）
+  def locale_to_region(locale)
+    case locale.to_s
+    when 'ja'
+      'jp'
+    when 'us'
+      'us'
+    else
+      'jp' # デフォルト
+    end
+  end
   
   def find_cultivation_plan
     # テスト用: URLパラメータでplan_idを受け取る（開発・テスト環境のみ）

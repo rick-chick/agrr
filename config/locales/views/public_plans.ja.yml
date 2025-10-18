@@ -8,6 +8,10 @@ ja:
       crop: "作物"
       completed: "✓"
     
+    region_selection:
+      title: "🌍 地域を選択してください"
+      subtitle: "農業データを利用する地域を選択してください"
+    
     farm_sizes:
       home_garden:
         name: "家庭菜園"
