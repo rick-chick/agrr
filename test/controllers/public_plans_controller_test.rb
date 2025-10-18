@@ -12,13 +12,24 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       is_anonymous: true
     )
     
-    # 参照農場を作成
+    # JP参照農場を作成
     @farm = Farm.create!(
       user: @user,
       name: "北海道・札幌",
       latitude: 43.0642,
       longitude: 141.3469,
-      is_reference: true
+      is_reference: true,
+      region: 'jp'
+    )
+    
+    # US参照農場を作成（地域選択タブ表示のため）
+    @us_farm = Farm.create!(
+      user: @user,
+      name: "Kern County, CA",
+      latitude: 35.3733,
+      longitude: -119.0187,
+      is_reference: true,
+      region: 'us'
     )
     
     # 天気ロケーションを作成
@@ -32,11 +43,44 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # 天気データを作成
     create_weather_data
     
-    # 参照作物を作成
+    # JP参照作物を作成
     @crop = Crop.create!(
       name: "トマト",
       variety: "桃太郎",
-      is_reference: true
+      is_reference: true,
+      region: 'jp'
+    )
+    
+    # US参照作物を作成
+    @us_crop = Crop.create!(
+      name: "Corn",
+      variety: "Field Corn",
+      is_reference: true,
+      region: 'us'
+    )
+    
+    # JP用のInteractionRulesを作成
+    InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "ナス科",
+      target_group: "ナス科",
+      impact_ratio: 0.6,
+      is_directional: true,
+      is_reference: true,
+      region: 'jp',
+      description: "ナス科の連作"
+    )
+    
+    # US用のInteractionRulesを作成
+    InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "Poaceae",
+      target_group: "Poaceae",
+      impact_ratio: 0.95,
+      is_directional: true,
+      is_reference: true,
+      region: 'us',
+      description: "Poaceae continuous cultivation"
     )
   end
 
@@ -408,6 +452,44 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     end
     
     plan
+  end
+  
+  # ========================================
+  # Region Filtering Tests (locale-based)
+  # ========================================
+  
+  test "should default to jp region when locale is ja" do
+    get public_plans_path(locale: 'ja')
+    assert_response :success
+    # JP farm should be displayed
+    assert_select ".enhanced-card-title", text: @farm.name
+  end
+  
+  test "should filter farms by locale (/ja shows jp farms, /us shows us farms)" do
+    # Test /ja locale → jp region
+    get public_plans_path(locale: 'ja')
+    assert_response :success
+    assert_select ".enhanced-card-title", text: @farm.name
+    assert_select ".enhanced-card-title", text: @us_farm.name, count: 0
+    
+    # Test /us locale → us region
+    get public_plans_path(locale: 'us')
+    assert_response :success
+    assert_select ".enhanced-card-title", text: @us_farm.name
+    assert_select ".enhanced-card-title", text: @farm.name, count: 0
+  end
+  
+  test "should filter crops by farm region based on locale" do
+    # Select JP farm (locale: ja)
+    get select_farm_size_public_plans_path(locale: 'ja', farm_id: @farm.id)
+    assert_response :success
+    
+    get select_crop_public_plans_path(locale: 'ja', params: { farm_size_id: 'home_garden' })
+    assert_response :success
+    
+    # Should show JP crop only
+    assert_select ".crop-name", text: @crop.name
+    assert_select ".crop-name", text: @us_crop.name, count: 0
   end
 end
 

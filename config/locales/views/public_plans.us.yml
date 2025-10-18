@@ -8,6 +8,10 @@ us:
       crop: "Crop"
       completed: "✓"
     
+    region_selection:
+      title: "🌍 Select Your Region"
+      subtitle: "Choose the region for agricultural data"
+    
     farm_sizes:
       home_garden:
         name: "Home Garden"
