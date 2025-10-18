@@ -213,22 +213,27 @@ function initializeMapComponents() {
     
     // エラー時はプレースホルダーを表示（再試行ボタン付き）
     const placeholder = document.getElementById('map-placeholder');
+    const mapEl2 = document.getElementById('map');
+    const labels = {
+      loadFailed: mapEl2?.dataset.mapLoadFailed || '地図の読み込みに失敗しました',
+      retry: mapEl2?.dataset.retry || '再試行'
+    };
+    
     if (placeholder) {
       placeholder.style.display = 'block';
       placeholder.innerHTML = `
         <div>
-          <div style="margin-bottom: 10px;">❌ 地図の読み込みに失敗しました</div>
+          <div style="margin-bottom: 10px;">❌ ${labels.loadFailed}</div>
           <button type="button" onclick="retryMapInitialization()" class="btn btn-small">
-            🔄 再試行
+            🔄 ${labels.retry}
           </button>
         </div>
       `;
     }
     
     // 地図要素を非表示にする（空の要素が表示されないように）
-    const mapElement = document.getElementById('map');
-    if (mapElement) {
-      mapElement.style.display = 'none';
+    if (mapEl2) {
+      mapEl2.style.display = 'none';
     }
   }
 }
