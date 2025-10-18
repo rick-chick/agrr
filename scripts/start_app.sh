@@ -56,7 +56,15 @@ if bundle exec rails runner "exit(User.count == 0 ? 0 : 1)" 2>/dev/null; then
     bundle exec rails db:seed
     echo "Seed completed"
 else
-    echo "Database already has data. Skipping seed."
+    echo "Database already has data. Checking region data..."
+    # Fix missing region data in existing records
+    if bundle exec rails runner "exit(Farm.where(region: nil).exists? || Crop.where(region: nil).exists? ? 0 : 1)" 2>/dev/null; then
+        echo "Found records with missing region data. Fixing..."
+        bundle exec rails db:fix_region_data
+        echo "Region data fixed"
+    else
+        echo "Region data is complete. Skipping fix."
+    fi
 fi
 
 echo "Step 4: Starting Litestream replication..."
