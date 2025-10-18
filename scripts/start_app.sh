@@ -49,23 +49,9 @@ if [ $? -ne 0 ]; then
 fi
 echo "Database setup completed"
 
-# Check if database needs seeding
-echo "Step 3: Checking if seed is needed..."
-if bundle exec rails runner "exit(User.count == 0 ? 0 : 1)" 2>/dev/null; then
-    echo "Database is empty. Running seed..."
-    bundle exec rails db:seed
-    echo "Seed completed"
-else
-    echo "Database already has data. Checking region data..."
-    # Fix missing region data in existing records
-    if bundle exec rails runner "exit(Farm.where(region: nil).exists? || Crop.where(region: nil).exists? ? 0 : 1)" 2>/dev/null; then
-        echo "Found records with missing region data. Fixing..."
-        bundle exec rails db:fix_region_data
-        echo "Region data fixed"
-    else
-        echo "Region data is complete. Skipping fix."
-    fi
-fi
+# Database setup is handled by migrations
+echo "Step 3: Database setup via migrations..."
+echo "✅ All data is managed through migrations (db:prepare handles this automatically)"
 
 echo "Step 4: Starting Litestream replication..."
 litestream replicate -config /etc/litestream.yml &

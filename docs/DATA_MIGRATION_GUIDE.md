@@ -1,0 +1,100 @@
+# データマイグレーション方式
+
+## 基本方針
+
+AGRRでは、マスターデータ（参照農場・作物など）を**マイグレーション**で管理します。
+
+```bash
+rails db:migrate  # これだけで構造とデータが揃う
+```
+
+---
+
+## 一時モデル方式
+
+マイグレーション内で一時的なActiveRecordクラスを定義します。
+
+```ruby
+class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
+  # 一時モデル定義
+  class TempFarm < ActiveRecord::Base
+    self.table_name = 'farms'
+  end
+  
+  def up
+    # 一時モデルでデータ投入
+    TempFarm.create!(name: '北海道', region: 'jp', ...)
+  end
+end
+```
+
+**理由:**
+- モデルクラスの変更に影響されない
+- マイグレーション実行時点のテーブル構造のみに依存
+
+---
+
+## 実装されているデータマイグレーション
+
+### 日本の参照データ
+**ファイル:** `db/migrate/20251018075019_seed_japan_reference_data.rb`
+
+**内容:**
+- 47農場（都道府県）
+- 15作物
+- 442K天気データ
+
+### 米国の参照データ
+**ファイル:** `db/migrate/20251018075149_seed_united_states_reference_data.rb`
+
+**内容:**
+- 50農場
+- 30作物
+- 430K天気データ
+
+---
+
+## 新しい地域を追加
+
+```bash
+# 1. マイグレーション作成
+rails generate migration SeedEuropeReferenceData
+
+# 2. 一時モデルで実装（既存ファイルを参考に）
+
+# 3. デプロイ
+./scripts/gcp-deploy.sh
+```
+
+起動時に自動実行されます。
+
+---
+
+## データ更新
+
+既存データを更新する場合も、新しいマイグレーションを作成します。
+
+```ruby
+# db/migrate/XXXXXX_update_crop_revenue.rb
+class UpdateCropRevenue < ActiveRecord::Migration[8.0]
+  class TempCrop < ActiveRecord::Base
+    self.table_name = 'crops'
+  end
+  
+  def up
+    TempCrop.find_by(name: 'トマト', region: 'jp')
+           &.update!(revenue_per_area: 6000.0)
+  end
+  
+  def down
+    TempCrop.find_by(name: 'トマト', region: 'jp')
+           &.update!(revenue_per_area: 5000.0)
+  end
+end
+```
+
+---
+
+## 参考
+
+詳細は [Region Data Creation Guide](region/DATA_CREATION_GUIDE.md) を参照してください。
