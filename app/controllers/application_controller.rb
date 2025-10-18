@@ -12,14 +12,62 @@ class ApplicationController < ActionController::Base
   private
   
   def switch_locale(&action)
-    locale = params[:locale] || cookies[:locale] || I18n.default_locale
+    # 優先順位:
+    # 1. URLの:localeパラメータ（明示的な選択）
+    # 2. Cookieのlocale（前回の選択）
+    # 3. Accept-Languageヘッダー（ブラウザ設定）
+    # 4. デフォルト（ja）
+    locale = params[:locale] || 
+             cookies[:locale] || 
+             extract_locale_from_accept_language_header || 
+             I18n.default_locale
+    
     # Validate locale
     locale = I18n.default_locale unless I18n.available_locales.map(&:to_s).include?(locale.to_s)
+    
+    # Debug log (development/test only)
+    if Rails.env.development? || Rails.env.test?
+      Rails.logger.debug "🌐 [Locale] params[:locale]=#{params[:locale]}, cookies[:locale]=#{cookies[:locale]}, Accept-Language locale=#{extract_locale_from_accept_language_header}, final locale=#{locale}"
+    end
     
     # Save locale to cookie
     cookies[:locale] = { value: locale.to_s, expires: 1.year.from_now }
     
     I18n.with_locale(locale, &action)
+  end
+  
+  # Accept-Languageヘッダーから言語を抽出
+  # 例: "ja,en-US;q=0.9,en;q=0.8" → "ja"
+  # 例: "en-US,en;q=0.9,ja;q=0.8" → "us"
+  def extract_locale_from_accept_language_header
+    return nil unless request.env['HTTP_ACCEPT_LANGUAGE']
+    
+    # Accept-Languageヘッダーをパース（q値を考慮）
+    # 形式: "ja,en-US;q=0.9,en;q=0.8"
+    accepted_languages = request.env['HTTP_ACCEPT_LANGUAGE']
+      .split(',')
+      .map do |lang|
+        parts = lang.strip.split(';')
+        language = parts[0]
+        quality = parts[1]&.match(/q=([\d.]+)/)&.[](1)&.to_f || 1.0
+        { language: language, quality: quality }
+      end
+      .sort_by { |l| -l[:quality] } # q値の高い順にソート
+    
+    # 最も優先度の高い言語を取得
+    top_language = accepted_languages.first[:language]
+    
+    # 言語コードをlocaleにマッピング
+    # ja または ja-JP → ja
+    return 'ja' if top_language.start_with?('ja')
+    
+    # en-* (英語圏全般) → us
+    # 注: AGRRでは現在usのみサポート。将来的にeu等を追加時に再検討
+    return 'us' if top_language.start_with?('en')
+    
+    # その他の言語はデフォルト（ja）を返さずnilを返す
+    # → デフォルトに委ねる
+    nil
   end
   
   def default_url_options
