@@ -31,30 +31,13 @@ else
 fi
 
 echo "Step 2: Database setup..."
-# Prepare primary database (creates if needed and runs migrations)
-echo "Setting up primary database..."
+# Rails 8: db:prepare handles all databases automatically
+echo "Preparing all databases (primary, queue, cache)..."
 bundle exec rails db:prepare
 if [ $? -ne 0 ]; then
-    echo "ERROR: Primary database setup failed"
+    echo "ERROR: Database setup failed"
     exit 1
 fi
-
-# Prepare queue database (Solid Queue)
-echo "Setting up queue database..."
-bundle exec rails db:prepare:queue
-if [ $? -ne 0 ]; then
-    echo "ERROR: Queue database setup failed"
-    exit 1
-fi
-
-# Prepare cache database (Solid Cache)
-echo "Setting up cache database..."
-bundle exec rails db:prepare:cache
-if [ $? -ne 0 ]; then
-    echo "ERROR: Cache database setup failed"
-    exit 1
-fi
-
 echo "All databases setup completed"
 
 # Database setup is handled by migrations
