@@ -1,0 +1,306 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# US Reference Crops AI Information Fetching Script (API version)
+#
+# Usage:
+#   bin/fetch_us_reference_crop_info                        # Fetch info for all US reference crops
+#   bin/fetch_us_reference_crop_info --crop-name "Corn"     # Fetch for specific crop only
+#   bin/fetch_us_reference_crop_info --api-url http://localhost:3000  # Custom API URL
+#
+# Prerequisites:
+#   - rails db:seed executed (US reference crops exist in DB)
+#   - Web server is running (docker compose up web or rails server)
+#   - AI API key is configured (environment variable: OPENAI_API_KEY, etc.)
+#
+# Process:
+#   1. Fetch US reference crops from DB (region: 'us')
+#   2. For each crop, fetch AI information via API and save to DB
+#   3. Read all crop data from DB and output to JSON
+#   4. Save to db/fixtures/us_reference_crops.json
+
+require 'fileutils'
+require 'json'
+
+require_relative '../config/environment'
+
+# Railsの環境を読み込んだ後にnet/httpをロード
+require 'net/http'
+require 'uri'
+
+# Logger with color output
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# API Client
+class AgrrApiClient
+  def initialize(base_url)
+    @base_url = base_url
+  end
+
+  def ai_create_crop(crop_name, variety = nil)
+    uri = URI("#{@base_url}/api/v1/crops/ai_create")
+    request = Net::HTTP::Post.new(uri)
+    request['Content-Type'] = 'application/json'
+    request.body = {
+      name: crop_name,
+      variety: variety
+    }.to_json
+    
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      http.request(request)
+    end
+    
+    JSON.parse(response.body)
+  rescue => e
+    { 'error' => e.message }
+  end
+end
+
+# Parse command line options
+crop_name_filter = nil
+api_url = 'http://localhost:3000'
+
+ARGV.each_with_index do |arg, i|
+  case arg
+  when '--crop-name'
+    crop_name_filter = ARGV[i + 1] if ARGV[i + 1]
+  when '--api-url'
+    api_url = ARGV[i + 1] if ARGV[i + 1]
+  end
+end
+
+# Header
+ColorLogger.log("\n" + "=" * 80, :blue)
+ColorLogger.log("US Reference Crops AI Information Fetching Script (API version)", :blue)
+ColorLogger.log("=" * 80, :blue)
+puts ""
+ColorLogger.info("API URL: #{api_url}")
+puts ""
+
+# API client
+api_client = AgrrApiClient.new(api_url)
+
+# 1. Fetch US reference crops from DB
+ColorLogger.info("Searching for US reference crops (region: 'us')...")
+crops = Crop.where(is_reference: true, region: 'us')
+crops = crops.where(name: crop_name_filter) if crop_name_filter
+
+if crops.empty?
+  ColorLogger.error("No US reference crops found. Please run 'rails db:seed' first.")
+  exit 1
+end
+
+ColorLogger.success("Found #{crops.count} US reference crops")
+puts ""
+
+# 2. Fetch AI information for each crop
+# Track if any Japanese output is detected
+japanese_detected = false
+japanese_crops = []
+
+crops.each_with_index do |crop, index|
+  ColorLogger.log("\n[#{index + 1}/#{crops.count}] Processing: #{crop.name} (#{crop.variety})", :blue)
+  
+  # Check if data already exists
+  if crop.crop_stages.any?
+    has_requirements = crop.crop_stages.all? do |stage|
+      stage.temperature_requirement.present? ||
+      stage.sunshine_requirement.present? ||
+      stage.thermal_requirement.present?
+    end
+    
+    if has_requirements
+      ColorLogger.success("  AI information already fetched (#{crop.crop_stages.count} stages)")
+      
+      # Check for Japanese characters in stage names
+      crop.crop_stages.each do |stage|
+        if stage.name =~ /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/
+          ColorLogger.warning("  ⚠️  Japanese characters detected in stage name: #{stage.name}")
+          japanese_detected = true
+          japanese_crops << crop.name unless japanese_crops.include?(crop.name)
+        end
+      end
+      
+      next
+    end
+  end
+  
+  # Fetch AI information via API
+  ColorLogger.info("  Fetching AI information...")
+  result = api_client.ai_create_crop(crop.name, crop.variety)
+  
+  if result['error']
+    ColorLogger.warning("  AI error: #{result['error']}")
+    ColorLogger.warning("  This crop will be skipped")
+    next
+  end
+  
+  if result['success']
+    ColorLogger.success("  #{result['message']}")
+    ColorLogger.info("  - Stages: #{result['stages_count']}")
+    ColorLogger.info("  - Area per unit: #{result['area_per_unit']} m²")
+    ColorLogger.info("  - Revenue per area: $#{result['revenue_per_area']}/m²")
+    
+    # Check for Japanese characters in response
+    # Reload crop to check stage names
+    crop.reload
+    crop.crop_stages.each do |stage|
+      if stage.name =~ /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/
+        ColorLogger.warning("  ⚠️  Japanese characters detected in stage name: #{stage.name}")
+        japanese_detected = true
+        japanese_crops << crop.name unless japanese_crops.include?(crop.name)
+      end
+    end
+  else
+    ColorLogger.warning("  Failed to fetch AI information: #{result['message']}")
+  end
+  
+  # Reduce API load
+  sleep 1
+end
+
+puts ""
+ColorLogger.log("=" * 80, :blue)
+
+# Japanese detection warning
+if japanese_detected
+  puts ""
+  ColorLogger.log("⚠️  WARNING: Japanese characters detected!", :yellow)
+  ColorLogger.log("=" * 80, :yellow)
+  ColorLogger.warning("The following crops have Japanese text in their stage names:")
+  japanese_crops.each do |crop_name|
+    ColorLogger.warning("  - #{crop_name}")
+  end
+  puts ""
+  ColorLogger.warning("This is likely because the agrr CLI uses Japanese prompts internally.")
+  ColorLogger.warning("You have the following options:")
+  puts ""
+  puts "  1. Rebuild agrr binary with English prompts"
+  puts "  2. Manually edit the JSON output to translate to English"
+  puts "  3. Post-process the data with a translation script"
+  puts ""
+  ColorLogger.log("=" * 80, :yellow)
+  puts ""
+end
+
+# 3. Export data to JSON from DB
+ColorLogger.info("Exporting data to JSON format...")
+output = {}
+
+crops.reload.each do |crop|
+  unless crop.crop_stages.any?
+    ColorLogger.warning("  #{crop.name}: No stage information (skipped)")
+    next
+  end
+  
+  output[crop.name] = {
+    name: crop.name,
+    variety: crop.variety,
+    is_reference: crop.is_reference,
+    region: crop.region,
+    area_per_unit: crop.area_per_unit,
+    revenue_per_area: crop.revenue_per_area,
+    groups: crop.groups,
+    crop_stages: crop.crop_stages.order(:order).map do |stage|
+      stage_hash = {
+        name: stage.name,
+        order: stage.order
+      }
+      
+      if stage.temperature_requirement
+        stage_hash[:temperature_requirement] = {
+          base_temperature: stage.temperature_requirement.base_temperature,
+          optimal_min: stage.temperature_requirement.optimal_min,
+          optimal_max: stage.temperature_requirement.optimal_max,
+          low_stress_threshold: stage.temperature_requirement.low_stress_threshold,
+          high_stress_threshold: stage.temperature_requirement.high_stress_threshold,
+          frost_threshold: stage.temperature_requirement.frost_threshold,
+          sterility_risk_threshold: stage.temperature_requirement.sterility_risk_threshold,
+          max_temperature: stage.temperature_requirement.max_temperature
+        }
+      end
+      
+      if stage.sunshine_requirement
+        stage_hash[:sunshine_requirement] = {
+          minimum_sunshine_hours: stage.sunshine_requirement.minimum_sunshine_hours,
+          target_sunshine_hours: stage.sunshine_requirement.target_sunshine_hours
+        }
+      end
+      
+      if stage.thermal_requirement
+        stage_hash[:thermal_requirement] = {
+          required_gdd: stage.thermal_requirement.required_gdd
+        }
+      end
+      
+      stage_hash
+    end
+  }
+  
+  ColorLogger.success("  #{crop.name}: Exported #{crop.crop_stages.count} stages")
+end
+
+if output.empty?
+  ColorLogger.error("No data to export")
+  exit 1
+end
+
+# 4. Save to file
+fixture_path = Rails.root.join('db/fixtures/us_reference_crops.json')
+FileUtils.mkdir_p(File.dirname(fixture_path))
+File.write(fixture_path, JSON.pretty_generate(output))
+
+puts ""
+ColorLogger.log("=" * 80, :green)
+ColorLogger.success("Completed!")
+ColorLogger.log("=" * 80, :green)
+puts ""
+puts "📄 Saved to: #{fixture_path}"
+puts "📊 Crops: #{output.keys.count}"
+puts "📊 Total stages: #{output.values.sum { |v| v[:crop_stages].count }}"
+puts ""
+
+if japanese_detected
+  ColorLogger.log("⚠️  Japanese characters were detected. Please review the output.", :yellow)
+  puts ""
+end
+
+ColorLogger.info("Next steps:")
+puts "  1. Check the file: cat #{fixture_path} | head -n 50"
+if japanese_detected
+  puts "  2. Review and fix Japanese text if needed"
+  puts "  3. Commit to Git: git add #{fixture_path}"
+else
+  puts "  2. Commit to Git: git add #{fixture_path}"
+end
+puts "  #{japanese_detected ? '4' : '3'}. After this, 'rails db:seed' can quickly load the data"
+puts ""
+

@@ -1,0 +1,156 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Translate Japanese stage names to English for US reference crops
+
+require_relative '../config/environment'
+
+# Logger with color output
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# Japanese to English translation mapping
+# Carefully translated by AI assistant
+TRANSLATION_MAP = {
+  # Pattern 1-4: Common crop stages (grains, vegetables)
+  "播種〜発芽" => "Planting to Germination",
+  "発芽〜成長" => "Germination to Growth",
+  "成長〜成熟" => "Growth to Maturity",
+  "成熟〜収穫" => "Maturity to Harvest",
+  
+  # Pattern 5-8: Transplant crops (tomatoes, cabbage, etc.)
+  "育苗期" => "Seedling Stage",
+  "定植期" => "Transplanting Stage",
+  "生育期" => "Growing Stage",
+  "収穫期" => "Harvest Stage",
+  
+  # Pattern 9-11: Fruit trees (apples, oranges, almonds)
+  "開花期" => "Flowering Stage",
+  "果実成長期" => "Fruit Development Stage",
+  "成熟期" => "Maturity Stage",
+  
+  # Pattern 12-14: Sugar crops and perennials
+  "成長期" => "Growth Stage",
+  "肥大期" => "Bulking Stage",
+  "発芽期" => "Germination Stage",
+  
+  # Pattern 15: Lettuce seedling
+  "苗期" => "Seedling Stage",
+  
+  # Pattern 16-17: Nuts and grapes
+  "発芽〜成長初期" => "Germination to Early Growth",
+  "成長中期" => "Mid Growth",
+  
+  # Pattern 18-20: Carrots, watermelon
+  "成長〜収穫" => "Growth to Harvest",
+  "発芽〜生育初期" => "Germination to Early Growing",
+  "生育初期〜収穫" => "Early Growing to Harvest"
+}
+
+# Header
+ColorLogger.log("\n" + "=" * 80, :blue)
+ColorLogger.log("Translate US Crop Stage Names: Japanese → English", :blue)
+ColorLogger.log("=" * 80, :blue)
+puts ""
+
+# Get all US reference crops
+ColorLogger.info("Loading US reference crops...")
+crops = Crop.where(is_reference: true, region: 'us')
+
+ColorLogger.success("Found #{crops.count} US reference crops")
+puts ""
+
+# Track statistics
+total_stages = 0
+translated_stages = 0
+untranslated_stages = []
+
+# Process each crop
+crops.each do |crop|
+  stages = crop.crop_stages
+  next if stages.empty?
+  
+  crop_translated = 0
+  crop_untranslated = []
+  
+  stages.each do |stage|
+    total_stages += 1
+    
+    # Check if stage name is in Japanese
+    if stage.name =~ /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/
+      # Japanese detected, translate it
+      if TRANSLATION_MAP.key?(stage.name)
+        english_name = TRANSLATION_MAP[stage.name]
+        stage.update!(name: english_name)
+        crop_translated += 1
+        translated_stages += 1
+      else
+        # Unknown Japanese text
+        crop_untranslated << stage.name
+        untranslated_stages << { crop: crop.name, stage: stage.name }
+      end
+    end
+  end
+  
+  if crop_translated > 0
+    ColorLogger.success("#{crop.name}: Translated #{crop_translated} stages")
+  end
+  
+  if crop_untranslated.any?
+    ColorLogger.warning("#{crop.name}: Untranslated stages found:")
+    crop_untranslated.each { |name| ColorLogger.warning("  - #{name}") }
+  end
+end
+
+puts ""
+ColorLogger.log("=" * 80, :green)
+ColorLogger.success("Translation Completed!")
+ColorLogger.log("=" * 80, :green)
+puts ""
+
+ColorLogger.info("Summary:")
+puts "  Total stages: #{total_stages}"
+puts "  Translated: #{translated_stages}"
+puts "  Untranslated: #{untranslated_stages.count}"
+puts ""
+
+if untranslated_stages.any?
+  ColorLogger.warning("Untranslated stages:")
+  untranslated_stages.each do |item|
+    puts "  #{item[:crop]}: #{item[:stage]}"
+  end
+  puts ""
+  ColorLogger.warning("Please add these to TRANSLATION_MAP and re-run")
+else
+  ColorLogger.success("All stages successfully translated!")
+end
+
+puts ""
+
