@@ -145,8 +145,8 @@ docker-compose build
 # 2. データベース作成
 docker-compose run --rm web rails db:create db:migrate
 
-# 3. サンプルデータ投入
-docker-compose run --rm web rails db:seed
+# 3. データベースセットアップ（マイグレーション実行で自動的にデータも投入される）
+# db:migrate により参照データも自動投入されます
 
 # 4. サーバー起動
 docker-compose up
@@ -386,12 +386,13 @@ AGRRは複数の地域（region）をサポートしています：
 - 🇯🇵 Japan (jp) - 47農場、15作物、442,501天気レコード
 - 🇺🇸 United States (us) - 50農場、30作物、430,361天気レコード
 
-**新しい地域を追加する場合:**
-- 📖 [Region Data Creation Guide](docs/region/DATA_CREATION_GUIDE.md) - 完全な手順書（他のLLM・開発者向け）
-- 📊 [US Region Summary](docs/region/US_SUMMARY.md) - US regionの実施結果と教訓
+**データ管理:**
+- 📖 [Data Migration Guide](docs/DATA_MIGRATION_GUIDE.md) - マイグレーションによるデータ管理方法
+- 📖 [Region Data Creation Guide](docs/region/DATA_CREATION_GUIDE.md) - 新しい地域データ作成手順
+- 📊 [US Region Summary](docs/region/US_SUMMARY.md) - US region実装の詳細
 - 📚 [Region Documentation](docs/region/README.md) - Region機能の全体ドキュメント
 
-これらのドキュメントに従うことで、EU、中国、オーストラリアなどの新しい地域データを作成できます。
+すべての参照データ（マスターデータ）はデータベースマイグレーションで管理されます。`rails db:migrate`を実行するだけで、スキーマ構築とデータ投入が自動的に完了します。
 
 ---
 

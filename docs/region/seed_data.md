@@ -1,4 +1,14 @@
-# Region機能 - シードデータ設定
+# Region機能 - データマイグレーション設定
+
+## 概要
+
+AGRRでは、すべての参照データ（マスターデータ）を**データベースマイグレーション**で管理しています。
+
+従来の`db/seeds.rb`方式ではなく、マイグレーション内で一時モデルを定義してデータ投入を行います。
+
+**参照:** [データマイグレーションガイド](../DATA_MIGRATION_GUIDE.md)
+
+---
 
 ## 現在の状況
 
@@ -49,17 +59,18 @@ AGRRのシードデータ（`db/seeds.rb`）は、日本の参照データとし
 | ヒユ科 | 0.9 | 軽い連作障害（10%減収） |
 | イネ科 | 0.95 | ほとんど連作障害なし（5%減収） |
 
-## シードデータの実行
+## データマイグレーションの実行
 
 ### 初回実行
 
 ```bash
-# 開発環境
-docker compose exec web bin/rails db:seed
-
-# 本番環境
-docker compose -f docker-compose.prod.yml exec web bin/rails db:seed
+# 開発環境・本番環境共通
+docker compose exec web bin/rails db:migrate
 ```
+
+**実行されるマイグレーション:**
+- `20251018075019_seed_japan_reference_data.rb` - 日本の参照データ
+- `20251018075149_seed_united_states_reference_data.rb` - 米国の参照データ
 
 ### データの確認
 
@@ -69,19 +80,21 @@ puts 'Farms (JP): ' + Farm.reference.by_region('jp').count.to_s
 puts 'Crops (JP): ' + Crop.reference.by_region('jp').count.to_s
 puts 'Fields (JP): ' + Field.by_region('jp').count.to_s
 puts 'Rules (JP): ' + InteractionRule.reference.by_region('jp').count.to_s
+puts 'Farms (US): ' + Farm.reference.by_region('us').count.to_s
+puts 'Crops (US): ' + Crop.reference.by_region('us').count.to_s
 "
 ```
 
-### 既存データの更新
+### データの更新
 
-既存のデータベースに`region`カラムを追加した場合、シードを再実行することで自動的に`region: "jp"`が設定されます。
+既存データを更新する場合は、新しいマイグレーションを作成します。
 
 ```bash
-# マイグレーション実行後
-docker compose exec web bin/rails db:migrate
+# 新しいマイグレーション作成
+rails generate migration UpdateJapanReferenceData
 
-# シード再実行（既存データを更新）
-docker compose exec web bin/rails db:seed
+# マイグレーション実行
+rails db:migrate
 ```
 
 ## 今後の予定

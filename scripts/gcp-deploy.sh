@@ -98,22 +98,16 @@ push_image() {
     
     local image_tag="$1"
     
-    echo "DEBUG: image_tag='$image_tag'"
-    echo "DEBUG: REGION='$REGION'"
-    echo "DEBUG: PROJECT_ID='$PROJECT_ID'"
-    echo "DEBUG: IMAGE_NAME='$IMAGE_NAME'"
-    
     # Configure Docker auth
     print_status "Configuring Docker authentication..."
     gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
     
     # Push image
-    print_status "Pushing image..."
-    echo "DEBUG: About to push: '$image_tag'"
+    print_status "Pushing image: $image_tag"
     docker push "$image_tag"
     
     local latest_tag="$REGION-docker.pkg.dev/$PROJECT_ID/agrr/$IMAGE_NAME:latest"
-    echo "DEBUG: About to push latest: '$latest_tag'"
+    print_status "Pushing latest tag..."
     docker push "$latest_tag"
     
     print_status "Image pushed successfully ✓"
