@@ -378,6 +378,23 @@ MIT License
 
 ---
 
+## 📚 データ管理ドキュメント
+
+### Region Data（地域別データ）
+
+AGRRは複数の地域（region）をサポートしています：
+- 🇯🇵 Japan (jp) - 47農場、15作物、442,501天気レコード
+- 🇺🇸 United States (us) - 50農場、30作物、430,361天気レコード
+
+**新しい地域を追加する場合:**
+- 📖 [Region Data Creation Guide](docs/region/DATA_CREATION_GUIDE.md) - 完全な手順書（他のLLM・開発者向け）
+- 📊 [US Region Summary](docs/region/US_SUMMARY.md) - US regionの実施結果と教訓
+- 📚 [Region Documentation](docs/region/README.md) - Region機能の全体ドキュメント
+
+これらのドキュメントに従うことで、EU、中国、オーストラリアなどの新しい地域データを作成できます。
+
+---
+
 ## 📞 リンク
 
 - [Cloud Run Console](https://console.cloud.google.com/run?project=agrr-475323)
