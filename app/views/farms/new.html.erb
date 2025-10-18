@@ -26,7 +26,13 @@
         <div class="form-group">
           <label class="form-label"><%= t('.form.location_label') %></label>
           <div class="map-container">
-            <div id="map"></div>
+            <div id="map" 
+                 data-farm-location="<%= t('.form.map.farm_location') %>"
+                 data-map-library-load-failed="<%= t('.form.map.library_load_failed') %>"
+                 data-map-load-failed="<%= t('.form.map.load_failed') %>"
+                 data-reload-page="<%= t('.form.map.reload_page') %>"
+                 data-retry="<%= t('.form.map.retry') %>"
+                 data-map-loading="<%= t('.form.map.loading') %>"></div>
             <div class="map-placeholder" id="map-placeholder">
               <div><%= t('.form.map_loading') %></div>
             </div>

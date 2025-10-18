@@ -13,13 +13,19 @@ function waitForLeaflet(callback, maxAttempts = 100) {
   if (maxAttempts <= 0) {
     console.error('Leaflet library failed to load after maximum attempts');
     const errorPlaceholder = document.getElementById('map-placeholder');
+    const mapElement = document.getElementById('map');
+    const labels = {
+      libraryLoadFailed: mapElement?.dataset.mapLibraryLoadFailed || '地図ライブラリの読み込みに失敗しました',
+      reloadPage: mapElement?.dataset.reloadPage || 'ページを再読み込み'
+    };
+    
     if (errorPlaceholder) {
       errorPlaceholder.style.display = 'block';
       errorPlaceholder.innerHTML = `
         <div>
-          <div style="margin-bottom: 10px;">⚠️ 地図ライブラリの読み込みに失敗しました</div>
+          <div style="margin-bottom: 10px;">⚠️ ${labels.libraryLoadFailed}</div>
           <button type="button" onclick="location.reload()" class="btn btn-small">
-            🔄 ページを再読み込み
+            🔄 ${labels.reloadPage}
           </button>
         </div>
       `;
@@ -152,10 +158,13 @@ function initializeMapComponents() {
     
     tileLayer.addTo(map);
     
-    // マーカーを追加（日本語ラベル付き）
+    // マーカーを追加（国際化対応ラベル付き）
+    const mapElement = document.getElementById('map');
+    const farmLocation = mapElement?.dataset.farmLocation || '農場の位置';
+    
     console.log('Adding marker at:', defaultLat, defaultLng);
     marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-    marker.bindPopup('農場の位置').openPopup();
+    marker.bindPopup(farmLocation).openPopup();
     console.log('Marker added:', marker);
     
     // マーカーをドラッグした時の処理
@@ -318,8 +327,11 @@ window.retryMapInitialization = function() {
   
   // プレースホルダーを「読み込み中」に戻す
   const placeholder = document.getElementById('map-placeholder');
+  const mapElement = document.getElementById('map');
+  const mapLoading = mapElement?.dataset.mapLoading || '地図を読み込み中...';
+  
   if (placeholder) {
-    placeholder.innerHTML = '<div>🗺️ 地図を読み込み中...</div>';
+    placeholder.innerHTML = `<div>🗺️ ${mapLoading}</div>`;
   }
   
   // 強制的に初期化フラグをリセット
