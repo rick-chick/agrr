@@ -210,6 +210,16 @@ function drawTemperatureChart(weatherData, optimalRange) {
     window.temperatureChartInstance.destroy();
   }
   
+  // data属性から翻訳を取得
+  const labels_i18n = {
+    tempMax: ctx.dataset.tempMaxLabel || '最高気温',
+    tempMean: ctx.dataset.tempMeanLabel || '平均気温',
+    tempMin: ctx.dataset.tempMinLabel || '最低気温',
+    optimalRange: ctx.dataset.optimalRangeLabel || '最適温度範囲',
+    dateAxis: ctx.dataset.dateLabel || '日付',
+    tempAxis: ctx.dataset.tempAxisLabel || '気温 (℃)'
+  };
+  
   const dates = weatherData.map(d => d.date);
   const tempMax = weatherData.map(d => d.temperature_max);
   const tempMin = weatherData.map(d => d.temperature_min);
@@ -221,7 +231,7 @@ function drawTemperatureChart(weatherData, optimalRange) {
       labels: dates,
       datasets: [
         {
-          label: '最高気温',
+          label: labels_i18n.tempMax,
           data: tempMax,
           borderColor: '#f56565',
           backgroundColor: 'rgba(245, 101, 101, 0.1)',
@@ -229,7 +239,7 @@ function drawTemperatureChart(weatherData, optimalRange) {
           pointRadius: 2
         },
         {
-          label: '平均気温',
+          label: labels_i18n.tempMean,
           data: tempMean,
           borderColor: '#48bb78',
           backgroundColor: 'rgba(72, 187, 120, 0.1)',
@@ -237,7 +247,7 @@ function drawTemperatureChart(weatherData, optimalRange) {
           pointRadius: 2
         },
         {
-          label: '最低気温',
+          label: labels_i18n.tempMin,
           data: tempMin,
           borderColor: '#4299e1',
           backgroundColor: 'rgba(66, 153, 225, 0.1)',
@@ -267,7 +277,7 @@ function drawTemperatureChart(weatherData, optimalRange) {
               borderColor: 'rgba(72, 187, 120, 0.3)',
               borderWidth: 1,
               label: {
-                content: '最適温度範囲',
+                content: labels_i18n.optimalRange,
                 enabled: true,
                 position: 'start'
               }
@@ -280,14 +290,14 @@ function drawTemperatureChart(weatherData, optimalRange) {
           display: true,
           title: {
             display: true,
-            text: '日付'
+            text: labels_i18n.dateAxis
           }
         },
         y: {
           display: true,
           title: {
             display: true,
-            text: '気温 (℃)'
+            text: labels_i18n.tempAxis
           }
         }
       }

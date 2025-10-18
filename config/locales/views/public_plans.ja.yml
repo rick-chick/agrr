@@ -89,6 +89,7 @@ ja:
         gdd_chart_title: "GDD（積算温度）推移"
         date_label: "日付"
         cumulative_required_label: "積算GDD / 要求GDD"
+        temp_axis_label: "気温 (°C)"
       
       header:
         title: "作付け計画完成"
@@ -126,3 +127,21 @@ ja:
       stages:
         intro: "各ステージの詳細な気温条件と積算温度の達成状況を確認できます。"
         loading: "ステージ情報を読み込んでいます..."
+      
+      detail_temp:
+        temp_chart_title: "栽培期間中の気温推移"
+        optimal_days: "最適温度範囲内"
+        high_risk_days: "高温リスク日"
+        low_risk_days: "低温リスク日"
+        gdd_chart_title: "積算温度（GDD）の推移"
+        target_gdd: "目標積算温度:"
+        actual_gdd: "実際の積算温度:"
+        achievement_date: "目標達成日:"
+        temp_max: "最高気温"
+        temp_mean: "平均気温"
+        temp_min: "最低気温"
+        optimal_range: "最適温度範囲"
+        date_axis: "日付"
+        temp_axis: "気温 (℃)"
+        gdd_label: "積算温度"
+        gdd_axis: "積算温度 (℃日)"

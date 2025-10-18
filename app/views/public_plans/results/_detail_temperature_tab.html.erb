@@ -6,10 +6,16 @@
   <div class="chart-section">
     <h4 class="chart-title">
       <span class="chart-title-icon">🌡️</span>
-      <span class="chart-title-text">栽培期間中の気温推移</span>
+      <span class="chart-title-text"><%= t('public_plans.results.detail_temp.temp_chart_title') %></span>
     </h4>
     <div class="chart-container">
-      <canvas id="temperatureChart"></canvas>
+      <canvas id="temperatureChart" 
+              data-temp-max-label="<%= t('public_plans.results.detail_temp.temp_max') %>"
+              data-temp-mean-label="<%= t('public_plans.results.detail_temp.temp_mean') %>"
+              data-temp-min-label="<%= t('public_plans.results.detail_temp.temp_min') %>"
+              data-optimal-range-label="<%= t('public_plans.results.detail_temp.optimal_range') %>"
+              data-date-label="<%= t('public_plans.results.detail_temp.date_axis') %>"
+              data-temp-axis-label="<%= t('public_plans.results.detail_temp.temp_axis') %>"></canvas>
     </div>
   </div>
   
@@ -18,7 +24,7 @@
     <div class="stat-card stat-success">
       <div class="stat-icon">✅</div>
       <div class="stat-content">
-        <div class="stat-label">最適温度範囲内</div>
+        <div class="stat-label"><%= t('public_plans.results.detail_temp.optimal_days') %></div>
         <div class="stat-value" data-field="optimal_days">-</div>
       </div>
     </div>
@@ -26,7 +32,7 @@
     <div class="stat-card stat-warning">
       <div class="stat-icon">⚠️</div>
       <div class="stat-content">
-        <div class="stat-label">高温リスク日</div>
+        <div class="stat-label"><%= t('public_plans.results.detail_temp.high_risk_days') %></div>
         <div class="stat-value" data-field="high_temp_days">-</div>
       </div>
     </div>
@@ -34,7 +40,7 @@
     <div class="stat-card stat-info">
       <div class="stat-icon">❄️</div>
       <div class="stat-content">
-        <div class="stat-label">低温リスク日</div>
+        <div class="stat-label"><%= t('public_plans.results.detail_temp.low_risk_days') %></div>
         <div class="stat-value" data-field="low_temp_days">-</div>
       </div>
     </div>
@@ -44,25 +50,27 @@
   <div class="chart-section">
     <h4 class="chart-title">
       <span class="chart-title-icon">📈</span>
-      <span class="chart-title-text">積算温度（GDD）の推移</span>
+      <span class="chart-title-text"><%= t('public_plans.results.detail_temp.gdd_chart_title') %></span>
     </h4>
     <div class="chart-container">
-      <canvas id="gddChart"></canvas>
+      <canvas id="gddChart"
+              data-gdd-label="<%= t('public_plans.results.detail_temp.gdd_label') %>"
+              data-gdd-axis-label="<%= t('public_plans.results.detail_temp.gdd_axis') %>"></canvas>
     </div>
   </div>
   
   <%# GDDサマリー %>
   <div class="gdd-summary">
     <div class="gdd-summary-item">
-      <span class="gdd-label">目標積算温度:</span>
+      <span class="gdd-label"><%= t('public_plans.results.detail_temp.target_gdd') %></span>
       <span class="gdd-value" data-field="target_gdd">-</span>
     </div>
     <div class="gdd-summary-item">
-      <span class="gdd-label">実際の積算温度:</span>
+      <span class="gdd-label"><%= t('public_plans.results.detail_temp.actual_gdd') %></span>
       <span class="gdd-value gdd-actual" data-field="actual_gdd">-</span>
     </div>
     <div class="gdd-summary-item">
-      <span class="gdd-label">目標達成日:</span>
+      <span class="gdd-label"><%= t('public_plans.results.detail_temp.achievement_date') %></span>
       <span class="gdd-value" data-field="gdd_achievement_date">-</span>
     </div>
   </div>

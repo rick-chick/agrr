@@ -89,6 +89,7 @@ us:
         gdd_chart_title: "GDD (Growing Degree Days) Trends"
         date_label: "Date"
         cumulative_required_label: "Cumulative GDD / Required GDD"
+        temp_axis_label: "Temperature (°C)"
       
       header:
         title: "Crop Plan Completed"
@@ -126,3 +127,21 @@ us:
       stages:
         intro: "You can check detailed temperature conditions and GDD achievement status for each stage."
         loading: "Loading stage information..."
+      
+      detail_temp:
+        temp_chart_title: "Temperature Trends During Cultivation"
+        optimal_days: "Within Optimal Range"
+        high_risk_days: "High Temp Risk Days"
+        low_risk_days: "Low Temp Risk Days"
+        gdd_chart_title: "GDD Trends"
+        target_gdd: "Target GDD:"
+        actual_gdd: "Actual GDD:"
+        achievement_date: "Target Achievement Date:"
+        temp_max: "Max Temperature"
+        temp_mean: "Mean Temperature"
+        temp_min: "Min Temperature"
+        optimal_range: "Optimal Range"
+        date_axis: "Date"
+        temp_axis: "Temperature (℃)"
+        gdd_label: "Accumulated GDD"
+        gdd_axis: "Accumulated GDD (℃·day)"
