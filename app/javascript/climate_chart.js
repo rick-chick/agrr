@@ -649,6 +649,10 @@ class ClimateChart {
       return annotations;
     }
     
+    // data属性から翻訳を取得
+    const container = document.getElementById('climate-chart-display');
+    const stageOptimalLabel = container?.dataset.stageOptimalLabel || '適正:';
+    
     // GDDデータから各ステージの開始・終了日を特定
     const stageColors = [
       { optimal: 'rgba(16, 185, 129, 0.12)', stress: 'rgba(239, 68, 68, 0.08)' },  // 緑系
@@ -703,7 +707,7 @@ class ClimateChart {
             borderColor: 'rgba(16, 185, 129, 0.8)',
             borderWidth: 1,
             label: {
-              content: `🟢 ${stage.name}\n適正: ${stage.optimal_temperature_min}°C - ${stage.optimal_temperature_max}°C`,
+              content: `🟢 ${stage.name}\n${stageOptimalLabel} ${stage.optimal_temperature_min}°C - ${stage.optimal_temperature_max}°C`,
               display: true,
               position: { x: 'center', y: 'start' },
               color: '#065f46',
@@ -791,7 +795,7 @@ class ClimateChart {
           borderColor: 'rgba(16, 185, 129, 0.6)',
           borderWidth: 1,
           label: {
-            content: `🟢 ${stage.name}\n適正: ${stage.optimal_temperature_min}°C - ${stage.optimal_temperature_max}°C`,
+            content: `🟢 ${stage.name}\n${stageOptimalLabel} ${stage.optimal_temperature_min}°C - ${stage.optimal_temperature_max}°C`,
             display: true,
             position: { x: 'center', y: 'start' },
             color: '#065f46',
