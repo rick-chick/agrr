@@ -28,14 +28,15 @@ Rails 8 + SQLite + Google Cloud Run
 ## 開発環境
 
 ```bash
-# 起動
+# 起動（自動的にマイグレーション実行）
 docker-compose up
-
-# データベースセットアップ
-docker-compose run --rm web rails db:migrate
 
 # テスト実行
 docker-compose run --rm test
+
+# データベースリセット
+docker-compose down -v
+docker-compose up
 ```
 
 ---
