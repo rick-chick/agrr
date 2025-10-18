@@ -1,11 +1,46 @@
-# データマイグレーション方式
+# データ管理ガイド
 
-## 基本方針
+## 概要
 
-AGRRでは、マスターデータ（参照農場・作物など）を**マイグレーション**で管理します。
+AGRRでは、すべてのマスターデータ（参照農場・作物など）を**データベースマイグレーション**で管理します。
 
 ```bash
-rails db:migrate  # これだけで構造とデータが揃う
+# 開発環境
+docker-compose up  # 自動的にマイグレーション実行
+
+# 本番環境
+./scripts/gcp-deploy.sh  # デプロイ時に自動実行
+```
+
+**特徴:**
+- `db/seeds.rb`は使用しない
+- スキーマとデータが一緒に管理される
+- 環境間で一貫した動作
+
+---
+
+## デプロイ時の動作
+
+### 開発環境（docker-compose up）
+```
+1. コンテナ起動
+2. schema.rb削除（クリーンな状態）
+3. rails db:migrate 実行
+   → 未適用マイグレーションを実行
+   → データ投入も自動
+4. サーバー起動
+```
+
+### 本番環境（GCP Cloud Run）
+```
+1. Docker build（.dockerignoreでschema.rb除外）
+2. Cloud Runデプロイ
+3. コンテナ起動時：
+   - GCSからDBリストア（あれば）
+   - rails db:migrate 実行
+   → 未適用マイグレーションを実行
+   → データ投入も自動
+4. サーバー起動
 ```
 
 ---
@@ -111,6 +146,32 @@ class UpdateCropRevenue < ActiveRecord::Migration[8.0]
            &.update!(revenue_per_area: 5000.0)
   end
 end
+```
+
+---
+
+---
+
+## デプロイコマンド
+
+### 開発環境
+```bash
+# 起動（自動的にマイグレーション実行）
+docker-compose up
+
+# データリセット
+docker-compose down -v
+docker-compose up
+```
+
+### 本番環境
+```bash
+# デプロイ
+./scripts/gcp-deploy.sh
+
+# データベースリセット（初回デプロイ時のみ）
+gsutil rm -r gs://agrr-production-db/**
+./scripts/gcp-deploy.sh
 ```
 
 ---
