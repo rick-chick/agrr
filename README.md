@@ -10,7 +10,7 @@ Rails 8 + SQLite + Google Cloud Run
 ./scripts/gcp-deploy.sh
 ```
 
-詳細: [MIGRATION_DEPLOYMENT_GUIDE.md](MIGRATION_DEPLOYMENT_GUIDE.md)
+詳細: [データ管理ガイド](docs/DATA_MIGRATION_GUIDE.md)
 
 ---
 
