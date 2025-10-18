@@ -164,7 +164,11 @@ import { createConsumer } from "@rails/actioncable"
     const elapsedTimeElement = document.getElementById('elapsed-time');
     if (!elapsedTimeElement) return;
     
-    startTime = Date.now();
+    // タイマーが既に動いている場合は、startTimeをリセットしない
+    // （ページ再描画時も経過時間を維持）
+    if (!startTime) {
+      startTime = Date.now();
+    }
     
     // 既存のタイマーがあればクリア
     if (elapsedTimer) {
@@ -215,6 +219,7 @@ import { createConsumer } from "@rails/actioncable"
       consumer.disconnect();
       consumer = null;
     }
+    startTime = null;  // タイマーのリセット
     currentPlanId = null;  // リセット
   }
   
