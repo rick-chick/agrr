@@ -31,18 +31,14 @@ else
 fi
 
 echo "Step 2: Database setup..."
-# Rails 8: db:prepare handles all databases automatically
-echo "Preparing all databases (primary, queue, cache)..."
-bundle exec rails db:prepare
+# Run migrations for all databases (primary, queue, cache)
+echo "Running migrations for all databases (primary, queue, cache)..."
+bundle exec rails db:migrate
 if [ $? -ne 0 ]; then
-    echo "ERROR: Database setup failed"
+    echo "ERROR: Database migration failed"
     exit 1
 fi
-echo "All databases setup completed"
-
-# Database setup is handled by migrations
-echo "Step 3: Database setup via migrations..."
-echo "✅ All data is managed through migrations (db:prepare handles this automatically)"
+echo "All databases migrated successfully"
 
 echo "Step 4: Starting Litestream replication..."
 litestream replicate -config /etc/litestream.yml &
