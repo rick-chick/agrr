@@ -35,6 +35,13 @@ us:
         longitude_label: "Longitude"
         longitude_placeholder: "139.6503"
         longitude_help: "e.g., 139.6503 (near Tokyo Station)"
+        map:
+          farm_location: "Farm Location"
+          library_load_failed: "Failed to load map library"
+          load_failed: "Failed to load map"
+          reload_page: "Reload Page"
+          retry: "Retry"
+          loading: "Loading map..."
         submit: "Create Farm"
         cancel: "Cancel"
       errors:

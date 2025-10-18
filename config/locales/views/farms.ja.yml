@@ -35,6 +35,13 @@ ja:
         longitude_label: "経度"
         longitude_placeholder: "139.6503"
         longitude_help: "例: 139.6503 (東京駅付近)"
+        map:
+          farm_location: "農場の位置"
+          library_load_failed: "地図ライブラリの読み込みに失敗しました"
+          load_failed: "地図の読み込みに失敗しました"
+          reload_page: "ページを再読み込み"
+          retry: "再試行"
+          loading: "地図を読み込み中..."
         submit: "農場を作成"
         cancel: "キャンセル"
       errors:
