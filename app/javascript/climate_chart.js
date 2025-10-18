@@ -263,10 +263,14 @@ class ClimateChart {
                   const original = Chart.defaults.plugins.legend.labels.generateLabels;
                   const labels = original.call(this, chart);
                   
-                  // 温度帯の凡例を追加
+                  // 温度帯の凡例を追加（translatedLabelsから取得）
+                  const container = document.getElementById('climate-chart-display');
+                  const optimalText = container?.dataset.optimalZone || '🟢 適正温度帯';
+                  const stressText = container?.dataset.stressZone || '🟠 限界温度帯（ストレス）';
+                  
                   labels.push(
                     {
-                      text: '🟢 適正温度帯',
+                      text: optimalText,
                       fillStyle: 'rgba(16, 185, 129, 0.3)',
                       strokeStyle: 'rgba(16, 185, 129, 0.8)',
                       lineWidth: 2,
@@ -274,7 +278,7 @@ class ClimateChart {
                       index: labels.length
                     },
                     {
-                      text: '🟠 限界温度帯（ストレス）',
+                      text: stressText,
                       fillStyle: 'rgba(239, 68, 68, 0.2)',
                       strokeStyle: 'rgba(239, 68, 68, 0.6)',
                       lineWidth: 2,
@@ -293,7 +297,7 @@ class ClimateChart {
             x: {
               title: {
                 display: true,
-                text: '日付'
+                text: container?.dataset.dateLabel || '日付'
               },
               // 月曜以外のティックを除外
               afterBuildTicks: function(scale) {
@@ -322,7 +326,7 @@ class ClimateChart {
             y: {
               title: {
                 display: true,
-                text: '気温 (°C)'
+                text: container?.dataset.tempChartAxisLabel || '気温 (°C)'
               }
             }
           }
@@ -605,18 +609,18 @@ class ClimateChart {
    * @param {Object} data - APIデータ
    * @returns {Array} 凡例用データセット
    */
-  createTemperatureZoneLegend(data) {
+  createTemperatureZoneLegend(data, labels) {
     // 凡例表示用の非表示データセットを返す
     return [
       {
-        label: '適正温度帯',
+        label: labels?.optimalZone || '適正温度帯',
         data: [],
         hidden: true,
         pointRadius: 0,
         pointHoverRadius: 0
       },
       {
-        label: '限界温度帯（ストレス）',
+        label: labels?.stressZone || '限界温度帯（ストレス）',
         data: [],
         hidden: true,
         pointRadius: 0,
