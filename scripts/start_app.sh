@@ -31,20 +31,10 @@ else
 fi
 
 echo "Step 2: Database setup..."
-# Prepare main database (creates if needed and runs migrations)
+# Prepare all databases (creates if needed and runs migrations)
 bundle exec rails db:prepare
 if [ $? -ne 0 ]; then
     echo "ERROR: Database setup failed"
-    exit 1
-fi
-
-# Ensure Solid Queue schema is up-to-date
-# Delete old queue database and recreate with latest schema
-echo "Updating Solid Queue schema..."
-rm -f /tmp/production_queue.sqlite3
-bundle exec rails db:prepare
-if [ $? -ne 0 ]; then
-    echo "ERROR: Solid Queue database setup failed"
     exit 1
 fi
 echo "Database setup completed"
