@@ -147,7 +147,6 @@ EOF
         --min-instances 0 \
         --max-instances 1 \
         --timeout 900 \
-        --startup-cpu-boost \
         --service-account cloud-run-agrr@agrr-475323.iam.gserviceaccount.com \
         --env-vars-file="$env_file" \
         --project $PROJECT_ID
