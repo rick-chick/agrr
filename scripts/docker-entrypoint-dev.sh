@@ -4,9 +4,9 @@ set -e
 # サーバーPIDファイルを削除
 rm -f /app/tmp/pids/server.pid
 
-# すべてのDBをセットアップ（primary, queue, cache）
-echo "Preparing all databases (primary, queue, cache)..."
-bundle exec rails db:prepare
+# すべてのDBをマイグレーション実行（primary, queue, cache）
+echo "Running migrations for all databases (primary, queue, cache)..."
+bundle exec rails db:migrate
 
 # Railsサーバー起動
 exec "$@"
