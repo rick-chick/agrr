@@ -1,0 +1,39 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ManageAGRRPolicies",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:GetPolicy",
+                "iam:DeletePolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:DeletePolicyVersion"
+            ],
+            "Resource": "arn:aws:iam::817924014562:policy/AGRR-*"
+        },
+        {
+            "Sid": "ListPolicies",
+            "Effect": "Allow",
+            "Action": "iam:ListPolicies",
+            "Resource": "*"
+        },
+        {
+            "Sid": "AttachDetachPoliciesToSelf",
+            "Effect": "Allow",
+            "Action": [
+                "iam:AttachUserPolicy",
+                "iam:DetachUserPolicy"
+            ],
+            "Resource": "arn:aws:iam::817924014562:user/agrr-admin"
+        },
+        {
+            "Sid": "ListUserPolicies",
+            "Effect": "Allow",
+            "Action": "iam:ListAttachedUserPolicies",
+            "Resource": "*"
+        }
+    ]
+}
