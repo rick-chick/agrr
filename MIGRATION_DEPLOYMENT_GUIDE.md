@@ -31,7 +31,7 @@ rails db:migrate  # スキーマ作成 + データ投入
 1. Docker build（schema.rbは含まれない）
 2. Cloud Run デプロイ
 3. コンテナ起動時：
-   - rails db:prepare 実行
+   - rails db:migrate 実行
    - 未適用のマイグレーション自動実行
    - データ投入も自動
 4. サーバー起動

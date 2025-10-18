@@ -10,27 +10,47 @@ rails db:migrate  # これだけで構造とデータが揃う
 
 ---
 
-## 一時モデル方式
+## 一時モデル方式（必須）
 
-マイグレーション内で一時的なActiveRecordクラスを定義します。
+**重要:** マイグレーション内で一時的なActiveRecordクラスを定義します。
 
 ```ruby
 class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
-  # 一時モデル定義
+  # ✅ 一時モデル定義（必須）
   class TempFarm < ActiveRecord::Base
     self.table_name = 'farms'
   end
   
   def up
-    # 一時モデルでデータ投入
+    # ✅ 一時モデルでデータ投入
     TempFarm.create!(name: '北海道', region: 'jp', ...)
   end
 end
 ```
 
-**理由:**
-- モデルクラスの変更に影響されない
-- マイグレーション実行時点のテーブル構造のみに依存
+### なぜ一時モデルが必要か
+
+**❌ アプリケーションモデルを直接使うと:**
+```ruby
+# NG例
+def up
+  Farm.create!(name: '北海道', ...)  # ❌
+end
+```
+→ Farmモデルが後で変更されると、古いマイグレーションが壊れる
+
+**✅ 一時モデルを使うと:**
+```ruby
+# OK例
+class TempFarm < ActiveRecord::Base
+  self.table_name = 'farms'
+end
+
+def up
+  TempFarm.create!(name: '北海道', ...)  # ✅
+end
+```
+→ マイグレーション実行時点のテーブル構造のみに依存するため安全
 
 ---
 
