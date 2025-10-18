@@ -4,11 +4,9 @@
 
 set -e
 
-# テストDBが存在しない場合、または古い場合は準備する
-if [ ! -f "storage/test.sqlite3" ] || [ "db/schema.rb" -nt "storage/test.sqlite3" ]; then
-  echo "==> Test DB準備中..."
-  bundle exec rails db:test:prepare
-fi
+# すべてのテストDBをセットアップ（primary, queue, cache）
+echo "==> Preparing test databases (primary, queue, cache)..."
+bundle exec rails db:prepare
 
 # 渡されたコマンドを実行
 exec "$@"

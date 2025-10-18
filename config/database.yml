@@ -7,8 +7,17 @@ default: &default
   timeout: 5000
 
 development:
-  <<: *default
-  database: storage/development.sqlite3
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    database: storage/development_cache.sqlite3
+    migrations_paths: db/cache_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -17,16 +26,17 @@ development:
 # IMPORTANT: Tests should be run in isolated test container with separate storage volume.
 # Use: docker compose run --rm test bundle exec rails test
 test:
-  <<: *default
-  database: storage/test.sqlite3
-  # Additional safety: Prevent schema copy from development
-  # Tests will use db/schema.rb instead of copying from development database
-  prepared_statements: false
-
-# Docker environment (for local development with Docker)
-docker:
-  <<: *default
-  database: storage/docker.sqlite3
+  primary:
+    <<: *default
+    database: storage/test.sqlite3
+  queue:
+    <<: *default
+    database: storage/test_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    database: storage/test_cache.sqlite3
+    migrations_paths: db/cache_migrate
 
 # AWS Test environment (SQLite with persistent storage)
 aws_test:
