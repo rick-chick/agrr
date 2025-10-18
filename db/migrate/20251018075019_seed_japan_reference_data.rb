@@ -363,19 +363,25 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
           { name: "#{farm_prefix}_第3圃場", area: 800.0, daily_fixed_cost: 2500.0 }
         ]
         
-        fields_data.first(farm_index % 2 + 2).each do |field_data|
-          field = TempField.find_or_initialize_by(farm_id: farm.id, name: field_data[:name])
-          field.assign_attributes(
-            user_id: farm.user_id,
-            area: field_data[:area],
-            daily_fixed_cost: field_data[:daily_fixed_cost],
-            latitude: farm.latitude ? farm.latitude + rand(-0.01..0.01) : nil,
-            longitude: farm.longitude ? farm.longitude + rand(-0.01..0.01) : nil,
-            region: 'jp'
-          )
-          field.save!
-          field_count += 1
+      fields_data.first(farm_index % 2 + 2).each do |field_data|
+        field = TempField.find_or_initialize_by(farm_id: farm.id, name: field_data[:name])
+        attrs = {
+          user_id: farm.user_id,
+          area: field_data[:area],
+          daily_fixed_cost: field_data[:daily_fixed_cost]
+        }
+        # latitude/longitudeカラムが存在する場合のみ設定
+        if TempField.column_names.include?('latitude')
+          attrs[:latitude] = farm.latitude ? farm.latitude + rand(-0.01..0.01) : nil
+          attrs[:longitude] = farm.longitude ? farm.longitude + rand(-0.01..0.01) : nil
         end
+        if TempField.column_names.include?('region')
+          attrs[:region] = 'jp'
+        end
+        field.assign_attributes(attrs)
+        field.save!
+        field_count += 1
+      end
       end
       
       field_count
