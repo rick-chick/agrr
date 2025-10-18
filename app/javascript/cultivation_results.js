@@ -315,6 +315,13 @@ function drawGddChart(gddData) {
     window.gddChartInstance.destroy();
   }
   
+  // data属性から翻訳を取得
+  const labels_i18n = {
+    gddLabel: ctx.dataset.gddLabel || '積算温度',
+    gddAxis: ctx.dataset.gddAxisLabel || '積算温度 (℃日)',
+    dateAxis: ctx.dataset.dateLabel || '日付'
+  };
+  
   const dates = gddData.map(d => d.date);
   const accumulatedGdd = gddData.map(d => d.accumulated_gdd);
   const targetGdd = gddData.length > 0 ? gddData[0].target_gdd : 0;
@@ -325,7 +332,7 @@ function drawGddChart(gddData) {
       labels: dates,
       datasets: [
         {
-          label: '積算温度',
+          label: labels_i18n.gddLabel,
           data: accumulatedGdd,
           borderColor: '#667eea',
           backgroundColor: 'rgba(102, 126, 234, 0.2)',
@@ -369,14 +376,14 @@ function drawGddChart(gddData) {
           display: true,
           title: {
             display: true,
-            text: '日付'
+            text: labels_i18n.dateAxis
           }
         },
         y: {
           display: true,
           title: {
             display: true,
-            text: '積算温度 (℃日)'
+            text: labels_i18n.gddAxis
           }
         }
       }
