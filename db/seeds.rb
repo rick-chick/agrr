@@ -406,14 +406,32 @@ end
 
 puts "✅ Created #{InteractionRule.count} interaction rules"
 
-puts "🎉 Seeding completed!"
+puts "🎉 Japan region seeding completed!"
+
+# Load US region seeds
+puts ""
+puts "=" * 80
+puts "Loading US region seeds..."
+puts "=" * 80
+load Rails.root.join('db/seeds/us_seeds.rb')
+
+puts ""
+puts "=" * 80
+puts "🎉 All seeding completed!"
+puts "=" * 80
 puts ""
 puts "Summary:"
 puts "  Admin Users: #{User.where(admin: true).count}"
-puts "  Reference Farms: #{Farm.where(is_reference: true).count}"
-puts "  Reference Crops: #{Crop.reference.count}"
+puts "  Total Reference Farms: #{Farm.where(is_reference: true).count}"
+puts "    - Japan (JP): #{Farm.where(is_reference: true, region: 'jp').count}"
+puts "    - United States (US): #{Farm.where(is_reference: true, region: 'us').count}"
+puts "  Total Reference Crops: #{Crop.reference.count}"
+puts "    - Japan (JP): #{Crop.where(is_reference: true, region: 'jp').count}"
+puts "    - United States (US): #{Crop.where(is_reference: true, region: 'us').count}"
 puts "  Sample Fields: #{Field.count}"
-puts "  Interaction Rules: #{InteractionRule.count}"
+puts "  Total Interaction Rules: #{InteractionRule.count}"
+puts "    - Japan (JP): #{InteractionRule.where(region: 'jp').count}"
+puts "    - United States (US): #{InteractionRule.where(region: 'us').count}"
 
 
 
