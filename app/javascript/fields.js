@@ -13,10 +13,10 @@ function waitForLeaflet(callback, maxAttempts = 100) {
   if (maxAttempts <= 0) {
     console.error('Leaflet library failed to load after maximum attempts');
     const errorPlaceholder = document.getElementById('map-placeholder');
-    const mapElement = document.getElementById('map');
+    const mapEl = document.getElementById('map');
     const labels = {
-      libraryLoadFailed: mapElement?.dataset.mapLibraryLoadFailed || '地図ライブラリの読み込みに失敗しました',
-      reloadPage: mapElement?.dataset.reloadPage || 'ページを再読み込み'
+      libraryLoadFailed: mapEl?.dataset.mapLibraryLoadFailed || '地図ライブラリの読み込みに失敗しました',
+      reloadPage: mapEl?.dataset.reloadPage || 'ページを再読み込み'
     };
     
     if (errorPlaceholder) {
@@ -31,9 +31,8 @@ function waitForLeaflet(callback, maxAttempts = 100) {
       `;
     }
     // 地図要素を非表示にする
-    const mapElement = document.getElementById('map');
-    if (mapElement) {
-      mapElement.style.display = 'none';
+    if (mapEl) {
+      mapEl.style.display = 'none';
     }
     return;
   }
@@ -159,7 +158,6 @@ function initializeMapComponents() {
     tileLayer.addTo(map);
     
     // マーカーを追加（国際化対応ラベル付き）
-    const mapElement = document.getElementById('map');
     const farmLocation = mapElement?.dataset.farmLocation || '農場の位置';
     
     console.log('Adding marker at:', defaultLat, defaultLng);
@@ -327,7 +325,6 @@ window.retryMapInitialization = function() {
   
   // プレースホルダーを「読み込み中」に戻す
   const placeholder = document.getElementById('map-placeholder');
-  const mapElement = document.getElementById('map');
   const mapLoading = mapElement?.dataset.mapLoading || '地図を読み込み中...';
   
   if (placeholder) {
