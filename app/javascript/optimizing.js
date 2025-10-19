@@ -16,6 +16,15 @@ import { createConsumer } from "@rails/actioncable"
     const isOptimizingPage = document.querySelector('.status-badge.optimizing');
     
     if (!isOptimizingPage) {
+      console.log('ℹ️ Not on optimizing page, skipping WebSocket connection');
+      cleanupSubscription();
+      return;
+    }
+    
+    // 結果ページでは実行しない（custom_gantt_chart.jsが管理）
+    const isResultsPage = window.location.pathname.includes('/results');
+    if (isResultsPage) {
+      console.log('ℹ️ On results page, optimizing.js WebSocket skipped');
       cleanupSubscription();
       return;
     }
@@ -132,14 +141,42 @@ import { createConsumer } from "@rails/actioncable"
               console.log('🚀 Redirecting now...');
               window.location.href = '/public_plans/results';
             }, 500);
+          } else if (data.status === 'adjusted') {
+            // adjusted は結果ページでのみ処理（optimizing.jsでは無視）
+            console.log('ℹ️ Received adjusted status, but this is handled by custom_gantt_chart.js');
           } else if (data.status === 'failed') {
-            console.error('❌ Optimization failed:', data.message);
-            // スピナーを非表示
+            console.error('❌ Optimization failed:', data.phase_message);
+            
+            // スピナーと経過時間を非表示
             const spinner = document.getElementById('loading-spinner');
             if (spinner) {
               spinner.classList.add('hidden');
             }
-            // アラートは表示せず、画面上にエラーを表示
+            
+            const durationHint = document.getElementById('progress-duration-hint');
+            if (durationHint) {
+              durationHint.style.display = 'none';
+            }
+            
+            const elapsedTime = document.getElementById('elapsed-time');
+            if (elapsedTime) {
+              elapsedTime.style.display = 'none';
+            }
+            
+            // エラーメッセージエリアを表示
+            const errorContainer = document.getElementById('error-message-container');
+            const errorDetail = document.getElementById('error-detail');
+            
+            if (errorContainer && errorDetail) {
+              errorDetail.textContent = data.phase_message || data.message || '不明なエラーが発生しました。';
+              errorContainer.style.display = 'flex';
+            }
+            
+            // タイマーを停止
+            if (elapsedTimer) {
+              clearInterval(elapsedTimer);
+              elapsedTimer = null;
+            }
           } else {
             console.log('ℹ️ Status is not completed or failed:', data.status);
           }

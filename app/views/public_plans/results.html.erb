@@ -44,4 +44,7 @@
 </div>
 
 <%# Chart.js は npm で管理され application.js にバンドル済み %>
-<%# cultivation_results.js も application.js にバンドル済み %>
+
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "cultivation_results", defer: true %>
+<% end %>

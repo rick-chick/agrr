@@ -103,5 +103,8 @@
 </div>
 
 <!-- Styles are loaded from app/assets/stylesheets/features/public-plans.css via layout -->
-<!-- JavaScript is loaded from app/javascript/crop_selection.js via application.js -->
+
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "crop_selection", defer: true %>
+<% end %>
 
