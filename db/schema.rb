@@ -187,6 +187,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_130418) do
     t.index ["user_id"], name: "index_fields_on_user_id"
   end
 
+  create_table "free_crop_plans", force: :cascade do |t|
+    t.integer "farm_id", null: false
+    t.integer "crop_id", null: false
+    t.string "session_id"
+    t.integer "area_sqm", null: false
+    t.string "status", default: "pending", null: false
+    t.text "plan_data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id"], name: "index_free_crop_plans_on_crop_id"
+    t.index ["farm_id"], name: "index_free_crop_plans_on_farm_id"
+    t.index ["session_id"], name: "index_free_crop_plans_on_session_id"
+    t.index ["status"], name: "index_free_crop_plans_on_status"
+  end
+
   create_table "interaction_rules", force: :cascade do |t|
     t.string "rule_type", null: false
     t.string "source_group", null: false
@@ -219,16 +234,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_130418) do
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["session_id"], name: "index_sessions_on_session_id", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
-  end
-
-  create_table "solid_cable_messages", force: :cascade do |t|
-    t.binary "channel", limit: 1024, null: false
-    t.binary "payload", limit: 536870912, null: false
-    t.datetime "created_at", null: false
-    t.integer "channel_hash", limit: 8, null: false
-    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
-    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
-    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
   create_table "solid_cache_entries", force: :cascade do |t|
@@ -327,6 +332,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_130418) do
   add_foreign_key "field_cultivations", "cultivation_plans"
   add_foreign_key "fields", "farms"
   add_foreign_key "fields", "users"
+  add_foreign_key "free_crop_plans", "crops"
+  add_foreign_key "free_crop_plans", "farms"
   add_foreign_key "interaction_rules", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"

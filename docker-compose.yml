@@ -41,9 +41,11 @@ services:
     entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
-      - storage_test_data:/app/storage  # テスト専用ストレージ（開発環境と完全分離）
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
+    tmpfs:
+      - /app/storage:mode=777  # テスト専用の一時ストレージ（開発環境と完全分離）
+      - /app/tmp:mode=777
     environment:
       - RAILS_ENV=test
       - DATABASE_URL=sqlite3:storage/test.sqlite3
@@ -75,4 +77,3 @@ volumes:
   bundle_data:
   bundle_cache:
   storage_dev_data:   # 開発環境用永続ストレージ
-  storage_test_data:  # テスト環境用永続ストレージ（完全分離）
