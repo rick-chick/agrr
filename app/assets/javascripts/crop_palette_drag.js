@@ -197,11 +197,18 @@ function initCropCardDrag() {
   console.log(`🌱 作物カード ${cropCards.length} 枚にドラッグ設定中...`);
 
   cropCards.forEach(card => {
+    // 既にイベントリスナーが設定されている場合はスキップ
+    if (card.dataset.dragInitialized === 'true') {
+      console.log('⏭️  カードは既に初期化済み:', card.dataset.cropName);
+      return;
+    }
+    
     let draggedSVGBar = null;
     let dragData = null;
     
     // mousedownでドラッグ開始
     card.addEventListener('mousedown', (e) => {
+      console.log('🎯 [DRAG START] mousedownイベント発火:', card.dataset.cropName);
       e.preventDefault();
       
       // ドラッグデータを設定
@@ -293,7 +300,8 @@ function initCropCardDrag() {
       };
       
       const mouseUpHandler = (upEvent) => {
-        console.log('🏁 ドラッグ終了');
+        console.log('🏁 [DRAG END] mouseupイベント発火');
+        console.log('🏁 [DRAG END] イベントタイムスタンプ:', new Date().toISOString());
         card.classList.remove('dragging');
         
         // SVGバーを削除
@@ -307,10 +315,17 @@ function initCropCardDrag() {
         svgPoint.y = upEvent.clientY;
         const svgCoords = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
         
+        console.log('📍 [DROP] ドロップ位置計算:', { x: svgCoords.x, y: svgCoords.y });
+        
         const dropInfo = calculateDropInfo(svgCoords);
+        console.log('📍 [DROP] 計算結果:', dropInfo);
+        
         if (dropInfo) {
+          console.log('✅ [DROP] ドロップ位置が有効 - addCropToSchedule呼び出し');
           // 作物を追加
           addCropToSchedule(dragData, dropInfo);
+        } else {
+          console.log('❌ [DROP] ドロップ位置が無効（範囲外）');
         }
         
         // イベントリスナーを削除
@@ -325,6 +340,10 @@ function initCropCardDrag() {
       document.addEventListener('mousemove', mouseMoveHandler);
       document.addEventListener('mouseup', mouseUpHandler);
     });
+    
+    // 初期化済みフラグを設定
+    card.dataset.dragInitialized = 'true';
+    console.log('✅ カード初期化完了:', card.dataset.cropName);
   });
 }
 
@@ -387,8 +406,21 @@ function calculateDropInfo(svgCoords) {
   };
 }
 
+// リクエスト中フラグ（二重送信防止）
+let isAddingCrop = false;
+
 // 作物をスケジュールに追加
 function addCropToSchedule(cropData, dropInfo) {
+  console.log('🚀 [ADD CROP] 関数呼び出し開始');
+  console.log('🚀 [ADD CROP] cropData:', cropData);
+  console.log('🚀 [ADD CROP] dropInfo:', dropInfo);
+  
+  // 二重送信防止チェック
+  if (isAddingCrop) {
+    console.warn('⚠️ [DUPLICATE REQUEST BLOCKED] 既にリクエスト処理中です');
+    return;
+  }
+  
   // ganttStateから計画IDを取得
   if (typeof ganttState === 'undefined' || !ganttState.cultivation_plan_id) {
     alert('エラー: 計画IDが取得できません');
@@ -396,6 +428,10 @@ function addCropToSchedule(cropData, dropInfo) {
   }
 
   const cultivation_plan_id = ganttState.cultivation_plan_id;
+  
+  // リクエスト中フラグを設定
+  isAddingCrop = true;
+  console.log('🔒 [LOCK] リクエスト中フラグを設定');
 
   // ローディング表示
   showLoadingOverlay();
@@ -409,8 +445,11 @@ function addCropToSchedule(cropData, dropInfo) {
     start_date: dropInfo.start_date
   };
   
-  console.log('📤 作物追加リクエスト:', requestData);
-  console.log('📤 field_id type:', typeof requestData.field_id, '値:', requestData.field_id);
+  const requestTimestamp = new Date().toISOString();
+  console.log('📤 [REQUEST] 作物追加リクエスト送信:', requestTimestamp);
+  console.log('📤 [REQUEST] URL:', url);
+  console.log('📤 [REQUEST] データ:', requestData);
+  console.log('📤 [REQUEST] field_id type:', typeof requestData.field_id, '値:', requestData.field_id);
 
   fetch(url, {
     method: 'POST',
@@ -420,12 +459,21 @@ function addCropToSchedule(cropData, dropInfo) {
     },
     body: JSON.stringify(requestData)
   })
-  .then(response => response.json())
+  .then(response => {
+    console.log('📥 [RESPONSE] レスポンス受信:', new Date().toISOString());
+    console.log('📥 [RESPONSE] ステータス:', response.status);
+    return response.json();
+  })
   .then(data => {
+    console.log('📥 [RESPONSE] データ:', data);
     if (data.success) {
+      console.log('✅ [SUCCESS] 作物追加成功');
       // Action Cable経由で更新を待機
+      // 成功時はAction Cableの更新後にフラグを解除（一時的にここで解除）
+      isAddingCrop = false;
+      console.log('🔓 [UNLOCK] リクエスト中フラグを解除（成功）');
     } else {
-      console.error('❌ 作物の追加に失敗しました:', data.message);
+      console.error('❌ [ERROR] 作物の追加に失敗しました:', data.message);
       
       // 技術的な詳細があればコンソールに出力
       if (data.technical_details) {
@@ -434,13 +482,22 @@ function addCropToSchedule(cropData, dropInfo) {
       
       hideLoadingOverlay();
       
+      // フラグを解除
+      isAddingCrop = false;
+      console.log('🔓 [UNLOCK] リクエスト中フラグを解除（エラー）');
+      
       // ユーザーフレンドリーなエラーメッセージを表示
       showErrorMessage(data.message || '作物の追加に失敗しました');
     }
   })
   .catch(error => {
-    console.error('❌ APIエラー:', error);
+    console.error('❌ [ERROR] APIエラー:', error);
     hideLoadingOverlay();
+    
+    // フラグを解除
+    isAddingCrop = false;
+    console.log('🔓 [UNLOCK] リクエスト中フラグを解除（例外）');
+    
     showErrorMessage('通信エラーが発生しました。もう一度お試しください。');
   });
 }
