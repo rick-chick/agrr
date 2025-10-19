@@ -195,6 +195,9 @@ Starting Rails server...
 
 ## 🔍 トラブルシューティング
 
+> **詳細なトラブルシューティング**: [docs/ASSET_LOADING_GUIDE.md](docs/ASSET_LOADING_GUIDE.md) を参照してください。  
+> レイアウトファイルの確認方法、よくある間違いの詳細な解説があります。
+
 ### アセットが読み込まれない
 
 1. **esbuildのビルド確認**:
