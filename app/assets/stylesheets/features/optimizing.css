@@ -106,7 +106,8 @@
 }
 
 .spacer-for-fixed-bar {
-  height: 100px;
+  height: 120px; /* 固定バーの高さ分の余白を確保 */
+  margin-bottom: var(--space-4);
 }
 
 /* ============================================

@@ -11,7 +11,7 @@
 
 .public-plans-wrapper {
   background: var(--color-gray-50);
-  min-height: 100vh;
+  min-height: calc(100vh - var(--navbar-height));
   padding: var(--space-3) 0 0 0;
   box-sizing: border-box;
   width: 100%;

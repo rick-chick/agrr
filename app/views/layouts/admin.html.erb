@@ -28,19 +28,26 @@
   <body>
     <%= render "shared/navbar" %>
     
-    <div class="admin-container">
-      <% if notice %>
-        <div class="alert alert-success"><%= notice %></div>
-      <% end %>
-      
-      <% if alert %>
-        <div class="alert alert-error"><%= alert %></div>
-      <% end %>
-      
-      <%= yield %>
-    </div>
+    <main class="main-content">
+      <div class="admin-container">
+        <% if notice %>
+          <div class="alert alert-success"><%= notice %></div>
+        <% end %>
+        
+        <% if alert %>
+          <div class="alert alert-error"><%= alert %></div>
+        <% end %>
+        
+        <%= yield %>
+      </div>
+    </main>
     
     <%= yield :javascripts %>
+    
+    <!-- Development: Client-side logging to server -->
+    <% if Rails.env.development? %>
+      <%= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
+    <% end %>
   </body>
 </html>
 

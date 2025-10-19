@@ -34,21 +34,28 @@
   <!-- Page-specific JavaScripts -->
   <%= yield :javascripts %>
   
+  <!-- Development: Client-side logging to server -->
+  <% if Rails.env.development? %>
+    <%= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
+  <% end %>
+  
 </head>
 <body>
   <%= render "shared/navbar" %>
   
-  <div class="container">
-    <% if flash[:notice] %>
-      <div class="alert alert-success"><%= flash[:notice] %></div>
-    <% end %>
-    
-    <% if flash[:alert] %>
-      <div class="alert alert-danger"><%= flash[:alert] %></div>
-    <% end %>
-    
-    <%= yield %>
-  </div>
+  <main class="main-content">
+    <div class="container">
+      <% if flash[:notice] %>
+        <div class="alert alert-success"><%= flash[:notice] %></div>
+      <% end %>
+      
+      <% if flash[:alert] %>
+        <div class="alert alert-danger"><%= flash[:alert] %></div>
+      <% end %>
+      
+      <%= yield %>
+    </div>
+  </main>
   
   <%= render "shared/footer" %>
 </body>
