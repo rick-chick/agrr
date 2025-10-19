@@ -1,0 +1,92 @@
+in:
+  # तारीख और समय प्रारूप (Date/Time formats)
+  time:
+    formats:
+      long: "%d %B %Y %H:%M"
+      short: "%d/%m %H:%M"
+  date:
+    formats:
+      long: "%d %B %Y"
+      short: "%d/%m"
+  
+  # सामान्य (Common)
+  common:
+    save: "सहेजें"
+    cancel: "रद्द करें"
+    edit: "संपादित करें"
+    delete: "हटाएं"
+    back: "वापस"
+    confirm: "पुष्टि करें"
+    search: "खोजें"
+    create: "बनाएं"
+    update: "अपडेट करें"
+    show: "विवरण"
+    new: "नया बनाएं"
+    destroy: "हटाएं"
+    actions: "कार्रवाई"
+    submit: "जमा करें"
+    close: "बंद करें"
+    loading: "लोड हो रहा है..."
+    yes: "हां"
+    no: "नहीं"
+
+  # नेविगेशन (Navigation)
+  nav:
+    home: "मुखपृष्ठ"
+    farms: "खेत प्रबंधन"
+    crops: "फसल प्रबंधन"
+    plans: "खेती योजना"
+    public_plans: "मुफ्त खेती योजना"
+    about: "AGRR के बारे में"
+    contact: "संपर्क करें"
+    login: "लॉगिन"
+    logout: "लॉगआउट"
+    admin: "व्यवस्थापक"
+    language: "भाषा"
+
+  # फुटर (Footer)
+  footer:
+    about: "AGRR के बारे में"
+    privacy: "गोपनीयता नीति"
+    terms: "उपयोग की शर्तें"
+    contact: "संपर्क करें"
+    copyright: "© 2025 AGRR. सर्वाधिकार सुरक्षित।"
+
+  # फ्लैश संदेश (Flash messages)
+  flash:
+    actions:
+      create:
+        notice: "%{resource_name} बनाया गया"
+      update:
+        notice: "%{resource_name} अपडेट किया गया"
+      destroy:
+        notice: "%{resource_name} हटाया गया"
+
+  # तारीख और समय (Date/Time)
+  date:
+    formats:
+      default: "%d %B %Y"
+      short: "%d/%m"
+      long: "%d %B %Y (%a)"
+    day_names: [रविवार, सोमवार, मंगलवार, बुधवार, गुरुवार, शुक्रवार, शनिवार]
+    abbr_day_names: [रवि, सोम, मंगल, बुध, गुरु, शुक्र, शनि]
+    month_names: [~, जनवरी, फरवरी, मार्च, अप्रैल, मई, जून, जुलाई, अगस्त, सितंबर, अक्टूबर, नवंबर, दिसंबर]
+    abbr_month_names: [~, जन, फर, मार्च, अप्रै, मई, जून, जुला, अग, सित, अक्टू, नव, दिस]
+
+  time:
+    formats:
+      default: "%d %B %Y %H:%M"
+      short: "%d/%m %H:%M"
+      long: "%d %B %Y %H:%M:%S"
+    am: "पूर्वाह्न"
+    pm: "अपराह्न"
+
+  # ActiveRecord
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "सत्यापन विफल: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "%{record} मौजूद है इसलिए हटाया नहीं जा सकता"
+          has_many: "%{record} मौजूद है इसलिए हटाया नहीं जा सकता"
+

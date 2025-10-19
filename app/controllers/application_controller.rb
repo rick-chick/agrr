@@ -138,7 +138,8 @@ class ApplicationController < ActionController::Base
   def available_locales
     [
       { code: 'ja', name: '日本語', flag: '🇯🇵' },
-      { code: 'us', name: 'English', flag: '🇺🇸' }
+      { code: 'us', name: 'English', flag: '🇺🇸' },
+      { code: 'in', name: 'हिंदी', flag: '🇮🇳' }
     ]
   end
 end

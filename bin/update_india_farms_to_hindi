@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Update India farm names from English to Hindi
+
+require_relative '../config/environment'
+
+farm_name_mapping = {
+  'Ludhiana, Punjab' => 'लुधियाना, पंजाब',
+  'Amritsar, Punjab' => 'अमृतसर, पंजाब',
+  'Jalandhar, Punjab' => 'जालंधर, पंजाब',
+  'Karnal, Haryana' => 'करनाल, हरियाणा',
+  'Hisar, Haryana' => 'हिसार, हरियाणा',
+  'Rohtak, Haryana' => 'रोहतक, हरियाणा',
+  'Meerut, Uttar Pradesh' => 'मेरठ, उत्तर प्रदेश',
+  'Lucknow, Uttar Pradesh' => 'लखनऊ, उत्तर प्रदेश',
+  'Kanpur, Uttar Pradesh' => 'कानपुर, उत्तर प्रदेश',
+  'Gorakhpur, Uttar Pradesh' => 'गोरखपुर, उत्तर प्रदेश',
+  'Varanasi, Uttar Pradesh' => 'वाराणसी, उत्तर प्रदेश',
+  'Patna, Bihar' => 'पटना, बिहार',
+  'Muzaffarpur, Bihar' => 'मुजफ्फरपुर, बिहार',
+  'Kolkata, West Bengal' => 'कोलकाता, पश्चिम बंगाल',
+  'Bardhaman, West Bengal' => 'बर्धमान, पश्चिम बंगाल',
+  'Bhubaneswar, Odisha' => 'भुवनेश्वर, ओडिशा',
+  'Cuttack, Odisha' => 'कटक, ओडिशा',
+  'Guwahati, Assam' => 'गुवाहाटी, असम',
+  'Raipur, Chhattisgarh' => 'रायपुर, छत्तीसगढ़',
+  'Nagpur, Maharashtra' => 'नागपुर, महाराष्ट्र',
+  'Nashik, Maharashtra' => 'नासिक, महाराष्ट्र',
+  'Aurangabad, Maharashtra' => 'औरंगाबाद, महाराष्ट्र',
+  'Ahmednagar, Maharashtra' => 'अहमदनगर, महाराष्ट्र',
+  'Ahmedabad, Gujarat' => 'अहमदाबाद, गुजरात',
+  'Surat, Gujarat' => 'सूरत, गुजरात',
+  'Rajkot, Gujarat' => 'राजकोट, गुजरात',
+  'Vadodara, Gujarat' => 'वडोदरा, गुजरात',
+  'Jaipur, Rajasthan' => 'जयपुर, राजस्थान',
+  'Jodhpur, Rajasthan' => 'जोधपुर, राजस्थान',
+  'Kota, Rajasthan' => 'कोटा, राजस्थान',
+  'Indore, Madhya Pradesh' => 'इंदौर, मध्य प्रदेश',
+  'Bhopal, Madhya Pradesh' => 'भोपाल, मध्य प्रदेश',
+  'Jabalpur, Madhya Pradesh' => 'जबलपुर, मध्य प्रदेश',
+  'Gwalior, Madhya Pradesh' => 'ग्वालियर, मध्य प्रदेश',
+  'Hyderabad, Telangana' => 'हैदराबाद, तेलंगाना',
+  'Warangal, Telangana' => 'वारंगल, तेलंगाना',
+  'Vijayawada, Andhra Pradesh' => 'विजयवाड़ा, आंध्र प्रदेश',
+  'Visakhapatnam, Andhra Pradesh' => 'विशाखापट्टनम, आंध्र प्रदेश',
+  'Guntur, Andhra Pradesh' => 'गुंटूर, आंध्र प्रदेश',
+  'Bangalore, Karnataka' => 'बेंगलुरु, कर्नाटक',
+  'Mysore, Karnataka' => 'मैसूर, कर्नाटक',
+  'Mangalore, Karnataka' => 'मैंगलोर, कर्नाटक',
+  'Hubli, Karnataka' => 'हुबली, कर्नाटक',
+  'Chennai, Tamil Nadu' => 'चेन्नई, तमिल नाडु',
+  'Madurai, Tamil Nadu' => 'मदुरै, तमिल नाडु',
+  'Coimbatore, Tamil Nadu' => 'कोयम्बटूर, तमिल नाडु',
+  'Tiruchirappalli, Tamil Nadu' => 'तिरुचिरापल्ली, तमिल नाडु',
+  'Salem, Tamil Nadu' => 'सेलम, तमिल नाडु',
+  'Kochi, Kerala' => 'कोच्चि, केरल',
+  'Trivandrum, Kerala' => 'तिरुवनंतपुरम, केरल'
+}
+
+puts "\n" + "=" * 80
+puts "Update India Farm Names: English → Hindi"
+puts "=" * 80
+puts ""
+
+updated = 0
+farm_name_mapping.each do |eng_name, hindi_name|
+  Farm.where(region: 'in', is_reference: true, name: eng_name).update_all(name: hindi_name)
+  
+  if Farm.where(region: 'in', is_reference: true, name: hindi_name).exists?
+    puts "✅ #{eng_name} → #{hindi_name}"
+    updated += 1
+  end
+end
+
+puts ""
+puts "=" * 80
+puts "✅ Completed!"
+puts "=" * 80
+puts ""
+puts "Updated #{updated} farms"
+puts ""
+
