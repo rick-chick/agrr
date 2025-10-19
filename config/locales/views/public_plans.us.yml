@@ -60,7 +60,7 @@ us:
       title: "Crop Planning"
       status_badge: "Optimizing"
       crops_count: "%{count} crop types"
-      hint: "💡 You will be automatically redirected to the results when optimization is complete"
+      hint: ""
       error_message: "Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan."
       progress:
         elapsed_time: "⏳ %{time} sec"
