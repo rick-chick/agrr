@@ -83,6 +83,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ドラッグ中はトランジションとフィルター効果を無効化（追随性を重視） */
+.custom-gantt-chart .cultivation-bar.dragging {
+  transition: none !important;
+}
+
+.custom-gantt-chart .cultivation-bar.dragging * {
+  transition: none !important;
+}
+
+.custom-gantt-chart .cultivation-bar.dragging .bar-bg {
+  filter: none !important;
+}
+
 .custom-gantt-chart .bar-bg {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
@@ -241,6 +254,42 @@
 #gantt-chart-container::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--color-secondary-dark) 0%, #653a8b 100%);
   border-color: #e5e7eb;
+}
+
+/* ============================================
+   作物を追加ボタン
+   ============================================ */
+.custom-gantt-chart .add-crop-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-gantt-chart .add-button-bg {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.2));
+}
+
+.custom-gantt-chart .add-button-bg:hover {
+  filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.4));
+  transform: translateY(-1px);
+}
+
+.custom-gantt-chart .add-button-icon,
+.custom-gantt-chart .add-button-text {
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+/* パレットハイライトアニメーション */
+@keyframes pulseHighlight {
+  0% {
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: -8px 0 24px rgba(102, 126, 234, 0.5);
+  }
+  100% {
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* ============================================

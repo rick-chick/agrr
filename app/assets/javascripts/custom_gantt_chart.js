@@ -262,7 +262,8 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     width: config.width,
     height: config.height,
     class: 'custom-gantt-chart',
-    viewBox: `0 0 ${config.width} ${config.height}`
+    viewBox: `0 0 ${config.width} ${config.height}`,
+    style: 'pointer-events: auto;'
   });
 
   // グラデーション定義を追加
@@ -284,12 +285,13 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   
   svg.appendChild(defs);
 
-  // 背景（ドラッグ&ドロップを通過させる）
+  // 背景（ドラッグ&ドロップを受け取る）
   svg.appendChild(createSVGElement('rect', {
     width: config.width,
     height: config.height,
     fill: 'url(#bgGradient)',
-    style: 'pointer-events: none;'
+    style: 'pointer-events: all;',
+    class: 'gantt-background'
   }));
 
   // タイムラインヘッダーを描画
@@ -330,8 +332,17 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   // SVGのドラッグ&ドロップイベントは crop_palette_drag.js で処理されるため、
   // ここでは既存の栽培バーのドラッグのみ処理する
   
-  // ハイライト要素を再利用するための変数
-  let highlightRect = null;
+  // ハイライト矩形を最初から作成（再利用のため）
+  let highlightRect = createSVGElement('rect', {
+    class: 'field-row-highlight',
+    fill: '#FFEB3B',
+    opacity: '0',
+    'pointer-events': 'none',
+    x: 0,
+    width: config.width
+  });
+  svg.insertBefore(highlightRect, svg.firstChild);
+  
   let lastTargetFieldIndex = -1;
   
   // 要素の参照をキャッシュ
@@ -342,19 +353,42 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   let barWidth = 0;
   let barHeight = 0;
   
+  // SVGの座標変換用（グローバルハンドラーから参照）
+  let svgElement = svg; // SVG要素を保存
+  let initialMouseSvgOffset = { x: 0, y: 0 }; // ドラッグ開始時のマウスと要素のオフセット（SVG座標系）
+  
+  // スクリーン座標をSVG座標に変換するヘルパー関数
+  function screenToSVGCoords(svgElem, screenX, screenY) {
+    if (!svgElem) {
+      console.warn('SVG element is null, returning screen coordinates');
+      return { x: screenX, y: screenY };
+    }
+    const pt = svgElem.createSVGPoint();
+    pt.x = screenX;
+    pt.y = screenY;
+    const ctm = svgElem.getScreenCTM();
+    if (ctm) {
+      return pt.matrixTransform(ctm.inverse());
+    }
+    return { x: screenX, y: screenY };
+  }
+  
   // マウス移動（ドラッグ中）
   ganttState.globalMouseMoveHandler = function(e) {
     if (!ganttState.draggedBar) return;
     
-    const deltaX = e.clientX - ganttState.dragStartX;
-    const deltaY = e.clientY - ganttState.dragStartY;
+    const mouseDeltaX = e.clientX - ganttState.dragStartX;
+    const mouseDeltaY = e.clientY - ganttState.dragStartY;
     
     // ドラッグ開始判定（まだ開始していない場合）
     if (!ganttState.isDragging) {
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const distance = Math.sqrt(mouseDeltaX * mouseDeltaX + mouseDeltaY * mouseDeltaY);
       if (distance > dragThreshold) {
         // ドラッグ開始
         ganttState.isDragging = true;
+        
+        // トランジションを無効化（追随性を重視）
+        ganttState.draggedBar.classList.add('dragging');
         
         // 要素の参照をキャッシュ（1回だけ）
         cachedBarBg = ganttState.draggedBar.querySelector('.bar-bg');
@@ -371,6 +405,12 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
           // サイズも1回だけ取得
           barWidth = parseFloat(cachedBarBg.getAttribute('width'));
           barHeight = parseFloat(cachedBarBg.getAttribute('height'));
+          
+          // マウスダウン位置をSVG座標に変換
+          const startSvgCoords = screenToSVGCoords(svgElement, ganttState.dragStartX, ganttState.dragStartY);
+          // 要素の左上とマウス位置のオフセットを記録（SVG座標系で）
+          initialMouseSvgOffset.x = startSvgCoords.x - ganttState.originalBarX;
+          initialMouseSvgOffset.y = startSvgCoords.y - parseFloat(cachedBarBg.getAttribute('y'));
         }
       } else {
         // まだ閾値に達していない
@@ -378,11 +418,17 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       }
     }
     
-    // 新しい位置を計算（直接DOM更新）
-    const newX = ganttState.originalBarX + deltaX;
+    // 現在のマウス位置をSVG座標に変換
+    const currentSvgCoords = screenToSVGCoords(svgElement, e.clientX, e.clientY);
+    
+    // マウスの下にバーの角（ドラッグ開始位置）が来るように位置を計算
+    const newX = currentSvgCoords.x - initialMouseSvgOffset.x;
+    const newY = currentSvgCoords.y - initialMouseSvgOffset.y;
     
     // Y方向の移動から移動先の圃場インデックスを計算
     const ROW_HEIGHT = 70;
+    const originalBarY = parseFloat(cachedBarBg.getAttribute('data-original-y'));
+    const deltaY = newY - originalBarY;
     const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
     const targetFieldIndex = Math.max(0, Math.min(
       ganttState.originalFieldIndex + fieldIndexChange,
@@ -394,43 +440,26 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       const HEADER_HEIGHT = 60;
       const highlightY = HEADER_HEIGHT + (targetFieldIndex * ROW_HEIGHT);
       
-      // 圃場が変わる場合のみハイライト
+      // 圃場が変わる場合のみハイライト表示
       if (targetFieldIndex !== ganttState.originalFieldIndex) {
-        if (!highlightRect) {
-          // 初回のみ作成
-          highlightRect = createSVGElement('rect', {
-            class: 'field-row-highlight',
-            fill: '#FFEB3B',
-            opacity: '0.4',
-            'pointer-events': 'none'
-          });
-          svg.insertBefore(highlightRect, svg.firstChild);
-        }
-        // 位置とサイズを更新（作成せずに再利用）
-        highlightRect.setAttribute('x', 0);
+        // 位置とサイズを更新（再利用）
         highlightRect.setAttribute('y', highlightY);
-        highlightRect.setAttribute('width', config.width);
         highlightRect.setAttribute('height', ROW_HEIGHT);
+        highlightRect.setAttribute('opacity', '0.4');
       } else {
-        // 元の圃場に戻った場合はハイライトを削除
-        if (highlightRect) {
-          highlightRect.remove();
-          highlightRect = null;
-        }
+        // 元の圃場に戻った場合はハイライトを非表示
+        highlightRect.setAttribute('opacity', '0');
       }
       
       lastTargetFieldIndex = targetFieldIndex;
     }
     
-    // バーの位置を更新（キャッシュした要素を使用）
+    // SVG属性を直接更新（transitionは無効化済みなので高速）
     if (cachedBarBg) {
-      const originalBarY = parseFloat(cachedBarBg.getAttribute('data-original-y'));
-      const newY = originalBarY + deltaY;
-      
       cachedBarBg.setAttribute('x', newX);
       cachedBarBg.setAttribute('y', newY);
       
-      // ラベルと削除ボタンの位置も更新（キャッシュした要素）
+      // ラベルと削除ボタンも更新
       if (cachedLabel) {
         cachedLabel.setAttribute('x', newX + (barWidth / 2));
         cachedLabel.setAttribute('y', newY + (barHeight / 2) + 5);
@@ -451,43 +480,54 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   ganttState.globalMouseUpHandler = function(e) {
     if (!ganttState.draggedBar) return;
     
-    // ハイライトを削除（キャッシュした要素を使用）
-    if (highlightRect) {
-      highlightRect.remove();
-      highlightRect = null;
-    }
+    // ハイライトを非表示（削除せずに再利用のため残す）
+    highlightRect.setAttribute('opacity', '0');
     
     const cultivation_id = ganttState.draggedBar.getAttribute('data-id');
     const originalFieldName = ganttState.draggedBar.getAttribute('data-field');
     
-    // 新しい開始日を計算（キャッシュした要素を使用）
-    if (!cachedBarBg) {
-      ganttState.draggedBar = null;
-      ganttState.isDragging = false;
-      return;
-    }
-    
-    // configを再定義（スコープの問題を解決）
+    // 現在の位置から新しい日付を計算（SVG属性は既に更新済み）
     const ROW_HEIGHT = 70;
     const MARGIN_LEFT = 80;
     
-    const newX = parseFloat(cachedBarBg.getAttribute('x'));
-    const svg = document.querySelector('svg.custom-gantt-chart');
-    const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - 40 : 1080;
-    const totalDays = daysBetween(ganttState.planStartDate, ganttState.planEndDate);
-    const daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
-    const newStartDate = new Date(ganttState.planStartDate);
-    newStartDate.setDate(newStartDate.getDate() + daysFromStart);
+    let newX, newFieldIndex, newFieldName, daysFromStart, newStartDate;
     
-    // Y方向の移動から新しい圃場を判定
-    const deltaY = e.clientY - ganttState.dragStartY;
-    const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
-    const newFieldIndex = Math.max(0, Math.min(
-      ganttState.originalFieldIndex + fieldIndexChange,
-      ganttState.fieldGroups.length - 1
-    ));
-    
-    const newFieldName = ganttState.fieldGroups[newFieldIndex].fieldName;
+    if (cachedBarBg) {
+      // 現在のSVG座標から計算
+      newX = parseFloat(cachedBarBg.getAttribute('x'));
+      const currentY = parseFloat(cachedBarBg.getAttribute('y'));
+      const originalBarY = parseFloat(cachedBarBg.getAttribute('data-original-y'));
+      
+      // 日付計算
+      const svg = document.querySelector('svg.custom-gantt-chart');
+      const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - 40 : 1080;
+      const totalDays = daysBetween(ganttState.planStartDate, ganttState.planEndDate);
+      daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
+      newStartDate = new Date(ganttState.planStartDate);
+      newStartDate.setDate(newStartDate.getDate() + daysFromStart);
+      
+      // 圃場計算
+      const deltaY = currentY - originalBarY;
+      const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
+      newFieldIndex = Math.max(0, Math.min(
+        ganttState.originalFieldIndex + fieldIndexChange,
+        ganttState.fieldGroups.length - 1
+      ));
+      
+      // 配列の範囲チェック
+      if (newFieldIndex >= 0 && newFieldIndex < ganttState.fieldGroups.length) {
+        newFieldName = ganttState.fieldGroups[newFieldIndex].fieldName;
+      } else {
+        newFieldName = originalFieldName; // フォールバック
+        newFieldIndex = ganttState.originalFieldIndex;
+      }
+    } else {
+      // フォールバック（通常は実行されない）
+      newX = ganttState.originalBarX;
+      newFieldIndex = ganttState.originalFieldIndex;
+      newFieldName = originalFieldName;
+      newStartDate = ganttState.planStartDate;
+    }
     
     // ⭐ 重要: 実際にドラッグが行われた場合のみ処理
     // クリック操作（isDragging = false）では最適化を実行しない
@@ -516,12 +556,18 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       console.log('ℹ️ クリック操作のため最適化スキップ');
     }
     
-    // ドラッグ状態をリセット（キャッシュした要素を使用）
-    if (cachedBarBg) {
-      cachedBarBg.style.cursor = 'grab';
-      cachedBarBg.setAttribute('opacity', '0.95');
-      cachedBarBg.setAttribute('stroke-width', '2.5');
-      cachedBarBg.removeAttribute('stroke-dasharray');
+    // ドラッグ終了時のビジュアルリセット
+    if (ganttState.draggedBar) {
+      // トランジションを再有効化（draggingクラスを削除）
+      ganttState.draggedBar.classList.remove('dragging');
+      
+      // カーソルと視覚効果をリセット
+      if (cachedBarBg) {
+        cachedBarBg.style.cursor = 'grab';
+        cachedBarBg.setAttribute('opacity', '0.95');
+        cachedBarBg.setAttribute('stroke-width', '2.5');
+        cachedBarBg.removeAttribute('stroke-dasharray');
+      }
     }
     
     // キャッシュをクリア
@@ -896,17 +942,6 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
     'data-field': group.fieldName
   });
 
-  // 背景（偶数行）（ドラッグ&ドロップを通過させる）
-  if (index % 2 === 0) {
-    rowGroup.appendChild(createSVGElement('rect', {
-      x: 0,
-      y: y,
-      width: config.width,
-      height: config.rowHeight,
-      fill: '#F9FAFB',
-      style: 'pointer-events: none;'
-    }));
-  }
 
   // 圃場ラベル（左側）
   const fieldNumber = group.fieldName.replace(/[^\d]/g, '');
@@ -931,12 +966,150 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
     style: 'pointer-events: none;'
   }));
 
+  // 「作物を追加」ボタンを描画
+  renderAddCropButton(rowGroup, config, group, y);
+
   // 各栽培のバーを描画
   group.cultivations.forEach((cultivation, cultIndex) => {
     renderCultivationBar(rowGroup, config, cultivation, y, planStartDate, totalDays, chartWidth);
   });
 
   svg.appendChild(rowGroup);
+}
+
+// 「作物を追加」ボタンを描画
+function renderAddCropButton(parentGroup, config, group, rowY) {
+  const buttonGroup = createSVGElement('g', {
+    class: 'add-crop-button',
+    style: 'cursor: pointer;',
+    'data-field-name': group.fieldName,
+    'data-field-id': group.fieldId
+  });
+
+  const buttonX = 55;
+  const buttonY = rowY + (config.rowHeight / 2);
+  const buttonWidth = 100;
+  const buttonHeight = 36;
+
+  // ボタン背景（角丸矩形）
+  const buttonBg = createSVGElement('rect', {
+    x: buttonX,
+    y: buttonY - (buttonHeight / 2),
+    width: buttonWidth,
+    height: buttonHeight,
+    rx: 18,
+    ry: 18,
+    fill: 'url(#addButtonGradient)',
+    stroke: '#667eea',
+    'stroke-width': '2',
+    class: 'add-button-bg',
+    opacity: '0.95'
+  });
+
+  // グラデーション定義を追加（初回のみ）
+  if (!document.querySelector('#addButtonGradient')) {
+    const defs = parentGroup.ownerSVGElement.querySelector('defs') || createSVGElement('defs');
+    if (!parentGroup.ownerSVGElement.querySelector('defs')) {
+      parentGroup.ownerSVGElement.appendChild(defs);
+    }
+    
+    const gradient = createSVGElement('linearGradient', {
+      id: 'addButtonGradient',
+      x1: '0%',
+      y1: '0%',
+      x2: '100%',
+      y2: '100%'
+    });
+    gradient.innerHTML = `
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.15" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.25" />
+    `;
+    defs.appendChild(gradient);
+  }
+
+  // ホバー効果
+  buttonBg.addEventListener('mouseenter', function() {
+    this.setAttribute('opacity', '1');
+    this.setAttribute('stroke-width', '2.5');
+  });
+
+  buttonBg.addEventListener('mouseleave', function() {
+    this.setAttribute('opacity', '0.95');
+    this.setAttribute('stroke-width', '2');
+  });
+
+  buttonGroup.appendChild(buttonBg);
+
+  // プラス記号
+  const plusIcon = createSVGElement('text', {
+    x: buttonX + 15,
+    y: buttonY + 5,
+    class: 'add-button-icon',
+    'text-anchor': 'middle',
+    'font-size': '18',
+    'font-weight': 'bold',
+    fill: '#667eea',
+    style: 'pointer-events: none;'
+  }, '+');
+
+  buttonGroup.appendChild(plusIcon);
+
+  // ボタンテキスト
+  const buttonText = createSVGElement('text', {
+    x: buttonX + 58,
+    y: buttonY + 5,
+    class: 'add-button-text',
+    'text-anchor': 'middle',
+    'font-size': '12',
+    'font-weight': '600',
+    fill: '#667eea',
+    style: 'pointer-events: none;'
+  }, '作物を追加');
+
+  buttonGroup.appendChild(buttonText);
+
+  // クリックイベント
+  buttonGroup.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 作物パレットを開く
+    openCropPalette(group.fieldName);
+  });
+
+  parentGroup.appendChild(buttonGroup);
+}
+
+// 作物パレットを開く
+function openCropPalette(fieldName) {
+  const palettePanel = document.getElementById('crop-palette-panel');
+  const toggleBtn = document.getElementById('crop-palette-toggle');
+  
+  if (!palettePanel) {
+    console.warn('作物パレットが見つかりません');
+    return;
+  }
+
+  // パネルが閉じている場合は開く
+  if (palettePanel.classList.contains('collapsed')) {
+    palettePanel.classList.remove('collapsed');
+    if (toggleBtn) {
+      toggleBtn.querySelector('.toggle-icon').style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // パネルをハイライト（視覚的フィードバック）
+  palettePanel.style.animation = 'none';
+  setTimeout(() => {
+    palettePanel.style.animation = 'pulseHighlight 0.6s ease-in-out';
+  }, 10);
+
+  // アニメーション終了後にリセット
+  setTimeout(() => {
+    palettePanel.style.animation = '';
+  }, 600);
+
+  console.log(`🌱 圃場「${fieldName}」に作物を追加するため、パレットを開きました`);
 }
 
 // 栽培バーを描画
