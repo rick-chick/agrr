@@ -15,7 +15,7 @@ test_farm:
   name: テスト農場
   latitude: 35.0
   longitude: 139.0
-  is_reference: true
+  is_reference: false
   weather_data_status: completed
 
 two:

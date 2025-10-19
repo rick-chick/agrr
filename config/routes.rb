@@ -93,6 +93,10 @@ Rails.application.routes.draw do
           resources :cultivation_plans, only: [] do
             member do
               post :adjust
+              post :add_crop
+              post :add_field
+              delete 'remove_field/:field_id', action: :remove_field, as: :remove_field
+              get :data
             end
           end
         end
