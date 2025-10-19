@@ -9,7 +9,13 @@ function toggleCropPalette() {
   const panel = document.getElementById('crop-palette-panel');
   const toggleBtn = document.getElementById('crop-palette-toggle');
   
+  console.log('🔄 [CropPalette] トグル実行:', { 
+    panelExists: !!panel, 
+    btnExists: !!toggleBtn 
+  });
+  
   if (!panel) {
+    console.error('❌ [CropPalette] パネルが見つかりません');
     return;
   }
   
@@ -27,14 +33,24 @@ function toggleCropPalette() {
   // ローカルストレージに状態を保存
   const isCollapsed = panel.classList.contains('collapsed');
   localStorage.setItem('cropPaletteCollapsed', isCollapsed);
+  console.log('💾 [CropPalette] 状態保存:', isCollapsed ? '閉じた' : '開いた');
 }
 
 // 初期化関数
 function initializeCropPalette() {
+  console.log('🌱 [CropPalette] 初期化開始...', { initialized: cropPaletteInitialized });
+  
   const palettePanel = document.getElementById('crop-palette-panel');
   if (!palettePanel) {
+    console.warn('⚠️ [CropPalette] パネルが見つからないため初期化をスキップ');
     return;
   }
+
+  console.log('📋 [CropPalette] パネル発見:', {
+    id: palettePanel.id,
+    classes: palettePanel.className,
+    visible: palettePanel.offsetParent !== null
+  });
 
   // トグルボタンの設定
   setupToggleButton();
@@ -46,6 +62,7 @@ function initializeCropPalette() {
   initGanttDropZone();
   
   cropPaletteInitialized = true;
+  console.log('✅ [CropPalette] 初期化完了');
 }
 
 // トグルボタンの設定
@@ -53,7 +70,13 @@ function setupToggleButton() {
   const toggleBtn = document.getElementById('crop-palette-toggle');
   const panel = document.getElementById('crop-palette-panel');
   
+  console.log('🔧 [CropPalette] ボタン設定開始:', { 
+    btnExists: !!toggleBtn, 
+    panelExists: !!panel 
+  });
+  
   if (!toggleBtn || !panel) {
+    console.error('❌ [CropPalette] ボタンまたはパネルが見つかりません');
     return;
   }
 
@@ -65,6 +88,7 @@ function setupToggleButton() {
   newToggleBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
+    console.log('👆 [CropPalette] クリックイベント発火');
     toggleCropPalette();
   });
 
@@ -81,6 +105,8 @@ function setupToggleButton() {
 
   // 保存された状態を復元
   const savedState = localStorage.getItem('cropPaletteCollapsed');
+  console.log('💾 [CropPalette] localStorage読込:', savedState);
+  
   if (savedState === 'true') {
     panel.classList.add('collapsed');
     
@@ -89,7 +115,24 @@ function setupToggleButton() {
     if (icon) {
       icon.style.transform = 'rotate(180deg)';
     }
+    console.log('📦 [CropPalette] 閉じた状態を復元');
+  } else {
+    // 初期状態では開いている（collapsedクラスを確実に削除）
+    panel.classList.remove('collapsed');
+    
+    const icon = newToggleBtn.querySelector('.toggle-icon');
+    if (icon) {
+      icon.style.transform = 'rotate(0deg)';
+    }
+    console.log('📦 [CropPalette] 開いた状態を設定');
   }
+  
+  console.log('✅ [CropPalette] ボタン設定完了:', {
+    collapsed: panel.classList.contains('collapsed'),
+    visible: panel.offsetParent !== null,
+    display: window.getComputedStyle(panel).display,
+    visibility: window.getComputedStyle(panel).visibility
+  });
 }
 
 // 初期化関数
@@ -107,7 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Turbo対応
 if (typeof Turbo !== 'undefined') {
   document.addEventListener('turbo:load', () => {
+    console.log('🔄 [CropPalette] turbo:load イベント検出');
+    // Turboでページ遷移した場合は初期化フラグをリセット
+    cropPaletteInitialized = false;
     tryInitialize();
+  });
+  
+  // Turboによるページ離脱を検出
+  document.addEventListener('turbo:before-cache', () => {
+    console.log('💾 [CropPalette] turbo:before-cache - 状態保存');
   });
 }
 
@@ -324,8 +375,13 @@ function calculateDropInfo(svgCoords) {
   const startDate = new Date(planStartDate);
   startDate.setDate(startDate.getDate() + daysFromStart);
 
+  // field_idを正規化（window.normalizeFieldIdを使用）
+  const normalizedFieldId = typeof window.normalizeFieldId === 'function' 
+    ? window.normalizeFieldId(targetField.fieldId) 
+    : targetField.fieldId;
+  
   return {
-    field_id: targetField.fieldId,
+    field_id: normalizedFieldId,
     field_name: targetField.fieldName,
     start_date: startDate.toISOString().split('T')[0]
   };
@@ -352,6 +408,9 @@ function addCropToSchedule(cropData, dropInfo) {
     field_id: dropInfo.field_id,
     start_date: dropInfo.start_date
   };
+  
+  console.log('📤 作物追加リクエスト:', requestData);
+  console.log('📤 field_id type:', typeof requestData.field_id, '値:', requestData.field_id);
 
   fetch(url, {
     method: 'POST',
