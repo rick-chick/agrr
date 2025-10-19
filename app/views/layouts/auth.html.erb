@@ -10,6 +10,9 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
+  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
+  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+  
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
@@ -31,6 +34,8 @@
 <body class="auth-body">
   <%= render 'shared/navbar' %>
   <%= yield %>
+  
+  <%= yield :javascripts %>
 </body>
 </html>
 

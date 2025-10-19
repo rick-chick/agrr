@@ -23,9 +23,16 @@
   <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/crop_ai_ad", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/interaction-rules", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
   
   <!-- Bundled JavaScript (includes Leaflet) -->
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  
+  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
+  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+  
+  <!-- Page-specific JavaScripts -->
+  <%= yield :javascripts %>
   
 </head>
 <body>
