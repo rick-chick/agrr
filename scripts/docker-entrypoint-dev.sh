@@ -14,5 +14,17 @@ rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb
 echo "Running migrations for all databases (primary, queue, cache)..."
 bundle exec rails db:migrate
 
+# アセットビルド実行
+echo "Building assets (JavaScript and CSS)..."
+npm run build
+
+# バックグラウンドでファイル監視を開始（開発時のホットリロード）
+echo "Starting asset watcher for development..."
+npm run build -- --watch &
+WATCHER_PID=$!
+
+# プロセス終了時にwatcherも終了するように設定
+trap "kill $WATCHER_PID 2>/dev/null || true" EXIT
+
 # Railsサーバー起動
 exec "$@"

@@ -28,16 +28,13 @@
     <span class="gantt-title-text"><%= t('public_plans.results.gantt.title') %></span>
   </h2>
   
-  <div class="gantt-scroll-hint">
-    <span class="scroll-hint-icon">👆</span>
-    <span class="scroll-hint-text"><%= t('public_plans.results.gantt.hint') %></span>
-  </div>
   
   <%# Frappe Gantt コンテナ %>
   <div id="gantt-chart-container"
        data-cultivations="<%= cultivation_data.to_json %>"
        data-plan-start-date="<%= plan_start_date.to_s %>"
-       data-plan-end-date="<%= plan_end_date.to_s %>">
+       data-plan-end-date="<%= plan_end_date.to_s %>"
+       data-cultivation-plan-id="<%= cultivation_plan.id %>">
   </div>
   
   <!-- Google AdSense 広告 -->

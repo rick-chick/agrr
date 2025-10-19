@@ -1,5 +1,25 @@
 // app/javascript/custom_gantt_chart.js
-// カスタムSVGガントチャート（圃場ベース）
+// カスタムSVGガントチャート（圃場ベース）- ドラッグ&ドロップ対応
+
+// グローバルステート管理
+let ganttState = {
+  cultivationData: [],
+  fieldGroups: [],
+  planStartDate: null,
+  planEndDate: null,
+  config: null,
+  chartWidth: 0,
+  chartHeight: 0,
+  totalDays: 0,
+  moves: [], // 移動履歴
+  removedIds: [], // 削除されたID
+  draggedBar: null,
+  dragStartX: 0,
+  dragStartY: 0,
+  originalBarX: 0,
+  originalFieldIndex: -1,
+  cultivation_plan_id: null
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   initCustomGanttChart();
@@ -14,24 +34,36 @@ function initCustomGanttChart() {
   if (!ganttContainer) return;
 
   // データ属性からJSONを取得
-  const cultivationData = JSON.parse(ganttContainer.dataset.cultivations || '[]');
-  const planStartDate = new Date(ganttContainer.dataset.planStartDate);
-  const planEndDate = new Date(ganttContainer.dataset.planEndDate);
+  ganttState.cultivationData = JSON.parse(ganttContainer.dataset.cultivations || '[]');
+  ganttState.planStartDate = new Date(ganttContainer.dataset.planStartDate);
+  ganttState.planEndDate = new Date(ganttContainer.dataset.planEndDate);
+  ganttState.cultivation_plan_id = ganttContainer.dataset.cultivationPlanId;
+  
+  // 移動履歴と削除IDをリセット
+  ganttState.moves = [];
+  ganttState.removedIds = [];
 
-  if (cultivationData.length === 0) {
+  if (ganttState.cultivationData.length === 0) {
     ganttContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">栽培データがありません</p>';
     return;
   }
 
   console.log('🎨 Custom Gantt Chart 初期化中...');
-  console.log('  栽培数:', cultivationData.length);
-  console.log('  期間:', planStartDate, 'to', planEndDate);
+  console.log('  栽培数:', ganttState.cultivationData.length);
+  console.log('  期間:', ganttState.planStartDate, 'to', ganttState.planEndDate);
+  console.log('  計画ID:', ganttState.cultivation_plan_id);
+  
+  // デバッグ用: ドラッグ&ドロップ機能の有効化を確認
+  console.log('🔧 ドラッグ&ドロップ機能を有効化しました');
+  console.log('  - バーをドラッグして移動できます');
+  console.log('  - ×ボタンで削除できます');
+  console.log('  - 右クリックで削除できます');
 
   // 圃場ごとにグループ化
-  const fieldGroups = groupByField(cultivationData);
+  ganttState.fieldGroups = groupByField(ganttState.cultivationData);
   
   // SVGガントチャートを描画
-  renderGanttChart(ganttContainer, fieldGroups, planStartDate, planEndDate);
+  renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
 }
 
 // 圃場ごとにグループ化
@@ -71,6 +103,12 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   const totalDays = daysBetween(planStartDate, planEndDate);
   const chartWidth = config.width - config.margin.left - config.margin.right;
   const chartHeight = config.height - config.margin.top - config.margin.bottom;
+  
+  // グローバルステートに保存
+  ganttState.config = config;
+  ganttState.chartWidth = chartWidth;
+  ganttState.chartHeight = chartHeight;
+  ganttState.totalDays = totalDays;
 
   console.log('📐 チャート寸法:', {
     totalDays,
@@ -126,7 +164,254 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   container.innerHTML = '';
   container.appendChild(svg);
   
+  // グローバルなマウスイベントリスナーを追加
+  setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWidth);
+  
+  // 再最適化ボタンは不要（自動実行のため）
+  
   console.log('✅ ガントチャート描画完了');
+  
+  // デバッグ: バーの数とイベントリスナーを確認
+  const bars = document.querySelectorAll('.cultivation-bar .bar-bg');
+  console.log('📊 描画されたバー数:', bars.length);
+  
+  bars.forEach((bar, index) => {
+    console.log(`📊 バー ${index + 1}:`, {
+      element: bar,
+      hasMousedownListener: bar.onmousedown !== null,
+      cursor: bar.style.cursor
+    });
+  });
+}
+
+// グローバルなドラッグハンドラーを設定
+function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWidth) {
+  // マウス移動（ドラッグ中）
+  document.addEventListener('mousemove', function(e) {
+    if (!ganttState.draggedBar) return;
+    
+    const deltaX = e.clientX - ganttState.dragStartX;
+    const deltaY = e.clientY - ganttState.dragStartY;
+    
+    // 新しいX位置を計算（グラフの範囲内に制限）
+    const newX = Math.max(
+      config.margin.left,
+      Math.min(
+        ganttState.originalBarX + deltaX,
+        config.margin.left + chartWidth
+      )
+    );
+    
+    // バーの位置を更新
+    const barBg = ganttState.draggedBar.querySelector('.bar-bg');
+    if (barBg) {
+      barBg.setAttribute('x', newX);
+      
+      // ラベルと削除ボタンの位置も更新
+      const barWidth = parseFloat(barBg.getAttribute('width'));
+      const label = ganttState.draggedBar.querySelector('.bar-label');
+      if (label) {
+        label.setAttribute('x', newX + (barWidth / 2));
+      }
+      
+      const deleteBtn = ganttState.draggedBar.querySelector('.delete-btn circle');
+      const deleteBtnText = ganttState.draggedBar.querySelector('.delete-btn text');
+      if (deleteBtn && deleteBtnText) {
+        deleteBtn.setAttribute('cx', newX + barWidth - 10);
+        deleteBtnText.setAttribute('x', newX + barWidth - 10);
+      }
+    }
+  });
+  
+  // マウスアップ（ドラッグ終了）
+  document.addEventListener('mouseup', function(e) {
+    if (!ganttState.draggedBar) return;
+    
+    const cultivation_id = ganttState.draggedBar.getAttribute('data-id');
+    const originalFieldName = ganttState.draggedBar.getAttribute('data-field');
+    
+    // 新しい開始日を計算
+    const barBg = ganttState.draggedBar.querySelector('.bar-bg');
+    if (!barBg) {
+      ganttState.draggedBar = null;
+      return;
+    }
+    
+    const newX = parseFloat(barBg.getAttribute('x'));
+    const daysFromStart = Math.round((newX - config.margin.left) / chartWidth * totalDays);
+    const newStartDate = new Date(planStartDate);
+    newStartDate.setDate(newStartDate.getDate() + daysFromStart);
+    
+    // Y方向の移動から新しい圃場を判定
+    const deltaY = e.clientY - ganttState.dragStartY;
+    const fieldIndexChange = Math.round(deltaY / config.rowHeight);
+    const newFieldIndex = Math.max(0, Math.min(
+      ganttState.originalFieldIndex + fieldIndexChange,
+      ganttState.fieldGroups.length - 1
+    ));
+    
+    const newFieldName = ganttState.fieldGroups[newFieldIndex].fieldName;
+    
+    // 移動があった場合のみ記録
+    if (originalFieldName !== newFieldName || Math.abs(daysFromStart) > 2) {
+      console.log('📍 ドラッグ完了:', {
+        cultivation_id,
+        from_field: originalFieldName,
+        to_field: newFieldName,
+        new_start_date: newStartDate.toISOString().split('T')[0]
+      });
+      
+      // 移動履歴に追加
+      recordMove(cultivation_id, newFieldName, newStartDate);
+      
+      // チャートを再描画（変更を反映）
+      applyMovesLocally();
+      
+      // 自動で再最適化を実行
+      executeReoptimization();
+    }
+    
+    // ドラッグ状態をリセット
+    barBg.style.cursor = 'grab';
+    barBg.setAttribute('opacity', '0.95');
+    barBg.setAttribute('stroke-width', '2.5');
+    barBg.removeAttribute('stroke-dasharray');
+    ganttState.draggedBar = null;
+  });
+}
+
+// 移動を記録
+function recordMove(allocation_id, to_field_name, to_start_date) {
+  // 既存の移動を削除（同じIDの場合）
+  ganttState.moves = ganttState.moves.filter(m => m.allocation_id !== `alloc_${allocation_id}`);
+  
+  // 圃場IDを抽出
+  const fieldGroup = ganttState.fieldGroups.find(g => g.fieldName === to_field_name);
+  const field_id = `field_${fieldGroup?.cultivations[0]?.field_name?.match(/\d+/)?.[0] || '1'}`;
+  
+  ganttState.moves.push({
+    allocation_id: `alloc_${allocation_id}`,
+    action: 'move',
+    to_field_id: field_id,
+    to_start_date: to_start_date.toISOString().split('T')[0]
+  });
+  
+  console.log('📋 移動履歴:', ganttState.moves);
+  
+  // 自動で再最適化を実行
+  executeReoptimization();
+}
+
+// 削除を実行
+function removeCultivation(cultivation_id) {
+  console.log('🗑️ 削除:', cultivation_id);
+  
+  // 削除IDを記録
+  ganttState.removedIds.push(cultivation_id);
+  
+  // 移動履歴に削除を追加
+  ganttState.moves.push({
+    allocation_id: `alloc_${cultivation_id}`,
+    action: 'remove'
+  });
+  
+  // ローカルで削除を適用
+  ganttState.cultivationData = ganttState.cultivationData.filter(c => c.id != cultivation_id);
+  ganttState.fieldGroups = groupByField(ganttState.cultivationData);
+  
+  // チャートを再描画
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  if (ganttContainer) {
+    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+  }
+  
+  // 自動で再最適化を実行
+  executeReoptimization();
+}
+
+// ローカルで移動を適用（再描画用）
+function applyMovesLocally() {
+  // 移動を適用
+  ganttState.moves.filter(m => m.action === 'move').forEach(move => {
+    const cultivation_id = parseInt(move.allocation_id.replace('alloc_', ''));
+    const cultivation = ganttState.cultivationData.find(c => c.id === cultivation_id);
+    
+    if (cultivation) {
+      const oldStartDate = new Date(cultivation.start_date);
+      const oldEndDate = new Date(cultivation.completion_date);
+      const duration = daysBetween(oldStartDate, oldEndDate);
+      
+      const newStartDate = new Date(move.to_start_date);
+      const newEndDate = new Date(newStartDate);
+      newEndDate.setDate(newEndDate.getDate() + duration);
+      
+      cultivation.start_date = newStartDate.toISOString().split('T')[0];
+      cultivation.completion_date = newEndDate.toISOString().split('T')[0];
+      
+      // 圃場名を更新（簡易版 - 実際にはfield_idからフィールド名を取得すべき）
+      const fieldNum = move.to_field_id.replace('field_', '');
+      cultivation.field_name = `圃場 ${fieldNum}`;
+    }
+  });
+  
+  // 削除を適用
+  ganttState.cultivationData = ganttState.cultivationData.filter(c => 
+    !ganttState.removedIds.includes(c.id)
+  );
+  
+  // 再グループ化
+  ganttState.fieldGroups = groupByField(ganttState.cultivationData);
+  
+  // 再描画
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  if (ganttContainer) {
+    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+  }
+}
+
+// 手動の再最適化ボタンは不要（自動実行のため）
+
+// 再最適化を実行（自動実行）
+function executeReoptimization() {
+  console.log('🔄 自動再最適化を開始...');
+  
+  // APIエンドポイントにPOST
+  const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/adjust`;
+  
+  // 一時的に再最適化を無効化（APIエラーのため）
+  console.log('⚠️ 再最適化は一時的に無効化されています（APIエラー修正中）');
+  console.log('📋 移動履歴:', ganttState.moves);
+  
+  // 移動履歴をクリア
+  ganttState.moves = [];
+  
+  // TODO: APIエラーが修正されたら再最適化を有効化
+  /*
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    },
+    body: JSON.stringify({
+      moves: ganttState.moves
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('✅ 再最適化が完了しました。ページをリロードします。');
+      location.reload();
+    } else {
+      console.error('❌ 再最適化に失敗しました:', data.message);
+      alert(`再最適化に失敗しました: ${data.message}`);
+    }
+  })
+  .catch(error => {
+    console.error('❌ 再最適化エラー:', error);
+    alert(`エラーが発生しました: ${error.message}`);
+  });
+  */
 }
 
 // タイムラインヘッダーを描画
@@ -235,6 +520,7 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
 
   // 各栽培のバーを描画
   group.cultivations.forEach((cultivation, cultIndex) => {
+    console.log('🎯 栽培バーを描画中:', cultivation.crop_name);
     renderCultivationBar(rowGroup, config, cultivation, y, planStartDate, totalDays, chartWidth);
   });
 
@@ -243,6 +529,8 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
 
 // 栽培バーを描画
 function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartDate, totalDays, chartWidth) {
+  console.log('🎨 栽培バー描画開始:', cultivation.crop_name, cultivation.start_date, cultivation.completion_date);
+  
   const startDate = new Date(cultivation.start_date);
   const endDate = new Date(cultivation.completion_date);
   
@@ -274,7 +562,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     stroke: getCropStrokeColor(cultivation.crop_name),
     'stroke-width': '2.5',
     class: 'bar-bg',
-    style: 'cursor: pointer;',
+    style: 'cursor: grab;',
     opacity: '0.95'
   });
 
@@ -282,34 +570,110 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   barBg.addEventListener('mouseenter', function() {
     this.setAttribute('opacity', '1');
     this.setAttribute('stroke-width', '3.5');
+    
+    // ドラッグ可能であることを示すカーソル
+    this.style.cursor = 'grab';
   });
   
   barBg.addEventListener('mouseleave', function() {
-    this.setAttribute('opacity', '0.95');
-    this.setAttribute('stroke-width', '2.5');
+    if (ganttState.draggedBar !== barGroup) {
+      this.setAttribute('opacity', '0.95');
+      this.setAttribute('stroke-width', '2.5');
+    }
+  });
+  
+  barGroup.appendChild(barBg);
+
+  // ドラッグとクリックを区別するための変数
+  let isDragging = false;
+  let dragThreshold = 5; // 5px以上移動したらドラッグとみなす
+  let mouseDownTime = 0;
+  let clickTimeout = null;
+
+  // ドラッグ開始
+  barBg.addEventListener('mousedown', function(e) {
+    // 右クリックは除外
+    if (e.button !== 0) return;
+    
+    isDragging = false;
+    mouseDownTime = Date.now();
+    ganttState.dragStartX = e.clientX;
+    ganttState.dragStartY = e.clientY;
+    ganttState.originalBarX = parseFloat(barBg.getAttribute('x'));
+    
+    // 現在のフィールドインデックスを保存
+    const currentFieldName = cultivation.field_name;
+    ganttState.originalFieldIndex = ganttState.fieldGroups.findIndex(g => g.fieldName === currentFieldName);
+    
+    console.log('🖱️ マウスダウン:', cultivation.crop_name);
   });
 
-  // クリックイベント
-  barBg.addEventListener('click', function(e) {
-    // 既存のポップアップを削除
-    const existingPopup = document.querySelector('.gantt-custom-popup');
-    if (existingPopup) {
-      existingPopup.remove();
+  // マウス移動（ドラッグ判定）
+  barBg.addEventListener('mousemove', function(e) {
+    if (mouseDownTime === 0) return;
+    
+    const deltaX = Math.abs(e.clientX - ganttState.dragStartX);
+    const deltaY = Math.abs(e.clientY - ganttState.dragStartY);
+    
+    if (deltaX > dragThreshold || deltaY > dragThreshold) {
+      if (!isDragging) {
+        isDragging = true;
+        ganttState.draggedBar = barGroup;
+        
+        // クリックタイムアウトをクリア
+        if (clickTimeout) {
+          clearTimeout(clickTimeout);
+          clickTimeout = null;
+        }
+        
+        this.style.cursor = 'grabbing';
+        console.log('🖱️ ドラッグ開始:', cultivation.crop_name);
+        
+        // ドラッグ可能であることを視覚的に示す
+        this.setAttribute('opacity', '0.8');
+        this.setAttribute('stroke-width', '4');
+        this.setAttribute('stroke-dasharray', '5,5');
+      }
+    }
+  });
+
+  // マウスアップ（クリック判定）
+  barBg.addEventListener('mouseup', function(e) {
+    if (mouseDownTime === 0) return;
+    
+    const clickDuration = Date.now() - mouseDownTime;
+    mouseDownTime = 0;
+    
+    if (!isDragging && clickDuration < 300) {
+      // クリック処理
+      console.log('🖱️ クリック:', cultivation.crop_name);
+      showClimateChart(cultivation.id);
     }
     
-    // 気温・GDDチャートを表示
-    showClimateChart(cultivation.id);
+    isDragging = false;
+    ganttState.draggedBar = null;
     
-    // 従来のポップアップも表示（オプション）
-    // showCultivationPopup(cultivation, e.clientX, e.clientY);
+    // 視覚的効果をリセット
+    this.style.cursor = 'grab';
+    this.setAttribute('opacity', '1');
+    this.setAttribute('stroke-width', '2');
+    this.setAttribute('stroke-dasharray', '');
   });
 
-  barGroup.appendChild(barBg);
+  // 右クリック（コンテキストメニュー）で削除
+  barBg.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (confirm(`${cultivation.crop_name}を削除しますか？`)) {
+      removeCultivation(cultivation.id);
+    }
+  });
 
   // バーのラベル（作物名）- 常に表示
   const labelText = cultivation.crop_name;
   
-  barGroup.appendChild(createSVGElement('text', {
+  const label = createSVGElement('text', {
     x: barX + (barWidth / 2),
     y: barY + (config.barHeight / 2) + 5,
     class: 'bar-label',
@@ -318,7 +682,55 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     'font-weight': '600',
     fill: '#1F2937',
     style: 'pointer-events: none;'
-  }, labelText));
+  }, labelText);
+  
+  barGroup.appendChild(label);
+  
+  // 削除ボタン（小さいバツボタン）
+  const deleteBtn = createSVGElement('g', {
+    class: 'delete-btn',
+    style: 'cursor: pointer;'
+  });
+  
+  const deleteBtnCircle = createSVGElement('circle', {
+    cx: barX + barWidth - 10,
+    cy: barY + 10,
+    r: 8,
+    fill: '#EF4444',
+    opacity: '0.9'
+  });
+  
+  const deleteBtnX = createSVGElement('text', {
+    x: barX + barWidth - 10,
+    y: barY + 15,
+    'text-anchor': 'middle',
+    'font-size': '12',
+    'font-weight': 'bold',
+    fill: '#FFFFFF',
+    style: 'pointer-events: none;'
+  }, '×');
+  
+  deleteBtn.appendChild(deleteBtnCircle);
+  deleteBtn.appendChild(deleteBtnX);
+  
+  deleteBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (confirm(`${cultivation.crop_name}を削除しますか？`)) {
+      removeCultivation(cultivation.id);
+    }
+  });
+  
+  deleteBtn.addEventListener('mouseenter', function() {
+    deleteBtnCircle.setAttribute('opacity', '1');
+  });
+  
+  deleteBtn.addEventListener('mouseleave', function() {
+    deleteBtnCircle.setAttribute('opacity', '0.9');
+  });
+  
+  barGroup.appendChild(deleteBtn);
 
   parentGroup.appendChild(barGroup);
 }

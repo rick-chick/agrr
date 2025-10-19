@@ -116,14 +116,20 @@ class ClimateChart {
     container.innerHTML = `
       <div class="climate-chart-container">
         <div class="climate-chart-header">
-          <div class="chart-title">
-            <span class="chart-title-icon">🌡️</span>
-            <span class="chart-title-text">${container.dataset.chartTitle || 'Climate Data and Crop Growth Analysis'}</span>
-            <span class="crop-badge">${data.field_cultivation.crop_name}</span>
-            <span class="region-badge">${data.farm.name}</span>
+          <div class="header-left">
+            <div class="chart-title">
+              <span class="chart-title-icon">🌡️</span>
+              <span class="chart-title-text">${container.dataset.chartTitle || 'Climate Data and Crop Growth Analysis'}</span>
+            </div>
+            <div class="badge-container">
+              <span class="crop-badge">${data.field_cultivation.crop_name}</span>
+              <span class="region-badge">${data.farm.name}</span>
+            </div>
           </div>
-          <div class="date-range">
-            ${data.field_cultivation.start_date} 〜 ${data.field_cultivation.completion_date}
+          <div class="header-right">
+            <div class="date-range">
+              ${data.field_cultivation.start_date} 〜 ${data.field_cultivation.completion_date}
+            </div>
           </div>
           <button class="chart-close-btn" id="closeClimateChart">×</button>
         </div>

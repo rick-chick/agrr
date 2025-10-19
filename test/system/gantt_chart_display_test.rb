@@ -31,9 +31,6 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
       assert_selector ".bar-label", minimum: 1, wait: 5
     end
 
-    # スクロールヒントが表示されている
-    assert_selector ".gantt-scroll-hint"
-    assert_text "栽培をクリックして詳細を表示"
 
     # スクリーンショットを撮影
     take_screenshot

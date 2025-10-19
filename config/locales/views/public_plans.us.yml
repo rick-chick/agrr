@@ -110,7 +110,6 @@ us:
       
       gantt:
         title: "Cultivation Schedule"
-        hint: "Click on a cultivation to view details"
         month_format: "Month %{month}"
       
       detail:
