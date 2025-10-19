@@ -34,7 +34,8 @@ module Agrr
       # Exit code 0でもstdoutがエラーメッセージの場合はエラーとして扱う
       if stdout.present? && stdout.strip.start_with?('Error', '❌')
         Rails.logger.error "❌ [AGRR] Command returned error message in stdout (exit code: #{status.exitstatus})"
-        error_message = stdout.lines.first&.strip || stdout
+        # 完全なエラーメッセージを取得（最初の行だけでなく全体）
+        error_message = stdout.strip
         
         # 特定のエラーメッセージに対して専用の例外を投げる
         if error_message.include?('No valid allocation candidates could be generated')
@@ -43,10 +44,10 @@ module Agrr
         
         # 重複エラーの場合は、より詳細なメッセージを表示
         if error_message.include?('overlap') && error_message.include?('fallow period')
-          raise ExecutionError, "作物の栽培期間が重複しています（休閑期間28日を考慮）。圃場数を増やすか、作物の数を減らすか、計画期間を延長してください。\n詳細: #{error_message}"
+          raise ExecutionError, "#{error_message}"
         end
         
-        raise ExecutionError, "Command returned error: #{error_message}"
+        raise ExecutionError, "#{error_message}"
       end
       
       unless status.success?

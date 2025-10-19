@@ -72,6 +72,10 @@ us:
         weather_data: "Fetching weather data..."
         optimization: "Calculating optimal crop plan..."
         finalizing: "Preparing results..."
+      error:
+        title: "Plan Creation Failed"
+        try_again: "Change crops and try again"
+        start_over: "Start over"
     
     results:
       create_new_plan: "← Create New Plan"
@@ -111,6 +115,12 @@ us:
       gantt:
         title: "Cultivation Schedule"
         month_format: "Month %{month}"
+      
+      crop_palette:
+        title: "Add Crops"
+        toggle: "Toggle panel"
+        hint: "Drag crops to add them to the schedule"
+        in_use: "In use"
       
       detail:
         loading: "Loading details..."

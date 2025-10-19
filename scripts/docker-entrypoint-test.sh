@@ -4,6 +4,16 @@
 
 set -e
 
+# アセットファイルをクリーンアップ（古いビルドファイルを削除）
+echo "==> Cleaning up old asset files..."
+rm -rf /app/app/assets/builds/*
+rm -rf /app/tmp/cache/assets/*
+echo "✓ Asset files cleaned"
+
+# アセットビルド実行（システムテスト用）
+echo "==> Building assets for system tests..."
+npm run build
+
 # すべてのテストDBをセットアップ（primary, queue, cache）
 echo "==> Setting up test databases (primary, queue, cache)..."
 bundle exec rails db:create

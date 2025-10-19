@@ -6,6 +6,7 @@ us:
       unexpected_error: "An unexpected error occurred: %{message}"
       errors:
         growth_incomplete: "Selected crops cannot complete growth within the specified period. Please set a longer evaluation period or choose different crops."
+        no_valid_candidates: "No crops could be planted. This may occur when:\n• Selected crops cannot mature within the planning period\n• Field capacity is insufficient\n• Weather conditions are unfavorable\n\nPlease set a longer cultivation period or choose different crops."
         missing_field: "Required fields are missing in input data. Please contact the system administrator."
         file_error: "Failed to read file. Please contact the system administrator."
         invalid_format: "Invalid input data format. Please contact the system administrator."

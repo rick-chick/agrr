@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作物パレット デバッグ</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #667eea;
+      margin-top: 30px;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+    }
+    .success {
+      background: #10b981;
+      color: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+      display: none;
+    }
+    .info {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .code {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    ul {
+      margin: 15px 0;
+    }
+    li {
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌱 作物パレット デバッグツール</h1>
+    
+    <div class="info">
+      <strong>現在の状態:</strong>
+      <div id="current-state" style="margin-top: 10px;"></div>
+    </div>
+
+    <h2>🔧 修正内容</h2>
+    <ul>
+      <li>✅ ビューファイル: <code>collapsed</code> クラスを削除</li>
+      <li>✅ CSS: z-index を 1000 に上昇、min-height を追加</li>
+      <li>✅ JavaScript: 初期状態を確実に「開いている」に設定</li>
+      <li>✅ デバッグ用 console.log を追加</li>
+    </ul>
+
+    <h2>🎯 デバッグ手順</h2>
+    <ol>
+      <li><strong>localStorage の操作:</strong>
+        <div>
+          <button onclick="clearLocalStorage()">localStorage をクリア (null)</button>
+          <button onclick="forceOpen()">強制的に開く (false)</button>
+          <div id="clear-success" class="success">✓ localStorage を更新しました</div>
+        </div>
+      </li>
+      
+      <li style="margin-top: 15px;"><strong>ページをリロード:</strong>
+        <div>
+          <button onclick="location.reload()">ページをリロード</button>
+        </div>
+      </li>
+
+      <li style="margin-top: 15px;"><strong>開発者ツールで確認:</strong>
+        <div class="code">
+F12 キーを押す → Console タブ
+「✅ 作物パレット初期化完了: 開いている」と表示されるか確認
+        </div>
+      </li>
+
+      <li style="margin-top: 15px;"><strong>Network タブで確認:</strong>
+        <div class="code">
+crop_palette.css → 200 OK
+crop_palette_drag.js → 200 OK
+crop_palette_style.js → 200 OK
+        </div>
+      </li>
+
+      <li style="margin-top: 15px;"><strong>Elements タブで確認:</strong>
+        <div class="code">
+&lt;div class="crop-palette-panel" id="crop-palette-panel"&gt;
+※ collapsed クラスがないことを確認
+        </div>
+      </li>
+    </ol>
+
+    <h2>🚀 栽培計画結果ページへ</h2>
+    <div>
+      <button onclick="goToResults()">栽培計画結果ページを開く</button>
+    </div>
+
+    <h2>📝 よくある問題と解決策</h2>
+    <ul>
+      <li><strong>パネルが見えない:</strong> localStorage をクリアしてリロード</li>
+      <li><strong>CSS が適用されない:</strong> スーパーリロード (Ctrl+Shift+R または Cmd+Shift+R)</li>
+      <li><strong>JavaScript エラー:</strong> Console タブでエラーメッセージを確認</li>
+      <li><strong>z-index の問題:</strong> Elements タブで他の要素の z-index を確認</li>
+    </ul>
+
+    <div class="info" style="margin-top: 30px;">
+      <strong>💡 ヒント:</strong> ブラウザのキャッシュが原因の場合、スーパーリロード (Ctrl+Shift+R) を試してください。
+    </div>
+  </div>
+
+  <script>
+    // 現在の状態を表示
+    function updateState() {
+      const state = localStorage.getItem('cropPaletteCollapsed');
+      const stateDiv = document.getElementById('current-state');
+      stateDiv.innerHTML = `
+        <strong>cropPaletteCollapsed:</strong> ${state || 'null (初回アクセス)'}
+        ${state === 'true' ? ' ❌ <em>閉じた状態で保存されています</em>' : ''}
+        ${state === 'false' ? ' ✅ <em>開いた状態で保存されています</em>' : ''}
+        ${!state ? ' ℹ️ <em>まだ保存されていません（初回は開いた状態）</em>' : ''}
+      `;
+    }
+
+    // localStorage をクリア
+    function clearLocalStorage() {
+      const before = localStorage.getItem('cropPaletteCollapsed');
+      localStorage.removeItem('cropPaletteCollapsed');
+      const after = localStorage.getItem('cropPaletteCollapsed');
+      
+      console.log('🗑️ localStorage クリア:', { before, after });
+      
+      document.getElementById('clear-success').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('clear-success').style.display = 'none';
+      }, 3000);
+      updateState();
+    }
+    
+    // 強制的に開いた状態に設定
+    function forceOpen() {
+      localStorage.setItem('cropPaletteCollapsed', 'false');
+      console.log('✅ 強制的に開いた状態に設定');
+      updateState();
+      alert('開いた状態に設定しました。ページをリロードしてください。');
+    }
+
+    // 栽培計画結果ページを開く
+    function goToResults() {
+      // 最初の栽培計画のIDを取得して遷移
+      fetch('/api/v1/public_plans/cultivation_plans')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            window.location.href = `/public_plans/${data[0].id}/results`;
+          } else {
+            alert('栽培計画が見つかりません。先に栽培計画を作成してください。');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          // フォールバック: 新しいタブで栽培計画一覧を開く
+          window.open('/public_plans', '_blank');
+        });
+    }
+
+    // 初期化
+    updateState();
+  </script>
+</body>
+</html>
+

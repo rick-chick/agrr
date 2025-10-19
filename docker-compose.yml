@@ -21,6 +21,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
+      - /app/public/assets  # Propshaftアセットはコンテナ内で動的生成（ホストと共有しない）
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
@@ -53,6 +54,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
+      - /app/public/assets  # Propshaftアセットはコンテナ内で動的生成（ホストと共有しない）
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3

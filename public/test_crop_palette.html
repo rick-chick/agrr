@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>作物パレット表示テスト</title>
+</head>
+<body>
+  <h1>作物パレット配信テスト</h1>
+  <p>F12で開発者ツールを開き、以下を確認してください：</p>
+  <ol>
+    <li>Network タブで crop_palette 関連のファイルが200で配信されているか</li>
+    <li>Console タブでエラーがないか</li>
+    <li>Application > Local Storage で cropPaletteCollapsed を削除してリロード</li>
+  </ol>
+  
+  <h2>チェックリスト:</h2>
+  <ul>
+    <li>✓ ビューファイル: collapsed クラス削除済み</li>
+    <li>✓ JavaScriptファイル: 存在確認済み</li>
+    <li>✓ Docker: 起動中</li>
+  </ul>
+  
+  <h3>LocalStorageクリア用スクリプト:</h3>
+  <button onclick="localStorage.removeItem('cropPaletteCollapsed'); alert('クリアしました。ページをリロードしてください。')">LocalStorage クリア</button>
+</body>
+</html>

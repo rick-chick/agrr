@@ -257,46 +257,7 @@ class ClimateChart {
               font: { size: 16, weight: 'bold' }
             },
             legend: {
-              display: true,
-              position: 'top',
-              labels: {
-                filter: function(item, chart) {
-                  // グレーのダミーデータセットは非表示にし、必要な凡例のみ表示
-                  const allowed = [labels.tempMax, labels.tempMean, labels.tempMin, labels.optimalZone, labels.stressZone];
-                  return allowed.includes(item.text);
-                },
-                generateLabels: function(chart) {
-                  const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                  const labels = original.call(this, chart);
-                  
-                  // 温度帯の凡例を追加（translatedLabelsから取得）
-                  const container = document.getElementById('climate-chart-display');
-                  const optimalText = container?.dataset.optimalZone || '🟢 適正温度帯';
-                  const stressText = container?.dataset.stressZone || '🟠 限界温度帯（ストレス）';
-                  
-                  labels.push(
-                    {
-                      text: optimalText,
-                      fillStyle: 'rgba(16, 185, 129, 0.3)',
-                      strokeStyle: 'rgba(16, 185, 129, 0.8)',
-                      lineWidth: 2,
-                      hidden: false,
-                      index: labels.length
-                    },
-                    {
-                      text: stressText,
-                      fillStyle: 'rgba(239, 68, 68, 0.2)',
-                      strokeStyle: 'rgba(239, 68, 68, 0.6)',
-                      lineWidth: 2,
-                      lineDash: [5, 5],
-                      hidden: false,
-                      index: labels.length + 1
-                    }
-                  );
-                  
-                  return labels;
-                }
-              }
+              display: false
             },
           },
           scales: {

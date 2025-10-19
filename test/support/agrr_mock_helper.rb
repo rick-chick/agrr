@@ -104,9 +104,39 @@ module AgrrMockHelper
     end
   end
 
+  # Adjust Gateway のモック化
+  def mock_agrr_adjust_success
+    Agrr::AdjustGateway.class_eval do
+      define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:|
+        # 既存の割り当てをそのまま返す（簡易モック）
+        field_schedules = current_allocation.dig(:optimization_result, :field_schedules) || []
+        
+        # もし新しい割り当てがあれば、それも含める
+        total_profit = field_schedules.sum { |fs| fs[:total_profit] || 0 }
+        total_revenue = field_schedules.sum { |fs| fs[:total_revenue] || 0 }
+        total_cost = field_schedules.sum { |fs| fs[:total_cost] || 0 }
+        
+        {
+          total_profit: total_profit,
+          total_revenue: total_revenue,
+          total_cost: total_cost,
+          field_schedules: field_schedules.map { |fs| fs.deep_stringify_keys },
+          summary: { status: 'success' },
+          optimization_time: 0.1,
+          algorithm_used: 'mock',
+          is_optimal: true
+        }
+      end
+    end
+  end
+  
   # すべてのAGRRコマンドをモック化（setup時に使用）
   def stub_all_agrr_commands
     stub_fetch_crop_info
     stub_fetch_weather_data
+    mock_agrr_adjust_success
   end
+  
+  # Alias for convenience
+  alias_method :mock_agrr_cli_success, :mock_agrr_adjust_success
 end

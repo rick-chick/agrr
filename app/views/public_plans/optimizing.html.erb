@@ -30,7 +30,7 @@
           <div class="progress-phase-message" id="phase-message">
             <%= @cultivation_plan.optimization_phase_message || t('.progress.default_message') %>
           </div>
-          <div class="progress-duration-hint"><%= t('.progress.duration_hint') %></div>
+          <div class="progress-duration-hint" id="progress-duration-hint"><%= t('.progress.duration_hint') %></div>
         </div>
       </div>
       <div class="progress-elapsed-time" 
@@ -38,6 +38,23 @@
            data-elapsed-time-template="<%= t('.progress.elapsed_time', time: '%{time}') %>"
            data-elapsed-time-minute-template="<%= t('.progress.elapsed_time_minute', minutes: '%{minutes}', seconds: '%{seconds}') %>">
         <%= t('.progress.elapsed_time', time: '0') %>
+      </div>
+    </div>
+    
+    <!-- エラー表示エリア（初期状態は非表示） -->
+    <div class="error-message-container" id="error-message-container" style="display: none;">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title"><%= t('.error.title') %></div>
+        <div class="error-detail" id="error-detail"></div>
+        <div class="error-actions">
+          <a href="<%= select_crop_public_plans_path %>" class="btn btn-primary">
+            <%= t('.error.try_again') %>
+          </a>
+          <a href="<%= public_plans_path %>" class="btn btn-secondary">
+            <%= t('.error.start_over') %>
+          </a>
+        </div>
       </div>
     </div>
   </div>

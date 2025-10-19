@@ -67,23 +67,18 @@ module Api
           
           Rails.logger.info "✅ [Add Crop] 一時的なfield_cultivation作成: #{temp_cultivation.id}"
           
-          # AGRRのadjustコマンドには'add'アクションが存在しないため、
-          # 新しい作物を'move'アクションとして現在の位置に配置する
-          # current_allocationからは除外し、movesで追加する
-          moves = [
-            {
-              allocation_id: "alloc_#{temp_cultivation.id}",
-              action: 'move',
-              to_field_id: "field_#{plan_field.id}",
-              to_start_date: start_date.to_s
-            }
-          ]
+          # cultivation_planをリロードして新しいfield_cultivationを含める
+          @cultivation_plan.reload
           
-          Rails.logger.info "🔧 [Add Crop] 新しい作物を追加（moves with move action）: #{moves.inspect}"
+          # 現在の割り当てをAGRR形式に構築（新しく作成したtemp_cultivationも含める）
+          current_allocation = build_current_allocation(@cultivation_plan)
           
-          # 現在の割り当てをAGRR形式に構築
-          # 新しく作成したtemp_cultivationは除外する（movesで追加するため）
-          current_allocation = build_current_allocation(@cultivation_plan, exclude_ids: [temp_cultivation.id])
+          # movesは空（新しい作物はcurrent_allocationに含まれているので移動不要）
+          moves = []
+          
+          Rails.logger.info "🔧 [Add Crop] 新しい作物をcurrent_allocationに含めました（moves不要）"
+          Rails.logger.info "🔧 [Add Crop] field_cultivations count: #{@cultivation_plan.field_cultivations.count}"
+          Rails.logger.info "🔧 [Add Crop] current_allocation field_schedules: #{current_allocation.dig(:optimization_result, :field_schedules)&.count}"
           
           # 圃場と作物の設定を構築
           fields = build_fields_config(@cultivation_plan)
@@ -135,7 +130,12 @@ module Api
             
             # 結果を保存
             if result && result[:field_schedules].present?
+              Rails.logger.info "💾 [Add Crop] 最適化結果を保存開始"
               save_adjusted_result(@cultivation_plan, result)
+              
+              # リロードして最新の状態を取得
+              @cultivation_plan.reload
+              Rails.logger.info "✅ [Add Crop] 保存完了: field_cultivations count = #{@cultivation_plan.field_cultivations.count}"
               
               # Action Cable経由でクライアントに通知
               broadcast_optimization_complete(@cultivation_plan)
