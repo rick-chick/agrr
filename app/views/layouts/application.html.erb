@@ -43,19 +43,17 @@
 <body>
   <%= render "shared/navbar" %>
   
-  <main class="main-content">
-    <div class="container">
-      <% if flash[:notice] %>
-        <div class="alert alert-success"><%= flash[:notice] %></div>
-      <% end %>
-      
-      <% if flash[:alert] %>
-        <div class="alert alert-danger"><%= flash[:alert] %></div>
-      <% end %>
-      
-      <%= yield %>
-    </div>
-  </main>
+  <div class="container">
+    <% if flash[:notice] %>
+      <div class="alert alert-success"><%= flash[:notice] %></div>
+    <% end %>
+    
+    <% if flash[:alert] %>
+      <div class="alert alert-danger"><%= flash[:alert] %></div>
+    <% end %>
+    
+    <%= yield %>
+  </div>
   
   <%= render "shared/footer" %>
 </body>
