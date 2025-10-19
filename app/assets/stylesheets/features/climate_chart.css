@@ -33,8 +33,8 @@
     0 10px 40px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e7eb;
   position: relative;
-  max-width: 800px; /* 最大幅を制限してコンパクトに */
-  margin: 0 auto; /* 中央配置 */
+  width: var(--card-max-width); /* ガントカードと同じ幅に統一 */
+  max-width: var(--card-container-max-width); /* コンテナの最大幅に統一 */
 }
 
 .climate-chart-container::before {
