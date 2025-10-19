@@ -135,13 +135,15 @@ class PublicPlansController < ApplicationController
   
   private
   
-  # localeから地域コードに変換（/ja → jp, /us → us）
+  # localeから地域コードに変換（/ja → jp, /us → us, /in → in）
   def locale_to_region(locale)
     case locale.to_s
     when 'ja'
       'jp'
     when 'us'
       'us'
+    when 'in'
+      'in'
     else
       'jp' # デフォルト
     end

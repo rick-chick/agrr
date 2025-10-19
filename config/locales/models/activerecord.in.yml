@@ -1,0 +1,121 @@
+in:
+  models:
+    farm:
+      weather_status:
+        pending: "प्रतीक्षा में"
+        fetching: "प्राप्त कर रहे हैं (%{progress}%)"
+        completed: "पूर्ण"
+        failed: "विफल"
+        unknown: "अज्ञात"
+  
+  activerecord:
+    models:
+      farm: "खेत"
+      field: "खेत क्षेत्र"
+      crop: "फसल"
+      cultivation_plan: "खेती योजना"
+      field_cultivation: "खेत खेती"
+      interaction_rule: "निरंतर खेती नियम"
+      crop_stage: "फसल चरण"
+      user: "उपयोगकर्ता"
+      session: "सत्र"
+      weather_datum: "मौसम डेटा"
+      weather_location: "मौसम स्थान"
+      thermal_requirement: "तापीय आवश्यकता"
+      temperature_requirement: "तापमान आवश्यकता"
+      sunshine_requirement: "धूप आवश्यकता"
+    
+    attributes:
+      farm:
+        name: "नाम"
+        latitude: "अक्षांश"
+        longitude: "देशांतर"
+        is_reference: "संदर्भ खेत"
+        user_id: "उपयोगकर्ता"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+      
+      field:
+        name: "नाम"
+        area_sqm: "क्षेत्रफल (वर्ग मीटर)"
+        farm_id: "खेत"
+        latitude: "अक्षांश"
+        longitude: "देशांतर"
+        geometry: "ज्यामिति"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+      
+      crop:
+        name: "नाम"
+        scientific_name: "वैज्ञानिक नाम"
+        variety: "किस्म"
+        family: "परिवार"
+        is_reference: "संदर्भ फसल"
+        planting_season: "रोपण का मौसम"
+        harvest_season: "कटाई का मौसम"
+        growth_days: "वृद्धि दिन"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+      
+      cultivation_plan:
+        name: "योजना नाम"
+        farm_id: "खेत"
+        user_id: "उपयोगकर्ता"
+        status: "स्थिति"
+        total_area: "कुल क्षेत्रफल"
+        optimization_status: "अनुकूलन स्थिति"
+        optimization_started_at: "अनुकूलन प्रारंभ समय"
+        optimization_completed_at: "अनुकूलन पूर्ण समय"
+        optimization_phase: "अनुकूलन चरण"
+        optimization_phase_message: "अनुकूलन चरण संदेश"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+      
+      field_cultivation:
+        field_id: "खेत क्षेत्र"
+        crop_id: "फसल"
+        cultivation_plan_id: "खेती योजना"
+        area_sqm: "क्षेत्रफल (वर्ग मीटर)"
+        planting_date: "रोपण तिथि"
+        harvest_date: "कटाई तिथि"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+      
+      interaction_rule:
+        crop_a_id: "फसल A"
+        crop_b_id: "फसल B"
+        years: "अंतराल वर्ष"
+        interaction_type: "संपर्क प्रकार"
+        description: "विवरण"
+        created_at: "निर्माण तिथि"
+        updated_at: "अद्यतन तिथि"
+    
+    errors:
+      models:
+        farm:
+          attributes:
+            name:
+              blank: "दर्ज करें"
+            latitude:
+              blank: "दर्ज करें"
+              not_a_number: "संख्या में दर्ज करें"
+            longitude:
+              blank: "दर्ज करें"
+              not_a_number: "संख्या में दर्ज करें"
+        
+        field:
+          attributes:
+            name:
+              blank: "दर्ज करें"
+            area_sqm:
+              blank: "दर्ज करें"
+              not_a_number: "संख्या में दर्ज करें"
+              greater_than: "%{count} से अधिक मान दर्ज करें"
+        
+        crop:
+          attributes:
+            name:
+              blank: "दर्ज करें"
+            scientific_name:
+              blank: "दर्ज करें"
+

@@ -1,0 +1,23 @@
+in:
+  shared:
+    navbar:
+      brand: "AGRR"
+      farms: "खेत"
+      crops: "फसलें"
+      interaction_rules: "परिक्रमण"
+      login: "लॉगिन"
+      logout: "लॉगआउट"
+      logout_confirm: "क्या आप वाकई लॉगआउट करना चाहते हैं?"
+      
+    footer:
+      brand_description: "कृषि फसल योजना सहायता प्रणाली\nस्थायी कृषि का लक्ष्य"
+      services: "सेवाएं"
+      create_plan: "फसल योजना बनाएं"
+      about: "AGRR के बारे में"
+      legal: "कानूनी"
+      privacy_policy: "गोपनीयता नीति"
+      terms: "सेवा की शर्तें"
+      contact_title: "संपर्क"
+      contact_form: "संपर्क फॉर्म"
+      copyright: "© %{year} AGRR. सर्वाधिकार सुरक्षित।"
+

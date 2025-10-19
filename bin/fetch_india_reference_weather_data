@@ -1,0 +1,209 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# India Reference Farms Weather Data Fetching Script (NASA POWER)
+#
+# Usage:
+#   bin/fetch_india_reference_weather_data                           # Fetch weather data for all India reference farms
+#   bin/fetch_india_reference_weather_data --farm-name "Ludhiana, Punjab"  # Fetch for specific farm only
+#
+# Prerequisites:
+#   - rails db:migrate executed (India reference farms exist in DB)
+#   - agrr binary exists at lib/core/agrr
+#
+# Process:
+#   1. Fetch India reference farms from DB (region: 'in')
+#   2. For each farm, execute agrr command to fetch weather data from NASA POWER
+#   3. Save fetched data to db/fixtures/india_reference_weather.json
+
+require 'fileutils'
+require 'json'
+require 'open3'
+
+require_relative '../config/environment'
+
+# Logger with color output
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# Fetch weather data from NASA POWER using agrr command
+def fetch_weather_from_nasa_power(latitude, longitude)
+  agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
+  
+  unless File.exist?(agrr_path)
+    ColorLogger.error("agrr binary not found: #{agrr_path}")
+    return nil
+  end
+  
+  # Fetch data from 2000-01-01 to today
+  start_date = Date.new(2000, 1, 1)
+  end_date = Date.today
+  
+  command = [
+    agrr_path,
+    'weather',
+    '--location', "#{latitude},#{longitude}",
+    '--start-date', start_date.to_s,
+    '--end-date', end_date.to_s,
+    '--data-source', 'nasa-power',
+    '--json'
+  ]
+  
+  ColorLogger.info("Executing: #{command.join(' ')}")
+  
+  stdout, stderr, status = Open3.capture3(*command)
+  
+  unless status.success?
+    ColorLogger.error("agrr command failed: #{stderr}")
+    return nil
+  end
+  
+  JSON.parse(stdout)
+rescue JSON::ParserError => e
+  ColorLogger.error("JSON parse error: #{e.message}")
+  nil
+rescue => e
+  ColorLogger.error("Weather data fetch error: #{e.message}")
+  nil
+end
+
+# Parse command line options
+farm_name_filter = nil
+
+ARGV.each_with_index do |arg, i|
+  case arg
+  when '--farm-name'
+    farm_name_filter = ARGV[i + 1] if ARGV[i + 1]
+  end
+end
+
+# Header
+ColorLogger.log("\n" + "=" * 80, :blue)
+ColorLogger.log("India Reference Farms Weather Data Fetching Script (NASA POWER)", :blue)
+ColorLogger.log("=" * 80, :blue)
+puts ""
+
+# 1. Fetch India reference farms from DB
+ColorLogger.info("Searching for India reference farms (region: 'in')...")
+farms = Farm.where(is_reference: true, region: 'in')
+farms = farms.where(name: farm_name_filter) if farm_name_filter
+
+if farms.empty?
+  ColorLogger.error("No India reference farms found. Please run 'rails db:migrate' first.")
+  exit 1
+end
+
+ColorLogger.success("Found #{farms.count} India reference farms")
+puts ""
+
+# 2. Fetch weather data for each farm
+output = {}
+
+farms.each_with_index do |farm, index|
+  ColorLogger.log("\n[#{index + 1}/#{farms.count}] Processing: #{farm.name}", :blue)
+  puts "  Location: #{farm.latitude}, #{farm.longitude}"
+  
+  # Fetch weather data from NASA POWER (2000-01-01 ~ today)
+  weather_result = fetch_weather_from_nasa_power(farm.latitude, farm.longitude)
+  
+  if weather_result.nil?
+    ColorLogger.warning("  Failed to fetch data (skipped)")
+    next
+  end
+  
+  # Transform data
+  location_data = weather_result['location']
+  weather_data_raw = weather_result['data']
+  
+  if weather_data_raw.nil? || weather_data_raw.empty?
+    ColorLogger.warning("  Data is empty (skipped)")
+    next
+  end
+  
+  # Format conversion
+  weather_data = weather_data_raw.map do |daily|
+    {
+      'date' => daily['time'],
+      'temperature_max' => daily['temperature_2m_max'],
+      'temperature_min' => daily['temperature_2m_min'],
+      'temperature_mean' => daily['temperature_2m_mean'],
+      'precipitation' => daily['precipitation_sum'],
+      'sunshine_hours' => daily['sunshine_hours'],
+      'wind_speed' => daily['wind_speed_10m'],
+      'weather_code' => daily['weather_code']
+    }
+  end
+  
+  output[farm.name] = {
+    'name' => farm.name,
+    'latitude' => farm.latitude,
+    'longitude' => farm.longitude,
+    'is_reference' => farm.is_reference,
+    'region' => farm.region,
+    'weather_location' => {
+      'latitude' => location_data['latitude'],
+      'longitude' => location_data['longitude'],
+      'elevation' => location_data['elevation'],
+      'timezone' => location_data['timezone'] || 'Asia/Kolkata'
+    },
+    'weather_data' => weather_data
+  }
+  
+  ColorLogger.success("  Fetched #{weather_data.count} data records")
+  
+  # Add delay to avoid overwhelming the API
+  sleep 2 if index < farms.count - 1
+end
+
+if output.empty?
+  ColorLogger.error("No data to export")
+  exit 1
+end
+
+# 3. Save to file
+fixture_path = Rails.root.join('db/fixtures/india_reference_weather.json')
+FileUtils.mkdir_p(File.dirname(fixture_path))
+File.write(fixture_path, JSON.pretty_generate(output))
+
+puts ""
+ColorLogger.log("=" * 80, :green)
+ColorLogger.success("Completed!")
+ColorLogger.log("=" * 80, :green)
+puts ""
+puts "📄 Saved to: #{fixture_path}"
+puts "📊 Farms: #{output.keys.count}"
+puts "📊 Total weather records: #{output.values.sum { |v| v['weather_data'].count }}"
+puts ""
+ColorLogger.info("Next steps:")
+puts "  1. Check the file: cat #{fixture_path} | head -n 50"
+puts "  2. Commit to Git: git add #{fixture_path}"
+puts "  3. After this, 'rails db:migrate' can quickly load the data"
+puts ""
+

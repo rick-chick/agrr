@@ -18,8 +18,11 @@ Rails 8 + SQLite + Google Cloud Run
 
 マスターデータ（参照農場・作物）は**データベースマイグレーション**で管理されています。
 
-- 🇯🇵 Japan: 47農場、15作物
-- 🇺🇸 United States: 50農場、30作物
+各地域は**ローカル言語**でステージ名を管理：
+
+- 🇯🇵 Japan: 47農場、15作物（日本語）
+- 🇺🇸 United States: 50農場、30作物（英語）
+- 🇮🇳 India: 50農場、30作物（ヒンディー語 हिंदी）
 
 詳細: [docs/DATA_MIGRATION_GUIDE.md](docs/DATA_MIGRATION_GUIDE.md)
 

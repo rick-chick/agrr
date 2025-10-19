@@ -1,0 +1,14 @@
+in:
+  models:
+    cultivation_plan:
+      phases:
+        fetching_weather: "मौसम डेटा प्राप्त कर रहे हैं..."
+        predicting_weather: "मौसम डेटा की भविष्यवाणी कर रहे हैं..."
+        optimizing: "अनुकूलन कर रहे हैं..."
+        completed: "अनुकूलन पूर्ण हुआ"
+      phase_failed:
+        fetching_weather: "मौसम डेटा प्राप्त करने में विफल"
+        predicting_weather: "मौसम डेटा की भविष्यवाणी में विफल"
+        optimizing: "अनुकूलन विफल रहा"
+        default: "प्रक्रिया विफल रही"
+

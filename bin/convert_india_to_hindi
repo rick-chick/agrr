@@ -1,0 +1,137 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Convert India crop stage names from English to Hindi
+
+require_relative '../config/environment'
+
+# Logger with color output
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# English to Hindi translation mapping
+TRANSLATION_MAP = {
+  "Planting to Germination" => "बुवाई से अंकुरण",
+  "Planting to Emergence" => "बुवाई से उद्भव",
+  "Emergence to Growth" => "उद्भव से वृद्धि",
+  "Germination to Growth" => "अंकुरण से वृद्धि",
+  "Germination to Flowering" => "अंकुरण से फूल आना",
+  "Growth to Maturity" => "वृद्धि से परिपक्वता",
+  "Growth to Flowering" => "वृद्धि से फूल आना",
+  "Maturity to Harvest" => "परिपक्वता से कटाई",
+  "Seedling Stage" => "पौध अवस्था",
+  "Transplanting Stage" => "रोपाई अवस्था",
+  "Growing Stage" => "वृद्धि अवस्था",
+  "Harvest Stage" => "कटाई अवस्था",
+  "Flowering Stage" => "फूल आने की अवस्था",
+  "Flowering to Harvest" => "फूल आने से कटाई",
+  "Flowering to Maturity" => "फूल आने से परिपक्वता",
+  "Germination Stage" => "अंकुरण अवस्था",
+  "Growth Stage" => "वृद्धि अवस्था",
+  "Maturity Stage" => "परिपक्वता अवस्था"
+}
+
+# Header
+ColorLogger.log("\n" + "=" * 80, :blue)
+ColorLogger.log("Convert India Crop Stage Names: English → Hindi (हिंदी)", :blue)
+ColorLogger.log("=" * 80, :blue)
+puts ""
+
+# Get all India reference crops
+ColorLogger.info("Loading India reference crops...")
+crops = Crop.where(is_reference: true, region: 'in')
+
+ColorLogger.success("Found #{crops.count} India reference crops")
+puts ""
+
+# Track statistics
+total_stages = 0
+converted_stages = 0
+unconverted_stages = []
+
+# Process each crop
+crops.each do |crop|
+  stages = crop.crop_stages
+  next if stages.empty?
+  
+  crop_converted = 0
+  crop_unconverted = []
+  
+  stages.each do |stage|
+    total_stages += 1
+    
+    # Check if stage name is in English and needs conversion
+    if TRANSLATION_MAP.key?(stage.name)
+      hindi_name = TRANSLATION_MAP[stage.name]
+      stage.update!(name: hindi_name)
+      crop_converted += 1
+      converted_stages += 1
+    elsif stage.name =~ /^[a-zA-Z\s]+$/
+      # English text but not in our map
+      crop_unconverted << stage.name
+      unconverted_stages << { crop: crop.name, stage: stage.name }
+    end
+  end
+  
+  if crop_converted > 0
+    ColorLogger.success("#{crop.name}: Converted #{crop_converted} stages to Hindi")
+  end
+  
+  if crop_unconverted.any?
+    ColorLogger.warning("#{crop.name}: Unconverted stages found:")
+    crop_unconverted.each { |name| ColorLogger.warning("  - #{name}") }
+  end
+end
+
+puts ""
+ColorLogger.log("=" * 80, :green)
+ColorLogger.success("Conversion Completed!")
+ColorLogger.log("=" * 80, :green)
+puts ""
+
+ColorLogger.info("Summary:")
+puts "  Total stages: #{total_stages}"
+puts "  Converted to Hindi: #{converted_stages}"
+puts "  Unconverted: #{unconverted_stages.count}"
+puts ""
+
+if unconverted_stages.any?
+  ColorLogger.warning("Unconverted stages:")
+  unconverted_stages.each do |item|
+    puts "  #{item[:crop]}: #{item[:stage]}"
+  end
+  puts ""
+  ColorLogger.warning("Please add these to TRANSLATION_MAP and re-run")
+else
+  ColorLogger.success("All stages successfully converted to Hindi!")
+end
+
+puts ""
+

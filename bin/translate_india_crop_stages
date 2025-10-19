@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Translate Japanese stage names to English for India reference crops
+
+require_relative '../config/environment'
+
+# Logger with color output
+class ColorLogger
+  COLORS = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    reset: "\e[0m"
+  }
+
+  def self.log(message, color = :reset)
+    puts "#{COLORS[color]}#{message}#{COLORS[:reset]}"
+  end
+
+  def self.info(message)
+    log("ℹ️  #{message}", :blue)
+  end
+
+  def self.success(message)
+    log("✅ #{message}", :green)
+  end
+
+  def self.warning(message)
+    log("⚠️  #{message}", :yellow)
+  end
+
+  def self.error(message)
+    log("❌ #{message}", :red)
+  end
+end
+
+# Japanese to Hindi translation mapping
+# Carefully translated to Hindi (Devanagari script) for India region
+TRANSLATION_MAP = {
+  # Common grain and vegetable patterns
+  "播種〜発芽" => "बुवाई से अंकुरण",              # Most crops (Buvai se Ankuran)
+  "播種〜出芽" => "बुवाई से उद्भव",               # Wheat (Buvai se Udbhav)
+  "出芽〜成長" => "उद्भव से वृद्धि",               # Wheat (Udbhav se Vriddhi)
+  "発芽〜成長" => "अंकुरण से वृद्धि",              # General crops (Ankuran se Vriddhi)
+  "発芽〜開花" => "अंकुरण से फूल आना",             # Soybeans, Chickpeas, Sunflower (Ankuran se Phool Aana)
+  "成長〜成熟" => "वृद्धि से परिपक्वता",           # Most crops (Vriddhi se Paripakwata)
+  "成長〜開花" => "वृद्धि से फूल आना",             # Cotton (Vriddhi se Phool Aana)
+  "成熟〜収穫" => "परिपक्वता से कटाई",            # Most crops (Paripakwata se Katai)
+  
+  # Transplant crops (rice, vegetables)
+  "育苗期" => "पौध अवस्था",                      # Rice, Chili, Tomato, Eggplant, Cabbage, Cauliflower, Turmeric, Ginger, Cardamom (Paudh Avastha)
+  "移植期" => "रोपाई अवस्था",                     # Rice (Ropai Avastha - traditional term for rice transplanting)
+  "定植期" => "रोपाई अवस्था",                     # Vegetables (Ropai Avastha - general transplanting)
+  "生育期" => "वृद्धि अवस्था",                    # Transplanted crops (Vriddhi Avastha)
+  "収穫期" => "कटाई अवस्था",                     # All crops (Katai Avastha)
+  
+  # Flowering crops
+  "開花期" => "फूल आने की अवस्था",                # Coffee, Mangoes (Phool Aane ki Avastha)
+  "開花〜収穫" => "फूल आने से कटाई",              # Cotton (Phool Aane se Katai)
+  "開花〜成熟" => "फूल आने से परिपक्वता",          # Sunflower (Phool Aane se Paripakwata)
+  
+  # Perennial crops (tea, coffee, fruits)
+  "発芽期" => "अंकुरण अवस्था",                   # Sugarcane, Tea, Coffee, Coconut, Mangoes (Ankuran Avastha)
+  "成長期" => "वृद्धि अवस्था",                    # Sugarcane, Jute, Tea, Coffee, Turmeric, Ginger, Cardamom, Coconut, Mangoes (Vriddhi Avastha)
+  "成熟期" => "परिपक्वता अवस्था"                 # Sugarcane, Coconut (Paripakwata Avastha)
+}
+
+# Header
+ColorLogger.log("\n" + "=" * 80, :blue)
+ColorLogger.log("Translate India Crop Stage Names: Japanese → Hindi (हिंदी)", :blue)
+ColorLogger.log("=" * 80, :blue)
+puts ""
+
+# Get all India reference crops
+ColorLogger.info("Loading India reference crops...")
+crops = Crop.where(is_reference: true, region: 'in')
+
+ColorLogger.success("Found #{crops.count} India reference crops")
+puts ""
+
+# Track statistics
+total_stages = 0
+translated_stages = 0
+untranslated_stages = []
+
+# Process each crop
+crops.each do |crop|
+  stages = crop.crop_stages
+  next if stages.empty?
+  
+  crop_translated = 0
+  crop_untranslated = []
+  
+  stages.each do |stage|
+    total_stages += 1
+    
+    # Check if stage name is in Japanese
+    if stage.name =~ /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/
+      # Japanese detected, translate it
+      if TRANSLATION_MAP.key?(stage.name)
+        english_name = TRANSLATION_MAP[stage.name]
+        stage.update!(name: english_name)
+        crop_translated += 1
+        translated_stages += 1
+      else
+        # Unknown Japanese text
+        crop_untranslated << stage.name
+        untranslated_stages << { crop: crop.name, stage: stage.name }
+      end
+    end
+  end
+  
+  if crop_translated > 0
+    ColorLogger.success("#{crop.name}: Translated #{crop_translated} stages")
+  end
+  
+  if crop_untranslated.any?
+    ColorLogger.warning("#{crop.name}: Untranslated stages found:")
+    crop_untranslated.each { |name| ColorLogger.warning("  - #{name}") }
+  end
+end
+
+puts ""
+ColorLogger.log("=" * 80, :green)
+ColorLogger.success("Translation Completed!")
+ColorLogger.log("=" * 80, :green)
+puts ""
+
+ColorLogger.info("Summary:")
+puts "  Total stages: #{total_stages}"
+puts "  Translated: #{translated_stages}"
+puts "  Untranslated: #{untranslated_stages.count}"
+puts ""
+
+if untranslated_stages.any?
+  ColorLogger.warning("Untranslated stages:")
+  untranslated_stages.each do |item|
+    puts "  #{item[:crop]}: #{item[:stage]}"
+  end
+  puts ""
+  ColorLogger.warning("Please add these to TRANSLATION_MAP and re-run")
+else
+  ColorLogger.success("All stages successfully translated!")
+end
+
+puts ""
+
