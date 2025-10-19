@@ -7,9 +7,11 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
+  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
+  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+  
   <!-- Custom Scripts (propshaft, not bundled) -->
   <%= javascript_include_tag "progress_bar", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_include_tag "custom_gantt_chart", "data-turbo-track": "reload", defer: true %>
   
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
@@ -25,6 +27,7 @@
   <%= stylesheet_link_tag "public_plans_results", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/custom_gantt_chart", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/climate_chart", "data-turbo-track": "reload" %>
   
   <style>
