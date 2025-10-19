@@ -77,6 +77,25 @@ COPY --from=builder --chown=appuser:appuser /app /app
 # Copy Litestream configuration
 COPY config/litestream.yml /etc/litestream.yml
 
+# Copy agrr binary and dependencies if they exist (for daemon mode)
+# lib/core/.dockerkeep ensures the directory exists even without agrr binary
+COPY --chown=appuser:appuser lib/core/ /tmp/agrr_temp/
+RUN if [ -f /tmp/agrr_temp/agrr ]; then \
+        mv /tmp/agrr_temp/agrr /usr/local/bin/agrr && \
+        chmod +x /usr/local/bin/agrr && \
+        chown appuser:appuser /usr/local/bin/agrr && \
+        if [ -d /tmp/agrr_temp/_internal ]; then \
+            mv /tmp/agrr_temp/_internal /usr/local/bin/_internal && \
+            chown -R appuser:appuser /usr/local/bin/_internal && \
+            echo "✓ agrr binary and dependencies included (daemon mode available with USE_AGRR_DAEMON=true)"; \
+        else \
+            echo "✓ agrr binary included (daemon mode available with USE_AGRR_DAEMON=true)"; \
+        fi; \
+    else \
+        echo "⚠ agrr binary not found (daemon mode disabled - USE_AGRR_DAEMON will be ignored)"; \
+    fi && \
+    rm -rf /tmp/agrr_temp
+
 # Ensure gems are available in the final stage
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
