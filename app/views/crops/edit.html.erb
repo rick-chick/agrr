@@ -1,5 +1,9 @@
 <% content_for :title, "#{t('.title', name: @crop.name)} - AGRR" %>
 
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "crop_form", defer: true %>
+<% end %>
+
 <div class="page-header">
   <h1 class="page-title"><%= t('.title', name: @crop.name) %></h1>
 </div>

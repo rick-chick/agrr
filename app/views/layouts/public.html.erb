@@ -7,6 +7,10 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
+  <!-- Custom Scripts (propshaft, not bundled) -->
+  <%= javascript_include_tag "progress_bar", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "custom_gantt_chart", "data-turbo-track": "reload", defer: true %>
+  
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
@@ -37,6 +41,8 @@
   <%= yield %>
   
   <%= render "shared/footer" %>
+  
+  <%= yield :javascripts %>
 </body>
 </html>
 

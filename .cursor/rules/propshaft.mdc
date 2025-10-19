@@ -1,5 +1,58 @@
 ---
 alwaysApply: true
 ---
-Propshatはapp/assets、jsbinderはvender/assets。Propshaftがライブラリのassetsを管理してはならない
-rails8なのでモデルに情報が少ない。常にwebで仕様を検索すること。
+# アセット管理の厳格なルール
+
+## 絶対に守ること
+
+### jsbundling-rails (esbuild)
+- **用途**: npmライブラリ（Leaflet、Turbo、Stimulusなど）のバンドルのみ
+- **場所**: `app/javascript/` 配下
+- **出力**: `app/assets/builds/` にバンドル済みファイル
+- **読み込み**: `<%= javascript_include_tag "application", type: "module" %>`
+
+### Propshaft
+- **用途**: ローカルの静的アセット（バンドルしない）
+- **JavaScript**: `app/assets/javascripts/` 配下
+- **CSS**: `app/assets/stylesheets/` 配下  
+- **画像**: `app/assets/images/` 配下
+- **読み込み**: 
+  - JS: `<%= javascript_include_tag "ファイル名", defer: true %>`
+  - CSS: `<%= stylesheet_link_tag "ファイル名" %>`
+- **特徴**: フィンガープリント付きで配信、サブディレクトリ構造を維持
+
+## 判断基準
+
+### app/javascript/ に置くもの
+- npmパッケージを使うコード
+- 複数ファイルをバンドルする必要があるコード
+- トランスパイルが必要なコード
+
+### app/assets/javascripts/ に置くもの（Propshaft）
+- **プロジェクト固有のカスタムスクリプト**
+- npmライブラリに依存しないスタンドアロンのJavaScript
+- 大きなファイル（バンドルに含めると重くなる）
+- **例**: custom_gantt_chart.js, climate_chart.js など
+
+## よくある間違い（絶対にやるな）
+
+❌ `app/javascript/`にカスタムチャートコードを置いてバンドルに含める
+❌ Propshaftでnpmライブラリを配信しようとする
+❌ `app/assets/builds/`を直接編集する（esbuildの出力先なので上書きされる）
+
+## 新しいJavaScriptファイルを追加するときの判断フロー
+
+1. npmライブラリを使う？
+   - YES → `app/javascript/`に置いて`application.js`でimport
+   - NO → 次へ
+
+2. 他のJSファイルとバンドルする必要がある？
+   - YES → `app/javascript/`に置いて`application.js`でimport
+   - NO → 次へ
+
+3. → `app/assets/javascripts/`に置いてPropshaftで配信
+   - レイアウトファイルで`<%= javascript_include_tag "ファイル名" %>`で読み込む
+
+## Rails 8の特徴
+- モデルに情報が少ない
+- 常にwebで最新仕様を検索すること
