@@ -161,6 +161,31 @@ module Api
           assert_includes json['message'], '面積'
         end
         
+        test 'add_field returns error when field limit is reached' do
+          # 既に2個の圃場があるので、3個目を追加
+          post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
+               params: { field_name: '圃場 3', field_area: 50.0 },
+               as: :json
+          
+          assert_response :success
+          @cultivation_plan.reload
+          assert_equal 3, @cultivation_plan.cultivation_plan_fields.count
+          
+          # 4個目を追加しようとするとエラー
+          post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
+               params: { field_name: '圃場 4', field_area: 50.0 },
+               as: :json
+          
+          assert_response :bad_request
+          json = JSON.parse(response.body)
+          assert_equal false, json['success']
+          assert_includes json['message'], '最大3個'
+          
+          # 圃場数が変わっていないことを確認
+          @cultivation_plan.reload
+          assert_equal 3, @cultivation_plan.cultivation_plan_fields.count
+        end
+        
         test 'remove_field deletes empty field successfully' do
           # 空の圃場（field2）を削除
           field_id = "field_#{@field2.id}"
@@ -220,6 +245,50 @@ module Api
           json = JSON.parse(response.body)
           assert_equal false, json['success']
           assert_includes json['message'], '圃場が見つかりません'
+        end
+        
+        test 'add_crop returns error when crop limit is reached' do
+          # 既に1種類の作物（crop1: トマト）がある
+          # あと8種類追加して、合計9種類にする
+          8.times do |i|
+            crop = @cultivation_plan.cultivation_plan_crops.create!(
+              agrr_crop_id: "crop_#{i + 2}",
+              name: "作物#{i + 2}",
+              variety: "品種#{i + 2}",
+              area_per_unit: 1.0,
+              revenue_per_area: 10000.0
+            )
+          end
+          
+          @cultivation_plan.reload
+          assert_equal 9, @cultivation_plan.cultivation_plan_crops.count
+          
+          # 10種類目を追加しようとするとエラー
+          # 新しいCropを作成
+          new_crop = Crop.create!(
+            name: '新しい作物',
+            variety: '新品種',
+            area_per_unit: 1.0,
+            revenue_per_area: 10000.0,
+            agrr_crop_id: 'new_crop_10'
+          )
+          
+          post add_crop_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
+               params: {
+                 crop_id: new_crop.id,
+                 field_id: "field_#{@field1.id}",
+                 start_date: (Date.current + 1.month).to_s
+               },
+               as: :json
+          
+          assert_response :bad_request
+          json = JSON.parse(response.body)
+          assert_equal false, json['success']
+          assert_includes json['message'], '最大9種類'
+          
+          # 作物種類数が変わっていないことを確認
+          @cultivation_plan.reload
+          assert_equal 9, @cultivation_plan.cultivation_plan_crops.count
         end
         
         # ===== add_crop E2Eテスト =====

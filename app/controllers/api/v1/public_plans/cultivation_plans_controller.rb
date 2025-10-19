@@ -48,8 +48,16 @@ module Api
             pc.agrr_crop_id == crop.id || pc.agrr_crop_id == crop.agrr_crop_id || pc.name == crop.name
           end
           
-          # 存在しない場合は新規作成
+          # 存在しない場合は新規作成（作物種類の制限をチェック）
           unless plan_crop
+            # 作物種類が9種類に達している場合はエラー
+            if @cultivation_plan.cultivation_plan_crops.count >= 9
+              return render json: {
+                success: false,
+                message: '作物は最大9種類までしか追加できません'
+              }, status: :bad_request
+            end
+            
             plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
               name: crop.name,
               variety: crop.variety,
@@ -195,6 +203,14 @@ module Api
             return render json: {
               success: false,
               message: '面積は0より大きい値を指定してください'
+            }, status: :bad_request
+          end
+          
+          # 圃場数の制限（最大3個まで）
+          if @cultivation_plan.cultivation_plan_fields.count >= 3
+            return render json: {
+              success: false,
+              message: '圃場は最大3個までしか追加できません'
             }, status: :bad_request
           end
           
