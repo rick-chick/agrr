@@ -28,19 +28,17 @@
   <body>
     <%= render "shared/navbar" %>
     
-    <main class="main-content">
-      <div class="admin-container">
-        <% if notice %>
-          <div class="alert alert-success"><%= notice %></div>
-        <% end %>
-        
-        <% if alert %>
-          <div class="alert alert-error"><%= alert %></div>
-        <% end %>
-        
-        <%= yield %>
-      </div>
-    </main>
+    <div class="admin-container">
+      <% if notice %>
+        <div class="alert alert-success"><%= notice %></div>
+      <% end %>
+      
+      <% if alert %>
+        <div class="alert alert-error"><%= alert %></div>
+      <% end %>
+      
+      <%= yield %>
+    </div>
     
     <%= yield :javascripts %>
     

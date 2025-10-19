@@ -35,8 +35,6 @@
     body {
       padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
     
   </style>
@@ -44,9 +42,7 @@
 <body>
   <%= render "shared/navbar" %>
 
-  <main class="main-content">
-    <%= yield %>
-  </main>
+  <%= yield %>
   
   <%= render "shared/footer" %>
   
