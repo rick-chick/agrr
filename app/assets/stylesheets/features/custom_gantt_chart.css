@@ -16,6 +16,7 @@
   overflow-y: visible;
   position: relative;
   border: 1px solid #e5e7eb;
+  max-height: 80vh; /* 最大高さを制限 */
 }
 
 #gantt-chart-container::before {
