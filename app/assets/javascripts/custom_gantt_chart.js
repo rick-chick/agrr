@@ -967,7 +967,7 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
   }));
 
   // 「作物を追加」ボタンを描画
-  renderAddCropButton(rowGroup, config, group, y);
+  renderAddCropButton(svg, rowGroup, config, group, y);
 
   // 各栽培のバーを描画
   group.cultivations.forEach((cultivation, cultIndex) => {
@@ -978,7 +978,7 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
 }
 
 // 「作物を追加」ボタンを描画
-function renderAddCropButton(parentGroup, config, group, rowY) {
+function renderAddCropButton(svg, parentGroup, config, group, rowY) {
   const buttonGroup = createSVGElement('g', {
     class: 'add-crop-button',
     style: 'cursor: pointer;',
@@ -986,10 +986,10 @@ function renderAddCropButton(parentGroup, config, group, rowY) {
     'data-field-id': group.fieldId
   });
 
-  const buttonX = 55;
+  const buttonX = 52;
   const buttonY = rowY + (config.rowHeight / 2);
-  const buttonWidth = 100;
-  const buttonHeight = 36;
+  const buttonWidth = 90;
+  const buttonHeight = 32;
 
   // ボタン背景（角丸矩形）
   const buttonBg = createSVGElement('rect', {
@@ -997,20 +997,20 @@ function renderAddCropButton(parentGroup, config, group, rowY) {
     y: buttonY - (buttonHeight / 2),
     width: buttonWidth,
     height: buttonHeight,
-    rx: 18,
-    ry: 18,
+    rx: 16,
+    ry: 16,
     fill: 'url(#addButtonGradient)',
     stroke: '#667eea',
-    'stroke-width': '2',
+    'stroke-width': '1.5',
     class: 'add-button-bg',
-    opacity: '0.95'
+    opacity: '0.9'
   });
 
   // グラデーション定義を追加（初回のみ）
   if (!document.querySelector('#addButtonGradient')) {
-    const defs = parentGroup.ownerSVGElement.querySelector('defs') || createSVGElement('defs');
-    if (!parentGroup.ownerSVGElement.querySelector('defs')) {
-      parentGroup.ownerSVGElement.appendChild(defs);
+    const defs = svg.querySelector('defs') || createSVGElement('defs');
+    if (!svg.querySelector('defs')) {
+      svg.appendChild(defs);
     }
     
     const gradient = createSVGElement('linearGradient', {
@@ -1030,23 +1030,23 @@ function renderAddCropButton(parentGroup, config, group, rowY) {
   // ホバー効果
   buttonBg.addEventListener('mouseenter', function() {
     this.setAttribute('opacity', '1');
-    this.setAttribute('stroke-width', '2.5');
+    this.setAttribute('stroke-width', '2');
   });
 
   buttonBg.addEventListener('mouseleave', function() {
-    this.setAttribute('opacity', '0.95');
-    this.setAttribute('stroke-width', '2');
+    this.setAttribute('opacity', '0.9');
+    this.setAttribute('stroke-width', '1.5');
   });
 
   buttonGroup.appendChild(buttonBg);
 
   // プラス記号
   const plusIcon = createSVGElement('text', {
-    x: buttonX + 15,
-    y: buttonY + 5,
+    x: buttonX + 13,
+    y: buttonY + 4,
     class: 'add-button-icon',
     'text-anchor': 'middle',
-    'font-size': '18',
+    'font-size': '16',
     'font-weight': 'bold',
     fill: '#667eea',
     style: 'pointer-events: none;'
@@ -1056,11 +1056,11 @@ function renderAddCropButton(parentGroup, config, group, rowY) {
 
   // ボタンテキスト
   const buttonText = createSVGElement('text', {
-    x: buttonX + 58,
-    y: buttonY + 5,
+    x: buttonX + 53,
+    y: buttonY + 4,
     class: 'add-button-text',
     'text-anchor': 'middle',
-    'font-size': '12',
+    'font-size': '11',
     'font-weight': '600',
     fill: '#667eea',
     style: 'pointer-events: none;'
