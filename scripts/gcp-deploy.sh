@@ -35,6 +35,7 @@ PROJECT_ID=${PROJECT_ID:-}
 REGION=${REGION:-asia-northeast1}
 SERVICE_NAME=${SERVICE_NAME:-agrr-production}
 IMAGE_NAME=${IMAGE_NAME:-agrr}
+USE_AGRR_DAEMON=${USE_AGRR_DAEMON:-false}
 
 # Get project from gcloud if not set
 if [ -z "$PROJECT_ID" ]; then
@@ -50,6 +51,7 @@ print_header "Google Cloud Run Deployment"
 print_status "Project ID: $PROJECT_ID"
 print_status "Region: $REGION"
 print_status "Service Name: $SERVICE_NAME"
+print_status "AGRR Daemon Mode: $USE_AGRR_DAEMON"
 
 # Check prerequisites
 check_prerequisites() {
@@ -132,9 +134,17 @@ GCS_BUCKET: "$GCS_BUCKET"
 ALLOWED_HOSTS: "$ALLOWED_HOSTS"
 DEPLOY_TIMESTAMP: "$timestamp"
 SOLID_QUEUE_IN_PUMA: "false"
+USE_AGRR_DAEMON: "$USE_AGRR_DAEMON"
 EOF
     
     print_status "Deploying $SERVICE_NAME..."
+    
+    # Set min-instances based on daemon mode
+    local min_instances=0
+    if [ "$USE_AGRR_DAEMON" = "true" ]; then
+        min_instances=1
+        print_status "Daemon mode enabled - setting min-instances=1 for better performance"
+    fi
     
     gcloud run deploy $SERVICE_NAME \
         --image "$image_tag" \
@@ -144,7 +154,7 @@ EOF
         --port 3000 \
         --memory 2Gi \
         --cpu 2 \
-        --min-instances 0 \
+        --min-instances $min_instances \
         --max-instances 1 \
         --timeout 600 \
         --service-account cloud-run-agrr@agrr-475323.iam.gserviceaccount.com \

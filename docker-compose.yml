@@ -1,6 +1,7 @@
 # Docker Compose file for development
 
 services:
+  # Web with daemon support (development with daemon) - DEFAULT
   web:
     build:
       context: .
@@ -8,7 +9,7 @@ services:
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["/app/scripts/docker-entrypoint-dev.sh"]
+    entrypoint: ["/app/scripts/docker-entrypoint-dev-daemon.sh"]
     ports:
       - "3000:3000"
     volumes:
@@ -23,9 +24,41 @@ services:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
       - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
+      - USE_AGRR_DAEMON=true  # Daemon mode enabled by default
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  # Web without daemon (CLI mode, optional)
+  web-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+    entrypoint: ["/app/scripts/docker-entrypoint-dev.sh"]
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - storage_dev_data:/app/storage
+      - bundle_data:/usr/local/bundle
+      - bundle_cache:/usr/local/bundle/cache
+      - /app/log
+      - /app/node_modules
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=sqlite3:storage/development.sqlite3
+      - PREVENT_TEST_IN_DEV=true
+    command: bundle exec rails server -b 0.0.0.0
+    stdin_open: true
+    tty: true
+    profiles:
+      - cli
     dns:
       - 8.8.8.8
       - 8.8.4.4
