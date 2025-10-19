@@ -9,10 +9,27 @@ module Api
         
         # POST /api/v1/public_plans/cultivation_plans/:id/add_crop
         # 新しい作物をスケジュールに追加
+        #
+        # 【新規作物追加のフロー】
+        # 1. CultivationPlanCropを作成または取得（作物マスタデータ）
+        # 2. action: 'add'のmoveを作成
+        #    - allocation_idはダミー値を設定（agrr.coreが自動生成して置き換える）
+        #    - crop_id, to_field_id, to_start_date, to_areaを指定
+        # 3. agrr optimize adjustを実行
+        #    - current_allocationには既存の作物のみ
+        #    - movesに新規作物追加を含める
+        # 4. save_adjusted_resultで最適化結果をDBに保存
+        #    - 既存のFieldCultivationを全削除
+        #    - 最適化結果のみを新規作成
         def add_crop
+          Rails.logger.info "🌱 [Add Crop] ========== START =========="
+          Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}, field_id: #{params[:field_id]}, start_date: #{params[:start_date]}"
+          
           @cultivation_plan = CultivationPlan
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
             .find(params[:id])
+          
+          Rails.logger.info "🌱 [Add Crop] 既存のfield_cultivations件数: #{@cultivation_plan.field_cultivations.count}"
           
           crop = Crop.find(params[:crop_id])
           field_id_str = params[:field_id] # "field_123" 形式
@@ -42,43 +59,29 @@ module Api
             )
           end
           
-          # 移動として追加（adjust APIを使用）
           start_date = Date.parse(params[:start_date])
           
-          # 新しい割り当てIDを生成（既存と重複しないように）
-          max_id = @cultivation_plan.field_cultivations.maximum(:id) || 0
-          new_allocation_id = "alloc_new_#{max_id + 1}_#{Time.current.to_i}"
-          
-          # 作物の栽培期間を推定（GDD要件から）
-          estimated_days = estimate_cultivation_days(crop, @cultivation_plan)
-          completion_date = start_date + estimated_days.days
-          
-          # 一時的なfield_cultivationを作成（adjust API用のcurrent_allocationに含める）
-          temp_cultivation = @cultivation_plan.field_cultivations.create!(
-            cultivation_plan_field: plan_field,
-            cultivation_plan_crop: plan_crop,
-            start_date: start_date,
-            completion_date: completion_date,
-            cultivation_days: estimated_days,
-            area: crop.area_per_unit || 1.0,
-            estimated_cost: 0,
-            status: 'pending'
-          )
-          
-          Rails.logger.info "✅ [Add Crop] 一時的なfield_cultivation作成: #{temp_cultivation.id}"
-          
-          # cultivation_planをリロードして新しいfield_cultivationを含める
-          @cultivation_plan.reload
-          
-          # 現在の割り当てをAGRR形式に構築（新しく作成したtemp_cultivationも含める）
+          # ⭐ 現在の割り当てをAGRR形式に構築（既存の作物のみ）
+          # 新規作物はmovesのaction: 'add'で追加するため、ここには含めない
           current_allocation = build_current_allocation(@cultivation_plan)
           
-          # movesは空（新しい作物はcurrent_allocationに含まれているので移動不要）
-          moves = []
+          # ⭐ 新規作物追加のmoveを作成（action: 'add'）
+          # allocation_idはダミー値（agrr.coreが自動生成して置き換える）
+          moves = [
+            {
+              allocation_id: "new_#{Time.current.to_i}",  # ダミーID（agrr.coreが置き換える）
+              action: 'add',
+              crop_id: crop.agrr_crop_id || crop.id.to_s,
+              to_field_id: field_id_str,
+              to_start_date: start_date.to_s,
+              to_area: crop.area_per_unit || 1.0,
+              variety: crop.variety
+            }
+          ]
           
-          Rails.logger.info "🔧 [Add Crop] 新しい作物をcurrent_allocationに含めました（moves不要）"
-          Rails.logger.info "🔧 [Add Crop] field_cultivations count: #{@cultivation_plan.field_cultivations.count}"
-          Rails.logger.info "🔧 [Add Crop] current_allocation field_schedules: #{current_allocation.dig(:optimization_result, :field_schedules)&.count}"
+          Rails.logger.info "🔧 [Add Crop] 新規作物追加のmoveを作成（action: 'add'）"
+          Rails.logger.info "🔧 [Add Crop] crop_id: #{moves.first[:crop_id]}"
+          Rails.logger.info "🔧 [Add Crop] move: #{moves.first.inspect}"
           
           # 圃場と作物の設定を構築
           fields = build_fields_config(@cultivation_plan)
@@ -87,7 +90,6 @@ module Api
           # 気象データを取得
           farm = @cultivation_plan.farm
           unless farm.weather_location
-            temp_cultivation.destroy
             return render json: {
               success: false,
               message: '気象データがありません'
@@ -95,7 +97,6 @@ module Api
           end
           
           unless @cultivation_plan.predicted_weather_data.present?
-            temp_cultivation.destroy
             return render json: {
               success: false,
               message: '気象予測データがありません。最適化を先に実行してください。'
@@ -140,6 +141,9 @@ module Api
               # Action Cable経由でクライアントに通知
               broadcast_optimization_complete(@cultivation_plan)
               
+              Rails.logger.info "🌱 [Add Crop] ========== SUCCESS =========="
+              Rails.logger.info "🌱 [Add Crop] 最終的なfield_cultivations件数: #{@cultivation_plan.field_cultivations.count}"
+              
               render json: {
                 success: true,
                 message: '作物を追加しました',
@@ -150,7 +154,6 @@ module Api
                 }
               }
             else
-              temp_cultivation.destroy
               Rails.logger.error "❌ [Add Crop] Result has no field_schedules"
               render json: {
                 success: false,
@@ -158,7 +161,7 @@ module Api
               }, status: :internal_server_error
             end
           rescue Agrr::BaseGateway::ExecutionError => e
-            temp_cultivation.destroy
+            Rails.logger.error "❌ [Add Crop] ========== ERROR =========="
             Rails.logger.error "❌ [Add Crop] Failed to optimize: #{e.message}"
             
             # ユーザーフレンドリーなエラーメッセージに変換
@@ -860,6 +863,11 @@ module Api
         end
         
         # 調整結果をデータベースに保存
+        #
+        # 【重要】このメソッドは既存のFieldCultivationを全削除してから新規作成する
+        # - add_cropで作成したtemp_cultivationも削除される
+        # - agrr optimize adjustの結果のみがDBに保存される
+        # - これにより、allocation_idの重複や一時データの残留を防ぐ
         def save_adjusted_result(cultivation_plan, result)
           Rails.logger.info "💾 [Save Adjusted Result] result keys: #{result.keys}"
           Rails.logger.info "💾 [Save Adjusted Result] field_schedules: #{result[:field_schedules]&.count || 'nil'}"
@@ -888,8 +896,16 @@ module Api
           
           # トランザクション内で既存データを削除し、新しいデータを作成
           ActiveRecord::Base.transaction do
-            # 既存の栽培スケジュールを削除
+            # ⭐ 既存の栽培スケジュールを全削除
+            # temp_cultivationも含め、全てのFieldCultivationを削除
+            # これにより、agrrの最適化結果のみがDBに残る
+            
+            # ⚠️ 重要: reloadしてキャッシュをクリア（ダブル送信対策）
+            cultivation_plan.reload
+            existing_count = cultivation_plan.field_cultivations.count
+            Rails.logger.info "🗑️ [Save] 既存のfield_cultivations削除開始: #{existing_count}件"
             cultivation_plan.field_cultivations.destroy_all
+            Rails.logger.info "✅ [Save] 既存のfield_cultivations削除完了"
             
             # 新しい栽培スケジュールを作成
             result[:field_schedules].each do |field_schedule|
@@ -928,7 +944,7 @@ module Api
                   next
                 end
                 
-                FieldCultivation.create!(
+                new_cultivation = FieldCultivation.create!(
                   cultivation_plan: cultivation_plan,
                   cultivation_plan_field: plan_field,
                   cultivation_plan_crop: plan_crop,
@@ -943,6 +959,7 @@ module Api
                     accumulated_gdd: allocation['accumulated_gdd']
                   }
                 )
+                Rails.logger.info "✅ [Save] 新規field_cultivation作成: #{new_cultivation.id} (#{plan_crop.name})"
               end
             end
             
@@ -957,6 +974,10 @@ module Api
               is_optimal: result[:is_optimal],
               status: 'completed'
             )
+            
+            # トランザクション完了後の件数確認
+            final_count = cultivation_plan.field_cultivations.count
+            Rails.logger.info "📊 [Save] トランザクション完了: 最終的なfield_cultivations件数 = #{final_count}"
           end
         end
       end
