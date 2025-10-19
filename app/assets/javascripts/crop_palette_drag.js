@@ -1,0 +1,574 @@
+// app/assets/javascripts/crop_palette_drag.js
+// 作物パレットのドラッグ&ドロップ機能
+
+// 初期化フラグ
+let cropPaletteInitialized = false;
+
+// トグル関数
+function toggleCropPalette() {
+  const panel = document.getElementById('crop-palette-panel');
+  const toggleBtn = document.getElementById('crop-palette-toggle');
+  
+  if (!panel) {
+    return;
+  }
+  
+  panel.classList.toggle('collapsed');
+  
+  // トグルボタンのアイコンも回転
+  if (toggleBtn) {
+    const icon = toggleBtn.querySelector('.toggle-icon');
+    if (icon) {
+      const isCollapsed = panel.classList.contains('collapsed');
+      icon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+  }
+  
+  // ローカルストレージに状態を保存
+  const isCollapsed = panel.classList.contains('collapsed');
+  localStorage.setItem('cropPaletteCollapsed', isCollapsed);
+}
+
+// 初期化関数
+function initializeCropPalette() {
+  const palettePanel = document.getElementById('crop-palette-panel');
+  if (!palettePanel) {
+    return;
+  }
+
+  // トグルボタンの設定
+  setupToggleButton();
+  
+  // 作物カードのドラッグ設定
+  initCropCardDrag();
+
+  // ガントチャートのドロップゾーン
+  initGanttDropZone();
+  
+  cropPaletteInitialized = true;
+}
+
+// トグルボタンの設定
+function setupToggleButton() {
+  const toggleBtn = document.getElementById('crop-palette-toggle');
+  const panel = document.getElementById('crop-palette-panel');
+  
+  if (!toggleBtn || !panel) {
+    return;
+  }
+
+  // 既存のイベントリスナーを削除
+  const newToggleBtn = toggleBtn.cloneNode(true);
+  toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+
+  // クリックイベントを設定
+  newToggleBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleCropPalette();
+  });
+
+  // キーボードアクセシビリティ対応
+  newToggleBtn.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleCropPalette();
+    }
+  });
+
+  // イベントリスナー設定済みフラグ
+  newToggleBtn.dataset.listenerAdded = 'true';
+
+  // 保存された状態を復元
+  const savedState = localStorage.getItem('cropPaletteCollapsed');
+  if (savedState === 'true') {
+    panel.classList.add('collapsed');
+    
+    // トグルボタンのアイコンも回転
+    const icon = newToggleBtn.querySelector('.toggle-icon');
+    if (icon) {
+      icon.style.transform = 'rotate(180deg)';
+    }
+  }
+}
+
+// 初期化関数
+function tryInitialize() {
+  if (!cropPaletteInitialized) {
+    initializeCropPalette();
+  }
+}
+
+// 複数のタイミングで初期化を試行
+document.addEventListener('DOMContentLoaded', () => {
+  tryInitialize();
+});
+
+// Turbo対応
+if (typeof Turbo !== 'undefined') {
+  document.addEventListener('turbo:load', () => {
+    tryInitialize();
+  });
+}
+
+// 即座に試行（DOM要素が既に存在する場合）
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tryInitialize);
+} else {
+  // DOMが既に読み込まれている場合
+  tryInitialize();
+}
+
+// 遅延初期化（フォールバック）
+setTimeout(() => {
+  tryInitialize();
+}, 500);
+
+
+// SVG要素を作成するヘルパー関数（custom_gantt_chart.jsと同じ）
+function createSVGElement(tag, attrs = {}, textContent = null) {
+  const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  
+  Object.entries(attrs).forEach(([key, value]) => {
+    element.setAttribute(key, value);
+  });
+  
+  if (textContent !== null) {
+    element.textContent = textContent;
+  }
+  
+  return element;
+}
+
+// 作物カードのドラッグ設定
+function initCropCardDrag() {
+  const cropCards = document.querySelectorAll('.crop-palette-card');
+  console.log(`🌱 作物カード ${cropCards.length} 枚にドラッグ設定中...`);
+
+  cropCards.forEach(card => {
+    let draggedSVGBar = null;
+    let dragData = null;
+    
+    // mousedownでドラッグ開始
+    card.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      
+      // ドラッグデータを設定
+      dragData = {
+        crop_id: card.dataset.cropId,
+        crop_name: card.dataset.cropName,
+        crop_variety: card.dataset.cropVariety,
+        agrr_crop_id: card.dataset.agrrCropId
+      };
+      
+      console.log('🚀 ドラッグ開始:', dragData);
+      
+      // 視覚的フィードバック
+      card.classList.add('dragging');
+      
+      // パレットを即座に閉じる
+      const panel = document.getElementById('crop-palette-panel');
+      if (panel && !panel.classList.contains('collapsed')) {
+        toggleCropPalette();
+        console.log('🔽 作物パレットを自動的に閉じました');
+      }
+      
+      // SVGコンテナを取得
+      const svgContainer = document.getElementById('gantt-chart-container');
+      const svg = svgContainer ? svgContainer.querySelector('svg.custom-gantt-chart') : null;
+      
+      if (!svg) {
+        console.warn('⚠️ SVGが見つかりません');
+        return;
+      }
+      
+      // SVGバーを作成（custom_gantt_chart.jsと同じスタイル）
+      const fillColor = typeof window.getCropColor !== 'undefined' 
+        ? window.getCropColor(dragData.crop_name) 
+        : '#9ae6b4';
+      const strokeColor = typeof window.getCropStrokeColor !== 'undefined' 
+        ? window.getCropStrokeColor(dragData.crop_name) 
+        : '#48bb78';
+      
+      const barGroup = createSVGElement('g', {
+        class: 'drag-preview-bar',
+        'pointer-events': 'none',
+        opacity: 0.9
+      });
+      
+      const rect = createSVGElement('rect', {
+        x: 0,
+        y: 0,
+        width: 240,
+        height: 50,
+        rx: 6,
+        ry: 6,
+        fill: fillColor,
+        stroke: strokeColor,
+        'stroke-width': 2.5,
+        'stroke-dasharray': '5,5'
+      });
+      
+      const text = createSVGElement('text', {
+        x: 120,
+        y: 30,
+        'text-anchor': 'middle',
+        fill: '#1F2937',
+        'font-size': '12px',
+        'font-weight': '600'
+      }, dragData.crop_name);
+      
+      barGroup.appendChild(rect);
+      barGroup.appendChild(text);
+      svg.appendChild(barGroup);
+      
+      draggedSVGBar = barGroup;
+      
+      // マウス位置に追従（custom_gantt_chart.jsのグローバルハンドラーを真似る）
+      const mouseMoveHandler = (moveEvent) => {
+        if (!draggedSVGBar) return;
+        
+        // マウス座標をSVG座標に変換
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = moveEvent.clientX;
+        svgPoint.y = moveEvent.clientY;
+        const svgCoords = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+        
+        // バーをマウス位置に移動（中央に配置）
+        const barX = svgCoords.x - 120;
+        const barY = svgCoords.y - 25;
+        
+        draggedSVGBar.setAttribute('transform', `translate(${barX}, ${barY})`);
+      };
+      
+      const mouseUpHandler = (upEvent) => {
+        console.log('🏁 ドラッグ終了');
+        card.classList.remove('dragging');
+        
+        // SVGバーを削除
+        if (draggedSVGBar && draggedSVGBar.parentNode) {
+          draggedSVGBar.parentNode.removeChild(draggedSVGBar);
+        }
+        
+        // ドロップ位置を計算
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = upEvent.clientX;
+        svgPoint.y = upEvent.clientY;
+        const svgCoords = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+        
+        const dropInfo = calculateDropInfo(svgCoords);
+        if (dropInfo) {
+          // 作物を追加
+          addCropToSchedule(dragData, dropInfo);
+        }
+        
+        // イベントリスナーを削除
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+        
+        draggedSVGBar = null;
+        dragData = null;
+      };
+      
+      // グローバルイベントリスナーを登録
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+    });
+  });
+}
+
+// ガントチャートのドロップゾーン設定（マウスイベントベースのため不要）
+function initGanttDropZone() {
+  // SVGへのドラッグ&ドロップはmousedownイベントで処理されるため、
+  // HTML5 Drag&Drop APIのイベントリスナーは不要
+  console.log('✅ マウスイベントベースのドラッグ&ドロップを使用');
+}
+
+// ドロップ位置から圃場と日付を計算
+function calculateDropInfo(svgCoords) {
+  // ganttStateはcustom_gantt_chart.jsで定義されている
+  if (typeof ganttState === 'undefined' || !ganttState.config) {
+    return null;
+  }
+
+  const config = ganttState.config;
+  const chartWidth = ganttState.chartWidth;
+  const totalDays = ganttState.totalDays;
+  const planStartDate = ganttState.planStartDate;
+  const fieldGroups = ganttState.fieldGroups;
+
+  // Y座標から圃場を判定
+  const ROW_HEIGHT = 70;
+  const HEADER_HEIGHT = config.margin.top;
+  
+  if (svgCoords.y < HEADER_HEIGHT) {
+    return null;
+  }
+
+  const fieldIndex = Math.floor((svgCoords.y - HEADER_HEIGHT) / ROW_HEIGHT);
+  
+  if (fieldIndex < 0 || fieldIndex >= fieldGroups.length) {
+    return null;
+  }
+
+  const targetField = fieldGroups[fieldIndex];
+
+  // X座標から日付を計算
+  const MARGIN_LEFT = config.margin.left;
+  
+  if (svgCoords.x < MARGIN_LEFT) {
+    return null;
+  }
+
+  const daysFromStart = Math.round(((svgCoords.x - MARGIN_LEFT) / chartWidth) * totalDays);
+  const startDate = new Date(planStartDate);
+  startDate.setDate(startDate.getDate() + daysFromStart);
+
+  return {
+    field_id: targetField.fieldId,
+    field_name: targetField.fieldName,
+    start_date: startDate.toISOString().split('T')[0]
+  };
+}
+
+// 作物をスケジュールに追加
+function addCropToSchedule(cropData, dropInfo) {
+  // ganttStateから計画IDを取得
+  if (typeof ganttState === 'undefined' || !ganttState.cultivation_plan_id) {
+    alert('エラー: 計画IDが取得できません');
+    return;
+  }
+
+  const cultivation_plan_id = ganttState.cultivation_plan_id;
+
+  // ローディング表示
+  showLoadingOverlay();
+
+  // APIエンドポイントにPOST
+  const url = `/api/v1/public_plans/cultivation_plans/${cultivation_plan_id}/add_crop`;
+
+  const requestData = {
+    crop_id: cropData.crop_id,
+    field_id: dropInfo.field_id,
+    start_date: dropInfo.start_date
+  };
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    },
+    body: JSON.stringify(requestData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Action Cable経由で更新を待機
+    } else {
+      console.error('❌ 作物の追加に失敗しました:', data.message);
+      
+      // 技術的な詳細があればコンソールに出力
+      if (data.technical_details) {
+        console.error('📋 Technical details:', data.technical_details);
+      }
+      
+      hideLoadingOverlay();
+      
+      // ユーザーフレンドリーなエラーメッセージを表示
+      showErrorMessage(data.message || '作物の追加に失敗しました');
+    }
+  })
+  .catch(error => {
+    console.error('❌ APIエラー:', error);
+    hideLoadingOverlay();
+    showErrorMessage('通信エラーが発生しました。もう一度お試しください。');
+  });
+}
+
+// ローディングオーバーレイを表示
+function showLoadingOverlay(message = '最適化処理中...') {
+  // 既存のオーバーレイを削除
+  hideLoadingOverlay();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'reoptimization-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    cursor: not-allowed;
+  `;
+  
+  const spinner = document.createElement('div');
+  spinner.style.cssText = `
+    background-color: white;
+    padding: 30px 50px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+  `;
+  spinner.innerHTML = `
+    <div style="margin-bottom: 15px;">
+      <div style="
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      "></div>
+    </div>
+    <div>${message}</div>
+  `;
+  
+  // アニメーションを追加（まだ存在しない場合）
+  if (!document.getElementById('loading-spinner-style')) {
+    const style = document.createElement('style');
+    style.id = 'loading-spinner-style';
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  overlay.appendChild(spinner);
+  document.body.appendChild(overlay);
+}
+
+// ローディングオーバーレイを非表示
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('reoptimization-overlay');
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
+// エラーメッセージを表示（見やすいモーダル）
+function showErrorMessage(message) {
+  // 既存のエラーメッセージを削除
+  const existingError = document.getElementById('crop-palette-error-modal');
+  if (existingError) {
+    existingError.remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'crop-palette-error-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-in;
+  `;
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background-color: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  modalContent.innerHTML = `
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+      <div style="
+        width: 48px;
+        height: 48px;
+        background-color: #FEE2E2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+      ">
+        <svg style="width: 24px; height: 24px; color: #DC2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #1F2937;">作物の追加に失敗しました</h3>
+    </div>
+    <p style="margin: 0 0 25px 0; color: #4B5563; font-size: 15px; line-height: 1.6;">${message}</p>
+    <button id="error-modal-close-btn" style="
+      width: 100%;
+      padding: 12px 24px;
+      background-color: #3B82F6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    ">OK</button>
+  `;
+  
+  // アニメーションを追加
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    #error-modal-close-btn:hover {
+      background-color: #2563EB !important;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+  
+  // 閉じるボタンのイベントリスナー
+  const closeBtn = document.getElementById('error-modal-close-btn');
+  closeBtn.addEventListener('click', () => {
+    modal.style.animation = 'fadeOut 0.2s ease-out';
+    setTimeout(() => modal.remove(), 200);
+  });
+  
+  // モーダル外クリックで閉じる
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.animation = 'fadeOut 0.2s ease-out';
+      setTimeout(() => modal.remove(), 200);
+    }
+  });
+}
+
+// グローバルに公開
+window.initCropPalette = initializeCropPalette;
+window.toggleCropPalette = toggleCropPalette;
+
+// 強制的に初期化を実行
+console.log('🚀 作物パレットJavaScript読み込み完了');
+console.log('🔍 toggleCropPalette関数:', typeof window.toggleCropPalette);
+console.log('🔍 initCropPalette関数:', typeof window.initCropPalette);
+
+
