@@ -25,16 +25,18 @@
       <% end %>
     <% end %>
     
-    <!-- Language Switcher -->
-    <div class="nav-locale-switcher">
-      <% available_locales.each do |locale| %>
-        <% if locale[:code] == I18n.locale.to_s %>
-          <span class="locale-current"><%= locale[:flag] %></span>
-        <% else %>
-          <%= link_to locale[:flag], url_for(locale: locale[:code]), class: "locale-link", title: locale[:name] %>
+    <!-- Language Switcher (Admin Only) -->
+    <% if admin_user? %>
+      <div class="nav-locale-switcher">
+        <% available_locales.each do |locale| %>
+          <% if locale[:code] == I18n.locale.to_s %>
+            <span class="locale-current"><%= locale[:flag] %></span>
+          <% else %>
+            <%= link_to locale[:flag], url_for(locale: locale[:code]), class: "locale-link", title: locale[:name] %>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
+      </div>
+    <% end %>
   </div>
 </nav>
 
