@@ -93,6 +93,8 @@
   padding: var(--space-6);
   margin-bottom: var(--space-6);
   box-shadow: var(--shadow-md);
+  width: var(--card-max-width); /* 統一されたカード幅を使用 */
+  max-width: var(--card-container-max-width); /* 統一された最大幅を使用 */
 }
 
 /* ガントチャートヘッダー（タイトルと作物パレットを横並び） */

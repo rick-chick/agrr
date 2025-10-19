@@ -5,7 +5,8 @@
    ガントチャートコンテナ
    ============================================ */
 #gantt-chart-container {
-  width: 100%;
+  width: var(--card-max-width); /* 統一されたカード幅を使用 */
+  max-width: var(--card-container-max-width); /* 統一された最大幅を使用 */
   background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
   border-radius: 16px;
   padding: 24px;
