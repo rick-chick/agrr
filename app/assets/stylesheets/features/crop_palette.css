@@ -4,7 +4,7 @@
 .crop-palette-container {
   position: relative;
   display: inline-block;
-  z-index: 100;
+  z-index: 1000;
 }
 
 /* トグルボタン */
@@ -13,7 +13,7 @@
   border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   color: white;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -22,6 +22,7 @@
   transition: all 0.3s ease;
   font-size: 0.9rem;
   font-weight: 600;
+  min-height: 44px; /* ボタンの最小高さを確保 */
 }
 
 .crop-palette-toggle-btn:hover {
@@ -53,7 +54,7 @@
 .crop-palette-panel {
   position: absolute;
   right: 0;
-  top: 0; /* ボタンと同じ高さに配置 */
+  top: 100%; /* ボタンの下に配置 */
   width: 280px;
   max-height: 480px;
   background: white;
@@ -64,47 +65,17 @@
   flex-direction: column;
   transition: all 0.3s ease;
   transform-origin: top right;
+  overflow: hidden;
 }
 
 .crop-palette-panel.collapsed {
-  /* 上にスライドして非表示 */
+  /* 非表示 */
   opacity: 0;
   transform: translateY(-10px) scale(0.95);
   pointer-events: none;
   visibility: hidden;
 }
 
-.crop-palette-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 10px 10px 0 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-}
-
-.crop-palette-header:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.crop-palette-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.crop-palette-icon {
-  font-size: 1.1rem;
-}
 
 .crop-palette-body {
   flex: 1;

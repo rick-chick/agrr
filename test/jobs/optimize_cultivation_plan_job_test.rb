@@ -115,5 +115,53 @@ class OptimizeCultivationPlanJobTest < ActiveJob::TestCase
     
     mock_optimizer.verify
   end
+  
+  test "should translate error message for no valid candidates" do
+    # ExecutionErrorをスローする場合
+    error_message = "No valid allocation candidates could be generated. This may occur when..."
+    
+    mock_optimizer = Minitest::Mock.new
+    mock_optimizer.expect :call, nil do
+      raise Agrr::BaseGateway::ExecutionError, error_message
+    end
+    
+    # ブロードキャストをモック化
+    OptimizationChannel.stub :broadcast_to, ->(*args) { nil } do
+      CultivationPlanOptimizer.stub :new, ->(*args) { mock_optimizer } do
+        OptimizeCultivationPlanJob.perform_now(@cultivation_plan.id)
+      end
+    end
+    
+    # エラーメッセージが翻訳されていることを確認
+    @cultivation_plan.reload
+    assert_equal 'failed', @cultivation_plan.status
+    assert_match /作付けできる作物が見つかりませんでした/, @cultivation_plan.error_message
+    
+    mock_optimizer.verify
+  end
+  
+  test "should translate error message for growth incomplete" do
+    # ExecutionErrorをスローする場合
+    error_message = "No candidate reached 100% growth completion"
+    
+    mock_optimizer = Minitest::Mock.new
+    mock_optimizer.expect :call, nil do
+      raise Agrr::BaseGateway::ExecutionError, error_message
+    end
+    
+    # ブロードキャストをモック化
+    OptimizationChannel.stub :broadcast_to, ->(*args) { nil } do
+      CultivationPlanOptimizer.stub :new, ->(*args) { mock_optimizer } do
+        OptimizeCultivationPlanJob.perform_now(@cultivation_plan.id)
+      end
+    end
+    
+    # エラーメッセージが翻訳されていることを確認
+    @cultivation_plan.reload
+    assert_equal 'failed', @cultivation_plan.status
+    assert_match /指定期間内に成長完了できません/, @cultivation_plan.error_message
+    
+    mock_optimizer.verify
+  end
 end
 

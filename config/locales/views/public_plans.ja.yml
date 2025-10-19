@@ -71,6 +71,10 @@ ja:
         weather_data: "気象データを取得しています..."
         optimization: "最適な作付け計画を計算しています..."
         finalizing: "結果を準備しています..."
+      error:
+        title: "計画作成に失敗しました"
+        try_again: "作物を変更してもう一度試す"
+        start_over: "最初からやり直す"
     
     results:
       create_new_plan: "← 新しい計画を作成"
@@ -110,6 +114,12 @@ ja:
       gantt:
         title: "栽培スケジュール"
         month_format: "%{month}月"
+      
+      crop_palette:
+        title: "作物を追加"
+        toggle: "パネルを開閉"
+        hint: "作物をドラッグしてスケジュールに追加できます"
+        in_use: "使用中"
       
       detail:
         loading: "詳細を読み込んでいます..."

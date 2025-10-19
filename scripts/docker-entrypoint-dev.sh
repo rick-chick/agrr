@@ -18,7 +18,9 @@ bundle exec rails db:migrate
 echo "Cleaning up old asset files..."
 rm -rf /app/app/assets/builds/*
 rm -rf /app/tmp/cache/assets/*
-echo "✓ Asset files cleaned"
+# Propshaftのpublicアセットをクリーンアップ（開発環境では動的処理を有効化）
+rm -rf /app/public/assets/*
+echo "✓ Asset files cleaned (including public/assets for Propshaft)"
 
 # アセットビルド実行
 echo "========================================="

@@ -16,14 +16,19 @@ module Agrr
     # @param enable_parallel [Boolean] 並列処理を有効化
     # @return [Hash] 調整後の割り当てデータ
     def adjust(current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules: nil, objective: 'maximize_profit', max_time: nil, enable_parallel: false)
+      perf_start = Time.current
       Rails.logger.info "🔧 [AGRR Adjust] Adjusting allocation: #{moves.count} move(s)"
+      Rails.logger.info "⏱️ [PERF Gateway] adjust() 開始"
       
       # 各種ファイルを作成
+      perf_before_files = Time.current
       allocation_file = write_temp_file(current_allocation, prefix: 'current_allocation')
       moves_file = write_temp_file({ 'moves' => moves }, prefix: 'moves')
       fields_file = write_temp_file({ 'fields' => fields }, prefix: 'fields')
       crops_file = write_temp_file({ 'crops' => crops }, prefix: 'crops')
       weather_file = write_temp_file(weather_data, prefix: 'weather')
+      perf_after_files = Time.current
+      Rails.logger.info "⏱️ [PERF Gateway] ファイル作成完了: #{((perf_after_files - perf_before_files) * 1000).round(2)}ms"
       
       # デバッグ用にファイルを保存（本番環境以外のみ）
       unless Rails.env.production?
@@ -58,7 +63,6 @@ module Agrr
           '--planning-start', planning_start.to_s,
           '--planning-end', planning_end.to_s,
           '--weather-file', weather_file.path,
-          '--objective', objective,
           '--format', 'json'
         ]
         
@@ -79,14 +83,26 @@ module Agrr
           command_args += ['--max-time', max_time.to_s]
         end
         
-        # オプションのenable-parallelを追加
-        if enable_parallel
-          command_args += ['--enable-parallel']
-        end
+        # enable-parallelオプションはagrr optimize adjustではサポートされていない
         
+        perf_before_exec = Time.current
+        Rails.logger.info "⏱️ [PERF Gateway] Pythonコマンド実行開始"
+        Rails.logger.info "⏱️ [PERF Gateway] コマンド: #{command_args.join(' ')}"
         result = execute_command(*command_args)
+        perf_after_exec = Time.current
+        Rails.logger.info "⏱️ [PERF Gateway] Pythonコマンド実行完了: #{((perf_after_exec - perf_before_exec) * 1000).round(2)}ms"
         
+        perf_before_parse = Time.current
         parsed = parse_adjust_result(result)
+        perf_after_parse = Time.current
+        Rails.logger.info "⏱️ [PERF Gateway] 結果パース完了: #{((perf_after_parse - perf_before_parse) * 1000).round(2)}ms"
+        
+        perf_end = Time.current
+        Rails.logger.info "⏱️ [PERF Gateway] === Gateway合計 ==="
+        Rails.logger.info "⏱️ [PERF Gateway] 全体: #{((perf_end - perf_start) * 1000).round(2)}ms"
+        Rails.logger.info "⏱️ [PERF Gateway] - ファイル作成: #{((perf_after_files - perf_before_files) * 1000).round(2)}ms"
+        Rails.logger.info "⏱️ [PERF Gateway] - Python実行: #{((perf_after_exec - perf_before_exec) * 1000).round(2)}ms"
+        Rails.logger.info "⏱️ [PERF Gateway] - 結果パース: #{((perf_after_parse - perf_before_parse) * 1000).round(2)}ms"
         Rails.logger.info "✅ [AGRR Adjust] Adjustment completed: fields=#{parsed[:field_schedules].count}, profit=¥#{parsed[:total_profit]}"
         
         parsed
@@ -114,6 +130,24 @@ module Agrr
       optimization = raw_result['optimization_result']
       summary = raw_result['summary']
       
+      # agrr optimize adjustの出力形式を allocate と同じ形式に変換
+      # adjust: {"field": {"field_id": "..."}, "allocations": [{"crop": {...}, ...}]}
+      # allocate: {"field_id": "...", "allocations": [{...}]}
+      field_schedules = optimization['field_schedules']&.map do |fs|
+        field_data = fs['field'] || {}
+        allocations = fs['allocations']&.map do |alloc|
+          # cropデータをフラット化
+          crop_data = alloc['crop'] || {}
+          alloc.except('crop').merge(crop_data)
+        end || []
+        
+        {
+          'field_id' => field_data['field_id'] || fs['field_id'],
+          'field_name' => field_data['name'] || fs['field_name'],
+          'allocations' => allocations
+        }
+      end || []
+      
       {
         optimization_id: optimization['optimization_id'],
         algorithm_used: optimization['algorithm_used'],
@@ -122,7 +156,7 @@ module Agrr
         total_cost: optimization['total_cost'],
         total_revenue: optimization['total_revenue'],
         total_profit: optimization['total_profit'],
-        field_schedules: optimization['field_schedules'],
+        field_schedules: field_schedules,
         crop_areas: optimization['crop_areas'],
         summary: summary,
         raw: raw_result

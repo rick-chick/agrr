@@ -62,6 +62,8 @@ class OptimizeCultivationPlanJob < ApplicationJob
     case error_message
     when /No candidate reached 100% growth completion/
       I18n.t('jobs.optimize_cultivation_plan.errors.growth_incomplete')
+    when /No valid allocation candidates could be generated/
+      I18n.t('jobs.optimize_cultivation_plan.errors.no_valid_candidates')
     when /Missing required field/
       I18n.t('jobs.optimize_cultivation_plan.errors.missing_field')
     when /FILE_ERROR/

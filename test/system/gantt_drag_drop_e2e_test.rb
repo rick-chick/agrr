@@ -50,7 +50,15 @@ class GanttDragDropE2eTest < ApplicationSystemTestCase
   end
 
   test "ガントチャートのドラッグ&ドロップ機能が動作する" do
+    puts "🔍 Plan ID: #{@cultivation_plan.id}"
     visit_results_page
+    
+    puts "🔍 Current URL: #{current_url}"
+    
+    # デバッグ: ページの内容を確認
+    page_html = page.html
+    puts "🔍 Page includes gantt-chart-container: #{page_html.include?('gantt-chart-container')}"
+    puts "🔍 Page includes error: #{page_html.include?('error') || page_html.include?('alert')}"
     
     # ガントチャートが読み込まれるまで待機
     assert_selector "#gantt-chart-container", wait: 10
@@ -66,66 +74,72 @@ class GanttDragDropE2eTest < ApplicationSystemTestCase
     assert first_bar.present?
     
     # カーソルスタイルを確認
-    cursor_style = page.evaluate_script(<<~JS)
-      const bar = document.querySelector('.cultivation-bar .bar-bg');
-      return bar ? window.getComputedStyle(bar).cursor : null;
-    JS
+    cursor_style = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? window.getComputedStyle(bar).cursor : null;')
     
     assert_equal "grab", cursor_style, "バーにgrabカーソルが設定されていません"
     
-    # ドラッグ操作をシミュレート
-    page.execute_script(<<~JS)
-      const bar = document.querySelector('.cultivation-bar .bar-bg');
-      
-      // ドラッグ開始
-      const mousedownEvent = new MouseEvent('mousedown', {
-        clientX: 100,
-        clientY: 100,
-        bubbles: true,
-        cancelable: true
-      });
-      bar.dispatchEvent(mousedownEvent);
-      
-      // ドラッグ移動
-      const mousemoveEvent = new MouseEvent('mousemove', {
-        clientX: 200,
-        clientY: 100,
-        bubbles: true,
-        cancelable: true
-      });
-      document.dispatchEvent(mousemoveEvent);
-      
-      // ドラッグ終了
-      const mouseupEvent = new MouseEvent('mouseup', {
-        clientX: 200,
-        clientY: 100,
-        bubbles: true,
-        cancelable: true
-      });
-      document.dispatchEvent(mouseupEvent);
-    JS
+    # グローバルハンドラーが設定されているか確認
+    handlers_setup = page.evaluate_script("return window.ganttState && window.ganttState.globalMouseMoveHandler !== null && window.ganttState.globalMouseUpHandler !== null;")
     
-    # ドラッグ状態の視覚的フィードバックを確認
-    opacity = page.evaluate_script(<<~JS)
-      const bar = document.querySelector('.cultivation-bar .bar-bg');
-      return bar ? bar.getAttribute('opacity') : null;
-    JS
+    assert handlers_setup, "グローバルドラッグハンドラーが設定されていません"
     
-    stroke_width = page.evaluate_script(<<~JS)
-      const bar = document.querySelector('.cultivation-bar .bar-bg');
-      return bar ? bar.getAttribute('stroke-width') : null;
-    JS
+    # 初期位置を記録
+    initial_x = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("x")) : null;')
+    initial_y = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("y")) : null;')
     
-    # ドラッグ後の状態を確認
-    assert_equal "0.95", opacity, "ドラッグ後に透明度が元に戻っていません"
-    assert_equal "2.5", stroke_width, "ドラッグ後に線幅が元に戻っていません"
+    puts "🎯 初期位置: x=#{initial_x}, y=#{initial_y}"
+    
+    # セレニウムでドラッグ操作を実行
+    bar = find('.cultivation-bar .bar-bg', match: :first)
+    
+    # ActionBuilderでドラッグ
+    page.driver.browser.action.click_and_hold(bar.native).move_by(100, 0).release.perform
+    
+    sleep 0.5 # ドラッグ後の処理を待つ
+    
+    # 移動後の位置を確認
+    final_x = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("x")) : null;')
+    final_y = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("y")) : null;')
+    
+    puts "🎯 最終位置: x=#{final_x}, y=#{final_y}"
+    puts "🎯 移動量: deltaX=#{final_x - initial_x}, deltaY=#{final_y - initial_y}"
+    
+    # バーが移動したことを確認（X方向に80px以上移動していることを期待）
+    assert (final_x - initial_x) > 80, "バーがX方向に移動していません（deltaX=#{final_x - initial_x}）"
+    
+    # Y方向の移動が小さいことを確認（±10px以内）
+    assert (final_y - initial_y).abs < 10, "Y方向の移動が大きすぎます（deltaY=#{final_y - initial_y}）"
     
     # 削除ボタンが存在する
     assert_selector ".delete-btn", minimum: 1, wait: 5
     
-    # 再最適化ボタンが表示される
-    # 自動再最適化のため、手動ボタンは表示されない
-    # 自動再最適化のため、手動ボタンは表示されない
+    take_screenshot
+  end
+
+  test "上下方向のドラッグ&ドロップが動作する" do
+    visit_results_page
+    
+    # ガントチャートが読み込まれるまで待機
+    assert_selector "#gantt-chart-container svg", wait: 10
+    assert_selector ".cultivation-bar", minimum: 1, wait: 10
+    
+    # 初期位置を記録
+    initial_y = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("y")) : null;')
+    puts "🎯 初期Y位置: #{initial_y}"
+    
+    # Y方向にドラッグ（70px = 1行分）
+    bar = find('.cultivation-bar .bar-bg', match: :first)
+    page.driver.browser.action.click_and_hold(bar.native).move_by(0, 70).release.perform
+    sleep 0.5
+    
+    # 移動後の位置を確認
+    final_y = page.evaluate_script('var bar = document.querySelector(".cultivation-bar .bar-bg"); return bar ? parseFloat(bar.getAttribute("y")) : null;')
+    
+    puts "🎯 最終Y位置: #{final_y}"
+    puts "🎯 Y移動量: deltaY=#{final_y - initial_y}"
+    
+    # Y方向に移動したことを確認（60px以上）
+    assert (final_y - initial_y) > 60, "バーがY方向に移動していません（deltaY=#{final_y - initial_y}）"
     
     take_screenshot
   end
@@ -253,13 +267,8 @@ class GanttDragDropE2eTest < ApplicationSystemTestCase
   private
 
   def visit_results_page
-    # セッションに計画IDを設定
-    page.driver.browser.manage.add_cookie(
-      name: 'cultivation_plan_id',
-      value: @cultivation_plan.id.to_s
-    )
-    
-    visit results_public_plans_path
+    # テスト環境ではplan_idパラメータが使える
+    visit results_public_plans_path(plan_id: @cultivation_plan.id)
   end
 
   def create_weather_data
