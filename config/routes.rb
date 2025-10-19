@@ -27,6 +27,11 @@ Rails.application.routes.draw do
       get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
       get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
       get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
+      
+      # Client-side JavaScript logging
+      namespace :dev do
+        post '/client_logs', to: 'client_logs#create'
+      end
     end
 
     # Farms and Fields routes (nested)
