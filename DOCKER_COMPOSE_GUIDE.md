@@ -1,5 +1,7 @@
 # Docker Compose使い方ガイド
 
+> **📚 アセット管理について**: 詳細は [ASSET_MANAGEMENT.md](ASSET_MANAGEMENT.md) を参照してください
+
 ## 🎯 デフォルト設定
 
 **デフォルトはDaemon版になりました！**
@@ -237,6 +239,42 @@ docker compose restart web
 docker compose down
 docker compose up --build
 ```
+
+### アセットファイルが更新されない
+
+**症状**: JavaScriptやCSSを変更しても反映されない
+
+**原因**: 古いビルド済みファイルがキャッシュされている
+
+**対処1（自動）**:
+```bash
+# docker compose up時に自動クリーンアップされる
+docker compose down
+docker compose up
+```
+
+**対処2（手動）**:
+```bash
+# 実行中のコンテナ内でクリーンアップ
+docker compose exec web /app/scripts/clean-assets.sh
+
+# ディープクリーン（node_modules/.cacheも削除）
+docker compose exec web /app/scripts/clean-assets.sh --deep
+
+# その後、アセットを再ビルド
+docker compose exec web npm run build
+```
+
+**対処3（完全リセット）**:
+```bash
+# コンテナを完全に再作成
+docker compose down
+docker compose up --build
+```
+
+**クリーンアップ内容**:
+- `app/assets/builds/*` - esbuildのビルド済みファイル
+- `tmp/cache/assets/*` - Propshaftのキャッシュ
 
 ## 📚 関連ドキュメント
 
