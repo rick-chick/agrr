@@ -1,25 +1,56 @@
 # AGRR - 農業計画支援システム
 
-Rails 8 + SQLite + Google Cloud Run
+Rails 8 + SQLite + Google Cloud Run で動く農業計画支援システム
 
----
+## 🚀 クイックスタート
 
-## デプロイ方法
+### 開発環境
+
+```bash
+# 起動（自動的にマイグレーション実行、アセットビルド）
+docker compose up
+
+# テスト実行
+docker compose run --rm test
+```
+
+アクセス: http://localhost:3000
+
+### デプロイ
 
 ```bash
 ./scripts/gcp-deploy.sh
 ```
 
-詳細: [データ管理ガイド](docs/DATA_MIGRATION_GUIDE.md)
+詳細: [docs/operations/DEPLOYMENT_GUIDE.md](docs/operations/DEPLOYMENT_GUIDE.md)
 
 ---
 
-## データ管理
+## 📚 主要ドキュメント
+
+### 開発を始める前に（必読）
+
+| ドキュメント | 用途 |
+|------------|------|
+| **[DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md)** | Docker使い方、起動確認 |
+| **[ASSET_MANAGEMENT.md](ASSET_MANAGEMENT.md)** | アセット管理の仕組み（esbuild/Propshaft） |
+| **[docs/FEATURE_CHECKLIST.md](docs/FEATURE_CHECKLIST.md)** | 新機能実装チェックリスト |
+| **[docs/ASSET_LOADING_GUIDE.md](docs/ASSET_LOADING_GUIDE.md)** | アセットトラブルシューティング |
+
+### アーキテクチャ
+
+| ドキュメント | 用途 |
+|------------|------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | システムアーキテクチャ、設計思想 |
+| [docs/DATA_MIGRATION_GUIDE.md](docs/DATA_MIGRATION_GUIDE.md) | データ管理方法（マイグレーション） |
+
+---
+
+## 💡 データ管理
 
 マスターデータ（参照農場・作物）は**データベースマイグレーション**で管理されています。
 
 各地域は**ローカル言語**でステージ名を管理：
-
 - 🇯🇵 Japan: 47農場、15作物（日本語）
 - 🇺🇸 United States: 50農場、30作物（英語）
 - 🇮🇳 India: 50農場、30作物（ヒンディー語 हिंदी）
@@ -28,31 +59,53 @@ Rails 8 + SQLite + Google Cloud Run
 
 ---
 
-## 開発環境
+## 📖 詳細ドキュメント
 
-```bash
-# 起動（自動的にマイグレーション実行）
-docker-compose up
+<details>
+<summary>開発ガイド</summary>
 
-# テスト実行
-docker-compose run --rm test
+- [docs/development/TEST_GUIDE.md](docs/development/TEST_GUIDE.md) - テスト作成ガイド
+- [docs/development/DEBUG_GUIDE.md](docs/development/DEBUG_GUIDE.md) - デバッグ方法
+- [docs/development/ERROR_HANDLING_GUIDE.md](docs/development/ERROR_HANDLING_GUIDE.md) - エラーハンドリング
+- [docs/development/GOOGLE_OAUTH_SETUP.md](docs/development/GOOGLE_OAUTH_SETUP.md) - Google OAuth設定
+- [scripts/validate_feature.rb](scripts/validate_feature.rb) - 新機能の自動検証スクリプト
 
-# データベースリセット
-docker-compose down -v
-docker-compose up
+</details>
 
-# 新機能を追加したら必ず実行（自動検証）
-docker compose exec web ruby scripts/validate_feature.rb --feature 機能名
-```
+<details>
+<summary>機能実装</summary>
 
-### 新機能を追加する前に必読
-- **[docs/FEATURE_CHECKLIST.md](docs/FEATURE_CHECKLIST.md)** - 「動いているはずです！」と言う前に必ずチェック
-- **[docs/ASSET_LOADING_GUIDE.md](docs/ASSET_LOADING_GUIDE.md)** - アセット（CSS/JS）の読み込み方法
-- **[ASSET_MANAGEMENT.md](ASSET_MANAGEMENT.md)** - アセット管理の仕組み（esbuild/Propshaft）
+- [docs/features/](docs/features/) - 各機能の実装詳細
+- [docs/region/](docs/region/) - 地域別データ作成ガイド
+
+</details>
+
+<details>
+<summary>運用・デプロイ</summary>
+
+- [docs/operations/DEPLOYMENT_GUIDE.md](docs/operations/DEPLOYMENT_GUIDE.md) - デプロイ方法
+- [docs/operations/QUICK_REFERENCE.md](docs/operations/QUICK_REFERENCE.md) - クイックリファレンス
+- [docs/operations/OPERATIONS_SUMMARY.md](docs/operations/OPERATIONS_SUMMARY.md) - 運用まとめ
+
+</details>
+
+<details>
+<summary>トラブルシューティング</summary>
+
+- [docs/troubleshooting/](docs/troubleshooting/) - トラブルシューティングガイド
+
+</details>
+
+<details>
+<summary>すべてのドキュメント</summary>
+
+- [docs/README.md](docs/README.md) - 全ドキュメント一覧
+
+</details>
 
 ---
 
-## 本番環境
+## 🌐 本番環境
 
 - **URL**: https://agrr.net
 - **プラットフォーム**: Google Cloud Run
@@ -60,36 +113,17 @@ docker compose exec web ruby scripts/validate_feature.rb --feature 機能名
 
 ---
 
-## ドキュメント
+## 🛠 技術スタック
 
-### 運用
-- [MIGRATION_DEPLOYMENT_GUIDE.md](MIGRATION_DEPLOYMENT_GUIDE.md) - デプロイ方法
-- [docs/operations/](docs/operations/) - 運用詳細
-
-### 開発
-- [docs/DATA_MIGRATION_GUIDE.md](docs/DATA_MIGRATION_GUIDE.md) - データ管理方法
-- [docs/region/](docs/region/) - 地域別データ作成ガイド
-- [docs/features/](docs/features/) - 機能実装の詳細
-- **[docs/FEATURE_CHECKLIST.md](docs/FEATURE_CHECKLIST.md) - 新機能実装チェックリスト（必読）**
-- **[docs/ASSET_LOADING_GUIDE.md](docs/ASSET_LOADING_GUIDE.md) - アセット読み込みガイド（必読）**
-- **[ASSET_MANAGEMENT.md](ASSET_MANAGEMENT.md) - アセット管理の仕組み（esbuild/Propshaft）**
-- **[DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md) - Docker Compose使い方ガイド**
-- [scripts/validate_feature.rb](scripts/validate_feature.rb) - 新機能の自動検証スクリプト
-
-### その他
-- [docs/README.md](docs/README.md) - ドキュメント一覧
+| カテゴリ | 技術 |
+|---------|------|
+| フレームワーク | Rails 8 |
+| データベース | SQLite（Solid Queue, Solid Cache, Solid Cable） |
+| バックアップ | Litestream |
+| インフラ | Google Cloud Run |
+| アセット | Propshaft + jsbundling-rails (esbuild) |
+| フロントエンド | Hotwire (Turbo + Stimulus) |
 
 ---
 
-## 技術スタック
-
-- Rails 8
-- SQLite（Solid Queue, Solid Cache, Solid Cable）
-- Litestream（データベースバックアップ）
-- Google Cloud Run
-- Propshaft（アセット）
-- jsbundling-rails + esbuild（JavaScript）
-
----
-
-**最終更新**: 2025-10-18
+**最終更新**: 2025-10-19
