@@ -8,7 +8,7 @@
     <%# ヘッダー・サマリー %>
     <%= render 'public_plans/results/header', cultivation_plan: @cultivation_plan %>
     
-    <%# ガントチャート %>
+    <%# ガントチャート（作物パレットを含む） %>
     <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
     
     <%# 気温・GDDチャート表示エリア（作物クリック時に表示、climate_chart.jsが内容を生成） %>
@@ -46,5 +46,14 @@
 <%# Chart.js は npm で管理され application.js にバンドル済み %>
 
 <% content_for :javascripts do %>
-  <%= javascript_include_tag "cultivation_results", defer: true %>
+  <%# 色パレット管理（共通化） - 最初に読み込む %>
+  <%= javascript_include_tag "crop_colors", defer: true, "data-turbo-track": "reload" %>
+  <%# ガントチャート %>
+  <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
+  <%# 作物パレットのドラッグ&ドロップ %>
+  <%= javascript_include_tag "crop_palette_drag", defer: true, "data-turbo-track": "reload" %>
+  <%# 作物パレットのスタイル適用 %>
+  <%= javascript_include_tag "crop_palette_style", defer: true, "data-turbo-track": "reload" %>
+  <%# その他の機能 %>
+  <%= javascript_include_tag "cultivation_results", defer: true, "data-turbo-track": "reload" %>
 <% end %>

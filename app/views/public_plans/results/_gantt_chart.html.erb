@@ -10,6 +10,7 @@
   cultivation_data = cultivation_plan.field_cultivations.map do |fc|
     {
       id: fc.id,
+      field_id: "field_#{fc.cultivation_plan_field_id}",
       field_name: fc.field_display_name,
       crop_name: fc.crop_display_name,
       start_date: fc.start_date.to_s,
@@ -20,18 +21,33 @@
       profit: fc.optimization_result&.dig('profit')
     }
   end
+  
+  # 圃場情報を準備
+  fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
+    {
+      id: field.id,
+      field_id: "field_#{field.id}",
+      name: field.name,
+      area: field.area
+    }
+  end
 %>
 
 <div class="gantt-section">
-  <h2 class="gantt-title">
-    <span class="gantt-title-icon">📊</span>
-    <span class="gantt-title-text"><%= t('public_plans.results.gantt.title') %></span>
-  </h2>
-  
+  <div class="gantt-header">
+    <h2 class="gantt-title">
+      <span class="gantt-title-icon">📊</span>
+      <span class="gantt-title-text"><%= t('public_plans.results.gantt.title') %></span>
+    </h2>
+    
+    <%# 作物パレット（ドロップダウン） - ガントチャートの右上に配置 %>
+    <%= render 'public_plans/results/crop_palette', cultivation_plan: cultivation_plan %>
+  </div>
   
   <%# Frappe Gantt コンテナ %>
   <div id="gantt-chart-container"
        data-cultivations="<%= cultivation_data.to_json %>"
+       data-fields="<%= fields_data.to_json %>"
        data-plan-start-date="<%= plan_start_date.to_s %>"
        data-plan-end-date="<%= plan_end_date.to_s %>"
        data-cultivation-plan-id="<%= cultivation_plan.id %>">
