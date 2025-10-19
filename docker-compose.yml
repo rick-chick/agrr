@@ -17,7 +17,8 @@ services:
       - storage_dev_data:/app/storage  # 開発用永続ストレージ
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
-      # - /app/tmp  # デバッグファイルをホストと共有するためコメントアウト
+      - ./tmp/debug:/app/tmp/debug  # デバッグファイルのみホストと共有
+      - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
     environment:
@@ -48,6 +49,8 @@ services:
       - storage_dev_data:/app/storage
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
+      - ./tmp/debug:/app/tmp/debug  # デバッグファイルのみホストと共有
+      - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
     environment:
