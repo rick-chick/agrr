@@ -257,8 +257,8 @@ function initCropCardDrag() {
       const rect = createSVGElement('rect', {
         x: 0,
         y: 0,
-        width: 240,
-        height: 50,
+        width: 120,
+        height: 25,
         rx: 6,
         ry: 6,
         fill: fillColor,
@@ -268,11 +268,11 @@ function initCropCardDrag() {
       });
       
       const text = createSVGElement('text', {
-        x: 120,
-        y: 30,
+        x: 60,
+        y: 16,
         'text-anchor': 'middle',
         fill: '#1F2937',
-        'font-size': '12px',
+        'font-size': '10px',
         'font-weight': '600'
       }, dragData.crop_name);
       
@@ -292,9 +292,9 @@ function initCropCardDrag() {
         svgPoint.y = moveEvent.clientY;
         const svgCoords = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
         
-        // バーをマウス位置に移動（中央に配置）
-        const barX = svgCoords.x - 120;
-        const barY = svgCoords.y - 25;
+        // バーをマウス位置に移動（カーソルは左から5px、上下中央）
+        const barX = svgCoords.x - 5;
+        const barY = svgCoords.y - 12.5;
         
         draggedSVGBar.setAttribute('transform', `translate(${barX}, ${barY})`);
       };
