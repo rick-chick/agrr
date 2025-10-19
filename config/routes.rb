@@ -90,6 +90,11 @@ Rails.application.routes.draw do
               get :climate_data
             end
           end
+          resources :cultivation_plans, only: [] do
+            member do
+              post :adjust
+            end
+          end
         end
         
         # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）

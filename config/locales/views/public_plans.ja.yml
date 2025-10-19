@@ -60,7 +60,6 @@ ja:
       title: "作付け計画"
       status_badge: "最適化中"
       crops_count: "%{count}種類の作物"
-      hint: "💡 最適化が完了すると自動的に結果画面に移動します"
       error_message: "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。"
       progress:
         elapsed_time: "⏳ %{time}秒"
@@ -110,7 +109,6 @@ ja:
       
       gantt:
         title: "栽培スケジュール"
-        hint: "栽培をクリックして詳細を表示"
         month_format: "%{month}月"
       
       detail:
