@@ -18,6 +18,10 @@ development:
     <<: *default
     database: storage/development_cache.sqlite3
     migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    database: storage/development_cable.sqlite3
+    schema_dump: cable_schema.rb
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -37,6 +41,10 @@ test:
     <<: *default
     database: storage/test_cache.sqlite3
     migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    database: storage/test_cable.sqlite3
+    schema_dump: cable_schema.rb
 
 # AWS Test environment (SQLite with persistent storage)
 aws_test:
@@ -56,3 +64,7 @@ production:
     <<: *default
     database: /tmp/production_cache.sqlite3
     migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    database: /tmp/production_cable.sqlite3
+    schema_dump: cable_schema.rb

@@ -1,4 +1,4 @@
-# Solid Cable - uses main database (no separate cable DB needed)
+# Solid Cable - uses primary database  
 development:
   adapter: solid_cable
   polling_interval: 0.1.seconds
