@@ -10,22 +10,24 @@ class FarmsSystemTest < ApplicationSystemTestCase
   end
 
   def login_as(user = nil, session = nil)
-    #  Test環境でモックログインエンドポイントを使用
+    # Test環境でモックログインエンドポイントを使用
     # これにより、正しくクッキーが設定される
     visit '/auth/test/mock_login'
-    # ログインが完了するまで待機
-    assert_text "Mock login successful"
+    # ログインが完了するまで待機（root_pathにリダイレクトされる）
+    # root_pathはlayout falseなのでフラッシュメッセージは表示されない
+    # 代わりにクッキーが設定されているかを確認
+    assert page.driver.browser.manage.cookie_named('session_id').present?, "Session cookie was not set"
   end
 
   test "visiting the farms index" do
     login_as
-    visit farms_path
+    visit farms_path(locale: I18n.default_locale)
     assert_selector "h1", text: "農場一覧"
   end
 
   test "creating a new farm" do
     login_as
-    visit new_farm_path
+    visit new_farm_path(locale: I18n.default_locale)
     
     # Check for CSP violations by looking at console errors
     assert_no_js_errors
@@ -62,7 +64,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
     )
     
     # This should now work since fields.js exists
-    visit edit_farm_path(farm)
+    visit edit_farm_path(farm, locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -86,7 +88,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
 
   test "map functionality works without CSP violations in new form" do
     login_as
-    visit new_farm_path
+    visit new_farm_path(locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -113,7 +115,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
 
   test "no external resource loading errors in new form" do
     login_as
-    visit new_farm_path
+    visit new_farm_path(locale: I18n.default_locale)
     
     # Check that no external resources fail to load
     # This should not throw any network errors
@@ -139,7 +141,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
 
   test "CSP compliance for inline styles and scripts in new form" do
     login_as
-    visit new_farm_path
+    visit new_farm_path(locale: I18n.default_locale)
     
     # Check that the page loads without CSP violations
     assert_no_js_errors
@@ -167,7 +169,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
       longitude: 139.7671
     )
     
-    visit farm_path(farm)
+    visit farm_path(farm, locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -184,7 +186,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
 
   test "farm index shows empty state correctly" do
     login_as
-    visit farms_path
+    visit farms_path(locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -208,7 +210,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
       longitude: 139.7671
     )
     
-    visit farms_path
+    visit farms_path(locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -241,7 +243,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
     # This test verifies that the edit form loads successfully
     # now that fields.js exists in the asset pipeline
     
-    visit edit_farm_path(farm)
+    visit edit_farm_path(farm, locale: I18n.default_locale)
     
     # Check for CSP violations
     assert_no_js_errors
@@ -268,7 +270,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
     # puts page.body
     
     # まず農場一覧ページにアクセス
-    visit farms_path
+    visit farms_path(locale: I18n.default_locale)
     
     # デバッグ: ページの内容を確認
     # puts page.body
@@ -312,7 +314,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
     )
     
     # 農場の編集ページに直接アクセス
-    visit edit_farm_path(farm)
+    visit edit_farm_path(farm, locale: I18n.default_locale)
     
     assert_selector "h1", text: "農場を編集"
     
@@ -335,7 +337,7 @@ class FarmsSystemTest < ApplicationSystemTestCase
     login_as(@user, @session)
     
     # 農場一覧ページから開始
-    visit farms_path
+    visit farms_path(locale: I18n.default_locale)
     assert_selector "h1", text: "農場一覧"
     
     # 新規作成ページに遷移

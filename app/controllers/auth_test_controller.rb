@@ -22,7 +22,7 @@ class AuthTestController < ApplicationController
     when 'researcher'
       mock_login_as_user(:google_oauth2_researcher)
     else
-      redirect_to auth_login_path, alert: 'Invalid user type.'
+      redirect_to root_path(locale: I18n.default_locale), alert: 'Invalid user type.'
     end
   end
   
@@ -30,9 +30,9 @@ class AuthTestController < ApplicationController
     if current_user
       current_user.sessions.destroy_all
       cookies.delete(:session_id)
-      redirect_to auth_login_path, notice: 'Mock logout successful!'
+      redirect_to root_path(locale: I18n.default_locale), notice: 'Mock logout successful!'
     else
-      redirect_to auth_login_path, alert: 'Not logged in.'
+      redirect_to root_path(locale: I18n.default_locale), alert: 'Not logged in.'
     end
   end
   
@@ -62,7 +62,7 @@ class AuthTestController < ApplicationController
     
     # Check if user was successfully persisted
     unless user.persisted?
-      redirect_to auth_login_path, alert: "Failed to create user: #{user.errors.full_messages.join(', ')}"
+      redirect_to root_path(locale: I18n.default_locale), alert: "Failed to create user: #{user.errors.full_messages.join(', ')}"
       return
     end
     
@@ -76,12 +76,12 @@ class AuthTestController < ApplicationController
       same_site: :lax
     }
     
-    redirect_to root_path, notice: "Mock login successful as #{user.name}!"
+    redirect_to root_path(locale: I18n.default_locale), notice: "Mock login successful as #{user.name}!"
   end
   
   def ensure_development_or_test
     unless Rails.env.development? || Rails.env.test?
-      redirect_to root_path, alert: 'Test endpoints only available in development and test environments.'
+      redirect_to root_path(locale: I18n.default_locale), alert: 'Test endpoints only available in development and test environments.'
     end
   end
 end
