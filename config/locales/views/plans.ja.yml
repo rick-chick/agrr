@@ -1,6 +1,6 @@
 ja:
   plans:
-    title: "個人作付け計画"
+    title: "個人計画"
     default_plan_name: "メイン計画"
     
     steps:
@@ -32,8 +32,8 @@ ja:
       reoptimization_started: "再最適化を開始しました。"
     
     index:
-      title: "作付け計画一覧"
-      subtitle: "年度別の作付け計画を管理"
+      title: "計画一覧"
+      subtitle: "年度別の計画を管理"
       create_new: "+ 新しい計画を作成"
       no_plans: "まだ計画がありません"
       no_plans_hint: "新しい計画を作成して栽培スケジュールを最適化しましょう。"
@@ -85,7 +85,7 @@ ja:
       create_crop_link: "作物を作成する"
     
     optimizing:
-      title: "作付け計画"
+      title: "計画"
       status_badge: "最適化中"
       year_label: "%{year}年度"
       crops_count: "%{count}種類の作物"
@@ -112,7 +112,7 @@ ja:
       loading_data: "データを読み込んでいます..."
       
       header:
-        title: "%{year}年度 作付け計画"
+        title: "%{year}年度 計画"
         badge: "完成"
         farm: "農場"
         total_area: "総面積"
