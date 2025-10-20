@@ -132,7 +132,7 @@ class FetchWeatherDataJob < ApplicationJob
       all_records << record_attrs
       
       # 最初と最後のレコードの詳細をログ
-      if index == 0 || index == weather_data['data']['data'].length - 1
+      if index == 0 || index == weather_data['data'].length - 1
         Rails.logger.debug "💾 [Weather Data ##{index + 1}] date=#{date}, temp=#{record_attrs[:temperature_min]}~#{record_attrs[:temperature_max]}°C"
       end
     end
@@ -173,13 +173,18 @@ class FetchWeatherDataJob < ApplicationJob
 
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
+    
+    # NASA POWERをデフォルトで使用（グローバルカバレッジ、1984年以降のデータ）
+    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=openmeteo など
+    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'nasa-power')
+    
     command = [
       agrr_path,
       'weather',
       '--location', "#{latitude},#{longitude}",
       '--start-date', start_date.to_s,
       '--end-date', end_date.to_s,
-      '--data-source', 'jma',
+      '--data-source', data_source,
       '--json'
     ]
 
