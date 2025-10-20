@@ -33,12 +33,14 @@ jobs:
     - name: Setup database
       env:
         RAILS_ENV: test
+        USE_AGRR_DAEMON: false
       run: |
         bundle exec rails db:prepare
     
     - name: Run tests
       env:
         RAILS_ENV: test
+        USE_AGRR_DAEMON: false
       run: |
         bundle exec rails test
     

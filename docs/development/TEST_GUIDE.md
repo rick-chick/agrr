@@ -51,8 +51,8 @@ bundle exec rails test
 ### Method 2: Docker Compose
 
 ```bash
-# テスト実行（推奨）
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
+# テスト実行（推奨）- 専用のtestサービスを使用
+docker compose run --rm test bundle exec rails test
 ```
 
 ## ⚙️ セットアップ
@@ -62,7 +62,8 @@ docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
 bundle install
 
 # テスト用データベースのセットアップ（Docker環境）
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails db:create db:migrate
+# 注: testサービスのentrypointで自動実行されるため、通常は不要
+docker compose run --rm test bundle exec rails db:prepare
 ```
 
 ## 🧪 テストの実行
@@ -70,50 +71,50 @@ docker-compose run --rm -e RAILS_ENV=test web bundle exec rails db:create db:mig
 #### 全テストを実行
 
 ```bash
-# Docker Compose（推奨）
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
+# Docker Compose（推奨）- 専用のtestサービスを使用
+docker compose run --rm test bundle exec rails test
 ```
 
 ### 特定のテストを実行
 
 ```bash
 # 特定のテストファイル
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test test/controllers/api/v1/base_controller_test.rb
+docker compose run --rm test bundle exec rails test test/controllers/api/v1/base_controller_test.rb
 
 # 特定のテストケース
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test test/controllers/api/v1/base_controller_test.rb:5
+docker compose run --rm test bundle exec rails test test/controllers/api/v1/base_controller_test.rb:5
 ```
 
 #### カテゴリ別にテストを実行
 
 ```bash
 # コントローラーテストのみ
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test:controllers
+docker compose run --rm test bundle exec rails test:controllers
 
 # モデルテストのみ
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test:models
+docker compose run --rm test bundle exec rails test:models
 
 # 統合テストのみ
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test:integration
+docker compose run --rm test bundle exec rails test:integration
 
 # システムテストのみ
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test:system
+docker compose run --rm test bundle exec rails test:system
 ```
 
 ### テストオプション
 
 ```bash
 # 詳細な出力
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test -v
+docker compose run --rm test bundle exec rails test -v
 
 # 失敗したテストのみ再実行
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test --fail-fast
+docker compose run --rm test bundle exec rails test --fail-fast
 
 # 並列実行（デフォルトで有効）
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
+docker compose run --rm test bundle exec rails test
 
 # 並列実行を無効化
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test -j 1
+docker compose run --rm test bundle exec rails test -j 1
 ```
 
 ## 🐳 Docker環境でのテスト実行
@@ -127,22 +128,23 @@ docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test -j 1
 
 ```bash
 # Dockerイメージをビルド
-docker-compose build
+docker compose build
+
+# テストサービスを起動（バックグラウンド）
+docker compose --profile test up -d
 
 # テスト実行（推奨）
-docker-compose run --rm -e RAILS_ENV=test web bundle exec rails test
+docker compose run --rm test bundle exec rails test
 
-# または手動で実行
-docker-compose up -d
-docker-compose exec web bundle exec rails test
-docker-compose down
+# テスト環境を停止
+docker compose --profile test down
 ```
 
 ### Dockerコンテナ内でインタラクティブに実行
 
 ```bash
-# コンテナに入る
-docker-compose exec web bash
+# testコンテナに入る
+docker compose exec test bash
 
 # コンテナ内でテスト実行
 bundle exec rails test

@@ -92,6 +92,7 @@ services:
       - SELENIUM_HOST=selenium
       - SELENIUM_PORT=4444
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
+      - USE_AGRR_DAEMON=false  # テスト時はdaemonを使わず直接CLI実行
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
