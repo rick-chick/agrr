@@ -1,6 +1,23 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  # Development and test routes (outside locale scope for direct access)
+  if Rails.env.development? || Rails.env.test?
+    get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
+    get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
+    get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
+    
+    # Client-side JavaScript logging
+    namespace :dev do
+      post '/client_logs', to: 'client_logs#create'
+    end
+    
+    # UI System Demo
+    namespace :demo do
+      get 'ui_system', to: 'demo#ui_system'
+    end
+  end
+
   # Locale switching
   scope "(:locale)", locale: /ja|us|in/ do
     namespace :admin do
@@ -20,23 +37,6 @@ Rails.application.routes.draw do
       get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
       get '/auth/failure', to: 'auth#failure'
       delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
-    end
-    
-    # Development and test routes
-    if Rails.env.development? || Rails.env.test?
-      get '/auth/test/mock_login', to: 'auth_test#mock_login', as: 'auth_test_mock_login'
-      get '/auth/test/mock_login_as/:user', to: 'auth_test#mock_login_as', as: 'auth_test_mock_login_as'
-      get '/auth/test/mock_logout', to: 'auth_test#mock_logout', as: 'auth_test_mock_logout'
-      
-      # Client-side JavaScript logging
-      namespace :dev do
-        post '/client_logs', to: 'client_logs#create'
-      end
-      
-      # UI System Demo
-      namespace :demo do
-        get 'ui_system', to: 'demo#ui_system'
-      end
     end
 
     # Farms and Fields routes (nested)

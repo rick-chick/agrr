@@ -9,7 +9,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI button is visible on new crop page" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     # AIボタンが表示されていることを確認
     assert_selector "button#ai-save-crop-btn", text: "AIで作物情報を保存"
@@ -18,7 +18,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI button saves crop and redirects to show page" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     # 作物情報を入力
     fill_in "名前", with: "AIテスト作物"
@@ -32,7 +32,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI button shows error when name is empty" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     # 品種のみ入力（名前は空）
     fill_in "品種", with: "品種のみ"
@@ -45,7 +45,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI button has correct attributes" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     button = find("button#ai-save-crop-btn")
     
@@ -57,7 +57,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI button works with variety field empty" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     # 作物名のみ入力
     fill_in "名前", with: "品種なし作物"
@@ -67,7 +67,7 @@ class CropAiButtonTest < ApplicationSystemTestCase
   end
 
   test "AI status div exists for displaying messages" do
-    visit new_crop_path
+    visit new_crop_path(locale: I18n.default_locale)
     
     # ステータス表示用のdivが存在することを確認（非表示でも検索）
     assert_selector "div#ai-save-status", visible: :all
@@ -84,7 +84,9 @@ class CropAiButtonTest < ApplicationSystemTestCase
   def sign_in_system(user)
     # システムテスト用のログイン
     visit '/auth/test/mock_login'
-    # ログインが完了するまで待機
-    assert_text "Mock login successful"
+    # ログインが完了するまで待機（root_pathにリダイレクトされる）
+    # root_pathはlayout falseなのでフラッシュメッセージは表示されない
+    # 代わりにクッキーが設定されているかを確認
+    assert page.driver.browser.manage.cookie_named('session_id').present?, "Session cookie was not set"
   end
 end
