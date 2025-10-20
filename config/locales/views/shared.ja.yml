@@ -2,7 +2,7 @@ ja:
   shared:
     navbar:
       brand: "AGRR"
-      plans: "作付け計画"
+      plans: "計画"
       farms: "農場"
       crops: "作物"
       interaction_rules: "連作"

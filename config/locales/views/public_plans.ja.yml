@@ -1,6 +1,6 @@
 ja:
   public_plans:
-    title: "作付け計画"
+    title: "計画"
     
     steps:
       region: "地域"
@@ -57,7 +57,7 @@ ja:
         hint: "⚠️ 作物を1つ以上選択してください"
     
     optimizing:
-      title: "作付け計画"
+      title: "計画"
       status_badge: "最適化中"
       crops_count: "%{count}種類の作物"
       error_message: "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。"
@@ -100,7 +100,7 @@ ja:
         temp_axis_label: "気温 (°C)"
       
       header:
-        title: "作付け計画完成"
+        title: "計画完成"
         badge: "完成"
         region: "地域"
         total_area: "総面積"
