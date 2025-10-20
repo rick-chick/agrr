@@ -29,8 +29,16 @@
   <!-- Bundled JavaScript (includes Leaflet) -->
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
+  <!-- i18n Helper (共通i18nユーティリティ) -->
+  <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+  
   <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
   <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+  
+  <!-- Notification & Dialog System (共通UI) -->
+  <%= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
   
   <!-- Page-specific JavaScripts -->
   <%= yield :javascripts %>

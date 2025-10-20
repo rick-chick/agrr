@@ -1,0 +1,313 @@
+<% content_for :title, 'UI System Demo' %>
+
+<div class="container" style="max-width: 1200px; margin: 40px auto; padding: 20px;">
+  <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 30px; color: #111827;">
+    🎨 UI System Demo
+  </h1>
+  
+  <p style="color: #6B7280; margin-bottom: 40px;">
+    統一的な通知・ダイアログシステムのデモページです。各ボタンをクリックして動作を確認できます。
+  </p>
+  
+  <!-- Toast Notifications -->
+  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+      📬 Toast Notifications（トースト通知）
+    </h2>
+    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+      画面下部に表示される軽量な通知。自動的に消えます（デフォルト4秒）。
+    </p>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-success" onclick="Notify.success('保存が完了しました')">
+        ✅ Success
+      </button>
+      <button class="btn btn-danger" onclick="Notify.error('エラーが発生しました')">
+        ❌ Error
+      </button>
+      <button class="btn btn-warning" onclick="Notify.warning('注意が必要です')">
+        ⚠️ Warning
+      </button>
+      <button class="btn btn-primary" onclick="Notify.info('処理を開始しました')">
+        ℹ️ Info
+      </button>
+      <button class="btn btn-secondary" onclick="Notify.success('削除しました', { action: { text: '元に戻す', callback: () => Notify.info('削除を取り消しました') } })">
+        🔄 With Action
+      </button>
+    </div>
+  </section>
+  
+  <!-- Snackbar -->
+  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+      📋 Snackbar（スナックバー）
+    </h2>
+    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+      アクション付きの重要な通知。画面下部に表示され、やや長く表示されます（デフォルト6秒）。
+    </p>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-success" onclick="Notify.snackbar('作物を削除しました', { type: 'success', action: { text: '元に戻す', callback: () => Notify.success('削除を取り消しました') } })">
+        Delete with Undo
+      </button>
+      <button class="btn btn-primary" onclick="Notify.snackbar('ファイルをダウンロードしました', { type: 'info', action: { text: '開く', callback: () => Notify.info('ファイルを開きます') } })">
+        Download Complete
+      </button>
+    </div>
+  </section>
+  
+  <!-- Dialog System -->
+  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+      💬 Dialog System（ダイアログ）
+    </h2>
+    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+      ネイティブの alert/confirm/prompt を置き換えるモダンなダイアログ。
+    </p>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+      <button class="btn btn-primary" onclick="testAlert()">
+        Alert Dialog
+      </button>
+      <button class="btn btn-warning" onclick="testConfirm()">
+        Confirm Dialog
+      </button>
+      <button class="btn btn-danger" onclick="testConfirmDanger()">
+        Confirm (Danger)
+      </button>
+      <button class="btn btn-success" onclick="testPrompt()">
+        Prompt Dialog
+      </button>
+      <button class="btn btn-secondary" onclick="testPromptNumber()">
+        Prompt (Number)
+      </button>
+    </div>
+    
+    <div id="dialog-result" style="padding: 15px; background: #F3F4F6; border-radius: 8px; color: #374151; font-size: 14px; min-height: 50px;">
+      結果がここに表示されます
+    </div>
+  </section>
+  
+  <!-- Loading System -->
+  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+      ⏳ Loading System（ローディング表示）
+    </h2>
+    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+      長時間かかる処理の進捗表示。プログレスバーにも対応。
+    </p>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="testBasicLoading()">
+        Basic Loading
+      </button>
+      <button class="btn btn-success" onclick="testProgressLoading()">
+        Progress Loading
+      </button>
+      <button class="btn btn-warning" onclick="testMultiStepLoading()">
+        Multi-Step Loading
+      </button>
+      <button class="btn btn-danger" onclick="Loading.hideAll()">
+        Hide All
+      </button>
+    </div>
+  </section>
+  
+  <!-- Combined Example -->
+  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+      🚀 Combined Example（実践的な例）
+    </h2>
+    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+      実際の使用シーンを想定した組み合わせ例。
+    </p>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="exampleFormSubmit()">
+        Form Submit Simulation
+      </button>
+      <button class="btn btn-danger" onclick="exampleDeleteItem()">
+        Delete with Confirmation
+      </button>
+      <button class="btn btn-success" onclick="exampleAddField()">
+        Add Field (Wizard)
+      </button>
+    </div>
+  </section>
+  
+  <!-- Documentation Links -->
+  <section style="background: #EFF6FF; border: 2px solid #BFDBFE; border-radius: 12px; padding: 30px;">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 15px; color: #1E40AF;">
+      📚 Documentation
+    </h2>
+    <p style="color: #1E3A8A; margin-bottom: 15px;">
+      詳細なガイドと使用例は以下のドキュメントを参照してください：
+    </p>
+    <ul style="color: #1E3A8A; padding-left: 20px;">
+      <li style="margin-bottom: 8px;"><code style="background: white; padding: 2px 6px; border-radius: 4px;">docs/UI_SYSTEM_GUIDE.md</code> - 完全なAPIガイド</li>
+      <li><code style="background: white; padding: 2px 6px; border-radius: 4px;">docs/UI_SYSTEM_EXAMPLES.md</code> - 実装例集</li>
+    </ul>
+  </section>
+</div>
+
+<% content_for :javascripts do %>
+  <script>
+    // Dialog のテスト関数
+    async function testAlert() {
+      await Dialog.alert('これはアラートダイアログです', '通知');
+      document.getElementById('dialog-result').textContent = 'Alert: OKが押されました';
+    }
+    
+    async function testConfirm() {
+      const result = await Dialog.confirm('この操作を実行しますか？');
+      document.getElementById('dialog-result').textContent = `Confirm: ${result.action} が選択されました`;
+    }
+    
+    async function testConfirmDanger() {
+      const result = await Dialog.confirm('この操作は取り消せません。本当に削除しますか？', {
+        title: '危険な操作',
+        confirmText: '削除する',
+        danger: true
+      });
+      document.getElementById('dialog-result').textContent = `Confirm (Danger): ${result.action} が選択されました`;
+    }
+    
+    async function testPrompt() {
+      const result = await Dialog.prompt('名前を入力してください', {
+        defaultValue: '圃場1',
+        placeholder: '例: 圃場4'
+      });
+      document.getElementById('dialog-result').textContent = `Prompt: ${result.action} - 入力値: ${result.value || '(empty)'}`;
+    }
+    
+    async function testPromptNumber() {
+      const result = await Dialog.prompt('面積（㎡）を入力してください', {
+        type: 'number',
+        defaultValue: '100',
+        title: '面積の入力'
+      });
+      document.getElementById('dialog-result').textContent = `Prompt (Number): ${result.action} - 入力値: ${result.value || '(empty)'}`;
+    }
+    
+    // Loading のテスト関数
+    async function testBasicLoading() {
+      const loadingId = Loading.show('データを読み込み中...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      Loading.hide(loadingId);
+      Notify.success('読み込みが完了しました');
+    }
+    
+    async function testProgressLoading() {
+      const loadingId = Loading.showProgress('処理中...', 0);
+      
+      for (let i = 0; i <= 100; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        Loading.updateProgress(loadingId, i);
+      }
+      
+      Loading.hide(loadingId);
+      Notify.success('処理が完了しました');
+    }
+    
+    async function testMultiStepLoading() {
+      const loadingId = Loading.show('処理を開始しています...');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      Loading.updateMessage(loadingId, '圃場データを取得中...', '残り2ステップ');
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      Loading.updateMessage(loadingId, '作物データを取得中...', '残り1ステップ');
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      Loading.updateMessage(loadingId, '最適化を実行中...', '完了間近');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      Loading.hide(loadingId);
+      Notify.success('すべての処理が完了しました');
+    }
+    
+    // Combined Example 関数
+    async function exampleFormSubmit() {
+      const loadingId = Loading.show('データを保存中...');
+      
+      // 仮想的な保存処理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // ランダムで成功/失敗
+      const success = Math.random() > 0.3;
+      
+      Loading.hide(loadingId);
+      
+      if (success) {
+        Notify.success('データを保存しました');
+      } else {
+        Notify.error('保存に失敗しました。もう一度お試しください。');
+      }
+    }
+    
+    async function exampleDeleteItem() {
+      const result = await Dialog.confirm('「トマト」を削除しますか？\nこの操作は取り消せません。', {
+        title: '作物の削除',
+        confirmText: '削除する',
+        cancelText: 'キャンセル',
+        danger: true
+      });
+      
+      if (result.action !== 'confirm') {
+        Notify.info('削除をキャンセルしました');
+        return;
+      }
+      
+      const loadingId = Loading.show('削除中...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      Loading.hide(loadingId);
+      
+      Notify.snackbar('「トマト」を削除しました', {
+        type: 'success',
+        action: {
+          text: '元に戻す',
+          callback: () => {
+            Notify.success('削除を取り消しました');
+          }
+        }
+      });
+    }
+    
+    async function exampleAddField() {
+      // ステップ1: 圃場名
+      const nameResult = await Dialog.prompt('圃場名を入力してください', {
+        title: '圃場の追加 (1/2)',
+        placeholder: '例: 圃場4',
+        defaultValue: '圃場4'
+      });
+      
+      if (nameResult.action !== 'confirm' || !nameResult.value) {
+        Notify.info('追加をキャンセルしました');
+        return;
+      }
+      
+      // ステップ2: 面積
+      const areaResult = await Dialog.prompt('面積（㎡）を入力してください', {
+        title: '圃場の追加 (2/2)',
+        type: 'number',
+        defaultValue: '100'
+      });
+      
+      if (areaResult.action !== 'confirm' || !areaResult.value) {
+        Notify.info('追加をキャンセルしました');
+        return;
+      }
+      
+      // 登録処理
+      const loadingId = Loading.show('圃場を追加中...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      Loading.hide(loadingId);
+      
+      Notify.success(`圃場「${nameResult.value}」（${areaResult.value}㎡）を追加しました`);
+    }
+    
+    console.log('✅ UI System Demo loaded');
+    console.log('Available APIs:', { Notify, Dialog, Loading });
+  </script>
+<% end %>
+
