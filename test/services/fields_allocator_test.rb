@@ -52,18 +52,20 @@ class FieldsAllocatorTest < ActiveSupport::TestCase
     allocator = FieldsAllocator.new(100, crops)
     result = allocator.allocate
     
-    # 100 ÷ 7 = 14 + 余り2
-    # 最初の2つの圃場が15㎡、残り5つが14㎡
+    # 7作物あるが、上限5圃場に制限される
+    # 100 ÷ 5 = 20 （余りなし）
     total = result.sum { |r| r[:area] }
     assert_equal 100.0, total
     
-    assert_equal 15.0, result[0][:area], "First field should get 15㎡"
-    assert_equal 15.0, result[1][:area], "Second field should get 15㎡"
-    assert_equal 14.0, result[2][:area], "Third field should get 14㎡"
-    assert_equal 14.0, result[3][:area], "Fourth field should get 14㎡"
-    assert_equal 14.0, result[4][:area], "Fifth field should get 14㎡"
-    assert_equal 14.0, result[5][:area], "Sixth field should get 14㎡"
-    assert_equal 14.0, result[6][:area], "Seventh field should get 14㎡"
+    # 5圃場のみ作成される（上限制限）
+    assert_equal 5, result.count, "Should be limited to 5 fields"
+    
+    # 各圃場が20㎡ずつ
+    assert_equal 20.0, result[0][:area], "First field should get 20㎡"
+    assert_equal 20.0, result[1][:area], "Second field should get 20㎡"
+    assert_equal 20.0, result[2][:area], "Third field should get 20㎡"
+    assert_equal 20.0, result[3][:area], "Fourth field should get 20㎡"
+    assert_equal 20.0, result[4][:area], "Fifth field should get 20㎡"
   end
   
   test "handles area_per_unit nil values" do
@@ -158,6 +160,17 @@ class FieldsAllocatorTest < ActiveSupport::TestCase
     allocator = FieldsAllocator.new(100, crops)
     
     assert_equal 3, allocator.field_count
+  end
+  
+  test "field_count is limited to MAX_FIELDS" do
+    # 10作物用意しても、圃場は最大5個まで
+    crops = (1..10).map { |i| create_crop("作物#{i}", 10) }
+    
+    allocator = FieldsAllocator.new(200, crops)
+    
+    # 上限5圃場に制限される
+    assert_equal 5, allocator.field_count
+    assert_equal 5, allocator.allocate.count
   end
   
   test "handles floating point total area" do

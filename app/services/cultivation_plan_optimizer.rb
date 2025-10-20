@@ -388,6 +388,12 @@ class CultivationPlanOptimizer
     @cultivation_plan.field_cultivations.destroy_all
     Rails.logger.info "🗑️  [AGRR] Cleared existing FieldCultivations for CultivationPlan ##{@cultivation_plan.id}"
     
+    # 既存のCultivationPlanFieldとCultivationPlanCropも全て削除
+    # AGRR最適化結果に基づいて再作成するため
+    @cultivation_plan.cultivation_plan_fields.destroy_all
+    @cultivation_plan.cultivation_plan_crops.destroy_all
+    Rails.logger.info "🗑️  [AGRR] Cleared existing CultivationPlanFields and CultivationPlanCrops for CultivationPlan ##{@cultivation_plan.id}"
+    
     field_schedules = allocation_result[:field_schedules] || []
     
     field_schedules.each do |schedule|

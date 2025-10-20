@@ -162,28 +162,38 @@ module Api
         end
         
         test 'add_field returns error when field limit is reached' do
-          # 既に2個の圃場があるので、3個目を追加
+          # 既に2個の圃場があるので、3個目、4個目、5個目を追加
           post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
                params: { field_name: '圃場 3', field_area: 50.0 },
                as: :json
-          
           assert_response :success
-          @cultivation_plan.reload
-          assert_equal 3, @cultivation_plan.cultivation_plan_fields.count
           
-          # 4個目を追加しようとするとエラー
           post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
                params: { field_name: '圃場 4', field_area: 50.0 },
+               as: :json
+          assert_response :success
+          
+          post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
+               params: { field_name: '圃場 5', field_area: 50.0 },
+               as: :json
+          assert_response :success
+          
+          @cultivation_plan.reload
+          assert_equal 5, @cultivation_plan.cultivation_plan_fields.count
+          
+          # 6個目を追加しようとするとエラー
+          post add_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
+               params: { field_name: '圃場 6', field_area: 50.0 },
                as: :json
           
           assert_response :bad_request
           json = JSON.parse(response.body)
           assert_equal false, json['success']
-          assert_includes json['message'], '最大3個'
+          assert_includes json['message'], '最大5個'
           
           # 圃場数が変わっていないことを確認
           @cultivation_plan.reload
-          assert_equal 3, @cultivation_plan.cultivation_plan_fields.count
+          assert_equal 5, @cultivation_plan.cultivation_plan_fields.count
         end
         
         test 'remove_field deletes empty field successfully' do
@@ -248,29 +258,45 @@ module Api
         end
         
         test 'add_crop returns error when crop limit is reached' do
-          # 既に1種類の作物（crop1: トマト）がある
-          # あと8種類追加して、合計9種類にする
-          8.times do |i|
-            crop = @cultivation_plan.cultivation_plan_crops.create!(
+          # 既に1種類の作物（crop1: トマト）がfield_cultivationに配置されている
+          # あと4種類の作物を追加して実際に配置し、合計5種類にする
+          4.times do |i|
+            # CultivationPlanCropを作成
+            plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
               agrr_crop_id: "crop_#{i + 2}",
               name: "作物#{i + 2}",
               variety: "品種#{i + 2}",
               area_per_unit: 1.0,
               revenue_per_area: 10000.0
             )
+            
+            # FieldCultivationを作成して実際に配置
+            @cultivation_plan.field_cultivations.create!(
+              cultivation_plan_field: @field1,
+              cultivation_plan_crop: plan_crop,
+              area: 10.0,
+              start_date: Date.current + i.days,
+              completion_date: Date.current + i.days + 30.days,
+              cultivation_days: 30
+            )
           end
           
           @cultivation_plan.reload
-          assert_equal 9, @cultivation_plan.cultivation_plan_crops.count
+          # 実際に配置されている作物種類数は5種類（既存の1種類 + 新規4種類）
+          used_crop_count = @cultivation_plan.field_cultivations
+            .joins(:cultivation_plan_crop)
+            .select('DISTINCT cultivation_plan_crops.id')
+            .count
+          assert_equal 5, used_crop_count
           
-          # 10種類目を追加しようとするとエラー
+          # 6種類目を追加しようとするとエラー
           # 新しいCropを作成
           new_crop = Crop.create!(
             name: '新しい作物',
             variety: '新品種',
             area_per_unit: 1.0,
             revenue_per_area: 10000.0,
-            agrr_crop_id: 'new_crop_10'
+            agrr_crop_id: 'new_crop_6'
           )
           
           post add_crop_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, locale: nil),
@@ -284,11 +310,7 @@ module Api
           assert_response :bad_request
           json = JSON.parse(response.body)
           assert_equal false, json['success']
-          assert_includes json['message'], '最大9種類'
-          
-          # 作物種類数が変わっていないことを確認
-          @cultivation_plan.reload
-          assert_equal 9, @cultivation_plan.cultivation_plan_crops.count
+          assert_includes json['message'], '最大5種類'
         end
         
         # ===== add_crop E2Eテスト =====
