@@ -3,6 +3,12 @@ us:
     title: "Cultivation Plans"
     default_plan_name: "Main Plan"
     
+    steps:
+      year: "Year"
+      farm: "Farm"
+      crop: "Crops"
+      completed: "✓"
+    
     errors:
       select_year_and_farm: "Please select a year and farm."
       select_crop: "Please select at least one crop."
@@ -14,6 +20,9 @@ us:
       unauthorized: "You don't have permission to access this plan."
       plan_already_exists: "A plan for %{year} already exists."
       copy_failed: "Failed to copy plan: %{errors}"
+      invalid_field_params: "Invalid field information."
+      cannot_remove_last_field: "Cannot remove the last field."
+      field_not_found: "Field not found."
     
     messages:
       plan_copied: "Plan copied to %{year}."
@@ -29,8 +38,19 @@ us:
       no_plans: "No plans yet"
       no_plans_hint: "Create a new plan to optimize your cultivation schedule."
       year_label: "Year %{year}"
-      view: "View Details"
-      copy: "Copy to Next Year"
+      status:
+        pending: "Pending"
+        optimizing: "Optimizing"
+        completed: "Completed"
+        failed: "Failed"
+      plan_card:
+        farm: "Farm"
+        total_area: "Total Area"
+        crops_count: "%{count} crops"
+        fields_count: "%{count} fields"
+        view: "View Details"
+        copy: "Copy to Next Year"
+        created_at: "Created"
     
     new:
       title: "📅 Select Year and Farm"
@@ -40,10 +60,12 @@ us:
       plan_name_label: "Plan Name"
       plan_name_placeholder: "e.g. Main Plan"
       farm_label: "Farm"
+      farm_hint: "Please select a farm"
       no_farms: "No farms available"
       no_farms_hint: "Please create a farm first"
       create_farm_link: "Create Farm"
       next_button: "Next: Select Crops"
+      empty_message: "Currently, no farms are available."
     
     select_crop:
       title: "🌾 Select Crops to Grow"
@@ -67,22 +89,71 @@ us:
       status_badge: "Optimizing"
       year_label: "Year %{year}"
       crops_count: "%{count} crops"
+      error_message: "Failed to retrieve optimization status.\n\nPlease try one of the following:\n• Reload the page (F5 key)\n• Clear your browser cache\n• Wait a moment and try again\n\nIf the issue persists, please create a new plan."
       progress:
+        elapsed_time: "⏳ %{time}s"
+        elapsed_time_minute: "%{minutes}m %{seconds}s"
+        duration_hint: "This will take approximately 1 minute"
         default_message: "Preparing optimization..."
+      phases:
+        initializing: "Preparing optimization..."
+        weather_data: "Fetching weather data..."
+        optimization: "Calculating optimal cultivation plan..."
+        finalizing: "Preparing results..."
       error:
         title: "Optimization Failed"
-        try_again: "Try Again"
+        try_again: "Try Again with Different Crops"
         start_over: "Back to List"
     
     show:
       back_to_list: "← Back to List"
       copy_plan: "Copy to Next Year"
+      chart_title: "Weather Data and Crop Growth Analysis"
+      loading_data: "Loading data..."
+      
       header:
         title: "Year %{year} Cultivation Plan"
         badge: "Completed"
         farm: "Farm"
+        total_area: "Total Area"
+        field_count: "Fields"
+        field_count_value: "%{count} fields"
+        total_cost: "Total Cost"
+        total_revenue: "Total Revenue"
+        total_profit: "Total Profit"
+        subtitle: "Optimal cultivation periods determined for %{count} fields"
         planning_period: "Planning Period"
         planning_period_value: "%{start} - %{end}"
+      
+      gantt:
+        title: "Cultivation Schedule"
+        month_format: "%{month}"
+      
+      crop_palette:
+        title: "Add Crops"
+        toggle: "Toggle Panel"
+        hint: "Drag crops to add them to the schedule"
+        in_use: "In Use"
+      
+      detail:
+        loading: "Loading details..."
+        loading_data: "Loading data..."
+      
+      info:
+        field: "Field"
+        crop: "Crop"
+        area: "Area"
+        planting_date: "Planting Date"
+        harvest_date: "Harvest Date"
+        cultivation_days: "Cultivation Days"
+        gdd: "Growing Degree Days"
+        estimated_cost: "Estimated Cost"
+        stages_title: "Cultivation Stages"
+        stages_loading: "Loading stage information..."
+      
+      stages:
+        intro: "View detailed temperature conditions and GDD achievement for each stage."
+        loading: "Loading stage information..."
   
   models:
     cultivation_plan:
