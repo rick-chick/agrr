@@ -7,12 +7,17 @@ class CultivationPlanCreator
     end
   end
   
-  def initialize(farm:, total_area:, crops:, user: nil, session_id: nil)
+  def initialize(farm:, total_area:, crops:, user: nil, session_id: nil, plan_type: 'public', plan_year: nil, plan_name: nil, planning_start_date: nil, planning_end_date: nil)
     @farm = farm
     @total_area = total_area
     @crops = crops
     @user = user
     @session_id = session_id
+    @plan_type = plan_type
+    @plan_year = plan_year
+    @plan_name = plan_name
+    @planning_start_date = planning_start_date
+    @planning_end_date = planning_end_date
   end
   
   def call
@@ -29,12 +34,26 @@ class CultivationPlanCreator
   private
   
   def create_plan_with_cultivations
-    @cultivation_plan = CultivationPlan.create!(
+    # 基本属性
+    plan_attrs = {
       farm: @farm,
       user: @user,
       total_area: @total_area,
-      session_id: @session_id
-    )
+      plan_type: @plan_type
+    }
+    
+    # public計画の場合はsession_idを追加
+    plan_attrs[:session_id] = @session_id if @plan_type == 'public'
+    
+    # private計画の場合は計画情報を追加
+    if @plan_type == 'private'
+      plan_attrs[:plan_year] = @plan_year
+      plan_attrs[:plan_name] = @plan_name
+      plan_attrs[:planning_start_date] = @planning_start_date
+      plan_attrs[:planning_end_date] = @planning_end_date
+    end
+    
+    @cultivation_plan = CultivationPlan.create!(plan_attrs)
     
     fields_allocation.each_with_index do |allocation, index|
       create_field_cultivation(allocation, index)

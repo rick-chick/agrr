@@ -9,9 +9,14 @@ in:
       logout_success: "सफलतापूर्वक लॉगआउट किया गया।"
       not_logged_in: "आप लॉगिन नहीं हैं।"
       disabled_in_production: "उत्पादन परिवेश में प्रमाणीकरण अक्षम है।"
+      authentication_failed: "प्रमाणीकरण विफल रहा। कृपया पुनः प्रयास करें।"
+      disabled_in_production_json: "उत्पादन परिवेश में प्रमाणीकरण अक्षम है।"
     
     messages:
       login_required: "इस संसाधन तक पहुंचने के लिए कृपया लॉगिन करें।"
       login_required_page: "इस पृष्ठ तक पहुंचने के लिए कृपया लॉगिन करें।"
       admin_required: "व्यवस्थापक पहुंच आवश्यक है।"
+    
+    api:
+      login_required: "इस संसाधन तक पहुंचने के लिए कृपया लॉगिन करें।"
 

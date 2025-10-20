@@ -30,6 +30,14 @@ us:
     yes: "Yes"
     no: "No"
 
+  # JavaScript messages
+  js:
+    crop_palette:
+      plan_id_missing: "Error: Could not retrieve plan ID"
+      crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
+      crop_add_failed: "Failed to add crop: %{message}"
+      communication_error: "Communication error occurred. Please try again."
+
   # Navigation
   nav:
     home: "Home"

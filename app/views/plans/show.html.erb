@@ -1,0 +1,100 @@
+<% content_for :title, t('plans.show.header.title', year: @cultivation_plan.plan_year) %>
+
+<div class="plans-wrapper">
+  <div class="plans-container">
+    <!-- ヘッダーアクション -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+      <%= link_to plans_path, class: "btn-plans-secondary" do %>
+        <%= t('plans.show.back_to_list') %>
+      <% end %>
+      <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
+          class: "btn-plans-secondary",
+          data: { confirm: "次年度（#{@cultivation_plan.plan_year + 1}年度）にこの計画をコピーしますか？" } %>
+    </div>
+
+    <!-- サマリーカード -->
+    <div class="content-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin: 0;">
+          <%= t('plans.show.header.title', year: @cultivation_plan.plan_year) %>
+        </h1>
+        <span class="plan-card-status completed">
+          <%= t('plans.show.header.badge') %>
+        </span>
+      </div>
+      
+      <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        <%= t('plans.show.header.subtitle', count: @cultivation_plan.field_cultivations.count) %>
+      </p>
+      
+      <!-- 統計情報グリッド -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+        <div>
+          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+            <%= t('plans.show.header.farm') %>
+          </div>
+          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+            <%= @cultivation_plan.farm.display_name %>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+            <%= t('plans.show.header.total_area') %>
+          </div>
+          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+            <%= number_with_delimiter(@cultivation_plan.total_area) %> ㎡
+          </div>
+        </div>
+        <div>
+          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+            <%= t('plans.show.header.field_count') %>
+          </div>
+          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+            <%= t('plans.show.header.field_count_value', count: @cultivation_plan.cultivation_plan_fields.count) %>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+            <%= t('plans.show.header.planning_period') %>
+          </div>
+          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+            <%= t('plans.show.header.planning_period_value', 
+                   start: @cultivation_plan.planning_start_date.year,
+                   end: @cultivation_plan.planning_end_date.year) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ガントチャートカード -->
+    <div class="content-card">
+      <h2 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-6);">
+        <%= t('plans.show.gantt.title') %>
+      </h2>
+      
+      <!-- ガントチャートコンテナ -->
+      <div id="gantt-chart" 
+           style="width: 100%; overflow-x: auto;"
+           data-plan-id="<%= @cultivation_plan.id %>"
+           data-data-url="<%= data_api_v1_plans_cultivation_plan_path(@cultivation_plan) %>"></div>
+      
+      <!-- 詳細パネル -->
+      <div id="detail-panel" style="margin-top: var(--space-6); display: none;">
+        <div style="background: var(--color-gray-50); border-radius: var(--radius-lg); padding: var(--space-6);">
+          <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-4);">
+            栽培詳細
+          </h3>
+          <div id="detail-content">
+            <%= t('plans.show.detail.loading') %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript is loaded from app/assets/javascripts/plans_show.js -->
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "custom_gantt_chart", defer: true %>
+  <%= javascript_include_tag "plans_show", defer: true %>
+<% end %>

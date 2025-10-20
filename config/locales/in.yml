@@ -30,6 +30,14 @@ in:
     yes: "हां"
     no: "नहीं"
 
+  # JavaScript संदेश (JavaScript messages)
+  js:
+    crop_palette:
+      plan_id_missing: "त्रुटि: योजना ID प्राप्त नहीं की जा सकी"
+      crop_types_limit: "अधिकतम %{max_types} फसल प्रकारों की अनुमति है।\nवर्तमान: %{current_types}"
+      crop_add_failed: "फसल जोड़ने में विफल: %{message}"
+      communication_error: "संचार त्रुटि हुई। कृपया पुनः प्रयास करें।"
+
   # नेविगेशन (Navigation)
   nav:
     home: "मुखपृष्ठ"

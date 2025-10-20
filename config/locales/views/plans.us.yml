@@ -1,0 +1,91 @@
+us:
+  plans:
+    title: "Cultivation Plans"
+    default_plan_name: "Main Plan"
+    
+    errors:
+      select_year_and_farm: "Please select a year and farm."
+      select_crop: "Please select at least one crop."
+      restart: "Please start over."
+      create_failed: "Failed to create plan: %{errors}"
+      not_found: "Cultivation plan not found."
+      farm_not_found: "Farm not found."
+      crop_not_found: "Crop not found."
+      unauthorized: "You don't have permission to access this plan."
+      plan_already_exists: "A plan for %{year} already exists."
+      copy_failed: "Failed to copy plan: %{errors}"
+    
+    messages:
+      plan_copied: "Plan copied to %{year}."
+      crop_added: "Crop added."
+      field_added: "Field added."
+      field_removed: "Field removed."
+      reoptimization_started: "Re-optimization started."
+    
+    index:
+      title: "Cultivation Plans"
+      subtitle: "Manage your yearly cultivation plans"
+      create_new: "+ Create New Plan"
+      no_plans: "No plans yet"
+      no_plans_hint: "Create a new plan to optimize your cultivation schedule."
+      year_label: "Year %{year}"
+      view: "View Details"
+      copy: "Copy to Next Year"
+    
+    new:
+      title: "📅 Select Year and Farm"
+      subtitle: "Choose the year and farm for your cultivation plan"
+      plan_year_label: "Plan Year"
+      plan_year_hint: "Plan period: %{start_year}/01 - %{end_year}/12 (2 years)"
+      plan_name_label: "Plan Name"
+      plan_name_placeholder: "e.g. Main Plan"
+      farm_label: "Farm"
+      no_farms: "No farms available"
+      no_farms_hint: "Please create a farm first"
+      create_farm_link: "Create Farm"
+      next_button: "Next: Select Crops"
+    
+    select_crop:
+      title: "🌾 Select Crops to Grow"
+      subtitle: "Click cards to select multiple crops"
+      summary:
+        year: "Year"
+        farm: "Farm"
+        total_area: "Total Area"
+      bottom_bar:
+        back_button: "← Back"
+        selected_label: "Selected"
+        selected_unit: "crops"
+        submit_button: "✓ Create Plan"
+        hint: "⚠️ Please select at least one crop"
+      no_crops: "No crops available"
+      no_crops_hint: "Please create crops first"
+      create_crop_link: "Create Crop"
+    
+    optimizing:
+      title: "Cultivation Plan"
+      status_badge: "Optimizing"
+      year_label: "Year %{year}"
+      crops_count: "%{count} crops"
+      progress:
+        default_message: "Preparing optimization..."
+      error:
+        title: "Optimization Failed"
+        try_again: "Try Again"
+        start_over: "Back to List"
+    
+    show:
+      back_to_list: "← Back to List"
+      copy_plan: "Copy to Next Year"
+      header:
+        title: "Year %{year} Cultivation Plan"
+        badge: "Completed"
+        farm: "Farm"
+        planning_period: "Planning Period"
+        planning_period_value: "%{start} - %{end}"
+  
+  models:
+    cultivation_plan:
+      default_plan_name: "Main Plan"
+      public_plan_name: "Free Cultivation Plan"
+

@@ -9,9 +9,14 @@ ja:
       logout_success: "ログアウトしました。"
       not_logged_in: "ログインしていません。"
       disabled_in_production: "本番環境では認証が無効になっています。"
+      authentication_failed: "認証に失敗しました。もう一度お試しください。"
+      disabled_in_production_json: "本番環境では認証が無効になっています。"
     
     messages:
       login_required: "このリソースにアクセスするにはログインしてください。"
       login_required_page: "このページにアクセスするにはログインしてください。"
       admin_required: "管理者権限が必要です。"
+    
+    api:
+      login_required: "このリソースにアクセスするにはログインしてください。"
 

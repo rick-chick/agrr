@@ -277,6 +277,12 @@ function updateMapFromInputs() {
 }
 
 // フォーム送信時のバリデーション
+// 翻訳メッセージを取得するヘルパー関数
+function getI18nMessage(key, defaultMessage) {
+  const i18nData = document.body.dataset;
+  return i18nData[key] || defaultMessage;
+}
+
 document.addEventListener('submit', function(e) {
   const latInput = document.getElementById('farm_latitude');
   const lngInput = document.getElementById('farm_longitude');
@@ -287,19 +293,19 @@ document.addEventListener('submit', function(e) {
     
     if (isNaN(lat) || isNaN(lng)) {
       e.preventDefault();
-      alert('緯度と経度は数値で入力してください。');
+      alert(getI18nMessage('fieldsValidationCoordinatesNumeric', 'Latitude and longitude must be numeric values.'));
       return false;
     }
     
     if (lat < -90 || lat > 90) {
       e.preventDefault();
-      alert('緯度は-90から90の間で入力してください。');
+      alert(getI18nMessage('fieldsValidationLatitudeRange', 'Latitude must be between -90 and 90.'));
       return false;
     }
     
     if (lng < -180 || lng > 180) {
       e.preventDefault();
-      alert('経度は-180から180の間で入力してください。');
+      alert(getI18nMessage('fieldsValidationLongitudeRange', 'Longitude must be between -180 and 180.'));
       return false;
     }
   }

@@ -35,6 +35,10 @@ us:
         description: "Add your first rule to get started."
         button: "Add Rule"
     
+    new:
+      title: "Create New Rule"
+      page_title: "Create New Rule"
+    
     edit:
       title: "Edit Rule"
     

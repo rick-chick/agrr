@@ -24,6 +24,7 @@
   <%= stylesheet_link_tag "features/crop_ai_ad", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/interaction-rules", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "features/plans", "data-turbo-track": "reload" %>
   
   <!-- Bundled JavaScript (includes Leaflet) -->
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
@@ -40,7 +41,7 @@
   <% end %>
   
 </head>
-<body>
+<body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
   <%= render "shared/navbar" %>
   
   <div class="container">

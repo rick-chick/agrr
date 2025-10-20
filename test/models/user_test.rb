@@ -265,5 +265,30 @@ class UserTest < ActiveSupport::TestCase
     assert anonymous2.valid?
     assert_not_equal anonymous1.id, anonymous2.id
   end
+
+  # Associations tests
+  test "should have many farms" do
+    user = users(:developer)
+    assert_respond_to user, :farms
+    assert_kind_of ActiveRecord::Associations::CollectionProxy, user.farms
+  end
+
+  test "should have many crops" do
+    user = users(:developer)
+    assert_respond_to user, :crops
+    assert_kind_of ActiveRecord::Associations::CollectionProxy, user.crops
+  end
+
+  test "should have many cultivation_plans" do
+    user = users(:developer)
+    assert_respond_to user, :cultivation_plans
+    assert_kind_of ActiveRecord::Associations::CollectionProxy, user.cultivation_plans
+  end
+
+  test "should have many interaction_rules" do
+    user = users(:developer)
+    assert_respond_to user, :interaction_rules
+    assert_kind_of ActiveRecord::Associations::CollectionProxy, user.interaction_rules
+  end
 end
 

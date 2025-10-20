@@ -1,24 +1,24 @@
-<% content_for :title, "新しい圃場 - #{@farm.display_name} - AGRR" %>
+<% content_for :title, "#{t('fields.new.breadcrumb.current')} - #{@farm.display_name} - AGRR" %>
 
 <div class="breadcrumb">
-  <%= link_to "農場一覧", farms_path, class: "breadcrumb-link" %>
+  <%= link_to t('fields.new.breadcrumb.farms'), farms_path, class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
   <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
-  <%= link_to "圃場一覧", farm_fields_path(@farm), class: "breadcrumb-link" %>
+  <%= link_to t('fields.new.breadcrumb.fields'), farm_fields_path(@farm), class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
-  <span class="breadcrumb-current">新しい圃場</span>
+  <span class="breadcrumb-current"><%= t('fields.new.breadcrumb.current') %></span>
 </div>
 
 <div class="page-header">
-  <h1 class="page-title"><%= @farm.display_name %> - 新しい圃場を追加</h1>
+  <h1 class="page-title"><%= @farm.display_name %> - <%= t('fields.new.title') %></h1>
 </div>
     
     <div class="form-card">
       <%= form_with model: [@farm, @field], local: true do |form| %>
         <% if @field.errors.any? %>
           <div class="errors">
-            <h3><%= pluralize(@field.errors.count, "error") %> prohibited this field from being saved:</h3>
+            <h3><%= t('fields.new.errors.title', count: @field.errors.count) %></h3>
             <ul>
               <% @field.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
@@ -28,26 +28,26 @@
         <% end %>
         
         <div class="form-group">
-          <%= form.label :name, "圃場名", class: "form-label" %>
-          <%= form.text_field :name, class: "form-control", placeholder: "例: 北側の田んぼ" %>
-          <div class="form-text">圃場の名前を入力してください</div>
+          <%= form.label :name, t('fields.new.form.name_label'), class: "form-label" %>
+          <%= form.text_field :name, class: "form-control", placeholder: t('fields.new.form.name_placeholder') %>
+          <div class="form-text"><%= t('fields.new.form.name_help') %></div>
         </div>
         
         <div class="form-group">
-          <%= form.label :area, "面積（㎡）", class: "form-label" %>
-          <%= form.number_field :area, class: "form-control", placeholder: "例: 1000", step: "0.1", min: "0" %>
-          <div class="form-text">圃場の面積を平方メートルで入力してください</div>
+          <%= form.label :area, t('fields.new.form.area_label'), class: "form-label" %>
+          <%= form.number_field :area, class: "form-control", placeholder: t('fields.new.form.area_placeholder'), step: "0.1", min: "0" %>
+          <div class="form-text"><%= t('fields.new.form.area_help') %></div>
         </div>
         
         <div class="form-group">
-          <%= form.label :daily_fixed_cost, "日次固定費用（円）", class: "form-label" %>
-          <%= form.number_field :daily_fixed_cost, class: "form-control", placeholder: "例: 5000", step: "1", min: "0" %>
-          <div class="form-text">1日あたりの固定費用（圃場のレンタル料など）を入力してください</div>
+          <%= form.label :daily_fixed_cost, t('fields.new.form.daily_cost_label'), class: "form-label" %>
+          <%= form.number_field :daily_fixed_cost, class: "form-control", placeholder: t('fields.new.form.daily_cost_placeholder'), step: "1", min: "0" %>
+          <div class="form-text"><%= t('fields.new.form.daily_cost_help') %></div>
         </div>
         
         <div class="actions">
-          <%= form.submit "圃場を作成", class: "btn btn-success" %>
-          <%= link_to "キャンセル", farm_fields_path(@farm), class: "btn btn-secondary" %>
+          <%= form.submit t('fields.new.form.submit'), class: "btn btn-success" %>
+          <%= link_to t('fields.new.form.cancel'), farm_fields_path(@farm), class: "btn btn-secondary" %>
         </div>
       <% end %>
     </div>
