@@ -20,3 +20,19 @@ three:
   name: "東側の果樹園"
   created_at: <%= 3.days.ago %>
   updated_at: <%= 3.days.ago %>
+
+farm_tokyo_field1:
+  farm: farm_tokyo
+  user: developer
+  name: "テスト圃場1"
+  area: 100.0
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+farm_tokyo_field2:
+  farm: farm_tokyo
+  user: developer
+  name: "テスト圃場2"
+  area: 150.0
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

@@ -35,11 +35,11 @@ class PlansWorkflowTest < ApplicationSystemTestCase
     assert_selector "h1", text: I18n.t('plans.index.title')
     
     # 新規計画作成
-    click_link I18n.t('plans.index.create_new')
+    click_link I18n.t('plans.index.create_new'), match: :first
     assert_selector "h2", text: I18n.t('plans.new.title')
     
     # 年度と農場を選択
-    select "2025", from: "plan_year"
+    select "2025年度（2024年1月〜2026年12月）", from: "plan_year"
     choose "farm_id_#{@farm.id}"
     click_button I18n.t('plans.new.next_button')
     
