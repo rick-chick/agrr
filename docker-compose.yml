@@ -27,6 +27,7 @@ services:
       - DATABASE_URL=sqlite3:storage/development.sqlite3
       - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
       - USE_AGRR_DAEMON=true  # Daemon mode enabled by default
+      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
@@ -59,6 +60,7 @@ services:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
       - PREVENT_TEST_IN_DEV=true
+      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
@@ -89,6 +91,7 @@ services:
       - DATABASE_URL=sqlite3:storage/test.sqlite3
       - SELENIUM_HOST=selenium
       - SELENIUM_PORT=4444
+      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
