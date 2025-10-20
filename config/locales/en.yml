@@ -1,4 +1,60 @@
 en:
+  # JavaScript messages
+  js:
+    crop_palette:
+      plan_id_missing: "Error: Could not retrieve plan ID"
+      crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
+      crop_add_failed: "Failed to add crop: %{message}"
+      communication_error: "Communication error occurred. Please try again."
+    
+    gantt:
+      optimization_failed: "Optimization failed"
+      update_failed: "Failed to update data. Please reload the page manually."
+      fetch_error: "Error occurred while fetching data. Please reload the page manually."
+      field_info_error: "Error: Could not retrieve field information.\nPlease check console logs."
+      communication_error: "Communication error occurred.\nPlease try again."
+      add_field_button: "+ Add Field"
+      adding_field_loading: "Adding field..."
+      confirm_delete_field: "Delete %{field_name}?\n(This field has no crops and can be deleted)"
+      confirm_delete_crop: "Delete %{crop_name}?"
+      invalid_area: "Please enter a valid area"
+      field_add_failed: "Failed to add field"
+      field_delete_failed: "Failed to delete field"
+    
+    crop_form:
+      stage_name_placeholder: "e.g., Germination, Vegetative growth"
+      order_placeholder: "0"
+      base_temperature_placeholder: "e.g., 5.0"
+      optimal_min_placeholder: "e.g., 15.0"
+      optimal_max_placeholder: "e.g., 25.0"
+      low_stress_placeholder: "e.g., 10.0"
+      high_stress_placeholder: "e.g., 30.0"
+      frost_threshold_placeholder: "e.g., 0.0"
+      sterility_risk_placeholder: "e.g., 35.0"
+      minimum_sunshine_placeholder: "e.g., 4.0"
+      target_sunshine_placeholder: "e.g., 8.0"
+    
+    crop_selection:
+      max_crops_message: "Maximum %{max} crop types can be selected"
+      hint_select: "Please select crops"
+    
+    cultivation_results:
+      load_error: "Failed to retrieve data"
+      data_error: "Failed to load data"
+      temp_max_label: "Max Temperature"
+      temp_mean_label: "Mean Temperature"
+      temp_min_label: "Min Temperature"
+      optimal_range_label: "Optimal Temperature Range"
+      date_label: "Date"
+      temp_axis_label: "Temperature (℃)"
+      gdd_label: "Growing Degree Days"
+      gdd_axis_label: "GDD (℃·day)"
+      gdd_target_label: "Target: %{target}℃·day"
+      no_risks: "None ✓"
+    
+    plans:
+      load_error: "Failed to load data"
+
   # Common
   common:
     save: "Save"

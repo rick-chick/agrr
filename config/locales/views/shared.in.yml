@@ -2,6 +2,7 @@ in:
   shared:
     navbar:
       brand: "AGRR"
+      plans: "योजनाएं"
       farms: "खेत"
       crops: "फसलें"
       interaction_rules: "परिक्रमण"

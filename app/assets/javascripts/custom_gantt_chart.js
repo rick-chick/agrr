@@ -237,7 +237,7 @@ function handleOptimizationUpdate(data) {
     reoptimizationInProgress = false;
 
     // エラーメッセージを表示
-    alert(data.message || '最適化に失敗しました');
+    alert(data.message || getI18nMessage('jsGanttOptimizationFailed', 'Optimization failed'));
     
     // 変更を元に戻す
     revertChanges();
@@ -325,14 +325,14 @@ function fetchAndUpdateChart() {
       console.log('📡 ganttChartReady イベントを発火しました（再描画後）');
     } else {
       console.error('❌ データ取得に失敗しました');
-      alert('データの更新に失敗しました。ページを手動でリロードしてください。');
+      alert(getI18nMessage('jsGanttUpdateFailed', 'Failed to update data. Please reload the page manually.'));
       hideLoadingOverlay();
       reoptimizationInProgress = false;
     }
   })
   .catch(error => {
     console.error('❌ データ取得エラー:', error);
-    alert('データ取得中にエラーが発生しました。ページを手動でリロードしてください。');
+    alert(getI18nMessage('jsGanttFetchError', 'Error occurred while fetching data. Please reload the page manually.'));
     hideLoadingOverlay();
     reoptimizationInProgress = false;
   });
@@ -475,7 +475,7 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     style: 'pointer-events: none;'
   }, '+');
   
-  // テキスト
+  // テキスト（i18n）
   const addFieldBtnText = createSVGElement('text', {
     x: 60,
     y: addFieldBtnY + 23,
@@ -484,7 +484,7 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     'font-weight': '600',
     fill: '#FFFFFF',
     style: 'pointer-events: none;'
-  }, '圃場追加');
+  }, getI18nMessage('jsGanttAddFieldButton', '+ Add Field'));
   
   addFieldBtn.appendChild(addFieldBtnRect);
   addFieldBtn.appendChild(addFieldBtnIcon);
@@ -813,7 +813,7 @@ function recordMove(allocation_id, to_field_name, to_start_date) {
     console.error('🔍 fieldGroup:', fieldGroup);
     console.error('🔍 to_field_name:', to_field_name);
     console.error('🔍 全圃場グループ:', ganttState.fieldGroups);
-    alert('エラー: 移動先の圃場情報が取得できませんでした。\nコンソールログを確認してください。');
+    alert(getI18nMessage('jsGanttFieldInfoError', 'Error: Could not retrieve field information.\nPlease check console logs.'));
     return;
   }
   
@@ -1015,7 +1015,7 @@ function executeReoptimization() {
   .catch(error => {
     console.error('❌ 再最適化エラー:', error);
     console.error('❌ エラー詳細:', error.stack);
-    alert(`通信エラーが発生しました。\nもう一度お試しください。`);
+    alert(getI18nMessage('jsGanttCommunicationError', 'Communication error occurred.\nPlease try again.'));
     
     // 変更を元に戻す
     console.log('🔙 変更を元に戻します...');
@@ -1222,7 +1222,8 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
       e.preventDefault();
       e.stopPropagation();
       
-      if (confirm(`${group.fieldName}を削除しますか？\n（この圃場に作物がないため削除できます）`)) {
+      const message = getI18nTemplate('jsGanttConfirmDeleteField', {field_name: group.fieldName}, `Delete ${group.fieldName}?\n(This field has no crops and can be deleted)`);
+      if (confirm(message)) {
         removeField(group.fieldId);
       }
     });
@@ -1389,7 +1390,8 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
       return;
     }
     
-    if (confirm(`${cultivation.crop_name}を削除しますか？`)) {
+    const message = getI18nTemplate('jsGanttConfirmDeleteCrop', {crop_name: cultivation.crop_name}, `Delete ${cultivation.crop_name}?`);
+    if (confirm(message)) {
       removeCultivation(cultivation.id);
     }
   });
@@ -1447,7 +1449,8 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
       return;
     }
     
-    if (confirm(`${cultivation.crop_name}を削除しますか？`)) {
+    const message = getI18nTemplate('jsGanttConfirmDeleteCrop', {crop_name: cultivation.crop_name}, `Delete ${cultivation.crop_name}?`);
+    if (confirm(message)) {
       removeCultivation(cultivation.id);
     }
   });
@@ -1665,7 +1668,7 @@ function addField() {
   
   const area = parseFloat(fieldArea);
   if (isNaN(area) || area <= 0) {
-    alert('有効な面積を入力してください');
+    alert(getI18nMessage('jsGanttInvalidArea', 'Please enter a valid area'));
     console.error('❌ 無効な面積:', fieldArea);
     return;
   }
@@ -1673,7 +1676,7 @@ function addField() {
   console.log('📤 圃場追加リクエスト:', { field_name: fieldName, field_area: area });
   
   // ローディング表示（圃場追加は最適化処理ではない）
-  showLoadingOverlay('圃場を追加中...');
+  showLoadingOverlay(getI18nMessage('jsGanttAddingFieldLoading', 'Adding field...'));
   
   // APIリクエスト
   const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/add_field`;
@@ -1702,13 +1705,13 @@ function addField() {
       fetchAndUpdateChart();
     } else {
       console.error('❌ 圃場の追加に失敗しました:', data.message);
-      alert(data.message || '圃場の追加に失敗しました');
+      alert(data.message || getI18nMessage('jsGanttFieldAddFailed', 'Failed to add field'));
       hideLoadingOverlay();
     }
   })
   .catch(error => {
     console.error('❌ 圃場追加エラー:', error);
-    alert('通信エラーが発生しました。\nもう一度お試しください。');
+    alert(getI18nMessage('jsGanttCommunicationError', 'Communication error occurred.\nPlease try again.'));
     hideLoadingOverlay();
   });
 }
@@ -1750,13 +1753,13 @@ function removeField(field_id) {
       fetchAndUpdateChart();
     } else {
       console.error('❌ 圃場の削除に失敗しました:', data.message);
-      alert(data.message || '圃場の削除に失敗しました');
+      alert(data.message || getI18nMessage('jsGanttFieldDeleteFailed', 'Failed to delete field'));
       hideLoadingOverlay();
     }
   })
   .catch(error => {
     console.error('❌ 圃場削除エラー:', error);
-    alert('通信エラーが発生しました。\nもう一度お試しください。');
+    alert(getI18nMessage('jsGanttCommunicationError', 'Communication error occurred.\nPlease try again.'));
     hideLoadingOverlay();
   });
 }

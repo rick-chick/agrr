@@ -26,7 +26,7 @@ document.addEventListener('turbo:load', function() {
         renderGanttChart(data.data);
       } else {
         console.error('❌ Failed to load plan data:', data.message);
-        showError('データの読み込みに失敗しました');
+        showError(getI18nMessage('jsPlansLoadError', 'Failed to load data'));
       }
     })
     .catch(error => {

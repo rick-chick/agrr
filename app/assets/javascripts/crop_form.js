@@ -60,14 +60,14 @@ function createStageTemplate(index) {
           <label class="form-label" for="crop_crop_stages_attributes_${index}_name">ステージ名</label>
           <input type="text" name="crop[crop_stages_attributes][${index}][name]" 
                  id="crop_crop_stages_attributes_${index}_name" 
-                 class="form-control" placeholder="例：発芽期、栄養成長期">
+                 class="form-control" placeholder="${getI18nMessage('jsCropStageNamePlaceholder', 'e.g., Germination, Vegetative growth')}">
         </div>
 
         <div class="form-group">
           <label class="form-label" for="crop_crop_stages_attributes_${index}_order">順序</label>
           <input type="number" name="crop[crop_stages_attributes][${index}][order]" 
                  id="crop_crop_stages_attributes_${index}_order" 
-                 class="form-control" min="0" placeholder="0">
+                 class="form-control" min="0" placeholder="${getI18nMessage('jsCropOrderPlaceholder', '0')}">
         </div>
       </div>
 
@@ -96,21 +96,21 @@ function createTemperatureRequirementTemplate(index) {
           <label class="form-label">最低限界温度 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][base_temperature]" 
-                 class="form-control" step="0.1" placeholder="例：5.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropBaseTemperaturePlaceholder', 'e.g., 5.0')}">
         </div>
 
         <div class="form-group">
           <label class="form-label">最適温度 最小 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][optimal_min]" 
-                 class="form-control" step="0.1" placeholder="例：15.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropOptimalMinPlaceholder', 'e.g., 15.0')}">
         </div>
 
         <div class="form-group">
           <label class="form-label">最適温度 最大 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][optimal_max]" 
-                 class="form-control" step="0.1" placeholder="例：25.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropOptimalMaxPlaceholder', 'e.g., 25.0')}">
         </div>
       </div>
 
@@ -119,14 +119,14 @@ function createTemperatureRequirementTemplate(index) {
           <label class="form-label">低温ストレス閾値 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][low_stress_threshold]" 
-                 class="form-control" step="0.1" placeholder="例：10.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropLowStressPlaceholder', 'e.g., 10.0')}">
         </div>
 
         <div class="form-group">
           <label class="form-label">高温ストレス閾値 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][high_stress_threshold]" 
-                 class="form-control" step="0.1" placeholder="例：30.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropHighStressPlaceholder', 'e.g., 30.0')}">
         </div>
       </div>
 
@@ -135,14 +135,14 @@ function createTemperatureRequirementTemplate(index) {
           <label class="form-label">霜害閾値 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][frost_threshold]" 
-                 class="form-control" step="0.1" placeholder="例：0.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropFrostThresholdPlaceholder', 'e.g., 0.0')}">
         </div>
 
         <div class="form-group">
           <label class="form-label">不稔リスク閾値 (°C)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][temperature_requirement_attributes][sterility_risk_threshold]" 
-                 class="form-control" step="0.1" placeholder="例：35.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropSterilityRiskPlaceholder', 'e.g., 35.0')}">
         </div>
       </div>
     </div>
@@ -161,14 +161,14 @@ function createSunshineRequirementTemplate(index) {
           <label class="form-label">最低日照時間 (時間)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][sunshine_requirement_attributes][minimum_sunshine_hours]" 
-                 class="form-control" step="0.1" placeholder="例：4.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropMinimumSunshinePlaceholder', 'e.g., 4.0')}">
         </div>
 
         <div class="form-group">
           <label class="form-label">目標日照時間 (時間)</label>
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][sunshine_requirement_attributes][target_sunshine_hours]" 
-                 class="form-control" step="0.1" placeholder="例：8.0">
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropTargetSunshinePlaceholder', 'e.g., 8.0')}">
         </div>
       </div>
     </div>

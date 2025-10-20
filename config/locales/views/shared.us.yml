@@ -2,6 +2,7 @@ us:
   shared:
     navbar:
       brand: "AGRR"
+      plans: "Plans"
       farms: "Farms"
       crops: "Crops"
       interaction_rules: "Rotations"

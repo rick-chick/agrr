@@ -74,7 +74,7 @@ async function showDetailPanel(fieldCultivationId, fieldName, cropName) {
   try {
     // APIからデータ取得
     const response = await fetch(`/api/v1/public_plans/field_cultivations/${fieldCultivationId}`);
-    if (!response.ok) throw new Error('データの取得に失敗しました');
+    if (!response.ok) throw new Error(getI18nMessage('jsCultivationLoadError', 'Failed to retrieve data'));
     
     const data = await response.json();
     
@@ -93,7 +93,7 @@ async function showDetailPanel(fieldCultivationId, fieldName, cropName) {
     console.error('Error loading detail data:', error);
     panelLoading.innerHTML = `
       <div style="text-align: center; color: #e53e3e;">
-        <p>データの読み込みに失敗しました</p>
+        <p>${getI18nMessage('jsCultivationDataError', 'Failed to load data')}</p>
         <p style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</p>
       </div>
     `;
@@ -191,7 +191,7 @@ function populateStagesTab(data) {
           <div class="stage-stat">
             <span class="stat-label">リスク:</span>
             <span class="stat-value ${stage.risks.length === 0 ? 'stat-success' : 'stat-warning'}">
-              ${stage.risks.length === 0 ? 'なし ✓' : stage.risks.join(', ')}
+              ${stage.risks.length === 0 ? getI18nMessage('jsCultivationNoRisks', 'None ✓') : stage.risks.join(', ')}
             </span>
           </div>
         </div>
@@ -210,14 +210,14 @@ function drawTemperatureChart(weatherData, optimalRange) {
     window.temperatureChartInstance.destroy();
   }
   
-  // data属性から翻訳を取得
+  // i18n翻訳を取得
   const labels_i18n = {
-    tempMax: ctx.dataset.tempMaxLabel || '最高気温',
-    tempMean: ctx.dataset.tempMeanLabel || '平均気温',
-    tempMin: ctx.dataset.tempMinLabel || '最低気温',
-    optimalRange: ctx.dataset.optimalRangeLabel || '最適温度範囲',
-    dateAxis: ctx.dataset.dateLabel || '日付',
-    tempAxis: ctx.dataset.tempAxisLabel || '気温 (℃)'
+    tempMax: getI18nMessage('jsCultivationTempMaxLabel', 'Max Temperature'),
+    tempMean: getI18nMessage('jsCultivationTempMeanLabel', 'Mean Temperature'),
+    tempMin: getI18nMessage('jsCultivationTempMinLabel', 'Min Temperature'),
+    optimalRange: getI18nMessage('jsCultivationOptimalRangeLabel', 'Optimal Temperature Range'),
+    dateAxis: getI18nMessage('jsCultivationDateLabel', 'Date'),
+    tempAxis: getI18nMessage('jsCultivationTempAxisLabel', 'Temperature (℃)')
   };
   
   const dates = weatherData.map(d => d.date);
@@ -315,11 +315,11 @@ function drawGddChart(gddData) {
     window.gddChartInstance.destroy();
   }
   
-  // data属性から翻訳を取得
+  // i18n翻訳を取得
   const labels_i18n = {
-    gddLabel: ctx.dataset.gddLabel || '積算温度',
-    gddAxis: ctx.dataset.gddAxisLabel || '積算温度 (℃日)',
-    dateAxis: ctx.dataset.dateLabel || '日付'
+    gddLabel: getI18nMessage('jsCultivationGddLabel', 'Growing Degree Days'),
+    gddAxis: getI18nMessage('jsCultivationGddAxisLabel', 'GDD (℃·day)'),
+    dateAxis: getI18nMessage('jsCultivationDateLabel', 'Date')
   };
   
   const dates = gddData.map(d => d.date);
@@ -363,7 +363,7 @@ function drawGddChart(gddData) {
               borderWidth: 2,
               borderDash: [5, 5],
               label: {
-                content: `目標: ${targetGdd}℃日`,
+                content: getI18nTemplate('jsCultivationGddTargetLabel', {target: targetGdd}, `Target: ${targetGdd}℃·day`),
                 enabled: true,
                 position: 'end'
               }

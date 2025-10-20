@@ -33,7 +33,7 @@
             checkbox.parentElement.querySelector('.crop-card').style.cursor = 'not-allowed';
           }
         });
-        hint.textContent = `作物は最大${MAX_CROPS}種類まで選択できます`;
+        hint.textContent = getI18nTemplate('jsCropSelectionMaxMessage', {max: MAX_CROPS}, `Maximum ${MAX_CROPS} crop types can be selected`);
         hint.style.display = 'block';
         hint.style.color = '#e53e3e';
       } else {
@@ -62,7 +62,7 @@
         submitBtn.style.cursor = 'not-allowed';
         hint.style.display = 'block';
         hint.style.color = '';
-        hint.textContent = hint.getAttribute('data-original-text') || '作物を選択してください';
+        hint.textContent = hint.getAttribute('data-original-text') || getI18nMessage('jsCropSelectionHint', 'Please select crops');
       }
     }
     

@@ -32,6 +32,11 @@ Rails.application.routes.draw do
       namespace :dev do
         post '/client_logs', to: 'client_logs#create'
       end
+      
+      # UI System Demo
+      namespace :demo do
+        get 'ui_system', to: 'demo#ui_system'
+      end
     end
 
     # Farms and Fields routes (nested)
