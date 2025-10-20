@@ -44,17 +44,30 @@ module Api
           end
           
           # 同じ作物がすでにcultivation_plan_cropsに存在するか確認
+          # agrr_crop_idが存在する場合はそれで一致判定、なければ名前と品種で判定
           plan_crop = @cultivation_plan.cultivation_plan_crops.find do |pc|
-            pc.agrr_crop_id == crop.id || pc.agrr_crop_id == crop.agrr_crop_id || pc.name == crop.name
+            if pc.agrr_crop_id.present? && crop.agrr_crop_id.present?
+              pc.agrr_crop_id == crop.agrr_crop_id
+            elsif pc.agrr_crop_id.present?
+              pc.agrr_crop_id == crop.id
+            else
+              pc.name == crop.name && pc.variety == crop.variety
+            end
           end
           
           # 存在しない場合は新規作成（作物種類の制限をチェック）
           unless plan_crop
-            # 作物種類が9種類に達している場合はエラー
-            if @cultivation_plan.cultivation_plan_crops.count >= 9
+            # 実際に使われている作物種類数をチェック（field_cultivationsに紐づいている作物）
+            used_crop_count = @cultivation_plan.field_cultivations
+              .joins(:cultivation_plan_crop)
+              .select('DISTINCT cultivation_plan_crops.id')
+              .count
+            
+            # 作物種類が5種類に達している場合はエラー
+            if used_crop_count >= 5
               return render json: {
                 success: false,
-                message: '作物は最大9種類までしか追加できません'
+                message: '作物は最大5種類までしか追加できません'
               }, status: :bad_request
             end
             
@@ -75,11 +88,12 @@ module Api
           
           # ⭐ 新規作物追加のmoveを作成（action: 'add'）
           # allocation_idはダミー値（agrr.coreが自動生成して置き換える）
+          # crop_idはcrops.jsonと一致させる必要がある（plan_crop.agrr_crop_id || plan_crop.name）
           moves = [
             {
               allocation_id: "new_#{Time.current.to_i}",  # ダミーID（agrr.coreが置き換える）
               action: 'add',
-              crop_id: crop.agrr_crop_id || crop.id.to_s,
+              crop_id: plan_crop.agrr_crop_id || plan_crop.name,
               to_field_id: field_id_str,
               to_start_date: start_date.to_s,
               to_area: crop.area_per_unit || 1.0,
@@ -206,11 +220,11 @@ module Api
             }, status: :bad_request
           end
           
-          # 圃場数の制限（最大3個まで）
-          if @cultivation_plan.cultivation_plan_fields.count >= 3
+          # 圃場数の制限（最大5個まで）
+          if @cultivation_plan.cultivation_plan_fields.count >= 5
             return render json: {
               success: false,
-              message: '圃場は最大3個までしか追加できません'
+              message: '圃場は最大5個までしか追加できません'
             }, status: :bad_request
           end
           
@@ -922,6 +936,24 @@ module Api
             Rails.logger.info "🗑️ [Save] 既存のfield_cultivations削除開始: #{existing_count}件"
             cultivation_plan.field_cultivations.destroy_all
             Rails.logger.info "✅ [Save] 既存のfield_cultivations削除完了"
+            
+            # AGRR結果に含まれる作物IDを収集
+            used_crop_ids = Set.new
+            result[:field_schedules].each do |field_schedule|
+              field_schedule['allocations']&.each do |allocation|
+                used_crop_ids.add(allocation['crop_id'])
+              end
+            end
+            
+            # 使われていない作物を削除（ゴミデータのクリーンアップ）
+            unused_crops = cultivation_plan.cultivation_plan_crops.reject do |crop|
+              used_crop_ids.include?(crop.agrr_crop_id) || used_crop_ids.include?(crop.name)
+            end
+            
+            if unused_crops.any?
+              Rails.logger.info "🗑️ [Save] 使われていない作物を削除: #{unused_crops.map(&:name).join(', ')}"
+              unused_crops.each(&:destroy)
+            end
             
             # 新しい栽培スケジュールを作成
             result[:field_schedules].each do |field_schedule|
