@@ -30,6 +30,14 @@ ja:
     yes: "はい"
     no: "いいえ"
 
+  # JavaScript用メッセージ
+  js:
+    crop_palette:
+      plan_id_missing: "エラー: 計画IDが取得できません"
+      crop_types_limit: "作物の種類は最大%{max_types}種類までです。\n現在: %{current_types}"
+      crop_add_failed: "作物の追加に失敗しました: %{message}"
+      communication_error: "通信エラーが発生しました。もう一度お試しください。"
+
   # ナビゲーション
   nav:
     home: "ホーム"

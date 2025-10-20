@@ -1,5 +1,10 @@
 ja:
   fields:
+    js:
+      validation:
+        coordinates_must_be_numeric: "緯度と経度は数値で入力してください。"
+        latitude_range: "緯度は-90から90の間で入力してください。"
+        longitude_range: "経度は-180から180の間で入力してください。"
     flash:
       created: "圃場が正常に作成されました。"
       updated: "圃場が正常に更新されました。"
@@ -26,6 +31,24 @@ ja:
     
     new:
       title: "新しい圃場を追加"
+      breadcrumb:
+        farms: "農場一覧"
+        fields: "圃場一覧"
+        current: "新しい圃場"
+      form:
+        name_label: "圃場名"
+        name_placeholder: "例: 北側の田んぼ"
+        name_help: "圃場の名前を入力してください"
+        area_label: "面積（㎡）"
+        area_placeholder: "例: 1000"
+        area_help: "圃場の面積を平方メートルで入力してください"
+        daily_cost_label: "日次固定費用（円）"
+        daily_cost_placeholder: "例: 5000"
+        daily_cost_help: "1日あたりの固定費用（圃場のレンタル料など）を入力してください"
+        submit: "圃場を作成"
+        cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
     
     edit:
       title: "圃場を編集"

@@ -5,6 +5,9 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :farms, dependent: :destroy
   has_many :fields, dependent: :destroy
+  has_many :crops, dependent: :destroy
+  has_many :cultivation_plans, dependent: :destroy
+  has_many :interaction_rules, dependent: :destroy
 
   # Validations
   validates :email, presence: true, 

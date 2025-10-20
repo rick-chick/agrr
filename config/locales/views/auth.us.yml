@@ -9,9 +9,14 @@ us:
       logout_success: "Logged out successfully."
       not_logged_in: "You are not logged in."
       disabled_in_production: "Authentication is disabled in production environment."
+      authentication_failed: "Authentication failed. Please try again."
+      disabled_in_production_json: "Authentication is disabled in production environment."
     
     messages:
       login_required: "Please log in to access this resource."
       login_required_page: "Please log in to access this page."
       admin_required: "Admin access required."
+    
+    api:
+      login_required: "Please log in to access this resource."
 

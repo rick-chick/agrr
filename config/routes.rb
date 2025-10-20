@@ -62,13 +62,16 @@ Rails.application.routes.draw do
     get '/free_plans', to: redirect('/public_plans/new')
     get '/free_plans/*path', to: redirect('/public_plans/new')
     
-    # 将来の実装用: Plans (個人用作付け計画 - 認証必須)
-    # resources :plans, only: [] do
-    #   collection do
-    #     get :new
-    #     post :create
-    #   end
-    # end
+    # Plans (個人用作付け計画 - 認証必須)
+    resources :plans do
+      collection do
+        get :select_crop
+      end
+      member do
+        get :optimizing
+        post :copy
+      end
+    end
 
     # ActionCable for WebSocket
     mount ActionCable.server => '/cable'
@@ -90,6 +93,24 @@ Rails.application.routes.draw do
         
         # Public Plans API（認証不要）
         namespace :public_plans do
+          resources :field_cultivations, only: [:show, :update] do
+            member do
+              get :climate_data
+            end
+          end
+          resources :cultivation_plans, only: [] do
+            member do
+              post :adjust
+              post :add_crop
+              post :add_field
+              delete 'remove_field/:field_id', action: :remove_field, as: :remove_field
+              get :data
+            end
+          end
+        end
+        
+        # Plans API（認証必須）
+        namespace :plans do
           resources :field_cultivations, only: [:show, :update] do
             member do
               get :climate_data

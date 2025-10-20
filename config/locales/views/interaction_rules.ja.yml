@@ -35,6 +35,10 @@ ja:
         description: "最初のルールを追加して始めましょう。"
         button: "ルールを追加"
     
+    new:
+      title: "新しいルール作成"
+      page_title: "新しいルール作成"
+    
     edit:
       title: "ルール編集"
     

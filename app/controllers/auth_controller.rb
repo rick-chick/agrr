@@ -56,7 +56,7 @@ class AuthController < ApplicationController
   end
 
   def failure
-    error_message = params[:message] || 'Authentication failed. Please try again.'
+    error_message = params[:message] || I18n.t('auth.flash.authentication_failed')
     redirect_to auth_login_path, alert: error_message
   end
 
@@ -79,7 +79,7 @@ class AuthController < ApplicationController
   def check_production_environment
     if Rails.env.production?
       if request.format.json?
-        render json: { error: 'Authentication is disabled in production environment.' }, status: :forbidden
+        render json: { error: I18n.t('auth.flash.disabled_in_production_json') }, status: :forbidden
       else
         redirect_to root_path, alert: I18n.t('auth.flash.disabled_in_production')
       end

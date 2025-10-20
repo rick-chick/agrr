@@ -1,0 +1,115 @@
+<% content_for :title, t('plans.new.title') %>
+
+<div class="plans-wrapper">
+  <div class="plans-container">
+    <!-- ヘッダー -->
+    <div class="compact-header-card">
+      <div class="compact-header-title">
+        <span class="title-icon">📅</span>
+        <span class="title-text"><%= t('plans.title') %></span>
+      </div>
+    </div>
+
+    <!-- コンテンツカード -->
+    <div class="content-card">
+      <h2 class="content-card-title"><%= t('plans.new.title') %></h2>
+      <p class="content-card-subtitle"><%= t('plans.new.subtitle') %></p>
+
+      <%= form_with url: select_crop_plans_path, method: :get, local: true do |f| %>
+        <!-- 計画年度選択 -->
+        <div class="plans-form-group">
+          <label class="plans-form-label">
+            <%= t('plans.new.plan_year_label') %>
+          </label>
+          <p class="plans-form-hint">
+            <%= t('plans.new.plan_year_hint', start_year: @current_year - 1, end_year: @current_year + 1) %>
+          </p>
+          <select name="plan_year" required class="plans-form-select">
+            <% @available_years.each do |year| %>
+              <option value="<%= year %>" <%= 'selected' if year == @current_year %>>
+                <%= year %>年度（<%= year - 1 %>年1月〜<%= year + 1 %>年12月）
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- 計画名 -->
+        <div class="plans-form-group">
+          <label class="plans-form-label">
+            <%= t('plans.new.plan_name_label') %>
+          </label>
+          <%= f.text_field :plan_name, 
+              value: @default_plan_name,
+              placeholder: t('plans.new.plan_name_placeholder'),
+              class: "plans-form-input" %>
+        </div>
+
+        <!-- 農場選択 -->
+        <div class="plans-form-group">
+          <label class="plans-form-label">
+            <%= t('plans.new.farm_label') %>
+          </label>
+          <p class="plans-form-hint">
+            <%= t('plans.new.farm_hint') %>
+          </p>
+
+          <% if @farms.empty? %>
+            <!-- 農場がない場合 -->
+            <div class="plans-empty">
+              <div class="plans-empty-icon">🌾</div>
+              <p class="plans-empty-subtitle">
+                <%= t('plans.new.no_farms') %>
+              </p>
+              <p class="plans-form-hint">
+                <%= t('plans.new.no_farms_hint') %>
+              </p>
+              <%= link_to t('plans.new.create_farm_link'), new_farm_path, 
+                  class: "btn-plans-primary" %>
+            </div>
+          <% else %>
+            <!-- 農場カードグリッド -->
+            <div class="radio-card-grid">
+              <% @farms.each do |farm| %>
+                <label class="radio-card-wrapper">
+                  <input type="radio" name="farm_id" value="<%= farm.id %>" required
+                         class="radio-card-input" />
+                  <div class="radio-card">
+                    <h3 class="radio-card-title">
+                      <%= farm.display_name %>
+                    </h3>
+                    <div class="radio-card-details">
+                      <div>
+                        📍 <%= farm.latitude.round(4) %>, <%= farm.longitude.round(4) %>
+                      </div>
+                      <% if farm.fields.any? %>
+                        <div>
+                          🌾 <%= farm.fields.count %>圃場 / 総面積: <%= number_with_delimiter(farm.fields.sum(:area)) %>㎡
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- 送信ボタン -->
+        <% if @farms.any? %>
+          <div style="text-align: center; margin-top: var(--space-8);">
+            <button type="submit" class="btn-plans-primary" style="width: 100%; max-width: 400px;">
+              <%= t('plans.new.next_button') %>
+            </button>
+          </div>
+        <% end %>
+      <% end %>
+
+      <!-- 戻るリンク -->
+      <div style="margin-top: var(--space-6); text-align: center;">
+        <%= link_to plans_path, style: "color: var(--color-primary); text-decoration: none;" do %>
+          ← <%= t('plans.show.back_to_list') %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,10 @@
 in:
   fields:
+    js:
+      validation:
+        coordinates_must_be_numeric: "अक्षांश और देशांतर संख्यात्मक मान होने चाहिए।"
+        latitude_range: "अक्षांश -90 और 90 के बीच होना चाहिए।"
+        longitude_range: "देशांतर -180 और 180 के बीच होना चाहिए।"
     flash:
       created: "खेत क्षेत्र सफलतापूर्वक बनाया गया।"
       updated: "खेत क्षेत्र सफलतापूर्वक अपडेट किया गया।"
@@ -26,6 +31,24 @@ in:
     
     new:
       title: "नया खेत क्षेत्र जोड़ें"
+      breadcrumb:
+        farms: "खेत सूची"
+        fields: "खेत क्षेत्र सूची"
+        current: "नया खेत क्षेत्र"
+      form:
+        name_label: "खेत क्षेत्र नाम"
+        name_placeholder: "उदाहरण: उत्तरी धान खेत"
+        name_help: "अपने खेत क्षेत्र का नाम दर्ज करें"
+        area_label: "क्षेत्रफल (वर्ग मीटर)"
+        area_placeholder: "उदाहरण: 1000"
+        area_help: "अपने खेत क्षेत्र का क्षेत्रफल वर्ग मीटर में दर्ज करें"
+        daily_cost_label: "दैनिक निश्चित लागत (₹)"
+        daily_cost_placeholder: "उदाहरण: 500"
+        daily_cost_help: "प्रति दिन निश्चित लागत दर्ज करें (जैसे खेत किराया शुल्क)"
+        submit: "खेत क्षेत्र बनाएं"
+        cancel: "रद्द करें"
+      errors:
+        title: "%{count} त्रुटियां हुईं:"
     
     edit:
       title: "खेत क्षेत्र संपादित करें"

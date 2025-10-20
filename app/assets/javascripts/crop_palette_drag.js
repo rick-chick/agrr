@@ -1,6 +1,20 @@
 // app/assets/javascripts/crop_palette_drag.js
 // 作物パレットのドラッグ&ドロップ機能
 
+// i18nヘルパー関数
+function getI18nMessage(key, defaultMessage) {
+  const i18nData = document.body.dataset;
+  return i18nData[key] || defaultMessage;
+}
+
+function getI18nTemplate(key, replacements, defaultMessage) {
+  let template = document.body.dataset[key] || defaultMessage;
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    template = template.replace(placeholder, value);
+  }
+  return template;
+}
+
 // 初期化フラグ
 let cropPaletteInitialized = false;
 
@@ -426,7 +440,7 @@ function addCropToSchedule(cropData, dropInfo) {
   
   // ganttStateから計画IDを取得
   if (typeof ganttState === 'undefined' || !ganttState.cultivation_plan_id) {
-    alert('エラー: 計画IDが取得できません');
+    alert(getI18nMessage('cropPalettePlanIdMissing', 'Error: Could not retrieve plan ID'));
     return;
   }
 
@@ -454,7 +468,14 @@ function addCropToSchedule(cropData, dropInfo) {
   
   // 新しい作物種類を追加しようとしていて、すでに上限に達している場合
   if (isNewCropType && existingCropTypes.size >= MAX_CROP_TYPES) {
-    const errorMessage = `作物の種類は最大${MAX_CROP_TYPES}種類までです。\n現在: ${Array.from(existingCropTypes).join('、')}`;
+    const errorMessage = getI18nTemplate(
+      'cropPaletteCropTypesLimit',
+      {
+        '__MAX_TYPES__': MAX_CROP_TYPES.toString(),
+        '__CURRENT_TYPES__': Array.from(existingCropTypes).join('、')
+      },
+      `Maximum ${MAX_CROP_TYPES} crop types allowed.\nCurrent: ${Array.from(existingCropTypes).join(', ')}`
+    );
     console.warn('⚠️ [CROP LIMIT] 作物種類が上限に達しています');
     alert(errorMessage);
     return;
@@ -518,7 +539,10 @@ function addCropToSchedule(cropData, dropInfo) {
       console.log('🔓 [UNLOCK] リクエスト中フラグを解除（エラー）');
       
       // ユーザーフレンドリーなエラーメッセージを表示
-      showErrorMessage(data.message || '作物の追加に失敗しました');
+      const failedMessage = data.message 
+        ? getI18nTemplate('cropPaletteCropAddFailed', {'__MESSAGE__': data.message}, `Failed to add crop: ${data.message}`)
+        : getI18nMessage('cropPaletteCropAddFailed', 'Failed to add crop');
+      showErrorMessage(failedMessage);
     }
   })
   .catch(error => {
@@ -529,7 +553,7 @@ function addCropToSchedule(cropData, dropInfo) {
     isAddingCrop = false;
     console.log('🔓 [UNLOCK] リクエスト中フラグを解除（例外）');
     
-    showErrorMessage('通信エラーが発生しました。もう一度お試しください。');
+    showErrorMessage(getI18nMessage('cropPaletteCommunicationError', 'Communication error occurred. Please try again.'));
   });
 }
 

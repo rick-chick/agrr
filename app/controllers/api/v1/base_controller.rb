@@ -29,7 +29,7 @@ module Api
         # CRUD操作は認証必須
         # current_userがアノニマスユーザーの場合は401を返す
         if current_user.anonymous?
-          render json: { error: 'Please log in to access this resource.' }, status: :unauthorized
+          render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
           return false
         end
         

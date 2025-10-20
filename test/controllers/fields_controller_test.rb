@@ -40,6 +40,84 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='field[daily_fixed_cost]']"
   end
 
+  test "should display new page in Japanese" do
+    get new_farm_field_path(@farm), headers: { 'Accept-Language': 'ja' }
+    assert_response :success
+    assert_select "h1", "テスト農場 - 新しい圃場を追加"
+    assert_select "label", text: "圃場名"
+    assert_select "input[placeholder='例: 北側の田んぼ']"
+    assert_select "label", text: "面積（㎡）"
+    assert_select "label", text: "日次固定費用（円）"
+    assert_select "input[type='submit'][value='圃場を作成']"
+  end
+
+  test "should display new page in English" do
+    get new_farm_field_path(@farm, locale: 'us')
+    assert_response :success
+    assert_select "h1", /Add New Field/
+    assert_select "label", text: "Field Name"
+    assert_select "input[placeholder='e.g., North Rice Field']"
+    assert_select "label", text: "Area (㎡)"
+    assert_select "label", text: "Daily Fixed Cost (¥)"
+    assert_select "input[type='submit'][value='Create Field']"
+  end
+
+  test "should display new page in Hindi" do
+    get new_farm_field_path(@farm, locale: 'in')
+    assert_response :success
+    assert_select "h1", /नया खेत क्षेत्र जोड़ें/
+    assert_select "label", text: "खेत क्षेत्र नाम"
+    assert_select "input[placeholder='उदाहरण: उत्तरी धान खेत']"
+    assert_select "label", text: "क्षेत्रफल (वर्ग मीटर)"
+    assert_select "label", text: "दैनिक निश्चित लागत (₹)"
+    assert_select "input[type='submit'][value='खेत क्षेत्र बनाएं']"
+  end
+
+  test "should include i18n data attributes for JavaScript in Japanese" do
+    get new_farm_field_path(@farm), headers: { 'Accept-Language': 'ja' }
+    assert_response :success
+    assert_select "body[data-fields-validation-coordinates-numeric]"
+    assert_select "body[data-fields-validation-latitude-range]"
+    assert_select "body[data-fields-validation-longitude-range]"
+  end
+
+  test "should include correct Japanese validation messages in data attributes" do
+    get new_farm_field_path(@farm, locale: 'ja')
+    assert_response :success
+    
+    # HTMLをパースしてdata属性の値を確認
+    doc = Nokogiri::HTML(response.body)
+    body = doc.at_css('body')
+    
+    assert_equal "緯度と経度は数値で入力してください。", body['data-fields-validation-coordinates-numeric']
+    assert_equal "緯度は-90から90の間で入力してください。", body['data-fields-validation-latitude-range']
+    assert_equal "経度は-180から180の間で入力してください。", body['data-fields-validation-longitude-range']
+  end
+
+  test "should include correct English validation messages in data attributes" do
+    get new_farm_field_path(@farm, locale: 'us')
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    body = doc.at_css('body')
+    
+    assert_equal "Latitude and longitude must be numeric values.", body['data-fields-validation-coordinates-numeric']
+    assert_equal "Latitude must be between -90 and 90.", body['data-fields-validation-latitude-range']
+    assert_equal "Longitude must be between -180 and 180.", body['data-fields-validation-longitude-range']
+  end
+
+  test "should include correct Hindi validation messages in data attributes" do
+    get new_farm_field_path(@farm, locale: 'in')
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    body = doc.at_css('body')
+    
+    assert_equal "अक्षांश और देशांतर संख्यात्मक मान होने चाहिए।", body['data-fields-validation-coordinates-numeric']
+    assert_equal "अक्षांश -90 और 90 के बीच होना चाहिए।", body['data-fields-validation-latitude-range']
+    assert_equal "देशांतर -180 और 180 के बीच होना चाहिए।", body['data-fields-validation-longitude-range']
+  end
+
   test "should redirect to login when not authenticated for new" do
     delete auth_logout_path
     get new_farm_field_path(@farm)

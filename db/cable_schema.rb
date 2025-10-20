@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_18_130418) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_20_033343) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -110,9 +110,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_130418) do
     t.boolean "is_optimal"
     t.text "optimization_summary"
     t.text "predicted_weather_data"
+    t.string "plan_type", default: "public", null: false
+    t.string "plan_name"
+    t.integer "plan_year"
     t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
+    t.index ["plan_type"], name: "index_cultivation_plans_on_plan_type"
     t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
     t.index ["status"], name: "index_cultivation_plans_on_status"
+    t.index ["user_id", "plan_name", "plan_year"], name: "index_cultivation_plans_on_user_plan_name_year", where: "plan_type = 'private'"
+    t.index ["user_id", "plan_year"], name: "index_cultivation_plans_on_user_id_and_plan_year", where: "plan_type = 'private'"
     t.index ["user_id"], name: "index_cultivation_plans_on_user_id"
   end
 

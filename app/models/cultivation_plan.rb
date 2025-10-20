@@ -14,6 +14,11 @@ class CultivationPlan < ApplicationRecord
   # == Validations =========================================================
   validates :total_area, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending optimizing completed failed] }
+  validates :plan_type, presence: true, inclusion: { in: %w[public private] }
+  validates :user_id, presence: true, if: :plan_type_private?
+  validates :plan_year, presence: true, numericality: { only_integer: true, greater_than: 2020 }, if: :plan_type_private?
+  validates :planning_start_date, presence: true, if: :plan_type_private?
+  validates :planning_end_date, presence: true, if: :plan_type_private?
   
   # == Enums ===============================================================
   enum :status, {
@@ -23,10 +28,19 @@ class CultivationPlan < ApplicationRecord
     failed: 'failed'
   }, default: 'pending', prefix: true
   
+  enum :plan_type, {
+    public: 'public',
+    private: 'private'
+  }, default: 'public', prefix: true
+  
   # == Scopes ==============================================================
   scope :anonymous, -> { where(user_id: nil) }
   scope :by_session, ->(session_id) { where(session_id: session_id) }
   scope :recent, -> { order(created_at: :desc) }
+  scope :by_user, ->(user) { where(user: user) }
+  scope :by_plan_year, ->(year) { where(plan_year: year) }
+  scope :by_plan_name, ->(name) { where(plan_name: name) }
+  scope :for_user_and_year, ->(user, year) { plan_type_private.by_user(user).by_plan_year(year) }
   
   # == Callbacks ===========================================================
   after_update :check_optimization_completion, if: :saved_change_to_status?
@@ -96,6 +110,31 @@ class CultivationPlan < ApplicationRecord
   
   def next_year_cultivations
     field_cultivations.next_year
+  end
+  
+  # 計画の表示名
+  def display_name
+    if plan_type_private?
+      name = plan_name.presence || I18n.t('models.cultivation_plan.default_plan_name')
+      "#{name} (#{plan_year})"
+    else
+      I18n.t('models.cultivation_plan.public_plan_name')
+    end
+  end
+  
+  # 計画年度から計画期間を計算（2年間）
+  def self.calculate_planning_dates(plan_year)
+    {
+      start_date: Date.new(plan_year - 1, 1, 1),
+      end_date: Date.new(plan_year + 1, 12, 31)
+    }
+  end
+  
+  # 計画期間を設定
+  def set_planning_dates_from_year!
+    return unless plan_year.present?
+    dates = self.class.calculate_planning_dates(plan_year)
+    update!(planning_start_date: dates[:start_date], planning_end_date: dates[:end_date])
   end
   
   private

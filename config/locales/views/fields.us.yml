@@ -1,5 +1,10 @@
 us:
   fields:
+    js:
+      validation:
+        coordinates_must_be_numeric: "Latitude and longitude must be numeric values."
+        latitude_range: "Latitude must be between -90 and 90."
+        longitude_range: "Longitude must be between -180 and 180."
     flash:
       created: "Field was successfully created."
       updated: "Field was successfully updated."
@@ -26,6 +31,24 @@ us:
     
     new:
       title: "Add New Field"
+      breadcrumb:
+        farms: "Farms"
+        fields: "Fields"
+        current: "New Field"
+      form:
+        name_label: "Field Name"
+        name_placeholder: "e.g., North Rice Field"
+        name_help: "Enter the name of your field"
+        area_label: "Area (㎡)"
+        area_placeholder: "e.g., 1000"
+        area_help: "Enter the area of your field in square meters"
+        daily_cost_label: "Daily Fixed Cost (¥)"
+        daily_cost_placeholder: "e.g., 5000"
+        daily_cost_help: "Enter the fixed cost per day (e.g., field rental fee)"
+        submit: "Create Field"
+        cancel: "Cancel"
+      errors:
+        title: "%{count} errors occurred:"
     
     edit:
       title: "Edit Field"
