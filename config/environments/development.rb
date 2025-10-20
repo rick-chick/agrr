@@ -59,22 +59,9 @@ Rails.application.configure do
   # Suppress logger output for asset requests.
   config.assets.quiet = true
   
-  # Enable live asset compilation in development
-  config.assets.debug = true
-  config.assets.digest = true
-  config.assets.compile = true
-  
   # Propshaft configuration for development
+  # Propshaft handles assets automatically in development, no compilation needed
   config.assets.prefix = '/assets'
-  config.assets.unknown_asset_fallback = true
-  
-  # Disable browser caching for assets in development
-  config.public_file_server.enabled = true
-  config.public_file_server.headers = {
-    'Cache-Control' => 'no-cache, no-store, must-revalidate',
-    'Pragma' => 'no-cache',
-    'Expires' => '0'
-  }
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

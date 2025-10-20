@@ -7,11 +7,13 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
-  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
-  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
-  
-  <!-- Custom Scripts (propshaft, not bundled) -->
-  <%= javascript_include_tag "progress_bar", "data-turbo-track": "reload", defer: true %>
+  <%# TODO: Fix Propshaft asset loading issue - Propshaftとjavascript_include_tagの互換性問題 %>
+  <%#= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+  <%#= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+  <%#= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
+  <%#= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
+  <%#= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
+  <%#= javascript_include_tag "progress_bar", "data-turbo-track": "reload", defer: true %>
   
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
@@ -39,7 +41,7 @@
     
   </style>
 </head>
-<body>
+<body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
   <%= render "shared/navbar" %>
 
   <%= yield %>
@@ -48,10 +50,10 @@
   
   <%= yield :javascripts %>
   
-  <!-- Development: Client-side logging to server -->
-  <% if Rails.env.development? %>
-    <%= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
-  <% end %>
+  <%# Development: Client-side logging to server %>
+  <%# if Rails.env.development? %>
+    <%#= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
+  <%# end %>
 </body>
 </html>
 
