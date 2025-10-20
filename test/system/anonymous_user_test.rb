@@ -19,13 +19,13 @@ class AnonymousUserTest < ApplicationSystemTestCase
     # デフォルト農場を作成
     User.instance_variable_set(:@anonymous_user, nil)
     anonymous_user = User.anonymous_user
-    Farm.where(is_default: true).destroy_all
+    Farm.where(is_reference: true).destroy_all
     farm = Farm.create!(
       user: anonymous_user,
       name: "東京",
       latitude: 35.6812,
       longitude: 139.7671,
-      is_default: true
+      is_reference: true
     )
     
     # Step 1: トップページにアクセス
