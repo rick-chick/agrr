@@ -41,8 +41,8 @@
       
       <!-- 経過時間 -->
       <div id="elapsedTime" class="optimizing-elapsed"
-           data-template-second="<%= t('plans.optimizing.progress.elapsed_time', time: '') %>"
-           data-template-minute="<%= t('plans.optimizing.progress.elapsed_time_minute') %>">
+           data-template-second="⏳ %{time}秒"
+           data-template-minute="%{minutes}分%{seconds}秒">
         <%= t('plans.optimizing.progress.elapsed_time', time: 0) %>
       </div>
       
