@@ -2,6 +2,8 @@
 (function() {
   console.log('🌾 Crop selection script loading');
   
+  const MAX_CROPS = 5;  // 作物選択の上限
+  
   function initCropSelection() {
     const checkboxes = document.querySelectorAll('.crop-check');
     const counter = document.getElementById('counter');
@@ -22,13 +24,36 @@
       counter.textContent = count;
       console.log('Count:', count);
       
+      // 上限に達したら他のチェックボックスを無効化
+      if (count >= MAX_CROPS) {
+        checkboxes.forEach(checkbox => {
+          if (!checkbox.checked) {
+            checkbox.disabled = true;
+            checkbox.parentElement.querySelector('.crop-card').style.opacity = '0.5';
+            checkbox.parentElement.querySelector('.crop-card').style.cursor = 'not-allowed';
+          }
+        });
+        hint.textContent = `作物は最大${MAX_CROPS}種類まで選択できます`;
+        hint.style.display = 'block';
+        hint.style.color = '#e53e3e';
+      } else {
+        // 上限未満なら全て有効化
+        checkboxes.forEach(checkbox => {
+          checkbox.disabled = false;
+          checkbox.parentElement.querySelector('.crop-card').style.opacity = '1';
+          checkbox.parentElement.querySelector('.crop-card').style.cursor = 'pointer';
+        });
+      }
+      
       if (count > 0) {
         counter.style.background = '#4299e1';
         counter.style.color = 'white';
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
         submitBtn.style.cursor = 'pointer';
-        hint.style.display = 'none';
+        if (count < MAX_CROPS) {
+          hint.style.display = 'none';
+        }
       } else {
         counter.style.background = '#e2e8f0';
         counter.style.color = '#a0aec0';
@@ -36,8 +61,13 @@
         submitBtn.style.opacity = '0.5';
         submitBtn.style.cursor = 'not-allowed';
         hint.style.display = 'block';
+        hint.style.color = '';
+        hint.textContent = hint.getAttribute('data-original-text') || '作物を選択してください';
       }
     }
+    
+    // オリジナルのヒントテキストを保存
+    hint.setAttribute('data-original-text', hint.textContent);
     
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener('change', updateSelection);

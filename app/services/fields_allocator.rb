@@ -3,6 +3,8 @@
 class FieldsAllocator
   attr_reader :total_area, :crops
   
+  MAX_FIELDS = 5  # 圃場数の上限
+  
   def initialize(total_area, crops)
     @total_area = total_area.to_f
     @crops = Array(crops)
@@ -35,7 +37,10 @@ class FieldsAllocator
   private
   
   def calculate_field_count
-    @crops.count.downto(1).find do |count|
+    # 作物数と上限のうち小さい方を最大値とする
+    max_count = [@crops.count, MAX_FIELDS].min
+    
+    max_count.downto(1).find do |count|
       (total_area / count) >= max_area_per_unit
     end || 1
   end

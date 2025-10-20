@@ -46,9 +46,7 @@
 <%# Chart.js は npm で管理され application.js にバンドル済み %>
 
 <% content_for :javascripts do %>
-  <%# 色パレット管理（共通化） - 最初に読み込む %>
-  <%= javascript_include_tag "crop_colors", defer: true, "data-turbo-track": "reload" %>
-  <%# ガントチャート %>
+  <%# ガントチャート（色パレット管理を含む） %>
   <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
   <%# 作物パレットのドラッグ&ドロップ %>
   <%= javascript_include_tag "crop_palette_drag", defer: true, "data-turbo-track": "reload" %>

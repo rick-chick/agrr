@@ -1,9 +1,63 @@
 // app/javascript/custom_gantt_chart.js
 // カスタムSVGガントチャート（圃場ベース）- ドラッグ&ドロップ対応
 
+// 作物の色パレット管理（共通化）
+const colorPalette = [
+  { fill: '#9ae6b4', stroke: '#48bb78' },   // 緑1
+  { fill: '#fbd38d', stroke: '#f6ad55' },   // オレンジ
+  { fill: '#90cdf4', stroke: '#4299e1' },   // 青
+  { fill: '#c6f6d5', stroke: '#2f855a' },   // 緑2
+  { fill: '#feebc8', stroke: '#dd6b20' },   // 淡いオレンジ
+  { fill: '#feb2b2', stroke: '#fc8181' },   // 赤
+  { fill: '#fef3c7', stroke: '#d69e2e' },   // 黄色
+  { fill: '#e9d5ff', stroke: '#a78bfa' },   // 紫
+  { fill: '#bfdbfe', stroke: '#60a5fa' },   // 水色
+  { fill: '#fce7f3', stroke: '#f472b6' }    // ピンク
+];
+
+const cropColorMap = new Map();
+
+function getCropColor(cropName) {
+  const baseCropName = cropName.split('（')[0];
+  
+  if (!cropColorMap.has(baseCropName)) {
+    const colorIndex = cropColorMap.size % colorPalette.length;
+    cropColorMap.set(baseCropName, colorIndex);
+  }
+  
+  const colorIndex = cropColorMap.get(baseCropName);
+  return colorPalette[colorIndex].fill;
+}
+
+function getCropStrokeColor(cropName) {
+  const baseCropName = cropName.split('（')[0];
+  
+  if (!cropColorMap.has(baseCropName)) {
+    const colorIndex = cropColorMap.size % colorPalette.length;
+    cropColorMap.set(baseCropName, colorIndex);
+  }
+  
+  const colorIndex = cropColorMap.get(baseCropName);
+  return colorPalette[colorIndex].stroke;
+}
+
+function getCropColors(cropName) {
+  return {
+    fill: getCropColor(cropName),
+    stroke: getCropStrokeColor(cropName)
+  };
+}
+
+// グローバルに公開
+window.getCropColor = getCropColor;
+window.getCropStrokeColor = getCropStrokeColor;
+window.getCropColors = getCropColors;
+window.cropColorPalette = colorPalette;
+
 // グローバルステート管理
 let ganttState = {
   cultivationData: [],
+  fields: [], // 圃場情報（空の圃場も含む）
   fieldGroups: [],
   planStartDate: null,
   planEndDate: null,
@@ -109,6 +163,9 @@ function initCustomGanttChart() {
   
   console.log('🔧 初期化時の圃場情報（正規化前）:', fieldsDataRaw);
   console.log('🔧 初期化時の圃場情報（正規化後）:', normalizedFields);
+
+  // 圃場情報をganttStateに保存（空の圃場も含む）
+  ganttState.fields = normalizedFields;
 
   // 圃場ごとにグループ化（圃場情報も含める）
   ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
@@ -240,6 +297,9 @@ function fetchAndUpdateChart() {
       }));
       
       console.log('📊 正規化後の圃場情報:', normalizedFields);
+
+      // 圃場情報をganttStateに保存（空の圃場も含む）
+      ganttState.fields = normalizedFields;
 
       // 圃場ごとにグループ化（圃場情報も含める）
       ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
@@ -786,7 +846,8 @@ function removeCultivation(cultivation_id) {
   
   // ローカルで削除を適用
   ganttState.cultivationData = ganttState.cultivationData.filter(c => c.id != cultivation_id);
-  ganttState.fieldGroups = groupByField(ganttState.cultivationData);
+  // 空の圃場も含めて再グループ化
+  ganttState.fieldGroups = groupByField(ganttState.cultivationData, ganttState.fields);
   
   // チャートを再描画
   const ganttContainer = document.getElementById('gantt-chart-container');

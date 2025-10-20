@@ -406,6 +406,9 @@ function calculateDropInfo(svgCoords) {
   };
 }
 
+// 作物種類の上限
+const MAX_CROP_TYPES = 5;
+
 // リクエスト中フラグ（二重送信防止）
 let isAddingCrop = false;
 
@@ -428,6 +431,34 @@ function addCropToSchedule(cropData, dropInfo) {
   }
 
   const cultivation_plan_id = ganttState.cultivation_plan_id;
+  
+  // 作物種類数の制限チェック（同じ作物の複数配置はOK）
+  const existingCropTypes = new Set();
+  if (ganttState.cultivationData && ganttState.cultivationData.length > 0) {
+    ganttState.cultivationData.forEach(cultivation => {
+      // 作物名の基本部分を取得（品種名を除く）
+      const baseCropName = cultivation.crop_name.split('（')[0];
+      existingCropTypes.add(baseCropName);
+    });
+  }
+  
+  // 新しく追加しようとしている作物の基本名
+  const newCropBaseName = cropData.crop_name.split('（')[0];
+  
+  // 新しい作物種類かどうかを判定
+  const isNewCropType = !existingCropTypes.has(newCropBaseName);
+  
+  console.log('🔍 [CROP CHECK] 既存の作物種類数:', existingCropTypes.size);
+  console.log('🔍 [CROP CHECK] 既存の作物種類:', Array.from(existingCropTypes));
+  console.log('🔍 [CROP CHECK] 新規作物:', newCropBaseName, '新しい種類:', isNewCropType);
+  
+  // 新しい作物種類を追加しようとしていて、すでに上限に達している場合
+  if (isNewCropType && existingCropTypes.size >= MAX_CROP_TYPES) {
+    const errorMessage = `作物の種類は最大${MAX_CROP_TYPES}種類までです。\n現在: ${Array.from(existingCropTypes).join('、')}`;
+    console.warn('⚠️ [CROP LIMIT] 作物種類が上限に達しています');
+    alert(errorMessage);
+    return;
+  }
   
   // リクエスト中フラグを設定
   isAddingCrop = true;

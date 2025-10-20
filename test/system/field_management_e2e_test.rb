@@ -95,6 +95,47 @@ class FieldManagementE2eTest < ApplicationSystemTestCase
     assert_includes field_names, '圃場5', "新しい圃場名が見つかりません"
   end
   
+  test "作物のついていない圃場が画面に表示される" do
+    # セットアップで作成された圃場1には作物があり、圃場2と3は空
+    visit_results_page
+    
+    # ページ読み込み完了を待機
+    sleep 2
+    
+    # ガントチャートが読み込まれるまで待機
+    assert_selector "#gantt-chart-container", wait: 15
+    assert_selector "#gantt-chart-container svg", wait: 15
+    
+    # データベース上の圃場数を確認
+    db_field_count = @cultivation_plan.cultivation_plan_fields.count
+    puts "📊 DB上の圃場数: #{db_field_count}"
+    
+    # 画面上の圃場数を確認
+    ui_field_count = page.evaluate_script('return ganttState.fieldGroups.length;')
+    puts "📊 UI上の圃場数: #{ui_field_count}"
+    
+    # DB上の圃場数とUI上の圃場数が一致することを確認
+    assert_equal db_field_count, ui_field_count, 
+      "DB上の圃場数(#{db_field_count})とUI上の圃場数(#{ui_field_count})が一致しません。空の圃場が表示されていない可能性があります。"
+    
+    # 各圃場の作物数を確認
+    field_groups = page.evaluate_script('return ganttState.fieldGroups;')
+    puts "📊 圃場グループ詳細:"
+    field_groups.each do |group|
+      cultivations_count = group['cultivations'].length
+      puts "  - #{group['fieldName']}: 作物数=#{cultivations_count}"
+    end
+    
+    # 作物がない圃場（圃場2と圃場3）が含まれていることを確認
+    field_names = field_groups.map { |g| g['fieldName'] }
+    assert_includes field_names, '圃場2', "空の圃場（圃場2）が表示されていません"
+    assert_includes field_names, '圃場3', "空の圃場（圃場3）が表示されていません"
+    
+    # 作物がない圃場の削除ボタンが表示されていることを確認
+    delete_btn_count = page.all('.delete-field-btn', wait: 2).count
+    assert_operator delete_btn_count, :>=, 2, "空の圃場の削除ボタンが表示されていません（期待: 2個以上、実際: #{delete_btn_count}個）"
+  end
+  
   test "空の圃場を削除できる" do
     # 圃場4を追加（空の圃場）
     @cultivation_plan.cultivation_plan_fields.create!(
