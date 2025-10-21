@@ -7,8 +7,10 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
-  <%# TODO: Fix Propshaft asset loading issue - Propshaftとjavascript_include_tagの互換性問題 %>
-  <%#= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+  <!-- i18n Helper (共通i18nユーティリティ) -->
+  <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+  
+  <%# TODO: Fix Propshaft asset loading issue for other utilities %>
   <%#= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
   <%#= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
   <%#= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>

@@ -4,6 +4,26 @@
   
   const MAX_CROPS = 5;  // 作物選択の上限
   
+  // i18n helper functions (inline copy for independence)
+  function getI18nMessage(key, defaultMessage) {
+    if (typeof document === 'undefined' || !document.body) {
+      return defaultMessage;
+    }
+    const i18nData = document.body.dataset;
+    return i18nData[key] || defaultMessage;
+  }
+  
+  function getI18nTemplate(key, replacements, defaultMessage) {
+    if (typeof document === 'undefined' || !document.body) {
+      return defaultMessage;
+    }
+    let template = document.body.dataset[key] || defaultMessage;
+    for (const [placeholder, value] of Object.entries(replacements)) {
+      template = template.replace(new RegExp(`%\\{${placeholder}\\}`, 'g'), value);
+    }
+    return template;
+  }
+  
   function initCropSelection() {
     const checkboxes = document.querySelectorAll('.crop-check');
     const counter = document.getElementById('counter');
@@ -11,26 +31,27 @@
     const hint = document.getElementById('hint');
     
     // 必要な要素が存在しない場合は静かに終了（他のページでは実行しない）
-    if (!checkboxes.length || !counter || !submitBtn) {
+    if (!checkboxes.length || !counter || !submitBtn || !hint) {
       return;
     }
     
-    console.log('Found:', checkboxes.length, 'checkboxes');
-    console.log('Counter:', counter);
-    console.log('Button:', submitBtn);
+    console.log('✅ Crop selection initializing:', checkboxes.length, 'checkboxes found');
     
     function updateSelection() {
       const count = document.querySelectorAll('.crop-check:checked').length;
       counter.textContent = count;
-      console.log('Count:', count);
+      console.log('📊 Selected count:', count);
       
       // 上限に達したら他のチェックボックスを無効化
       if (count >= MAX_CROPS) {
         checkboxes.forEach(checkbox => {
           if (!checkbox.checked) {
             checkbox.disabled = true;
-            checkbox.parentElement.querySelector('.crop-card').style.opacity = '0.5';
-            checkbox.parentElement.querySelector('.crop-card').style.cursor = 'not-allowed';
+            const card = checkbox.parentElement.querySelector('.crop-card');
+            if (card) {
+              card.style.opacity = '0.5';
+              card.style.cursor = 'not-allowed';
+            }
           }
         });
         hint.textContent = getI18nTemplate('jsCropSelectionMaxMessage', {max: MAX_CROPS}, `Maximum ${MAX_CROPS} crop types can be selected`);
@@ -40,8 +61,11 @@
         // 上限未満なら全て有効化
         checkboxes.forEach(checkbox => {
           checkbox.disabled = false;
-          checkbox.parentElement.querySelector('.crop-card').style.opacity = '1';
-          checkbox.parentElement.querySelector('.crop-card').style.cursor = 'pointer';
+          const card = checkbox.parentElement.querySelector('.crop-card');
+          if (card) {
+            card.style.opacity = '1';
+            card.style.cursor = 'pointer';
+          }
         });
       }
       
@@ -62,19 +86,25 @@
         submitBtn.style.cursor = 'not-allowed';
         hint.style.display = 'block';
         hint.style.color = '';
-        hint.textContent = hint.getAttribute('data-original-text') || getI18nMessage('jsCropSelectionHint', 'Please select crops');
+        // Restore original hint text
+        const originalText = hint.getAttribute('data-original-text');
+        if (originalText) {
+          hint.textContent = originalText;
+        }
       }
     }
     
     // オリジナルのヒントテキストを保存
-    hint.setAttribute('data-original-text', hint.textContent);
+    if (hint.textContent) {
+      hint.setAttribute('data-original-text', hint.textContent);
+    }
     
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener('change', updateSelection);
     });
     
     updateSelection();
-    console.log('Crop selection initialized');
+    console.log('✅ Crop selection initialized');
   }
   
   // DOMが既にロードされている場合は即座に実行、そうでなければイベントを待つ
