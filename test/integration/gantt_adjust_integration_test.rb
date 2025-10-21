@@ -5,7 +5,7 @@ require 'test_helper'
 class GanttAdjustIntegrationTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
-    sign_in @user
+    sign_in_as(@user)
     
     # 農場を作成
     @farm = Farm.create!(
