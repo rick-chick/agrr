@@ -49,13 +49,16 @@ echo "All databases migrated successfully"
 # Step 3: Start agrr daemon if enabled
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then
     echo "Step 3: Starting agrr daemon..."
-    # agrr daemonを起動（バックグラウンド）
-    if [ -x "/usr/local/bin/agrr" ]; then
+    # agrr daemonを起動（環境変数またはデフォルトパスを使用）
+    AGRR_BIN="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
+    
+    if [ -x "$AGRR_BIN" ]; then
+        echo "Using agrr binary: $AGRR_BIN"
         # daemon startは即座に戻るため、明示的にバックグラウンド化は不要
-        /usr/local/bin/agrr daemon start
+        $AGRR_BIN daemon start
         if [ $? -eq 0 ]; then
             # PIDを取得（agrr daemon statusから抽出）
-            AGRR_DAEMON_PID=$(/usr/local/bin/agrr daemon status 2>/dev/null | grep -oP 'PID: \K[0-9]+' || echo "")
+            AGRR_DAEMON_PID=$($AGRR_BIN daemon status 2>/dev/null | grep -oP 'PID: \K[0-9]+' || echo "")
             if [ -n "$AGRR_DAEMON_PID" ]; then
                 echo "✓ agrr daemon started (PID: $AGRR_DAEMON_PID)"
             else
@@ -65,7 +68,7 @@ if [ "${USE_AGRR_DAEMON}" = "true" ]; then
             echo "⚠ agrr daemon start failed, continuing without daemon"
         fi
     else
-        echo "⚠ agrr binary not found at /usr/local/bin/agrr, skipping daemon"
+        echo "⚠ agrr binary not found at $AGRR_BIN, skipping daemon"
         echo "   Hint: Build agrr binary or set USE_AGRR_DAEMON=false"
     fi
 else
@@ -98,9 +101,12 @@ cleanup() {
     kill -TERM $LITESTREAM_PID 2>/dev/null || true
     
     # Stop agrr daemon if it was started
-    if [ "${USE_AGRR_DAEMON}" = "true" ] && [ -x "/usr/local/bin/agrr" ]; then
-        echo "Stopping agrr daemon..."
-        /usr/local/bin/agrr daemon stop 2>/dev/null || true
+    if [ "${USE_AGRR_DAEMON}" = "true" ]; then
+        AGRR_BIN="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
+        if [ -x "$AGRR_BIN" ]; then
+            echo "Stopping agrr daemon (using: $AGRR_BIN)..."
+            $AGRR_BIN daemon stop 2>/dev/null || true
+        fi
     fi
     
     exit 0

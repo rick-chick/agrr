@@ -97,7 +97,12 @@ module Agrr
     end
     
     def agrr_path
-      @agrr_path ||= Rails.root.join('lib/core/agrr').to_s
+      @agrr_path ||= begin
+        # 環境変数で指定されたパスを優先
+        # Docker環境では /app/lib/core/agrr (volumeマウント経由のローカルバイナリ)
+        # 本番環境では環境変数で明示的に指定
+        ENV['AGRR_BIN_PATH'] || Rails.root.join('lib/core/agrr').to_s
+      end
     end
     
     def write_temp_file(data, prefix: 'agrr_data')

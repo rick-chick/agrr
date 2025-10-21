@@ -46,26 +46,58 @@ fi
 
 # Start agrr daemon if enabled
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-    echo "Starting agrr daemon..."
-    # agrr daemonを起動（ホスト側のパスを使用、volumeマウント対応）
+    echo "========================================="
+    echo "Configuring agrr daemon..."
+    echo "========================================="
+    # agrr daemonを起動（volumeマウント優先: /app/lib/core/agrr）
     AGRR_BIN=""
     if [ -x "/app/lib/core/agrr" ]; then
         AGRR_BIN="/app/lib/core/agrr"
+        echo "✓ Found volume-mounted agrr: $AGRR_BIN"
+        
+        # バイナリ情報を表示
+        AGRR_SIZE=$(du -h "$AGRR_BIN" | cut -f1)
+        AGRR_DATE=$(stat -c %y "$AGRR_BIN" | cut -d. -f1)
+        echo "  Size: $AGRR_SIZE, Modified: $AGRR_DATE"
+        
+        # MD5チェックサムを計算して表示（同期確認用）
+        AGRR_MD5=$(md5sum "$AGRR_BIN" | cut -d' ' -f1)
+        echo "  MD5: $AGRR_MD5"
+        echo "  → This binary is synced from your local lib/core/agrr"
+        
+        # /usr/local/bin/agrrが存在する場合は警告
+        if [ -x "/usr/local/bin/agrr" ]; then
+            echo "  ⚠ WARNING: /usr/local/bin/agrr also exists but will NOT be used"
+            echo "  ⚠ Volume-mounted binary has priority"
+        fi
     elif [ -x "/usr/local/bin/agrr" ]; then
         AGRR_BIN="/usr/local/bin/agrr"
+        echo "⚠ Using built-in agrr (volume-mounted binary not found): $AGRR_BIN"
+        echo "  This may be an old version baked into the Docker image"
+        AGRR_SIZE=$(du -h "$AGRR_BIN" | cut -f1)
+        AGRR_DATE=$(stat -c %y "$AGRR_BIN" | cut -d. -f1)
+        echo "  Size: $AGRR_SIZE, Modified: $AGRR_DATE"
     fi
     
     if [ -n "$AGRR_BIN" ]; then
-        $AGRR_BIN daemon start
-        if [ $? -eq 0 ]; then
+        echo ""
+        echo "Starting daemon with: $AGRR_BIN"
+        DAEMON_OUTPUT=$($AGRR_BIN daemon start 2>&1)
+        DAEMON_EXIT_CODE=$?
+        
+        if [ $DAEMON_EXIT_CODE -eq 0 ]; then
+            sleep 1
             AGRR_DAEMON_PID=$($AGRR_BIN daemon status 2>/dev/null | grep -oP 'PID: \K[0-9]+' || echo "")
             if [ -n "$AGRR_DAEMON_PID" ]; then
-                echo "✓ agrr daemon started (PID: $AGRR_DAEMON_PID)"
+                echo "✓ agrr daemon started successfully (PID: $AGRR_DAEMON_PID)"
+                echo "  Your local agrr binary is now running as a daemon"
             else
                 echo "✓ agrr daemon started (PID unknown)"
             fi
         else
-            echo "⚠ agrr daemon start failed, continuing without daemon"
+            echo "✗ agrr daemon start failed (exit code: $DAEMON_EXIT_CODE)"
+            echo "  Error: $DAEMON_OUTPUT"
+            echo "  Continuing without daemon mode..."
         fi
     else
         echo "⚠ agrr binary not found, skipping daemon"
@@ -110,7 +142,7 @@ cleanup() {
         fi
         
         if [ -n "$AGRR_BIN" ]; then
-            echo "Stopping agrr daemon..."
+            echo "Stopping agrr daemon (using: $AGRR_BIN)..."
             $AGRR_BIN daemon stop 2>/dev/null || true
         fi
     fi

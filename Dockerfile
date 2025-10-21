@@ -47,22 +47,10 @@ RUN mkdir -p /usr/local/bundle/cache && chown -R appuser:appuser /usr/local/bund
 # Fix tmp directory permissions
 RUN chown -R appuser:appuser /app/tmp
 
-# Copy agrr binary and dependencies if they exist (for daemon mode)
-# Must be after appuser creation
-COPY lib/core/ /tmp/agrr_temp/
-RUN if [ -f /tmp/agrr_temp/agrr ]; then \
-        mv /tmp/agrr_temp/agrr /usr/local/bin/agrr && \
-        chmod +x /usr/local/bin/agrr && \
-        if [ -d /tmp/agrr_temp/_internal ]; then \
-            mv /tmp/agrr_temp/_internal /usr/local/bin/_internal && \
-            echo "✓ agrr binary and dependencies included (daemon mode available)"; \
-        else \
-            echo "✓ agrr binary included (daemon mode available)"; \
-        fi; \
-    else \
-        echo "⚠ agrr binary not found (daemon mode will be disabled)"; \
-    fi && \
-    rm -rf /tmp/agrr_temp
+# Note: agrr binary is mounted via volume in docker-compose.yml
+# Development: Uses /app/lib/core/agrr (volume mount from host)
+# Production: agrr binary should be built and placed in lib/core/ before docker build
+# No need to copy to /usr/local/bin/ - we use explicit paths in entrypoint scripts
 
 # Ensure /tmp is writable for daemon socket
 RUN chmod 1777 /tmp
