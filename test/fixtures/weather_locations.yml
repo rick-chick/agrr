@@ -1,15 +1,1 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-# Weather Locations - 気象データの地点情報
-
-tokyo_location:
-  latitude: 35.6812
-  longitude: 139.7671
-  timezone: "Asia/Tokyo"
-  elevation: 40.0
-
-osaka_location:
-  latitude: 34.6937
-  longitude: 135.5023
-  timezone: "Asia/Tokyo"
-  elevation: 10.0
-
+# Empty - tests should create data as needed

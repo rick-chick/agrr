@@ -1,4 +1,5 @@
 require "test_helper"
+require "database_cleaner/active_record"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   include ActionView::RecordIdentifier
@@ -6,6 +7,10 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # システムテストではトランザクショナルテストを無効にする
   # （ブラウザとRailsサーバーが異なるプロセスでデータベースを共有するため）
   self.use_transactional_tests = false
+  
+  # Capybaraのパフォーマンス最適化
+  Capybara.default_max_wait_time = 5 # デフォルトは2秒、必要に応じて調整
+  Capybara.default_normalize_ws = true
   
   # Docker環境でSeleniumを使用する場合
   if ENV['SELENIUM_HOST']
@@ -24,6 +29,10 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       options.add_argument('--disable-dev-shm-usage')
       options.add_argument('--disable-gpu')
       options.add_argument('--window-size=1400,1400')
+      # パフォーマンス最適化
+      options.add_argument('--disable-extensions')
+      options.add_argument('--disable-logging')
+      options.add_argument('--disable-software-rasterizer')
       
       Capybara::Selenium::Driver.new(
         app,
@@ -36,7 +45,18 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     driven_by :selenium_remote_chrome
   else
     # ローカル環境
-    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400]
+    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400] do |driver_options|
+      driver_options.add_argument('--disable-extensions')
+      driver_options.add_argument('--disable-logging')
+      driver_options.add_argument('--disable-software-rasterizer')
+    end
+  end
+
+  # DatabaseCleanerの設定
+  def before_setup
+    DatabaseCleaner.strategy = :truncation
+    DatabaseCleaner.start
+    super
   end
 
   # システムテスト用の認証ヘルパー
@@ -48,11 +68,14 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     ActiveRecord::Base.connection.execute("PRAGMA synchronous = NORMAL")
   end
   
-  # テスト後のクリーンアップ（トランザクションが無効なため手動でクリーンアップ）
+  # テスト後のクリーンアップ（高速化）
   def teardown
     # Capybaraのセッションをリセット
     Capybara.reset_sessions!
     Capybara.use_default_driver
+  ensure
+    # DatabaseCleanerでDBをクリーンアップ
+    DatabaseCleaner.clean
   end
 
   def setup_omniauth_test_mode

@@ -73,9 +73,10 @@
       </h2>
       
       <!-- ガントチャートコンテナ -->
-      <div id="gantt-chart" 
+      <div id="gantt-chart-container" 
            style="width: 100%; overflow-x: auto;"
            data-plan-id="<%= @cultivation_plan.id %>"
+           data-cultivation-plan-id="<%= @cultivation_plan.id %>"
            data-data-url="<%= data_api_v1_plans_cultivation_plan_path(@cultivation_plan) %>"></div>
       
       <!-- 詳細パネル -->

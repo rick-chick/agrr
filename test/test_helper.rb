@@ -37,10 +37,15 @@ module ActiveSupport
     include AgrrMockHelper
     
     # Run tests in parallel with specified workers
-    # parallelize(workers: :number_of_processors) # Disabled for SimpleCov
+    # 並列テストはPARALLEL_TESTS環境変数で制御
+    # デフォルトでは無効（SimpleCovのため）
+    # 有効化: PARALLEL_TESTS=1 rails test
+    # parallelize(workers: :number_of_processors) # parallel_test_config.rbで管理
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-    fixtures :all
+    # フィクスチャの外部キー制約違反を避けるため、コメントアウト
+    # 必要に応じて各テストで個別にロード
+    # fixtures :all
 
     # テスト開始前にアノニマスユーザーを作成
     setup do
