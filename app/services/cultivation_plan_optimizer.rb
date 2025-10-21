@@ -177,6 +177,8 @@ class CultivationPlanOptimizer
     
     Rails.logger.info "🔮 [AGRR] Predicting weather until #{target_end_date} (#{prediction_days} days)"
     
+    # LightGBMモデルを使用（長期予測に適している）
+    # 注意: 処理に時間がかかる可能性があるが、予測日数や精度を勝手に変更してはならない
     future = @prediction_gateway.predict(
       historical_data: training_formatted,
       days: prediction_days,

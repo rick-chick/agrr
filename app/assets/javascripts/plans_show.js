@@ -1,7 +1,7 @@
 // app/assets/javascripts/plans_show.js
 // 計画詳細画面のガントチャート表示
 
-document.addEventListener('turbo:load', function() {
+function initializePlansShow() {
   // ガントチャートコンテナがあるときのみ実行
   const chartContainer = document.getElementById('gantt-chart');
   if (!chartContainer) {
@@ -63,5 +63,11 @@ document.addEventListener('turbo:load', function() {
       </div>
     `;
   }
-});
+}
+
+// 通常のページロード（初回アクセス時）
+document.addEventListener('DOMContentLoaded', initializePlansShow);
+
+// Turboによるページ遷移
+document.addEventListener('turbo:load', initializePlansShow);
 

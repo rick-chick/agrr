@@ -1,7 +1,7 @@
 // app/assets/javascripts/plans_optimizing.js
 // 最適化進捗画面のWebSocket接続と進捗表示
 
-document.addEventListener('turbo:load', function() {
+function initializePlansOptimizing() {
   // 最適化画面でのみ実行
   const container = document.querySelector('.optimizing-card');
   if (!container) {
@@ -105,5 +105,11 @@ document.addEventListener('turbo:load', function() {
     if (timerInterval) clearInterval(timerInterval);
     if (subscription) subscription.unsubscribe();
   });
-});
+}
+
+// 通常のページロード（初回アクセス時）
+document.addEventListener('DOMContentLoaded', initializePlansOptimizing);
+
+// Turboによるページ遷移
+document.addEventListener('turbo:load', initializePlansOptimizing);
 

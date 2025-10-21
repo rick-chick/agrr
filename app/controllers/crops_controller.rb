@@ -43,7 +43,7 @@ class CropsController < ApplicationController
     end
 
     if @crop.save
-      redirect_to @crop, notice: I18n.t('crops.flash.created')
+      redirect_to crop_path(@crop), notice: I18n.t('crops.flash.created')
     else
       render :new, status: :unprocessable_entity
     end
@@ -52,7 +52,7 @@ class CropsController < ApplicationController
   # PATCH/PUT /crops/:id
   def update
     if crop_params.key?(:is_reference) && !admin_user?
-      return redirect_to @crop, alert: I18n.t('crops.flash.reference_flag_admin_only')
+      return redirect_to crop_path(@crop), alert: I18n.t('crops.flash.reference_flag_admin_only')
     end
 
     # groupsをカンマ区切りテキストから配列に変換
@@ -61,7 +61,7 @@ class CropsController < ApplicationController
     end
 
     if @crop.update(crop_params)
-      redirect_to @crop, notice: I18n.t('crops.flash.updated')
+      redirect_to crop_path(@crop), notice: I18n.t('crops.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
