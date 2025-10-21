@@ -5,7 +5,7 @@ require "test_helper"
 class PlansControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:developer)
-    log_in_as(@user)
+    sign_in_as(@user)
     
     @farm = farms(:farm_tokyo)
     @crop = crops(:tomato_user)
@@ -71,8 +71,8 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
   end
   
   test "should not access other user's plan" do
-    other_user = users(:other_user)
-    log_in_as(other_user)
+    other_user = users(:two)
+    sign_in_as(other_user)
     
     assert_raises(ActiveRecord::RecordNotFound) do
       get plan_url(@plan)
