@@ -99,7 +99,7 @@ ja:
       period_90: "過去90日"
       period_180: "過去180日"
       period_365: "過去1年"
-      period_next_365: "翌1年（予測）"
+      period_next_365: "来年末まで（予測）"
       processing_complete: "データ処理完了間近です..."
       fetching_progress: "天気データを取得中です... (%{progress}%)"
       fetch_failed: "天気データの取得に失敗しました。"

@@ -85,6 +85,19 @@ us:
     
     plans:
       load_error: "Failed to load data"
+    
+    temperature_chart:
+      no_data: "No data available for the selected period."
+      load_failed: "Failed to load data."
+      no_prediction_data: "No prediction data available."
+      prediction_load_failed: "Failed to load prediction data."
+      predicted_value: "(Predicted)"
+    
+    climate_chart:
+      fetch_failed: "Failed to fetch data"
+      load_failed: "Failed to load data"
+      chart_create_failed: "Failed to create chart"
+      gdd_chart_create_failed: "Failed to create GDD chart"
 
   # Navigation
   nav:
