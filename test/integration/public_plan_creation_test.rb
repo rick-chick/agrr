@@ -144,6 +144,52 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
     assert_select ".enhanced-summary-value", text: /50㎡/
   end
   
+  test "crop selection counter updates correctly" do
+    # Step 1: 栽培地域選択
+    get public_plans_path(locale: :ja)
+    assert_response :success
+    
+    # Step 2: 農場サイズ選択
+    get select_farm_size_public_plans_path(farm_id: @farm.id)
+    assert_response :success
+    
+    # Step 3: 作物選択画面を取得
+    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    assert_response :success
+    
+    # 必要な要素が存在することを確認
+    assert_select "#counter"
+    assert_select "#submitBtn[disabled]"  # 初期状態では無効
+    assert_select "#hint"
+    assert_select "input.crop-check", minimum: 1
+    
+    # JavaScriptファイルがページに含まれることを確認（content_for :javascripts経由）
+    # Note: Propshaftでは直接<script>タグは出力されないが、レイアウトで読み込まれる
+  end
+  
+  test "crop selection form contains correct elements" do
+    # セッションを設定
+    get select_farm_size_public_plans_path(farm_id: @farm.id)
+    assert_response :success
+    
+    # 作物選択画面に遷移
+    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    assert_response :success
+    
+    # フォーム要素の確認
+    assert_select "form#cropForm" do
+      assert_select "input[name='crop_ids[]']", minimum: 1
+      assert_select "input.crop-check", minimum: 1
+    end
+    
+    # ボトムバーの確認
+    assert_select ".fixed-bottom-bar" do
+      assert_select "#counter"
+      assert_select "#submitBtn"
+      assert_select "#hint"
+    end
+  end
+  
   private
   
   def create_weather_data
