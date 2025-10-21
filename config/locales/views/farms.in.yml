@@ -111,4 +111,11 @@ in:
       chart_temp_min: "न्यूनतम तापमान (°C)"
       chart_date_label: "तिथि"
       chart_temp_axis: "तापमान (°C)"
+      prediction_job_started: "मौसम पूर्वानुमान पृष्ठभूमि में चल रहा है। कृपया पूर्णता तक प्रतीक्षा करें।"
+    
+    weather_data:
+      no_weather_data: "इस खेत के लिए मौसम डेटा अभी तक प्राप्त नहीं किया गया है।"
+      insufficient_historical_data: "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।"
+      job_queue_failed: "पूर्वानुमान जॉब कतारबद्ध करने में विफल: %{error}"
+      farm_not_found: "खेत नहीं मिला।"
 
