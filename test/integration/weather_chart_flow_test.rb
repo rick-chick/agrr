@@ -31,17 +31,24 @@ class WeatherChartFlowTest < ActionDispatch::IntegrationTest
     @farm.save!(validate: false)
     @farm.update_columns(weather_data_status: 'completed')
     
-    # 天気データを作成
+    # 天気データを作成（バルクインサートで高速化）
+    weather_data_records = []
+    now = Time.current
+    
     30.times do |i|
-      WeatherDatum.create!(
-        weather_location: @weather_location,
+      weather_data_records << {
+        weather_location_id: @weather_location.id,
         date: Date.today - i.days,
         temperature_max: 25.0,
         temperature_min: 15.0,
         temperature_mean: 20.0,
-        precipitation: 0.0
-      )
+        precipitation: 0.0,
+        created_at: now,
+        updated_at: now
+      }
     end
+    
+    WeatherDatum.insert_all(weather_data_records) if weather_data_records.any?
   end
 
   test "complete weather chart workflow" do
