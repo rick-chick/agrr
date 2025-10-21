@@ -1,5 +1,9 @@
 in:
   jobs:
+    fetch_weather_data:
+      retry_limit_exceeded: "पुनः प्रयास सीमा पार हो गई: %{error}"
+      validation_error: "डेटा सत्यापन त्रुटि: %{error}"
+    
     optimize_cultivation_plan:
       completed: "अनुकूलन पूरा हुआ"
       failed: "अनुकूलन विफल रहा"

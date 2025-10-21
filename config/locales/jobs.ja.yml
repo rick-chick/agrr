@@ -1,5 +1,9 @@
 ja:
   jobs:
+    fetch_weather_data:
+      retry_limit_exceeded: "リトライ上限に達しました: %{error}"
+      validation_error: "データ検証エラー: %{error}"
+    
     optimize_cultivation_plan:
       completed: "最適化が完了しました"
       failed: "最適化に失敗しました"
