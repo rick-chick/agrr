@@ -1,7 +1,10 @@
-# Public plan
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Minimal fixtures for basic tests
+
+# Public plan (no user, has session)
 public_plan_1:
   farm: farm_tokyo
-  user: 
+  user_id: null
   session_id: "test_session_123"
   total_area: 100.0
   status: completed
@@ -9,7 +12,7 @@ public_plan_1:
   planning_start_date: <%= Date.current.beginning_of_year %>
   planning_end_date: <%= Date.current.end_of_year %>
 
-# Private plan
+# Private plan (has user, no session)
 plan_2025:
   farm: farm_tokyo
   user: developer
@@ -20,15 +23,4 @@ plan_2025:
   plan_name: "メイン計画"
   planning_start_date: 2024-01-01
   planning_end_date: 2026-12-31
-
-plan_2026:
-  farm: farm_tokyo
-  user: developer
-  total_area: 300.0
-  status: pending
-  plan_type: private
-  plan_year: 2026
-  plan_name: "メイン計画"
-  planning_start_date: 2025-01-01
-  planning_end_date: 2027-12-31
 

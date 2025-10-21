@@ -1,5 +1,7 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Minimal fixtures for basic tests
 
+# Reference crops (system-wide, no user)
 tomato:
   name: トマト
   variety: 桃太郎
@@ -11,23 +13,13 @@ tomato:
 
 cucumber:
   name: キュウリ
-  variety: null
   is_reference: true
   user_id: null
   area_per_unit: 0.8
   revenue_per_area: 800.0
   agrr_crop_id: cucumber
 
-lettuce:
-  name: レタス
-  variety: null
-  is_reference: true
-  user_id: null
-  area_per_unit: 0.5
-  revenue_per_area: 600.0
-  agrr_crop_id: lettuce
-
-# User-owned crops (for testing private plans)
+# User-owned crop (for testing private plans)
 tomato_user:
   name: マイトマト
   variety: 自家製
@@ -36,12 +28,3 @@ tomato_user:
   area_per_unit: 1.0
   revenue_per_area: 1200.0
   agrr_crop_id: tomato_user
-
-cucumber_user:
-  name: マイキュウリ
-  variety: null
-  is_reference: false
-  user: developer
-  area_per_unit: 0.8
-  revenue_per_area: 900.0
-  agrr_crop_id: cucumber_user

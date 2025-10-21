@@ -152,7 +152,8 @@ class CropsIntegrationTest < ActionDispatch::IntegrationTest
     }
     
     assert_response :unprocessable_entity
-    assert_match "Name can&#39;t be blank", @response.body
+    # Check for Japanese validation message (日本語のバリデーションメッセージを確認)
+    assert_match(/名前.*入力してください/, @response.body)
     
     # Try to create reference crop as non-admin
     post crops_path, params: {
@@ -178,7 +179,7 @@ class CropsIntegrationTest < ActionDispatch::IntegrationTest
     
     # Check navigation links in header
     get crops_path
-    assert_match "ホーム", @response.body
+    assert_match "AGRR", @response.body  # Brand name instead of "ホーム"
     assert_match "農場", @response.body
     assert_match "作物", @response.body
     

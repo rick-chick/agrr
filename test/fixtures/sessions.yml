@@ -1,18 +1,15 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Minimal fixtures for basic tests
 
 one:
   session_id: "session_123456789"
   user: one
   data: ""
   expires_at: <%= 1.week.from_now %>
-  created_at: <%= 1.day.ago %>
-  updated_at: <%= 1.day.ago %>
 
 two:
   session_id: "session_987654321"
   user: two
   data: ""
   expires_at: <%= 1.week.from_now %>
-  created_at: <%= 2.days.ago %>
-  updated_at: <%= 2.days.ago %>
 
