@@ -101,6 +101,6 @@
 </div>
 
 <% content_for :javascripts do %>
-  <%= javascript_include_tag "crop_selection", defer: true %>
+  <%= javascript_include_tag "crop_selection", "data-turbo-track": "reload" %>
 <% end %>
 

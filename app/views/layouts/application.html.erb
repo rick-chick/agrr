@@ -40,9 +40,6 @@
   <%= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
   <%= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
   
-  <!-- Page-specific JavaScripts -->
-  <%= yield :javascripts %>
-  
   <!-- Development: Client-side logging to server -->
   <% if Rails.env.development? %>
     <%= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
@@ -65,5 +62,8 @@
   </div>
   
   <%= render "shared/footer" %>
+  
+  <!-- Page-specific JavaScripts (loaded at end of body for Turbo compatibility) -->
+  <%= yield :javascripts %>
 </body>
 </html>
