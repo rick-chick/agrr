@@ -69,7 +69,7 @@ module Farms
       # データ取得時にselectを適用
       weather_data = weather_data_relation.select(:date, :temperature_max, :temperature_min, :temperature_mean, :precipitation)
 
-      # JSON形式で返す
+      # JSON形式で返す（null値を持つレコードはフィルタリング）
       render json: {
         success: true,
         farm: {
@@ -82,13 +82,20 @@ module Farms
           start_date: start_date,
           end_date: end_date
         },
-        data: weather_data.map do |datum|
+        data: weather_data.filter_map do |datum|
+          # 温度データが欠損している場合はスキップ
+          next if datum.temperature_max.nil? || datum.temperature_min.nil?
+          
+          # temperature_meanがnilの場合は計算
+          temp_mean = datum.temperature_mean
+          temp_mean = (datum.temperature_max + datum.temperature_min) / 2.0 if temp_mean.nil?
+          
           {
             date: datum.date,
-            temperature_max: datum.temperature_max,
-            temperature_min: datum.temperature_min,
-            temperature_mean: datum.temperature_mean,
-            precipitation: datum.precipitation
+            temperature_max: datum.temperature_max.to_f,
+            temperature_min: datum.temperature_min.to_f,
+            temperature_mean: temp_mean.to_f,
+            precipitation: (datum.precipitation || 0.0).to_f
           }
         end
       }
@@ -99,6 +106,51 @@ module Farms
     def predict_weather_data
       Rails.logger.info "🔮 Weather prediction request for Farm##{@farm.id}"
       
+      # 既に予測データが保存されているかチェック
+      if @farm.predicted_weather_data.present? && @farm.predicted_weather_data['data'].present?
+        prediction_data = @farm.predicted_weather_data
+        
+        Rails.logger.info "✅ [Farm##{@farm.id}] Returning cached prediction data (#{prediction_data['data'].count} days)"
+        
+        # 予測データからnull値を除外
+        filtered_data = prediction_data['data'].filter_map do |datum|
+          # 温度データが欠損している場合はスキップ
+          next if datum['temperature_max'].nil? || datum['temperature_min'].nil?
+          
+          # temperature_meanがnilの場合は計算
+          temp_mean = datum['temperature_mean']
+          temp_mean = (datum['temperature_max'] + datum['temperature_min']) / 2.0 if temp_mean.nil?
+          
+          {
+            date: datum['date'],
+            temperature_max: datum['temperature_max'].to_f,
+            temperature_min: datum['temperature_min'].to_f,
+            temperature_mean: temp_mean.to_f,
+            precipitation: (datum['precipitation'] || 0.0).to_f
+          }
+        end
+        
+        render json: {
+          success: true,
+          farm: {
+            id: @farm.id,
+            name: @farm.display_name,
+            latitude: @farm.latitude,
+            longitude: @farm.longitude
+          },
+          period: {
+            start_date: prediction_data['prediction_start_date'],
+            end_date: prediction_data['prediction_end_date']
+          },
+          is_prediction: true,
+          predicted_at: prediction_data['predicted_at'],
+          model: prediction_data['model'],
+          data: filtered_data
+        }
+        return
+      end
+      
+      # 予測データがない場合は、バックグラウンドジョブを開始
       # Farmに関連付けられたWeatherLocationを使用
       weather_location = @farm.weather_location
       
@@ -115,16 +167,16 @@ module Farms
         return
       end
       
-      # 過去1年分のデータを取得（予測のための履歴データ）
+      # 過去2年分のデータがあるか確認
       end_date = Date.today
-      start_date = end_date - 1.year
+      start_date = end_date - 2.years
       
-      historical_data = weather_location.weather_data
+      historical_data_count = weather_location.weather_data
         .where(date: start_date..end_date)
-        .order(:date)
-        .select(:date, :temperature_max, :temperature_min, :temperature_mean, :precipitation)
+        .where.not(temperature_max: nil, temperature_min: nil)
+        .count
       
-      if historical_data.empty?
+      if historical_data_count < 365
         render json: {
           success: false,
           message: '予測に必要な履歴データが不足しています。'
@@ -132,67 +184,33 @@ module Farms
         return
       end
       
-      # 履歴データをPredictionGateway用のフォーマットに変換
-      formatted_data = {
-        'data' => historical_data.map do |datum|
-          {
-            'time' => datum.date.to_s,
-            'temperature_2m_max' => datum.temperature_max,
-            'temperature_2m_min' => datum.temperature_min,
-            'temperature_2m_mean' => datum.temperature_mean,
-            'precipitation_sum' => datum.precipitation || 0.0
-          }
-        end
-      }
-      
-      # 翌1年（365日）を予測
-      days_to_predict = 365
-      prediction_gateway = Agrr::PredictionGateway.new
-      
+      # バックグラウンドジョブとしてキューに入れる（daemon経由で高速実行）
+      # 来年の12/31までの日数を自動計算（nilを渡すとジョブ側で計算）
       begin
-        prediction_result = prediction_gateway.predict(
-          historical_data: formatted_data,
-          days: days_to_predict,
+        PredictWeatherDataJob.perform_later(
+          farm_id: @farm.id,
+          days: nil,  # 来年の12/31まで（ジョブ側で自動計算）
           model: 'lightgbm'
         )
         
-        # 予測データを整形
-        prediction_data = prediction_result['data'].map do |datum|
-          {
-            date: datum['time'],
-            temperature_max: datum['temperature_2m_max'],
-            temperature_min: datum['temperature_2m_min'],
-            temperature_mean: datum['temperature_2m_mean'],
-            precipitation: datum['precipitation_sum'],
-            is_prediction: true
-          }
-        end
-        
-        # 予測の終了日を計算
-        prediction_end_date = Date.today + days_to_predict.days
+        Rails.logger.info "✅ [Farm##{@farm.id}] Weather prediction job queued"
         
         render json: {
           success: true,
+          message: '天気予測をバックグラウンドで実行中です。完了までしばらくお待ちください。',
           farm: {
             id: @farm.id,
-            name: @farm.display_name,
-            latitude: @farm.latitude,
-            longitude: @farm.longitude
+            name: @farm.display_name
           },
-          period: {
-            start_date: Date.today + 1.day,
-            end_date: prediction_end_date
-          },
-          is_prediction: true,
-          data: prediction_data
+          status: 'processing'
         }
       rescue => e
-        Rails.logger.error "❌ Prediction failed: #{e.message}"
+        Rails.logger.error "❌ Failed to queue prediction job for Farm##{@farm.id}: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
         
         render json: {
           success: false,
-          message: "予測の実行に失敗しました: #{e.message}"
+          message: "予測ジョブのキューイングに失敗しました: #{e.message}"
         }, status: :internal_server_error
       end
     end

@@ -63,6 +63,45 @@ class CableSubscriptionManager {
     return subscription;
   }
 
+  // 予測チャンネルに接続
+  subscribeToPrediction(farmId, callbacks) {
+    const subscriptionKey = `prediction_${farmId}`;
+    
+    // 既に購読している場合は何もしない
+    if (this.subscriptions.has(subscriptionKey)) {
+      console.log(`📡 Already subscribed to prediction channel: farm_id=${farmId}`);
+      return this.subscriptions.get(subscriptionKey);
+    }
+
+    console.log(`📡 Subscribing to prediction channel: farm_id=${farmId}`);
+
+    const subscription = this.getConsumer().subscriptions.create(
+      {
+        channel: "PredictionChannel",
+        farm_id: farmId
+      },
+      {
+        connected() {
+          console.log(`✅ Connected to prediction channel: farm_id=${farmId}`);
+          if (callbacks.onConnected) callbacks.onConnected();
+        },
+
+        disconnected() {
+          console.log(`🔌 Disconnected from prediction channel: farm_id=${farmId}`);
+          if (callbacks.onDisconnected) callbacks.onDisconnected();
+        },
+
+        received(data) {
+          console.log(`📬 Received data from prediction channel:`, data);
+          if (callbacks.onReceived) callbacks.onReceived(data);
+        }
+      }
+    );
+
+    this.subscriptions.set(subscriptionKey, subscription);
+    return subscription;
+  }
+
   // 購読を解除
   unsubscribe(cultivationPlanId) {
     const subscriptionKey = `optimization_${cultivationPlanId}`;
