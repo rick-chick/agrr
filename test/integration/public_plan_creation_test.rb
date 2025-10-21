@@ -143,19 +143,27 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
   end
   
   def create_weather_data
+    # バルクインサートで高速化（730回のINSERT → 1回のINSERT）
+    weather_data_records = []
+    now = Time.current
+    
     [2024, 2025].each do |year|
       (Date.new(year, 1, 1)..Date.new(year, 12, 31)).each do |date|
-        WeatherDatum.create!(
-          weather_location: @weather_location,
+        weather_data_records << {
+          weather_location_id: @weather_location.id,
           date: date,
           temperature_max: 20.0 + rand(-5.0..10.0),
           temperature_min: 10.0 + rand(-5.0..5.0),
           temperature_mean: 15.0 + rand(-5.0..7.0),
           precipitation: rand(0.0..10.0),
-          sunshine_hours: rand(0.0..12.0)
-        )
+          sunshine_hours: rand(0.0..12.0),
+          created_at: now,
+          updated_at: now
+        }
       end
     end
+    
+    WeatherDatum.insert_all(weather_data_records) if weather_data_records.any?
   end
 end
 
