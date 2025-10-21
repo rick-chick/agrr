@@ -111,4 +111,11 @@ us:
       chart_temp_min: "Min Temperature (°C)"
       chart_date_label: "Date"
       chart_temp_axis: "Temperature (°C)"
+      prediction_job_started: "Weather prediction is running in the background. Please wait for completion."
+    
+    weather_data:
+      no_weather_data: "Weather data for this farm has not been retrieved yet."
+      insufficient_historical_data: "Insufficient historical data for prediction."
+      job_queue_failed: "Failed to queue prediction job: %{error}"
+      farm_not_found: "Farm not found."
 

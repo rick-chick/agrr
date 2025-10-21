@@ -111,4 +111,11 @@ ja:
       chart_temp_min: "最低気温 (°C)"
       chart_date_label: "日付"
       chart_temp_axis: "温度 (°C)"
+      prediction_job_started: "天気予測をバックグラウンドで実行中です。完了までしばらくお待ちください。"
+    
+    weather_data:
+      no_weather_data: "この農場の天気データがまだ取得されていません。"
+      insufficient_historical_data: "予測に必要な履歴データが不足しています。"
+      job_queue_failed: "予測ジョブのキューイングに失敗しました: %{error}"
+      farm_not_found: "指定された農場が見つかりません。"
 

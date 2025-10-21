@@ -35,7 +35,7 @@ module Farms
         
         render json: { 
           success: false, 
-          message: 'この農場の天気データがまだ取得されていません。',
+          message: t('farms.weather_data.no_weather_data'),
           debug: {
             farm_id: @farm.id,
             farm_coordinates: { latitude: @farm.latitude, longitude: @farm.longitude },
@@ -162,7 +162,7 @@ module Farms
       if weather_location.nil?
         render json: {
           success: false,
-          message: 'この農場の天気データがまだ取得されていません。'
+          message: t('farms.weather_data.no_weather_data')
         }
         return
       end
@@ -179,7 +179,7 @@ module Farms
       if historical_data_count < 365
         render json: {
           success: false,
-          message: '予測に必要な履歴データが不足しています。'
+          message: t('farms.weather_data.insufficient_historical_data')
         }
         return
       end
@@ -197,7 +197,7 @@ module Farms
         
         render json: {
           success: true,
-          message: '天気予測をバックグラウンドで実行中です。完了までしばらくお待ちください。',
+          message: t('farms.weather_section.prediction_job_started'),
           farm: {
             id: @farm.id,
             name: @farm.display_name
@@ -210,7 +210,7 @@ module Farms
         
         render json: {
           success: false,
-          message: "予測ジョブのキューイングに失敗しました: #{e.message}"
+          message: t('farms.weather_data.job_queue_failed', error: e.message)
         }, status: :internal_server_error
       end
     end
@@ -224,7 +224,7 @@ module Farms
     rescue ActiveRecord::RecordNotFound
       render json: { 
         success: false, 
-        message: '指定された農場が見つかりません。' 
+        message: t('farms.weather_data.farm_not_found')
       }, status: :not_found
     end
 
