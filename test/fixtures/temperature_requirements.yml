@@ -1,0 +1,6 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Temperature Requirements - 温度要件（作物ステージごと）
+
+# Empty fixture file to satisfy foreign key constraints
+# データが必要な場合は個別のテストで作成
+

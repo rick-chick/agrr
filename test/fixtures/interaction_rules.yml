@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Interaction Rules - 作物相互作用ルール（連作・輪作効果など）
+
+# Reference rule (system-wide, no user)
+continuous_cultivation_solanaceae:
+  rule_type: continuous_cultivation
+  source_group: Solanaceae
+  target_group: Solanaceae
+  impact_ratio: 0.7
+  is_directional: true
+  is_reference: true
+  user_id: null
+  description: "ナス科の連作障害"
+  region: null
+
+# User-owned rule
+user_rule_one:
+  rule_type: continuous_cultivation
+  source_group: Brassicaceae
+  target_group: Brassicaceae
+  impact_ratio: 0.8
+  is_directional: true
+  is_reference: false
+  user: developer
+  description: "アブラナ科の連作"
+  region: null
+
