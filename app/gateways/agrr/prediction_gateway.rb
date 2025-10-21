@@ -15,6 +15,8 @@ module Agrr
       
       input_file = write_temp_file(historical_data, prefix: 'weather_input')
       output_file = Tempfile.new(['weather_output', '.json'])
+      output_file.close # AGRRコマンドが書き込めるようにファイルを閉じる
+      output_path = output_file.path
       
       # デバッグ用にファイルを保存（本番環境以外のみ）
       unless Rails.env.production?
@@ -27,21 +29,34 @@ module Agrr
       
       begin
         Rails.logger.info "📁 [AGRR] Input file: #{input_file.path} (#{File.size(input_file.path)} bytes)"
-        Rails.logger.info "📁 [AGRR] Output file: #{output_file.path}"
+        Rails.logger.info "📁 [AGRR] Output file: #{output_path}"
         
-        execute_command(
-          agrr_path,
-          'predict',
-          '--input', input_file.path,
-          '--output', output_file.path,
-          '--days', days.to_s,
-          '--model', model,
-          parse_json: false
-        )
+        # LightGBMの場合は、明示的に全ての気温メトリックを指定
+        if model == 'lightgbm'
+          execute_command(
+            agrr_path,
+            'predict',
+            '--input', input_file.path,
+            '--output', output_path,
+            '--days', days.to_s,
+            '--model', model,
+            '--metrics', 'temperature,temperature_max,temperature_min',
+            parse_json: false
+          )
+        else
+          execute_command(
+            agrr_path,
+            'predict',
+            '--input', input_file.path,
+            '--output', output_path,
+            '--days', days.to_s,
+            '--model', model,
+            parse_json: false
+          )
+        end
         
         # 出力ファイルからJSONを読み込む
-        output_file.rewind
-        output_content = output_file.read
+        output_content = File.read(output_path)
         
         # デバッグ用に出力ファイルも保存（本番環境以外のみ）
         unless Rails.env.production?
@@ -95,12 +110,24 @@ module Agrr
       
       # 予測データを完全な天気データ形式に変換
       weather_data = prediction_result['predictions'].map do |prediction|
-        predicted_temp_mean = prediction['predicted_value']
-        
-        # 平均気温から最高気温・最低気温を推定
-        # 履歴データの平均的な日較差を使用
-        temp_max = predicted_temp_mean + stats[:temp_range_half]
-        temp_min = predicted_temp_mean - stats[:temp_range_half]
+        # 新フォーマット対応：temperature_max/temperature_min が含まれているか確認
+        if prediction['temperature_max'] && prediction['temperature_min']
+          # ✅ LightGBMマルチメトリック予測（新フォーマット）
+          # モデルが予測した値をそのまま使用（飽和問題を解決）
+          predicted_temp_mean = prediction['temperature'] || prediction['predicted_value']
+          temp_max = prediction['temperature_max']
+          temp_min = prediction['temperature_min']
+          
+          Rails.logger.debug "🆕 [AGRR] Using multi-metric predictions (temp_max: #{temp_max}, temp_min: #{temp_min})"
+        else
+          # ❌ 従来フォーマット（predicted_valueのみ）
+          # 平均気温から最高気温・最低気温を推定（飽和する）
+          predicted_temp_mean = prediction['predicted_value']
+          temp_max = predicted_temp_mean + stats[:temp_range_half]
+          temp_min = predicted_temp_mean - stats[:temp_range_half]
+          
+          Rails.logger.debug "📊 [AGRR] Using legacy format (estimated temp_max/min)"
+        end
         
         {
           'time' => prediction['date'].split('T').first,

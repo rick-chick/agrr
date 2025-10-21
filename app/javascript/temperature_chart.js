@@ -1,7 +1,15 @@
 import { Chart, registerables } from 'chart.js';
+import CableSubscriptionManager from './cable_subscription';
 
 // Chart.jsのコンポーネントを登録
 Chart.register(...registerables);
+
+// i18nヘルパー関数
+function getI18nMessage(key, defaultMessage) {
+  const canvas = document.getElementById('temperatureChart');
+  if (!canvas || !canvas.dataset) return defaultMessage;
+  return canvas.dataset[key] || defaultMessage;
+}
 
 // 温度チャートの初期化と管理
 class TemperatureChart {
@@ -23,6 +31,11 @@ class TemperatureChart {
 
     // data属性から農場IDを取得（より確実）
     this.farmId = canvas.dataset.farmId;
+    
+    // ActionCableの購読を設定
+    if (this.farmId) {
+      this.subscribeToPredictionChannel();
+    }
     
     if (!this.farmId) {
       // フォールバック: URLから取得
@@ -104,7 +117,7 @@ class TemperatureChart {
 
       if (!result.data || result.data.length === 0) {
         console.warn('No weather data available for the selected period');
-        this.showError('選択した期間のデータがありません。');
+        this.showError(getI18nMessage('noData', 'No data available for the selected period.'));
         return;
       }
 
@@ -112,8 +125,29 @@ class TemperatureChart {
       this.renderChart(result.data, false);
     } catch (error) {
       console.error('Error loading chart data:', error);
-      this.showError('データの読み込みに失敗しました。');
+      this.showError(getI18nMessage('loadFailed', 'Failed to load data.'));
     }
+  }
+
+  subscribeToPredictionChannel() {
+    CableSubscriptionManager.subscribeToPrediction(this.farmId, {
+      onConnected: () => {
+        console.log('🔌 Prediction channel connected');
+      },
+      
+      onReceived: (data) => {
+        console.log('📬 Prediction channel received:', data);
+        if (data.type === 'prediction_completed' || data.type === 'prediction_ready') {
+          console.log('✅ Prediction completed, reloading data...');
+          // 予測が完了したので、データを再読み込み
+          this.loadPredictionData();
+        }
+      },
+      
+      onDisconnected: () => {
+        console.log('❌ Prediction channel disconnected');
+      }
+    });
   }
 
   async loadPredictionData() {
@@ -128,15 +162,44 @@ class TemperatureChart {
       const response = await fetch(url);
       const result = await response.json();
 
+      // バックグラウンド処理中の場合
+      if (result.status === 'processing') {
+        console.log('Prediction is being processed in background...');
+        
+        // 既存のチャートを破棄
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+        
+        this.showError(result.message || getI18nMessage('predictionProcessing', 'Prediction is being processed. Please wait...'));
+        // ActionCableで完了通知を待つ（ポーリング不要）
+        return;
+      }
+
       if (!result.success) {
         console.error('Failed to load prediction data:', result.message);
+        
+        // 既存のチャートを破棄
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+        
         this.showError(result.message);
         return;
       }
 
       if (!result.data || result.data.length === 0) {
         console.warn('No prediction data available');
-        this.showError('予測データがありません。');
+        
+        // 既存のチャートを破棄
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+        
+        this.showError(getI18nMessage('noPredictionData', 'No prediction data available.'));
         return;
       }
 
@@ -144,7 +207,14 @@ class TemperatureChart {
       this.renderChart(result.data, true);
     } catch (error) {
       console.error('Error loading prediction data:', error);
-      this.showError('予測データの読み込みに失敗しました。');
+      
+      // 既存のチャートを破棄
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
+      }
+      
+      this.showError(getI18nMessage('predictionLoadFailed', 'Failed to load prediction data.'));
     }
   }
 
@@ -159,11 +229,24 @@ class TemperatureChart {
       this.chart.destroy();
     }
 
-    // データの準備
-    const labels = data.map(d => d.date);
-    const tempMax = data.map(d => d.temperature_max);
-    const tempMin = data.map(d => d.temperature_min);
-    const tempMean = data.map(d => d.temperature_mean);
+    // データの準備（null値を除外）
+    const validData = data.filter(d => 
+      d.date && 
+      d.temperature_max !== null && d.temperature_max !== undefined &&
+      d.temperature_min !== null && d.temperature_min !== undefined
+    );
+    
+    // 有効なデータがない場合はエラーメッセージを表示
+    if (validData.length === 0) {
+      console.warn('No valid temperature data to display');
+      this.showError(getI18nMessage('noValidData', 'No valid data available for chart display.'));
+      return;
+    }
+    
+    const labels = validData.map(d => d.date);
+    const tempMax = validData.map(d => d.temperature_max);
+    const tempMin = validData.map(d => d.temperature_min);
+    const tempMean = validData.map(d => d.temperature_mean !== null && d.temperature_mean !== undefined ? d.temperature_mean : (d.temperature_max + d.temperature_min) / 2);
 
     // 予測データの場合はスタイルを変更
     const borderDash = isPrediction ? [5, 5] : [];
@@ -198,7 +281,8 @@ class TemperatureChart {
             borderDash: borderDash,
             pointStyle: pointStyle,
             pointRadius: pointRadius,
-            pointBackgroundColor: 'rgb(255, 99, 132)'
+            pointBackgroundColor: 'rgb(255, 99, 132)',
+            spanGaps: true  // null値をスキップ
           },
           {
             label: labels_i18n.tempMean,
@@ -210,7 +294,8 @@ class TemperatureChart {
             borderDash: borderDash,
             pointStyle: pointStyle,
             pointRadius: pointRadius,
-            pointBackgroundColor: 'rgb(75, 192, 192)'
+            pointBackgroundColor: 'rgb(75, 192, 192)',
+            spanGaps: true  // null値をスキップ
           },
           {
             label: labels_i18n.tempMin,
@@ -222,7 +307,8 @@ class TemperatureChart {
             borderDash: borderDash,
             pointStyle: pointStyle,
             pointRadius: pointRadius,
-            pointBackgroundColor: 'rgb(54, 162, 235)'
+            pointBackgroundColor: 'rgb(54, 162, 235)',
+            spanGaps: true  // null値をスキップ
           }
         ]
       },
@@ -241,9 +327,21 @@ class TemperatureChart {
           tooltip: {
             mode: 'index',
             intersect: false,
+            filter: function(tooltipItem) {
+              // tooltipItem、element、parsedの存在チェック
+              if (!tooltipItem) return false;
+              if (!tooltipItem.element) return false;
+              if (!tooltipItem.parsed) return false;
+              
+              // null値を持つデータポイントをtooltipから除外
+              const y = tooltipItem.parsed.y;
+              return y !== null && 
+                     y !== undefined &&
+                     !isNaN(y);
+            },
             callbacks: {
               afterLabel: function(context) {
-                return isPrediction ? '（予測値）' : '';
+                return isPrediction ? getI18nMessage('predictedValue', '(Predicted)') : '';
               }
             }
           }
@@ -273,6 +371,18 @@ class TemperatureChart {
           mode: 'nearest',
           axis: 'x',
           intersect: false
+        },
+        elements: {
+          point: {
+            // ホバー時のポイントのヒットボックスを制御
+            hitRadius: 10,
+            hoverRadius: 5
+          }
+        },
+        // nullやundefinedの値を持つデータポイントをスキップ
+        parsing: {
+          xAxisKey: 'date',
+          yAxisKey: 'value'
         }
       }
     });
@@ -282,7 +392,20 @@ class TemperatureChart {
     const canvas = document.getElementById('temperatureChart');
     if (canvas) {
       const container = canvas.parentElement;
+      // キャンバスを削除してエラーメッセージのみ表示
       container.innerHTML = `<p class="error-message">${message}</p>`;
+      
+      // 新しいキャンバスを作成（次回の描画用）
+      const newCanvas = document.createElement('canvas');
+      newCanvas.id = 'temperatureChart';
+      newCanvas.dataset.farmId = this.farmId;
+      // data属性をコピー
+      if (canvas.dataset) {
+        Object.keys(canvas.dataset).forEach(key => {
+          newCanvas.dataset[key] = canvas.dataset[key];
+        });
+      }
+      container.appendChild(newCanvas);
     }
   }
 }

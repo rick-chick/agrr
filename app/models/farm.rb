@@ -11,6 +11,9 @@
 #     - 作成したユーザーのみが管理可能
 #
 class Farm < ApplicationRecord
+  # Serialization
+  serialize :predicted_weather_data, coder: JSON
+  
   # Associations
   belongs_to :user
   belongs_to :weather_location, optional: true

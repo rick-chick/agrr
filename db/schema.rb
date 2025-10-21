@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_20_033343) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_051123) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -148,6 +148,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_033343) do
     t.integer "weather_location_id"
     t.boolean "is_reference", default: false, null: false
     t.string "region"
+    t.text "predicted_weather_data"
     t.index ["is_reference"], name: "index_farms_on_is_reference", where: "is_reference = true"
     t.index ["region"], name: "index_farms_on_region"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
