@@ -116,5 +116,5 @@
 
 <!-- JavaScript is loaded from app/assets/javascripts/plans_select_crop.js -->
 <% content_for :javascripts do %>
-  <%= javascript_include_tag "plans_select_crop", defer: true %>
+  <%= javascript_include_tag "plans_select_crop", "data-turbo-track": "reload" %>
 <% end %>

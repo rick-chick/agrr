@@ -24,7 +24,18 @@
     return template;
   }
   
+  // 重複実行を防ぐフラグ
+  let initialized = false;
+  
   function initCropSelection() {
+    console.log('🔍 initCropSelection called, readyState:', document.readyState);
+    
+    // 既に初期化済みならスキップ
+    if (initialized) {
+      console.log('⚠️  Already initialized, skipping');
+      return;
+    }
+    
     const checkboxes = document.querySelectorAll('.crop-check');
     const counter = document.getElementById('counter');
     const submitBtn = document.getElementById('submitBtn');
@@ -32,6 +43,7 @@
     
     // 必要な要素が存在しない場合は静かに終了（他のページでは実行しない）
     if (!checkboxes.length || !counter || !submitBtn || !hint) {
+      console.log('⚠️  Required elements not found');
       return;
     }
     
@@ -104,17 +116,33 @@
     });
     
     updateSelection();
+    
+    // 初期化完了フラグを立てる
+    initialized = true;
     console.log('✅ Crop selection initialized');
   }
   
-  // DOMが既にロードされている場合は即座に実行、そうでなければイベントを待つ
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCropSelection);
-  } else {
-    initCropSelection();
-  }
+  // <body>の最後に配置されるため、DOMは既に読み込まれている
+  // ただし、Turboページ遷移のためにturbo:loadも監視
   
-  document.addEventListener('turbo:load', initCropSelection);
-  window.addEventListener('load', initCropSelection);
+  // 初回実行（スクリプトロード時、DOMは既に準備完了）
+  console.log('📄 Script loaded, readyState:', document.readyState);
+  initCropSelection();
+  
+  // Turboによるページ遷移時
+  if (typeof Turbo !== 'undefined') {
+    console.log('⚡ Turbo detected, registering turbo:load handler');
+    document.addEventListener('turbo:load', function() {
+      console.log('⚡ turbo:load event fired');
+      initialized = false;
+      initCropSelection();
+    });
+    
+    // turbo:before-cache で初期化をクリーンアップ
+    document.addEventListener('turbo:before-cache', function() {
+      console.log('🧹 turbo:before-cache - cleaning up');
+      initialized = false;
+    });
+  }
 })();
 
