@@ -99,7 +99,7 @@ us:
       period_90: "Past 90 Days"
       period_180: "Past 180 Days"
       period_365: "Past 1 Year"
-      period_next_365: "Next 1 Year (Forecast)"
+      period_next_365: "Until End of Next Year (Forecast)"
       processing_complete: "Data processing almost complete..."
       fetching_progress: "Fetching weather data... (%{progress}%)"
       fetch_failed: "Failed to fetch weather data."

@@ -54,6 +54,19 @@ en:
     
     plans:
       load_error: "Failed to load data"
+    
+    temperature_chart:
+      no_data: "No data available for the selected period."
+      load_failed: "Failed to load data."
+      no_prediction_data: "No prediction data available."
+      prediction_load_failed: "Failed to load prediction data."
+      predicted_value: "(Predicted)"
+    
+    climate_chart:
+      fetch_failed: "Failed to fetch data"
+      load_failed: "Failed to load data"
+      chart_create_failed: "Failed to create chart"
+      gdd_chart_create_failed: "Failed to create GDD chart"
 
   # Common
   common:
@@ -129,10 +142,67 @@ en:
 
   # ActiveRecord
   activerecord:
+    models:
+      farm: "Farm"
+      field: "Field"
+      crop: "Crop"
+      cultivation_plan: "Cultivation Plan"
+      field_cultivation: "Field Cultivation"
+      interaction_rule: "Interaction Rule"
+      crop_stage: "Crop Stage"
+      user: "User"
+      session: "Session"
+      weather_datum: "Weather Data"
+      weather_location: "Weather Location"
+      thermal_requirement: "Thermal Requirement"
+      temperature_requirement: "Temperature Requirement"
+      sunshine_requirement: "Sunshine Requirement"
+    
+    attributes:
+      crop:
+        name: "Name"
+        scientific_name: "Scientific Name"
+        variety: "Variety"
+        family: "Family"
+        is_reference: "Reference Crop"
+        planting_season: "Planting Season"
+        harvest_season: "Harvest Season"
+        growth_days: "Growth Days"
+    
     errors:
       messages:
         record_invalid: "Validation failed: %{errors}"
         restrict_dependent_destroy:
           has_one: "Cannot delete record because a dependent %{record} exists"
           has_many: "Cannot delete record because dependent %{record} exist"
+  
+  # Error messages (common for ActiveRecord and other validations)
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      required: "can't be blank"
+      blank: "can't be blank"
+      empty: "can't be empty"
+      invalid: "is invalid"
+      confirmation: "doesn't match %{attribute}"
+      accepted: "must be accepted"
+      too_long: "is too long (maximum is %{count} characters)"
+      too_short: "is too short (minimum is %{count} characters)"
+      wrong_length: "is the wrong length (should be %{count} characters)"
+      not_a_number: "is not a number"
+      not_an_integer: "must be an integer"
+      greater_than: "must be greater than %{count}"
+      greater_than_or_equal_to: "must be greater than or equal to %{count}"
+      equal_to: "must be equal to %{count}"
+      less_than: "must be less than %{count}"
+      less_than_or_equal_to: "must be less than or equal to %{count}"
+      other_than: "must be other than %{count}"
+      odd: "must be odd"
+      even: "must be even"
+      taken: "has already been taken"
+      inclusion: "is not included in the list"
+      exclusion: "is reserved"
+      present: "must be blank"
+      model_invalid: "Validation failed: %{errors}"
+      required_dependency: "required %{dependency} is not set"
 

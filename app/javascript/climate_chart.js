@@ -61,7 +61,8 @@ class ClimateChart {
       console.log('📊 API data received:', data);
 
       if (!data.success) {
-        throw new Error(data.message || 'データの取得に失敗しました');
+        const errorMsg = container.dataset.fetchError || 'Failed to fetch data';
+        throw new Error(data.message || errorMsg);
       }
 
       console.log('✅ API data validation passed, rendering charts...');
@@ -69,9 +70,10 @@ class ClimateChart {
       this.renderCharts(data, container);
     } catch (error) {
       console.error('Error loading climate data:', error);
+      const loadErrorMsg = container.dataset.loadError || 'Failed to load data';
       container.innerHTML = `
         <div class="climate-chart-error">
-          <p>データの読み込みに失敗しました</p>
+          <p>${loadErrorMsg}</p>
           <p class="error-details">${error.message}</p>
         </div>
       `;
@@ -432,7 +434,9 @@ class ClimateChart {
       console.log('✅ Temperature chart with annotations created successfully');
     } catch (error) {
       console.error('❌ Failed to create temperature chart:', error);
-      ctx.parentElement.innerHTML = `<div class="chart-error">チャートの作成に失敗しました: ${error.message}</div>`;
+      const container = document.getElementById('climate-chart-display');
+      const chartErrorMsg = container?.dataset.chartCreateError || 'Failed to create chart';
+      ctx.parentElement.innerHTML = `<div class="chart-error">${chartErrorMsg}: ${error.message}</div>`;
     }
   }
 
@@ -567,7 +571,9 @@ class ClimateChart {
       console.log('✅ GDD chart created successfully');
     } catch (error) {
       console.error('❌ Failed to create GDD chart:', error);
-      ctx.parentElement.innerHTML = `<div class="chart-error">GDDチャートの作成に失敗しました: ${error.message}</div>`;
+      const container = document.getElementById('climate-chart-display');
+      const gddErrorMsg = container?.dataset.gddChartCreateError || 'Failed to create GDD chart';
+      ctx.parentElement.innerHTML = `<div class="chart-error">${gddErrorMsg}: ${error.message}</div>`;
     }
   }
 
