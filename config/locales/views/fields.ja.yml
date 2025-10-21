@@ -81,49 +81,10 @@ ja:
       daily_cost_value: "¥%{amount} / 日"
       created_at: "作成日"
       updated_at: "更新日"
+      info: "圃場情報"
       back_to_list: "圃場一覧に戻る"
       edit: "編集"
       delete: "削除"
       confirm_delete: "この圃場を削除しますか？"
-      breadcrumb:
-        farms: "農場一覧"
-        current: "新しい圃場"
-      form:
-        name_label: "圃場名"
-        name_placeholder: "例: 第1圃場"
-        name_help: "圃場の名前を入力してください"
-        area_label: "面積（㎡）"
-        area_placeholder: "例: 1000"
-        area_help: "圃場の面積を平方メートルで入力してください"
-        location_label: "📍 位置情報"
-        map_loading: "🗺️ 地図を読み込み中..."
-        latitude_label: "緯度"
-        latitude_placeholder: "35.6762"
-        longitude_label: "経度"
-        longitude_placeholder: "139.6503"
-        submit: "圃場を作成"
-        cancel: "キャンセル"
-      errors:
-        title: "%{count}件のエラーがあります："
-    
-    edit:
-      title: "圃場を編集"
-      breadcrumb:
-        farms: "農場一覧"
-        current: "圃場編集"
-      form:
-        submit: "圃場を更新"
-        cancel: "キャンセル"
-      errors:
-        title: "%{count}件のエラーがあります："
-    
-    show:
-      breadcrumb:
-        farms: "農場一覧"
-        fields: "圃場一覧"
-      info: "圃場情報"
-      edit: "編集"
-      delete: "削除"
-      delete_confirm: "本当に削除しますか？"
       back: "戻る"
 
