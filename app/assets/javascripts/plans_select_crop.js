@@ -1,7 +1,7 @@
 // app/assets/javascripts/plans_select_crop.js
 // 作物選択画面の選択カウンター機能
 
-document.addEventListener('turbo:load', function() {
+function initializeCropSelection() {
   // 作物選択画面でのみ実行
   const checkboxes = document.querySelectorAll('.crop-check');
   if (checkboxes.length === 0) return;
@@ -37,5 +37,11 @@ document.addEventListener('turbo:load', function() {
   updateCounter();
   
   console.log('✅ Plans select crop counter initialized');
-});
+}
+
+// 通常のページロード（初回アクセス時）
+document.addEventListener('DOMContentLoaded', initializeCropSelection);
+
+// Turboによるページ遷移
+document.addEventListener('turbo:load', initializeCropSelection);
 

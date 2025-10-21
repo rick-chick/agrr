@@ -811,10 +811,10 @@ module Api
               
               {
                 'time' => datum.date.to_s,
-                'temperature_2m_max' => datum.temperature_max,
-                'temperature_2m_min' => datum.temperature_min,
-                'temperature_2m_mean' => temp_mean,
-                'precipitation_sum' => datum.precipitation || 0.0
+                'temperature_2m_max' => datum.temperature_max.to_f,
+                'temperature_2m_min' => datum.temperature_min.to_f,
+                'temperature_2m_mean' => temp_mean.to_f,
+                'precipitation_sum' => (datum.precipitation || 0.0).to_f
               }
             end
           }

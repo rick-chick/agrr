@@ -1,7 +1,6 @@
 // 作物フォーム - 動的な生育ステージ追加/削除機能
 
-// Turboに対応するため、turbo:loadイベントを使用
-document.addEventListener('turbo:load', () => {
+function initializeCropForm() {
   const addButton = document.getElementById('add-crop-stage');
   if (!addButton) return;
 
@@ -19,7 +18,13 @@ document.addEventListener('turbo:load', () => {
 
   // 削除ボタンのハンドラーを既存の要素に適用
   attachRemoveHandlers();
-});
+}
+
+// 通常のページロード（初回アクセス時）
+document.addEventListener('DOMContentLoaded', initializeCropForm);
+
+// Turboによるページ遷移
+document.addEventListener('turbo:load', initializeCropForm);
 
 // 削除ボタンのイベントハンドラーをアタッチ
 function attachRemoveHandlers() {
