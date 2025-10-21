@@ -4,7 +4,6 @@ require "test_helper"
 
 class PublicPlanCreationTest < ActionDispatch::IntegrationTest
   def setup
-    # アノニマスユーザーを作成
     @anonymous_user = User.create!(
       email: 'anonymous@agrr.app',
       name: 'Anonymous User',
@@ -12,7 +11,6 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
       is_anonymous: true
     )
     
-    # 参照農場を作成
     @farm = Farm.create!(
       user: @anonymous_user,
       name: "北海道・札幌",
@@ -21,7 +19,6 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
       is_reference: true
     )
     
-    # 天気ロケーションを作成
     @weather_location = WeatherLocation.create!(
       latitude: @farm.latitude,
       longitude: @farm.longitude,
@@ -29,10 +26,8 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
       elevation: 10.0
     )
     
-    # 天気データを作成（2024年と2025年）
     create_weather_data
     
-    # 参照作物を作成
     @crop1 = Crop.create!(
       name: "トマト",
       variety: "桃太郎",
@@ -84,116 +79,70 @@ class PublicPlanCreationTest < ActionDispatch::IntegrationTest
   end
   
   test "cannot create plan without selecting crops" do
-    # セッションに必要な情報を設定
-    get select_farm_size_public_plans_path(farm_id: @farm.id)
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    setup_session_with_farm_size('home_garden')
     
     assert_no_difference 'CultivationPlan.count' do
-      post public_plans_path, params: {
-        crop_ids: []
-      }
+      post public_plans_path, params: { crop_ids: [] }
     end
     
-    # 作物選択画面にリダイレクトされることを確認
     assert_redirected_to select_crop_public_plans_path
     assert_equal '作物を1つ以上選択してください。', flash[:alert]
   end
   
   test "cannot create plan without session data" do
-    # セッションをクリア
     reset!
     
     assert_no_difference 'CultivationPlan.count' do
-      post public_plans_path, params: {
-        crop_ids: [@crop1.id]
-      }
+      post public_plans_path, params: { crop_ids: [@crop1.id] }
     end
     
     assert_redirected_to public_plans_path
   end
   
-  test "select crop page displays crops correctly" do
-    # セッションを設定するために農場サイズ選択画面を経由
-    get select_farm_size_public_plans_path(farm_id: @farm.id)
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+  test "crop selection page displays correctly" do
+    setup_session_with_farm_size('home_garden')
     
     assert_response :success
     
-    # トマトとキュウリが表示されている
+    # 作物が表示されている
     assert_select ".crop-name", text: "トマト"
     assert_select ".crop-name", text: "キュウリ"
     
-    # チェックボックスが存在
-    assert_select "input[type='checkbox'][name='crop_ids[]'][value='#{@crop1.id}']"
-    assert_select "input[type='checkbox'][name='crop_ids[]'][value='#{@crop2.id}']"
+    # フォーム要素
+    assert_select "form#cropForm" do
+      assert_select "input[type='checkbox'][name='crop_ids[]'][value='#{@crop1.id}']"
+      assert_select "input[type='checkbox'][name='crop_ids[]'][value='#{@crop2.id}']"
+      assert_select "input.crop-check", minimum: 1
+    end
     
-    # 送信ボタンが存在
+    # ボトムバー
+    assert_select ".fixed-bottom-bar" do
+      assert_select "#counter"
+      assert_select "#submitBtn[disabled]"
+      assert_select "#hint"
+    end
+    
     assert_select "button[type='submit'][form='cropForm']", text: /選択した作物で計画を作成/
   end
   
-  test "select crop page shows correct farm info" do
-    # セッションを設定するために農場サイズ選択画面を経由
+  test "displays correct farm info for different farm sizes" do
     get select_farm_size_public_plans_path(farm_id: @farm.id)
     get select_crop_public_plans_path(farm_size_id: 'community_garden')
     
     assert_response :success
-    
-    # 農場情報が表示されている
     assert_select ".enhanced-summary-value", text: /#{@farm.name}/
     assert_select ".enhanced-summary-value", text: /市民農園/
     assert_select ".enhanced-summary-value", text: /50㎡/
   end
   
-  test "crop selection counter updates correctly" do
-    # Step 1: 栽培地域選択
-    get public_plans_path(locale: :ja)
-    assert_response :success
-    
-    # Step 2: 農場サイズ選択
-    get select_farm_size_public_plans_path(farm_id: @farm.id)
-    assert_response :success
-    
-    # Step 3: 作物選択画面を取得
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
-    assert_response :success
-    
-    # 必要な要素が存在することを確認
-    assert_select "#counter"
-    assert_select "#submitBtn[disabled]"  # 初期状態では無効
-    assert_select "#hint"
-    assert_select "input.crop-check", minimum: 1
-    
-    # JavaScriptファイルがページに含まれることを確認（content_for :javascripts経由）
-    # Note: Propshaftでは直接<script>タグは出力されないが、レイアウトで読み込まれる
-  end
-  
-  test "crop selection form contains correct elements" do
-    # セッションを設定
-    get select_farm_size_public_plans_path(farm_id: @farm.id)
-    assert_response :success
-    
-    # 作物選択画面に遷移
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
-    assert_response :success
-    
-    # フォーム要素の確認
-    assert_select "form#cropForm" do
-      assert_select "input[name='crop_ids[]']", minimum: 1
-      assert_select "input.crop-check", minimum: 1
-    end
-    
-    # ボトムバーの確認
-    assert_select ".fixed-bottom-bar" do
-      assert_select "#counter"
-      assert_select "#submitBtn"
-      assert_select "#hint"
-    end
-  end
-  
   private
   
+  def setup_session_with_farm_size(farm_size_id)
+    get select_farm_size_public_plans_path(farm_id: @farm.id)
+    get select_crop_public_plans_path(farm_size_id: farm_size_id)
+  end
+  
   def create_weather_data
-    # 2024年と2025年の天気データを作成
     [2024, 2025].each do |year|
       (Date.new(year, 1, 1)..Date.new(year, 12, 31)).each do |date|
         WeatherDatum.create!(
