@@ -1,0 +1,37 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Cultivation Plan Crops - 作付け計画に含まれる作物のスナップショット
+
+# Public plan用の作物
+public_plan_1_tomato:
+  cultivation_plan: public_plan_1
+  name: "トマト"
+  variety: "桃太郎"
+  area_per_unit: 1.0
+  revenue_per_area: 1000.0
+  agrr_crop_id: "tomato"
+
+public_plan_1_cucumber:
+  cultivation_plan: public_plan_1
+  name: "キュウリ"
+  variety: null
+  area_per_unit: 0.8
+  revenue_per_area: 800.0
+  agrr_crop_id: "cucumber"
+
+# Private plan用の作物
+plan_2025_tomato:
+  cultivation_plan: plan_2025
+  name: "トマト"
+  variety: "桃太郎"
+  area_per_unit: 1.0
+  revenue_per_area: 1000.0
+  agrr_crop_id: "tomato"
+
+plan_2025_cucumber:
+  cultivation_plan: plan_2025
+  name: "キュウリ"
+  variety: "夏すずみ"
+  area_per_unit: 0.8
+  revenue_per_area: 800.0
+  agrr_crop_id: "cucumber"
+

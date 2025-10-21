@@ -6,6 +6,7 @@ one:
   name: テスト農場1
   latitude: 35.6812
   longitude: 139.7671
+  weather_location: tokyo_location
   is_reference: false
 
 two:
@@ -13,6 +14,7 @@ two:
   name: テスト農場2
   latitude: 35.6762
   longitude: 139.6503
+  weather_location: tokyo_location
   is_reference: false
 
 farm_tokyo:
@@ -20,4 +22,5 @@ farm_tokyo:
   name: 東京テスト農場
   latitude: 35.6812
   longitude: 139.7671
+  weather_location: tokyo_location
   is_reference: false

@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Weather Data - 気象データ
+
+tokyo_2024_01_01:
+  weather_location: tokyo_location
+  date: 2024-01-01
+  temperature_max: 10.5
+  temperature_min: 2.3
+  temperature_mean: 6.4
+  precipitation: 0.0
+  sunshine_hours: 8.5
+
+tokyo_2024_01_02:
+  weather_location: tokyo_location
+  date: 2024-01-02
+  temperature_max: 11.2
+  temperature_min: 3.1
+  temperature_mean: 7.2
+  precipitation: 2.5
+  sunshine_hours: 5.2
+
