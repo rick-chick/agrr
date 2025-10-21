@@ -28,3 +28,12 @@ tomato_user:
   area_per_unit: 1.0
   revenue_per_area: 1200.0
   agrr_crop_id: tomato_user
+
+cucumber_user:
+  name: マイキュウリ
+  variety: 自家製
+  is_reference: false
+  user: developer
+  area_per_unit: 0.8
+  revenue_per_area: 900.0
+  agrr_crop_id: cucumber_user
