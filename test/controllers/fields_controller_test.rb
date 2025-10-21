@@ -18,20 +18,49 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
+  # Helper methods to avoid url_for repetition
+  def fields_index_path(farm, options = {})
+    url_for({controller: 'fields', action: 'index', farm_id: farm.id, only_path: true}.merge(options))
+  end
+
+  def field_new_path(farm, options = {})
+    url_for({controller: 'fields', action: 'new', farm_id: farm.id, only_path: true}.merge(options))
+  end
+
+  def field_show_path(farm, field, options = {})
+    url_for({controller: 'fields', action: 'show', farm_id: farm.id, id: field.id, only_path: true}.merge(options))
+  end
+
+  def field_edit_path(farm, field, options = {})
+    url_for({controller: 'fields', action: 'edit', farm_id: farm.id, id: field.id, only_path: true}.merge(options))
+  end
+
+  def field_create_path(farm, options = {})
+    url_for({controller: 'fields', action: 'create', farm_id: farm.id, only_path: true}.merge(options))
+  end
+
+  def field_update_path(farm, field, options = {})
+    url_for({controller: 'fields', action: 'update', farm_id: farm.id, id: field.id, only_path: true}.merge(options))
+  end
+
+  def field_destroy_path(farm, field, options = {})
+    url_for({controller: 'fields', action: 'destroy', farm_id: farm.id, id: field.id, only_path: true}.merge(options))
+  end
+
   test "should get index when authenticated" do
-    get farm_fields_path(@farm)
+    get fields_index_path(@farm)
     assert_response :success
     assert_select "h1", "テスト農場 - 圃場一覧"
   end
 
   test "should redirect to login when not authenticated" do
     delete auth_logout_path
-    get farm_fields_path(@farm)
+    get fields_index_path(@farm)
     assert_redirected_to auth_login_path
   end
 
   test "should get new when authenticated" do
-    get new_farm_field_path(@farm)
+    get field_new_path(@farm)
     assert_response :success
     assert_select "h1", "テスト農場 - 新しい圃場を追加"
     assert_select "form"
@@ -41,7 +70,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display new page in Japanese" do
-    get new_farm_field_path(@farm), headers: { 'Accept-Language': 'ja' }
+    get field_new_path(@farm), headers: { 'Accept-Language': 'ja' }
     assert_response :success
     assert_select "h1", "テスト農場 - 新しい圃場を追加"
     assert_select "label", text: "圃場名"
@@ -52,7 +81,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display new page in English" do
-    get new_farm_field_path(@farm, locale: 'us')
+    get new_polymorphic_path([@farm, :field], locale: 'us')
     assert_response :success
     assert_select "h1", /Add New Field/
     assert_select "label", text: "Field Name"
@@ -63,7 +92,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display new page in Hindi" do
-    get new_farm_field_path(@farm, locale: 'in')
+    get new_polymorphic_path([@farm, :field], locale: 'in')
     assert_response :success
     assert_select "h1", /नया खेत क्षेत्र जोड़ें/
     assert_select "label", text: "खेत क्षेत्र नाम"
@@ -74,7 +103,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should include i18n data attributes for JavaScript in Japanese" do
-    get new_farm_field_path(@farm), headers: { 'Accept-Language': 'ja' }
+    get field_new_path(@farm), headers: { 'Accept-Language': 'ja' }
     assert_response :success
     assert_select "body[data-fields-validation-coordinates-numeric]"
     assert_select "body[data-fields-validation-latitude-range]"
@@ -82,7 +111,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should include correct Japanese validation messages in data attributes" do
-    get new_farm_field_path(@farm, locale: 'ja')
+    get new_polymorphic_path([@farm, :field], locale: 'ja')
     assert_response :success
     
     # HTMLをパースしてdata属性の値を確認
@@ -95,7 +124,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should include correct English validation messages in data attributes" do
-    get new_farm_field_path(@farm, locale: 'us')
+    get new_polymorphic_path([@farm, :field], locale: 'us')
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
@@ -107,7 +136,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should include correct Hindi validation messages in data attributes" do
-    get new_farm_field_path(@farm, locale: 'in')
+    get new_polymorphic_path([@farm, :field], locale: 'in')
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
@@ -120,29 +149,27 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should redirect to login when not authenticated for new" do
     delete auth_logout_path
-    get new_farm_field_path(@farm)
+    get field_new_path(@farm)
     assert_redirected_to auth_login_path
   end
 
   test "should create field with valid attributes" do
     assert_difference('Field.count') do
-      post farm_fields_path(@farm), params: {
+      post fields_index_path(@farm), params: {
         field: {
-          name: "新しい圃場",
-          latitude: 36.2048,
-          longitude: 138.2529
+          name: "新しい圃場"
         }
       }
     end
     
-    assert_redirected_to farm_field_path(@farm, Field.last)
+    assert_redirected_to field_show_path(@farm, Field.last)
     follow_redirect!
     assert_select ".alert", "圃場が正常に作成されました。"
   end
 
   test "should create field with area and daily_fixed_cost" do
     assert_difference('Field.count') do
-      post farm_fields_path(@farm), params: {
+      post fields_index_path(@farm), params: {
         field: {
           name: "新しい圃場",
           area: 1000.0,
@@ -154,16 +181,14 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     new_field = Field.last
     assert_equal 1000.0, new_field.area
     assert_equal 5000.0, new_field.daily_fixed_cost
-    assert_redirected_to farm_field_path(@farm, new_field)
+    assert_redirected_to field_show_path(@farm, new_field)
   end
 
   test "should not create field with invalid attributes" do
     assert_no_difference('Field.count') do
-      post farm_fields_path(@farm), params: {
+      post fields_index_path(@farm), params: {
         field: {
-          name: "",
-          latitude: 200,
-          longitude: 200
+          name: ""
         }
       }
     end
@@ -175,7 +200,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not create field with invalid area" do
     assert_no_difference('Field.count') do
-      post farm_fields_path(@farm), params: {
+      post fields_index_path(@farm), params: {
         field: {
           name: "新しい圃場",
           area: -100
@@ -189,7 +214,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not create field with invalid daily_fixed_cost" do
     assert_no_difference('Field.count') do
-      post farm_fields_path(@farm), params: {
+      post fields_index_path(@farm), params: {
         field: {
           name: "新しい圃場",
           daily_fixed_cost: -1000
@@ -202,7 +227,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get show when authenticated and field belongs to user" do
-    get farm_field_path(@farm, @field)
+    get field_show_path(@farm, @field)
     assert_response :success
     assert_select "h1", @field.display_name
     assert_select ".info-value", @field.name
@@ -223,13 +248,11 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     other_field = Field.create!(
       farm: other_farm,
       user: other_user,
-      name: "Other Field",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "Other Field"
     )
     
     # 他のユーザーのfarmにアクセスしようとするとfarms_pathにリダイレクト
-    get farm_field_path(other_farm, other_field)
+    get field_show_path(other_farm, other_field)
     assert_redirected_to farms_path
     follow_redirect!
     assert_select ".alert", "指定された農場が見つかりません。"
@@ -237,7 +260,7 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should get edit when authenticated and field belongs to user" do
     @field.update!(area: 1000.0, daily_fixed_cost: 5000.0)
-    get edit_farm_field_path(@farm, @field)
+    get field_edit_path(@farm, @field)
     assert_response :success
     assert_select "h1", text: /圃場を編集/
     assert_select "form"
@@ -247,30 +270,26 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update field with valid attributes" do
-    patch farm_field_path(@farm, @field), params: {
+    patch field_show_path(@farm, @field), params: {
       field: {
-        name: "更新された圃場",
-        latitude: 36.2048,
-        longitude: 138.2529
+        name: "更新された圃場"
       }
     }
     
-    assert_redirected_to farm_field_path(@farm, @field)
+    assert_redirected_to field_show_path(@farm, @field)
     @field.reload
     assert_equal "更新された圃場", @field.name
-    assert_equal 36.2048, @field.latitude
-    assert_equal 138.2529, @field.longitude
   end
 
   test "should update field with area and daily_fixed_cost" do
-    patch farm_field_path(@farm, @field), params: {
+    patch field_show_path(@farm, @field), params: {
       field: {
         area: 1500.0,
         daily_fixed_cost: 6000.0
       }
     }
     
-    assert_redirected_to farm_field_path(@farm, @field)
+    assert_redirected_to field_show_path(@farm, @field)
     @field.reload
     assert_equal 1500.0, @field.area
     assert_equal 6000.0, @field.daily_fixed_cost
@@ -278,30 +297,24 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not update field with invalid attributes" do
     original_name = @field.name
-    original_latitude = @field.latitude
-    original_longitude = @field.longitude
     
-    patch farm_field_path(@farm, @field), params: {
+    patch field_show_path(@farm, @field), params: {
       field: {
-        name: "",
-        latitude: 200,
-        longitude: 200
+        name: ""
       }
     }
     
     assert_response :unprocessable_entity
     @field.reload
     assert_equal original_name, @field.name
-    assert_equal original_latitude, @field.latitude
-    assert_equal original_longitude, @field.longitude
   end
 
   test "should destroy field when authenticated and field belongs to user" do
     assert_difference('Field.count', -1) do
-      delete farm_field_path(@farm, @field)
+      delete field_show_path(@farm, @field)
     end
     
-    assert_redirected_to farm_fields_path(@farm)
+    assert_redirected_to fields_index_path(@farm)
     follow_redirect!
     assert_select ".alert", "圃場が削除されました。"
   end
@@ -321,13 +334,11 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     other_field = Field.create!(
       farm: other_farm,
       user: other_user,
-      name: "Other Field",
-      latitude: 35.6812,
-      longitude: 139.7671
+      name: "Other Field"
     )
     
     assert_no_difference('Field.count') do
-      delete farm_field_path(other_farm, other_field)
+      delete field_show_path(other_farm, other_field)
     end
     
     # 他のユーザーのfarmにアクセスしようとするとfarms_pathにリダイレクト
@@ -341,14 +352,14 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
 
   test "should display empty state when no fields exist" do
     Field.destroy_all
-    get farm_fields_path(@farm)
+    get fields_index_path(@farm)
     assert_response :success
     assert_select ".empty-state"
     assert_select ".empty-state-icon", "🌾"
   end
 
   test "should display fields in grid layout when fields exist" do
-    get farm_fields_path(@farm)
+    get fields_index_path(@farm)
     assert_response :success
     assert_select ".fields-grid"
     assert_select ".field-card"

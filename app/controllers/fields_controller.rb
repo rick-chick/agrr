@@ -30,7 +30,7 @@ class FieldsController < ApplicationController
     @field.user = current_user
 
     if @field.save
-      redirect_to farm_field_path(@farm, @field), notice: I18n.t('fields.flash.created')
+      redirect_to url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id), notice: I18n.t('fields.flash.created')
     else
       render :new, status: :unprocessable_entity
     end
@@ -39,7 +39,7 @@ class FieldsController < ApplicationController
   # PATCH/PUT /farms/:farm_id/fields/:id
   def update
     if @field.update(field_params)
-      redirect_to farm_field_path(@farm, @field), notice: I18n.t('fields.flash.updated')
+      redirect_to url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id), notice: I18n.t('fields.flash.updated')
     else
       render :edit, status: :unprocessable_entity
     end
@@ -48,7 +48,7 @@ class FieldsController < ApplicationController
   # DELETE /farms/:farm_id/fields/:id
   def destroy
     @field.destroy
-    redirect_to farm_fields_path(@farm), notice: I18n.t('fields.flash.destroyed')
+    redirect_to url_for(controller: 'fields', action: 'index', farm_id: @farm.id), notice: I18n.t('fields.flash.destroyed')
   end
 
   private
@@ -68,10 +68,10 @@ class FieldsController < ApplicationController
   def set_field
     @field = @farm.fields.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to farm_fields_path(@farm), alert: I18n.t('fields.flash.not_found')
+    redirect_to url_for(controller: 'fields', action: 'index', farm_id: @farm.id), alert: I18n.t('fields.flash.not_found')
   end
 
   def field_params
-    params.require(:field).permit(:name, :description, :latitude, :longitude, :area, :daily_fixed_cost)
+    params.require(:field).permit(:name, :description, :area, :daily_fixed_cost)
   end
 end

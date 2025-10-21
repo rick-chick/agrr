@@ -46,6 +46,15 @@ module ActiveSupport
     setup do
       User.instance_variable_set(:@anonymous_user, nil)
       User.anonymous_user
+      # Set default locale for URL helpers
+      I18n.locale = :ja
+      # Set default URL options for route helpers
+      Rails.application.routes.default_url_options[:locale] = :ja
+    end
+
+    # URLヘルパーのデフォルトオプションを設定
+    def default_url_options
+      { locale: I18n.locale }
     end
 
     # Add more helper methods to be used by all tests here...
@@ -86,6 +95,15 @@ module ActiveSupport
     
     def session_cookie_header(session_id)
       { 'Cookie' => "session_id=#{session_id}" }
+    end
+  end
+end
+
+# Integration Test用のURL設定
+module ActionDispatch
+  class IntegrationTest
+    def default_url_options
+      { locale: I18n.locale }
     end
   end
 end
