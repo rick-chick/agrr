@@ -1,0 +1,37 @@
+#!/bin/bash
+# 中速テストを実行（遅いテストを除外）
+
+set -e
+
+echo "🏃 中速Systemテストを実行（超遅いテストを除外、推定: 30-50分）"
+echo ""
+
+EXCLUDE_TESTS=(
+  "test/system/complete_user_journey_test.rb"
+  "test/system/action_cable_realtime_update_test.rb"
+  "test/system/all_pages_coverage_test.rb"
+)
+
+# 全テストファイルを取得
+ALL_TESTS=$(find test/system -name "*_test.rb" -type f)
+
+# 除外するテストをフィルタリング
+MEDIUM_TESTS=()
+for test in $ALL_TESTS; do
+  skip=0
+  for exclude in "${EXCLUDE_TESTS[@]}"; do
+    if [[ "$test" == "$exclude" ]]; then
+      skip=1
+      break
+    fi
+  done
+  if [[ $skip -eq 0 ]]; then
+    MEDIUM_TESTS+=("$test")
+  fi
+done
+
+echo "📝 実行テスト数: ${#MEDIUM_TESTS[@]}"
+echo "⏭️  スキップ: complete_user_journey, action_cable_realtime_update, all_pages_coverage"
+echo ""
+
+docker compose run --rm test bundle exec rails test:system "${MEDIUM_TESTS[@]}"
