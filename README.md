@@ -34,6 +34,8 @@ docker compose run --rm test
 |------------|------|
 | **[DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md)** | Docker使い方、起動確認 |
 | **[ASSET_MANAGEMENT.md](ASSET_MANAGEMENT.md)** | アセット管理の仕組み（esbuild/Propshaft） |
+| **[docs/AGRR_BINARY_MANAGEMENT.md](docs/AGRR_BINARY_MANAGEMENT.md)** | agrrバイナリ管理ガイド |
+| **[docs/AGRR_SYNC_GUARANTEE.md](docs/AGRR_SYNC_GUARANTEE.md)** | agrrバイナリ同期の保証 |
 | **[docs/FEATURE_CHECKLIST.md](docs/FEATURE_CHECKLIST.md)** | 新機能実装チェックリスト |
 | **[docs/ASSET_LOADING_GUIDE.md](docs/ASSET_LOADING_GUIDE.md)** | アセットトラブルシューティング |
 

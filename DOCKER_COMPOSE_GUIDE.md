@@ -94,26 +94,44 @@ docker compose --profile test down
 
 ## 🔍 daemon動作確認
 
-### コンテナ内でdaemon状態を確認
+### 自動確認（起動時）
+
+`docker compose up`すると、**自動的に**以下の情報が表示されます：
 
 ```bash
-# デフォルト（web）でdaemon確認
-docker compose exec web /app/lib/core/agrr daemon status
+docker compose up
+# または
+docker compose logs web | grep -A 10 "Configuring agrr"
 
-# 期待される出力
+# 表示される情報:
+# ✓ Found volume-mounted agrr: /app/lib/core/agrr
+#   Size: 168M, Modified: 2025-10-21 04:16:48
+#   MD5: ce54e632c1c0fff387b5e3fbf30fa743
+#   → This binary is synced from your local lib/core/agrr
+```
+
+**これにより、手動で確認しなくても、ローカルのagrrが使われていることが保証されます。**
+
+### ワンコマンド確認スクリプト
+
+```bash
+# すべての状態を一度に確認
+./scripts/check-agrr-sync.sh
+
+# 表示内容:
+# ✅ SYNCED: Local and container binaries are identical
 # ✓ Daemon is running (PID: xxx)
 ```
 
-### ログで確認
+### 手動確認（必要な場合のみ）
 
 ```bash
-# 起動ログを確認
-docker compose logs web | grep daemon
+# daemon状態確認
+docker compose exec web /app/lib/core/agrr daemon status
 
-# 期待される出力
-# AGRR Daemon Mode: true
-# Starting agrr daemon...
-# ✓ agrr daemon started (PID: xxx)
+# MD5チェックサム確認
+md5sum lib/core/agrr
+docker compose exec web md5sum /app/lib/core/agrr
 ```
 
 ## 📝 環境変数
