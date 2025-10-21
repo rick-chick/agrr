@@ -27,7 +27,8 @@ class FetchWeatherDataJob < ApplicationJob
     
     if farm_id
       farm = Farm.find_by(id: farm_id)
-      farm&.mark_weather_data_failed!("リトライ上限に達しました: #{exception.message}")
+      error_msg = I18n.t('jobs.fetch_weather_data.retry_limit_exceeded', error: exception.message)
+      farm&.mark_weather_data_failed!(error_msg)
     end
   end
 
@@ -42,7 +43,8 @@ class FetchWeatherDataJob < ApplicationJob
     
     if farm_id
       farm = Farm.find_by(id: farm_id)
-      farm&.mark_weather_data_failed!("データ検証エラー: #{exception.message}")
+      error_msg = I18n.t('jobs.fetch_weather_data.validation_error', error: exception.message)
+      farm&.mark_weather_data_failed!(error_msg)
     end
   end
 
@@ -174,9 +176,10 @@ class FetchWeatherDataJob < ApplicationJob
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
     
-    # NASA POWERをデフォルトで使用（グローバルカバレッジ、1984年以降のデータ）
-    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=openmeteo など
-    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'nasa-power')
+    # Open-Meteoをデフォルトで使用（高解像度: 0.1度 ≈ 11km、1940年以降のデータ）
+    # NASA POWERは解像度が低い（0.5-1度 ≈ 55-111km）ため、近接農場で同じデータになる
+    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=nasa-power など
+    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'openmeteo')
     
     command = [
       agrr_path,

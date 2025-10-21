@@ -1,5 +1,9 @@
 us:
   jobs:
+    fetch_weather_data:
+      retry_limit_exceeded: "Retry limit exceeded: %{error}"
+      validation_error: "Data validation error: %{error}"
+    
     optimize_cultivation_plan:
       completed: "Optimization completed"
       failed: "Optimization failed"
