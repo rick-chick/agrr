@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale %>">
 <head>
   <%= render "shared/meta_tags" %>
   
@@ -25,6 +25,7 @@
   <%= stylesheet_link_tag "features/interaction-rules", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/plans", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "features/optimizing", "data-turbo-track": "reload" %>
   
   <!-- Bundled JavaScript (includes Leaflet) -->
   <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
