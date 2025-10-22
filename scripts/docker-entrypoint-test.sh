@@ -8,6 +8,8 @@ set -e
 echo "==> Cleaning up old asset files..."
 rm -rf /app/app/assets/builds/*
 rm -rf /app/tmp/cache/assets/*
+## Propshaft public assets should not persist between runs in Docker
+rm -rf /app/public/assets/*
 echo "✓ Asset files cleaned"
 
 # アセットビルド実行（システムテスト用）
