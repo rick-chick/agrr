@@ -1,70 +1,73 @@
 <% content_for :title, t('plans.optimizing.title') %>
 
-<div class="plans-wrapper">
-  <div class="optimizing-container">
-    <!-- ヘッダーカード -->
-    <div class="content-card" style="margin-bottom: var(--space-4);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
-        <h1 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin: 0;">
-          <%= t('plans.optimizing.title') %>
-        </h1>
-        <span class="plan-card-status optimizing">
-          <%= t('plans.optimizing.status_badge') %>
-        </span>
+<div class="plans-wrapper pb-0" 
+     data-optimizing-container
+     data-cultivation-plan-id="<%= @cultivation_plan.id %>"
+     data-channel-name="PlansOptimizationChannel"
+     data-redirect-url="<%= plan_path(@cultivation_plan) %>"
+     data-error-message="<%= t('plans.optimizing.error_message') %>">
+  <div class="plans-container">
+    <!-- Compact Header -->
+    <div class="compact-header-card">
+      <div class="compact-header-title">
+        <span class="title-icon">🌱</span>
+        <span class="title-text"><%= t('plans.optimizing.title') %></span>
+        <span class="status-badge optimizing"><%= t('plans.optimizing.status_badge') %></span>
       </div>
-      
-      <div style="display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--text-secondary);">
-        <div>
-          <strong><%= t('plans.optimizing.year_label', year: @cultivation_plan.plan_year) %></strong>
-        </div>
-        <div>
-          <%= @cultivation_plan.farm.display_name %>
-        </div>
-        <div>
-          <%= t('plans.optimizing.crops_count', count: @cultivation_plan.cultivation_plan_crops.count) %>
-        </div>
+      <div class="compact-subtitle">
+        <%= t('plans.optimizing.year_label', year: @cultivation_plan.plan_year) %> · 
+        <%= @cultivation_plan.farm.display_name %> · 
+        <%= t('plans.optimizing.crops_count', count: @cultivation_plan.cultivation_plan_crops.count) %>
       </div>
     </div>
+    
+    <!-- Spacer for fixed progress bar -->
+    <div class="spacer-for-fixed-bar"></div>
+  </div>
+</div>
 
-    <!-- 進捗カード -->
-    <div class="optimizing-card" 
-         data-plan-id="<%= @cultivation_plan.id %>"
-         data-redirect-url="<%= plan_path(@cultivation_plan) %>">
-      <!-- スピナー -->
-      <div class="optimizing-spinner"></div>
-      
-      <!-- 進捗メッセージ -->
-      <div id="progressMessage" class="optimizing-message"
-           data-error-title="<%= t('plans.optimizing.error.title') %>">
-        <%= t('plans.optimizing.progress.default_message') %>
+<!-- Fixed Bottom Progress Bar -->
+<div class="fixed-progress-bar">
+  <div class="fixed-progress-container">
+    <div class="progress-header">
+      <div class="progress-label-with-spinner">
+        <span class="spinner spinner-sm" id="loading-spinner"></span>
+        <div class="progress-info">
+          <div class="progress-phase-message" id="phase-message">
+            <%= @cultivation_plan.optimization_phase_message || t('plans.optimizing.progress.default_message') %>
+          </div>
+          <div class="progress-duration-hint" id="progress-duration-hint"><%= t('plans.optimizing.progress.duration_hint') %></div>
+        </div>
       </div>
-      
-      <!-- 経過時間 -->
-      <div id="elapsedTime" class="optimizing-elapsed"
-           data-template-second="⏳ %{time}秒"
-           data-template-minute="%{minutes}分%{seconds}秒">
-        <%= t('plans.optimizing.progress.elapsed_time', time: 0) %>
+      <div class="progress-elapsed-time" 
+           id="elapsed-time"
+           data-elapsed-time-template="<%= t('plans.optimizing.progress.elapsed_time', time: '%{time}') %>"
+           data-elapsed-time-minute-template="<%= t('plans.optimizing.progress.elapsed_time_minute', minutes: '%{minutes}', seconds: '%{seconds}') %>">
+        <%= t('plans.optimizing.progress.elapsed_time', time: '0') %>
       </div>
-      
-      <!-- ヒント -->
-      <div class="optimizing-hint">
-        <%= t('plans.optimizing.progress.duration_hint') %>
-      </div>
-
-      <!-- プログレスバー -->
-      <div class="optimizing-progress-bar" style="margin-top: var(--space-6);">
-        <div id="progressBar" class="optimizing-progress-fill" style="width: 0%"></div>
-      </div>
-      
-      <div id="progressPercentage" class="optimizing-percentage">
-        0%
+    </div>
+    
+    <!-- エラー表示エリア（初期状態は非表示） -->
+    <div class="error-message-container" id="error-message-container" style="display: none;">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title"><%= t('plans.optimizing.error.title') %></div>
+        <div class="error-detail" id="error-detail"></div>
+        <div class="error-actions">
+          <a href="<%= select_crop_plans_path %>" class="btn btn-primary">
+            <%= t('plans.optimizing.error.try_again') %>
+          </a>
+          <a href="<%= plans_path %>" class="btn btn-secondary">
+            <%= t('plans.optimizing.error.start_over') %>
+          </a>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- JavaScript is loaded from app/assets/javascripts/plans_optimizing.js -->
+<!-- JavaScript is loaded from app/assets/javascripts/optimizing.js (共通) -->
 <% content_for :javascripts do %>
   <%= javascript_include_tag "actioncable", defer: true %>
-  <%= javascript_include_tag "plans_optimizing", defer: true %>
+  <%= javascript_include_tag "optimizing", defer: true %>
 <% end %>

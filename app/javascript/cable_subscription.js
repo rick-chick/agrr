@@ -25,8 +25,9 @@ class CableSubscriptionManager {
   }
 
   // 最適化チャンネルに接続
-  subscribeToOptimization(cultivationPlanId, callbacks) {
-    const subscriptionKey = `optimization_${cultivationPlanId}`;
+  subscribeToOptimization(cultivationPlanId, callbacks, options = {}) {
+    const channelName = options.channelName || "OptimizationChannel";
+    const subscriptionKey = `optimization_${channelName}_${cultivationPlanId}`;
     
     // 既に購読している場合は何もしない
     if (this.subscriptions.has(subscriptionKey)) {
@@ -34,26 +35,26 @@ class CableSubscriptionManager {
       return this.subscriptions.get(subscriptionKey);
     }
 
-    console.log(`📡 Subscribing to optimization channel: plan_id=${cultivationPlanId}`);
+    console.log(`📡 Subscribing to optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);
 
     const subscription = this.getConsumer().subscriptions.create(
       {
-        channel: "OptimizationChannel",
+        channel: channelName,
         cultivation_plan_id: cultivationPlanId
       },
       {
         connected() {
-          console.log(`✅ Connected to optimization channel: plan_id=${cultivationPlanId}`);
+          console.log(`✅ Connected to optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);
           if (callbacks.onConnected) callbacks.onConnected();
         },
 
         disconnected() {
-          console.log(`🔌 Disconnected from optimization channel: plan_id=${cultivationPlanId}`);
+          console.log(`🔌 Disconnected from optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);
           if (callbacks.onDisconnected) callbacks.onDisconnected();
         },
 
         received(data) {
-          console.log(`📬 Received data from optimization channel:`, data);
+          console.log(`📬 Received data from optimization channel (${channelName}):`, data);
           if (callbacks.onReceived) callbacks.onReceived(data);
         }
       }
@@ -103,12 +104,13 @@ class CableSubscriptionManager {
   }
 
   // 購読を解除
-  unsubscribe(cultivationPlanId) {
-    const subscriptionKey = `optimization_${cultivationPlanId}`;
+  unsubscribe(cultivationPlanId, options = {}) {
+    const channelName = options.channelName || "OptimizationChannel";
+    const subscriptionKey = `optimization_${channelName}_${cultivationPlanId}`;
     const subscription = this.subscriptions.get(subscriptionKey);
     
     if (subscription) {
-      console.log(`🔌 Unsubscribing from optimization channel: plan_id=${cultivationPlanId}`);
+      console.log(`🔌 Unsubscribing from optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);
       subscription.unsubscribe();
       this.subscriptions.delete(subscriptionKey);
     }

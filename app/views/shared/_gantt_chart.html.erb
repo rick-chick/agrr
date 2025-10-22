@@ -1,0 +1,100 @@
+<%# app/views/shared/_gantt_chart.html.erb %>
+<%# 共通ガントチャートコンポーネント %>
+<%# 
+  使い方:
+  render 'shared/gantt_chart', 
+         cultivation_plan: @cultivation_plan,
+         show_crop_palette: true,
+         plan_type: 'public'
+  
+  パラメータ:
+  - cultivation_plan: CultivationPlanオブジェクト（必須）
+  - show_crop_palette: 作物パレットを表示するか (デフォルト: false)
+  - plan_type: 'public' または 'private' (デフォルト: 'public')
+%>
+
+<%
+  # デフォルト値の設定
+  show_crop_palette ||= false
+  plan_type ||= 'public'
+  
+  # 栽培スケジュール期間の計算
+  plan_start_date = cultivation_plan.planning_start_date || Date.current
+  plan_end_date = cultivation_plan.planning_end_date || Date.new(Date.current.year + 1, 12, 31)
+  
+  # Frappe Gantt用のデータを準備
+  cultivation_data = cultivation_plan.field_cultivations.map do |fc|
+    {
+      id: fc.id,
+      field_id: "field_#{fc.cultivation_plan_field_id}",
+      field_name: fc.field_display_name,
+      crop_name: fc.crop_display_name,
+      start_date: fc.start_date.to_s,
+      completion_date: fc.completion_date.to_s,
+      cultivation_days: fc.cultivation_days,
+      area: fc.area,
+      estimated_cost: fc.estimated_cost,
+      profit: fc.optimization_result&.dig('profit')
+    }
+  end
+  
+  # 圃場情報を準備
+  fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
+    {
+      id: field.id,
+      field_id: "field_#{field.id}",
+      name: field.name,
+      area: field.area
+    }
+  end
+  
+  # I18nキーの決定
+  i18n_key = plan_type == 'public' ? 'public_plans' : 'plans'
+%>
+
+<div class="gantt-section">
+  <div class="gantt-header">
+    <h2 class="gantt-title">
+      <span class="gantt-title-icon">📊</span>
+      <span class="gantt-title-text"><%= t("#{i18n_key}.results.gantt.title", default: t('plans.show.gantt.title')) %></span>
+    </h2>
+    
+    <%# 作物パレット（public_plansの場合のみ表示） %>
+    <% if show_crop_palette %>
+      <%= render 'shared/crop_palette', cultivation_plan: cultivation_plan %>
+    <% end %>
+  </div>
+  
+  <%# Frappe Gantt コンテナ %>
+  <div id="gantt-chart-container"
+       data-cultivations="<%= cultivation_data.to_json %>"
+       data-fields="<%= fields_data.to_json %>"
+       data-plan-start-date="<%= plan_start_date.to_s %>"
+       data-plan-end-date="<%= plan_end_date.to_s %>"
+       data-cultivation-plan-id="<%= cultivation_plan.id %>"
+       data-plan-type="<%= plan_type %>"
+       <%# plans_show.js 用の属性（private のみ必要） %>
+       <% if plan_type == 'private' %>
+         data-plan-id="<%= cultivation_plan.id %>"
+         data-data-url="<%= data_api_v1_plans_cultivation_plan_path(cultivation_plan) %>"
+       <% end %>>
+  </div>
+  
+  <%# 詳細パネル（作物クリック時に表示） %>
+  <div id="detail-panel" style="margin-top: var(--space-6); display: none;">
+    <div style="background: var(--color-gray-50); border-radius: var(--radius-lg); padding: var(--space-6);">
+      <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        <%= t("#{i18n_key}.show.detail.title", default: '栽培詳細') %>
+      </h3>
+      <div id="detail-content">
+        <%= t("#{i18n_key}.show.detail.loading", default: '読み込み中...') %>
+      </div>
+    </div>
+  </div>
+  
+  <%# Google AdSense 広告（public_plansの場合のみ） %>
+  <% if plan_type == 'public' %>
+    <%= render 'shared/adsense_display_ad', ad_slot: '0000000000', ad_format: 'horizontal' %>
+  <% end %>
+</div>
+

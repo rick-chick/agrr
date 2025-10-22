@@ -141,6 +141,7 @@ function initCustomGanttChart() {
   ganttState.planStartDate = new Date(ganttContainer.dataset.planStartDate);
   ganttState.planEndDate = new Date(ganttContainer.dataset.planEndDate);
   ganttState.cultivation_plan_id = ganttContainer.dataset.cultivationPlanId;
+  ganttState.plan_type = ganttContainer.dataset.planType || 'public';
   
   // 移動履歴と削除IDをリセット
   ganttState.moves = [];
@@ -186,7 +187,8 @@ function setupCableSubscription() {
   // 既存のサブスクリプションがあれば解除
   if (ganttState.cableSubscription) {
     console.log('🔌 既存のAction Cableサブスクリプションを解除します');
-    window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id);
+    const channelName = (ganttState.plan_type === 'private') ? 'PlansOptimizationChannel' : 'OptimizationChannel';
+    window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id, { channelName });
     ganttState.cableSubscription = null;
   }
 
@@ -198,20 +200,22 @@ function setupCableSubscription() {
 
   console.log('📡 Action Cableサブスクリプションを設定中...');
 
+  const channelName = (ganttState.plan_type === 'private') ? 'PlansOptimizationChannel' : 'OptimizationChannel';
   ganttState.cableSubscription = window.CableSubscriptionManager.subscribeToOptimization(
     ganttState.cultivation_plan_id,
     {
       onConnected: () => {
-        console.log('✅ 最適化チャンネルに接続しました');
+        console.log(`✅ 最適化チャンネルに接続しました (${channelName})`);
       },
       onDisconnected: () => {
-        console.log('🔌 最適化チャンネルから切断されました');
+        console.log(`🔌 最適化チャンネルから切断されました (${channelName})`);
       },
       onReceived: (data) => {
         console.log('📬 最適化更新を受信:', data);
         handleOptimizationUpdate(data);
       }
-    }
+    },
+    { channelName }
   );
 }
 
@@ -251,7 +255,10 @@ function handleOptimizationUpdate(data) {
 function fetchAndUpdateChart() {
   console.log('🔄 データを再取得中...');
 
-  const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/data`;
+  const baseApi = (ganttState.plan_type === 'private')
+    ? '/api/v1/plans/cultivation_plans'
+    : '/api/v1/public_plans/cultivation_plans';
+  const url = `${baseApi}/${ganttState.cultivation_plan_id}/data`;
 
   fetch(url, {
     method: 'GET',
@@ -263,19 +270,27 @@ function fetchAndUpdateChart() {
   .then(response => response.json())
   .then(data => {
     console.log('📊 データ取得成功:', data);
-    console.log('📊 取得した圃場情報:', data.fields);
-    console.log('📊 取得した栽培データ:', data.cultivations);
+    // 新スキーマ対応: data.data に本体、totalsは data.totals
+    const payload = (data && data.data) ? data.data : data;
+    const totals = (data && data.totals) ? data.totals : {
+      profit: data.total_profit,
+      revenue: data.total_revenue,
+      cost: data.total_cost
+    };
+
+    console.log('📊 取得した圃場情報:', payload.fields);
+    console.log('📊 取得した栽培データ:', payload.cultivations);
 
     if (data.success) {
       // ⭐ adjustの結果を反映: 開始日と終了日の両方が更新される
       // adjustにより、開始日も終了日も変わる可能性がある
       // （例: 休閑期間確保のため開始日がずれる、気象条件により栽培期間が変わる）
-      ganttState.cultivationData = data.cultivations || [];
+      ganttState.cultivationData = payload.cultivations || [];
       
       // デバッグ: adjustの結果で更新された日付をログ出力
-      if (data.cultivations && data.cultivations.length > 0) {
+      if (payload.cultivations && payload.cultivations.length > 0) {
         console.log('🔄 adjust結果で更新された栽培データ:');
-        data.cultivations.forEach(c => {
+        payload.cultivations.forEach(c => {
           console.log(`  [${c.id}] ${c.crop_name}: ${c.start_date} 〜 ${c.completion_date}`);
         });
       }
@@ -291,7 +306,7 @@ function fetchAndUpdateChart() {
       }));
       
       // 圃場情報を正規化（field_idを統一）
-      const normalizedFields = (data.fields || []).map(field => ({
+      const normalizedFields = (payload.fields || []).map(field => ({
         ...field,
         field_id: normalizeFieldId(field.field_id || field.id)
       }));
@@ -950,7 +965,10 @@ function executeReoptimization() {
   showLoadingOverlay();
   
   // APIエンドポイントにPOST
-  const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/adjust`;
+  const baseApi = (ganttState.plan_type === 'private')
+    ? '/api/v1/plans/cultivation_plans'
+    : '/api/v1/public_plans/cultivation_plans';
+  const url = `${baseApi}/${ganttState.cultivation_plan_id}/adjust`;
   
   console.log('📋 送信データ:', {
     cultivation_plan_id: ganttState.cultivation_plan_id,
@@ -1179,7 +1197,6 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
 
 
   // 圃場ラベル（左側）
-  const fieldNumber = group.fieldName.replace(/[^\d]/g, '');
   rowGroup.appendChild(createSVGElement('text', {
     x: 30,
     y: y + (config.rowHeight / 2) + 5,
@@ -1188,7 +1205,7 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
     'font-size': '14',
     'font-weight': '600',
     fill: '#374151'
-  }, fieldNumber));
+  }, group.fieldName));
   
   // 圃場削除ボタン（作物がない場合のみ表示）
   if (group.cultivations.length === 0 && ganttState.fieldGroups.length > 1) {
@@ -1679,7 +1696,10 @@ function addField() {
   showLoadingOverlay(getI18nMessage('jsGanttAddingFieldLoading', 'Adding field...'));
   
   // APIリクエスト
-  const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/add_field`;
+  const baseApi = (ganttState.plan_type === 'private')
+    ? '/api/v1/plans/cultivation_plans'
+    : '/api/v1/public_plans/cultivation_plans';
+  const url = `${baseApi}/${ganttState.cultivation_plan_id}/add_field`;
   
   console.log('📡 API URL:', url);
   
@@ -1733,7 +1753,10 @@ function removeField(field_id) {
   showLoadingOverlay('圃場を削除中...');
   
   // APIリクエスト
-  const url = `/api/v1/public_plans/cultivation_plans/${ganttState.cultivation_plan_id}/remove_field/${normalizedFieldId}`;
+  const baseApi = (ganttState.plan_type === 'private')
+    ? '/api/v1/plans/cultivation_plans'
+    : '/api/v1/public_plans/cultivation_plans';
+  const url = `${baseApi}/${ganttState.cultivation_plan_id}/remove_field/${normalizedFieldId}`;
   
   fetch(url, {
     method: 'DELETE',
