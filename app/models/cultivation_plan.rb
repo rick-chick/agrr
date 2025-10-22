@@ -12,7 +12,7 @@ class CultivationPlan < ApplicationRecord
   serialize :predicted_weather_data, coder: JSON
   
   # == Validations =========================================================
-  validates :total_area, presence: true, numericality: { greater_than: 0 }
+  validates :total_area, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :status, presence: true, inclusion: { in: %w[pending optimizing completed failed] }
   validates :plan_type, presence: true, inclusion: { in: %w[public private] }
   validates :user_id, presence: true, if: :plan_type_private?
@@ -145,16 +145,19 @@ class CultivationPlan < ApplicationRecord
   end
   
   def broadcast_phase_update
-    OptimizationChannel.broadcast_to(
-      self,
-      {
-        status: status,
-        progress: optimization_progress,
-        phase: optimization_phase,
-        phase_message: optimization_phase_message,
-        message: optimization_phase_message
-      }
-    )
+    payload = {
+      status: status,
+      progress: optimization_progress,
+      phase: optimization_phase,
+      phase_message: optimization_phase_message,
+      message: optimization_phase_message
+    }
+
+    if plan_type_private?
+      PlansOptimizationChannel.broadcast_to(self, payload)
+    else
+      OptimizationChannel.broadcast_to(self, payload)
+    end
   rescue => e
     Rails.logger.error "❌ Broadcast phase update failed for plan ##{id}: #{e.message}"
     # ブロードキャスト失敗しても処理は続行
