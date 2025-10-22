@@ -18,6 +18,7 @@ services:
       - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
       - ./tmp/debug:/app/tmp/debug  # デバッグファイルのみホストと共有
+      - ./tmp/memory_monitoring:/app/tmp/memory_monitoring  # メモリ監視ログをホストと共有
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
@@ -28,7 +29,11 @@ services:
       - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
       - USE_AGRR_DAEMON=true  # Daemon mode enabled by default
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
+      - ASYNC_DAEMON_START=true  # 完全非同期daemon起動（Railsサーバーを即座に起動）
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
+      - ENABLE_MEMORY_MONITOR=true  # Enable automatic memory monitoring in development
+      - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds
+      - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (until container stops)
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
