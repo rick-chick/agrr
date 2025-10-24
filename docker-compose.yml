@@ -31,9 +31,9 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - ASYNC_DAEMON_START=true  # 完全非同期daemon起動（Railsサーバーを即座に起動）
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
-      - ENABLE_MEMORY_MONITOR=true  # Enable automatic memory monitoring in development
-      - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds
-      - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (until container stops)
+      - ENABLE_MEMORY_MONITOR=false  # Disable memory monitoring by default for faster startup
+      - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds (when enabled)
+      - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (when enabled)
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
