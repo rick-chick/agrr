@@ -3,9 +3,9 @@
 class CultivationPlanOptimizer
   class WeatherDataNotFoundError < StandardError; end
   
-  def initialize(cultivation_plan)
+  def initialize(cultivation_plan, channel_class)
     @cultivation_plan = cultivation_plan
-    @prediction_gateway = Agrr::PredictionGateway.new
+    @channel_class = channel_class
     @allocation_gateway = Agrr::AllocationGateway.new
   end
   
@@ -14,24 +14,25 @@ class CultivationPlanOptimizer
     @current_phase = nil
     
     begin
-      weather_info = prepare_weather_data
+      # 天気予測データを取得
+      weather_prediction_service = WeatherPredictionService.new(@cultivation_plan.farm)
+      existing_prediction = weather_prediction_service.get_existing_prediction(cultivation_plan: @cultivation_plan)
+      
+      unless existing_prediction
+        error_message = "天気予測データが存在しません。計画作成時に天気予測が実行されていません。"
+        Rails.logger.error "❌ [Optimizer] #{error_message}"
+        raise WeatherDataNotFoundError, error_message
+      end
+      
+      Rails.logger.info "♻️ [Optimizer] Using existing prediction data"
+      weather_info = existing_prediction
       
       # 最適化フェーズ
       @current_phase = 'optimizing'
-      @cultivation_plan.phase_optimizing!
-      
-      # 計画期間を設定
-      planning_start = Date.current
-      planning_end = weather_info[:target_end_date]
-      
-      # cultivation_planに計画期間を保存
-      @cultivation_plan.update!(
-        planning_start_date: planning_start,
-        planning_end_date: planning_end
-      )
+      @cultivation_plan.phase_optimizing!(@channel_class)
       
       # 全フィールドと作物情報を収集
-      fields_data, crops_data = prepare_allocation_data(planning_end)
+      fields_data, crops_data = prepare_allocation_data(weather_info[:target_end_date])
       
       # interaction_rulesを取得
       interaction_rules = prepare_interaction_rules
@@ -46,8 +47,8 @@ class CultivationPlanOptimizer
         fields: fields_data,
         crops: crops_data,
         weather_data: weather_info[:data],
-        planning_start: planning_start,
-        planning_end: planning_end,
+        planning_start: @cultivation_plan.planning_start_date,
+        planning_end: @cultivation_plan.planning_end_date,
         interaction_rules: interaction_rules
       )
       
@@ -57,205 +58,27 @@ class CultivationPlanOptimizer
       # 最適化結果をcultivation_planに反映
       update_cultivation_plan_with_results(allocation_result)
       
-      @cultivation_plan.phase_completed!
+      @cultivation_plan.phase_completed!(@channel_class)
       @cultivation_plan.complete!
       Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
       true
     rescue Agrr::BaseGateway::NoAllocationCandidatesError => e
-      Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed: No allocation candidates"
-      Rails.logger.error "Error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      
-      # ユーザーフレンドリーなエラーメッセージを作成
-      user_friendly_message = <<~MSG.strip
-        作付け計画の候補を生成できませんでした。以下の可能性があります：
-        
-        1. 計画期間内に作物が成熟しない
-           → 計画期間を延長するか、より短期間で収穫できる作物を選択してください
-        
-        2. 圃場の面積が不足している
-           → 圃場の面積を増やすか、作物の数を減らしてください
-        
-        3. 気象条件が適していない
-           → 選択した作物が気象条件に適していない可能性があります。別の作物を試してください
-        
-        4. 作物の収益設定が適切でない
-           → 作物の収益設定（revenue_per_area）を確認してください
-        
-        技術的な詳細: #{e.message}
-      MSG
-      
-      @cultivation_plan.phase_failed!(@current_phase || 'unknown')
-      @cultivation_plan.fail!(user_friendly_message)
-      false
+      Rails.logger.error "❌ [Optimizer] AGRR allocation failed: #{e.message}"
+      Rails.logger.info "🔄 [Optimizer] Re-raising error to job level"
+      raise e
+    rescue Agrr::BaseGateway::ExecutionError => e
+      Rails.logger.error "❌ [Optimizer] AGRR execution failed: #{e.message}"
+      Rails.logger.info "🔄 [Optimizer] Re-raising error to job level"
+      raise e
     rescue StandardError => e
-      Rails.logger.error "❌ CultivationPlan ##{@cultivation_plan.id} optimization failed at phase: #{@current_phase || 'unknown'}"
-      Rails.logger.error "Error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      
-      # フェーズに応じたエラーメッセージを設定
-      @cultivation_plan.phase_failed!(@current_phase || 'unknown')
-      @cultivation_plan.fail!(e.message)
-      false
+      Rails.logger.error "❌ [Optimizer] Unexpected error at phase: #{@current_phase || 'unknown'}: #{e.message}"
+      Rails.logger.info "🔄 [Optimizer] Re-raising error to job level"
+      raise e
     end
   end
   
   private
   
-  def prepare_weather_data
-    # フェーズ: 気象データ取得
-    @current_phase = 'fetching_weather'
-    @cultivation_plan.phase_fetching_weather!
-    
-    farm = @cultivation_plan.farm
-    
-    # DBから天気データを取得
-    weather_location = WeatherLocation.find_by(
-      latitude: farm.latitude,
-      longitude: farm.longitude
-    )
-    
-    unless weather_location
-      raise WeatherDataNotFoundError, 
-            "Weather location not found for coordinates: #{farm.latitude}, #{farm.longitude}. " \
-            "Please run weather data import batch first."
-    end
-    
-    # 過去20年分の実績データをLightGBMモデルのトレーニング用に取得
-    # 長期データで季節性パターンと気候変動の傾向を学習可能
-    # 気象データは通常1-2日遅れで更新されるため、2日前までのデータを使用
-    training_start_date = Date.current - 20.years
-    training_end_date = Date.current - 2.days
-    training_data = weather_location.weather_data_for_period(training_start_date, training_end_date)
-    
-    if training_data.empty?
-      raise WeatherDataNotFoundError,
-            "No training weather data found for period #{training_start_date} to #{training_end_date}. " \
-            "Please run weather data import batch first."
-    end
-    
-    # 最低限必要なデータ量をチェック（15年分 = 約5475日、閏年3-4回分を含む）
-    # LightGBMモデルは長期データで季節性パターンと気候変動の傾向を学習可能
-    # 気象データは通常1-2日遅れで更新されるため、実際には20年 - 2日分を取得
-    # 最低15年分あれば学習可能
-    minimum_required_days = 5470  # 15年 × 365日 = 5475日（閏年や日付ズレを考慮して-5日）
-    if training_data.count < minimum_required_days
-      raise WeatherDataNotFoundError,
-            "Insufficient training weather data: #{training_data.count} records found, but at least #{minimum_required_days} days (approximately 15 years) required. " \
-            "Please run weather data import batch to fetch historical data (#{training_start_date} to #{training_end_date})."
-    end
-    
-    Rails.logger.info "✅ [AGRR] Training data loaded from DB: #{training_data.count} records (#{training_start_date} to #{training_end_date})"
-    
-    # 今年1年間の実績データを取得
-    # 気象データは通常1-2日遅れで更新されるため、2日前までのデータを使用
-    current_year_start = Date.new(Date.current.year, 1, 1)
-    current_year_end = Date.current - 2.days
-    current_year_data = weather_location.weather_data_for_period(current_year_start, current_year_end)
-    
-    if current_year_data.empty?
-      raise WeatherDataNotFoundError,
-            "No current year weather data found for period #{current_year_start} to #{current_year_end}. " \
-            "Please run weather data import batch first."
-    end
-    
-    Rails.logger.info "✅ [AGRR] Current year data loaded from DB: #{current_year_data.count} records (#{current_year_start} to #{current_year_end})"
-    
-    # トレーニングデータをAGRR形式に変換
-    training_formatted = format_weather_data_for_agrr(weather_location, training_data)
-    
-    # フェーズ: 気象データ予測
-    @current_phase = 'predicting_weather'
-    @cultivation_plan.phase_predicting_weather!
-    
-    # 1年後の12月31日までの予測データ
-    # ナスやキュウリなど、必要GDDが高い作物も成長完了できるように期間を延長
-    next_year = Date.current.year + 1
-    target_end_date = Date.new(next_year, 12, 31)
-    # 両端を含む日数を計算（開始日から終了日まで）
-    prediction_days = (target_end_date - Date.current).to_i + 1
-    
-    Rails.logger.info "🔮 [AGRR] Predicting weather until #{target_end_date} (#{prediction_days} days)"
-    
-    # LightGBMモデルを使用（長期予測に適している）
-    # 注意: 処理に時間がかかる可能性があるが、予測日数や精度を勝手に変更してはならない
-    future = @prediction_gateway.predict(
-      historical_data: training_formatted,
-      days: prediction_days,
-      model: 'lightgbm'
-    )
-    
-    Rails.logger.info "✅ [AGRR] Prediction completed for next #{prediction_days} days (until #{target_end_date})"
-    
-    # 今年の実データをAGRR形式に変換
-    current_year_formatted = format_weather_data_for_agrr(weather_location, current_year_data)
-    
-    # 今年の実データ + 来年の予測データをマージ
-    merged_data = merge_weather_data(current_year_formatted, future)
-    
-    # 気象データの実際の範囲を計算
-    # 今年の実データ + 次の年の12月31日までの予測データ
-    total_weather_days = current_year_data.count + prediction_days
-    
-    Rails.logger.info "✅ [AGRR] Total weather data available: #{total_weather_days} days (current year: #{current_year_data.count} + prediction until #{target_end_date}: #{prediction_days})"
-    
-    # 気象データを保存（後で気温・GDDチャート表示時に再利用）
-    # merged_dataはすでに{latitude, longitude, timezone, data: [...]}の構造を持っている
-    @cultivation_plan.update!(
-      predicted_weather_data: merged_data.merge(
-        'generated_at' => Time.current.iso8601,
-        'target_end_date' => target_end_date.to_s
-      )
-    )
-    
-    Rails.logger.info "✅ [AGRR] Weather data saved to CultivationPlan for future reuse"
-    
-    # 気象データと計画期間の終了日を返す
-    {
-      data: merged_data,
-      target_end_date: target_end_date
-    }
-  end
-  
-  def format_weather_data_for_agrr(weather_location, weather_data)
-    {
-      'latitude' => weather_location.latitude.to_f,
-      'longitude' => weather_location.longitude.to_f,
-      'elevation' => (weather_location.elevation || 0.0).to_f,
-      'timezone' => weather_location.timezone,
-      'data' => weather_data.filter_map do |datum|
-        # Skip records with missing temperature data
-        next if datum.temperature_max.nil? || datum.temperature_min.nil?
-        
-        # Calculate mean from max/min if missing
-        temp_mean = datum.temperature_mean
-        if temp_mean.nil?
-          temp_mean = (datum.temperature_max.to_f + datum.temperature_min.to_f) / 2.0
-        else
-          temp_mean = temp_mean.to_f
-        end
-        
-        {
-          'time' => datum.date.to_s,
-          'temperature_2m_max' => datum.temperature_max.to_f,
-          'temperature_2m_min' => datum.temperature_min.to_f,
-          'temperature_2m_mean' => temp_mean,
-          'precipitation_sum' => (datum.precipitation || 0.0).to_f,
-          'sunshine_duration' => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0, # 時間→秒
-          'wind_speed_10m_max' => (datum.wind_speed || 0.0).to_f,
-          'weather_code' => datum.weather_code || 0
-        }
-      end
-    }
-  end
-  
-  def merge_weather_data(historical, future)
-    {
-      latitude: historical['latitude'],
-      longitude: historical['longitude'],
-      data: (historical['data'] || []) + (future['data'] || [])
-    }
-  end
   
   def prepare_interaction_rules
     # 農場の地域を取得
@@ -288,43 +111,22 @@ class CultivationPlanOptimizer
   def prepare_allocation_data(evaluation_end)
     Rails.logger.info "🗓️  [AGRR] Evaluation period: #{Date.current} to #{evaluation_end}"
     
-    field_cultivations = @cultivation_plan.field_cultivations.to_a
+    cultivation_plan_crops = @cultivation_plan.cultivation_plan_crops.to_a
+    Rails.logger.debug "🔍 [CultivationPlanOptimizer] cultivation_plan_crops count: #{cultivation_plan_crops.count}"
+    cultivation_plan_crops.each { |cpc| Rails.logger.debug "  - CultivationPlanCrop: #{cpc.name} (Crop ID: #{cpc.crop_id})" }
+    
     fields_data = []
     crops_data = []
     crops_collection = {}  # 作物の収集用（重複排除 + revenue_per_area計算用）
     
     # 第1パス: 全作物を収集
-    field_cultivations.each do |fc|
-      fc.start_optimizing!
+    cultivation_plan_crops.each do |cpc|
+      crop = cpc.crop
       
-      crop_info = fc.crop_info
-      
-      # Cropモデルを検索（関連データをeager load）
-      crop = Crop.includes(crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement])
-                 .find_by(
-                   name: crop_info[:name],
-                   variety: crop_info[:variety],
-                   is_reference: true
-                 )
-      
-      crop ||= Crop.includes(crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement])
-                   .find_by(
-                     name: crop_info[:name],
-                     variety: crop_info[:variety],
-                     user_id: @cultivation_plan.user_id
-                   )
-      
-      unless crop
-        error_message = "Crop not found: name='#{crop_info[:name]}', variety='#{crop_info[:variety]}'. " \
-                        "Please register the crop with detailed growth stages in the Crop management page before optimization."
-        Rails.logger.error "❌ [AGRR] #{error_message}"
-        raise StandardError, error_message
-      end
-      
-      Rails.logger.info "📚 [AGRR] Using Crop model (id: #{crop.id}, reference: #{crop.is_reference})"
+      Rails.logger.debug "🌾 [AGRR] Processing crop: #{crop.name} (ID: #{crop.id})"
       
       # 作物を収集（重複を避ける）
-      crop_key = "#{crop_info[:name]}_#{crop_info[:variety]}"
+      crop_key = "#{crop.name}_#{crop.variety}"
       unless crops_collection[crop_key]
         crops_collection[crop_key] = crop
       end
@@ -349,7 +151,7 @@ class CultivationPlanOptimizer
     
     # フィールドデータを作成（作物数と同じ数だけ）
     field_count.times do |i|
-      field_id = "field_#{i + 1}"
+      field_id = i + 1
       fields_data << {
         'field_id' => field_id,
         'name' => "圃場#{i + 1}",
