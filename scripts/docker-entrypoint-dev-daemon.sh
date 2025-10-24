@@ -165,7 +165,7 @@ else
     exit 1
 fi
 
-# メモリ監視を開始（環境変数で制御）
+# メモリ監視を開始（環境変数で制御、デフォルトは無効）
 if [ "${ENABLE_MEMORY_MONITOR}" = "true" ]; then
     echo "========================================="
     echo "Starting memory monitoring..."
@@ -221,7 +221,8 @@ if [ "${ENABLE_MEMORY_MONITOR}" = "true" ]; then
         echo ""
     fi
 else
-    echo "Memory monitoring disabled (set ENABLE_MEMORY_MONITOR=true to enable)"
+    echo "Memory monitoring disabled by default (set ENABLE_MEMORY_MONITOR=true to enable)"
+    echo "  This improves startup time. Enable only when debugging memory issues."
     MEMORY_MONITOR_PID=""
 fi
 

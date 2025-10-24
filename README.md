@@ -12,9 +12,16 @@ docker compose up
 
 # テスト実行
 docker compose run --rm test
+
+# メモリ監視レポート確認（必要時のみ有効化）
+# デフォルトでは無効（起動時間短縮のため）
+# 有効化: ENABLE_MEMORY_MONITOR=true docker compose up
+./scripts/view_memory_report.sh
 ```
 
 アクセス: http://localhost:3000
+
+> 💡 **メモリ監視はデフォルトで無効**（起動時間短縮のため）。必要時は `ENABLE_MEMORY_MONITOR=true docker compose up` で有効化。詳細は [メモリ監視クイックスタート](docs/MEMORY_MONITORING_QUICKSTART.md) を参照。
 
 ### デプロイ
 
@@ -71,6 +78,11 @@ docker compose run --rm test
 - [docs/development/ERROR_HANDLING_GUIDE.md](docs/development/ERROR_HANDLING_GUIDE.md) - エラーハンドリング
 - [docs/development/GOOGLE_OAUTH_SETUP.md](docs/development/GOOGLE_OAUTH_SETUP.md) - Google OAuth設定
 - [scripts/validate_feature.rb](scripts/validate_feature.rb) - 新機能の自動検証スクリプト
+
+**メモリ監視・プロファイリング:**
+- [docs/MEMORY_MONITORING_QUICKSTART.md](docs/MEMORY_MONITORING_QUICKSTART.md) - ⚡ クイックスタート（すぐ始める）
+- [docs/MEMORY_LEAK_DETECTION.md](docs/MEMORY_LEAK_DETECTION.md) - 📊 詳細ガイド
+- [docs/MEMORY_MONITORING.md](docs/MEMORY_MONITORING.md) - 🔧 実装詳細
 
 </details>
 
