@@ -31,6 +31,11 @@ us:
       create_failed: "Failed to create plan: %{errors}"
       not_found: "Crop plan not found."
     
+    messages:
+      crop_added: "Crop added."
+      field_added: "Field added."
+      field_removed: "Field removed."
+    
     new:
       title: "🌍 Select Your Growing Region"
       subtitle: "Choose the region where your farm is located"

@@ -344,10 +344,11 @@ module AgrrOptimization
     Rails.logger.info "⏱️ [PERF] DB読み込み完了: #{((perf_db_load - perf_start) * 1000).round(2)}ms"
     
     if moves.empty?
+      # 空の移動指示の場合は調整不要で成功
+      Rails.logger.info "ℹ️ [Adjust] 移動指示が空のため調整をスキップします"
       return {
-        success: false,
-        message: '移動指示がありません',
-        status: :bad_request
+        success: true,
+        message: '調整不要（移動指示なし）'
       }
     end
     
