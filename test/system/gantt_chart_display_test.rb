@@ -30,7 +30,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     @field = Field.create!(
       farm: @farm,
       user: @user,
-      name: 'テスト圃場1',
+      name: 'テスト1',
       area: 100.0
     )
     
@@ -127,7 +127,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     # Public計画のCultivationPlanFieldを作成
     @public_plan_field = CultivationPlanField.create!(
       cultivation_plan: @public_plan,
-      name: '圃場A',
+      name: 'A',
       area: 100.0,
       daily_fixed_cost: 0.0
     )

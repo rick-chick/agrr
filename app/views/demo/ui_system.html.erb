@@ -174,8 +174,8 @@
     
     async function testPrompt() {
       const result = await Dialog.prompt('名前を入力してください', {
-        defaultValue: '圃場1',
-        placeholder: '例: 圃場4'
+        defaultValue: '1',
+        placeholder: '例: 4'
       });
       document.getElementById('dialog-result').textContent = `Prompt: ${result.action} - 入力値: ${result.value || '(empty)'}`;
     }
@@ -277,8 +277,8 @@
       // ステップ1: 圃場名
       const nameResult = await Dialog.prompt('圃場名を入力してください', {
         title: '圃場の追加 (1/2)',
-        placeholder: '例: 圃場4',
-        defaultValue: '圃場4'
+        placeholder: '例: 4',
+        defaultValue: '4'
       });
       
       if (nameResult.action !== 'confirm' || !nameResult.value) {

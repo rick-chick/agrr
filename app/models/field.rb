@@ -22,7 +22,7 @@ class Field < ApplicationRecord
   # == Instance Methods ====================================================
   
   def display_name
-    name.presence || "圃場 ##{id}"
+    name.presence || "##{id}"
   end
 
   # Export field configuration for agrr CLI

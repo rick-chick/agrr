@@ -1755,10 +1755,10 @@ function addField() {
   }
   
   // ダイアログを表示して圃場名と面積を入力
-  const defaultFieldName = `圃場${ganttState.fieldGroups.length + 1}`;
+  const defaultFieldName = `${ganttState.fieldGroups.length + 1}`;
   console.log('📝 デフォルト圃場名:', defaultFieldName);
   
-  const fieldName = prompt('圃場名を入力してください（例: 圃場4）', defaultFieldName);
+  const fieldName = prompt('圃場名を入力してください（例: 4）', defaultFieldName);
   if (!fieldName) {
     console.log('⚠️ 圃場名が入力されなかったためキャンセル');
     return;
