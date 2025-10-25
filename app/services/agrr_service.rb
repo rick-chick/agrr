@@ -52,10 +52,11 @@ class AgrrService
   end
 
   # Calculate crop progress
-  def progress(crop_file:, start_date:, weather_file:)
+  def progress(crop_file:, start_date:, weather_file:, json: true)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['progress', '--crop-file', crop_file, '--start-date', start_date, '--weather-file', weather_file]
+    args += ['--format', 'json'] if json
 
     execute_command(args)
   end
