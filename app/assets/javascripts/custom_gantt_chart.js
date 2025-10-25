@@ -112,9 +112,15 @@ window.addEventListener('beforeunload', (event) => {
 });
 
 function initCustomGanttChart() {
+  console.log('🚀 [Gantt] initCustomGanttChart 開始');
+  
   const ganttContainer = document.getElementById('gantt-chart-container');
-  if (!ganttContainer) return;
+  if (!ganttContainer) {
+    console.warn('⚠️ [Gantt] gantt-chart-container が見つかりません');
+    return;
+  }
 
+  console.log('📊 [Gantt] データ属性を取得中...');
   // データ属性からJSONを取得
   const cultivationsRaw = JSON.parse(ganttContainer.dataset.cultivations || '[]');
   const fieldsDataRaw = JSON.parse(ganttContainer.dataset.fields || '[]');
@@ -123,6 +129,13 @@ function initCustomGanttChart() {
   ganttState.cultivation_plan_id = ganttContainer.dataset.cultivationPlanId;
   ganttState.plan_type = ganttContainer.dataset.planType || 'public';
   
+  console.log('📊 [Gantt] 生データ:', { 
+    cultivations: cultivationsRaw, 
+    fields: fieldsDataRaw,
+    planStartDate: ganttContainer.dataset.planStartDate,
+    planEndDate: ganttContainer.dataset.planEndDate
+  });
+  
   // 移動履歴と削除IDをリセット
   ganttState.moves = [];
   ganttState.removedIds = [];
@@ -130,23 +143,35 @@ function initCustomGanttChart() {
   // Action Cableサブスクリプションを設定
   setupCableSubscription(ganttContainer);
 
+  console.log('🔧 [Gantt] データ正規化開始...');
+  console.log('🔧 [Gantt] window.normalizeCultivationsData 存在確認:', typeof window.normalizeCultivationsData);
+  console.log('🔧 [Gantt] window.normalizeFieldsData 存在確認:', typeof window.normalizeFieldsData);
+  
   // 共通ユーティリティを使用してデータを正規化
-  ganttState.cultivationData = window.normalizeCultivationsData(cultivationsRaw);
-  const normalizedFields = window.normalizeFieldsData(fieldsDataRaw);
-  
-  console.log('🔧 初期化時の圃場情報（正規化前）:', fieldsDataRaw);
-  console.log('🔧 初期化時の圃場情報（正規化後）:', normalizedFields);
+  try {
+    ganttState.cultivationData = window.normalizeCultivationsData(cultivationsRaw);
+    const normalizedFields = window.normalizeFieldsData(fieldsDataRaw);
+    
+    console.log('🔧 初期化時の圃場情報（正規化前）:', fieldsDataRaw);
+    console.log('🔧 初期化時の圃場情報（正規化後）:', normalizedFields);
+    console.log('🔧 初期化時の栽培データ（正規化後）:', ganttState.cultivationData);
 
-  // 圃場情報をganttStateに保存（空の圃場も含む）
-  ganttState.fields = normalizedFields;
+    // 圃場情報をganttStateに保存（空の圃場も含む）
+    ganttState.fields = normalizedFields;
 
-  // 圃場ごとにグループ化（圃場情報も含める）
-  ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
-  
-  console.log('🔧 初期化時のグループ化結果:', ganttState.fieldGroups);
-  
-  // SVGガントチャートを描画
-  renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+    // 圃場ごとにグループ化（圃場情報も含める）
+    ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
+    
+    console.log('🔧 初期化時のグループ化結果:', ganttState.fieldGroups);
+    
+    // SVGガントチャートを描画
+    console.log('🎨 [Gantt] チャート描画開始...');
+    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+    console.log('✅ [Gantt] チャート描画完了');
+  } catch (error) {
+    console.error('❌ [Gantt] データ正規化エラー:', error);
+    console.error('❌ [Gantt] スタックトレース:', error.stack);
+  }
 }
 
 // Action Cableサブスクリプションを設定
@@ -160,14 +185,16 @@ function setupCableSubscription(ganttContainer) {
   if (ganttState.cableSubscription) {
     console.log('🔌 既存のAction Cableサブスクリプションを解除します');
     const channelName = ganttContainer.dataset.optimizationChannel || 'OptimizationChannel';
-    window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id, { channelName });
+    if (window.CableSubscriptionManager) {
+      window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id, { channelName });
+    }
     ganttState.cableSubscription = null;
   }
 
   // CableSubscriptionManagerが読み込まれていることを確認
   if (typeof window.CableSubscriptionManager === 'undefined') {
     console.error('❌ CableSubscriptionManager not loaded');
-    return;
+    throw new Error('CableSubscriptionManager is not loaded. Check asset loading order.');
   }
 
   console.log('📡 Action Cableサブスクリプションを設定中...');
@@ -184,6 +211,8 @@ function setupCableSubscription(ganttContainer) {
       },
       onReceived: (data) => {
         console.log('📬 最適化更新を受信:', data);
+        console.log('📬 受信データタイプ:', data.type);
+        console.log('📬 受信データ全体:', JSON.stringify(data, null, 2));
         handleOptimizationUpdate(data);
       }
     },
@@ -198,17 +227,19 @@ function handleOptimizationUpdate(data) {
   // 圃場追加の通知を処理
   if (data.type === 'field_added') {
     console.log('📊 圃場追加の通知を受信:', data.field);
+    console.log('📊 受信データ詳細:', JSON.stringify(data, null, 2));
     
     // ローディングオーバーレイを非表示
     hideLoadingOverlay();
     
     // データを再取得してチャートを更新
+    console.log('🔄 fetchAndUpdateChart()を呼び出します');
     fetchAndUpdateChart();
     return;
   }
 
   // ステータスが完了の場合
-  if (data.status === 'completed' || data.status === 'adjusted') {
+  if (data.status === 'completed' || data.status === 'adjusted' || (data.status === 'optimizing' && data.phase === 'completed')) {
     console.log('✅ 最適化が完了しました。データを更新します。');
     
     // ローディングオーバーレイを非表示
@@ -1813,8 +1844,10 @@ function addField() {
       console.log('✅ 圃場を追加しました');
       console.log('📊 追加された圃場:', data.field);
       
-      // Action Cable経由で更新を待機（圃場追加は最適化を伴わない）
-      // 成功時はAction Cableの更新後にフラグを解除
+      // ローディングオーバーレイを即座に非表示
+      hideLoadingOverlay();
+      
+      // Action Cable経由で圃場追加の更新を待機
       console.log('📡 Action Cable経由で圃場追加の更新を待機中...');
     } else {
       console.error('❌ 圃場の追加に失敗しました:', data.message);

@@ -4,6 +4,9 @@ us:
       retry_limit_exceeded: "Retry limit exceeded: %{error}"
       validation_error: "Data validation error: %{error}"
     
+    weather_prediction:
+      completed: "Weather prediction completed"
+    
     optimize_cultivation_plan:
       completed: "Optimization completed"
       failed: "Optimization failed"

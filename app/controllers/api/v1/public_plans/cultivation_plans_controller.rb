@@ -35,7 +35,7 @@ module Api
             Rails.logger.info "🌱 [Add Crop] 既存のfield_cultivations件数: #{@cultivation_plan.field_cultivations.count}"
             
             crop = Crop.find(params[:crop_id])
-            field_id = params[:field_id]
+            field_id = params[:field_id].to_i
             plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
             
             unless plan_field
@@ -308,7 +308,7 @@ module Api
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
             .find(params[:id])
           
-          field_id = params[:field_id]
+          field_id = params[:field_id].to_i
           
           plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
           
@@ -344,13 +344,10 @@ module Api
             total_area: @cultivation_plan.cultivation_plan_fields.sum(:area)
           )
           
-          # 再最適化を実行（栽培スケジュールの再調整）
-          OptimizeCultivationPlanJob.perform_later(@cultivation_plan.id)
-          
           render json: {
             success: true,
             message: '圃場を削除しました',
-            field_id: field_id_str
+            field_id: field_id
           }
         rescue ActiveRecord::RecordNotFound => e
           render json: {

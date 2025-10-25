@@ -34,13 +34,17 @@ class WeatherPredictionJob < ApplicationJob
     
     begin
       # 天気予測開始通知
+      Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_predicting_weather! for plan ##{cultivation_plan_id}"
       cultivation_plan.phase_predicting_weather!(channel_class)
+      Rails.logger.info "🌤️ [WeatherPredictionJob] phase_predicting_weather! completed for plan ##{cultivation_plan_id}"
       
       # 天気予測処理
+      Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction service for plan ##{cultivation_plan_id}"
       weather_prediction_service = WeatherPredictionService.new(cultivation_plan.farm)
       weather_prediction_service.predict_for_cultivation_plan(cultivation_plan)
       
       # 天気予測完了通知
+      Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_weather_prediction_completed! for plan ##{cultivation_plan_id}"
       cultivation_plan.phase_weather_prediction_completed!(channel_class)
       
       Rails.logger.info "✅ [WeatherPredictionJob] Weather prediction completed for plan ##{cultivation_plan_id}"

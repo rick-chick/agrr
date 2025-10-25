@@ -180,11 +180,16 @@ module Farms
       # バックグラウンドジョブとしてキューに入れる（daemon経由で高速実行）
       # 1年後までの日数を自動計算（nilを渡すとジョブ側で計算）
       begin
-        job = PredictWeatherDataJob.new
-        job.farm_id = @farm.id
-        job.days = nil  # 1年後まで（ジョブ側で自動計算）
-        job.model = 'lightgbm'
-        job.perform_later
+        # 農場単体での天気予測実行（計画作成とは独立）
+        # WebSocket通知は不要（単独実行のため）
+        PredictWeatherDataJob.perform_later(
+          farm_id: @farm.id,
+          days: nil,  # 1年後まで（ジョブ側で自動計算）
+          model: 'lightgbm',
+          target_end_date: nil,  # ジョブ側で自動計算
+          cultivation_plan_id: nil,  # 単独実行のため nil
+          channel_class: nil  # 単独実行のため nil
+        )
         
         Rails.logger.info "✅ [Farm##{@farm.id}] Weather prediction job queued"
         

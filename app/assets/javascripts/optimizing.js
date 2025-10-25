@@ -10,14 +10,33 @@
   let elapsedTimer = null;
   let startTime = null;
   let currentPlanId = null;
+  let cableManagerWaitCount = 0;
   
   function initOptimizingWebSocket() {
     // 最適化画面の要素を確認
     const container = document.querySelector('[data-optimizing-container]');
     
     if (!container) {
-      console.log('ℹ️ [Optimizing] Not on optimizing page, skipping WebSocket connection');
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', 'ℹ️ [Optimizing] Not on optimizing page, skipping WebSocket connection');
+      }
       cleanupSubscription();
+      return;
+    }
+    
+    // CableSubscriptionManagerの読み込みを待つ（最大50回、5秒間）
+    if (typeof window.CableSubscriptionManager === 'undefined') {
+      cableManagerWaitCount++;
+      if (cableManagerWaitCount > 50) {
+        if (window.ClientLogger) {
+          window.ClientLogger.log('error', '❌ [Optimizing] CableSubscriptionManager failed to load after 5 seconds');
+        }
+        return;
+      }
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', `⏳ [Optimizing] Waiting for CableSubscriptionManager to load... (${cableManagerWaitCount}/50)`);
+      }
+      setTimeout(initOptimizingWebSocket, 100);
       return;
     }
     
@@ -36,33 +55,44 @@
     const redirectUrl = container.dataset.redirectUrl;
     
     if (!cultivationPlanId) {
-      console.error('❌ [Optimizing] cultivation_plan_id not found');
+      if (window.ClientLogger) {
+        window.ClientLogger.log('error', '❌ [Optimizing] cultivation_plan_id not found');
+      }
       return;
     }
     
     if (!redirectUrl) {
-      console.error('❌ [Optimizing] redirect_url not found');
+      if (window.ClientLogger) {
+        window.ClientLogger.log('error', '❌ [Optimizing] redirect_url not found');
+      }
       return;
     }
 
     if (!channelName) {
-      console.error('❌ [Optimizing] data-channel-name not found on optimizing container');
+      if (window.ClientLogger) {
+        window.ClientLogger.log('error', '❌ [Optimizing] data-channel-name not found on optimizing container');
+      }
       // フォールバックせず即時エラーとし、誤接続を防ぐ
       return;
     }
     
     // 既に同じplan_idで接続している場合はスキップ
     if (currentPlanId === cultivationPlanId && subscription) {
-      console.log('ℹ️ [Optimizing] Already connected to plan:', cultivationPlanId);
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', `ℹ️ [Optimizing] Already connected to plan: ${cultivationPlanId}`);
+      }
       return;
     }
     
-    console.log(`🔌 [Optimizing] Connecting to ${channelName} for plan:`, cultivationPlanId);
+    if (window.ClientLogger) {
+      window.ClientLogger.log('info', `🔌 [Optimizing] Connecting to ${channelName} for plan: ${cultivationPlanId}`);
+    }
     currentPlanId = cultivationPlanId;
     
     // 既存の購読があれば解除
-    if (subscription) {
-      subscription.unsubscribe();
+    if (subscription && window.CableSubscriptionManager) {
+      const oldChannelName = channelName; // 現在のchannelNameを使用
+      window.CableSubscriptionManager.unsubscribe(cultivationPlanId, { channelName: oldChannelName });
       subscription = null;
     }
     
@@ -72,21 +102,20 @@
     // 経過時間タイマーを開始
     startElapsedTimer();
     
-    // ActionCableに購読（グローバルに利用可能）
-    if (typeof ActionCable === 'undefined') {
-      console.error('❌ [Optimizing] ActionCable is not loaded');
+    // CableSubscriptionManagerがグローバルで利用可能であることを確認
+    if (typeof window.CableSubscriptionManager === 'undefined') {
+      console.error('❌ [Optimizing] CableSubscriptionManager is not loaded');
       return;
     }
     
-    const consumer = ActionCable.createConsumer();
-    subscription = consumer.subscriptions.create(
-      { 
-        channel: channelName,
-        cultivation_plan_id: cultivationPlanId
-      },
+    // CableSubscriptionManagerを使ってサブスクリプションを作成
+    subscription = window.CableSubscriptionManager.subscribeToOptimization(
+      cultivationPlanId,
       {
-        connected() {
-          console.log(`✅ [Optimizing] Connected to ${channelName}`);
+        onConnected: () => {
+          if (window.ClientLogger) {
+            window.ClientLogger.log('info', `✅ [Optimizing] Connected to ${channelName}`);
+          }
           // タイムアウトタイマーをクリア
           if (fallbackTimer) {
             clearTimeout(fallbackTimer);
@@ -94,45 +123,48 @@
           }
         },
         
-        disconnected() {
-          console.log(`❌ [Optimizing] Disconnected from ${channelName}`);
+        onDisconnected: () => {
+          if (window.ClientLogger) {
+            window.ClientLogger.log('warn', `❌ [Optimizing] Disconnected from ${channelName}`);
+          }
           // 30秒後にフォールバック
           setupFallback();
         },
         
-        rejected() {
-          console.error(`❌ [Optimizing] Connection rejected by ${channelName}`);
-          console.error('🔍 [Optimizing] Debug: cultivation_plan_id =', cultivationPlanId);
-          
-          // 開発環境でのデバッグ情報
-          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.error('⚠️ [Optimizing] Development mode: This might be a session/auth mismatch issue');
-            console.error('💡 [Optimizing] Check server logs for detailed information');
+        onReceived: (data) => {
+          // サーバーログ通知機能を使用
+          if (window.ClientLogger) {
+            window.ClientLogger.log('info', `📨 [Optimizing] Received data: ${JSON.stringify(data, null, 2)}`);
+            window.ClientLogger.log('info', `📨 [Optimizing] Data type: ${typeof data}`);
+            window.ClientLogger.log('info', `📨 [Optimizing] Data keys: ${Object.keys(data).join(', ')}`);
           }
           
-          // エラーメッセージを表示（data属性から取得）
-          const errorMessage = container.dataset.errorMessage || 
-            'Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan.';
-          
-          alert(errorMessage);
-          
-          // 5秒後に自動リロード
-          setTimeout(() => {
-            console.log('🔄 Auto-reloading page...');
-            window.location.reload();
-          }, 5000);
-        },
-        
-        received(data) {
-          console.log('📨 [Optimizing] Received data:', JSON.stringify(data, null, 2));
+          // リダイレクト通知を処理
+          if (data.type === 'redirect') {
+            if (window.ClientLogger) {
+              window.ClientLogger.log('info', `🔄 [Optimizing] Received redirect notification: ${data.redirect_path}`);
+            }
+            handleCompleted(data.redirect_path);
+            return;
+          }
           
           // フェーズメッセージを更新
           if (data.phase_message) {
+            if (window.ClientLogger) {
+              window.ClientLogger.log('info', `📝 [Optimizing] Updating phase message: ${data.phase_message}`);
+            }
             updatePhaseMessage(data.phase_message, data.status === 'failed');
+          } else {
+            if (window.ClientLogger) {
+              window.ClientLogger.log('warn', '⚠️ [Optimizing] No phase_message in data');
+            }
           }
           
           // プログレスバーを更新
           if (data.progress !== undefined) {
+            if (window.ClientLogger) {
+              window.ClientLogger.log('info', `📊 [Optimizing] Updating progress: ${data.progress}`);
+            }
             updateProgressBar(data.progress);
           }
           
@@ -143,34 +175,76 @@
             handleFailed(data);
           } else if (data.status === 'adjusted') {
             // adjusted は結果ページでのみ処理（custom_gantt_chart.js）
-            console.log('ℹ️ [Optimizing] Received adjusted status (ignored on optimizing page)');
+            if (window.ClientLogger) {
+              window.ClientLogger.log('info', 'ℹ️ [Optimizing] Received adjusted status (ignored on optimizing page)');
+            }
           }
         }
-      }
+      },
+      { channelName }
     );
   }
   
   // フェーズメッセージを更新
   function updatePhaseMessage(message, isError = false) {
+    // サーバーログ通知機能を使用（フォールバック付き）
+    if (window.ClientLogger) {
+      window.ClientLogger.log('info', `📝 [Optimizing] updatePhaseMessage called: ${message}, isError: ${isError}`);
+    } else {
+      console.log(`📝 [Optimizing] updatePhaseMessage called: ${message}, isError: ${isError}`);
+    }
+    
     // public_plans用
     const phaseMessageElement = document.getElementById('phase-message');
+    if (window.ClientLogger) {
+      window.ClientLogger.log('info', `📝 [Optimizing] phase-message element: ${phaseMessageElement ? 'found' : 'not found'}`);
+    } else {
+      console.log(`📝 [Optimizing] phase-message element: ${phaseMessageElement ? 'found' : 'not found'}`);
+    }
     if (phaseMessageElement) {
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', `📝 [Optimizing] Updating phase-message element with: ${message}`);
+      } else {
+        console.log(`📝 [Optimizing] Updating phase-message element with: ${message}`);
+      }
       phaseMessageElement.textContent = message;
       if (isError) {
         phaseMessageElement.classList.add('error');
       } else {
         phaseMessageElement.classList.remove('error');
       }
+    } else {
+      if (window.ClientLogger) {
+        window.ClientLogger.log('warn', '⚠️ [Optimizing] phase-message element not found');
+      } else {
+        console.warn('⚠️ [Optimizing] phase-message element not found');
+      }
     }
     
     // plans用
     const progressMessageElement = document.getElementById('progressMessage');
+    if (window.ClientLogger) {
+      window.ClientLogger.log('info', `📝 [Optimizing] progressMessage element: ${progressMessageElement ? 'found' : 'not found'}`);
+    } else {
+      console.log(`📝 [Optimizing] progressMessage element: ${progressMessageElement ? 'found' : 'not found'}`);
+    }
     if (progressMessageElement) {
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', `📝 [Optimizing] Updating progressMessage element with: ${message}`);
+      } else {
+        console.log(`📝 [Optimizing] Updating progressMessage element with: ${message}`);
+      }
       progressMessageElement.textContent = message;
       if (isError) {
         progressMessageElement.style.color = 'var(--color-danger)';
       } else {
         progressMessageElement.style.color = '';
+      }
+    } else {
+      if (window.ClientLogger) {
+        window.ClientLogger.log('info', 'ℹ️ [Optimizing] progressMessage element not found (this is normal for public plans)');
+      } else {
+        console.log('ℹ️ [Optimizing] progressMessage element not found (this is normal for public plans)');
       }
     }
   }
@@ -329,12 +403,18 @@
       clearInterval(elapsedTimer);
       elapsedTimer = null;
     }
-    if (subscription) {
-      subscription.unsubscribe();
+    if (subscription && window.CableSubscriptionManager) {
+      const container = document.querySelector('[data-optimizing-container]');
+      if (container) {
+        const cultivationPlanId = container.dataset.cultivationPlanId;
+        const channelName = container.dataset.channelName;
+        window.CableSubscriptionManager.unsubscribe(cultivationPlanId, { channelName });
+      }
       subscription = null;
     }
     startTime = null;
     currentPlanId = null;
+    cableManagerWaitCount = 0;
   }
   
   // Turboのページ遷移時に実行

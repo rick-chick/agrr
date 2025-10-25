@@ -37,11 +37,22 @@ class CableSubscriptionManager {
 
     console.log(`📡 Subscribing to optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);
 
-    const subscription = this.getConsumer().subscriptions.create(
-      {
+    // チャンネル名に応じて正しいチャンネル設定を使用
+    let channelConfig;
+    if (channelName === "PlansOptimizationChannel") {
+      channelConfig = {
+        channel: "PlansOptimizationChannel",
+        cultivation_plan_id: cultivationPlanId
+      };
+    } else {
+      channelConfig = {
         channel: channelName,
         cultivation_plan_id: cultivationPlanId
-      },
+      };
+    }
+
+    const subscription = this.getConsumer().subscriptions.create(
+      channelConfig,
       {
         connected() {
           console.log(`✅ Connected to optimization channel: channel=${channelName} plan_id=${cultivationPlanId}`);

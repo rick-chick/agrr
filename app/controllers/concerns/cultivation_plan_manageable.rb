@@ -74,53 +74,6 @@ module CultivationPlanManageable
   end
   
   
-  # 計画作成の共通処理
-  def create_cultivation_plan(farm:, total_area:, crops:, redirect_path:, additional_params: {})
-    if crops.empty?
-      redirect_to send(select_crop_redirect_path), 
-                  alert: I18n.t("#{i18n_scope}.errors.select_crop")
-      return
-    end
-    
-    # セッションIDを取得
-    session_id = session.id.to_s
-    Rails.logger.info "🔑 [#{self.class.name}#create] Using session_id: #{session_id}"
-    
-    # 計画作成パラメータを構築
-    creator_params = {
-      farm: farm,
-      total_area: total_area,
-      crops: crops,
-      user: current_user,
-      session_id: session_id,
-      plan_type: plan_type
-    }.merge(additional_params)
-    
-    # Service で計画作成
-    result = CultivationPlanCreator.new(**creator_params).call
-    
-    if result.success?
-      Rails.logger.info "✅ [#{self.class.name}#create] CultivationPlan created: #{result.cultivation_plan.id}"
-      session[session_key] = { plan_id: result.cultivation_plan.id }
-      
-      # 天気予測が必要な場合は実行
-      if result.cultivation_plan.requires_weather_prediction?
-        Rails.logger.info "🌤️ [#{self.class.name}#create] Starting weather prediction for plan ##{result.cultivation_plan.id}"
-        job = WeatherPredictionJob.new
-        job.cultivation_plan_id = result.cultivation_plan.id
-        job.channel_class = channel_class
-        job.perform_later
-      end
-      
-      # リダイレクト先を決定
-      redirect_to send(redirect_path)
-    else
-      redirect_to send(redirect_path_method), 
-                  alert: I18n.t("#{i18n_scope}.errors.create_failed", errors: result.errors.join(', '))
-    end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to send(redirect_path_method), alert: I18n.t("#{i18n_scope}.errors.restart")
-  end
   
   private
   

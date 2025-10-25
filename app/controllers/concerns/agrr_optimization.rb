@@ -25,9 +25,10 @@ module AgrrOptimization
     
     Rails.logger.info "🔍 [Build Allocation] cultivations_by_field: #{cultivations_by_field.keys}"
     
-    cultivations_by_field.each do |field_id, cultivations|
-      field = cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
-      next unless field
+    # 全ての圃場を処理（field_cultivationsが0件でも含める）
+    cultivation_plan.cultivation_plan_fields.each do |field|
+      field_id = field.id
+      cultivations = cultivations_by_field[field_id] || []
       
       # exclude_idsに含まれる作物を除外
       filtered_cultivations = cultivations.reject { |fc| exclude_ids.include?(fc.id) }
@@ -234,6 +235,8 @@ module AgrrOptimization
           raise "圃場が見つかりません: field_id=#{field_id}"
         end
         
+        # allocationsが存在しないか空の場合は、このfield_scheduleをスキップ
+        next unless field_schedule['allocations']&.present?
         
         field_schedule['allocations']&.each do |allocation|
           
