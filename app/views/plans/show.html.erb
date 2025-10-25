@@ -98,15 +98,13 @@
 <!-- JavaScript is loaded from app/assets/javascripts/ -->
 <% content_for :javascripts do %>
   <%# ガントチャートデータ変換ユーティリティ（最初に読み込み） %>
-  <%= javascript_include_tag "gantt_data_utils", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "gantt_data_utils", "data-turbo-track": "reload" %>
   <%# 作物色管理システム %>
-  <%= javascript_include_tag "crop_colors", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_colors", "data-turbo-track": "reload" %>
   <%# ガントチャート（色パレット管理を含む） %>
-  <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "custom_gantt_chart", "data-turbo-track": "reload" %>
   <%# 作物パレットのドラッグ&ドロップ %>
-  <%= javascript_include_tag "crop_palette_drag", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_palette_drag", "data-turbo-track": "reload" %>
   <%# 作物パレットのスタイル適用 %>
-  <%= javascript_include_tag "crop_palette_style", defer: true, "data-turbo-track": "reload" %>
-  <%# その他の機能 %>
-  <%= javascript_include_tag "plans_show", defer: true, "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_palette_style", "data-turbo-track": "reload" %>
 <% end %>
