@@ -224,9 +224,9 @@ class CultivationPlanOptimizer
     crop_name = allocation['crop_name']
     crop_variety = allocation['variety']
     
-    # field_idから圃場名を取得（"field_1" -> "圃場1"）
+    # field_idから圃場名を取得（"field_1" -> "1"）
     field_number = field_id.split('_').last
-    field_name = "圃場#{field_number}"
+    field_name = field_number
     
     # 新しいFieldCultivationを作成
     field_cultivation = @cultivation_plan.field_cultivations.create!(

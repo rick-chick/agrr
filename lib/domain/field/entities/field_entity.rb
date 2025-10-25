@@ -21,7 +21,7 @@ module Domain
         end
 
         def display_name
-          name.presence || "圃場 ##{id}"
+          name.presence || "##{id}"
         end
 
         def coordinates

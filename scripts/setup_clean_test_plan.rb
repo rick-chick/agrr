@@ -16,9 +16,9 @@ cp = CultivationPlan.create!(
 )
 
 # 3つの圃場を作成
-field1 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト圃場1', area: 150.0, daily_fixed_cost: 10.0)
-field2 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト圃場2', area: 150.0, daily_fixed_cost: 10.0)
-field3 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト圃場3', area: 150.0, daily_fixed_cost: 10.0)
+field1 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト1', area: 150.0, daily_fixed_cost: 10.0)
+field2 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト2', area: 150.0, daily_fixed_cost: 10.0)
+field3 = CultivationPlanField.create!(cultivation_plan: cp, name: 'テスト3', area: 150.0, daily_fixed_cost: 10.0)
 
 # 作物を作成
 crop = Crop.find(7)  # ほうれん草

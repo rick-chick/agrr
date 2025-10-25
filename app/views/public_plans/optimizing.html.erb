@@ -14,7 +14,7 @@
         <span class="status-badge optimizing"><%= t('.status_badge') %></span>
       </div>
       <div class="compact-subtitle">
-        <%= @cultivation_plan.farm.name %> · <%= t('.crops_count', count: @cultivation_plan.field_cultivations.count, default: "%{count}種類の作物") %>
+        <%= @cultivation_plan.farm.name %> · <%= t('.crops_count', count: @cultivation_plan.cultivation_plan_crops.count, default: "%{count}種類の作物") %>
       </div>
     </div>
     

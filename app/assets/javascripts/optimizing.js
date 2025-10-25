@@ -295,15 +295,13 @@
         if (minutes > 0) {
           const minuteTemplate = elapsedTimeElementPublic.dataset.elapsedTimeMinuteTemplate;
           if (minuteTemplate) {
-            timeStr = minuteTemplate.replace('%{minutes}', minutes).replace('%{seconds}', seconds);
+            elapsedTimeElementPublic.textContent = minuteTemplate.replace('%{minutes}', minutes).replace('%{seconds}', seconds);
           } else {
-            timeStr = `${minutes}:${String(seconds).padStart(2, '0')}`;
+            elapsedTimeElementPublic.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
           }
         } else {
-          timeStr = seconds.toString();
+          elapsedTimeElementPublic.textContent = template.replace('%{time}', seconds.toString());
         }
-        
-        elapsedTimeElementPublic.textContent = template.replace('%{time}', timeStr);
       }
       
       // plans用の要素を更新

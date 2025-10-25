@@ -328,6 +328,23 @@ module CultivationPlanApi
       []
     end
     
+    # 型変換を追加（AGRRとの互換性のため）
+    moves = moves.map do |move|
+      # allocation_idを数値に変換
+      if move[:allocation_id].present?
+        move[:allocation_id] = move[:allocation_id].to_i
+      end
+      
+      # to_field_idを数値に変換
+      if move[:to_field_id].present?
+        move[:to_field_id] = move[:to_field_id].to_i
+      end
+      
+      move
+    end
+    
+    Rails.logger.info "🔧 [Adjust] Processed moves with type conversion: #{moves.inspect}"
+    
     # DBに保存された天気データを使って調整を実行
     result = adjust_with_db_weather(@cultivation_plan, moves)
     
