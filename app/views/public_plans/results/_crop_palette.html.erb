@@ -3,7 +3,7 @@
 
 <%
   # 現在の計画で使用されている作物
-  used_crop_ids = cultivation_plan.cultivation_plan_crops.map(&:agrr_crop_id).compact
+  used_crop_ids = cultivation_plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
   
   # 同じ地域の参照作物を取得
   available_crops = Crop.reference.where(region: cultivation_plan.farm.region).order(:name)
@@ -26,12 +26,11 @@
           <div class="crop-palette-card" 
                data-crop-id="<%= crop.id %>"
                data-crop-name="<%= crop.name %>"
-               data-crop-variety="<%= crop.variety %>"
-               data-agrr-crop-id="<%= crop.agrr_crop_id || crop.name %>">
+               data-crop-variety="<%= crop.variety %>">
             <!-- ガントカードと同じスタイルのバー -->
             <div class="crop-card-bar">
               <span class="crop-card-label"><%= crop.name %></span>
-              <% if used_crop_ids.include?(crop.id) || used_crop_ids.include?(crop.agrr_crop_id) %>
+              <% if used_crop_ids.include?(crop.id) %>
                 <span class="crop-card-badge"><%= t('public_plans.results.crop_palette.in_use') %></span>
               <% end %>
             </div>

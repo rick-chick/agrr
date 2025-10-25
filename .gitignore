@@ -18,6 +18,7 @@
 /tmp/*
 !/log/.keep
 !/tmp/.keep
+!/tmp/memory_monitoring/.keep
 
 # Ignore pidfiles, but keep the directory.
 /tmp/pids/*
@@ -77,3 +78,16 @@ db/cache_schema.rb.tmp
 
 # AWS CLI (if accidentally extracted)
 /aws/
+
+# Memory monitoring logs (keep directory structure)
+/tmp/memory_monitoring/*.csv
+/tmp/memory_monitoring/*.txt
+/tmp/memory_monitoring/*.log
+
+# AGRR debug files (keep directory structure)
+/tmp/debug/*
+!/tmp/debug/.keep
+
+# System test screenshots
+/tmp/screenshots/*
+!/tmp/screenshots/.keep

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Agrr
-  class WeatherGateway < BaseGateway
+  class WeatherGateway < BaseGatewayV2
     def fetch(latitude:, longitude:, days:)
       Rails.logger.info "🌤️  [AGRR] Fetching weather: lat=#{latitude}, lon=#{longitude}, days=#{days}"
       
       result = execute_command(
-        agrr_path,
+        'dummy_path', # Not used in V2
         'weather',
         '--location', "#{latitude},#{longitude}",
         '--days', days.to_s,

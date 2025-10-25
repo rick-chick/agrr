@@ -126,7 +126,7 @@ class CultivationPlanOptimizer
       Rails.logger.debug "🌾 [AGRR] Processing crop: #{crop.name} (ID: #{crop.id})"
       
       # 作物を収集（重複を避ける）
-      crop_key = "#{crop.name}_#{crop.variety}"
+      crop_key = crop.id.to_s
       unless crops_collection[crop_key]
         crops_collection[crop_key] = crop
       end

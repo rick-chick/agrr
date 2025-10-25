@@ -2,6 +2,7 @@
 
 require 'open3'
 require 'tempfile'
+require 'timeout'
 
 module Agrr
   class BaseGateway
@@ -11,22 +12,27 @@ module Agrr
     
     private
     
-    def execute_command(*args, parse_json: true)
+    def execute_command(*args, parse_json: true, timeout: 600)
       Rails.logger.info "🔧 [AGRR] Executing: #{args.join(' ')}"
+      Rails.logger.info "⏱️ [AGRR] Timeout: #{timeout}s"
       
-      stdout, stderr, status = Open3.capture3(*args)
+      stdout, stderr, status = Timeout.timeout(timeout) do
+        Open3.capture3(*args)
+      end
       
       # 実行結果を常に詳細ログ出力
       Rails.logger.info "📊 [AGRR] Exit code: #{status.exitstatus}"
       
       if stdout.present?
-        Rails.logger.info "📝 [AGRR] stdout (#{stdout.bytesize} bytes): #{stdout.first(500)}#{stdout.bytesize > 500 ? '...' : ''}"
+        preview = stdout[0...100]
+        Rails.logger.info "📝 [AGRR] stdout (#{stdout.bytesize} bytes): #{preview}#{stdout.bytesize > 100 ? '...' : ''}"
       else
         Rails.logger.info "📝 [AGRR] stdout: (empty)"
       end
       
       if stderr.present?
-        Rails.logger.warn "⚠️ [AGRR] stderr (#{stderr.bytesize} bytes): #{stderr}"
+        preview = stderr[0...100]
+        Rails.logger.warn "⚠️ [AGRR] stderr (#{stderr.bytesize} bytes): #{preview}#{stderr.bytesize > 100 ? '...' : ''}"
       else
         Rails.logger.info "📝 [AGRR] stderr: (empty)"
       end
@@ -67,6 +73,10 @@ module Agrr
       # AGRR CLIが警告メッセージをstdoutに出力する場合があるので、JSONの部分だけを抽出
       json_content = extract_json_from_output(stdout)
       JSON.parse(json_content)
+    rescue Timeout::Error => e
+      Rails.logger.error "❌ [AGRR] Command timed out after #{timeout}s"
+      Rails.logger.error "Command: #{args.join(' ')}"
+      raise ExecutionError, "Command timed out after #{timeout} seconds. The operation may require more time or optimization."
     rescue JSON::ParserError => e
       Rails.logger.error "❌ [AGRR] Failed to parse JSON: #{e.message}"
       Rails.logger.error "stdout (first 500 chars): #{stdout&.first(500)}"

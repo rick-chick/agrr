@@ -30,6 +30,20 @@ us:
     yes: "Yes"
     no: "No"
 
+  # Optimization messages
+  optimization:
+    messages:
+      completed: "Optimization completed"
+
+  # API error messages
+  api:
+    errors:
+      crop_not_found: "Crop information not found"
+      no_weather_data: "No weather data available"
+      no_cultivation_period: "Cultivation period not set"
+      weather_forecast_failed: "Failed to fetch weather forecast data"
+      data_fetch_failed: "Failed to fetch data"
+  
   # JavaScript messages
   js:
     crop_palette:

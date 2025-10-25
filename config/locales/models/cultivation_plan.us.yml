@@ -4,6 +4,7 @@ us:
       phases:
         fetching_weather: "Fetching weather data..."
         predicting_weather: "Predicting weather data..."
+        weather_prediction_completed: "Weather prediction completed"
         optimizing: "Optimizing..."
         completed: "Optimization completed"
       phase_failed:

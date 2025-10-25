@@ -3,13 +3,20 @@
 <div class="plans-wrapper">
   <div class="plans-container">
     <!-- ヘッダーアクション -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); gap: var(--space-3); flex-wrap: wrap;">
       <%= link_to plans_path, class: "btn-plans-secondary" do %>
         <%= t('plans.show.back_to_list') %>
       <% end %>
-      <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
-          class: "btn-plans-secondary",
-          data: { confirm: "次年度（#{@cultivation_plan.plan_year + 1}年度）にこの計画をコピーしますか？" } %>
+      <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <% if @cultivation_plan.status_pending? %>
+          <%= button_to t('plans.show.optimize_button'), optimize_plan_path(@cultivation_plan), method: :post,
+              class: "btn-plans-primary",
+              data: { confirm: "この計画を最適化しますか？" } %>
+        <% end %>
+        <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
+            class: "btn-plans-secondary",
+            data: { confirm: "次年度（#{@cultivation_plan.plan_year + 1}年度）にこの計画をコピーしますか？" } %>
+      </div>
     </div>
 
     <!-- サマリーカード -->
@@ -68,34 +75,38 @@
 
     <!-- ガントチャートカード -->
     <div class="content-card">
-      <h2 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-6);">
-        <%= t('plans.show.gantt.title') %>
-      </h2>
-      
-      <!-- ガントチャートコンテナ -->
-      <div id="gantt-chart-container" 
-           style="width: 100%; overflow-x: auto;"
-           data-plan-id="<%= @cultivation_plan.id %>"
-           data-cultivation-plan-id="<%= @cultivation_plan.id %>"
-           data-data-url="<%= data_api_v1_plans_cultivation_plan_path(@cultivation_plan) %>"></div>
-      
-      <!-- 詳細パネル -->
-      <div id="detail-panel" style="margin-top: var(--space-6); display: none;">
-        <div style="background: var(--color-gray-50); border-radius: var(--radius-lg); padding: var(--space-6);">
-          <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-4);">
-            栽培詳細
-          </h3>
-          <div id="detail-content">
-            <%= t('plans.show.detail.loading') %>
-          </div>
-        </div>
-      </div>
+      <%= render 'shared/gantt_chart', 
+                 cultivation_plan: @cultivation_plan,
+                 show_crop_palette: true,
+                 plan_type: 'private',
+                 data_url: data_api_v1_plans_cultivation_plan_path(@cultivation_plan),
+                 adjust_url: adjust_api_v1_plans_cultivation_plan_path(@cultivation_plan),
+                 add_field_url: add_field_api_v1_plans_cultivation_plan_path(@cultivation_plan),
+                 remove_field_url: remove_field_api_v1_plans_cultivation_plan_path(id: @cultivation_plan.id, field_id: 'PLACEHOLDER'),
+                 add_crop_url: add_crop_api_v1_plans_cultivation_plan_path(@cultivation_plan),
+                 optimization_channel: 'PlansOptimizationChannel',
+                 gantt_title: t('plans.show.gantt.title'),
+                 detail_title: t('plans.show.detail.title'),
+                 detail_loading: t('plans.show.detail.loading'),
+                 crop_palette_toggle_label: t('plans.show.crop_palette.toggle', default: '作物を追加'),
+                 crop_palette_title: t('plans.show.crop_palette.title', default: '作物を追加'),
+                 crop_palette_in_use_label: t('plans.show.crop_palette.in_use', default: '使用中') %>
     </div>
   </div>
 </div>
 
-<!-- JavaScript is loaded from app/assets/javascripts/plans_show.js -->
+<!-- JavaScript is loaded from app/assets/javascripts/ -->
 <% content_for :javascripts do %>
-  <%= javascript_include_tag "custom_gantt_chart", defer: true %>
-  <%= javascript_include_tag "plans_show", defer: true %>
+  <%# ガントチャートデータ変換ユーティリティ（最初に読み込み） %>
+  <%= javascript_include_tag "gantt_data_utils", defer: true, "data-turbo-track": "reload" %>
+  <%# 作物色管理システム %>
+  <%= javascript_include_tag "crop_colors", defer: true, "data-turbo-track": "reload" %>
+  <%# ガントチャート（色パレット管理を含む） %>
+  <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
+  <%# 作物パレットのドラッグ&ドロップ %>
+  <%= javascript_include_tag "crop_palette_drag", defer: true, "data-turbo-track": "reload" %>
+  <%# 作物パレットのスタイル適用 %>
+  <%= javascript_include_tag "crop_palette_style", defer: true, "data-turbo-track": "reload" %>
+  <%# その他の機能 %>
+  <%= javascript_include_tag "plans_show", defer: true, "data-turbo-track": "reload" %>
 <% end %>

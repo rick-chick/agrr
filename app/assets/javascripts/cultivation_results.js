@@ -46,8 +46,8 @@ function initGanttRowClick() {
   });
 }
 
-// 詳細パネルを表示
-async function showDetailPanel(fieldCultivationId, fieldName, cropName) {
+// 詳細パネルを表示（グローバル関数として公開）
+window.showDetailPanel = async function showDetailPanel(fieldCultivationId, fieldName, cropName) {
   const detailPanel = document.getElementById('detailPanel');
   const panelTitle = document.getElementById('panelTitle');
   const panelLoading = document.getElementById('panelLoading');
@@ -72,8 +72,17 @@ async function showDetailPanel(fieldCultivationId, fieldName, cropName) {
   });
   
   try {
+    // 計画タイプに応じてAPIエンドポイントを決定
+    const ganttContainer = document.getElementById('gantt-chart-container');
+    const planType = ganttContainer?.dataset.planType;
+    const apiEndpoint = planType === 'private' 
+      ? `/api/v1/plans/field_cultivations/${fieldCultivationId}`
+      : `/api/v1/public_plans/field_cultivations/${fieldCultivationId}`;
+    
+    console.log('🔗 [Detail Panel] API Endpoint:', apiEndpoint);
+    
     // APIからデータ取得
-    const response = await fetch(`/api/v1/public_plans/field_cultivations/${fieldCultivationId}`);
+    const response = await fetch(apiEndpoint);
     if (!response.ok) throw new Error(getI18nMessage('jsCultivationLoadError', 'Failed to retrieve data'));
     
     const data = await response.json();

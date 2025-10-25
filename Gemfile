@@ -87,4 +87,10 @@ group :test do
   
   # Code coverage
   gem "simplecov", require: false
+  
+  # Database cleanup for system tests
+  gem "database_cleaner-active_record"
+  
+  # Test data factories
+  gem "factory_bot_rails"
 end

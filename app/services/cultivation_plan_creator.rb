@@ -12,6 +12,9 @@ class CultivationPlanCreator
     @total_area = total_area
     @crops = crops
     @user = user
+    
+    Rails.logger.debug "🔍 [CultivationPlanCreator] crops count: #{@crops.count}"
+    @crops.each_with_index { |crop, i| Rails.logger.debug "  - Crop #{i+1}: #{crop.name} (ID: #{crop.id})" }
     @session_id = session_id
     @plan_type = plan_type
     @plan_year = plan_year
@@ -22,7 +25,7 @@ class CultivationPlanCreator
   
   def call
     ActiveRecord::Base.transaction do
-      create_plan_with_cultivations
+      create_cultivation_plan_and_relations
       Result.new(cultivation_plan: @cultivation_plan, errors: [])
     end
   rescue StandardError => e
@@ -30,10 +33,32 @@ class CultivationPlanCreator
     Rails.logger.error e.backtrace.join("\n")
     Result.new(cultivation_plan: nil, errors: [e.message])
   end
+
   
+  def create_cultivation_plan_and_relations
+    # CultivationPlanを作成
+    create_cultivation_plan
+    
+    # CultivationPlanCropを作成
+    create_cultivation_plan_crops
+    
+    # CultivationPlanFieldを作成
+    create_cultivation_plan_fields
+    
+    Rails.logger.info "✅ Added #{@cultivation_plan.cultivation_plan_fields.count} fields and #{@cultivation_plan.cultivation_plan_crops.count} crops to CultivationPlan ##{@cultivation_plan.id}"
+  end
+    
   private
   
-  def create_plan_with_cultivations
+  def fields_allocation
+    @fields_allocation ||= FieldsAllocator.new(@total_area, @crops).allocate
+  end
+  
+  def calculate_daily_cost(area)
+    area * 1.0
+  end
+  
+  def create_cultivation_plan
     # 基本属性
     plan_attrs = {
       farm: @farm,
@@ -42,62 +67,53 @@ class CultivationPlanCreator
       plan_type: @plan_type
     }
     
-    # public計画の場合はsession_idを追加
-    plan_attrs[:session_id] = @session_id if @plan_type == 'public'
+    plan_attrs[:session_id] = @session_id if @session_id.present?
     
-    # private計画の場合は計画情報を追加
     if @plan_type == 'private'
       plan_attrs[:plan_year] = @plan_year
       plan_attrs[:plan_name] = @plan_name
       plan_attrs[:planning_start_date] = @planning_start_date
       plan_attrs[:planning_end_date] = @planning_end_date
+    else
+      planning_dates = CultivationPlan.calculate_public_planning_dates
+      plan_attrs[:planning_start_date] = planning_dates[:start_date]
+      plan_attrs[:planning_end_date] = planning_dates[:end_date]
     end
     
     @cultivation_plan = CultivationPlan.create!(plan_attrs)
     
-    fields_allocation.each_with_index do |allocation, index|
-      create_field_cultivation(allocation, index)
+    auth_info = @plan_type == 'public' ? "session_id: #{@cultivation_plan.session_id}" : "user_id: #{@cultivation_plan.user_id}"
+    Rails.logger.info "✅ Created CultivationPlan ##{@cultivation_plan.id} (type: #{@plan_type}, #{auth_info})"
+    self
+  end
+
+  def create_cultivation_plan_crops
+    Rails.logger.debug "🔍 [CultivationPlanCreator] Creating CultivationPlanCrops for #{@crops.count} crops"
+    @crops.each do |crop|
+      Rails.logger.debug "🔍 [CultivationPlanCreator] Creating CultivationPlanCrop for: #{crop.name} (ID: #{crop.id})"
+      cultivation_plan_crop = CultivationPlanCrop.create!(
+        cultivation_plan: @cultivation_plan,
+        crop: crop,
+        name: crop.name,
+        variety: crop.variety,
+        area_per_unit: crop.area_per_unit,
+        revenue_per_area: crop.revenue_per_area
+      )
+      Rails.logger.debug "✅ [CultivationPlanCreator] Created CultivationPlanCrop for: #{crop.name} (ID: #{cultivation_plan_crop.id})"
     end
-    
-    Rails.logger.info "✅ Created CultivationPlan ##{@cultivation_plan.id} with #{@cultivation_plan.field_cultivations.count} field cultivations"
   end
-  
-  def create_field_cultivation(allocation, index)
-    crop = allocation[:crop]
-    
-    # 作付け計画専用の圃場を作成
-    plan_field = CultivationPlanField.create!(
-      cultivation_plan: @cultivation_plan,
-      name: "圃場#{index + 1}",
-      area: allocation[:area],
-      daily_fixed_cost: calculate_daily_cost(allocation[:area])
-    )
-    
-    # 作付け計画専用の作物を作成（スナップショット）
-    plan_crop = CultivationPlanCrop.create!(
-      cultivation_plan: @cultivation_plan,
-      name: crop.name,
-      variety: crop.variety,
-      area_per_unit: crop.area_per_unit,
-      revenue_per_area: crop.revenue_per_area,
-      agrr_crop_id: crop.id  # CropのIDを保存（後で元の作物を取得するため）
-    )
-    
-    # FieldCultivationを作成
-    FieldCultivation.create!(
-      cultivation_plan: @cultivation_plan,
-      cultivation_plan_field: plan_field,
-      cultivation_plan_crop: plan_crop,
-      area: allocation[:area]
-    )
-  end
-  
-  def fields_allocation
-    @fields_allocation ||= FieldsAllocator.new(@total_area, @crops).allocate
-  end
-  
-  def calculate_daily_cost(area)
-    area * 1.0  # 1円/㎡/日
+
+  def create_cultivation_plan_fields
+    Rails.logger.debug "🔍 [CultivationPlanCreator] Creating CultivationPlanFields for #{fields_allocation.count} allocations"
+    fields_allocation.each_with_index do |allocation, index|
+      field = CultivationPlanField.create!(
+        cultivation_plan: @cultivation_plan,
+        name: "#{index + 1}",
+        area: allocation[:area],
+        daily_fixed_cost: calculate_daily_cost(allocation[:area])
+      )
+      Rails.logger.debug "✅ [CultivationPlanCreator] Created CultivationPlanField ##{field.id} (area: #{allocation[:area]}, name: #{field.name})"
+    end
   end
 end
 

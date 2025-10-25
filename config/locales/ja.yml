@@ -30,6 +30,20 @@ ja:
     yes: "はい"
     no: "いいえ"
 
+  # 最適化関連メッセージ
+  optimization:
+    messages:
+      completed: "最適化が完了しました"
+
+  # API用エラーメッセージ
+  api:
+    errors:
+      crop_not_found: "作物情報が見つかりません"
+      no_weather_data: "気象データがありません"
+      no_cultivation_period: "栽培期間が設定されていません"
+      weather_forecast_failed: "天気予報データの取得に失敗しました"
+      data_fetch_failed: "データの取得に失敗しました"
+  
   # JavaScript用メッセージ
   js:
     crop_palette:

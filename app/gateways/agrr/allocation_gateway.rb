@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Agrr
-  class AllocationGateway < BaseGateway
+  class AllocationGateway < BaseGatewayV2
     def allocate(fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules: nil, objective: 'maximize_profit', max_time: nil, enable_parallel: false)
       Rails.logger.info "⚙️  [AGRR] Multi-field allocation: fields=#{fields.count}, crops=#{crops.count}"
       
@@ -27,7 +27,7 @@ module Agrr
       
       begin
         command_args = [
-          agrr_path,
+          'dummy_path', # Not used in V2
           'optimize',
           'allocate',
           '--fields-file', fields_file.path,

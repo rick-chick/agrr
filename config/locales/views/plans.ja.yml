@@ -20,15 +20,21 @@ ja:
       unauthorized: "この計画にアクセスする権限がありません。"
       plan_already_exists: "%{year}年の計画は既に存在します。"
       copy_failed: "計画のコピーに失敗しました: %{errors}"
+      delete_failed: "計画の削除に失敗しました。"
+      already_optimized: "この計画は既に最適化されています。"
       invalid_field_params: "圃場の情報が不正です。"
       cannot_remove_last_field: "最後の圃場は削除できません。"
+      cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
       field_not_found: "圃場が見つかりません。"
     
     messages:
+      plan_created: "計画を作成しました。"
       plan_copied: "%{year}年の計画をコピーしました。"
+      plan_deleted: "計画を削除しました。"
       crop_added: "作物を追加しました。"
       field_added: "圃場を追加しました。"
       field_removed: "圃場を削除しました。"
+      optimization_started: "最適化を開始しました。"
       reoptimization_started: "再最適化を開始しました。"
     
     index:
@@ -50,6 +56,8 @@ ja:
         fields_count: "%{count}圃場"
         view: "詳細を見る"
         copy: "次年度にコピー"
+        delete: "削除"
+        delete_confirm: "本当にこの計画を削除しますか？この操作は取り消せません。"
         created_at: "作成日"
     
     new:
@@ -107,6 +115,7 @@ ja:
     
     show:
       back_to_list: "← 計画一覧に戻る"
+      optimize_button: "最適化"
       copy_plan: "次年度にコピー"
       chart_title: "気象データと作物成長分析"
       loading_data: "データを読み込んでいます..."

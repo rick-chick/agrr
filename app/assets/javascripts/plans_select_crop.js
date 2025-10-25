@@ -20,6 +20,12 @@
       return;
     }
     
+    // 他の作物選択スクリプトが既に実行されている場合はスキップ
+    if (document.querySelector('.crop-check') && document.querySelector('.crop-check').hasAttribute('data-initialized')) {
+      console.log('⚠️  Another crop selection script already initialized, skipping');
+      return;
+    }
+    
     // 作物選択画面でのみ実行
     const checkboxes = document.querySelectorAll('.crop-check');
     console.log('📊 Found checkboxes:', checkboxes.length);
@@ -43,6 +49,11 @@
       console.error('❌ Missing required elements');
       return;
     }
+    
+    // 初期化済みマークを設定
+    checkboxes.forEach(checkbox => {
+      checkbox.setAttribute('data-initialized', 'true');
+    });
     
     function updateCounter() {
       const checkedCount = document.querySelectorAll('.crop-check:checked').length;

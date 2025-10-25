@@ -30,6 +30,20 @@ in:
     yes: "हां"
     no: "नहीं"
 
+  # अनुकूलन संदेश (Optimization messages)
+  optimization:
+    messages:
+      completed: "अनुकूलन पूर्ण हुआ"
+
+  # API त्रुटि संदेश (API error messages)
+  api:
+    errors:
+      crop_not_found: "फसल जानकारी नहीं मिली"
+      no_weather_data: "कोई मौसम डेटा उपलब्ध नहीं है"
+      no_cultivation_period: "खेती की अवधि निर्धारित नहीं है"
+      weather_forecast_failed: "मौसम पूर्वानुमान डेटा प्राप्त करने में विफल"
+      data_fetch_failed: "डेटा प्राप्त करने में विफल"
+  
   # JavaScript संदेश (JavaScript messages)
   js:
     crop_palette:

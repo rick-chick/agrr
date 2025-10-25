@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Agrr
-  class PredictionGateway < BaseGateway
+  class PredictionGateway < BaseGatewayV2
     def predict(historical_data:, days:, model: 'lightgbm')
       Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days using #{model.upcase} model"
       
@@ -32,26 +32,31 @@ module Agrr
         Rails.logger.info "📁 [AGRR] Output file: #{output_path}"
         
         # LightGBMの場合は、明示的に全ての気温メトリックを指定
+        # 予測処理は時間がかかるため、タイムアウトを30分に設定
+        prediction_timeout = 1800  # 30 minutes
+        
         if model == 'lightgbm'
           execute_command(
-            agrr_path,
+            'dummy_path', # Not used in V2
             'predict',
             '--input', input_file.path,
             '--output', output_path,
             '--days', days.to_s,
             '--model', model,
             '--metrics', 'temperature,temperature_max,temperature_min',
-            parse_json: false
+            parse_json: false,
+            timeout: prediction_timeout
           )
         else
           execute_command(
-            agrr_path,
+            'dummy_path', # Not used in V2
             'predict',
             '--input', input_file.path,
             '--output', output_path,
             '--days', days.to_s,
             '--model', model,
-            parse_json: false
+            parse_json: false,
+            timeout: prediction_timeout
           )
         end
         
@@ -75,7 +80,8 @@ module Agrr
         end
         
         raw_result = JSON.parse(output_content)
-        Rails.logger.info "📊 [AGRR] Raw predictions count: #{raw_result['predictions']&.count || 0}"
+        predictions_count = raw_result['predictions']&.count || 0
+        Rails.logger.info "📊 [AGRR] Raw predictions count: #{predictions_count}"
         
         # AGRR予測結果を完全な天気データ形式に変換
         transformed_result = transform_predictions_to_weather_data(raw_result, historical_data)
@@ -117,16 +123,12 @@ module Agrr
           predicted_temp_mean = prediction['temperature'] || prediction['predicted_value']
           temp_max = prediction['temperature_max']
           temp_min = prediction['temperature_min']
-          
-          Rails.logger.debug "🆕 [AGRR] Using multi-metric predictions (temp_max: #{temp_max}, temp_min: #{temp_min})"
         else
           # ❌ 従来フォーマット（predicted_valueのみ）
           # 平均気温から最高気温・最低気温を推定（飽和する）
           predicted_temp_mean = prediction['predicted_value']
           temp_max = predicted_temp_mean + stats[:temp_range_half]
           temp_min = predicted_temp_mean - stats[:temp_range_half]
-          
-          Rails.logger.debug "📊 [AGRR] Using legacy format (estimated temp_max/min)"
         end
         
         {

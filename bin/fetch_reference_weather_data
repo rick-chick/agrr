@@ -53,12 +53,12 @@ class ColorLogger
   end
 end
 
-# agrrコマンドでJMAから天気データを取得
+# agrr daemon clientでJMAから天気データを取得
 def fetch_weather_from_jma(latitude, longitude)
-  agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
+  agrr_client_path = Rails.root.join('bin', 'agrr_client').to_s
   
-  unless File.exist?(agrr_path)
-    ColorLogger.error("agrrバイナリが見つかりません: #{agrr_path}")
+  unless File.exist?(agrr_client_path)
+    ColorLogger.error("agrr clientが見つかりません: #{agrr_client_path}")
     return nil
   end
   
@@ -67,7 +67,7 @@ def fetch_weather_from_jma(latitude, longitude)
   end_date = Date.today
   
   command = [
-    agrr_path,
+    agrr_client_path,
     'weather',
     '--location', "#{latitude},#{longitude}",
     '--start-date', start_date.to_s,

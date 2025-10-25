@@ -36,6 +36,9 @@ module ActiveSupport
     # Include AGRR mock helper
     include AgrrMockHelper
     
+    # Include FactoryBot syntax methods
+    include FactoryBot::Syntax::Methods
+    
     # Run tests in parallel with specified workers
     # 並列テストはPARALLEL_TESTS環境変数で制御
     # デフォルトでは無効（SimpleCovのため）
@@ -44,7 +47,7 @@ module ActiveSupport
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     # フィクスチャの外部キー制約違反を避けるため、コメントアウト
-    # 必要に応じて各テストで個別にロード
+    # FactoryBotを使用してテストデータを作成
     # fixtures :all
 
     # テスト開始前にアノニマスユーザーを作成
@@ -76,25 +79,20 @@ module ActiveSupport
     end
 
     def create_authenticated_user
-      user = User.create!(
-        email: 'test@example.com',
-        name: 'Test User',
-        google_id: "google_#{SecureRandom.hex(8)}",
-        avatar_url: 'dev-avatar.svg'
-      )
-      session = Session.create_for_user(user)
+      user = create(:user)
+      session = create(:session, user: user)
       cookies[:session_id] = session.session_id
       user
     end
 
     def sign_in_as(user)
-      session = Session.create_for_user(user)
+      session = create(:session, user: user)
       cookies[:session_id] = session.session_id
     end
     
     # IntegrationTest用のヘルパーメソッド
     def create_session_for(user)
-      session = Session.create_for_user(user)
+      session = create(:session, user: user)
       session.session_id
     end
     

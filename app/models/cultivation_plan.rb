@@ -28,6 +28,7 @@ class CultivationPlan < ApplicationRecord
     failed: 'failed'
   }, default: 'pending', prefix: true
   
+  # @deprecated plan_typeは非推奨です。代わりにrequires_weather_prediction?メソッドを使用してください
   enum :plan_type, {
     public: 'public',
     private: 'private'
@@ -60,37 +61,39 @@ class CultivationPlan < ApplicationRecord
   
   def complete!
     update!(status: :completed)
-    broadcast_phase_update
   end
   
   def fail!(error_message)
     update!(status: :failed, error_message: error_message)
-    broadcast_phase_update
   end
   
   # フェーズ更新メソッド
-  def update_phase!(phase, message)
+  def update_phase!(phase, message, channel_class)
     update!(optimization_phase: phase, optimization_phase_message: message)
-    broadcast_phase_update
+    broadcast_phase_update(channel_class)
   end
   
-  def phase_fetching_weather!
-    update_phase!('fetching_weather', I18n.t('models.cultivation_plan.phases.fetching_weather'))
+  def phase_fetching_weather!(channel_class)
+    update_phase!('fetching_weather', I18n.t('models.cultivation_plan.phases.fetching_weather'), channel_class)
   end
   
-  def phase_predicting_weather!
-    update_phase!('predicting_weather', I18n.t('models.cultivation_plan.phases.predicting_weather'))
+  def phase_predicting_weather!(channel_class)
+    update_phase!('predicting_weather', I18n.t('models.cultivation_plan.phases.predicting_weather'), channel_class)
   end
   
-  def phase_optimizing!
-    update_phase!('optimizing', I18n.t('models.cultivation_plan.phases.optimizing'))
+  def phase_weather_prediction_completed!(channel_class)
+    update_phase!('weather_prediction_completed', I18n.t('models.cultivation_plan.phases.weather_prediction_completed'), channel_class)
   end
   
-  def phase_completed!
-    update_phase!('completed', I18n.t('models.cultivation_plan.phases.completed'))
+  def phase_optimizing!(channel_class)
+    update_phase!('optimizing', I18n.t('models.cultivation_plan.phases.optimizing'), channel_class)
   end
   
-  def phase_failed!(phase_name)
+  def phase_completed!(channel_class)
+    update_phase!('completed', I18n.t('models.cultivation_plan.phases.completed'), channel_class)
+  end
+  
+  def phase_failed!(phase_name, channel_class)
     message = case phase_name
               when 'fetching_weather'
                 I18n.t('models.cultivation_plan.phase_failed.fetching_weather')
@@ -101,7 +104,7 @@ class CultivationPlan < ApplicationRecord
               else
                 I18n.t('models.cultivation_plan.phase_failed.default')
               end
-    update_phase!('failed', message)
+    update_phase!('failed', message, channel_class)
   end
   
   def this_year_cultivations
@@ -122,11 +125,27 @@ class CultivationPlan < ApplicationRecord
     end
   end
   
+  # 天気予測が必要かどうかを判定
+  # @return [Boolean] 天気予測が必要な場合はtrue
+  def requires_weather_prediction?
+    # 現在は全ての計画で天気予測が必要
+    # 将来的にフラグベースの制御に変更可能
+    true
+  end
+  
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
     {
-      start_date: Date.new(plan_year - 1, 1, 1),
+      start_date: Date.new(plan_year, 1, 1),
       end_date: Date.new(plan_year + 1, 12, 31)
+    }
+  end
+
+  # public計画用の計画期間を計算（今日から来年の12月31日まで）
+  def self.calculate_public_planning_dates
+    {
+      start_date: Date.current,
+      end_date: Date.new(Date.current.year + 1, 12, 31)
     }
   end
   
@@ -141,10 +160,12 @@ class CultivationPlan < ApplicationRecord
   
   def check_optimization_completion
     return unless status_optimizing?
+    # 空の配列の場合は完了しない
+    return if field_cultivations.empty?
     complete! if field_cultivations.all?(&:status_completed?)
   end
   
-  def broadcast_phase_update
+  def broadcast_phase_update(channel_class)
     payload = {
       status: status,
       progress: optimization_progress,
@@ -153,11 +174,8 @@ class CultivationPlan < ApplicationRecord
       message: optimization_phase_message
     }
 
-    if plan_type_private?
-      PlansOptimizationChannel.broadcast_to(self, payload)
-    else
-      OptimizationChannel.broadcast_to(self, payload)
-    end
+    channel_class.broadcast_to(self, payload)
+    Rails.logger.info "📡 [CultivationPlan##{id}] Broadcast phase update: #{optimization_phase}"
   rescue => e
     Rails.logger.error "❌ Broadcast phase update failed for plan ##{id}: #{e.message}"
     # ブロードキャスト失敗しても処理は続行

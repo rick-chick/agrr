@@ -22,7 +22,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
-      - /app/public/assets  # Propshaftアセットはコンテナ内で動的生成（ホストと共有しない）
+      - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
@@ -61,7 +61,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
-      - /app/public/assets  # Propshaftアセットはコンテナ内で動的生成（ホストと共有しない）
+      - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
@@ -100,15 +100,48 @@ services:
       - SELENIUM_PORT=4444
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
-      - USE_AGRR_DAEMON=false  # テスト時はdaemonを使わず直接CLI実行
+      - USE_AGRR_DAEMON=false  # 通常のテストではdaemonを使用しない
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
       - 8.8.4.4
     profiles:
       - test
-    depends_on:
-      - selenium
+    # depends_on:
+    #   - selenium  # Seleniumは統合テストでのみ必要
+
+  # Integration test environment (統合テスト専用 - デーモン起動)
+  test-integration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+    entrypoint: ["/app/scripts/docker-entrypoint-test-integration.sh"]
+    volumes:
+      - .:/app
+      - bundle_data:/usr/local/bundle
+      - bundle_cache:/usr/local/bundle/cache
+    tmpfs:
+      - /app/storage:mode=777  # テスト専用の一時ストレージ（開発環境と完全分離）
+      - /app/tmp:mode=777
+    environment:
+      - RAILS_ENV=test
+      - DATABASE_URL=sqlite3:storage/test.sqlite3
+      - SELENIUM_HOST=selenium
+      - SELENIUM_PORT=4444
+      - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
+      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
+      - USE_AGRR_DAEMON=true  # 統合テストではdaemonを使用
+    command: bash -c "tail -f /dev/null"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    profiles:
+      - test-integration
+    # depends_on:
+    #   - selenium  # Seleniumは統合テストでのみ必要
 
   # Selenium for system tests
   selenium:

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Agrr
-  class ProgressGateway < BaseGateway
+  class ProgressGateway < BaseGatewayV2
     # agrr progress コマンドを実行して作物の成長進捗を計算
     # @param crop [Crop] 作物モデル
     # @param start_date [Date] 栽培開始日
@@ -29,7 +29,7 @@ module Agrr
       
       begin
         command_args = [
-          agrr_path,
+          'dummy_path', # Not used in V2
           'progress',
           '--crop-file', crop_file.path,
           '--start-date', start_date.to_s,

@@ -40,36 +40,69 @@ class ColorLogger
   end
 end
 
-# Fetch crop info from agrr command
-def fetch_crop_info_from_agrr(crop_name)
-  agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
+# Fetch crop info from agrr daemon client (with retry logic)
+def fetch_crop_info_from_agrr(crop_name, max_retries: 3)
+  agrr_client_path = Rails.root.join('bin', 'agrr_client').to_s
   command = [
-    agrr_path,
+    agrr_client_path,
     'crop',
     '--query', crop_name,
     '--json'
   ]
 
-  stdout, stderr, status = Open3.capture3(*command)
+  max_retries.times do |retry_count|
+    attempt = retry_count + 1
+    
+    begin
+      stdout, stderr, status = Open3.capture3(*command)
 
-  unless status.success?
-    ColorLogger.error("agrr command failed: #{stderr}")
-    return nil
-  end
+      unless status.success?
+        error_msg = stderr.strip
+        
+        # 一時的なネットワークエラーや圧縮エラーの場合はリトライ
+        if (error_msg.include?('decompressing') || error_msg.include?('Connection') || 
+            error_msg.include?('timeout') || error_msg.include?('Network')) && attempt < max_retries
+          
+          sleep_time = 2 ** attempt
+          ColorLogger.warning("Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}. Retrying in #{sleep_time}s...")
+          sleep(sleep_time)
+          next
+        end
+        
+        ColorLogger.error("agrr command failed after #{attempt} attempts: #{error_msg}")
+        return nil
+      end
 
-  parsed_data = JSON.parse(stdout)
-  
-  if parsed_data['success'] == false
-    ColorLogger.error("agrr returned error: #{parsed_data['error']}")
-    return nil
+      parsed_data = JSON.parse(stdout)
+      
+      if parsed_data['success'] == false
+        ColorLogger.error("agrr returned error: #{parsed_data['error']}")
+        return nil
+      end
+      
+      if attempt > 1
+        ColorLogger.success("Succeeded after #{attempt} attempts")
+      end
+      
+      return parsed_data
+      
+    rescue JSON::ParserError => e
+      ColorLogger.error("JSON parse error: #{e.message}")
+      return nil
+    rescue => e
+      if attempt < max_retries
+        sleep_time = 2 ** attempt
+        ColorLogger.warning("Error (attempt #{attempt}/#{max_retries}): #{e.message}. Retrying in #{sleep_time}s...")
+        sleep(sleep_time)
+        next
+      end
+      
+      ColorLogger.error("Error after #{attempt} attempts: #{e.message}")
+      return nil
+    end
   end
   
-  parsed_data
-rescue JSON::ParserError => e
-  ColorLogger.error("JSON parse error: #{e.message}")
-  nil
-rescue => e
-  ColorLogger.error("Error: #{e.message}")
+  ColorLogger.error("Failed to fetch crop info after #{max_retries} attempts")
   nil
 end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Agrr
-  class AdjustGateway < BaseGateway
+  class AdjustGateway < BaseGatewayV2
     # agrr optimize adjust コマンドを実行して既存の割り当てを手修正
     # @param current_allocation [Hash] 現在の割り当てデータ（agrr optimize allocateの出力形式）
     # @param moves [Array<Hash>] 移動指示のリスト
@@ -53,7 +53,7 @@ module Agrr
       
       begin
         command_args = [
-          agrr_path,
+          'dummy_path', # Not used in V2
           'optimize',
           'adjust',
           '--current-allocation', allocation_file.path,
@@ -93,6 +93,7 @@ module Agrr
         Rails.logger.info "⏱️ [PERF Gateway] Pythonコマンド実行完了: #{((perf_after_exec - perf_before_exec) * 1000).round(2)}ms"
         
         perf_before_parse = Time.current
+        # BaseGatewayV2のexecute_commandは既にJSONをパース済み
         parsed = parse_adjust_result(result)
         perf_after_parse = Time.current
         Rails.logger.info "⏱️ [PERF Gateway] 結果パース完了: #{((perf_after_parse - perf_before_parse) * 1000).round(2)}ms"

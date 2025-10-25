@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_051123) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_24_105813) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -58,10 +58,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_051123) do
     t.datetime "updated_at", null: false
     t.float "area_per_unit"
     t.float "revenue_per_area"
-    t.string "agrr_crop_id"
     t.text "groups"
     t.string "region"
-    t.index ["agrr_crop_id"], name: "index_crops_on_agrr_crop_id"
     t.index ["region"], name: "index_crops_on_region"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
@@ -72,9 +70,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_051123) do
     t.string "variety"
     t.float "area_per_unit"
     t.float "revenue_per_area"
-    t.string "agrr_crop_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "crop_id"
+    t.index ["crop_id"], name: "index_cultivation_plan_crops_on_crop_id"
     t.index ["cultivation_plan_id"], name: "index_cultivation_plan_crops_on_cultivation_plan_id"
   end
 
@@ -328,6 +327,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_051123) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "crop_stages", "crops"
   add_foreign_key "crops", "users"
+  add_foreign_key "cultivation_plan_crops", "crops"
   add_foreign_key "cultivation_plan_crops", "cultivation_plans"
   add_foreign_key "cultivation_plan_fields", "cultivation_plans"
   add_foreign_key "cultivation_plans", "farms"

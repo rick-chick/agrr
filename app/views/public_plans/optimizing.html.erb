@@ -1,7 +1,10 @@
 <%# encoding: UTF-8 %>
 <div class="public-plans-wrapper pb-0" 
+     data-optimizing-container
      data-cultivation-plan-id="<%= @cultivation_plan.id %>"
-     data-optimization-error-message="<%= t('.error_message') %>">
+     data-channel-name="OptimizationChannel"
+     data-redirect-url="<%= results_public_plans_path %>"
+     data-error-message="<%= t('.error_message') %>">
   <div class="free-plans-container">
     <!-- Compact Header -->
     <div class="compact-header-card">
@@ -60,3 +63,6 @@
   </div>
 </div>
 
+<!-- JavaScript is loaded from app/assets/javascripts/optimizing.js (共通) -->
+<%= javascript_include_tag "actioncable", defer: true %>
+<%= javascript_include_tag "optimizing", defer: true %>

@@ -4,6 +4,9 @@ module Api
   module V1
     module PublicPlans
       class CultivationPlansController < ApplicationController
+        include CultivationPlanApi
+        include AgrrOptimization
+        
         skip_before_action :verify_authenticity_token, only: [:adjust, :data, :add_crop, :add_field, :remove_field]
         skip_before_action :authenticate_user!, only: [:adjust, :data, :add_crop, :add_field, :remove_field]
         
@@ -13,7 +16,6 @@ module Api
         # 【新規作物追加のフロー】
         # 1. CultivationPlanCropを作成または取得（作物マスタデータ）
         # 2. action: 'add'のmoveを作成
-        #    - allocation_idはダミー値を設定（agrr.coreが自動生成して置き換える）
         #    - crop_id, to_field_id, to_start_date, to_areaを指定
         # 3. agrr optimize adjustを実行
         #    - current_allocationには既存の作物のみ
@@ -25,34 +27,42 @@ module Api
           Rails.logger.info "🌱 [Add Crop] ========== START =========="
           Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}, field_id: #{params[:field_id]}, start_date: #{params[:start_date]}"
           
-          @cultivation_plan = CultivationPlan
-            .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
-            .find(params[:id])
-          
-          Rails.logger.info "🌱 [Add Crop] 既存のfield_cultivations件数: #{@cultivation_plan.field_cultivations.count}"
-          
-          crop = Crop.find(params[:crop_id])
-          field_id_str = params[:field_id] # "field_123" 形式
-          field_id_num = field_id_str.gsub('field_', '').to_i
-          plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id_num }
-          
-          unless plan_field
+          begin
+            @cultivation_plan = CultivationPlan
+              .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
+              .find(params[:id])
+            
+            Rails.logger.info "🌱 [Add Crop] 既存のfield_cultivations件数: #{@cultivation_plan.field_cultivations.count}"
+            
+            crop = Crop.find(params[:crop_id])
+            field_id = params[:field_id]
+            plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
+            
+            unless plan_field
+              return render json: {
+                success: false,
+                message: '指定された圃場が見つかりません'
+              }, status: :not_found
+            end
+          rescue ActiveRecord::RecordNotFound => e
+            Rails.logger.error "❌ [Add Crop] Record not found: #{e.message}"
             return render json: {
               success: false,
-              message: '指定された圃場が見つかりません'
+              message: "データが見つかりません: #{e.message}"
             }, status: :not_found
+          rescue => e
+            Rails.logger.error "❌ [Add Crop] Unexpected error: #{e.message}"
+            Rails.logger.error e.backtrace.join("\n")
+            return render json: {
+              success: false,
+              message: "予期しないエラーが発生しました: #{e.message}"
+            }, status: :internal_server_error
           end
           
           # 同じ作物がすでにcultivation_plan_cropsに存在するか確認
-          # agrr_crop_idが存在する場合はそれで一致判定、なければ名前と品種で判定
+          # crop_idで一致判定
           plan_crop = @cultivation_plan.cultivation_plan_crops.find do |pc|
-            if pc.agrr_crop_id.present? && crop.agrr_crop_id.present?
-              pc.agrr_crop_id == crop.agrr_crop_id
-            elsif pc.agrr_crop_id.present?
-              pc.agrr_crop_id == crop.id
-            else
-              pc.name == crop.name && pc.variety == crop.variety
-            end
+            pc.crop_id == crop.id
           end
           
           # 存在しない場合は新規作成（作物種類の制限をチェック）
@@ -72,31 +82,28 @@ module Api
             end
             
             plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
+              crop: crop,  # 元のCropへの参照
               name: crop.name,
               variety: crop.variety,
               area_per_unit: crop.area_per_unit,
-              revenue_per_area: crop.revenue_per_area,
-              agrr_crop_id: crop.id
+              revenue_per_area: crop.revenue_per_area
             )
           end
           
           start_date = Date.parse(params[:start_date])
           
-          # ⭐ 現在の割り当てをAGRR形式に構築（既存の作物のみ）
-          # 新規作物はmovesのaction: 'add'で追加するため、ここには含めない
+          # 現在の割り当てを構築
           current_allocation = build_current_allocation(@cultivation_plan)
           
-          # ⭐ 新規作物追加のmoveを作成（action: 'add'）
-          # allocation_idはダミー値（agrr.coreが自動生成して置き換える）
-          # crop_idはcrops.jsonと一致させる必要がある（plan_crop.agrr_crop_id || plan_crop.name）
+          # 新規作物追加のmoveを作成
           moves = [
             {
-              allocation_id: "new_#{Time.current.to_i}",  # ダミーID（agrr.coreが置き換える）
+              allocation_id: nil,
               action: 'add',
-              crop_id: plan_crop.agrr_crop_id || plan_crop.name,
-              to_field_id: field_id_str,
+              crop_id: crop.id.to_s,  # Rails側のcrop.idを使用
+              to_field_id: field_id,
               to_start_date: start_date.to_s,
-              to_area: crop.area_per_unit || 1.0,
+              to_area: crop.area_per_unit,
               variety: crop.variety
             }
           ]
@@ -194,12 +201,27 @@ module Api
               message: user_message,
               technical_details: e.message # デバッグ用
             }, status: :internal_server_error
+          rescue => e
+            Rails.logger.error "❌ [Add Crop] Unexpected error in optimization: #{e.message}"
+            Rails.logger.error e.backtrace.join("\n")
+            render json: {
+              success: false,
+              message: "最適化処理中にエラーが発生しました: #{e.message}"
+            }, status: :internal_server_error
           end
         rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.error "❌ [Add Crop] Record not found: #{e.message}"
           render json: {
             success: false,
             message: "データが見つかりません: #{e.message}"
           }, status: :not_found
+        rescue => e
+          Rails.logger.error "❌ [Add Crop] Unexpected error: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          render json: {
+            success: false,
+            message: "予期しないエラーが発生しました: #{e.message}"
+          }, status: :internal_server_error
         end
         
         # POST /api/v1/public_plans/cultivation_plans/:id/add_field
@@ -209,8 +231,8 @@ module Api
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
             .find(params[:id])
           
-          field_name = params[:field_name] || "圃場#{@cultivation_plan.cultivation_plan_fields.count + 1}"
-          field_area = params[:field_area]&.to_f || 100.0
+          field_name = params[:field_name]
+          field_area = params[:field_area]&.to_f
           
           # バリデーション
           if field_area <= 0
@@ -242,12 +264,27 @@ module Api
             total_area: @cultivation_plan.cultivation_plan_fields.sum(:area)
           )
           
+          # ActionCable経由で圃場追加を通知
+          ActionCable.server.broadcast(
+            "optimization_#{@cultivation_plan.id}",
+            {
+              type: 'field_added',
+              field: {
+                id: new_field.id,
+                field_id: new_field.id,
+                name: new_field.name,
+                area: new_field.area
+              },
+              total_area: @cultivation_plan.total_area
+            }
+          )
+          
           render json: {
             success: true,
             message: '圃場を追加しました',
             field: {
               id: new_field.id,
-              field_id: "field_#{new_field.id}",
+              field_id: new_field.id,
               name: new_field.name,
               area: new_field.area
             }
@@ -271,10 +308,9 @@ module Api
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
             .find(params[:id])
           
-          field_id_str = params[:field_id] # "field_123" 形式
-          field_id_num = field_id_str.gsub('field_', '').to_i
+          field_id = params[:field_id]
           
-          plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id_num }
+          plan_field = @cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
           
           unless plan_field
             return render json: {
@@ -308,6 +344,9 @@ module Api
             total_area: @cultivation_plan.cultivation_plan_fields.sum(:area)
           )
           
+          # 再最適化を実行（栽培スケジュールの再調整）
+          OptimizeCultivationPlanJob.perform_later(@cultivation_plan.id)
+          
           render json: {
             success: true,
             message: '圃場を削除しました',
@@ -333,7 +372,7 @@ module Api
             id: fc.id,
             crop_name: fc.crop_display_name,
             field_name: fc.cultivation_plan_field.name,
-            field_id: "field_#{fc.cultivation_plan_field_id}",
+            field_id: fc.cultivation_plan_field_id,
             start_date: fc.start_date.to_s,
             completion_date: fc.completion_date.to_s,
             cultivation_days: fc.cultivation_days,
@@ -348,20 +387,43 @@ module Api
         fields = @cultivation_plan.cultivation_plan_fields.map do |field|
           {
             id: field.id,
-            field_id: "field_#{field.id}",
+            field_id: field.id,
             name: field.name,
             area: field.area
           }
         end
           
-          render json: {
+          # 新スキーマ（Concern版に合わせる）
+          payload = {
             success: true,
+            data: {
+              id: @cultivation_plan.id,
+              plan_year: @cultivation_plan.plan_year,
+              plan_name: @cultivation_plan.plan_name,
+              status: @cultivation_plan.status,
+              total_area: @cultivation_plan.total_area,
+              planning_start_date: @cultivation_plan.planning_start_date,
+              planning_end_date: @cultivation_plan.planning_end_date,
+              fields: fields,
+              cultivations: cultivations
+            },
+            totals: {
+              profit: @cultivation_plan.total_profit,
+              revenue: @cultivation_plan.total_revenue,
+              cost: @cultivation_plan.total_cost
+            }
+          }
+
+          # 互換性維持のため、従来のトップレベルキーも同梱（将来削除予定）
+          payload.merge!({
             cultivations: cultivations,
             fields: fields,
             total_profit: @cultivation_plan.total_profit,
             total_revenue: @cultivation_plan.total_revenue,
             total_cost: @cultivation_plan.total_cost
-          }
+          })
+
+          render json: payload
         rescue ActiveRecord::RecordNotFound
           render json: {
             success: false,
@@ -369,217 +431,31 @@ module Api
           }, status: :not_found
         end
         
-        # POST /api/v1/public_plans/cultivation_plans/:id/adjust
-        # 既存の割り当てを手修正して再最適化
-        def adjust
-          perf_start = Time.current
-          Rails.logger.info "⏱️ [PERF] adjust() 開始: #{perf_start}"
-          
-          @cultivation_plan = CultivationPlan
-            .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
-            .find(params[:id])
-          
-          perf_db_load = Time.current
-          Rails.logger.info "⏱️ [PERF] DB読み込み完了: #{((perf_db_load - perf_start) * 1000).round(2)}ms"
-          
-          # 移動指示を受け取る
-          moves_raw = params[:moves] || []
-          
-          Rails.logger.info "📥 [Adjust] Received moves: #{moves_raw.inspect}"
-          Rails.logger.info "📥 [Adjust] Moves class: #{moves_raw.class}"
-          Rails.logger.info "📥 [Adjust] First move class: #{moves_raw.first&.class}"
-          
-          # movesを適切な形式に変換
-          moves = if moves_raw.is_a?(Array)
-            moves_raw.map do |move|
-              case move
-              when ActionController::Parameters
-                # permit!を使って全てのパラメータを許可してからハッシュに変換
-                move.permit!.to_h.symbolize_keys
-              when Hash
-                move.symbolize_keys
-              when String
-                # JSONパース試行
-                begin
-                  JSON.parse(move).symbolize_keys
-                rescue JSON::ParserError
-                  Rails.logger.error "❌ [Adjust] Failed to parse move: #{move}"
-                  nil
-                end
-              else
-                nil
-              end
-            end.compact
-          else
-            []
-          end
-          
-          if moves.empty?
-            return render json: {
-              success: false,
-              message: '移動指示がありません'
-            }, status: :bad_request
-          end
-          
-          # 現在の割り当てをAGRR形式に変換
-          perf_before_allocation = Time.current
-          current_allocation = build_current_allocation(@cultivation_plan)
-          perf_after_allocation = Time.current
-          Rails.logger.info "⏱️ [PERF] 割り当てデータ構築: #{((perf_after_allocation - perf_before_allocation) * 1000).round(2)}ms"
-          
-          # 圃場と作物の設定を構築
-          fields = build_fields_config(@cultivation_plan)
-          perf_after_fields = Time.current
-          Rails.logger.info "⏱️ [PERF] 圃場設定構築: #{((perf_after_fields - perf_after_allocation) * 1000).round(2)}ms"
-          
-          crops = build_crops_config(@cultivation_plan)
-          perf_after_crops = Time.current
-          Rails.logger.info "⏱️ [PERF] 作物設定構築: #{((perf_after_crops - perf_after_fields) * 1000).round(2)}ms"
-          
-          # デバッグ用にファイルを保存（本番環境以外のみ）
-          unless Rails.env.production?
-            debug_dir = Rails.root.join('tmp/debug')
-            FileUtils.mkdir_p(debug_dir)
-            debug_current_allocation_path = debug_dir.join("adjust_current_allocation_#{Time.current.to_i}.json")
-            debug_moves_path = debug_dir.join("adjust_moves_#{Time.current.to_i}.json")
-            debug_fields_path = debug_dir.join("adjust_fields_#{Time.current.to_i}.json")
-            debug_crops_path = debug_dir.join("adjust_crops_#{Time.current.to_i}.json")
-            File.write(debug_current_allocation_path, JSON.pretty_generate(current_allocation))
-            File.write(debug_moves_path, JSON.pretty_generate({ 'moves' => moves }))
-            File.write(debug_fields_path, JSON.pretty_generate({ 'fields' => fields }))
-            File.write(debug_crops_path, JSON.pretty_generate({ 'crops' => crops }))
-            Rails.logger.info "📁 [Adjust Controller] Debug current_allocation saved to: #{debug_current_allocation_path}"
-            Rails.logger.info "📁 [Adjust Controller] Debug moves saved to: #{debug_moves_path}"
-            Rails.logger.info "📁 [Adjust Controller] Debug fields saved to: #{debug_fields_path}"
-            Rails.logger.info "📁 [Adjust Controller] Debug crops saved to: #{debug_crops_path}"
-          end
-          
-          # 気象データを取得
-          farm = @cultivation_plan.farm
-          unless farm.weather_location
-            return render json: {
-              success: false,
-              message: '気象データがありません'
-            }, status: :not_found
-          end
-          
-          # 最適化時に保存した予測データを再利用
-          unless @cultivation_plan.predicted_weather_data.present?
-            return render json: {
-              success: false,
-              message: '気象予測データがありません。最適化を先に実行してください。'
-            }, status: :not_found
-          end
-          
-          weather_data = @cultivation_plan.predicted_weather_data
-          
-          # 古い保存形式（ネスト構造）の場合は修正
-          if weather_data['data'].is_a?(Hash) && weather_data['data']['data'].is_a?(Array)
-            weather_data = weather_data['data']
-          end
-          
-          # 交互作用ルールを構築
-          perf_before_rules = Time.current
-          interaction_rules = build_interaction_rules(@cultivation_plan)
-          perf_after_rules = Time.current
-          Rails.logger.info "⏱️ [PERF] 交互作用ルール構築: #{((perf_after_rules - perf_before_rules) * 1000).round(2)}ms"
-          
-          # agrr optimize adjust を実行
-          begin
-            perf_before_adjust = Time.current
-            Rails.logger.info "⏱️ [PERF] AdjustGateway.adjust() 呼び出し開始"
-            adjust_gateway = Agrr::AdjustGateway.new
-            result = adjust_gateway.adjust(
-              current_allocation: current_allocation,
-              moves: moves,
-              fields: fields,
-              crops: crops,
-              weather_data: weather_data,
-              planning_start: @cultivation_plan.planning_start_date,
-              planning_end: @cultivation_plan.planning_end_date,
-              interaction_rules: interaction_rules.empty? ? nil : { 'rules' => interaction_rules },
-              objective: 'maximize_profit',
-              enable_parallel: true
-            )
-            
-            perf_after_adjust = Time.current
-            Rails.logger.info "⏱️ [PERF] AdjustGateway.adjust() 完了: #{((perf_after_adjust - perf_before_adjust) * 1000).round(2)}ms"
-            
-            # 結果が正常に取得できた場合のみデータベースに保存
-            if result && result[:field_schedules].present?
-              perf_before_save = Time.current
-              save_adjusted_result(@cultivation_plan, result)
-              perf_after_save = Time.current
-              Rails.logger.info "⏱️ [PERF] DB保存完了: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
-              
-              perf_end = Time.current
-              Rails.logger.info "⏱️ [PERF] === 合計処理時間 ==="
-              Rails.logger.info "⏱️ [PERF] 全体: #{((perf_end - perf_start) * 1000).round(2)}ms"
-              Rails.logger.info "⏱️ [PERF] - DB読み込み: #{((perf_db_load - perf_start) * 1000).round(2)}ms"
-              Rails.logger.info "⏱️ [PERF] - データ構築: #{((perf_before_adjust - perf_db_load) * 1000).round(2)}ms"
-              Rails.logger.info "⏱️ [PERF] - agrr adjust実行: #{((perf_after_adjust - perf_before_adjust) * 1000).round(2)}ms"
-              Rails.logger.info "⏱️ [PERF] - DB保存: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
-              
-              # Action Cable経由でクライアントに通知
-              broadcast_optimization_complete(@cultivation_plan)
-              
-              render json: {
-                success: true,
-                message: '調整が完了しました',
-                cultivation_plan: {
-                  id: @cultivation_plan.id,
-                  total_profit: result[:total_profit],
-                  field_cultivations_count: @cultivation_plan.field_cultivations.count
-                }
-              }
-            else
-              Rails.logger.error "❌ [Adjust] Result has no field_schedules"
-              render json: {
-                success: false,
-                message: "調整結果が空です"
-              }, status: :internal_server_error
-            end
-          rescue Agrr::BaseGateway::ExecutionError => e
-            Rails.logger.error "❌ [Adjust] Failed to adjust: #{e.message}"
-            # エラー時はデータを削除しない
-            render json: {
-              success: false,
-              message: "調整に失敗しました: #{e.message}"
-            }, status: :internal_server_error
-          end
-        end
+        # adjust メソッドは CultivationPlanApi concern で実装されています
+        # DBに保存された天気データを再利用し、不要な天気予測を実行しません
         
         private
         
-        # 最適化エラーメッセージをユーザーフレンドリーに変換
-        def parse_optimization_error(error_message)
-          # 休閑期間による重複エラー
-          if error_message.include?('Time overlap') && error_message.include?('fallow period')
-            return '指定した位置には作物を配置できません。休閑期間（28日）を考慮すると、既存の作物と重複してしまいます。別の位置または日付を選択してください。'
-          end
-          
-          # 全ての移動が拒否された
-          if error_message.include?('No moves were applied successfully')
-            if error_message.include?('Time overlap')
-              return '作物を追加できません。選択した位置は既存の作物と重複しています（休閑期間を含む）。空いている場所を選択してください。'
-            else
-              return '作物を追加できません。栽培計画の制約により、この作物を配置できませんでした。'
-            end
-          end
-          
-          # 割り当ての重複エラー
-          if error_message.include?('overlap') && error_message.include?('considering')
-            return '作物の配置に失敗しました。既存の栽培スケジュールと重複しています。別の時期または圃場を選択してください。'
-          end
-          
-          # Invalid optimization result
-          if error_message.include?('Invalid optimization result')
-            return '最適化処理でエラーが発生しました。作物の配置位置を変更してもう一度お試しください。'
-          end
-          
-          # デフォルトメッセージ
-          '作物の追加に失敗しました。別の位置または日付をお試しください。'
+        # Concernで実装すべきメソッド
+        
+        def find_api_cultivation_plan
+          CultivationPlan
+            .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
+            .find(params[:id])
         end
+        
+        def get_crop_for_add_crop(crop_id)
+          Crop.find(crop_id)
+        end
+        
+        # 公開版特有のメソッド（Concernに移動済みのメソッドを使用）
+        # - parse_optimization_error: AgrrOptimizationに移動済み
+        # - broadcast_optimization_complete: AgrrOptimizationに移動済み
+        # - build_current_allocation: AgrrOptimizationに移動済み
+        # - build_fields_config: AgrrOptimizationに移動済み
+        # - build_crops_config: AgrrOptimizationに移動済み
+        # - build_interaction_rules: AgrrOptimizationに移動済み
+        # - save_adjusted_result: AgrrOptimizationに移動済み
         
         # 作物の栽培期間を推定（GDD要件から）
         def estimate_cultivation_days(crop, cultivation_plan)
@@ -618,178 +494,6 @@ module Api
           90
         end
         
-        # Action Cable経由で最適化完了を通知
-        def broadcast_optimization_complete(cultivation_plan)
-          Rails.logger.info "📡 [Action Cable] Broadcasting optimization complete for plan_id=#{cultivation_plan.id}"
-          
-          OptimizationChannel.broadcast_to(
-            cultivation_plan,
-            {
-              status: 'adjusted',
-              message: '最適化が完了しました',
-              total_profit: cultivation_plan.total_profit,
-              total_revenue: cultivation_plan.total_revenue,
-              total_cost: cultivation_plan.total_cost,
-              field_cultivations_count: cultivation_plan.field_cultivations.count
-            }
-          )
-          
-          Rails.logger.info "✅ [Action Cable] Broadcast sent successfully"
-        rescue StandardError => e
-          Rails.logger.error "❌ [Action Cable] Failed to broadcast: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-        end
-        
-        # 現在の割り当てをAGRR形式に構築
-        # @param cultivation_plan [CultivationPlan] 栽培計画
-        # @param exclude_ids [Array<Integer>] 除外するfield_cultivationのIDリスト（デフォルト: []）
-        def build_current_allocation(cultivation_plan, exclude_ids: [])
-          field_schedules = []
-          
-          Rails.logger.info "🔍 [Build Allocation] field_cultivations count: #{cultivation_plan.field_cultivations.count}"
-          Rails.logger.info "🔍 [Build Allocation] exclude_ids: #{exclude_ids.inspect}" if exclude_ids.any?
-          
-          # 圃場ごとにグループ化
-          cultivations_by_field = cultivation_plan.field_cultivations.group_by(&:cultivation_plan_field_id)
-          
-          Rails.logger.info "🔍 [Build Allocation] cultivations_by_field: #{cultivations_by_field.keys}"
-          
-          cultivations_by_field.each do |field_id, cultivations|
-            field = cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
-            next unless field
-            
-            # exclude_idsに含まれる作物を除外
-            filtered_cultivations = cultivations.reject { |fc| exclude_ids.include?(fc.id) }
-            
-            Rails.logger.info "🔍 [Build Allocation] Field #{field_id}: #{cultivations.count} -> #{filtered_cultivations.count} (excluded: #{cultivations.count - filtered_cultivations.count})" if exclude_ids.any?
-            
-            allocations = filtered_cultivations.map do |fc|
-              # 収益とコストを取得
-              revenue = fc.optimization_result&.dig('revenue') || 0.0
-              cost = fc.estimated_cost || 0.0
-              # profitはrevenue - costで計算（agrrコマンドの期待に合わせる）
-              profit = revenue - cost
-              
-              {
-                allocation_id: "alloc_#{fc.id}",
-                crop_id: fc.cultivation_plan_crop.agrr_crop_id || fc.cultivation_plan_crop.name,
-                crop_name: fc.crop_display_name,
-                variety: fc.cultivation_plan_crop.name,
-                area_used: fc.area,  # agrr optimize adjustが期待するフィールド
-                start_date: fc.start_date.to_s,
-                completion_date: fc.completion_date.to_s,
-                growth_days: fc.cultivation_days || (fc.completion_date - fc.start_date).to_i + 1,
-                accumulated_gdd: fc.optimization_result&.dig('accumulated_gdd') || 0.0,
-                total_cost: cost,
-                expected_revenue: revenue,
-                profit: profit  # revenue - costで計算
-              }
-            end
-            
-            # 圃場レベルの合計値を計算
-            field_total_cost = allocations.sum { |a| a[:total_cost] }
-            field_total_revenue = allocations.sum { |a| a[:expected_revenue] }
-            field_total_profit = allocations.sum { |a| a[:profit] }
-            field_area_used = allocations.sum { |a| a[:area_used] }
-            field_utilization_rate = field_area_used / field.area.to_f
-            
-            field_schedules << {
-              field_id: "field_#{field.id}",
-              field_name: field.name,
-              total_cost: field_total_cost,
-              total_revenue: field_total_revenue,
-              total_profit: field_total_profit,
-              utilization_rate: field_utilization_rate,
-              allocations: allocations
-            }
-          end
-          
-          # 全体レベルの合計値を計算
-          total_cost = field_schedules.sum { |fs| fs[:total_cost] }
-          total_revenue = field_schedules.sum { |fs| fs[:total_revenue] }
-          total_profit = field_schedules.sum { |fs| fs[:total_profit] }
-          
-          {
-            optimization_result: {
-              optimization_id: "opt_#{cultivation_plan.id}",
-              total_cost: total_cost,
-              total_revenue: total_revenue,
-              total_profit: total_profit,
-              field_schedules: field_schedules
-            }
-          }
-        end
-        
-        # 圃場設定を構築
-        def build_fields_config(cultivation_plan)
-          cultivation_plan.cultivation_plan_fields.map do |field|
-            {
-              field_id: "field_#{field.id}",
-              name: field.name,
-              area: field.area,
-              daily_fixed_cost: 0.0 # 公開計画では固定費なし
-            }
-          end
-        end
-        
-        # 作物設定を構築
-        def build_crops_config(cultivation_plan)
-          cultivation_plan.cultivation_plan_crops.map do |plan_crop|
-            # agrr_crop_idから参照作物を取得
-            crop = if plan_crop.agrr_crop_id.present?
-              Crop.find_by(id: plan_crop.agrr_crop_id) ||
-                Crop.find_by(agrr_crop_id: plan_crop.agrr_crop_id) ||
-                Crop.reference.find_by(name: plan_crop.name, variety: plan_crop.variety)
-            else
-              Crop.reference.find_by(name: plan_crop.name, variety: plan_crop.variety)
-            end
-            
-            next unless crop
-            
-            # AGRR形式に変換（stage_requirementsを含む完全な形式）
-            crop_data = crop.to_agrr_requirement
-            
-            # crop_idをcurrent_allocationと一致させる
-            crop_data['crop']['crop_id'] = plan_crop.agrr_crop_id || plan_crop.name
-            
-            crop_data
-          end.compact
-        end
-        
-        # 交互作用ルールを構築
-        def build_interaction_rules(cultivation_plan)
-          # 作物グループのマッピング
-          crop_groups = {}
-          cultivation_plan.cultivation_plan_crops.each do |plan_crop|
-            crop = Crop.find_by(id: plan_crop.agrr_crop_id) ||
-                   Crop.find_by(agrr_crop_id: plan_crop.agrr_crop_id) ||
-                   Crop.reference.find_by(name: plan_crop.name, variety: plan_crop.variety)
-            
-            next unless crop
-            
-            crop_id = plan_crop.agrr_crop_id || plan_crop.name
-            crop_groups[crop_id] = crop.groups || []
-          end
-          
-          # 連作ペナルティルールを作成
-          rules = []
-          crop_groups.each do |crop_id, groups|
-            groups.each do |group|
-              rules << {
-                rule_id: "continuous_#{group}_#{SecureRandom.hex(4)}",
-                rule_type: 'continuous_cultivation',
-                source_group: group,
-                target_group: group,
-                impact_ratio: 0.7,
-                is_directional: true,
-                description: "Continuous cultivation penalty for #{group}"
-              }
-            end
-          end
-          
-          rules.uniq { |r| [r[:source_group], r[:target_group]] }
-        end
-        
         # 気象データを取得（FieldCultivationsControllerから移植）
         def get_weather_data_for_period(weather_location, start_date, end_date, latitude, longitude)
           # 過去20年分の訓練データを取得
@@ -820,7 +524,9 @@ module Api
           }
           
           # 予測が必要な日数を計算
-          prediction_days = (end_date - Date.current).to_i + 1
+          # AGRRは訓練データの最終日（training_end_date）の翌日から予測を開始するため、
+          # training_end_dateからend_dateまでの日数を計算
+          prediction_days = (end_date - training_end_date).to_i
           
           if prediction_days > 0
             # 予測データを生成
@@ -831,9 +537,9 @@ module Api
               model: 'lightgbm'
             )
             
-            # 今年の実データを取得
+            # 今年の実データを取得（training_end_dateまで）
             current_year_start = Date.new(Date.current.year, 1, 1)
-            current_year_end = Date.current - 2.days
+            current_year_end = training_end_date
             current_year_data = weather_location.weather_data
               .where(date: current_year_start..current_year_end)
               .order(:date)
@@ -889,143 +595,6 @@ module Api
                   }
                 end
             }
-          end
-        end
-        
-        # 調整結果をデータベースに保存
-        #
-        # 【重要】このメソッドは既存のFieldCultivationを全削除してから新規作成する
-        # - add_cropで作成したtemp_cultivationも削除される
-        # - agrr optimize adjustの結果のみがDBに保存される
-        # - これにより、allocation_idの重複や一時データの残留を防ぐ
-        def save_adjusted_result(cultivation_plan, result)
-          Rails.logger.info "💾 [Save Adjusted Result] result keys: #{result.keys}"
-          Rails.logger.info "💾 [Save Adjusted Result] field_schedules: #{result[:field_schedules]&.count || 'nil'}"
-          
-          # 全field_schedulesのallocation_idをリスト化して重複チェック
-          all_allocation_ids = []
-          result[:field_schedules]&.each do |fs|
-            fs['allocations']&.each do |alloc|
-              all_allocation_ids << alloc['allocation_id']
-            end
-          end
-          
-          Rails.logger.info "💾 [Save] Total allocations to create: #{all_allocation_ids.count}"
-          Rails.logger.info "💾 [Save] Unique allocations: #{all_allocation_ids.uniq.count}"
-          
-          if all_allocation_ids.count != all_allocation_ids.uniq.count
-            duplicates = all_allocation_ids.select { |id| all_allocation_ids.count(id) > 1 }.uniq
-            Rails.logger.error "❌ [Save] 重複したallocation_idが検出されました: #{duplicates}"
-          end
-          
-          # field_schedulesが存在しない場合は何もしない（エラーを避ける）
-          unless result[:field_schedules].present?
-            Rails.logger.warn "⚠️ [Save Adjusted Result] field_schedules is empty, skipping save"
-            return
-          end
-          
-          # トランザクション内で既存データを削除し、新しいデータを作成
-          ActiveRecord::Base.transaction do
-            # ⭐ 既存の栽培スケジュールを全削除
-            # temp_cultivationも含め、全てのFieldCultivationを削除
-            # これにより、agrrの最適化結果のみがDBに残る
-            
-            # ⚠️ 重要: reloadしてキャッシュをクリア（ダブル送信対策）
-            cultivation_plan.reload
-            existing_count = cultivation_plan.field_cultivations.count
-            Rails.logger.info "🗑️ [Save] 既存のfield_cultivations削除開始: #{existing_count}件"
-            cultivation_plan.field_cultivations.destroy_all
-            Rails.logger.info "✅ [Save] 既存のfield_cultivations削除完了"
-            
-            # AGRR結果に含まれる作物IDを収集
-            used_crop_ids = Set.new
-            result[:field_schedules].each do |field_schedule|
-              field_schedule['allocations']&.each do |allocation|
-                used_crop_ids.add(allocation['crop_id'])
-              end
-            end
-            
-            # 使われていない作物を削除（ゴミデータのクリーンアップ）
-            unused_crops = cultivation_plan.cultivation_plan_crops.reject do |crop|
-              used_crop_ids.include?(crop.agrr_crop_id) || used_crop_ids.include?(crop.name)
-            end
-            
-            if unused_crops.any?
-              Rails.logger.info "🗑️ [Save] 使われていない作物を削除: #{unused_crops.map(&:name).join(', ')}"
-              unused_crops.each(&:destroy)
-            end
-            
-            # 新しい栽培スケジュールを作成
-            result[:field_schedules].each do |field_schedule|
-              # agrr optimize adjustの出力形式: {"field"=>{...}, "allocations"=>[...]}
-              # agrr optimize allocateの出力形式: {"field_id"=>..., "allocations"=>[...]}
-              field_id_str = field_schedule['field_id'] || field_schedule.dig('field', 'field_id')
-              
-              Rails.logger.info "🔍 [Save] Processing field_schedule: #{field_id_str}"
-              
-              # field_idから実際のCultivationPlanFieldを取得
-              field_id_num = field_id_str&.gsub('field_', '')&.to_i
-              unless field_id_num
-                Rails.logger.warn "⚠️ [Save] field_id_num is nil for: #{field_schedule['field_id']}"
-                next
-              end
-              
-              plan_field = cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id_num }
-              unless plan_field
-                Rails.logger.warn "⚠️ [Save] plan_field not found for field_id: #{field_id_num}, available: #{cultivation_plan.cultivation_plan_fields.map(&:id)}"
-                next
-              end
-              
-              Rails.logger.info "✅ [Save] Found plan_field: #{plan_field.id} (#{plan_field.name})"
-              Rails.logger.info "🔍 [Save] allocations count: #{field_schedule['allocations']&.count || 'nil'}"
-              Rails.logger.info "🔍 [Save] allocations: #{field_schedule['allocations']&.inspect&.first(300)}"
-              
-              field_schedule['allocations']&.each do |allocation|
-                Rails.logger.info "🔍 [Save] Processing allocation: #{allocation['allocation_id']}, crop_id: #{allocation['crop_id']}"
-                
-                # crop_idから実際のCultivationPlanCropを取得
-                plan_crop = cultivation_plan.cultivation_plan_crops.find do |c|
-                  c.agrr_crop_id == allocation['crop_id'] || c.name == allocation['crop_id']
-                end
-                unless plan_crop
-                  Rails.logger.warn "⚠️ [Save] plan_crop not found for crop_id: #{allocation['crop_id']}, available agrr_crop_ids: #{cultivation_plan.cultivation_plan_crops.map(&:agrr_crop_id)}, names: #{cultivation_plan.cultivation_plan_crops.map(&:name)}"
-                  next
-                end
-                
-                new_cultivation = FieldCultivation.create!(
-                  cultivation_plan: cultivation_plan,
-                  cultivation_plan_field: plan_field,
-                  cultivation_plan_crop: plan_crop,
-                  start_date: Date.parse(allocation['start_date']),
-                  completion_date: Date.parse(allocation['completion_date']),
-                  cultivation_days: (Date.parse(allocation['completion_date']) - Date.parse(allocation['start_date'])).to_i + 1,
-                  area: allocation['area_used'] || allocation['area'],
-                  estimated_cost: allocation['total_cost'] || allocation['cost'],
-                  optimization_result: {
-                    revenue: allocation['expected_revenue'] || allocation['revenue'],
-                    profit: allocation['profit'],
-                    accumulated_gdd: allocation['accumulated_gdd']
-                  }
-                )
-                Rails.logger.info "✅ [Save] 新規field_cultivation作成: #{new_cultivation.id} (#{plan_crop.name})"
-              end
-            end
-            
-            # 最適化結果を更新
-            cultivation_plan.update!(
-              optimization_summary: result[:summary],
-              total_profit: result[:total_profit],
-              total_revenue: result[:total_revenue],
-              total_cost: result[:total_cost],
-              optimization_time: result[:optimization_time],
-              algorithm_used: result[:algorithm_used],
-              is_optimal: result[:is_optimal],
-              status: 'completed'
-            )
-            
-            # トランザクション完了後の件数確認
-            final_count = cultivation_plan.field_cultivations.count
-            Rails.logger.info "📊 [Save] トランザクション完了: 最終的なfield_cultivations件数 = #{final_count}"
           end
         end
       end
