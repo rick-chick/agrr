@@ -1863,12 +1863,21 @@ function addField() {
 }
 
 function getFieldCultivationIds(field_id) {
+  console.log('🔍 [getFieldCultivationIds] field_id:', field_id);
+  console.log('🔍 [getFieldCultivationIds] ganttState.fieldGroups:', ganttState.fieldGroups);
+  
   const fieldGroup = ganttState.fieldGroups.find(g => g.fieldId === field_id);
+  console.log('🔍 [getFieldCultivationIds] found fieldGroup:', fieldGroup);
+  
   if (!fieldGroup || !fieldGroup.cultivations) {
+    console.log('⚠️ [getFieldCultivationIds] No fieldGroup or cultivations found');
     return [];
   }
   
-  return fieldGroup.cultivations.map(c => c.id).filter(id => id != null);
+  const cultivationIds = fieldGroup.cultivations.map(c => c.id).filter(id => id != null);
+  console.log('🔍 [getFieldCultivationIds] cultivationIds:', cultivationIds);
+  
+  return cultivationIds;
 }
 
 // 圃場を削除
@@ -1901,6 +1910,7 @@ function removeField(field_id) {
   const url = baseUrl.replace('PLACEHOLDER', normalizedFieldId);
   
   const fieldCultivationIds = getFieldCultivationIds(field_id);
+  console.log('🔍 [removeField] fieldCultivationIds:', fieldCultivationIds);
 
   fetch(url, {
     method: 'DELETE',
