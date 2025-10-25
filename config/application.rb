@@ -49,6 +49,9 @@ module Agrr
     config.assets.version = '1.0'
     config.assets.paths << Rails.root.join('vendor/assets/stylesheets')
     
+    # Add builds directory to Propshaft load paths (for esbuild output)
+    config.assets.paths << Rails.root.join('app/assets/builds')
+    
     # Propshaft specific configuration
     config.assets.configure do |env|
       env.logger = Rails.logger

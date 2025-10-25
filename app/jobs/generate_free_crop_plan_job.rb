@@ -2,9 +2,23 @@
 
 class GenerateFreeCropPlanJob < ApplicationJob
   queue_as :default
+  
+  # インスタンス変数の定義
+  attr_accessor :free_crop_plan_id, :channel_class
 
-  def perform(free_crop_plan_id)
+  def perform(free_crop_plan_id, channel_class: nil)
     free_crop_plan = FreeCropPlan.find(free_crop_plan_id)
+    
+    # 開始通知
+    if channel_class
+      channel_class.broadcast_to(free_crop_plan, {
+        status: 'started',
+        progress: 0,
+        phase: 'calculating',
+        phase_message: '作付け計画を計算中です...'
+      })
+      Rails.logger.info "🌱 [GenerateFreeCropPlanJob] Started calculation for plan ##{free_crop_plan_id}"
+    end
     
     # 計算中に設定
     free_crop_plan.start_calculation!
@@ -19,10 +33,32 @@ class GenerateFreeCropPlanJob < ApplicationJob
       # 計画データを保存
       free_crop_plan.complete_calculation!(plan_data)
       
+      # 完了通知
+      if channel_class
+        channel_class.broadcast_to(free_crop_plan, {
+          status: 'completed',
+          progress: 100,
+          phase: 'completed',
+          phase_message: '作付け計画の計算が完了しました'
+        })
+        Rails.logger.info "🌱 [GenerateFreeCropPlanJob] Calculation completed for plan ##{free_crop_plan_id}"
+      end
+      
       Rails.logger.info "✅ FreeCropPlan ##{free_crop_plan.id} generated successfully"
     rescue StandardError => e
       Rails.logger.error "❌ FreeCropPlan ##{free_crop_plan.id} generation failed: #{e.message}"
       free_crop_plan.mark_failed!(e.message)
+      
+      # エラー通知
+      if channel_class
+        channel_class.broadcast_to(free_crop_plan, {
+          status: 'failed',
+          progress: 0,
+          phase: 'failed',
+          phase_message: '作付け計画の計算に失敗しました'
+        })
+        Rails.logger.info "🌱 [GenerateFreeCropPlanJob] Calculation failed for plan ##{free_crop_plan_id}"
+      end
     end
   end
   

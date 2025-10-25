@@ -192,6 +192,11 @@ class PlansController < ApplicationController
   def channel_class
     PlansOptimizationChannel
   end
+  
+  # JobExecutionで使用する遷移先パス
+  def job_completion_redirect_path
+    plan_path(@cultivation_plan || CultivationPlan.find(session_data[:plan_id]))
+  end
 
   def create_job_instances_for_plans(cultivation_plan_id, channel_class)
     cultivation_plan = CultivationPlan.find(cultivation_plan_id)

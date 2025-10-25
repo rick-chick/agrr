@@ -7,6 +7,58 @@ module JobExecution
   # ジョブ固有の処理（フェーズ更新など）は各ジョブクラス内で実装する
   # このモジュールは汎用的なジョブチェーン実行のみを提供する
   
+  # 遷移先を指定するためのメソッド（各コントローラーでオーバーライド）
+  def job_completion_redirect_path
+    # デフォルトは何もしない（各コントローラーでオーバーライド）
+    nil
+  end
+  
+  # ジョブ完了時の遷移制御
+  def handle_job_completion_redirect(cultivation_plan_id, channel_class)
+    redirect_path = job_completion_redirect_path
+    return unless redirect_path
+    
+    Rails.logger.info "🔄 [JobExecution] Job completed, redirecting to: #{redirect_path}"
+    
+    # チャンネル経由でリダイレクト通知を送信
+    if channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      channel_class.broadcast_to(
+        cultivation_plan,
+        {
+          type: 'redirect',
+          redirect_path: redirect_path,
+          message: I18n.t('jobs.weather_prediction.completed')
+        }
+      )
+    end
+  end
+  
+  # 遷移制御ジョブを必要に応じて追加
+  def add_redirect_completion_job_if_needed(job_instances)
+    # コントローラーインスタンスが存在する場合のみ遷移制御ジョブを追加
+    redirect_path = job_completion_redirect_path
+    unless redirect_path
+      Rails.logger.info "ℹ️ [JobExecution] No redirect path specified, skipping redirect completion job"
+      return job_instances
+    end
+    
+    # 最後のジョブから必要な情報を取得
+    last_job = job_instances.last
+    return job_instances unless last_job
+    
+    # RedirectCompletionJobを作成
+    redirect_job = RedirectCompletionJob.new
+    redirect_job.channel_id = last_job.cultivation_plan_id  # チャンネル用のIDとして使用
+    redirect_job.channel_class = last_job.channel_class
+    redirect_job.redirect_path = redirect_path
+    
+    Rails.logger.info "🔄 [JobExecution] Adding redirect completion job to chain with path: #{redirect_path}"
+    
+    # ジョブチェーンの最後に追加
+    job_instances + [redirect_job]
+  end
+  
   private
   
   # 同期的ジョブチェーン実行（従来の方法）
@@ -42,6 +94,9 @@ module JobExecution
     Rails.logger.info "🔗 [#{self.class.name}] Executing async job chain with #{job_instances.length} jobs"
     Rails.logger.info "📋 [#{self.class.name}] Job chain: #{job_instances.map(&:class).map(&:name).join(' → ')}"
     
+    # 遷移制御ジョブを最後に追加
+    job_instances = add_redirect_completion_job_if_needed(job_instances)
+    
     # 最初のジョブを非同期実行
     if job_instances.any?
       first_job = job_instances.first
@@ -69,6 +124,9 @@ module JobExecution
   # ジョブインスタンスから非同期チェーンを実行
   def execute_job_chain_from_instances(job_instances)
     Rails.logger.info "🔗 [#{self.class.name}] Converting job instances to async chain"
+    
+    # 遷移制御ジョブを最後に追加
+    job_instances = add_redirect_completion_job_if_needed(job_instances)
     
     # ジョブインスタンスを非同期実行用に変換
     job_instances.each_with_index do |job_instance, index|

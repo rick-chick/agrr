@@ -158,8 +158,8 @@ module CultivationPlanApi
   def remove_field
     @cultivation_plan = find_api_cultivation_plan
     
-    # field_idをそのまま使用（変換処理なし）
-    field_id = params[:field_id]
+    # field_idを整数に変換
+    field_id = params[:field_id].to_i
     
     plan_field = @cultivation_plan.cultivation_plan_fields.find_by(id: field_id)
     

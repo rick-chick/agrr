@@ -174,10 +174,23 @@ class CultivationPlan < ApplicationRecord
       message: optimization_phase_message
     }
 
+    Rails.logger.info "📡 [CultivationPlan##{id}] Attempting to broadcast phase update: #{optimization_phase}"
+    Rails.logger.info "📡 [CultivationPlan##{id}] Payload: #{payload.inspect}"
+    Rails.logger.info "📡 [CultivationPlan##{id}] Channel class: #{channel_class.name}"
+    
+    # WebSocket接続の確立を待つ
+    if optimization_phase == 'predicting_weather'
+      Rails.logger.info "⏳ [CultivationPlan##{id}] Waiting for WebSocket connection for predicting_weather phase"
+      sleep(2.0) # 2秒待機
+    end
+    
     channel_class.broadcast_to(self, payload)
     Rails.logger.info "📡 [CultivationPlan##{id}] Broadcast phase update: #{optimization_phase}"
   rescue => e
     Rails.logger.error "❌ Broadcast phase update failed for plan ##{id}: #{e.message}"
+    Rails.logger.error "❌ Channel class: #{channel_class.name}"
+    Rails.logger.error "❌ Payload: #{payload.inspect}"
+    Rails.logger.error "❌ Backtrace: #{e.backtrace.first(5).join("\n")}"
     # ブロードキャスト失敗しても処理は続行
   end
 end

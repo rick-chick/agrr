@@ -82,11 +82,11 @@ class FetchWeatherDataJob < ApplicationJob
     channel_class ||= self.channel_class
     farm_info = farm_id ? "[Farm##{farm_id}]" : ""
     
-    # フェーズを更新
+    # フェーズを更新（開始通知）
     if cultivation_plan_id && channel_class
       cultivation_plan = CultivationPlan.find(cultivation_plan_id)
       cultivation_plan.phase_fetching_weather!(channel_class)
-      Rails.logger.info "🌤️ [FetchWeatherDataJob] Updated phase to fetching_weather for plan ##{cultivation_plan_id}"
+      Rails.logger.info "🌤️ [FetchWeatherDataJob] Started fetching weather data for plan ##{cultivation_plan_id}"
     end
     
     # 日付の検証
@@ -209,11 +209,25 @@ class FetchWeatherDataJob < ApplicationJob
     end
 
     Rails.logger.info "✅ #{farm_info} Saved #{data_count} weather records for #{period_str}"
+    
+    # 完了通知
+    if cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_weather_data_fetched!(channel_class)
+      Rails.logger.info "🌤️ [FetchWeatherDataJob] Weather data fetching completed for plan ##{cultivation_plan_id}"
+    end
   rescue => e
     # エラーログを出力（リトライの場合は警告レベル、それ以外はエラーレベル）
     log_level = executions < MAX_RETRY_ATTEMPTS ? :warn : :error
     Rails.logger.public_send(log_level, "⚠️  #{farm_info} Failed to fetch weather data for #{period_str}: #{e.message}")
     Rails.logger.public_send(log_level, "   Backtrace: #{e.backtrace.first(3).join("\n   ")}")
+    
+    # エラー時の通知（最終リトライ失敗時のみ）
+    if executions >= MAX_RETRY_ATTEMPTS && cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_failed!('fetching_weather', channel_class)
+      Rails.logger.info "🌤️ [FetchWeatherDataJob] Weather data fetching failed for plan ##{cultivation_plan_id}"
+    end
     
     # 例外を再raiseして、retry_onに処理を委ねる
     # retry_onが最終的にリトライ上限に達した場合のみmark_weather_data_failed!が呼ばれる

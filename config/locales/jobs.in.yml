@@ -4,6 +4,9 @@ in:
       retry_limit_exceeded: "पुनः प्रयास सीमा पार हो गई: %{error}"
       validation_error: "डेटा सत्यापन त्रुटि: %{error}"
     
+    weather_prediction:
+      completed: "मौसम भविष्यवाणी पूर्ण हुई"
+    
     optimize_cultivation_plan:
       completed: "अनुकूलन पूरा हुआ"
       failed: "अनुकूलन विफल रहा"

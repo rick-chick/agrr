@@ -15,7 +15,7 @@ class PredictWeatherDataJob < ApplicationJob
   discard_on ArgumentError
   
   # インスタンス変数の定義
-  attr_accessor :farm_id, :days, :model, :target_end_date
+  attr_accessor :farm_id, :days, :model, :target_end_date, :cultivation_plan_id, :channel_class
   
   # インスタンス変数をハッシュとして返す
   def job_arguments
@@ -23,21 +23,32 @@ class PredictWeatherDataJob < ApplicationJob
       farm_id: farm_id,
       days: days,
       model: model,
-      target_end_date: target_end_date
+      target_end_date: target_end_date,
+      cultivation_plan_id: cultivation_plan_id,
+      channel_class: channel_class
     }
   end
   
-  def perform(farm_id: nil, days: nil, model: nil, target_end_date: nil)
+  def perform(farm_id: nil, days: nil, model: nil, target_end_date: nil, cultivation_plan_id: nil, channel_class: nil)
     # dictの中身を確認してバリデーション
-    Rails.logger.info "🔍 [PredictWeatherDataJob] Received args: farm_id=#{farm_id}, days=#{days}, model=#{model}, target_end_date=#{target_end_date}"
+    Rails.logger.info "🔍 [PredictWeatherDataJob] Received args: farm_id=#{farm_id}, days=#{days}, model=#{model}, target_end_date=#{target_end_date}, cultivation_plan_id=#{cultivation_plan_id}, channel_class=#{channel_class}"
     
     # 引数が渡された場合はそれを使用、そうでなければインスタンス変数から取得
     farm_id ||= self.farm_id
     days ||= self.days
     model ||= self.model
     target_end_date ||= self.target_end_date
+    cultivation_plan_id ||= self.cultivation_plan_id
+    channel_class ||= self.channel_class
     
     farm = Farm.find(farm_id)
+    
+    # 予測開始通知
+    if cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_predicting_weather!(channel_class)
+      Rails.logger.info "🌤️ [PredictWeatherDataJob] Started weather prediction for plan ##{cultivation_plan_id}"
+    end
     
     # target_end_dateが指定されていない場合、今日から1年後に設定
     # （過去1年のデータと対称的に表示するため）
@@ -175,6 +186,13 @@ class PredictWeatherDataJob < ApplicationJob
     
     Rails.logger.info "✅ [PredictWeatherDataJob] Completed for Farm ##{farm_id}: #{prediction_data.count} days predicted"
     
+    # 予測完了通知
+    if cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_weather_prediction_completed!(channel_class)
+      Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction completed for plan ##{cultivation_plan_id}"
+    end
+    
     # WebSocketで完了を通知
     broadcast_completion(farm, prediction_data.count)
     
@@ -190,6 +208,14 @@ class PredictWeatherDataJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error "❌ [PredictWeatherDataJob] Unexpected error for Farm ##{farm_id}: #{e.class} - #{e.message}"
     Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
+    
+    # エラー時の通知
+    if cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_failed!('predicting_weather', channel_class)
+      Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction failed for plan ##{cultivation_plan_id}"
+    end
+    
     raise
   end
   

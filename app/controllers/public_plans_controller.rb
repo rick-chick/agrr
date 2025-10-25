@@ -170,6 +170,51 @@ class PublicPlansController < ApplicationController
     CultivationPlan
   end
   
+  # ジョブインスタンスを作成（public plans用）
+  def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
+    Rails.logger.info "🔧 [PublicPlansController] Creating job instances for plan: #{cultivation_plan_id}"
+    
+    # 計画を取得
+    cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+    farm = cultivation_plan.farm
+    
+    # 天気データ取得のパラメータを計算
+    weather_params = calculate_weather_data_params(farm.weather_location)
+    predict_days = calculate_predict_days(weather_params[:end_date])
+    
+    Rails.logger.info "🌤️ [PublicPlansController] Weather params: #{weather_params}, predict_days: #{predict_days}"
+    
+    # ジョブインスタンスを作成
+    job_instances = []
+    
+    # 1. 天気データ取得ジョブ
+    fetch_job = FetchWeatherDataJob.new
+    fetch_job.farm_id = farm.id
+    fetch_job.latitude = farm.latitude
+    fetch_job.longitude = farm.longitude
+    fetch_job.start_date = weather_params[:start_date]
+    fetch_job.end_date = weather_params[:end_date]
+    fetch_job.cultivation_plan_id = cultivation_plan_id
+    fetch_job.channel_class = channel_class
+    job_instances << fetch_job
+    
+    # 2. 天気予測ジョブ
+    prediction_job = WeatherPredictionJob.new
+    prediction_job.cultivation_plan_id = cultivation_plan_id
+    prediction_job.channel_class = channel_class
+    prediction_job.predict_days = predict_days
+    job_instances << prediction_job
+    
+    # 3. 最適化ジョブ
+    optimization_job = OptimizationJob.new
+    optimization_job.cultivation_plan_id = cultivation_plan_id
+    optimization_job.channel_class = channel_class
+    job_instances << optimization_job
+    
+    Rails.logger.info "✅ [PublicPlansController] Created #{job_instances.length} job instances"
+    job_instances
+  end
+
   # テスト用のオーバーライド: URLパラメータでplan_idを受け取る
   def find_cultivation_plan
     # テスト用: URLパラメータでplan_idを受け取る（開発・テスト環境のみ）
@@ -207,52 +252,10 @@ class PublicPlansController < ApplicationController
   def channel_class
     OptimizationChannel
   end
-end
-
-def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
-  cultivation_plan = CultivationPlan.find(cultivation_plan_id)
-  farm = cultivation_plan.farm
   
-  # 天気データ取得パラメータを計算
-  weather_params = calculate_weather_data_params(farm.weather_location)
-  
-  # FetchWeatherDataJobのインスタンスを作成し、引数を設定
-  weather_job = FetchWeatherDataJob.new
-  weather_job.latitude = farm.latitude
-  weather_job.longitude = farm.longitude
-  weather_job.start_date = weather_params[:start_date]
-  weather_job.end_date = weather_params[:end_date]
-  weather_job.farm_id = farm.id
-  weather_job.cultivation_plan_id = cultivation_plan_id
-  weather_job.channel_class = channel_class
-  
-  # 天気予測の日数を調整（終了日を考慮）
-  predict_days = calculate_predict_days(weather_params[:end_date])
-  
-  [
-    # データ取得
-    weather_job,
-    # 天気予測（調整された日数で）
-    create_weather_prediction_job(cultivation_plan_id, channel_class, predict_days),
-    # 最適化
-    create_optimization_job(cultivation_plan_id, channel_class)
-  ]
-end
-
-private
-
-def create_weather_prediction_job(cultivation_plan_id, channel_class, predict_days)
-  job = WeatherPredictionJob.new
-  job.cultivation_plan_id = cultivation_plan_id
-  job.channel_class = channel_class
-  job.predict_days = predict_days
-  job
-end
-
-def create_optimization_job(cultivation_plan_id, channel_class)
-  job = OptimizationJob.new
-  job.cultivation_plan_id = cultivation_plan_id
-  job.channel_class = channel_class
-  job
+  # JobExecutionで使用する遷移先パス
+  def job_completion_redirect_path
+    results_public_plans_path
+  end
 end
 
