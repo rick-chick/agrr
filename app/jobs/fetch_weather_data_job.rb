@@ -108,8 +108,12 @@ class FetchWeatherDataJob < ApplicationJob
         date: start_date..end_date
       ).count
       
-      if existing_count == expected_days
-        Rails.logger.info "⏭️  #{farm_info} Skipping #{period_str} - data already exists (#{existing_count}/#{expected_days} days)"
+      # 8割以上のデータがあれば十分とみなす（データ欠損を考慮）
+      threshold_ratio = 0.8
+      threshold_days = (expected_days * threshold_ratio).ceil
+      
+      if existing_count >= threshold_days
+        Rails.logger.info "⏭️  #{farm_info} Skipping #{period_str} - sufficient data exists (#{existing_count}/#{expected_days} days, #{((existing_count.to_f / expected_days) * 100).round(1)}%)"
         
         # 進捗を更新
         if farm_id
@@ -221,10 +225,10 @@ class FetchWeatherDataJob < ApplicationJob
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
     
-    # NASA POWERをデフォルトで使用（グローバル対応、長期データ1984年以降）
-    # JMAは高品質だがTLS証明書の問題でエラーが発生する場合がある
-    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=jma など
-    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'nasa-power')
+    # NOAAをデフォルトで使用（高品質な気象データ）
+    # NASA POWERはグローバル対応だが、NOAAの方が精度が高い
+    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=nasa-power など
+    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'noaa')
     
     command = [
       agrr_path,
