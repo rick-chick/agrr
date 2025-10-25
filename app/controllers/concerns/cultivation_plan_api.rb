@@ -118,7 +118,8 @@ module CultivationPlanApi
     @cultivation_plan.update!(total_area: @cultivation_plan.cultivation_plan_fields.sum(:area))
     
     # ActionCable経由で圃場追加を通知
-    PlansOptimizationChannel.broadcast_to(
+    channel_class = @cultivation_plan.plan_type == 'private' ? PlansOptimizationChannel : OptimizationChannel
+    channel_class.broadcast_to(
       @cultivation_plan,
       {
         type: 'field_added',
