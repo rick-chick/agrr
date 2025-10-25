@@ -77,8 +77,10 @@ class Api::V1::Crops::CropApiController < Api::V1::BaseController
           @find_all_interactor = Domain::Crop::Interactors::CropFindAllInteractor.new(gateway)
         end
 
+        CROP_PERMITTED_PARAMS = %i[name variety is_reference area_per_unit revenue_per_area].freeze
+
         def crop_params
-          params.require(:crop).permit(:name, :variety, :is_reference, :area_per_unit, :revenue_per_area, :agrr_crop_id)
+          params.require(:crop).permit(*CROP_PERMITTED_PARAMS)
         end
 
         def crop_to_json(crop)
@@ -89,7 +91,6 @@ class Api::V1::Crops::CropApiController < Api::V1::BaseController
             is_reference: crop.reference?,
             area_per_unit: crop.area_per_unit,
             revenue_per_area: crop.revenue_per_area,
-            agrr_crop_id: crop.agrr_crop_id,
             stages: (crop.respond_to?(:stages) ? crop.stages.map { |stage| stage_to_json(stage) } : [])
           }
         end

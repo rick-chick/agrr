@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Agrr
-  class OptimizationGateway < BaseGateway
-    def optimize(crop_name:, variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, interaction_rules: nil)
-      Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{variety}"
+  class OptimizationGateway < BaseGatewayV2
+    def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, interaction_rules: nil)
+      Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{crop_variety}"
       
       # Cropモデルは必須
       unless crop
@@ -38,7 +38,7 @@ module Agrr
       
       begin
         command_args = [
-          agrr_path,
+          'dummy_path', # Not used in V2
           'optimize',
           'period',
           '--crop-file', crop_file.path,
