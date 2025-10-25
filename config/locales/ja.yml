@@ -43,6 +43,9 @@ ja:
       no_cultivation_period: "栽培期間が設定されていません"
       weather_forecast_failed: "天気予報データの取得に失敗しました"
       data_fetch_failed: "データの取得に失敗しました"
+      agrr_daemon_not_running: "AGRRサービスが起動していません"
+      agrr_command_failed: "AGRRコマンドの実行に失敗しました"
+      agrr_result_parse_failed: "AGRRの結果を解析できませんでした"
   
   # JavaScript用メッセージ
   js:
