@@ -3,12 +3,14 @@
 // custom_gantt_chart.jsと連携して動作します
 
 function initializePlansShow() {
+  console.log('🔍 [Plans Show] initializePlansShow 呼び出し開始');
   // ガントチャートコンテナがあるときのみ実行
   const chartContainer = document.getElementById('gantt-chart-container');
   if (!chartContainer) {
-    console.log('ℹ️ Not on plans show page, skipping chart initialization');
+    console.log('ℹ️ [Plans Show] Not on plans show page, skipping chart initialization');
     return;
   }
+  console.log('✅ [Plans Show] Chart container found');
   
   const planId = chartContainer.dataset.cultivationPlanId;
   const dataUrl = chartContainer.dataset.dataUrl;
@@ -84,8 +86,18 @@ function initializePlansShow() {
 }
 
 // 通常のページロード（初回アクセス時）
-document.addEventListener('DOMContentLoaded', initializePlansShow);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🔍 [Plans Show] DOMContentLoaded event detected');
+  initializePlansShow();
+});
 
-// Turboによるページ遷移
-document.addEventListener('turbo:load', initializePlansShow);
+// Turboによるページ遷移（turbo:loadとturbo:render両方に対応）
+document.addEventListener('turbo:load', () => {
+  console.log('🔍 [Plans Show] turbo:load event detected');
+  initializePlansShow();
+});
+document.addEventListener('turbo:render', () => {
+  console.log('🔍 [Plans Show] turbo:render event detected');
+  initializePlansShow();
+});
 

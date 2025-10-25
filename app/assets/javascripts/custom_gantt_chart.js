@@ -83,24 +83,38 @@ let ganttState = {
 // normalizeFieldId関数は共通ユーティリティ（gantt_data_utils.js）に移動
 
 
-// Turboを使用している場合はturbo:loadのみ、使用していない場合はDOMContentLoaded
+// Turboを使用している場合はturbo:loadとturbo:render両方をリスン、使用していない場合はDOMContentLoaded
+console.log('📝 [Gantt Chart] スクリプト読み込み完了、Turbo:', typeof Turbo !== 'undefined');
 if (typeof Turbo !== 'undefined') {
+  console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
   document.addEventListener('turbo:load', () => {
-    console.log('🔄 [Turbo] turbo:load イベント検出');
+    console.log('🔄 [Gantt Chart] turbo:load イベント検出');
     initCustomGanttChart();
+  });
+  
+  // turbo:renderもリスン（Turbo 7の新機能）
+  document.addEventListener('turbo:render', () => {
+    console.log('🔄 [Gantt Chart] turbo:render イベント検出');
+    // 既にコンテナが存在する場合は再初期化
+    if (document.getElementById('gantt-chart-container')) {
+      console.log('✅ [Gantt Chart] Container found in turbo:render, initializing...');
+      initCustomGanttChart();
+    } else {
+      console.log('⚠️ [Gantt Chart] Container not found in turbo:render');
+    }
   });
   
   // Turboによる画面遷移を検出
   document.addEventListener('turbo:before-visit', (event) => {
-    console.warn('⚠️ [Turbo] turbo:before-visit 検出 - ページ遷移が発生します', event.detail.url);
+    console.warn('⚠️ [Gantt Chart] turbo:before-visit 検出 - ページ遷移が発生します', event.detail.url);
   });
   
   document.addEventListener('turbo:visit', (event) => {
-    console.warn('⚠️ [Turbo] turbo:visit 検出 - ページ遷移中', event.detail.url);
+    console.warn('⚠️ [Gantt Chart] turbo:visit 検出 - ページ遷移中', event.detail.url);
   });
 } else {
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔄 [DOM] DOMContentLoaded イベント検出');
+    console.log('🔄 [Gantt Chart] DOMContentLoaded イベント検出');
     initCustomGanttChart();
   });
 }
