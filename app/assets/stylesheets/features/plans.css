@@ -798,3 +798,150 @@
   }
 }
 
+/* ============================================
+   気温分析タブ（チャート用CSS）
+   出典: public_plans_results.css
+   ============================================ */
+.chart-section {
+  margin-bottom: var(--space-6);
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  margin-bottom: var(--space-4);
+}
+
+.chart-title-icon {
+  font-size: var(--font-size-2xl);
+}
+
+.chart-title-text {
+  line-height: 1.2;
+}
+
+.chart-container {
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  height: 350px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-100);
+}
+
+.stat-card.stat-success {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(72, 187, 120, 0.05) 100%);
+}
+
+.stat-card.stat-warning {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(237, 137, 54, 0.05) 100%);
+}
+
+.stat-card.stat-info {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.1) 0%, rgba(66, 153, 225, 0.05) 100%);
+}
+
+.stat-icon {
+  font-size: var(--font-size-3xl);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin-bottom: var(--space-1);
+}
+
+.stat-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+}
+
+.gdd-summary {
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gdd-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+}
+
+.gdd-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+}
+
+.gdd-value {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  font-size: var(--font-size-lg);
+}
+
+.gdd-value.gdd-actual {
+  color: var(--color-success);
+}
+
+/* ============================================
+   ステージタブ
+   ============================================ */
+.stages-intro {
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.stages-intro-text {
+  margin: 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-base);
+}
+
+.stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stages-placeholder {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-gray-600);
+}
+
+.placeholder-icon {
+  font-size: var(--font-size-5xl);
+  margin-bottom: var(--space-4);
+}
+
