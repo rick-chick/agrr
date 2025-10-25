@@ -40,6 +40,7 @@ class OptimizationJob < ApplicationJob
       
       # 最適化完了通知
       cultivation_plan.phase_completed!(channel_class)
+      cultivation_plan.complete!
       
       Rails.logger.info "✅ [OptimizationJob] Optimization completed for plan ##{cultivation_plan_id}"
       

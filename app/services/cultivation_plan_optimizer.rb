@@ -58,8 +58,9 @@ class CultivationPlanOptimizer
       # 最適化結果をcultivation_planに反映
       update_cultivation_plan_with_results(allocation_result)
       
-      @cultivation_plan.phase_completed!(@channel_class)
-      @cultivation_plan.complete!
+      # 最適化完了通知（OptimizationJobで重複して呼ばれるため、ここでは呼ばない）
+      # @cultivation_plan.phase_completed!(@channel_class)
+      # @cultivation_plan.complete!
       Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
       true
     rescue Agrr::BaseGateway::NoAllocationCandidatesError => e
