@@ -297,7 +297,12 @@ module AgrrOptimization
   def broadcast_optimization_complete(cultivation_plan)
     Rails.logger.info "📡 [Action Cable] Broadcasting optimization complete for plan_id=#{cultivation_plan.id}"
     
-    # チャンネルクラスは呼び出し元のコントローラーで定義済み
+    # チャンネルクラスを決定（plan_typeに基づく）
+    channel_class = if cultivation_plan.plan_type_public?
+                      OptimizationChannel
+                    else
+                      PlansOptimizationChannel
+                    end
     
     Rails.logger.info "📡 [Action Cable] Using channel: #{channel_class.name}"
     
