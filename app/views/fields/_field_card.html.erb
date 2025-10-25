@@ -1,0 +1,13 @@
+<div class="field-card" id="<%= dom_id(field) %>">
+  <h3 class="field-name"><%= field.display_name %></h3>
+  <div class="field-actions">
+    <%= link_to t('fields.index.actions.detail'), farm_field_path(farm, field), class: "btn btn-info btn-sm" %>
+    <%= link_to t('fields.index.actions.edit'), edit_farm_field_path(farm, field), class: "btn btn-secondary btn-sm" %>
+    <%= link_to t('fields.index.actions.delete'), farm_field_path(farm, field), method: :delete, 
+                class: "btn btn-error btn-sm", 
+                data: { 
+                  turbo_method: :delete,
+                  turbo_confirm: t('fields.index.actions.delete_confirm')
+                } %>
+  </div>
+</div>

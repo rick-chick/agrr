@@ -13,22 +13,12 @@
   <%= link_to t('.new_field'), new_farm_field_path(@farm), class: "btn btn-success" %>
 </div>
 
+<%= turbo_stream_from @farm %>
+
 <% if @fields.any? %>
-  <div class="fields-grid">
+  <div class="fields-grid" id="fields">
     <% @fields.each do |field| %>
-      <div class="field-card">
-        <h3 class="field-name"><%= field.display_name %></h3>
-        <div class="field-actions">
-          <%= link_to t('.actions.detail'), farm_field_path(@farm, field), class: "btn btn-info btn-sm" %>
-          <%= link_to t('.actions.edit'), edit_farm_field_path(@farm, field), class: "btn btn-secondary btn-sm" %>
-          <%= link_to t('.actions.delete'), farm_field_path(@farm, field), method: :delete, 
-                      class: "btn btn-error btn-sm", 
-                      data: { 
-                        turbo_method: :delete,
-                        turbo_confirm: t('.actions.delete_confirm')
-                      } %>
-        </div>
-      </div>
+      <%= render "field_card", field: field, farm: @farm %>
     <% end %>
   </div>
 <% else %>
