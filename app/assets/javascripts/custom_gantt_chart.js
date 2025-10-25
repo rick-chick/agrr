@@ -88,25 +88,55 @@ let ganttState = {
 // normalizeFieldId関数は共通ユーティリティ（gantt_data_utils.js）に移動
 
 
+// 初期化関数（遅延実行でコンテナが確実に存在することを保証）
+let retryCount = 0;
+const MAX_RETRIES = 50; // 最大5秒間待機 (100ms × 50)
+
+function initWhenReady() {
+  const container = document.getElementById('gantt-chart-container');
+  if (container) {
+    console.log('✅ [Gantt Chart] Container found, initializing...');
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.warn('✅ [Gantt Chart] Container found, initializing...');
+    }
+    retryCount = 0; // リセット
+    initCustomGanttChart();
+  } else if (retryCount < MAX_RETRIES) {
+    retryCount++;
+    console.log(`⏳ [Gantt Chart] Container not found yet, retrying... (${retryCount}/${MAX_RETRIES})`);
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.warn(`⏳ [Gantt Chart] Container not found yet, retrying... (${retryCount}/${MAX_RETRIES})`);
+    }
+    // 100ms待って再試行
+    setTimeout(initWhenReady, 100);
+  } else {
+    console.error('❌ [Gantt Chart] Container not found after maximum retries');
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.error('❌ [Gantt Chart] Container not found after maximum retries');
+    }
+    retryCount = 0; // リセット
+  }
+}
+
 // Turboを使用している場合はturbo:loadとturbo:render両方をリスン、使用していない場合はDOMContentLoaded
 console.log('📝 [Gantt Chart] スクリプト読み込み完了、Turbo:', typeof Turbo !== 'undefined');
 if (typeof Turbo !== 'undefined') {
   console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
   document.addEventListener('turbo:load', () => {
     console.log('🔄 [Gantt Chart] turbo:load イベント検出');
-    initCustomGanttChart();
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.warn('🔄 [Gantt Chart] turbo:load イベント検出');
+    }
+    initWhenReady();
   });
   
   // turbo:renderもリスン（Turbo 7の新機能）
   document.addEventListener('turbo:render', () => {
     console.log('🔄 [Gantt Chart] turbo:render イベント検出');
-    // 既にコンテナが存在する場合は再初期化
-    if (document.getElementById('gantt-chart-container')) {
-      console.log('✅ [Gantt Chart] Container found in turbo:render, initializing...');
-      initCustomGanttChart();
-    } else {
-      console.log('⚠️ [Gantt Chart] Container not found in turbo:render');
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.warn('🔄 [Gantt Chart] turbo:render イベント検出');
     }
+    initWhenReady();
   });
   
   // Turboによる画面遷移を検出
@@ -117,11 +147,15 @@ if (typeof Turbo !== 'undefined') {
   document.addEventListener('turbo:visit', (event) => {
     console.warn('⚠️ [Gantt Chart] turbo:visit 検出 - ページ遷移中', event.detail.url);
   });
+  
+  // 初回読み込み時にも実行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWhenReady);
+  } else {
+    initWhenReady();
+  }
 } else {
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔄 [Gantt Chart] DOMContentLoaded イベント検出');
-    initCustomGanttChart();
-  });
+  document.addEventListener('DOMContentLoaded', initWhenReady);
 }
 
 // ページリロードを検出
@@ -132,10 +166,16 @@ window.addEventListener('beforeunload', (event) => {
 
 function initCustomGanttChart() {
   console.log('🚀 [Gantt] initCustomGanttChart 開始');
+  if (typeof window.ClientLogger !== 'undefined') {
+    window.ClientLogger.warn('🚀 [Gantt] initCustomGanttChart 開始');
+  }
   
   const ganttContainer = document.getElementById('gantt-chart-container');
   if (!ganttContainer) {
     console.warn('⚠️ [Gantt] gantt-chart-container が見つかりません');
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.warn('⚠️ [Gantt] gantt-chart-container が見つかりません');
+    }
     return;
   }
 
