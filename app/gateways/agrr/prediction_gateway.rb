@@ -3,6 +3,12 @@
 module Agrr
   class PredictionGateway < BaseGatewayV2
     def predict(historical_data:, days:, model: 'lightgbm')
+      # 開発環境ではmockを使用
+      if Rails.env.development? && ENV['AGRR_USE_MOCK'] != 'false'
+        Rails.logger.info "🔮 [AGRR] Using MOCK model for development environment"
+        return generate_mock_predictions(historical_data, days)
+      end
+      
       Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days using #{model.upcase} model"
       
       # 入力データの検証
@@ -44,6 +50,17 @@ module Agrr
             '--days', days.to_s,
             '--model', model,
             '--metrics', 'temperature,temperature_max,temperature_min',
+            parse_json: false,
+            timeout: prediction_timeout
+          )
+        elsif model == 'mock'
+          execute_command(
+            'dummy_path', # Not used in V2
+            'predict',
+            '--input', input_file.path,
+            '--output', output_path,
+            '--days', days.to_s,
+            '--model', model,
             parse_json: false,
             timeout: prediction_timeout
           )
@@ -109,6 +126,47 @@ module Agrr
     end
     
     private
+    
+    def generate_mock_predictions(historical_data, days)
+      Rails.logger.info "🎭 [AGRR] Generating mock predictions for #{days} days"
+      
+      # 履歴データから統計値を計算
+      stats = calculate_historical_stats(historical_data['data'])
+      
+      # 現在の日付から指定日数分の予測データを生成
+      start_date = Date.current
+      mock_predictions = (0...days).map do |i|
+        date = start_date + i.days
+        
+        # 季節性を考慮した気温の生成
+        day_of_year = date.yday
+        seasonal_temp = 15.0 + 10.0 * Math.sin(2 * Math::PI * (day_of_year - 80) / 365.0)
+        
+        # ランダムな変動を追加
+        random_variation = (rand - 0.5) * 5.0
+        base_temp = seasonal_temp + random_variation
+        
+        # 最高気温・最低気温・平均気温を生成
+        temp_max = base_temp + 5.0 + rand(3.0)
+        temp_min = base_temp - 5.0 - rand(3.0)
+        temp_mean = (temp_max + temp_min) / 2.0
+        
+        {
+          'time' => date.to_s,
+          'temperature_2m_max' => temp_max.round(2),
+          'temperature_2m_min' => temp_min.round(2),
+          'temperature_2m_mean' => temp_mean.round(2),
+          'precipitation_sum' => rand < 0.3 ? rand(10.0).round(2) : 0.0, # 30%の確率で降水
+          'sunshine_duration' => (6.0 + rand(4.0)) * 3600.0, # 6-10時間の日照時間
+          'wind_speed_10m_max' => (2.0 + rand(5.0)).round(2),
+          'weather_code' => rand < 0.7 ? 0 : 61 # 70%の確率で晴れ
+        }
+      end
+      
+      {
+        'data' => mock_predictions
+      }
+    end
     
     def transform_predictions_to_weather_data(prediction_result, historical_data)
       # 履歴データから統計値を計算
