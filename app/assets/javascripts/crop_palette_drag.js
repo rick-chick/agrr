@@ -17,6 +17,24 @@ function getI18nTemplate(key, replacements, defaultMessage) {
 
 // 初期化フラグ
 let cropPaletteInitialized = false;
+let ganttChartReady = false;
+
+// ガントチャート準備完了イベントをリッスン
+document.addEventListener('ganttChartReady', () => {
+  console.log('✅ [CropPalette] ガントチャートが準備完了しました');
+  ganttChartReady = true;
+  
+  // ガントチャートの準備ができたら、作物パレットのドラッグ機能を初期化
+  if (!cropPaletteInitialized) {
+    // まだパレット自体が初期化されていない場合
+    tryInitialize();
+  } else {
+    // パレットは初期化済みだが、ドラッグ機能がまだの場合
+    console.log('🔧 [CropPalette] パレット初期化済み - ドラッグ機能のみ追加初期化');
+    initCropCardDrag();
+    initGanttDropZone();
+  }
+});
 
 // トグル関数
 function toggleCropPalette() {
@@ -52,7 +70,10 @@ function toggleCropPalette() {
 
 // 初期化関数
 function initializeCropPalette() {
-  console.log('🌱 [CropPalette] 初期化開始...', { initialized: cropPaletteInitialized });
+  console.log('🌱 [CropPalette] 初期化開始...', { 
+    initialized: cropPaletteInitialized,
+    ganttReady: ganttChartReady 
+  });
   
   const palettePanel = document.getElementById('crop-palette-panel');
   if (!palettePanel) {
@@ -66,17 +87,22 @@ function initializeCropPalette() {
     visible: palettePanel.offsetParent !== null
   });
 
-  // トグルボタンの設定
+  // トグルボタンの設定（ガントチャート不要）
   setupToggleButton();
   
-  // 作物カードのドラッグ設定
-  initCropCardDrag();
-
-  // ガントチャートのドロップゾーン
-  initGanttDropZone();
+  // ガントチャートが準備できている場合のみドラッグ機能を初期化
+  if (ganttChartReady) {
+    console.log('✅ [CropPalette] ガントチャートの準備ができているため、ドラッグ機能を初期化');
+    // 作物カードのドラッグ設定
+    initCropCardDrag();
+    // ガントチャートのドロップゾーン
+    initGanttDropZone();
+  } else {
+    console.warn('⏳ [CropPalette] ガントチャートの準備を待機中... ドラッグ機能は後で初期化します');
+  }
   
   cropPaletteInitialized = true;
-  console.log('✅ [CropPalette] 初期化完了');
+  console.log('✅ [CropPalette] 初期化完了（ドラッグ機能は', ganttChartReady ? '有効' : '待機中', '）');
 }
 
 // トグルボタンの設定
@@ -230,7 +256,7 @@ function initCropCardDrag() {
         crop_id: card.dataset.cropId,
         crop_name: card.dataset.cropName,
         crop_variety: card.dataset.cropVariety,
-        agrr_crop_id: card.dataset.agrrCropId
+        crop_id: card.dataset.cropId
       };
       
       console.log('🚀 ドラッグ開始:', dragData);
@@ -250,7 +276,9 @@ function initCropCardDrag() {
       const svg = svgContainer ? svgContainer.querySelector('svg.custom-gantt-chart') : null;
       
       if (!svg) {
-        console.warn('⚠️ SVGが見つかりません');
+        console.warn('⚠️ SVGが見つかりません - ガントチャートが初期化されていない可能性があります');
+        card.classList.remove('dragging');
+        alert('ガントチャートの読み込みを待ってから再度お試しください');
         return;
       }
       
@@ -488,8 +516,17 @@ function addCropToSchedule(cropData, dropInfo) {
   // ローディング表示
   showLoadingOverlay();
 
-  // APIエンドポイントにPOST
-  const url = `/api/v1/public_plans/cultivation_plans/${cultivation_plan_id}/add_crop`;
+  // data属性からURLを取得
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  const baseUrl = ganttContainer?.dataset.addCropUrl;
+  
+  if (!baseUrl) {
+    console.error('❌ data-add-crop-url属性が設定されていません');
+    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    return;
+  }
+  
+  const url = baseUrl;
 
   const requestData = {
     crop_id: cropData.crop_id,
@@ -514,6 +551,13 @@ function addCropToSchedule(cropData, dropInfo) {
   .then(response => {
     console.log('📥 [RESPONSE] レスポンス受信:', new Date().toISOString());
     console.log('📥 [RESPONSE] ステータス:', response.status);
+    
+    // レスポンスがJSONかどうかを確認
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'}`);
+    }
+    
     return response.json();
   })
   .then(data => {

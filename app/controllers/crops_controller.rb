@@ -108,7 +108,6 @@ class CropsController < ApplicationController
       :is_reference,
       :area_per_unit,
       :revenue_per_area,
-      :agrr_crop_id,
       :groups,
       crop_stages_attributes: [
         :id,

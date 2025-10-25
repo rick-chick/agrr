@@ -1,8 +1,18 @@
 # frozen_string_literal: true
 
 class PublicPlansController < ApplicationController
+  include CultivationPlanManageable
+  include JobExecution
+  include WeatherDataManagement
+  
   skip_before_action :authenticate_user!
+  skip_before_action :verify_authenticity_token
   layout 'public'
+  
+  # Concern設定
+  self.plan_type = 'public'
+  self.session_key = :public_plan
+  self.redirect_path_method = :public_plans_path
   
   # 農場サイズの定数定義
   def self.farm_sizes
@@ -82,46 +92,51 @@ class PublicPlansController < ApplicationController
     
     farm = Farm.find(session_data[:farm_id])
     total_area = session_data[:total_area]
+    
+    Rails.logger.debug "🔍 [PublicPlansController] crop_ids: #{crop_ids.inspect}"
     crops = Crop.where(id: crop_ids)
+    Rails.logger.debug "🔍 [PublicPlansController] found crops: #{crops.count}"
+    crops.each { |crop| Rails.logger.debug "  - #{crop.name} (ID: #{crop.id})" }
     
     if crops.empty?
       redirect_to select_crop_public_plans_path, alert: I18n.t('public_plans.errors.select_crop') and return
     end
     
-    # Service で計画作成
+    # セッションIDを取得
     session_id = session.id.to_s
-    Rails.logger.info "🔑 [PublicPlans#create] Using session_id: #{session_id}"
+    Rails.logger.info "🔑 [PublicPlansController#create] Using session_id: #{session_id}"
     
-    result = CultivationPlanCreator.new(
+    # 計画作成パラメータを構築
+    creator_params = {
       farm: farm,
-      total_area: total_area,
+      total_area: session_data[:total_area],
       crops: crops,
       user: current_user,
-      session_id: session_id
-    ).call
+      session_id: session_id,
+      plan_type: 'public',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year
+    }
     
-    if result.success?
-      Rails.logger.info "✅ [PublicPlans#create] CultivationPlan created with session_id: #{result.cultivation_plan.session_id}"
-      session[:public_plan] = { plan_id: result.cultivation_plan.id }
-      
-      # 非同期で最適化実行
-      OptimizeCultivationPlanJob.perform_later(result.cultivation_plan.id)
-      
-      redirect_to optimizing_public_plans_path
-    else
-      redirect_to public_plans_path, alert: I18n.t('public_plans.errors.create_failed', errors: result.errors.join(', '))
-    end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: I18n.t('public_plans.errors.restart')
+    # Service で計画作成（最適化はしない）
+    result = CultivationPlanCreator.new(**creator_params).call
+    cultivation_plan = result.cultivation_plan
+
+    # セッションに計画IDを保存
+    session[:public_plan] = session_data.merge(plan_id: cultivation_plan.id)
+    Rails.logger.info "💾 [PublicPlansController#create] Saved plan_id: #{cultivation_plan.id} to session"
+
+    # ジョブチェーンを実行（データ取得 → 予測 → 最適化）
+    job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
+    execute_job_chain_async(job_instances)
+    
+    # 天気予測実行のためにoptimizing画面にリダイレクト
+    redirect_to optimizing_public_plans_path
   end
   
   # Step 5: 最適化進捗画面（広告表示）
   def optimizing
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
-    
-    # 完了している場合は結果画面へ
-    redirect_to results_public_plans_path if @cultivation_plan.status_completed?
+    handle_optimizing(force_weather_only: false)
   end
   
   # Step 6: 結果表示
@@ -145,16 +160,23 @@ class PublicPlansController < ApplicationController
     when 'in'
       'in'
     else
-      'jp' # デフォルト
+      'jp'  # デフォルトは日本
     end
   end
   
+  # Concernで実装すべきメソッド
+  
+  def find_cultivation_plan_scope
+    CultivationPlan
+  end
+  
+  # テスト用のオーバーライド: URLパラメータでplan_idを受け取る
   def find_cultivation_plan
     # テスト用: URLパラメータでplan_idを受け取る（開発・テスト環境のみ）
     plan_id = if Rails.env.test? && params[:plan_id].present?
       params[:plan_id]
     else
-      session_data[:plan_id]
+      params[:id] || session_data[:plan_id]
     end
     
     unless plan_id
@@ -162,7 +184,7 @@ class PublicPlansController < ApplicationController
       return nil
     end
     
-    CultivationPlan
+    find_cultivation_plan_scope
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
       .find(plan_id)
   rescue ActiveRecord::RecordNotFound
@@ -170,12 +192,67 @@ class PublicPlansController < ApplicationController
     nil
   end
   
-  def session_data
-    (session[:public_plan] || {}).with_indifferent_access
+  def select_crop_redirect_path
+    :select_crop_public_plans_path
   end
   
-  def crop_ids
-    params[:crop_ids].presence || []
+  def optimizing_redirect_path
+    :optimizing_public_plans_path
   end
+  
+  def completion_redirect_path
+    :results_public_plans_path
+  end
+  
+  def channel_class
+    OptimizationChannel
+  end
+end
+
+def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
+  cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+  farm = cultivation_plan.farm
+  
+  # 天気データ取得パラメータを計算
+  weather_params = calculate_weather_data_params(farm.weather_location)
+  
+  # FetchWeatherDataJobのインスタンスを作成し、引数を設定
+  weather_job = FetchWeatherDataJob.new
+  weather_job.latitude = farm.latitude
+  weather_job.longitude = farm.longitude
+  weather_job.start_date = weather_params[:start_date]
+  weather_job.end_date = weather_params[:end_date]
+  weather_job.farm_id = farm.id
+  weather_job.cultivation_plan_id = cultivation_plan_id
+  weather_job.channel_class = channel_class
+  
+  # 天気予測の日数を調整（終了日を考慮）
+  predict_days = calculate_predict_days(weather_params[:end_date])
+  
+  [
+    # データ取得
+    weather_job,
+    # 天気予測（調整された日数で）
+    create_weather_prediction_job(cultivation_plan_id, channel_class, predict_days),
+    # 最適化
+    create_optimization_job(cultivation_plan_id, channel_class)
+  ]
+end
+
+private
+
+def create_weather_prediction_job(cultivation_plan_id, channel_class, predict_days)
+  job = WeatherPredictionJob.new
+  job.cultivation_plan_id = cultivation_plan_id
+  job.channel_class = channel_class
+  job.predict_days = predict_days
+  job
+end
+
+def create_optimization_job(cultivation_plan_id, channel_class)
+  job = OptimizationJob.new
+  job.cultivation_plan_id = cultivation_plan_id
+  job.channel_class = channel_class
+  job
 end
 

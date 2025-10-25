@@ -9,10 +9,11 @@ class PlanCopier
     end
   end
   
-  def initialize(source_plan:, new_year:, user:)
+  def initialize(source_plan:, new_year:, user:, session_id: nil)
     @source_plan = source_plan
     @new_year = new_year
     @user = user
+    @session_id = session_id
   end
   
   def call
@@ -33,7 +34,7 @@ class PlanCopier
     planning_dates = CultivationPlan.calculate_planning_dates(@new_year)
     
     # 新しい計画を作成
-    @new_plan = CultivationPlan.create!(
+    plan_attrs = {
       farm: @source_plan.farm,
       user: @user,
       total_area: @source_plan.total_area,
@@ -43,7 +44,12 @@ class PlanCopier
       planning_start_date: planning_dates[:start_date],
       planning_end_date: planning_dates[:end_date],
       status: 'pending'
-    )
+    }
+    
+    # session_idを設定（WebSocket認証に使用）
+    plan_attrs[:session_id] = @session_id if @session_id.present?
+    
+    @new_plan = CultivationPlan.create!(plan_attrs)
     
     Rails.logger.info "✅ Created new plan ##{@new_plan.id} (year: #{@new_year})"
     
@@ -64,11 +70,11 @@ class PlanCopier
     @source_plan.cultivation_plan_crops.each do |source_crop|
       CultivationPlanCrop.create!(
         cultivation_plan: @new_plan,
+        crop: source_crop.crop,  # 元のCropへの参照
         name: source_crop.name,
         variety: source_crop.variety,
         area_per_unit: source_crop.area_per_unit,
-        revenue_per_area: source_crop.revenue_per_area,
-        agrr_crop_id: source_crop.agrr_crop_id
+        revenue_per_area: source_crop.revenue_per_area
       )
     end
     

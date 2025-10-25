@@ -35,33 +35,22 @@ module Api
           plan_crop = @field_cultivation.cultivation_plan_crop
           
           # ユーザーの作物から検索（is_reference: false）
-          crop = if plan_crop&.agrr_crop_id.present?
-            # まずIDで検索
-            found_crop = current_user.crops.find_by(id: plan_crop.agrr_crop_id, is_reference: false)
-            # IDで見つからない場合は、agrr_crop_idフィールドで検索
-            found_crop ||= current_user.crops.find_by(agrr_crop_id: plan_crop.agrr_crop_id, is_reference: false)
-            # それでも見つからない場合は、名前と品種で検索
-            found_crop ||= current_user.crops.find_by(name: plan_crop.name, variety: plan_crop.variety, is_reference: false)
-            found_crop
-          else
-            # agrr_crop_idがない場合は名前で検索
-            current_user.crops.find_by(name: plan_crop.name, variety: plan_crop.variety, is_reference: false)
-          end
+          crop = current_user.crops.find_by(id: plan_crop.crop_id, is_reference: false)
           
-          Rails.logger.info "🔍 [Plans Climate Data] plan_crop.agrr_crop_id: #{plan_crop&.agrr_crop_id}, found crop: #{crop&.id}"
+          Rails.logger.info "🔍 [Plans Climate Data] plan_crop.crop_id: #{plan_crop&.crop_id}, found crop: #{crop&.id}"
           
           unless farm.weather_location
-            return render json: { success: false, message: '気象データがありません' }, status: :not_found
+            return render json: { success: false, message: I18n.t('api.errors.no_weather_data') }, status: :not_found
           end
           
           # 栽培期間が設定されていない場合のエラーハンドリング
           unless @field_cultivation.start_date && @field_cultivation.completion_date
-            return render json: { success: false, message: '栽培期間が設定されていません' }, status: :bad_request
+            return render json: { success: false, message: I18n.t('api.errors.no_cultivation_period') }, status: :bad_request
           end
           
           # 作物が見つからない場合はエラー
           unless crop
-            return render json: { success: false, message: '作物情報が見つかりません' }, status: :not_found
+            return render json: { success: false, message: I18n.t('api.errors.crop_not_found') }, status: :not_found
           end
           
           # 最適化時に保存した予測データを再利用
@@ -92,7 +81,7 @@ module Api
             unless weather_data_for_cli['success']
               return render json: {
                 success: false,
-                message: '天気予報データの取得に失敗しました'
+                message: I18n.t('api.errors.weather_forecast_failed')
               }, status: :internal_server_error
             end
           end
@@ -161,7 +150,7 @@ module Api
           else
             render json: {
               success: false,
-              message: result[:error] || 'データの取得に失敗しました'
+              message: result[:error] || I18n.t('api.errors.data_fetch_failed')
             }, status: :internal_server_error
           end
         rescue => e

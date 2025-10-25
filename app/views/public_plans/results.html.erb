@@ -8,8 +8,23 @@
     <%# ヘッダー・サマリー %>
     <%= render 'public_plans/results/header', cultivation_plan: @cultivation_plan %>
     
-    <%# ガントチャート（作物パレットを含む） %>
-    <%= render 'public_plans/results/gantt_chart', cultivation_plan: @cultivation_plan %>
+    <%# ガントチャート（作物パレットを含む） - 共通パーシャルを使用 %>
+    <%= render 'shared/gantt_chart', 
+               cultivation_plan: @cultivation_plan,
+               show_crop_palette: true,
+               plan_type: 'public',
+               data_url: data_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
+               adjust_url: adjust_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
+               add_field_url: add_field_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
+               remove_field_url: remove_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, field_id: 'PLACEHOLDER'),
+               add_crop_url: add_crop_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
+               optimization_channel: 'OptimizationChannel',
+               gantt_title: t('public_plans.results.gantt.title'),
+               detail_title: t('public_plans.show.detail.title'),
+               detail_loading: t('public_plans.show.detail.loading'),
+               crop_palette_toggle_label: t('public_plans.results.crop_palette.toggle', default: '作物を追加'),
+               crop_palette_title: t('public_plans.results.crop_palette.title', default: '作物を追加'),
+               crop_palette_in_use_label: t('public_plans.results.crop_palette.in_use', default: '使用中') %>
     
     <%# 気温・GDDチャート表示エリア（作物クリック時に表示、climate_chart.jsが内容を生成） %>
     <div id="climate-chart-display" 
@@ -50,6 +65,8 @@
 <%# Chart.js は npm で管理され application.js にバンドル済み %>
 
 <% content_for :javascripts do %>
+  <%# ガントチャートデータ変換ユーティリティ（最初に読み込み） %>
+  <%= javascript_include_tag "gantt_data_utils", defer: true, "data-turbo-track": "reload" %>
   <%# ガントチャート（色パレット管理を含む） %>
   <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
   <%# 作物パレットのドラッグ&ドロップ %>

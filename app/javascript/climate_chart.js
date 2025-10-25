@@ -46,12 +46,20 @@ class ClimateChart {
     container.style.display = 'block';
 
     try {
+      // APIエンドポイントを決定（plan_typeに基づいて）
+      // gantt-chart-containerのdata-plan-typeを参照
+      const ganttContainer = document.getElementById('gantt-chart-container');
+      const planType = ganttContainer?.dataset.planType || 'public';
+      const apiBasePath = planType === 'private' ? '/api/v1/plans' : '/api/v1/public_plans';
+      const apiUrl = `${apiBasePath}/field_cultivations/${fieldCultivationId}/climate_data`;
+      
+      console.log('🔄 Fetching API data...', { planType, apiUrl });
+      
       // APIからデータ取得（タイムアウトを20秒に設定）
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20秒でタイムアウト
       
-      console.log('🔄 Fetching API data...');
-      const response = await fetch(`/api/v1/public_plans/field_cultivations/${fieldCultivationId}/climate_data`, {
+      const response = await fetch(apiUrl, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);

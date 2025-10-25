@@ -10,15 +10,17 @@
 #   variety: 品種名（任意）
 #   area_per_unit: 単位あたりの栽培面積（㎡）
 #   revenue_per_area: 面積あたりの収益（円/㎡）
-#   agrr_crop_id: agrrコマンドで使用する作物ID
+#   crop_id: 元のCropテーブルへの参照（必須）
 #
 class CultivationPlanCrop < ApplicationRecord
   # == Associations ========================================================
   belongs_to :cultivation_plan
+  belongs_to :crop
   has_many :field_cultivations, dependent: :destroy
   
   # == Validations =========================================================
   validates :name, presence: true, length: { maximum: 100 }
+  validates :crop_id, presence: true
   validates :area_per_unit, numericality: { greater_than: 0 }, allow_nil: true
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   

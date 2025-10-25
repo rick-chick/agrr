@@ -4,13 +4,13 @@
 <%
   # 栽培スケジュール期間の計算
   plan_start_date = cultivation_plan.planning_start_date || Date.current
-  plan_end_date = cultivation_plan.planning_end_date || Date.new(Date.current.year + 1, 12, 31)
+  plan_end_date = cultivation_plan.planning_end_date
   
   # Frappe Gantt用のデータを準備
   cultivation_data = cultivation_plan.field_cultivations.map do |fc|
     {
       id: fc.id,
-      field_id: "field_#{fc.cultivation_plan_field_id}",
+      field_id: fc.cultivation_plan_field_id,
       field_name: fc.field_display_name,
       crop_name: fc.crop_display_name,
       start_date: fc.start_date.to_s,
@@ -26,7 +26,7 @@
   fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
     {
       id: field.id,
-      field_id: "field_#{field.id}",
+      field_id: field.id,
       name: field.name,
       area: field.area
     }

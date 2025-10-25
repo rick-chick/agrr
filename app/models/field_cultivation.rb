@@ -54,7 +54,7 @@ class FieldCultivation < ApplicationRecord
       variety: cultivation_plan_crop.variety,
       area_per_unit: cultivation_plan_crop.area_per_unit,
       revenue_per_area: cultivation_plan_crop.revenue_per_area,
-      agrr_id: cultivation_plan_crop.agrr_crop_id
+      crop_id: cultivation_plan_crop.crop_id
     }
   end
   

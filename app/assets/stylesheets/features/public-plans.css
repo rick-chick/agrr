@@ -893,7 +893,9 @@
    ============================================ */
 
 .crop-check { 
-  display: none; 
+  position: absolute;
+  opacity: 0;
+  /* display: none から変更 - ラベルクリックでchangeイベントを確実に発火させるため */
 }
 
 .crop-card {

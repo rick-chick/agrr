@@ -53,12 +53,12 @@ class ColorLogger
   end
 end
 
-# Fetch weather data from NASA POWER using agrr command
+# Fetch weather data from NASA POWER using agrr daemon client
 def fetch_weather_from_nasa_power(latitude, longitude)
-  agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
+  agrr_client_path = Rails.root.join('bin', 'agrr_client').to_s
   
-  unless File.exist?(agrr_path)
-    ColorLogger.error("agrr binary not found: #{agrr_path}")
+  unless File.exist?(agrr_client_path)
+    ColorLogger.error("agrr client not found: #{agrr_client_path}")
     return nil
   end
   
@@ -67,7 +67,7 @@ def fetch_weather_from_nasa_power(latitude, longitude)
   end_date = Date.today
   
   command = [
-    agrr_path,
+    agrr_client_path,
     'weather',
     '--location', "#{latitude},#{longitude}",
     '--start-date', start_date.to_s,

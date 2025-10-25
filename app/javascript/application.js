@@ -16,7 +16,6 @@ window.Chart = Chart;
 
 // npmライブラリを使用するファイルのみバンドル
 import "./fields"; // Leaflet使用（バンドル必須）
-import "./optimizing"; // Action Cable使用（バンドル必須）
 import "./temperature_chart"; // Chart.js使用（バンドル必須）
 import "./climate_chart"; // Chart.js使用（バンドル必須）
 
@@ -26,6 +25,7 @@ import "./climate_chart"; // Chart.js使用（バンドル必須）
 // - progress_bar.js
 // - cultivation_results.js
 // - custom_gantt_chart.js
+// - optimizing.js (ActionCableはグローバルで利用可能)
 
 // Google Analytics 4 統合
 import "./integrations/analytics_integration";

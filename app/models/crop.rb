@@ -8,7 +8,6 @@
 #   is_reference: 参照作物フラグ
 #   area_per_unit: 単位あたりの栽培面積（㎡）- 正の数値のみ
 #   revenue_per_area: 面積あたりの収益（円/㎡）- 0以上の数値のみ
-#   agrr_crop_id: agrrコマンドから取得した作物ID（更新時の識別に使用）
 #   user_id: 所有ユーザー（参照作物の場合はnull）
 #   groups: 作物グループ（複数の文字列、JSON配列として保存）
 #
@@ -84,7 +83,9 @@ class Crop < ApplicationRecord
           'low_stress_threshold' => temp_req.low_stress_threshold,
           'high_stress_threshold' => temp_req.high_stress_threshold,
           'frost_threshold' => temp_req.frost_threshold,
-          'max_temperature' => temp_req.max_temperature
+          # Use 50.0 as default max_temperature if nil (Python AGRR code requires this field)
+          # 50°C is higher than any realistic crop tolerance
+          'max_temperature' => temp_req.max_temperature || 50.0
         },
         'thermal' => {
           'required_gdd' => thermal_req.required_gdd
@@ -108,7 +109,7 @@ class Crop < ApplicationRecord
     # crop情報を構築
     {
       'crop' => {
-        'crop_id' => agrr_crop_id || name.downcase.gsub(/\s+/, '_'),
+        'crop_id' => id.to_s,
         'name' => name,
         'variety' => variety || 'general',
         'area_per_unit' => area_per_unit || 0.25,

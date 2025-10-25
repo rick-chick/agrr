@@ -122,6 +122,13 @@ ja:
         in_use: "使用中"
       
       detail:
+        title: "栽培詳細"
+        loading: "詳細を読み込んでいます..."
+        loading_data: "データを読み込んでいます..."
+    
+    show:
+      detail:
+        title: "栽培詳細"
         loading: "詳細を読み込んでいます..."
         loading_data: "データを読み込んでいます..."
       

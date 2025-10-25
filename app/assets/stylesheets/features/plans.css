@@ -30,6 +30,33 @@
    Header
    ============================================ */
 
+/* ガントチャートヘッダー（タイトルと作物パレットを横並び） */
+.gantt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.gantt-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 0; /* gantt-headerで制御するためmarginは0に */
+  color: var(--color-gray-800);
+}
+
+.gantt-title-icon {
+  font-size: var(--font-size-3xl);
+  line-height: 1;
+}
+
+.gantt-title-text {
+  line-height: 1.2;
+}
+
 .plans-header {
   background: var(--color-white);
   border-radius: var(--radius-lg);
@@ -668,7 +695,7 @@
 .crop-check {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
+  /* pointer-events: none を削除 - ラベルクリックでchangeイベントを発火させるため */
 }
 
 .crop-card {

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require_relative 'concerns/job_arguments_provider'
+
 class PredictWeatherDataJob < ApplicationJob
+  include JobArgumentsProvider
+  
   queue_as :default
   
   # リトライ設定（agrr実行エラー時のみ）
@@ -10,12 +14,35 @@ class PredictWeatherDataJob < ApplicationJob
   # データ不足エラーはリトライしない
   discard_on ArgumentError
   
-  def perform(farm_id:, days: nil, model: 'lightgbm', target_end_date: nil)
+  # インスタンス変数の定義
+  attr_accessor :farm_id, :days, :model, :target_end_date
+  
+  # インスタンス変数をハッシュとして返す
+  def job_arguments
+    {
+      farm_id: farm_id,
+      days: days,
+      model: model,
+      target_end_date: target_end_date
+    }
+  end
+  
+  def perform(farm_id: nil, days: nil, model: nil, target_end_date: nil)
+    # dictの中身を確認してバリデーション
+    Rails.logger.info "🔍 [PredictWeatherDataJob] Received args: farm_id=#{farm_id}, days=#{days}, model=#{model}, target_end_date=#{target_end_date}"
+    
+    # 引数が渡された場合はそれを使用、そうでなければインスタンス変数から取得
+    farm_id ||= self.farm_id
+    days ||= self.days
+    model ||= self.model
+    target_end_date ||= self.target_end_date
+    
     farm = Farm.find(farm_id)
     
-    # target_end_dateが指定されていない場合、来年の12/31に設定
+    # target_end_dateが指定されていない場合、今日から1年後に設定
+    # （過去1年のデータと対称的に表示するため）
     if target_end_date.nil?
-      target_end_date = Date.new(Date.today.year + 1, 12, 31)
+      target_end_date = Date.today + 1.year
     end
     
     Rails.logger.info "🔮 [PredictWeatherDataJob] Starting prediction for Farm ##{farm_id} (target: #{target_end_date})"
@@ -69,7 +96,12 @@ class PredictWeatherDataJob < ApplicationJob
     end
     
     # 履歴データをPredictionGateway用のフォーマットに変換
+    # 地域特性を学習するために座標情報を含める
     formatted_data = {
+      'latitude' => weather_location.latitude.to_f,
+      'longitude' => weather_location.longitude.to_f,
+      'elevation' => (weather_location.elevation || 0.0).to_f,
+      'timezone' => weather_location.timezone || 'UTC',
       'data' => historical_data.filter_map do |datum|
         # 温度データが欠損しているレコードをスキップ
         next if datum.temperature_max.nil? || datum.temperature_min.nil?
@@ -89,6 +121,8 @@ class PredictWeatherDataJob < ApplicationJob
         }
       end
     }
+    
+    Rails.logger.info "📍 [PredictWeatherDataJob] Location: (#{weather_location.latitude}, #{weather_location.longitude}), elevation: #{weather_location.elevation}m, timezone: #{weather_location.timezone}"
     
     # PredictionGatewayを使って予測を実行（daemon経由で高速実行）
     prediction_gateway = Agrr::PredictionGateway.new

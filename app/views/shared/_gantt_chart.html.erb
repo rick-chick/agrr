@@ -20,14 +20,15 @@
   
   # 栽培スケジュール期間の計算
   plan_start_date = cultivation_plan.planning_start_date || Date.current
-  plan_end_date = cultivation_plan.planning_end_date || Date.new(Date.current.year + 1, 12, 31)
+  plan_end_date = cultivation_plan.planning_end_date
   
   # Frappe Gantt用のデータを準備
   cultivation_data = cultivation_plan.field_cultivations.map do |fc|
     {
       id: fc.id,
-      field_id: "field_#{fc.cultivation_plan_field_id}",
+      field_id: fc.cultivation_plan_field_id,
       field_name: fc.field_display_name,
+      crop_id: fc.cultivation_plan_crop_id,
       crop_name: fc.crop_display_name,
       start_date: fc.start_date.to_s,
       completion_date: fc.completion_date.to_s,
@@ -42,26 +43,33 @@
   fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
     {
       id: field.id,
-      field_id: "field_#{field.id}",
+      field_id: field.id,
       name: field.name,
       area: field.area
     }
   end
   
-  # I18nキーの決定
-  i18n_key = plan_type == 'public' ? 'public_plans' : 'plans'
+  
+  # デフォルト値の設定
+  gantt_title ||= t('plans.show.gantt.title', default: 'ガントチャート')
+  detail_title ||= t('plans.show.detail.title', default: '栽培詳細')
+  detail_loading ||= t('plans.show.detail.loading', default: '読み込み中...')
 %>
 
 <div class="gantt-section">
   <div class="gantt-header">
     <h2 class="gantt-title">
       <span class="gantt-title-icon">📊</span>
-      <span class="gantt-title-text"><%= t("#{i18n_key}.results.gantt.title", default: t('plans.show.gantt.title')) %></span>
+      <span class="gantt-title-text"><%= gantt_title %></span>
     </h2>
     
     <%# 作物パレット（public_plansの場合のみ表示） %>
     <% if show_crop_palette %>
-      <%= render 'shared/crop_palette', cultivation_plan: cultivation_plan %>
+      <%= render 'shared/crop_palette', 
+                 cultivation_plan: cultivation_plan,
+                 crop_palette_toggle_label: crop_palette_toggle_label,
+                 crop_palette_title: crop_palette_title,
+                 crop_palette_in_use_label: crop_palette_in_use_label %>
     <% end %>
   </div>
   
@@ -73,21 +81,23 @@
        data-plan-end-date="<%= plan_end_date.to_s %>"
        data-cultivation-plan-id="<%= cultivation_plan.id %>"
        data-plan-type="<%= plan_type %>"
-       <%# plans_show.js 用の属性（private のみ必要） %>
-       <% if plan_type == 'private' %>
-         data-plan-id="<%= cultivation_plan.id %>"
-         data-data-url="<%= data_api_v1_plans_cultivation_plan_path(cultivation_plan) %>"
-       <% end %>>
+       <%# API エンドポイント（呼び出し側で設定） %>
+       data-data-url="<%= data_url %>"
+       data-adjust-url="<%= adjust_url %>"
+       data-add-field-url="<%= add_field_url %>"
+       data-remove-field-url="<%= remove_field_url %>"
+       data-add-crop-url="<%= add_crop_url %>"
+       data-optimization-channel="<%= optimization_channel %>">
   </div>
   
   <%# 詳細パネル（作物クリック時に表示） %>
   <div id="detail-panel" style="margin-top: var(--space-6); display: none;">
     <div style="background: var(--color-gray-50); border-radius: var(--radius-lg); padding: var(--space-6);">
       <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-4);">
-        <%= t("#{i18n_key}.show.detail.title", default: '栽培詳細') %>
+        <%= detail_title %>
       </h3>
       <div id="detail-content">
-        <%= t("#{i18n_key}.show.detail.loading", default: '読み込み中...') %>
+        <%= detail_loading %>
       </div>
     </div>
   </div>

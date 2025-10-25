@@ -11,16 +11,12 @@
           predicted_temp_mean = prediction['temperature'] || prediction['predicted_value']
           temp_max = prediction['temperature_max']
           temp_min = prediction['temperature_min']
-          
-          Rails.logger.debug "🆕 [AGRR] Using multi-metric predictions (temp_max: #{temp_max}, temp_min: #{temp_min})"
         else
           # ❌ 従来フォーマット（predicted_valueのみ）
           # 平均気温から最高気温・最低気温を推定（飽和する）
           predicted_temp_mean = prediction['predicted_value']
           temp_max = predicted_temp_mean + stats[:temp_range_half]
           temp_min = predicted_temp_mean - stats[:temp_range_half]
-          
-          Rails.logger.debug "📊 [AGRR] Using legacy format (estimated temp_max/min)"
         end
         
         {

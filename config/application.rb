@@ -48,6 +48,11 @@ module Agrr
     config.assets.enabled = true
     config.assets.version = '1.0'
     config.assets.paths << Rails.root.join('vendor/assets/stylesheets')
+    
+    # Propshaft specific configuration
+    config.assets.configure do |env|
+      env.logger = Rails.logger
+    end
 
     # I18n configuration
     config.i18n.default_locale = :ja

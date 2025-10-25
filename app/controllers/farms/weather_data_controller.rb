@@ -19,34 +19,19 @@ module Farms
       Rails.logger.info "🔍 Weather data request for Farm##{@farm.id} (#{@farm.latitude}, #{@farm.longitude})"
       Rails.logger.info "   Period: #{start_date} to #{end_date}"
 
-      # Farmに直接関連付けられたWeatherLocationを使用
+      # Farmに関連付けられたWeatherLocationを使用
       weather_location = @farm.weather_location
 
-      # 関連付けがない場合は、座標から検索（後方互換性のため）
       if weather_location.nil?
-        Rails.logger.warn "⚠️  Farm##{@farm.id} has no weather_location association, trying coordinate search..."
-        weather_location = find_weather_location_for_farm(@farm)
-      end
-
-      if weather_location.nil?
-        Rails.logger.warn "❌ No WeatherLocation found for Farm##{@farm.id}"
-        Rails.logger.warn "   Farm coordinates: (#{@farm.latitude}, #{@farm.longitude})"
-        Rails.logger.warn "   Total WeatherLocations in DB: #{WeatherLocation.count}"
-        
+        Rails.logger.error "❌ Farm##{@farm.id} has no weather_location association"
         render json: { 
           success: false, 
-          message: t('farms.weather_data.no_weather_data'),
-          debug: {
-            farm_id: @farm.id,
-            farm_coordinates: { latitude: @farm.latitude, longitude: @farm.longitude },
-            weather_locations_count: WeatherLocation.count,
-            has_weather_location_association: @farm.weather_location_id.present?
-          }
-        }
+          message: t('farms.weather_data.no_weather_data')
+        }, status: :not_found
         return
       end
 
-      Rails.logger.info "✅ Found WeatherLocation##{weather_location.id}"
+      Rails.logger.info "✅ Using WeatherLocation##{weather_location.id} for Farm##{@farm.id}"
 
       # 指定期間の天気データを取得（countの前にselectしない）
       weather_data_relation = weather_location.weather_data
@@ -109,45 +94,57 @@ module Farms
       # 既に予測データが保存されているかチェック
       if @farm.predicted_weather_data.present? && @farm.predicted_weather_data['data'].present?
         prediction_data = @farm.predicted_weather_data
+        predicted_at = Time.zone.parse(prediction_data['predicted_at']) rescue nil
         
-        Rails.logger.info "✅ [Farm##{@farm.id}] Returning cached prediction data (#{prediction_data['data'].count} days)"
+        # 予測データが古い場合は再予測（24時間以上経過、または予測開始日が過去になった場合）
+        is_outdated = predicted_at.nil? || 
+                      (Time.current - predicted_at) > 24.hours ||
+                      Date.parse(prediction_data['prediction_start_date']) < Date.today
         
-        # 予測データからnull値を除外
-        filtered_data = prediction_data['data'].filter_map do |datum|
-          # 温度データが欠損している場合はスキップ
-          next if datum['temperature_max'].nil? || datum['temperature_min'].nil?
+        if is_outdated
+          Rails.logger.info "⚠️ [Farm##{@farm.id}] Prediction data is outdated (predicted_at: #{predicted_at}), re-predicting..."
+          # 古い予測データを削除して再予測（以下のコードに進む）
+          @farm.update!(predicted_weather_data: nil)
+        else
+          Rails.logger.info "✅ [Farm##{@farm.id}] Returning cached prediction data (#{prediction_data['data'].count} days, predicted_at: #{predicted_at})"
           
-          # temperature_meanがnilの場合は計算
-          temp_mean = datum['temperature_mean']
-          temp_mean = (datum['temperature_max'] + datum['temperature_min']) / 2.0 if temp_mean.nil?
+          # 予測データからnull値を除外
+          filtered_data = prediction_data['data'].filter_map do |datum|
+            # 温度データが欠損している場合はスキップ
+            next if datum['temperature_max'].nil? || datum['temperature_min'].nil?
+            
+            # temperature_meanがnilの場合は計算
+            temp_mean = datum['temperature_mean']
+            temp_mean = (datum['temperature_max'] + datum['temperature_min']) / 2.0 if temp_mean.nil?
+            
+            {
+              date: datum['date'],
+              temperature_max: datum['temperature_max'].to_f,
+              temperature_min: datum['temperature_min'].to_f,
+              temperature_mean: temp_mean.to_f,
+              precipitation: (datum['precipitation'] || 0.0).to_f
+            }
+          end
           
-          {
-            date: datum['date'],
-            temperature_max: datum['temperature_max'].to_f,
-            temperature_min: datum['temperature_min'].to_f,
-            temperature_mean: temp_mean.to_f,
-            precipitation: (datum['precipitation'] || 0.0).to_f
+          render json: {
+            success: true,
+            farm: {
+              id: @farm.id,
+              name: @farm.display_name,
+              latitude: @farm.latitude,
+              longitude: @farm.longitude
+            },
+            period: {
+              start_date: prediction_data['prediction_start_date'],
+              end_date: prediction_data['prediction_end_date']
+            },
+            is_prediction: true,
+            predicted_at: prediction_data['predicted_at'],
+            model: prediction_data['model'],
+            data: filtered_data
           }
+          return
         end
-        
-        render json: {
-          success: true,
-          farm: {
-            id: @farm.id,
-            name: @farm.display_name,
-            latitude: @farm.latitude,
-            longitude: @farm.longitude
-          },
-          period: {
-            start_date: prediction_data['prediction_start_date'],
-            end_date: prediction_data['prediction_end_date']
-          },
-          is_prediction: true,
-          predicted_at: prediction_data['predicted_at'],
-          model: prediction_data['model'],
-          data: filtered_data
-        }
-        return
       end
       
       # 予測データがない場合は、バックグラウンドジョブを開始
@@ -155,15 +152,11 @@ module Farms
       weather_location = @farm.weather_location
       
       if weather_location.nil?
-        Rails.logger.warn "⚠️  Farm##{@farm.id} has no weather_location association"
-        weather_location = find_weather_location_for_farm(@farm)
-      end
-      
-      if weather_location.nil?
+        Rails.logger.error "❌ Farm##{@farm.id} has no weather_location association"
         render json: {
           success: false,
           message: t('farms.weather_data.no_weather_data')
-        }
+        }, status: :not_found
         return
       end
       
@@ -185,13 +178,13 @@ module Farms
       end
       
       # バックグラウンドジョブとしてキューに入れる（daemon経由で高速実行）
-      # 来年の12/31までの日数を自動計算（nilを渡すとジョブ側で計算）
+      # 1年後までの日数を自動計算（nilを渡すとジョブ側で計算）
       begin
-        PredictWeatherDataJob.perform_later(
-          farm_id: @farm.id,
-          days: nil,  # 来年の12/31まで（ジョブ側で自動計算）
-          model: 'lightgbm'
-        )
+        job = PredictWeatherDataJob.new
+        job.farm_id = @farm.id
+        job.days = nil  # 1年後まで（ジョブ側で自動計算）
+        job.model = 'lightgbm'
+        job.perform_later
         
         Rails.logger.info "✅ [Farm##{@farm.id}] Weather prediction job queued"
         
@@ -226,27 +219,6 @@ module Farms
         success: false, 
         message: t('farms.weather_data.farm_not_found')
       }, status: :not_found
-    end
-
-    # 農場の座標に最も近いWeatherLocationを探す
-    # 天気APIが返す座標は農場の座標と異なる可能性があるため
-    def find_weather_location_for_farm(farm)
-      # まず完全一致を試す
-      location = WeatherLocation.find_by(
-        latitude: farm.latitude,
-        longitude: farm.longitude
-      )
-      return location if location
-
-      # 完全一致しない場合、近似マッチング（0.01度 ≈ 1.1km の範囲内で最も近いものを選択）
-      tolerance = 0.01
-      WeatherLocation.where(
-        'ABS(latitude - ?) < ? AND ABS(longitude - ?) < ?',
-        farm.latitude, tolerance,
-        farm.longitude, tolerance
-      ).order(
-        Arel.sql("(ABS(latitude - #{farm.latitude.to_f}) + ABS(longitude - #{farm.longitude.to_f}))")
-      ).first
     end
   end
 end

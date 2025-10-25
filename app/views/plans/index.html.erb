@@ -37,76 +37,103 @@
       </div>
     <% else %>
       <!-- 年度別の計画一覧 -->
-      <% @available_years.reverse.each do |year| %>
+      <% @available_years.reverse.each_with_index do |year, index| %>
         <% year_plans = @plans_by_year[year] %>
+        <% is_current_year = year == @current_year %>
         
         <div class="plans-year-section">
-          <h2 class="plans-year-title">
-            <%= t('plans.index.year_label', year: year) %>
-          </h2>
-          
-          <% if year_plans.present? %>
-            <div class="plans-grid">
-              <% year_plans.each do |plan| %>
-                <div class="plan-card">
-                  <!-- ステータスバッジ -->
-                  <div class="plan-card-header">
-                    <span class="plan-card-status <%= plan.status %>">
-                      <%= t("plans.index.status.#{plan.status}") %>
-                    </span>
-                  </div>
-                  
-                  <!-- 計画名 -->
-                  <h3 class="plan-card-title">
-                    <%= plan.display_name %>
-                  </h3>
-                  
-                  <!-- 農場情報 -->
-                  <div class="plan-card-details">
-                    <div class="plan-card-detail-item">
-                      <span class="plan-card-detail-label"><%= t('plans.index.plan_card.farm') %>:</span>
-                      <span><%= plan.farm.display_name %></span>
+          <details <%= 'open' if is_current_year %>>
+            <summary class="plans-year-title" style="cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: var(--space-2);">
+              <span class="year-toggle-icon" style="transition: transform 0.2s;">▼</span>
+              <%= t('plans.index.year_label', year: year) %>
+              <% if year_plans.present? %>
+                <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: normal;">
+                  (<%= year_plans.count %>件)
+                </span>
+              <% end %>
+            </summary>
+            
+            <div class="plans-year-content" style="margin-top: var(--space-4);">
+              <% if year_plans.present? %>
+                <div class="plans-grid">
+                  <% year_plans.each do |plan| %>
+                    <div class="plan-card">
+                      <!-- ステータスバッジ -->
+                      <div class="plan-card-header">
+                        <span class="plan-card-status <%= plan.status %>">
+                          <%= t("plans.index.status.#{plan.status}") %>
+                        </span>
+                      </div>
+                      
+                      <!-- 計画名 -->
+                      <h3 class="plan-card-title">
+                        <%= plan.display_name %>
+                      </h3>
+                      
+                      <!-- 農場情報 -->
+                      <div class="plan-card-details">
+                        <div class="plan-card-detail-item">
+                          <span class="plan-card-detail-label"><%= t('plans.index.plan_card.farm') %>:</span>
+                          <span><%= plan.farm.display_name %></span>
+                        </div>
+                        <div class="plan-card-detail-item">
+                          <span class="plan-card-detail-label"><%= t('plans.index.plan_card.total_area') %>:</span>
+                          <span><%= number_with_delimiter(plan.total_area) %> ㎡</span>
+                        </div>
+                        <div class="plan-card-detail-item">
+                          <span><%= t('plans.index.plan_card.crops_count', count: plan.cultivation_plan_crops.count) %></span>
+                          <span>・</span>
+                          <span><%= t('plans.index.plan_card.fields_count', count: plan.cultivation_plan_fields.count) %></span>
+                        </div>
+                      </div>
+                      
+                      <!-- アクション -->
+                      <div class="plan-card-actions">
+                        <% if plan.status_completed? %>
+                          <%= link_to t('plans.index.plan_card.view'), plan_path(plan), 
+                              class: "plan-card-action-btn primary" %>
+                          <%= button_to t('plans.index.plan_card.copy'), copy_plan_path(plan), method: :post,
+                              data: { confirm: t('plans.messages.plan_copied', year: year + 1) },
+                              class: "plan-card-action-btn secondary" %>
+                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
+                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
+                              class: "plan-card-action-btn danger" %>
+                        <% elsif plan.status_optimizing? %>
+                          <%= link_to t('plans.index.plan_card.view'), optimizing_plan_path(plan), 
+                              class: "plan-card-action-btn primary" %>
+                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
+                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
+                              class: "plan-card-action-btn danger" %>
+                        <% elsif plan.status_pending? %>
+                          <%= link_to t('plans.index.plan_card.view'), plan_path(plan), 
+                              class: "plan-card-action-btn primary" %>
+                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
+                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
+                              class: "plan-card-action-btn danger" %>
+                        <% else %>
+                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
+                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
+                              class: "plan-card-action-btn danger" %>
+                        <% end %>
+                      </div>
+                      
+                      <!-- 作成日 -->
+                      <div class="plan-card-meta">
+                        <%= t('plans.index.plan_card.created_at') %>: <%= l(plan.created_at, format: :short) %>
+                      </div>
                     </div>
-                    <div class="plan-card-detail-item">
-                      <span class="plan-card-detail-label"><%= t('plans.index.plan_card.total_area') %>:</span>
-                      <span><%= number_with_delimiter(plan.total_area) %> ㎡</span>
-                    </div>
-                    <div class="plan-card-detail-item">
-                      <span><%= t('plans.index.plan_card.crops_count', count: plan.cultivation_plan_crops.count) %></span>
-                      <span>・</span>
-                      <span><%= t('plans.index.plan_card.fields_count', count: plan.cultivation_plan_fields.count) %></span>
-                    </div>
-                  </div>
-                  
-                  <!-- アクション -->
-                  <div class="plan-card-actions">
-                    <% if plan.status_completed? %>
-                      <%= link_to t('plans.index.plan_card.view'), plan_path(plan), 
-                          class: "plan-card-action-btn primary" %>
-                      <%= button_to t('plans.index.plan_card.copy'), copy_plan_path(plan), method: :post,
-                          data: { confirm: t('plans.messages.plan_copied', year: year + 1) },
-                          class: "plan-card-action-btn secondary" %>
-                    <% elsif plan.status_optimizing? %>
-                      <%= link_to t('plans.index.plan_card.view'), optimizing_plan_path(plan), 
-                          class: "plan-card-action-btn primary" %>
-                    <% end %>
-                  </div>
-                  
-                  <!-- 作成日 -->
-                  <div class="plan-card-meta">
-                    <%= t('plans.index.plan_card.created_at') %>: <%= l(plan.created_at, format: :short) %>
-                  </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <!-- その年度に計画がない場合 -->
+                <div class="content-card">
+                  <p style="text-align: center; color: var(--text-secondary);">
+                    <%= t('plans.index.no_plans') %>
+                  </p>
                 </div>
               <% end %>
             </div>
-          <% else %>
-            <!-- その年度に計画がない場合 -->
-            <div class="content-card">
-              <p style="text-align: center; color: var(--text-secondary);">
-                <%= t('plans.index.no_plans') %>
-              </p>
-            </div>
-          <% end %>
+          </details>
         </div>
       <% end %>
     <% end %>

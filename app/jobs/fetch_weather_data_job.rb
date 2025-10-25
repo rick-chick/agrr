@@ -2,11 +2,30 @@
 
 require 'open3'
 require 'json'
+require_relative 'concerns/job_arguments_provider'
 
 class FetchWeatherDataJob < ApplicationJob
+  include JobArgumentsProvider
+  
   queue_as :weather_data_sequential
   
   MAX_RETRY_ATTEMPTS = 5
+  
+  # インスタンス変数の定義
+  attr_accessor :latitude, :longitude, :start_date, :end_date, :farm_id, :cultivation_plan_id, :channel_class
+  
+  # インスタンス変数をハッシュとして返す
+  def job_arguments
+    {
+      latitude: latitude,
+      longitude: longitude,
+      start_date: start_date,
+      end_date: end_date,
+      farm_id: farm_id,
+      cultivation_plan_id: cultivation_plan_id,
+      channel_class: channel_class
+    }
+  end
 
   # APIエラーやネットワークエラーに対してリトライする
   # 指数バックオフ + ジッター（ランダム性）で最大5回までリトライ
@@ -49,8 +68,34 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   # 指定された緯度経度と期間の気象データを取得してデータベースに保存
-  def perform(latitude:, longitude:, start_date:, end_date:, farm_id: nil)
+  def perform(latitude: nil, longitude: nil, start_date: nil, end_date: nil, farm_id: nil, cultivation_plan_id: nil, channel_class: nil)
+    # dictの中身を確認してバリデーション
+    Rails.logger.info "🔍 [FetchWeatherDataJob] Received args: latitude=#{latitude}, longitude=#{longitude}, start_date=#{start_date}, end_date=#{end_date}, farm_id=#{farm_id}, cultivation_plan_id=#{cultivation_plan_id}, channel_class=#{channel_class}"
+    
+    # 引数が渡された場合はそれを使用、そうでなければインスタンス変数から取得
+    latitude ||= self.latitude
+    longitude ||= self.longitude
+    start_date ||= self.start_date
+    end_date ||= self.end_date
+    farm_id ||= self.farm_id
+    cultivation_plan_id ||= self.cultivation_plan_id
+    channel_class ||= self.channel_class
     farm_info = farm_id ? "[Farm##{farm_id}]" : ""
+    
+    # フェーズを更新
+    if cultivation_plan_id && channel_class
+      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan.phase_fetching_weather!(channel_class)
+      Rails.logger.info "🌤️ [FetchWeatherDataJob] Updated phase to fetching_weather for plan ##{cultivation_plan_id}"
+    end
+    
+    # 日付の検証
+    if start_date.nil? || end_date.nil?
+      error_msg = "Invalid date parameters: start_date=#{start_date.inspect}, end_date=#{end_date.inspect}"
+      Rails.logger.error "❌ #{farm_info} #{error_msg}"
+      raise ArgumentError, error_msg
+    end
+    
     period_str = start_date.year == end_date.year ? "#{start_date.year}" : "#{start_date.year}-#{end_date.year}"
     retry_info = executions > 1 ? " (リトライ #{executions - 1}/#{MAX_RETRY_ATTEMPTS})" : ""
     
@@ -176,10 +221,10 @@ class FetchWeatherDataJob < ApplicationJob
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
     agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
     
-    # Open-Meteoをデフォルトで使用（高解像度: 0.1度 ≈ 11km、1940年以降のデータ）
-    # NASA POWERは解像度が低い（0.5-1度 ≈ 55-111km）ため、近接農場で同じデータになる
-    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=nasa-power など
-    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'openmeteo')
+    # NASA POWERをデフォルトで使用（グローバル対応、長期データ1984年以降）
+    # JMAは高品質だがTLS証明書の問題でエラーが発生する場合がある
+    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=jma など
+    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'nasa-power')
     
     command = [
       agrr_path,

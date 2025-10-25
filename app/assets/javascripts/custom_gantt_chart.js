@@ -80,28 +80,8 @@ let ganttState = {
   globalMouseUpHandler: null
 };
 
-// field_idを常に"field_123"形式に統一するヘルパー関数
-function normalizeFieldId(fieldId) {
-  if (!fieldId) return null;
-  
-  // 既に"field_123"形式の場合
-  if (typeof fieldId === 'string' && fieldId.startsWith('field_')) {
-    return fieldId;
-  }
-  
-  // 数値の場合
-  if (typeof fieldId === 'number') {
-    return `field_${fieldId}`;
-  }
-  
-  // 文字列の数値の場合
-  if (typeof fieldId === 'string' && /^\d+$/.test(fieldId)) {
-    return `field_${fieldId}`;
-  }
-  
-  // それ以外はそのまま返す
-  return fieldId;
-}
+// normalizeFieldId関数は共通ユーティリティ（gantt_data_utils.js）に移動
+
 
 // Turboを使用している場合はturbo:loadのみ、使用していない場合はDOMContentLoaded
 if (typeof Turbo !== 'undefined') {
@@ -148,19 +128,11 @@ function initCustomGanttChart() {
   ganttState.removedIds = [];
 
   // Action Cableサブスクリプションを設定
-  setupCableSubscription();
+  setupCableSubscription(ganttContainer);
 
-  // 栽培データのfield_idを正規化
-  ganttState.cultivationData = cultivationsRaw.map(c => ({
-    ...c,
-    field_id: normalizeFieldId(c.field_id)
-  }));
-  
-  // 圃場情報を正規化（field_idを統一）
-  const normalizedFields = fieldsDataRaw.map(field => ({
-    ...field,
-    field_id: normalizeFieldId(field.field_id || field.id)
-  }));
+  // 共通ユーティリティを使用してデータを正規化
+  ganttState.cultivationData = window.normalizeCultivationsData(cultivationsRaw);
+  const normalizedFields = window.normalizeFieldsData(fieldsDataRaw);
   
   console.log('🔧 初期化時の圃場情報（正規化前）:', fieldsDataRaw);
   console.log('🔧 初期化時の圃場情報（正規化後）:', normalizedFields);
@@ -178,7 +150,7 @@ function initCustomGanttChart() {
 }
 
 // Action Cableサブスクリプションを設定
-function setupCableSubscription() {
+function setupCableSubscription(ganttContainer) {
   if (!ganttState.cultivation_plan_id) {
     console.warn('⚠️ cultivation_plan_idがないため、Action Cableサブスクリプションをスキップします');
     return;
@@ -187,7 +159,7 @@ function setupCableSubscription() {
   // 既存のサブスクリプションがあれば解除
   if (ganttState.cableSubscription) {
     console.log('🔌 既存のAction Cableサブスクリプションを解除します');
-    const channelName = (ganttState.plan_type === 'private') ? 'PlansOptimizationChannel' : 'OptimizationChannel';
+    const channelName = ganttContainer.dataset.optimizationChannel || 'OptimizationChannel';
     window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id, { channelName });
     ganttState.cableSubscription = null;
   }
@@ -200,7 +172,7 @@ function setupCableSubscription() {
 
   console.log('📡 Action Cableサブスクリプションを設定中...');
 
-  const channelName = (ganttState.plan_type === 'private') ? 'PlansOptimizationChannel' : 'OptimizationChannel';
+  const channelName = ganttContainer.dataset.optimizationChannel || 'OptimizationChannel';
   ganttState.cableSubscription = window.CableSubscriptionManager.subscribeToOptimization(
     ganttState.cultivation_plan_id,
     {
@@ -223,6 +195,18 @@ function setupCableSubscription() {
 function handleOptimizationUpdate(data) {
   console.log('🔄 最適化更新を処理中:', data);
 
+  // 圃場追加の通知を処理
+  if (data.type === 'field_added') {
+    console.log('📊 圃場追加の通知を受信:', data.field);
+    
+    // ローディングオーバーレイを非表示
+    hideLoadingOverlay();
+    
+    // データを再取得してチャートを更新
+    fetchAndUpdateChart();
+    return;
+  }
+
   // ステータスが完了の場合
   if (data.status === 'completed' || data.status === 'adjusted') {
     console.log('✅ 最適化が完了しました。データを更新します。');
@@ -231,7 +215,20 @@ function handleOptimizationUpdate(data) {
     hideLoadingOverlay();
     reoptimizationInProgress = false;
 
-    // データを再取得してチャートを更新
+    // 最適化ページかどうかを判定
+    const isOptimizingPage = document.querySelector('[data-optimizing-container]');
+    
+    if (isOptimizingPage) {
+      // 最適化ページの場合はリダイレクトURLを取得して遷移
+      const redirectUrl = isOptimizingPage.dataset.redirectUrl;
+      if (redirectUrl) {
+        console.log('🔄 最適化ページからリダイレクト:', redirectUrl);
+        window.location.href = redirectUrl;
+        return;
+      }
+    }
+
+    // データを再取得してチャートを更新（ガントチャートが存在する場合のみ）
     fetchAndUpdateChart();
   } else if (data.status === 'failed') {
     console.error('❌ 最適化に失敗しました:', data.message);
@@ -255,10 +252,22 @@ function handleOptimizationUpdate(data) {
 function fetchAndUpdateChart() {
   console.log('🔄 データを再取得中...');
 
-  const baseApi = (ganttState.plan_type === 'private')
-    ? '/api/v1/plans/cultivation_plans'
-    : '/api/v1/public_plans/cultivation_plans';
-  const url = `${baseApi}/${ganttState.cultivation_plan_id}/data`;
+  // data属性からURLを取得
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  
+  // ガントチャートコンテナが存在しない場合はスキップ（最適化ページなど）
+  if (!ganttContainer) {
+    console.log('ℹ️ ガントチャートコンテナが見つかりません。最適化ページの可能性があります。');
+    return;
+  }
+  
+  const url = ganttContainer.dataset.dataUrl;
+  
+  if (!url) {
+    console.error('❌ data-data-url属性が設定されていません');
+    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    return;
+  }
 
   fetch(url, {
     method: 'GET',
@@ -300,16 +309,9 @@ function fetchAndUpdateChart() {
       ganttState.removedIds = [];
 
       // 栽培データのfield_idも正規化
-      ganttState.cultivationData = ganttState.cultivationData.map(c => ({
-        ...c,
-        field_id: normalizeFieldId(c.field_id)
-      }));
-      
-      // 圃場情報を正規化（field_idを統一）
-      const normalizedFields = (payload.fields || []).map(field => ({
-        ...field,
-        field_id: normalizeFieldId(field.field_id || field.id)
-      }));
+      // 共通ユーティリティを使用してデータを正規化
+      ganttState.cultivationData = window.normalizeCultivationsData(ganttState.cultivationData);
+      const normalizedFields = window.normalizeFieldsData(payload.fields || []);
       
       console.log('📊 正規化後の圃場情報:', normalizedFields);
 
@@ -360,7 +362,7 @@ function groupByField(cultivations, fields = []) {
   // まず全ての圃場をグループに追加（空の圃場も含める）
   fields.forEach(field => {
     // field_idを"field_123"形式に統一
-    const fieldId = normalizeFieldId(field.field_id || field.id);
+    const fieldId = window.normalizeFieldId(field.field_id || field.id);
     
     groups[field.name] = {
       fieldName: field.name,
@@ -376,7 +378,7 @@ function groupByField(cultivations, fields = []) {
     if (!groups[fieldName]) {
       groups[fieldName] = {
         fieldName: fieldName,
-        fieldId: normalizeFieldId(cultivation.field_id),
+        fieldId: window.normalizeFieldId(cultivation.field_id),
         cultivations: []
       };
     }
@@ -402,9 +404,31 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     barPadding: 10
   };
 
-  const totalDays = daysBetween(planStartDate, planEndDate);
+  // 日付の検証と変換
+  const startDate = typeof planStartDate === 'string' ? new Date(planStartDate) : planStartDate;
+  const endDate = typeof planEndDate === 'string' ? new Date(planEndDate) : planEndDate;
+  
+  // 無効な日付の場合はデフォルト値を設定
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    console.warn('Invalid dates in renderGanttChart:', { planStartDate, planEndDate });
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear(), 0, 1); // 今年の1月1日
+    const defaultEnd = new Date(now.getFullYear(), 11, 31); // 今年の12月31日
+    startDate = defaultStart;
+    endDate = defaultEnd;
+  }
+
+  const totalDays = daysBetween(startDate, endDate);
   const chartWidth = config.width - config.margin.left - config.margin.right;
   const chartHeight = config.height - config.margin.top - config.margin.bottom;
+  
+  // chartWidthがNaNの場合はデフォルト値を設定
+  if (isNaN(chartWidth) || chartWidth <= 0) {
+    console.warn('Invalid chartWidth:', chartWidth);
+    config.width = 1200;
+    const fallbackChartWidth = config.width - config.margin.left - config.margin.right;
+    console.log('Using fallback chartWidth:', fallbackChartWidth);
+  }
   
   // グローバルステートに保存
   ganttState.config = config;
@@ -812,7 +836,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
 // 移動を記録
 function recordMove(allocation_id, to_field_name, to_start_date) {
   // 既存の移動を削除（同じIDの場合）
-  ganttState.moves = ganttState.moves.filter(m => m.allocation_id !== `alloc_${allocation_id}`);
+  ganttState.moves = ganttState.moves.filter(m => m.allocation_id !== allocation_id);
   
   // 圃場IDを抽出（正しい圃場IDを取得）
   const fieldGroup = ganttState.fieldGroups.find(g => g.fieldName === to_field_name);
@@ -833,10 +857,10 @@ function recordMove(allocation_id, to_field_name, to_start_date) {
   }
   
   // field_idを"field_123"形式に統一してからmovesに追加
-  const normalizedFieldId = normalizeFieldId(field_id);
+  const normalizedFieldId = window.normalizeFieldId(field_id);
   
   ganttState.moves.push({
-    allocation_id: `alloc_${allocation_id}`,
+    allocation_id: allocation_id,
     action: 'move',
     to_field_id: normalizedFieldId,
     to_start_date: to_start_date.toISOString().split('T')[0]
@@ -855,7 +879,7 @@ function removeCultivation(cultivation_id) {
   
   // 移動履歴に削除を追加
   ganttState.moves.push({
-    allocation_id: `alloc_${cultivation_id}`,
+    allocation_id: cultivation_id,
     action: 'remove'
   });
   
@@ -880,7 +904,7 @@ function removeCultivation(cultivation_id) {
 function applyMovesLocally() {
   // 移動を適用
   ganttState.moves.filter(m => m.action === 'move').forEach(move => {
-    const cultivation_id = parseInt(move.allocation_id.replace('alloc_', ''));
+    const cultivation_id = parseInt(move.allocation_id);
     const cultivation = ganttState.cultivationData.find(c => c.id === cultivation_id);
     
     if (cultivation) {
@@ -901,7 +925,7 @@ function applyMovesLocally() {
       console.log(`📝 楽観的更新 [${cultivation_id}] ${cultivation.crop_name}: ${cultivation.start_date} 〜 ${cultivation.completion_date}`);
       
       // 圃場名を更新（to_field_idから実際の圃場グループを検索）
-      const normalizedToFieldId = normalizeFieldId(move.to_field_id);
+      const normalizedToFieldId = window.normalizeFieldId(move.to_field_id);
       const targetFieldGroup = ganttState.fieldGroups.find(g => g.fieldId === normalizedToFieldId);
       if (targetFieldGroup) {
         cultivation.field_name = targetFieldGroup.fieldName;
@@ -921,7 +945,7 @@ function applyMovesLocally() {
   // 圃場情報を抽出（現在のfieldGroupsから）
   const fieldsData = ganttState.fieldGroups.map(g => {
     // field_idを"field_123"形式に統一
-    const normalizedFieldId = normalizeFieldId(g.fieldId);
+    const normalizedFieldId = window.normalizeFieldId(g.fieldId);
     
     return {
       id: g.fieldId, // 元のIDをそのまま使用
@@ -964,11 +988,15 @@ function executeReoptimization() {
   // 視覚的フィードバック: ローディングオーバーレイを表示
   showLoadingOverlay();
   
-  // APIエンドポイントにPOST
-  const baseApi = (ganttState.plan_type === 'private')
-    ? '/api/v1/plans/cultivation_plans'
-    : '/api/v1/public_plans/cultivation_plans';
-  const url = `${baseApi}/${ganttState.cultivation_plan_id}/adjust`;
+  // data属性からURLを取得
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  const url = ganttContainer?.dataset.adjustUrl;
+  
+  if (!url) {
+    console.error('❌ data-adjust-url属性が設定されていません');
+    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    return;
+  }
   
   console.log('📋 送信データ:', {
     cultivation_plan_id: ganttState.cultivation_plan_id,
@@ -1282,15 +1310,49 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   const startDate = new Date(cultivation.start_date);
   const endDate = new Date(cultivation.completion_date);
   
+  // 無効な日付の場合はスキップ
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    console.warn('Invalid cultivation dates:', { cultivation, startDate, endDate });
+    return;
+  }
+  
+  // 日数計算で無効な値が返された場合はスキップ
+  const daysFromStart = daysBetween(planStartDate, startDate);
+  const cultivationDays = daysBetween(startDate, endDate) + 1;
+  
+  if (daysFromStart < 0 || cultivationDays <= 0) {
+    console.warn('Invalid cultivation period calculation:', { 
+      cultivation, 
+      daysFromStart, 
+      cultivationDays,
+      planStartDate,
+      startDate,
+      endDate
+    });
+    return;
+  }
+  
   // 日数ベースの座標計算
   // ⭐ barXは開始日から計算される（adjustで開始日が変わると位置も変わる）
-  const daysFromStart = daysBetween(planStartDate, startDate);
   // ⭐ barWidthは開始日と終了日から計算される（adjustで期間が変わると幅も変わる）
-  const cultivationDays = daysBetween(startDate, endDate) + 1; // 開始日を含む
   
   const barX = config.margin.left + (daysFromStart / totalDays) * chartWidth;
   const barWidth = (cultivationDays / totalDays) * chartWidth;
   const barY = rowY + config.barPadding;
+  
+  // NaNチェック
+  if (isNaN(barX) || isNaN(barWidth) || isNaN(barY)) {
+    console.warn('Invalid bar coordinates:', { 
+      barX, 
+      barWidth, 
+      barY, 
+      daysFromStart, 
+      cultivationDays, 
+      totalDays, 
+      chartWidth 
+    });
+    return;
+  }
   
   // バーグループ
   const barGroup = createSVGElement('g', {
@@ -1314,6 +1376,18 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     class: 'bar-bg',
     style: 'cursor: grab;',
     opacity: '0.95'
+  });
+
+  // クリックイベントを追加（詳細パネル表示）
+  barBg.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🖱️ 栽培バーがクリックされました:', cultivation);
+    
+    // 詳細パネルを表示
+    if (typeof window.showDetailPanel === 'function') {
+      window.showDetailPanel(cultivation.id, cultivation.field_name, cultivation.crop_name);
+    }
   });
 
   // ホバー効果を追加
@@ -1508,8 +1582,21 @@ function daysInMonth(year, month) {
 
 // 2つの日付間の日数を計算
 function daysBetween(date1, date2) {
+  // 日付をDateオブジェクトに変換（文字列の場合は変換）
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  
+  // 無効な日付の場合は0を返す（描画をスキップするため）
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+    console.warn('Invalid date in daysBetween:', { date1, date2, d1, d2 });
+    return 0; // 無効な日付の場合は0を返して描画をスキップ
+  }
+  
   const oneDay = 24 * 60 * 60 * 1000;
-  return Math.round(Math.abs((date2 - date1) / oneDay));
+  const result = Math.round(Math.abs((d2 - d1) / oneDay));
+  
+  // 結果が0以下の場合は最小値を返す
+  return Math.max(result, 1);
 }
 
 // 日付フォーマット
@@ -1695,11 +1782,15 @@ function addField() {
   // ローディング表示（圃場追加は最適化処理ではない）
   showLoadingOverlay(getI18nMessage('jsGanttAddingFieldLoading', 'Adding field...'));
   
-  // APIリクエスト
-  const baseApi = (ganttState.plan_type === 'private')
-    ? '/api/v1/plans/cultivation_plans'
-    : '/api/v1/public_plans/cultivation_plans';
-  const url = `${baseApi}/${ganttState.cultivation_plan_id}/add_field`;
+  // data属性からURLを取得
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  const url = ganttContainer?.dataset.addFieldUrl;
+  
+  if (!url) {
+    console.error('❌ data-add-field-url属性が設定されていません');
+    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    return;
+  }
   
   console.log('📡 API URL:', url);
   
@@ -1720,9 +1811,11 @@ function addField() {
     
     if (data.success) {
       console.log('✅ 圃場を追加しました');
+      console.log('📊 追加された圃場:', data.field);
       
-      // データを再取得してチャートを更新
-      fetchAndUpdateChart();
+      // Action Cable経由で更新を待機（圃場追加は最適化を伴わない）
+      // 成功時はAction Cableの更新後にフラグを解除
+      console.log('📡 Action Cable経由で圃場追加の更新を待機中...');
     } else {
       console.error('❌ 圃場の追加に失敗しました:', data.message);
       alert(data.message || getI18nMessage('jsGanttFieldAddFailed', 'Failed to add field'));
@@ -1736,10 +1829,19 @@ function addField() {
   });
 }
 
+function getFieldCultivationIds(field_id) {
+  const fieldGroup = ganttState.fieldGroups.find(g => g.fieldId === field_id);
+  if (!fieldGroup || !fieldGroup.cultivations) {
+    return [];
+  }
+  
+  return fieldGroup.cultivations.map(c => c.id).filter(id => id != null);
+}
+
 // 圃場を削除
 function removeField(field_id) {
   // field_idを"field_123"形式に統一
-  const normalizedFieldId = normalizeFieldId(field_id);
+  const normalizedFieldId = window.normalizeFieldId(field_id);
   
   console.log('🗑️ 圃場を削除:', normalizedFieldId);
   
@@ -1752,18 +1854,30 @@ function removeField(field_id) {
   // ローディング表示（圃場削除は最適化処理ではない）
   showLoadingOverlay('圃場を削除中...');
   
-  // APIリクエスト
-  const baseApi = (ganttState.plan_type === 'private')
-    ? '/api/v1/plans/cultivation_plans'
-    : '/api/v1/public_plans/cultivation_plans';
-  const url = `${baseApi}/${ganttState.cultivation_plan_id}/remove_field/${normalizedFieldId}`;
+  // data属性からURLを取得
+  const ganttContainer = document.getElementById('gantt-chart-container');
+  const baseUrl = ganttContainer?.dataset.removeFieldUrl;
   
+  if (!baseUrl) {
+    console.error('❌ data-remove-field-url属性が設定されていません');
+    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    return;
+  }
+  
+  // 圃場IDをURLに置換
+  const url = baseUrl.replace('PLACEHOLDER', normalizedFieldId);
+  
+  const fieldCultivationIds = getFieldCultivationIds(field_id);
+
   fetch(url, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-    }
+    },
+    body: JSON.stringify({
+      field_cultivation_ids: fieldCultivationIds
+    })
   })
   .then(response => response.json())
   .then(data => {
@@ -1834,7 +1948,7 @@ function debugState() {
 window.initCustomGanttChart = initCustomGanttChart;
 window.showClimateChart = showClimateChart;
 window.addField = addField;
-window.normalizeFieldId = normalizeFieldId;
+// normalizeFieldIdは共通ユーティリティ（gantt_data_utils.js）で管理
 window.debugFieldIds = debugFieldIds;
 window.debugState = debugState;
 

@@ -11,6 +11,9 @@ class FieldsAllocator
   end
   
   def allocate
+    # total_areaが0または作物が空の場合は空配列を返す
+    return [] if total_area <= 0 || @crops.empty?
+    
     base_area = (total_area / field_count).floor
     remainder = (total_area - (base_area * field_count)).round
     

@@ -20,15 +20,21 @@ in:
       unauthorized: "इस योजना तक पहुँचने की अनुमति नहीं है।"
       plan_already_exists: "%{year} के लिए योजना पहले से मौजूद है।"
       copy_failed: "योजना कॉपी करने में विफल: %{errors}"
+      delete_failed: "योजना हटाने में विफल।"
+      already_optimized: "यह योजना पहले से अनुकूलित है।"
       invalid_field_params: "खेत की जानकारी अमान्य है।"
       cannot_remove_last_field: "अंतिम खेत नहीं हटाया जा सकता।"
+      cannot_remove_field_with_cultivations: "इस खेत में खेती का कार्यक्रम है। कृपया पहले फसलें हटाएं।"
       field_not_found: "खेत नहीं मिला।"
     
     messages:
+      plan_created: "योजना सफलतापूर्वक बनाई गई।"
       plan_copied: "%{year} की योजना कॉपी की गई।"
+      plan_deleted: "योजना सफलतापूर्वक हटाई गई।"
       crop_added: "फसल जोड़ी गई।"
       field_added: "खेत जोड़ा गया।"
       field_removed: "खेत हटाया गया।"
+      optimization_started: "अनुकूलन शुरू किया गया।"
       reoptimization_started: "पुनः अनुकूलन शुरू किया गया।"
     
     index:
@@ -50,6 +56,8 @@ in:
         fields_count: "%{count} खेत"
         view: "विवरण देखें"
         copy: "अगले वर्ष में कॉपी करें"
+        delete: "हटाएं"
+        delete_confirm: "क्या आप वाकई इस योजना को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।"
         created_at: "बनाया गया"
     
     new:
@@ -107,6 +115,7 @@ in:
     
     show:
       back_to_list: "← सूची पर वापस जाएं"
+      optimize_button: "अनुकूलित करें"
       copy_plan: "अगले वर्ष में कॉपी करें"
       chart_title: "मौसम डेटा और फसल विकास विश्लेषण"
       loading_data: "डेटा लोड किया जा रहा है..."

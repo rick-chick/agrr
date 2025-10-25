@@ -2,15 +2,30 @@
 FROM ruby:3.3.9-slim
 
 # Install system dependencies (including SQLite, YAML, and Node.js)
+# Note: We need to downgrade zlib to 1.2.x for agrr binary compatibility
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libsqlite3-dev \
     libyaml-dev \
     curl \
     gnupg \
+    wget \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
+
+# Install zlib 1.2.13 (compatible with agrr binary built on host)
+# The agrr binary was built with zlib 1.2.x and is incompatible with zlib 1.3.x
+RUN cd /tmp \
+    && wget https://github.com/madler/zlib/archive/refs/tags/v1.2.13.tar.gz \
+    && tar -xzf v1.2.13.tar.gz \
+    && cd zlib-1.2.13 \
+    && ./configure --prefix=/usr/local \
+    && make \
+    && make install \
+    && ldconfig \
+    && cd / \
+    && rm -rf /tmp/zlib-1.2.13* /tmp/v1.2.13.tar.gz
 
 # Set the working directory
 WORKDIR /app

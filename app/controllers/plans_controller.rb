@@ -1,13 +1,27 @@
 # frozen_string_literal: true
 
 class PlansController < ApplicationController
+  include CultivationPlanManageable
+  include JobExecution
+  include WeatherDataManagement
+  
   before_action :authenticate_user!
   layout 'application'
+  
+  # Concern設定
+  self.plan_type = 'private'
+  self.session_key = :plan_data
+  self.redirect_path_method = :plans_path
+  
+  # 定数
+  AVAILABLE_YEARS_RANGE = 1 # 現在年から前後何年まで表示するか
+  PLAN_TYPE_PRIVATE = 'private'
+  SESSION_ID_KEY = :plan_data
   
   # 計画一覧（年度別）
   def index
     @current_year = Date.current.year
-    @available_years = ((@current_year - 1)..(@current_year + 5)).to_a
+    @available_years = available_years_range
     
     # ユーザーの全計画を取得（年度別にグループ化）
     @plans_by_year = CultivationPlan
@@ -23,7 +37,7 @@ class PlansController < ApplicationController
   # Step 1: 年度・農場選択
   def new
     @current_year = Date.current.year
-    @available_years = ((@current_year - 1)..(@current_year + 5)).to_a
+    @available_years = available_years_range
     
     # ユーザーの農場を取得
     @farms = current_user.farms.user_owned.to_a
@@ -66,59 +80,39 @@ class PlansController < ApplicationController
     redirect_to new_plan_path, alert: I18n.t('plans.errors.farm_not_found')
   end
   
-  # Step 3: 計画作成（最適化開始）
+  # Step 3: 計画作成（最適化はしない）
   def create
-    unless plan_session_data[:farm_id] && plan_session_data[:plan_year]
-      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart') and return
-    end
+    return unless validate_session_data
     
-    farm = current_user.farms.find(plan_session_data[:farm_id])
-    plan_year = plan_session_data[:plan_year]
-    plan_name = plan_session_data[:plan_name]
-    crops = current_user.crops.where(id: crop_ids, is_reference: false)
+    farm = find_farm_from_session
+    crops = find_selected_crops
+    return unless validate_crops_selection(crops)
     
-    if crops.empty?
-      redirect_to select_crop_plans_path, alert: I18n.t('plans.errors.select_crop') and return
-    end
-    
-    # 計画期間を計算
-    planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
-    
-    # Service で計画作成
-    result = CultivationPlanCreator.new(
-      farm: farm,
-      total_area: plan_session_data[:total_area],
-      crops: crops,
-      user: current_user,
-      plan_type: 'private',
-      plan_year: plan_year,
-      plan_name: plan_name,
-      planning_start_date: planning_dates[:start_date],
-      planning_end_date: planning_dates[:end_date]
-    ).call
-    
-    if result.success?
-      Rails.logger.info "✅ [Plans#create] CultivationPlan created: #{result.cultivation_plan.id}"
-      session[:plan_data] = { plan_id: result.cultivation_plan.id }
-      
-      # 非同期で最適化実行
-      OptimizeCultivationPlanJob.perform_later(result.cultivation_plan.id)
-      
-      redirect_to optimizing_plan_path(result.cultivation_plan)
-    else
-      redirect_to new_plan_path, alert: I18n.t('plans.errors.create_failed', errors: result.errors.join(', '))
-    end
+    result = create_cultivation_plan_with_jobs(farm, crops)
+    redirect_to_optimizing(result.cultivation_plan.id)
   rescue ActiveRecord::RecordNotFound
     redirect_to new_plan_path, alert: I18n.t('plans.errors.restart')
   end
   
+  # 計画の最適化を実行
+  def optimize
+    plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+    
+    # 既に最適化中または完了している場合はスキップ
+    if plan.status_optimizing? || plan.status_completed?
+      redirect_to plan_path(plan), alert: I18n.t('plans.errors.already_optimized') and return
+    end
+    
+    # 最適化は計画作成時に既に実行されているため、進捗画面にリダイレクト
+    redirect_to optimizing_plan_path(plan.id), notice: I18n.t('plans.messages.optimization_started')
+  rescue ActiveRecord::RecordNotFound
+    redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
+  end
+  
   # Step 4: 最適化進捗画面
   def optimizing
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
-    
-    # 完了している場合は詳細画面へ
-    redirect_to plan_path(@cultivation_plan) if @cultivation_plan.status_completed?
+    Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{params[:id]}"
+    handle_optimizing(force_weather_only: true)
   end
   
   # Step 5: 計画詳細（結果表示）
@@ -126,8 +120,8 @@ class PlansController < ApplicationController
     @cultivation_plan = find_cultivation_plan
     return unless @cultivation_plan
     
-    # まだ完了していない場合は進捗画面へ
-    redirect_to optimizing_plan_path(@cultivation_plan) unless @cultivation_plan.status_completed?
+    # 最適化中の場合のみ進捗画面へ
+    redirect_to optimizing_plan_path(@cultivation_plan.id) if @cultivation_plan.status_optimizing?
   end
   
   # 計画コピー（前年度の計画を新年度にコピー）
@@ -143,10 +137,12 @@ class PlansController < ApplicationController
     end
     
     # PlanCopierサービスで計画をコピー
+    session_id = session.id.to_s
     result = PlanCopier.new(
       source_plan: source_plan,
       new_year: new_year,
-      user: current_user
+      user: current_user,
+      session_id: session_id
     ).call
     
     if result.success?
@@ -158,32 +154,163 @@ class PlansController < ApplicationController
     redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
   end
   
+  # 計画削除
+  def destroy
+    plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+    
+    if plan.destroy
+      redirect_to plans_path, notice: I18n.t('plans.messages.plan_deleted')
+    else
+      redirect_to plans_path, alert: I18n.t('plans.errors.delete_failed')
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
+  end
+  
   private
   
-  def find_cultivation_plan
-    plan_id = params[:id] || plan_session_data[:plan_id]
-    
-    unless plan_id
-      redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
-      return nil
-    end
-    
+  # Concernで実装すべきメソッド
+  
+  def find_cultivation_plan_scope
     CultivationPlan
       .plan_type_private
       .by_user(current_user)
-      .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
-      .find(plan_id)
-  rescue ActiveRecord::RecordNotFound
-    redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
-    nil
   end
   
-  def plan_session_data
-    (session[:plan_data] || {}).with_indifferent_access
+  def select_crop_redirect_path
+    :select_crop_plans_path
   end
   
-  def crop_ids
-    params[:crop_ids].presence || []
+  def optimizing_redirect_path
+    :optimizing_plan_path
   end
-end
+  
+  def completion_redirect_path
+    :plan_path
+  end
+  
+  def channel_class
+    PlansOptimizationChannel
+  end
 
+  def create_job_instances_for_plans(cultivation_plan_id, channel_class)
+    cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+    farm = cultivation_plan.farm
+    
+    # 天気データ取得パラメータを計算
+    weather_params = calculate_weather_data_params(farm.weather_location)
+    
+    # FetchWeatherDataJobのインスタンスを作成し、引数を設定
+    weather_job = FetchWeatherDataJob.new
+    weather_job.latitude = farm.latitude
+    weather_job.longitude = farm.longitude
+    weather_job.start_date = weather_params[:start_date]
+    weather_job.end_date = weather_params[:end_date]
+    weather_job.farm_id = farm.id
+    weather_job.cultivation_plan_id = cultivation_plan_id
+    weather_job.channel_class = channel_class
+    
+    # 天気予測の日数を調整（終了日を考慮）
+    predict_days = calculate_predict_days(weather_params[:end_date])
+    
+    # WeatherPredictionJobのインスタンスを作成し、引数を設定
+    prediction_job = WeatherPredictionJob.new
+    prediction_job.cultivation_plan_id = cultivation_plan_id
+    prediction_job.channel_class = channel_class
+    prediction_job.predict_days = predict_days
+    
+    [
+      # データ取得
+      weather_job,
+      # 天気予測
+      prediction_job
+    ]
+  end
+
+  # 年度範囲を計算するヘルパーメソッド
+  def available_years_range
+    current_year = Date.current.year
+    ((current_year - AVAILABLE_YEARS_RANGE)..(current_year + AVAILABLE_YEARS_RANGE)).to_a
+  end
+
+  # セッションデータの検証
+  def validate_session_data
+    unless session_data[:farm_id] && session_data[:plan_year]
+      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart')
+      return false
+    end
+    true
+  end
+
+  # セッションから農場を取得
+  def find_farm_from_session
+    current_user.farms.find(session_data[:farm_id])
+  end
+
+  # 選択された作物を取得
+  def find_selected_crops
+    current_user.crops.where(id: crop_ids, is_reference: false)
+  end
+
+  # 作物選択の検証
+  def validate_crops_selection(crops)
+    if crops.empty?
+      redirect_to select_crop_plans_path, alert: I18n.t('plans.errors.select_crop')
+      return false
+    end
+    true
+  end
+
+  # 栽培計画作成とジョブ実行
+  def create_cultivation_plan_with_jobs(farm, crops)
+    creator_params = build_creator_params(farm, crops)
+    result = CultivationPlanCreator.new(**creator_params).call
+    
+    Rails.logger.info "✅ [PlansController#create] CultivationPlan created: #{result.cultivation_plan.id}"
+    session[SESSION_ID_KEY] = { plan_id: result.cultivation_plan.id }
+    
+    # ジョブチェーンを非同期実行
+    job_instances = create_job_instances_for_plans(result.cultivation_plan.id, PlansOptimizationChannel)
+    execute_job_chain_async(job_instances)
+    
+    result
+  end
+
+  # 作成者パラメータを構築
+  def build_creator_params(farm, crops)
+    plan_year = session_data[:plan_year]
+    plan_name = session_data[:plan_name]
+    planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
+    session_id = session.id.to_s
+    
+    Rails.logger.info "🔑 [PlansController#create] Using session_id: #{session_id}"
+    
+    {
+      farm: farm,
+      total_area: session_data[:total_area],
+      crops: crops,
+      user: current_user,
+      session_id: session_id,
+      plan_type: PLAN_TYPE_PRIVATE,
+      plan_year: plan_year,
+      plan_name: plan_name,
+      planning_start_date: planning_dates[:start_date],
+      planning_end_date: planning_dates[:end_date]
+    }
+  end
+
+  # 最適化画面へのリダイレクト
+  def redirect_to_optimizing(plan_id)
+    redirect_with_log(optimizing_plan_path(plan_id), 'plans.messages.plan_created')
+  end
+
+  # 共通リダイレクト処理
+  def redirect_with_log(path, message_key = nil, alert_key = nil)
+    Rails.logger.info "🔄 [PlansController] Redirecting to: #{path}"
+    options = {}
+    options[:notice] = I18n.t(message_key) if message_key
+    options[:alert] = I18n.t(alert_key) if alert_key
+    redirect_to path, options
+  end
+
+end

@@ -75,6 +75,7 @@ Rails.application.routes.draw do
       member do
         get :optimizing
         post :copy
+        post :optimize
       end
     end
 
@@ -130,6 +131,13 @@ Rails.application.routes.draw do
               get :data
             end
           end
+        end
+        
+        # Weather API endpoints
+        namespace :weather do
+          get 'historical', to: 'weather#historical'
+          get 'forecast', to: 'weather#forecast'
+          get 'status', to: 'weather#status'
         end
         
         # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）

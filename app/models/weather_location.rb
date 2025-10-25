@@ -51,5 +51,15 @@ class WeatherLocation < ApplicationRecord
   def has_weather_data_for_period?(start_date, end_date)
     weather_data.where(date: start_date..end_date).count == (end_date - start_date).to_i + 1
   end
+
+  # 最新の天気データの日付を取得
+  def latest_weather_date
+    weather_data.maximum(:date)
+  end
+
+  # 最古の天気データの日付を取得
+  def earliest_weather_date
+    weather_data.minimum(:date)
+  end
 end
 

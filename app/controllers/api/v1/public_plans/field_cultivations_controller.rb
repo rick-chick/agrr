@@ -31,37 +31,26 @@ module Api
           cultivation_plan = @field_cultivation.cultivation_plan
           farm = cultivation_plan.farm
           
-          # agrr_crop_idから参照作物を取得
+          # crop_idから参照作物を取得
           plan_crop = @field_cultivation.cultivation_plan_crop
           
-          # agrr_crop_idは作物の元IDなので、それで検索
-          crop = if plan_crop&.agrr_crop_id.present?
-            # まずIDで検索
-            found_crop = Crop.find_by(id: plan_crop.agrr_crop_id)
-            # IDで見つからない場合は、agrr_crop_idフィールドで検索
-            found_crop ||= Crop.find_by(agrr_crop_id: plan_crop.agrr_crop_id)
-            # それでも見つからない場合は、名前と品種で参照作物を検索
-            found_crop ||= Crop.reference.find_by(name: plan_crop.name, variety: plan_crop.variety)
-            found_crop
-          else
-            # agrr_crop_idがない場合は名前で検索を試みる
-            Crop.reference.find_by(name: plan_crop.name, variety: plan_crop.variety)
-          end
+          # crop_idで検索
+          crop = Crop.find_by(id: plan_crop.crop_id)
           
-          Rails.logger.info "🔍 [Climate Data] plan_crop.agrr_crop_id: #{plan_crop&.agrr_crop_id}, found crop: #{crop&.id}"
+          Rails.logger.info "🔍 [Climate Data] plan_crop.crop_id: #{plan_crop&.crop_id}, found crop: #{crop&.id}"
           
           unless farm.weather_location
-            return render json: { success: false, message: '気象データがありません' }, status: :not_found
+            return render json: { success: false, message: I18n.t('api.errors.no_weather_data') }, status: :not_found
           end
           
           # 栽培期間が設定されていない場合のエラーハンドリング
           unless @field_cultivation.start_date && @field_cultivation.completion_date
-            return render json: { success: false, message: '栽培期間が設定されていません' }, status: :bad_request
+            return render json: { success: false, message: I18n.t('api.errors.no_cultivation_period') }, status: :bad_request
           end
           
           # 作物が参照作物でない場合はエラー
           unless crop
-            return render json: { success: false, message: '作物情報が見つかりません' }, status: :not_found
+            return render json: { success: false, message: I18n.t('api.errors.crop_not_found') }, status: :not_found
           end
           
           # 最適化時に保存した予測データを再利用（パフォーマンス向上 & データ一貫性）
@@ -76,8 +65,51 @@ module Api
             else
               weather_data_for_cli = saved_data
             end
+          elsif farm.predicted_weather_data.present? && farm.predicted_weather_data['data'].present?
+            # Farmに保存されている予測データを再利用（2番目の優先度）
+            Rails.logger.info "♻️ [Climate Data] Using Farm##{farm.id} cached prediction data"
+            
+            farm_prediction = farm.predicted_weather_data
+            farm_prediction_start = Date.parse(farm_prediction['prediction_start_date'])
+            farm_prediction_end = Date.parse(farm_prediction['prediction_end_date'])
+            
+            # 必要な期間をカバーしているか確認
+            if farm_prediction_end >= @field_cultivation.completion_date
+              # カバーしている場合は使用
+              filtered_data = farm_prediction['data'].select do |datum|
+                datum_date = Date.parse(datum['date'])
+                datum_date >= farm_prediction_start && datum_date <= @field_cultivation.completion_date
+              end
+              
+              weather_data_for_cli = {
+                'latitude' => farm.latitude,
+                'longitude' => farm.longitude,
+                'timezone' => farm.weather_location.timezone || 'Asia/Tokyo',
+                'data' => filtered_data.map do |datum|
+                  {
+                    'time' => datum['date'],
+                    'temperature_2m_max' => datum['temperature_max'],
+                    'temperature_2m_min' => datum['temperature_min'],
+                    'temperature_2m_mean' => datum['temperature_mean'],
+                    'precipitation_sum' => datum['precipitation'] || 0.0
+                  }
+                end
+              }
+              
+              Rails.logger.info "✅ [Climate Data] Using #{filtered_data.count} days from Farm cached prediction"
+            else
+              # カバーしていない場合は新規生成
+              Rails.logger.warn "⚠️ [Climate Data] Farm prediction doesn't cover required period, generating on-the-fly"
+              weather_data_for_cli = get_weather_data_for_period(
+                farm.weather_location,
+                @field_cultivation.start_date,
+                @field_cultivation.completion_date,
+                farm.latitude,
+                farm.longitude
+              )
+            end
           else
-            Rails.logger.warn "⚠️ [Climate Data] No saved weather data, generating on-the-fly"
+            Rails.logger.warn "⚠️ [Climate Data] No cached weather data, generating on-the-fly"
             # フォールバック: その場で予測データを生成
             weather_data_for_cli = get_weather_data_for_period(
               farm.weather_location,
@@ -91,7 +123,7 @@ module Api
           # 表示用の気象データレコード（実データと予測データ）
           # weather_data_for_cliがnilまたはdataキーがない場合のエラーハンドリング
           unless weather_data_for_cli && weather_data_for_cli['data']
-            return render json: { success: false, message: '気象データの取得に失敗しました' }, status: :internal_server_error
+            return render json: { success: false, message: I18n.t('api.errors.weather_forecast_failed') }, status: :internal_server_error
           end
           
           weather_data_records = extract_actual_weather_data(weather_data_for_cli, @field_cultivation.start_date, @field_cultivation.completion_date)
@@ -355,7 +387,9 @@ module Api
           }
           
           # 予測が必要な日数を計算
-          prediction_days = (end_date - Date.current).to_i + 1
+          # AGRRは訓練データの最終日（training_end_date）の翌日から予測を開始するため、
+          # training_end_dateからend_dateまでの日数を計算
+          prediction_days = (end_date - training_end_date).to_i
           
           if prediction_days > 0
             # 予測データを生成
@@ -366,9 +400,9 @@ module Api
               model: 'lightgbm'
             )
             
-            # 今年の実データを取得
+            # 今年の実データを取得（training_end_dateまで）
             current_year_start = Date.new(Date.current.year, 1, 1)
-            current_year_end = Date.current - 2.days
+            current_year_end = training_end_date
             current_year_data = weather_location.weather_data
               .where(date: current_year_start..current_year_end)
               .order(:date)
