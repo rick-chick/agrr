@@ -192,11 +192,9 @@ class CultivationPlanOptimizer
     @cultivation_plan.field_cultivations.destroy_all
     Rails.logger.info "🗑️  [AGRR] Cleared existing FieldCultivations for CultivationPlan ##{@cultivation_plan.id}"
     
-    # 既存のCultivationPlanFieldとCultivationPlanCropも全て削除
-    # AGRR最適化結果に基づいて再作成するため
-    @cultivation_plan.cultivation_plan_fields.destroy_all
-    @cultivation_plan.cultivation_plan_crops.destroy_all
-    Rails.logger.info "🗑️  [AGRR] Cleared existing CultivationPlanFields and CultivationPlanCrops for CultivationPlan ##{@cultivation_plan.id}"
+    # 既存のCultivationPlanFieldとCultivationPlanCropは保持
+    # AGRR最適化結果に基づいてFieldCultivationのみ再作成する
+    Rails.logger.info "🔄 [AGRR] Keeping existing CultivationPlanFields and CultivationPlanCrops for CultivationPlan ##{@cultivation_plan.id}"
     
     field_schedules = allocation_result[:field_schedules] || []
     
@@ -222,6 +220,7 @@ class CultivationPlanOptimizer
   
   def create_field_cultivation_from_allocation(allocation, field_id, index)
     # 作物情報を作成
+    crop_id = allocation['crop_id']
     crop_name = allocation['crop_name']
     crop_variety = allocation['variety']
     
@@ -232,7 +231,7 @@ class CultivationPlanOptimizer
     # 新しいFieldCultivationを作成
     field_cultivation = @cultivation_plan.field_cultivations.create!(
       cultivation_plan_field_id: create_or_find_cultivation_plan_field(field_name, allocation['area_used']),
-      cultivation_plan_crop_id: create_or_find_cultivation_plan_crop(crop_name, crop_variety),
+      cultivation_plan_crop_id: find_cultivation_plan_crop_by_crop_id(crop_id, crop_name),
       area: allocation['area_used'],
       start_date: Date.parse(allocation['start_date']),
       completion_date: Date.parse(allocation['completion_date']),
@@ -265,16 +264,20 @@ class CultivationPlanOptimizer
     field.id
   end
   
-  def create_or_find_cultivation_plan_crop(crop_name, crop_variety)
-    # CultivationPlanCropを作成または検索
-    crop = @cultivation_plan.cultivation_plan_crops.find_or_create_by!(
-      name: crop_name,
-      variety: crop_variety
-    ) do |c|
-      c.area_per_unit = 1.0 # デフォルト値
-      c.revenue_per_area = 800.0 # デフォルト値
+  def find_cultivation_plan_crop_by_crop_id(crop_id, crop_name)
+    # AGRR最適化は入力された作物のみを使用するため、既存のCultivationPlanCropが必ず存在する
+    existing_cpc = @cultivation_plan.cultivation_plan_crops.find_by(crop_id: crop_id)
+    
+    if existing_cpc
+      Rails.logger.debug "♻️ [AGRR] Found existing CultivationPlanCrop: #{crop_name} (ID: #{existing_cpc.id}, Crop ID: #{existing_cpc.crop_id})"
+      existing_cpc.id
+    else
+      # このケースは実際には発生しない（AGRRは入力された作物のみを返すため）
+      # もし発生した場合は、データ整合性の問題
+      Rails.logger.error "❌ [AGRR] CultivationPlanCrop not found for crop_id: #{crop_id} (#{crop_name})"
+      Rails.logger.error "❌ [AGRR] Available CultivationPlanCrops: #{@cultivation_plan.cultivation_plan_crops.pluck(:crop_id, :name)}"
+      raise "CultivationPlanCrop not found for crop_id: #{crop_id}. This indicates a data integrity issue."
     end
-    crop.id
   end
   
   def update_cultivation_plan_with_results(allocation_result)
