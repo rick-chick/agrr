@@ -1,6 +1,11 @@
 // app/javascript/custom_gantt_chart.js
 // カスタムSVGガントチャート（圃場ベース）- ドラッグ&ドロップ対応
 
+// ファイル読み込み確認
+if (typeof window.ClientLogger !== 'undefined') {
+  window.ClientLogger.warn('📝 [Gantt Chart] custom_gantt_chart.js ファイル読み込み完了');
+}
+
 // 作物の色パレット管理（共通化）
 const colorPalette = [
   { fill: '#9ae6b4', stroke: '#48bb78' },   // 緑1
