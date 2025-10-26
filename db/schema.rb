@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_25_045442) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_26_061849) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -186,10 +186,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_25_045442) do
     t.float "area"
     t.float "daily_fixed_cost"
     t.string "region"
-    t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name", unique: true
+    t.index ["farm_id", "name"], name: "index_fields_on_farm_id_and_name"
     t.index ["farm_id"], name: "index_fields_on_farm_id"
     t.index ["region"], name: "index_fields_on_region"
-    t.index ["user_id", "name"], name: "index_fields_on_user_id_and_name", unique: true
+    t.index ["user_id", "farm_id", "name"], name: "index_fields_on_user_id_and_farm_id_and_name", unique: true
     t.index ["user_id"], name: "index_fields_on_user_id"
   end
 
