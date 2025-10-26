@@ -18,13 +18,14 @@ class PlanSaveService
       # 1. マスタデータの作成・取得
       farm = create_or_get_user_farm
       crops = create_or_get_user_crops
+      fields = create_user_fields(farm)
       interaction_rules = create_interaction_rules(crops)
       
       # 2. 計画のコピー
       new_plan = copy_cultivation_plan(farm, crops)
       
       # 3. マスタデータ間の関連付け
-      establish_master_data_relationships(farm, crops, interaction_rules)
+      establish_master_data_relationships(farm, crops, fields, interaction_rules)
       
       # 4. 関連データのコピー
       copy_plan_relations(new_plan)
@@ -46,23 +47,18 @@ class PlanSaveService
     farm_id = @session_data[:farm_id] || @session_data['farm_id']
     reference_farm = Farm.find(farm_id)
     
-    # 既存の農場があるかチェック
-    existing_farm = @user.farms.find_by(
-      latitude: reference_farm.latitude,
-      longitude: reference_farm.longitude
-    )
-    
-    return existing_farm if existing_farm
-    
-    # 新しい農場を作成（weather_location_idを渡す）
-    @user.farms.create!(
-      name: "#{reference_farm.name} (コピー)",
+    # 常に新しい農場を作成（重複チェックなし）
+    new_farm = @user.farms.create!(
+      name: "#{reference_farm.name} (コピー #{Time.current.strftime('%Y%m%d_%H%M%S')})",
       latitude: reference_farm.latitude,
       longitude: reference_farm.longitude,
       region: reference_farm.region,
       is_reference: false,
       weather_location_id: reference_farm.weather_location_id
     )
+    
+    Rails.logger.info "✅ [PlanSaveService] Created new farm: #{new_farm.name} (ID: #{new_farm.id})"
+    new_farm
   end
   
   def create_or_get_user_crops
@@ -71,48 +67,109 @@ class PlanSaveService
     user_crops = []
     
     reference_crops.each do |reference_crop|
-      # 既存の作物があるかチェック
-      existing_crop = @user.crops.includes(crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement]).find_by(name: reference_crop.name)
+      # 常に新しい作物を作成（重複チェックなし）
+      new_crop = @user.crops.create!(
+        name: reference_crop.name,
+        variety: reference_crop.variety,
+        area_per_unit: reference_crop.area_per_unit,
+        revenue_per_area: reference_crop.revenue_per_area,
+        groups: reference_crop.groups,
+        is_reference: false,
+        region: reference_crop.region
+      )
       
-      if existing_crop
-        # 既存の作物にステージ要件があるかチェック
-        missing_requirements = existing_crop.crop_stages.any? do |stage|
-          !stage.temperature_requirement || !stage.thermal_requirement
-        end
-        
-        if missing_requirements
-          # ステージ要件が欠けている場合はコピー
-          Rails.logger.info "⚠️  [PlanSaveService] Copying missing requirements for existing crop: #{existing_crop.name}"
-          copy_crop_stages(reference_crop, existing_crop)
-        end
-        
-        user_crops << existing_crop
-      else
-        # 新しい作物を作成
-        new_crop = @user.crops.create!(
-          name: reference_crop.name,
-          variety: reference_crop.variety,
-          area_per_unit: reference_crop.area_per_unit,
-          revenue_per_area: reference_crop.revenue_per_area,
-          groups: reference_crop.groups,
-          is_reference: false,
-          region: reference_crop.region
-        )
-        
-        # 作物ステージをコピー
-        copy_crop_stages(reference_crop, new_crop)
-        
-        user_crops << new_crop
-      end
+      # 作物ステージをコピー
+      copy_crop_stages(reference_crop, new_crop)
+      
+      user_crops << new_crop
+      Rails.logger.info "✅ [PlanSaveService] Created new crop: #{new_crop.name} (ID: #{new_crop.id})"
     end
     
     user_crops
   end
   
+  def create_user_fields(farm)
+    field_data = @session_data[:field_data] || @session_data['field_data']
+    Rails.logger.debug "🔍 [PlanSaveService] field_data from session: #{field_data.inspect}"
+    
+    return [] unless field_data&.any?
+    
+    user_fields = []
+    
+    field_data.each do |field_info|
+      Rails.logger.debug "🔍 [PlanSaveService] Processing field_info: #{field_info.inspect}"
+      
+      # ハッシュのキーをシンボルと文字列の両方に対応
+      field_name = field_info[:name] || field_info['name']
+      field_area = field_info[:area] || field_info['area']
+      field_coordinates = field_info[:coordinates] || field_info['coordinates']
+      
+      Rails.logger.debug "🔍 [PlanSaveService] Extracted: name=#{field_name}, area=#{field_area}, coordinates=#{field_coordinates}"
+      
+      # 常に新しい圃場を作成（農場ごとにユニークなので重複チェック不要）
+      field_attrs = {
+        farm: farm,
+        user: @user,
+        name: field_name,
+        area: field_area
+      }
+      
+      # Fieldモデルには座標属性がないため、座標情報はスキップ
+      # 必要に応じてdescriptionに座標情報を保存
+      if field_coordinates&.is_a?(Array) && field_coordinates.length >= 2
+        field_attrs[:description] = "座標: #{field_coordinates[0]}, #{field_coordinates[1]}"
+      end
+      
+      Rails.logger.debug "🔍 [PlanSaveService] Creating field with attrs: #{field_attrs.inspect}"
+      
+      new_field = farm.fields.create!(field_attrs)
+      user_fields << new_field
+      Rails.logger.info "✅ [PlanSaveService] Created new field: #{new_field.name} (#{new_field.area}m²)"
+    end
+    
+    user_fields
+  end
+  
   def create_interaction_rules(crops)
-    # InteractionRuleはグループベースなので、個別コピーは不要
-    # 既存のルールを参照する
-    []
+    # 作物の組み合わせから連作ルールを作成
+    interaction_rules = []
+    
+    # 2つ以上の作物がある場合のみ連作ルールを作成
+    return interaction_rules if crops.length < 2
+    
+    crops.combination(2).each do |crop1, crop2|
+      # 作物のgroups属性を取得（なければ作物名を使用）
+      group1 = crop1.groups&.first || crop1.name
+      group2 = crop2.groups&.first || crop2.name
+      
+      # 既存の連作ルールがあるかチェック
+      existing_rule = @user.interaction_rules.find_by(
+        source_group: group1,
+        target_group: group2
+      ) || @user.interaction_rules.find_by(
+        source_group: group2,
+        target_group: group1
+      )
+      
+      if existing_rule
+        interaction_rules << existing_rule
+      else
+        # 新しい連作ルールを作成（デフォルトはneutral）
+        new_rule = @user.interaction_rules.create!(
+          rule_type: 'continuous_cultivation',
+          source_group: group1,
+          target_group: group2,
+          impact_ratio: 1.0, # 影響なし（中立）
+          is_directional: false, # 双方向
+          description: "#{crop1.name}と#{crop2.name}の連作ルール"
+        )
+        interaction_rules << new_rule
+        
+        Rails.logger.info "✅ [PlanSaveService] Created interaction rule: #{group1} ↔ #{group2}"
+      end
+    end
+    
+    interaction_rules
   end
   
   def copy_cultivation_plan(farm, crops)
@@ -138,10 +195,61 @@ class PlanSaveService
     )
   end
   
-  def establish_master_data_relationships(farm, crops, interaction_rules)
-    # 農場と圃場の関連付けは不要（CultivationPlanFieldは計画専用）
+  def copy_cultivation_plan(farm, crops)
+    plan_id = @session_data[:plan_id] || @session_data['plan_id']
+    reference_plan = CultivationPlan.find(plan_id)
+    
+    # 今年の計画期間を計算
+    current_year = Date.current.year
+    planning_dates = CultivationPlan.calculate_planning_dates(current_year)
+    
+    # 新しい計画を作成
+    new_plan = CultivationPlan.create!(
+      farm: farm,
+      user: @user,
+      total_area: reference_plan.total_area,
+      plan_type: 'private',
+      plan_year: current_year,
+      plan_name: "#{reference_plan.farm.name}の計画",
+      planning_start_date: planning_dates[:start_date],
+      planning_end_date: planning_dates[:end_date],
+      status: 'pending'
+    )
+    
+    Rails.logger.info "✅ [PlanSaveService] Created new plan: #{new_plan.id}"
+    new_plan
+  end
+  
+  def establish_master_data_relationships(farm, crops, fields, interaction_rules)
+    # 農場と圃場の関連付けは既にcreate_user_fieldsで完了
     # 作物と連作ルールの関連付けは既にcreate_interaction_rulesで完了
-    # ここでは追加の関連付け処理があれば実装
+    
+    # データ整合性チェック
+    Rails.logger.info "🔍 [PlanSaveService] Data integrity check:"
+    Rails.logger.info "  - Farm: #{farm.name} (ID: #{farm.id})"
+    Rails.logger.info "  - Fields: #{fields.count} fields"
+    Rails.logger.info "  - Crops: #{crops.count} crops"
+    Rails.logger.info "  - Interaction rules: #{interaction_rules.count} rules"
+    
+    # 農場の圃場数が一致しているかチェック
+    if farm.fields.count != fields.count
+      Rails.logger.warn "⚠️ [PlanSaveService] Field count mismatch: farm.fields.count=#{farm.fields.count}, fields.count=#{fields.count}"
+    end
+    
+    # 全てのマスタデータが正しく作成されているかチェック
+    unless fields.all?(&:persisted?)
+      raise "Some fields were not properly created"
+    end
+    
+    unless crops.all?(&:persisted?)
+      raise "Some crops were not properly created"
+    end
+    
+    unless interaction_rules.all?(&:persisted?)
+      raise "Some interaction rules were not properly created"
+    end
+    
+    Rails.logger.info "✅ [PlanSaveService] All master data relationships established successfully"
   end
   
   def copy_plan_relations(new_plan)
