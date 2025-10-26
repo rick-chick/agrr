@@ -141,7 +141,7 @@
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   margin-bottom: var(--space-4);
-  max-height: 70vh; /* 最大高さを制限 */
+  /* max-height を削除して2重スクロールを防止 */
 }
 
 .gantt-table {
