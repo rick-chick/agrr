@@ -459,7 +459,7 @@ if (typeof window.MAX_CROP_TYPES === 'undefined') {
 }
 
 // リクエスト中フラグ（二重送信防止）
-let isAddingCrop = false;
+if (typeof window.window.isAddingCrop === "undefined") { window.window.isAddingCrop = false; }
 
 // 作物をスケジュールに追加
 function addCropToSchedule(cropData, dropInfo) {
@@ -468,7 +468,7 @@ function addCropToSchedule(cropData, dropInfo) {
   console.log('🚀 [ADD CROP] dropInfo:', dropInfo);
   
   // 二重送信防止チェック
-  if (isAddingCrop) {
+  if (window.isAddingCrop) {
     console.warn('⚠️ [DUPLICATE REQUEST BLOCKED] 既にリクエスト処理中です');
     return;
   }
@@ -517,7 +517,7 @@ function addCropToSchedule(cropData, dropInfo) {
   }
   
   // リクエスト中フラグを設定
-  isAddingCrop = true;
+  window.isAddingCrop = true;
   console.log('🔒 [LOCK] リクエスト中フラグを設定');
 
   // ローディング表示
@@ -573,7 +573,7 @@ function addCropToSchedule(cropData, dropInfo) {
       console.log('✅ [SUCCESS] 作物追加成功');
       // Action Cable経由で更新を待機
       // 成功時はAction Cableの更新後にフラグを解除（一時的にここで解除）
-      isAddingCrop = false;
+      window.isAddingCrop = false;
       console.log('🔓 [UNLOCK] リクエスト中フラグを解除（成功）');
     } else {
       console.error('❌ [ERROR] 作物の追加に失敗しました:', data.message);
@@ -586,7 +586,7 @@ function addCropToSchedule(cropData, dropInfo) {
       hideLoadingOverlay();
       
       // フラグを解除
-      isAddingCrop = false;
+      window.isAddingCrop = false;
       console.log('🔓 [UNLOCK] リクエスト中フラグを解除（エラー）');
       
       // ユーザーフレンドリーなエラーメッセージを表示
@@ -601,7 +601,7 @@ function addCropToSchedule(cropData, dropInfo) {
     hideLoadingOverlay();
     
     // フラグを解除
-    isAddingCrop = false;
+    window.isAddingCrop = false;
     console.log('🔓 [UNLOCK] リクエスト中フラグを解除（例外）');
     
     showErrorMessage(getI18nMessage('cropPaletteCommunicationError', 'Communication error occurred. Please try again.'));
