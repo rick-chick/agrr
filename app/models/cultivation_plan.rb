@@ -20,6 +20,13 @@ class CultivationPlan < ApplicationRecord
   validates :planning_start_date, presence: true, if: :plan_type_private?
   validates :planning_end_date, presence: true, if: :plan_type_private?
   
+  # 農場とユーザと年で一意制約（private計画のみ）
+  validates :farm_id, uniqueness: { 
+    scope: [:user_id, :plan_year], 
+    message: I18n.t('activerecord.errors.models.cultivation_plan.attributes.farm_id.taken'),
+    if: :plan_type_private?
+  }
+  
   # == Enums ===============================================================
   enum :status, {
     pending: 'pending',

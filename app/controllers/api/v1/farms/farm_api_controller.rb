@@ -55,7 +55,12 @@ class Api::V1::Farms::FarmApiController < Api::V1::BaseController
           if result.success?
             head :no_content
           else
-            render json: { error: result.error }, status: :not_found
+            # エラーメッセージに応じて適切なHTTPステータスコードを返す
+            if result.error.include?("使用されているため削除できません")
+              render json: { error: result.error }, status: :conflict
+            else
+              render json: { error: result.error }, status: :not_found
+            end
           end
         end
 

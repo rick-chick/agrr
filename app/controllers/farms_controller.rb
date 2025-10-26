@@ -60,8 +60,23 @@ class FarmsController < ApplicationController
       return
     end
     
-    @farm.destroy
-    redirect_to farms_path, notice: I18n.t('farms.flash.destroyed')
+    begin
+      @farm.destroy
+      redirect_to farms_path, notice: I18n.t('farms.flash.destroyed')
+    rescue ActiveRecord::InvalidForeignKey => e
+      # 外部参照制約エラーの場合
+      if e.message.include?('cultivation_plans')
+        redirect_to farms_path, alert: "この農場は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
+      elsif e.message.include?('fields')
+        redirect_to farms_path, alert: "この農場には圃場が登録されているため削除できません。まず圃場を削除してください。"
+      else
+        redirect_to farms_path, alert: "この農場は他のデータで使用されているため削除できません。"
+      end
+    rescue ActiveRecord::DeleteRestrictionError => e
+      redirect_to farms_path, alert: "この農場は他のデータで使用されているため削除できません。"
+    rescue StandardError => e
+      redirect_to farms_path, alert: "削除中にエラーが発生しました: #{e.message}"
+    end
   end
 
   private
