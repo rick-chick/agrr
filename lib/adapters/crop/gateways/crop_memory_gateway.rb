@@ -17,7 +17,7 @@ module Adapters
         end
 
         def create(crop_data)
-          record = ::Crop.create!(
+          record = ::Crop.new(
             user_id: crop_data[:user_id],
             name: crop_data[:name],
             variety: crop_data[:variety],
@@ -26,6 +26,12 @@ module Adapters
             revenue_per_area: crop_data[:revenue_per_area],
             groups: crop_data[:groups] || []
           )
+          
+          unless record.save
+            error_message = record.errors.full_messages.join(', ')
+            raise StandardError, error_message
+          end
+          
           entity_from_record(record)
         end
 
