@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ostruct'
+require 'set'
 
 class PlanSaveService
   include ActiveModel::Model
@@ -295,11 +296,19 @@ class PlanSaveService
                             crops: 0, 
                             cultivations: 0)
     
-    # CultivationPlanCropをコピー（バルクインサート）
+    # CultivationPlanCropをコピー（重複を避ける）
     crop_plan_data = []
+    processed_crop_combinations = Set.new
+    
     reference_plan.cultivation_plan_crops.each do |reference_crop_plan|
       crop = @user.crops.find_by(name: reference_crop_plan.crop.name)
       next unless crop
+      
+      # 同じcrop_id + variety + nameの組み合わせが既に処理済みの場合はスキップ
+      # これにより、同じ作物でも異なる品種や名前の場合は別々に保存される
+      crop_combination = "#{crop.id}_#{reference_crop_plan.variety}_#{reference_crop_plan.name}"
+      next if processed_crop_combinations.include?(crop_combination)
+      processed_crop_combinations.add(crop_combination)
       
       crop_plan_data << {
         cultivation_plan_id: new_plan.id,
@@ -337,8 +346,10 @@ class PlanSaveService
         area: reference_field_cultivation.area,
         start_date: reference_field_cultivation.start_date,
         completion_date: reference_field_cultivation.completion_date,
+        cultivation_days: reference_field_cultivation.cultivation_days,
         estimated_cost: reference_field_cultivation.estimated_cost,
         status: reference_field_cultivation.status,
+        optimization_result: reference_field_cultivation.optimization_result,
         created_at: Time.current,
         updated_at: Time.current
       }
