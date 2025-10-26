@@ -33,6 +33,15 @@ class FarmsController < ApplicationController
 
   # POST /farms
   def create
+    # 農場数の上限チェック
+    unless validate_farm_count
+      @farm = current_user.farms.build(farm_params)
+      @farm.errors.add(:base, I18n.t('farms.flash.farm_limit'))
+      Rails.logger.warn "⚠️  Farm limit reached for user ##{current_user.id}"
+      render :new, status: :unprocessable_entity
+      return
+    end
+
     @farm = current_user.farms.build(farm_params)
 
     if @farm.save

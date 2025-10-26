@@ -6,6 +6,7 @@ ja:
       destroyed: "農場が削除されました。"
       cannot_delete: "この農場は%{count}件の作付け計画で使用されているため削除できません。"
       not_found: "指定された農場が見つかりません。"
+      farm_limit: "農場の数が上限（4個）に達しています。"
     
     index:
       title: "農場一覧"
