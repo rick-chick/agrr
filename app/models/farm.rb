@@ -43,6 +43,9 @@ class Farm < ApplicationRecord
   validates :longitude, presence: true, 
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
   
+  # ユーザー農場の件数制限（4件まで）
+  validates :user, presence: true, user_resource_limit: { model_name: Farm, max_count: 4 }
+  
   # 参照農場はアノニマスユーザーにのみ設定可能（複数の参照農場を許可）
   validate :reference_farm_must_belong_to_anonymous_user
 
