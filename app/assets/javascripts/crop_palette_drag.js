@@ -16,16 +16,21 @@ function getI18nTemplate(key, replacements, defaultMessage) {
 }
 
 // 初期化フラグ
-let cropPaletteInitialized = false;
-let ganttChartReady = false;
+// Turboページ遷移対応: すでに定義されている場合は再利用
+if (typeof window.cropPaletteInitialized === 'undefined') {
+  window.cropPaletteInitialized = false;
+}
+if (typeof window.ganttChartReady === 'undefined') {
+  window.ganttChartReady = false;
+}
 
 // ガントチャート準備完了イベントをリッスン
 document.addEventListener('ganttChartReady', () => {
   console.log('✅ [CropPalette] ガントチャートが準備完了しました');
-  ganttChartReady = true;
+  window.ganttChartReady = true;
   
   // ガントチャートの準備ができたら、作物パレットのドラッグ機能を初期化
-  if (!cropPaletteInitialized) {
+  if (!window.cropPaletteInitialized) {
     // まだパレット自体が初期化されていない場合
     tryInitialize();
   } else {
@@ -71,8 +76,8 @@ function toggleCropPalette() {
 // 初期化関数
 function initializeCropPalette() {
   console.log('🌱 [CropPalette] 初期化開始...', { 
-    initialized: cropPaletteInitialized,
-    ganttReady: ganttChartReady 
+    initialized: window.cropPaletteInitialized,
+    ganttReady: window.ganttChartReady 
   });
   
   const palettePanel = document.getElementById('crop-palette-panel');
@@ -91,7 +96,7 @@ function initializeCropPalette() {
   setupToggleButton();
   
   // ガントチャートが準備できている場合のみドラッグ機能を初期化
-  if (ganttChartReady) {
+  if (window.ganttChartReady) {
     console.log('✅ [CropPalette] ガントチャートの準備ができているため、ドラッグ機能を初期化');
     // 作物カードのドラッグ設定
     initCropCardDrag();
@@ -101,8 +106,8 @@ function initializeCropPalette() {
     console.warn('⏳ [CropPalette] ガントチャートの準備を待機中... ドラッグ機能は後で初期化します');
   }
   
-  cropPaletteInitialized = true;
-  console.log('✅ [CropPalette] 初期化完了（ドラッグ機能は', ganttChartReady ? '有効' : '待機中', '）');
+  window.cropPaletteInitialized = true;
+  console.log('✅ [CropPalette] 初期化完了（ドラッグ機能は', window.ganttChartReady ? '有効' : '待機中', '）');
 }
 
 // トグルボタンの設定
@@ -177,7 +182,7 @@ function setupToggleButton() {
 
 // 初期化関数
 function tryInitialize() {
-  if (!cropPaletteInitialized) {
+  if (!window.cropPaletteInitialized) {
     initializeCropPalette();
   }
 }
@@ -192,7 +197,7 @@ if (typeof Turbo !== 'undefined') {
   document.addEventListener('turbo:load', () => {
     console.log('🔄 [CropPalette] turbo:load イベント検出');
     // Turboでページ遷移した場合は初期化フラグをリセット
-    cropPaletteInitialized = false;
+    window.cropPaletteInitialized = false;
     tryInitialize();
   });
   
@@ -449,7 +454,9 @@ function calculateDropInfo(svgCoords) {
 }
 
 // 作物種類の上限
-const MAX_CROP_TYPES = 5;
+if (typeof window.MAX_CROP_TYPES === 'undefined') {
+  window.MAX_CROP_TYPES = 5;
+}
 
 // リクエスト中フラグ（二重送信防止）
 let isAddingCrop = false;
@@ -495,14 +502,14 @@ function addCropToSchedule(cropData, dropInfo) {
   console.log('🔍 [CROP CHECK] 新規作物:', newCropBaseName, '新しい種類:', isNewCropType);
   
   // 新しい作物種類を追加しようとしていて、すでに上限に達している場合
-  if (isNewCropType && existingCropTypes.size >= MAX_CROP_TYPES) {
+  if (isNewCropType && existingCropTypes.size >= window.MAX_CROP_TYPES) {
     const errorMessage = getI18nTemplate(
       'cropPaletteCropTypesLimit',
       {
-        '__MAX_TYPES__': MAX_CROP_TYPES.toString(),
+        '__MAX_TYPES__': window.MAX_CROP_TYPES.toString(),
         '__CURRENT_TYPES__': Array.from(existingCropTypes).join('、')
       },
-      `Maximum ${MAX_CROP_TYPES} crop types allowed.\nCurrent: ${Array.from(existingCropTypes).join(', ')}`
+      `Maximum ${window.MAX_CROP_TYPES} crop types allowed.\nCurrent: ${Array.from(existingCropTypes).join(', ')}`
     );
     console.warn('⚠️ [CROP LIMIT] 作物種類が上限に達しています');
     alert(errorMessage);

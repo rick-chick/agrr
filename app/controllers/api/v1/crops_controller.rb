@@ -23,13 +23,13 @@ module Api
         begin
           # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
           dummy_crop = ::Crop.new(user: current_user, name: 'dummy', is_reference: false)
-          # user_resource_limitバリデーションのみチェック（nameバリデーションはスキップ）
-          if dummy_crop.valid?
-            # valid?がtrueの場合は件数制限なし
-          elsif dummy_crop.errors[:base].any?
-            # 件数制限エラーを返す
-            validation_error = dummy_crop.errors[:base].first
-            return render json: { error: validation_error }, status: :unprocessable_entity
+          # user_crop_count_limitバリデーションをチェック
+          unless dummy_crop.valid?
+            # 件数制限エラーを返す（:user または :base にエラーがある）
+            validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
+            if validation_error
+              return render json: { error: validation_error }, status: :unprocessable_entity
+            end
           end
           
           # 1. agrrコマンドで作物情報を取得（常に実行して最新情報を取得）
