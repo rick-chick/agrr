@@ -28,11 +28,24 @@ class CropsController < ApplicationController
 
   # POST /crops
   def create
-    is_reference = crop_params[:is_reference] || false
+    # is_reference を boolean に正規化
+    is_reference = ActiveModel::Type::Boolean.new.cast(crop_params[:is_reference])
+    
     if is_reference && !admin_user?
       return redirect_to crops_path, alert: I18n.t('crops.flash.reference_only_admin')
     end
 
+    # ユーザー作物の場合、作物数の上限チェック（参照作物は除外）
+    unless is_reference
+      unless validate_crop_count
+        @crop = Crop.new
+        @crop.errors.add(:base, I18n.t('crops.flash.crop_limit'))
+        Rails.logger.warn "⚠️  Crop limit reached for user ##{current_user.id}"
+        render :new, status: :unprocessable_entity
+        return
+      end
+    end
+    
     @crop = Crop.new(crop_params)
     @crop.user_id = nil if is_reference
     @crop.user_id ||= current_user.id

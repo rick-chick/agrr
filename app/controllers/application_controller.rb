@@ -142,4 +142,45 @@ class ApplicationController < ActionController::Base
       { code: 'in', name: 'हिंदी', flag: '🇮🇳' }
     ]
   end
+
+  # バリデーション共通メソッド
+  
+  # 新規ユーザーかどうかを判定（参照データは除外）
+  # 計画・農場・作物が全てない場合のみ新規ユーザーとみなす
+  def is_new_user?
+    plans_count = current_user.cultivation_plans.count
+    farms_count = current_user.farms.where(is_reference: false).count
+    crops_count = current_user.crops.where(is_reference: false).count
+    
+    # 新規ユーザー: 計画・農場・作物が全て0
+    # ただし、最初の1つのみは特別に許容（例: 最初の農場5個、最初の作物20個）
+    result = plans_count == 0 && farms_count == 0 && crops_count == 0
+    result
+  end
+
+  # 農場数の上限チェック
+  # @return [Boolean] 上限オーバーの場合false、そうでなければtrue
+  def validate_farm_count
+    return true if is_new_user? # 新規ユーザーは制限なし
+    
+    existing_farms_count = current_user.farms.where(is_reference: false).count
+    if existing_farms_count >= 4
+      false
+    else
+      true
+    end
+  end
+
+  # 作物数の上限チェック
+  # @return [Boolean] 上限オーバーの場合false、そうでなければtrue
+  def validate_crop_count
+    return true if is_new_user? # 新規ユーザーは制限なし
+    
+    existing_crops_count = current_user.crops.where(is_reference: false).count
+    if existing_crops_count >= 20
+      false
+    else
+      true
+    end
+  end
 end
