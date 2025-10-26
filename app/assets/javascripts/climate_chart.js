@@ -177,27 +177,59 @@ class ClimateChart {
       });
     }
 
-    const tempCanvas = document.getElementById('climateTemperatureChart');
-    if (!tempCanvas) return;
+    // チャートを描画（サイズ確定後に描画）
+    this.drawChartsWhenReady(data);
+  }
 
+  /**
+   * チャートをサイズ確定後に描画
+   * @param {Object} data - APIデータ
+   */
+  drawChartsWhenReady(data) {
+    const tempCanvas = document.getElementById('climateTemperatureChart');
+    if (!tempCanvas) {
+      console.error('Temperature chart canvas not found');
+      return;
+    }
+
+    // canvasの親要素（chart-canvas-wrapper）を取得
+    const wrapper = tempCanvas.parentElement;
+    
+    // サイズが確定したら描画
     const drawCharts = () => {
       this.drawTemperatureChart(data);
       this.drawGddChart(data);
     };
 
-    const wrapper = tempCanvas.parentElement;
-    
-    if (wrapper.offsetWidth > 0) {
+    // 既にサイズが確定している場合は即描画
+    if (wrapper.offsetWidth > 0 && wrapper.offsetHeight > 0) {
       drawCharts();
-    } else {
-      const observer = new ResizeObserver((entries) => {
-        if (entries[0]?.contentRect.width > 0) {
+      return;
+    }
+
+    // サイズが確定するまでResizeObserverで待機
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
           observer.disconnect();
           drawCharts();
+          return;
         }
-      });
-      observer.observe(wrapper);
-    }
+      }
+    });
+    
+    observer.observe(wrapper);
+    
+    // タイムアウト設定（念のため）
+    setTimeout(() => {
+      observer.disconnect();
+      // タイムアウトしても描画を試みる
+      if (wrapper.offsetWidth > 0 && wrapper.offsetHeight > 0) {
+        drawCharts();
+      } else {
+        console.error('Canvas wrapper size not determined after timeout');
+      }
+    }, 1000);
   }
 
   /**
@@ -206,7 +238,16 @@ class ClimateChart {
    */
   drawTemperatureChart(data) {
     const ctx = document.getElementById('climateTemperatureChart');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('Temperature chart canvas not found');
+      return;
+    }
+
+    console.log('🌡️ Drawing temperature chart with data:', {
+      weatherDataLength: data.weather_data?.length || 0,
+      stagesLength: data.stages?.length || 0,
+      chartAvailable: typeof Chart !== 'undefined'
+    });
 
     // data属性から翻訳を取得
     const container = document.getElementById('climate-chart-display');
@@ -222,7 +263,10 @@ class ClimateChart {
     // 日付配列（表示は日付のみ）
     const dates = data.weather_data.map(d => this.formatDateLabel(d.date));
     
+    // アノテーション設定
     const annotations = this.createStageAnnotations(data, dates);
+    console.log('📊 Annotations created:', Object.keys(annotations));
+    console.log('📊 Annotations details:', annotations);
 
     // 温度帯の凡例データを作成
     const temperatureZoneLegend = this.createTemperatureZoneLegend(data, labels);
@@ -443,8 +487,9 @@ class ClimateChart {
           }
         }]
       });
+      console.log('✅ Temperature chart with annotations created successfully');
     } catch (error) {
-      console.error('Failed to create temperature chart:', error);
+      console.error('❌ Failed to create temperature chart:', error);
       const container = document.getElementById('climate-chart-display');
       const chartErrorMsg = container?.dataset.chartCreateError || 'Failed to create chart';
       ctx.parentElement.innerHTML = `<div class="chart-error">${chartErrorMsg}: ${error.message}</div>`;
@@ -457,7 +502,10 @@ class ClimateChart {
    */
   drawGddChart(data) {
     const ctx = document.getElementById('climateGddChart');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('GDD chart canvas not found');
+      return;
+    }
 
     // data属性から翻訳を取得
     const container = document.getElementById('climate-chart-display');
@@ -576,8 +624,9 @@ class ClimateChart {
           }
         }
       });
+      console.log('✅ GDD chart created successfully');
     } catch (error) {
-      console.error('Failed to create GDD chart:', error);
+      console.error('❌ Failed to create GDD chart:', error);
       const container = document.getElementById('climate-chart-display');
       const gddErrorMsg = container?.dataset.gddChartCreateError || 'Failed to create GDD chart';
       ctx.parentElement.innerHTML = `<div class="chart-error">${gddErrorMsg}: ${error.message}</div>`;
@@ -618,7 +667,14 @@ class ClimateChart {
   createStageAnnotations(data, dates) {
     const annotations = {};
     
+    console.log('🔍 createStageAnnotations called with:', {
+      stagesCount: data.stages?.length || 0,
+      gddDataCount: data.gdd_data?.length || 0,
+      datesCount: dates?.length || 0
+    });
+    
     if (!data.stages || data.stages.length === 0) {
+      console.log('❌ No stages data available');
       return annotations;
     }
     
@@ -653,7 +709,7 @@ class ClimateChart {
         );
       }
       
-
+      console.log(`ステージ ${index + 1} (${stage.name}): GDD範囲 (${prevCumulativeGdd}, ${currentCumulativeGdd}], 日数: ${stageRecords.length}, 実際のGDD範囲: ${stageRecords[0]?.cumulative_gdd || 'N/A'} - ${stageRecords[stageRecords.length - 1]?.cumulative_gdd || 'N/A'}`);
       
       // ステージ期間が0日でも、最低限のアノテーションを表示
       if (stageRecords.length > 0) {
@@ -746,6 +802,8 @@ class ClimateChart {
           }
         }
       } else {
+        // ステージ期間が0日の場合でも、全期間にアノテーションを表示
+        console.log(`⚠️ ステージ ${index + 1} (${stage.name}) の期間が0日のため、全期間にアノテーションを表示`);
         
         const startIndex = 0;
         const endIndex = dates.length - 1;
@@ -833,6 +891,8 @@ class ClimateChart {
       }
     });
     
+    console.log('作成されたアノテーション:', Object.keys(annotations));
+    console.log('アノテーション詳細:', annotations);
     return annotations;
   }
 
@@ -877,6 +937,8 @@ class ClimateChart {
         lastValue = steps[i];
       }
     }
+    
+    console.log('📊 Required GDD steps created:', steps.slice(0, 10), '...', steps.slice(-10));
     
     return steps;
   }

@@ -432,8 +432,9 @@
 .chart-container {
   position: relative;
   width: 100%;
-  min-height: 400px;
+  height: 400px;
   padding: var(--space-4) 0;
+  box-sizing: border-box;
 }
 
 .info-message {
@@ -542,7 +543,7 @@
   }
 
   .chart-container {
-    min-height: 300px;
+    height: 300px;
   }
 }
 
