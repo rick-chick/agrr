@@ -300,10 +300,20 @@ class PublicPlansController < ApplicationController
   
   # セッションに保存データを保存
   def save_plan_data_to_session
+    # 圃場データを取得
+    field_data = @cultivation_plan.cultivation_plan_fields.map do |field|
+      {
+        name: field.name,
+        area: field.area,
+        coordinates: [35.0, 139.0] # デフォルト座標（実際の座標があれば使用）
+      }
+    end
+    
     session[:public_plan_save_data] = {
       plan_id: @cultivation_plan.id,
       farm_id: session_data[:farm_id],
-      crop_ids: session_data[:crop_ids]
+      crop_ids: session_data[:crop_ids],
+      field_data: field_data
     }
     Rails.logger.info "💾 [save_plan_data_to_session] Saved to session: #{session[:public_plan_save_data]}"
   end
@@ -327,10 +337,20 @@ class PublicPlansController < ApplicationController
       end
       
       # セッションデータを構築
+      # 圃場データを取得
+      field_data = @cultivation_plan.cultivation_plan_fields.map do |field|
+        {
+          name: field.name,
+          area: field.area,
+          coordinates: [35.0, 139.0] # デフォルト座標（実際の座標があれば使用）
+        }
+      end
+      
       save_data = {
         plan_id: @cultivation_plan.id,
         farm_id: session_data[:farm_id],
-        crop_ids: session_data[:crop_ids]
+        crop_ids: session_data[:crop_ids],
+        field_data: field_data
       }
       
       # PlanSaveServiceを呼び出し
