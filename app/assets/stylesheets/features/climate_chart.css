@@ -196,6 +196,12 @@
   position: relative;
   width: 100%;
   min-height: 300px;
+  overflow-x: auto; /* 横スクロールを許可 */
+}
+
+.chart-canvas-wrapper canvas {
+  display: block;
+  max-width: 100%;
 }
 
 
@@ -294,6 +300,12 @@
 
   .chart-canvas-wrapper {
     min-height: 250px;
+    overflow-x: auto; /* 横スクロールを許可 */
+  }
+
+  .chart-canvas-wrapper canvas {
+    display: block;
+    max-width: 100%;
   }
 
 }
