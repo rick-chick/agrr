@@ -71,7 +71,7 @@ public_plans（公開作付け計画）に保存機能を追加し、未ログ�
   - 参照作物の詳細情報をコピー
   - ユーザーに紐付け
   - **作物ステージのコピー**: CropStage、TemperatureRequirement、ThermalRequirement、SunshineRequirementも含めてコピー
-  - **重複チェック**: 同じ名前の作物が既に存在する場合は既存のものを使用
+  - **名前重複許容**: 同じ名前の作物でも新規作成を許可
 
 #### 4.3 圃場（Field）の処理
 - **新規圃場の作成**:

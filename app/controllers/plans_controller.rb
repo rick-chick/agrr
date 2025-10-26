@@ -56,7 +56,8 @@ class PlansController < ApplicationController
     
     @plan_year = params[:plan_year].to_i
     @farm = current_user.farms.find(params[:farm_id])
-    @plan_name = params[:plan_name].presence || I18n.t('plans.default_plan_name')
+    # 計画名は農場名を自動設定
+    @plan_name = @farm.name
     
     # ユーザーの作物のみ取得
     @crops = current_user.crops.where(is_reference: false).order(:name)

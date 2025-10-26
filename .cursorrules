@@ -1,0 +1,149 @@
+# AGRR Project Rules
+
+## 🚨 Critical Business Rules
+
+### Resource Limits (MANDATORY)
+- **Farm Limit**: Users can create maximum 4 farms (is_reference: false)
+- **Crop Limit**: Users can create maximum 20 crops (is_reference: false)
+- **Reference records**: Always excluded from limits (is_reference: true)
+
+### Implementation Requirements
+- **ALWAYS implement limits at MODEL level first**
+- **NEVER implement limits only at controller level**
+- **ALWAYS test direct database operations** (e.g., `Farm.create!`)
+- **ALWAYS test both model and controller levels**
+
+## 🏗️ Architecture Rules
+
+### Model Validation Priority
+1. **Model-level validation is MANDATORY** for business rules
+2. **Controller-level validation is supplementary only**
+3. **Direct database operations must respect model validations**
+
+### Testing Requirements
+- **Integration tests** must test actual user flows
+- **Unit tests** must test model validations directly
+- **Both levels** must be tested for resource limits
+
+## 🚫 Anti-Patterns (FORBIDDEN)
+
+### Resource Limit Anti-Patterns
+```ruby
+# ❌ FORBIDDEN: Controller-only validation
+def create
+  return if user.farms.count >= 4  # This can be bypassed!
+end
+
+# ❌ FORBIDDEN: New user exception for limits
+def validate_farm_count
+  return true if is_new_user?  # Allows unlimited creation!
+end
+
+# ❌ FORBIDDEN: Reference check in controller only
+def create
+  return if farm.is_reference?  # Can be bypassed with direct DB access
+end
+```
+
+### Correct Patterns
+```ruby
+# ✅ CORRECT: Model-level validation
+class Farm < ApplicationRecord
+  validate :user_farm_count_limit, unless: :is_reference?
+  
+  private
+  
+  def user_farm_count_limit
+    return if user.nil? || is_reference?
+    
+    existing_count = user.farms.where(is_reference: false).count
+    current_count = new_record? ? existing_count : existing_count - 1
+    
+    if current_count >= 4
+      errors.add(:user, "作成できるFarmは4件までです")
+    end
+  end
+end
+```
+
+## 📋 Implementation Checklist
+
+### Before Implementing Resource Limits
+- [ ] Identify the resource type (Farm, Crop, etc.)
+- [ ] Determine the limit number (4, 20, etc.)
+- [ ] Check if reference records should be excluded
+- [ ] Plan model-level validation
+- [ ] Plan controller-level validation (supplementary)
+
+### During Implementation
+- [ ] Implement model-level validation first
+- [ ] Test with direct database operations
+- [ ] Implement controller-level validation
+- [ ] Test actual user flows
+- [ ] Add error messages in Japanese
+- [ ] Update PlanSaveService if applicable
+
+### After Implementation
+- [ ] Run integration tests
+- [ ] Test edge cases (new users, reference records)
+- [ ] Verify error messages are user-friendly
+- [ ] Document the implementation
+
+## 🔍 Testing Requirements
+
+### Model Tests (MANDATORY)
+```ruby
+test "should prevent creating 5th farm" do
+  # Create 4 farms
+  4.times { create(:farm, user: @user) }
+  
+  # Attempt 5th farm
+  farm5 = Farm.new(user: @user, name: "Farm 5", ...)
+  assert_not farm5.valid?
+  assert_includes farm5.errors[:user], "作成できるFarmは4件までです"
+end
+```
+
+### Integration Tests (MANDATORY)
+```ruby
+test "should prevent farm creation in PlanSaveService when limit reached" do
+  # Setup user with 4 farms
+  4.times { create(:farm, user: @user) }
+  
+  # Attempt to create farm via PlanSaveService
+  result = PlanSaveService.new(user: @user, session_data: data).call
+  
+  assert_not result.success
+  assert_includes result.error_message, "作成できるFarmは4件までです"
+end
+```
+
+## 📚 Historical Context
+
+### Past Issues
+- **2025-10-26 13:06**: Controller-only validation implemented (BROKEN)
+  - Problem: Direct `Farm.create!` bypassed validation
+  - Solution: Model-level validation required
+  
+- **2025-10-26 16:03**: Model-level validation implemented (CORRECT)
+  - Solution: `UserResourceLimitValidator` with model-level checks
+  
+- **2025-10-26 19:27**: Simplified model validation (CORRECT)
+  - Solution: Direct validation methods in models
+
+### Lessons Learned
+1. **Model-level validation is non-negotiable**
+2. **Controller-only validation is insufficient**
+3. **Direct database operations must be tested**
+4. **Reference records must be properly excluded**
+
+## 🎯 Success Criteria
+
+A resource limit implementation is correct when:
+- [ ] Direct `Model.create!` respects the limit
+- [ ] Controller actions respect the limit
+- [ ] Service objects respect the limit
+- [ ] Reference records are excluded
+- [ ] Error messages are clear and in Japanese
+- [ ] Tests cover both model and integration levels
+- [ ] Edge cases are handled (new users, updates, etc.)

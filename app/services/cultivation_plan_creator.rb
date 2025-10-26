@@ -77,7 +77,8 @@ class CultivationPlanCreator
     
     if @plan_type == 'private'
       plan_attrs[:plan_year] = @plan_year
-      plan_attrs[:plan_name] = @plan_name
+      # 計画名が未指定の場合は農場名を使用
+      plan_attrs[:plan_name] = @plan_name.presence || @farm.name
       plan_attrs[:planning_start_date] = @planning_start_date
       plan_attrs[:planning_end_date] = @planning_end_date
     else

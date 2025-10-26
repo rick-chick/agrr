@@ -8,7 +8,7 @@ FactoryBot.define do
     status { 'pending' }
     plan_type { 'private' }
     plan_year { Date.current.year }
-    plan_name { 'テスト計画' }
+    plan_name { farm.name }
     planning_start_date { Date.new(Date.current.year, 1, 1) }
     planning_end_date { Date.new(Date.current.year + 1, 12, 31) }
 

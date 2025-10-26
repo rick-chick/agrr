@@ -56,15 +56,15 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "should prevent CultivationPlanCrop duplication when same crop appears multiple times" do
-    # 参照計画を作成（同じ作物を複数含む）
+  test "should allow CultivationPlanCrop duplication when same crop appears multiple times" do
+    # 参照計画を作成（同じ作物を複数含む - 名前重複は許容）
     plan = CultivationPlan.create!(
       farm: @farm,
       user: nil, # 参照計画
       total_area: 300.0,
       plan_type: 'public',
       plan_year: Date.current.year,
-      plan_name: '重複防止テスト計画',
+      plan_name: '重複許容テスト計画',
       planning_start_date: Date.current,
       planning_end_date: Date.current.end_of_year,
       status: 'completed'
@@ -95,8 +95,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       farm_id: @farm.id,
       crop_ids: @crops.map(&:id),
       field_data: [
-        { name: '重複防止テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
-        { name: '重複防止テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
+        { name: '重複許容テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
+        { name: '重複許容テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
       ]
     }
 
@@ -111,23 +111,10 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     new_plan = @user.cultivation_plans.where(plan_type: 'private').order(:created_at).last
     assert_not_nil new_plan, "New plan should be created"
 
-    # CultivationPlanCropの重複チェック
-    crop_names = new_plan.cultivation_plan_crops.map(&:name)
-    duplicate_names = crop_names.select { |name| crop_names.count(name) > 1 }.uniq
-
-    assert_empty duplicate_names, 
-      "No duplicate crop names should exist. Found: #{duplicate_names.join(', ')}"
-
-    # 同じcrop_idのCultivationPlanCropが1つだけであることを確認
-    crop_ids = new_plan.cultivation_plan_crops.map(&:crop_id)
-    duplicate_crop_ids = crop_ids.select { |crop_id| crop_ids.count(crop_id) > 1 }.uniq
-
-    assert_empty duplicate_crop_ids, 
-      "No duplicate crop_ids should exist. Found: #{duplicate_crop_ids.join(', ')}"
-
-    # CultivationPlanCropが1つだけ作成されることを確認
-    assert_equal 1, new_plan.cultivation_plan_crops.count, 
-      "Only one CultivationPlanCrop should be created for the same crop"
+    # 仕様に従い、名前重複は許容される（重複チェックを削除）
+    # CultivationPlanCropが2つ作成されることを確認（重複許容）
+    assert_equal 2, new_plan.cultivation_plan_crops.count, 
+      "Two CultivationPlanCrops should be created (duplicates allowed)"
   end
 
   test "should handle multiple different crops without duplication" do
@@ -212,8 +199,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       "No duplicate crop_ids should exist for different crops"
   end
 
-  test "should preserve crop variety information when preventing duplication" do
-    # 同じ作物で異なる品種を作成
+  test "should preserve crop variety information when allowing duplication" do
+    # 同じ作物で異なる品種を作成（名前重複は許容）
     same_crop = @crops[0]
     
     # 参照計画を作成
@@ -269,17 +256,14 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     new_plan = @user.cultivation_plans.where(plan_type: 'private').order(:created_at).last
     assert_not_nil new_plan, "New plan should be created"
 
-    # CultivationPlanCropが1つだけ作成されることを確認
-    assert_equal 1, new_plan.cultivation_plan_crops.count,
-      "Only one CultivationPlanCrop should be created for the same crop"
+    # CultivationPlanCropが2つ作成されることを確認（重複許容）
+    assert_equal 2, new_plan.cultivation_plan_crops.count,
+      "Two CultivationPlanCrops should be created for the same crop (duplicates allowed)"
 
-    # 品種情報が保持されることを確認（最初に見つかった品種が使用される）
-    created_crop = new_plan.cultivation_plan_crops.first
-    # crop_idは新しく作成されたユーザー作物のIDになる
-    assert_not_nil created_crop.crop_id,
-      "Crop ID should be present"
-    assert_not_nil created_crop.variety,
-      "Variety information should be preserved"
+    # 品種情報が保持されることを確認
+    created_crops = new_plan.cultivation_plan_crops.order(:created_at)
+    assert_equal '品種A', created_crops[0].variety, "First variety should be preserved"
+    assert_equal '品種B', created_crops[1].variety, "Second variety should be preserved"
   end
 
   test "should prevent farm creation when user has reached farm limit" do

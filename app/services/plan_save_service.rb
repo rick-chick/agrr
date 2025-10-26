@@ -91,7 +91,7 @@ class PlanSaveService
     user_crops = []
     
     reference_crops.each do |reference_crop|
-      # 新しい作物を作成（バリデーションエラーを捕捉）
+      # 新しい作物を作成（名前重複は許容）
       new_crop = @user.crops.build(
         name: reference_crop.name,
         variety: reference_crop.variety,
@@ -300,20 +300,14 @@ class PlanSaveService
                             crops: 0, 
                             cultivations: 0)
     
-    # CultivationPlanCropをコピー（重複を避ける）
+    # CultivationPlanCropをコピー（名前重複は許容）
     crop_plan_data = []
-    processed_crop_combinations = Set.new
     
     reference_plan.cultivation_plan_crops.each do |reference_crop_plan|
       crop = @user.crops.find_by(name: reference_crop_plan.crop.name)
       next unless crop
       
-      # 同じcrop_id + variety + nameの組み合わせが既に処理済みの場合はスキップ
-      # これにより、同じ作物でも異なる品種や名前の場合は別々に保存される
-      crop_combination = "#{crop.id}_#{reference_crop_plan.variety}_#{reference_crop_plan.name}"
-      next if processed_crop_combinations.include?(crop_combination)
-      processed_crop_combinations.add(crop_combination)
-      
+      # 仕様に従い、名前重複は許容する（重複制御を削除）
       crop_plan_data << {
         cultivation_plan_id: new_plan.id,
         crop_id: crop.id,
