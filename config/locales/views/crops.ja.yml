@@ -74,7 +74,6 @@ ja:
       reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
       no_permission: "権限がありません。"
       not_found: "指定された作物が見つかりません。"
-      crop_limit: "作物の数が上限（20個）に達しています。"
     
     index:
       title: "作物一覧"

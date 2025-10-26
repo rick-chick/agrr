@@ -91,15 +91,45 @@ let ganttState = {
 // 初期化関数（遅延実行でコンテナが確実に存在することを保証）
 let retryCount = 0;
 const MAX_RETRIES = 50; // 最大5秒間待機 (100ms × 50)
+let isInitializing = false; // 重複初期化を防ぐフラグ
+
+// ガントチャートが存在するページかどうかを判定
+function shouldHaveGanttChart() {
+  const currentPath = window.location.pathname;
+  console.log('🔍 [Gantt Chart] ページ判定中:', currentPath);
+  
+  // ガントチャートが表示されるページのパターン
+  const ganttPages = [
+    '/plans/',  // 計画詳細ページ
+    '/public_plans/',  // 公開計画詳細ページ
+    '/results/'  // 結果ページ
+  ];
+  
+  const shouldHave = ganttPages.some(pattern => currentPath.includes(pattern));
+  console.log('🔍 [Gantt Chart] ページ判定結果:', shouldHave, 'パターン:', ganttPages);
+  
+  return shouldHave;
+}
 
 function initWhenReady() {
+  console.log('🚀 [Gantt Chart] initWhenReady 開始', { isInitializing, retryCount });
+  
+  // 既に初期化中の場合はスキップ
+  if (isInitializing) {
+    console.log('⏭️ [Gantt Chart] 既に初期化中です');
+    return;
+  }
+
   const container = document.getElementById('gantt-chart-container');
+  console.log('🔍 [Gantt Chart] コンテナ検索結果:', container ? '見つかった' : '見つからない');
+  
   if (container) {
     console.log('✅ [Gantt Chart] Container found, initializing...');
     if (typeof window.ClientLogger !== 'undefined') {
       window.ClientLogger.warn('✅ [Gantt Chart] Container found, initializing...');
     }
     retryCount = 0; // リセット
+    isInitializing = true;
     initCustomGanttChart();
   } else if (retryCount < MAX_RETRIES) {
     retryCount++;
@@ -110,11 +140,60 @@ function initWhenReady() {
     // 100ms待って再試行
     setTimeout(initWhenReady, 100);
   } else {
-    console.error('❌ [Gantt Chart] Container not found after maximum retries');
-    if (typeof window.ClientLogger !== 'undefined') {
-      window.ClientLogger.error('❌ [Gantt Chart] Container not found after maximum retries');
+    // ガントチャートが期待されるページでない場合は正常終了
+    if (!shouldHaveGanttChart()) {
+      console.log('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
+      if (typeof window.ClientLogger !== 'undefined') {
+        window.ClientLogger.info('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
+      }
+    } else {
+      console.log('ℹ️ [Gantt Chart] Container not found - this page may not have a gantt chart');
+      if (typeof window.ClientLogger !== 'undefined') {
+        window.ClientLogger.info('ℹ️ [Gantt Chart] Container not found - this page may not have a gantt chart');
+      }
     }
     retryCount = 0; // リセット
+    isInitializing = false; // フラグをリセット
+  }
+}
+
+// クリーンアップ関数
+function cleanupGanttChart() {
+  console.log('🧹 [Gantt Chart] クリーンアップ開始');
+  if (typeof window.ClientLogger !== 'undefined') {
+    window.ClientLogger.warn('🧹 [Gantt Chart] クリーンアップ開始');
+  }
+  
+  // フラグをリセット
+  isInitializing = false;
+  retryCount = 0;
+  
+  // Action Cableサブスクリプションを切断
+  if (window.ganttChartState && window.ganttChartState.cableSubscription) {
+    window.ganttChartState.cableSubscription.unsubscribe();
+    window.ganttChartState.cableSubscription = null;
+    console.log('📡 [Gantt Chart] Action Cableサブスクリプションを切断しました');
+  }
+  
+  // グローバルイベントハンドラーを削除
+  if (window.ganttChartState && window.ganttChartState.globalMouseMoveHandler) {
+    document.removeEventListener('mousemove', window.ganttChartState.globalMouseMoveHandler);
+    window.ganttChartState.globalMouseMoveHandler = null;
+  }
+  if (window.ganttChartState && window.ganttChartState.globalMouseUpHandler) {
+    document.removeEventListener('mouseup', window.ganttChartState.globalMouseUpHandler);
+    window.ganttChartState.globalMouseUpHandler = null;
+  }
+  
+  // ガントチャートコンテナをクリア
+  const container = document.getElementById('gantt-chart-container');
+  if (container) {
+    container.innerHTML = '';
+  }
+  
+  console.log('✅ [Gantt Chart] クリーンアップ完了');
+  if (typeof window.ClientLogger !== 'undefined') {
+    window.ClientLogger.warn('✅ [Gantt Chart] クリーンアップ完了');
   }
 }
 
@@ -122,37 +201,35 @@ function initWhenReady() {
 console.log('📝 [Gantt Chart] スクリプト読み込み完了、Turbo:', typeof Turbo !== 'undefined');
 if (typeof Turbo !== 'undefined') {
   console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
-  document.addEventListener('turbo:load', () => {
-    console.log('🔄 [Gantt Chart] turbo:load イベント検出');
-    if (typeof window.ClientLogger !== 'undefined') {
-      window.ClientLogger.warn('🔄 [Gantt Chart] turbo:load イベント検出');
-    }
-    initWhenReady();
+  
+  // ページ遷移前のクリーンアップ
+  document.addEventListener('turbo:before-visit', (event) => {
+    console.warn('⚠️ [Gantt Chart] turbo:before-visit 検出 - ページ遷移が発生します', event.detail.url);
+    cleanupGanttChart();
   });
   
-  // turbo:renderもリスン（Turbo 7の新機能）
+  // ページ遷移中
+  document.addEventListener('turbo:visit', (event) => {
+    console.warn('⚠️ [Gantt Chart] turbo:visit 検出 - ページ遷移中', event.detail.url);
+  });
+  
+  // レンダリング完了時（Turbo 7の新機能）
   document.addEventListener('turbo:render', () => {
     console.log('🔄 [Gantt Chart] turbo:render イベント検出');
     if (typeof window.ClientLogger !== 'undefined') {
       window.ClientLogger.warn('🔄 [Gantt Chart] turbo:render イベント検出');
     }
-    initWhenReady();
-  });
-  
-  // Turboによる画面遷移を検出
-  document.addEventListener('turbo:before-visit', (event) => {
-    console.warn('⚠️ [Gantt Chart] turbo:before-visit 検出 - ページ遷移が発生します', event.detail.url);
-  });
-  
-  document.addEventListener('turbo:visit', (event) => {
-    console.warn('⚠️ [Gantt Chart] turbo:visit 検出 - ページ遷移中', event.detail.url);
+    // 少し遅延させてDOM要素が確実に存在することを保証
+    setTimeout(initWhenReady, 50);
   });
   
   // 初回読み込み時にも実行
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initWhenReady);
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(initWhenReady, 100);
+    });
   } else {
-    initWhenReady();
+    setTimeout(initWhenReady, 100);
   }
 } else {
   document.addEventListener('DOMContentLoaded', initWhenReady);
@@ -227,9 +304,16 @@ function initCustomGanttChart() {
     console.log('🎨 [Gantt] チャート描画開始...');
     renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
     console.log('✅ [Gantt] チャート描画完了');
+    
+    // 初期化フラグをリセット
+    isInitializing = false;
+    console.log('✅ [Gantt Chart] 初期化完了、フラグをリセットしました');
   } catch (error) {
     console.error('❌ [Gantt] データ正規化エラー:', error);
     console.error('❌ [Gantt] スタックトレース:', error.stack);
+    // エラー時も初期化フラグをリセット
+    isInitializing = false;
+    console.log('✅ [Gantt Chart] エラー後、フラグをリセットしました');
   }
 }
 

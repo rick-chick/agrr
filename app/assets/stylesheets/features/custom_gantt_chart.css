@@ -17,7 +17,7 @@
   overflow-y: visible;
   position: relative;
   border: 1px solid #e5e7eb;
-  max-height: 80vh; /* 最大高さを制限 */
+  /* max-height: 80vh; を削除して2重スクロールを防止 */
 }
 
 #gantt-chart-container::before {
