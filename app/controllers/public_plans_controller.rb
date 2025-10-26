@@ -148,6 +148,46 @@ class PublicPlansController < ApplicationController
     redirect_to optimizing_public_plans_path unless @cultivation_plan.status_completed?
   end
   
+  # 保存ボタンクリック時の処理
+  def save_plan
+    Rails.logger.info "🔍 [save_plan] Called - logged_in?: #{logged_in?}"
+    @cultivation_plan = find_cultivation_plan
+    return unless @cultivation_plan
+    
+    if logged_in?
+      Rails.logger.info "✅ [save_plan] User is logged in, saving to account"
+      # ログイン済みの場合、直接保存処理を実行
+      save_plan_to_user_account
+    else
+      Rails.logger.info "ℹ️ [save_plan] User is not logged in, redirecting to login"
+      # 未ログインの場合、セッションに保存してログイン画面へ
+      save_plan_data_to_session
+      redirect_to auth_login_path, notice: I18n.t('public_plans.save.login_required')
+    end
+  end
+  
+  # ログイン後の保存処理
+  def process_saved_plan
+    return unless session[:public_plan_save_data]
+    
+    begin
+      result = PlanSaveService.new(
+        user: current_user,
+        session_data: session[:public_plan_save_data]
+      ).call
+      
+      if result.success
+        session.delete(:public_plan_save_data)
+        redirect_to plans_path, notice: I18n.t('public_plans.save.success')
+      else
+        redirect_to results_public_plans_path, alert: result.error_message || I18n.t('public_plans.save.error')
+      end
+    rescue => e
+      Rails.logger.error "❌ [process_saved_plan] Error: #{e.message}"
+      redirect_to results_public_plans_path, alert: I18n.t('public_plans.save.error')
+    end
+  end
+  
   private
   
   # localeから地域コードに変換（/ja → jp, /us → us, /in → in）
@@ -256,6 +296,61 @@ class PublicPlansController < ApplicationController
   # JobExecutionで使用する遷移先パス
   def job_completion_redirect_path
     results_public_plans_path
+  end
+  
+  # セッションに保存データを保存
+  def save_plan_data_to_session
+    session[:public_plan_save_data] = {
+      plan_id: @cultivation_plan.id,
+      farm_id: session_data[:farm_id],
+      crop_ids: session_data[:crop_ids]
+    }
+    Rails.logger.info "💾 [save_plan_data_to_session] Saved to session: #{session[:public_plan_save_data]}"
+  end
+  
+  # ログイン済みユーザーのアカウントに保存
+  def save_plan_to_user_account
+    Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
+    
+    begin
+      # 重複チェック: 既に同じ計画が保存されているか
+      existing_plan = current_user.cultivation_plans.find_by(
+        plan_type: 'private',
+        total_area: @cultivation_plan.total_area,
+        planning_start_date: @cultivation_plan.planning_start_date,
+        planning_end_date: @cultivation_plan.planning_end_date
+      )
+      
+      if existing_plan
+        Rails.logger.warn "⚠️ [save_plan_to_user_account] Duplicate plan detected: #{existing_plan.id}"
+        redirect_to results_public_plans_path, alert: "この計画は既に保存されています。" and return
+      end
+      
+      # セッションデータを構築
+      save_data = {
+        plan_id: @cultivation_plan.id,
+        farm_id: session_data[:farm_id],
+        crop_ids: session_data[:crop_ids]
+      }
+      
+      # PlanSaveServiceを呼び出し
+      result = PlanSaveService.new(
+        user: current_user,
+        session_data: save_data
+      ).call
+      
+      if result.success
+        Rails.logger.info "✅ [save_plan_to_user_account] Plan saved successfully"
+        redirect_to plans_path, notice: I18n.t('public_plans.save.success')
+      else
+        Rails.logger.error "❌ [save_plan_to_user_account] Save failed: #{result.error_message}"
+        redirect_to results_public_plans_path, alert: result.error_message || I18n.t('public_plans.save.error')
+      end
+    rescue => e
+      Rails.logger.error "❌ [save_plan_to_user_account] Error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      redirect_to results_public_plans_path, alert: I18n.t('public_plans.save.error')
+    end
   end
 end
 

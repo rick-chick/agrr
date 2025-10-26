@@ -31,6 +31,12 @@ us:
       create_failed: "Failed to create plan: %{errors}"
       not_found: "Crop plan not found."
     
+    save:
+      button: "Save to My Plans"
+      login_required: "Login required. The plan will be saved automatically after login."
+      success: "Plan saved to My Plans."
+      error: "Failed to save plan."
+    
     messages:
       crop_added: "Crop added."
       field_added: "Field added."

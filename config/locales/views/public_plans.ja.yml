@@ -31,6 +31,12 @@ ja:
       create_failed: "計画作成に失敗しました: %{errors}"
       not_found: "作付け計画が見つかりません。"
     
+    save:
+      button: "マイプランに保存"
+      login_required: "ログインが必要です。ログイン後、計画が自動的に保存されます。"
+      success: "計画をマイプランに保存しました。"
+      error: "計画の保存に失敗しました。"
+    
     new:
       title: "🌍 栽培地域を選択してください"
       subtitle: "あなたの農場がある地域を選択してください"

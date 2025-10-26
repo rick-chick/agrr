@@ -60,6 +60,8 @@ Rails.application.routes.draw do
         get :select_crop
         get :optimizing
         get :results
+        post :save_plan
+        get :process_saved_plan
       end
     end
 

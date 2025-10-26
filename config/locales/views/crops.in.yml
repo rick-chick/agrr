@@ -74,7 +74,6 @@ in:
       reference_flag_admin_only: "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।"
       no_permission: "अनुमति अस्वीकृत।"
       not_found: "फसल नहीं मिली।"
-      crop_limit: "फसल की सीमा पहुंच गई (अधिकतम 20 फसलें)।"
     
     index:
       title: "फसल सूची"
