@@ -88,6 +88,14 @@ class PlansController < ApplicationController
     crops = find_selected_crops
     return unless validate_crops_selection(crops)
     
+    # 既存の計画があるかチェック
+    existing_plan = find_existing_plan(farm)
+    if existing_plan
+      Rails.logger.info "⚠️ [PlansController#create] Existing plan found: #{existing_plan.id}"
+      redirect_to plan_path(existing_plan), alert: I18n.t('plans.errors.plan_already_exists', year: existing_plan.plan_year)
+      return
+    end
+    
     result = create_cultivation_plan_with_jobs(farm, crops)
     redirect_to_optimizing(result.cultivation_plan.id)
   rescue ActiveRecord::RecordNotFound
@@ -254,7 +262,11 @@ class PlansController < ApplicationController
 
   # 選択された作物を取得
   def find_selected_crops
-    current_user.crops.where(id: crop_ids, is_reference: false)
+    Rails.logger.debug "🔍 [PlansController] crop_ids: #{crop_ids.inspect}"
+    crops = current_user.crops.where(id: crop_ids.map(&:to_i), is_reference: false)
+    Rails.logger.debug "🔍 [PlansController] found crops: #{crops.count}"
+    crops.each { |crop| Rails.logger.debug "  - #{crop.name} (ID: #{crop.id})" }
+    crops
   end
 
   # 作物選択の検証
@@ -270,6 +282,12 @@ class PlansController < ApplicationController
   def create_cultivation_plan_with_jobs(farm, crops)
     creator_params = build_creator_params(farm, crops)
     result = CultivationPlanCreator.new(**creator_params).call
+    
+    # エラーハンドリング: 計画作成に失敗した場合
+    unless result.success? && result.cultivation_plan
+      Rails.logger.error "❌ [PlansController#create] CultivationPlan creation failed: #{result.errors.join(', ')}"
+      raise ActiveRecord::RecordInvalid.new(result.cultivation_plan || CultivationPlan.new)
+    end
     
     Rails.logger.info "✅ [PlansController#create] CultivationPlan created: #{result.cultivation_plan.id}"
     session[SESSION_ID_KEY] = { plan_id: result.cultivation_plan.id }
@@ -289,6 +307,10 @@ class PlansController < ApplicationController
     session_id = session.id.to_s
     
     Rails.logger.info "🔑 [PlansController#create] Using session_id: #{session_id}"
+    Rails.logger.info "👤 [PlansController#create] Current user: #{current_user&.name} (#{current_user&.id})"
+    Rails.logger.info "🏡 [PlansController#create] Farm: #{farm.name} (#{farm.id})"
+    Rails.logger.info "🌾 [PlansController#create] Crops: #{crops.count} crops"
+    Rails.logger.info "📊 [PlansController#create] Session data: #{session_data.inspect}"
     
     {
       farm: farm,
@@ -302,6 +324,82 @@ class PlansController < ApplicationController
       planning_start_date: planning_dates[:start_date],
       planning_end_date: planning_dates[:end_date]
     }
+  end
+
+  # セッションデータの検証
+  def validate_session_data
+    Rails.logger.info "🔍 [PlansController#create] Validating session data: #{session_data.inspect}"
+    
+    unless session_data[:farm_id] && session_data[:total_area] && session_data[:plan_year] && session_data[:plan_name]
+      Rails.logger.warn "⚠️ [PlansController#create] Missing required session data"
+      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart') and return false
+    end
+    
+    Rails.logger.info "✅ [PlansController#create] Session data validation passed"
+    true
+  end
+
+  # 作物選択の検証
+  def validate_crops_selection(crops)
+    Rails.logger.info "🔍 [PlansController#create] Validating crops selection: #{crops.count} crops"
+    
+    if crops.empty?
+      Rails.logger.warn "⚠️ [PlansController#create] No crops selected"
+      redirect_to select_crop_plan_path, alert: I18n.t('plans.errors.select_crop') and return false
+    end
+    
+    Rails.logger.info "✅ [PlansController#create] Crops selection validation passed"
+    true
+  end
+
+  # セッションから農場を取得
+  def find_farm_from_session
+    farm_id = session_data[:farm_id]
+    Rails.logger.info "🏡 [PlansController#create] Finding farm with ID: #{farm_id}"
+    
+    unless farm_id
+      Rails.logger.warn "⚠️ [PlansController#create] No farm_id in session data"
+      raise ActiveRecord::RecordNotFound, "Farm ID not found in session"
+    end
+    
+    farm = current_user.farms.find(farm_id)
+    Rails.logger.info "✅ [PlansController#create] Found farm: #{farm.name} (#{farm.id})"
+    farm
+  end
+
+  # 既存の計画を検索
+  def find_existing_plan(farm)
+    plan_year = session_data[:plan_year]
+    Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, plan_year=#{plan_year}"
+    
+    existing_plan = current_user.cultivation_plans
+      .where(farm: farm, plan_year: plan_year, plan_type: 'private')
+      .first
+    
+    if existing_plan
+      Rails.logger.info "⚠️ [PlansController#create] Found existing plan: ID=#{existing_plan.id}, name=#{existing_plan.plan_name}"
+    else
+      Rails.logger.info "✅ [PlansController#create] No existing plan found"
+    end
+    
+    existing_plan
+  end
+
+  # 選択された作物を取得
+  def find_selected_crops
+    Rails.logger.info "🔍 [PlansController#create] Finding selected crops with IDs: #{crop_ids.inspect}"
+    
+    if crop_ids.empty?
+      Rails.logger.warn "⚠️ [PlansController#create] No crop IDs provided"
+      return []
+    end
+    
+    # ユーザーの作物のみ取得
+    crops = current_user.crops.where(id: crop_ids, is_reference: false)
+    Rails.logger.info "🌾 [PlansController#create] Found #{crops.count} crops for user #{current_user.id}"
+    crops.each { |crop| Rails.logger.info "  - #{crop.name} (ID: #{crop.id})" }
+    
+    crops
   end
 
   # 最適化画面へのリダイレクト
