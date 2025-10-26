@@ -17,6 +17,7 @@ class PublicPlansToMyPlansTest
       test_save_to_my_plans
       test_plan_verification
       test_gantt_chart
+      test_cultivation_plan_crop_duplication_prevention
       puts "✅ All tests passed!"
     rescue => e
       puts "❌ Test failed: #{e.message}"
@@ -207,6 +208,153 @@ class PublicPlansToMyPlansTest
     end
   rescue Timeout::Error
     puts "  ⚠️ Optimization timeout (continuing anyway)"
+  end
+
+  def test_cultivation_plan_crop_duplication_prevention
+    puts "🔍 Testing CultivationPlanCrop duplication prevention..."
+    
+    # Railsコンソールでテストを実行
+    test_result = `docker compose exec web rails runner "
+      # テストユーザーを取得
+      user = User.where(is_anonymous: false).first
+      if user.nil?
+        puts 'ERROR: No test user found'
+        exit 1
+      end
+      
+      puts 'Using user: ' + user.name + ' (ID: ' + user.id.to_s + ')'
+      
+      # 理想的な移送方法: セッションデータから農場IDを取得
+      # 実際のフローでは、ユーザーが選択した農場IDがセッションデータに保存される
+      # ここでは秋田の農場ID（3）を使用してテストする
+      farm_id = 3  # 秋田の農場ID
+      farm = Farm.find(farm_id)
+      if farm.nil?
+        puts 'ERROR: Farm with ID ' + farm_id.to_s + ' not found'
+        exit 1
+      end
+      
+      puts 'Selected farm: ' + farm.name + ' (ID: ' + farm.id.to_s + ')'
+      
+      # 同じ名前の作物を複数選択（トマトを2回）
+      crops = [Crop.find(1), Crop.find(1)] # トマトを2回
+      puts 'Selected crops: ' + crops.map(&:name).join(', ')
+      
+      # 参照計画を作成（同じ作物を複数含む）
+      plan = CultivationPlan.create!(
+        farm: farm,
+        user: nil, # 参照計画
+        total_area: 300.0,
+        plan_type: 'public',
+        plan_year: Date.current.year,
+        plan_name: '重複防止テスト計画',
+        planning_start_date: Date.current,
+        planning_end_date: Date.current.end_of_year,
+        status: 'completed'
+      )
+      
+      # CultivationPlanCropを手動で作成（同じ名前の作物を複数）
+      CultivationPlanCrop.create!(
+        cultivation_plan: plan,
+        crop: crops[0],
+        name: crops[0].name,
+        variety: '品種A',
+        area_per_unit: crops[0].area_per_unit,
+        revenue_per_area: crops[0].revenue_per_area
+      )
+      
+      CultivationPlanCrop.create!(
+        cultivation_plan: plan,
+        crop: crops[1],
+        name: crops[1].name,
+        variety: '品種B',
+        area_per_unit: crops[1].area_per_unit,
+        revenue_per_area: crops[1].revenue_per_area
+      )
+      
+      puts 'Created test plan: ' + plan.plan_name + ' (ID: ' + plan.id.to_s + ')'
+      
+      # 参照計画のCultivationPlanCropを確認
+      puts 'Reference plan CultivationPlanCrops:'
+      plan.cultivation_plan_crops.each do |crop|
+        puts '  - ' + crop.name + ' (crop_id: ' + crop.crop_id.to_s + ', variety: ' + (crop.variety || 'nil').to_s + ')'
+      end
+      
+      # セッションデータを構築
+      session_data = {
+        plan_id: plan.id,
+        farm_id: farm.id,
+        crop_ids: crops.map(&:id),
+        field_data: [
+          { name: '重複防止テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
+          { name: '重複防止テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
+        ]
+      }
+      
+      puts 'Session data: ' + session_data.inspect
+      
+      # PlanSaveServiceを実行
+      service = PlanSaveService.new(user: user, session_data: session_data)
+      result = service.call
+      
+      puts 'Result: ' + result.success.to_s
+      if !result.success
+        puts 'Error: ' + result.error_message
+        exit 1
+      end
+      
+      # 作成された計画のCultivationPlanCropを確認
+      new_plan = user.cultivation_plans.where(plan_type: 'private').order(:created_at).last
+      puts 'New plan: ' + new_plan.plan_name + ' (ID: ' + new_plan.id.to_s + ')'
+      
+      puts 'New plan CultivationPlanCrops:'
+      new_plan.cultivation_plan_crops.each do |crop|
+        puts '  - ' + crop.name + ' (crop_id: ' + crop.crop_id.to_s + ', variety: ' + (crop.variety || 'nil').to_s + ')'
+      end
+      
+      # 重複チェック
+      crop_names = new_plan.cultivation_plan_crops.map(&:name)
+      duplicate_names = crop_names.select { |name| crop_names.count(name) > 1 }.uniq
+      
+      if duplicate_names.any?
+        puts 'ERROR: DUPLICATE CultivationPlanCrops found:'
+        duplicate_names.each do |name|
+          duplicates = new_plan.cultivation_plan_crops.select { |crop| crop.name == name }
+          puts '  - ' + name + ': ' + duplicates.count.to_s + ' instances'
+        end
+        exit 1
+      else
+        puts 'SUCCESS: No duplicate CultivationPlanCrops found - duplication prevention working!'
+      end
+      
+      # 同じcrop_idのCultivationPlanCropが1つだけであることを確認
+      crop_ids = new_plan.cultivation_plan_crops.map(&:crop_id)
+      duplicate_crop_ids = crop_ids.select { |crop_id| crop_ids.count(crop_id) > 1 }.uniq
+      
+      if duplicate_crop_ids.any?
+        puts 'ERROR: DUPLICATE crop_ids found:'
+        duplicate_crop_ids.each do |crop_id|
+          duplicates = new_plan.cultivation_plan_crops.select { |crop| crop.crop_id == crop_id }
+          puts '  - crop_id ' + crop_id.to_s + ': ' + duplicates.count.to_s + ' instances'
+        end
+        exit 1
+      else
+        puts 'SUCCESS: No duplicate crop_ids found - each crop_id has only one CultivationPlanCrop!'
+      end
+      
+      puts 'TEST PASSED: CultivationPlanCrop duplication prevention is working correctly'
+    "`
+    
+    if $?.success?
+      puts "  ✅ CultivationPlanCrop duplication prevention test passed"
+      puts "  📋 Test output:"
+      puts test_result.lines.map { |line| "    #{line}" }.join
+    else
+      puts "  ❌ CultivationPlanCrop duplication prevention test failed"
+      puts "  📋 Test output:"
+      puts test_result.lines.map { |line| "    #{line}" }.join
+      raise "CultivationPlanCrop duplication prevention test failed"
+    end
   end
 
   def cleanup
