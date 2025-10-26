@@ -64,8 +64,9 @@ class PlanSaveService
     )
     
     unless new_farm.save
-      Rails.logger.error I18n.t('services.plan_save_service.errors.farm_creation_failed', errors: new_farm.errors.full_messages.join(', '))
-      raise StandardError, I18n.t('services.plan_save_service.errors.farm_creation_failed', errors: new_farm.errors.full_messages.join(', '))
+      error_message = new_farm.errors.full_messages.join(', ')
+      Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
+      raise StandardError, error_message
     end
     
     Rails.logger.info I18n.t('services.plan_save_service.messages.farm_created', farm_name: new_farm.name)
@@ -97,8 +98,9 @@ class PlanSaveService
       )
       
       unless new_crop.save
-        Rails.logger.error I18n.t('services.plan_save_service.errors.crop_creation_failed', errors: new_crop.errors.full_messages.join(', '))
-        raise StandardError, I18n.t('services.plan_save_service.errors.crop_creation_failed', errors: new_crop.errors.full_messages.join(', '))
+        error_message = new_crop.errors.full_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Crop creation failed: #{error_message}"
+        raise StandardError, error_message
       end
       
       # 作物ステージをコピー

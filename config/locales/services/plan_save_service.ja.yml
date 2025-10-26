@@ -18,9 +18,9 @@ ja:
       
       errors:
         farm_not_found: "参照農場が見つかりません (ID: %{farm_id})"
-        farm_creation_failed: "農場の作成に失敗しました: %{errors}"
+        farm_creation_failed: "%{errors}"
         crop_not_found: "参照作物が見つかりません (ID: %{crop_id})"
-        crop_creation_failed: "作物の作成に失敗しました: %{errors}"
+        crop_creation_failed: "%{errors}"
         crop_stage_copy_failed: "作物ステージのコピーに失敗しました: %{errors}"
         temperature_requirement_copy_failed: "温度要件のコピーに失敗しました: %{errors}"
         sunshine_requirement_copy_failed: "日照要件のコピーに失敗しました: %{errors}"

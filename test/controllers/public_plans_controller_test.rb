@@ -186,6 +186,63 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'jp', controller.send(:locale_to_region, :unknown)
   end
 
+  test "農場の件数制限に達している場合にエラーメッセージが表示される" do
+    # テストユーザーを作成（農場上限に達している）
+    user = User.create!(
+      email: 'flash_test@example.com',
+      name: 'Flash Test User',
+      google_id: "flash_#{SecureRandom.hex(8)}"
+    )
+    
+    # ユーザーを4件の農場に制限
+    4.times do |i|
+      Farm.create!(
+        user: user,
+        name: "既存農場 #{i + 1}",
+        latitude: 35.6812,
+        longitude: 139.7671,
+        region: 'jp',
+        is_reference: false
+      )
+    end
+    
+    # セッションを作成
+    session = Session.create_for_user(user)
+    
+    # Public計画を作成（結果画面用）
+    public_plan = CultivationPlan.create!(
+      farm: @japan_farm,
+      user: nil,
+      total_area: 100.0,
+      status: 'completed',
+      plan_type: 'public',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year
+    )
+    
+    # Public Plansのセッションデータを設定
+    session_data = {
+      plan_id: public_plan.id,
+      farm_id: @japan_farm.id,
+      crop_ids: [@spinach_crop.id],
+      field_data: [{ name: 'テスト圃場', area: 100.0, coordinates: [35.0, 139.0] }]
+    }
+    
+    # save_planをシミュレート
+    cookies[:session_id] = session.session_id
+    
+    # PlanSaveServiceを直接呼び出し
+    result = PlanSaveService.new(
+      user: user,
+      session_data: session_data
+    ).call
+    
+    # エラーが発生することを確認
+    assert_not result.success
+    assert_not_nil result.error_message
+    assert_includes result.error_message, "作成できるFarmは4件までです"
+  end
+
   private
 
   def select_farm_size_public_plans_path(farm_id:)
