@@ -69,8 +69,23 @@ class CropsController < ApplicationController
 
   # DELETE /crops/:id
   def destroy
-    @crop.destroy
-    redirect_to crops_path, notice: I18n.t('crops.flash.destroyed')
+    begin
+      @crop.destroy
+      redirect_to crops_path, notice: I18n.t('crops.flash.destroyed')
+    rescue ActiveRecord::InvalidForeignKey => e
+      # 外部参照制約エラーの場合
+      if e.message.include?('cultivation_plan_crops')
+        redirect_to crops_path, alert: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
+      elsif e.message.include?('field_cultivations')
+        redirect_to crops_path, alert: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
+      else
+        redirect_to crops_path, alert: "この作物は他のデータで使用されているため削除できません。"
+      end
+    rescue ActiveRecord::DeleteRestrictionError => e
+      redirect_to crops_path, alert: "この作物は他のデータで使用されているため削除できません。"
+    rescue StandardError => e
+      redirect_to crops_path, alert: "削除中にエラーが発生しました: #{e.message}"
+    end
   end
 
   private

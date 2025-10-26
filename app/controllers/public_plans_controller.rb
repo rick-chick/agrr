@@ -323,18 +323,6 @@ class PublicPlansController < ApplicationController
     Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
     
     begin
-      # 重複チェック: 既に同じ計画が保存されているか
-      existing_plan = current_user.cultivation_plans.find_by(
-        plan_type: 'private',
-        total_area: @cultivation_plan.total_area,
-        planning_start_date: @cultivation_plan.planning_start_date,
-        planning_end_date: @cultivation_plan.planning_end_date
-      )
-      
-      if existing_plan
-        Rails.logger.warn "⚠️ [save_plan_to_user_account] Duplicate plan detected: #{existing_plan.id}"
-        redirect_to results_public_plans_path, alert: "この計画は既に保存されています。" and return
-      end
       
       # セッションデータを構築
       # 圃場データを取得

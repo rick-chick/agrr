@@ -281,4 +281,43 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_not_nil created_crop.variety,
       "Variety information should be preserved"
   end
+
+  test "should prevent farm creation when user has reached farm limit" do
+    # ユーザーが4つの農場を持っている状態を作成
+    4.times do |i|
+      Farm.create!(
+        user: @user,
+        name: "既存農場 #{i + 1}",
+        latitude: 35.0 + i * 0.1,
+        longitude: 135.0 + i * 0.1,
+        is_reference: false
+      )
+    end
+    
+    # セッションデータを準備
+    session_data = {
+      farm_id: @farm.id,
+      crop_ids: [@crops[0].id],
+      field_data: [{ name: 'テスト圃場', area: 100.0, coordinates: [35.0, 139.0] }]
+    }
+    
+    # 計画を作成
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      status: 'completed',
+      plan_type: 'public',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year
+    )
+    session_data[:plan_id] = plan.id
+    
+    # PlanSaveServiceを実行（失敗するはず）
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    
+    # 失敗することを確認
+    assert_not result.success, "PlanSaveService should fail when farm limit is reached"
+    assert_includes result.error_message, "作成できるFarmは4件までです", "Error message should mention farm limit"
+  end
 end

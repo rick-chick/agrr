@@ -45,6 +45,17 @@ module Adapters
           true
         rescue ActiveRecord::RecordNotFound
           false
+        rescue ActiveRecord::InvalidForeignKey => e
+          # 外部参照制約エラーの場合、より分かりやすいメッセージを返す
+          if e.message.include?('cultivation_plans')
+            raise StandardError, "この農場は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
+          elsif e.message.include?('fields')
+            raise StandardError, "この農場には圃場が登録されているため削除できません。まず圃場を削除してください。"
+          else
+            raise StandardError, "この農場は他のデータで使用されているため削除できません。"
+          end
+        rescue ActiveRecord::DeleteRestrictionError => e
+          raise StandardError, "この農場は他のデータで使用されているため削除できません。"
         end
 
         def exists?(id)

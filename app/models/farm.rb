@@ -44,7 +44,8 @@ class Farm < ApplicationRecord
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
   
   # ユーザー農場の件数制限（4件まで）
-  validates :user, presence: true, user_resource_limit: { model_name: Farm, max_count: 4 }
+  validates :user, presence: true
+  validate :user_farm_count_limit, unless: :is_reference?
   
   # 参照農場はアノニマスユーザーにのみ設定可能（複数の参照農場を許可）
   validate :reference_farm_must_belong_to_anonymous_user
@@ -163,6 +164,19 @@ class Farm < ApplicationRecord
   def reference_farm_must_belong_to_anonymous_user
     if is_reference && user && !user.anonymous?
       errors.add(:is_reference, "参照農場はアノニマスユーザーにのみ設定できます")
+    end
+  end
+
+  # ユーザー農場の件数制限（4件まで）
+  def user_farm_count_limit
+    return if user.nil? || is_reference?
+    
+    existing_farms_count = user.farms.where(is_reference: false).count
+    # 新規作成の場合は既存の件数、更新の場合は既存の件数-1（自分自身を除く）
+    current_count = new_record? ? existing_farms_count : existing_farms_count - 1
+    
+    if current_count >= 4
+      errors.add(:user, "作成できるFarmは4件までです")
     end
   end
 

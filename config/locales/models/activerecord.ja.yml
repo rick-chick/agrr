@@ -118,4 +118,9 @@ ja:
               blank: "を入力してください"
             scientific_name:
               blank: "を入力してください"
+        
+        cultivation_plan:
+          attributes:
+            farm_id:
+              taken: "この農場の計画は既に存在します"
 

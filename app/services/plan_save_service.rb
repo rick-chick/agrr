@@ -67,6 +67,10 @@ class PlanSaveService
     unless new_farm.save
       error_message = new_farm.errors.full_messages.join(', ')
       Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
+      # 農場件数制限のエラーの場合は特別なメッセージを返す
+      if new_farm.errors[:user].any? { |msg| msg.include?("作成できるFarmは4件までです") }
+        raise StandardError, "作成できるFarmは4件までです"
+      end
       raise StandardError, error_message
     end
     
