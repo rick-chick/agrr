@@ -2,7 +2,9 @@
 // 作物の色管理システム
 
 // 作物の色マップ（デフォルト色）
-const CROP_COLOR_MAP = {
+// Turboページ遷移対応: すでに定義されている場合は再定義しない
+if (typeof window.CROP_COLOR_MAP === 'undefined') {
+  window.CROP_COLOR_MAP = {
   // 穀物類
   'rice': '#4CAF50',           // 緑
   'wheat': '#FFC107',          // 黄色
@@ -28,14 +30,18 @@ const CROP_COLOR_MAP = {
   
   // その他
   'default': '#607D8B'          // ブルーグレー
-};
+  };
+}
 
 // 色の透明度バリエーション
-const COLOR_OPACITIES = {
-  light: 0.2,
-  medium: 0.5,
-  dark: 0.8
-};
+// Turboページ遷移対応: すでに定義されている場合は再定義しない
+if (typeof window.COLOR_OPACITIES === 'undefined') {
+  window.COLOR_OPACITIES = {
+    light: 0.2,
+    medium: 0.5,
+    dark: 0.8
+  };
+}
 
 /**
  * 作物名から色を取得
@@ -43,12 +49,12 @@ const COLOR_OPACITIES = {
  * @returns {string} 色コード（HEX）
  */
 function getCropColor(cropName) {
-  if (!cropName) return CROP_COLOR_MAP.default;
+  if (!cropName) return window.CROP_COLOR_MAP.default;
   
   // 作物名を正規化（小文字、アンダースコア区切り）
   const normalizedName = cropName.toLowerCase().replace(/[-\s]/g, '_');
   
-  return CROP_COLOR_MAP[normalizedName] || CROP_COLOR_MAP.default;
+  return window.CROP_COLOR_MAP[normalizedName] || window.CROP_COLOR_MAP.default;
 }
 
 /**
@@ -68,7 +74,7 @@ function getCropStrokeColor(cropName) {
  */
 function getCropFillColor(cropName, opacity = 'medium') {
   const baseColor = getCropColor(cropName);
-  const alpha = COLOR_OPACITIES[opacity] || COLOR_OPACITIES.medium;
+  const alpha = window.COLOR_OPACITIES[opacity] || window.COLOR_OPACITIES.medium;
   
   // HEXをRGBに変換
   const hex = baseColor.replace('#', '');
@@ -84,7 +90,7 @@ function getCropFillColor(cropName, opacity = 'medium') {
  * @param {Object} colorMap - 新しい色マップ
  */
 function updateCropColorMap(colorMap) {
-  Object.assign(CROP_COLOR_MAP, colorMap);
+  Object.assign(window.CROP_COLOR_MAP, colorMap);
 }
 
 /**
@@ -94,7 +100,7 @@ function updateCropColorMap(colorMap) {
  */
 function setCropColor(cropName, color) {
   const normalizedName = cropName.toLowerCase().replace(/[-\s]/g, '_');
-  CROP_COLOR_MAP[normalizedName] = color;
+  window.CROP_COLOR_MAP[normalizedName] = color;
 }
 
 /**
@@ -102,7 +108,7 @@ function setCropColor(cropName, color) {
  * @returns {Object} 作物色マップ
  */
 function getAvailableColors() {
-  return { ...CROP_COLOR_MAP };
+  return { ...window.CROP_COLOR_MAP };
 }
 
 /**
@@ -130,7 +136,7 @@ function getContrastRatio(hexColor) {
  */
 function hasCropColor(cropName) {
   const normalizedName = cropName.toLowerCase().replace(/[-\s]/g, '_');
-  return CROP_COLOR_MAP.hasOwnProperty(normalizedName);
+  return window.CROP_COLOR_MAP.hasOwnProperty(normalizedName);
 }
 
 // グローバルに公開

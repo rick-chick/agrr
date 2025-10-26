@@ -7,43 +7,48 @@ if (typeof window.ClientLogger !== 'undefined') {
 }
 
 // 作物の色パレット管理（共通化）
-const colorPalette = [
-  { fill: '#9ae6b4', stroke: '#48bb78' },   // 緑1
-  { fill: '#fbd38d', stroke: '#f6ad55' },   // オレンジ
-  { fill: '#90cdf4', stroke: '#4299e1' },   // 青
-  { fill: '#c6f6d5', stroke: '#2f855a' },   // 緑2
-  { fill: '#feebc8', stroke: '#dd6b20' },   // 淡いオレンジ
-  { fill: '#feb2b2', stroke: '#fc8181' },   // 赤
-  { fill: '#fef3c7', stroke: '#d69e2e' },   // 黄色
-  { fill: '#e9d5ff', stroke: '#a78bfa' },   // 紫
-  { fill: '#bfdbfe', stroke: '#60a5fa' },   // 水色
-  { fill: '#fce7f3', stroke: '#f472b6' }    // ピンク
-];
+// Turboページ遷移対応: すでに定義されている場合は再定義しない
+if (typeof window.colorPalette === 'undefined') {
+  window.colorPalette = [
+    { fill: '#9ae6b4', stroke: '#48bb78' },   // 緑1
+    { fill: '#fbd38d', stroke: '#f6ad55' },   // オレンジ
+    { fill: '#90cdf4', stroke: '#4299e1' },   // 青
+    { fill: '#c6f6d5', stroke: '#2f855a' },   // 緑2
+    { fill: '#feebc8', stroke: '#dd6b20' },   // 淡いオレンジ
+    { fill: '#feb2b2', stroke: '#fc8181' },   // 赤
+    { fill: '#fef3c7', stroke: '#d69e2e' },   // 黄色
+    { fill: '#e9d5ff', stroke: '#a78bfa' },   // 紫
+    { fill: '#bfdbfe', stroke: '#60a5fa' },   // 水色
+    { fill: '#fce7f3', stroke: '#f472b6' }    // ピンク
+  ];
+}
 
-const cropColorMap = new Map();
+if (typeof window.cropColorMap === 'undefined') {
+  window.cropColorMap = new Map();
+}
 
 function getCropColor(cropName) {
   const baseCropName = cropName.split('（')[0];
   
-  if (!cropColorMap.has(baseCropName)) {
-    const colorIndex = cropColorMap.size % colorPalette.length;
-    cropColorMap.set(baseCropName, colorIndex);
+  if (!window.cropColorMap.has(baseCropName)) {
+    const colorIndex = window.cropColorMap.size % window.colorPalette.length;
+    window.cropColorMap.set(baseCropName, colorIndex);
   }
   
-  const colorIndex = cropColorMap.get(baseCropName);
-  return colorPalette[colorIndex].fill;
+  const colorIndex = window.cropColorMap.get(baseCropName);
+  return window.colorPalette[colorIndex].fill;
 }
 
 function getCropStrokeColor(cropName) {
   const baseCropName = cropName.split('（')[0];
   
-  if (!cropColorMap.has(baseCropName)) {
-    const colorIndex = cropColorMap.size % colorPalette.length;
-    cropColorMap.set(baseCropName, colorIndex);
+  if (!window.cropColorMap.has(baseCropName)) {
+    const colorIndex = window.cropColorMap.size % window.colorPalette.length;
+    window.cropColorMap.set(baseCropName, colorIndex);
   }
   
-  const colorIndex = cropColorMap.get(baseCropName);
-  return colorPalette[colorIndex].stroke;
+  const colorIndex = window.cropColorMap.get(baseCropName);
+  return window.colorPalette[colorIndex].stroke;
 }
 
 function getCropColors(cropName) {
@@ -57,41 +62,44 @@ function getCropColors(cropName) {
 window.getCropColor = getCropColor;
 window.getCropStrokeColor = getCropStrokeColor;
 window.getCropColors = getCropColors;
-window.cropColorPalette = colorPalette;
+window.cropColorPalette = window.colorPalette;
 
 // グローバルステート管理
-let ganttState = {
-  cultivationData: [],
-  fields: [], // 圃場情報（空の圃場も含む）
-  fieldGroups: [],
-  planStartDate: null,
-  planEndDate: null,
-  config: null,
-  chartWidth: 0,
-  chartHeight: 0,
-  totalDays: 0,
-  moves: [], // 移動履歴
-  removedIds: [], // 削除されたID
-  draggedBar: null,
-  isDragging: false, // ドラッグ中かどうかを示すフラグ（グローバル管理）
-  dragStartX: 0,
-  dragStartY: 0,
-  originalBarX: 0,
-  originalFieldIndex: -1,
-  cultivation_plan_id: null,
-  cableSubscription: null, // Action Cableサブスクリプション
-  // イベントハンドラーの参照を保存
-  globalMouseMoveHandler: null,
-  globalMouseUpHandler: null
-};
+// Turboページ遷移対応: すでに定義されている場合は再利用
+if (typeof window.ganttState === 'undefined') {
+  window.ganttState = {
+    cultivationData: [],
+    fields: [], // 圃場情報（空の圃場も含む）
+    fieldGroups: [],
+    planStartDate: null,
+    planEndDate: null,
+    config: null,
+    chartWidth: 0,
+    chartHeight: 0,
+    totalDays: 0,
+    moves: [], // 移動履歴
+    removedIds: [], // 削除されたID
+    draggedBar: null,
+    isDragging: false, // ドラッグ中かどうかを示すフラグ（グローバル管理）
+    dragStartX: 0,
+    dragStartY: 0,
+    originalBarX: 0,
+    originalFieldIndex: -1,
+    cultivation_plan_id: null,
+    cableSubscription: null, // Action Cableサブスクリプション
+    // イベントハンドラーの参照を保存
+    globalMouseMoveHandler: null,
+    globalMouseUpHandler: null
+  };
+}
 
 // normalizeFieldId関数は共通ユーティリティ（gantt_data_utils.js）に移動
 
 
 // 初期化関数（遅延実行でコンテナが確実に存在することを保証）
-let retryCount = 0;
-const MAX_RETRIES = 50; // 最大5秒間待機 (100ms × 50)
-let isInitializing = false; // 重複初期化を防ぐフラグ
+if (typeof window.MAX_RETRIES === 'undefined') {
+  window.MAX_RETRIES = 50; // 最大5秒間待機 (100ms × 50)
+}
 
 // ガントチャートが存在するページかどうかを判定
 function shouldHaveGanttChart() {
@@ -112,14 +120,12 @@ function shouldHaveGanttChart() {
 }
 
 function initWhenReady() {
-  console.log('🚀 [Gantt Chart] initWhenReady 開始', { isInitializing, retryCount });
-  
-  // 既に初期化中の場合はスキップ
-  if (isInitializing) {
-    console.log('⏭️ [Gantt Chart] 既に初期化中です');
-    return;
+  if (typeof window.ganttRetryCount === 'undefined') {
+    window.ganttRetryCount = 0;
   }
-
+  
+  console.log('🚀 [Gantt Chart] initWhenReady 開始', { retryCount: window.ganttRetryCount });
+  
   const container = document.getElementById('gantt-chart-container');
   console.log('🔍 [Gantt Chart] コンテナ検索結果:', container ? '見つかった' : '見つからない');
   
@@ -128,14 +134,13 @@ function initWhenReady() {
     if (typeof window.ClientLogger !== 'undefined') {
       window.ClientLogger.warn('✅ [Gantt Chart] Container found, initializing...');
     }
-    retryCount = 0; // リセット
-    isInitializing = true;
+    window.ganttRetryCount = 0;
     initCustomGanttChart();
-  } else if (retryCount < MAX_RETRIES) {
-    retryCount++;
-    console.log(`⏳ [Gantt Chart] Container not found yet, retrying... (${retryCount}/${MAX_RETRIES})`);
+  } else if (window.ganttRetryCount < window.MAX_RETRIES) {
+    window.ganttRetryCount++;
+    console.log(`⏳ [Gantt Chart] Container not found yet, retrying... (${window.ganttRetryCount}/${window.MAX_RETRIES})`);
     if (typeof window.ClientLogger !== 'undefined') {
-      window.ClientLogger.warn(`⏳ [Gantt Chart] Container not found yet, retrying... (${retryCount}/${MAX_RETRIES})`);
+      window.ClientLogger.warn(`⏳ [Gantt Chart] Container not found yet, retrying... (${window.ganttRetryCount}/${window.MAX_RETRIES})`);
     }
     // 100ms待って再試行
     setTimeout(initWhenReady, 100);
@@ -152,8 +157,7 @@ function initWhenReady() {
         window.ClientLogger.info('ℹ️ [Gantt Chart] Container not found - this page may not have a gantt chart');
       }
     }
-    retryCount = 0; // リセット
-    isInitializing = false; // フラグをリセット
+    window.ganttRetryCount = 0;
   }
 }
 
@@ -165,24 +169,23 @@ function cleanupGanttChart() {
   }
   
   // フラグをリセット
-  isInitializing = false;
-  retryCount = 0;
+  window.ganttRetryCount = 0;
   
   // Action Cableサブスクリプションを切断
-  if (window.ganttChartState && window.ganttChartState.cableSubscription) {
-    window.ganttChartState.cableSubscription.unsubscribe();
-    window.ganttChartState.cableSubscription = null;
+  if (window.ganttState && window.ganttState.cableSubscription) {
+    window.ganttState.cableSubscription.unsubscribe();
+    window.ganttState.cableSubscription = null;
     console.log('📡 [Gantt Chart] Action Cableサブスクリプションを切断しました');
   }
   
   // グローバルイベントハンドラーを削除
-  if (window.ganttChartState && window.ganttChartState.globalMouseMoveHandler) {
-    document.removeEventListener('mousemove', window.ganttChartState.globalMouseMoveHandler);
-    window.ganttChartState.globalMouseMoveHandler = null;
+  if (window.ganttState && window.ganttState.globalMouseMoveHandler) {
+    document.removeEventListener('mousemove', window.ganttState.globalMouseMoveHandler);
+    window.ganttState.globalMouseMoveHandler = null;
   }
-  if (window.ganttChartState && window.ganttChartState.globalMouseUpHandler) {
-    document.removeEventListener('mouseup', window.ganttChartState.globalMouseUpHandler);
-    window.ganttChartState.globalMouseUpHandler = null;
+  if (window.ganttState && window.ganttState.globalMouseUpHandler) {
+    document.removeEventListener('mouseup', window.ganttState.globalMouseUpHandler);
+    window.ganttState.globalMouseUpHandler = null;
   }
   
   // ガントチャートコンテナをクリア
@@ -197,49 +200,51 @@ function cleanupGanttChart() {
   }
 }
 
-// Turboを使用している場合はturbo:loadとturbo:render両方をリスン、使用していない場合はDOMContentLoaded
-console.log('📝 [Gantt Chart] スクリプト読み込み完了、Turbo:', typeof Turbo !== 'undefined');
-if (typeof Turbo !== 'undefined') {
-  console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
-  
-  // ページ遷移前のクリーンアップ
-  document.addEventListener('turbo:before-visit', (event) => {
-    console.warn('⚠️ [Gantt Chart] turbo:before-visit 検出 - ページ遷移が発生します', event.detail.url);
-    cleanupGanttChart();
-  });
-  
-  // ページ遷移中
-  document.addEventListener('turbo:visit', (event) => {
-    console.warn('⚠️ [Gantt Chart] turbo:visit 検出 - ページ遷移中', event.detail.url);
-  });
-  
-  // レンダリング完了時（Turbo 7の新機能）
-  document.addEventListener('turbo:render', () => {
-    console.log('🔄 [Gantt Chart] turbo:render イベント検出');
-    if (typeof window.ClientLogger !== 'undefined') {
-      window.ClientLogger.warn('🔄 [Gantt Chart] turbo:render イベント検出');
-    }
-    // 少し遅延させてDOM要素が確実に存在することを保証
+// Turbo対応: ページ読み込み時とナビゲーション後に初期化
+(function() {
+  console.log('🔧 [Gantt Chart] スクリプト読み込み完了');
+
+  function triggerInit() {
+    console.log('🔄 [Gantt Chart] 初期化トリガー起動');
     setTimeout(initWhenReady, 50);
-  });
-  
-  // 初回読み込み時にも実行
+  }
+
+  // 初回読み込み時も実行
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(initWhenReady, 100);
+      console.log('🔄 [Gantt Chart] DOMContentLoaded イベント検出');
+      triggerInit();
     });
   } else {
-    setTimeout(initWhenReady, 100);
+    console.log('🔄 [Gantt Chart] 既にDOM読み込み済み、即座に初期化');
+    triggerInit();
   }
-} else {
-  document.addEventListener('DOMContentLoaded', initWhenReady);
-}
 
-// ページリロードを検出
-window.addEventListener('beforeunload', (event) => {
-  console.warn('⚠️ [Window] beforeunload 検出 - ページがアンロードされます');
-  console.trace('リロードのスタックトレース:');
-});
+  if (typeof Turbo !== 'undefined') {
+    console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
+    
+    // ページレンダリング後に初期化
+    document.addEventListener('turbo:render', () => {
+      console.log('🔄 [Gantt Chart] turbo:render イベント検出');
+      if (typeof window.ClientLogger !== 'undefined') {
+        window.ClientLogger.warn('🔄 [Gantt Chart] turbo:render イベント検出');
+      }
+      triggerInit();
+    });
+
+    // Frameレンダリング後も初期化
+    document.addEventListener('turbo:frame-render', () => {
+      console.log('🔄 [Gantt Chart] turbo:frame-render イベント検出');
+      triggerInit();
+    });
+    
+    // ページキャッシュ前にクリーンアップ
+    document.addEventListener('turbo:before-cache', () => {
+      console.log('🧹 [Gantt Chart] turbo:before-cache 検出 - クリーンアップを実行');
+      cleanupGanttChart();
+    });
+  }
+})();
 
 function initCustomGanttChart() {
   console.log('🚀 [Gantt] initCustomGanttChart 開始');
@@ -260,10 +265,10 @@ function initCustomGanttChart() {
   // データ属性からJSONを取得
   const cultivationsRaw = JSON.parse(ganttContainer.dataset.cultivations || '[]');
   const fieldsDataRaw = JSON.parse(ganttContainer.dataset.fields || '[]');
-  ganttState.planStartDate = new Date(ganttContainer.dataset.planStartDate);
-  ganttState.planEndDate = new Date(ganttContainer.dataset.planEndDate);
-  ganttState.cultivation_plan_id = ganttContainer.dataset.cultivationPlanId;
-  ganttState.plan_type = ganttContainer.dataset.planType || 'public';
+  window.ganttState.planStartDate = new Date(ganttContainer.dataset.planStartDate);
+  window.ganttState.planEndDate = new Date(ganttContainer.dataset.planEndDate);
+  window.ganttState.cultivation_plan_id = ganttContainer.dataset.cultivationPlanId;
+  window.ganttState.plan_type = ganttContainer.dataset.planType || 'public';
   
   console.log('📊 [Gantt] 生データ:', { 
     cultivations: cultivationsRaw, 
@@ -273,8 +278,8 @@ function initCustomGanttChart() {
   });
   
   // 移動履歴と削除IDをリセット
-  ganttState.moves = [];
-  ganttState.removedIds = [];
+  window.ganttState.moves = [];
+  window.ganttState.removedIds = [];
 
   // Action Cableサブスクリプションを設定
   setupCableSubscription(ganttContainer);
@@ -285,53 +290,53 @@ function initCustomGanttChart() {
   
   // 共通ユーティリティを使用してデータを正規化
   try {
-    ganttState.cultivationData = window.normalizeCultivationsData(cultivationsRaw);
+    window.ganttState.cultivationData = window.normalizeCultivationsData(cultivationsRaw);
     const normalizedFields = window.normalizeFieldsData(fieldsDataRaw);
     
     console.log('🔧 初期化時の圃場情報（正規化前）:', fieldsDataRaw);
     console.log('🔧 初期化時の圃場情報（正規化後）:', normalizedFields);
-    console.log('🔧 初期化時の栽培データ（正規化後）:', ganttState.cultivationData);
+    console.log('🔧 初期化時の栽培データ（正規化後）:', window.ganttState.cultivationData);
 
     // 圃場情報をganttStateに保存（空の圃場も含む）
-    ganttState.fields = normalizedFields;
+    window.ganttState.fields = normalizedFields;
 
     // 圃場ごとにグループ化（圃場情報も含める）
-    ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
+    window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, normalizedFields);
     
-    console.log('🔧 初期化時のグループ化結果:', ganttState.fieldGroups);
+    console.log('🔧 初期化時のグループ化結果:', window.ganttState.fieldGroups);
     
     // SVGガントチャートを描画
     console.log('🎨 [Gantt] チャート描画開始...');
-    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
     console.log('✅ [Gantt] チャート描画完了');
     
     // 初期化フラグをリセット
-    isInitializing = false;
+    window.ganttRetryCount = 0;
     console.log('✅ [Gantt Chart] 初期化完了、フラグをリセットしました');
   } catch (error) {
     console.error('❌ [Gantt] データ正規化エラー:', error);
     console.error('❌ [Gantt] スタックトレース:', error.stack);
     // エラー時も初期化フラグをリセット
-    isInitializing = false;
+    window.ganttRetryCount = 0;
     console.log('✅ [Gantt Chart] エラー後、フラグをリセットしました');
   }
 }
 
 // Action Cableサブスクリプションを設定
 function setupCableSubscription(ganttContainer) {
-  if (!ganttState.cultivation_plan_id) {
+  if (!window.ganttState.cultivation_plan_id) {
     console.warn('⚠️ cultivation_plan_idがないため、Action Cableサブスクリプションをスキップします');
     return;
   }
 
   // 既存のサブスクリプションがあれば解除
-  if (ganttState.cableSubscription) {
+  if (window.ganttState.cableSubscription) {
     console.log('🔌 既存のAction Cableサブスクリプションを解除します');
     const channelName = ganttContainer.dataset.optimizationChannel || 'OptimizationChannel';
     if (window.CableSubscriptionManager) {
-      window.CableSubscriptionManager.unsubscribe(ganttState.cultivation_plan_id, { channelName });
+      window.CableSubscriptionManager.unsubscribe(window.ganttState.cultivation_plan_id, { channelName });
     }
-    ganttState.cableSubscription = null;
+    window.ganttState.cableSubscription = null;
   }
 
   // CableSubscriptionManagerが読み込まれていることを確認
@@ -343,8 +348,8 @@ function setupCableSubscription(ganttContainer) {
   console.log('📡 Action Cableサブスクリプションを設定中...');
 
   const channelName = ganttContainer.dataset.optimizationChannel || 'OptimizationChannel';
-  ganttState.cableSubscription = window.CableSubscriptionManager.subscribeToOptimization(
-    ganttState.cultivation_plan_id,
+  window.ganttState.cableSubscription = window.CableSubscriptionManager.subscribeToOptimization(
+    window.ganttState.cultivation_plan_id,
     {
       onConnected: () => {
         console.log(`✅ 最適化チャンネルに接続しました (${channelName})`);
@@ -468,7 +473,7 @@ function fetchAndUpdateChart() {
       // ⭐ adjustの結果を反映: 開始日と終了日の両方が更新される
       // adjustにより、開始日も終了日も変わる可能性がある
       // （例: 休閑期間確保のため開始日がずれる、気象条件により栽培期間が変わる）
-      ganttState.cultivationData = payload.cultivations || [];
+      window.ganttState.cultivationData = payload.cultivations || [];
       
       // デバッグ: adjustの結果で更新された日付をログ出力
       if (payload.cultivations && payload.cultivations.length > 0) {
@@ -479,28 +484,28 @@ function fetchAndUpdateChart() {
       }
       
       // 移動履歴と削除IDをリセット
-      ganttState.moves = [];
-      ganttState.removedIds = [];
+      window.ganttState.moves = [];
+      window.ganttState.removedIds = [];
 
       // 栽培データのfield_idも正規化
       // 共通ユーティリティを使用してデータを正規化
-      ganttState.cultivationData = window.normalizeCultivationsData(ganttState.cultivationData);
+      window.ganttState.cultivationData = window.normalizeCultivationsData(window.ganttState.cultivationData);
       const normalizedFields = window.normalizeFieldsData(payload.fields || []);
       
       console.log('📊 正規化後の圃場情報:', normalizedFields);
 
       // 圃場情報をganttStateに保存（空の圃場も含む）
-      ganttState.fields = normalizedFields;
+      window.ganttState.fields = normalizedFields;
 
       // 圃場ごとにグループ化（圃場情報も含める）
-      ganttState.fieldGroups = groupByField(ganttState.cultivationData, normalizedFields);
+      window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, normalizedFields);
       
-      console.log('📊 グループ化結果:', ganttState.fieldGroups);
+      console.log('📊 グループ化結果:', window.ganttState.fieldGroups);
 
       // チャートを再描画（開始日と終了日の両方が正しく反映される）
       const ganttContainer = document.getElementById('gantt-chart-container');
       if (ganttContainer) {
-        renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+        renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
       }
 
       console.log('✅ チャートを更新しました（開始日・終了日の両方を反映）');
@@ -605,10 +610,10 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   }
   
   // グローバルステートに保存
-  ganttState.config = config;
-  ganttState.chartWidth = chartWidth;
-  ganttState.chartHeight = chartHeight;
-  ganttState.totalDays = totalDays;
+  window.ganttState.config = config;
+  window.ganttState.chartWidth = chartWidth;
+  window.ganttState.chartHeight = chartHeight;
+  window.ganttState.totalDays = totalDays;
 
   // SVG要素を作成
   const svg = createSVGElement('svg', {
@@ -743,11 +748,11 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   const dragThreshold = 5; // 5px以上移動したらドラッグとみなす
   
   // 古いイベントハンドラーを削除
-  if (ganttState.globalMouseMoveHandler) {
-    document.removeEventListener('mousemove', ganttState.globalMouseMoveHandler);
+  if (window.ganttState.globalMouseMoveHandler) {
+    document.removeEventListener('mousemove', window.ganttState.globalMouseMoveHandler);
   }
-  if (ganttState.globalMouseUpHandler) {
-    document.removeEventListener('mouseup', ganttState.globalMouseUpHandler);
+  if (window.ganttState.globalMouseUpHandler) {
+    document.removeEventListener('mouseup', window.ganttState.globalMouseUpHandler);
   }
   
   // SVGのドラッグ&ドロップイベントは crop_palette_drag.js で処理されるため、
@@ -795,27 +800,27 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   }
   
   // マウス移動（ドラッグ中）
-  ganttState.globalMouseMoveHandler = function(e) {
-    if (!ganttState.draggedBar) return;
+  window.ganttState.globalMouseMoveHandler = function(e) {
+    if (!window.ganttState.draggedBar) return;
     
-    const mouseDeltaX = e.clientX - ganttState.dragStartX;
-    const mouseDeltaY = e.clientY - ganttState.dragStartY;
+    const mouseDeltaX = e.clientX - window.ganttState.dragStartX;
+    const mouseDeltaY = e.clientY - window.ganttState.dragStartY;
     
     // ドラッグ開始判定（まだ開始していない場合）
-    if (!ganttState.isDragging) {
+    if (!window.ganttState.isDragging) {
       const distance = Math.sqrt(mouseDeltaX * mouseDeltaX + mouseDeltaY * mouseDeltaY);
       if (distance > dragThreshold) {
         // ドラッグ開始
-        ganttState.isDragging = true;
+        window.ganttState.isDragging = true;
         
         // トランジションを無効化（追随性を重視）
-        ganttState.draggedBar.classList.add('dragging');
+        window.ganttState.draggedBar.classList.add('dragging');
         
         // 要素の参照をキャッシュ（1回だけ）
-        cachedBarBg = ganttState.draggedBar.querySelector('.bar-bg');
-        cachedLabel = ganttState.draggedBar.querySelector('.bar-label');
-        cachedDeleteBtn = ganttState.draggedBar.querySelector('.delete-btn circle');
-        cachedDeleteBtnText = ganttState.draggedBar.querySelector('.delete-btn text');
+        cachedBarBg = window.ganttState.draggedBar.querySelector('.bar-bg');
+        cachedLabel = window.ganttState.draggedBar.querySelector('.bar-label');
+        cachedDeleteBtn = window.ganttState.draggedBar.querySelector('.delete-btn circle');
+        cachedDeleteBtnText = window.ganttState.draggedBar.querySelector('.delete-btn text');
         
         if (cachedBarBg) {
           cachedBarBg.style.cursor = 'grabbing';
@@ -828,9 +833,9 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
           barHeight = parseFloat(cachedBarBg.getAttribute('height'));
           
           // マウスダウン位置をSVG座標に変換
-          const startSvgCoords = screenToSVGCoords(svgElement, ganttState.dragStartX, ganttState.dragStartY);
+          const startSvgCoords = screenToSVGCoords(svgElement, window.ganttState.dragStartX, window.ganttState.dragStartY);
           // 要素の左上とマウス位置のオフセットを記録（SVG座標系で）
-          initialMouseSvgOffset.x = startSvgCoords.x - ganttState.originalBarX;
+          initialMouseSvgOffset.x = startSvgCoords.x - window.ganttState.originalBarX;
           initialMouseSvgOffset.y = startSvgCoords.y - parseFloat(cachedBarBg.getAttribute('y'));
         }
       } else {
@@ -852,8 +857,8 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     const deltaY = newY - originalBarY;
     const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
     const targetFieldIndex = Math.max(0, Math.min(
-      ganttState.originalFieldIndex + fieldIndexChange,
-      ganttState.fieldGroups.length - 1
+      window.ganttState.originalFieldIndex + fieldIndexChange,
+      window.ganttState.fieldGroups.length - 1
     ));
     
     // ハイライトの更新（圃場が変わった場合のみ）
@@ -862,7 +867,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       const highlightY = HEADER_HEIGHT + (targetFieldIndex * ROW_HEIGHT);
       
       // 圃場が変わる場合のみハイライト表示
-      if (targetFieldIndex !== ganttState.originalFieldIndex) {
+      if (targetFieldIndex !== window.ganttState.originalFieldIndex) {
         // 位置とサイズを更新（再利用）
         highlightRect.setAttribute('y', highlightY);
         highlightRect.setAttribute('height', ROW_HEIGHT);
@@ -898,14 +903,14 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   };
   
   // マウスアップ（ドラッグ終了）
-  ganttState.globalMouseUpHandler = function(e) {
-    if (!ganttState.draggedBar) return;
+  window.ganttState.globalMouseUpHandler = function(e) {
+    if (!window.ganttState.draggedBar) return;
     
     // ハイライトを非表示（削除せずに再利用のため残す）
     highlightRect.setAttribute('opacity', '0');
     
-    const cultivation_id = ganttState.draggedBar.getAttribute('data-id');
-    const originalFieldName = ganttState.draggedBar.getAttribute('data-field');
+    const cultivation_id = window.ganttState.draggedBar.getAttribute('data-id');
+    const originalFieldName = window.ganttState.draggedBar.getAttribute('data-field');
     
     // 現在の位置から新しい日付を計算（SVG属性は既に更新済み）
     const ROW_HEIGHT = 70;
@@ -922,37 +927,37 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       // 日付計算
       const svg = document.querySelector('svg.custom-gantt-chart');
       const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - 40 : 1080;
-      const totalDays = daysBetween(ganttState.planStartDate, ganttState.planEndDate);
+      const totalDays = daysBetween(window.ganttState.planStartDate, window.ganttState.planEndDate);
       daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
-      newStartDate = new Date(ganttState.planStartDate);
+      newStartDate = new Date(window.ganttState.planStartDate);
       newStartDate.setDate(newStartDate.getDate() + daysFromStart);
       
       // 圃場計算
       const deltaY = currentY - originalBarY;
       const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
       newFieldIndex = Math.max(0, Math.min(
-        ganttState.originalFieldIndex + fieldIndexChange,
-        ganttState.fieldGroups.length - 1
+        window.ganttState.originalFieldIndex + fieldIndexChange,
+        window.ganttState.fieldGroups.length - 1
       ));
       
       // 配列の範囲チェック
-      if (newFieldIndex >= 0 && newFieldIndex < ganttState.fieldGroups.length) {
-        newFieldName = ganttState.fieldGroups[newFieldIndex].fieldName;
+      if (newFieldIndex >= 0 && newFieldIndex < window.ganttState.fieldGroups.length) {
+        newFieldName = window.ganttState.fieldGroups[newFieldIndex].fieldName;
       } else {
         newFieldName = originalFieldName; // フォールバック
-        newFieldIndex = ganttState.originalFieldIndex;
+        newFieldIndex = window.ganttState.originalFieldIndex;
       }
     } else {
       // フォールバック（通常は実行されない）
-      newX = ganttState.originalBarX;
-      newFieldIndex = ganttState.originalFieldIndex;
+      newX = window.ganttState.originalBarX;
+      newFieldIndex = window.ganttState.originalFieldIndex;
       newFieldName = originalFieldName;
-      newStartDate = ganttState.planStartDate;
+      newStartDate = window.ganttState.planStartDate;
     }
     
     // ⭐ 重要: 実際にドラッグが行われた場合のみ処理
     // クリック操作（isDragging = false）では最適化を実行しない
-    if (ganttState.isDragging) {
+    if (window.ganttState.isDragging) {
       // さらに、有意な移動があった場合のみ最適化を実行
       // - 圃場が変わった、または
       // - 2日以上の日付移動があった
@@ -978,9 +983,9 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     }
     
     // ドラッグ終了時のビジュアルリセット
-    if (ganttState.draggedBar) {
+    if (window.ganttState.draggedBar) {
       // トランジションを再有効化（draggingクラスを削除）
-      ganttState.draggedBar.classList.remove('dragging');
+      window.ganttState.draggedBar.classList.remove('dragging');
       
       // カーソルと視覚効果をリセット
       if (cachedBarBg) {
@@ -998,22 +1003,22 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     cachedDeleteBtnText = null;
     lastTargetFieldIndex = -1;
     
-    ganttState.draggedBar = null;
-    ganttState.isDragging = false;  // グローバルなドラッグフラグもリセット
+    window.ganttState.draggedBar = null;
+    window.ganttState.isDragging = false;  // グローバルなドラッグフラグもリセット
   };
   
   // イベントリスナーを登録
-  document.addEventListener('mousemove', ganttState.globalMouseMoveHandler);
-  document.addEventListener('mouseup', ganttState.globalMouseUpHandler);
+  document.addEventListener('mousemove', window.ganttState.globalMouseMoveHandler);
+  document.addEventListener('mouseup', window.ganttState.globalMouseUpHandler);
 }
 
 // 移動を記録
 function recordMove(allocation_id, to_field_name, to_start_date) {
   // 既存の移動を削除（同じIDの場合）
-  ganttState.moves = ganttState.moves.filter(m => m.allocation_id !== allocation_id);
+  window.ganttState.moves = window.ganttState.moves.filter(m => m.allocation_id !== allocation_id);
   
   // 圃場IDを抽出（正しい圃場IDを取得）
-  const fieldGroup = ganttState.fieldGroups.find(g => g.fieldName === to_field_name);
+  const fieldGroup = window.ganttState.fieldGroups.find(g => g.fieldName === to_field_name);
   
   // 圃場IDを正しく取得
   let field_id;
@@ -1025,7 +1030,7 @@ function recordMove(allocation_id, to_field_name, to_start_date) {
     console.error('❌ 圃場IDが取得できませんでした');
     console.error('🔍 fieldGroup:', fieldGroup);
     console.error('🔍 to_field_name:', to_field_name);
-    console.error('🔍 全圃場グループ:', ganttState.fieldGroups);
+    console.error('🔍 全圃場グループ:', window.ganttState.fieldGroups);
     alert(getI18nMessage('jsGanttFieldInfoError', 'Error: Could not retrieve field information.\nPlease check console logs.'));
     return;
   }
@@ -1033,7 +1038,7 @@ function recordMove(allocation_id, to_field_name, to_start_date) {
   // field_idを"field_123"形式に統一してからmovesに追加
   const normalizedFieldId = window.normalizeFieldId(field_id);
   
-  ganttState.moves.push({
+  window.ganttState.moves.push({
     allocation_id: allocation_id,
     action: 'move',
     to_field_id: normalizedFieldId,
@@ -1049,23 +1054,23 @@ function removeCultivation(cultivation_id) {
   console.log('🗑️ 削除:', cultivation_id);
   
   // 削除IDを記録
-  ganttState.removedIds.push(cultivation_id);
+  window.ganttState.removedIds.push(cultivation_id);
   
   // 移動履歴に削除を追加
-  ganttState.moves.push({
+  window.ganttState.moves.push({
     allocation_id: cultivation_id,
     action: 'remove'
   });
   
   // ローカルで削除を適用
-  ganttState.cultivationData = ganttState.cultivationData.filter(c => c.id != cultivation_id);
+  window.ganttState.cultivationData = window.ganttState.cultivationData.filter(c => c.id != cultivation_id);
   // 空の圃場も含めて再グループ化
-  ganttState.fieldGroups = groupByField(ganttState.cultivationData, ganttState.fields);
+  window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, window.ganttState.fields);
   
   // チャートを再描画
   const ganttContainer = document.getElementById('gantt-chart-container');
   if (ganttContainer) {
-    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
   }
   
   // 自動で再最適化を実行
@@ -1077,9 +1082,9 @@ function removeCultivation(cultivation_id) {
 // adjustの結果が返ってくると、開始日・終了日の両方が変わる可能性があります
 function applyMovesLocally() {
   // 移動を適用
-  ganttState.moves.filter(m => m.action === 'move').forEach(move => {
+  window.ganttState.moves.filter(m => m.action === 'move').forEach(move => {
     const cultivation_id = parseInt(move.allocation_id);
-    const cultivation = ganttState.cultivationData.find(c => c.id === cultivation_id);
+    const cultivation = window.ganttState.cultivationData.find(c => c.id === cultivation_id);
     
     if (cultivation) {
       const oldStartDate = new Date(cultivation.start_date);
@@ -1100,24 +1105,24 @@ function applyMovesLocally() {
       
       // 圃場名を更新（to_field_idから実際の圃場グループを検索）
       const normalizedToFieldId = window.normalizeFieldId(move.to_field_id);
-      const targetFieldGroup = ganttState.fieldGroups.find(g => g.fieldId === normalizedToFieldId);
+      const targetFieldGroup = window.ganttState.fieldGroups.find(g => g.fieldId === normalizedToFieldId);
       if (targetFieldGroup) {
         cultivation.field_name = targetFieldGroup.fieldName;
         cultivation.field_id = targetFieldGroup.fieldId;
       } else {
         console.error('⚠️ 移動先の圃場が見つかりません:', normalizedToFieldId);
-        console.error('🔍 利用可能な圃場:', ganttState.fieldGroups.map(g => g.fieldId));
+        console.error('🔍 利用可能な圃場:', window.ganttState.fieldGroups.map(g => g.fieldId));
       }
     }
   });
   
   // 削除を適用
-  ganttState.cultivationData = ganttState.cultivationData.filter(c => 
-    !ganttState.removedIds.includes(c.id)
+  window.ganttState.cultivationData = window.ganttState.cultivationData.filter(c => 
+    !window.ganttState.removedIds.includes(c.id)
   );
   
   // 圃場情報を抽出（現在のfieldGroupsから）
-  const fieldsData = ganttState.fieldGroups.map(g => {
+  const fieldsData = window.ganttState.fieldGroups.map(g => {
     // field_idを"field_123"形式に統一
     const normalizedFieldId = window.normalizeFieldId(g.fieldId);
     
@@ -1130,12 +1135,12 @@ function applyMovesLocally() {
   });
   
   // 再グループ化
-  ganttState.fieldGroups = groupByField(ganttState.cultivationData, fieldsData);
+  window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, fieldsData);
   
   // 再描画
   const ganttContainer = document.getElementById('gantt-chart-container');
   if (ganttContainer) {
-    renderGanttChart(ganttContainer, ganttState.fieldGroups, ganttState.planStartDate, ganttState.planEndDate);
+    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
   }
 }
 
@@ -1173,8 +1178,8 @@ function executeReoptimization() {
   }
   
   console.log('📋 送信データ:', {
-    cultivation_plan_id: ganttState.cultivation_plan_id,
-    moves: ganttState.moves
+    cultivation_plan_id: window.ganttState.cultivation_plan_id,
+    moves: window.ganttState.moves
   });
   
   const fetchStart = performance.now();
@@ -1187,7 +1192,7 @@ function executeReoptimization() {
       'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
     },
     body: JSON.stringify({
-      moves: ganttState.moves
+      moves: window.ganttState.moves
     })
   })
   .then(response => {
@@ -1317,8 +1322,8 @@ function hideLoadingOverlay() {
 // 変更を元に戻す（データ再取得）
 function revertChanges() {
   // 移動履歴と削除IDをクリア
-  ganttState.moves = [];
-  ganttState.removedIds = [];
+  window.ganttState.moves = [];
+  window.ganttState.removedIds = [];
   
   // データを再取得して元の状態に戻す
   fetchAndUpdateChart();
@@ -1410,7 +1415,7 @@ function renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, 
   }, group.fieldName));
   
   // 圃場削除ボタン（作物がない場合のみ表示）
-  if (group.cultivations.length === 0 && ganttState.fieldGroups.length > 1) {
+  if (group.cultivations.length === 0 && window.ganttState.fieldGroups.length > 1) {
     const deleteFieldBtn = createSVGElement('g', {
       class: 'delete-field-btn',
       style: 'cursor: pointer;'
@@ -1572,7 +1577,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   });
   
   barBg.addEventListener('mouseleave', function() {
-    if (ganttState.draggedBar !== barGroup) {
+    if (window.ganttState.draggedBar !== barGroup) {
       this.setAttribute('opacity', '0.95');
       this.setAttribute('stroke-width', '2.5');
     }
@@ -1581,7 +1586,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   barGroup.appendChild(barBg);
 
   // ドラッグとクリックを区別するための変数
-  // ローカルのisDraggingは削除し、ganttState.isDraggingを使用
+  // ローカルのisDraggingは削除し、window.ganttState.isDraggingを使用
   let dragThreshold = 5; // 5px以上移動したらドラッグとみなす
   let mouseDownTime = 0;
   let clickTimeout = null;
@@ -1598,12 +1603,12 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     }
     
     // ドラッグの準備（まだドラッグは開始していない）
-    ganttState.isDragging = false;
-    ganttState.draggedBar = barGroup; // グローバルハンドラーが動作するように設定
+    window.ganttState.isDragging = false;
+    window.ganttState.draggedBar = barGroup; // グローバルハンドラーが動作するように設定
     mouseDownTime = Date.now();
-    ganttState.dragStartX = e.clientX;
-    ganttState.dragStartY = e.clientY;
-    ganttState.originalBarX = parseFloat(barBg.getAttribute('x'));
+    window.ganttState.dragStartX = e.clientX;
+    window.ganttState.dragStartY = e.clientY;
+    window.ganttState.originalBarX = parseFloat(barBg.getAttribute('x'));
     
     // 元のY座標を保存（data-original-y属性として）
     const originalBarY = parseFloat(barBg.getAttribute('y'));
@@ -1611,7 +1616,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     
     // 現在のフィールドインデックスを保存
     const currentFieldName = cultivation.field_name;
-    ganttState.originalFieldIndex = ganttState.fieldGroups.findIndex(g => g.fieldName === currentFieldName);
+    window.ganttState.originalFieldIndex = window.ganttState.fieldGroups.findIndex(g => g.fieldName === currentFieldName);
     
     // デフォルトのドラッグ動作を防止
     e.preventDefault();
@@ -1628,7 +1633,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     const clickDuration = Date.now() - mouseDownTime;
     
     // ドラッグされていない、かつ短時間のマウスダウン＝クリック
-    if (!ganttState.isDragging && clickDuration < 300) {
+    if (!window.ganttState.isDragging && clickDuration < 300) {
       // 再最適化中は操作を受け付けない
       if (reoptimizationInProgress) {
         console.log('⚠️ 再最適化中のため操作をブロックしました');
@@ -1920,7 +1925,7 @@ function showClimateChart(cultivationId) {
 // 圃場を追加
 function addField() {
   console.log('➕ 圃場を追加');
-  console.log('📊 現在の圃場数:', ganttState.fieldGroups.length);
+  console.log('📊 現在の圃場数:', window.ganttState.fieldGroups.length);
   
   // 再最適化中は操作を受け付けない
   if (reoptimizationInProgress) {
@@ -1929,7 +1934,7 @@ function addField() {
   }
   
   // ダイアログを表示して圃場名と面積を入力
-  const defaultFieldName = `${ganttState.fieldGroups.length + 1}`;
+  const defaultFieldName = `${window.ganttState.fieldGroups.length + 1}`;
   console.log('📝 デフォルト圃場名:', defaultFieldName);
   
   const fieldName = prompt('圃場名を入力してください（例: 4）', defaultFieldName);
@@ -2007,9 +2012,9 @@ function addField() {
 
 function getFieldCultivationIds(field_id) {
   console.log('🔍 [getFieldCultivationIds] field_id:', field_id);
-  console.log('🔍 [getFieldCultivationIds] ganttState.fieldGroups:', ganttState.fieldGroups);
+  console.log('🔍 [getFieldCultivationIds] window.ganttState.fieldGroups:', window.ganttState.fieldGroups);
   
-  const fieldGroup = ganttState.fieldGroups.find(g => g.fieldId === field_id);
+  const fieldGroup = window.ganttState.fieldGroups.find(g => g.fieldId === field_id);
   console.log('🔍 [getFieldCultivationIds] found fieldGroup:', fieldGroup);
   
   if (!fieldGroup || !fieldGroup.cultivations) {
@@ -2090,17 +2095,17 @@ function removeField(field_id) {
 // デバッグ用ヘルパー関数
 function debugFieldIds() {
   console.log('=== 圃場ID形式チェック ===');
-  console.log('圃場グループ:', ganttState.fieldGroups);
+  console.log('圃場グループ:', window.ganttState.fieldGroups);
   console.log('');
   console.log('圃場ID一覧:');
-  ganttState.fieldGroups.forEach((group, index) => {
+  window.ganttState.fieldGroups.forEach((group, index) => {
     const isValid = typeof group.fieldId === 'string' && group.fieldId.startsWith('field_');
     const status = isValid ? '✅' : '❌';
     console.log(`  ${status} [${index}] ${group.fieldName}: ${group.fieldId} (type: ${typeof group.fieldId})`);
   });
   console.log('');
   
-  const allValid = ganttState.fieldGroups.every(g => 
+  const allValid = window.ganttState.fieldGroups.every(g => 
     typeof g.fieldId === 'string' && g.fieldId.startsWith('field_')
   );
   
@@ -2111,21 +2116,21 @@ function debugFieldIds() {
   }
   
   return {
-    total: ganttState.fieldGroups.length,
-    valid: ganttState.fieldGroups.filter(g => 
+    total: window.ganttState.fieldGroups.length,
+    valid: window.ganttState.fieldGroups.filter(g => 
       typeof g.fieldId === 'string' && g.fieldId.startsWith('field_')
     ).length,
-    fieldIds: ganttState.fieldGroups.map(g => g.fieldId)
+    fieldIds: window.ganttState.fieldGroups.map(g => g.fieldId)
   };
 }
 
 function debugState() {
   console.log('=== ガントチャート状態 ===');
-  console.log('圃場数:', ganttState.fieldGroups.length);
-  console.log('栽培数:', ganttState.cultivationData.length);
-  console.log('計画ID:', ganttState.cultivation_plan_id);
-  console.log('移動履歴:', ganttState.moves);
-  console.log('削除ID:', ganttState.removedIds);
+  console.log('圃場数:', window.ganttState.fieldGroups.length);
+  console.log('栽培数:', window.ganttState.cultivationData.length);
+  console.log('計画ID:', window.ganttState.cultivation_plan_id);
+  console.log('移動履歴:', window.ganttState.moves);
+  console.log('削除ID:', window.ganttState.removedIds);
   console.log('');
   debugFieldIds();
 }
