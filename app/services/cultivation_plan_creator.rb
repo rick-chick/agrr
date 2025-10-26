@@ -24,6 +24,8 @@ class CultivationPlanCreator
   end
   
   def call
+    Rails.logger.info "🚀 [CultivationPlanCreator] Starting plan creation with farm: #{@farm.name} (#{@farm.id}), crops: #{@crops.count}, total_area: #{@total_area}"
+    
     ActiveRecord::Base.transaction do
       create_cultivation_plan_and_relations
       Result.new(cultivation_plan: @cultivation_plan, errors: [])
@@ -36,6 +38,8 @@ class CultivationPlanCreator
 
   
   def create_cultivation_plan_and_relations
+    Rails.logger.info "🔧 [CultivationPlanCreator] Creating cultivation plan and relations..."
+    
     # CultivationPlanを作成
     create_cultivation_plan
     
@@ -59,6 +63,8 @@ class CultivationPlanCreator
   end
   
   def create_cultivation_plan
+    Rails.logger.info "🏗️ [CultivationPlanCreator] Creating CultivationPlan..."
+    
     # 基本属性
     plan_attrs = {
       farm: @farm,
@@ -79,6 +85,8 @@ class CultivationPlanCreator
       plan_attrs[:planning_start_date] = planning_dates[:start_date]
       plan_attrs[:planning_end_date] = planning_dates[:end_date]
     end
+    
+    Rails.logger.info "📋 [CultivationPlanCreator] Plan attributes: #{plan_attrs.inspect}"
     
     @cultivation_plan = CultivationPlan.create!(plan_attrs)
     
@@ -104,7 +112,9 @@ class CultivationPlanCreator
   end
 
   def create_cultivation_plan_fields
-    Rails.logger.debug "🔍 [CultivationPlanCreator] Creating CultivationPlanFields for #{fields_allocation.count} allocations"
+    Rails.logger.info "🌾 [CultivationPlanCreator] Creating CultivationPlanFields for #{fields_allocation.count} allocations"
+    Rails.logger.info "📊 [CultivationPlanCreator] Fields allocation: #{fields_allocation.inspect}"
+    
     fields_allocation.each_with_index do |allocation, index|
       field = CultivationPlanField.create!(
         cultivation_plan: @cultivation_plan,
