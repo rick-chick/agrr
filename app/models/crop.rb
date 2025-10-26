@@ -42,6 +42,9 @@ class Crop < ApplicationRecord
   validates :is_reference, inclusion: { in: [true, false] }
   validates :area_per_unit, numericality: { greater_than: 0, allow_nil: true }
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
+  
+  # ユーザー作物の件数制限（20件まで）
+  validates :user, user_resource_limit: { model_name: Crop, max_count: 20 }, if: -> { user.present? }
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
