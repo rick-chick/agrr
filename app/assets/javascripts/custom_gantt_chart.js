@@ -392,7 +392,7 @@ function handleOptimizationUpdate(data) {
     
     // ローディングオーバーレイを非表示
     hideLoadingOverlay();
-    reoptimizationInProgress = false;
+    window.reoptimizationInProgress = false;
 
     // 最適化ページかどうかを判定
     const isOptimizingPage = document.querySelector('[data-optimizing-container]');
@@ -414,7 +414,7 @@ function handleOptimizationUpdate(data) {
     
     // ローディングオーバーレイを非表示
     hideLoadingOverlay();
-    reoptimizationInProgress = false;
+    window.reoptimizationInProgress = false;
 
     // エラーメッセージを表示
     alert(data.message || getI18nMessage('jsGanttOptimizationFailed', 'Optimization failed'));
@@ -523,14 +523,14 @@ function fetchAndUpdateChart() {
       console.error('❌ データ取得に失敗しました');
       alert(getI18nMessage('jsGanttUpdateFailed', 'Failed to update data. Please reload the page manually.'));
       hideLoadingOverlay();
-      reoptimizationInProgress = false;
+      window.reoptimizationInProgress = false;
     }
   })
   .catch(error => {
     console.error('❌ データ取得エラー:', error);
     alert(getI18nMessage('jsGanttFetchError', 'Error occurred while fetching data. Please reload the page manually.'));
     hideLoadingOverlay();
-    reoptimizationInProgress = false;
+    window.reoptimizationInProgress = false;
   });
 }
 
@@ -1147,7 +1147,7 @@ function applyMovesLocally() {
 // 手動の再最適化ボタンは不要（自動実行のため）
 
 // 再最適化を実行（自動実行）
-let reoptimizationInProgress = false;
+if (typeof window.window.reoptimizationInProgress === "undefined") { window.window.reoptimizationInProgress = false; }
 let reoptimizationCallCount = 0;
 
 function executeReoptimization() {
@@ -1157,12 +1157,12 @@ function executeReoptimization() {
   console.log(`⏱️ [PERF] executeReoptimization() 開始時刻: ${perfStart.toFixed(2)}ms`);
   
   // 既に実行中の場合はスキップ
-  if (reoptimizationInProgress) {
+  if (window.reoptimizationInProgress) {
     console.warn('⚠️ 再最適化が既に実行中です。スキップします。');
     return;
   }
   
-  reoptimizationInProgress = true;
+  window.reoptimizationInProgress = true;
   
   // 視覚的フィードバック: ローディングオーバーレイを表示
   showLoadingOverlay();
@@ -1233,7 +1233,7 @@ function executeReoptimization() {
       // 変更を元に戻す
       console.log('🔙 変更を元に戻します...');
       hideLoadingOverlay();
-      reoptimizationInProgress = false;
+      window.reoptimizationInProgress = false;
       revertChanges();
     }
   })
@@ -1245,7 +1245,7 @@ function executeReoptimization() {
     // 変更を元に戻す
     console.log('🔙 変更を元に戻します...');
     hideLoadingOverlay();
-    reoptimizationInProgress = false;
+    window.reoptimizationInProgress = false;
     revertChanges();
   });
 }
@@ -1597,7 +1597,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     if (e.button !== 0) return;
     
     // 再最適化中は操作を受け付けない
-    if (reoptimizationInProgress) {
+    if (window.reoptimizationInProgress) {
       console.log('⚠️ 再最適化中のため操作をブロックしました');
       return;
     }
@@ -1635,7 +1635,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     // ドラッグされていない、かつ短時間のマウスダウン＝クリック
     if (!window.ganttState.isDragging && clickDuration < 300) {
       // 再最適化中は操作を受け付けない
-      if (reoptimizationInProgress) {
+      if (window.reoptimizationInProgress) {
         console.log('⚠️ 再最適化中のため操作をブロックしました');
         mouseDownTime = 0;
         return;
@@ -1655,7 +1655,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     e.stopPropagation();
     
     // 再最適化中は操作を受け付けない
-    if (reoptimizationInProgress) {
+    if (window.reoptimizationInProgress) {
       console.log('⚠️ 再最適化中のため操作をブロックしました');
       return;
     }
@@ -1714,7 +1714,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     e.stopPropagation();
     
     // 再最適化中は操作を受け付けない
-    if (reoptimizationInProgress) {
+    if (window.reoptimizationInProgress) {
       console.log('⚠️ 再最適化中のため操作をブロックしました');
       return;
     }
@@ -1928,7 +1928,7 @@ function addField() {
   console.log('📊 現在の圃場数:', window.ganttState.fieldGroups.length);
   
   // 再最適化中は操作を受け付けない
-  if (reoptimizationInProgress) {
+  if (window.reoptimizationInProgress) {
     console.log('⚠️ 再最適化中のため操作をブロックしました');
     return;
   }
@@ -2036,7 +2036,7 @@ function removeField(field_id) {
   console.log('🗑️ 圃場を削除:', normalizedFieldId);
   
   // 再最適化中は操作を受け付けない
-  if (reoptimizationInProgress) {
+  if (window.reoptimizationInProgress) {
     console.log('⚠️ 再最適化中のため操作をブロックしました');
     return;
   }
