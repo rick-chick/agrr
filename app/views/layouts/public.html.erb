@@ -20,6 +20,7 @@
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
   <!-- Components -->
   <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
@@ -46,6 +47,15 @@
 </head>
 <body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
   <%= render "shared/navbar" %>
+
+  <!-- Flash Messages -->
+  <% if flash[:notice] %>
+    <div class="alert alert-success" style="max-width: 1280px; margin: 20px auto; padding: 16px;"><%= flash[:notice] %></div>
+  <% end %>
+  
+  <% if flash[:alert] %>
+    <div class="alert alert-danger" style="max-width: 1280px; margin: 20px auto; padding: 16px;"><%= flash[:alert] %></div>
+  <% end %>
 
   <%= yield %>
   

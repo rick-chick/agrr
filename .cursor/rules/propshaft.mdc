@@ -14,9 +14,38 @@
 2. バンドル必要？ → YES: `app/javascript/`
 3. → NO: `app/assets/javascripts/`（Propshaft）
 
-## Rails 8
-- モデルに情報が少ない
-- 常にwebで最新仕様を検索すること
+## Dockerでのアセット配信手順
+
+### 基本原則
+- **開発環境**: Propshaftが自動的にアセットを配信（プリコンパイル不要）
+- **本番環境**: `bin/rails assets:precompile` でプリコンパイル
+
+### アセットクリア（トラブルシューティング）
+```bash
+# 1. コンテナ再起動
+docker compose restart web
+
+# 2. アセットファイルを削除（Device busy エラーが出る場合は再起動後）
+docker compose exec web find /app/public/assets -type f -delete
+
+# 3. 必要に応じてキャッシュクリア
+docker compose exec web rm -rf /app/tmp/cache/assets
+```
+
+### アセット再ビルド（開発環境）
+```bash
+# JavaScript (esbuild) は自動的にビルドされる
+# CSS は Propshaft が直接配信（プリコンパイル不要）
+
+# 念のため再起動
+docker compose restart web
+```
+
+### 注意事項
+- 開発環境では `assets:precompile` は不要
+- 本番環境のみ `RAILS_ENV=production bin/rails assets:precompile` を実行
+- `EBUSY: Device or resource busy` エラーは再起動で解決
+
 ## Rails 8の特徴
 - モデルに情報が少ない
 - 常にwebで最新仕様を検索すること

@@ -61,10 +61,10 @@ Rails.application.configure do
   
   # Propshaft configuration for development
   # Propshaft handles assets automatically in development, no compilation needed
-  config.assets.prefix = '/assets'
-  config.assets.compile = true
-  config.assets.digest = false
-  config.assets.debug = true
+  # config.assets.prefix = '/assets'
+  # config.assets.compile = true  # Not needed for Propshaft
+  # config.assets.digest = false  # Propshaft handles this automatically
+  # config.assets.debug = true
   
   # Enable static file serving in development
   config.public_file_server.enabled = true
