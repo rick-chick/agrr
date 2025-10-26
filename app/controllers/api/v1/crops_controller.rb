@@ -21,6 +21,12 @@ module Api
         end
 
         begin
+          # 事前バリデーション: ユーザーの作物数をチェック
+          user_crop_count = current_user.crops.where(is_reference: false).count
+          if user_crop_count >= 20
+            return render json: { error: '作成できるCropは20件までです' }, status: :unprocessable_entity
+          end
+          
           # 1. agrrコマンドで作物情報を取得（常に実行して最新情報を取得）
           Rails.logger.info "🤖 [AI Crop] Querying crop info for: #{crop_name}"
           crop_info = fetch_crop_info_from_agrr(crop_name)
