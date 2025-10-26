@@ -8,7 +8,7 @@ class Field < ApplicationRecord
 
   # == Validations =========================================================
   validates :name, presence: true, length: { maximum: 100 }
-  validates :name, uniqueness: { scope: :farm_id, case_sensitive: false }
+  validates :name, uniqueness: { scope: [:user_id, :farm_id], case_sensitive: false }
   validates :area, numericality: { greater_than: 0 }, allow_nil: true
   validates :daily_fixed_cost, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
