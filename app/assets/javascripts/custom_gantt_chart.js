@@ -1147,13 +1147,13 @@ function applyMovesLocally() {
 // 手動の再最適化ボタンは不要（自動実行のため）
 
 // 再最適化を実行（自動実行）
-if (typeof window.window.reoptimizationInProgress === "undefined") { window.window.reoptimizationInProgress = false; }
-let reoptimizationCallCount = 0;
+if (typeof window.reoptimizationInProgress === "undefined") { window.reoptimizationInProgress = false; }
+if (typeof window.window.reoptimizationCallCount === "undefined") { window.window.reoptimizationCallCount = 0; }
 
 function executeReoptimization() {
-  reoptimizationCallCount++;
+  window.reoptimizationCallCount++;
   const perfStart = performance.now();
-  console.log(`🔄 自動再最適化を開始... (呼び出し回数: ${reoptimizationCallCount})`);
+  console.log(`🔄 自動再最適化を開始... (呼び出し回数: ${window.reoptimizationCallCount})`);
   console.log(`⏱️ [PERF] executeReoptimization() 開始時刻: ${perfStart.toFixed(2)}ms`);
   
   // 既に実行中の場合はスキップ
