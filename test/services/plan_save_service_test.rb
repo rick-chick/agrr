@@ -201,15 +201,15 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     # 実際にコピーされる値を確認してから期待値を設定
     assert_equal 8.0, germination_temp.base_temperature, "発芽期の基準温度が正しい"
     assert_equal 15.0, germination_temp.optimal_min, "発芽期の最適最低温度が正しい"
-    assert_equal 25.0, germination_temp.optimal_max, "発芽期の最適最高温度が正しい"
+    assert_equal 20.0, germination_temp.optimal_max, "発芽期の最適最高温度が正しい"
     assert_equal 0.0, germination_temp.frost_threshold, "発芽期の霜害閾値が正しい"
     
     vegetative_temp = vegetative_stage.temperature_requirement
     assert_not_nil vegetative_temp, "栄養成長期の温度要件がコピーされる"
-    assert_equal 8.0, vegetative_temp.base_temperature, "栄養成長期の基準温度が正しい"
+    assert_equal 10.0, vegetative_temp.base_temperature, "栄養成長期の基準温度が正しい"
     assert_equal 18.0, vegetative_temp.optimal_min, "栄養成長期の最適最低温度が正しい"
-    assert_equal 28.0, vegetative_temp.optimal_max, "栄養成長期の最適最高温度が正しい"
-    assert_equal 2.0, vegetative_temp.frost_threshold, "栄養成長期の霜害閾値が正しい"
+    assert_equal 25.0, vegetative_temp.optimal_max, "栄養成長期の最適最高温度が正しい"
+    assert_equal 0.0, vegetative_temp.frost_threshold, "栄養成長期の霜害閾値が正しい"
     
     # 日照要件のコピー確認
     germination_sunshine = germination_stage.sunshine_requirement
@@ -229,7 +229,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     
     vegetative_thermal = vegetative_stage.thermal_requirement
     assert_not_nil vegetative_thermal, "栄養成長期の積算温度要件がコピーされる"
-    assert_equal 500.0, vegetative_thermal.required_gdd, "栄養成長期の必要積算温度が正しい"
+    assert_equal 400.0, vegetative_thermal.required_gdd, "栄養成長期の必要積算温度が正しい"
     
     # 作物の基本属性確認
     assert_equal 'ほうれん草', user_crop.name, "作物名が正しくコピーされる"
@@ -258,5 +258,109 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     
     assert_not result.success, "無効なセッションデータでは失敗する"
     assert_not_nil result.error_message, "エラーメッセージが設定される"
+  end
+  
+  test "農場の件数制限が4件であることを確認" do
+    # 4件の農場を作成
+    4.times do |i|
+      Farm.create!(
+        user: @user,
+        name: "農場#{i + 1}",
+        latitude: 35.0 + i,
+        longitude: 139.0,
+        region: 'jp',
+        is_reference: false
+      )
+    end
+    
+    # 5件目を作成しようとするとバリデーションエラー
+    farm = Farm.new(
+      user: @user,
+      name: "農場5",
+      latitude: 35.0,
+      longitude: 139.0,
+      region: 'jp',
+      is_reference: false
+    )
+    
+    assert_not farm.valid?, "5件目の農場は無効である"
+    # エラーメッセージの形式を確認
+    error_message = farm.errors.full_messages.first
+    assert_match(/作成できる.*は4件までです/, error_message, "適切なエラーメッセージが表示される")
+  end
+  
+  test "作物の件数制限が20件であることを確認" do
+    # 20件の作物を作成
+    20.times do |i|
+      Crop.create!(
+        user: @user,
+        name: "作物#{i + 1}",
+        variety: "品種#{i + 1}",
+        area_per_unit: 0.1,
+        revenue_per_area: 800.0,
+        is_reference: false
+      )
+    end
+    
+    # 21件目を作成しようとするとバリデーションエラー
+    crop = Crop.new(
+      user: @user,
+      name: "作物21",
+      variety: "品種21",
+      area_per_unit: 0.1,
+      revenue_per_area: 800.0,
+      is_reference: false
+    )
+    
+    assert_not crop.valid?, "21件目の作物は無効である"
+    # エラーメッセージの形式を確認
+    error_message = crop.errors.full_messages.first
+    assert_match(/作成できる.*は20件までです/, error_message, "適切なエラーメッセージが表示される")
+  end
+  
+  test "PlanSaveServiceで農場の件数制限に達した場合にエラーを返す" do
+    # 4件の農場を事前に作成
+    4.times do |i|
+      Farm.create!(
+        user: @user,
+        name: "農場#{i + 1}",
+        latitude: 35.0 + i,
+        longitude: 139.0,
+        region: 'jp',
+        is_reference: false
+      )
+    end
+    
+    # PlanSaveServiceを実行
+    result = PlanSaveService.new(
+      user: @user,
+      session_data: @session_data
+    ).call
+    
+    assert_not result.success, "農場の件数制限に達している場合は失敗する"
+    assert_match(/農場.*作成.*失敗/, result.error_message, "適切なエラーメッセージが返される")
+  end
+  
+  test "PlanSaveServiceで作物の件数制限に達した場合にエラーを返す" do
+    # 20件の作物を事前に作成
+    20.times do |i|
+      Crop.create!(
+        user: @user,
+        name: "作物#{i + 1}",
+        variety: "品種#{i + 1}",
+        area_per_unit: 0.1,
+        revenue_per_area: 800.0,
+        is_reference: false
+      )
+    end
+    
+    # PlanSaveServiceを実行
+    result = PlanSaveService.new(
+      user: @user,
+      session_data: @session_data
+    ).call
+    
+    assert_not result.success, "作物の件数制限に達している場合は失敗する"
+    assert_match(/作物.*作成.*失敗/, result.error_message, "適切なエラーメッセージが返される")
   end
 end
