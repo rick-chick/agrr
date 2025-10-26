@@ -271,7 +271,7 @@ session[:public_plan_save_data] = {
 │   ├── TemperatureRequirement
 │   ├── ThermalRequirement
 │   └── SunshineRequirement
-└── 重複チェック（同じ名前の作物が既存か）
+└── 名前重複許容（同じ名前の作物でも新規作成）
 ```
 
 #### 2.3 圃場の作成
