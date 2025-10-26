@@ -21,10 +21,11 @@ module Api
         end
 
         begin
-          # 事前バリデーション: ユーザーの作物数をチェック
-          user_crop_count = current_user.crops.where(is_reference: false).count
-          if user_crop_count >= 20
-            return render json: { error: '作成できるCropは20件までです' }, status: :unprocessable_entity
+          # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
+          dummy_crop = ::Crop.new(user: current_user, is_reference: false)
+          unless dummy_crop.valid?
+            validation_error = dummy_crop.errors.full_messages.first
+            return render json: { error: validation_error }, status: :unprocessable_entity
           end
           
           # 1. agrrコマンドで作物情報を取得（常に実行して最新情報を取得）
