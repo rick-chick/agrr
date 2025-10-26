@@ -125,3 +125,18 @@ class Crop < ApplicationRecord
 end
 
 
+
+  private
+
+  def user_crop_count_limit
+    return if user.nil? || is_reference?
+    
+    existing_crops_count = user.crops.where(is_reference: false).count
+    # 新規作成の場合は既存の件数、更新の場合は既存の件数-1（自分自身を除く）
+    current_count = new_record? ? existing_crops_count : existing_crops_count - 1
+    
+    if current_count >= 20
+      errors.add(:user, "作成できるCropは20件までです")
+    end
+  end
+end
