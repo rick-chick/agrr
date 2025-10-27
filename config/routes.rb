@@ -18,8 +18,8 @@ Rails.application.routes.draw do
     end
   end
 
-  # Locale switching
-  scope "(:locale)", locale: /ja|us|in/ do
+  # Locale switching with default locale optimization
+  scope "(:locale)", locale: /ja|us|in/, defaults: { locale: 'ja' } do
     namespace :admin do
       # 管理画面のルート
       root to: redirect('/crops')
