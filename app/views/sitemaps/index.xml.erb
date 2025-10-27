@@ -1,51 +1,169 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Home Page -->
-  <url>
-    <loc><%= @base_url %>/</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <!-- Default Language (Japanese) URLs -->
+  <% I18n.with_locale(:ja) do %>
+    <!-- Home Page -->
+    <url>
+      <loc><%= @base_url %>/</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>daily</changefreq>
+      <priority>1.0</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/" />
+    </url>
 
-  <!-- Public Plans (Main Feature) -->
-  <url>
-    <loc><%= @base_url %>/public_plans</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
+    <!-- Public Plans (Main Feature) -->
+    <url>
+      <loc><%= @base_url %>/public_plans</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.9</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/public_plans" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/public_plans" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/public_plans" />
+    </url>
 
-  <!-- About Page -->
-  <url>
-    <loc><%= @base_url %>/about</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+    <!-- About Page -->
+    <url>
+      <loc><%= @base_url %>/about</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/about" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/about" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/about" />
+    </url>
 
-  <!-- Contact Page -->
-  <url>
-    <loc><%= @base_url %>/contact</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+    <!-- Contact Page -->
+    <url>
+      <loc><%= @base_url %>/contact</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/contact" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/contact" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/contact" />
+    </url>
 
-  <!-- Privacy Policy -->
-  <url>
-    <loc><%= @base_url %>/privacy</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
+    <!-- Privacy Policy -->
+    <url>
+      <loc><%= @base_url %>/privacy</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.5</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/privacy" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/privacy" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/privacy" />
+    </url>
 
-  <!-- Terms of Service -->
-  <url>
-    <loc><%= @base_url %>/terms</loc>
-    <lastmod><%= Time.current.to_date.to_s %></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
+    <!-- Terms of Service -->
+    <url>
+      <loc><%= @base_url %>/terms</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.5</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/terms" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/terms" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/terms" />
+    </url>
+  <% end %>
+
+  <!-- English (US) URLs -->
+  <% I18n.with_locale(:us) do %>
+    <!-- Home Page -->
+    <url>
+      <loc><%= @base_url %>/us/</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/" />
+    </url>
+
+    <!-- Public Plans -->
+    <url>
+      <loc><%= @base_url %>/us/public_plans</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/public_plans" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/public_plans" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/public_plans" />
+    </url>
+
+    <!-- About Page -->
+    <url>
+      <loc><%= @base_url %>/us/about</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/about" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/about" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/about" />
+    </url>
+
+    <!-- Contact Page -->
+    <url>
+      <loc><%= @base_url %>/us/contact</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.6</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/contact" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/contact" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/contact" />
+    </url>
+  <% end %>
+
+  <!-- Hindi (India) URLs -->
+  <% I18n.with_locale(:in) do %>
+    <!-- Home Page -->
+    <url>
+      <loc><%= @base_url %>/in/</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/" />
+    </url>
+
+    <!-- Public Plans -->
+    <url>
+      <loc><%= @base_url %>/in/public_plans</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/public_plans" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/public_plans" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/public_plans" />
+    </url>
+
+    <!-- About Page -->
+    <url>
+      <loc><%= @base_url %>/in/about</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/about" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/about" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/about" />
+    </url>
+
+    <!-- Contact Page -->
+    <url>
+      <loc><%= @base_url %>/in/contact</loc>
+      <lastmod><%= Time.current.to_date.to_s %></lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.6</priority>
+      <xhtml:link rel="alternate" hreflang="ja" href="<%= @base_url %>/contact" />
+      <xhtml:link rel="alternate" hreflang="us" href="<%= @base_url %>/us/contact" />
+      <xhtml:link rel="alternate" hreflang="in" href="<%= @base_url %>/in/contact" />
+    </url>
+  <% end %>
+
 </urlset>
 
