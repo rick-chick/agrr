@@ -97,4 +97,13 @@ Rails.application.configure do
   # Use Solid Cable for Action Cable (SQLite-based)
   # Note: Action Cable adapter should be configured in config/cable.yml instead
   # config.action_cable.adapter = :solid_cable
+  
+  # Google OAuth production configuration
+  config.after_initialize do
+    # Production OAuth credentials should be set via environment variables
+    # GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured
+    unless ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
+      Rails.logger.warn "⚠️  Google OAuth credentials not configured for production"
+    end
+  end
 end
