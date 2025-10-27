@@ -6,8 +6,8 @@ class ApplicationController < ActionController::Base
   # I18n locale setting
   around_action :switch_locale
   
-  # Authentication (disabled in production)
-  before_action :authenticate_user!, unless: -> { Rails.env.production? }
+  # Authentication (enabled in all environments)
+  before_action :authenticate_user!
   
   private
   
@@ -102,9 +102,6 @@ class ApplicationController < ActionController::Base
   end
   
   def authenticate_user!
-    # Production環境では認証を強制しない（全員アノニマスユーザーとして扱う）
-    return if Rails.env.production?
-    
     # アノニマスユーザーの場合は認証が必要
     return if current_user && !current_user.anonymous?
     

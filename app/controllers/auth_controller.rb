@@ -9,8 +9,8 @@ class AuthController < ApplicationController
   # Public endpoints
   skip_before_action :authenticate_user!, only: [:login, :google_oauth2_callback, :failure]
   
-  # Production環境では認証機能を無効化
-  before_action :check_production_environment
+  # Production環境での認証機能制限を解除
+  # before_action :check_production_environment
 
   def login
     # Display login page with Google OAuth button
