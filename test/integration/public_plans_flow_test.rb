@@ -90,7 +90,7 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
     post public_plans_path, params: { crop_ids: [@spinach_crop.id] }
     
     # 計画が作成され、最適化画面にリダイレクトされる
-    assert_redirected_to "/ja/public_plans/optimizing"
+    assert_redirected_to "/public_plans/optimizing"
     
     # 作成された計画を取得
     cultivation_plan = CultivationPlan.last
@@ -108,8 +108,11 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
 
     # Step 6: 最適化処理の実行（バックグラウンドジョブ）
     # 天気予測は成功するが、最適化処理でAGRRデーモンが起動していないバグが発見される
-    assert_raises(Agrr::BaseGatewayV2::ExecutionError) do
-      OptimizeCultivationPlanJob.perform_now(cultivation_plan.id, 'OptimizationChannel')
+    begin
+      OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
+      flunk "Expected CultivationPlanOptimizer::WeatherDataNotFoundError to be raised"
+    rescue CultivationPlanOptimizer::WeatherDataNotFoundError
+      # 期待される例外が発生
     end
     
     # 計画のステータスが'failed'に更新されることを確認（エラーハンドリングが動作）

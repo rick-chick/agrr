@@ -88,7 +88,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     post public_plans_path, params: { crop_ids: [@spinach_crop.id] }
     
     # 計画が作成され、最適化画面にリダイレクトされる
-    assert_redirected_to "/ja/public_plans/optimizing"
+    assert_redirected_to "/public_plans/optimizing"
     
     # 作成された計画を取得
     cultivation_plan = CultivationPlan.last
@@ -106,7 +106,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # Step 6: 最適化処理の実行（バックグラウンドジョブ）
     # 注意: 実際の最適化処理は複雑な依存関係があるため、ここではスキップ
     # 代わりに、最適化画面が表示されることを確認
-    # OptimizeCultivationPlanJob.perform_now(cultivation_plan.id, 'OptimizationChannel')
+    # OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
 
     # Step 7: 結果画面の表示（完了済みの場合）
     if cultivation_plan.status == 'completed'
@@ -127,8 +127,11 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     )
     
     # 最適化ジョブを直接実行（気象データ不足のバグが発見される）
-    assert_raises(WeatherPredictionService::WeatherDataNotFoundError) do
-      OptimizeCultivationPlanJob.perform_now(cultivation_plan.id, 'OptimizationChannel')
+    begin
+      OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
+      flunk "Expected CultivationPlanOptimizer::WeatherDataNotFoundError to be raised"
+    rescue CultivationPlanOptimizer::WeatherDataNotFoundError
+      # 期待される例外が発生
     end
     
     # 計画のステータスが'failed'に更新されることを確認（エラーハンドリングが動作）

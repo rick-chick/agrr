@@ -44,7 +44,7 @@ class Crop < ApplicationRecord
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   
   # ユーザー作物の件数制限（20件まで）
-  validates :user, presence: true
+  validates :user, presence: true, unless: :is_reference?
   validate :user_crop_count_limit, unless: :is_reference?
 
   scope :reference, -> { where(is_reference: true) }
