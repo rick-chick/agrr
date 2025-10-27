@@ -111,7 +111,8 @@ class CultivationPlan < ApplicationRecord
               else
                 I18n.t('models.cultivation_plan.phase_failed.default')
               end
-    update_phase!('failed', message, channel_class)
+    update!(optimization_phase: 'failed', optimization_phase_message: message, status: 'failed')
+    broadcast_phase_update(channel_class)
   end
   
   def this_year_cultivations
@@ -183,7 +184,7 @@ class CultivationPlan < ApplicationRecord
 
     Rails.logger.info "📡 [CultivationPlan##{id}] Attempting to broadcast phase update: #{optimization_phase}"
     Rails.logger.info "📡 [CultivationPlan##{id}] Payload: #{payload.inspect}"
-    Rails.logger.info "📡 [CultivationPlan##{id}] Channel class: #{channel_class.name}"
+    Rails.logger.info "📡 [CultivationPlan##{id}] Channel class: #{channel_class.is_a?(String) ? channel_class : channel_class.name}"
     
     # WebSocket接続の確立を待つ
     if optimization_phase == 'predicting_weather'
@@ -195,7 +196,7 @@ class CultivationPlan < ApplicationRecord
     Rails.logger.info "📡 [CultivationPlan##{id}] Broadcast phase update: #{optimization_phase}"
   rescue => e
     Rails.logger.error "❌ Broadcast phase update failed for plan ##{id}: #{e.message}"
-    Rails.logger.error "❌ Channel class: #{channel_class.name}"
+    Rails.logger.error "❌ Channel class: #{channel_class.is_a?(String) ? channel_class : channel_class.name}"
     Rails.logger.error "❌ Payload: #{payload.inspect}"
     Rails.logger.error "❌ Backtrace: #{e.backtrace.first(5).join("\n")}"
     # ブロードキャスト失敗しても処理は続行

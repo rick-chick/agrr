@@ -67,10 +67,11 @@ class CropTest < ActiveSupport::TestCase
     assert_not Crop.new(user: @user2, name: "New", is_reference: false).valid?
   end
 
-  test "should not validate if user is nil" do
+  test "should validate user presence for non-reference crops" do
     crop = Crop.new(user: nil, name: "作物", is_reference: false)
-    # No validation error for missing user
+    # Should have validation error for missing user
     crop.valid? # triggers validations
-    assert_equal 0, crop.errors[:user].count
+    assert_equal 1, crop.errors[:user].count
+    assert_includes crop.errors[:user], "を入力してください"
   end
 end
