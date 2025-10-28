@@ -200,7 +200,7 @@ function cleanupGanttChart() {
   }
 }
 
-// Turbo対応: ページ読み込み時とナビゲーション後に初期化
+// Turbo対応: Frameレンダリング後に初期化（重複を避けるためturbo:frame-renderのみ使用）
 (function() {
   console.log('🔧 [Gantt Chart] スクリプト読み込み完了');
 
@@ -209,13 +209,8 @@ function cleanupGanttChart() {
     setTimeout(initWhenReady, 50);
   }
 
-  // 初回読み込み時も実行
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('🔄 [Gantt Chart] DOMContentLoaded イベント検出');
-      triggerInit();
-    });
-  } else {
+  // 初回読み込み時（DOMが既に読み込まれている場合）
+  if (document.readyState !== 'loading') {
     console.log('🔄 [Gantt Chart] 既にDOM読み込み済み、即座に初期化');
     triggerInit();
   }
@@ -223,16 +218,7 @@ function cleanupGanttChart() {
   if (typeof Turbo !== 'undefined') {
     console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
     
-    // ページレンダリング後に初期化
-    document.addEventListener('turbo:render', () => {
-      console.log('🔄 [Gantt Chart] turbo:render イベント検出');
-      if (typeof window.ClientLogger !== 'undefined') {
-        window.ClientLogger.warn('🔄 [Gantt Chart] turbo:render イベント検出');
-      }
-      triggerInit();
-    });
-
-    // Frameレンダリング後も初期化
+    // Frameレンダリング後に初期化（重複を避けるためこれのみ使用）
     document.addEventListener('turbo:frame-render', () => {
       console.log('🔄 [Gantt Chart] turbo:frame-render イベント検出');
       triggerInit();
@@ -552,7 +538,7 @@ function fetchAndUpdateChart() {
   });
 }
 
-// 圃場ごとにグループ化
+// 圃場ごとにグループ化（field_idベースでグループ化）
 function groupByField(cultivations, fields = []) {
   const groups = {};
   
@@ -561,25 +547,34 @@ function groupByField(cultivations, fields = []) {
     // field_idを"field_123"形式に統一
     const fieldId = window.normalizeFieldId(field.field_id || field.id);
     
-    groups[field.name] = {
+    // field_idをキーとして使用（圃場名ではなく）
+    groups[fieldId] = {
       fieldName: field.name,
       fieldId: fieldId,
       cultivations: []
     };
   });
   
-  // 栽培スケジュールを圃場ごとに振り分け
+  // 栽培スケジュールを圃場ごとに振り分け（field_idベース）
   cultivations.forEach(cultivation => {
-    const fieldName = cultivation.field_name || '未設定';
+    const fieldId = cultivation.field_id;
     
-    if (!groups[fieldName]) {
-      groups[fieldName] = {
-        fieldName: fieldName,
-        fieldId: window.normalizeFieldId(cultivation.field_id),
+    if (!fieldId) {
+      console.warn('⚠️ cultivation.field_idが未定義です:', cultivation);
+      return;
+    }
+    
+    // field_idでグループを検索
+    if (!groups[fieldId]) {
+      console.warn('⚠️ field_idに対応する圃場が見つかりません:', fieldId);
+      // 圃場が見つからない場合は新しいグループを作成
+      groups[fieldId] = {
+        fieldName: cultivation.field_name || `圃場${fieldId}`,
+        fieldId: fieldId,
         cultivations: []
       };
     }
-    groups[fieldName].cultivations.push(cultivation);
+    groups[fieldId].cultivations.push(cultivation);
   });
   
   // 栽培を開始日順にソート
@@ -1030,20 +1025,18 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
   document.addEventListener('mouseup', window.ganttState.globalMouseUpHandler);
 }
 
-// 移動を記録
+// 移動を記録（field_idベースで処理）
 function recordMove(allocation_id, to_field_name, to_start_date) {
   // 既存の移動を削除（同じIDの場合）
   window.ganttState.moves = window.ganttState.moves.filter(m => m.allocation_id !== allocation_id);
   
-  // 圃場IDを抽出（正しい圃場IDを取得）
+  // 圃場IDを抽出（field_idベースで検索）
   const fieldGroup = window.ganttState.fieldGroups.find(g => g.fieldName === to_field_name);
   
   // 圃場IDを正しく取得
   let field_id;
   if (fieldGroup?.fieldId) {
     field_id = fieldGroup.fieldId;
-  } else if (fieldGroup?.cultivations?.[0]?.field_id) {
-    field_id = fieldGroup.cultivations[0].field_id;
   } else {
     console.error('❌ 圃場IDが取得できませんでした');
     console.error('🔍 fieldGroup:', fieldGroup);

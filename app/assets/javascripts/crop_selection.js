@@ -140,11 +140,11 @@
   console.log('📄 Script loaded, readyState:', document.readyState);
   initCropSelection();
   
-  // Turboによるページ遷移時
+  // Turboによるページ遷移時（重複を避けるためturbo:frame-renderのみ使用）
   if (typeof Turbo !== 'undefined') {
-    console.log('⚡ Turbo detected, registering turbo:load handler');
-    document.addEventListener('turbo:load', function() {
-      console.log('⚡ turbo:load event fired');
+    console.log('⚡ Turbo detected, registering turbo:frame-render handler');
+    document.addEventListener('turbo:frame-render', function() {
+      console.log('⚡ turbo:frame-render event fired');
       initialized = false;
       initCropSelection();
     });
