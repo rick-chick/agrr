@@ -171,9 +171,6 @@ module CultivationPlanApi
       }, status: :not_found
     end
     
-    # フロントエンドから送信されたFieldCultivationのIDを取得
-    field_cultivation_ids = params[:field_cultivation_ids] || []
-    
     # 圃場に栽培がある場合は削除できない
     if plan_field.field_cultivations.any?
       return render json: {
@@ -196,38 +193,23 @@ module CultivationPlanApi
     # total_areaを更新
     @cultivation_plan.update!(total_area: @cultivation_plan.cultivation_plan_fields.sum(:area))
     
-    # 調整を実行
-    moves = field_cultivation_ids.map do |fc_id|
+    # ActionCable経由で圃場削除を通知
+    channel_class = @cultivation_plan.plan_type == 'private' ? PlansOptimizationChannel : OptimizationChannel
+    channel_class.broadcast_to(
+      @cultivation_plan,
       {
-        allocation_id: fc_id,
-        action: 'remove'
-      }
-    end
-    
-    # DBに保存された天気データを使って調整を実行
-    result = adjust_with_db_weather(@cultivation_plan, moves)
-    
-    if result[:success]
-      # ActionCable経由で圃場削除を通知
-      channel_class = @cultivation_plan.plan_type == 'private' ? PlansOptimizationChannel : OptimizationChannel
-      channel_class.broadcast_to(
-        @cultivation_plan,
-        {
-          type: 'field_removed',
-          field_id: field_id,
-          total_area: @cultivation_plan.total_area
-        }
-      )
-      
-      render json: {
-        success: true,
-        message: i18n_t('messages.field_removed'),
+        type: 'field_removed',
         field_id: field_id,
         total_area: @cultivation_plan.total_area
       }
-    else
-      render json: result, status: result[:status] || :internal_server_error
-    end
+    )
+    
+    render json: {
+      success: true,
+      message: i18n_t('messages.field_removed'),
+      field_id: field_id,
+      total_area: @cultivation_plan.total_area
+    }
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, message: i18n_t('errors.field_not_found') }, status: :not_found
   rescue => e
