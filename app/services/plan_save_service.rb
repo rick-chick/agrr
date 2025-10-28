@@ -68,8 +68,8 @@ class PlanSaveService
       error_message = new_farm.errors.full_messages.join(', ')
       Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
       # 農場件数制限のエラーの場合は特別なメッセージを返す
-      if new_farm.errors[:user].any? { |msg| msg.include?("作成できるFarmは4件までです") }
-        raise StandardError, "作成できるFarmは4件までです"
+      if new_farm.errors.details[:user].any? { |e| e[:error] == :farm_limit_exceeded }
+        raise StandardError, I18n.t('activerecord.errors.models.farm.attributes.user.farm_limit_exceeded')
       end
       raise StandardError, error_message
     end
@@ -156,7 +156,7 @@ class PlanSaveService
       # Fieldモデルには座標属性がないため、座標情報はスキップ
       # 必要に応じてdescriptionに座標情報を保存
       if field_coordinates&.is_a?(Array) && field_coordinates.length >= 2
-        field_attrs[:description] = "座標: #{field_coordinates[0]}, #{field_coordinates[1]}"
+        field_attrs[:description] = I18n.t('services.plan_save_service.messages.coordinates', lat: field_coordinates[0], lng: field_coordinates[1])
       end
       
       Rails.logger.debug "🔍 [PlanSaveService] Creating field with attrs: #{field_attrs.inspect}"

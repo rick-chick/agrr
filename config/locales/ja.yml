@@ -38,6 +38,34 @@ ja:
   # API用エラーメッセージ
   api:
     errors:
+      common:
+        location_required: "位置情報を入力してください"
+        weather_service_unavailable: "天気サービスは一時的に利用できません"
+        weather_fetch_failed: "天気データの取得に失敗しました: %{message}"
+        forecast_fetch_failed: "予報データの取得に失敗しました: %{message}"
+        weather_invalid_response: "天気サービスからの応答が不正です"
+        farm_not_found: "農場が見つかりません"
+        weather_location_not_found: "天気取得地点が見つかりません"
+        env_only: "このエンドポイントは開発・テスト環境でのみ利用できます"
+        files:
+          no_file: "ファイルが指定されていません"
+          not_found: "ファイルが見つかりません"
+      crops:
+        name_required: "作物名を入力してください"
+        invalid_payload: "作物情報が不正な形式です"
+        fetch_failed: "作物情報の取得に失敗しました"
+        fetch_failed_with_reason: "作物情報の取得に失敗しました: %{message}"
+        reference_only_admin: "参照作物の作成は管理者のみ可能です"
+        reference_flag_admin_only: "参照フラグの変更は管理者のみ可能です"
+    messages:
+      common:
+        weather_service_available: "天気サービスは利用可能です"
+        weather_service_not_available: "天気サービスは利用できません"
+        weather_data_already_exists: "天気データは既に存在します"
+        weather_data_fetch_started: "天気データの取得を開始しました"
+      crops:
+        updated_with_latest: "作物「%{name}」を最新情報で更新しました"
+        created_by_ai: "AIで作物「%{name}」の情報を取得して作成しました"
       crop_not_found: "作物情報が見つかりません"
       no_weather_data: "気象データがありません"
       no_cultivation_period: "栽培期間が設定されていません"
@@ -110,6 +138,22 @@ ja:
         field_removed: "圃場を削除しました。"
     
     public_plans:
+    gantt:
+      api_endpoint_missing: "APIエンドポイントが設定されていません。ページを再読み込みしてください。"
+      data_url_missing: "データURLが設定されていません"
+      adjust_url_missing: "調整URLが設定されていません"
+      prompt_field_name: "圃場名を入力してください（例: 4）"
+      prompt_field_area: "面積（㎡）を入力してください"
+      adding_field: "圃場を追加中..."
+      deleting_field: "圃場を削除中..."
+      error_occurred: "エラーが発生しました"
+    crop_ai:
+      enter_name: "作物名を入力してください"
+      fetching: "AIで作物情報を取得しています..."
+      button_fetching: "🤖 AIで情報を取得中..."
+      created_success: "✓ 作物「%{name}」の情報を取得して保存しました！"
+      fetch_failed: "作物情報の取得に失敗しました"
+      network_error: "ネットワークエラーが発生しました"
       errors:
         field_not_found: "圃場が見つかりません"
         cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
@@ -200,6 +244,28 @@ ja:
 
   # ActiveRecord
   activerecord:
+    errors:
+      models:
+        farm:
+          attributes:
+            is_reference:
+              reference_only_anonymous: "参照農場はアノニマスユーザーにのみ設定できます"
+            user:
+              farm_limit_exceeded: "作成できるFarmは4件までです"
+        crop:
+          attributes:
+            user:
+              crop_limit_exceeded: "作成できるCropは20件までです"
+  auth_test:
+  services:
+    plan_save_service:
+      messages:
+        coordinates: "座標: %{lat}, %{lng}"
+    invalid_user_type: "不正なユーザー種別です"
+    mock_logout_success: "モックログアウトに成功しました"
+    not_logged_in: "ログインしていません"
+    create_user_failed: "ユーザー作成に失敗しました: %{errors}"
+    mock_login_success: "モックログインに成功しました（%{name}）!"
     errors:
       messages:
         record_invalid: "バリデーションに失敗しました: %{errors}"
