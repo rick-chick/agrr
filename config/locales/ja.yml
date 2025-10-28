@@ -116,6 +116,23 @@ ja:
         cannot_remove_last_field: "最後の圃場は削除できません"
       messages:
         field_removed: "圃場を削除しました。"
+  
+  # API用の翻訳（js配下とは別に）
+  public_plans:
+    errors:
+      field_not_found: "圃場が見つかりません"
+      cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
+      cannot_remove_last_field: "最後の圃場は削除できません"
+    messages:
+      field_removed: "圃場を削除しました。"
+  
+  plans:
+    errors:
+      field_not_found: "圃場が見つかりません"
+      cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
+      cannot_remove_last_field: "最後の圃場は削除できません"
+    messages:
+      field_removed: "圃場を削除しました。"
     
     temperature_chart:
       no_data: "選択した期間のデータがありません。"
