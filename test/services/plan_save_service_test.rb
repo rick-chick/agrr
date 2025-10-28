@@ -343,6 +343,63 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_not_nil fc_b
   end
 
+  test "copies interaction rule impact_ratio from reference when available" do
+    # 参照作物A/B（同じregion）
+    crop_a = Crop.create!(user: nil, name: '参照A', variety: 'A1', is_reference: true, area_per_unit: 0.2, revenue_per_area: 4000.0, region: 'jp')
+    crop_b = Crop.create!(user: nil, name: '参照B', variety: 'B1', is_reference: true, area_per_unit: 0.3, revenue_per_area: 6000.0, region: 'jp')
+
+    # 参照連作ルール（グループは名前を使用）impact_ratio=0.7 を登録
+    InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: crop_a.name,
+      target_group: crop_b.name,
+      impact_ratio: 0.7,
+      is_directional: true,
+      is_reference: true,
+      user: nil,
+      region: 'jp'
+    )
+
+    # 参照計画
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '連作係数コピー検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # 参照CPC
+    CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_a, name: crop_a.name, variety: crop_a.variety, area_per_unit: crop_a.area_per_unit, revenue_per_area: crop_a.revenue_per_area)
+    CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_b, name: crop_b.name, variety: crop_b.variety, area_per_unit: crop_b.area_per_unit, revenue_per_area: crop_b.revenue_per_area)
+
+    # セッションデータ
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: 'F1', area: 100.0, coordinates: [35.0, 139.0] }
+      ]
+    }
+
+    # 実行
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    # 作成されたユーザーの連作ルールを取得
+    user_rules = @user.interaction_rules.where(rule_type: 'continuous_cultivation')
+    assert user_rules.exists?, 'User interaction rules should be created'
+
+    # A->B のルールが impact_ratio=0.7 で作成されていること
+    rule = user_rules.find_by(source_group: crop_a.name, target_group: crop_b.name)
+    assert_not_nil rule, 'Interaction rule A->B should exist'
+    assert_in_delta 0.7, rule.impact_ratio.to_f, 0.0001, 'impact_ratio should be copied from reference rule'
+  end
+
   test "should prevent farm creation when user has reached farm limit" do
     # ユーザーが4つの農場を持っている状態を作成
     4.times do |i|
