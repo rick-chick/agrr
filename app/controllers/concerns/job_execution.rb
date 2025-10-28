@@ -91,34 +91,28 @@ module JobExecution
   
   # 非同期ジョブチェーン実行（新しい方法）
   def execute_job_chain_async(job_instances)
-    Rails.logger.info "🔗 [#{self.class.name}] Executing async job chain with #{job_instances.length} jobs"
+    Rails.logger.info "🔗 [#{self.class.name}] Executing async job chain (sequential via wrapper) with #{job_instances.length} jobs"
     Rails.logger.info "📋 [#{self.class.name}] Job chain: #{job_instances.map(&:class).map(&:name).join(' → ')}"
     
     # 遷移制御ジョブを最後に追加
     job_instances = add_redirect_completion_job_if_needed(job_instances)
     
-    # 最初のジョブを非同期実行
-    if job_instances.any?
-      first_job = job_instances.first
-      Rails.logger.info "🚀 [#{self.class.name}] Starting async job chain with: #{first_job.class.name}"
-      
-      # 最初のジョブを非同期実行（キーワード引数として渡す）
-      first_job.class.perform_later(**first_job.job_arguments)
-      
-      # 残りのジョブをチェーンとして設定
-      if job_instances.length > 1
-        remaining_jobs = job_instances[1..-1]
-        Rails.logger.info "🔗 [#{self.class.name}] Setting up chain for #{remaining_jobs.length} remaining jobs"
-        
-        # 各ジョブを順次チェーンとして設定
-        remaining_jobs.each_with_index do |job, index|
-          Rails.logger.info "⛓️ [#{self.class.name}] Chaining job #{index + 2}/#{job_instances.length}: #{job.class.name}"
-          job.class.perform_later(**job.job_arguments)
-        end
-      end
+    # ラッパー用のchain配列に変換
+    chain = job_instances.map do |job|
+      {
+        class: job.class.name,
+        args: job.job_arguments
+      }
     end
     
-    Rails.logger.info "🎉 [#{self.class.name}] Async job chain enqueued successfully"
+    if chain.empty?
+      Rails.logger.info "ℹ️ [#{self.class.name}] No jobs to execute in chain"
+      return
+    end
+    
+    Rails.logger.info "🚀 [#{self.class.name}] Enqueuing ChainedJobRunnerJob with #{chain.length} steps"
+    ChainedJobRunnerJob.perform_later(chain: chain, index: 0)
+    Rails.logger.info "🎉 [#{self.class.name}] Wrapper enqueued; chain will run sequentially"
   end
   
   # ジョブインスタンスから非同期チェーンを実行
