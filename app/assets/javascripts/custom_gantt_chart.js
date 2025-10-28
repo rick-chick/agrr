@@ -513,6 +513,9 @@ function fetchAndUpdateChart() {
       // ローディングオーバーレイを非表示
       hideLoadingOverlay();
       
+      // 圃場削除処理完了時はフラグをリセット
+      window.reoptimizationInProgress = false;
+      
       // カスタムイベントを発火（再描画完了を通知）
       const ganttReadyEvent = new CustomEvent('ganttChartReady', {
         detail: { ganttState: ganttState }
@@ -2041,6 +2044,9 @@ function removeField(field_id) {
     return;
   }
   
+  // 圃場削除処理中フラグを設定（競合状態を防ぐ）
+  window.reoptimizationInProgress = true;
+  
   // ローディング表示（圃場削除は最適化処理ではない）
   showLoadingOverlay('圃場を削除中...');
   
@@ -2083,12 +2089,16 @@ function removeField(field_id) {
       console.error('❌ 圃場の削除に失敗しました:', data.message);
       alert(data.message || getI18nMessage('jsGanttFieldDeleteFailed', 'Failed to delete field'));
       hideLoadingOverlay();
+      // 失敗時はフラグをリセット
+      window.reoptimizationInProgress = false;
     }
   })
   .catch(error => {
     console.error('❌ 圃場削除エラー:', error);
     alert(getI18nMessage('jsGanttCommunicationError', 'Communication error occurred.\nPlease try again.'));
     hideLoadingOverlay();
+    // エラー時はフラグをリセット
+    window.reoptimizationInProgress = false;
   });
 }
 
