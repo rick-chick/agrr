@@ -11,11 +11,11 @@
         <% if @cultivation_plan.status_pending? %>
           <%= button_to t('plans.show.optimize_button'), optimize_plan_path(@cultivation_plan), method: :post,
               class: "btn-plans-primary",
-              data: { confirm: "この計画を最適化しますか？" } %>
+              data: { confirm: t('plans.show.confirms.optimize') } %>
         <% end %>
         <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
             class: "btn-plans-secondary",
-            data: { confirm: "次年度（#{@cultivation_plan.plan_year + 1}年度）にこの計画をコピーしますか？" } %>
+            data: { confirm: t('plans.show.confirms.copy_next_year', year: @cultivation_plan.plan_year + 1) } %>
       </div>
     </div>
 

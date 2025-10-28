@@ -131,6 +131,10 @@ ja:
         title: "栽培詳細"
         loading: "詳細を読み込んでいます..."
         loading_data: "データを読み込んでいます..."
+        tabs:
+          info: "基本情報"
+          temperature: "気温分析"
+          stages: "ステージ"
     
     show:
       detail:

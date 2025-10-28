@@ -67,7 +67,7 @@ class Farm < ApplicationRecord
   end
 
   def display_name
-    name.presence || "農場 ##{id}"
+    name.presence || I18n.t('models.farm.default_name', id: id)
   end
 
   def reference?

@@ -30,6 +30,13 @@ ja:
     yes: "はい"
     no: "いいえ"
 
+  # モデル共通のデフォルト表示名
+  models:
+    farm:
+      default_name: "農場 #%{id}"
+    cultivation_plan_field:
+      default_name: "圃場 #%{id}"
+
   # 最適化関連メッセージ
   optimization:
     messages:
@@ -136,6 +143,10 @@ ja:
         cannot_remove_last_field: "最後の圃場は削除できません"
       messages:
         field_removed: "圃場を削除しました。"
+    messages:
+      jsPlansLoadError: "データの読み込みに失敗しました"
+      jsPlansLoadErrorWithMessage: "データの読み込みに失敗しました: %{message}"
+      jsGanttNotLoaded: "ガントチャート機能が読み込まれていません"
     
     public_plans:
     gantt:

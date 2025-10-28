@@ -75,16 +75,16 @@ class CropsController < ApplicationController
     rescue ActiveRecord::InvalidForeignKey => e
       # 外部参照制約エラーの場合
       if e.message.include?('cultivation_plan_crops')
-        redirect_to crops_path, alert: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
+        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.plan')
       elsif e.message.include?('field_cultivations')
-        redirect_to crops_path, alert: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
+        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.field')
       else
-        redirect_to crops_path, alert: "この作物は他のデータで使用されているため削除できません。"
+        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.other')
       end
     rescue ActiveRecord::DeleteRestrictionError => e
-      redirect_to crops_path, alert: "この作物は他のデータで使用されているため削除できません。"
+      redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.other')
     rescue StandardError => e
-      redirect_to crops_path, alert: "削除中にエラーが発生しました: #{e.message}"
+      redirect_to crops_path, alert: I18n.t('crops.flash.delete_error', message: e.message)
     end
   end
 
