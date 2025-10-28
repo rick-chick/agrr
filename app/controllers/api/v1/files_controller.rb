@@ -27,7 +27,7 @@ module Api
           
           render json: file_attributes(blob), status: :created
         else
-          render json: { error: 'No file provided' }, status: :unprocessable_entity
+          render json: { error: I18n.t('api.errors.common.files.no_file') }, status: :unprocessable_entity
         end
       end
 
@@ -42,7 +42,7 @@ module Api
       def set_file
         @file = ActiveStorage::Blob.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'File not found' }, status: :not_found
+        render json: { error: I18n.t('api.errors.common.files.not_found') }, status: :not_found
       end
 
       def file_attributes(blob)

@@ -445,7 +445,7 @@ function fetchAndUpdateChart() {
   
   if (!url) {
     console.error('❌ data-data-url属性が設定されていません');
-    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    alert(container?.dataset.apiEndpointMissing || 'APIエンドポイントが設定されていません。ページを再読み込みしてください。');
     return;
   }
 
@@ -1184,7 +1184,7 @@ function executeReoptimization() {
   
   if (!url) {
     console.error('❌ data-adjust-url属性が設定されていません');
-    alert('APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    alert(container?.dataset.apiEndpointMissing || 'APIエンドポイントが設定されていません。ページを再読み込みしてください。');
     return;
   }
   
@@ -1948,13 +1948,13 @@ function addField() {
   const defaultFieldName = `${window.ganttState.fieldGroups.length + 1}`;
   console.log('📝 デフォルト圃場名:', defaultFieldName);
   
-  const fieldName = prompt('圃場名を入力してください（例: 4）', defaultFieldName);
+  const fieldName = prompt(container?.dataset.promptFieldName || '圃場名を入力してください（例: 4）', defaultFieldName);
   if (!fieldName) {
     console.log('⚠️ 圃場名が入力されなかったためキャンセル');
     return;
   }
   
-  const fieldArea = prompt('面積（㎡）を入力してください', '100');
+  const fieldArea = prompt(container?.dataset.promptFieldArea || '面積（㎡）を入力してください', '100');
   if (!fieldArea) {
     console.log('⚠️ 面積が入力されなかったためキャンセル');
     return;
@@ -2035,7 +2035,7 @@ function removeField(field_id) {
   window.reoptimizationInProgress = true;
   
   // ローディング表示（圃場削除は最適化処理ではない）
-  showLoadingOverlay('圃場を削除中...');
+  showLoadingOverlay(container?.dataset.deletingField || '圃場を削除中...');
   
   // data属性からURLを取得
   const ganttContainer = document.getElementById('gantt-chart-container');

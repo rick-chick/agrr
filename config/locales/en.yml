@@ -1,6 +1,22 @@
 en:
   # JavaScript messages
   js:
+    gantt:
+      api_endpoint_missing: "API endpoint is not configured. Please reload the page."
+      data_url_missing: "Data URL is not configured"
+      adjust_url_missing: "Adjust URL is not configured"
+      prompt_field_name: "Enter field name (e.g., 4)"
+      prompt_field_area: "Enter area (㎡)"
+      adding_field: "Adding field..."
+      deleting_field: "Deleting field..."
+      error_occurred: "An error occurred"
+    crop_ai:
+      enter_name: "Please enter a crop name"
+      fetching: "Fetching crop information with AI..."
+      button_fetching: "🤖 Fetching with AI..."
+      created_success: "✓ Retrieved and saved crop '%{name}'!"
+      fetch_failed: "Failed to retrieve crop information"
+      network_error: "A network error occurred"
     crop_palette:
       plan_id_missing: "Error: Could not retrieve plan ID"
       crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
@@ -177,6 +193,62 @@ en:
           has_many: "Cannot delete record because dependent %{record} exist"
   
   # Error messages (common for ActiveRecord and other validations)
+  # API translations
+  api:
+    errors:
+      common:
+        location_required: "Location is required"
+        weather_service_unavailable: "Weather service is temporarily unavailable"
+        weather_fetch_failed: "Weather data fetch failed: %{message}"
+        forecast_fetch_failed: "Forecast fetch failed: %{message}"
+        weather_invalid_response: "Invalid response from weather service"
+        farm_not_found: "Farm not found"
+        weather_location_not_found: "Weather location not found"
+        env_only: "This endpoint is only available in development and test environments"
+        files:
+          no_file: "No file provided"
+          not_found: "File not found"
+      crops:
+        name_required: "Please enter a crop name"
+        invalid_payload: "Invalid crop payload format"
+        fetch_failed: "Failed to retrieve crop information"
+        fetch_failed_with_reason: "Failed to retrieve crop information: %{message}"
+        reference_only_admin: "Only admin can create reference crops"
+        reference_flag_admin_only: "Only admin can change reference flag"
+    messages:
+      common:
+        weather_service_available: "Weather service is available"
+        weather_service_not_available: "Weather service is not available"
+        weather_data_already_exists: "Weather data already exists"
+        weather_data_fetch_started: "Weather data fetch started"
+      crops:
+        updated_with_latest: "Updated crop '%{name}' with latest info"
+        created_by_ai: "Created crop '%{name}' with AI-fetched info"
+
+  activerecord:
+    errors:
+      models:
+        farm:
+          attributes:
+            is_reference:
+              reference_only_anonymous: "Reference farms can only belong to the anonymous user"
+            user:
+              farm_limit_exceeded: "You can create up to 4 Farms"
+        crop:
+          attributes:
+            user:
+              crop_limit_exceeded: "You can create up to 20 Crops"
+
+  auth_test:
+  services:
+    plan_save_service:
+      messages:
+        coordinates: "Coordinates: %{lat}, %{lng}"
+    invalid_user_type: "Invalid user type."
+    mock_logout_success: "Mock logout successful!"
+    not_logged_in: "Not logged in."
+    create_user_failed: "Failed to create user: %{errors}"
+    mock_login_success: "Mock login successful as %{name}!"
   errors:
     format: "%{attribute} %{message}"
     messages:

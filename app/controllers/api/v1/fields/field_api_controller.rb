@@ -82,7 +82,7 @@ class Api::V1::Fields::FieldApiController < Api::V1::BaseController
         def set_farm
           @farm = Farm.find(params[:farm_id])
         rescue ActiveRecord::RecordNotFound
-          render json: { error: "Farm not found" }, status: :not_found
+          render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
         end
 
         def field_params

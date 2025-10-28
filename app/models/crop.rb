@@ -135,7 +135,7 @@ class Crop < ApplicationRecord
     current_count = new_record? ? existing_crops_count : existing_crops_count - 1
     
     if current_count >= 20
-      errors.add(:user, "作成できるCropは20件までです")
+      errors.add(:user, :crop_limit_exceeded)
     end
   end
 end

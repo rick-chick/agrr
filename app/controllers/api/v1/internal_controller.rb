@@ -21,7 +21,7 @@ module Api
         if farm.weather_location && farm.weather_data_status == 'completed'
           return render json: {
             success: true,
-            message: 'Weather data already exists',
+            message: I18n.t('api.messages.common.weather_data_already_exists'),
             farm_id: farm.id,
             status: farm.weather_data_status,
             weather_data_count: farm.weather_location.weather_data.count
@@ -33,13 +33,13 @@ module Api
         
         render json: {
           success: true,
-          message: 'Weather data fetch started',
+          message: I18n.t('api.messages.common.weather_data_fetch_started'),
           farm_id: farm.id,
           status: farm.weather_data_status,
           total_blocks: farm.weather_data_total_years
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Farm not found' }, status: :not_found
+        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
       rescue => e
         render json: { error: e.message }, status: :internal_server_error
       end
@@ -60,7 +60,7 @@ module Api
           last_error: farm.weather_data_last_error
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Farm not found' }, status: :not_found
+        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
       end
       
       # GET /api/v1/internal/farms/:farm_id/weather_data
@@ -69,7 +69,7 @@ module Api
         farm = Farm.find(params[:farm_id])
         
         unless farm.weather_location
-          return render json: { error: 'Weather location not found' }, status: :not_found
+          return render json: { error: I18n.t('api.errors.common.weather_location_not_found') }, status: :not_found
         end
         
         weather_data = farm.weather_location.weather_data.order(:date).map do |wd|
@@ -104,14 +104,14 @@ module Api
           count: weather_data.count
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Farm not found' }, status: :not_found
+        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
       end
       
       private
       
       def check_environment
         unless Rails.env.development? || Rails.env.test?
-          render json: { error: 'This endpoint is only available in development and test environments' }, 
+          render json: { error: I18n.t('api.errors.common.env_only') }, 
                  status: :forbidden
         end
       end

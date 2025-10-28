@@ -13,7 +13,7 @@ class Api::WeatherController < ApplicationController
     data_source = params[:data_source] || 'openmeteo'
 
     if location.blank?
-      render json: { error: 'Location is required' }, status: :bad_request
+      render json: { error: I18n.t('api.errors.common.location_required') }, status: :bad_request
       return
     end
 
@@ -29,11 +29,11 @@ class Api::WeatherController < ApplicationController
 
       render json: JSON.parse(weather_data)
     rescue AgrrService::DaemonNotRunningError
-      render json: { error: 'Weather service is temporarily unavailable' }, status: :service_unavailable
+      render json: { error: I18n.t('api.errors.common.weather_service_unavailable') }, status: :service_unavailable
     rescue AgrrService::CommandExecutionError => e
-      render json: { error: "Weather data fetch failed: #{e.message}" }, status: :internal_server_error
+      render json: { error: I18n.t('api.errors.common.weather_fetch_failed', message: e.message) }, status: :internal_server_error
     rescue JSON::ParserError
-      render json: { error: 'Invalid response from weather service' }, status: :internal_server_error
+      render json: { error: I18n.t('api.errors.common.weather_invalid_response') }, status: :internal_server_error
     end
   end
 
@@ -42,7 +42,7 @@ class Api::WeatherController < ApplicationController
     location = params[:location]
 
     if location.blank?
-      render json: { error: 'Location is required' }, status: :bad_request
+      render json: { error: I18n.t('api.errors.common.location_required') }, status: :bad_request
       return
     end
 
@@ -54,20 +54,20 @@ class Api::WeatherController < ApplicationController
 
       render json: JSON.parse(forecast_data)
     rescue AgrrService::DaemonNotRunningError
-      render json: { error: 'Weather service is temporarily unavailable' }, status: :service_unavailable
+      render json: { error: I18n.t('api.errors.common.weather_service_unavailable') }, status: :service_unavailable
     rescue AgrrService::CommandExecutionError => e
-      render json: { error: "Forecast fetch failed: #{e.message}" }, status: :internal_server_error
+      render json: { error: I18n.t('api.errors.common.forecast_fetch_failed', message: e.message) }, status: :internal_server_error
     rescue JSON::ParserError
-      render json: { error: 'Invalid response from weather service' }, status: :internal_server_error
+      render json: { error: I18n.t('api.errors.common.weather_invalid_response') }, status: :internal_server_error
     end
   end
 
   # GET /api/weather/status
   def status
     if @agrr_service.daemon_running?
-      render json: { status: 'running', message: 'Weather service is available' }
+      render json: { status: 'running', message: I18n.t('api.messages.common.weather_service_available') }
     else
-      render json: { status: 'stopped', message: 'Weather service is not available' }, status: :service_unavailable
+      render json: { status: 'stopped', message: I18n.t('api.messages.common.weather_service_not_available') }, status: :service_unavailable
     end
   end
 

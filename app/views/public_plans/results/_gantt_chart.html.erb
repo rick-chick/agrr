@@ -50,7 +50,15 @@
        data-fields="<%= fields_data.to_json %>"
        data-plan-start-date="<%= plan_start_date.to_s %>"
        data-plan-end-date="<%= plan_end_date.to_s %>"
-       data-cultivation-plan-id="<%= cultivation_plan.id %>">
+       data-cultivation-plan-id="<%= cultivation_plan.id %>"
+       data-api-endpoint-missing="<%= t('js.gantt.api_endpoint_missing') %>"
+       data-data-url-missing="<%= t('js.gantt.data_url_missing') %>"
+       data-adjust-url-missing="<%= t('js.gantt.adjust_url_missing') %>"
+       data-prompt-field-name="<%= t('js.gantt.prompt_field_name') %>"
+       data-prompt-field-area="<%= t('js.gantt.prompt_field_area') %>"
+       data-adding-field="<%= t('js.gantt.adding_field') %>"
+       data-deleting-field="<%= t('js.gantt.deleting_field') %>"
+       data-error-occurred="<%= t('js.gantt.error_occurred') %>">
   </div>
   
   <!-- Google AdSense 広告 -->

@@ -28,7 +28,7 @@ class Api::V1::Crops::CropApiController < Api::V1::BaseController
         def create
           is_reference = ActiveModel::Type::Boolean.new.cast(crop_params['is_reference'])
           if is_reference && !current_user.admin?
-            return render json: { error: "Only admin can create reference crops" }, status: :forbidden
+            return render json: { error: I18n.t('api.errors.crops.reference_only_admin') }, status: :forbidden
           end
 
           user_id = is_reference ? nil : current_user.id
@@ -45,7 +45,7 @@ class Api::V1::Crops::CropApiController < Api::V1::BaseController
         # PUT /api/v1/crops/:id
         def update
           if crop_params.key?('is_reference') && !current_user.admin?
-            return render json: { error: "Only admin can change reference flag" }, status: :forbidden
+            return render json: { error: I18n.t('api.errors.crops.reference_flag_admin_only') }, status: :forbidden
           end
 
           result = @update_interactor.call(params[:id], crop_params.to_h.symbolize_keys)

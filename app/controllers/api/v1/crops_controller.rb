@@ -17,7 +17,7 @@ module Api
         variety = params[:variety]&.strip
 
         unless crop_name.present?
-          return render json: { error: '作物名を入力してください' }, status: :bad_request
+          return render json: { error: I18n.t('api.errors.crops.name_required') }, status: :bad_request
         end
 
         begin
@@ -38,7 +38,7 @@ module Api
 
           # エラーチェック（エラー時は success: false が返る）
           if crop_info['success'] == false
-            error_msg = crop_info['error'] || '作物情報の取得に失敗しました'
+            error_msg = crop_info['error'] || I18n.t('api.errors.crops.fetch_failed')
             return render json: { error: error_msg }, status: :unprocessable_entity
           end
 
@@ -47,7 +47,7 @@ module Api
           stage_requirements = crop_info['stage_requirements']
           
           unless crop_data
-            return render json: { error: '作物情報が不正な形式です' }, status: :unprocessable_entity
+            return render json: { error: I18n.t('api.errors.crops.invalid_payload') }, status: :unprocessable_entity
           end
           
           crop_id = crop_data['crop_id']  # agrrが返すcrop_id
@@ -84,7 +84,7 @@ module Api
               revenue_per_area: existing_crop.revenue_per_area,
               stages_count: stage_requirements&.count || 0,
               is_reference: existing_crop.is_reference,
-              message: "作物「#{existing_crop.name}」を最新情報で更新しました"
+              message: I18n.t('api.messages.crops.updated_with_latest', name: existing_crop.name)
             }, status: :ok
           end
 
@@ -123,7 +123,7 @@ module Api
               area_per_unit: crop_entity.area_per_unit,
               revenue_per_area: crop_entity.revenue_per_area,
               stages_count: stage_requirements&.count || 0,
-              message: "AIで作物「#{crop_entity.name}」の情報を取得して作成しました"
+              message: I18n.t('api.messages.crops.created_by_ai', name: crop_entity.name)
             }, status: :created
           else
             Rails.logger.error "❌ [AI Crop] Failed to create: #{result.error}"
@@ -133,7 +133,7 @@ module Api
         rescue => e
           Rails.logger.error "❌ [AI Crop] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: "作物情報の取得に失敗しました: #{e.message}" }, status: :internal_server_error
+          render json: { error: I18n.t('api.errors.crops.fetch_failed_with_reason', message: e.message) }, status: :internal_server_error
         end
       end
 

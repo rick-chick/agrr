@@ -163,7 +163,7 @@ class Farm < ApplicationRecord
   # 参照農場はアノニマスユーザーに属する必要がある（複数の参照農場を地域ごとに許可）
   def reference_farm_must_belong_to_anonymous_user
     if is_reference && user && !user.anonymous?
-      errors.add(:is_reference, "参照農場はアノニマスユーザーにのみ設定できます")
+      errors.add(:is_reference, :reference_only_anonymous)
     end
   end
 
@@ -176,7 +176,7 @@ class Farm < ApplicationRecord
     current_count = new_record? ? existing_farms_count : existing_farms_count - 1
     
     if current_count >= 4
-      errors.add(:user, "作成できるFarmは4件までです")
+      errors.add(:user, :farm_limit_exceeded)
     end
   end
 

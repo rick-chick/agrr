@@ -22,7 +22,7 @@ class AuthTestController < ApplicationController
     when 'researcher'
       mock_login_as_user(:google_oauth2_researcher)
     else
-      redirect_to root_path(locale: I18n.default_locale), alert: 'Invalid user type.'
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.invalid_user_type')
     end
   end
   
@@ -30,9 +30,9 @@ class AuthTestController < ApplicationController
     if current_user
       current_user.sessions.destroy_all
       cookies.delete(:session_id)
-      redirect_to root_path(locale: I18n.default_locale), notice: 'Mock logout successful!'
+      redirect_to root_path(locale: I18n.default_locale), notice: I18n.t('auth_test.mock_logout_success')
     else
-      redirect_to root_path(locale: I18n.default_locale), alert: 'Not logged in.'
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.not_logged_in')
     end
   end
   
@@ -62,7 +62,7 @@ class AuthTestController < ApplicationController
     
     # Check if user was successfully persisted
     unless user.persisted?
-      redirect_to root_path(locale: I18n.default_locale), alert: "Failed to create user: #{user.errors.full_messages.join(', ')}"
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.create_user_failed', errors: user.errors.full_messages.join(', '))
       return
     end
     
@@ -81,12 +81,12 @@ class AuthTestController < ApplicationController
       redirect_to process_saved_plan_public_plans_path and return
     end
 
-    redirect_to root_path(locale: I18n.default_locale), notice: "Mock login successful as #{user.name}!"
+    redirect_to root_path(locale: I18n.default_locale), notice: I18n.t('auth_test.mock_login_success', name: user.name)
   end
   
   def ensure_development_or_test
     unless Rails.env.development? || Rails.env.test?
-      redirect_to root_path(locale: I18n.default_locale), alert: 'Test endpoints only available in development and test environments.'
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.env_only')
     end
   end
 end
