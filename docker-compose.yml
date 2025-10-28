@@ -32,6 +32,7 @@ services:
       - ASYNC_DAEMON_START=true  # 完全非同期daemon起動（Railsサーバーを即座に起動）
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
       - ENABLE_MEMORY_MONITOR=false  # Disable memory monitoring by default for faster startup
+      - AGRR_USE_MOCK=false  # 開発環境でもモック予測を無効化
       - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds (when enabled)
       - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (when enabled)
     command: bundle exec rails server -b 0.0.0.0

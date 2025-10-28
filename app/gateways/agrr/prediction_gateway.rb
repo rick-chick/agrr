@@ -3,13 +3,26 @@
 module Agrr
   class PredictionGateway < BaseGatewayV2
     def predict(historical_data:, days:, model: 'lightgbm')
-      # 開発環境ではmockを使用
-      if Rails.env.development? && ENV['AGRR_USE_MOCK'] != 'false'
-        Rails.logger.info "🔮 [AGRR] Using MOCK model for development environment"
+      # 環境変数でモデル選択を制御
+      # 優先順位:
+      # 1) ENV['AGRR_PREDICT_MODEL'] があればそれを最優先（例: 'mock', 'lightgbm'）
+      # 2) 開発環境では、ENV['AGRR_USE_MOCK'] が 'false' でなければ 'mock' を既定にする（後方互換）
+      # 3) それ以外は引数の model を使用
+      env_model = ENV['AGRR_PREDICT_MODEL']&.strip&.downcase
+      effective_model = if env_model.present?
+        env_model
+      elsif Rails.env.development?
+        (ENV['AGRR_USE_MOCK'] == 'false') ? model : 'mock'
+      else
+        model
+      end
+
+      if effective_model == 'mock'
+        Rails.logger.info "🔮 [AGRR] Using MOCK model (effective_model=mock)"
         return generate_mock_predictions(historical_data, days)
       end
       
-      Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days using #{model.upcase} model"
+      Rails.logger.info "🔮 [AGRR] Predicting weather for #{days} days using #{effective_model.upcase} model"
       
       # 入力データの検証
       data_count = historical_data.dig('data')&.count || 0
@@ -41,26 +54,26 @@ module Agrr
         # 予測処理は時間がかかるため、タイムアウトを30分に設定
         prediction_timeout = 1800  # 30 minutes
         
-        if model == 'lightgbm'
+        if effective_model == 'lightgbm'
           execute_command(
             'dummy_path', # Not used in V2
             'predict',
             '--input', input_file.path,
             '--output', output_path,
             '--days', days.to_s,
-            '--model', model,
+            '--model', effective_model,
             '--metrics', 'temperature,temperature_max,temperature_min',
             parse_json: false,
             timeout: prediction_timeout
           )
-        elsif model == 'mock'
+        elsif effective_model == 'mock'
           execute_command(
             'dummy_path', # Not used in V2
             'predict',
             '--input', input_file.path,
             '--output', output_path,
             '--days', days.to_s,
-            '--model', model,
+            '--model', effective_model,
             parse_json: false,
             timeout: prediction_timeout
           )
@@ -71,7 +84,7 @@ module Agrr
             '--input', input_file.path,
             '--output', output_path,
             '--days', days.to_s,
-            '--model', model,
+            '--model', effective_model,
             parse_json: false,
             timeout: prediction_timeout
           )

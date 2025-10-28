@@ -40,7 +40,9 @@
   </style>
 </head>
 <body class="auth-body" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
-  <%= render 'shared/navbar' %>
+  
+  <%= render "shared/navbar" %>
+  
   <%= yield %>
   
   <%= yield :javascripts %>
