@@ -32,14 +32,14 @@ function initCropPaletteStyle() {
   applyCropCardColors();
 }
 
-// 複数のタイミングで初期化を試行
+// 複数のタイミングで初期化を試行（重複を避けるためturbo:frame-renderのみ使用）
 document.addEventListener('DOMContentLoaded', () => {
   initCropPaletteStyle();
 });
 
-// Turbo対応
+// Turbo対応（重複を避けるためturbo:frame-renderのみ使用）
 if (typeof Turbo !== 'undefined') {
-  document.addEventListener('turbo:load', () => {
+  document.addEventListener('turbo:frame-render', () => {
     initCropPaletteStyle();
   });
 }

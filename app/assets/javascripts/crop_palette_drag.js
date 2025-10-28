@@ -187,15 +187,15 @@ function tryInitialize() {
   }
 }
 
-// 複数のタイミングで初期化を試行
+// 複数のタイミングで初期化を試行（重複を避けるためturbo:frame-renderのみ使用）
 document.addEventListener('DOMContentLoaded', () => {
   tryInitialize();
 });
 
-// Turbo対応
+// Turbo対応（重複を避けるためturbo:frame-renderのみ使用）
 if (typeof Turbo !== 'undefined') {
-  document.addEventListener('turbo:load', () => {
-    console.log('🔄 [CropPalette] turbo:load イベント検出');
+  document.addEventListener('turbo:frame-render', () => {
+    console.log('🔄 [CropPalette] turbo:frame-render イベント検出');
     // Turboでページ遷移した場合は初期化フラグをリセット
     window.cropPaletteInitialized = false;
     tryInitialize();

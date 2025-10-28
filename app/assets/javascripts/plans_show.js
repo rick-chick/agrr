@@ -91,13 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initializePlansShow();
 });
 
-// Turboによるページ遷移（turbo:loadとturbo:render両方に対応）
-document.addEventListener('turbo:load', () => {
-  console.log('🔍 [Plans Show] turbo:load event detected');
-  initializePlansShow();
-});
-document.addEventListener('turbo:render', () => {
-  console.log('🔍 [Plans Show] turbo:render event detected');
+// Turboによるページ遷移（重複を避けるためturbo:frame-renderのみ使用）
+document.addEventListener('turbo:frame-render', () => {
+  console.log('🔍 [Plans Show] turbo:frame-render event detected');
   initializePlansShow();
 });
 
