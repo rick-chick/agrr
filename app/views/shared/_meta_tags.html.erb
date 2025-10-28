@@ -7,10 +7,15 @@
 
 <!-- Language and Locale -->
 <meta name="language" content="<%= I18n.locale %>">
-<link rel="alternate" hreflang="ja" href="<%= url_for(locale: :ja, only_path: false) %>">
-<link rel="alternate" hreflang="us" href="<%= url_for(locale: :us, only_path: false) %>">
-<link rel="alternate" hreflang="in" href="<%= url_for(locale: :in, only_path: false) %>">
-<link rel="alternate" hreflang="x-default" href="<%= url_for(locale: :ja, only_path: false) %>">
+<% if Rails.env.production? %>
+  <link rel="alternate" hreflang="ja" href="<%= url_for(locale: :ja, only_path: false) %>">
+  <link rel="alternate" hreflang="x-default" href="<%= url_for(locale: :ja, only_path: false) %>">
+<% else %>
+  <link rel="alternate" hreflang="ja" href="<%= url_for(locale: :ja, only_path: false) %>">
+  <link rel="alternate" hreflang="us" href="<%= url_for(locale: :us, only_path: false) %>">
+  <link rel="alternate" hreflang="in" href="<%= url_for(locale: :in, only_path: false) %>">
+  <link rel="alternate" hreflang="x-default" href="<%= url_for(locale: :ja, only_path: false) %>">
+<% end %>
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -18,11 +23,15 @@
 <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : t('meta.default.title') %>">
 <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : t('meta.default.og_description') %>">
 <meta property="og:site_name" content="AGRR">
-<meta property="og:locale" content="<%= case I18n.locale.to_s
+<meta property="og:locale" content="<%= if Rails.env.production?
+  'ja_JP'
+else
+  case I18n.locale.to_s
   when 'ja' then 'ja_JP'
   when 'us' then 'en_US'
   when 'in' then 'hi_IN'
   else 'ja_JP'
+  end
 end %>">
 
 <!-- Twitter -->
