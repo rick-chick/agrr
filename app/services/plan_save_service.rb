@@ -20,7 +20,7 @@ class PlanSaveService
     ActiveRecord::Base.transaction do
       # 1. マスタデータの作成・取得
       farm = create_or_get_user_farm
-      crops = create_or_get_user_crops
+      crops = create_user_crops_from_plan
       fields = create_user_fields(farm)
       interaction_rules = create_interaction_rules(crops)
       
@@ -81,16 +81,23 @@ class PlanSaveService
     raise e
   end
   
-  def create_or_get_user_crops
-    crop_ids = @session_data[:crop_ids] || @session_data['crop_ids']
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.crop_ids_extracted', crop_ids: crop_ids)
-    
-    reference_crops = Crop.includes(crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement]).where(id: crop_ids)
+  def create_user_crops_from_plan
+    # 仕様: セッションにはplan_idのみを持たせる。crop_idsは参照計画から常に導出する。
+    plan_id = @session_data[:plan_id] || @session_data['plan_id']
+    raise StandardError, 'plan_id is required to derive crops' unless plan_id
+
+    reference_plan = CultivationPlan.includes(cultivation_plan_crops: [crop: { crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement] }]).find(plan_id)
+    # 登録順にマッピングするために、参照計画のCultivationPlanCropを順序付きで取得
+    reference_cultivation_plan_crops = reference_plan.cultivation_plan_crops.order(:id).to_a
+    reference_crops = reference_cultivation_plan_crops.map(&:crop).compact
     Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_crops_found', count: reference_crops.count)
     
     user_crops = []
+    # 参照CPC(ID) -> ユーザーCrop(ID) のマッピング（登録順ベース）
+    @ref_cpc_id_to_user_crop_id = {}
     
-    reference_crops.each do |reference_crop|
+    reference_cultivation_plan_crops.each do |reference_cpc|
+      reference_crop = reference_cpc.crop
       # 新しい作物を作成（名前重複は許容）
       new_crop = @user.crops.build(
         name: reference_crop.name,
@@ -112,6 +119,7 @@ class PlanSaveService
       copy_crop_stages(reference_crop, new_crop)
       
       user_crops << new_crop
+      @ref_cpc_id_to_user_crop_id[reference_cpc.id] = new_crop.id
       Rails.logger.info I18n.t('services.plan_save_service.messages.crop_created', crop_name: new_crop.name)
     end
     
@@ -281,83 +289,64 @@ class PlanSaveService
       field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop]
     ).find(plan_id)
     
-    # CultivationPlanFieldをコピー（バルクインサート）
-    field_data = reference_plan.cultivation_plan_fields.map do |reference_field|
-      {
-        cultivation_plan_id: new_plan.id,
+    # 新規作成したユーザー作物のマップを作成（名前でマッピング）
+    user_crops_map = @user.crops.index_by(&:name)
+    
+    # 1. CultivationPlanFieldを新規作成
+    new_fields = reference_plan.cultivation_plan_fields.map do |reference_field|
+      CultivationPlanField.create!(
+        cultivation_plan: new_plan,
         name: reference_field.name,
         area: reference_field.area,
         daily_fixed_cost: reference_field.daily_fixed_cost,
-        description: reference_field.description,
-        created_at: Time.current,
-        updated_at: Time.current
-      }
+        description: reference_field.description
+      )
     end
-    CultivationPlanField.insert_all(field_data) if field_data.any?
     
-    Rails.logger.info I18n.t('services.plan_save_service.debug.plan_relations_copied', 
-                            fields: field_data.count, 
-                            crops: 0, 
-                            cultivations: 0)
-    
-    # CultivationPlanCropをコピー（名前重複は許容）
-    crop_plan_data = []
-    
-    reference_plan.cultivation_plan_crops.each do |reference_crop_plan|
-      crop = @user.crops.find_by(name: reference_crop_plan.crop.name)
-      next unless crop
+    # 2. CultivationPlanCropを新規作成（登録順マッピングを使用）
+    new_crops = reference_plan.cultivation_plan_crops.order(:id).map do |reference_crop_plan|
+      user_crop_id = @ref_cpc_id_to_user_crop_id[reference_crop_plan.id]
+      next unless user_crop_id
       
-      # 仕様に従い、名前重複は許容する（重複制御を削除）
-      crop_plan_data << {
-        cultivation_plan_id: new_plan.id,
-        crop_id: crop.id,
+      CultivationPlanCrop.create!(
+        cultivation_plan: new_plan,
+        crop_id: user_crop_id,
         name: reference_crop_plan.name,
         variety: reference_crop_plan.variety,
         area_per_unit: reference_crop_plan.area_per_unit,
-        revenue_per_area: reference_crop_plan.revenue_per_area,
-        created_at: Time.current,
-        updated_at: Time.current
-      }
-    end
-    CultivationPlanCrop.insert_all(crop_plan_data) if crop_plan_data.any?
+        revenue_per_area: reference_crop_plan.revenue_per_area
+      )
+    end.compact
     
-    # 作成したCultivationPlanFieldとCultivationPlanCropを再読み込み（名前でマップを作成）
-    new_plan.cultivation_plan_fields.reload
-    new_plan.cultivation_plan_crops.reload
-    
-    field_map = new_plan.cultivation_plan_fields.index_by(&:name)
-    crop_map = new_plan.cultivation_plan_crops.index_by(&:name)
-    
-    # FieldCultivationをコピー（バルクインサート）
-    field_cultivation_data = []
+    # 3. FieldCultivationを新規作成（直接参照）
+    field_cultivation_count = 0
     reference_plan.field_cultivations.each do |reference_field_cultivation|
-      plan_field = field_map[reference_field_cultivation.cultivation_plan_field.name]
-      next unless plan_field
+      # 名前でマッチング
+      new_field = new_fields.find { |f| f.name == reference_field_cultivation.cultivation_plan_field.name }
+      # 作物は登録順マッピングを使用
+      mapped_user_crop_id = @ref_cpc_id_to_user_crop_id[reference_field_cultivation.cultivation_plan_crop_id]
+      new_crop = new_crops.find { |c| c.crop_id == mapped_user_crop_id }
+      next unless new_field && new_crop
       
-      plan_crop = crop_map[reference_field_cultivation.cultivation_plan_crop.name]
-      next unless plan_crop
-      
-      field_cultivation_data << {
-        cultivation_plan_id: new_plan.id,
-        cultivation_plan_field_id: plan_field.id,
-        cultivation_plan_crop_id: plan_crop.id,
+      FieldCultivation.create!(
+        cultivation_plan: new_plan,
+        cultivation_plan_field: new_field,
+        cultivation_plan_crop: new_crop,
         area: reference_field_cultivation.area,
         start_date: reference_field_cultivation.start_date,
         completion_date: reference_field_cultivation.completion_date,
         cultivation_days: reference_field_cultivation.cultivation_days,
         estimated_cost: reference_field_cultivation.estimated_cost,
         status: reference_field_cultivation.status,
-        optimization_result: reference_field_cultivation.optimization_result,
-        created_at: Time.current,
-        updated_at: Time.current
-      }
+        optimization_result: reference_field_cultivation.optimization_result
+      )
+      field_cultivation_count += 1
     end
-    FieldCultivation.insert_all(field_cultivation_data) if field_cultivation_data.any?
     
     Rails.logger.info I18n.t('services.plan_save_service.debug.plan_relations_copied', 
-                            fields: field_data.count, 
-                            crops: crop_plan_data.count, 
-                            cultivations: field_cultivation_data.count)
+                            fields: new_fields.count, 
+                            crops: new_crops.count, 
+                            cultivations: field_cultivation_count)
   rescue => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.plan_relations_copy_failed', errors: e.message)
     raise e

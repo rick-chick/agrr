@@ -93,7 +93,6 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     session_data = {
       plan_id: plan.id,
       farm_id: @farm.id,
-      crop_ids: @crops.map(&:id),
       field_data: [
         { name: '重複許容テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
         { name: '重複許容テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
@@ -169,7 +168,6 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     session_data = {
       plan_id: plan.id,
       farm_id: @farm.id,
-      crop_ids: different_crops.map(&:id),
       field_data: [
         { name: '複数作物テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
         { name: '複数作物テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
@@ -239,7 +237,6 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     session_data = {
       plan_id: plan.id,
       farm_id: @farm.id,
-      crop_ids: [same_crop.id, same_crop.id],
       field_data: [
         { name: '品種保持テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] }
       ]
@@ -264,6 +261,86 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     created_crops = new_plan.cultivation_plan_crops.order(:created_at)
     assert_equal '品種A', created_crops[0].variety, "First variety should be preserved"
     assert_equal '品種B', created_crops[1].variety, "Second variety should be preserved"
+  end
+
+  test "maps crops by registration order and links field cultivations correctly" do
+    # 参照作物A/B
+    crop_a = Crop.create!(user: nil, name: '参照作物A', variety: 'A1', is_reference: true, area_per_unit: 0.2, revenue_per_area: 4000.0, region: 'jp')
+    crop_b = Crop.create!(user: nil, name: '参照作物B', variety: 'B1', is_reference: true, area_per_unit: 0.3, revenue_per_area: 6000.0, region: 'jp')
+
+    # 参照計画
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '順序マッピング検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # 参照CPC（登録順: A -> B）
+    cpc_a = CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_a, name: crop_a.name, variety: crop_a.variety, area_per_unit: crop_a.area_per_unit, revenue_per_area: crop_a.revenue_per_area)
+    cpc_b = CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_b, name: crop_b.name, variety: crop_b.variety, area_per_unit: crop_b.area_per_unit, revenue_per_area: crop_b.revenue_per_area)
+
+    # 参照フィールド
+    field1 = CultivationPlanField.create!(cultivation_plan: plan, name: 'F1', area: 150, daily_fixed_cost: 10)
+    field2 = CultivationPlanField.create!(cultivation_plan: plan, name: 'F2', area: 150, daily_fixed_cost: 10)
+
+    # 参照FieldCultivation（A: 面積10, B: 面積20）
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: field1,
+      cultivation_plan_crop: cpc_a,
+      area: 10,
+      start_date: Date.current,
+      completion_date: Date.current + 10,
+      cultivation_days: 11,
+      estimated_cost: 1000,
+      status: 'completed'
+    )
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: field2,
+      cultivation_plan_crop: cpc_b,
+      area: 20,
+      start_date: Date.current + 1,
+      completion_date: Date.current + 12,
+      cultivation_days: 12,
+      estimated_cost: 2000,
+      status: 'completed'
+    )
+
+    # セッションデータ（plan_idのみ）
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: 'F1', area: 150.0, coordinates: [35.0, 139.0] },
+        { name: 'F2', area: 150.0, coordinates: [35.1, 139.1] }
+      ]
+    }
+
+    # 実行
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    new_plan = @user.cultivation_plans.where(plan_type: 'private').order(:created_at).last
+    assert_not_nil new_plan
+
+    # 新規CPCの作成順が参照CPCの順（A->B）に対応していること
+    new_cpcs = new_plan.cultivation_plan_crops.order(:id)
+    assert_equal ['参照作物A', '参照作物B'], new_cpcs.map(&:name)
+    # 各CPCがユーザー作物を参照していること
+    assert new_cpcs.all? { |cpc| cpc.crop.user_id == @user.id }
+
+    # FieldCultivationが対応する新規CPCに紐付くこと（作物名で検証）
+    fc_a = new_plan.field_cultivations.find { |fc| fc.cultivation_plan_crop.name == '参照作物A' }
+    fc_b = new_plan.field_cultivations.find { |fc| fc.cultivation_plan_crop.name == '参照作物B' }
+    assert_not_nil fc_a
+    assert_not_nil fc_b
   end
 
   test "should prevent farm creation when user has reached farm limit" do
