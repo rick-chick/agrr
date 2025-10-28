@@ -2028,30 +2028,9 @@ function addField() {
   });
 }
 
-function getFieldCultivationIds(field_id) {
-  console.log('🔍 [getFieldCultivationIds] field_id:', field_id);
-  console.log('🔍 [getFieldCultivationIds] window.ganttState.fieldGroups:', window.ganttState.fieldGroups);
-  
-  const fieldGroup = window.ganttState.fieldGroups.find(g => g.fieldId === field_id);
-  console.log('🔍 [getFieldCultivationIds] found fieldGroup:', fieldGroup);
-  
-  if (!fieldGroup || !fieldGroup.cultivations) {
-    console.log('⚠️ [getFieldCultivationIds] No fieldGroup or cultivations found');
-    return [];
-  }
-  
-  const cultivationIds = fieldGroup.cultivations.map(c => c.id).filter(id => id != null);
-  console.log('🔍 [getFieldCultivationIds] cultivationIds:', cultivationIds);
-  
-  return cultivationIds;
-}
-
 // 圃場を削除
 function removeField(field_id) {
-  // field_idを"field_123"形式に統一
-  const normalizedFieldId = window.normalizeFieldId(field_id);
-  
-  console.log('🗑️ 圃場を削除:', normalizedFieldId);
+  console.log('🗑️ 圃場を削除:', field_id);
   
   // 再最適化中は操作を受け付けない
   if (window.reoptimizationInProgress) {
@@ -2076,20 +2055,14 @@ function removeField(field_id) {
   }
   
   // 圃場IDをURLに置換
-  const url = baseUrl.replace('PLACEHOLDER', normalizedFieldId);
+  const url = baseUrl.replace('PLACEHOLDER', field_id);
   
-  const fieldCultivationIds = getFieldCultivationIds(field_id);
-  console.log('🔍 [removeField] fieldCultivationIds:', fieldCultivationIds);
-
   fetch(url, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-    },
-    body: JSON.stringify({
-      field_cultivation_ids: fieldCultivationIds
-    })
+    }
   })
   .then(response => response.json())
   .then(data => {

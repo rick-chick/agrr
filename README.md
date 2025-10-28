@@ -26,10 +26,16 @@ docker compose run --rm test
 ### デプロイ
 
 ```bash
+# Production環境
 ./scripts/gcp-deploy.sh
+
+# Test環境（独立した環境）
+./scripts/gcp-deploy-test.sh deploy
 ```
 
-詳細: [docs/operations/DEPLOYMENT_GUIDE.md](docs/operations/DEPLOYMENT_GUIDE.md)
+詳細:
+- Production: [docs/operations/DEPLOYMENT_GUIDE.md](docs/operations/DEPLOYMENT_GUIDE.md)
+- Test環境: [docs/GCP_TEST_ENVIRONMENT.md](docs/GCP_TEST_ENVIRONMENT.md) ⭐ New!
 
 ---
 

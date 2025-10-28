@@ -1,0 +1,28 @@
+# Litestream configuration for Cloud Storage replication (Test Environment)
+# Separate databases for primary, queue, and cache for better performance
+dbs:
+  # Main application database
+  - path: /tmp/test.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET}
+        path: test.sqlite3
+        sync-interval: 10s
+  
+  # Solid Queue database
+  - path: /tmp/test_queue.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET}
+        path: test_queue.sqlite3
+        sync-interval: 10s
+  
+  # Solid Cache database (optional backup - cache can be recreated)
+  - path: /tmp/test_cache.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET}
+        path: test_cache.sqlite3
+        sync-interval: 30s
+
+
