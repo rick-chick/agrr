@@ -6,40 +6,22 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
-  <!-- Bundled JavaScript and CSS (includes Leaflet) -->
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
-  
-  <!-- i18n Helper (共通i18nユーティリティ) -->
-  <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
-  
-  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
-  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
-  
-  <!-- Notification & Dialog System (共通UI) -->
-  <%= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
-  
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
   <!-- Components -->
-  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-  <!-- Feature-specific styles -->
-  <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
+  <!-- Auth-specific styles -->
   <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" %>
   
   <style>
-    /* Layout-specific adjustments using design tokens */
+    /* Auth layout adjustments with navbar */
     body {
       padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
     }
   </style>
 </head>
-<body class="auth-body" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
+<body class="auth-body" data-shared-navbar-brand="<%= t('shared.navbar.brand') %>" data-shared-navbar-plans="<%= t('shared.navbar.plans') %>" data-shared-navbar-farms="<%= t('shared.navbar.farms') %>" data-shared-navbar-crops="<%= t('shared.navbar.crops') %>" data-shared-navbar-interaction-rules="<%= t('shared.navbar.interaction_rules') %>" data-shared-navbar-login="<%= t('shared.navbar.login') %>" data-shared-navbar-logout="<%= t('shared.navbar.logout') %>" data-shared-navbar-logout-confirm="<%= t('shared.navbar.logout_confirm') %>">
   
   <%= render "shared/navbar" %>
   
@@ -47,10 +29,6 @@
   
   <%= yield :javascripts %>
   
-  <!-- Development: Client-side logging to server -->
-  <% if Rails.env.development? %>
-    <%= javascript_include_tag "client_logger", "data-turbo-track": "reload", defer: true %>
-  <% end %>
 </body>
 </html>
 
