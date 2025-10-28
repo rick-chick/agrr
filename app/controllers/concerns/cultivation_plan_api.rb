@@ -208,6 +208,17 @@ module CultivationPlanApi
     result = adjust_with_db_weather(@cultivation_plan, moves)
     
     if result[:success]
+      # ActionCable経由で圃場削除を通知
+      channel_class = @cultivation_plan.plan_type == 'private' ? PlansOptimizationChannel : OptimizationChannel
+      channel_class.broadcast_to(
+        @cultivation_plan,
+        {
+          type: 'field_removed',
+          field_id: field_id,
+          total_area: @cultivation_plan.total_area
+        }
+      )
+      
       render json: {
         success: true,
         message: i18n_t('messages.field_removed'),
