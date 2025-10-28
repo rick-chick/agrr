@@ -32,16 +32,21 @@ class AuthController < ApplicationController
       user = User.from_omniauth(auth_hash)
       
       if user.persisted?
-        # Create session
-        session = Session.create_for_user(user)
+        # Create session (avoid shadowing Rails session hash)
+        user_session = Session.create_for_user(user)
         cookies[:session_id] = {
-          value: session.session_id,
-          expires: session.expires_at,
+          value: user_session.session_id,
+          expires: user_session.expires_at,
           httponly: true,
           secure: Rails.env.production?,
           same_site: :strict
         }
-        
+
+        # Continue saved-plan flow if present
+        if session[:public_plan_save_data]
+          redirect_to process_saved_plan_public_plans_path and return
+        end
+
         redirect_to root_path, notice: I18n.t('auth.flash.login_success')
       else
         redirect_to auth_failure_path, alert: I18n.t('auth.flash.create_user_failed')

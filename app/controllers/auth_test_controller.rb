@@ -66,16 +66,21 @@ class AuthTestController < ApplicationController
       return
     end
     
-    # Create session
-    session = Session.create_for_user(user)
+    # Create user session (avoid shadowing Rails session hash)
+    user_session = Session.create_for_user(user)
     cookies[:session_id] = {
-      value: session.session_id,
-      expires: session.expires_at,
+      value: user_session.session_id,
+      expires: user_session.expires_at,
       httponly: true,
       secure: false, # Development only
       same_site: :lax
     }
-    
+
+    # If user came from public_plans save flow, continue that flow
+    if session[:public_plan_save_data]
+      redirect_to process_saved_plan_public_plans_path and return
+    end
+
     redirect_to root_path(locale: I18n.default_locale), notice: "Mock login successful as #{user.name}!"
   end
   
