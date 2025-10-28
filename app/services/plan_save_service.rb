@@ -181,6 +181,7 @@ class PlanSaveService
       # 作物のgroups属性を取得（なければ作物名を使用）
       group1 = crop1.groups&.first || crop1.name
       group2 = crop2.groups&.first || crop2.name
+      region = crop1.region || crop2.region
       
       # 既存の連作ルールがあるかチェック
       existing_rule = @user.interaction_rules.find_by(
@@ -194,13 +195,28 @@ class PlanSaveService
       if existing_rule
         interaction_rules << existing_rule
       else
-        # 新しい連作ルールを作成（デフォルトはneutral）
+        # 参照連作ルールから影響係数をコピー（存在する場合）
+        reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
+        reference_scope = reference_scope.where(region: region) if region.present?
+
+        # 優先: 同方向の参照ルール
+        ref_rule_same = reference_scope.find_by(source_group: group1, target_group: group2)
+
+        # 次点: 双方向（非方向性）の参照ルール（反対方向でも可）
+        ref_rule_bidirectional = reference_scope.where(is_directional: false).find_by(source_group: group2, target_group: group1)
+
+        chosen_ref = ref_rule_same || ref_rule_bidirectional
+
+        impact_ratio = chosen_ref ? chosen_ref.impact_ratio.to_f : 1.0
+        is_directional = chosen_ref ? !!chosen_ref.is_directional : false
+
+        # 新しい連作ルールを作成（参照がなければ中立値）
         new_rule = @user.interaction_rules.create!(
           rule_type: 'continuous_cultivation',
           source_group: group1,
           target_group: group2,
-          impact_ratio: 1.0, # 影響なし（中立）
-          is_directional: false, # 双方向
+          impact_ratio: impact_ratio,
+          is_directional: is_directional,
           description: "#{crop1.name}と#{crop2.name}の連作ルール"
         )
         interaction_rules << new_rule
