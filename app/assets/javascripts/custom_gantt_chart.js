@@ -386,6 +386,21 @@ function handleOptimizationUpdate(data) {
     return;
   }
 
+  // 圃場削除の通知を処理
+  if (data.type === 'field_removed') {
+    console.log('📊 圃場削除の通知を受信:', data.field_id);
+    console.log('📊 受信データ詳細:', JSON.stringify(data, null, 2));
+    
+    // ローディングオーバーレイを非表示
+    hideLoadingOverlay();
+    window.reoptimizationInProgress = false;
+    
+    // データを再取得してチャートを更新
+    console.log('🔄 fetchAndUpdateChart()を呼び出します');
+    fetchAndUpdateChart();
+    return;
+  }
+
   // ステータスが完了の場合
   if (data.status === 'completed' || data.status === 'adjusted' || (data.status === 'optimizing' && data.phase === 'completed')) {
     console.log('✅ 最適化が完了しました。データを更新します。');
