@@ -13,6 +13,11 @@ class AuthController < ApplicationController
   # before_action :check_production_environment
 
   def login
+    # Check if Google OAuth is properly configured
+    unless ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
+      Rails.logger.error "Google OAuth not configured for login attempt"
+      flash[:alert] = I18n.t('auth.flash.oauth_not_configured', default: 'Google OAuth認証が設定されていません。管理者にお問い合わせください。')
+    end
     # Display login page with Google OAuth button
   end
 

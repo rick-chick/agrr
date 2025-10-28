@@ -103,7 +103,11 @@ Rails.application.configure do
     # Production OAuth credentials should be set via environment variables
     # GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured
     unless ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
-      Rails.logger.warn "⚠️  Google OAuth credentials not configured for production"
+      Rails.logger.error "🚨 CRITICAL: Google OAuth credentials not configured for production!"
+      Rails.logger.error "   Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables"
+      Rails.logger.error "   Google OAuth authentication will not work without these credentials"
+    else
+      Rails.logger.info "✅ Google OAuth credentials configured for production"
     end
   end
 end

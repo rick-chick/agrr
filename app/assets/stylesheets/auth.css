@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 80px; /* Account for header */
+  padding-top: 80px; /* Account for navbar */
 }
 
 .login-container {
@@ -102,6 +102,33 @@
   border-radius: 6px;
   margin-bottom: 1rem;
   border: 1px solid #cfc;
+}
+
+/* OAuth Error Display */
+.oauth-error {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.oauth-error-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.oauth-error h3 {
+  color: #856404;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.oauth-error p {
+  color: #856404;
+  margin: 0;
+  font-size: 1rem;
 }
 
 /* Development Mock Login Section */

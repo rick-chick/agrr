@@ -30,14 +30,12 @@ Rails.application.routes.draw do
     # Can be used by uptime monitors and load balancers.
     get "up" => "rails/health#show", as: :rails_health_check
 
-    # Authentication routes (disabled in production)
-    unless Rails.env.production?
-      get '/auth/login', to: 'auth#login', as: 'auth_login'
-      # /auth/google_oauth2 is handled by OmniAuth middleware
-      get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
-      get '/auth/failure', to: 'auth#failure'
-      delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
-    end
+    # Authentication routes
+    get '/auth/login', to: 'auth#login', as: 'auth_login'
+    # Google OAuth routes (automatically handled by OmniAuth middleware)
+    get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
+    get '/auth/failure', to: 'auth#failure'
+    delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
 
     # Farms and Fields routes (nested)
     resources :farms do

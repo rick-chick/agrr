@@ -2,18 +2,25 @@
 
 # OmniAuth configuration for Google OAuth2 (enabled in all environments)
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, 
-    ENV['GOOGLE_CLIENT_ID'], 
-    ENV['GOOGLE_CLIENT_SECRET'],
-    {
-      scope: 'email,profile',
-      prompt: 'select_account',
-      image_aspect_ratio: 'square',
-      image_size: 50,
-      access_type: 'offline',
-      provider_ignores_state: false,
-      skip_jwt: true
-    }
+  # Check if credentials are available
+  if ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
+    provider :google_oauth2, 
+      ENV['GOOGLE_CLIENT_ID'], 
+      ENV['GOOGLE_CLIENT_SECRET'],
+      {
+        scope: 'email,profile',
+        prompt: 'select_account',
+        image_aspect_ratio: 'square',
+        image_size: 50,
+        access_type: 'offline',
+        provider_ignores_state: false,
+        skip_jwt: true
+      }
+  else
+    Rails.logger.error "🚨 OmniAuth: Google OAuth credentials not configured!"
+    Rails.logger.error "   GOOGLE_CLIENT_ID: #{ENV['GOOGLE_CLIENT_ID'].present? ? 'SET' : 'NOT SET'}"
+    Rails.logger.error "   GOOGLE_CLIENT_SECRET: #{ENV['GOOGLE_CLIENT_SECRET'].present? ? 'SET' : 'NOT SET'}"
+  end
 end
 
 # Configure OmniAuth for security
