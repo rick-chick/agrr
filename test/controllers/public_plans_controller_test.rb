@@ -2,6 +2,33 @@
 
 require 'test_helper'
 
+class PublicPlansControllerSessionTest < ActionController::TestCase
+  tests PublicPlansController
+
+  test 'create does not store crop_ids in session' do
+    farm = Farm.reference.first || Farm.create!(user: User.anonymous_user, name: 'Ref Farm', is_reference: true, region: 'jp', latitude: 35.0, longitude: 139.0)
+
+    # Step2: farm_idをセッションに入れる（GETアクションを直接呼び出し）
+    get :select_farm_size, params: { farm_id: farm.id }
+
+    # Step3: 作物選択画面を通過（farm_size_id必須）
+    get :select_crop, params: { farm_size_id: 'home_garden' }
+
+    # Step4: 計画作成（create）
+    crop = Crop.reference.first || Crop.create!(name: 'Ref Crop', is_reference: true, region: 'jp')
+    post :create, params: { crop_ids: [crop.id] }
+
+    public_plan = @request.session[:public_plan]
+    assert public_plan.is_a?(Hash)
+    assert public_plan[:plan_id].present?
+    assert_nil public_plan[:crop_ids]
+  end
+end
+
+# frozen_string_literal: true
+
+require 'test_helper'
+
 class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   setup do
     # アノニマスユーザーを作成

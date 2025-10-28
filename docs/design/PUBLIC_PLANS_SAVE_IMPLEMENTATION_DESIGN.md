@@ -167,7 +167,7 @@ class PlanSaveService
     ActiveRecord::Base.transaction do
       # 1. マスタデータの作成・取得
       farm = create_or_get_user_farm
-      crops = create_or_get_user_crops
+      crops = create_user_crops_from_plan
       fields = create_user_fields(farm)
       interaction_rules = create_interaction_rules(crops)
       
@@ -213,7 +213,7 @@ class PlanSaveService
     )
   end
   
-  def create_or_get_user_crops
+  def create_user_crops_from_plan
     reference_crops = Crop.where(id: @session_data[:crop_ids])
     user_crops = []
     

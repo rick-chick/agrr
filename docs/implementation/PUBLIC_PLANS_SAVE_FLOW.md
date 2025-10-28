@@ -26,7 +26,7 @@ Public Plans Save機能は、ユーザーが公開計画を自分のアカウン
     ↓ [PlanSaveService.new.call]
 [PlanSaveService#call]
     ├─ [create_or_get_user_farm] → UserFarm作成/取得
-    ├─ [create_or_get_user_crops] → UserCrops作成/取得
+    ├─ [create_user_crops_from_plan] → 参照計画からUserCrops新規作成
     ├─ [copy_cultivation_plan] → CultivationPlanコピー
     └─ [copy_plan_relations] → 関連データコピー
     ↓ [成功]
@@ -52,7 +52,7 @@ Public Plans Save機能は、ユーザーが公開計画を自分のアカウン
     ↓ [PlanSaveService.new.call]
 [PlanSaveService#call]
     ├─ [create_or_get_user_farm] → UserFarm作成/取得
-    ├─ [create_or_get_user_crops] → UserCrops作成/取得
+    ├─ [create_user_crops_from_plan] → 参照計画からUserCrops新規作成
     ├─ [copy_cultivation_plan] → CultivationPlanコピー
     └─ [copy_plan_relations] → 関連データコピー
     ↓ [成功]
@@ -200,7 +200,7 @@ def call
   ActiveRecord::Base.transaction do
     # 1. マスタデータの作成・取得
     farm = create_or_get_user_farm
-    crops = create_or_get_user_crops
+    crops = create_user_crops_from_plan
     interaction_rules = create_interaction_rules(crops)
     
     # 2. 計画のコピー
@@ -258,7 +258,7 @@ end
 ##### 4.4 作物の作成・取得
 
 ```ruby
-def create_or_get_user_crops
+def create_user_crops_from_plan
   crop_ids = @session_data[:crop_ids] || @session_data['crop_ids']
   reference_crops = Crop.includes(crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement])
                         .where(id: crop_ids)
