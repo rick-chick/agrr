@@ -45,7 +45,9 @@
     
   </style>
 </head>
-<body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
+<body>
+  <!-- i18n data attributes (hidden) -->
+  <div id="js-i18n" hidden <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>></div>
   <%= render "shared/navbar" %>
 
   <!-- Flash Messages -->
