@@ -445,7 +445,8 @@ function fetchAndUpdateChart() {
   
   if (!url) {
     console.error('❌ data-data-url属性が設定されていません');
-    alert(container?.dataset.apiEndpointMissing || 'APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    const container = document.getElementById('gantt-container');
+    alert(container?.dataset.apiEndpointMissing);
     return;
   }
 
@@ -1184,7 +1185,8 @@ function executeReoptimization() {
   
   if (!url) {
     console.error('❌ data-adjust-url属性が設定されていません');
-    alert(container?.dataset.apiEndpointMissing || 'APIエンドポイントが設定されていません。ページを再読み込みしてください。');
+    const container = document.getElementById('gantt-container');
+    alert(container?.dataset.apiEndpointMissing);
     return;
   }
   
@@ -1944,17 +1946,20 @@ function addField() {
     return;
   }
   
+  // コンテナ要素を取得（i18n用のdata属性にアクセスするため）
+  const container = document.getElementById('gantt-container');
+  
   // ダイアログを表示して圃場名と面積を入力
   const defaultFieldName = `${window.ganttState.fieldGroups.length + 1}`;
   console.log('📝 デフォルト圃場名:', defaultFieldName);
   
-  const fieldName = prompt(container?.dataset.promptFieldName || '圃場名を入力してください（例: 4）', defaultFieldName);
+  const fieldName = prompt(container?.dataset.promptFieldName, defaultFieldName);
   if (!fieldName) {
     console.log('⚠️ 圃場名が入力されなかったためキャンセル');
     return;
   }
   
-  const fieldArea = prompt(container?.dataset.promptFieldArea || '面積（㎡）を入力してください', '100');
+  const fieldArea = prompt(container?.dataset.promptFieldArea, '100');
   if (!fieldArea) {
     console.log('⚠️ 面積が入力されなかったためキャンセル');
     return;
@@ -2031,11 +2036,14 @@ function removeField(field_id) {
     return;
   }
   
+  // コンテナ要素を取得（i18n用のdata属性にアクセスするため）
+  const container = document.getElementById('gantt-container');
+  
   // 圃場削除処理中フラグを設定（競合状態を防ぐ）
   window.reoptimizationInProgress = true;
   
   // ローディング表示（圃場削除は最適化処理ではない）
-  showLoadingOverlay(container?.dataset.deletingField || '圃場を削除中...');
+  showLoadingOverlay(container?.dataset.deletingField);
   
   // data属性からURLを取得
   const ganttContainer = document.getElementById('gantt-chart-container');
