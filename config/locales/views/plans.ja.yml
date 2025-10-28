@@ -117,6 +117,9 @@ ja:
       back_to_list: "← 計画一覧に戻る"
       optimize_button: "最適化"
       copy_plan: "次年度にコピー"
+      confirms:
+        optimize: "この計画を最適化しますか？"
+        copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
       chart_title: "気象データと作物成長分析"
       loading_data: "データを読み込んでいます..."
       

@@ -24,7 +24,7 @@ class CultivationPlanField < ApplicationRecord
   # == Instance Methods ====================================================
   
   def display_name
-    name.presence || "圃場 ##{id}"
+    name.presence || I18n.t('models.cultivation_plan_field.default_name', id: id)
   end
 end
 

@@ -70,6 +70,11 @@ ja:
       created: "作物が正常に作成されました。"
       updated: "作物が正常に更新されました。"
       destroyed: "作物が削除されました。"
+      cannot_delete_in_use:
+        plan: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
+        field: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
+        other: "この作物は他のデータで使用されているため削除できません。"
+      delete_error: "削除中にエラーが発生しました: %{message}"
       reference_only_admin: "参照作物は管理者のみ作成できます。"
       reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
       no_permission: "権限がありません。"

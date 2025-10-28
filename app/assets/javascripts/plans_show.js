@@ -41,7 +41,7 @@ function initializePlansShow() {
     })
     .catch(error => {
       console.error('❌ [Plans Show] Error loading plan data:', error);
-      showError('データの読み込みに失敗しました: ' + error.message);
+      showError(getI18nTemplate('jsPlansLoadErrorWithMessage', 'データの読み込みに失敗しました: %{message}', { message: error.message }));
     });
   
   /**
@@ -68,7 +68,7 @@ function initializePlansShow() {
       console.log('✅ [Plans Show] Gantt chart initialized successfully');
     } else {
       console.error('❌ [Plans Show] initCustomGanttChart is not available. Make sure custom_gantt_chart.js is loaded.');
-      showError('ガントチャート機能が読み込まれていません');
+      showError(getI18nMessage('jsGanttNotLoaded', 'ガントチャート機能が読み込まれていません'));
     }
   }
   
