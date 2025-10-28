@@ -26,16 +26,18 @@
       <% end %>
     <% end %>
     
-    <!-- Language Switcher (All Users) -->
-    <div class="nav-locale-switcher">
-      <% available_locales.each do |locale| %>
-        <% if locale[:code] == I18n.locale.to_s %>
-          <span class="locale-current" title="<%= locale[:name] %>"><%= locale[:flag] %></span>
-        <% else %>
-          <%= link_to locale[:flag], url_for(locale: locale[:code]), class: "locale-link", title: locale[:name] %>
+    <!-- Language Switcher (hidden in production) -->
+    <% unless Rails.env.production? %>
+      <div class="nav-locale-switcher">
+        <% available_locales.each do |locale| %>
+          <% if locale[:code] == I18n.locale.to_s %>
+            <span class="locale-current" title="<%= locale[:name] %>"><%= locale[:flag] %></span>
+          <% else %>
+            <%= link_to locale[:flag], url_for(locale: locale[:code]), class: "locale-link", title: locale[:name] %>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
+      </div>
+    <% end %>
   </div>
 </nav>
 
