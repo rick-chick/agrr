@@ -1,7 +1,7 @@
 in:
   meta:
     default:
-      title: "AGRR - कृषि योजना सहायता प्रणाली"
+      title: "AGRR (Agriculture Resource and Rotation planner) - कृषि योजना सहायता प्रणाली"
       description: "मौसम डेटा और AI का उपयोग करके इष्टतम फसल योजना। मुफ्त खेती योजना बनाएं और स्थायी कृषि का समर्थन करें।"
       keywords: "कृषि, फसल योजना, मौसम डेटा, AI, खेती, भारत"
 

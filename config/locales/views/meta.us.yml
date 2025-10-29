@@ -1,7 +1,7 @@
 us:
   meta:
     default:
-      title: "AGRR - Agricultural Planning Support System"
+      title: "AGRR (Agriculture Resource and Rotation planner) - Agricultural Planning Support System"
       description: "AGRR is an agricultural crop planning support system that leverages weather data and AI. From field management to crop information management and cultivation planning optimization, we help realize sustainable agriculture."
       keywords: "agriculture,crop planning,field management,weather data,AI,agricultural DX,cultivation planning,crop rotation,farming support"
       og_description: "Agricultural crop planning support system powered by weather data and AI"

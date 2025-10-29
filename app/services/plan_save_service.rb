@@ -177,38 +177,32 @@ class PlanSaveService
     # 2つ以上の作物がある場合のみ連作ルールを作成
     return interaction_rules if crops.length < 2
     
+    # 既に処理した組み合わせを記録（重複防止）
+    processed_pairs = Set.new
+    
     crops.combination(2).each do |crop1, crop2|
-      # 作物のgroups属性を取得（なければ作物名を使用）
-      group1 = crop1.groups&.first || crop1.name
-      group2 = crop2.groups&.first || crop2.name
+      # 作物のgroups属性を取得（配列の場合は最初の要素を使用、なければ作物名を使用）
+      group1 = extract_crop_group(crop1)
+      group2 = extract_crop_group(crop2)
       region = crop1.region || crop2.region
       
-      # 既存の連作ルールがあるかチェック
-      existing_rule = @user.interaction_rules.find_by(
-        source_group: group1,
-        target_group: group2
-      ) || @user.interaction_rules.find_by(
-        source_group: group2,
-        target_group: group1
-      )
+      # 組み合わせの正規化（重複防止のため）
+      pair_key = [group1, group2].sort
+      next if processed_pairs.include?(pair_key)
+      processed_pairs.add(pair_key)
+      
+      # 既存の連作ルールがあるかチェック（双方向で検索）
+      existing_rule = find_existing_interaction_rule(group1, group2)
       
       if existing_rule
         interaction_rules << existing_rule
+        Rails.logger.info "✅ [PlanSaveService] Using existing interaction rule: #{group1} ↔ #{group2}"
       else
         # 参照連作ルールから影響係数をコピー（存在する場合）
-        reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
-        reference_scope = reference_scope.where(region: region) if region.present?
-
-        # 優先: 同方向の参照ルール
-        ref_rule_same = reference_scope.find_by(source_group: group1, target_group: group2)
-
-        # 次点: 双方向（非方向性）の参照ルール（反対方向でも可）
-        ref_rule_bidirectional = reference_scope.where(is_directional: false).find_by(source_group: group2, target_group: group1)
-
-        chosen_ref = ref_rule_same || ref_rule_bidirectional
-
-        impact_ratio = chosen_ref ? chosen_ref.impact_ratio.to_f : 1.0
-        is_directional = chosen_ref ? !!chosen_ref.is_directional : false
+        reference_rule = find_reference_interaction_rule(group1, group2, region)
+        
+        impact_ratio = reference_rule ? reference_rule.impact_ratio.to_f : 1.0
+        is_directional = reference_rule ? !!reference_rule.is_directional : false
 
         # 新しい連作ルールを作成（参照がなければ中立値）
         new_rule = @user.interaction_rules.create!(
@@ -221,11 +215,45 @@ class PlanSaveService
         )
         interaction_rules << new_rule
         
-        Rails.logger.info "✅ [PlanSaveService] Created interaction rule: #{group1} ↔ #{group2}"
+        Rails.logger.info "✅ [PlanSaveService] Created interaction rule: #{group1} ↔ #{group2} (impact: #{impact_ratio})"
       end
     end
     
     interaction_rules
+  end
+  
+  def extract_crop_group(crop)
+    # groupsが配列の場合は最初の要素を使用、なければ作物名を使用
+    if crop.groups.is_a?(Array) && crop.groups.any?
+      crop.groups.first
+    else
+      crop.name
+    end
+  end
+  
+  def find_existing_interaction_rule(group1, group2)
+    # 双方向で既存ルールを検索
+    @user.interaction_rules.where(rule_type: 'continuous_cultivation').find_by(
+      source_group: group1,
+      target_group: group2
+    ) || @user.interaction_rules.where(rule_type: 'continuous_cultivation').find_by(
+      source_group: group2,
+      target_group: group1
+    )
+  end
+  
+  def find_reference_interaction_rule(group1, group2, region)
+    # 参照連作ルールから影響係数をコピー（存在する場合）
+    reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
+    reference_scope = reference_scope.where(region: region) if region.present?
+
+    # 優先: 同方向の参照ルール
+    ref_rule_same = reference_scope.find_by(source_group: group1, target_group: group2)
+
+    # 次点: 双方向（非方向性）の参照ルール（反対方向でも可）
+    ref_rule_bidirectional = reference_scope.where(is_directional: false).find_by(source_group: group2, target_group: group1)
+
+    ref_rule_same || ref_rule_bidirectional
   end
   
   def copy_cultivation_plan(farm, crops)
@@ -305,9 +333,6 @@ class PlanSaveService
       field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop]
     ).find(plan_id)
     
-    # 新規作成したユーザー作物のマップを作成（名前でマッピング）
-    user_crops_map = @user.crops.index_by(&:name)
-    
     # 1. CultivationPlanFieldを新規作成
     new_fields = reference_plan.cultivation_plan_fields.map do |reference_field|
       CultivationPlanField.create!(
@@ -320,11 +345,12 @@ class PlanSaveService
     end
     
     # 2. CultivationPlanCropを新規作成（登録順マッピングを使用）
-    new_crops = reference_plan.cultivation_plan_crops.order(:id).map do |reference_crop_plan|
+    new_crops = []
+    reference_plan.cultivation_plan_crops.order(:id).each do |reference_crop_plan|
       user_crop_id = @ref_cpc_id_to_user_crop_id[reference_crop_plan.id]
       next unless user_crop_id
       
-      CultivationPlanCrop.create!(
+      new_crop = CultivationPlanCrop.create!(
         cultivation_plan: new_plan,
         crop_id: user_crop_id,
         name: reference_crop_plan.name,
@@ -332,17 +358,25 @@ class PlanSaveService
         area_per_unit: reference_crop_plan.area_per_unit,
         revenue_per_area: reference_crop_plan.revenue_per_area
       )
-    end.compact
+      new_crops << new_crop
+      
+      Rails.logger.debug "✅ [PlanSaveService] Created CultivationPlanCrop: #{new_crop.name} (variety: #{new_crop.variety})"
+    end
     
-    # 3. FieldCultivationを新規作成（直接参照）
+    # 3. FieldCultivationを新規作成（IDマッピングを使用）
     field_cultivation_count = 0
     reference_plan.field_cultivations.each do |reference_field_cultivation|
-      # 名前でマッチング
+      # 圃場は名前でマッチング
       new_field = new_fields.find { |f| f.name == reference_field_cultivation.cultivation_plan_field.name }
+      
       # 作物は登録順マッピングを使用
       mapped_user_crop_id = @ref_cpc_id_to_user_crop_id[reference_field_cultivation.cultivation_plan_crop_id]
       new_crop = new_crops.find { |c| c.crop_id == mapped_user_crop_id }
-      next unless new_field && new_crop
+      
+      unless new_field && new_crop
+        Rails.logger.warn "⚠️ [PlanSaveService] Skipping FieldCultivation: field=#{new_field&.name}, crop=#{new_crop&.name}"
+        next
+      end
       
       FieldCultivation.create!(
         cultivation_plan: new_plan,
@@ -357,6 +391,8 @@ class PlanSaveService
         optimization_result: reference_field_cultivation.optimization_result
       )
       field_cultivation_count += 1
+      
+      Rails.logger.debug "✅ [PlanSaveService] Created FieldCultivation: #{new_field.name} + #{new_crop.name}"
     end
     
     Rails.logger.info I18n.t('services.plan_save_service.debug.plan_relations_copied', 
