@@ -81,8 +81,8 @@ class AuthController < ApplicationController
       # Destroy all sessions for the user
       current_user.sessions.destroy_all
       
-      # Clear session cookie
-      cookies.delete(:session_id)
+      # Clear session cookie (ensure deletion in production as well)
+      clear_session_cookie
       
       redirect_to auth_login_path, notice: I18n.t('auth.flash.logout_success')
     else
@@ -91,6 +91,30 @@ class AuthController < ApplicationController
   end
 
   private
+  
+  # Delete session cookie robustly across environments and domains
+  def clear_session_cookie
+    # Default deletion (matches cookies set without domain/path)
+    cookies.delete(:session_id)
+    
+    # Ensure deletion when a domain/path is involved (some proxies/CDNs alter host)
+    begin
+      cookie_domain = request.cookie_domain.presence
+    rescue NoMethodError
+      cookie_domain = nil
+    end
+    
+    # Try explicit path root
+    cookies.delete(:session_id, path: '/')
+    
+    # Try with current host domain if available
+    if cookie_domain
+      cookies.delete(:session_id, domain: cookie_domain, path: '/')
+    end
+    
+    # Also try wildcard domain deletion for subdomain cookies
+    cookies.delete(:session_id, domain: :all, path: '/')
+  end
   
   def check_production_environment
     if Rails.env.production?
