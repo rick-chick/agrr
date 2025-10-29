@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # OmniAuth test mode configuration for development and test
-if Rails.env.development? || Rails.env.test?
-  # Enable OmniAuth test mode
+if Rails.env.test?
+  # Enable OmniAuth test mode only for test environment
   OmniAuth.config.test_mode = true
   
   # Mock Google OAuth responses for development

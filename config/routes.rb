@@ -32,7 +32,7 @@ Rails.application.routes.draw do
 
     # Authentication routes
     get '/auth/login', to: 'auth#login', as: 'auth_login'
-    # Google OAuth routes (automatically handled by OmniAuth middleware)
+    # Google OAuth routes (OmniAuth middleware handles /auth/google_oauth2)
     get '/auth/google_oauth2/callback', to: 'auth#google_oauth2_callback'
     get '/auth/failure', to: 'auth#failure'
     delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'

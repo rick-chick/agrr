@@ -44,6 +44,7 @@ module Agrr
       end
     end
 
+
     # Propshaft configuration (Rails 8 default asset pipeline)
     config.assets.enabled = true
     config.assets.version = '1.0'
