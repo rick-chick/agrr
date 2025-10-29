@@ -218,9 +218,9 @@ function cleanupGanttChart() {
   if (typeof Turbo !== 'undefined') {
     console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
     
-    // Frameレンダリング後に初期化（重複を避けるためこれのみ使用）
-    document.addEventListener('turbo:frame-render', () => {
-      console.log('🔄 [Gantt Chart] turbo:frame-render イベント検出');
+    // Turbo Driveによるページ遷移時に初期化（全てのケースで確実に発火）
+    document.addEventListener('turbo:load', () => {
+      console.log('🔄 [Gantt Chart] turbo:load イベント検出');
       triggerInit();
     });
     
