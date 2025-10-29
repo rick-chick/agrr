@@ -460,6 +460,18 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       region: 'jp'
     )
     
+    # 参照連作ルールを作成（参照ルールがない場合はルールが作成されないため）
+    InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: crop_a.name,
+      target_group: crop_b.name,
+      impact_ratio: 0.8,
+      is_directional: true,
+      is_reference: true,
+      user: nil,
+      region: 'jp'
+    )
+    
     # 参照計画を作成
     plan = CultivationPlan.create!(
       farm: @farm,

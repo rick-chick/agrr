@@ -191,31 +191,34 @@ class PlanSaveService
       next if processed_pairs.include?(pair_key)
       processed_pairs.add(pair_key)
       
-      # 既存の連作ルールがあるかチェック（双方向で検索）
-      existing_rule = find_existing_interaction_rule(group1, group2)
+      # 既存のユーザールールがあるかチェック（存在する場合はそれを使う）
+      existing_rule = find_existing_interaction_rule(group1, group2, region)
       
       if existing_rule
         interaction_rules << existing_rule
-        Rails.logger.info "✅ [PlanSaveService] Using existing interaction rule: #{group1} ↔ #{group2}"
+        Rails.logger.info "✅ [PlanSaveService] Using existing user interaction rule: #{group1} ↔ #{group2} (region: #{region})"
       else
-        # 参照連作ルールから影響係数をコピー（存在する場合）
+        # 既存のユーザールールがない場合のみ、参照ルールからコピーしてユーザールールを作成
         reference_rule = find_reference_interaction_rule(group1, group2, region)
         
-        impact_ratio = reference_rule ? reference_rule.impact_ratio.to_f : 1.0
-        is_directional = reference_rule ? !!reference_rule.is_directional : false
-
-        # 新しい連作ルールを作成（参照がなければ中立値）
-        new_rule = @user.interaction_rules.create!(
-          rule_type: 'continuous_cultivation',
-          source_group: group1,
-          target_group: group2,
-          impact_ratio: impact_ratio,
-          is_directional: is_directional,
-          description: "#{crop1.name}と#{crop2.name}の連作ルール"
-        )
-        interaction_rules << new_rule
-        
-        Rails.logger.info "✅ [PlanSaveService] Created interaction rule: #{group1} ↔ #{group2} (impact: #{impact_ratio})"
+        if reference_rule
+          # 参照ルールをコピーしてユーザールールを作成
+          new_rule = @user.interaction_rules.create!(
+            rule_type: reference_rule.rule_type,
+            source_group: reference_rule.source_group,
+            target_group: reference_rule.target_group,
+            impact_ratio: reference_rule.impact_ratio.to_f,
+            is_directional: !!reference_rule.is_directional,
+            region: region,
+            description: reference_rule.description || "#{crop1.name}と#{crop2.name}の連作ルール"
+          )
+          interaction_rules << new_rule
+          
+          Rails.logger.info "✅ [PlanSaveService] Created interaction rule from reference: #{group1} ↔ #{group2} (impact: #{reference_rule.impact_ratio})"
+        else
+          # 参照ルールがない場合はスキップ（ルールを作成しない）
+          Rails.logger.debug "⏭️ [PlanSaveService] Skipping interaction rule creation: #{group1} ↔ #{group2} (no reference rule found, region: #{region})"
+        end
       end
     end
     
@@ -231,12 +234,16 @@ class PlanSaveService
     end
   end
   
-  def find_existing_interaction_rule(group1, group2)
-    # 双方向で既存ルールを検索
-    @user.interaction_rules.where(rule_type: 'continuous_cultivation').find_by(
+  def find_existing_interaction_rule(group1, group2, region)
+    # 双方向で既存ユーザールールを検索（ユーザー所有、リージョンでフィルタリング）
+    # is_reference: false を明示してユーザールールのみを検索
+    user_scope = @user.interaction_rules.where(rule_type: 'continuous_cultivation', is_reference: false)
+    user_scope = user_scope.where(region: region) if region.present?
+    
+    user_scope.find_by(
       source_group: group1,
       target_group: group2
-    ) || @user.interaction_rules.where(rule_type: 'continuous_cultivation').find_by(
+    ) || user_scope.find_by(
       source_group: group2,
       target_group: group1
     )
