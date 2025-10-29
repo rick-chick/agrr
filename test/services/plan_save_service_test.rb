@@ -438,4 +438,88 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_not result.success, "PlanSaveService should fail when farm limit is reached"
     assert_includes result.error_message, "作成できるFarmは4件までです", "Error message should mention farm limit"
   end
+
+  test "should prevent duplicate interaction rules for same crop combination" do
+    # 異なる作物を選択
+    crop_a = Crop.create!(
+      user: nil,
+      name: 'テスト作物A',
+      variety: '品種A',
+      is_reference: true,
+      area_per_unit: 0.25,
+      revenue_per_area: 5000.0,
+      region: 'jp'
+    )
+    crop_b = Crop.create!(
+      user: nil,
+      name: 'テスト作物B',
+      variety: '品種B',
+      is_reference: true,
+      area_per_unit: 0.30,
+      revenue_per_area: 6000.0,
+      region: 'jp'
+    )
+    
+    # 参照計画を作成
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '連作重複防止テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # 各作物のCultivationPlanCropを作成
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: crop_a,
+      name: crop_a.name,
+      variety: crop_a.variety,
+      area_per_unit: crop_a.area_per_unit,
+      revenue_per_area: crop_a.revenue_per_area
+    )
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: crop_b,
+      name: crop_b.name,
+      variety: crop_b.variety,
+      area_per_unit: crop_b.area_per_unit,
+      revenue_per_area: crop_b.revenue_per_area
+    )
+
+    # セッションデータを構築
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: '連作重複防止テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
+        { name: '連作重複防止テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }
+      ]
+    }
+
+    # PlanSaveServiceを実行
+    service = PlanSaveService.new(user: @user, session_data: session_data)
+    result = service.call
+
+    # 成功を確認
+    assert result.success, "PlanSaveService should succeed: #{result.error_message}"
+
+    # 作成された計画を取得
+    new_plan = @user.cultivation_plans.where(plan_type: 'private').order(:created_at).last
+    assert_not_nil new_plan, "New plan should be created"
+
+    # 連作ルールが1つだけ作成されることを確認（重複防止）
+    user_interaction_rules = @user.interaction_rules.where(rule_type: 'continuous_cultivation')
+    assert_equal 1, user_interaction_rules.count, "Only one interaction rule should be created for two crops"
+
+    # ルールの内容を確認
+    rule = user_interaction_rules.first
+    assert_includes [crop_a.name, crop_b.name], rule.source_group, "Source group should be one of the crops"
+    assert_includes [crop_a.name, crop_b.name], rule.target_group, "Target group should be one of the crops"
+    assert_not_equal rule.source_group, rule.target_group, "Source and target groups should be different"
+  end
 end

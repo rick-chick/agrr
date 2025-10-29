@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
-# OmniAuth test mode configuration for development and test
-if Rails.env.test?
-  # Enable OmniAuth test mode only for test environment
-  OmniAuth.config.test_mode = true
+# OmniAuth mock profiles for development and test
+if Rails.env.development? || Rails.env.test?
   
-  # Mock Google OAuth responses for development
+  # Mock Google OAuth responses for mock-login endpoints
   # Default user (Developer)
   OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
     provider: 'google_oauth2',
@@ -54,6 +52,11 @@ if Rails.env.test?
     }
   )
   
-  # Failure scenario
+  # Failure scenario (used in tests only)
   OmniAuth.config.mock_auth[:google_oauth2_fail] = :invalid_credentials
+end
+
+# Enable OmniAuth test mode ONLY in test so real Google OAuth works in development
+if Rails.env.test?
+  OmniAuth.config.test_mode = true
 end

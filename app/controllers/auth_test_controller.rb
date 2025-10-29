@@ -42,6 +42,12 @@ class AuthTestController < ApplicationController
     # Get mock auth data
     auth_hash = OmniAuth.config.mock_auth[auth_key]
     
+    # Handle missing mock data gracefully
+    unless auth_hash.present? && auth_hash['info'].present?
+      redirect_to root_path(locale: I18n.default_locale), alert: "モック認証データが設定されていません"
+      return
+    end
+    
     # Process avatar URL using User model's method
     # This converts '/assets/dev-avatar.svg' to 'dev-avatar.svg'
     processed_avatar_url = User.process_avatar_url(auth_hash['info']['image'])
