@@ -35,6 +35,9 @@ services:
       - AGRR_USE_MOCK=false  # 開発環境でもモック予測を無効化
       - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds (when enabled)
       - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (when enabled)
+      # Google OAuth設定（開発環境用）
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true

@@ -21,7 +21,13 @@ class AuthController < ApplicationController
     # Display login page with Google OAuth button
   end
 
-  # /auth/google_oauth2 is handled by OmniAuth middleware, no action needed
+  # Google OAuth2 initiation - handled by OmniAuth middleware
+  def google_oauth2
+    # This should not be reached as OmniAuth middleware handles /auth/google_oauth2
+    # If reached, there's a configuration issue
+    Rails.logger.error "🚨 OAuth: google_oauth2 action reached - OmniAuth middleware not working"
+    redirect_to auth_login_path, alert: 'OAuth認証の設定に問題があります。'
+  end
 
   def google_oauth2_callback
     begin
@@ -44,7 +50,7 @@ class AuthController < ApplicationController
           expires: user_session.expires_at,
           httponly: true,
           secure: Rails.env.production?,
-          same_site: :strict
+          same_site: :lax
         }
 
         # Continue saved-plan flow if present
