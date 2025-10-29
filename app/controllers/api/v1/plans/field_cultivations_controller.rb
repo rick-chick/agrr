@@ -53,33 +53,33 @@ module Api
             return render json: { success: false, message: I18n.t('api.errors.crop_not_found') }, status: :not_found
           end
           
-          # 最適化時に保存した予測データを再利用
-          if cultivation_plan.predicted_weather_data.present?
-            Rails.logger.info "✅ [Plans Climate Data] Using saved predicted weather data from optimization"
-            saved_data = cultivation_plan.predicted_weather_data
-            
-            # 古い保存形式（ネスト構造）の場合は修正
-            if saved_data['data'].is_a?(Hash) && saved_data['data']['data'].is_a?(Array)
-              Rails.logger.warn "⚠️ [Plans Climate Data] Old nested format detected, extracting inner data"
-              weather_data_for_cli = saved_data['data']
-            else
-              weather_data_for_cli = saved_data
-            end
+          # CultivationPlanに保存された予測データを使用（必須）
+          unless cultivation_plan.predicted_weather_data.present?
+            Rails.logger.error "❌ [Plans Climate Data] No predicted_weather_data found in CultivationPlan##{cultivation_plan.id}"
+            return render json: {
+              success: false,
+              message: "気象予測データがありません。最適化を実行してから再度お試しください。"
+            }, status: :not_found
+          end
+          
+          Rails.logger.info "✅ [Plans Climate Data] Using saved predicted weather data from CultivationPlan##{cultivation_plan.id}"
+          saved_data = cultivation_plan.predicted_weather_data
+          
+          # 古い保存形式（ネスト構造）の場合は修正
+          if saved_data['data'].is_a?(Hash) && saved_data['data']['data'].is_a?(Array)
+            Rails.logger.warn "⚠️ [Plans Climate Data] Old nested format detected, extracting inner data"
+            weather_data_for_cli = saved_data['data']
           else
-            Rails.logger.warn "⚠️ [Plans Climate Data] No saved weather data, generating on-the-fly"
-            # フォールバック: その場で予測データを生成
-            weather_data_for_cli = get_weather_data_for_period(
-              farm.weather_location,
-              @field_cultivation.start_date,
-              @field_cultivation.completion_date,
-              farm.latitude,
-              farm.longitude
-            )
+            weather_data_for_cli = saved_data
           end
           
           # 表示用の気象データレコード（実データと予測データ）
           unless weather_data_for_cli && weather_data_for_cli['data']
-            return render json: { success: false, message: I18n.t('api.errors.weather_forecast_failed') }, status: :internal_server_error
+            Rails.logger.error "❌ [Plans Climate Data] Invalid weather_data format in CultivationPlan##{cultivation_plan.id}"
+            return render json: {
+              success: false,
+              message: "気象データの形式が不正です。最適化を再実行してください。"
+            }, status: :internal_server_error
           end
           
           weather_data_records = extract_actual_weather_data(weather_data_for_cli, @field_cultivation.start_date, @field_cultivation.completion_date)
@@ -215,6 +215,13 @@ module Api
             success: false,
             message: "成長進捗の計算に失敗しました: #{e.message}"
           }, status: :internal_server_error
+        rescue StandardError => e
+          Rails.logger.error "❌ [Plans Climate Data] Unexpected error: #{e.class.name}: #{e.message}"
+          Rails.logger.error "❌ [Plans Climate Data] Backtrace: #{e.backtrace.first(10).join("\n")}"
+          render json: {
+            success: false,
+            message: "気象データの取得中にエラーが発生しました: #{e.message}"
+          }, status: :internal_server_error
         end
         
         # PATCH /api/v1/plans/field_cultivations/:id
@@ -314,113 +321,6 @@ module Api
           end
           
           daily_gdd
-        end
-        
-        # agrr optimize allocateに使った気象データを取得（実データ + 予測データ）
-        def get_weather_data_for_period(weather_location, start_date, end_date, latitude, longitude)
-          # 過去20年分の訓練データを取得
-          training_start_date = Date.current - 20.years
-          training_end_date = Date.current - 2.days
-          training_data = weather_location.weather_data
-            .where(date: training_start_date..training_end_date)
-            .order(:date)
-          
-          # 訓練データをAGRR形式に変換（nilチェック付き）
-          training_formatted = {
-            'latitude' => latitude,
-            'longitude' => longitude,
-            'timezone' => weather_location.timezone || 'Asia/Tokyo',
-            'data' => training_data.filter_map do |datum|
-              # temperature_meanがnilの場合は計算、max/minもnilなら スキップ
-              next if datum.temperature_max.nil? || datum.temperature_min.nil?
-              
-              temp_mean = datum.temperature_mean || ((datum.temperature_max + datum.temperature_min) / 2.0)
-              
-              {
-                'time' => datum.date.to_s,
-                'temperature_2m_max' => datum.temperature_max.to_f,
-                'temperature_2m_min' => datum.temperature_min.to_f,
-                'temperature_2m_mean' => temp_mean.to_f,
-                'precipitation_sum' => (datum.precipitation || 0.0).to_f
-              }
-            end
-          }
-          
-          # 予測が必要な日数を計算
-          # AGRRは訓練データの最終日（training_end_date）の翌日から予測を開始するため、
-          # training_end_dateからend_dateまでの日数を計算
-          prediction_days = (end_date - training_end_date).to_i
-          
-          if prediction_days > 0
-            # 予測データを生成
-            prediction_gateway = Agrr::PredictionGateway.new
-            future = prediction_gateway.predict(
-              historical_data: training_formatted,
-              days: prediction_days,
-              model: 'lightgbm'
-            )
-            
-            # 今年の実データを取得（training_end_dateまで）
-            current_year_start = Date.new(Date.current.year, 1, 1)
-            current_year_end = training_end_date
-            current_year_data = weather_location.weather_data
-              .where(date: current_year_start..current_year_end)
-              .order(:date)
-            
-            current_year_formatted = {
-              'latitude' => latitude,
-              'longitude' => longitude,
-              'timezone' => weather_location.timezone || 'Asia/Tokyo',
-              'data' => current_year_data.filter_map do |datum|
-                # temperature_meanがnilの場合は計算、max/minもnilならスキップ
-                next if datum.temperature_max.nil? || datum.temperature_min.nil?
-                
-                temp_mean = datum.temperature_mean || ((datum.temperature_max + datum.temperature_min) / 2.0)
-                
-                {
-                  'time' => datum.date.to_s,
-                  'temperature_2m_max' => datum.temperature_max,
-                  'temperature_2m_min' => datum.temperature_min,
-                  'temperature_2m_mean' => temp_mean,
-                  'precipitation_sum' => datum.precipitation || 0.0
-                }
-              end
-            }
-            
-            # 実データと予測データをマージ
-            merged_data = current_year_formatted['data'] + future['data']
-            
-            {
-              'latitude' => latitude,
-              'longitude' => longitude,
-              'timezone' => weather_location.timezone || 'Asia/Tokyo',
-              'data' => merged_data
-            }
-          else
-            # 過去のデータのみ使用
-            {
-              'latitude' => latitude,
-              'longitude' => longitude,
-              'timezone' => weather_location.timezone || 'Asia/Tokyo',
-              'data' => weather_location.weather_data
-                .where(date: start_date..end_date)
-                .order(:date)
-                .filter_map do |datum|
-                  # temperature_meanがnilの場合は計算、max/minもnilならスキップ
-                  next if datum.temperature_max.nil? || datum.temperature_min.nil?
-                  
-                  temp_mean = datum.temperature_mean || ((datum.temperature_max + datum.temperature_min) / 2.0)
-                  
-                  {
-                    'time' => datum.date.to_s,
-                    'temperature_2m_max' => datum.temperature_max,
-                    'temperature_2m_min' => datum.temperature_min,
-                    'temperature_2m_mean' => temp_mean,
-                    'precipitation_sum' => datum.precipitation || 0.0
-                  }
-                end
-            }
-          end
         end
         
         # モックのprogress_recordsを生成

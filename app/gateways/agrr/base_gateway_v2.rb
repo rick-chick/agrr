@@ -357,6 +357,7 @@ module Agrr
       output = nil
       days = nil
       model = 'arima'
+      metrics = nil
       
       i = 0
       while i < args.length
@@ -373,6 +374,9 @@ module Agrr
         when '--model'
           model = args[i + 1]
           i += 2
+        when '--metrics'
+          metrics = args[i + 1]
+          i += 2
         else
           i += 1
         end
@@ -384,7 +388,8 @@ module Agrr
         input: input,
         output: output,
         days: days,
-        model: model
+        model: model,
+        metrics: metrics
       )
     end
     
