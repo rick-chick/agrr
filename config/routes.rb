@@ -144,6 +144,12 @@ Rails.application.routes.draw do
         post 'internal/farms/:farm_id/fetch_weather_data', to: 'internal#fetch_weather_data'
         get 'internal/farms/:farm_id/weather_status', to: 'internal#weather_status'
         get 'internal/farms/:farm_id/weather_data', to: 'internal#get_weather_data'
+        
+        # Backdoor API (ランダムトークン認証)
+        namespace :backdoor do
+          get 'status', to: 'backdoor#status'
+          get 'health', to: 'backdoor#health'
+        end
       end
     end
 

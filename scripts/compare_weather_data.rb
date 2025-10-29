@@ -205,3 +205,4 @@ end
 field_cultivation_id = ARGV[0].to_i
 compare_weather_data(field_cultivation_id)
 
+
