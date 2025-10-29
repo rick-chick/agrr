@@ -95,10 +95,11 @@ class AgrrService
   end
 
   # Predict weather
-  def predict(input:, output:, days:, model: 'lightgbm')
+  def predict(input:, output:, days:, model: 'lightgbm', metrics: nil)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['predict', '--input', input, '--output', output, '--days', days.to_s, '--model', model]
+    args += ['--metrics', metrics] if metrics && !metrics.to_s.empty?
 
     execute_command(args)
   end

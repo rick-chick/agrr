@@ -284,8 +284,16 @@ class PlanSaveService
       plan_name: "#{reference_plan.farm.name}の計画",
       planning_start_date: planning_dates[:start_date],
       planning_end_date: planning_dates[:end_date],
-      status: 'pending'
+      status: 'pending',
+      # 予測データをコピー（存在する場合）
+      predicted_weather_data: reference_plan.predicted_weather_data
     )
+    
+    if reference_plan.predicted_weather_data.present?
+      Rails.logger.info "✅ [PlanSaveService] Copied predicted_weather_data to new plan ##{new_plan.id}"
+    else
+      Rails.logger.warn "⚠️ [PlanSaveService] Reference plan has no predicted_weather_data"
+    end
     
     Rails.logger.info I18n.t('services.plan_save_service.messages.plan_created', plan_id: new_plan.id)
     new_plan
