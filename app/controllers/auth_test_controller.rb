@@ -29,7 +29,18 @@ class AuthTestController < ApplicationController
   def mock_logout
     if current_user
       current_user.sessions.destroy_all
+      # Robustly clear session cookie for development/test parity with production behavior
       cookies.delete(:session_id)
+      cookies.delete(:session_id, path: '/')
+      begin
+        cookie_domain = request.cookie_domain.presence
+      rescue NoMethodError
+        cookie_domain = nil
+      end
+      if cookie_domain
+        cookies.delete(:session_id, domain: cookie_domain, path: '/')
+      end
+      cookies.delete(:session_id, domain: :all, path: '/')
       redirect_to root_path(locale: I18n.default_locale), notice: I18n.t('auth_test.mock_logout_success')
     else
       redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.not_logged_in')
