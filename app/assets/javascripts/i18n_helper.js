@@ -8,7 +8,8 @@
  * @returns {string} - 翻訳されたメッセージまたはデフォルトメッセージ
  */
 function getI18nMessage(key, defaultMessage) {
-  const i18nData = document.body.dataset;
+  const i18nEl = document.getElementById('js-i18n');
+  const i18nData = i18nEl ? i18nEl.dataset : document.body.dataset;
   return i18nData[key] || defaultMessage;
 }
 
@@ -20,7 +21,8 @@ function getI18nMessage(key, defaultMessage) {
  * @returns {string} - 置換済みのメッセージ
  */
 function getI18nTemplate(key, replacements, defaultMessage) {
-  let template = document.body.dataset[key] || defaultMessage;
+  const i18nEl = document.getElementById('js-i18n');
+  let template = (i18nEl ? i18nEl.dataset[key] : document.body.dataset[key]) || defaultMessage;
   for (const [placeholder, value] of Object.entries(replacements)) {
     // %{placeholder} 形式を置換
     template = template.replace(new RegExp(`%\\{${placeholder}\\}`, 'g'), value);
