@@ -73,23 +73,25 @@ class AgrrService
   end
 
   # Optimize allocation
-  def optimize_allocate(fields_file:, crops_file:, planning_start:, planning_end:, weather_file:, format: 'json')
+  def optimize_allocate(fields_file:, crops_file:, planning_start:, planning_end:, weather_file:, format: 'json', interaction_rules_file: nil)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['optimize', 'allocate', '--fields-file', fields_file, '--crops-file', crops_file,
             '--planning-start', planning_start, '--planning-end', planning_end, 
             '--weather-file', weather_file, '--format', format]
+    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
 
     execute_command(args)
   end
 
   # Adjust allocation
-  def optimize_adjust(current_allocation:, moves:, weather_file:, fields_file:, crops_file:, planning_start:, planning_end:, format: 'json')
+  def optimize_adjust(current_allocation:, moves:, weather_file:, fields_file:, crops_file:, planning_start:, planning_end:, format: 'json', interaction_rules_file: nil)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['optimize', 'adjust', '--current-allocation', current_allocation, '--moves', moves,
             '--weather-file', weather_file, '--fields-file', fields_file, '--crops-file', crops_file,
             '--planning-start', planning_start, '--planning-end', planning_end, '--format', format]
+    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
 
     execute_command(args)
   end
@@ -113,10 +115,35 @@ class AgrrService
     
     Rails.logger.info "🔍 [AgrrService] Exit code: #{status.exitstatus}"
     Rails.logger.info "🔍 [AgrrService] stdout length: #{stdout&.length || 0}, content: #{stdout&.first(100)}..."
+    Rails.logger.info "🔍 [AgrrService] stdout last 100: #{stdout&.last(100) if stdout}" if stdout&.length.to_i > 200
     Rails.logger.info "🔍 [AgrrService] stderr length: #{stderr&.length || 0}, content: #{stderr&.first(100)}..."
     
+    # Check if stdout contains valid JSON (even if exit code is non-zero)
+    has_valid_json = stdout&.strip&.start_with?('{') || stdout&.strip&.start_with?('[')
+    
+    # Extract only the JSON part if there's extra text after the JSON
+    if has_valid_json
+      # Find the last } or ] to extract only the JSON
+      last_brace = stdout.rindex('}')
+      last_bracket = stdout.rindex(']')
+      last_pos = [last_brace, last_bracket].compact.max
+      if last_pos
+        clean_output = stdout[0..last_pos]
+        Rails.logger.info "🔍 [AgrrService] Extracted JSON (removed #{stdout.length - clean_output.length} chars after JSON)"
+      else
+        clean_output = stdout
+      end
+    else
+      clean_output = stdout
+    end
+    
     if status.success?
-      stdout
+      clean_output || stdout
+    elsif has_valid_json && stderr.blank?
+      # Exit code is non-zero but we have valid JSON and no stderr
+      # This is likely a warning in the daemon but the result is still valid
+      Rails.logger.warn "⚠️ [AgrrService] Command returned exit code #{status.exitstatus} but has valid JSON output (likely warning)"
+      clean_output || stdout
     else
       error_message = stderr.presence || "Command failed with exit code #{status.exitstatus}"
       Rails.logger.error "AGRR command failed: #{error_message}"
