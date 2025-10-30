@@ -257,6 +257,7 @@ module Agrr
       planning_end = nil
       weather_file = nil
       format = 'json'
+      interaction_rules_file = nil
       
       i = 0
       while i < args.length
@@ -279,6 +280,9 @@ module Agrr
         when '--format'
           format = args[i + 1]
           i += 2
+        when '--interaction-rules-file'
+          interaction_rules_file = args[i + 1]
+          i += 2
         else
           i += 1
         end
@@ -292,7 +296,8 @@ module Agrr
         planning_start: planning_start,
         planning_end: planning_end,
         weather_file: weather_file,
-        format: format
+        format: format,
+        interaction_rules_file: interaction_rules_file
       )
     end
     
@@ -305,6 +310,7 @@ module Agrr
       planning_start = nil
       planning_end = nil
       format = 'json'
+      interaction_rules_file = nil
       
       i = 0
       while i < args.length
@@ -333,6 +339,9 @@ module Agrr
         when '--format'
           format = args[i + 1]
           i += 2
+        when '--interaction-rules-file'
+          interaction_rules_file = args[i + 1]
+          i += 2
         else
           i += 1
         end
@@ -348,7 +357,8 @@ module Agrr
         crops_file: crops_file,
         planning_start: planning_start,
         planning_end: planning_end,
-        format: format
+        format: format,
+        interaction_rules_file: interaction_rules_file
       )
     end
     
@@ -400,8 +410,9 @@ module Agrr
       Rails.logger.info "🔍 [AGRR] Extracting JSON from output (length: #{output.length})"
       Rails.logger.info "🔍 [AGRR] Output preview: #{output[0..200]}..."
       
-      # Check if the output contains error messages
-      if output.include?("Error:") || output.include?("❌")
+      # Check if the output contains error messages (but not just warnings)
+      # Don't treat "❌" as an error if it's part of a warning that still produces valid JSON
+      if output.include?("Error:") 
         Rails.logger.error "❌ [AGRR] AGRR daemon returned error message: #{output.strip}"
         raise ExecutionError, "AGRR daemon error: #{output.strip}"
       end
