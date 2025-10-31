@@ -118,3 +118,10 @@ db/cache_schema.rb.tmp
 # System test screenshots
 /tmp/screenshots/*
 !/tmp/screenshots/.keep
+
+
+tmp/
+.cursor/
+.dockerignore
+lib/core/agrr
+lib/core/_internal
