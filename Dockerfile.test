@@ -96,9 +96,9 @@ RUN if [ -f /tmp/agrr_temp/agrr ]; then \
     fi && \
     rm -rf /tmp/agrr_temp
 
-# Ensure gems are available in the final stage
+# Ensure gems are available in the final stage (keep test group)
 RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
+    bundle config set --local without 'development' && \
     bundle install
 
 # Install Node.js dependencies for runtime (if needed)

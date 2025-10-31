@@ -7,14 +7,14 @@ ruby "3.3.9"
 gem "rails", "~> 8.0.0"
 
 # Use Propshaft for asset pipeline (Rails 8 default)
-gem "propshaft"
+gem "propshaft", "= 1.3.1"
 
 # Use jsbundling-rails for JavaScript bundling
-gem "jsbundling-rails"
+gem "jsbundling-rails", "= 1.3.1"
 
 # Hotwire's SPA-like page accelerator and realtime updates
-gem "turbo-rails"
-gem "stimulus-rails"
+gem "turbo-rails", "= 2.0.17"
+gem "stimulus-rails", "= 1.3.4"
 
 # Use SQLite3 as the database for Active Record (production-ready with Rails 8)
 gem "sqlite3", ">= 2.1"
@@ -77,7 +77,7 @@ group :development do
 end
 
 group :production do
-  gem "rack-attack"
+  gem "rack-attack", "= 6.8.0"
 end
 
 group :test do
@@ -86,11 +86,11 @@ group :test do
   gem "selenium-webdriver"
   
   # Code coverage
-  gem "simplecov", require: false
+  gem "simplecov", "= 0.22.0", require: false
   
   # Database cleanup for system tests
-  gem "database_cleaner-active_record"
+  gem "database_cleaner-active_record", "= 2.2.2"
   
   # Test data factories
-  gem "factory_bot_rails"
+  gem "factory_bot_rails", "= 6.5.1"
 end
