@@ -51,6 +51,27 @@
 # Ignore test coverage
 /coverage
 
+# Ruby / Bundler (inside repo)
+/vendor/bundle
+
+# Byebug & RSpec artifacts
+/.byebug_history
+/.rspec_status
+/spec/examples.txt
+
+# direnv
+/.envrc
+/.direnv/
+
+# Local cookie/session exports
+/cookies.txt
+
+# JS package managers debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
 # OS-specific files
 .DS_Store
 .DS_Store?
