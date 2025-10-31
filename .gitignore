@@ -88,6 +88,12 @@ db/cache_schema.rb.tmp
 /tmp/debug/*
 !/tmp/debug/.keep
 
+# AGRR binary backups (auto-generated)
+/lib/core/agrr.backup*
+/lib/core/_internal.backup*
+/lib/core/agrr.broken
+/lib/core/agrr_host
+
 # System test screenshots
 /tmp/screenshots/*
 !/tmp/screenshots/.keep
