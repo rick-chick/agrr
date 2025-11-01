@@ -1,0 +1,71 @@
+<div class="form-card">
+  <%= form_with(model: [@crop, @profile]) do |f| %>
+    <% if @profile.errors.any? %>
+      <div class="errors">
+        <h3><%= t('crop_fertilize_profiles.form.errors.title', count: @profile.errors.count) %></h3>
+        <ul>
+          <% @profile.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :total_n, t('crop_fertilize_profiles.form.total_n_label'), class: 'form-label' %>
+      <%= f.number_field :total_n, step: :any, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_n_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :total_p, t('crop_fertilize_profiles.form.total_p_label'), class: 'form-label' %>
+      <%= f.number_field :total_p, step: :any, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_p_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :total_k, t('crop_fertilize_profiles.form.total_k_label'), class: 'form-label' %>
+      <%= f.number_field :total_k, step: :any, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_k_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :confidence, t('crop_fertilize_profiles.form.confidence_label'), class: 'form-label' %>
+      <%= f.number_field :confidence, step: 0.01, min: 0, max: 1, value: @profile.confidence || 0.5, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.confidence_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :sources, t('crop_fertilize_profiles.form.sources_label'), class: 'form-label' %>
+      <% sources_value = @profile.sources.is_a?(Array) ? @profile.sources.join(', ') : (@profile.sources.to_s if @profile.sources.present?) %>
+      <%= f.text_field :sources, value: sources_value, class: 'form-control', placeholder: t('crop_fertilize_profiles.form.sources_placeholder') %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.sources_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :notes, t('crop_fertilize_profiles.form.notes_label'), class: 'form-label' %>
+      <%= f.text_area :notes, rows: 4, class: 'form-control', placeholder: t('crop_fertilize_profiles.form.notes_placeholder') %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.notes_help') %></div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="section-title"><%= t('crop_fertilize_profiles.form.applications_section_title') %></h3>
+      
+      <div id="crop-fertilize-applications">
+        <%= f.fields_for :crop_fertilize_applications do |app_form| %>
+          <%= render 'crop_fertilize_application_fields', f: app_form %>
+        <% end %>
+      </div>
+
+      <div class="form-group">
+        <button type="button" id="add-crop-fertilize-application" class="btn btn-secondary"><%= t('crop_fertilize_profiles.form.add_application_button') %></button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <%= f.submit t("crop_fertilize_profiles.form.submit_#{@profile.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('crop_fertilize_profiles.form.cancel'), @profile.persisted? ? crop_crop_fertilize_profile_path(@crop, @profile) : crop_path(@crop), class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>
+

@@ -1,0 +1,113 @@
+<% content_for :title, "#{t('.title', crop_name: @crop.name)} - AGRR" %>
+
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= t('.title', crop_name: @crop.name) %></h1>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">🌾 <%= t('.crop_name') %>:</span>
+      <span class="info-value"><%= link_to @crop.name, crop_path(@crop), class: 'link' %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📊 <%= t('.total_n') %>:</span>
+      <span class="info-value"><%= @profile.total_n %> g/m²</span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📊 <%= t('.total_p') %>:</span>
+      <span class="info-value"><%= @profile.total_p %> g/m²</span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📊 <%= t('.total_k') %>:</span>
+      <span class="info-value"><%= @profile.total_k %> g/m²</span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📈 <%= t('.confidence') %>:</span>
+      <span class="info-value"><%= number_to_percentage(@profile.confidence * 100, precision: 1) %></span>
+    </div>
+    
+    <% if @profile.sources.present? %>
+      <% sources_array = @profile.sources.is_a?(Array) ? @profile.sources : [@profile.sources] %>
+      <% if sources_array.any? %>
+        <div class="info-item">
+          <span class="info-label">📚 <%= t('.sources') %>:</span>
+          <span class="info-value"><%= sources_array.join(', ') %></span>
+        </div>
+      <% end %>
+    <% end %>
+    
+    <% if @profile.notes.present? %>
+      <div class="info-item">
+        <span class="info-label">📝 <%= t('.notes') %>:</span>
+        <span class="info-value"><%= simple_format(@profile.notes) %></span>
+      </div>
+    <% end %>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@profile.created_at, format: :long) %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@profile.updated_at, format: :long) %></span>
+    </div>
+  </div>
+  
+  <div class="stages-section">
+    <h2 class="stages-title"><%= t('.applications_title') %></h2>
+    <% if @profile.crop_fertilize_applications.any? %>
+      <ol class="stages-list">
+        <% @profile.crop_fertilize_applications.order(:application_type, :id).each do |application| %>
+          <li class="stage-item">
+            <div class="stage-name"><%= application.application_type_name %></div>
+            
+            <div class="stage-requirements">
+              <div class="requirement-item">
+                <div class="requirement-label">📊 <%= t('.application_nutrients') %></div>
+                <div class="requirement-value">
+                  <%= t('.total_n') %>: <%= application.total_n %> g/m²<br>
+                  <%= t('.total_p') %>: <%= application.total_p %> g/m²<br>
+                  <%= t('.total_k') %>: <%= application.total_k %> g/m²<br>
+                  <%= t('.count') %>: <%= application.count %>回<br>
+                  <% if application.schedule_hint.present? %>
+                    <%= t('.schedule_hint') %>: <%= application.schedule_hint %><br>
+                  <% end %>
+                  <% if application.per_application_n.present? || application.per_application_p.present? || application.per_application_k.present? %>
+                    <%= t('.per_application_n') %>: <%= application.per_application_n %> g/m²<br>
+                    <%= t('.per_application_p') %>: <%= application.per_application_p %> g/m²<br>
+                    <%= t('.per_application_k') %>: <%= application.per_application_k %> g/m²<br>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ol>
+    <% else %>
+      <div class="no-stages">
+        <div class="empty-state-icon">🌾</div>
+        <h3><%= t('.no_applications_title') %></h3>
+        <p><%= t('.no_applications_description') %></p>
+      </div>
+    <% end %>
+  </div>
+  
+  <div class="actions">
+    <%= link_to t('.back_to_crop'), crop_path(@crop), class: "btn btn-secondary" %>
+    <%= link_to t('.edit'), edit_crop_crop_fertilize_profile_path(@crop, @profile), class: "btn btn-secondary" %>
+    <%= button_to t('.delete'), crop_crop_fertilize_profile_path(@crop, @profile), 
+                method: :delete, 
+                class: "btn btn-error", 
+                data: { 
+                  turbo_method: :delete,
+                  turbo_confirm: t('.confirm_delete')
+                } %>
+  </div>
+</div>
+
