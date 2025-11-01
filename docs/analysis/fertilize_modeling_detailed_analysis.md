@@ -9,26 +9,27 @@
 **基本形（area指定なし）**:
 ```ruby
 # パラメータ: language, limit, area（オプション）
-# 戻り値: 肥料の配列
-[
-  { 'name' => '尿素', 'n' => 46 },
-  { 'name' => 'リン酸一安', 'n' => 16, 'p' => 20 },
-  { 'name' => '硫安', 'n' => 21 },
-  { 'name' => '過リン酸石灰', 'p' => 20 },
-  { 'name' => '塩化カリ', 'k' => 60 }
-]
+# 戻り値: 肥料名の配列
+{
+  "fertilizers": ["尿素", "リン酸一安", "硫安", "過リン酸石灰", "塩化カリ"],
+  "count": 5
+}
 ```
 
 **area指定あり**:
 ```ruby
-[
-  { 'name' => '尿素', 'n' => 46, 'recommended_amount' => 200 }
-]
+# areaが指定されても戻り値形式は同じ（肥料名のみ）
+{
+  "fertilizers": ["尿素", "リン酸一安", "硫安", "過リン酸石灰", "塩化カリ"],
+  "count": 5
+}
 ```
 
 **データ構造**:
-- `area`パラメータが指定された場合のみ`recommended_amount`が追加される
-- `recommended_amount`は計算結果であり、マスターデータではない
+- `fertilizers`: 肥料名の文字列配列
+- `count`: 返された肥料の数
+- `area`パラメータがあっても戻り値形式は変わらない
+- NPK情報や詳細情報は含まれない。詳細が必要な場合は`fertilize_get`を使用
 
 #### 2. fertilize_get（肥料詳細）
 
@@ -47,8 +48,8 @@
 
 **重要な認識**:
 - `description`, `package_size`は`fertilize_get`でのみ取得可能
-- `fertilize_list`では`n`, `p`, `k`, `name`のみ
-- 詳細情報が必要な場合は`fertilize_get`を個別に呼び出す必要がある
+- `fertilize_list`では肥料名の文字列のみを返す
+- 詳細情報（NPK, description, package_sizeなど）が必要な場合は`fertilize_get`を個別に呼び出す必要がある
 
 #### 3. fertilize_recommend（肥料推奨）
 

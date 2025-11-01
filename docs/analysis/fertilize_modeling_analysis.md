@@ -7,18 +7,12 @@
 #### 1. fertilize_list（肥料一覧）
 ```ruby
 # パラメータ: language, limit, area（オプション）
-# 戻り値: 肥料の配列
-[
-  { 'name' => '尿素', 'n' => 46 },
-  { 'name' => 'リン酸一安', 'n' => 16, 'p' => 20 },
-  { 'name' => '硫安', 'n' => 21 },
-  { 'name' => '過リン酸石灰', 'p' => 20 },
-  { 'name' => '塩化カリ', 'k' => 60 }
-]
-# areaが指定された場合: recommended_amountが追加される
-[
-  { 'name' => '尿素', 'n' => 46, 'recommended_amount' => 200 }
-]
+# 戻り値: 肥料名の配列
+{
+  "fertilizers": ["尿素", "リン酸一安", "硫安", "過リン酸石灰", "塩化カリ"],
+  "count": 5
+}
+# 注意: NPK情報は含まれない。詳細情報が必要な場合はfertilize_getを使用
 ```
 
 #### 2. fertilize_get（肥料詳細）
