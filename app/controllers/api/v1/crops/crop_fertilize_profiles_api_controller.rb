@@ -7,11 +7,11 @@ module Api
   module V1
     module Crops
       class CropFertilizeProfilesApiController < Api::V1::BaseController
-        before_action :authenticate_user!
-        before_action :set_crop
+        # ai_create, ai_updateはHTMLフォームから呼び出すため認証必須
+        before_action :authenticate_api_request
+        before_action :set_crop, except: [:ai_create]
+        before_action :set_crop_for_ai, only: [:ai_create]
         before_action :set_profile, only: [:show, :update, :destroy, :ai_update]
-        # ai_createは認証不要（無料プラン機能の一部）
-        skip_before_action :authenticate_user!, only: [:ai_create]
 
         # GET /api/v1/crops/:crop_id/crop_fertilize_profiles/:id
         def show
@@ -185,6 +185,20 @@ module Api
           @crop = Crop.find(params[:crop_id])
           
           # 権限チェック
+          unless @crop.is_reference || @crop.user_id == current_user.id || current_user.admin?
+            render json: { error: I18n.t('crops.flash.no_permission', default: 'この作物にアクセスする権限がありません') }, status: :forbidden
+            return false
+          end
+        rescue ActiveRecord::RecordNotFound
+          render json: { error: I18n.t('crops.flash.not_found', default: '作物が見つかりません') }, status: :not_found
+          return false
+        end
+
+        def set_crop_for_ai
+          # ai_createはHTMLフォームから呼び出すため認証済みユーザーが使用
+          @crop = Crop.find(params[:crop_id])
+          
+          # 権限チェック（参照作物は誰でも閲覧可能、ユーザー作物は所有者のみ）
           unless @crop.is_reference || @crop.user_id == current_user.id || current_user.admin?
             render json: { error: I18n.t('crops.flash.no_permission', default: 'この作物にアクセスする権限がありません') }, status: :forbidden
             return false
