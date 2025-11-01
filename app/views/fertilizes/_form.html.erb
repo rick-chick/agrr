@@ -78,21 +78,9 @@
     </div>
 
     <div class="form-group">
-      <%= f.label :usage, t('fertilizes.form.usage_label'), class: 'form-label' %>
-      <%= f.text_area :usage, rows: 3, class: 'form-control' %>
-      <div class="form-text"><%= t('fertilizes.form.usage_help') %></div>
-    </div>
-
-    <div class="form-group">
       <%= f.label :package_size, t('fertilizes.form.package_size_label'), class: 'form-label' %>
       <%= f.text_field :package_size, class: 'form-control' %>
       <div class="form-text"><%= t('fertilizes.form.package_size_help') %></div>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :application_rate, t('fertilizes.form.application_rate_label'), class: 'form-label' %>
-      <%= f.text_field :application_rate, class: 'form-control' %>
-      <div class="form-text"><%= t('fertilizes.form.application_rate_help') %></div>
     </div>
 
     <% if admin_user? %>

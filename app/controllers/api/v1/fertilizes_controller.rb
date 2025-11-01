@@ -62,8 +62,6 @@ module Api
               p: fertilize_data['p'],
               k: fertilize_data['k'],
               description: fertilize_data['description'],
-              usage: fertilize_data['usage'],
-              application_rate: fertilize_data['application_rate'],
               package_size: fertilize_package_size_from_agrr  # agrrから返されたpackage_size
             }
             
@@ -81,8 +79,6 @@ module Api
                 p: fertilize_entity.p,
                 k: fertilize_entity.k,
                 description: fertilize_entity.description,
-                usage: fertilize_entity.usage,
-                application_rate: fertilize_entity.application_rate,
                 package_size: fertilize_entity.package_size,
                 is_reference: fertilize_entity.is_reference,
                 message: I18n.t('api.messages.fertilizes.updated_with_latest', name: fertilize_entity.name)
@@ -104,8 +100,6 @@ module Api
             p: fertilize_data['p'],
             k: fertilize_data['k'],
             description: fertilize_data['description'],
-            usage: fertilize_data['usage'],
-            application_rate: fertilize_data['application_rate'],
             package_size: fertilize_package_size_from_agrr,  # agrrから返されたpackage_size
             is_reference: is_reference
           }
@@ -123,11 +117,9 @@ module Api
               n: fertilize_entity.n,
               p: fertilize_entity.p,
               k: fertilize_entity.k,
-                description: fertilize_entity.description,
-                usage: fertilize_entity.usage,
-                application_rate: fertilize_entity.application_rate,
-                package_size: fertilize_entity.package_size,
-                message: I18n.t('api.messages.fertilizes.created_by_ai', name: fertilize_entity.name)
+              description: fertilize_entity.description,
+              package_size: fertilize_entity.package_size,
+              message: I18n.t('api.messages.fertilizes.created_by_ai', name: fertilize_entity.name)
             }, status: :created
           else
             Rails.logger.error "❌ [AI Fertilize] Failed to create: #{result.error}"

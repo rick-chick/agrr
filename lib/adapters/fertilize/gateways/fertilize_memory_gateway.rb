@@ -24,8 +24,6 @@ module Adapters
             p: normalized_data['p'],
             k: normalized_data['k'],
             description: normalized_data['description'],
-            usage: normalized_data['usage'],
-            application_rate: normalized_data['application_rate'],
             package_size: normalized_data['package_size'],
             is_reference: normalized_data.fetch('is_reference', true)  # デフォルトは参照データ
           )
@@ -50,8 +48,6 @@ module Adapters
           update_attributes[:p] = normalized_data['p'] if normalized_data.key?('p')
           update_attributes[:k] = normalized_data['k'] if normalized_data.key?('k')
           update_attributes[:description] = normalized_data['description'] if normalized_data.key?('description')
-          update_attributes[:usage] = normalized_data['usage'] if normalized_data.key?('usage')
-          update_attributes[:application_rate] = normalized_data['application_rate'] if normalized_data.key?('application_rate')
           update_attributes[:package_size] = normalized_data['package_size'] if normalized_data.key?('package_size')
           
           record.update!(update_attributes)
@@ -89,8 +85,6 @@ module Adapters
             p: record.p,
             k: record.k,
             description: record.description,
-            usage: record.usage,
-            application_rate: record.application_rate,
             package_size: record.package_size,
             is_reference: record.is_reference,
             created_at: record.created_at,

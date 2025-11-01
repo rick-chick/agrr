@@ -31,8 +31,7 @@
   'p' => nil,  # 含まれない場合もある
   'k' => nil,  # 含まれない場合もある
   'description' => '窒素肥料として広く使用される',
-  'usage' => '基肥・追肥に使用可能',
-  'application_rate' => '1㎡あたり10-30g'
+  'package_size' => '25kg'
 }
 ```
 
@@ -90,8 +89,7 @@
 - `p` (float): リン含有率（%）
 - `k` (float): カリ含有率（%）
 - `description` (text): 説明文
-- `usage` (text): 使用方法
-- `application_rate` (string): 適用率（例: "1㎡あたり10-30g"）
+- `package_size` (string): 容量（例: "20kg"）
 - `is_reference` (boolean): 参照肥料フラグ（将来の拡張用、デフォルト: true）
 - `created_at`, `updated_at`
 

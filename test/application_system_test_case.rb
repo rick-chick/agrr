@@ -54,9 +54,27 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   # DatabaseCleanerの設定
   def before_setup
+    # システムテスト前にapplication.jsがビルドされているか確認
+    ensure_application_js_built
+    
     DatabaseCleaner.strategy = :truncation
     DatabaseCleaner.start
     super
+  end
+  
+  # application.jsがビルドされているか確認し、なければダミーファイルを作成
+  def ensure_application_js_built
+    app_js_path = Rails.root.join('app', 'assets', 'builds', 'application.js')
+    unless File.exist?(app_js_path)
+      Rails.logger.warn "[System Test] ⚠️ application.js not found at #{app_js_path}"
+      Rails.logger.warn "[System Test] Creating dummy application.js for test environment (Propshaft requires this)"
+      
+      # Propshaftが存在しないアセットに対してエラーを発生させるため、ダミーファイルを作成
+      FileUtils.mkdir_p(app_js_path.dirname)
+      File.write(app_js_path, "// Dummy application.js for test environment\n// This file is auto-generated when application.js is not built\n")
+      
+      Rails.logger.info "[System Test] ✓ Created dummy application.js"
+    end
   end
 
   # システムテスト用の認証ヘルパー

@@ -37,9 +37,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
         p: 10.0,
         k: 10.0,
         description: 'テスト用',
-        usage: '基肥',
-        package_size: '20kg',
-        application_rate: '1㎡あたり10g'
+        package_size: '20kg'
       } }
     end
 

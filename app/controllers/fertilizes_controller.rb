@@ -104,9 +104,7 @@ class FertilizesController < ApplicationController
       :p,
       :k,
       :description,
-      :usage,
       :package_size,
-      :application_rate,
       :is_reference
     )
   end
