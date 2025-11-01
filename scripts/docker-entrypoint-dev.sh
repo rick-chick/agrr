@@ -14,6 +14,9 @@ rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb
 echo "Running migrations for all databases (primary, queue, cache)..."
 bundle exec rails db:migrate
 
+# app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
+mkdir -p /app/app/assets/builds
+
 # アセットファイルをクリーンアップ（古いビルドファイルを削除）
 echo "Cleaning up old asset files..."
 rm -rf /app/app/assets/builds/*

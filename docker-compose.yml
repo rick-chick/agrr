@@ -22,6 +22,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
+      - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
       - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
     environment:
       - RAILS_ENV=development
@@ -66,6 +67,7 @@ services:
       - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
       - /app/log
       - /app/node_modules
+      - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
       - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
     environment:
       - RAILS_ENV=development

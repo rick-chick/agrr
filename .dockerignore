@@ -78,3 +78,6 @@ db/cache_schema.rb
 # Temporary files
 tmp/
 temp/
+
+# Build outputs (generated in container)
+app/assets/builds/

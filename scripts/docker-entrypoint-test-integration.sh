@@ -4,6 +4,9 @@
 
 set -e
 
+# app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
+mkdir -p /app/app/assets/builds
+
 # アセットファイルをクリーンアップ（古いビルドファイルを削除）
 echo "==> Cleaning up old asset files..."
 rm -rf /app/app/assets/builds/*
