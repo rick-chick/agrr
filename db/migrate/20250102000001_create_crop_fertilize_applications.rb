@@ -3,7 +3,7 @@
 class CreateCropFertilizeApplications < ActiveRecord::Migration[8.0]
   def change
     create_table :crop_fertilize_applications do |t|
-      t.references :crop_fertilize_profile, null: false, foreign_key: true
+      t.references :crop_fertilize_profile, null: false, foreign_key: true, index: true
       # application_type: "basal" (基肥) または "topdress" (追肥)
       t.string :application_type, null: false, comment: "Type: 'basal' or 'topdress'"
       # count: 施用回数
@@ -22,8 +22,7 @@ class CreateCropFertilizeApplications < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # インデックス
-    add_index :crop_fertilize_applications, :crop_fertilize_profile_id
+    # application_typeにインデックス
     add_index :crop_fertilize_applications, :application_type
     
     # application_typeのバリデーションはモデルで行う

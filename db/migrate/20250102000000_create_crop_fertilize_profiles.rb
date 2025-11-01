@@ -3,7 +3,7 @@
 class CreateCropFertilizeProfiles < ActiveRecord::Migration[8.0]
   def change
     create_table :crop_fertilize_profiles do |t|
-      t.references :crop, null: false, foreign_key: true
+      t.references :crop, null: false, foreign_key: true, index: true
       # totals: 総肥料量（g/m²）
       t.float :total_n, null: false, comment: "Total nitrogen (g/m²)"
       t.float :total_p, null: false, comment: "Total phosphorus (g/m²)"
@@ -17,9 +17,6 @@ class CreateCropFertilizeProfiles < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-
-    # crop_idにインデックス（1つのcropにつき1つのprofileを想定、将来複数バージョン対応可能）
-    add_index :crop_fertilize_profiles, :crop_id
   end
 end
 

@@ -18,7 +18,7 @@
 class CropFertilizeApplication < ApplicationRecord
   belongs_to :crop_fertilize_profile
 
-  validates :crop_fertilize_profile_id, presence: true
+  validates :crop_fertilize_profile, presence: true
   validates :application_type, presence: true, inclusion: { in: %w[basal topdress] }
   validates :count, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :total_n, presence: true, numericality: { greater_than_or_equal_to: 0 }

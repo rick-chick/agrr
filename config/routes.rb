@@ -45,7 +45,9 @@ Rails.application.routes.draw do
     end
 
     # Crops (HTML) routes
-    resources :crops
+    resources :crops do
+      resources :crop_fertilize_profiles, controller: 'crops/crop_fertilize_profiles', except: [:index]
+    end
 
     # Fertilizes (HTML) routes
     resources :fertilizes
@@ -96,7 +98,9 @@ Rails.application.routes.draw do
         resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
           resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
         end
-        resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
+        resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy] do
+          resources :crop_fertilize_profiles, controller: 'crops/crop_fertilize_profiles_api', only: [:show, :create, :update, :destroy]
+        end
         # AI作物情報取得・保存エンドポイント
         post 'crops/ai_create', to: 'crops#ai_create'
         resources :fertilizes, controller: 'fertilizes/fertilize_api', only: [:index, :show, :create, :update, :destroy]
