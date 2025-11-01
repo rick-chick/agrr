@@ -14,16 +14,38 @@ module Crops
     test 'should show crop fertilize profile' do
       get crop_crop_fertilize_profile_path(@crop, @profile)
       assert_response :success
+      assert_select 'h1', text: /#{@crop.name}/
+      assert_select '.info-label', text: /総窒素量|Total Nitrogen/
+      assert_select '.info-value', text: /#{@profile.total_n}/
+    end
+
+    test 'should show crop fertilize profile with applications' do
+      application = create(:crop_fertilize_application, crop_fertilize_profile: @profile)
+      get crop_crop_fertilize_profile_path(@crop, @profile)
+      assert_response :success
+      assert_select '.stages-title', text: /施用計画|Application Plans/
+      assert_select '.stage-item'
     end
 
     test 'should get new' do
       get new_crop_crop_fertilize_profile_path(@crop)
       assert_response :success
+      assert_select 'form' do
+        assert_select 'input[name="crop_fertilize_profile[total_n]"]'
+        assert_select 'input[name="crop_fertilize_profile[total_p]"]'
+        assert_select 'input[name="crop_fertilize_profile[total_k]"]'
+        assert_select 'input[name="crop_fertilize_profile[confidence]"]'
+      end
+      assert_select '#add-crop-fertilize-application'
     end
 
     test 'should get edit' do
       get edit_crop_crop_fertilize_profile_path(@crop, @profile)
       assert_response :success
+      assert_select 'form' do
+        assert_select 'input[name="crop_fertilize_profile[total_n]"]'
+        assert_select 'input[value=?]', @profile.total_n.to_s
+      end
     end
 
     test 'should create crop fertilize profile' do
@@ -147,6 +169,42 @@ module Crops
       end
 
       assert_response :unprocessable_entity
+      assert_select '.errors'
+    end
+
+    test 'should render errors on invalid update' do
+      patch crop_crop_fertilize_profile_path(@crop, @profile), params: {
+        crop_fertilize_profile: {
+          total_n: nil,
+          total_p: 5.0,
+          total_k: 12.0
+        }
+      }
+
+      assert_response :unprocessable_entity
+      assert_select '.errors'
+    end
+
+    test 'should display sources in show page' do
+      @profile.update(sources: ['source1', 'source2'])
+      get crop_crop_fertilize_profile_path(@crop, @profile)
+      assert_response :success
+      assert_match /source1/, response.body
+      assert_match /source2/, response.body
+    end
+
+    test 'should display notes in show page' do
+      @profile.update(notes: 'Test notes')
+      get crop_crop_fertilize_profile_path(@crop, @profile)
+      assert_response :success
+      assert_match /Test notes/, response.body
+    end
+
+    test 'should show no applications message when no applications' do
+      @profile.crop_fertilize_applications.destroy_all
+      get crop_crop_fertilize_profile_path(@crop, @profile)
+      assert_response :success
+      assert_select '.no-stages', text: /まだ施用計画が登録されていません|No application plans registered yet/
     end
   end
 end
