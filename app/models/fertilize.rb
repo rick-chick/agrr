@@ -16,7 +16,7 @@
 #   - false: ユーザーが作成した個人の肥料
 class Fertilize < ApplicationRecord
   # バリデーション
-  validates :name, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :is_reference, inclusion: { in: [true, false] }
   validates :n, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }

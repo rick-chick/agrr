@@ -16,6 +16,21 @@ class FertilizeTest < ActiveSupport::TestCase
     assert_includes fertilize.errors[:name], "はすでに存在します"
   end
 
+  test "should allow updating with same name (exclude self)" do
+    fertilize = create(:fertilize, name: "尿素", n: 46.0)
+    fertilize.name = "尿素"  # 同じ名前で更新
+    assert fertilize.valid?, "編集時は同じ名前で更新できる必要がある"
+    assert fertilize.save
+  end
+
+  test "should not allow updating to existing other name" do
+    create(:fertilize, name: "リン酸一安")
+    fertilize = create(:fertilize, name: "尿素", n: 46.0)
+    fertilize.name = "リン酸一安"  # 別の既存の名前で更新
+    fertilize.valid?
+    assert_includes fertilize.errors[:name], "はすでに存在します"
+  end
+
   test "should validate n is greater than or equal to 0" do
     fertilize = build(:fertilize, n: -1)
     fertilize.valid?
