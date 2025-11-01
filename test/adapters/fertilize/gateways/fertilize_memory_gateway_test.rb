@@ -34,8 +34,6 @@ module Adapters
             'p' => nil,
             'k' => nil,
             'description' => '窒素肥料として広く使用される',
-            'usage' => '基肥・追肥に使用可能',
-            'application_rate' => '1㎡あたり10-30g',
             'package_size' => '25kg'
           }
 

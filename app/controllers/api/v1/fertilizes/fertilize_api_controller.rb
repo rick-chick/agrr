@@ -78,7 +78,7 @@ class Api::V1::Fertilizes::FertilizeApiController < Api::V1::BaseController
   end
 
   def fertilize_params
-    params.require(:fertilize).permit(:name, :n, :p, :k, :description, :usage, :application_rate, :package_size, :is_reference)
+    params.require(:fertilize).permit(:name, :n, :p, :k, :description, :package_size, :is_reference)
   end
 
   def fertilize_to_json(fertilize)
@@ -89,8 +89,6 @@ class Api::V1::Fertilizes::FertilizeApiController < Api::V1::BaseController
       p: fertilize.p,
       k: fertilize.k,
       description: fertilize.description,
-      usage: fertilize.usage,
-      application_rate: fertilize.application_rate,
       package_size: fertilize.package_size,
       is_reference: fertilize.is_reference,
       npk_summary: fertilize.npk_summary,

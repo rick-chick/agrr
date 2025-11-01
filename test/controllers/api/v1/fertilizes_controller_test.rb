@@ -21,8 +21,6 @@ module Api
           "product_type" => "化学肥料",
           "package_size" => "25kg",
           "description" => "尿素は、窒素を主成分とする化学肥料",
-          "usage" => "基肥・追肥に使用可能",
-          "application_rate" => "1㎡あたり10-30g",
           "link" => nil
         }.to_json
 
@@ -48,9 +46,7 @@ module Api
           "name" => "リン酸一安",
           "npk" => "0-18-0",
           "package_size" => "20kg",
-          "description" => "リン酸肥料",
-          "usage" => "基肥として使用",
-          "application_rate" => "1㎡あたり15-40g"
+          "description" => "リン酸肥料"
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
@@ -69,9 +65,7 @@ module Api
           "name" => "リン酸一安",
           "npk" => "0-18-0",
           "package_size" => nil,
-          "description" => "リン酸肥料",
-          "usage" => "基肥として使用",
-          "application_rate" => "1㎡あたり15-40g"
+          "description" => "リン酸肥料"
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
@@ -93,9 +87,7 @@ module Api
           "name" => "尿素",
           "npk" => "46-0-0",
           "package_size" => "25kg",
-          "description" => "尿素は、窒素を主成分とする化学肥料",
-          "usage" => "基肥・追肥に使用可能",
-          "application_rate" => "1㎡あたり10-30g"
+          "description" => "尿素は、窒素を主成分とする化学肥料"
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
@@ -126,8 +118,6 @@ module Api
             "product_type" => "化学肥料",
             "package_size" => "25kg",
             "description" => "尿素は、窒素を主成分とする化学肥料",
-            "usage" => "基肥・追肥に使用可能",
-            "application_rate" => "1㎡あたり10-30g",
             "link" => nil
           },
           "success" => true

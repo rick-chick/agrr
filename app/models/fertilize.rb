@@ -8,8 +8,7 @@
 #   p: リン含有率（%）
 #   k: カリ含有率（%）
 #   description: 説明文
-#   usage: 使用方法
-#   application_rate: 適用率（例: "1㎡あたり10-30g"）
+#   package_size: 容量（例: "20kg"）
 #   is_reference: 参照肥料フラグ（デフォルト: true）
 #
 # is_reference フラグについて:

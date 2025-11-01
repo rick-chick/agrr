@@ -41,13 +41,12 @@
   'p' => nil,  # 含まれない場合もある
   'k' => nil,  # 含まれない場合もある
   'description' => '窒素肥料として広く使用される',
-  'usage' => '基肥・追肥に使用可能',
-  'application_rate' => '1㎡あたり10-30g'
+  'package_size' => '25kg'
 }
 ```
 
 **重要な認識**:
-- `description`, `usage`, `application_rate`は`fertilize_get`でのみ取得可能
+- `description`, `package_size`は`fertilize_get`でのみ取得可能
 - `fertilize_list`では`n`, `p`, `k`, `name`のみ
 - 詳細情報が必要な場合は`fertilize_get`を個別に呼び出す必要がある
 

@@ -7,8 +7,6 @@ FactoryBot.define do
     p { 10.0 }
     k { 10.0 }
     description { "テスト用の肥料" }
-    usage { "基肥として使用" }
-    application_rate { "1㎡あたり20-50g" }
     is_reference { true }
 
     trait :urea do
@@ -17,8 +15,6 @@ FactoryBot.define do
       p { nil }
       k { nil }
       description { "窒素肥料として広く使用される" }
-      usage { "基肥・追肥に使用可能" }
-      application_rate { "1㎡あたり10-30g" }
     end
 
     trait :phosphate_ammonium do
@@ -27,8 +23,6 @@ FactoryBot.define do
       p { 20.0 }
       k { nil }
       description { "窒素とリン酸を含む肥料" }
-      usage { "基肥として使用" }
-      application_rate { "1㎡あたり15-40g" }
     end
 
     trait :potassium_chloride do
@@ -37,8 +31,6 @@ FactoryBot.define do
       p { nil }
       k { 60.0 }
       description { "カリ肥料として使用される" }
-      usage { "基肥・追肥に使用可能" }
-      application_rate { "1㎡あたり5-15g" }
     end
   end
 end

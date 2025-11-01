@@ -49,24 +49,10 @@
       </div>
     <% end %>
     
-    <% if @fertilize.usage.present? %>
-      <div class="info-item">
-        <span class="info-label">💡 <%= t('.usage') %>:</span>
-        <span class="info-value"><%= simple_format(@fertilize.usage) %></span>
-      </div>
-    <% end %>
-    
     <% if @fertilize.package_size.present? %>
       <div class="info-item">
         <span class="info-label">📦 <%= t('.package_size') %>:</span>
         <span class="info-value"><%= @fertilize.package_size %></span>
-      </div>
-    <% end %>
-    
-    <% if @fertilize.application_rate.present? %>
-      <div class="info-item">
-        <span class="info-label">📊 <%= t('.application_rate') %>:</span>
-        <span class="info-value"><%= @fertilize.application_rate %></span>
       </div>
     <% end %>
     
