@@ -8,11 +8,15 @@ export default class extends Controller {
     this.statusDiv = document.getElementById('ai-save-status')
     this.nameField = document.querySelector('input[name="fertilize[name]"]')
     this.adPopup = document.getElementById('ad-popup-overlay')
+    this.isNewRecord = this.element.dataset.isNewRecord === 'true'
+    this.fertilizeId = this.element.dataset.fertilizeId
     
     console.log('[FertilizeAiController] button:', this.button)
     console.log('[FertilizeAiController] nameField:', this.nameField)
     console.log('[FertilizeAiController] statusDiv:', this.statusDiv)
     console.log('[FertilizeAiController] adPopup:', this.adPopup)
+    console.log('[FertilizeAiController] isNewRecord:', this.isNewRecord)
+    console.log('[FertilizeAiController] fertilizeId:', this.fertilizeId)
     
     if (!this.button) {
       console.error('[FertilizeAiController] Button element not found!')
@@ -48,9 +52,19 @@ export default class extends Controller {
     try {
       const csrfToken = document.querySelector('[name="csrf-token"]')?.content
       
-      // AI Create APIを呼び出し（agrrコマンドで情報取得 + 保存）
-      const response = await fetch('/api/v1/fertilizes/ai_create', {
-        method: 'POST',
+      let endpoint, method
+      if (this.isNewRecord) {
+        // 新規作成
+        endpoint = '/api/v1/fertilizes/ai_create'
+        method = 'POST'
+      } else {
+        // 更新
+        endpoint = `/api/v1/fertilizes/${this.fertilizeId}/ai_update`
+        method = 'POST'
+      }
+      
+      const response = await fetch(endpoint, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken
@@ -64,7 +78,12 @@ export default class extends Controller {
       
       if (response.ok) {
         // 成功時：広告を閉じて肥料詳細画面に遷移
-        this.showStatus((this.element.dataset.createdSuccess || '✓ 肥料「%{name}」の情報を取得して保存しました！').replace('%{name}', data.fertilize_name), 'success')
+        // APIレスポンスのmessageを使用（ai_create=作成、ai_update=更新で正しいメッセージを返す）
+        const successMsg = data.message || (this.isNewRecord
+          ? (this.element.dataset.createdSuccess || '✓ 肥料「%{name}」の情報を取得して保存しました！').replace('%{name}', data.fertilize_name || '')
+          : (this.element.dataset.updatedSuccess || '✓ 肥料「%{name}」の情報を取得して更新しました！').replace('%{name}', data.fertilize_name || ''))
+        
+        this.showStatus('✓ ' + successMsg, 'success')
         
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
