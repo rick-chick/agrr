@@ -1,0 +1,12 @@
+<% content_for :title, "#{t('.title', crop_name: @crop.name)} - AGRR" %>
+
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "crop_fertilize_profile_form", defer: true %>
+<% end %>
+
+<div class="page-header">
+  <h1 class="page-title"><%= t('.title', crop_name: @crop.name) %></h1>
+</div>
+
+<%= render 'form' %>
+

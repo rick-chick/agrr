@@ -1,0 +1,77 @@
+<div class="nested-fields crop-fertilize-application-item">
+  <div class="nested-fields-header">
+    <h4 class="nested-title"><%= t('crop_fertilize_profiles.application.title') %></h4>
+    <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
+    <button type="button" class="btn btn-error btn-sm remove-crop-fertilize-application"><%= t('crop_fertilize_profiles.application.remove_button') %></button>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :application_type, t('crop_fertilize_profiles.application.application_type_label'), class: 'form-label' %>
+    <%= f.select :application_type, 
+                 options_for_select([
+                   ['基肥', 'basal'],
+                   ['追肥', 'topdress']
+                 ], f.object.application_type || 'basal'),
+                 { prompt: t('crop_fertilize_profiles.application.application_type_prompt') },
+                 { required: true, class: 'form-control' } %>
+    <div class="form-text"><%= t('crop_fertilize_profiles.application.application_type_help') %></div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :count, t('crop_fertilize_profiles.application.count_label'), class: 'form-label' %>
+      <%= f.number_field :count, min: 1, value: f.object.count || 1, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.application.count_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :schedule_hint, t('crop_fertilize_profiles.application.schedule_hint_label'), class: 'form-label' %>
+      <%= f.text_field :schedule_hint, class: 'form-control', placeholder: t('crop_fertilize_profiles.application.schedule_hint_placeholder') %>
+      <div class="form-text"><%= t('crop_fertilize_profiles.application.schedule_hint_help') %></div>
+    </div>
+  </div>
+
+  <div class="nested-section">
+    <h5 class="nested-subtitle"><%= t('crop_fertilize_profiles.application.total_nutrients_section') %></h5>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :total_n, t('crop_fertilize_profiles.application.total_n_label'), class: 'form-label' %>
+        <%= f.number_field :total_n, step: :any, required: true, class: 'form-control' %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :total_p, t('crop_fertilize_profiles.application.total_p_label'), class: 'form-label' %>
+        <%= f.number_field :total_p, step: :any, required: true, class: 'form-control' %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :total_k, t('crop_fertilize_profiles.application.total_k_label'), class: 'form-label' %>
+        <%= f.number_field :total_k, step: :any, required: true, class: 'form-control' %>
+      </div>
+    </div>
+  </div>
+
+  <div class="nested-section">
+    <h5 class="nested-subtitle"><%= t('crop_fertilize_profiles.application.per_application_section') %></h5>
+    <div class="form-text"><%= t('crop_fertilize_profiles.application.per_application_help') %></div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :per_application_n, t('crop_fertilize_profiles.application.per_application_n_label'), class: 'form-label' %>
+        <%= f.number_field :per_application_n, step: :any, class: 'form-control' %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :per_application_p, t('crop_fertilize_profiles.application.per_application_p_label'), class: 'form-label' %>
+        <%= f.number_field :per_application_p, step: :any, class: 'form-control' %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :per_application_k, t('crop_fertilize_profiles.application.per_application_k_label'), class: 'form-label' %>
+        <%= f.number_field :per_application_k, step: :any, class: 'form-control' %>
+      </div>
+    </div>
+  </div>
+</div>
+
