@@ -87,8 +87,8 @@ ja:
         updated_with_latest: "肥料「%{name}」を最新情報で更新しました"
         created_by_ai: "AIで肥料「%{name}」の情報を取得して作成しました"
       crop_fertilize_profiles:
-        created_by_ai: "肥料プロファイルを作成しました"
-        updated_by_ai: "肥料プロファイルを更新しました"
+        created_by_ai: "肥料プロファイル「%{crop_name}」を作成しました"
+        updated_by_ai: "肥料プロファイル「%{crop_name}」を更新しました"
       crop_not_found: "作物情報が見つかりません"
       no_weather_data: "気象データがありません"
       no_cultivation_period: "栽培期間が設定されていません"
