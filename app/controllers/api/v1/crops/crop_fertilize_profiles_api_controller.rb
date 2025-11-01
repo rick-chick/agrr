@@ -99,11 +99,6 @@ module Api
               message: I18n.t('api.messages.crop_fertilize_profiles.created_by_ai', default: '肥料プロファイルを作成しました', crop_name: @crop.name)
             }, status: :created
 
-          rescue ActiveRecord::RecordInvalid => e
-            Rails.logger.error "❌ [AI Fertilize Profile] Validation Error: #{e.record.class.name}"
-            Rails.logger.error "   Errors: #{e.record.errors.full_messages.join(', ')}"
-            error_messages = e.record.errors.full_messages
-            render json: { error: error_messages.join(', ') }, status: :unprocessable_entity
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
             Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
@@ -178,11 +173,6 @@ module Api
               message: I18n.t('api.messages.crop_fertilize_profiles.updated_by_ai', default: '肥料プロファイルを更新しました', crop_name: @crop.name)
             }, status: :ok
 
-          rescue ActiveRecord::RecordInvalid => e
-            Rails.logger.error "❌ [AI Fertilize Profile] Validation Error: #{e.record.class.name}"
-            Rails.logger.error "   Errors: #{e.record.errors.full_messages.join(', ')}"
-            error_messages = e.record.errors.full_messages
-            render json: { error: error_messages.join(', ') }, status: :unprocessable_entity
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
             Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
