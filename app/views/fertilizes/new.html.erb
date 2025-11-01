@@ -1,5 +1,9 @@
 <% content_for :title, "#{t('.title')} - AGRR" %>
 
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "fertilize_ai", defer: true %>
+<% end %>
+
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
 </div>

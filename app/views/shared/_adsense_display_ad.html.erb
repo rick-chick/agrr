@@ -5,9 +5,18 @@
        data-ad-client="ca-pub-7498903562014256"
        data-ad-slot="<%= local_assigns[:ad_slot] || '0000000000' %>"
        data-ad-format="<%= local_assigns[:ad_format] || 'auto' %>"
-       data-full-width-responsive="true"></ins>
+       data-full-width-responsive="true"
+       data-ad-initialized="false"></ins>
   <script nonce="<%= content_security_policy_nonce %>">
-       (adsbygoogle = window.adsbygoogle || []).push({});
+       // 広告の初期化はポップアップが表示された後に行う（fertilize_ai_controller.js / crop_ai_controller.js）
+       // ポップアップ内の広告は自動初期化しない（ポップアップが表示されている場合）
+       (function() {
+         const adOverlay = document.getElementById('ad-popup-overlay');
+         // ポップアップが非表示または存在しない場合のみ自動初期化
+         if (!adOverlay || !adOverlay.classList.contains('show')) {
+           (adsbygoogle = window.adsbygoogle || []).push({});
+         }
+       })();
   </script>
 </div>
 

@@ -1,5 +1,5 @@
 # Use the official Ruby image as the base image
-FROM ruby:3.3.9-slim
+FROM ruby:3.3.10-slim
 
 # Install system dependencies (including SQLite, YAML, and Node.js)
 # Note: We need to downgrade zlib to 1.2.x for agrr binary compatibility

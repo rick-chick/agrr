@@ -6,11 +6,21 @@ import { Application } from "@hotwired/stimulus"
 const application = Application.start()
 
 // Configure Stimulus development experience
-application.debug = false
+application.debug = true  // デバッグモードを有効化
 window.Stimulus = application
 
 // Register controllers manually
 import CropAiController from "./crop_ai_controller"
+import FertilizeAiController from "./fertilize_ai_controller"
+
+console.log('[Controllers] Registering controllers...')
+console.log('[Controllers] CropAiController:', CropAiController)
+console.log('[Controllers] FertilizeAiController:', FertilizeAiController)
+
 application.register("crop-ai", CropAiController)
+application.register("fertilize-ai", FertilizeAiController)
+
+console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
+console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)
 
 export { application }
