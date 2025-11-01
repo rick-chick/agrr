@@ -15,6 +15,9 @@ export default class extends Controller {
       return
     }
     
+    // ボタンのテキストを初期化
+    this.button.textContent = this.element.dataset.buttonIdle || '🤖 AIで肥料情報を取得・保存'
+    
     this.button.addEventListener('click', this.saveProfile.bind(this))
   }
 
@@ -61,7 +64,8 @@ export default class extends Controller {
       const data = await response.json()
       
       if (response.ok) {
-        // 成功時：広告を閉じて肥料プロファイル詳細画面に遷移
+        // 成功時：広告を閉じて遷移
+        // 新規作成時は詳細画面、編集時は編集画面に遷移（Cropの動作に合わせる）
         // APIレスポンスのmessageを使用（ai_create=作成、ai_update=更新で正しいメッセージを返す）
         const successMsg = data.message || '処理が完了しました'
         
@@ -70,7 +74,13 @@ export default class extends Controller {
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
           this.hideAdPopup()
-          window.location.href = `/crops/${this.cropId}/crop_fertilize_profiles/${data.profile_id}`
+          if (this.isNewRecord) {
+            // 新規作成時：詳細画面に遷移（Cropと同じ動作）
+            window.location.href = `/crops/${this.cropId}/crop_fertilize_profiles/${data.profile_id}`
+          } else {
+            // 編集時：編集画面に戻る
+            window.location.href = `/crops/${this.cropId}/crop_fertilize_profiles/${data.profile_id}/edit`
+          }
         }, 1500)
       } else {
         this.hideAdPopup()
