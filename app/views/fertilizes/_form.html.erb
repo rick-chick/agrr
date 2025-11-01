@@ -17,6 +17,43 @@
     </div>
 
     <div class="form-group">
+      <button type="button" id="ai-save-fertilize-btn" class="btn btn-ai" 
+              data-enter-name="<%= t('js.fertilize_ai.enter_name') %>"
+              data-fetching="<%= t('js.fertilize_ai.fetching') %>"
+              data-button-fetching="<%= t('js.fertilize_ai.button_fetching') %>"
+              data-created-success="<%= t('js.fertilize_ai.created_success', name: '%{name}') %>"
+              data-fetch-failed="<%= t('js.fertilize_ai.fetch_failed') %>"
+              data-network-error="<%= t('js.fertilize_ai.network_error') %>"
+              data-button-idle="<%= t('fertilizes.form.ai_button') %>">
+        <%= t('fertilizes.form.ai_button') %>
+      </button>
+      <div id="ai-save-status" class="form-text d-none"></div>
+      <div class="form-text"><%= t('fertilizes.form.ai_help') %></div>
+    </div>
+
+    <!-- AI処理中の広告ポップアップ -->
+    <div id="ad-popup-overlay" class="ad-popup-overlay">
+      <div class="ad-popup-container">
+        <div class="ad-popup-status">
+          <div class="ad-popup-status-title">
+            <%= t('fertilizes.form.ai_processing_title') %>
+          </div>
+          <p class="ad-popup-status-message"><%= t('fertilizes.form.ai_processing_message') %></p>
+        </div>
+
+        <div class="ad-popup-progress">
+          <p class="ad-popup-progress-text"><%= t('fertilizes.form.ai_progress_text') %></p>
+          <div class="ad-popup-progress-bar">
+            <div class="ad-popup-progress-fill"></div>
+          </div>
+        </div>
+        
+        <!-- Google AdSense 広告 -->
+        <%= render 'shared/adsense_display_ad', ad_slot: '0000000000', ad_format: 'rectangle' %>
+      </div>
+    </div>
+
+    <div class="form-group">
       <%= f.label :n, t('fertilizes.form.n_label'), class: 'form-label' %>
       <%= f.number_field :n, step: :any, class: 'form-control' %>
       <div class="form-text"><%= t('fertilizes.form.n_help') %></div>
@@ -44,6 +81,12 @@
       <%= f.label :usage, t('fertilizes.form.usage_label'), class: 'form-label' %>
       <%= f.text_area :usage, rows: 3, class: 'form-control' %>
       <div class="form-text"><%= t('fertilizes.form.usage_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :package_size, t('fertilizes.form.package_size_label'), class: 'form-label' %>
+      <%= f.text_field :package_size, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.package_size_help') %></div>
     </div>
 
     <div class="form-group">
