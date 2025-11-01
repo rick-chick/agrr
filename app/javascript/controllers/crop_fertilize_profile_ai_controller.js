@@ -62,11 +62,12 @@ export default class extends Controller {
       
       if (response.ok) {
         // 成功時：広告を閉じて肥料プロファイル詳細画面に遷移
-        const successMsg = this.isNewRecord
+        // APIレスポンスのmessageを使用（作成/更新を自動判定）
+        const successMsg = data.message || (this.isNewRecord
           ? (this.element.dataset.createdSuccess || '✓ 肥料プロファイルを作成しました！').replace('%{crop_name}', data.crop_name || '')
-          : (this.element.dataset.updatedSuccess || '✓ 肥料プロファイルを更新しました！').replace('%{crop_name}', data.crop_name || '')
+          : (this.element.dataset.updatedSuccess || '✓ 肥料プロファイルを更新しました！').replace('%{crop_name}', data.crop_name || ''))
         
-        this.showStatus(successMsg, 'success')
+        this.showStatus('✓ ' + successMsg, 'success')
         
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
