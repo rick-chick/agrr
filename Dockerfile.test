@@ -1,5 +1,5 @@
 # Multi-stage build for production (test environment)
-FROM ruby:3.3.9-slim AS builder
+FROM ruby:3.3.10-slim AS builder
 
 # Install system dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
@@ -48,9 +48,9 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompi
 # This ensures migrations run with the actual test database
 
 # Production stage (test environment)
-FROM ruby:3.3.9-slim
+FROM ruby:3.3.10-slim
 
-# Install runtime dependencies (including SQLite, Node.js, and Litestream)
+# Install runtime dependencies (including SQLite, Node.js, Litestream, and build tools for test gems)
 RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
     libyaml-0-2 \
@@ -58,6 +58,8 @@ RUN apt-get update -qq && apt-get install -y \
     ca-certificates \
     gnupg \
     wget \
+    build-essential \
+    libsqlite3-dev \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && wget https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \

@@ -145,14 +145,8 @@ module Api
       end
 
       def fetch_crop_info_from_agrr(crop_name, max_retries: 3)
-        agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
-        command = [
-          agrr_path,
-          'crop',
-          '--query', crop_name,
-          '--json'
-        ]
-
+        agrr_service = AgrrService.new
+        
         attempt = 0
         last_error = nil
 
@@ -161,36 +155,9 @@ module Api
           attempt = retry_count + 1
           
           begin
-            Rails.logger.debug "🔧 [AGRR Crop Query] #{command.join(' ')} (attempt #{attempt}/#{max_retries})"
+            Rails.logger.debug "🔧 [AGRR Crop Query] crop --query #{crop_name} --json (attempt #{attempt}/#{max_retries})"
 
-            stdout, stderr, status = Open3.capture3(*command)
-
-            # 実行に失敗した場合
-            unless status.success?
-              error_msg = stderr.strip
-              
-              # 一時的なネットワークエラーや圧縮エラーの場合はリトライ
-              if error_msg.include?('decompressing') || 
-                 error_msg.include?('Connection') || 
-                 error_msg.include?('timeout') ||
-                 error_msg.include?('Network')
-                
-                Rails.logger.warn "⚠️  [AGRR Crop Query] Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}"
-                
-                # リトライ前に指数バックオフで待機
-                if attempt < max_retries
-                  sleep_time = 2 ** attempt # 2秒、4秒、8秒...
-                  Rails.logger.info "⏳ [AGRR Crop Query] Retrying in #{sleep_time} seconds..."
-                  sleep(sleep_time)
-                  next
-                end
-              end
-              
-              # リトライしないエラー、または最終試行での失敗
-              Rails.logger.error "❌ [AGRR Crop Query Error] Command failed: #{command.join(' ')}"
-              Rails.logger.error "   stderr: #{error_msg}"
-              raise "Failed to query crop info from agrr: #{error_msg}"
-            end
+            stdout = agrr_service.crop(query: crop_name, json: true)
 
             # agrrコマンドの生の出力をログに記録（最初の500文字のみ）
             Rails.logger.debug "📥 [AGRR Crop Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
@@ -218,6 +185,34 @@ module Api
 
             return parsed_data
 
+          rescue AgrrService::DaemonNotRunningError => e
+            # Daemonが起動していない場合はリトライしない
+            Rails.logger.error "❌ [AGRR Crop Query] Daemon not running: #{e.message}"
+            raise "AGRR daemon is not running: #{e.message}"
+          rescue AgrrService::CommandExecutionError => e
+            # コマンド実行エラー
+            error_msg = e.message
+            
+            # 一時的なネットワークエラーや圧縮エラーの場合はリトライ
+            if error_msg.include?('decompressing') || 
+               error_msg.include?('Connection') || 
+               error_msg.include?('timeout') ||
+               error_msg.include?('Network')
+              
+              Rails.logger.warn "⚠️  [AGRR Crop Query] Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}"
+              
+              # リトライ前に指数バックオフで待機
+              if attempt < max_retries
+                sleep_time = 2 ** attempt # 2秒、4秒、8秒...
+                Rails.logger.info "⏳ [AGRR Crop Query] Retrying in #{sleep_time} seconds..."
+                sleep(sleep_time)
+                next
+              end
+            end
+            
+            # リトライしないエラー、または最終試行での失敗
+            Rails.logger.error "❌ [AGRR Crop Query Error] Command failed: #{error_msg}"
+            raise "Failed to query crop info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             # JSONパースエラー（リトライしても意味がない）
             Rails.logger.error "❌ [AGRR Crop Query] JSON parse error: #{e.message}"

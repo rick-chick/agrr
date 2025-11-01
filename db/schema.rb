@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_01_100944) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -163,11 +163,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_100944) do
     t.float "p"
     t.float "k"
     t.text "description"
-    t.text "usage"
-    t.string "application_rate"
     t.boolean "is_reference", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "package_size"
     t.index ["name"], name: "index_fertilizes_on_name", unique: true
   end
 

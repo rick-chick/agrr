@@ -86,7 +86,7 @@ services:
   test:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.test
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
@@ -106,6 +106,7 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
       - USE_AGRR_DAEMON=false  # 通常のテストではdaemonを使用しない
+      - PREVENT_TEST_IN_DEV=  # テスト環境では無効化
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
@@ -139,6 +140,7 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
       - USE_AGRR_DAEMON=true  # 統合テストではdaemonを使用
+      - PREVENT_TEST_IN_DEV=  # テスト環境では無効化
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8

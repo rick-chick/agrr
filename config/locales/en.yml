@@ -17,6 +17,13 @@ en:
       created_success: "✓ Retrieved and saved crop '%{name}'!"
       fetch_failed: "Failed to retrieve crop information"
       network_error: "A network error occurred"
+    fertilize_ai:
+      enter_name: "Please enter a fertilizer name"
+      fetching: "Fetching fertilizer information with AI..."
+      button_fetching: "🤖 Fetching with AI..."
+      created_success: "✓ Retrieved and saved fertilizer '%{name}'!"
+      fetch_failed: "Failed to retrieve fertilizer information"
+      network_error: "A network error occurred"
     crop_palette:
       plan_id_missing: "Error: Could not retrieve plan ID"
       crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
@@ -215,6 +222,11 @@ en:
         fetch_failed_with_reason: "Failed to retrieve crop information: %{message}"
         reference_only_admin: "Only admin can create reference crops"
         reference_flag_admin_only: "Only admin can change reference flag"
+      fertilizes:
+        name_required: "Please enter a fertilizer name"
+        invalid_payload: "Invalid fertilizer payload format"
+        fetch_failed: "Failed to retrieve fertilizer information"
+        fetch_failed_with_reason: "Failed to retrieve fertilizer information: %{message}"
     messages:
       common:
         weather_service_available: "Weather service is available"
@@ -224,6 +236,9 @@ en:
       crops:
         updated_with_latest: "Updated crop '%{name}' with latest info"
         created_by_ai: "Created crop '%{name}' with AI-fetched info"
+      fertilizes:
+        updated_with_latest: "Updated fertilizer '%{name}' with latest info"
+        created_by_ai: "Created fertilizer '%{name}' with AI-fetched info"
 
   activerecord:
     errors:

@@ -7,3 +7,4 @@
 //= link gantt_data_utils.js
 //= link custom_gantt_chart.js
 //= link cultivation_results.js
+//= link fertilize_ai.js

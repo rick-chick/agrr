@@ -84,6 +84,10 @@ Rails.application.configure do
   config.action_cable.disable_request_forgery_protection = true
   config.action_cable.mount_path = nil
 
+  # Propshaft configuration for test environment
+  # Allow missing assets (application.js might not be built)
+  config.assets.check_precompiled_asset = false
+  
   # Google OAuth test configuration
   config.after_initialize do
     # Set test OAuth credentials
