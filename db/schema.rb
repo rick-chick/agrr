@@ -39,6 +39,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "crop_fertilize_applications", force: :cascade do |t|
+    t.integer "crop_fertilize_profile_id", null: false
+    t.string "application_type", null: false
+    t.integer "count", default: 1, null: false
+    t.string "schedule_hint"
+    t.float "total_n", null: false
+    t.float "total_p", null: false
+    t.float "total_k", null: false
+    t.float "per_application_n"
+    t.float "per_application_p"
+    t.float "per_application_k"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_type"], name: "index_crop_fertilize_applications_on_application_type"
+    t.index ["crop_fertilize_profile_id"], name: "index_crop_fertilize_applications_on_crop_fertilize_profile_id"
+  end
+
+  create_table "crop_fertilize_profiles", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.float "total_n", null: false
+    t.float "total_p", null: false
+    t.float "total_k", null: false
+    t.text "sources"
+    t.float "confidence", default: 0.5, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id"], name: "index_crop_fertilize_profiles_on_crop_id"
+  end
+
   create_table "crop_stages", force: :cascade do |t|
     t.integer "crop_id", null: false
     t.string "name", null: false
@@ -339,6 +369,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "crop_fertilize_applications", "crop_fertilize_profiles"
+  add_foreign_key "crop_fertilize_profiles", "crops"
   add_foreign_key "crop_stages", "crops"
   add_foreign_key "crops", "users"
   add_foreign_key "cultivation_plan_crops", "crops"
