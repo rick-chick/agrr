@@ -106,38 +106,6 @@ class AgrrService
     execute_command(args)
   end
 
-  # List popular fertilizers
-  def fertilize_list(language:, limit: 5, area: nil, json: true)
-    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
-
-    args = ['fertilize', 'list', '--language', language]
-    args += ['--limit', limit.to_s] if limit
-    args += ['--area', area.to_s] if area
-    args << '--json' if json
-
-    execute_command(args)
-  end
-
-  # Get detailed fertilizer information
-  def fertilize_get(name:, json: true)
-    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
-
-    args = ['fertilize', 'get', '--name', name]
-    args << '--json' if json
-
-    execute_command(args)
-  end
-
-  # Recommend fertilizer plan
-  def fertilize_recommend(crop_file:, json: true)
-    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
-
-    args = ['fertilize', 'recommend', '--crop-file', crop_file]
-    args << '--json' if json
-
-    execute_command(args)
-  end
-
   private
 
   def execute_command(args)

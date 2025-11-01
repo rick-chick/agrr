@@ -5,6 +5,7 @@ in:
       plans: "योजनाएं"
       farms: "खेत"
       crops: "फसलें"
+      fertilizes: "उर्वरक"
       interaction_rules: "परिक्रमण"
       login: "लॉगिन"
       logout: "लॉगआउट"

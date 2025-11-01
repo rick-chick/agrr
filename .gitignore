@@ -125,3 +125,4 @@ tmp/
 .dockerignore
 lib/core/agrr
 lib/core/_internal
+vendor/

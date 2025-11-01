@@ -1,0 +1,96 @@
+<% content_for :title, "#{@fertilize.name} - AGRR" %>
+
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= @fertilize.name %></h1>
+    <% if admin_user? && @fertilize.is_reference %>
+      <div class="crop-detail-type reference"><%= t('.reference_fertilize') %></div>
+    <% end %>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">📝 <%= t('.name') %>:</span>
+      <span class="info-value"><%= @fertilize.name %></span>
+    </div>
+    
+    <% if @fertilize.npk_summary.present? %>
+      <div class="info-item">
+        <span class="info-label">🧪 <%= t('.npk_summary') %>:</span>
+        <span class="info-value"><%= @fertilize.npk_summary %></span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.n.present? %>
+      <div class="info-item">
+        <span class="info-label">🌿 <%= t('.n') %>:</span>
+        <span class="info-value"><%= @fertilize.n %>%</span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.p.present? %>
+      <div class="info-item">
+        <span class="info-label">🌿 <%= t('.p') %>:</span>
+        <span class="info-value"><%= @fertilize.p %>%</span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.k.present? %>
+      <div class="info-item">
+        <span class="info-label">🌿 <%= t('.k') %>:</span>
+        <span class="info-value"><%= @fertilize.k %>%</span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.description.present? %>
+      <div class="info-item">
+        <span class="info-label">📄 <%= t('.description') %>:</span>
+        <span class="info-value"><%= simple_format(@fertilize.description) %></span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.usage.present? %>
+      <div class="info-item">
+        <span class="info-label">💡 <%= t('.usage') %>:</span>
+        <span class="info-value"><%= simple_format(@fertilize.usage) %></span>
+      </div>
+    <% end %>
+    
+    <% if @fertilize.application_rate.present? %>
+      <div class="info-item">
+        <span class="info-label">📊 <%= t('.application_rate') %>:</span>
+        <span class="info-value"><%= @fertilize.application_rate %></span>
+      </div>
+    <% end %>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@fertilize.created_at, format: :long) %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@fertilize.updated_at, format: :long) %></span>
+    </div>
+  </div>
+  
+  <div class="actions">
+    <%= link_to t('.back_to_list'), fertilizes_path, class: "btn btn-secondary" %>
+    <% if @fertilize.is_reference %>
+      <%# 参照肥料は管理者のみ編集・削除可能 %>
+      <% if admin_user? %>
+        <%= link_to t('.edit'), edit_fertilize_path(@fertilize), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @fertilize, method: :delete, 
+                    class: "btn btn-error", 
+                    confirm: t('.confirm_delete') %>
+      <% end %>
+    <% else %>
+      <%# ユーザー肥料は所有者が編集・削除可能 %>
+      <%= link_to t('.edit'), edit_fertilize_path(@fertilize), class: "btn btn-secondary" %>
+      <%= button_to t('.delete'), @fertilize, method: :delete, 
+                  class: "btn btn-error", 
+                  confirm: t('.confirm_delete') %>
+    <% end %>
+  </div>
+</div>
+

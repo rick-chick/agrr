@@ -2,7 +2,31 @@
 
 ## 🏗️ System Architecture Overview
 
-AGRR is a Ruby on Rails application for agricultural planning and optimization, built with Clean Architecture principles and comprehensive internationalization support.
+AGRR is a Ruby on Rails application for agricultural planning and optimization, built with **Clean Architecture principles** and comprehensive internationalization support.
+
+### Technology Stack
+- **Framework**: Ruby on Rails 8
+- **Database**: SQLite3 (development/test), with Litestream backup
+- **Architecture**: Hybrid (Clean Architecture + Traditional Rails MVC)
+- **Language**: Ruby
+- **External Services**: Python-based AGRR CLI for advanced predictions
+
+### Current Architecture Status
+
+**Clean Architecture is partially implemented:**
+
+- ✅ **API Controllers** (5/30): Full Clean Architecture adoption
+  - `/api/v1/farms`, `/api/v1/crops`, `/api/v1/fields`, `/api/v1/fertilizes`
+  - Uses Domain/Interactor/Gateway pattern
+- ⚠️ **HTML Controllers** (25/30): Traditional Rails MVC
+  - Direct Model usage (ActiveRecord)
+  - No Interactor/Gateway layer
+- ✅ **Domain Layer**: Complete implementation
+  - Entities, Interactors, Gateway interfaces for Farm, Crop, Field, Fertilize
+- ✅ **Adapter Layer**: Complete implementation
+  - Memory Gateway implementations for all domain entities
+
+**Migration Strategy**: The project is gradually adopting Clean Architecture, starting with API endpoints. HTML controllers remain on traditional Rails MVC for rapid iteration.
 
 ## 📊 Core Business Rules
 
@@ -12,48 +36,295 @@ AGRR is a Ruby on Rails application for agricultural planning and optimization, 
 - **Reference Records**: Always excluded from limits (`is_reference: true`)
 
 ### Implementation Architecture
-- **Model-Level Validation**: MANDATORY for all business rules
-- **Controller-Level Validation**: Supplementary only
-- **Service Objects**: Handle complex business logic
-- **Direct Database Operations**: Must respect model validations
+
+The system follows Clean Architecture with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────┐
+│         Infrastructure Layer            │
+│  (Controllers, Models, Services)        │
+│  - Rails MVC                            │
+│  - Database Access (ActiveRecord)       │
+│  - External Services                    │
+└─────────────────────────────────────────┘
+            ↓ ↑
+┌─────────────────────────────────────────┐
+│         Adapter Layer                   │
+│  (lib/adapters/)                        │
+│  - Gateway Implementations             │
+│  - Memory Gateway                       │
+│  - External API Gateway                │
+└─────────────────────────────────────────┘
+            ↓ ↑
+┌─────────────────────────────────────────┐
+│         UseCase Layer                   │
+│  (lib/domain/)                          │
+│  - Interactors (Application Logic)      │
+│  - Gateways (Interfaces)                │
+│  - Entities (Domain Models)             │
+└─────────────────────────────────────────┘
+            ↓ ↑
+┌─────────────────────────────────────────┐
+│         Domain Layer                    │
+│  (Business Rules & Entities)            │
+│  - Core Business Logic                  │
+│  - Domain Entities                      │
+│  - Value Objects                        │
+└─────────────────────────────────────────┘
+```
+
+## 🎯 Layer Responsibilities
+
+### 1. Infrastructure Layer (app/)
+- **Controllers**: Handle HTTP requests/responses
+- **Models**: ActiveRecord ORM, validations, database persistence
+- **Jobs**: Background job processing
+- **Services**: Application-level orchestration
+
+### 2. Adapter Layer (lib/adapters/)
+- **Gateway Implementations**: Concrete implementations of domain gateways
+- **Memory Gateway**: Maps ActiveRecord models to domain entities
+- **External API Gateway**: Integrates with external services
+
+Example:
+```ruby
+# lib/adapters/farm/gateways/farm_memory_gateway.rb
+module Adapters
+  module Farm
+    module Gateways
+      class FarmMemoryGateway < Domain::Farm::Gateways::FarmGateway
+        def create(farm_data)
+          farm_record = ::Farm.create!(farm_data)
+          entity_from_record(farm_record)
+        end
+        
+        private
+        
+        def entity_from_record(record)
+          Domain::Farm::Entities::FarmEntity.new(
+            id: record.id,
+            user_id: record.user_id,
+            name: record.name,
+            latitude: record.latitude,
+            longitude: record.longitude,
+            created_at: record.created_at,
+            updated_at: record.updated_at
+          )
+        end
+      end
+    end
+  end
+end
+```
+
+### 3. UseCase Layer (lib/domain/)
+- **Interactors**: Application use cases (one use case per class)
+- **Gateways**: Interface definitions for data access
+- **Entities**: Rich domain models with business logic
+
+Example:
+```ruby
+# lib/domain/farm/interactors/farm_create_interactor.rb
+module Domain
+  module Farm
+    module Interactors
+      class FarmCreateInteractor
+        def initialize(gateway)
+          @gateway = gateway
+        end
+
+        def call(farm_data)
+          validate_input(farm_data)
+          farm_entity = Entities::FarmEntity.new(farm_data)
+          created_farm = @gateway.create(farm_data)
+          Domain::Shared::Result.success(created_farm)
+        rescue StandardError => e
+          Domain::Shared::Result.failure(e.message)
+        end
+
+        private
+
+        def validate_input(data)
+          raise ArgumentError, "Name is required" if data[:name].blank?
+          raise ArgumentError, "User ID is required" if data[:user_id].blank?
+        end
+      end
+    end
+  end
+end
+```
+
+### 4. Domain Layer (lib/domain/)
+- **Entities**: Rich domain models with behavior
+- **Business Rules**: Core domain logic
+- **Value Objects**: Immutable domain concepts
+
+Example:
+```ruby
+# lib/domain/farm/entities/farm_entity.rb
+module Domain
+  module Farm
+    module Entities
+      class FarmEntity
+        attr_reader :id, :user_id, :name, :latitude, :longitude, :created_at, :updated_at
+
+        def initialize(attributes)
+          @id = attributes[:id]
+          @user_id = attributes[:user_id]
+          @name = attributes[:name]
+          @latitude = attributes[:latitude]
+          @longitude = attributes[:longitude]
+          @created_at = attributes[:created_at]
+          @updated_at = attributes[:updated_at]
+
+          validate!
+        end
+
+        def coordinates
+          [latitude, longitude]
+        end
+
+        def has_coordinates?
+          latitude.present? && longitude.present?
+        end
+
+        private
+
+        def validate!
+          raise ArgumentError, "Name is required" if name.blank?
+          raise ArgumentError, "User ID is required" if user_id.blank?
+          
+          if latitude
+            lat_num = latitude.to_f
+            raise ArgumentError, "Latitude must be between -90 and 90" if lat_num < -90 || lat_num > 90
+          end
+          
+          if longitude
+            lng_num = longitude.to_f
+            raise ArgumentError, "Longitude must be between -180 and 180" if lng_num < -180 || lng_num > 180
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+## 🔄 Data Flow Architecture
+
+### Request Flow
+```
+1. HTTP Request → Controller
+2. Controller → Interactor (UseCase)
+3. Interactor → Gateway (Interface)
+4. Gateway → ActiveRecord Model
+5. Model → Database
+6. Gateway → Entity (Domain Object)
+7. Entity → Interactor
+8. Interactor → Result
+9. Result → Controller
+10. Controller → Response
+```
+
+### Controller Pattern
+```ruby
+# app/controllers/api/v1/farms/farm_api_controller.rb
+class Api::V1::Farms::FarmApiController < Api::V1::BaseController
+  before_action :set_interactors
+
+  def create
+    farm_params_with_user = farm_params.merge(user_id: current_user.id)
+    result = @create_interactor.call(farm_params_with_user)
+    
+    if result.success?
+      render json: farm_to_json(result.data), status: :created
+    else
+      render json: { error: result.error }, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def set_interactors
+    gateway = Adapters::Farm::Gateways::FarmMemoryGateway.new
+    @create_interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(gateway)
+    @find_interactor = Domain::Farm::Interactors::FarmFindInteractor.new(gateway)
+    @update_interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(gateway)
+    @delete_interactor = Domain::Farm::Interactors::FarmDeleteInteractor.new(gateway)
+    @find_all_interactor = Domain::Farm::Interactors::FarmFindAllInteractor.new(gateway)
+  end
+end
+```
 
 ## 🎯 Validation Architecture
 
-### Model Validation Priority
+### Multi-Layer Validation
+The system employs validation at multiple layers for security and user experience:
+
 ```
-1. Model-Level Validation (MANDATORY)
+1. Domain Layer Validation (lib/domain/)
+   ├── Entity validation
    ├── Business rule enforcement
-   ├── Data integrity
-   └── Direct database operation protection
+   └── Core domain logic
 
-2. Controller-Level Validation (SUPPLEMENTARY)
-   ├── User experience enhancement
-   ├── Early error detection
-   └── UI feedback
+2. UseCase Layer Validation (lib/domain/)
+   ├── Interactor input validation
+   ├── Cross-entity validation
+   └── Use case orchestration
 
-3. Service Object Validation (BUSINESS LOGIC)
-   ├── Complex workflow validation
-   ├── Cross-model validation
-   └── Error handling and messaging
+3. Infrastructure Layer Validation (app/)
+   ├── ActiveRecord model validation
+   ├── Controller parameter validation
+   └── Service object validation
 ```
 
 ### Resource Limit Implementation Pattern
+
+The resource limit validation spans multiple layers:
+
 ```ruby
-class Farm < ApplicationRecord
-  # MANDATORY: Model-level validation
-  validate :user_farm_count_limit, unless: :is_reference?
-  
+# 1. Domain Entity (lib/domain/farm/entities/farm_entity.rb)
+class FarmEntity
+  def initialize(attributes)
+    # Entity-level validation
+    validate!
+  end
+
   private
-  
+
+  def validate!
+    raise ArgumentError, "Name is required" if name.blank?
+    raise ArgumentError, "User ID is required" if user_id.blank?
+  end
+end
+
+# 2. Infrastructure Model (app/models/farm.rb)
+class Farm < ApplicationRecord
+  validates :user, presence: true
+  validate :user_farm_count_limit, unless: :is_reference?
+
+  private
+
   def user_farm_count_limit
     return if user.nil? || is_reference?
     
-    existing_count = user.farms.where(is_reference: false).count
-    current_count = new_record? ? existing_count : existing_count - 1
+    existing_farms_count = user.farms.where(is_reference: false).count
+    current_count = new_record? ? existing_farms_count : existing_farms_count - 1
     
     if current_count >= 4
-      errors.add(:user, "作成できるFarmは4件までです")
+      errors.add(:user, :farm_limit_exceeded)
     end
+  end
+end
+
+# 3. Controller Usage (app/controllers/api/v1/farms/farm_api_controller.rb)
+def create
+  result = @create_interactor.call(farm_params_with_user)
+  
+  if result.success?
+    render json: farm_to_json(result.data), status: :created
+  else
+    render json: { error: result.error }, status: :unprocessable_entity
   end
 end
 ```
@@ -62,87 +333,212 @@ end
 
 ### Test Pyramid Structure
 ```
-1. Unit Tests (Model Level)
-   ├── Direct model validation
-   ├── Business rule enforcement
-   └── Edge case handling
+1. Unit Tests (70%)
+   ├── Domain entities
+   ├── Interactors
+   ├── Gateway implementations
+   └── Business logic
 
-2. Integration Tests (Service Level)
-   ├── Cross-model interactions
-   ├── Service object workflows
-   └── Error propagation
+2. Integration Tests (20%)
+   ├── Controller-interactor integration
+   ├── Gateway-model integration
+   ├── Cross-layer workflows
+   └── Service objects
 
-3. System Tests (Controller Level)
-   ├── User flow validation
-   ├── UI interaction testing
+3. System Tests (10%)
+   ├── User flows
+   ├── UI interactions
    └── End-to-end scenarios
 ```
 
-### Resource Limit Testing Requirements
+### Test Location Structure
+```
+test/
+├── domain/                    # Domain layer tests
+│   ├── farm/
+│   │   ├── entities/         # Entity tests
+│   │   ├── interactors/      # Interactor tests
+│   │   └── gateways/         # Gateway interface tests
+│   └── shared/
+├── adapters/                  # Adapter layer tests
+│   ├── farm/
+│   │   └── gateways/         # Gateway implementation tests
+│   └── ...
+├── models/                    # Model tests
+├── controllers/               # Controller tests
+├── services/                  # Service tests
+├── integration/               # Integration tests
+└── system/                    # System tests
+```
+
+### Test Patterns
+
+#### Domain Entity Test
 ```ruby
-# MANDATORY: Model-level test
-test "should prevent creating 5th farm" do
-  4.times { create(:farm, user: @user) }
-  
-  farm5 = Farm.new(user: @user, name: "Farm 5", ...)
-  assert_not farm5.valid?
-  assert_includes farm5.errors[:user], "作成できるFarmは4件までです"
+# test/domain/farm/entities/farm_entity_test.rb
+class Domain::Farm::Entities::FarmEntityTest < ActiveSupport::TestCase
+  test "should raise error when name is blank" do
+    assert_raises(ArgumentError, "Name is required") do
+      Domain::Farm::Entities::FarmEntity.new(
+        user_id: 1,
+        latitude: 35.0,
+        longitude: 139.0
+      )
+    end
+  end
+
+  test "should create valid entity with all attributes" do
+    entity = Domain::Farm::Entities::FarmEntity.new(
+      id: 1,
+      user_id: 1,
+      name: "Test Farm",
+      latitude: 35.0,
+      longitude: 139.0,
+      created_at: Time.current,
+      updated_at: Time.current
+    )
+
+    assert_equal "Test Farm", entity.name
+    assert_equal [35.0, 139.0], entity.coordinates
+    assert entity.has_coordinates?
+  end
 end
+```
 
-# MANDATORY: Integration test
-test "should prevent farm creation in PlanSaveService when limit reached" do
-  4.times { create(:farm, user: @user) }
-  
-  result = PlanSaveService.new(user: @user, session_data: data).call
-  assert_not result.success
-  assert_includes result.error_message, "作成できるFarmは4件までです"
+#### Interactor Test
+```ruby
+# test/domain/farm/interactors/farm_create_interactor_test.rb
+class Domain::Farm::Interactors::FarmCreateInteractorTest < ActiveSupport::TestCase
+  setup do
+    @mock_gateway = Minitest::Mock.new
+    @interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(@mock_gateway)
+  end
+
+  test "should create farm successfully" do
+    farm_data = {
+      user_id: 1,
+      name: "Test Farm",
+      latitude: 35.0,
+      longitude: 139.0
+    }
+
+    @mock_gateway.expect :create, 
+      Domain::Farm::Entities::FarmEntity.new({id: 1, **farm_data, created_at: Time.current, updated_at: Time.current})
+
+    result = @interactor.call(farm_data)
+
+    assert result.success?
+    assert_equal "Test Farm", result.data.name
+    @mock_gateway.verify
+  end
+
+  test "should return failure when name is blank" do
+    result = @interactor.call({user_id: 1, name: ""})
+
+    assert result.failure?
+    assert_includes result.error, "Name is required"
+  end
 end
 ```
 
-## 🔄 Data Flow Architecture
-
-### User Resource Creation Flow
-```
-1. User Action (Controller)
-   ├── Parameter validation
-   ├── Authentication check
-   └── Authorization check
-
-2. Business Logic (Service Object)
-   ├── Cross-model validation
-   ├── Resource limit check
-   └── Data transformation
-
-3. Model Validation (ActiveRecord)
-   ├── Business rule enforcement
-   ├── Data integrity check
-   └── Resource limit validation
-
-4. Database Operation
-   ├── Transaction management
-   ├── Constraint enforcement
-   └── Data persistence
-```
-
-### Error Handling Architecture
-```
-1. Model Level
-   ├── Validation errors
-   ├── Business rule violations
-   └── Data integrity issues
-
-2. Service Level
-   ├── Workflow errors
-   ├── Cross-model validation
-   └── External service errors
-
-3. Controller Level
-   ├── Parameter errors
-   ├── Authentication errors
-   └── Authorization errors
+#### Integration Test
+```ruby
+# test/integration/farm_limit_integration_test.rb
+class FarmLimitIntegrationTest < ActiveSupport::TestCase
+  test "should prevent creating 5th farm" do
+    user = create(:user)
+    
+    # Create 4 farms
+    4.times do |i|
+      Farm.create!(
+        user: user,
+        name: "Farm #{i + 1}",
+        latitude: 35.0 + i * 0.1,
+        longitude: 135.0 + i * 0.1,
+        is_reference: false
+      )
+    end
+    
+    # Attempt 5th farm creation
+    farm5 = Farm.new(
+      user: user,
+      name: "Farm 5",
+      latitude: 35.5,
+      longitude: 135.5,
+      is_reference: false
+    )
+    
+    assert_not farm5.valid?
+    assert_includes farm5.errors[:user], "作成できるFarmは4件までです"
+  end
+end
 ```
 
 ## 🚫 Anti-Patterns (FORBIDDEN)
+
+### Architecture Anti-Patterns
+```ruby
+# ❌ FORBIDDEN: Controller depending on domain interfaces
+class FarmsController < ApplicationController
+  def create
+    # Controller should not depend on Domain interfaces directly
+    interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(gateway)
+  end
+end
+
+# ✅ CORRECT: Controller instantiates adapters and interactors
+class FarmsController < ApplicationController
+  before_action :set_interactors
+
+  private
+
+  def set_interactors
+    gateway = Adapters::Farm::Gateways::FarmMemoryGateway.new
+    @create_interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(gateway)
+  end
+end
+
+# ❌ FORBIDDEN: Patches in tests
+test "should create farm" do
+  Farm.expect(:create, some_farm)
+  # ...
+end
+
+# ✅ CORRECT: Use dependency injection
+test "should create farm" do
+  gateway = Adapters::Farm::Gateways::FarmMemoryGateway.new
+  interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(gateway)
+  # ...
+end
+```
+
+### Testing Anti-Patterns
+```ruby
+# ❌ FORBIDDEN: Testing only controller level
+test "controller prevents farm creation" do
+  post farms_path, params: { farm: {} }
+  assert_response :unprocessable_entity
+end
+
+# ✅ CORRECT: Test multiple layers
+test "model prevents farm creation when limit reached" do
+  # Model-level test
+  farm = Farm.new(user: user_with_4_farms, ...)
+  assert_not farm.valid?
+end
+
+test "controller prevents farm creation when limit reached" do
+  # Controller-level test
+  post farms_path, params: { farm: {} }
+  assert_response :unprocessable_entity
+end
+
+test "integration test ensures end-to-end validation" do
+  # Integration test
+  result = interactor.call(farm_data)
+  assert result.failure?
+end
+```
 
 ### Resource Limit Anti-Patterns
 ```ruby
@@ -156,87 +552,118 @@ def validate_farm_count
   return true if is_new_user?  # Allows unlimited creation!
 end
 
-# ❌ FORBIDDEN: Reference check in controller only
-def create
-  return if farm.is_reference?  # Can be bypassed!
-end
+# ✅ CORRECT: Multi-layer validation
+# 1. Model-level validation (mandatory)
+# 2. Controller-level validation (supplementary)
+# 3. Service/Interactor validation (business logic)
 ```
 
-### Testing Anti-Patterns
-```ruby
-# ❌ FORBIDDEN: Testing only controller level
-test "controller prevents farm creation" do
-  # This doesn't test direct database operations!
-end
+## 📚 Implementation Guidelines
 
-# ❌ FORBIDDEN: Missing integration tests
-# Service objects must be tested for resource limits
-```
+### Before Implementing New Feature
 
-## 📚 Historical Context
+#### 1. Analyze Requirements
+- Identify domain concepts
+- Determine use cases
+- Map relationships
 
-### Past Issues and Solutions
-- **2025-10-26 13:06**: Controller-only validation (BROKEN)
-  - **Problem**: Direct `Farm.create!` bypassed validation
-  - **Solution**: Model-level validation required
-  
-- **2025-10-26 16:03**: Model-level validation (CORRECT)
-  - **Solution**: `UserResourceLimitValidator` implementation
-  
-- **2025-10-26 19:27**: Simplified model validation (CORRECT)
-  - **Solution**: Direct validation methods in models
+#### 2. Design Domain Layer
+- Create entities
+- Define business rules
+- Identify value objects
 
-### Lessons Learned
-1. **Model-level validation is non-negotiable**
-2. **Controller-only validation is insufficient**
-3. **Direct database operations must be tested**
-4. **Reference records must be properly excluded**
-5. **Service objects must handle resource limits**
+#### 3. Design UseCase Layer
+- Create gateway interfaces
+- Implement interactors
+- Define result types
 
-## 🎯 Implementation Guidelines
+#### 4. Implement Adapter Layer
+- Create gateway implementations
+- Map to infrastructure models
+- Handle external integrations
 
-### Before Implementing Resource Limits
-- [ ] Identify resource type and limit number
-- [ ] Determine reference record exclusion rules
-- [ ] Plan model-level validation approach
-- [ ] Plan controller-level validation (supplementary)
-- [ ] Plan service object integration
+#### 5. Implement Infrastructure Layer
+- Create ActiveRecord models
+- Implement controllers
+- Add services if needed
 
-### During Implementation
-- [ ] Implement model-level validation first
-- [ ] Test with direct database operations
-- [ ] Implement controller-level validation
-- [ ] Test actual user flows
-- [ ] Update service objects
-- [ ] Add Japanese error messages
+#### 6. Write Tests
+- Domain entity tests
+- Interactor tests
+- Gateway tests
+- Integration tests
+- System tests
 
-### After Implementation
-- [ ] Run comprehensive test suite
-- [ ] Test edge cases (new users, updates, etc.)
-- [ ] Verify error messages are user-friendly
-- [ ] Document the implementation
-- [ ] Update architecture documentation
+### Implementation Checklist
+
+#### Domain Layer
+- [ ] Entity classes created
+- [ ] Business rules implemented
+- [ ] Validation logic added
+- [ ] Unit tests written
+
+#### UseCase Layer
+- [ ] Gateway interfaces defined
+- [ ] Interactors implemented
+- [ ] Result types used
+- [ ] Unit tests written
+
+#### Adapter Layer
+- [ ] Gateway implementations created
+- [ ] Mapping logic implemented
+- [ ] External integrations handled
+- [ ] Unit tests written
+
+#### Infrastructure Layer
+- [ ] Models created with validations
+- [ ] Controllers implemented
+- [ ] Jobs/services added as needed
+- [ ] Integration tests written
+
+#### Testing
+- [ ] All unit tests passing
+- [ ] Integration tests passing
+- [ ] System tests passing
+- [ ] Coverage acceptable
 
 ## 🔍 Quality Assurance
 
 ### Code Review Checklist
-- [ ] Model-level validation implemented
-- [ ] Controller-level validation implemented
-- [ ] Service object integration completed
-- [ ] Tests cover both model and integration levels
-- [ ] Error messages are clear and in Japanese
-- [ ] Reference records are properly excluded
-- [ ] Edge cases are handled
+
+#### Domain Layer
+- [ ] Entities contain business logic
+- [ ] No infrastructure dependencies
+- [ ] Clear naming conventions
+- [ ] Comprehensive tests
+
+#### UseCase Layer
+- [ ] Interactors are single-purpose
+- [ ] Gateways properly abstracted
+- [ ] Results used consistently
+- [ ] Comprehensive tests
+
+#### Adapter Layer
+- [ ] Gateway implementations complete
+- [ ] Proper error handling
+- [ ] No domain logic leakage
+- [ ] Comprehensive tests
+
+#### Infrastructure Layer
+- [ ] Models validated properly
+- [ ] Controllers are thin
+- [ ] Services orchestrate properly
+- [ ] Integration tests cover critical paths
 
 ### Success Criteria
-A resource limit implementation is correct when:
-- [ ] Direct `Model.create!` respects the limit
-- [ ] Controller actions respect the limit
-- [ ] Service objects respect the limit
-- [ ] Reference records are excluded
-- [ ] Error messages are clear and in Japanese
-- [ ] Tests cover both model and integration levels
-- [ ] Edge cases are handled (new users, updates, etc.)
+
+A feature implementation is correct when:
+- [ ] Domain logic is in domain layer
+- [ ] Use cases are in interactors
+- [ ] Infrastructure concerns are isolated
+- [ ] Tests cover all layers
+- [ ] No patches used in tests
+- [ ] Clear separation of concerns
+- [ ] Easy to test and maintain
 
 ## 🚀 Future Considerations
 
@@ -245,12 +672,31 @@ A resource limit implementation is correct when:
 - Different user tiers may have different limits
 - Reference data management may need optimization
 
+### Architecture Improvements
+- Add repository pattern for complex queries
+- Implement CQRS for read/write separation
+- Consider event sourcing for audit trails
+
 ### Monitoring
 - Resource usage metrics
-- Limit violation attempts
-- Performance impact of validations
+- Performance monitoring
+- Architecture compliance checking
 
 ### Maintenance
-- Regular validation testing
-- Architecture compliance reviews
+- Regular architecture reviews
+- Dependency analysis
 - Documentation updates
+
+## 📖 Additional Resources
+
+### Related Documentation
+- [DEVELOPMENT_RULES.md](docs/DEVELOPMENT_RULES.md): Development conventions
+- [TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md): Testing standards
+- [RESOURCE_LIMIT_TEMPLATE.md](docs/RESOURCE_LIMIT_TEMPLATE.md): Resource limit pattern
+
+### Key Principles
+1. **Dependency Rule**: Inner layers must not depend on outer layers
+2. **Single Responsibility**: Each class has one reason to change
+3. **Dependency Injection**: Dependencies are injected, not created
+4. **Testability**: All code should be easily testable without patches
+5. **Domain-Driven Design**: Business logic drives the architecture

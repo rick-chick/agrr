@@ -47,6 +47,9 @@ Rails.application.routes.draw do
     # Crops (HTML) routes
     resources :crops
 
+    # Fertilizes (HTML) routes
+    resources :fertilizes
+
     # Interaction Rules (連作ルール) routes
     resources :interaction_rules
 
@@ -96,6 +99,7 @@ Rails.application.routes.draw do
         resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
         # AI作物情報取得・保存エンドポイント
         post 'crops/ai_create', to: 'crops#ai_create'
+        resources :fertilizes, controller: 'fertilizes/fertilize_api', only: [:index, :show, :create, :update, :destroy]
         
         # Public Plans API（認証不要）
         namespace :public_plans do

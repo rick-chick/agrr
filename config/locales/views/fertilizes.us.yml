@@ -1,0 +1,72 @@
+us:
+  fertilizes:
+    form:
+      name_label: "Name"
+      n_label: "Nitrogen Content (%)"
+      n_help: "Enter the nitrogen (N) content percentage (optional)"
+      p_label: "Phosphorus Content (%)"
+      p_help: "Enter the phosphorus (P) content percentage (optional)"
+      k_label: "Potassium Content (%)"
+      k_help: "Enter the potassium (K) content percentage (optional)"
+      description_label: "Description"
+      description_help: "Enter a description of the fertilizer (optional)"
+      usage_label: "Usage"
+      usage_help: "Enter how to use the fertilizer (optional)"
+      application_rate_label: "Application Rate"
+      application_rate_help: "Example: 10-30g per 1㎡ (optional)"
+      is_reference_label: "Reference Fertilizer (Admin Only)"
+      submit_create: "Create Fertilizer"
+      submit_update: "Update Fertilizer"
+      cancel: "Cancel"
+      errors:
+        title: "%{count} error(s) found:"
+    
+    flash:
+      created: "Fertilizer created successfully."
+      updated: "Fertilizer updated successfully."
+      destroyed: "Fertilizer deleted successfully."
+      cannot_delete_in_use: "This fertilizer cannot be deleted because it is being used in other data."
+      delete_error: "An error occurred while deleting: %{message}"
+      reference_only_admin: "Only administrators can create reference fertilizers."
+      reference_flag_admin_only: "Only administrators can change the reference flag."
+      no_permission: "Permission denied."
+      not_found: "Fertilizer not found."
+    
+    index:
+      title: "Fertilizers"
+      new_fertilize: "Add New Fertilizer"
+      reference_fertilizes: "Reference Fertilizers (Common Data)"
+      actions:
+        show: "Details"
+        edit: "Edit"
+        delete: "Delete"
+        delete_confirm: "Are you sure you want to delete this fertilizer?"
+      empty:
+        icon: "🌾"
+        title: "No fertilizers registered yet"
+        description: "Add your first fertilizer to get started."
+        button: "Add Fertilizer"
+    
+    new:
+      title: "Add New Fertilizer"
+    
+    edit:
+      title: "Edit %{name}"
+    
+    show:
+      reference_fertilize: "Reference Fertilizer"
+      name: "Name"
+      npk_summary: "NPK"
+      n: "Nitrogen (N)"
+      p: "Phosphorus (P)"
+      k: "Potassium (K)"
+      description: "Description"
+      usage: "Usage"
+      application_rate: "Application Rate"
+      created_at: "Created"
+      updated_at: "Updated"
+      back_to_list: "Back to Fertilizers"
+      edit: "Edit"
+      delete: "Delete"
+      confirm_delete: "Are you sure you want to delete this fertilizer?"
+

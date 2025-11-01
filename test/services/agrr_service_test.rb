@@ -33,11 +33,4 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_respond_to @service, :forecast
     assert_respond_to @service, :crop
   end
-  
-  test 'should have fertilize methods' do
-    # Test that fertilize methods exist and accept parameters
-    assert_respond_to @service, :fertilize_list
-    assert_respond_to @service, :fertilize_get
-    assert_respond_to @service, :fertilize_recommend
-  end
 end

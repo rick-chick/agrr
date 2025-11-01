@@ -38,8 +38,6 @@ module Agrr
           execute_optimize_command(command_args)
         when 'predict'
           execute_predict_command(command_args)
-        when 'fertilize'
-          execute_fertilize_command(command_args)
         else
           raise ExecutionError, "Unsupported command: #{command}"
         end
@@ -402,97 +400,6 @@ module Agrr
         days: days,
         model: model,
         metrics: metrics
-      )
-    end
-    
-    def execute_fertilize_command(args)
-      subcommand = args[0]
-      
-      case subcommand
-      when 'list'
-        execute_fertilize_list(args[1..-1])
-      when 'get'
-        execute_fertilize_get(args[1..-1])
-      when 'recommend'
-        execute_fertilize_recommend(args[1..-1])
-      else
-        raise ExecutionError, "Unsupported fertilize subcommand: #{subcommand}"
-      end
-    end
-    
-    def execute_fertilize_list(args)
-      language = nil
-      limit = 5
-      area = nil
-      
-      i = 0
-      while i < args.length
-        case args[i]
-        when '--language', '-l'
-          language = args[i + 1]
-          i += 2
-        when '--limit'
-          limit = args[i + 1].to_i
-          i += 2
-        when '--area', '-a'
-          area = args[i + 1].to_f
-          i += 2
-        else
-          i += 1
-        end
-      end
-      
-      raise ArgumentError, "Language is required" unless language
-      
-      @agrr_service.fertilize_list(
-        language: language,
-        limit: limit,
-        area: area,
-        json: true
-      )
-    end
-    
-    def execute_fertilize_get(args)
-      name = nil
-      
-      i = 0
-      while i < args.length
-        case args[i]
-        when '--name', '-n'
-          name = args[i + 1]
-          i += 2
-        else
-          i += 1
-        end
-      end
-      
-      raise ArgumentError, "Name is required" unless name
-      
-      @agrr_service.fertilize_get(
-        name: name,
-        json: true
-      )
-    end
-    
-    def execute_fertilize_recommend(args)
-      crop_file = nil
-      
-      i = 0
-      while i < args.length
-        case args[i]
-        when '--crop-file', '-c'
-          crop_file = args[i + 1]
-          i += 2
-        else
-          i += 1
-        end
-      end
-      
-      raise ArgumentError, "Crop file is required" unless crop_file
-      
-      @agrr_service.fertilize_recommend(
-        crop_file: crop_file,
-        json: true
       )
     end
     
