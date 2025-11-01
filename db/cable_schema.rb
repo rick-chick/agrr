@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_26_101101) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_01_100944) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -155,6 +155,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_101101) do
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
     t.index ["weather_location_id"], name: "index_farms_on_weather_location_id"
+  end
+
+  create_table "fertilizes", force: :cascade do |t|
+    t.string "name", null: false
+    t.float "n"
+    t.float "p"
+    t.float "k"
+    t.text "description"
+    t.text "usage"
+    t.string "application_rate"
+    t.boolean "is_reference", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_fertilizes_on_name", unique: true
   end
 
   create_table "field_cultivations", force: :cascade do |t|

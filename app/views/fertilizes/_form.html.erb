@@ -1,0 +1,70 @@
+<div class="form-card">
+  <%= form_with(model: @fertilize) do |f| %>
+    <% if @fertilize.errors.any? %>
+      <div class="errors">
+        <h3><%= t('fertilizes.form.errors.title', count: @fertilize.errors.count) %></h3>
+        <ul>
+          <% @fertilize.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :name, t('fertilizes.form.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, required: true, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :n, t('fertilizes.form.n_label'), class: 'form-label' %>
+      <%= f.number_field :n, step: :any, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.n_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :p, t('fertilizes.form.p_label'), class: 'form-label' %>
+      <%= f.number_field :p, step: :any, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.p_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :k, t('fertilizes.form.k_label'), class: 'form-label' %>
+      <%= f.number_field :k, step: :any, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.k_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :description, t('fertilizes.form.description_label'), class: 'form-label' %>
+      <%= f.text_area :description, rows: 4, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.description_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :usage, t('fertilizes.form.usage_label'), class: 'form-label' %>
+      <%= f.text_area :usage, rows: 3, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.usage_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :application_rate, t('fertilizes.form.application_rate_label'), class: 'form-label' %>
+      <%= f.text_field :application_rate, class: 'form-control' %>
+      <div class="form-text"><%= t('fertilizes.form.application_rate_help') %></div>
+    </div>
+
+    <% if admin_user? %>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <%= f.check_box :is_reference, class: 'form-control' %>
+          <%= f.label :is_reference, t('fertilizes.form.is_reference_label'), class: 'form-label' %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="actions">
+      <%= f.submit t("fertilizes.form.submit_#{@fertilize.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('fertilizes.form.cancel'), @fertilize.persisted? ? fertilize_path(@fertilize) : fertilizes_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>
+

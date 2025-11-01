@@ -5,6 +5,7 @@ us:
       plans: "Plans"
       farms: "Farms"
       crops: "Crops"
+      fertilizes: "Fertilizers"
       interaction_rules: "Rotations"
       login: "Login"
       logout: "Logout"

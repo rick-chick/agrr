@@ -5,6 +5,7 @@ ja:
       plans: "計画"
       farms: "農場"
       crops: "作物"
+      fertilizes: "肥料"
       interaction_rules: "連作"
       login: "ログイン"
       logout: "ログアウト"

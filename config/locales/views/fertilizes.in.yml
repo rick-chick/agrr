@@ -1,0 +1,72 @@
+in:
+  fertilizes:
+    form:
+      name_label: "Nama"
+      n_label: "Kandungan Nitrogen (%)"
+      n_help: "Masukkan persentase kandungan nitrogen (N) (opsional)"
+      p_label: "Kandungan Fosfor (%)"
+      p_help: "Masukkan persentase kandungan fosfor (P) (opsional)"
+      k_label: "Kandungan Kalium (%)"
+      k_help: "Masukkan persentase kandungan kalium (K) (opsional)"
+      description_label: "Deskripsi"
+      description_help: "Masukkan deskripsi pupuk (opsional)"
+      usage_label: "Penggunaan"
+      usage_help: "Masukkan cara penggunaan pupuk (opsional)"
+      application_rate_label: "Tingkat Aplikasi"
+      application_rate_help: "Contoh: 10-30g per 1㎡ (opsional)"
+      is_reference_label: "Pupuk Referensi (Hanya Admin)"
+      submit_create: "Buat Pupuk"
+      submit_update: "Perbarui Pupuk"
+      cancel: "Batal"
+      errors:
+        title: "Ditemukan %{count} kesalahan:"
+    
+    flash:
+      created: "Pupuk berhasil dibuat."
+      updated: "Pupuk berhasil diperbarui."
+      destroyed: "Pupuk berhasil dihapus."
+      cannot_delete_in_use: "Pupuk ini tidak dapat dihapus karena sedang digunakan dalam data lain."
+      delete_error: "Terjadi kesalahan saat menghapus: %{message}"
+      reference_only_admin: "Hanya administrator yang dapat membuat pupuk referensi."
+      reference_flag_admin_only: "Hanya administrator yang dapat mengubah flag referensi."
+      no_permission: "Izin ditolak."
+      not_found: "Pupuk tidak ditemukan."
+    
+    index:
+      title: "Pupuk"
+      new_fertilize: "Tambah Pupuk Baru"
+      reference_fertilizes: "Pupuk Referensi (Data Umum)"
+      actions:
+        show: "Detail"
+        edit: "Edit"
+        delete: "Hapus"
+        delete_confirm: "Apakah Anda yakin ingin menghapus pupuk ini?"
+      empty:
+        icon: "🌾"
+        title: "Belum ada pupuk yang terdaftar"
+        description: "Tambahkan pupuk pertama Anda untuk memulai."
+        button: "Tambah Pupuk"
+    
+    new:
+      title: "Tambah Pupuk Baru"
+    
+    edit:
+      title: "Edit %{name}"
+    
+    show:
+      reference_fertilize: "Pupuk Referensi"
+      name: "Nama"
+      npk_summary: "NPK"
+      n: "Nitrogen (N)"
+      p: "Fosfor (P)"
+      k: "Kalium (K)"
+      description: "Deskripsi"
+      usage: "Penggunaan"
+      application_rate: "Tingkat Aplikasi"
+      created_at: "Dibuat"
+      updated_at: "Diperbarui"
+      back_to_list: "Kembali ke Daftar Pupuk"
+      edit: "Edit"
+      delete: "Hapus"
+      confirm_delete: "Apakah Anda yakin ingin menghapus pupuk ini?"
+
