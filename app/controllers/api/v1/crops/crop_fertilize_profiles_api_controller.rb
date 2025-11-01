@@ -99,6 +99,11 @@ module Api
               message: I18n.t('api.messages.crop_fertilize_profiles.created_by_ai', default: '肥料プロファイルを作成しました', crop_name: @crop.name)
             }, status: :created
 
+          rescue ActiveRecord::RecordInvalid => e
+            Rails.logger.error "❌ [AI Fertilize Profile] Validation Error: #{e.record.class.name}"
+            Rails.logger.error "   Errors: #{e.record.errors.full_messages.join(', ')}"
+            error_messages = e.record.errors.full_messages
+            render json: { error: error_messages.join(', ') }, status: :unprocessable_entity
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
             Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
@@ -174,17 +179,9 @@ module Api
             }, status: :ok
 
           rescue ActiveRecord::RecordInvalid => e
-            # バリデーションエラー（一意性エラーなど）を適切に処理
-            Rails.logger.error "❌ [AI Fertilize Profile] Validation error: #{e.record.errors.full_messages.join(', ')}"
+            Rails.logger.error "❌ [AI Fertilize Profile] Validation Error: #{e.record.class.name}"
+            Rails.logger.error "   Errors: #{e.record.errors.full_messages.join(', ')}"
             error_messages = e.record.errors.full_messages
-            # 編集時には「すでに存在します」というエラーは不適切なので、より分かりやすいメッセージに変換
-            error_messages = error_messages.map do |msg|
-              if msg.include?('すでに存在します') || msg.include?('has already been taken')
-                I18n.t('api.errors.crop_fertilize_profiles.update_validation_failed', default: '更新に失敗しました。入力内容を確認してください')
-              else
-                msg
-              end
-            end
             render json: { error: error_messages.join(', ') }, status: :unprocessable_entity
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
