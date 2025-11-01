@@ -1,6 +1,11 @@
 us:
   crop_fertilize_profiles:
     form:
+      ai_button: "🤖 Get & Save Fertilizer Profile with AI"
+      ai_help: "Click the button and AI will automatically retrieve and save fertilizer profile information for this crop"
+      ai_processing_title: "🤖 Retrieving fertilizer profile information with AI..."
+      ai_processing_message: "Please wait. You will be automatically redirected to the fertilizer profile details page when processing is complete."
+      ai_progress_text: "AI processing..."
       total_n_label: "Total Nitrogen (g/m²)"
       total_n_help: "Enter total nitrogen amount (required)"
       total_p_label: "Total Phosphorus (g/m²)"

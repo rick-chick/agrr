@@ -99,7 +99,14 @@ Rails.application.routes.draw do
           resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
         end
         resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy] do
-          resources :crop_fertilize_profiles, controller: 'crops/crop_fertilize_profiles_api', only: [:show, :create, :update, :destroy]
+          resources :crop_fertilize_profiles, controller: 'crops/crop_fertilize_profiles_api', only: [:show, :create, :update, :destroy] do
+            collection do
+              post 'ai_create', to: 'crops/crop_fertilize_profiles_api#ai_create'
+            end
+            member do
+              post 'ai_update', to: 'crops/crop_fertilize_profiles_api#ai_update'
+            end
+          end
         end
         # AI作物情報取得・保存エンドポイント
         post 'crops/ai_create', to: 'crops#ai_create'

@@ -1,6 +1,11 @@
 in:
   crop_fertilize_profiles:
     form:
+      ai_button: "🤖 Dapatkan & Simpan Profil Pupuk dengan AI"
+      ai_help: "Klik tombol dan AI akan secara otomatis mengambil dan menyimpan informasi profil pupuk untuk tanaman ini"
+      ai_processing_title: "🤖 Mengambil informasi profil pupuk dengan AI..."
+      ai_processing_message: "Harap tunggu. Anda akan secara otomatis diarahkan ke halaman detail profil pupuk ketika pemrosesan selesai."
+      ai_progress_text: "Pemrosesan AI..."
       total_n_label: "Total Nitrogen (g/m²)"
       total_n_help: "Masukkan total jumlah nitrogen (wajib)"
       total_p_label: "Total Fosfor (g/m²)"
