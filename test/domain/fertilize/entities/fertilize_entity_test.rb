@@ -16,6 +16,7 @@ module Domain
             description: "窒素肥料",
             usage: "基肥・追肥",
             application_rate: "1㎡あたり10-30g",
+            package_size: "25kg",
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current
@@ -26,7 +27,27 @@ module Domain
           assert_equal 46.0, entity.n
           assert_nil entity.p
           assert_nil entity.k
+          assert_equal "25kg", entity.package_size
           assert entity.reference?
+        end
+
+        test "should initialize with nil package_size" do
+          entity = FertilizeEntity.new(
+            id: 1,
+            name: "尿素",
+            n: 46.0,
+            p: nil,
+            k: nil,
+            description: "窒素肥料",
+            usage: "基肥・追肥",
+            application_rate: "1㎡あたり10-30g",
+            package_size: nil,
+            is_reference: true,
+            created_at: Time.current,
+            updated_at: Time.current
+          )
+          
+          assert_nil entity.package_size
         end
 
         test "should raise error when name is blank" do
@@ -40,6 +61,7 @@ module Domain
               description: nil,
               usage: nil,
               application_rate: nil,
+              package_size: nil,
               is_reference: true,
               created_at: Time.current,
               updated_at: Time.current
@@ -57,6 +79,7 @@ module Domain
             description: nil,
             usage: nil,
             application_rate: nil,
+            package_size: nil,
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current
@@ -77,6 +100,7 @@ module Domain
             description: nil,
             usage: nil,
             application_rate: nil,
+            package_size: nil,
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current
@@ -95,6 +119,7 @@ module Domain
             description: nil,
             usage: nil,
             application_rate: nil,
+            package_size: nil,
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current
@@ -113,6 +138,7 @@ module Domain
             description: nil,
             usage: nil,
             application_rate: nil,
+            package_size: nil,
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current

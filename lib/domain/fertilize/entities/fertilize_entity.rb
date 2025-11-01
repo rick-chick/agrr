@@ -5,7 +5,7 @@ module Domain
     module Entities
       class FertilizeEntity
         attr_reader :id, :name, :n, :p, :k, :description, :usage, 
-                    :application_rate, :is_reference, :created_at, :updated_at
+                    :application_rate, :package_size, :is_reference, :created_at, :updated_at
         
         def initialize(attributes)
           @id = attributes[:id]
@@ -16,6 +16,7 @@ module Domain
           @description = attributes[:description]
           @usage = attributes[:usage]
           @application_rate = attributes[:application_rate]
+          @package_size = attributes[:package_size]
           @is_reference = attributes[:is_reference]
           @created_at = attributes[:created_at]
           @updated_at = attributes[:updated_at]

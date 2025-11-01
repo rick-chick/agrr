@@ -26,6 +26,7 @@ module Adapters
             description: normalized_data['description'],
             usage: normalized_data['usage'],
             application_rate: normalized_data['application_rate'],
+            package_size: normalized_data['package_size'],
             is_reference: normalized_data.fetch('is_reference', true)  # デフォルトは参照データ
           )
           
@@ -42,13 +43,16 @@ module Adapters
           update_attributes = {}
           
           # シンボルキーと文字列キーの両方に対応
-          update_attributes[:name] = fertilize_data[:name] if fertilize_data.key?(:name)
-          update_attributes[:n] = fertilize_data[:n] if fertilize_data.key?(:n)
-          update_attributes[:p] = fertilize_data[:p] if fertilize_data.key?(:p)
-          update_attributes[:k] = fertilize_data[:k] if fertilize_data.key?(:k)
-          update_attributes[:description] = fertilize_data[:description] if fertilize_data.key?(:description)
-          update_attributes[:usage] = fertilize_data[:usage] if fertilize_data.key?(:usage)
-          update_attributes[:application_rate] = fertilize_data[:application_rate] if fertilize_data.key?(:application_rate)
+          normalized_data = fertilize_data.is_a?(Hash) ? fertilize_data.stringify_keys : fertilize_data
+          
+          update_attributes[:name] = normalized_data['name'] if normalized_data.key?('name')
+          update_attributes[:n] = normalized_data['n'] if normalized_data.key?('n')
+          update_attributes[:p] = normalized_data['p'] if normalized_data.key?('p')
+          update_attributes[:k] = normalized_data['k'] if normalized_data.key?('k')
+          update_attributes[:description] = normalized_data['description'] if normalized_data.key?('description')
+          update_attributes[:usage] = normalized_data['usage'] if normalized_data.key?('usage')
+          update_attributes[:application_rate] = normalized_data['application_rate'] if normalized_data.key?('application_rate')
+          update_attributes[:package_size] = normalized_data['package_size'] if normalized_data.key?('package_size')
           
           record.update!(update_attributes)
           entity_from_record(record.reload)
@@ -87,6 +91,7 @@ module Adapters
             description: record.description,
             usage: record.usage,
             application_rate: record.application_rate,
+            package_size: record.package_size,
             is_reference: record.is_reference,
             created_at: record.created_at,
             updated_at: record.updated_at

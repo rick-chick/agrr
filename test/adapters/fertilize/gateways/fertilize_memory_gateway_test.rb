@@ -35,7 +35,8 @@ module Adapters
             'k' => nil,
             'description' => '窒素肥料として広く使用される',
             'usage' => '基肥・追肥に使用可能',
-            'application_rate' => '1㎡あたり10-30g'
+            'application_rate' => '1㎡あたり10-30g',
+            'package_size' => '25kg'
           }
 
           entity = @gateway.create(fertilize_data)
@@ -45,11 +46,34 @@ module Adapters
           assert_equal 46.0, entity.n
           assert_nil entity.p
           assert_nil entity.k
+          assert_equal '25kg', entity.package_size
           assert entity.reference?
           
           # Verify it was saved to database
           record = ::Fertilize.find_by(name: '尿素')
           assert_not_nil record
+          assert_equal '25kg', record.package_size
+        end
+
+        test "should create fertilize with nil package_size" do
+          fertilize_data = {
+            'name' => '尿素',
+            'n' => 46.0,
+            'p' => nil,
+            'k' => nil,
+            'description' => '窒素肥料として広く使用される',
+            'usage' => '基肥・追肥に使用可能',
+            'application_rate' => '1㎡あたり10-30g',
+            'package_size' => nil
+          }
+
+          entity = @gateway.create(fertilize_data)
+
+          assert_not_nil entity
+          assert_nil entity.package_size
+          
+          record = ::Fertilize.find_by(name: '尿素')
+          assert_nil record.package_size
         end
 
         test "should raise error when create fails validation" do
@@ -75,6 +99,20 @@ module Adapters
 
           assert_equal "尿素（粒状）", entity.name
           assert_equal "粒状の尿素肥料", entity.description
+          assert_equal 46.0, entity.n  # unchanged
+        end
+
+        test "should update fertilize package_size" do
+          fertilize = create(:fertilize, name: "尿素", n: 46.0, package_size: "20kg")
+          
+          update_data = {
+            :package_size => "25kg"
+          }
+
+          entity = @gateway.update(fertilize.id, update_data)
+
+          assert_equal "25kg", entity.package_size
+          assert_equal "尿素", entity.name  # unchanged
           assert_equal 46.0, entity.n  # unchanged
         end
 
