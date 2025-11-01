@@ -1,6 +1,11 @@
 ja:
   crop_fertilize_profiles:
     form:
+      ai_button: "🤖 AIで肥料情報を取得・保存"
+      ai_help: "ボタンをクリックすると、AIがこの作物の肥料プロファイル情報を自動的に取得して保存します"
+      ai_processing_title: "🤖 AIで肥料プロファイル情報を取得中..."
+      ai_processing_message: "しばらくお待ちください。処理が完了すると肥料プロファイル詳細画面に自動で移動します。"
+      ai_progress_text: "AI処理中..."
       total_n_label: "総窒素量 (g/m²)"
       total_n_help: "総窒素量を入力してください（必須）"
       total_p_label: "総リン量 (g/m²)"

@@ -69,6 +69,11 @@ ja:
         invalid_payload: "肥料情報が不正な形式です"
         fetch_failed: "肥料情報の取得に失敗しました"
         fetch_failed_with_reason: "肥料情報の取得に失敗しました: %{message}"
+      crop_fertilize_profiles:
+        fetch_failed: "肥料プロファイルの取得に失敗しました"
+        invalid_payload: "無効なデータ形式です"
+        fetch_failed_with_reason: "取得に失敗しました: %{message}"
+        daemon_not_running: "AGRRサービスが起動していません。サービスを起動してから再度お試しください。"
     messages:
       common:
         weather_service_available: "天気サービスは利用可能です"
@@ -81,6 +86,9 @@ ja:
       fertilizes:
         updated_with_latest: "肥料「%{name}」を最新情報で更新しました"
         created_by_ai: "AIで肥料「%{name}」の情報を取得して作成しました"
+      crop_fertilize_profiles:
+        created_by_ai: "肥料プロファイルを作成しました"
+        updated_by_ai: "肥料プロファイルを更新しました"
       crop_not_found: "作物情報が見つかりません"
       no_weather_data: "気象データがありません"
       no_cultivation_period: "栽培期間が設定されていません"
@@ -92,6 +100,14 @@ ja:
   
   # JavaScript用メッセージ
   js:
+    crop_fertilize_profile_ai:
+      enter_crop_name: "作物を選択してください"
+      fetching: "AIで肥料プロファイル情報を取得しています..."
+      button_fetching: "🤖 AIで情報を取得中..."
+      created_success: "✓ 肥料プロファイル「%{crop_name}」を作成しました！"
+      updated_success: "✓ 肥料プロファイル「%{crop_name}」を更新しました！"
+      fetch_failed: "肥料プロファイル情報の取得に失敗しました"
+      network_error: "ネットワークエラーが発生しました"
     crop_palette:
       plan_id_missing: "エラー: 計画IDが取得できません"
       crop_types_limit: "作物の種類は最大%{max_types}種類までです。\n現在: %{current_types}"

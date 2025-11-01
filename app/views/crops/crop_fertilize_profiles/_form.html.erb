@@ -36,6 +36,50 @@
     </div>
 
     <div class="form-group">
+      <button type="button" 
+              id="ai-save-fertilize-profile-btn" 
+              class="btn btn-ai" 
+              data-controller="crop-fertilize-profile-ai"
+              data-is-new-record="<%= @profile.new_record? %>"
+              data-crop-id="<%= @crop.id %>"
+              data-profile-id="<%= @profile.persisted? ? @profile.id : '' %>"
+              data-enter-crop-name="<%= t('js.crop_fertilize_profile_ai.enter_crop_name', default: '作物を選択してください') %>"
+              data-fetching="<%= t('js.crop_fertilize_profile_ai.fetching', default: 'AIで肥料プロファイル情報を取得しています...') %>"
+              data-button-fetching="<%= t('js.crop_fertilize_profile_ai.button_fetching', default: '🤖 AIで情報を取得中...') %>"
+              data-created-success="<%= t('js.crop_fertilize_profile_ai.created_success', default: '✓ 肥料プロファイル「%{crop_name}」を作成しました！') %>"
+              data-updated-success="<%= t('js.crop_fertilize_profile_ai.updated_success', default: '✓ 肥料プロファイル「%{crop_name}」を更新しました！') %>"
+              data-fetch-failed="<%= t('js.crop_fertilize_profile_ai.fetch_failed', default: '肥料プロファイル情報の取得に失敗しました') %>"
+              data-network-error="<%= t('js.crop_fertilize_profile_ai.network_error', default: 'ネットワークエラーが発生しました') %>"
+              data-button-idle="<%= t('crop_fertilize_profiles.form.ai_button', default: '🤖 AIで肥料情報を取得・保存') %>">
+        <%= t('crop_fertilize_profiles.form.ai_button', default: '🤖 AIで肥料情報を取得・保存') %>
+      </button>
+      <div id="ai-save-status" class="form-text d-none"></div>
+      <div class="form-text"><%= t('crop_fertilize_profiles.form.ai_help', default: 'ボタンをクリックすると、AIがこの作物の肥料プロファイル情報を自動的に取得して保存します') %></div>
+    </div>
+
+    <!-- AI処理中の広告ポップアップ -->
+    <div id="ad-popup-overlay" class="ad-popup-overlay">
+      <div class="ad-popup-container">
+        <div class="ad-popup-status">
+          <div class="ad-popup-status-title">
+            <%= t('crop_fertilize_profiles.form.ai_processing_title', default: '🤖 AIで肥料プロファイル情報を取得中...') %>
+          </div>
+          <p class="ad-popup-status-message"><%= t('crop_fertilize_profiles.form.ai_processing_message', default: 'しばらくお待ちください。処理が完了すると肥料プロファイル詳細画面に自動で移動します。') %></p>
+        </div>
+
+        <div class="ad-popup-progress">
+          <p class="ad-popup-progress-text"><%= t('crop_fertilize_profiles.form.ai_progress_text', default: 'AI処理中...') %></p>
+          <div class="ad-popup-progress-bar">
+            <div class="ad-popup-progress-fill"></div>
+          </div>
+        </div>
+        
+        <!-- Google AdSense 広告 -->
+        <%= render 'shared/adsense_display_ad', ad_slot: '0000000000', ad_format: 'rectangle' %>
+      </div>
+    </div>
+
+    <div class="form-group">
       <%= f.label :sources, t('crop_fertilize_profiles.form.sources_label'), class: 'form-label' %>
       <% sources_value = @profile.sources.is_a?(Array) ? @profile.sources.join(', ') : (@profile.sources.to_s if @profile.sources.present?) %>
       <%= f.text_field :sources, value: sources_value, class: 'form-control', placeholder: t('crop_fertilize_profiles.form.sources_placeholder') %>

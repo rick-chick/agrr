@@ -46,9 +46,9 @@ class CropFertilizeProfile < ApplicationRecord
   def self.from_agrr_output(crop:, profile_data:)
     profile = create!(
       crop: crop,
-      total_n: profile_data['totals']['N'],
-      total_p: profile_data['totals']['P'],
-      total_k: profile_data['totals']['K'],
+      total_n: profile_data.dig('totals', 'N') || 0,
+      total_p: profile_data.dig('totals', 'P') || 0,
+      total_k: profile_data.dig('totals', 'K') || 0,
       sources: profile_data['sources'] || [],
       confidence: profile_data['confidence'] || 0.5,
       notes: profile_data['notes']
@@ -59,14 +59,14 @@ class CropFertilizeProfile < ApplicationRecord
       profile_data['applications'].each do |app_data|
         profile.crop_fertilize_applications.create!(
           application_type: app_data['type'],
-          count: app_data['count'],
+          count: app_data['count'] || 1,
           schedule_hint: app_data['schedule_hint'],
-          total_n: app_data['nutrients']['N'],
-          total_p: app_data['nutrients']['P'],
-          total_k: app_data['nutrients']['K'],
-          per_application_n: app_data['per_application']&.dig('N'),
-          per_application_p: app_data['per_application']&.dig('P'),
-          per_application_k: app_data['per_application']&.dig('K')
+          total_n: app_data.dig('nutrients', 'N') || 0,
+          total_p: app_data.dig('nutrients', 'P') || 0,
+          total_k: app_data.dig('nutrients', 'K') || 0,
+          per_application_n: app_data.dig('per_application', 'N'),
+          per_application_p: app_data.dig('per_application', 'P'),
+          per_application_k: app_data.dig('per_application', 'K')
         )
       end
     end
