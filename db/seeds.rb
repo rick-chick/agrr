@@ -6,6 +6,7 @@
 # See:
 # - db/migrate/20251018075019_seed_japan_reference_data.rb
 # - db/migrate/20251018075149_seed_united_states_reference_data.rb
+# - db/migrate/20251018130418_seed_india_reference_data.rb
 #
 # To populate the database, run:
 #   rails db:migrate
