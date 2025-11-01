@@ -7,8 +7,11 @@ module Api
   module V1
     class FertilizesController < Api::V1::BaseController
       # ai_createは認証不要（無料プラン機能の一部）
+      # ai_updateはHTMLフォームから呼び出すため認証必須
       skip_before_action :authenticate_api_request, only: [:ai_create]
-      before_action :set_interactors, only: [:ai_create]
+      before_action :authenticate_api_request, only: [:ai_update]
+      before_action :set_interactors, only: [:ai_create, :ai_update]
+      before_action :set_fertilize, only: [:ai_update]
 
       # POST /api/v1/fertilizes/ai_create
       # AIで肥料情報を取得して保存
@@ -46,50 +49,7 @@ module Api
           
           Rails.logger.info "📊 [AI Fertilize] Retrieved data: name=#{fertilize_name_from_agrr}, n=#{fertilize_data['n']}, p=#{fertilize_data['p']}, k=#{fertilize_data['k']}, package_size=#{fertilize_package_size_from_agrr}"
 
-          # name（商品名）で肥料を探す（ユーザー肥料のみ）
-          # agrrから返された商品名を使用
-          existing_fertilize = ::Fertilize.find_by(name: fertilize_name_from_agrr, is_reference: false)
-
-          if existing_fertilize
-            # 既存肥料が見つかった → 更新
-            Rails.logger.info "🔄 [AI Fertilize] Existing fertilize found: #{fertilize_name} (DB_ID: #{existing_fertilize.id}, is_reference: #{existing_fertilize.is_reference})"
-            Rails.logger.info "🔄 [AI Fertilize] Updating fertilize with latest data from agrr"
-            
-            # agrrから返された商品名とpackage_sizeを使用して更新
-            attrs = {
-              name: fertilize_name_from_agrr,  # agrrから返された商品名
-              n: fertilize_data['n'],
-              p: fertilize_data['p'],
-              k: fertilize_data['k'],
-              description: fertilize_data['description'],
-              package_size: fertilize_package_size_from_agrr  # agrrから返されたpackage_size
-            }
-            
-            result = @update_interactor.call(existing_fertilize.id, attrs)
-
-            if result.success?
-              fertilize_entity = result.data
-              Rails.logger.info "✅ [AI Fertilize] Updated fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
-              
-              return render json: {
-                success: true,
-                fertilize_id: fertilize_entity.id,
-                fertilize_name: fertilize_entity.name,
-                n: fertilize_entity.n,
-                p: fertilize_entity.p,
-                k: fertilize_entity.k,
-                description: fertilize_entity.description,
-                package_size: fertilize_entity.package_size,
-                is_reference: fertilize_entity.is_reference,
-                message: I18n.t('api.messages.fertilizes.updated_with_latest', name: fertilize_entity.name)
-              }, status: :ok
-            else
-              Rails.logger.error "❌ [AI Fertilize] Failed to update: #{result.error}"
-              return render json: { error: result.error }, status: :unprocessable_entity
-            end
-          end
-
-          # 新規作成（見つからなかった場合）
+          # 新規作成（登録時は常に新規作成）
           Rails.logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name}"
           is_reference = false # AI作成は常にユーザー肥料
 
@@ -133,7 +93,88 @@ module Api
         end
       end
 
+      # POST /api/v1/fertilizes/:id/ai_update
+      # AIで肥料情報を取得して更新（編集時は既存を編集）
+      def ai_update
+        fertilize_name = params[:name]&.strip
+
+        unless fertilize_name.present?
+          return render json: { error: I18n.t('api.errors.fertilizes.name_required') }, status: :bad_request
+        end
+
+        unless @fertilize
+          return render json: { error: I18n.t('api.errors.fertilizes.not_found', default: '肥料が見つかりません') }, status: :not_found
+        end
+
+        begin
+          # agrrコマンドで肥料情報を取得
+          Rails.logger.info "🤖 [AI Fertilize] Querying fertilize info for update: #{fertilize_name} (ID: #{@fertilize.id})"
+          fertilize_info = fetch_fertilize_info_from_agrr(fertilize_name)
+
+          # エラーチェック
+          if fertilize_info['success'] == false
+            error_msg = fertilize_info['error'] || I18n.t('api.errors.fertilizes.fetch_failed')
+            status_code = fertilize_info['code'] == 'daemon_not_running' ? :service_unavailable : :unprocessable_entity
+            return render json: { error: error_msg }, status: status_code
+          end
+
+          fertilize_data = fertilize_info['fertilize']
+          unless fertilize_data
+            return render json: { error: I18n.t('api.errors.fertilizes.invalid_payload') }, status: :unprocessable_entity
+          end
+
+          fertilize_name_from_agrr = fertilize_data['name']
+          fertilize_package_size_from_agrr = fertilize_data['package_size']
+
+          Rails.logger.info "🔄 [AI Fertilize] Updating fertilize##{@fertilize.id} with latest data from agrr"
+
+          # agrrから返された商品名とpackage_sizeを使用して更新
+          attrs = {
+            name: fertilize_name_from_agrr,  # agrrから返された商品名
+            n: fertilize_data['n'],
+            p: fertilize_data['p'],
+            k: fertilize_data['k'],
+            description: fertilize_data['description'],
+            package_size: fertilize_package_size_from_agrr  # agrrから返されたpackage_size
+          }
+
+          result = @update_interactor.call(@fertilize.id, attrs)
+
+          if result.success?
+            fertilize_entity = result.data
+            Rails.logger.info "✅ [AI Fertilize] Updated fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
+
+            render json: {
+              success: true,
+              fertilize_id: fertilize_entity.id,
+              fertilize_name: fertilize_entity.name,
+              n: fertilize_entity.n,
+              p: fertilize_entity.p,
+              k: fertilize_entity.k,
+              description: fertilize_entity.description,
+              package_size: fertilize_entity.package_size,
+              is_reference: fertilize_entity.is_reference,
+              message: I18n.t('api.messages.fertilizes.updated_by_ai', name: fertilize_entity.name, default: '肥料「%{name}」を更新しました')
+            }, status: :ok
+          else
+            Rails.logger.error "❌ [AI Fertilize] Failed to update: #{result.error}"
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+
+        rescue => e
+          Rails.logger.error "❌ [AI Fertilize] Error: #{e.message}"
+          Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
+          render json: { error: I18n.t('api.errors.fertilizes.fetch_failed_with_reason', message: e.message) }, status: :internal_server_error
+        end
+      end
+
       private
+
+      def set_fertilize
+        @fertilize = Fertilize.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        @fertilize = nil
+      end
 
       def set_interactors
         gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new

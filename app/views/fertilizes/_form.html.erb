@@ -18,10 +18,14 @@
 
     <div class="form-group">
       <button type="button" id="ai-save-fertilize-btn" class="btn btn-ai" 
+              data-controller="fertilize-ai"
+              data-is-new-record="<%= @fertilize.new_record? %>"
+              data-fertilize-id="<%= @fertilize.persisted? ? @fertilize.id : '' %>"
               data-enter-name="<%= t('js.fertilize_ai.enter_name') %>"
               data-fetching="<%= t('js.fertilize_ai.fetching') %>"
               data-button-fetching="<%= t('js.fertilize_ai.button_fetching') %>"
               data-created-success="<%= t('js.fertilize_ai.created_success', name: '%{name}') %>"
+              data-updated-success="<%= t('js.fertilize_ai.updated_success', name: '%{name}') %>"
               data-fetch-failed="<%= t('js.fertilize_ai.fetch_failed') %>"
               data-network-error="<%= t('js.fertilize_ai.network_error') %>"
               data-button-idle="<%= t('fertilizes.form.ai_button') %>">

@@ -110,9 +110,15 @@ Rails.application.routes.draw do
         end
         # AI作物情報取得・保存エンドポイント
         post 'crops/ai_create', to: 'crops#ai_create'
-        resources :fertilizes, controller: 'fertilizes/fertilize_api', only: [:index, :show, :create, :update, :destroy]
-        # AI肥料情報取得・保存エンドポイント
-        post 'fertilizes/ai_create', to: 'fertilizes#ai_create'
+        resources :fertilizes, controller: 'fertilizes/fertilize_api', only: [:index, :show, :create, :update, :destroy] do
+          # AI肥料情報取得・保存エンドポイント
+          collection do
+            post 'ai_create', to: 'fertilizes#ai_create'
+          end
+          member do
+            post 'ai_update', to: 'fertilizes#ai_update'
+          end
+        end
         
         # Public Plans API（認証不要）
         namespace :public_plans do
