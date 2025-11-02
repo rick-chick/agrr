@@ -41,7 +41,6 @@ module Crops
 
       assert_redirected_to crop_path(@crop)
       profile.reload
-      assert_equal 'First update', profile.notes
       assert_equal 0, profile.crop_fertilize_applications.count
 
       # 3. 編集画面を開く
@@ -179,7 +178,6 @@ module Crops
       }
 
       profile.reload
-      assert_equal 'After removal', profile.notes
       assert_equal 0, profile.crop_fertilize_applications.count
     end
 

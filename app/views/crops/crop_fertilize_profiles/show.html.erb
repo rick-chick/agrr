@@ -26,22 +26,6 @@
       <span class="info-value"><%= @profile.total_k %> g/m²</span>
     </div>
     
-    <% if @profile.sources.present? %>
-      <% sources_array = @profile.sources.is_a?(Array) ? @profile.sources : [@profile.sources] %>
-      <% if sources_array.any? %>
-        <div class="info-item">
-          <span class="info-label">📚 <%= t('.sources') %>:</span>
-          <span class="info-value"><%= sources_array.join(', ') %></span>
-        </div>
-      <% end %>
-    <% end %>
-    
-    <% if @profile.notes.present? %>
-      <div class="info-item">
-        <span class="info-label">📝 <%= t('.notes') %>:</span>
-        <span class="info-value"><%= simple_format(@profile.notes) %></span>
-      </div>
-    <% end %>
     
     <div class="info-item">
       <span class="info-label">📅 <%= t('.created_at') %>:</span>

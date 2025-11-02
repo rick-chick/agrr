@@ -61,29 +61,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     end
   end
 
-  # sources シリアライズテスト
-  test "should serialize sources as JSON array" do
-    profile = create(:crop_fertilize_profile, crop: @crop, sources: ["source1", "source2"])
-    assert_equal ["source1", "source2"], profile.sources
-    assert profile.sources.is_a?(Array)
-  end
-
-  test "should handle string sources during migration" do
-    profile = CropFertilizeProfile.new(
-      crop: @crop,
-      sources: "single_source"
-    )
-    profile.valid?
-    assert_equal ["single_source"], profile.sources
-  end
-
-  test "should default sources to empty array" do
-    profile = CropFertilizeProfile.new(
-      crop: @crop
-    )
-    profile.valid?
-    assert_equal [], profile.sources
-  end
 
   # from_agrr_output テスト
   test "should create profile from agrr output" do
@@ -115,8 +92,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 18.0, profile.total_n
     assert_equal 5.0, profile.total_p
     assert_equal 12.0, profile.total_k
-    assert_equal ["inmemory"], profile.sources
-    assert_equal "Test notes", profile.notes
     assert_equal 2, profile.crop_fertilize_applications.count
 
     basal = profile.crop_fertilize_applications.find_by(application_type: "basal")
@@ -146,9 +121,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     }
 
     profile = CropFertilizeProfile.from_agrr_output(crop: @crop, profile_data: agrr_output)
-
-    assert_nil profile.notes
-    assert_equal [], profile.sources
   end
 
   test "from_agrr_output should handle empty applications array" do

@@ -2,6 +2,7 @@
 
 require 'open3'
 require 'json'
+require 'tempfile'
 
 module Api
   module V1
@@ -27,11 +28,6 @@ module Api
 
           @profile = @crop.build_crop_fertilize_profile(profile_params)
 
-          # sourcesをカンマ区切りテキストから配列に変換
-          if params.dig(:crop_fertilize_profile, :sources).is_a?(String)
-            @profile.sources = params[:crop_fertilize_profile][:sources].split(',').map(&:strip).reject(&:blank?)
-          end
-
           if @profile.save
             render json: profile_to_json(@profile), status: :created
           else
@@ -41,11 +37,6 @@ module Api
 
         # PUT /api/v1/crops/:crop_id/crop_fertilize_profiles/:id
         def update
-          # sourcesをカンマ区切りテキストから配列に変換
-          if params.dig(:crop_fertilize_profile, :sources).is_a?(String)
-            @profile.sources = params[:crop_fertilize_profile][:sources].split(',').map(&:strip).reject(&:blank?)
-          end
-
           if @profile.update(profile_params)
             render json: profile_to_json(@profile)
           else
@@ -71,7 +62,7 @@ module Api
           begin
             # agrrコマンドで肥料プロファイル情報を取得
             Rails.logger.info "🤖 [AI Fertilize Profile] Querying profile for crop: #{@crop.name} (ID: #{@crop.id})"
-            profile_info = fetch_profile_info_from_agrr(@crop.id)
+            profile_info = fetch_profile_info_from_agrr(@crop)
 
             # エラーチェック
             if profile_info['success'] == false
@@ -94,24 +85,48 @@ module Api
               # 既存のapplicationsを削除
               profile.crop_fertilize_applications.destroy_all
               
-              # プロファイルを更新
-              profile.update!(
-                sources: profile_data['sources'] || [],
-                notes: profile_data['notes']
-              )
+              # プロファイルを更新（sources/notesは保存しない）
+              # 何も更新するものがないが、明示的に更新処理を残す
               
               # applicationsを作成
-              if profile_data['applications'].present?
-                profile_data['applications'].each do |app_data|
-                  profile.crop_fertilize_applications.create!(
-                    application_type: app_data['type'],
-                    count: app_data['count'] || 1,
-                    schedule_hint: app_data['schedule_hint'],
-                    per_application_n: app_data.dig('per_application', 'N'),
-                    per_application_p: app_data.dig('per_application', 'P'),
-                    per_application_k: app_data.dig('per_application', 'K')
-                  )
+              unless profile_data['applications'].is_a?(Array)
+                raise "Invalid response format: 'applications' must be an array"
+              end
+              
+              profile_data['applications'].each do |app_data|
+                unless app_data['type']
+                  raise "Invalid application data: missing 'type'"
                 end
+                unless app_data['count']
+                  raise "Invalid application data: missing 'count'"
+                end
+                
+                # per_applicationがnullの場合（基肥など）、nutrientsから計算
+                per_application_n = app_data.dig('per_application', 'N')
+                per_application_p = app_data.dig('per_application', 'P')
+                per_application_k = app_data.dig('per_application', 'K')
+                
+                if per_application_n.nil? && app_data.dig('nutrients', 'N')
+                  count_val = app_data['count'] || 1
+                  per_application_n = app_data.dig('nutrients', 'N') / count_val.to_f if count_val > 0
+                end
+                if per_application_p.nil? && app_data.dig('nutrients', 'P')
+                  count_val = app_data['count'] || 1
+                  per_application_p = app_data.dig('nutrients', 'P') / count_val.to_f if count_val > 0
+                end
+                if per_application_k.nil? && app_data.dig('nutrients', 'K')
+                  count_val = app_data['count'] || 1
+                  per_application_k = app_data.dig('nutrients', 'K') / count_val.to_f if count_val > 0
+                end
+                
+                profile.crop_fertilize_applications.create!(
+                  application_type: app_data['type'],
+                  count: app_data['count'],
+                  schedule_hint: app_data['schedule_hint'],
+                  per_application_n: per_application_n,
+                  per_application_p: per_application_p,
+                  per_application_k: per_application_k
+                )
               end
               
               profile.reload
@@ -149,7 +164,14 @@ module Api
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
             Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-            render json: { error: I18n.t('api.errors.crop_fertilize_profiles.fetch_failed_with_reason', default: '取得に失敗しました', message: e.message) }, status: :internal_server_error
+            error_message = if e.message.include?('Empty response')
+              I18n.t('api.errors.crop_fertilize_profiles.empty_response', default: '取得に失敗しました: AGRRコマンドが空のレスポンスを返しました')
+            elsif e.message.include?('Invalid JSON')
+              I18n.t('api.errors.crop_fertilize_profiles.invalid_json', default: '取得に失敗しました: 無効なJSONレスポンス', message: e.message)
+            else
+              I18n.t('api.errors.crop_fertilize_profiles.fetch_failed_with_reason', default: '取得に失敗しました', message: e.message)
+            end
+            render json: { error: error_message }, status: :internal_server_error
           end
         end
 
@@ -159,7 +181,7 @@ module Api
           begin
             # agrrコマンドで肥料プロファイル情報を取得
             Rails.logger.info "🤖 [AI Fertilize Profile] Querying profile for update: crop=#{@crop.name} (ID: #{@crop.id}), profile=#{@profile.id}"
-            profile_info = fetch_profile_info_from_agrr(@crop.id)
+            profile_info = fetch_profile_info_from_agrr(@crop)
 
             # エラーチェック
             if profile_info['success'] == false
@@ -177,24 +199,48 @@ module Api
             # 既存のapplicationsを削除
             @profile.crop_fertilize_applications.destroy_all
 
-            # プロファイルを更新
-            @profile.update!(
-              sources: profile_data['sources'] || [],
-              notes: profile_data['notes']
-            )
+            # プロファイルを更新（sources/notesは保存しない）
+            # 何も更新するものがないが、明示的に更新処理を残す
 
             # applicationsを作成
-            if profile_data['applications'].present?
-              profile_data['applications'].each do |app_data|
-                @profile.crop_fertilize_applications.create!(
-                  application_type: app_data['type'],
-                  count: app_data['count'] || 1,
-                  schedule_hint: app_data['schedule_hint'],
-                  per_application_n: app_data.dig('per_application', 'N'),
-                  per_application_p: app_data.dig('per_application', 'P'),
-                  per_application_k: app_data.dig('per_application', 'K')
-                )
+            unless profile_data['applications'].is_a?(Array)
+              raise "Invalid response format: 'applications' must be an array"
+            end
+            
+            profile_data['applications'].each do |app_data|
+              unless app_data['type']
+                raise "Invalid application data: missing 'type'"
               end
+              unless app_data['count']
+                raise "Invalid application data: missing 'count'"
+              end
+              
+              # per_applicationがnullの場合（基肥など）、nutrientsから計算
+              per_application_n = app_data.dig('per_application', 'N')
+              per_application_p = app_data.dig('per_application', 'P')
+              per_application_k = app_data.dig('per_application', 'K')
+              
+              if per_application_n.nil? && app_data.dig('nutrients', 'N')
+                count_val = app_data['count'] || 1
+                per_application_n = app_data.dig('nutrients', 'N') / count_val.to_f if count_val > 0
+              end
+              if per_application_p.nil? && app_data.dig('nutrients', 'P')
+                count_val = app_data['count'] || 1
+                per_application_p = app_data.dig('nutrients', 'P') / count_val.to_f if count_val > 0
+              end
+              if per_application_k.nil? && app_data.dig('nutrients', 'K')
+                count_val = app_data['count'] || 1
+                per_application_k = app_data.dig('nutrients', 'K') / count_val.to_f if count_val > 0
+              end
+              
+              @profile.crop_fertilize_applications.create!(
+                application_type: app_data['type'],
+                count: app_data['count'],
+                schedule_hint: app_data['schedule_hint'],
+                per_application_n: per_application_n,
+                per_application_p: per_application_p,
+                per_application_k: per_application_k
+              )
             end
 
             @profile.reload
@@ -215,7 +261,14 @@ module Api
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
             Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-            render json: { error: I18n.t('api.errors.crop_fertilize_profiles.fetch_failed_with_reason', default: '取得に失敗しました', message: e.message) }, status: :internal_server_error
+            error_message = if e.message.include?('Empty response')
+              I18n.t('api.errors.crop_fertilize_profiles.empty_response', default: '取得に失敗しました: AGRRコマンドが空のレスポンスを返しました')
+            elsif e.message.include?('Invalid JSON')
+              I18n.t('api.errors.crop_fertilize_profiles.invalid_json', default: '取得に失敗しました: 無効なJSONレスポンス', message: e.message)
+            else
+              I18n.t('api.errors.crop_fertilize_profiles.fetch_failed_with_reason', default: '取得に失敗しました', message: e.message)
+            end
+            render json: { error: error_message }, status: :internal_server_error
           end
         end
 
@@ -258,8 +311,6 @@ module Api
 
         def profile_params
           params.require(:crop_fertilize_profile).permit(
-            :notes,
-            :sources,
             crop_fertilize_applications_attributes: [
               :id,
               :application_type,
@@ -280,8 +331,6 @@ module Api
             total_n: profile.total_n,
             total_p: profile.total_p,
             total_k: profile.total_k,
-            sources: profile.sources || [],
-            notes: profile.notes,
             applications: profile.crop_fertilize_applications.order(:application_type, :id).map do |app|
               {
                 id: app.id,
@@ -307,18 +356,35 @@ module Api
           }
         end
 
-        def fetch_profile_info_from_agrr(crop_id, max_retries: 3)
+        def fetch_profile_info_from_agrr(crop, max_retries: 3)
           attempt = 0
           last_error = nil
+          temp_file = nil
 
           max_retries.times do |retry_count|
             attempt = retry_count + 1
 
             begin
-              Rails.logger.debug "🔧 [AGRR Fertilize Profile Query] fertilize profile --crop-id #{crop_id} --json (attempt #{attempt}/#{max_retries})"
+              # cropからagrrのrequirement形式のJSONを生成
+              # to_agrr_requirementはcrop_stagesが必要
+              begin
+                crop_requirement = crop.to_agrr_requirement
+              rescue StandardError => e
+                Rails.logger.error "❌ [AGRR Fertilize Profile Query] Failed to generate crop requirement: #{e.message}"
+                raise "Failed to generate crop requirement: #{e.message}"
+              end
+              
+              # 一時ファイルに保存
+              temp_file = Tempfile.new(['crop_profile', '.json'])
+              temp_file.write(crop_requirement.to_json)
+              temp_file.flush
+              temp_file.rewind
+              
+              crop_file_path = temp_file.path
+              Rails.logger.debug "🔧 [AGRR Fertilize Profile Query] fertilize profile --crop-file #{crop_file_path} --json (attempt #{attempt}/#{max_retries})"
 
               client_path = Rails.root.join('bin', 'agrr_client').to_s
-              stdout, stderr, status = Open3.capture3(client_path, 'fertilize', 'profile', '--crop-id', crop_id.to_s, '--json')
+              stdout, stderr, status = Open3.capture3(client_path, 'fertilize', 'profile', '--crop-file', crop_file_path, '--json')
 
               unless status.success?
                 error_msg = stderr.strip
@@ -350,7 +416,7 @@ module Api
                   end
                 end
 
-                Rails.logger.error "❌ [AGRR Fertilize Profile Query Error] Command failed: fertilize profile --crop-id #{crop_id} --json"
+                Rails.logger.error "❌ [AGRR Fertilize Profile Query Error] Command failed: fertilize profile --crop-file #{crop_file_path} --json"
                 Rails.logger.error "   stderr: #{error_msg}"
                 raise "Failed to query fertilize profile from agrr: #{error_msg}"
               end
@@ -366,21 +432,21 @@ module Api
 
               parsed_data = JSON.parse(stdout)
 
-              if parsed_data['success'] == false
-                Rails.logger.error "📊 [AGRR Fertilize Profile Error] #{parsed_data['error']} (code: #{parsed_data['code']})"
-              else
-                profile_data = parsed_data['profile'] || parsed_data
-                Rails.logger.debug "📊 [AGRR Fertilize Profile Data] totals: N=#{profile_data&.dig('totals', 'N')}, P=#{profile_data&.dig('totals', 'P')}, K=#{profile_data&.dig('totals', 'K')}"
+              # agrrコマンドが返す実際の形式（直接形式）: {crop: ..., totals: ..., applications: ..., sources: ..., notes: ...}
+              # successキーやprofileキーでラップされていない
+              profile_data = parsed_data
+              
+              Rails.logger.info "📊 [AGRR Fertilize Profile Data] totals: N=#{profile_data['totals']&.dig('N')}, P=#{profile_data['totals']&.dig('P')}, K=#{profile_data['totals']&.dig('K')}"
+              Rails.logger.info "📚 [AGRR Fertilize Profile Data] sources: #{profile_data['sources']&.inspect}"
+              Rails.logger.info "📝 [AGRR Fertilize Profile Data] notes: #{profile_data['notes']&.inspect}"
 
-                if attempt > 1
-                  Rails.logger.info "✅ [AGRR Fertilize Profile Query] Succeeded after #{attempt} attempts"
-                end
-
-                # profileキーがない場合は、profileキーでラップした形式に変換
-                parsed_data = { 'profile' => profile_data, 'success' => true } unless parsed_data['profile']
+              if attempt > 1
+                Rails.logger.info "✅ [AGRR Fertilize Profile Query] Succeeded after #{attempt} attempts"
               end
 
-              return parsed_data
+              # コントローラー側の統一インターフェースのためにラップ
+              # 成功時はここでメソッドを終了する
+              return { 'success' => true, 'profile' => profile_data }
 
             rescue JSON::ParserError => e
               Rails.logger.error "❌ [AGRR Fertilize Profile Query] JSON parse error: #{e.message}"
@@ -398,9 +464,16 @@ module Api
               end
 
               raise
+            ensure
+              # 一時ファイルを削除
+              if temp_file
+                temp_file.close
+                temp_file.unlink
+              end
             end
           end
 
+          # すべてのリトライが失敗した場合
           if last_error
             raise last_error
           else

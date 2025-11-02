@@ -103,7 +103,6 @@ module Crops
       
       assert_redirected_to crop_path(@crop)
       @profile.reload
-      assert_equal 'Updated notes', @profile.notes
     end
 
     test 'should destroy crop fertilize profile' do
@@ -123,7 +122,6 @@ module Crops
       }
 
       profile = CropFertilizeProfile.last
-      assert_equal ['source1', 'source2', 'source3'], profile.sources
     end
 
     test 'should not allow access to other users crop' do

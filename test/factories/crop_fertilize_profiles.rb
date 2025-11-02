@@ -3,14 +3,9 @@
 FactoryBot.define do
   factory :crop_fertilize_profile do
     association :crop
-    
-    sources { ["inmemory"] }
-    notes { "Test fertilizer profile" }
 
     trait :tomato_profile do
       association :crop, :tomato
-      sources { ["JAガイド 2021", "agrr-ai"] }
-      notes { "トマトの推奨肥料施用計画" }
     end
 
     trait :with_applications do
