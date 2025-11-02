@@ -53,6 +53,9 @@ Rails.application.routes.draw do
     # Pests (HTML) routes
     resources :pests
 
+    # Pesticides (HTML) routes
+    resources :pesticides
+
     # Interaction Rules (連作ルール) routes
     resources :interaction_rules
 

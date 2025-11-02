@@ -1,0 +1,58 @@
+<% content_for :title, "#{t('.title')} - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title"><%= t('.title') %></h1>
+  <% if admin_user? %>
+    <%= link_to t('.new_pesticide'), new_pesticide_path, class: "btn btn-success" %>
+  <% end %>
+</div>
+
+<% if @pesticides.any? %>
+  <div class="crops-grid">
+    <% @pesticides.each do |pesticide| %>
+      <div class="crop-card">
+        <h3 class="crop-name"><%= pesticide.name %></h3>
+        <% if pesticide.active_ingredient.present? %>
+          <div class="crop-variety"><%= t('.active_ingredient') %>: <%= pesticide.active_ingredient %></div>
+        <% end %>
+        <% if admin_user? && pesticide.is_reference %>
+          <div class="crop-type reference"><%= t('.reference_pesticides') %></div>
+        <% end %>
+        <div class="crop-actions">
+          <%= link_to t('.actions.show'), pesticide_path(pesticide), class: "btn btn-info btn-sm" %>
+          <% if pesticide.is_reference %>
+            <%# Reference pesticides: admin only %>
+            <% if admin_user? %>
+              <%= link_to t('.actions.edit'), edit_pesticide_path(pesticide), class: "btn btn-secondary btn-sm" %>
+              <%= link_to t('.actions.delete'), pesticide_path(pesticide), method: :delete, 
+                          class: "btn btn-error btn-sm", 
+                          data: { 
+                            turbo_method: :delete,
+                            turbo_confirm: t('.actions.delete_confirm')
+                          } %>
+            <% end %>
+          <% else %>
+            <%# User pesticides: owner only %>
+            <%= link_to t('.actions.edit'), edit_pesticide_path(pesticide), class: "btn btn-secondary btn-sm" %>
+            <%= link_to t('.actions.delete'), pesticide_path(pesticide), method: :delete, 
+                        class: "btn btn-error btn-sm", 
+                        data: { 
+                          turbo_method: :delete,
+                          turbo_confirm: t('.actions.delete_confirm')
+                        } %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty-state">
+    <div class="empty-state-icon"><%= t('.empty.icon') %></div>
+    <h3><%= t('.empty.title') %></h3>
+    <p><%= t('.empty.description') %></p>
+    <% if admin_user? %>
+      <%= link_to t('.empty.button'), new_pesticide_path, class: "btn btn-success" %>
+    <% end %>
+  </div>
+<% end %>
+
