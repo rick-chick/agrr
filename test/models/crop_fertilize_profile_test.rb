@@ -9,49 +9,34 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
 
   # バリデーションテスト
   test "should validate crop_id presence" do
-    profile = CropFertilizeProfile.new(
-      total_n: 18.0,
-      total_p: 5.0,
-      total_k: 12.0
-    )
+    profile = CropFertilizeProfile.new
     assert_not profile.valid?
     assert_includes profile.errors[:crop], "を入力してください"
   end
 
-  test "should validate total_n presence" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_n: nil)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_n], "を入力してください"
+  # totals計算メソッドのテスト
+  test "should calculate total_n from applications" do
+    profile = create(:crop_fertilize_profile, crop: @crop)
+    create(:crop_fertilize_application, :basal, crop_fertilize_profile: profile)
+    create(:crop_fertilize_application, :topdress, crop_fertilize_profile: profile)
+    # basal: 6.0 (1 * 6.0), topdress: 12.0 (2 * 6.0)
+    assert_equal 18.0, profile.total_n
   end
 
-  test "should validate total_p presence" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_p: nil)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_p], "を入力してください"
+  test "should calculate total_p from applications" do
+    profile = create(:crop_fertilize_profile, crop: @crop)
+    create(:crop_fertilize_application, :basal, crop_fertilize_profile: profile)
+    create(:crop_fertilize_application, :topdress, crop_fertilize_profile: profile)
+    # basal: 2.0 (1 * 2.0), topdress: 3.0 (2 * 1.5)
+    assert_equal 5.0, profile.total_p
   end
 
-  test "should validate total_k presence" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_k: nil)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_k], "を入力してください"
-  end
-
-  test "should validate total_n is greater than or equal to 0" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_n: -1)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_n], "は0以上の値にしてください"
-  end
-
-  test "should validate total_p is greater than or equal to 0" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_p: -1)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_p], "は0以上の値にしてください"
-  end
-
-  test "should validate total_k is greater than or equal to 0" do
-    profile = build(:crop_fertilize_profile, crop: @crop, total_k: -1)
-    assert_not profile.valid?
-    assert_includes profile.errors[:total_k], "は0以上の値にしてください"
+  test "should calculate total_k from applications" do
+    profile = create(:crop_fertilize_profile, crop: @crop)
+    create(:crop_fertilize_application, :basal, crop_fertilize_profile: profile)
+    create(:crop_fertilize_application, :topdress, crop_fertilize_profile: profile)
+    # basal: 3.0 (1 * 3.0), topdress: 9.0 (2 * 4.5)
+    assert_equal 12.0, profile.total_k
   end
 
   test "should validate confidence is between 0 and 1" do
@@ -107,9 +92,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
   test "should handle string sources during migration" do
     profile = CropFertilizeProfile.new(
       crop: @crop,
-      total_n: 18.0,
-      total_p: 5.0,
-      total_k: 12.0,
       sources: "single_source"
     )
     profile.valid?
@@ -118,10 +100,7 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
 
   test "should default sources to empty array" do
     profile = CropFertilizeProfile.new(
-      crop: @crop,
-      total_n: 18.0,
-      total_p: 5.0,
-      total_k: 12.0
+      crop: @crop
     )
     profile.valid?
     assert_equal [], profile.sources
@@ -137,14 +116,12 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
           "type" => "basal",
           "count" => 1,
           "schedule_hint" => "pre-plant",
-          "nutrients" => { "N" => 6.0, "P" => 2.0, "K" => 3.0 },
-          "per_application" => nil
+          "per_application" => { "N" => 6.0, "P" => 2.0, "K" => 3.0 }
         },
         {
           "type" => "topdress",
           "count" => 2,
           "schedule_hint" => "fruiting",
-          "nutrients" => { "N" => 12.0, "P" => 3.0, "K" => 9.0 },
           "per_application" => { "N" => 6.0, "P" => 1.5, "K" => 4.5 }
         }
       ],
@@ -171,7 +148,7 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 6.0, basal.total_n
     assert_equal 2.0, basal.total_p
     assert_equal 3.0, basal.total_k
-    assert_nil basal.per_application_n
+    assert_equal 6.0, basal.per_application_n
 
     topdress = profile.crop_fertilize_applications.find_by(application_type: "topdress")
     assert_equal 2, topdress.count
@@ -214,29 +191,17 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
   # to_agrr_output テスト
   test "should convert to agrr output format" do
     profile = create(:crop_fertilize_profile, crop: @crop,
-      total_n: 18.0,
-      total_p: 5.0,
-      total_k: 12.0,
       sources: ["source1", "source2"],
       confidence: 0.8,
       notes: "Test notes"
     )
     
     basal = create(:crop_fertilize_application, :basal,
-      crop_fertilize_profile: profile,
-      total_n: 6.0,
-      total_p: 2.0,
-      total_k: 3.0
+      crop_fertilize_profile: profile
     )
     
     topdress = create(:crop_fertilize_application, :topdress,
-      crop_fertilize_profile: profile,
-      total_n: 12.0,
-      total_p: 3.0,
-      total_k: 9.0,
-      per_application_n: 6.0,
-      per_application_p: 1.5,
-      per_application_k: 4.5
+      crop_fertilize_profile: profile
     )
 
     output = profile.to_agrr_output
@@ -257,7 +222,10 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 6.0, basal_output["nutrients"]["N"]
     assert_equal 2.0, basal_output["nutrients"]["P"]
     assert_equal 3.0, basal_output["nutrients"]["K"]
-    assert_nil basal_output["per_application"]
+    # basalにもper_applicationがある
+    assert_equal 6.0, basal_output["per_application"]["N"]
+    assert_equal 2.0, basal_output["per_application"]["P"]
+    assert_equal 3.0, basal_output["per_application"]["K"]
 
     topdress_output = output["applications"].find { |a| a["type"] == "topdress" }
     assert_equal 2, topdress_output["count"]
@@ -302,9 +270,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
   test "to_agrr_output should handle nil sources" do
     profile = CropFertilizeProfile.new(
       crop: @crop,
-      total_n: 18.0,
-      total_p: 5.0,
-      total_k: 12.0,
       sources: nil
     )
     profile.save!(validate: false)

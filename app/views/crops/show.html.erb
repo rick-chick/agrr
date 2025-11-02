@@ -58,38 +58,34 @@
   
   <div class="fertilize-profiles-section">
     <h2 class="stages-title"><%= t('.fertilize_profiles_title') %></h2>
-    <% if @crop.crop_fertilize_profiles.any? %>
+    <% if @crop.crop_fertilize_profile %>
+      <% profile = @crop.crop_fertilize_profile %>
       <div class="fertilize-profiles-list">
-        <% @crop.crop_fertilize_profiles.recent.each do |profile| %>
-          <div class="fertilize-profile-card">
-            <div class="profile-info">
-              <h4 class="profile-title">
-                <%= link_to t('.fertilize_profile_link'), crop_crop_fertilize_profile_path(@crop, profile), class: 'link' %>
-              </h4>
-              <div class="profile-summary">
-                N: <%= profile.total_n %> g/m², 
-                P: <%= profile.total_p %> g/m², 
-                K: <%= profile.total_k %> g/m²
-              </div>
-              <div class="profile-meta">
-                <%= t('.confidence') %>: <%= number_to_percentage(profile.confidence * 100, precision: 1) %>
-              </div>
+        <div class="fertilize-profile-card">
+          <div class="profile-info">
+            <h4 class="profile-title">
+              <%= link_to t('.fertilize_profile_link'), crop_crop_fertilize_profile_path(@crop, profile), class: 'link' %>
+            </h4>
+            <div class="profile-summary">
+              N: <%= profile.total_n %> g/m², 
+              P: <%= profile.total_p %> g/m², 
+              K: <%= profile.total_k %> g/m²
             </div>
-            <div class="profile-actions">
-              <%= link_to t('.edit'), edit_crop_crop_fertilize_profile_path(@crop, profile), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.delete'), crop_crop_fertilize_profile_path(@crop, profile), 
-                          method: :delete, 
-                          class: "btn btn-error btn-sm",
-                          data: { 
-                            turbo_method: :delete,
-                            turbo_confirm: t('.confirm_delete_profile')
-                          } %>
+            <div class="profile-meta">
+              <%= t('.confidence') %>: <%= number_to_percentage(profile.confidence * 100, precision: 1) %>
             </div>
           </div>
-        <% end %>
-      </div>
-      <div class="profile-actions-top">
-        <%= link_to t('.new_fertilize_profile'), new_crop_crop_fertilize_profile_path(@crop), class: "btn btn-success" %>
+          <div class="profile-actions">
+            <%= link_to t('.edit'), edit_crop_crop_fertilize_profile_path(@crop, profile), class: "btn btn-secondary btn-sm" %>
+            <%= link_to t('.delete'), crop_crop_fertilize_profile_path(@crop, profile), 
+                        method: :delete, 
+                        class: "btn btn-error btn-sm",
+                        data: { 
+                          turbo_method: :delete,
+                          turbo_confirm: t('.confirm_delete_profile')
+                        } %>
+          </div>
+        </div>
       </div>
     <% else %>
       <div class="no-profiles">

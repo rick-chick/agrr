@@ -7,32 +7,23 @@ FactoryBot.define do
     application_type { "basal" }
     count { 1 }
     schedule_hint { "pre-plant" }
-    total_n { 6.0 }
-    total_p { 2.0 }
-    total_k { 3.0 }
-    per_application_n { nil }
-    per_application_p { nil }
-    per_application_k { nil }
+    per_application_n { 6.0 }
+    per_application_p { 2.0 }
+    per_application_k { 3.0 }
 
     trait :basal do
       application_type { "basal" }
       count { 1 }
       schedule_hint { "pre-plant" }
-      total_n { 6.0 }
-      total_p { 2.0 }
-      total_k { 3.0 }
-      per_application_n { nil }
-      per_application_p { nil }
-      per_application_k { nil }
+      per_application_n { 6.0 }
+      per_application_p { 2.0 }
+      per_application_k { 3.0 }
     end
 
     trait :topdress do
       application_type { "topdress" }
       count { 2 }
       schedule_hint { "fruiting" }
-      total_n { 12.0 }
-      total_p { 3.0 }
-      total_k { 9.0 }
       per_application_n { 6.0 }
       per_application_p { 1.5 }
       per_application_k { 4.5 }
@@ -42,12 +33,9 @@ FactoryBot.define do
       application_type { "topdress" }
       count { 1 }
       schedule_hint { "fruiting" }
-      total_n { 12.0 }
-      total_p { 3.0 }
-      total_k { 9.0 }
-      per_application_n { nil }
-      per_application_p { nil }
-      per_application_k { nil }
+      per_application_n { 12.0 }
+      per_application_p { 3.0 }
+      per_application_k { 9.0 }
     end
   end
 end

@@ -45,15 +45,15 @@ module Api
           # agrrの結果に基づいて、name（商品名）とpackage_sizeを使用
           # nameはagrrから返された商品名をそのまま使用
           fertilize_name_from_agrr = fertilize_data['name']
-          fertilize_package_size_from_agrr = fertilize_data['package_size']
+          fertilize_package_size_from_agrr = parse_package_size(fertilize_data['package_size'])
           
           Rails.logger.info "📊 [AI Fertilize] Retrieved data: name=#{fertilize_name_from_agrr}, n=#{fertilize_data['n']}, p=#{fertilize_data['p']}, k=#{fertilize_data['k']}, package_size=#{fertilize_package_size_from_agrr}"
 
-          # 新規作成（登録時は常に新規作成）
-          Rails.logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name}"
-          is_reference = false # AI作成は常にユーザー肥料
+          # 既存の肥料を検索（AI作成は常にユーザー肥料）
+          is_reference = false
+          existing_fertilize = ::Fertilize.find_by(name: fertilize_name_from_agrr, is_reference: is_reference)
 
-          # agrrから返された商品名とpackage_sizeを使用して新規作成
+          # agrrから返された商品名とpackage_sizeを使用
           attrs = {
             name: fertilize_name_from_agrr,  # agrrから返された商品名
             n: fertilize_data['n'],
@@ -64,11 +64,22 @@ module Api
             is_reference: is_reference
           }
 
-          result = @create_interactor.call(attrs)
+          if existing_fertilize
+            # 既存の肥料を更新
+            Rails.logger.info "🔄 [AI Fertilize] Updating existing fertilize##{existing_fertilize.id}: #{fertilize_name_from_agrr}"
+            result = @update_interactor.call(existing_fertilize.id, attrs)
+            status_code = :ok
+          else
+            # 新規作成
+            Rails.logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name_from_agrr}"
+            result = @create_interactor.call(attrs)
+            status_code = :created
+          end
 
           if result.success?
             fertilize_entity = result.data
-            Rails.logger.info "✅ [AI Fertilize] Created fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
+            action = existing_fertilize ? "Updated" : "Created"
+            Rails.logger.info "✅ [AI Fertilize] #{action} fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
 
             render json: {
               success: true,
@@ -80,9 +91,9 @@ module Api
               description: fertilize_entity.description,
               package_size: fertilize_entity.package_size,
               message: I18n.t('api.messages.fertilizes.created_by_ai', name: fertilize_entity.name)
-            }, status: :created
+            }, status: status_code
           else
-            Rails.logger.error "❌ [AI Fertilize] Failed to create: #{result.error}"
+            Rails.logger.error "❌ [AI Fertilize] Failed to #{existing_fertilize ? 'update' : 'create'}: #{result.error}"
             render json: { error: result.error }, status: :unprocessable_entity
           end
 
@@ -124,7 +135,7 @@ module Api
           end
 
           fertilize_name_from_agrr = fertilize_data['name']
-          fertilize_package_size_from_agrr = fertilize_data['package_size']
+          fertilize_package_size_from_agrr = parse_package_size(fertilize_data['package_size'])
 
           Rails.logger.info "🔄 [AI Fertilize] Updating fertilize##{@fertilize.id} with latest data from agrr"
 
@@ -169,6 +180,15 @@ module Api
       end
 
       private
+
+      # agrrから来るpackage_size（文字列、例: "25kg"）を数値（例: 25.0）に変換
+      def parse_package_size(value)
+        return nil if value.nil? || value.to_s.strip.empty?
+        
+        # 文字列から数値部分を抽出（"25kg" -> 25.0, "25.5kg" -> 25.5）
+        numeric_value = value.to_s.gsub(/[^0-9.]/, '').to_f
+        numeric_value == 0.0 && !value.to_s.match?(/\d/) ? nil : numeric_value
+      end
 
       def set_fertilize
         @fertilize = Fertilize.find(params[:id])

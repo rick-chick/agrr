@@ -34,7 +34,7 @@ module Adapters
             'p' => nil,
             'k' => nil,
             'description' => '窒素肥料として広く使用される',
-            'package_size' => '25kg'
+            'package_size' => 25.0
           }
 
           entity = @gateway.create(fertilize_data)
@@ -44,13 +44,13 @@ module Adapters
           assert_equal 46.0, entity.n
           assert_nil entity.p
           assert_nil entity.k
-          assert_equal '25kg', entity.package_size
+          assert_equal 25.0, entity.package_size
           assert entity.reference?
           
           # Verify it was saved to database
           record = ::Fertilize.find_by(name: '尿素')
           assert_not_nil record
-          assert_equal '25kg', record.package_size
+          assert_equal 25.0, record.package_size
         end
 
         test "should create fertilize with nil package_size" do
@@ -101,15 +101,15 @@ module Adapters
         end
 
         test "should update fertilize package_size" do
-          fertilize = create(:fertilize, name: "尿素", n: 46.0, package_size: "20kg")
+          fertilize = create(:fertilize, name: "尿素", n: 46.0, package_size: 20.0)
           
           update_data = {
-            :package_size => "25kg"
+            :package_size => 25.0
           }
 
           entity = @gateway.update(fertilize.id, update_data)
 
-          assert_equal "25kg", entity.package_size
+          assert_equal 25.0, entity.package_size
           assert_equal "尿素", entity.name  # unchanged
           assert_equal 46.0, entity.n  # unchanged
         end

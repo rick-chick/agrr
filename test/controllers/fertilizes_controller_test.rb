@@ -37,13 +37,13 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
         p: 10.0,
         k: 10.0,
         description: 'テスト用',
-        package_size: '20kg'
+        package_size: 20.0
       } }
     end
 
     assert_redirected_to fertilize_path(Fertilize.last)
     fertilize = Fertilize.last
-    assert_equal '20kg', fertilize.package_size
+    assert_equal 20.0, fertilize.package_size
   end
 
   test "should update fertilize" do
@@ -65,11 +65,11 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     
     patch fertilize_path(fertilize), params: { fertilize: {
       name: fertilize.name,
-      package_size: '25kg'
+      package_size: 25.0
     } }
     assert_redirected_to fertilize_path(fertilize)
     fertilize.reload
-    assert_equal '25kg', fertilize.package_size
+    assert_equal 25.0, fertilize.package_size
   end
 
   test "should destroy fertilize" do

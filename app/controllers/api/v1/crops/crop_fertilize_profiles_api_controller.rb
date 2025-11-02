@@ -20,7 +20,12 @@ module Api
 
         # POST /api/v1/crops/:crop_id/crop_fertilize_profiles
         def create
-          @profile = @crop.crop_fertilize_profiles.build(profile_params)
+          # 既存のプロファイルがある場合は作成不可
+          if @crop.crop_fertilize_profile
+            return render json: { error: I18n.t('crops.crop_fertilize_profiles.flash.already_exists', default: '既に肥料プロファイルが存在します') }, status: :unprocessable_entity
+          end
+
+          @profile = @crop.build_crop_fertilize_profile(profile_params)
 
           # sourcesをカンマ区切りテキストから配列に変換
           if params.dig(:crop_fertilize_profile, :sources).is_a?(String)
@@ -81,23 +86,68 @@ module Api
 
             Rails.logger.info "📊 [AI Fertilize Profile] Retrieved profile data for crop##{@crop.id}"
 
-            # 新規作成（登録時は常に新規作成）
-            Rails.logger.info "🆕 [AI Fertilize Profile] Creating new profile for crop##{@crop.id}"
-            profile = CropFertilizeProfile.from_agrr_output(crop: @crop, profile_data: profile_data)
-            Rails.logger.info "✅ [AI Fertilize Profile] Created profile##{profile.id} for crop##{@crop.id}"
+            # 既存のプロファイルがある場合は更新、なければ新規作成
+            if @crop.crop_fertilize_profile
+              profile = @crop.crop_fertilize_profile
+              Rails.logger.info "🔄 [AI Fertilize Profile] Updating existing profile##{profile.id} for crop##{@crop.id}"
+              
+              # 既存のapplicationsを削除
+              profile.crop_fertilize_applications.destroy_all
+              
+              # プロファイルを更新
+              profile.update!(
+                sources: profile_data['sources'] || [],
+                confidence: profile_data['confidence'] || 0.5,
+                notes: profile_data['notes']
+              )
+              
+              # applicationsを作成
+              if profile_data['applications'].present?
+                profile_data['applications'].each do |app_data|
+                  profile.crop_fertilize_applications.create!(
+                    application_type: app_data['type'],
+                    count: app_data['count'] || 1,
+                    schedule_hint: app_data['schedule_hint'],
+                    per_application_n: app_data.dig('per_application', 'N'),
+                    per_application_p: app_data.dig('per_application', 'P'),
+                    per_application_k: app_data.dig('per_application', 'K')
+                  )
+                end
+              end
+              
+              profile.reload
+              Rails.logger.info "✅ [AI Fertilize Profile] Updated profile##{profile.id} for crop##{@crop.id}"
+              
+              render json: {
+                success: true,
+                profile_id: profile.id,
+                crop_id: @crop.id,
+                crop_name: @crop.name,
+                total_n: profile.total_n,
+                total_p: profile.total_p,
+                total_k: profile.total_k,
+                confidence: profile.confidence,
+                applications_count: profile.crop_fertilize_applications.count,
+                message: I18n.t('api.messages.crop_fertilize_profiles.updated_by_ai', default: '肥料プロファイルを更新しました', crop_name: @crop.name)
+              }, status: :ok
+            else
+              Rails.logger.info "🆕 [AI Fertilize Profile] Creating new profile for crop##{@crop.id}"
+              profile = CropFertilizeProfile.from_agrr_output(crop: @crop, profile_data: profile_data)
+              Rails.logger.info "✅ [AI Fertilize Profile] Created profile##{profile.id} for crop##{@crop.id}"
 
-            render json: {
-              success: true,
-              profile_id: profile.id,
-              crop_id: @crop.id,
-              crop_name: @crop.name,
-              total_n: profile.total_n,
-              total_p: profile.total_p,
-              total_k: profile.total_k,
-              confidence: profile.confidence,
-              applications_count: profile.crop_fertilize_applications.count,
-              message: I18n.t('api.messages.crop_fertilize_profiles.created_by_ai', default: '肥料プロファイルを作成しました', crop_name: @crop.name)
-            }, status: :created
+              render json: {
+                success: true,
+                profile_id: profile.id,
+                crop_id: @crop.id,
+                crop_name: @crop.name,
+                total_n: profile.total_n,
+                total_p: profile.total_p,
+                total_k: profile.total_k,
+                confidence: profile.confidence,
+                applications_count: profile.crop_fertilize_applications.count,
+                message: I18n.t('api.messages.crop_fertilize_profiles.created_by_ai', default: '肥料プロファイルを作成しました', crop_name: @crop.name)
+              }, status: :created
+            end
 
           rescue => e
             Rails.logger.error "❌ [AI Fertilize Profile] Error: #{e.message}"
@@ -132,9 +182,6 @@ module Api
 
             # プロファイルを更新
             @profile.update!(
-              total_n: profile_data.dig('totals', 'N') || 0,
-              total_p: profile_data.dig('totals', 'P') || 0,
-              total_k: profile_data.dig('totals', 'K') || 0,
               sources: profile_data['sources'] || [],
               confidence: profile_data['confidence'] || 0.5,
               notes: profile_data['notes']
@@ -147,9 +194,6 @@ module Api
                   application_type: app_data['type'],
                   count: app_data['count'] || 1,
                   schedule_hint: app_data['schedule_hint'],
-                  total_n: app_data.dig('nutrients', 'N') || 0,
-                  total_p: app_data.dig('nutrients', 'P') || 0,
-                  total_k: app_data.dig('nutrients', 'K') || 0,
                   per_application_n: app_data.dig('per_application', 'N'),
                   per_application_p: app_data.dig('per_application', 'P'),
                   per_application_k: app_data.dig('per_application', 'K')
@@ -210,16 +254,15 @@ module Api
         end
 
         def set_profile
-          @profile = @crop.crop_fertilize_profiles.find(params[:id])
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: I18n.t('crop_fertilize_profiles.flash.not_found', default: '肥料プロファイルが見つかりません') }, status: :not_found
+          # 1:1の関係なので、crop_idから直接取得（params[:id]は使用しないが、ルーティング互換性のため残す）
+          @profile = @crop.crop_fertilize_profile
+          unless @profile
+            render json: { error: I18n.t('crops.crop_fertilize_profiles.flash.not_found', default: '肥料プロファイルが見つかりません') }, status: :not_found
+          end
         end
 
         def profile_params
           params.require(:crop_fertilize_profile).permit(
-            :total_n,
-            :total_p,
-            :total_k,
             :confidence,
             :notes,
             :sources,
@@ -228,9 +271,6 @@ module Api
               :application_type,
               :count,
               :schedule_hint,
-              :total_n,
-              :total_p,
-              :total_k,
               :per_application_n,
               :per_application_p,
               :per_application_k,

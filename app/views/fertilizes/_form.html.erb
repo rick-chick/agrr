@@ -82,7 +82,10 @@
 
     <div class="form-group">
       <%= f.label :package_size, t('fertilizes.form.package_size_label'), class: 'form-label' %>
-      <%= f.text_field :package_size, class: 'form-control' %>
+      <div class="input-group">
+        <%= f.number_field :package_size, step: :any, min: 0, class: 'form-control' %>
+        <span class="input-group-text">kg</span>
+      </div>
       <div class="form-text"><%= t('fertilizes.form.package_size_help') %></div>
     </div>
 

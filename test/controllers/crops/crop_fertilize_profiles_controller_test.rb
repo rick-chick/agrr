@@ -9,6 +9,7 @@ module Crops
       sign_in_as @user
       @crop = create(:crop, :tomato, user: @user)
       @profile = create(:crop_fertilize_profile, crop: @crop)
+      @application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
     end
 
     test 'should show crop fertilize profile' do
@@ -27,34 +28,32 @@ module Crops
       assert_select '.stage-item'
     end
 
-    test 'should get new' do
+    test 'should get new when no profile exists' do
+      @profile.destroy
       get new_crop_crop_fertilize_profile_path(@crop)
       assert_response :success
       assert_select 'form' do
-        assert_select 'input[name="crop_fertilize_profile[total_n]"]'
-        assert_select 'input[name="crop_fertilize_profile[total_p]"]'
-        assert_select 'input[name="crop_fertilize_profile[total_k]"]'
         assert_select 'input[name="crop_fertilize_profile[confidence]"]'
       end
       assert_select '#add-crop-fertilize-application'
     end
 
+    test 'should redirect to edit when profile already exists' do
+      get new_crop_crop_fertilize_profile_path(@crop)
+      assert_redirected_to edit_crop_crop_fertilize_profile_path(@crop, @profile)
+    end
+
     test 'should get edit' do
       get edit_crop_crop_fertilize_profile_path(@crop, @profile)
       assert_response :success
-      assert_select 'form' do
-        assert_select 'input[name="crop_fertilize_profile[total_n]"]'
-        assert_select 'input[value=?]', @profile.total_n.to_s
-      end
+      assert_select 'form'
     end
 
     test 'should create crop fertilize profile' do
+      @profile.destroy
       assert_difference('CropFertilizeProfile.count') do
         post crop_crop_fertilize_profiles_path(@crop), params: {
           crop_fertilize_profile: {
-            total_n: 18.0,
-            total_p: 5.0,
-            total_k: 12.0,
             confidence: 0.8,
             notes: 'Test profile'
           }
@@ -65,30 +64,25 @@ module Crops
     end
 
     test 'should create crop fertilize profile with applications' do
+      @profile.destroy
       assert_difference('CropFertilizeProfile.count', 1) do
         assert_difference('CropFertilizeApplication.count', 2) do
           post crop_crop_fertilize_profiles_path(@crop), params: {
             crop_fertilize_profile: {
-              total_n: 18.0,
-              total_p: 5.0,
-              total_k: 12.0,
               confidence: 0.8,
               crop_fertilize_applications_attributes: [
                 {
                   application_type: 'basal',
                   count: 1,
                   schedule_hint: 'pre-plant',
-                  total_n: 6.0,
-                  total_p: 2.0,
-                  total_k: 3.0
+                  per_application_n: 6.0,
+                  per_application_p: 2.0,
+                  per_application_k: 3.0
                 },
                 {
                   application_type: 'topdress',
                   count: 2,
                   schedule_hint: 'fruiting',
-                  total_n: 12.0,
-                  total_p: 3.0,
-                  total_k: 9.0,
                   per_application_n: 6.0,
                   per_application_p: 1.5,
                   per_application_k: 4.5
@@ -107,15 +101,14 @@ module Crops
     test 'should update crop fertilize profile' do
       patch crop_crop_fertilize_profile_path(@crop, @profile), params: {
         crop_fertilize_profile: {
-          total_n: 20.0,
-          total_p: 6.0,
-          total_k: 14.0
+          confidence: 0.9,
+          notes: 'Updated notes'
         }
       }
       
       assert_redirected_to crop_path(@crop)
       @profile.reload
-      assert_equal 20.0, @profile.total_n
+      assert_equal 0.9, @profile.confidence
     end
 
     test 'should destroy crop fertilize profile' do
@@ -127,11 +120,10 @@ module Crops
     end
 
     test 'should handle sources as comma separated string' do
+      @profile.destroy
       post crop_crop_fertilize_profiles_path(@crop), params: {
         crop_fertilize_profile: {
-          total_n: 18.0,
-          total_p: 5.0,
-          total_k: 12.0,
+          confidence: 0.5,
           sources: 'source1, source2, source3'
         }
       }
@@ -158,12 +150,11 @@ module Crops
     end
 
     test 'should render errors on invalid create' do
+      @profile.destroy
       assert_no_difference('CropFertilizeProfile.count') do
         post crop_crop_fertilize_profiles_path(@crop), params: {
           crop_fertilize_profile: {
-            total_n: nil,
-            total_p: 5.0,
-            total_k: 12.0
+            confidence: nil
           }
         }
       end
@@ -172,12 +163,22 @@ module Crops
       assert_select '.errors'
     end
 
+    test 'should not allow creating when profile already exists' do
+      post crop_crop_fertilize_profiles_path(@crop), params: {
+        crop_fertilize_profile: {
+          confidence: 0.8,
+          notes: 'Test profile'
+        }
+      }
+
+      assert_redirected_to crop_path(@crop)
+      assert_match /既に肥料プロファイルが存在します|already exists/i, flash[:alert] || ''
+    end
+
     test 'should render errors on invalid update' do
       patch crop_crop_fertilize_profile_path(@crop, @profile), params: {
         crop_fertilize_profile: {
-          total_n: nil,
-          total_p: 5.0,
-          total_k: 12.0
+          confidence: -1
         }
       }
 
@@ -208,4 +209,3 @@ module Crops
     end
   end
 end
-

@@ -14,7 +14,7 @@ module Domain
             p: nil,
             k: nil,
             description: "窒素肥料",
-            package_size: "25kg",
+            package_size: 25.0,
             is_reference: true,
             created_at: Time.current,
             updated_at: Time.current
@@ -25,7 +25,7 @@ module Domain
           assert_equal 46.0, entity.n
           assert_nil entity.p
           assert_nil entity.k
-          assert_equal "25kg", entity.package_size
+          assert_equal 25.0, entity.package_size
           assert entity.reference?
         end
 
