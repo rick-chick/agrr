@@ -1,0 +1,170 @@
+<div class="form-card" 
+     data-pest-form
+     data-i18n-control-methods-title="<%= t('pests.form.control_methods_title') %>"
+     data-i18n-method-type-label="<%= t('pests.form.method_type_label') %>"
+     data-i18n-select-method-type="<%= t('pests.form.select_method_type') %>"
+     data-i18n-method-types-chemical="<%= t('pests.form.method_types.chemical') %>"
+     data-i18n-method-types-biological="<%= t('pests.form.method_types.biological') %>"
+     data-i18n-method-types-cultural="<%= t('pests.form.method_types.cultural') %>"
+     data-i18n-method-types-physical="<%= t('pests.form.method_types.physical') %>"
+     data-i18n-method-name-label="<%= t('pests.form.method_name_label') %>"
+     data-i18n-method-description-label="<%= t('pests.form.method_description_label') %>"
+     data-i18n-timing-hint-label="<%= t('pests.form.timing_hint_label') %>"
+     data-i18n-remove-method="<%= t('pests.form.remove_method') %>">
+  <%= form_with(model: @pest) do |f| %>
+    <% if @pest.errors.any? %>
+      <div class="errors">
+        <h3><%= t('pests.form.errors.title', count: @pest.errors.count) %></h3>
+        <ul>
+          <% @pest.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :pest_id, t('pests.form.pest_id_label'), class: 'form-label' %>
+      <%= f.text_field :pest_id, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('pests.form.pest_id_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :name, t('pests.form.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, required: true, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :name_scientific, t('pests.form.name_scientific_label'), class: 'form-label' %>
+      <%= f.text_field :name_scientific, class: 'form-control' %>
+      <div class="form-text"><%= t('pests.form.name_scientific_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :family, t('pests.form.family_label'), class: 'form-label' %>
+      <%= f.text_field :family, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :order, t('pests.form.order_label'), class: 'form-label' %>
+      <%= f.text_field :order, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :description, t('pests.form.description_label'), class: 'form-label' %>
+      <%= f.text_area :description, rows: 4, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :occurrence_season, t('pests.form.occurrence_season_label'), class: 'form-label' %>
+      <%= f.text_field :occurrence_season, class: 'form-control' %>
+      <div class="form-text"><%= t('pests.form.occurrence_season_help') %></div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><%= t('pests.form.temperature_profile_title') %></h3>
+      <%= f.fields_for :pest_temperature_profile do |temp_form| %>
+        <div class="form-group">
+          <%= temp_form.label :base_temperature, t('pests.form.base_temperature_label'), class: 'form-label' %>
+          <%= temp_form.number_field :base_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.base_temperature_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= temp_form.label :max_temperature, t('pests.form.max_temperature_label'), class: 'form-label' %>
+          <%= temp_form.number_field :max_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.max_temperature_help') %></div>
+        </div>
+
+        <%= temp_form.hidden_field :_destroy, value: false %>
+      <% end %>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><%= t('pests.form.thermal_requirement_title') %></h3>
+      <%= f.fields_for :pest_thermal_requirement do |thermal_form| %>
+        <div class="form-group">
+          <%= thermal_form.label :required_gdd, t('pests.form.required_gdd_label'), class: 'form-label' %>
+          <%= thermal_form.number_field :required_gdd, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.required_gdd_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= thermal_form.label :first_generation_gdd, t('pests.form.first_generation_gdd_label'), class: 'form-label' %>
+          <%= thermal_form.number_field :first_generation_gdd, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.first_generation_gdd_help') %></div>
+        </div>
+
+        <%= thermal_form.hidden_field :_destroy, value: false %>
+      <% end %>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><%= t('pests.form.control_methods_title') %></h3>
+      <div id="control-methods-list">
+        <%= f.fields_for :pest_control_methods do |method_form| %>
+          <div class="control-method-fields nested-fields">
+            <div class="nested-fields-header">
+              <h4 class="nested-title"><%= t('pests.form.control_methods_title') %></h4>
+              <% unless method_form.object.new_record? %>
+                <%= method_form.hidden_field :id %>
+                <%= method_form.hidden_field :_destroy, value: false, class: 'destroy-flag' %>
+              <% end %>
+              <button type="button" class="btn btn-error btn-sm remove-control-method">
+                <%= t('pests.form.remove_method') %>
+              </button>
+            </div>
+
+            <div class="form-group">
+              <%= method_form.label :method_type, t('pests.form.method_type_label'), class: 'form-label' %>
+              <%= method_form.select :method_type, 
+                  options_for_select([
+                    [t('pests.form.method_types.chemical'), 'chemical'],
+                    [t('pests.form.method_types.biological'), 'biological'],
+                    [t('pests.form.method_types.cultural'), 'cultural'],
+                    [t('pests.form.method_types.physical'), 'physical']
+                  ], method_form.object.method_type), 
+                  { include_blank: t('pests.form.select_method_type') }, 
+                  { class: 'form-control' } %>
+            </div>
+
+            <div class="form-group">
+              <%= method_form.label :method_name, t('pests.form.method_name_label'), class: 'form-label' %>
+              <%= method_form.text_field :method_name, class: 'form-control' %>
+            </div>
+
+            <div class="form-group">
+              <%= method_form.label :description, t('pests.form.method_description_label'), class: 'form-label' %>
+              <%= method_form.text_area :description, rows: 3, class: 'form-control' %>
+            </div>
+
+            <div class="form-group">
+              <%= method_form.label :timing_hint, t('pests.form.timing_hint_label'), class: 'form-label' %>
+              <%= method_form.text_field :timing_hint, class: 'form-control' %>
+              <div class="form-text"><%= t('pests.form.timing_hint_help') %></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" id="add-control-method" class="btn btn-secondary btn-sm">
+        <%= t('pests.form.add_control_method') %>
+      </button>
+    </div>
+
+    <% if admin_user? %>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <%= f.check_box :is_reference, class: 'form-control' %>
+          <%= f.label :is_reference, t('pests.form.is_reference_label'), class: 'form-label' %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="actions">
+      <%= f.submit t("pests.form.submit_#{@pest.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('pests.form.cancel'), @pest.persisted? ? pest_path(@pest) : pests_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>
+
+
