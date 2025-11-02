@@ -11,6 +11,10 @@ ja:
       description_label: "説明"
       occurrence_season_label: "発生季節"
       occurrence_season_help: "発生する季節を入力してください（任意、例：春、夏、秋、冬）"
+      crops_title: "関連付けられている作物"
+      crops_help: "この害虫が発生する可能性のある作物を選択してください（複数選択可能）"
+      reference_crop: "参照作物"
+      no_crops_available: "利用可能な作物がありません。まず作物を作成してください。"
       temperature_profile_title: "温度プロファイル"
       base_temperature_label: "基準温度（°C）"
       base_temperature_help: "害虫が活動を開始する基準温度を入力してください（任意）"
@@ -105,4 +109,7 @@ ja:
       edit: "編集"
       delete: "削除"
       confirm_delete: "この害虫を削除しますか？"
+      crops_title: "関連付けられている作物"
+      reference_crop: "参照作物"
+      no_crops_description: "まだ関連付けられている作物がありません。"
 

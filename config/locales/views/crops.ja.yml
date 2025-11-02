@@ -116,6 +116,9 @@ ja:
       updated_at: "更新日"
       edit: "編集"
       delete: "削除"
+      pests_title: "害虫"
+      no_pests_description: "まだ害虫が登録されていません。"
+      manage_pests: "害虫を管理"
       stages_title: "生育ステージ"
       stage_order: "順序"
       no_stages_title: "まだ生育ステージが登録されていません"
@@ -169,4 +172,72 @@ ja:
         cancel: "キャンセル"
       errors:
         title: "%{count}件のエラーがあります："
+    
+    pests:
+      flash:
+        created: "害虫が作成され、作物に関連付けられました。"
+        updated: "害虫が更新されました。"
+        associated: "既存の害虫を作物に関連付けました。"
+        already_associated: "この害虫は既に関連付けられています。"
+        reference_only_admin: "参照害虫は管理者のみ作成できます。"
+        reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
+        not_found: "指定された害虫が見つかりません。"
+      
+      index:
+        title: "害虫一覧"
+        new_pest: "新しい害虫を追加"
+        reference_pest: "参照害虫"
+        scientific_name: "学名"
+        family: "科"
+        back_to_crop: "作物に戻る"
+        actions:
+          show: "詳細"
+          edit: "編集"
+        empty:
+          icon: "🐛"
+          title: "まだ害虫が登録されていません"
+          description: "この作物に関連付けられている害虫を追加してください。"
+          button: "害虫を追加"
+      
+      new:
+        title: "新しい害虫を追加"
+        associate_existing_pest: "既存の害虫を関連付ける"
+        select_existing_pest: "既存の害虫を選択"
+        select_pest_placeholder: "害虫を選択してください"
+        associate_button: "関連付ける"
+        no_unassociated_pests: "関連付け可能な害虫がありません。新しい害虫を作成してください。"
+        create_new_pest: "新しい害虫を作成"
+        back_to_list: "一覧に戻る"
+      
+      edit:
+        title: "%{pest_name}を編集"
+        back_to_list: "一覧に戻る"
+      
+      show:
+        reference_pest: "参照害虫"
+        name: "名前"
+        name_scientific: "学名"
+        family: "科"
+        order: "目"
+        description: "説明"
+        occurrence_season: "発生季節"
+        temperature_profile: "温度プロファイル"
+        base_temperature: "基準温度"
+        max_temperature: "最高温度"
+        thermal_requirement: "温度要求"
+        required_gdd: "必要積算温度"
+        first_generation_gdd: "第一世代積算温度"
+        not_available: "未設定"
+        control_methods_title: "防除方法"
+        method_type:
+          chemical: "化学的防除"
+          biological: "生物的防除"
+          cultural: "耕種的防除"
+          physical: "物理的防除"
+        timing_hint: "タイミング"
+        created_at: "作成日"
+        updated_at: "更新日"
+        back_to_list: "一覧に戻る"
+        back_to_crop: "作物に戻る"
+        edit: "編集"
 

@@ -1,19 +1,16 @@
-<% content_for :title, "#{@pest.name} - AGRR" %>
+<% content_for :title, "#{@crop.name} - #{@pest.name} - AGRR" %>
 
 <div class="crop-detail-card">
   <div class="crop-detail-header">
-    <h1 class="crop-detail-title"><%= @pest.name %></h1>
+    <h1 class="crop-detail-title">
+      <%= link_to @crop.name, crop_path(@crop), class: "crop-link" %> - <%= @pest.name %>
+    </h1>
     <% if admin_user? && @pest.is_reference %>
       <div class="crop-detail-type reference"><%= t('.reference_pest') %></div>
     <% end %>
   </div>
   
   <div class="crop-basic-info">
-    <div class="info-item">
-      <span class="info-label">🆔 <%= t('.pest_id') %>:</span>
-      <span class="info-value"><%= @pest.id %></span>
-    </div>
-    
     <div class="info-item">
       <span class="info-label">📝 <%= t('.name') %>:</span>
       <span class="info-value"><%= @pest.name %></span>
@@ -43,7 +40,7 @@
     <% if @pest.description.present? %>
       <div class="info-item">
         <span class="info-label">📄 <%= t('.description') %>:</span>
-        <span class="info-value"><%= simple_format(@pest.description) %></span>
+        <div class="info-value"><%= simple_format(@pest.description) %></div>
       </div>
     <% end %>
     
@@ -116,51 +113,10 @@
     </div>
   <% end %>
   
-  <% if @crops&.any? %>
-    <div class="stages-section">
-      <h2 class="stages-title"><%= t('.crops_title') %></h2>
-      <div class="crops-list">
-        <% @crops.each do |crop| %>
-          <div class="crop-item">
-            <div class="crop-name">
-              <%= link_to crop.name, crop_path(crop), class: "crop-link" %>
-            </div>
-            <% if crop.variety.present? %>
-              <div class="crop-variety"><%= crop.variety %></div>
-            <% end %>
-            <% if crop.is_reference %>
-              <span class="crop-reference-badge"><%= t('.reference_crop') %></span>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  <% else %>
-    <div class="stages-section">
-      <h2 class="stages-title"><%= t('.crops_title') %></h2>
-      <div class="no-crops">
-        <p><%= t('.no_crops_description') %></p>
-      </div>
-    </div>
-  <% end %>
-  
   <div class="actions">
-    <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
-    <% if @pest.is_reference %>
-      <%# 参照害虫は管理者のみ編集・削除可能 %>
-      <% if admin_user? %>
-        <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @pest, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.confirm_delete') %>
-      <% end %>
-    <% else %>
-      <%# ユーザー害虫は所有者が編集・削除可能 %>
-      <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-      <%= button_to t('.delete'), @pest, method: :delete, 
-                  class: "btn btn-error", 
-                  confirm: t('.confirm_delete') %>
-    <% end %>
+    <%= link_to t('.back_to_list'), crop_pests_path(@crop), class: "btn btn-secondary" %>
+    <%= link_to t('.back_to_crop'), crop_path(@crop), class: "btn btn-secondary" %>
+    <%= link_to t('.edit'), edit_crop_pest_path(@crop, @pest), class: "btn btn-secondary" %>
   </div>
 </div>
 

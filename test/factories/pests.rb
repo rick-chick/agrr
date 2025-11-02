@@ -2,7 +2,6 @@
 
 FactoryBot.define do
   factory :pest do
-    sequence(:pest_id) { |n| "pest_#{n}" }
     name { "テスト害虫" }
     name_scientific { "Test Pest" }
     family { "テスト科" }
@@ -10,9 +9,14 @@ FactoryBot.define do
     description { "テスト用の害虫説明" }
     occurrence_season { "春〜秋" }
     is_reference { true }
+    user_id { nil } # 参照害虫の場合はuser_idはnil
+    
+    trait :user_owned do
+      is_reference { false }
+      association :user, factory: :user
+    end
 
     trait :aphid do
-      pest_id { "aphid" }
       name { "アブラムシ" }
       name_scientific { "Aphidoidea" }
       family { "アブラムシ科" }
@@ -22,7 +26,6 @@ FactoryBot.define do
     end
 
     trait :spider_mite do
-      pest_id { "spider_mite" }
       name { "ダニ" }
       name_scientific { "Tetranychus urticae" }
       family { "ダニ科" }

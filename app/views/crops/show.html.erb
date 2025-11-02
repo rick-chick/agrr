@@ -56,6 +56,31 @@
     </div>
   </div>
   
+  <div class="pests-section">
+    <h2 class="stages-title"><%= t('.pests_title') %></h2>
+    <% if @crop.pests.any? %>
+      <div class="pests-list">
+        <% @crop.pests.recent.each do |pest| %>
+          <div class="pest-item">
+            <div class="pest-name">
+              <%= link_to pest.name, crop_pest_path(@crop, pest), class: "pest-link" %>
+            </div>
+            <% if pest.name_scientific.present? %>
+              <div class="pest-scientific"><%= pest.name_scientific %></div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="no-pests">
+        <p><%= t('.no_pests_description') %></p>
+      </div>
+    <% end %>
+    <div class="pest-actions">
+      <%= link_to t('.manage_pests'), crop_pests_path(@crop), class: "btn btn-secondary btn-sm" %>
+    </div>
+  </div>
+
   <div class="stages-section">
     <h2 class="stages-title"><%= t('.stages_title') %></h2>
     <% if @crop.crop_stages.any? %>

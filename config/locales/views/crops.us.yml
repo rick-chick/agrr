@@ -111,6 +111,9 @@ us:
       updated_at: "Updated"
       edit: "Edit"
       delete: "Delete"
+      pests_title: "Pests"
+      no_pests_description: "No pests registered yet."
+      manage_pests: "Manage Pests"
       stages_title: "Growth Stages"
       stage_order: "Order"
       no_stages_title: "No growth stages registered yet"
@@ -164,4 +167,72 @@ us:
         cancel: "Cancel"
       errors:
         title: "%{count} errors occurred:"
+    
+    pests:
+      flash:
+        created: "Pest created and associated with crop."
+        updated: "Pest updated."
+        associated: "Existing pest associated with crop."
+        already_associated: "This pest is already associated."
+        reference_only_admin: "Reference pests can only be created by administrators."
+        reference_flag_admin_only: "Reference flag can only be changed by administrators."
+        not_found: "Pest not found."
+      
+      index:
+        title: "Pests"
+        new_pest: "Add New Pest"
+        reference_pest: "Reference Pest"
+        scientific_name: "Scientific Name"
+        family: "Family"
+        back_to_crop: "Back to Crop"
+        actions:
+          show: "Details"
+          edit: "Edit"
+        empty:
+          icon: "🐛"
+          title: "No pests registered yet"
+          description: "Add pests associated with this crop."
+          button: "Add Pest"
+      
+      new:
+        title: "Add New Pest"
+        associate_existing_pest: "Associate Existing Pest"
+        select_existing_pest: "Select Existing Pest"
+        select_pest_placeholder: "Select a pest"
+        associate_button: "Associate"
+        no_unassociated_pests: "No unassociated pests available. Please create a new pest."
+        create_new_pest: "Create New Pest"
+        back_to_list: "Back to List"
+      
+      edit:
+        title: "Edit %{pest_name}"
+        back_to_list: "Back to List"
+      
+      show:
+        reference_pest: "Reference Pest"
+        name: "Name"
+        name_scientific: "Scientific Name"
+        family: "Family"
+        order: "Order"
+        description: "Description"
+        occurrence_season: "Occurrence Season"
+        temperature_profile: "Temperature Profile"
+        base_temperature: "Base Temperature"
+        max_temperature: "Max Temperature"
+        thermal_requirement: "Thermal Requirement"
+        required_gdd: "Required GDD"
+        first_generation_gdd: "First Generation GDD"
+        not_available: "Not Available"
+        control_methods_title: "Control Methods"
+        method_type:
+          chemical: "Chemical Control"
+          biological: "Biological Control"
+          cultural: "Cultural Control"
+          physical: "Physical Control"
+        timing_hint: "Timing"
+        created_at: "Created"
+        updated_at: "Updated"
+        back_to_list: "Back to List"
+        back_to_crop: "Back to Crop"
+        edit: "Edit"
 

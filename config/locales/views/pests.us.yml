@@ -11,6 +11,10 @@ us:
       description_label: "Description"
       occurrence_season_label: "Occurrence Season"
       occurrence_season_help: "Enter the season when the pest occurs (optional, e.g., Spring, Summer, Fall, Winter)"
+      crops_title: "Associated Crops"
+      crops_help: "Select crops that may be affected by this pest (multiple selection allowed)"
+      reference_crop: "Reference Crop"
+      no_crops_available: "No crops available. Please create a crop first."
       temperature_profile_title: "Temperature Profile"
       base_temperature_label: "Base Temperature (°C)"
       base_temperature_help: "Enter the base temperature at which the pest starts activity (optional)"
@@ -105,4 +109,7 @@ us:
       edit: "Edit"
       delete: "Delete"
       confirm_delete: "Are you sure you want to delete this pest?"
+      crops_title: "Associated Crops"
+      reference_crop: "Reference Crop"
+      no_crops_description: "No crops are associated with this pest yet."
 

@@ -5,16 +5,18 @@ class PestsController < ApplicationController
 
   # GET /pests
   def index
-    # 管理者は参照害虫も表示、一般ユーザーは参照害虫のみ表示
+    # 管理者はすべての害虫を表示、一般ユーザーは自分が作成した害虫（is_reference: false, user_id: current_user.id）のみ表示
     if admin_user?
       @pests = Pest.recent
     else
-      @pests = Pest.reference.recent
+      # 一般ユーザー: 自分の害虫のみ表示（参照害虫は表示しない）
+      @pests = Pest.where(user_id: current_user.id).recent
     end
   end
 
   # GET /pests/:id
   def show
+    @crops = @pest.crops.recent
   end
 
   # GET /pests/new
@@ -23,11 +25,13 @@ class PestsController < ApplicationController
     @pest.build_pest_temperature_profile
     @pest.build_pest_thermal_requirement
     @pest.pest_control_methods.build
+    @available_crops = available_crops_for_user
   end
 
   # GET /pests/:id/edit
   def edit
     @pest.pest_control_methods.build if @pest.pest_control_methods.empty?
+    @available_crops = available_crops_for_user
   end
 
   # POST /pests
@@ -38,11 +42,30 @@ class PestsController < ApplicationController
       return redirect_to pests_path, alert: I18n.t('pests.flash.reference_only_admin')
     end
 
-    @pest = Pest.new(pest_params)
+    # pest_paramsを取得して、user_idを追加
+    pest_attributes = pest_params.to_h
+    # 一般ユーザーが作成する場合は、is_referenceをfalseに強制設定し、user_idを設定
+    unless admin_user?
+      pest_attributes[:is_reference] = false
+      pest_attributes[:user_id] = current_user.id
+    else
+      # 管理者が作成する場合も、参照害虫の場合はuser_idをnilに、そうでない場合は管理者のIDを設定
+      is_reference = ActiveModel::Type::Boolean.new.cast(pest_attributes[:is_reference]) || false
+      if is_reference
+        pest_attributes[:user_id] = nil
+      else
+        pest_attributes[:user_id] ||= current_user.id
+      end
+    end
+    
+    @pest = Pest.new(pest_attributes)
 
     if @pest.save
+      # 選択された作物との関連付けを処理
+      associate_crops(@pest, params[:crop_ids])
       redirect_to pest_path(@pest), notice: I18n.t('pests.flash.created')
     else
+      @available_crops = available_crops_for_user
       render :new, status: :unprocessable_entity
     end
   end
@@ -58,8 +81,11 @@ class PestsController < ApplicationController
     end
 
     if @pest.update(pest_params)
+      # 選択された作物との関連付けを更新
+      update_crop_associations(@pest, params[:crop_ids])
       redirect_to pest_path(@pest), notice: I18n.t('pests.flash.updated')
     else
+      @available_crops = available_crops_for_user
       render :edit, status: :unprocessable_entity
     end
   end
@@ -90,15 +116,16 @@ class PestsController < ApplicationController
     if action.in?([:edit, :update, :destroy])
       # 編集・更新・削除は以下の場合のみ許可
       # - 管理者（すべての害虫を編集可能）
-      # - 参照害虫でない場合（一般ユーザーが作成した害虫）
-      unless admin_user? || !@pest.is_reference
+      # - ユーザー害虫の所有者
+      unless admin_user? || (!@pest.is_reference && @pest.user_id == current_user.id)
         redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
       end
     elsif action == :show
       # 詳細表示は以下の場合に許可
       # - 参照害虫（誰でも閲覧可能）
+      # - 自分の害虫
       # - 管理者
-      unless @pest.is_reference || admin_user?
+      unless @pest.is_reference || @pest.user_id == current_user.id || admin_user?
         redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
       end
     end
@@ -108,7 +135,6 @@ class PestsController < ApplicationController
 
   def pest_params
     params.require(:pest).permit(
-      :pest_id,
       :name,
       :name_scientific,
       :family,
@@ -137,6 +163,70 @@ class PestsController < ApplicationController
         :_destroy
       ]
     )
+  end
+
+  # ユーザーが利用可能な作物のリストを取得
+  def available_crops_for_user
+    if admin_user?
+      Crop.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+    else
+      Crop.where(user_id: current_user.id).recent
+    end
+  end
+
+  # 害虫と作物を関連付ける
+  def associate_crops(pest, crop_ids)
+    return unless crop_ids.present?
+    
+    # 配列に変換（文字列または配列の両方に対応）
+    ids = Array(crop_ids).compact.reject(&:blank?).map(&:to_i)
+    
+    ids.each do |crop_id|
+      crop = Crop.find_by(id: crop_id)
+      next unless crop
+      
+      # 権限チェック：作物へのアクセス権があるか確認
+      can_access = if crop.is_reference
+        true # 参照作物は誰でもアクセス可能
+      else
+        crop.user_id == current_user.id || admin_user?
+      end
+      
+      if can_access && !pest.crops.include?(crop)
+        pest.crops << crop
+      end
+    end
+  end
+
+  # 害虫と作物の関連付けを更新
+  def update_crop_associations(pest, crop_ids)
+    return unless crop_ids.present?
+    
+    # 配列に変換（文字列または配列の両方に対応）
+    new_ids = Array(crop_ids).compact.reject(&:blank?).map(&:to_i).uniq
+    
+    # 現在の関連付けを取得
+    current_ids = pest.crop_ids
+    
+    # 削除すべき関連付け（現在あるが選択されていない）
+    to_remove = current_ids - new_ids
+    to_remove.each do |crop_id|
+      crop = Crop.find_by(id: crop_id)
+      next unless crop
+      
+      # 権限チェック：作物へのアクセス権があるか確認
+      can_access = if crop.is_reference
+        true # 参照作物は誰でもアクセス可能
+      else
+        crop.user_id == current_user.id || admin_user?
+      end
+      
+      pest.crops.delete(crop) if can_access
+    end
+    
+    # 追加すべき関連付け（選択されているが現在ない）
+    to_add = new_ids - current_ids
+    associate_crops(pest, to_add)
   end
 end
 
