@@ -6,6 +6,7 @@ in:
       farms: "खेत"
       crops: "फसलें"
       fertilizes: "उर्वरक"
+      pests: "कीट"
       interaction_rules: "परिक्रमण"
       login: "लॉगिन"
       logout: "लॉगआउट"
