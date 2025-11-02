@@ -3,6 +3,7 @@
 require 'test_helper'
 require 'open3'
 require 'ostruct'
+require 'minitest/mock'
 
 module Api
   module V1
@@ -11,7 +12,7 @@ module Api
         setup do
           @user = create(:user)
           sign_in_as @user
-          @crop = create(:crop, :tomato, user: @user)
+          @crop = create(:crop, :tomato, :with_stages, user: @user)
           @profile = create(:crop_fertilize_profile, crop: @crop)
           @application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
         end
@@ -35,7 +36,6 @@ module Api
             post api_v1_crop_crop_fertilize_profiles_path(@crop),
                  params: {
                    crop_fertilize_profile: {
-                     notes: 'Test profile'
                    }
                  },
                  headers: { 'Accept' => 'application/json' }
@@ -96,17 +96,12 @@ module Api
           patch api_v1_crop_crop_fertilize_profile_path(@crop, @profile),
                 params: {
                   crop_fertilize_profile: {
-                    notes: 'Updated notes'
                   }
                 },
                 headers: { 'Accept' => 'application/json' }
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert_equal 'Updated notes', json_response['notes']
-          
-          @profile.reload
-          assert_equal 'Updated notes', @profile.notes
         end
 
         test 'should destroy crop fertilize profile' do
@@ -123,20 +118,17 @@ module Api
           post api_v1_crop_crop_fertilize_profiles_path(@crop),
                params: {
                  crop_fertilize_profile: {
-                   sources: 'source1, source2, source3'
                  }
                },
                headers: { 'Accept' => 'application/json' }
 
           profile = CropFertilizeProfile.last
-          assert_equal ['source1', 'source2', 'source3'], profile.sources
         end
 
         test 'should not allow creating when profile already exists' do
           post api_v1_crop_crop_fertilize_profiles_path(@crop),
                params: {
                  crop_fertilize_profile: {
-                   notes: 'Test profile'
                  }
                },
                headers: { 'Accept' => 'application/json' }
@@ -214,25 +206,25 @@ module Api
           existing_profile_id = existing_profile.id
           old_total_n = existing_profile.total_n
           
-          # agrrコマンドの出力をモック
+          # agrrコマンドの出力をモック（実際の形式に合わせる）
           agrr_output = {
-            "success" => true,
-            "profile" => {
-              "totals" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 },
-              "applications" => [
-                {
-                  "type" => "basal",
-                  "count" => 1,
-                  "schedule_hint" => "pre-plant",
-                  "per_application" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 }
-                }
-              ],
-              "sources" => ["agrr-ai"],
-              "notes" => "AI generated profile"
-            }
+            "crop" => { "crop_id" => @crop.id.to_s, "name" => @crop.name },
+            "totals" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 },
+            "applications" => [
+              {
+                "type" => "basal",
+                "count" => 1,
+                "schedule_hint" => "pre-plant",
+                "nutrients" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 },
+                "per_application" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 }
+              }
+            ],
+            "confidence" => 0.5
           }.to_json
 
-          Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
+          # Open3.capture3をモック（リトライループで複数回呼ばれる可能性があるのでlambdaを使用）
+          capture3_stub = ->(*args) { [agrr_output, "", OpenStruct.new(success?: true)] }
+          Open3.stub :capture3, capture3_stub do
             assert_no_difference('CropFertilizeProfile.count') do
               post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
                    headers: { 'Accept' => 'application/json' }
@@ -255,41 +247,45 @@ module Api
         test 'ai_create should create new profile with applications when no profile exists' do
           @profile.destroy
           agrr_output = {
-            "success" => true,
-            "profile" => {
-              "totals" => { "N" => 20.0, "P" => 6.0, "K" => 14.0 },
-              "applications" => [
-                {
-                  "type" => "basal",
-                  "count" => 1,
-                  "schedule_hint" => "pre-plant",
-                  "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
-                },
-                {
-                  "type" => "topdress",
-                  "count" => 2,
-                  "schedule_hint" => "fruiting",
-                  "per_application" => { "N" => 6.0, "P" => 1.5, "K" => 5.0 }
-                }
-              ],
-              "sources" => ["agrr-ai"],
-              "notes" => "Test profile"
-            }
+            "crop" => { "crop_id" => @crop.id.to_s, "name" => @crop.name },
+            "totals" => { "N" => 20.0, "P" => 6.0, "K" => 14.0 },
+            "applications" => [
+              {
+                "type" => "basal",
+                "count" => 1,
+                "schedule_hint" => "pre-plant",
+                "nutrients" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 },
+                "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
+              },
+              {
+                "type" => "topdress",
+                "count" => 2,
+                "schedule_hint" => "fruiting",
+                "nutrients" => { "N" => 12.0, "P" => 3.0, "K" => 10.0 },
+                "per_application" => { "N" => 6.0, "P" => 1.5, "K" => 5.0 }
+              }
+            ],
+            "confidence" => 0.5
           }.to_json
 
-          Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-            assert_difference('CropFertilizeProfile.count', 1) do
-              assert_difference('CropFertilizeApplication.count', 2) do
-                post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
-                     headers: { 'Accept' => 'application/json' }
-              end
-            end
+          # Open3.capture3をモック（リトライループで複数回呼ばれる可能性があるのでlambdaを使用）
+          capture3_stub = ->(*args) { [agrr_output, "", OpenStruct.new(success?: true)] }
+          Open3.stub :capture3, capture3_stub do
+            initial_profile_count = CropFertilizeProfile.count
+            initial_application_count = CropFertilizeApplication.count
+            
+            post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
+                 headers: { 'Accept' => 'application/json' }
 
             assert_response :created
             json_response = JSON.parse(response.body)
             assert json_response['success']
             assert_equal 20.0, json_response['total_n']  # 8 + 12
             assert_equal 2, json_response['applications_count']
+            
+            # データベースの変更を確認
+            assert_equal initial_profile_count + 1, CropFertilizeProfile.count
+            assert_equal initial_application_count + 2, CropFertilizeApplication.count
             
             profile = CropFertilizeProfile.find(json_response['profile_id'])
             assert_equal 2, profile.crop_fertilize_applications.count
@@ -303,29 +299,30 @@ module Api
           profile_id = profile_to_update.id
           
           agrr_output = {
-            "success" => true,
-            "profile" => {
-              "totals" => { "N" => 20.0, "P" => 6.0, "K" => 14.0 },
-              "applications" => [
-                {
-                  "type" => "basal",
-                  "count" => 1,
-                  "schedule_hint" => "pre-plant-updated",
-                  "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
-                },
-                {
-                  "type" => "topdress",
-                  "count" => 3,
-                  "schedule_hint" => "fruiting",
-                  "per_application" => { "N" => 4.0, "P" => 1.0, "K" => 3.0 }
-                }
-              ],
-              "sources" => ["agrr-ai-updated"],
-              "notes" => "Updated profile"
-            }
+            "crop" => { "crop_id" => @crop.id.to_s, "name" => @crop.name },
+            "totals" => { "N" => 20.0, "P" => 6.0, "K" => 14.0 },
+            "applications" => [
+              {
+                "type" => "basal",
+                "count" => 1,
+                "schedule_hint" => "pre-plant-updated",
+                "nutrients" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 },
+                "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
+              },
+              {
+                "type" => "topdress",
+                "count" => 3,
+                "schedule_hint" => "fruiting",
+                "nutrients" => { "N" => 12.0, "P" => 3.0, "K" => 9.0 },
+                "per_application" => { "N" => 4.0, "P" => 1.0, "K" => 3.0 }
+              }
+            ],
+            "confidence" => 0.5
           }.to_json
 
-          Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
+          # Open3.capture3をモック（リトライループで複数回呼ばれる可能性があるのでlambdaを使用）
+          capture3_stub = ->(*args) { [agrr_output, "", OpenStruct.new(success?: true)] }
+          Open3.stub :capture3, capture3_stub do
             assert_no_difference('CropFertilizeProfile.count') do
               post ai_update_api_v1_crop_crop_fertilize_profile_path(@crop, profile_to_update),
                    headers: { 'Accept' => 'application/json' }
@@ -345,7 +342,6 @@ module Api
             assert_equal profile_id, profile_to_update.id
             assert_equal 20.0, profile_to_update.total_n
             assert_equal 13.0, profile_to_update.total_k
-            assert_equal ["agrr-ai-updated"], profile_to_update.sources
             assert_equal 2, profile_to_update.crop_fertilize_applications.count
           end
         end
@@ -357,7 +353,9 @@ module Api
             "code" => "daemon_not_running"
           }.to_json
 
-          Open3.stub :capture3, [error_output, "", OpenStruct.new(success?: true)] do
+          # エラーケース（リトライループで複数回呼ばれる可能性があるのでlambdaを使用）
+          capture3_stub_error = ->(*args) { ["", "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/agrr.sock'", OpenStruct.new(success?: false)] }
+          Open3.stub :capture3, capture3_stub_error do
             assert_no_difference('CropFertilizeProfile.count') do
               post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
                    headers: { 'Accept' => 'application/json' }
@@ -366,6 +364,49 @@ module Api
             assert_response :unprocessable_entity
             json_response = JSON.parse(response.body)
             assert json_response['error'].present?
+          end
+        end
+
+        test 'ai_create should handle empty response from agrr command' do
+          # agrrコマンドが空のレスポンスを返す場合
+          Open3.stub :capture3, ["", "some error", OpenStruct.new(success?: true)] do
+            assert_no_difference('CropFertilizeProfile.count') do
+              post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
+                   headers: { 'Accept' => 'application/json' }
+            end
+
+            assert_response :internal_server_error
+            json_response = JSON.parse(response.body)
+            assert json_response['error'].present?
+            assert_match(/AGRRコマンドが空のレスポンス/, json_response['error'])
+          end
+        end
+
+        test 'ai_create should handle JSON parse error with empty response' do
+          # 空白のみのレスポンス
+          Open3.stub :capture3, ["   \n  ", "", OpenStruct.new(success?: true)] do
+            assert_no_difference('CropFertilizeProfile.count') do
+              post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
+                   headers: { 'Accept' => 'application/json' }
+            end
+
+            assert_response :internal_server_error
+            json_response = JSON.parse(response.body)
+            assert json_response['error'].present?
+            assert_match(/AGRRコマンドが空のレスポンス/, json_response['error'])
+          end
+        end
+
+        test 'ai_update should handle empty response from agrr command' do
+          # agrrコマンドが空のレスポンスを返す場合
+          Open3.stub :capture3, ["", "some error", OpenStruct.new(success?: true)] do
+            post ai_update_api_v1_crop_crop_fertilize_profile_path(@crop, @profile),
+                 headers: { 'Accept' => 'application/json' }
+
+            assert_response :internal_server_error
+            json_response = JSON.parse(response.body)
+            assert json_response['error'].present?
+            assert_match(/AGRRコマンドが空のレスポンス/, json_response['error'])
           end
         end
       end

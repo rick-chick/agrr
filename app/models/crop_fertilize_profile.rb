@@ -4,8 +4,6 @@
 #
 # Attributes:
 #   crop_id: 作物ID（必須）
-#   sources: 情報源（JSON配列、テキストとして保存）
-#   notes: 追加のガイダンス
 #
 # 役割: 作物に対する肥料施用計画の全体情報を保持
 # Note: total_n, total_p, total_kは削除され、計算メソッドで取得可能
@@ -15,18 +13,6 @@ class CropFertilizeProfile < ApplicationRecord
 
   accepts_nested_attributes_for :crop_fertilize_applications, allow_destroy: true, reject_if: :all_blank
 
-  # sourcesをJSON配列としてシリアライズ
-  serialize :sources, coder: JSON
-
-  # デフォルト値を設定
-  after_initialize do
-    # Handle both String and Array cases during migration
-    if sources.is_a?(String)
-      self.sources = [sources]
-    else
-      self.sources ||= []
-    end
-  end
 
   validates :crop_id, presence: true
 
@@ -49,25 +35,54 @@ class CropFertilizeProfile < ApplicationRecord
   # @param crop [Crop] 作物モデル
   # @param profile_data [Hash] agrr fertilize profile のJSON出力
   # @return [CropFertilizeProfile] 作成されたプロファイル
+  # @raise [StandardError] 必須データが欠損している場合
   def self.from_agrr_output(crop:, profile_data:)
+    unless profile_data['applications'].is_a?(Array)
+      raise "Invalid profile_data: 'applications' must be an array"
+    end
+    
     profile = create!(
-      crop: crop,
-      sources: profile_data['sources'] || [],
-      notes: profile_data['notes']
+      crop: crop
     )
 
     # applicationsを作成
-    if profile_data['applications'].present?
-      profile_data['applications'].each do |app_data|
-        profile.crop_fertilize_applications.create!(
-          application_type: app_data['type'],
-          count: app_data['count'] || 1,
-          schedule_hint: app_data['schedule_hint'],
-          per_application_n: app_data.dig('per_application', 'N'),
-          per_application_p: app_data.dig('per_application', 'P'),
-          per_application_k: app_data.dig('per_application', 'K')
-        )
+    profile_data['applications'].each do |app_data|
+      unless app_data['type']
+        raise "Invalid application data: missing 'type'"
       end
+      unless app_data['count']
+        raise "Invalid application data: missing 'count'"
+      end
+      
+      # per_applicationがnullの場合（基肥など）、nutrientsから計算
+      # nutrients.N = per_application.N * count (per_applicationがnullでない場合)
+      # 基肥の場合: per_application = nullだが、nutrientsには合計値がある
+      per_application_n = app_data.dig('per_application', 'N')
+      per_application_p = app_data.dig('per_application', 'P')
+      per_application_k = app_data.dig('per_application', 'K')
+      
+      # per_applicationがnullの場合、nutrientsから計算
+      if per_application_n.nil? && app_data.dig('nutrients', 'N')
+        count_val = app_data['count'] || 1
+        per_application_n = app_data.dig('nutrients', 'N') / count_val.to_f if count_val > 0
+      end
+      if per_application_p.nil? && app_data.dig('nutrients', 'P')
+        count_val = app_data['count'] || 1
+        per_application_p = app_data.dig('nutrients', 'P') / count_val.to_f if count_val > 0
+      end
+      if per_application_k.nil? && app_data.dig('nutrients', 'K')
+        count_val = app_data['count'] || 1
+        per_application_k = app_data.dig('nutrients', 'K') / count_val.to_f if count_val > 0
+      end
+      
+      profile.crop_fertilize_applications.create!(
+        application_type: app_data['type'],
+        count: app_data['count'],
+        schedule_hint: app_data['schedule_hint'],
+        per_application_n: per_application_n,
+        per_application_p: per_application_p,
+        per_application_k: per_application_k
+      )
     end
 
     profile
@@ -110,9 +125,7 @@ class CropFertilizeProfile < ApplicationRecord
         end
 
         app_hash
-      end,
-      'sources' => sources || [],
-      'notes' => notes
+      end
     }
   end
 end
