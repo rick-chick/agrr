@@ -1,0 +1,138 @@
+<% content_for :title, "#{@pest.name} - AGRR" %>
+
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= @pest.name %></h1>
+    <% if admin_user? && @pest.is_reference %>
+      <div class="crop-detail-type reference"><%= t('.reference_pest') %></div>
+    <% end %>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">🆔 <%= t('.pest_id') %>:</span>
+      <span class="info-value"><%= @pest.pest_id %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📝 <%= t('.name') %>:</span>
+      <span class="info-value"><%= @pest.name %></span>
+    </div>
+    
+    <% if @pest.name_scientific.present? %>
+      <div class="info-item">
+        <span class="info-label">🔬 <%= t('.name_scientific') %>:</span>
+        <span class="info-value"><%= @pest.name_scientific %></span>
+      </div>
+    <% end %>
+    
+    <% if @pest.family.present? %>
+      <div class="info-item">
+        <span class="info-label">🌿 <%= t('.family') %>:</span>
+        <span class="info-value"><%= @pest.family %></span>
+      </div>
+    <% end %>
+    
+    <% if @pest.order.present? %>
+      <div class="info-item">
+        <span class="info-label">📋 <%= t('.order') %>:</span>
+        <span class="info-value"><%= @pest.order %></span>
+      </div>
+    <% end %>
+    
+    <% if @pest.description.present? %>
+      <div class="info-item">
+        <span class="info-label">📄 <%= t('.description') %>:</span>
+        <span class="info-value"><%= simple_format(@pest.description) %></span>
+      </div>
+    <% end %>
+    
+    <% if @pest.occurrence_season.present? %>
+      <div class="info-item">
+        <span class="info-label">📅 <%= t('.occurrence_season') %>:</span>
+        <span class="info-value"><%= @pest.occurrence_season %></span>
+      </div>
+    <% end %>
+    
+    <% if @pest.pest_temperature_profile %>
+      <div class="info-item">
+        <span class="info-label">🌡️ <%= t('.temperature_profile') %>:</span>
+        <div class="info-value">
+          <%= t('.base_temperature') %>: <%= @pest.pest_temperature_profile.base_temperature %>°C<br>
+          <%= t('.max_temperature') %>: <%= @pest.pest_temperature_profile.max_temperature %>°C
+        </div>
+      </div>
+    <% end %>
+    
+    <% if @pest.pest_thermal_requirement %>
+      <div class="info-item">
+        <span class="info-label">🌡️ <%= t('.thermal_requirement') %>:</span>
+        <div class="info-value">
+          <%= t('.required_gdd') %>: <%= @pest.pest_thermal_requirement.required_gdd %>°C・日<br>
+          <% if @pest.pest_thermal_requirement.first_generation_gdd.present? %>
+            <%= t('.first_generation_gdd') %>: <%= @pest.pest_thermal_requirement.first_generation_gdd %>°C・日
+          <% else %>
+            <%= t('.first_generation_gdd') %>: <%= t('.not_available') %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@pest.created_at, format: :long) %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@pest.updated_at, format: :long) %></span>
+    </div>
+  </div>
+  
+  <% if @pest.pest_control_methods.any? %>
+    <div class="stages-section">
+      <h2 class="stages-title"><%= t('.control_methods_title') %></h2>
+      <div class="control-methods-list">
+        <% @pest.pest_control_methods.order(:id).each do |method| %>
+          <div class="control-method-card">
+            <div class="method-header">
+              <span class="method-type-badge method-type-<%= method.method_type %>">
+                <%= t(".method_type.#{method.method_type}") %>
+              </span>
+              <h4 class="method-name"><%= method.method_name %></h4>
+            </div>
+            <% if method.description.present? %>
+              <div class="method-description"><%= simple_format(method.description) %></div>
+            <% end %>
+            <% if method.timing_hint.present? %>
+              <div class="method-timing">
+                <span class="timing-label"><%= t('.timing_hint') %>:</span>
+                <span class="timing-value"><%= method.timing_hint %></span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+  
+  <div class="actions">
+    <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
+    <% if @pest.is_reference %>
+      <%# 参照害虫は管理者のみ編集・削除可能 %>
+      <% if admin_user? %>
+        <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @pest, method: :delete, 
+                    class: "btn btn-error", 
+                    confirm: t('.confirm_delete') %>
+      <% end %>
+    <% else %>
+      <%# ユーザー害虫は所有者が編集・削除可能 %>
+      <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
+      <%= button_to t('.delete'), @pest, method: :delete, 
+                  class: "btn btn-error", 
+                  confirm: t('.confirm_delete') %>
+    <% end %>
+  </div>
+</div>
+

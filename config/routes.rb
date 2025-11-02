@@ -52,6 +52,9 @@ Rails.application.routes.draw do
     # Fertilizes (HTML) routes
     resources :fertilizes
 
+    # Pests (HTML) routes
+    resources :pests
+
     # Interaction Rules (連作ルール) routes
     resources :interaction_rules
 
