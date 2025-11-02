@@ -11,7 +11,12 @@ module Crops
 
     # GET /crops/:crop_id/crop_fertilize_profiles/new
     def new
-      @profile = @crop.crop_fertilize_profiles.build
+      # 既存のプロファイルがある場合は編集画面にリダイレクト
+      if @crop.crop_fertilize_profile
+        redirect_to edit_crop_crop_fertilize_profile_path(@crop, @crop.crop_fertilize_profile)
+        return
+      end
+      @profile = @crop.build_crop_fertilize_profile
     end
 
     # GET /crops/:crop_id/crop_fertilize_profiles/:id/edit
@@ -20,7 +25,13 @@ module Crops
 
     # POST /crops/:crop_id/crop_fertilize_profiles
     def create
-      @profile = @crop.crop_fertilize_profiles.build(profile_params)
+      # 既存のプロファイルがある場合は作成不可
+      if @crop.crop_fertilize_profile
+        redirect_to crop_path(@crop), alert: I18n.t('crops.crop_fertilize_profiles.flash.already_exists', default: '既に肥料プロファイルが存在します')
+        return
+      end
+
+      @profile = @crop.build_crop_fertilize_profile(profile_params)
 
       # sourcesをカンマ区切りテキストから配列に変換
       if params.dig(:crop_fertilize_profile, :sources).is_a?(String)
@@ -28,7 +39,7 @@ module Crops
       end
 
       if @profile.save
-        redirect_to crop_path(@crop), notice: I18n.t('crop_fertilize_profiles.flash.created', default: '肥料プロファイルを作成しました')
+        redirect_to crop_path(@crop), notice: I18n.t('crops.crop_fertilize_profiles.flash.created', default: '肥料プロファイルを作成しました')
       else
         render :new, status: :unprocessable_entity
       end
@@ -42,7 +53,7 @@ module Crops
       end
 
       if @profile.update(profile_params)
-        redirect_to crop_path(@crop), notice: I18n.t('crop_fertilize_profiles.flash.updated', default: '肥料プロファイルを更新しました')
+        redirect_to crop_path(@crop), notice: I18n.t('crops.crop_fertilize_profiles.flash.updated', default: '肥料プロファイルを更新しました')
       else
         render :edit, status: :unprocessable_entity
       end
@@ -51,9 +62,9 @@ module Crops
     # DELETE /crops/:crop_id/crop_fertilize_profiles/:id
     def destroy
       @profile.destroy
-      redirect_to crop_path(@crop), notice: I18n.t('crop_fertilize_profiles.flash.destroyed', default: '肥料プロファイルを削除しました')
+      redirect_to crop_path(@crop), notice: I18n.t('crops.crop_fertilize_profiles.flash.destroyed', default: '肥料プロファイルを削除しました')
     rescue StandardError => e
-      redirect_to crop_path(@crop), alert: I18n.t('crop_fertilize_profiles.flash.delete_error', default: '削除に失敗しました', message: e.message)
+      redirect_to crop_path(@crop), alert: I18n.t('crops.crop_fertilize_profiles.flash.delete_error', default: '削除に失敗しました', message: e.message)
     end
 
     private
@@ -70,16 +81,15 @@ module Crops
     end
 
     def set_profile
-      @profile = @crop.crop_fertilize_profiles.find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      redirect_to crop_path(@crop), alert: I18n.t('crop_fertilize_profiles.flash.not_found', default: '肥料プロファイルが見つかりません')
+      # 1:1の関係なので、crop_idから直接取得（params[:id]は使用しないが、ルーティング互換性のため残す）
+      @profile = @crop.crop_fertilize_profile
+      unless @profile
+        redirect_to crop_path(@crop), alert: I18n.t('crops.crop_fertilize_profiles.flash.not_found', default: '肥料プロファイルが見つかりません')
+      end
     end
 
     def profile_params
       params.require(:crop_fertilize_profile).permit(
-        :total_n,
-        :total_p,
-        :total_k,
         :confidence,
         :notes,
         :sources,
@@ -88,9 +98,6 @@ module Crops
           :application_type,
           :count,
           :schedule_hint,
-          :total_n,
-          :total_p,
-          :total_k,
           :per_application_n,
           :per_application_p,
           :per_application_k,

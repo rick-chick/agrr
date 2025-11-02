@@ -13,6 +13,7 @@ module Api
           sign_in_as @user
           @crop = create(:crop, :tomato, user: @user)
           @profile = create(:crop_fertilize_profile, crop: @crop)
+          @application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
         end
 
         test 'should show crop fertilize profile' do
@@ -29,13 +30,11 @@ module Api
         end
 
         test 'should create crop fertilize profile' do
+          @profile.destroy
           assert_difference('CropFertilizeProfile.count') do
             post api_v1_crop_crop_fertilize_profiles_path(@crop),
                  params: {
                    crop_fertilize_profile: {
-                     total_n: 18.0,
-                     total_p: 5.0,
-                     total_k: 12.0,
                      confidence: 0.8,
                      notes: 'Test profile'
                    }
@@ -45,38 +44,33 @@ module Api
 
           assert_response :created
           json_response = JSON.parse(response.body)
-          assert_equal 18.0, json_response['total_n']
-          assert_equal 5.0, json_response['total_p']
-          assert_equal 12.0, json_response['total_k']
+          assert_equal 0.0, json_response['total_n']  # アプリケーションがないため0
+          assert_equal 0.0, json_response['total_p']
+          assert_equal 0.0, json_response['total_k']
           assert_equal 0.8, json_response['confidence']
         end
 
         test 'should create crop fertilize profile with applications' do
+          @profile.destroy
           assert_difference('CropFertilizeProfile.count', 1) do
             assert_difference('CropFertilizeApplication.count', 2) do
               post api_v1_crop_crop_fertilize_profiles_path(@crop),
                    params: {
                      crop_fertilize_profile: {
-                       total_n: 18.0,
-                       total_p: 5.0,
-                       total_k: 12.0,
                        confidence: 0.8,
                        crop_fertilize_applications_attributes: [
                          {
                            application_type: 'basal',
                            count: 1,
                            schedule_hint: 'pre-plant',
-                           total_n: 6.0,
-                           total_p: 2.0,
-                           total_k: 3.0
+                           per_application_n: 6.0,
+                           per_application_p: 2.0,
+                           per_application_k: 3.0
                          },
                          {
                            application_type: 'topdress',
                            count: 2,
                            schedule_hint: 'fruiting',
-                           total_n: 12.0,
-                           total_p: 3.0,
-                           total_k: 9.0,
                            per_application_n: 6.0,
                            per_application_p: 1.5,
                            per_application_k: 4.5
@@ -94,7 +88,7 @@ module Api
 
           basal = json_response['applications'].find { |a| a['application_type'] == 'basal' }
           assert_equal 1, basal['count']
-          assert_nil basal['per_application']
+          assert_equal 6.0, basal['per_application']['n']
 
           topdress = json_response['applications'].find { |a| a['application_type'] == 'topdress' }
           assert_equal 2, topdress['count']
@@ -105,19 +99,18 @@ module Api
           patch api_v1_crop_crop_fertilize_profile_path(@crop, @profile),
                 params: {
                   crop_fertilize_profile: {
-                    total_n: 20.0,
-                    total_p: 6.0,
-                    total_k: 14.0
+                    confidence: 0.9,
+                    notes: 'Updated notes'
                   }
                 },
                 headers: { 'Accept' => 'application/json' }
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert_equal 20.0, json_response['total_n']
+          assert_equal 0.9, json_response['confidence']
           
           @profile.reload
-          assert_equal 20.0, @profile.total_n
+          assert_equal 0.9, @profile.confidence
         end
 
         test 'should destroy crop fertilize profile' do
@@ -130,12 +123,11 @@ module Api
         end
 
         test 'should handle sources as comma separated string' do
+          @profile.destroy
           post api_v1_crop_crop_fertilize_profiles_path(@crop),
                params: {
                  crop_fertilize_profile: {
-                   total_n: 18.0,
-                   total_p: 5.0,
-                   total_k: 12.0,
+                   confidence: 0.5,
                    sources: 'source1, source2, source3'
                  }
                },
@@ -143,6 +135,21 @@ module Api
 
           profile = CropFertilizeProfile.last
           assert_equal ['source1', 'source2', 'source3'], profile.sources
+        end
+
+        test 'should not allow creating when profile already exists' do
+          post api_v1_crop_crop_fertilize_profiles_path(@crop),
+               params: {
+                 crop_fertilize_profile: {
+                   confidence: 0.8,
+                   notes: 'Test profile'
+                 }
+               },
+               headers: { 'Accept' => 'application/json' }
+
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert_match /既に肥料プロファイルが存在します|already exists/i, json_response['error'] || ''
         end
 
         test 'should not allow access to other users crop' do
@@ -171,9 +178,7 @@ module Api
             post api_v1_crop_crop_fertilize_profiles_path(@crop),
                  params: {
                    crop_fertilize_profile: {
-                     total_n: nil,
-                     total_p: 5.0,
-                     total_k: 12.0
+                     confidence: -1
                    }
                  },
                  headers: { 'Accept' => 'application/json' }
@@ -185,6 +190,7 @@ module Api
         end
 
         test 'should return correct json structure' do
+          @profile.destroy
           profile_with_apps = create(:crop_fertilize_profile, :with_applications, crop: @crop)
 
           get api_v1_crop_crop_fertilize_profile_path(@crop, profile_with_apps),
@@ -206,11 +212,13 @@ module Api
           assert_equal 'n', application['nutrients'].keys.first
         end
 
-        # ai_create テスト: 登録時は常に新規作成（既存プロファイルがあっても新規作成）
-        test 'ai_create should always create new profile even if existing profile exists' do
+        # ai_create テスト: 既存プロファイルがある場合は更新、なければ新規作成
+        test 'ai_create should update existing profile if it exists' do
           # 既存のプロファイルを作成
-          existing_profile = create(:crop_fertilize_profile, crop: @crop, total_n: 15.0, total_p: 4.0, total_k: 10.0)
+          existing_profile = @profile
+          app1 = create(:crop_fertilize_application, :basal, crop_fertilize_profile: existing_profile, per_application_n: 10.0)
           existing_profile_id = existing_profile.id
+          old_total_n = existing_profile.total_n
           
           # agrrコマンドの出力をモック
           agrr_output = {
@@ -222,7 +230,7 @@ module Api
                   "type" => "basal",
                   "count" => 1,
                   "schedule_hint" => "pre-plant",
-                  "nutrients" => { "N" => 6.0, "P" => 2.0, "K" => 3.0 }
+                  "per_application" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 }
                 }
               ],
               "sources" => ["agrr-ai"],
@@ -232,31 +240,27 @@ module Api
           }.to_json
 
           Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-            assert_difference('CropFertilizeProfile.count', 1) do
+            assert_no_difference('CropFertilizeProfile.count') do
               post ai_create_api_v1_crop_crop_fertilize_profiles_path(@crop),
                    headers: { 'Accept' => 'application/json' }
             end
 
-            assert_response :created
+            assert_response :ok
             json_response = JSON.parse(response.body)
             assert json_response['success']
             assert_equal 18.0, json_response['total_n']
             assert_equal 5.0, json_response['total_p']
             assert_equal 12.0, json_response['total_k']
             
-            # 既存プロファイルが更新されていないことを確認
+            # 既存プロファイルが更新されていることを確認
             existing_profile.reload
-            assert_equal 15.0, existing_profile.total_n, "既存プロファイルは更新されてはいけない"
-            assert_equal existing_profile_id, existing_profile.id
-            
-            # 新しいプロファイルが作成されていることを確認
-            new_profile = CropFertilizeProfile.find(json_response['profile_id'])
-            assert_not_equal existing_profile_id, new_profile.id, "新しいプロファイルが作成される必要がある"
-            assert_equal 18.0, new_profile.total_n
+            assert_equal 18.0, existing_profile.total_n, "既存プロファイルが更新される必要がある"
+            assert_equal existing_profile_id, existing_profile.id, "同じプロファイルIDである必要がある"
           end
         end
 
-        test 'ai_create should create new profile with applications' do
+        test 'ai_create should create new profile with applications when no profile exists' do
+          @profile.destroy
           agrr_output = {
             "success" => true,
             "profile" => {
@@ -266,13 +270,12 @@ module Api
                   "type" => "basal",
                   "count" => 1,
                   "schedule_hint" => "pre-plant",
-                  "nutrients" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
+                  "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
                 },
                 {
                   "type" => "topdress",
                   "count" => 2,
                   "schedule_hint" => "fruiting",
-                  "nutrients" => { "N" => 12.0, "P" => 3.0, "K" => 10.0 },
                   "per_application" => { "N" => 6.0, "P" => 1.5, "K" => 5.0 }
                 }
               ],
@@ -293,7 +296,7 @@ module Api
             assert_response :created
             json_response = JSON.parse(response.body)
             assert json_response['success']
-            assert_equal 20.0, json_response['total_n']
+            assert_equal 20.0, json_response['total_n']  # 8 + 12
             assert_equal 2, json_response['applications_count']
             
             profile = CropFertilizeProfile.find(json_response['profile_id'])
@@ -303,11 +306,9 @@ module Api
 
         # ai_update テスト: 編集時は既存プロファイルを更新
         test 'ai_update should update existing profile' do
-          profile_to_update = create(:crop_fertilize_profile, crop: @crop, total_n: 15.0, total_p: 4.0, total_k: 10.0)
-          profile_id = profile_to_update.id
-          
-          # 既存のapplicationsを作成
+          profile_to_update = @profile
           create(:crop_fertilize_application, :basal, crop_fertilize_profile: profile_to_update)
+          profile_id = profile_to_update.id
           
           agrr_output = {
             "success" => true,
@@ -318,14 +319,13 @@ module Api
                   "type" => "basal",
                   "count" => 1,
                   "schedule_hint" => "pre-plant-updated",
-                  "nutrients" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
+                  "per_application" => { "N" => 8.0, "P" => 3.0, "K" => 4.0 }
                 },
                 {
                   "type" => "topdress",
                   "count" => 3,
                   "schedule_hint" => "fruiting",
-                  "nutrients" => { "N" => 12.0, "P" => 3.0, "K" => 10.0 },
-                  "per_application" => { "N" => 4.0, "P" => 1.0, "K" => 3.33 }
+                  "per_application" => { "N" => 4.0, "P" => 1.0, "K" => 3.0 }
                 }
               ],
               "sources" => ["agrr-ai-updated"],
@@ -334,8 +334,6 @@ module Api
             }
           }.to_json
 
-          initial_app_count = profile_to_update.crop_fertilize_applications.count
-          
           Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
             assert_no_difference('CropFertilizeProfile.count') do
               post ai_update_api_v1_crop_crop_fertilize_profile_path(@crop, profile_to_update),
@@ -346,15 +344,16 @@ module Api
             json_response = JSON.parse(response.body)
             assert json_response['success']
             assert_equal profile_id, json_response['profile_id'], "同じプロファイルIDが返される必要がある"
-            assert_equal 20.0, json_response['total_n']
-            assert_equal 6.0, json_response['total_p']
-            assert_equal 14.0, json_response['total_k']
+            assert_equal 20.0, json_response['total_n']  # 8 + 12
+            assert_equal 6.0, json_response['total_p']  # 3 + 3
+            assert_equal 13.0, json_response['total_k']  # 4 + 9
             assert_equal 2, json_response['applications_count']
             
             # プロファイルが更新されていることを確認
             profile_to_update.reload
             assert_equal profile_id, profile_to_update.id
             assert_equal 20.0, profile_to_update.total_n
+            assert_equal 13.0, profile_to_update.total_k
             assert_equal 0.95, profile_to_update.confidence
             assert_equal ["agrr-ai-updated"], profile_to_update.sources
             assert_equal 2, profile_to_update.crop_fertilize_applications.count
@@ -383,4 +382,3 @@ module Api
     end
   end
 end
-

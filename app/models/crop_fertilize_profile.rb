@@ -4,14 +4,12 @@
 #
 # Attributes:
 #   crop_id: 作物ID（必須）
-#   total_n: 総窒素量（g/m²、必須）
-#   total_p: 総リン量（g/m²、必須）
-#   total_k: 総カリ量（g/m²、必須）
 #   sources: 情報源（JSON配列、テキストとして保存）
 #   confidence: 信頼度（0-1、デフォルト: 0.5）
 #   notes: 追加のガイダンス
 #
 # 役割: 作物に対する肥料施用計画の全体情報を保持
+# Note: total_n, total_p, total_kは削除され、計算メソッドで取得可能
 class CropFertilizeProfile < ApplicationRecord
   belongs_to :crop
   has_many :crop_fertilize_applications, dependent: :destroy
@@ -32,12 +30,22 @@ class CropFertilizeProfile < ApplicationRecord
   end
 
   validates :crop_id, presence: true
-  validates :total_n, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :total_p, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :total_k, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :confidence, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
 
   scope :recent, -> { order(created_at: :desc) }
+
+  # 計算メソッド: 全applicationsから総量を計算
+  def total_n
+    crop_fertilize_applications.sum(&:total_n)
+  end
+
+  def total_p
+    crop_fertilize_applications.sum(&:total_p)
+  end
+
+  def total_k
+    crop_fertilize_applications.sum(&:total_k)
+  end
 
   # agrr CLI の fertilize profile 出力形式からモデルを作成
   # @param crop [Crop] 作物モデル
@@ -46,9 +54,6 @@ class CropFertilizeProfile < ApplicationRecord
   def self.from_agrr_output(crop:, profile_data:)
     profile = create!(
       crop: crop,
-      total_n: profile_data.dig('totals', 'N') || 0,
-      total_p: profile_data.dig('totals', 'P') || 0,
-      total_k: profile_data.dig('totals', 'K') || 0,
       sources: profile_data['sources'] || [],
       confidence: profile_data['confidence'] || 0.5,
       notes: profile_data['notes']
@@ -61,9 +66,6 @@ class CropFertilizeProfile < ApplicationRecord
           application_type: app_data['type'],
           count: app_data['count'] || 1,
           schedule_hint: app_data['schedule_hint'],
-          total_n: app_data.dig('nutrients', 'N') || 0,
-          total_p: app_data.dig('nutrients', 'P') || 0,
-          total_k: app_data.dig('nutrients', 'K') || 0,
           per_application_n: app_data.dig('per_application', 'N'),
           per_application_p: app_data.dig('per_application', 'P'),
           per_application_k: app_data.dig('per_application', 'K')

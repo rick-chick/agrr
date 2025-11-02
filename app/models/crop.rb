@@ -21,7 +21,7 @@
 class Crop < ApplicationRecord
   belongs_to :user, optional: true
   has_many :crop_stages, dependent: :destroy
-  has_many :crop_fertilize_profiles, dependent: :destroy
+  has_one :crop_fertilize_profile, dependent: :destroy
 
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
 

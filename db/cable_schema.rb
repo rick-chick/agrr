@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_02_102635) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -44,9 +44,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
     t.string "application_type", null: false
     t.integer "count", default: 1, null: false
     t.string "schedule_hint"
-    t.float "total_n", null: false
-    t.float "total_p", null: false
-    t.float "total_k", null: false
     t.float "per_application_n"
     t.float "per_application_p"
     t.float "per_application_k"
@@ -58,9 +55,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
 
   create_table "crop_fertilize_profiles", force: :cascade do |t|
     t.integer "crop_id", null: false
-    t.float "total_n", null: false
-    t.float "total_p", null: false
-    t.float "total_k", null: false
     t.text "sources"
     t.float "confidence", default: 0.5, null: false
     t.text "notes"
@@ -196,7 +190,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_213338) do
     t.boolean "is_reference", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "package_size"
+    t.float "package_size"
     t.index ["name"], name: "index_fertilizes_on_name", unique: true
   end
 

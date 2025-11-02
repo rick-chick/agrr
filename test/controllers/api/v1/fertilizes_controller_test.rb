@@ -26,7 +26,7 @@ module Api
 
         # agrr_clientの出力をモック
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
@@ -37,7 +37,7 @@ module Api
           assert_equal 46.0, json_response["n"]
           assert_nil json_response["p"]
           assert_nil json_response["k"]
-          assert_equal "25kg", json_response["package_size"]
+          assert_equal 25.0, json_response["package_size"]
         end
       end
 
@@ -50,13 +50,13 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "リン酸一安" },
                headers: { "Accept" => "application/json" }
           
           assert_response :created
           json_response = JSON.parse(response.body)
-          assert_equal "20kg", json_response["package_size"]
+          assert_equal 20.0, json_response["package_size"]
         end
       end
 
@@ -69,7 +69,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "リン酸一安" },
                headers: { "Accept" => "application/json" }
           
@@ -81,7 +81,7 @@ module Api
 
       test "ai_create should update existing fertilize with package_size from agrr" do
         # 既存の肥料を作成
-        existing = create(:fertilize, name: "尿素", is_reference: false, package_size: "20kg")
+        existing = create(:fertilize, name: "尿素", is_reference: false, package_size: 20.0)
         
         agrr_output = {
           "name" => "尿素",
@@ -91,18 +91,18 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
           assert_response :ok
           json_response = JSON.parse(response.body)
           assert json_response["success"]
-          assert_equal "25kg", json_response["package_size"]
+          assert_equal 25.0, json_response["package_size"]
           
           # DBを確認
           existing.reload
-          assert_equal "25kg", existing.package_size
+          assert_equal 25.0, existing.package_size
         end
       end
 
@@ -124,7 +124,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
@@ -132,7 +132,7 @@ module Api
           json_response = JSON.parse(response.body)
           assert json_response["success"]
           assert_equal "尿素", json_response["fertilize_name"]
-          assert_equal "25kg", json_response["package_size"]
+          assert_equal 25.0, json_response["package_size"]
         end
       end
 
@@ -140,7 +140,7 @@ module Api
         error_output = "Traceback (most recent call last):\nFileNotFoundError: [Errno 2] No such file or directory\n"
 
         Open3.stub :capture3, ["", error_output, OpenStruct.new(success?: false)] do
-          post api_v1_fertilizes_ai_create_path, 
+          post ai_create_api_v1_fertilizes_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           

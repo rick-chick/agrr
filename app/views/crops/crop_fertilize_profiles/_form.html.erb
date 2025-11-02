@@ -1,8 +1,26 @@
-<div class="form-card">
+<div class="form-card" 
+     data-crop-fertilize-profile-form
+     data-i18n-title="<%= t('crops.crop_fertilize_profiles.application.title') %>"
+     data-i18n-remove-button="<%= t('crops.crop_fertilize_profiles.application.remove_button') %>"
+     data-i18n-application-type-label="<%= t('crops.crop_fertilize_profiles.application.application_type_label') %>"
+     data-i18n-application-type-prompt="<%= t('crops.crop_fertilize_profiles.application.application_type_prompt') %>"
+     data-i18n-application-type-help="<%= t('crops.crop_fertilize_profiles.application.application_type_help') %>"
+     data-i18n-basal="<%= t('crops.crop_fertilize_profiles.application.basal') %>"
+     data-i18n-topdress="<%= t('crops.crop_fertilize_profiles.application.topdress') %>"
+     data-i18n-count-label="<%= t('crops.crop_fertilize_profiles.application.count_label') %>"
+     data-i18n-count-help="<%= t('crops.crop_fertilize_profiles.application.count_help') %>"
+     data-i18n-schedule-hint-label="<%= t('crops.crop_fertilize_profiles.application.schedule_hint_label') %>"
+     data-i18n-schedule-hint-placeholder="<%= t('crops.crop_fertilize_profiles.application.schedule_hint_placeholder') %>"
+     data-i18n-schedule-hint-help="<%= t('crops.crop_fertilize_profiles.application.schedule_hint_help') %>"
+     data-i18n-per-application-section="<%= t('crops.crop_fertilize_profiles.application.per_application_section') %>"
+     data-i18n-per-application-help="<%= t('crops.crop_fertilize_profiles.application.per_application_help') %>"
+     data-i18n-per-application-n-label="<%= t('crops.crop_fertilize_profiles.application.per_application_n_label') %>"
+     data-i18n-per-application-p-label="<%= t('crops.crop_fertilize_profiles.application.per_application_p_label') %>"
+     data-i18n-per-application-k-label="<%= t('crops.crop_fertilize_profiles.application.per_application_k_label') %>">
   <%= form_with(model: [@crop, @profile]) do |f| %>
     <% if @profile.errors.any? %>
       <div class="errors">
-        <h3><%= t('crop_fertilize_profiles.form.errors.title', count: @profile.errors.count) %></h3>
+        <h3><%= t('crops.crop_fertilize_profiles.form.errors.title', count: @profile.errors.count) %></h3>
         <ul>
           <% @profile.errors.full_messages.each do |message| %>
             <li><%= message %></li>
@@ -12,27 +30,9 @@
     <% end %>
 
     <div class="form-group">
-      <%= f.label :total_n, t('crop_fertilize_profiles.form.total_n_label'), class: 'form-label' %>
-      <%= f.number_field :total_n, step: :any, required: true, class: 'form-control' %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_n_help') %></div>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :total_p, t('crop_fertilize_profiles.form.total_p_label'), class: 'form-label' %>
-      <%= f.number_field :total_p, step: :any, required: true, class: 'form-control' %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_p_help') %></div>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :total_k, t('crop_fertilize_profiles.form.total_k_label'), class: 'form-label' %>
-      <%= f.number_field :total_k, step: :any, required: true, class: 'form-control' %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.total_k_help') %></div>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :confidence, t('crop_fertilize_profiles.form.confidence_label'), class: 'form-label' %>
+      <%= f.label :confidence, t('crops.crop_fertilize_profiles.form.confidence_label'), class: 'form-label' %>
       <%= f.number_field :confidence, step: 0.01, min: 0, max: 1, value: @profile.confidence || 0.5, required: true, class: 'form-control' %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.confidence_help') %></div>
+      <div class="form-text"><%= t('crops.crop_fertilize_profiles.form.confidence_help') %></div>
     </div>
 
     <div class="form-group">
@@ -50,10 +50,10 @@
               data-updated-success="<%= t('js.crop_fertilize_profile_ai.updated_success', default: '✓ 肥料プロファイル「%{crop_name}」を更新しました！') %>"
               data-fetch-failed="<%= t('js.crop_fertilize_profile_ai.fetch_failed', default: '肥料プロファイル情報の取得に失敗しました') %>"
               data-network-error="<%= t('js.crop_fertilize_profile_ai.network_error', default: 'ネットワークエラーが発生しました') %>"
-              data-button-idle="<%= t('crop_fertilize_profiles.form.ai_button', default: '🤖 AIで肥料情報を取得・保存') %>">
+              data-button-idle="<%= t('crops.crop_fertilize_profiles.form.ai_button', default: '🤖 AIで肥料情報を取得・保存') %>">
       </button>
       <div id="ai-save-status" class="form-text d-none"></div>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.ai_help', default: 'ボタンをクリックすると、AIがこの作物の肥料プロファイル情報を自動的に取得して保存します') %></div>
+      <div class="form-text"><%= t('crops.crop_fertilize_profiles.form.ai_help', default: 'ボタンをクリックすると、AIがこの作物の肥料プロファイル情報を自動的に取得して保存します') %></div>
     </div>
 
     <!-- AI処理中の広告ポップアップ -->
@@ -61,13 +61,13 @@
       <div class="ad-popup-container">
         <div class="ad-popup-status">
           <div class="ad-popup-status-title">
-            <%= t('crop_fertilize_profiles.form.ai_processing_title', default: '🤖 AIで肥料プロファイル情報を取得中...') %>
+            <%= t('crops.crop_fertilize_profiles.form.ai_processing_title', default: '🤖 AIで肥料プロファイル情報を取得中...') %>
           </div>
-          <p class="ad-popup-status-message"><%= t('crop_fertilize_profiles.form.ai_processing_message', default: 'しばらくお待ちください。処理が完了すると肥料プロファイル詳細画面に自動で移動します。') %></p>
+          <p class="ad-popup-status-message"><%= t('crops.crop_fertilize_profiles.form.ai_processing_message', default: 'しばらくお待ちください。処理が完了すると肥料プロファイル詳細画面に自動で移動します。') %></p>
         </div>
 
         <div class="ad-popup-progress">
-          <p class="ad-popup-progress-text"><%= t('crop_fertilize_profiles.form.ai_progress_text', default: 'AI処理中...') %></p>
+          <p class="ad-popup-progress-text"><%= t('crops.crop_fertilize_profiles.form.ai_progress_text', default: 'AI処理中...') %></p>
           <div class="ad-popup-progress-bar">
             <div class="ad-popup-progress-fill"></div>
           </div>
@@ -79,20 +79,20 @@
     </div>
 
     <div class="form-group">
-      <%= f.label :sources, t('crop_fertilize_profiles.form.sources_label'), class: 'form-label' %>
+      <%= f.label :sources, t('crops.crop_fertilize_profiles.form.sources_label'), class: 'form-label' %>
       <% sources_value = @profile.sources.is_a?(Array) ? @profile.sources.join(', ') : (@profile.sources.to_s if @profile.sources.present?) %>
-      <%= f.text_field :sources, value: sources_value, class: 'form-control', placeholder: t('crop_fertilize_profiles.form.sources_placeholder') %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.sources_help') %></div>
+      <%= f.text_field :sources, value: sources_value, class: 'form-control', placeholder: t('crops.crop_fertilize_profiles.form.sources_placeholder') %>
+      <div class="form-text"><%= t('crops.crop_fertilize_profiles.form.sources_help') %></div>
     </div>
 
     <div class="form-group">
-      <%= f.label :notes, t('crop_fertilize_profiles.form.notes_label'), class: 'form-label' %>
-      <%= f.text_area :notes, rows: 4, class: 'form-control', placeholder: t('crop_fertilize_profiles.form.notes_placeholder') %>
-      <div class="form-text"><%= t('crop_fertilize_profiles.form.notes_help') %></div>
+      <%= f.label :notes, t('crops.crop_fertilize_profiles.form.notes_label'), class: 'form-label' %>
+      <%= f.text_area :notes, rows: 4, class: 'form-control', placeholder: t('crops.crop_fertilize_profiles.form.notes_placeholder') %>
+      <div class="form-text"><%= t('crops.crop_fertilize_profiles.form.notes_help') %></div>
     </div>
 
     <div class="form-section">
-      <h3 class="section-title"><%= t('crop_fertilize_profiles.form.applications_section_title') %></h3>
+      <h3 class="section-title"><%= t('crops.crop_fertilize_profiles.form.applications_section_title') %></h3>
       
       <div id="crop-fertilize-applications">
         <%= f.fields_for :crop_fertilize_applications do |app_form| %>
@@ -101,13 +101,13 @@
       </div>
 
       <div class="form-group">
-        <button type="button" id="add-crop-fertilize-application" class="btn btn-secondary"><%= t('crop_fertilize_profiles.form.add_application_button') %></button>
+        <button type="button" id="add-crop-fertilize-application" class="btn btn-secondary"><%= t('crops.crop_fertilize_profiles.form.add_application_button') %></button>
       </div>
     </div>
 
     <div class="actions">
-      <%= f.submit t("crop_fertilize_profiles.form.submit_#{@profile.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
-      <%= link_to t('crop_fertilize_profiles.form.cancel'), @profile.persisted? ? crop_crop_fertilize_profile_path(@crop, @profile) : crop_path(@crop), class: 'btn btn-secondary' %>
+      <%= f.submit t("crops.crop_fertilize_profiles.form.submit_#{@profile.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('crops.crop_fertilize_profiles.form.cancel'), @profile.persisted? ? crop_crop_fertilize_profile_path(@crop, @profile) : crop_path(@crop), class: 'btn btn-secondary' %>
     </div>
   <% end %>
 </div>

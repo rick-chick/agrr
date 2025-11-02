@@ -8,7 +8,7 @@
 #   p: リン含有率（%）
 #   k: カリ含有率（%）
 #   description: 説明文
-#   package_size: 容量（例: "20kg"）
+#   package_size: 容量（kg、数値型）
 #   is_reference: 参照肥料フラグ（デフォルト: true）
 #
 # is_reference フラグについて:
@@ -21,6 +21,7 @@ class Fertilize < ApplicationRecord
   validates :n, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
+  validates :package_size, numericality: { greater_than: 0, allow_nil: true }
   
   # スコープ
   scope :reference, -> { where(is_reference: true) }

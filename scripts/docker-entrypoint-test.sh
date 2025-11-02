@@ -22,8 +22,12 @@ npm run build
 # すべてのテストDBをセットアップ（primary, queue, cache）
 echo "==> Setting up test databases (primary, queue, cache)..."
 bundle exec rails db:create
-bundle exec rails db:schema:load
-bundle exec rails db:migrate
+# schema.rbが存在する場合のみロード、存在しない場合はマイグレーションで作成
+if [ -f /app/db/schema.rb ]; then
+    bundle exec rails db:schema:load
+else
+    bundle exec rails db:migrate
+fi
 
 # AGRRデーモンを起動（テスト環境でも必要）
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then

@@ -12,13 +12,58 @@ class CropFertilizeApplicationTest < ActiveSupport::TestCase
   test "should validate crop_fertilize_profile_id presence" do
     application = CropFertilizeApplication.new(
       application_type: "basal",
-      count: 1,
-      total_n: 6.0,
-      total_p: 2.0,
-      total_k: 3.0
+      count: 1
     )
     assert_not application.valid?
     assert_includes application.errors[:crop_fertilize_profile], "を入力してください"
+  end
+
+  # totals計算メソッドのテスト
+  test "should calculate total_n from per_application_n and count" do
+    application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
+    assert_equal 6.0, application.total_n  # 6.0 * 1
+
+    application = create(:crop_fertilize_application, :topdress, crop_fertilize_profile: @profile)
+    assert_equal 12.0, application.total_n  # 6.0 * 2
+  end
+
+  test "should calculate total_p from per_application_p and count" do
+    application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
+    assert_equal 2.0, application.total_p  # 2.0 * 1
+
+    application = create(:crop_fertilize_application, :topdress, crop_fertilize_profile: @profile)
+    assert_equal 3.0, application.total_p  # 1.5 * 2
+  end
+
+  test "should calculate total_k from per_application_k and count" do
+    application = create(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
+    assert_equal 3.0, application.total_k  # 3.0 * 1
+
+    application = create(:crop_fertilize_application, :topdress, crop_fertilize_profile: @profile)
+    assert_equal 9.0, application.total_k  # 4.5 * 2
+  end
+
+  test "should return 0 for totals when per_application is nil" do
+    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile,
+      per_application_n: nil,
+      per_application_p: nil,
+      per_application_k: nil
+    )
+    assert_equal 0, application.total_n
+    assert_equal 0, application.total_p
+    assert_equal 0, application.total_k
+  end
+
+  test "should not validate per_application_present_for_topdress anymore" do
+    # この警告バリデーションは削除された
+    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile,
+      application_type: "topdress",
+      count: 2,
+      per_application_n: nil,
+      per_application_p: nil,
+      per_application_k: nil
+    )
+    assert application.valid?
   end
 
   test "should validate application_type presence" do
@@ -64,50 +109,6 @@ class CropFertilizeApplicationTest < ActiveSupport::TestCase
     assert_includes application.errors[:count], "は整数で入力してください"
   end
 
-  test "should validate total_n presence" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_n: nil)
-    assert_not application.valid?
-    assert_includes application.errors[:total_n], "を入力してください"
-  end
-
-  test "should validate total_p presence" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_p: nil)
-    assert_not application.valid?
-    assert_includes application.errors[:total_p], "を入力してください"
-  end
-
-  test "should validate total_k presence" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_k: nil)
-    assert_not application.valid?
-    assert_includes application.errors[:total_k], "を入力してください"
-  end
-
-  test "should validate total_n is greater than or equal to 0" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_n: -1)
-    assert_not application.valid?
-    assert_includes application.errors[:total_n], "は0以上の値にしてください"
-  end
-
-  test "should validate total_p is greater than or equal to 0" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_p: -1)
-    assert_not application.valid?
-    assert_includes application.errors[:total_p], "は0以上の値にしてください"
-  end
-
-  test "should validate total_k is greater than or equal to 0" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile, total_k: -1)
-    assert_not application.valid?
-    assert_includes application.errors[:total_k], "は0以上の値にしてください"
-  end
-
-  test "should allow zero values for total_n, total_p, total_k" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile,
-      total_n: 0,
-      total_p: 0,
-      total_k: 0
-    )
-    assert application.valid?
-  end
 
   test "should allow nil for per_application fields" do
     application = build(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile,
@@ -118,36 +119,6 @@ class CropFertilizeApplicationTest < ActiveSupport::TestCase
     assert application.valid?
   end
 
-  # カスタムバリデーションテスト
-  test "should warn when topdress with multiple count lacks per_application" do
-    application = build(:crop_fertilize_application, crop_fertilize_profile: @profile,
-      application_type: "topdress",
-      count: 2,
-      per_application_n: nil,
-      per_application_p: nil,
-      per_application_k: nil
-    )
-    application.valid?
-    assert_includes application.errors[:base], "追肥で複数回の場合、1回あたりの施肥量（per_application）を設定することを推奨します"
-  end
-
-  test "should not warn when topdress with single count lacks per_application" do
-    application = build(:crop_fertilize_application, :topdress_single, crop_fertilize_profile: @profile)
-    assert application.valid?
-    assert_not_includes application.errors[:base], "追肥で複数回の場合"
-  end
-
-  test "should not warn when topdress with multiple count has per_application" do
-    application = build(:crop_fertilize_application, :topdress, crop_fertilize_profile: @profile)
-    assert application.valid?
-    assert_not_includes application.errors[:base], "追肥で複数回の場合"
-  end
-
-  test "should not warn when basal lacks per_application" do
-    application = build(:crop_fertilize_application, :basal, crop_fertilize_profile: @profile)
-    assert application.valid?
-    assert_not_includes application.errors[:base], "追肥で複数回の場合"
-  end
 
   # 関連テスト
   test "should belong to crop_fertilize_profile" do
