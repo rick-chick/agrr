@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_02_220000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_03_081718) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -309,7 +309,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_220000) do
   end
 
   create_table "pesticides", force: :cascade do |t|
-    t.string "pesticide_id", null: false
     t.string "name", null: false
     t.string "active_ingredient"
     t.text "description"
@@ -318,15 +317,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_220000) do
     t.datetime "updated_at", null: false
     t.integer "crop_id", null: false
     t.integer "pest_id", null: false
-    t.index ["crop_id", "pest_id", "pesticide_id"], name: "index_pesticides_on_crop_pest_pesticide_id", unique: true
+    t.integer "user_id"
     t.index ["crop_id"], name: "index_pesticides_on_crop_id"
     t.index ["is_reference"], name: "index_pesticides_on_is_reference"
     t.index ["pest_id"], name: "index_pesticides_on_pest_id"
-    t.index ["pesticide_id"], name: "index_pesticides_on_pesticide_id", unique: true
+    t.index ["user_id"], name: "index_pesticides_on_user_id"
   end
 
   create_table "pests", force: :cascade do |t|
-    t.string "pest_id", null: false
     t.string "name", null: false
     t.string "name_scientific"
     t.string "family"
@@ -336,8 +334,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_220000) do
     t.boolean "is_reference", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["is_reference"], name: "index_pests_on_is_reference"
-    t.index ["pest_id"], name: "index_pests_on_pest_id", unique: true
+    t.index ["user_id"], name: "index_pests_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -461,6 +460,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_220000) do
   add_foreign_key "pesticide_usage_constraints", "pesticides"
   add_foreign_key "pesticides", "crops"
   add_foreign_key "pesticides", "pests"
+  add_foreign_key "pesticides", "users"
+  add_foreign_key "pests", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"
