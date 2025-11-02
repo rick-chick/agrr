@@ -28,12 +28,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create pest" do
-    # 重複を避けるためにユニークなpest_idを使用
-    unique_pest_id = SecureRandom.hex(8)
-    
     assert_difference('Pest.count', 1) do
       post pests_path, params: { pest: {
-        pest_id: unique_pest_id,
         name: 'テスト害虫',
         name_scientific: 'Testus pestus',
         family: 'テスト科',
@@ -45,18 +41,14 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to pest_path(Pest.last)
-    pest = Pest.find_by(pest_id: unique_pest_id)
-    assert_not_nil pest, "Pest with pest_id '#{unique_pest_id}' should exist"
-    assert_equal unique_pest_id, pest.pest_id
+    pest = Pest.last
+    assert_not_nil pest, "Pest should exist"
     assert_equal 'テスト害虫', pest.name
   end
 
   test "should create pest with nested temperature_profile" do
-    unique_pest_id = "test_pest_#{SecureRandom.hex(8)}"
-    
     assert_difference('PestTemperatureProfile.count') do
       post pests_path, params: { pest: {
-        pest_id: unique_pest_id,
         name: 'テスト害虫2',
         pest_temperature_profile_attributes: {
           base_temperature: 10.0,
@@ -72,11 +64,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create pest with nested thermal_requirement" do
-    unique_pest_id = "test_pest_#{SecureRandom.hex(8)}"
-    
     assert_difference('PestThermalRequirement.count') do
       post pests_path, params: { pest: {
-        pest_id: unique_pest_id,
         name: 'テスト害虫3',
         pest_thermal_requirement_attributes: {
           required_gdd: 200.0,
@@ -92,11 +81,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create pest with nested control_methods" do
-    unique_pest_id = "test_pest_#{SecureRandom.hex(8)}"
-    
     assert_difference('PestControlMethod.count', 2) do
       post pests_path, params: { pest: {
-        pest_id: unique_pest_id,
         name: 'テスト害虫4',
         pest_control_methods_attributes: {
           '0' => {
@@ -329,8 +315,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     pest = create(:pest, is_reference: false)
     
     patch pest_path(pest), params: { pest: {
-      name: '',  # 必須フィールドを空にする
-      pest_id: pest.pest_id
+      name: ''  # 必須フィールドを空にする
     } }
     
     assert_response :unprocessable_entity
@@ -422,11 +407,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not create pest with invalid control_method method_type" do
-    unique_pest_id = SecureRandom.hex(8)
-    
     assert_no_difference('Pest.count') do
       post pests_path, params: { pest: {
-        pest_id: unique_pest_id,
         name: 'Test Pest',
         pest_control_methods_attributes: {
           '0' => {
@@ -440,12 +422,9 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not create pest with empty control_method method_name" do
-    unique_pest_id = SecureRandom.hex(8)
-    
     assert_no_difference('Pest.count') do
       assert_no_difference('PestControlMethod.count') do
         post pests_path, params: { pest: {
-          pest_id: unique_pest_id,
           name: 'Test Pest',
           pest_control_methods_attributes: {
             '0' => {
@@ -636,6 +615,207 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal '更新された方法名1', method1.reload.method_name
     assert_equal original_name2, method2.reload.method_name  # 変更されていない
     assert_equal pest.pest_control_methods.count, 3  # すべて残っている
+  end
+
+  # ========== 防除方法パネルの重複作成防止テスト ==========
+
+  test "should create pest with multiple control methods without duplication" do
+    # 5つの防除方法を一度に追加
+    assert_difference('PestControlMethod.count', 5) do
+      post pests_path, params: { pest: {
+        name: 'テスト害虫複数防除方法',
+        pest_control_methods_attributes: {
+          '0' => {
+            method_type: 'chemical',
+            method_name: '農薬1',
+            description: '化学的防除1',
+            timing_hint: '発生初期'
+          },
+          '1' => {
+            method_type: 'biological',
+            method_name: '天敵1',
+            description: '生物的防除1',
+            timing_hint: '発生確認時'
+          },
+          '2' => {
+            method_type: 'cultural',
+            method_name: '輪作1',
+            description: '耕種的防除1',
+            timing_hint: '栽培計画時'
+          },
+          '3' => {
+            method_type: 'physical',
+            method_name: '物理的防除1',
+            description: '物理的防除1',
+            timing_hint: '発生初期'
+          },
+          '4' => {
+            method_type: 'chemical',
+            method_name: '農薬2',
+            description: '化学的防除2',
+            timing_hint: '発生後期'
+          }
+        }
+      } }
+    end
+
+    pest = Pest.last
+    assert_equal 5, pest.pest_control_methods.count
+    # 各防除方法が正しく作成されていることを確認
+    assert_equal 'chemical', pest.pest_control_methods.find_by(method_name: '農薬1').method_type
+    assert_equal 'biological', pest.pest_control_methods.find_by(method_name: '天敵1').method_type
+    assert_equal 'cultural', pest.pest_control_methods.find_by(method_name: '輪作1').method_type
+    assert_equal 'physical', pest.pest_control_methods.find_by(method_name: '物理的防除1').method_type
+    assert_equal 'chemical', pest.pest_control_methods.find_by(method_name: '農薬2').method_type
+  end
+
+  test "should update pest with new control methods without affecting existing ones" do
+    pest = create(:pest, :complete, is_reference: false)
+    existing_method = pest.pest_control_methods.first
+    original_count = pest.pest_control_methods.count
+    
+    # 既存の防除方法を維持しつつ、新しい防除方法を2つ追加
+    assert_difference('PestControlMethod.count', 2) do
+      patch pest_path(pest), params: { pest: {
+        name: pest.name,
+        pest_control_methods_attributes: {
+          '0' => {
+            id: existing_method.id,
+            method_type: existing_method.method_type,
+            method_name: existing_method.method_name,
+            _destroy: 'false'
+          },
+          '1' => {
+            method_type: 'chemical',
+            method_name: '新規農薬',
+            description: '新規追加された防除方法',
+            timing_hint: '発生初期'
+          },
+          '2' => {
+            method_type: 'biological',
+            method_name: '新規天敵',
+            description: '新規追加された生物的防除',
+            timing_hint: '発生確認時'
+          }
+        }
+      } }
+    end
+    
+    assert_redirected_to pest_path(pest)
+    pest.reload
+    # 既存の防除方法 + 新規2つ = 合計が正しいことを確認
+    assert_equal original_count + 2, pest.pest_control_methods.count
+    # 既存の防除方法が維持されていることを確認
+    assert_not_nil pest.pest_control_methods.find_by(id: existing_method.id)
+    # 新規追加された防除方法が存在することを確認
+    assert_not_nil pest.pest_control_methods.find_by(method_name: '新規農薬')
+    assert_not_nil pest.pest_control_methods.find_by(method_name: '新規天敵')
+  end
+
+  test "should handle control methods with consecutive indices correctly" do
+    # 連続したインデックスで防除方法を追加（JavaScriptで追加された場合を想定）
+    assert_difference('PestControlMethod.count', 3) do
+      post pests_path, params: { pest: {
+        name: 'テスト害虫連続インデックス',
+        pest_control_methods_attributes: {
+          '0' => {
+            method_type: 'chemical',
+            method_name: '農薬A',
+            description: '説明A',
+            timing_hint: '発生初期'
+          },
+          '1' => {
+            method_type: 'biological',
+            method_name: '天敵B',
+            description: '説明B',
+            timing_hint: '発生確認時'
+          },
+          '2' => {
+            method_type: 'cultural',
+            method_name: '輪作C',
+            description: '説明C',
+            timing_hint: '栽培計画時'
+          }
+        }
+      } }
+    end
+
+    pest = Pest.last
+    assert_equal 3, pest.pest_control_methods.count
+    # すべての防除方法が正しく作成されていることを確認
+    assert_equal 3, pest.pest_control_methods.pluck(:method_name).uniq.count
+  end
+
+  test "should not create duplicate control methods when same index is used multiple times" do
+    # 同じインデックス（'0'）を複数回使用（本来は発生すべきでないが、防御的テスト）
+    # この場合、Railsは最後の値のみを使用する
+    # 警告を避けるため、ハッシュを直接構築
+    control_methods_attrs = {}
+    control_methods_attrs['0'] = {
+      method_type: 'chemical',
+      method_name: '農薬1',
+      description: '説明1'
+    }
+    # 同じキーで上書き（実際の動作をシミュレート）
+    control_methods_attrs['0'] = {
+      method_type: 'biological',
+      method_name: '天敵1',
+      description: '説明2'
+    }
+    
+    post pests_path, params: { pest: {
+      name: 'テスト害虫重複インデックス',
+      pest_control_methods_attributes: control_methods_attrs
+    } }
+
+    pest = Pest.last
+    # Railsは同じキーに対して最後の値のみを使用するため、1つだけ作成される
+    assert_equal 1, pest.pest_control_methods.count
+    # 最後に送信された値（天敵1）が保存される
+    assert_equal 'biological', pest.pest_control_methods.first.method_type
+  end
+
+  test "should handle control methods with _destroy flag correctly" do
+    pest = create(:pest, :complete, is_reference: false)
+    method1 = pest.pest_control_methods.first
+    method2 = pest.pest_control_methods.second
+    original_count = pest.pest_control_methods.count
+    
+    # method1を削除（_destroy: '1'）、method2は維持、新規を1つ追加
+    assert_difference('PestControlMethod.count', 0) do  # 1つ削除、1つ追加で合計変わらず
+      patch pest_path(pest), params: { pest: {
+        name: pest.name,
+        pest_control_methods_attributes: {
+          '0' => {
+            id: method1.id,
+            _destroy: '1'
+          },
+          '1' => {
+            id: method2.id,
+            method_type: method2.method_type,
+            method_name: method2.method_name,
+            _destroy: 'false'
+          },
+          '2' => {
+            method_type: 'physical',
+            method_name: '新規物理的防除',
+            description: '新規追加',
+            timing_hint: '発生初期'
+          }
+        }
+      } }
+    end
+    
+    assert_redirected_to pest_path(pest)
+    pest.reload
+    # 1つ削除、1つ追加で合計は変わらない
+    assert_equal original_count, pest.pest_control_methods.count
+    # method1が削除されていることを確認
+    assert_nil PestControlMethod.find_by(id: method1.id)
+    # method2が維持されていることを確認
+    assert_not_nil pest.pest_control_methods.find_by(id: method2.id)
+    # 新規追加された防除方法が存在することを確認
+    assert_not_nil pest.pest_control_methods.find_by(method_name: '新規物理的防除')
   end
 end
 
