@@ -32,9 +32,7 @@ module Crops
       @profile.destroy
       get new_crop_crop_fertilize_profile_path(@crop)
       assert_response :success
-      assert_select 'form' do
-        assert_select 'input[name="crop_fertilize_profile[confidence]"]'
-      end
+      assert_select 'form'
       assert_select '#add-crop-fertilize-application'
     end
 
@@ -54,7 +52,6 @@ module Crops
       assert_difference('CropFertilizeProfile.count') do
         post crop_crop_fertilize_profiles_path(@crop), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
             notes: 'Test profile'
           }
         }
@@ -69,7 +66,6 @@ module Crops
         assert_difference('CropFertilizeApplication.count', 2) do
           post crop_crop_fertilize_profiles_path(@crop), params: {
             crop_fertilize_profile: {
-              confidence: 0.8,
               crop_fertilize_applications_attributes: [
                 {
                   application_type: 'basal',
@@ -101,14 +97,13 @@ module Crops
     test 'should update crop fertilize profile' do
       patch crop_crop_fertilize_profile_path(@crop, @profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.9,
           notes: 'Updated notes'
         }
       }
       
       assert_redirected_to crop_path(@crop)
       @profile.reload
-      assert_equal 0.9, @profile.confidence
+      assert_equal 'Updated notes', @profile.notes
     end
 
     test 'should destroy crop fertilize profile' do
@@ -123,7 +118,6 @@ module Crops
       @profile.destroy
       post crop_crop_fertilize_profiles_path(@crop), params: {
         crop_fertilize_profile: {
-          confidence: 0.5,
           sources: 'source1, source2, source3'
         }
       }
@@ -154,7 +148,7 @@ module Crops
       assert_no_difference('CropFertilizeProfile.count') do
         post crop_crop_fertilize_profiles_path(@crop), params: {
           crop_fertilize_profile: {
-            confidence: nil
+            crop_id: nil
           }
         }
       end
@@ -166,7 +160,6 @@ module Crops
     test 'should not allow creating when profile already exists' do
       post crop_crop_fertilize_profiles_path(@crop), params: {
         crop_fertilize_profile: {
-          confidence: 0.8,
           notes: 'Test profile'
         }
       }
@@ -176,9 +169,10 @@ module Crops
     end
 
     test 'should render errors on invalid update' do
+      # 無効なデータでテスト（存在しないカラムを削除）
       patch crop_crop_fertilize_profile_path(@crop, @profile), params: {
         crop_fertilize_profile: {
-          confidence: -1
+          crop_id: nil
         }
       }
 

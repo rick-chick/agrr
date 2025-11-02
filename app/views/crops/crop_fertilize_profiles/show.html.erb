@@ -26,11 +26,6 @@
       <span class="info-value"><%= @profile.total_k %> g/m²</span>
     </div>
     
-    <div class="info-item">
-      <span class="info-label">📈 <%= t('.confidence') %>:</span>
-      <span class="info-value"><%= number_to_percentage(@profile.confidence * 100, precision: 1) %></span>
-    </div>
-    
     <% if @profile.sources.present? %>
       <% sources_array = @profile.sources.is_a?(Array) ? @profile.sources : [@profile.sources] %>
       <% if sources_array.any? %>

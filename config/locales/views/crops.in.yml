@@ -111,7 +111,6 @@ in:
       updated_at: "अद्यतन तिथि"
       fertilize_profiles_title: "Pupuk Profil"
       fertilize_profile_link: "Lihat Detail Profil"
-      confidence: "Tingkat Kepercayaan"
       edit: "Edit"
       delete: "Hapus"
       confirm_delete_profile: "Apakah Anda yakin ingin menghapus profil pupuk ini?"

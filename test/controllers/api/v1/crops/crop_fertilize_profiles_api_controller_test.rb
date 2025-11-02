@@ -35,7 +35,6 @@ module Api
             post api_v1_crop_crop_fertilize_profiles_path(@crop),
                  params: {
                    crop_fertilize_profile: {
-                     confidence: 0.8,
                      notes: 'Test profile'
                    }
                  },
@@ -47,7 +46,6 @@ module Api
           assert_equal 0.0, json_response['total_n']  # アプリケーションがないため0
           assert_equal 0.0, json_response['total_p']
           assert_equal 0.0, json_response['total_k']
-          assert_equal 0.8, json_response['confidence']
         end
 
         test 'should create crop fertilize profile with applications' do
@@ -57,7 +55,6 @@ module Api
               post api_v1_crop_crop_fertilize_profiles_path(@crop),
                    params: {
                      crop_fertilize_profile: {
-                       confidence: 0.8,
                        crop_fertilize_applications_attributes: [
                          {
                            application_type: 'basal',
@@ -99,7 +96,6 @@ module Api
           patch api_v1_crop_crop_fertilize_profile_path(@crop, @profile),
                 params: {
                   crop_fertilize_profile: {
-                    confidence: 0.9,
                     notes: 'Updated notes'
                   }
                 },
@@ -107,10 +103,10 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert_equal 0.9, json_response['confidence']
+          assert_equal 'Updated notes', json_response['notes']
           
           @profile.reload
-          assert_equal 0.9, @profile.confidence
+          assert_equal 'Updated notes', @profile.notes
         end
 
         test 'should destroy crop fertilize profile' do
@@ -127,7 +123,6 @@ module Api
           post api_v1_crop_crop_fertilize_profiles_path(@crop),
                params: {
                  crop_fertilize_profile: {
-                   confidence: 0.5,
                    sources: 'source1, source2, source3'
                  }
                },
@@ -141,7 +136,6 @@ module Api
           post api_v1_crop_crop_fertilize_profiles_path(@crop),
                params: {
                  crop_fertilize_profile: {
-                   confidence: 0.8,
                    notes: 'Test profile'
                  }
                },
@@ -178,7 +172,7 @@ module Api
             post api_v1_crop_crop_fertilize_profiles_path(@crop),
                  params: {
                    crop_fertilize_profile: {
-                     confidence: -1
+                     crop_id: nil
                    }
                  },
                  headers: { 'Accept' => 'application/json' }
@@ -234,7 +228,6 @@ module Api
                 }
               ],
               "sources" => ["agrr-ai"],
-              "confidence" => 0.8,
               "notes" => "AI generated profile"
             }
           }.to_json
@@ -280,7 +273,6 @@ module Api
                 }
               ],
               "sources" => ["agrr-ai"],
-              "confidence" => 0.9,
               "notes" => "Test profile"
             }
           }.to_json
@@ -329,7 +321,6 @@ module Api
                 }
               ],
               "sources" => ["agrr-ai-updated"],
-              "confidence" => 0.95,
               "notes" => "Updated profile"
             }
           }.to_json
@@ -354,7 +345,6 @@ module Api
             assert_equal profile_id, profile_to_update.id
             assert_equal 20.0, profile_to_update.total_n
             assert_equal 13.0, profile_to_update.total_k
-            assert_equal 0.95, profile_to_update.confidence
             assert_equal ["agrr-ai-updated"], profile_to_update.sources
             assert_equal 2, profile_to_update.crop_fertilize_applications.count
           end

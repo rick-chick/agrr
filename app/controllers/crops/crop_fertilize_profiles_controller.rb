@@ -90,7 +90,6 @@ module Crops
 
     def profile_params
       params.require(:crop_fertilize_profile).permit(
-        :confidence,
         :notes,
         :sources,
         crop_fertilize_applications_attributes: [

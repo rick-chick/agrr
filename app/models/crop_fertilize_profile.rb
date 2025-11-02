@@ -5,7 +5,6 @@
 # Attributes:
 #   crop_id: 作物ID（必須）
 #   sources: 情報源（JSON配列、テキストとして保存）
-#   confidence: 信頼度（0-1、デフォルト: 0.5）
 #   notes: 追加のガイダンス
 #
 # 役割: 作物に対する肥料施用計画の全体情報を保持
@@ -30,7 +29,6 @@ class CropFertilizeProfile < ApplicationRecord
   end
 
   validates :crop_id, presence: true
-  validates :confidence, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
 
   scope :recent, -> { order(created_at: :desc) }
 
@@ -55,7 +53,6 @@ class CropFertilizeProfile < ApplicationRecord
     profile = create!(
       crop: crop,
       sources: profile_data['sources'] || [],
-      confidence: profile_data['confidence'] || 0.5,
       notes: profile_data['notes']
     )
 
@@ -115,7 +112,6 @@ class CropFertilizeProfile < ApplicationRecord
         app_hash
       end,
       'sources' => sources || [],
-      'confidence' => confidence,
       'notes' => notes
     }
   end

@@ -111,7 +111,6 @@ us:
       updated_at: "Updated"
       fertilize_profiles_title: "Fertilizer Profiles"
       fertilize_profile_link: "View Profile Details"
-      confidence: "Confidence"
       edit: "Edit"
       delete: "Delete"
       confirm_delete_profile: "Are you sure you want to delete this fertilizer profile?"

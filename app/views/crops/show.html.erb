@@ -71,9 +71,6 @@
               P: <%= profile.total_p %> g/m², 
               K: <%= profile.total_k %> g/m²
             </div>
-            <div class="profile-meta">
-              <%= t('.confidence') %>: <%= number_to_percentage(profile.confidence * 100, precision: 1) %>
-            </div>
           </div>
           <div class="profile-actions">
             <%= link_to t('.edit'), edit_crop_crop_fertilize_profile_path(@crop, profile), class: "btn btn-secondary btn-sm" %>

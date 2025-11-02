@@ -116,7 +116,6 @@ ja:
       updated_at: "更新日"
       fertilize_profiles_title: "肥料プロファイル"
       fertilize_profile_link: "肥料プロファイル詳細"
-      confidence: "信頼度"
       edit: "編集"
       delete: "削除"
       confirm_delete_profile: "本当にこの肥料プロファイルを削除しますか？"
