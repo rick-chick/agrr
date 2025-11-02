@@ -39,27 +39,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 12.0, profile.total_k
   end
 
-  test "should validate confidence is between 0 and 1" do
-    profile = build(:crop_fertilize_profile, crop: @crop, confidence: -0.1)
-    assert_not profile.valid?
-    assert_includes profile.errors[:confidence], "は0以上の値にしてください"
-
-    profile = build(:crop_fertilize_profile, crop: @crop, confidence: 1.1)
-    assert_not profile.valid?
-    assert_includes profile.errors[:confidence], "は1以下の値にしてください"
-  end
-
-  test "should allow confidence between 0 and 1" do
-    profile = build(:crop_fertilize_profile, crop: @crop, confidence: 0.5)
-    assert profile.valid?
-
-    profile = build(:crop_fertilize_profile, crop: @crop, confidence: 0.0)
-    assert profile.valid?
-
-    profile = build(:crop_fertilize_profile, crop: @crop, confidence: 1.0)
-    assert profile.valid?
-  end
-
   # 関連テスト
   test "should belong to crop" do
     profile = create(:crop_fertilize_profile, crop: @crop)
@@ -126,7 +105,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
         }
       ],
       "sources" => ["inmemory"],
-      "confidence" => 0.5,
       "notes" => "Test notes"
     }
 
@@ -138,7 +116,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 5.0, profile.total_p
     assert_equal 12.0, profile.total_k
     assert_equal ["inmemory"], profile.sources
-    assert_equal 0.5, profile.confidence
     assert_equal "Test notes", profile.notes
     assert_equal 2, profile.crop_fertilize_applications.count
 
@@ -161,7 +138,7 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 4.5, topdress.per_application_k
   end
 
-  test "from_agrr_output should handle missing confidence and notes" do
+  test "from_agrr_output should handle missing notes" do
     agrr_output = {
       "totals" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 },
       "applications" => [],
@@ -170,7 +147,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
 
     profile = CropFertilizeProfile.from_agrr_output(crop: @crop, profile_data: agrr_output)
 
-    assert_equal 0.5, profile.confidence  # default
     assert_nil profile.notes
     assert_equal [], profile.sources
   end
@@ -179,8 +155,7 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     agrr_output = {
       "totals" => { "N" => 18.0, "P" => 5.0, "K" => 12.0 },
       "applications" => [],
-      "sources" => [],
-      "confidence" => 0.7
+      "sources" => []
     }
 
     profile = CropFertilizeProfile.from_agrr_output(crop: @crop, profile_data: agrr_output)
@@ -192,7 +167,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
   test "should convert to agrr output format" do
     profile = create(:crop_fertilize_profile, crop: @crop,
       sources: ["source1", "source2"],
-      confidence: 0.8,
       notes: "Test notes"
     )
     
@@ -212,7 +186,6 @@ class CropFertilizeProfileTest < ActiveSupport::TestCase
     assert_equal 5.0, output["totals"]["P"]
     assert_equal 12.0, output["totals"]["K"]
     assert_equal ["source1", "source2"], output["sources"]
-    assert_equal 0.8, output["confidence"]
     assert_equal "Test notes", output["notes"]
     assert_equal 2, output["applications"].count
 

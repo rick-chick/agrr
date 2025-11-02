@@ -5,13 +5,11 @@ FactoryBot.define do
     association :crop
     
     sources { ["inmemory"] }
-    confidence { 0.5 }
     notes { "Test fertilizer profile" }
 
     trait :tomato_profile do
       association :crop, :tomato
       sources { ["JAガイド 2021", "agrr-ai"] }
-      confidence { 0.8 }
       notes { "トマトの推奨肥料施用計画" }
     end
 

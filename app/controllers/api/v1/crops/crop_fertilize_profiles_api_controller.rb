@@ -97,7 +97,6 @@ module Api
               # プロファイルを更新
               profile.update!(
                 sources: profile_data['sources'] || [],
-                confidence: profile_data['confidence'] || 0.5,
                 notes: profile_data['notes']
               )
               
@@ -126,7 +125,6 @@ module Api
                 total_n: profile.total_n,
                 total_p: profile.total_p,
                 total_k: profile.total_k,
-                confidence: profile.confidence,
                 applications_count: profile.crop_fertilize_applications.count,
                 message: I18n.t('api.messages.crop_fertilize_profiles.updated_by_ai', default: '肥料プロファイルを更新しました', crop_name: @crop.name)
               }, status: :ok
@@ -143,7 +141,6 @@ module Api
                 total_n: profile.total_n,
                 total_p: profile.total_p,
                 total_k: profile.total_k,
-                confidence: profile.confidence,
                 applications_count: profile.crop_fertilize_applications.count,
                 message: I18n.t('api.messages.crop_fertilize_profiles.created_by_ai', default: '肥料プロファイルを作成しました', crop_name: @crop.name)
               }, status: :created
@@ -183,7 +180,6 @@ module Api
             # プロファイルを更新
             @profile.update!(
               sources: profile_data['sources'] || [],
-              confidence: profile_data['confidence'] || 0.5,
               notes: profile_data['notes']
             )
 
@@ -212,7 +208,6 @@ module Api
               total_n: @profile.total_n,
               total_p: @profile.total_p,
               total_k: @profile.total_k,
-              confidence: @profile.confidence,
               applications_count: @profile.crop_fertilize_applications.count,
               message: I18n.t('api.messages.crop_fertilize_profiles.updated_by_ai', default: '肥料プロファイルを更新しました', crop_name: @crop.name)
             }, status: :ok
@@ -263,7 +258,6 @@ module Api
 
         def profile_params
           params.require(:crop_fertilize_profile).permit(
-            :confidence,
             :notes,
             :sources,
             crop_fertilize_applications_attributes: [
@@ -287,7 +281,6 @@ module Api
             total_p: profile.total_p,
             total_k: profile.total_k,
             sources: profile.sources || [],
-            confidence: profile.confidence,
             notes: profile.notes,
             applications: profile.crop_fertilize_applications.order(:application_type, :id).map do |app|
               {
@@ -363,6 +356,13 @@ module Api
               end
 
               Rails.logger.debug "📥 [AGRR Fertilize Profile Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
+
+              # stdoutが空または空白のみの場合はエラー
+              if stdout.nil? || stdout.strip.empty?
+                Rails.logger.error "❌ [AGRR Fertilize Profile Query] Empty response from agrr command"
+                Rails.logger.error "   stderr: #{stderr.strip}" if stderr.present?
+                raise "Empty response from agrr command. stderr: #{stderr.strip}"
+              end
 
               parsed_data = JSON.parse(stdout)
 

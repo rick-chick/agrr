@@ -22,7 +22,6 @@ module Crops
         assert_difference('CropFertilizeApplication.count', 0) do
           post crop_crop_fertilize_profiles_path(@crop), params: {
             crop_fertilize_profile: {
-              confidence: 0.7,
               notes: 'Initial profile'
             }
           }
@@ -36,14 +35,12 @@ module Crops
       # 2. 更新（アプリケーション追加なし）
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.8,
           notes: 'First update'
         }
       }
 
       assert_redirected_to crop_path(@crop)
       profile.reload
-      assert_equal 0.8, profile.confidence
       assert_equal 'First update', profile.notes
       assert_equal 0, profile.crop_fertilize_applications.count
 
@@ -55,7 +52,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
             notes: 'First update',
             crop_fertilize_applications_attributes: [
               {
@@ -84,7 +80,6 @@ module Crops
       assert_no_difference('CropFertilizeApplication.count') do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.85,
             notes: 'Second update',
             crop_fertilize_applications_attributes: [
               {
@@ -118,7 +113,6 @@ module Crops
       assert_difference('CropFertilizeProfile.count', 1) do
         post crop_crop_fertilize_profiles_path(@crop), params: {
           crop_fertilize_profile: {
-            confidence: 0.7,
             notes: 'Initial'
           }
         }
@@ -129,7 +123,6 @@ module Crops
       # 2. 更新
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.8
         }
       }
 
@@ -141,7 +134,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -163,7 +156,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', -1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 id: app.id,
@@ -181,13 +174,11 @@ module Crops
       # 6. 再度更新（アプリケーションなし）
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.9,
           notes: 'After removal'
         }
       }
 
       profile.reload
-      assert_equal 0.9, profile.confidence
       assert_equal 'After removal', profile.notes
       assert_equal 0, profile.crop_fertilize_applications.count
     end
@@ -197,9 +188,7 @@ module Crops
       # 1. 新規作成
       assert_difference('CropFertilizeProfile.count', 1) do
         post crop_crop_fertilize_profiles_path(@crop), params: {
-          crop_fertilize_profile: {
-            confidence: 0.7
-          }
+          crop_fertilize_profile: {}
         }
       end
 
@@ -208,7 +197,6 @@ module Crops
       # 2. 更新
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.8
         }
       }
 
@@ -220,7 +208,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -242,7 +230,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', -1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 id: app1.id,
@@ -260,7 +248,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'topdress',
@@ -285,7 +273,7 @@ module Crops
       assert_no_difference('CropFertilizeApplication.count') do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.85,
+5,
             crop_fertilize_applications_attributes: [
               {
                 id: app2.id,
@@ -311,7 +299,7 @@ module Crops
     # パターン4: 編集 → 詳細 → 追加 → 更新
     test 'pattern4: edit -> show -> add application -> update' do
       # 既存のプロファイルを作成
-      profile = create(:crop_fertilize_profile, crop: @crop, confidence: 0.7)
+      profile = create(:crop_fertilize_profile, crop: @crop)
       assert_equal 0, profile.crop_fertilize_applications.count
 
       # 1. 編集画面を開く
@@ -330,7 +318,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.7,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -357,7 +344,7 @@ module Crops
       app = profile.crop_fertilize_applications.first
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: 0.8,
+,
           crop_fertilize_applications_attributes: [
             {
               id: app.id,
@@ -386,7 +373,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 2) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: profile.confidence,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -419,7 +405,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', -1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: profile.confidence,
             crop_fertilize_applications_attributes: [
               {
                 id: basal_app.id,
@@ -448,7 +433,6 @@ module Crops
       assert_no_difference('CropFertilizeApplication.count') do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.9,
             crop_fertilize_applications_attributes: [
               {
                 id: remaining_app.id,
@@ -477,7 +461,6 @@ module Crops
         assert_difference('CropFertilizeApplication.count', 3) do
           post crop_crop_fertilize_profiles_path(@crop), params: {
             crop_fertilize_profile: {
-              confidence: 0.7,
               crop_fertilize_applications_attributes: [
                 {
                   application_type: 'basal',
@@ -511,7 +494,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', -3) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: profile.confidence,
             crop_fertilize_applications_attributes: app_ids.map { |id| { id: id, _destroy: '1' } }
           }
         }
@@ -525,7 +507,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -542,7 +524,6 @@ module Crops
       profile.reload
       assert_equal 1, profile.crop_fertilize_applications.count
       assert_equal 20.0, profile.total_n
-      assert_equal 0.8, profile.confidence
     end
 
     # パターン7: 既存の施用計画を更新しながら新しいものを追加
@@ -557,7 +538,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: profile.confidence,
             crop_fertilize_applications_attributes: [
               {
                 id: app.id,
@@ -594,7 +574,6 @@ module Crops
         assert_difference('CropFertilizeApplication.count', 1) do
           post crop_crop_fertilize_profiles_path(@crop), params: {
             crop_fertilize_profile: {
-              confidence: 0.7,
               crop_fertilize_applications_attributes: [
                 {
                   application_type: 'basal',
@@ -614,7 +593,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 id: app1.id,
@@ -646,7 +625,6 @@ module Crops
       # 削除マークを付ける
       patch crop_crop_fertilize_profile_path(@crop, profile), params: {
         crop_fertilize_profile: {
-          confidence: profile.confidence,
           crop_fertilize_applications_attributes: [
             {
               id: app.id,
@@ -664,7 +642,6 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: profile.confidence,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -689,11 +666,11 @@ module Crops
     test 'pattern10: validation error then resubmit (applications are preserved)' do
       profile = create(:crop_fertilize_profile, crop: @crop)
 
-      # 無効なデータ（confidence が nil）で送信 - バリデーションエラー
+      # 無効なデータ（crop_id が nil）で送信 - バリデーションエラー
       assert_no_difference('CropFertilizeApplication.count') do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: nil,
+            crop_id: nil,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
@@ -712,7 +689,7 @@ module Crops
       assert_difference('CropFertilizeApplication.count', 1) do
         patch crop_crop_fertilize_profile_path(@crop, profile), params: {
           crop_fertilize_profile: {
-            confidence: 0.8,
+,
             crop_fertilize_applications_attributes: [
               {
                 application_type: 'basal',
