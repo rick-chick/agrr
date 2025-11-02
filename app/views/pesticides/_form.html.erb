@@ -1,0 +1,142 @@
+<div class="form-card">
+  <%= form_with(model: @pesticide) do |f| %>
+    <% if @pesticide.errors.any? %>
+      <div class="errors">
+        <h3><%= t('pesticides.form.errors.title', count: @pesticide.errors.count) %></h3>
+        <ul>
+          <% @pesticide.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :crop_id, t('pesticides.form.crop_label'), class: 'form-label' %>
+      <%= f.collection_select :crop_id, @crops, :id, :name, 
+          { prompt: t('pesticides.form.select_crop') }, 
+          { required: true, class: 'form-control' } %>
+      <div class="form-text"><%= t('pesticides.form.crop_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :pest_id, t('pesticides.form.pest_label'), class: 'form-label' %>
+      <%= f.collection_select :pest_id, @pests, :id, :name, 
+          { prompt: t('pesticides.form.select_pest') }, 
+          { required: true, class: 'form-control' } %>
+      <div class="form-text"><%= t('pesticides.form.pest_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :pesticide_id, t('pesticides.form.pesticide_id_label'), class: 'form-label' %>
+      <%= f.text_field :pesticide_id, required: true, class: 'form-control' %>
+      <div class="form-text"><%= t('pesticides.form.pesticide_id_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :name, t('pesticides.form.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, required: true, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :active_ingredient, t('pesticides.form.active_ingredient_label'), class: 'form-label' %>
+      <%= f.text_field :active_ingredient, class: 'form-control' %>
+      <div class="form-text"><%= t('pesticides.form.active_ingredient_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :description, t('pesticides.form.description_label'), class: 'form-label' %>
+      <%= f.text_area :description, rows: 4, class: 'form-control' %>
+      <div class="form-text"><%= t('pesticides.form.description_help') %></div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><%= t('pesticides.form.usage_constraints_title') %></h3>
+      <%= f.fields_for :pesticide_usage_constraint do |constraint_form| %>
+        <div class="form-group">
+          <%= constraint_form.label :min_temperature, t('pesticides.form.min_temperature_label'), class: 'form-label' %>
+          <%= constraint_form.number_field :min_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.min_temperature_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= constraint_form.label :max_temperature, t('pesticides.form.max_temperature_label'), class: 'form-label' %>
+          <%= constraint_form.number_field :max_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.max_temperature_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= constraint_form.label :max_wind_speed_m_s, t('pesticides.form.max_wind_speed_label'), class: 'form-label' %>
+          <%= constraint_form.number_field :max_wind_speed_m_s, step: :any, min: 0, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.max_wind_speed_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= constraint_form.label :max_application_count, t('pesticides.form.max_application_count_label'), class: 'form-label' %>
+          <%= constraint_form.number_field :max_application_count, step: 1, min: 1, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.max_application_count_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= constraint_form.label :harvest_interval_days, t('pesticides.form.harvest_interval_label'), class: 'form-label' %>
+          <%= constraint_form.number_field :harvest_interval_days, step: 1, min: 0, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.harvest_interval_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= constraint_form.label :other_constraints, t('pesticides.form.other_constraints_label'), class: 'form-label' %>
+          <%= constraint_form.text_area :other_constraints, rows: 3, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.other_constraints_help') %></div>
+        </div>
+
+        <%= constraint_form.hidden_field :_destroy, value: false %>
+      <% end %>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><%= t('pesticides.form.application_details_title') %></h3>
+      <%= f.fields_for :pesticide_application_detail do |detail_form| %>
+        <div class="form-group">
+          <%= detail_form.label :dilution_ratio, t('pesticides.form.dilution_ratio_label'), class: 'form-label' %>
+          <%= detail_form.text_field :dilution_ratio, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.dilution_ratio_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= detail_form.label :amount_per_m2, t('pesticides.form.amount_per_m2_label'), class: 'form-label' %>
+          <%= detail_form.number_field :amount_per_m2, step: :any, min: 0, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.amount_per_m2_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= detail_form.label :amount_unit, t('pesticides.form.amount_unit_label'), class: 'form-label' %>
+          <%= detail_form.text_field :amount_unit, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.amount_unit_help') %></div>
+        </div>
+
+        <div class="form-group">
+          <%= detail_form.label :application_method, t('pesticides.form.application_method_label'), class: 'form-label' %>
+          <%= detail_form.text_field :application_method, class: 'form-control' %>
+          <div class="form-text"><%= t('pesticides.form.application_method_help') %></div>
+        </div>
+
+        <%= detail_form.hidden_field :_destroy, value: false %>
+      <% end %>
+    </div>
+
+    <% if admin_user? %>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <%= f.check_box :is_reference, class: 'form-control' %>
+          <%= f.label :is_reference, t('pesticides.form.is_reference_label'), class: 'form-label' %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="actions">
+      <%= f.submit t("pesticides.form.submit_#{@pesticide.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('pesticides.form.cancel'), @pesticide.persisted? ? pesticide_path(@pesticide) : pesticides_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>
+

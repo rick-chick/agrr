@@ -1,0 +1,126 @@
+<% content_for :title, "#{@pesticide.name} - AGRR" %>
+
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= @pesticide.name %></h1>
+    <% if admin_user? && @pesticide.is_reference %>
+      <div class="crop-detail-type reference"><%= t('.reference_pesticide') %></div>
+    <% end %>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">🌾 <%= t('.crop') %>:</span>
+      <span class="info-value"><%= @pesticide.crop.name %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">🐛 <%= t('.pest') %>:</span>
+      <span class="info-value"><%= @pesticide.pest.name %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">🆔 <%= t('.pesticide_id') %>:</span>
+      <span class="info-value"><%= @pesticide.pesticide_id %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📝 <%= t('.name') %>:</span>
+      <span class="info-value"><%= @pesticide.name %></span>
+    </div>
+    
+    <% if @pesticide.active_ingredient.present? %>
+      <div class="info-item">
+        <span class="info-label">🧪 <%= t('.active_ingredient') %>:</span>
+        <span class="info-value"><%= @pesticide.active_ingredient %></span>
+      </div>
+    <% end %>
+    
+    <% if @pesticide.description.present? %>
+      <div class="info-item">
+        <span class="info-label">📄 <%= t('.description') %>:</span>
+        <span class="info-value"><%= simple_format(@pesticide.description) %></span>
+      </div>
+    <% end %>
+    
+    <% if @pesticide.pesticide_usage_constraint %>
+      <div class="info-item">
+        <span class="info-label">⚠️ <%= t('.usage_constraints') %>:</span>
+        <div class="info-value">
+          <% if @pesticide.pesticide_usage_constraint.min_temperature.present? || @pesticide.pesticide_usage_constraint.max_temperature.present? %>
+            <%= t('.temperature_range') %>: 
+            <% if @pesticide.pesticide_usage_constraint.min_temperature.present? %>
+              <%= @pesticide.pesticide_usage_constraint.min_temperature %>°C
+            <% end %>
+            <% if @pesticide.pesticide_usage_constraint.min_temperature.present? && @pesticide.pesticide_usage_constraint.max_temperature.present? %>
+              -
+            <% end %>
+            <% if @pesticide.pesticide_usage_constraint.max_temperature.present? %>
+              <%= @pesticide.pesticide_usage_constraint.max_temperature %>°C
+            <% end %>
+            <br>
+          <% end %>
+          <% if @pesticide.pesticide_usage_constraint.max_wind_speed_m_s.present? %>
+            <%= t('.max_wind_speed') %>: <%= @pesticide.pesticide_usage_constraint.max_wind_speed_m_s %> m/s<br>
+          <% end %>
+          <% if @pesticide.pesticide_usage_constraint.max_application_count.present? %>
+            <%= t('.max_application_count') %>: <%= @pesticide.pesticide_usage_constraint.max_application_count %> <%= t('.times_per_season') %><br>
+          <% end %>
+          <% if @pesticide.pesticide_usage_constraint.harvest_interval_days.present? %>
+            <%= t('.harvest_interval') %>: <%= @pesticide.pesticide_usage_constraint.harvest_interval_days %> <%= t('.days') %><br>
+          <% end %>
+          <% if @pesticide.pesticide_usage_constraint.other_constraints.present? %>
+            <%= t('.other_constraints') %>: <%= simple_format(@pesticide.pesticide_usage_constraint.other_constraints) %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    
+    <% if @pesticide.pesticide_application_detail %>
+      <div class="info-item">
+        <span class="info-label">💊 <%= t('.application_details') %>:</span>
+        <div class="info-value">
+          <% if @pesticide.pesticide_application_detail.dilution_ratio.present? %>
+            <%= t('.dilution_ratio') %>: <%= @pesticide.pesticide_application_detail.dilution_ratio %><br>
+          <% end %>
+          <% if @pesticide.pesticide_application_detail.amount_per_m2.present? && @pesticide.pesticide_application_detail.amount_unit.present? %>
+            <%= t('.amount_per_m2') %>: <%= @pesticide.pesticide_application_detail.amount_per_m2 %> <%= @pesticide.pesticide_application_detail.amount_unit %>/m²<br>
+          <% end %>
+          <% if @pesticide.pesticide_application_detail.application_method.present? %>
+            <%= t('.application_method') %>: <%= @pesticide.pesticide_application_detail.application_method %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@pesticide.created_at, format: :long) %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@pesticide.updated_at, format: :long) %></span>
+    </div>
+  </div>
+  
+  <div class="actions">
+    <%= link_to t('.back_to_list'), pesticides_path, class: "btn btn-secondary" %>
+    <% if @pesticide.is_reference %>
+      <%# 参照農薬は管理者のみ編集・削除可能 %>
+      <% if admin_user? %>
+        <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @pesticide, method: :delete, 
+                    class: "btn btn-error", 
+                    confirm: t('.confirm_delete') %>
+      <% end %>
+    <% else %>
+      <%# ユーザー農薬は所有者が編集・削除可能 %>
+      <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
+      <%= button_to t('.delete'), @pesticide, method: :delete, 
+                  class: "btn btn-error", 
+                  confirm: t('.confirm_delete') %>
+    <% end %>
+  </div>
+</div>
+

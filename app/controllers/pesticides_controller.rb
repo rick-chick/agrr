@@ -1,0 +1,151 @@
+# frozen_string_literal: true
+
+class PesticidesController < ApplicationController
+  before_action :set_pesticide, only: [:show, :edit, :update, :destroy]
+
+  # GET /pesticides
+  def index
+    # 管理者は参照農薬も表示、一般ユーザーは参照農薬のみ表示
+    if admin_user?
+      @pesticides = Pesticide.recent
+    else
+      @pesticides = Pesticide.reference.recent
+    end
+  end
+
+  # GET /pesticides/:id
+  def show
+  end
+
+  # GET /pesticides/new
+  def new
+    @pesticide = Pesticide.new
+    @pesticide.build_pesticide_usage_constraint
+    @pesticide.build_pesticide_application_detail
+    load_crops_and_pests
+  end
+
+  # GET /pesticides/:id/edit
+  def edit
+    @pesticide.build_pesticide_usage_constraint unless @pesticide.pesticide_usage_constraint
+    @pesticide.build_pesticide_application_detail unless @pesticide.pesticide_application_detail
+    load_crops_and_pests
+  end
+
+  # POST /pesticides
+  def create
+    # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
+    is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
+    if is_reference && !admin_user?
+      return redirect_to pesticides_path, alert: I18n.t('pesticides.flash.reference_only_admin')
+    end
+
+    @pesticide = Pesticide.new(pesticide_params)
+
+    if @pesticide.save
+      redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.created')
+    else
+      load_crops_and_pests
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH/PUT /pesticides/:id
+  def update
+    # is_referenceをbooleanに変換してチェック
+    if pesticide_params.key?(:is_reference)
+      is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
+      if is_reference != @pesticide.is_reference && !admin_user?
+        return redirect_to pesticide_path(@pesticide), alert: I18n.t('pesticides.flash.reference_flag_admin_only')
+      end
+    end
+
+    if @pesticide.update(pesticide_params)
+      redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.updated')
+    else
+      load_crops_and_pests
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /pesticides/:id
+  def destroy
+    begin
+      @pesticide.destroy
+      redirect_to pesticides_path, notice: I18n.t('pesticides.flash.destroyed')
+    rescue ActiveRecord::InvalidForeignKey => e
+      # 外部参照制約エラーの場合
+      redirect_to pesticides_path, alert: I18n.t('pesticides.flash.cannot_delete_in_use')
+    rescue ActiveRecord::DeleteRestrictionError => e
+      redirect_to pesticides_path, alert: I18n.t('pesticides.flash.cannot_delete_in_use')
+    rescue StandardError => e
+      redirect_to pesticides_path, alert: I18n.t('pesticides.flash.delete_error', message: e.message)
+    end
+  end
+
+  private
+
+  def set_pesticide
+    @pesticide = Pesticide.find(params[:id])
+    
+    # アクションに応じた権限チェック
+    action = params[:action].to_sym
+    
+    if action.in?([:edit, :update, :destroy])
+      # 編集・更新・削除は以下の場合のみ許可
+      # - 管理者（すべての農薬を編集可能）
+      # - 参照農薬でない場合（一般ユーザーが作成した農薬）
+      unless admin_user? || !@pesticide.is_reference
+        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.no_permission')
+      end
+    elsif action == :show
+      # 詳細表示は以下の場合に許可
+      # - 参照農薬（誰でも閲覧可能）
+      # - 管理者
+      unless @pesticide.is_reference || admin_user?
+        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.no_permission')
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+  end
+
+  def load_crops_and_pests
+    # 作物は参照データのみ
+    @crops = Crop.reference.order(:name)
+    
+    # 害虫は参照データのみ
+    @pests = Pest.reference.order(:name)
+  end
+
+  def pesticide_params
+    params.require(:pesticide).permit(
+      :pesticide_id,
+      :name,
+      :active_ingredient,
+      :description,
+      :crop_id,
+      :pest_id,
+      :is_reference,
+      pesticide_usage_constraint_attributes: [
+        :id,
+        :min_temperature,
+        :max_temperature,
+        :max_wind_speed_m_s,
+        :max_application_count,
+        :harvest_interval_days,
+        :other_constraints,
+        :_destroy
+      ],
+      pesticide_application_detail_attributes: [
+        :id,
+        :dilution_ratio,
+        :amount_per_m2,
+        :amount_unit,
+        :application_method,
+        :_destroy
+      ]
+    )
+  end
+end
+
