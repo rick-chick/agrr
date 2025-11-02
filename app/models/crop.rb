@@ -21,7 +21,6 @@
 class Crop < ApplicationRecord
   belongs_to :user, optional: true
   has_many :crop_stages, dependent: :destroy
-  has_one :crop_fertilize_profile, dependent: :destroy
   has_many :crop_pests, dependent: :destroy
   has_many :pests, through: :crop_pests
 

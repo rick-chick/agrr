@@ -69,11 +69,6 @@ ja:
         invalid_payload: "肥料情報が不正な形式です"
         fetch_failed: "肥料情報の取得に失敗しました"
         fetch_failed_with_reason: "肥料情報の取得に失敗しました: %{message}"
-      crop_fertilize_profiles:
-        fetch_failed: "肥料プロファイルの取得に失敗しました"
-        invalid_payload: "無効なデータ形式です"
-        fetch_failed_with_reason: "取得に失敗しました: %{message}"
-        daemon_not_running: "AGRRサービスが起動していません。サービスを起動してから再度お試しください。"
     messages:
       common:
         weather_service_available: "天気サービスは利用可能です"
@@ -87,9 +82,6 @@ ja:
         updated_with_latest: "肥料「%{name}」を最新情報で更新しました"
         created_by_ai: "AIで肥料「%{name}」の情報を取得して作成しました"
         updated_by_ai: "肥料「%{name}」を更新しました"
-      crop_fertilize_profiles:
-        created_by_ai: "肥料プロファイル「%{crop_name}」を作成しました"
-        updated_by_ai: "肥料プロファイル「%{crop_name}」を更新しました"
       crop_not_found: "作物情報が見つかりません"
       no_weather_data: "気象データがありません"
       no_cultivation_period: "栽培期間が設定されていません"
@@ -107,14 +99,6 @@ ja:
       button_fetching: "🤖 AIで情報を取得中..."
       created_success: "✓ 作物「%{name}」の情報を取得して保存しました！"
       fetch_failed: "作物情報の取得に失敗しました"
-      network_error: "ネットワークエラーが発生しました"
-    crop_fertilize_profile_ai:
-      enter_crop_name: "作物を選択してください"
-      fetching: "AIで肥料プロファイル情報を取得しています..."
-      button_fetching: "🤖 AIで情報を取得中..."
-      created_success: "✓ 肥料プロファイル「%{crop_name}」を作成しました！"
-      updated_success: "✓ 肥料プロファイル「%{crop_name}」を更新しました！"
-      fetch_failed: "肥料プロファイル情報の取得に失敗しました"
       network_error: "ネットワークエラーが発生しました"
     fertilize_ai:
       enter_name: "肥料名を入力してください"

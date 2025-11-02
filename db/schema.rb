@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_02_211025) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,27 +37,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "crop_fertilize_applications", force: :cascade do |t|
-    t.integer "crop_fertilize_profile_id", null: false
-    t.string "application_type", null: false
-    t.integer "count", default: 1, null: false
-    t.string "schedule_hint"
-    t.float "per_application_n"
-    t.float "per_application_p"
-    t.float "per_application_k"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["application_type"], name: "index_crop_fertilize_applications_on_application_type"
-    t.index ["crop_fertilize_profile_id"], name: "index_crop_fertilize_applications_on_crop_fertilize_profile_id"
-  end
-
-  create_table "crop_fertilize_profiles", force: :cascade do |t|
-    t.integer "crop_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["crop_id"], name: "index_crop_fertilize_profiles_on_crop_id"
   end
 
   create_table "crop_pests", force: :cascade do |t|
@@ -305,6 +284,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
     t.index ["pest_id"], name: "index_pest_thermal_requirements_on_pest_id"
   end
 
+  create_table "pesticide_application_details", force: :cascade do |t|
+    t.integer "pesticide_id", null: false
+    t.string "dilution_ratio"
+    t.float "amount_per_m2"
+    t.string "amount_unit"
+    t.string "application_method"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pesticide_id"], name: "index_pesticide_application_details_on_pesticide_id"
+  end
+
+  create_table "pesticide_usage_constraints", force: :cascade do |t|
+    t.integer "pesticide_id", null: false
+    t.float "min_temperature"
+    t.float "max_temperature"
+    t.float "max_wind_speed_m_s"
+    t.integer "max_application_count"
+    t.integer "harvest_interval_days"
+    t.text "other_constraints"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pesticide_id"], name: "index_pesticide_usage_constraints_on_pesticide_id"
+  end
+
+  create_table "pesticides", force: :cascade do |t|
+    t.string "pesticide_id", null: false
+    t.string "name", null: false
+    t.string "active_ingredient"
+    t.text "description"
+    t.boolean "is_reference", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_reference"], name: "index_pesticides_on_is_reference"
+    t.index ["pesticide_id"], name: "index_pesticides_on_pesticide_id", unique: true
+  end
+
   create_table "pests", force: :cascade do |t|
     t.string "pest_id", null: false
     t.string "name", null: false
@@ -415,8 +430,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "crop_fertilize_applications", "crop_fertilize_profiles"
-  add_foreign_key "crop_fertilize_profiles", "crops"
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"
@@ -439,6 +452,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
   add_foreign_key "pest_control_methods", "pests"
   add_foreign_key "pest_temperature_profiles", "pests"
   add_foreign_key "pest_thermal_requirements", "pests"
+  add_foreign_key "pesticide_application_details", "pesticides"
+  add_foreign_key "pesticide_usage_constraints", "pesticides"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"
