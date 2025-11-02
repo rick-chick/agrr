@@ -40,6 +40,11 @@ FactoryBot.define do
       with_usage_constraint
       with_application_detail
     end
+
+    trait :user_owned do
+      is_reference { false }
+      association :user
+    end
   end
 end
 

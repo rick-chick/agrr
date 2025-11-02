@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :crops, dependent: :destroy
   has_many :cultivation_plans, dependent: :destroy
   has_many :interaction_rules, dependent: :destroy
+  has_many :pesticides, dependent: :destroy
 
   # Validations
   validates :email, presence: true, 
