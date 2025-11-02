@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_02_151737) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_02_151742) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -58,6 +58,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151737) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["crop_id"], name: "index_crop_fertilize_profiles_on_crop_id"
+  end
+
+  create_table "crop_pests", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.integer "pest_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id", "pest_id"], name: "index_crop_pests_on_crop_id_and_pest_id", unique: true
+    t.index ["crop_id"], name: "index_crop_pests_on_crop_id"
+    t.index ["pest_id"], name: "index_crop_pests_on_pest_id"
   end
 
   create_table "crop_stages", force: :cascade do |t|
@@ -265,6 +275,51 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151737) do
     t.index ["user_id"], name: "index_interaction_rules_on_user_id"
   end
 
+  create_table "pest_control_methods", force: :cascade do |t|
+    t.integer "pest_id", null: false
+    t.string "method_type", null: false
+    t.string "method_name", null: false
+    t.text "description"
+    t.string "timing_hint"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["method_type"], name: "index_pest_control_methods_on_method_type"
+    t.index ["pest_id"], name: "index_pest_control_methods_on_pest_id"
+  end
+
+  create_table "pest_temperature_profiles", force: :cascade do |t|
+    t.integer "pest_id", null: false
+    t.float "base_temperature"
+    t.float "max_temperature"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pest_id"], name: "index_pest_temperature_profiles_on_pest_id"
+  end
+
+  create_table "pest_thermal_requirements", force: :cascade do |t|
+    t.integer "pest_id", null: false
+    t.float "required_gdd"
+    t.float "first_generation_gdd"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pest_id"], name: "index_pest_thermal_requirements_on_pest_id"
+  end
+
+  create_table "pests", force: :cascade do |t|
+    t.string "pest_id", null: false
+    t.string "name", null: false
+    t.string "name_scientific"
+    t.string "family"
+    t.string "order"
+    t.text "description"
+    t.string "occurrence_season"
+    t.boolean "is_reference", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_reference"], name: "index_pests_on_is_reference"
+    t.index ["pest_id"], name: "index_pests_on_pest_id", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.string "session_id", null: false
     t.text "data"
@@ -362,6 +417,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151737) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "crop_fertilize_applications", "crop_fertilize_profiles"
   add_foreign_key "crop_fertilize_profiles", "crops"
+  add_foreign_key "crop_pests", "crops"
+  add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"
   add_foreign_key "crops", "users"
   add_foreign_key "cultivation_plan_crops", "crops"
@@ -379,6 +436,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_151737) do
   add_foreign_key "free_crop_plans", "crops"
   add_foreign_key "free_crop_plans", "farms"
   add_foreign_key "interaction_rules", "users"
+  add_foreign_key "pest_control_methods", "pests"
+  add_foreign_key "pest_temperature_profiles", "pests"
+  add_foreign_key "pest_thermal_requirements", "pests"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
   add_foreign_key "temperature_requirements", "crop_stages"

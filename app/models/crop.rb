@@ -22,6 +22,8 @@ class Crop < ApplicationRecord
   belongs_to :user, optional: true
   has_many :crop_stages, dependent: :destroy
   has_one :crop_fertilize_profile, dependent: :destroy
+  has_many :crop_pests, dependent: :destroy
+  has_many :pests, through: :crop_pests
 
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
 
@@ -124,6 +126,30 @@ class Crop < ApplicationRecord
       },
       'stage_requirements' => stage_requirements
     }
+  end
+
+  # agrr CLI の pest 出力形式からPestを作成または更新し、Cropと関連付け
+  # @param pest_output_data [Hash] agrr pest コマンドのJSON出力（data部分）
+  # @param is_reference [Boolean] Pestを参照データとして作成するか（デフォルト: true）
+  # @return [Array<Pest>] 作成または更新されたPestの配列
+  # @raise [StandardError] 必須データが欠損している場合
+  def associate_pests_from_agrr_output(pest_output_data:, is_reference: true)
+    unless pest_output_data['pests'].is_a?(Array)
+      raise StandardError, "Invalid pest_output_data: 'pests' must be an array"
+    end
+
+    associated_pests = []
+
+    pest_output_data['pests'].each do |pest_data|
+      pest = Pest.from_agrr_output(pest_data: pest_data, is_reference: is_reference)
+      
+      # CropとPestを関連付け（既存の関連は上書きしない）
+      CropPest.find_or_create_by!(crop: self, pest: pest)
+      
+      associated_pests << pest
+    end
+
+    associated_pests
   end
 
   private
