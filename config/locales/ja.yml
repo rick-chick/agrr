@@ -180,31 +180,6 @@ ja:
       jsPlansLoadError: "データの読み込みに失敗しました"
       jsPlansLoadErrorWithMessage: "データの読み込みに失敗しました: %{message}"
       jsGanttNotLoaded: "ガントチャート機能が読み込まれていません"
-    
-    public_plans:
-    gantt:
-      api_endpoint_missing: "APIエンドポイントが設定されていません。ページを再読み込みしてください。"
-      data_url_missing: "データURLが設定されていません"
-      adjust_url_missing: "調整URLが設定されていません"
-      prompt_field_name: "圃場名を入力してください（例: 4）"
-      prompt_field_area: "面積（㎡）を入力してください"
-      adding_field: "圃場を追加中..."
-      deleting_field: "圃場を削除中..."
-      error_occurred: "エラーが発生しました"
-    crop_ai:
-      enter_name: "作物名を入力してください"
-      fetching: "AIで作物情報を取得しています..."
-      button_fetching: "🤖 AIで情報を取得中..."
-      created_success: "✓ 作物「%{name}」の情報を取得して保存しました！"
-      fetch_failed: "作物情報の取得に失敗しました"
-      network_error: "ネットワークエラーが発生しました"
-    fertilize_ai:
-      enter_name: "肥料名を入力してください"
-      fetching: "AIで肥料情報を取得しています..."
-      button_fetching: "🤖 AIで情報を取得中..."
-      created_success: "✓ 肥料「%{name}」の情報を取得して保存しました！"
-      fetch_failed: "肥料情報の取得に失敗しました"
-      network_error: "ネットワークエラーが発生しました"
   
   # API用の翻訳（js配下とは別に）
   public_plans:

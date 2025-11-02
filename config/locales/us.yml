@@ -112,6 +112,15 @@ us:
       load_failed: "Failed to load data"
       chart_create_failed: "Failed to create chart"
       gdd_chart_create_failed: "Failed to create GDD chart"
+    
+    fertilize_ai:
+      enter_name: "Enter fertilizer name"
+      fetching: "Fetching fertilizer information with AI..."
+      button_fetching: "🤖 Fetching information with AI..."
+      created_success: "✓ Fetched and saved fertilizer information for \"%{name}\"!"
+      updated_success: "✓ Fetched and updated fertilizer information for \"%{name}\"!"
+      fetch_failed: "Failed to fetch fertilizer information"
+      network_error: "Network error occurred"
 
   # Navigation
   nav:
