@@ -2,9 +2,7 @@
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
-  <% if admin_user? %>
-    <%= link_to t('.new_pesticide'), new_pesticide_path, class: "btn btn-success" %>
-  <% end %>
+  <%= link_to t('.new_pesticide'), new_pesticide_path, class: "btn btn-success" %>
 </div>
 
 <% if @pesticides.any? %>
@@ -33,13 +31,15 @@
             <% end %>
           <% else %>
             <%# User pesticides: owner only %>
-            <%= link_to t('.actions.edit'), edit_pesticide_path(pesticide), class: "btn btn-secondary btn-sm" %>
-            <%= link_to t('.actions.delete'), pesticide_path(pesticide), method: :delete, 
-                        class: "btn btn-error btn-sm", 
-                        data: { 
-                          turbo_method: :delete,
-                          turbo_confirm: t('.actions.delete_confirm')
-                        } %>
+            <% if pesticide.user_id == current_user.id || admin_user? %>
+              <%= link_to t('.actions.edit'), edit_pesticide_path(pesticide), class: "btn btn-secondary btn-sm" %>
+              <%= link_to t('.actions.delete'), pesticide_path(pesticide), method: :delete, 
+                          class: "btn btn-error btn-sm", 
+                          data: { 
+                            turbo_method: :delete,
+                            turbo_confirm: t('.actions.delete_confirm')
+                          } %>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -50,9 +50,7 @@
     <div class="empty-state-icon"><%= t('.empty.icon') %></div>
     <h3><%= t('.empty.title') %></h3>
     <p><%= t('.empty.description') %></p>
-    <% if admin_user? %>
-      <%= link_to t('.empty.button'), new_pesticide_path, class: "btn btn-success" %>
-    <% end %>
+    <%= link_to t('.empty.button'), new_pesticide_path, class: "btn btn-success" %>
   </div>
 <% end %>
 

@@ -3,7 +3,7 @@
 # Pesticide（農薬）モデル
 #
 # Attributes:
-#   pesticide_id: 農薬ID（必須、一意）
+#   id: 農薬ID（主キー）
 #   name: 農薬名（必須）
 #   active_ingredient: 有効成分名
 #   description: 説明文
@@ -26,7 +26,6 @@ class Pesticide < ApplicationRecord
   accepts_nested_attributes_for :pesticide_usage_constraint, allow_destroy: true
   accepts_nested_attributes_for :pesticide_application_detail, allow_destroy: true
 
-  validates :pesticide_id, presence: true, uniqueness: { scope: [:crop_id, :pest_id] }
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
   validates :user, presence: true, unless: :is_reference?
@@ -45,8 +44,13 @@ class Pesticide < ApplicationRecord
   # @return [Pesticide] 作成または更新されたPesticide
   # @raise [StandardError] 必須データが欠損している場合
   def self.from_agrr_output(pesticide_data:, crop_id:, pest_id:, is_reference: true)
-    unless pesticide_data['pesticide_id']
-      raise StandardError, "Invalid pesticide_data: 'pesticide_id' is required"
+    # pesticide_idが指定されている場合は、idとして解釈して既存レコードを検索
+    # 指定されていない場合は新規作成
+    pesticide = if pesticide_data['pesticide_id'].present?
+      find_by(id: pesticide_data['pesticide_id'], crop_id: crop_id, pest_id: pest_id) ||
+      new(crop_id: crop_id, pest_id: pest_id)
+    else
+      new(crop_id: crop_id, pest_id: pest_id)
     end
 
     unless crop_id
@@ -56,12 +60,6 @@ class Pesticide < ApplicationRecord
     unless pest_id
       raise StandardError, "pest_id is required"
     end
-
-    pesticide = find_or_initialize_by(
-      pesticide_id: pesticide_data['pesticide_id'],
-      crop_id: crop_id,
-      pest_id: pest_id
-    )
     pesticide.assign_attributes(
       crop_id: crop_id,
       pest_id: pest_id,
@@ -106,7 +104,7 @@ class Pesticide < ApplicationRecord
   # @note crop_idとpest_idも含める（Entityとの整合性のため）
   def to_agrr_output
     {
-      'pesticide_id' => pesticide_id,
+      'pesticide_id' => id.to_s,  # idをpesticide_idとして出力（agrr CLIとの互換性のため）
       'crop_id' => crop_id.to_s,  # agrr CLIは文字列を期待する可能性があるためto_s
       'pest_id' => pest_id.to_s,  # agrr CLIは文字列を期待する可能性があるためto_s
       'name' => name,

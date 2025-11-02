@@ -29,55 +29,33 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   # バリデーションテスト
-  test "should validate pesticide_id presence" do
-    pesticide = Pesticide.new(name: "テスト農薬")
-    assert_not pesticide.valid?
-    assert_includes pesticide.errors[:pesticide_id], "を入力してください"
-  end
-
-  test "should validate pesticide_id uniqueness with scope crop_id and pest_id" do
-    crop1 = create(:crop, is_reference: true)
-    crop2 = create(:crop, is_reference: true)
-    pest1 = create(:pest, is_reference: true)
-    pest2 = create(:pest, is_reference: true)
-    
-    create(:pesticide, pesticide_id: "test_pesticide", crop: crop1, pest: pest1)
-    
-    # 同じpesticide_idでも、crop_idまたはpest_idが異なれば有効
-    pesticide2 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬2", crop: crop2, pest: pest1, is_reference: true)
-    assert pesticide2.valid?
-    
-    pesticide3 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬3", crop: crop1, pest: pest2, is_reference: true)
-    assert pesticide3.valid?
-    
-    # 同じpesticide_id、crop_id、pest_idの組み合わせは無効
-    pesticide4 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬4", crop: crop1, pest: pest1, is_reference: true)
-    assert_not pesticide4.valid?
-    assert_includes pesticide4.errors[:pesticide_id], "はすでに存在します"
-  end
 
   test "should validate crop presence" do
     pest = create(:pest, is_reference: true)
-    pesticide = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬", pest: pest)
+    pesticide = Pesticide.new(name: "テスト農薬", pest: pest)
     assert_not pesticide.valid?
     assert_includes pesticide.errors[:crop], "を入力してください"
   end
 
   test "should validate pest presence" do
     crop = create(:crop, is_reference: true)
-    pesticide = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬", crop: crop)
+    pesticide = Pesticide.new(name: "テスト農薬", crop: crop)
     assert_not pesticide.valid?
     assert_includes pesticide.errors[:pest], "を入力してください"
   end
 
   test "should validate name presence" do
-    pesticide = Pesticide.new(pesticide_id: "test_pesticide")
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = Pesticide.new(crop: crop, pest: pest)
     assert_not pesticide.valid?
     assert_includes pesticide.errors[:name], "を入力してください"
   end
 
   test "should validate is_reference inclusion" do
-    pesticide = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬", is_reference: nil)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = Pesticide.new(name: "テスト農薬", is_reference: nil, crop: crop, pest: pest)
     assert_not pesticide.valid?
     assert_includes pesticide.errors[:is_reference], "は一覧にありません"
   end
@@ -86,7 +64,6 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, is_reference: true)
     pest = create(:pest, is_reference: true)
     pesticide = Pesticide.new(
-      pesticide_id: "test_pesticide",
       name: "テスト農薬",
       is_reference: false,
       user_id: nil,
@@ -101,7 +78,6 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, is_reference: true)
     pest = create(:pest, is_reference: true)
     pesticide = Pesticide.new(
-      pesticide_id: "test_pesticide",
       name: "テスト農薬",
       is_reference: true,
       user_id: nil,
@@ -116,7 +92,6 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, is_reference: true)
     pest = create(:pest, is_reference: true)
     pesticide = Pesticide.new(
-      pesticide_id: "test_pesticide",
       name: "テスト農薬",
       is_reference: false,
       user_id: user.id,
@@ -235,7 +210,8 @@ class PesticideTest < ActiveSupport::TestCase
     )
 
     assert pesticide.persisted?
-    assert_equal "acetamiprid", pesticide.pesticide_id
+    # pesticide_idはidとして扱われるため、to_agrr_outputでidが返される
+    assert_equal pesticide.id.to_s, pesticide.to_agrr_output["pesticide_id"]
     assert_equal "アセタミプリド", pesticide.name
     assert_equal "アセタミプリド", pesticide.active_ingredient
     assert_equal "浸透性殺虫剤として広く使用される", pesticide.description
@@ -495,7 +471,7 @@ class PesticideTest < ActiveSupport::TestCase
 
     output = pesticide.to_agrr_output
 
-    assert_equal "acetamiprid", output["pesticide_id"]
+    assert_equal pesticide.id.to_s, output["pesticide_id"]
     assert_equal pesticide.crop_id.to_s, output["crop_id"]
     assert_equal pesticide.pest.id.to_s, output["pest_id"]
     assert_equal pesticide.name, output["name"]
@@ -619,10 +595,10 @@ class PesticideTest < ActiveSupport::TestCase
     )
 
     assert pesticide.persisted?
-    assert_equal "001", pesticide.pesticide_id
+    assert_equal pesticide.id.to_s, pesticide.to_agrr_output["pesticide_id"]
     assert_equal "テスト農薬", pesticide.name
 
-    found_pesticide = Pesticide.find_by(pesticide_id: "001")
+    found_pesticide = Pesticide.find_by(id: pesticide.id)
     assert_equal pesticide.id, found_pesticide.id
   end
 
@@ -644,10 +620,10 @@ class PesticideTest < ActiveSupport::TestCase
     )
 
     assert pesticide.persisted?
-    assert_equal "imidacloprid_001", pesticide.pesticide_id
+    assert_equal pesticide.id.to_s, pesticide.to_agrr_output["pesticide_id"]
     assert_equal "イミダクロプリド", pesticide.name
 
-    found_pesticide = Pesticide.find_by(pesticide_id: "imidacloprid_001")
+    found_pesticide = Pesticide.find_by(id: pesticide.id)
     assert_equal pesticide.id, found_pesticide.id
   end
 

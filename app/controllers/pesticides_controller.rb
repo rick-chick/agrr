@@ -5,11 +5,11 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides
   def index
-    # 管理者は参照農薬も表示、一般ユーザーは参照農薬のみ表示
+    # 管理者は自身の農薬と参照農薬のみ表示、一般ユーザーは自分の農薬のみ表示
     if admin_user?
-      @pesticides = Pesticide.recent
+      @pesticides = Pesticide.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
     else
-      @pesticides = Pesticide.reference.recent
+      @pesticides = Pesticide.where(user_id: current_user.id, is_reference: false).recent
     end
   end
 
@@ -41,6 +41,8 @@ class PesticidesController < ApplicationController
     end
 
     @pesticide = Pesticide.new(pesticide_params)
+    @pesticide.user_id = nil if is_reference
+    @pesticide.user_id ||= current_user.id
 
     if @pesticide.save
       redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.created')
@@ -86,23 +88,28 @@ class PesticidesController < ApplicationController
   private
 
   def set_pesticide
-    @pesticide = Pesticide.find(params[:id])
+    # 管理者は自身の農薬と参照農薬のみアクセス可能、一般ユーザーは自分の農薬のみアクセス可能
+    if admin_user?
+      @pesticide = Pesticide.where("is_reference = ? OR user_id = ?", true, current_user.id).find(params[:id])
+    else
+      @pesticide = Pesticide.where(user_id: current_user.id, is_reference: false).find(params[:id])
+    end
     
     # アクションに応じた権限チェック
     action = params[:action].to_sym
     
     if action.in?([:edit, :update, :destroy])
       # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（すべての農薬を編集可能）
-      # - 参照農薬でない場合（一般ユーザーが作成した農薬）
-      unless admin_user? || !@pesticide.is_reference
+      # - 管理者（参照農薬または自身の農薬を編集可能）
+      # - 参照農薬でない場合、かつ所有者である場合（一般ユーザーが作成した農薬）
+      unless admin_user? || (!@pesticide.is_reference && @pesticide.user_id == current_user.id)
         redirect_to pesticides_path, alert: I18n.t('pesticides.flash.no_permission')
       end
     elsif action == :show
       # 詳細表示は以下の場合に許可
-      # - 参照農薬（誰でも閲覧可能）
-      # - 管理者
-      unless @pesticide.is_reference || admin_user?
+      # - 管理者（参照農薬または自身の農薬を閲覧可能）
+      # - 自分の農薬（一般ユーザー）
+      unless admin_user? || (@pesticide.user_id == current_user.id && !@pesticide.is_reference)
         redirect_to pesticides_path, alert: I18n.t('pesticides.flash.no_permission')
       end
     end
@@ -111,16 +118,15 @@ class PesticidesController < ApplicationController
   end
 
   def load_crops_and_pests
-    # 作物は参照データのみ
+    # 作物は参照データのみ（一般ユーザーは参照作物のみ選択可能）
     @crops = Crop.reference.order(:name)
     
-    # 害虫は参照データのみ
+    # 害虫は参照データのみ（一般ユーザーは参照害虫のみ選択可能）
     @pests = Pest.reference.order(:name)
   end
 
   def pesticide_params
     params.require(:pesticide).permit(
-      :pesticide_id,
       :name,
       :active_ingredient,
       :description,

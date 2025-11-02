@@ -21,7 +21,7 @@
     
     <div class="info-item">
       <span class="info-label">🆔 <%= t('.pesticide_id') %>:</span>
-      <span class="info-value"><%= @pesticide.pesticide_id %></span>
+      <span class="info-value"><%= @pesticide.id %></span>
     </div>
     
     <div class="info-item">
@@ -116,10 +116,12 @@
       <% end %>
     <% else %>
       <%# ユーザー農薬は所有者が編集・削除可能 %>
-      <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
-      <%= button_to t('.delete'), @pesticide, method: :delete, 
-                  class: "btn btn-error", 
-                  confirm: t('.confirm_delete') %>
+      <% if @pesticide.user_id == current_user.id || admin_user? %>
+        <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @pesticide, method: :delete, 
+                    class: "btn btn-error", 
+                    confirm: t('.confirm_delete') %>
+      <% end %>
     <% end %>
   </div>
 </div>

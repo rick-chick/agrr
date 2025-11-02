@@ -6,6 +6,7 @@ us:
       farms: "Farms"
       crops: "Crops"
       fertilizes: "Fertilizers"
+      pesticides: "Pesticides"
       pests: "Pests"
       interaction_rules: "Rotations"
       login: "Login"
