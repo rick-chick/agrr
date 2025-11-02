@@ -2,6 +2,8 @@
 
 FactoryBot.define do
   factory :pesticide do
+    association :crop, factory: :crop, strategy: :build
+    association :pest, factory: :pest, strategy: :build
     sequence(:pesticide_id) { |n| "pesticide_#{n}" }
     name { "テスト農薬" }
     active_ingredient { "テスト成分" }

@@ -4,12 +4,11 @@ module Domain
   module Pesticide
     module Entities
       class PesticideEntity
-        attr_reader :id, :pesticide_id, :crop_id, :pest_id, :name, :active_ingredient, :description,
+        attr_reader :id, :crop_id, :pest_id, :name, :active_ingredient, :description,
                     :is_reference, :created_at, :updated_at
 
         def initialize(attributes)
           @id = attributes[:id]
-          @pesticide_id = attributes[:pesticide_id]
           @crop_id = attributes[:crop_id]
           @pest_id = attributes[:pest_id]
           @name = attributes[:name]
@@ -33,7 +32,6 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "Pesticide ID is required" if pesticide_id.blank?
           raise ArgumentError, "Name is required" if name.blank?
           raise ArgumentError, "Crop ID is required" if crop_id.blank?
           raise ArgumentError, "Pest ID is required" if pest_id.blank?

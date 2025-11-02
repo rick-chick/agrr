@@ -3,12 +3,22 @@
 module Domain
   module Pesticide
     module Entities
+      # PesticideApplicationDetailsEntity（農薬施用詳細エンティティ）
+      #
+      # Attributes:
+      #   id: データベースの主キー（Integer）
+      #   pesticide_id: 農薬ID（Integer、Pesticide.idを参照、ActiveRecordの外部キーと一致）
+      #   dilution_ratio: 希釈倍率（例: "1000倍"）
+      #   amount_per_m2: 1m²あたりの量
+      #   amount_unit: 単位（例: "ml", "g"）
+      #   application_method: 施用方法（例: "散布"）
       class PesticideApplicationDetailsEntity
         attr_reader :id, :pesticide_id, :dilution_ratio, :amount_per_m2,
                     :amount_unit, :application_method, :created_at, :updated_at
 
         def initialize(attributes)
           @id = attributes[:id]
+          # pesticide_idは整数ID（Pesticide.id）を指す（ActiveRecordの外部キーと一致）
           @pesticide_id = attributes[:pesticide_id]
           @dilution_ratio = attributes[:dilution_ratio]
           @amount_per_m2 = attributes[:amount_per_m2]
@@ -27,6 +37,7 @@ module Domain
         private
 
         def validate!
+          # pesticide_idは整数ID（Pesticide.id）を要求
           raise ArgumentError, "Pesticide ID is required" if pesticide_id.blank?
 
           if amount_per_m2

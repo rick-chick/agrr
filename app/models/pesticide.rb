@@ -34,16 +34,32 @@ class Pesticide < ApplicationRecord
 
   # agrr CLI の pesticide 出力形式からPesticideを作成または更新
   # @param pesticide_data [Hash] agrr pesticide コマンドの個別農薬データ
+  # @param crop_id [Integer] 作物ID（必須）
+  # @param pest_id [Integer] 害虫ID（必須）
   # @param is_reference [Boolean] 参照データかどうか（デフォルト: true）
   # @return [Pesticide] 作成または更新されたPesticide
   # @raise [StandardError] 必須データが欠損している場合
-  def self.from_agrr_output(pesticide_data:, is_reference: true)
+  def self.from_agrr_output(pesticide_data:, crop_id:, pest_id:, is_reference: true)
     unless pesticide_data['pesticide_id']
       raise StandardError, "Invalid pesticide_data: 'pesticide_id' is required"
     end
 
-    pesticide = find_or_initialize_by(pesticide_id: pesticide_data['pesticide_id'])
+    unless crop_id
+      raise StandardError, "crop_id is required"
+    end
+
+    unless pest_id
+      raise StandardError, "pest_id is required"
+    end
+
+    pesticide = find_or_initialize_by(
+      pesticide_id: pesticide_data['pesticide_id'],
+      crop_id: crop_id,
+      pest_id: pest_id
+    )
     pesticide.assign_attributes(
+      crop_id: crop_id,
+      pest_id: pest_id,
       name: pesticide_data['name'],
       active_ingredient: pesticide_data['active_ingredient'],
       description: pesticide_data['description'],
@@ -82,9 +98,12 @@ class Pesticide < ApplicationRecord
 
   # agrr CLI の pesticide 出力形式に変換
   # @return [Hash] agrr CLI が期待する農薬データのハッシュ
+  # @note crop_idとpest_idも含める（Entityとの整合性のため）
   def to_agrr_output
     {
       'pesticide_id' => pesticide_id,
+      'crop_id' => crop_id.to_s,  # agrr CLIは文字列を期待する可能性があるためto_s
+      'pest_id' => pest_id.to_s,  # agrr CLIは文字列を期待する可能性があるためto_s
       'name' => name,
       'active_ingredient' => active_ingredient,
       'description' => description,

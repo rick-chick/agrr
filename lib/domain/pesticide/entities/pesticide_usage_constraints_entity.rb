@@ -3,6 +3,17 @@
 module Domain
   module Pesticide
     module Entities
+      # PesticideUsageConstraintsEntity（農薬使用制約エンティティ）
+      #
+      # Attributes:
+      #   id: データベースの主キー（Integer）
+      #   pesticide_id: 農薬ID（Integer、Pesticide.idを参照、ActiveRecordの外部キーと一致）
+      #   min_temperature: 最小適用温度 (°C)
+      #   max_temperature: 最大適用温度 (°C)
+      #   max_wind_speed_m_s: 最大風速 (m/s)
+      #   max_application_count: 1シーズンあたりの最大施用回数
+      #   harvest_interval_days: 収穫前日数 (PHI)
+      #   other_constraints: その他の制約（テキスト）
       class PesticideUsageConstraintsEntity
         attr_reader :id, :pesticide_id, :min_temperature, :max_temperature,
                     :max_wind_speed_m_s, :max_application_count,
@@ -11,6 +22,7 @@ module Domain
 
         def initialize(attributes)
           @id = attributes[:id]
+          # pesticide_idは整数ID（Pesticide.id）を指す（ActiveRecordの外部キーと一致）
           @pesticide_id = attributes[:pesticide_id]
           @min_temperature = attributes[:min_temperature]
           @max_temperature = attributes[:max_temperature]
@@ -35,6 +47,7 @@ module Domain
         private
 
         def validate!
+          # pesticide_idは整数ID（Pesticide.id）を要求
           raise ArgumentError, "Pesticide ID is required" if pesticide_id.blank?
 
           if min_temperature && max_temperature
