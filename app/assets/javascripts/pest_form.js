@@ -1,20 +1,42 @@
 // 害虫フォーム - 動的な防除方法追加/削除機能
 
+// 防除方法追加ボタンのハンドラーを保持する変数（重複登録防止のため）
+let addControlMethodHandler = null;
+
 function initializePestForm() {
   const addButton = document.getElementById('add-control-method');
   if (!addButton) return;
 
-  let methodIndex = document.querySelectorAll('.control-method-fields').length;
+  // 非表示（削除フラグが立った）要素を除外してインデックスを計算
+  const allMethodFields = document.querySelectorAll('.control-method-fields');
+  let methodIndex = 0;
+  allMethodFields.forEach(field => {
+    const destroyFlag = field.querySelector('.destroy-flag');
+    // destroy-flagが存在し、値が'true'でない、またはstyle.displayが'none'でない要素をカウント
+    if (!destroyFlag || destroyFlag.value !== 'true') {
+      if (field.style.display !== 'none') {
+        methodIndex++;
+      }
+    }
+  });
 
-  // 防除方法追加ボタンのイベント
-  addButton.addEventListener('click', (e) => {
+  // 既存のイベントリスナーを削除（重複登録防止）
+  if (addControlMethodHandler) {
+    addButton.removeEventListener('click', addControlMethodHandler);
+  }
+
+  // 防除方法追加ボタンのイベントハンドラーを定義
+  addControlMethodHandler = (e) => {
     e.preventDefault();
     const container = document.getElementById('control-methods-list');
     const newMethod = createMethodTemplate(methodIndex);
     container.insertAdjacentHTML('beforeend', newMethod);
     methodIndex++;
     attachRemoveHandlers();
-  });
+  };
+
+  // イベントリスナーを追加
+  addButton.addEventListener('click', addControlMethodHandler);
 
   // 削除ボタンのハンドラーを既存の要素に適用
   attachRemoveHandlers();

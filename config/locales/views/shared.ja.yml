@@ -6,6 +6,7 @@ ja:
       farms: "農場"
       crops: "作物"
       fertilizes: "肥料"
+      pests: "害虫"
       interaction_rules: "連作"
       login: "ログイン"
       logout: "ログアウト"
