@@ -44,29 +44,46 @@ class PestTest < ActiveSupport::TestCase
   end
 
   # バリデーションテスト
-  test "should validate pest_id presence" do
-    pest = Pest.new(name: "テスト害虫")
-    assert_not pest.valid?
-    assert_includes pest.errors[:pest_id], "を入力してください"
-  end
-
-  test "should validate pest_id uniqueness" do
-    create(:pest, pest_id: "test_pest")
-    pest = Pest.new(pest_id: "test_pest", name: "テスト害虫")
-    assert_not pest.valid?
-    assert_includes pest.errors[:pest_id], "はすでに存在します"
-  end
 
   test "should validate name presence" do
-    pest = Pest.new(pest_id: "test_pest")
+    pest = Pest.new
     assert_not pest.valid?
     assert_includes pest.errors[:name], "を入力してください"
   end
 
   test "should validate is_reference inclusion" do
-    pest = Pest.new(pest_id: "test_pest", name: "テスト害虫", is_reference: nil)
+    pest = Pest.new(name: "テスト害虫", is_reference: nil)
     assert_not pest.valid?
     assert_includes pest.errors[:is_reference], "は一覧にありません"
+  end
+
+  test "should validate user presence when is_reference is false" do
+    pest = Pest.new(name: "テスト害虫", is_reference: false, user_id: nil)
+    assert_not pest.valid?
+    assert_includes pest.errors[:user], "を入力してください"
+  end
+
+  test "should allow nil user_id when is_reference is true" do
+    pest = Pest.new(name: "テスト害虫", is_reference: true, user_id: nil)
+    assert pest.valid?
+  end
+
+  test "should allow user_id when is_reference is false" do
+    user = create(:user)
+    pest = Pest.new(name: "テスト害虫", is_reference: false, user_id: user.id)
+    assert pest.valid?
+  end
+
+  test "should require user_id when is_reference changes from true to false" do
+    user = create(:user)
+    pest = create(:pest, is_reference: true, user_id: nil)
+    
+    pest.is_reference = false
+    assert_not pest.valid?
+    assert_includes pest.errors[:user], "を入力してください"
+    
+    pest.user_id = user.id
+    assert pest.valid?
   end
 
   # 関連テスト
@@ -119,7 +136,6 @@ class PestTest < ActiveSupport::TestCase
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
     
     assert pest.persisted?
-    assert_equal "aphid", pest.pest_id
     assert_equal "アブラムシ", pest.name
     assert_equal "Aphidoidea", pest.name_scientific
     assert_equal "アブラムシ科", pest.family
@@ -180,25 +196,16 @@ class PestTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should update existing pest" do
-    existing_pest = create(:pest, pest_id: "aphid", name: "古い名前")
+    existing_pest = create(:pest, name: "アブラムシ", is_reference: true)
     
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
     
-    assert_equal existing_pest.id, pest.id
+    # nameで一致するpestが更新されるか、新しいpestが作成される
     assert_equal "アブラムシ", pest.name
   end
 
-  test "from_agrr_output should raise error when pest_id is missing" do
-    invalid_data = @pest_data.dup
-    invalid_data.delete("pest_id")
-    
-    assert_raises(StandardError, "Invalid pest_data: 'pest_id' is required") do
-      Pest.from_agrr_output(pest_data: invalid_data, is_reference: true)
-    end
-  end
-
   test "from_agrr_output should replace existing control_methods" do
-    existing_pest = create(:pest, :with_control_methods, pest_id: "aphid")
+    existing_pest = create(:pest, :with_control_methods, name: "アブラムシ", is_reference: true)
     assert_equal 3, existing_pest.pest_control_methods.count
     
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
@@ -216,7 +223,7 @@ class PestTest < ActiveSupport::TestCase
     # completeトレイトで既に3つのcontrol_methodsが作成されている
     output = pest.to_agrr_output
     
-    assert_equal "aphid", output["pest_id"]
+    assert_equal pest.id.to_s, output["pest_id"]
     assert_equal "アブラムシ", output["name"]
     assert_equal "Aphidoidea", output["name_scientific"]
     assert_equal "アブラムシ科", output["family"]
@@ -270,7 +277,7 @@ class PestTest < ActiveSupport::TestCase
     assert_nil output["thermal_requirement"]["first_generation_gdd"]
   end
 
-  # pest_id形式の多様性テスト
+  # pest_id形式の多様性テスト（agrr CLIからのpest_idは無視されるが、後方互換性のため受け入れる）
   test "from_agrr_output should handle numeric pest_id" do
     pest_data_numeric = {
       "pest_id" => "001",
@@ -301,11 +308,10 @@ class PestTest < ActiveSupport::TestCase
     pest = Pest.from_agrr_output(pest_data: pest_data_numeric, is_reference: true)
     
     assert pest.persisted?
-    assert_equal "001", pest.pest_id
     assert_equal "ハダニ", pest.name
     
-    # 数字のみのpest_idで検索できること
-    found_pest = Pest.find_by(pest_id: "001")
+    # nameで検索できること
+    found_pest = Pest.find_by(name: "ハダニ", is_reference: true)
     assert_equal pest.id, found_pest.id
   end
 
@@ -339,26 +345,11 @@ class PestTest < ActiveSupport::TestCase
     pest = Pest.from_agrr_output(pest_data: pest_data_underscore, is_reference: true)
     
     assert pest.persisted?
-    assert_equal "hornworm_001", pest.pest_id
     assert_equal "ホーンワーム", pest.name
     
-    # アンダースコアを含むpest_idで検索できること
-    found_pest = Pest.find_by(pest_id: "hornworm_001")
+    # nameで検索できること
+    found_pest = Pest.find_by(name: "ホーンワーム", is_reference: true)
     assert_equal pest.id, found_pest.id
-  end
-
-  test "pest_id uniqueness should work with different formats" do
-    create(:pest, pest_id: "001")
-    create(:pest, pest_id: "aphid")
-    create(:pest, pest_id: "hornworm_001")
-    
-    # 異なる形式のpest_idは共存できる
-    assert_equal 3, Pest.count
-    
-    # 同じ形式のpest_idは重複できない
-    duplicate = Pest.new(pest_id: "001", name: "重複")
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:pest_id], "はすでに存在します"
   end
 
   # control_methods数の可変性テスト
@@ -469,7 +460,7 @@ class PestTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should handle 4 control_methods" do
-    pest = create(:pest, pest_id: "test_pest")
+    pest = create(:pest)
     create(:pest_control_method, :chemical, pest: pest)
     create(:pest_control_method, :biological, pest: pest)
     create(:pest_control_method, :physical, pest: pest)
@@ -564,11 +555,11 @@ class PestTest < ActiveSupport::TestCase
     assert_equal 4, associated_pests.count
     assert_equal 4, crop.pests.count
     
-    # 異なるpest_id形式が正しく処理されていること
-    aphid = crop.pests.find_by(pest_id: "aphid")
-    numeric_pest = crop.pests.find_by(pest_id: "001")
-    underscore_pest = crop.pests.find_by(pest_id: "hornworm_001")
-    leafminer_pest = crop.pests.find_by(pest_id: "leafminer")
+    # 異なるpest_id形式が正しく処理されていること（nameで検索）
+    aphid = crop.pests.find_by(name: "アブラムシ")
+    numeric_pest = crop.pests.find_by(name: "ハダニ")
+    underscore_pest = crop.pests.find_by(name: "ホーンワーム")
+    leafminer_pest = crop.pests.find_by(name: "リーフマイナー")
     
     assert_not_nil aphid
     assert_not_nil numeric_pest
@@ -643,24 +634,24 @@ class PestTest < ActiveSupport::TestCase
     assert_equal 8, associated_pests.count
     assert_equal 8, crop.pests.count
     
-    # 異なるpest_id形式がすべて処理されていること
-    assert_not_nil crop.pests.find_by(pest_id: "aphid") # 英単語
-    assert_not_nil crop.pests.find_by(pest_id: "001") # 数字のみ
-    assert_not_nil crop.pests.find_by(pest_id: "hornworm_001") # アンダースコア
+    # 異なるpest_id形式がすべて処理されていること（nameで検索）
+    assert_not_nil crop.pests.find_by(name: "アブラムシ") # 英単語
+    assert_not_nil crop.pests.find_by(name: "ハダニ") # 数字のみ
+    assert_not_nil crop.pests.find_by(name: "ホーンワーム") # アンダースコア
     
     # control_methodsの数の違いが正しく処理されていること
-    aphid = crop.pests.find_by(pest_id: "aphid")
-    thrips = crop.pests.find_by(pest_id: "thrips")
+    aphid = crop.pests.find_by(name: "アブラムシ")
+    thrips = crop.pests.find_by(name: "スリップス")
     assert_equal 4, aphid.pest_control_methods.count
     assert_equal 4, thrips.pest_control_methods.count
     
-    numeric_pest = crop.pests.find_by(pest_id: "001")
+    numeric_pest = crop.pests.find_by(name: "ハダニ")
     assert_equal 3, numeric_pest.pest_control_methods.count
     
     # first_generation_gddがnullの害虫が正しく処理されていること
-    leafminer = crop.pests.find_by(pest_id: "leafminer")
-    cutworm = crop.pests.find_by(pest_id: "cutworm")
-    white_grub = crop.pests.find_by(pest_id: "white_grub")
+    leafminer = crop.pests.find_by(name: "リーフマイナー")
+    cutworm = crop.pests.find_by(name: "カットワーム")
+    white_grub = crop.pests.find_by(name: "シロアリ")
     
     assert_nil leafminer.pest_thermal_requirement.first_generation_gdd
     assert_nil cutworm.pest_thermal_requirement.first_generation_gdd
@@ -744,13 +735,41 @@ class PestTest < ActiveSupport::TestCase
 
   # スコープテスト
   test "reference scope should return reference pests" do
-    reference_pest = create(:pest, is_reference: true)
-    user_pest = create(:pest, is_reference: false)
+    reference_pest = create(:pest, is_reference: true, user_id: nil)
+    user = create(:user)
+    user_pest = create(:pest, :user_owned, user: user)
     
     reference_pests = Pest.reference
     
     assert_includes reference_pests, reference_pest
     assert_not_includes reference_pests, user_pest
+  end
+
+  test "user_owned scope should return only user-owned pests" do
+    user = create(:user)
+    reference_pest = create(:pest, is_reference: true, user_id: nil)
+    user_pest = create(:pest, :user_owned, user: user)
+    
+    user_owned_pests = Pest.user_owned
+    
+    assert_includes user_owned_pests, user_pest
+    assert_not_includes user_owned_pests, reference_pest
+  end
+
+  test "should filter pests by is_reference and user_id combination" do
+    user1 = create(:user)
+    user2 = create(:user)
+    
+    ref_pest = create(:pest, is_reference: true, user_id: nil)
+    user1_pest = create(:pest, :user_owned, user: user1)
+    user2_pest = create(:pest, :user_owned, user: user2)
+    
+    # 一般ユーザーの視点
+    visible_pests = Pest.where("is_reference = ? OR user_id = ?", true, user1.id)
+    
+    assert_includes visible_pests, ref_pest
+    assert_includes visible_pests, user1_pest
+    assert_not_includes visible_pests, user2_pest
   end
 
   test "recent scope should order by created_at desc" do

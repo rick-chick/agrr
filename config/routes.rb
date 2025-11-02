@@ -45,7 +45,9 @@ Rails.application.routes.draw do
     end
 
     # Crops (HTML) routes
-    resources :crops
+    resources :crops do
+      resources :pests, controller: 'crops/pests', except: [:destroy]
+    end
 
     # Fertilizes (HTML) routes
     resources :fertilizes

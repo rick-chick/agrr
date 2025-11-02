@@ -3,7 +3,7 @@
 # Pest（害虫）モデル
 #
 # Attributes:
-#   pest_id: 害虫ID（必須、一意）
+#   id: 害虫ID（主キー）
 #   name: 害虫名（必須）
 #   name_scientific: 学名
 #   family: 科
@@ -11,12 +11,15 @@
 #   description: 説明
 #   occurrence_season: 発生時期
 #   is_reference: 参照データフラグ
+#   user_id: 所有ユーザー（参照害虫の場合はnull）
 #
 # is_reference フラグについて:
 #   - true: システムが提供する参照用害虫マスタ
 #     - user_idはnull（システム所有）
-#   - false: ユーザーが作成した個人の害虫（将来的な拡張用）
+#   - false: ユーザーが作成した個人の害虫
+#     - user_idが設定される（ユーザー所有）
 class Pest < ApplicationRecord
+  belongs_to :user, optional: true
   has_one :pest_temperature_profile, dependent: :destroy
   has_one :pest_thermal_requirement, dependent: :destroy
   has_many :pest_control_methods, dependent: :destroy
@@ -27,11 +30,12 @@ class Pest < ApplicationRecord
   accepts_nested_attributes_for :pest_thermal_requirement, allow_destroy: true
   accepts_nested_attributes_for :pest_control_methods, allow_destroy: true, reject_if: :all_blank
 
-  validates :pest_id, presence: true, uniqueness: true
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
+  validates :user, presence: true, unless: :is_reference?
 
   scope :reference, -> { where(is_reference: true) }
+  scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
 
   # agrr CLI の pest 出力形式からPestを作成または更新
@@ -39,12 +43,17 @@ class Pest < ApplicationRecord
   # @param is_reference [Boolean] 参照データかどうか（デフォルト: true）
   # @return [Pest] 作成または更新されたPest
   # @raise [StandardError] 必須データが欠損している場合
+  # @note pest_dataに'pest_id'がある場合は既存のpestを更新、ない場合は新規作成
   def self.from_agrr_output(pest_data:, is_reference: true)
-    unless pest_data['pest_id']
-      raise StandardError, "Invalid pest_data: 'pest_id' is required"
+    # pest_idが指定されている場合は、既存のpestを検索（後方互換性のため）
+    # ただし、pest_idは文字列IDなので、nameとis_referenceで一致するものを検索
+    pest = nil
+    if pest_data['pest_id']
+      # 既存のpestをnameで検索（pest_idからidへの移行を考慮）
+      pest = find_by(name: pest_data['name'], is_reference: is_reference)
     end
-
-    pest = find_or_initialize_by(pest_id: pest_data['pest_id'])
+    
+    pest ||= new(is_reference: is_reference)
     pest.assign_attributes(
       name: pest_data['name'],
       name_scientific: pest_data['name_scientific'],
@@ -98,7 +107,7 @@ class Pest < ApplicationRecord
   # @return [Hash] agrr CLI が期待する害虫データのハッシュ
   def to_agrr_output
     {
-      'pest_id' => pest_id,
+      'pest_id' => id.to_s,
       'name' => name,
       'name_scientific' => name_scientific,
       'family' => family,

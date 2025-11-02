@@ -11,12 +11,12 @@
      data-i18n-method-description-label="<%= t('pests.form.method_description_label') %>"
      data-i18n-timing-hint-label="<%= t('pests.form.timing_hint_label') %>"
      data-i18n-remove-method="<%= t('pests.form.remove_method') %>">
-  <%= form_with(model: @pest) do |f| %>
-    <% if @pest.errors.any? %>
+  <%= form_with(model: [crop, pest]) do |f| %>
+    <% if pest.errors.any? %>
       <div class="errors">
-        <h3><%= t('pests.form.errors.title', count: @pest.errors.count) %></h3>
+        <h3><%= t('pests.form.errors.title', count: pest.errors.count) %></h3>
         <ul>
-          <% @pest.errors.full_messages.each do |message| %>
+          <% pest.errors.full_messages.each do |message| %>
             <li><%= message %></li>
           <% end %>
         </ul>
@@ -53,26 +53,6 @@
       <%= f.label :occurrence_season, t('pests.form.occurrence_season_label'), class: 'form-label' %>
       <%= f.text_field :occurrence_season, class: 'form-control' %>
       <div class="form-text"><%= t('pests.form.occurrence_season_help') %></div>
-    </div>
-
-    <div class="form-section">
-      <h3 class="form-section-title"><%= t('pests.form.crops_title') %></h3>
-      <div class="form-text"><%= t('pests.form.crops_help') %></div>
-      <% if @available_crops&.any? %>
-        <div class="crops-checkbox-group">
-          <% @available_crops.each do |crop| %>
-            <div class="crop-checkbox-item">
-              <%= check_box_tag 'crop_ids[]', crop.id, @pest.persisted? && @pest.crop_ids.include?(crop.id), id: "crop_#{crop.id}", class: 'form-checkbox' %>
-              <%= label_tag "crop_#{crop.id}", crop.name, class: 'form-label' %>
-              <% if crop.is_reference %>
-                <span class="crop-reference-badge"><%= t('pests.form.reference_crop') %></span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="form-text"><%= t('pests.form.no_crops_available') %></p>
-      <% end %>
     </div>
 
     <div class="form-section">
@@ -175,10 +155,9 @@
     <% end %>
 
     <div class="actions">
-      <%= f.submit t("pests.form.submit_#{@pest.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
-      <%= link_to t('pests.form.cancel'), @pest.persisted? ? pest_path(@pest) : pests_path, class: 'btn btn-secondary' %>
+      <%= f.submit t("pests.form.submit_#{pest.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('pests.form.cancel'), pest.persisted? ? crop_pest_path(crop, pest) : crop_pests_path(crop), class: 'btn btn-secondary' %>
     </div>
   <% end %>
 </div>
-
 
