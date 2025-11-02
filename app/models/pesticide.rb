@@ -8,12 +8,15 @@
 #   active_ingredient: 有効成分名
 #   description: 説明文
 #   is_reference: 参照データフラグ
+#   user_id: 所有ユーザー（参照農薬の場合はnull）
 #
 # is_reference フラグについて:
 #   - true: システムが提供する参照用農薬マスタ
 #     - user_idはnull（システム所有）
-#   - false: ユーザーが作成した個人の農薬（将来的な拡張用）
+#   - false: ユーザーが作成した個人の農薬
+#     - user_idが設定される（ユーザー所有）
 class Pesticide < ApplicationRecord
+  belongs_to :user, optional: true
   belongs_to :crop
   belongs_to :pest
 
@@ -26,10 +29,12 @@ class Pesticide < ApplicationRecord
   validates :pesticide_id, presence: true, uniqueness: { scope: [:crop_id, :pest_id] }
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
+  validates :user, presence: true, unless: :is_reference?
   validates :crop, presence: true
   validates :pest, presence: true
 
   scope :reference, -> { where(is_reference: true) }
+  scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
 
   # agrr CLI の pesticide 出力形式からPesticideを作成または更新

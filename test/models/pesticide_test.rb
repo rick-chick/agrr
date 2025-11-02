@@ -44,14 +44,14 @@ class PesticideTest < ActiveSupport::TestCase
     create(:pesticide, pesticide_id: "test_pesticide", crop: crop1, pest: pest1)
     
     # 同じpesticide_idでも、crop_idまたはpest_idが異なれば有効
-    pesticide2 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬2", crop: crop2, pest: pest1)
+    pesticide2 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬2", crop: crop2, pest: pest1, is_reference: true)
     assert pesticide2.valid?
     
-    pesticide3 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬3", crop: crop1, pest: pest2)
+    pesticide3 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬3", crop: crop1, pest: pest2, is_reference: true)
     assert pesticide3.valid?
     
     # 同じpesticide_id、crop_id、pest_idの組み合わせは無効
-    pesticide4 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬4", crop: crop1, pest: pest1)
+    pesticide4 = Pesticide.new(pesticide_id: "test_pesticide", name: "テスト農薬4", crop: crop1, pest: pest1, is_reference: true)
     assert_not pesticide4.valid?
     assert_includes pesticide4.errors[:pesticide_id], "はすでに存在します"
   end
@@ -82,7 +82,126 @@ class PesticideTest < ActiveSupport::TestCase
     assert_includes pesticide.errors[:is_reference], "は一覧にありません"
   end
 
+  test "should validate user presence when is_reference is false" do
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = Pesticide.new(
+      pesticide_id: "test_pesticide",
+      name: "テスト農薬",
+      is_reference: false,
+      user_id: nil,
+      crop: crop,
+      pest: pest
+    )
+    assert_not pesticide.valid?
+    assert_includes pesticide.errors[:user], "を入力してください"
+  end
+
+  test "should allow nil user_id when is_reference is true" do
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = Pesticide.new(
+      pesticide_id: "test_pesticide",
+      name: "テスト農薬",
+      is_reference: true,
+      user_id: nil,
+      crop: crop,
+      pest: pest
+    )
+    assert pesticide.valid?
+  end
+
+  test "should allow user_id when is_reference is false" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = Pesticide.new(
+      pesticide_id: "test_pesticide",
+      name: "テスト農薬",
+      is_reference: false,
+      user_id: user.id,
+      crop: crop,
+      pest: pest
+    )
+    assert pesticide.valid?
+  end
+
+  test "should require user_id when is_reference changes from true to false" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
+    
+    pesticide.is_reference = false
+    assert_not pesticide.valid?
+    assert_includes pesticide.errors[:user], "を入力してください"
+    
+    pesticide.user_id = user.id
+    assert pesticide.valid?
+  end
+
   # 関連テスト
+  test "should belong to user" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
+    
+    assert_equal user.id, pesticide.user_id
+    assert_equal user, pesticide.user
+  end
+
+  test "should allow nil user for reference pesticides" do
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = create(:pesticide, user_id: nil, crop: crop, pest: pest, is_reference: true)
+    
+    assert_nil pesticide.user_id
+    assert_nil pesticide.user
+  end
+
+  test "user should have many pesticides" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide1 = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
+    pesticide2 = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
+    
+    assert_equal 2, user.pesticides.count
+    assert_includes user.pesticides, pesticide1
+    assert_includes user.pesticides, pesticide2
+  end
+
+  test "user pesticides should be destroyed when user is destroyed" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    pesticide = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
+    pesticide_id = pesticide.id
+    
+    user.destroy
+    
+    assert_not Pesticide.exists?(pesticide_id)
+  end
+
+  test "should filter pesticides by is_reference and user_id combination" do
+    user1 = create(:user)
+    user2 = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    
+    ref_pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
+    user1_pesticide = create(:pesticide, is_reference: false, user: user1, crop: crop, pest: pest)
+    user2_pesticide = create(:pesticide, is_reference: false, user: user2, crop: crop, pest: pest)
+    
+    # 一般ユーザーの視点
+    visible_pesticides = Pesticide.where("is_reference = ? OR user_id = ?", true, user1.id)
+    
+    assert_includes visible_pesticides, ref_pesticide
+    assert_includes visible_pesticides, user1_pesticide
+    assert_not_includes visible_pesticides, user2_pesticide
+  end
+
   test "should have one pesticide_usage_constraint" do
     pesticide = create(:pesticide, :with_usage_constraint)
     assert_not_nil pesticide.pesticide_usage_constraint
@@ -258,7 +377,8 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should update is_reference flag" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", is_reference: false, crop: @crop, pest: @pest)
+    user = create(:user)
+    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", is_reference: false, user: user, crop: @crop, pest: @pest)
 
     pesticide = Pesticide.from_agrr_output(
       pesticide_data: @pesticide_data,
@@ -377,7 +497,7 @@ class PesticideTest < ActiveSupport::TestCase
 
     assert_equal "acetamiprid", output["pesticide_id"]
     assert_equal pesticide.crop_id.to_s, output["crop_id"]
-    assert_equal pesticide.pest_id.to_s, output["pest_id"]
+    assert_equal pesticide.pest.id.to_s, output["pest_id"]
     assert_equal pesticide.name, output["name"]
     assert_equal pesticide.active_ingredient, output["active_ingredient"]
     assert_equal pesticide.description, output["description"]
@@ -544,27 +664,43 @@ class PesticideTest < ActiveSupport::TestCase
     assert_equal 3, Pesticide.count
 
     # 同じpesticide_id、crop_id、pest_idの組み合わせは重複エラー
-    duplicate = Pesticide.new(pesticide_id: "001", name: "重複", crop: crop1, pest: pest1)
+    duplicate = Pesticide.new(pesticide_id: "001", name: "重複", crop: crop1, pest: pest1, is_reference: true)
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:pesticide_id], "はすでに存在します"
     
     # 異なるcrop_idまたはpest_idの場合は有効
-    valid = Pesticide.new(pesticide_id: "001", name: "有効", crop: crop2, pest: pest1)
+    valid = Pesticide.new(pesticide_id: "001", name: "有効", crop: crop2, pest: pest1, is_reference: true)
     assert valid.valid?
     
-    valid2 = Pesticide.new(pesticide_id: "001", name: "有効2", crop: crop1, pest: pest2)
+    valid2 = Pesticide.new(pesticide_id: "001", name: "有効2", crop: crop1, pest: pest2, is_reference: true)
     assert valid2.valid?
   end
 
   # スコープテスト
   test "reference scope should return reference pesticides" do
-    reference_pesticide = create(:pesticide, is_reference: true)
-    user_pesticide = create(:pesticide, is_reference: false)
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    reference_pesticide = create(:pesticide, is_reference: true, crop: crop, pest: pest)
+    user_pesticide = create(:pesticide, is_reference: false, user: user, crop: crop, pest: pest)
 
     reference_pesticides = Pesticide.reference
 
     assert_includes reference_pesticides, reference_pesticide
     assert_not_includes reference_pesticides, user_pesticide
+  end
+
+  test "user_owned scope should return only user-owned pesticides" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    reference_pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
+    user_pesticide = create(:pesticide, is_reference: false, user: user, crop: crop, pest: pest)
+    
+    user_owned_pesticides = Pesticide.user_owned
+    
+    assert_includes user_owned_pesticides, user_pesticide
+    assert_not_includes user_owned_pesticides, reference_pesticide
   end
 
   test "recent scope should order by created_at desc" do
