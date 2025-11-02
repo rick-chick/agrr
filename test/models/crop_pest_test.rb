@@ -52,8 +52,8 @@ class CropPestTest < ActiveSupport::TestCase
   end
 
   test "should allow different pests for same crop" do
-    pest1 = create(:pest, pest_id: "pest1")
-    pest2 = create(:pest, pest_id: "pest2")
+    pest1 = create(:pest)
+    pest2 = create(:pest)
     
     crop_pest1 = create(:crop_pest, crop: @crop, pest: pest1)
     crop_pest2 = create(:crop_pest, crop: @crop, pest: pest2)

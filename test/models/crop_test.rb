@@ -79,7 +79,7 @@ class CropTest < ActiveSupport::TestCase
   test "should have many crop_pests" do
     crop = create(:crop)
     pest1 = create(:pest)
-    pest2 = create(:pest, pest_id: "pest2")
+    pest2 = create(:pest)
     
     create(:crop_pest, crop: crop, pest: pest1)
     create(:crop_pest, crop: crop, pest: pest2)
@@ -90,7 +90,7 @@ class CropTest < ActiveSupport::TestCase
   test "should have many pests through crop_pests" do
     crop = create(:crop)
     pest1 = create(:pest)
-    pest2 = create(:pest, pest_id: "pest2")
+    pest2 = create(:pest)
     
     create(:crop_pest, crop: crop, pest: pest1)
     create(:crop_pest, crop: crop, pest: pest2)
@@ -165,14 +165,14 @@ class CropTest < ActiveSupport::TestCase
     assert_equal 2, crop.pests.count
     assert_equal 2, crop.crop_pests.count
     
-    aphid = crop.pests.find_by(pest_id: "aphid")
+    aphid = crop.pests.find_by(name: "アブラムシ")
     assert_not_nil aphid
     assert_equal "アブラムシ", aphid.name
     assert_not_nil aphid.pest_temperature_profile
     assert_equal 5, aphid.pest_temperature_profile.base_temperature
     assert_equal 1, aphid.pest_control_methods.count
     
-    spider_mite = crop.pests.find_by(pest_id: "spider_mite")
+    spider_mite = crop.pests.find_by(name: "ダニ")
     assert_not_nil spider_mite
     assert_equal "ダニ", spider_mite.name
     assert_not_nil spider_mite.pest_thermal_requirement
@@ -181,7 +181,7 @@ class CropTest < ActiveSupport::TestCase
 
   test "associate_pests_from_agrr_output should not duplicate existing associations" do
     crop = create(:crop)
-    existing_pest = create(:pest, pest_id: "aphid")
+    existing_pest = create(:pest, name: "アブラムシ", is_reference: true)
     create(:crop_pest, crop: crop, pest: existing_pest)
     
     pest_output_data = {
@@ -239,13 +239,13 @@ class CropTest < ActiveSupport::TestCase
 
   test "associate_pests_from_agrr_output should update existing pests" do
     crop = create(:crop)
-    existing_pest = create(:pest, pest_id: "aphid", name: "古い名前")
+    existing_pest = create(:pest, name: "新しい名前", is_reference: true)
     
     pest_output_data = {
       "pests" => [
         {
           "pest_id" => "aphid",
-          "name" => "新しい名前",
+          "name" => "新しい名前",  # 既存のpestと同じname
           "name_scientific" => "Aphidoidea",
           "family" => "アブラムシ科",
           "order" => "半翅目",
@@ -268,6 +268,8 @@ class CropTest < ActiveSupport::TestCase
     
     existing_pest.reload
     assert_equal "新しい名前", existing_pest.name
+    # 新しいpestが作成されず、既存のpestが更新されていること
+    assert_equal 1, crop.pests.count
   end
 
   # 複数害虫の統合テスト（実際のagrr出力に基づく）
@@ -328,18 +330,18 @@ class CropTest < ActiveSupport::TestCase
     assert_equal 8, crop.pests.count
     assert_equal 8, crop.crop_pests.count
     
-    # 異なるpest_id形式がすべて正しく処理されていること
-    assert_not_nil crop.pests.find_by(pest_id: "aphid") # 英単語
-    assert_not_nil crop.pests.find_by(pest_id: "001") # 数字のみ
-    assert_not_nil crop.pests.find_by(pest_id: "hornworm_001") # アンダースコア
+    # 異なるpest_id形式がすべて正しく処理されていること（nameで検索）
+    assert_not_nil crop.pests.find_by(name: "アブラムシ") # 英単語
+    assert_not_nil crop.pests.find_by(name: "ハダニ") # 数字のみ
+    assert_not_nil crop.pests.find_by(name: "ホーンワーム") # アンダースコア
     
     # control_methodsの数の違いが正しく処理されていること
-    aphid = crop.pests.find_by(pest_id: "aphid")
-    thrips = crop.pests.find_by(pest_id: "thrips")
+    aphid = crop.pests.find_by(name: "アブラムシ")
+    thrips = crop.pests.find_by(name: "スリップス")
     assert_equal 4, aphid.pest_control_methods.count
     assert_equal 4, thrips.pest_control_methods.count
     
-    numeric_pest = crop.pests.find_by(pest_id: "001")
+    numeric_pest = crop.pests.find_by(name: "ハダニ")
     assert_equal 3, numeric_pest.pest_control_methods.count
     
     # physicalタイプが正しく処理されていること
@@ -347,9 +349,9 @@ class CropTest < ActiveSupport::TestCase
     assert_not_nil thrips.pest_control_methods.find_by(method_type: "physical")
     
     # first_generation_gddがnullの害虫が正しく処理されていること
-    leafminer = crop.pests.find_by(pest_id: "leafminer")
-    cutworm = crop.pests.find_by(pest_id: "cutworm")
-    white_grub = crop.pests.find_by(pest_id: "white_grub")
+    leafminer = crop.pests.find_by(name: "リーフマイナー")
+    cutworm = crop.pests.find_by(name: "カットワーム")
+    white_grub = crop.pests.find_by(name: "シロアリ")
     
     assert_nil leafminer.pest_thermal_requirement.first_generation_gdd
     assert_nil cutworm.pest_thermal_requirement.first_generation_gdd

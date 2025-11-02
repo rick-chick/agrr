@@ -2,9 +2,7 @@
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
-  <% if admin_user? %>
-    <%= link_to t('.new_pest'), new_pest_path, class: "btn btn-success" %>
-  <% end %>
+  <%= link_to t('.new_pest'), new_pest_path, class: "btn btn-success" %>
 </div>
 
 <% if @pests.any? %>
@@ -53,9 +51,7 @@
     <div class="empty-state-icon"><%= t('.empty.icon') %></div>
     <h3><%= t('.empty.title') %></h3>
     <p><%= t('.empty.description') %></p>
-    <% if admin_user? %>
-      <%= link_to t('.empty.button'), new_pest_path, class: "btn btn-success" %>
-    <% end %>
+    <%= link_to t('.empty.button'), new_pest_path, class: "btn btn-success" %>
   </div>
 <% end %>
 
