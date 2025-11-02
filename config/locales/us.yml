@@ -46,6 +46,13 @@ us:
   
   # JavaScript messages
   js:
+    crop_ai:
+      enter_name: "Please enter a crop name"
+      fetching: "Fetching crop information with AI..."
+      button_fetching: "🤖 Fetching with AI..."
+      created_success: "✓ Retrieved and saved crop '%{name}'!"
+      fetch_failed: "Failed to retrieve crop information"
+      network_error: "A network error occurred"
     crop_palette:
       plan_id_missing: "Error: Could not retrieve plan ID"
       crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
