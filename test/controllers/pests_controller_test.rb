@@ -277,20 +277,78 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pests_path
   end
 
-  test "should show all pests for admin" do
+  test "admin should see only reference pests and own pests in index" do
     admin_user = create(:user, admin: true)
     sign_in_as admin_user
     
     reference_pest = create(:pest, is_reference: true, user_id: nil)
-    user_pest = create(:pest, :user_owned, user: admin_user)
+    admin_pest = create(:pest, :user_owned, user: admin_user)
+    other_user = create(:user)
+    other_user_pest = create(:pest, :user_owned, user: other_user)
     
     get pests_path
     assert_response :success
-    # 管理者は参照害虫と自分の害虫のみ表示（現状の実装）
-    assert_select '.crop-card', minimum: 2  # @pest (参照), reference_pest, user_pest
+    
+    # 管理者は参照害虫と自分の害虫のみ表示される
+    # @pest (setupで作成された参照害虫), reference_pest, admin_pest の3つが表示される
+    response_body = response.body
+    assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
+    assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
+    assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
   end
 
-  test "should not show other user pest in index" do
+  test "admin should not access other user's pest" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+    
+    other_user = create(:user)
+    other_user_pest = create(:pest, :user_owned, user: other_user)
+    
+    # 詳細画面にアクセス試行
+    get pest_path(other_user_pest)
+    assert_redirected_to pests_path
+    assert_equal I18n.t('pests.flash.no_permission'), flash[:alert]
+    
+    # 編集画面にアクセス試行
+    get edit_pest_path(other_user_pest)
+    assert_redirected_to pests_path
+    assert_equal I18n.t('pests.flash.no_permission'), flash[:alert]
+    
+    # 更新試行
+    patch pest_path(other_user_pest), params: { pest: { name: '変更された名前' } }
+    assert_redirected_to pests_path
+    assert_equal I18n.t('pests.flash.no_permission'), flash[:alert]
+    other_user_pest.reload
+    assert_not_equal '変更された名前', other_user_pest.name
+  end
+
+  test "admin should access reference pest" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+    
+    reference_pest = create(:pest, is_reference: true, user_id: nil)
+    
+    get pest_path(reference_pest)
+    assert_response :success
+    
+    get edit_pest_path(reference_pest)
+    assert_response :success
+  end
+
+  test "admin should access own pest" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+    
+    admin_pest = create(:pest, :user_owned, user: admin_user)
+    
+    get pest_path(admin_pest)
+    assert_response :success
+    
+    get edit_pest_path(admin_pest)
+    assert_response :success
+  end
+
+  test "regular user should not see other user pest in index" do
     other_user = create(:user)
     other_user_pest = create(:pest, :user_owned, user: other_user, name: '他のユーザーの害虫')
     my_pest = create(:pest, :user_owned, user: @user, name: '自分の害虫')
@@ -299,12 +357,11 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     get pests_path
     assert_response :success
     
-    # 自分の害虫と参照害虫のみ表示される（@pestも参照害虫なので含まれる）
-    # 実際には @pest, my_pest, reference_pest の3つが表示される可能性がある
-    assert_select '.crop-card', minimum: 1  # 最低1つ（@pestが参照害虫として既に存在）
-    # 他のユーザーの害虫は表示されない
+    # 一般ユーザーは自分の害虫のみ表示される（参照害虫は表示しない）
     response_body = response.body
-    assert_not response_body.include?(other_user_pest.name), "他のユーザーの害虫が表示されてはいけない"
+    assert response_body.include?(my_pest.name), "自分の害虫が表示されるべき"
+    assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+    assert_not response_body.include?(reference_pest.name), "参照害虫は表示されないべき"
   end
 
   test "should not show other user pest detail" do

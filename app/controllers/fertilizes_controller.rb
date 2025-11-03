@@ -5,11 +5,11 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes
   def index
-    # 管理者は参照肥料も表示、一般ユーザーは参照肥料のみ表示
+    # 管理者は自身の肥料と参照肥料を表示、一般ユーザーは自身の肥料のみ表示
     if admin_user?
-      @fertilizes = Fertilize.recent
+      @fertilizes = Fertilize.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
     else
-      @fertilizes = Fertilize.reference.recent
+      @fertilizes = Fertilize.where(user_id: current_user.id, is_reference: false).recent
     end
   end
 
@@ -28,12 +28,20 @@ class FertilizesController < ApplicationController
 
   # POST /fertilizes
   def create
-    is_reference = fertilize_params[:is_reference] || false
+    # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
+    is_reference = ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) || false
     if is_reference && !admin_user?
       return redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.reference_only_admin')
     end
 
     @fertilize = Fertilize.new(fertilize_params)
+    if is_reference
+      @fertilize.user_id = nil
+      @fertilize.is_reference = true
+    else
+      @fertilize.user_id = current_user.id
+      @fertilize.is_reference = false
+    end
 
     if @fertilize.save
       redirect_to fertilize_path(@fertilize), notice: I18n.t('fertilizes.flash.created')
@@ -44,8 +52,12 @@ class FertilizesController < ApplicationController
 
   # PATCH/PUT /fertilizes/:id
   def update
-    if fertilize_params.key?(:is_reference) && !admin_user?
-      return redirect_to fertilize_path(@fertilize), alert: I18n.t('fertilizes.flash.reference_flag_admin_only')
+    # is_referenceをbooleanに変換してチェック
+    if fertilize_params.key?(:is_reference)
+      is_reference = ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) || false
+      if is_reference != @fertilize.is_reference && !admin_user?
+        return redirect_to fertilize_path(@fertilize), alert: I18n.t('fertilizes.flash.reference_flag_admin_only')
+      end
     end
 
     if @fertilize.update(fertilize_params)
@@ -73,23 +85,28 @@ class FertilizesController < ApplicationController
   private
 
   def set_fertilize
-    @fertilize = Fertilize.find(params[:id])
+    # 管理者は自身の肥料と参照肥料のみアクセス可能、一般ユーザーは自分の肥料のみアクセス可能
+    if admin_user?
+      @fertilize = Fertilize.where("is_reference = ? OR user_id = ?", true, current_user.id).find(params[:id])
+    else
+      @fertilize = Fertilize.where(user_id: current_user.id, is_reference: false).find(params[:id])
+    end
     
     # アクションに応じた権限チェック
     action = params[:action].to_sym
     
     if action.in?([:edit, :update, :destroy])
       # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（すべての肥料を編集可能）
-      # - 参照肥料でない場合（一般ユーザーが作成した肥料）
-      unless admin_user? || !@fertilize.is_reference
+      # - 管理者（参照肥料または自身の肥料を編集可能）
+      # - 参照肥料でない場合、かつ所有者である場合（一般ユーザーが作成した肥料）
+      unless admin_user? || (!@fertilize.is_reference && @fertilize.user_id == current_user.id)
         redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
       end
     elsif action == :show
       # 詳細表示は以下の場合に許可
-      # - 参照肥料（誰でも閲覧可能）
-      # - 管理者
-      unless @fertilize.is_reference || admin_user?
+      # - 管理者（参照肥料または自身の肥料を閲覧可能）
+      # - 自分の肥料（一般ユーザー）
+      unless admin_user? || (@fertilize.user_id == current_user.id && !@fertilize.is_reference)
         redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
       end
     end

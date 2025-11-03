@@ -5,9 +5,9 @@ class PestsController < ApplicationController
 
   # GET /pests
   def index
-    # 管理者はすべての害虫を表示、一般ユーザーは自分が作成した害虫（is_reference: false, user_id: current_user.id）のみ表示
+    # 管理者は参照害虫と自身が作成した害虫のみ表示、一般ユーザーは自分が作成した害虫のみ表示
     if admin_user?
-      @pests = Pest.recent
+      @pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
     else
       # 一般ユーザー: 自分の害虫のみ表示（参照害虫は表示しない）
       @pests = Pest.where(user_id: current_user.id).recent
@@ -113,21 +113,15 @@ class PestsController < ApplicationController
     # アクションに応じた権限チェック
     action = params[:action].to_sym
     
-    if action.in?([:edit, :update, :destroy])
-      # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（すべての害虫を編集可能）
-      # - ユーザー害虫の所有者
-      unless admin_user? || (!@pest.is_reference && @pest.user_id == current_user.id)
-        redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
-      end
-    elsif action == :show
-      # 詳細表示は以下の場合に許可
-      # - 参照害虫（誰でも閲覧可能）
-      # - 自分の害虫
-      # - 管理者
-      unless @pest.is_reference || @pest.user_id == current_user.id || admin_user?
-        redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
-      end
+    # アクセス権限チェック: 参照害虫または自分の害虫のみアクセス可能
+    # 管理者も他人のユーザー害虫にはアクセスできない
+    unless @pest.is_reference || @pest.user_id == current_user.id
+      redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
+    end
+    
+    # 編集・更新・削除は参照害虫の場合、管理者のみ許可
+    if action.in?([:edit, :update, :destroy]) && @pest.is_reference && !admin_user?
+      redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to pests_path, alert: I18n.t('pests.flash.not_found')

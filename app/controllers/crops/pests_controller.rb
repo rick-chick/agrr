@@ -7,10 +7,11 @@ module Crops
 
     # GET /crops/:crop_id/pests
     def index
-      # この作物に関連付けられている害虫を取得
-      @pests = @crop.pests.recent
-      # 参照害虫も選択可能にするため、利用可能なすべての害虫を取得
-      @available_pests = Pest.recent
+      # この作物に関連付けられている害虫を取得（アクセス権限のある害虫のみ）
+      # 参照害虫または自分の害虫のみ表示
+      @pests = @crop.pests.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+      # 参照害虫も選択可能にするため、利用可能な害虫を取得（管理者も参照害虫と自分の害虫のみ）
+      @available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
     end
 
     # GET /crops/:crop_id/pests/:id
@@ -25,8 +26,9 @@ module Crops
       @pest.build_pest_thermal_requirement
       @pest.pest_control_methods.build
       
-      # この作物にまだ関連付けられていない害虫のリスト
-      @unassociated_pests = Pest.recent.where.not(id: @crop.pest_ids)
+      # この作物にまだ関連付けられていない害虫のリスト（参照害虫または自分の害虫のみ）
+      available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id)
+      @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
     end
 
     # GET /crops/:crop_id/pests/:id/edit
@@ -68,7 +70,8 @@ module Crops
         @crop.pests << @pest unless @crop.pests.include?(@pest)
         redirect_to crop_pest_path(@crop, @pest), notice: I18n.t('crops.pests.flash.created')
       else
-        @unassociated_pests = Pest.recent.where.not(id: @crop.pest_ids)
+        available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id)
+        @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
         render :new, status: :unprocessable_entity
       end
     end
@@ -95,7 +98,8 @@ module Crops
       @crop = Crop.find(params[:crop_id])
       
       # 作物へのアクセス権限チェック
-      unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
+      # 管理者も参照作物と自身が作成した作物のみアクセス可能
+      unless @crop.is_reference || @crop.user_id == current_user.id
         redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
       end
     rescue ActiveRecord::RecordNotFound
