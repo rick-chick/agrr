@@ -59,7 +59,7 @@ class Crop < ApplicationRecord
   # @raise [StandardError] 必須データが未設定の場合
   def to_agrr_requirement
     # crop_stagesをorderでソート
-    sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement).order(:order)
+    sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement).order(:order)
     
     # 生育ステージが未設定の場合はエラー
     if sorted_stages.empty?
@@ -71,6 +71,7 @@ class Crop < ApplicationRecord
       temp_req = stage.temperature_requirement
       thermal_req = stage.thermal_requirement
       sunshine_req = stage.sunshine_requirement
+      nutrient_req = stage.nutrient_requirement
       
       # 必須チェック
       unless temp_req && thermal_req
@@ -103,6 +104,17 @@ class Crop < ApplicationRecord
         stage_hash['sunshine'] = {
           'minimum_sunshine_hours' => sunshine_req.minimum_sunshine_hours,
           'target_sunshine_hours' => sunshine_req.target_sunshine_hours
+        }
+      end
+      
+      # 栄養素要件がある場合のみ追加
+      if nutrient_req
+        stage_hash['nutrients'] = {
+          'daily_uptake' => {
+            'N' => nutrient_req.daily_uptake_n,
+            'P' => nutrient_req.daily_uptake_p,
+            'K' => nutrient_req.daily_uptake_k
+          }
         }
       end
       

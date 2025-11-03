@@ -96,6 +96,13 @@ module AgrrMockHelper
               },
               'thermal' => {
                 'required_gdd' => 500.0
+              },
+              'nutrients' => {
+                'daily_uptake' => {
+                  'N' => 0.5,
+                  'P' => 0.2,
+                  'K' => 0.8
+                }
               }
             }
           ]

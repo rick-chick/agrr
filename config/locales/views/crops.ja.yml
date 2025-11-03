@@ -35,6 +35,7 @@ ja:
       temperature_section: "🌡️ 温度要件"
       thermal_section: "🌡️ 熱要件（GDD）"
       sunshine_section: "☀️ 日照要件"
+      nutrient_section: "🌱 栄養素要件"
       
       temperature:
         base_temperature_label: "最低限界温度 (°C)"
@@ -65,6 +66,17 @@ ja:
         minimum_hours_placeholder: "例：4.0"
         target_hours_label: "目標日照時間 (時間)"
         target_hours_placeholder: "例：8.0"
+      
+      nutrient:
+        daily_uptake_n_label: "窒素 (N) 吸収量 (g/m²/day)"
+        daily_uptake_n_placeholder: "例：0.5"
+        daily_uptake_n_help: "このステージでの窒素の日当たり吸収量を入力してください。"
+        daily_uptake_p_label: "リン (P) 吸収量 (g/m²/day)"
+        daily_uptake_p_placeholder: "例：0.2"
+        daily_uptake_p_help: "このステージでのリン（元素）の日当たり吸収量を入力してください。"
+        daily_uptake_k_label: "カリウム (K) 吸収量 (g/m²/day)"
+        daily_uptake_k_placeholder: "例：0.8"
+        daily_uptake_k_help: "このステージでのカリウム（元素）の日当たり吸収量を入力してください。"
 
     flash:
       created: "作物が正常に作成されました。"
@@ -126,6 +138,7 @@ ja:
       temperature_requirement: "温度要件"
       thermal_requirement: "熱要件（GDD）"
       sunshine_requirement: "日照要件"
+      nutrient_requirement: "栄養素要件"
       base_temperature: "最低限界温度"
       optimal_temperature: "最適温度"
       low_stress_threshold: "低ストレス閾値"
@@ -136,6 +149,9 @@ ja:
       required_gdd: "必要積算温度"
       minimum_sunshine_hours: "最低日照時間"
       target_sunshine_hours: "目標日照時間"
+      daily_uptake_n: "窒素 (N) 吸収量"
+      daily_uptake_p: "リン (P) 吸収量"
+      daily_uptake_k: "カリウム (K) 吸収量"
       back_to_list: "作物一覧に戻る"
       edit: "編集"
       delete: "削除"

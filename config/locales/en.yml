@@ -56,6 +56,9 @@ en:
       sterility_risk_placeholder: "e.g., 35.0"
       minimum_sunshine_placeholder: "e.g., 4.0"
       target_sunshine_placeholder: "e.g., 8.0"
+      daily_uptake_n_placeholder: "e.g., 0.5"
+      daily_uptake_p_placeholder: "e.g., 0.2"
+      daily_uptake_k_placeholder: "e.g., 0.8"
     
     crop_selection:
       max_crops_message: "Maximum %{max} crop types can be selected"

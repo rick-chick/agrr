@@ -140,6 +140,9 @@ ja:
       sterility_risk_placeholder: "例：35.0"
       minimum_sunshine_placeholder: "例：4.0"
       target_sunshine_placeholder: "例：8.0"
+      daily_uptake_n_placeholder: "例：0.5"
+      daily_uptake_p_placeholder: "例：0.2"
+      daily_uptake_k_placeholder: "例：0.8"
     
     crop_selection:
       max_crops_message: "作物は最大%{max}種類まで選択できます"

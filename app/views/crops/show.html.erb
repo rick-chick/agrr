@@ -90,7 +90,7 @@
             <div class="stage-name"><%= stage.name %></div>
             <div class="stage-order"><%= t('.stage_order') %>: <%= stage.order %></div>
             
-            <% if stage.temperature_requirement || stage.thermal_requirement || stage.sunshine_requirement %>
+            <% if stage.temperature_requirement || stage.thermal_requirement || stage.sunshine_requirement || stage.nutrient_requirement %>
               <div class="stage-requirements">
                 <% if stage.temperature_requirement %>
                   <div class="requirement-item">
@@ -122,6 +122,17 @@
                     <div class="requirement-value">
                       <%= t('.minimum_sunshine_hours') %>: <%= stage.sunshine_requirement.minimum_sunshine_hours %>時間<br>
                       <%= t('.target_sunshine_hours') %>: <%= stage.sunshine_requirement.target_sunshine_hours %>時間
+                    </div>
+                  </div>
+                <% end %>
+                
+                <% if stage.nutrient_requirement %>
+                  <div class="requirement-item">
+                    <div class="requirement-label">🌱 <%= t('.nutrient_requirement') %></div>
+                    <div class="requirement-value">
+                      <%= t('.daily_uptake_n') %>: <%= stage.nutrient_requirement.daily_uptake_n %> g/m²/day<br>
+                      <%= t('.daily_uptake_p') %>: <%= stage.nutrient_requirement.daily_uptake_p %> g/m²/day<br>
+                      <%= t('.daily_uptake_k') %>: <%= stage.nutrient_requirement.daily_uptake_k %> g/m²/day
                     </div>
                   </div>
                 <% end %>

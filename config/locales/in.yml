@@ -85,6 +85,9 @@ in:
       sterility_risk_placeholder: "उदा., 35.0"
       minimum_sunshine_placeholder: "उदा., 4.0"
       target_sunshine_placeholder: "उदा., 8.0"
+      daily_uptake_n_placeholder: "उदा., 0.5"
+      daily_uptake_p_placeholder: "उदा., 0.2"
+      daily_uptake_k_placeholder: "उदा., 0.8"
     
     crop_selection:
       max_crops_message: "आप अधिकतम %{max} फसलें चुन सकते हैं"
