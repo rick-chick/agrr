@@ -291,6 +291,20 @@ module Api
             )
           end
           
+          # 栄養素要件を作成
+          if stage_requirement['nutrients'].present?
+            nutrients_data = stage_requirement['nutrients']
+            daily_uptake = nutrients_data['daily_uptake']
+            if daily_uptake.present?
+              ::NutrientRequirement.create!(
+                crop_stage_id: stage.id,
+                daily_uptake_n: daily_uptake['N'],
+                daily_uptake_p: daily_uptake['P'],
+                daily_uptake_k: daily_uptake['K']
+              )
+            end
+          end
+          
           saved_count += 1
           Rails.logger.debug "  🌱 Stage #{stage.order}: #{stage.name} (ID: #{stage.id})"
         end

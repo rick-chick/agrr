@@ -39,5 +39,12 @@
       <%= render 'sunshine_requirement_fields', f: sun_form %>
     <% end %>
   </div>
+
+  <div class="nested-section">
+    <h5 class="nested-subtitle"><%= t('crops.stage.nutrient_section') %></h5>
+    <%= f.fields_for :nutrient_requirement do |nut_form| %>
+      <%= render 'nutrient_requirement_fields', f: nut_form %>
+    <% end %>
+  </div>
 </div>
 

@@ -37,6 +37,9 @@ module ApplicationHelper
       js_crop_sterility_risk_placeholder: t('js.crop_form.sterility_risk_placeholder'),
       js_crop_minimum_sunshine_placeholder: t('js.crop_form.minimum_sunshine_placeholder'),
       js_crop_target_sunshine_placeholder: t('js.crop_form.target_sunshine_placeholder'),
+      js_crop_daily_uptake_n_placeholder: t('js.crop_form.daily_uptake_n_placeholder'),
+      js_crop_daily_uptake_p_placeholder: t('js.crop_form.daily_uptake_p_placeholder'),
+      js_crop_daily_uptake_k_placeholder: t('js.crop_form.daily_uptake_k_placeholder'),
       
       # crop_selection.js messages
       js_crop_selection_hint: t('js.crop_selection.hint_select'),

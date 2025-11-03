@@ -85,6 +85,11 @@ function createStageTemplate(index) {
         <h5 class="nested-subtitle">☀️ 日照要件</h5>
         ${createSunshineRequirementTemplate(index)}
       </div>
+
+      <div class="nested-section">
+        <h5 class="nested-subtitle">🌱 栄養素要件</h5>
+        ${createNutrientRequirementTemplate(index)}
+      </div>
     </div>
   `;
 }
@@ -174,6 +179,39 @@ function createSunshineRequirementTemplate(index) {
           <input type="number" 
                  name="crop[crop_stages_attributes][${index}][sunshine_requirement_attributes][target_sunshine_hours]" 
                  class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropTargetSunshinePlaceholder', 'e.g., 8.0')}">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 栄養素要件のテンプレート
+function createNutrientRequirementTemplate(index) {
+  return `
+    <div class="requirement-fields">
+      <input type="hidden" name="crop[crop_stages_attributes][${index}][nutrient_requirement_attributes][_destroy]" 
+             value="false" class="destroy-flag">
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">窒素 (N) 吸収量 (g/m²/day)</label>
+          <input type="number" 
+                 name="crop[crop_stages_attributes][${index}][nutrient_requirement_attributes][daily_uptake_n]" 
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropDailyUptakeNPlaceholder', 'e.g., 0.5')}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">リン (P) 吸収量 (g/m²/day)</label>
+          <input type="number" 
+                 name="crop[crop_stages_attributes][${index}][nutrient_requirement_attributes][daily_uptake_p]" 
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropDailyUptakePPlaceholder', 'e.g., 0.2')}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">カリウム (K) 吸収量 (g/m²/day)</label>
+          <input type="number" 
+                 name="crop[crop_stages_attributes][${index}][nutrient_requirement_attributes][daily_uptake_k]" 
+                 class="form-control" step="0.1" placeholder="${getI18nMessage('jsCropDailyUptakeKPlaceholder', 'e.g., 0.8')}">
         </div>
       </div>
     </div>

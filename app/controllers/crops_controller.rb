@@ -24,6 +24,9 @@ class CropsController < ApplicationController
 
   # GET /crops/:id/edit
   def edit
+    @crop.crop_stages.each do |stage|
+      stage.build_nutrient_requirement unless stage.nutrient_requirement
+    end
   end
 
   # POST /crops
@@ -91,7 +94,9 @@ class CropsController < ApplicationController
   private
 
   def set_crop
-    @crop = Crop.find(params[:id])
+    @crop = Crop.includes(
+      crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement]
+    ).find(params[:id])
     
     # アクションに応じた権限チェック
     action = params[:action].to_sym
@@ -150,6 +155,13 @@ class CropsController < ApplicationController
           :id,
           :minimum_sunshine_hours,
           :target_sunshine_hours,
+          :_destroy
+        ],
+        nutrient_requirement_attributes: [
+          :id,
+          :daily_uptake_n,
+          :daily_uptake_p,
+          :daily_uptake_k,
           :_destroy
         ]
       ]

@@ -1,0 +1,29 @@
+<div class="requirement-fields">
+  <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :daily_uptake_n, t('crops.stage.nutrient.daily_uptake_n_label'), class: 'form-label' %>
+      <%= f.number_field :daily_uptake_n, class: 'form-control', step: 0.1, placeholder: t('crops.stage.nutrient.daily_uptake_n_placeholder') %>
+      <div class="form-text">
+        <%= t('crops.stage.nutrient.daily_uptake_n_help') %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :daily_uptake_p, t('crops.stage.nutrient.daily_uptake_p_label'), class: 'form-label' %>
+      <%= f.number_field :daily_uptake_p, class: 'form-control', step: 0.1, placeholder: t('crops.stage.nutrient.daily_uptake_p_placeholder') %>
+      <div class="form-text">
+        <%= t('crops.stage.nutrient.daily_uptake_p_help') %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :daily_uptake_k, t('crops.stage.nutrient.daily_uptake_k_label'), class: 'form-label' %>
+      <%= f.number_field :daily_uptake_k, class: 'form-control', step: 0.1, placeholder: t('crops.stage.nutrient.daily_uptake_k_placeholder') %>
+      <div class="form-text">
+        <%= t('crops.stage.nutrient.daily_uptake_k_help') %>
+      </div>
+    </div>
+  </div>
+</div>

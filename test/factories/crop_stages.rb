@@ -12,6 +12,7 @@ FactoryBot.define do
       after(:create) do |stage|
         create(:temperature_requirement, :germination, crop_stage: stage)
         create(:thermal_requirement, :germination, crop_stage: stage)
+        create(:nutrient_requirement, :low_intake, crop_stage: stage)
       end
     end
 
@@ -22,6 +23,7 @@ FactoryBot.define do
       after(:create) do |stage|
         create(:temperature_requirement, :vegetative, crop_stage: stage)
         create(:thermal_requirement, :vegetative, crop_stage: stage)
+        create(:nutrient_requirement, :vegetative_high, crop_stage: stage)
       end
     end
 
@@ -32,6 +34,7 @@ FactoryBot.define do
       after(:create) do |stage|
         create(:temperature_requirement, :flowering, crop_stage: stage)
         create(:thermal_requirement, :flowering, crop_stage: stage)
+        create(:nutrient_requirement, :flowering_high, crop_stage: stage)
       end
     end
 
@@ -42,6 +45,7 @@ FactoryBot.define do
       after(:create) do |stage|
         create(:temperature_requirement, :fruiting, crop_stage: stage)
         create(:thermal_requirement, :fruiting, crop_stage: stage)
+        create(:nutrient_requirement, :fruiting_high, crop_stage: stage)
       end
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_03_090411) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,6 +37,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_090411) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "agricultural_tasks", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.float "time_per_sqm"
+    t.string "weather_dependency"
+    t.text "required_tools"
+    t.string "skill_level"
+    t.boolean "is_reference", default: true, null: false
+    t.integer "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_reference"], name: "index_agricultural_tasks_on_is_reference"
+    t.index ["name"], name: "index_agricultural_tasks_on_name", where: "is_reference = true"
+    t.index ["user_id", "name"], name: "index_agricultural_tasks_on_user_id_and_name", unique: true, where: "is_reference = false"
+    t.index ["user_id"], name: "index_agricultural_tasks_on_user_id"
   end
 
   create_table "crop_pests", force: :cascade do |t|
@@ -256,6 +273,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_090411) do
     t.index ["user_id"], name: "index_interaction_rules_on_user_id"
   end
 
+  create_table "nutrient_requirements", force: :cascade do |t|
+    t.integer "crop_stage_id", null: false
+    t.float "daily_uptake_n"
+    t.float "daily_uptake_p"
+    t.float "daily_uptake_k"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_stage_id"], name: "index_nutrient_requirements_on_crop_stage_id"
+  end
+
   create_table "pest_control_methods", force: :cascade do |t|
     t.integer "pest_id", null: false
     t.string "method_type", null: false
@@ -455,6 +482,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_090411) do
   add_foreign_key "free_crop_plans", "crops"
   add_foreign_key "free_crop_plans", "farms"
   add_foreign_key "interaction_rules", "users"
+  add_foreign_key "nutrient_requirements", "crop_stages"
   add_foreign_key "pest_control_methods", "pests"
   add_foreign_key "pest_temperature_profiles", "pests"
   add_foreign_key "pest_thermal_requirements", "pests"

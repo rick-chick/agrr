@@ -361,4 +361,66 @@ class CropTest < ActiveSupport::TestCase
     assert_equal 100, aphid.pest_thermal_requirement.first_generation_gdd
     assert_equal 300, numeric_pest.pest_thermal_requirement.first_generation_gdd
   end
+
+  # to_agrr_requirement の nutrients 出力テスト
+  test "to_agrr_requirement should include nutrients when present" do
+    crop = create(:crop, :with_stages)
+    
+    # 栄養素要件を追加（with_stagesは既に栄養素要件があるので、それを上書き）
+    crop.crop_stages.first.nutrient_requirement.update!(
+      daily_uptake_n: 0.5,
+      daily_uptake_p: 0.2,
+      daily_uptake_k: 0.8
+    )
+    
+    result = crop.to_agrr_requirement
+    
+    # stage_requirementsにnutrientsが含まれていること
+    stage_with_nutrients = result['stage_requirements'].find { |sr| sr['stage']['name'] == crop.crop_stages.first.name }
+    assert_not_nil stage_with_nutrients['nutrients']
+    assert_equal 0.5, stage_with_nutrients['nutrients']['daily_uptake']['N']
+    assert_equal 0.2, stage_with_nutrients['nutrients']['daily_uptake']['P']
+    assert_equal 0.8, stage_with_nutrients['nutrients']['daily_uptake']['K']
+  end
+
+  test "to_agrr_requirement should not include nutrients when absent" do
+    crop = create(:crop)
+    
+    # 栄養素要件なしでCropStageを作成
+    crop_stage = create(:crop_stage, crop: crop, order: 1)
+    create(:temperature_requirement, crop_stage: crop_stage)
+    create(:thermal_requirement, crop_stage: crop_stage)
+    
+    result = crop.to_agrr_requirement
+    
+    # stage_requirementsにnutrientsが含まれていないこと
+    stage_without_nutrients = result['stage_requirements'].first
+    assert_nil stage_without_nutrients['nutrients']
+  end
+
+  test "to_agrr_requirement should handle multiple stages with and without nutrients" do
+    crop = create(:crop)
+    
+    # Stage 1: 栄養素要件あり
+    stage1 = create(:crop_stage, crop: crop, name: "栄養成長期", order: 1)
+    create(:temperature_requirement, crop_stage: stage1)
+    create(:thermal_requirement, crop_stage: stage1)
+    create(:nutrient_requirement, crop_stage: stage1, daily_uptake_n: 1.0, daily_uptake_p: 0.5, daily_uptake_k: 1.5)
+    
+    # Stage 2: 栄養素要件なし
+    stage2 = create(:crop_stage, crop: crop, name: "成熟期", order: 2)
+    create(:temperature_requirement, crop_stage: stage2)
+    create(:thermal_requirement, crop_stage: stage2)
+    
+    result = crop.to_agrr_requirement
+    
+    # Stage 1は nutrients が含まれていること
+    stage1_result = result['stage_requirements'].find { |sr| sr['stage']['name'] == '栄養成長期' }
+    assert_not_nil stage1_result['nutrients']
+    assert_equal 1.0, stage1_result['nutrients']['daily_uptake']['N']
+    
+    # Stage 2は nutrients が含まれていないこと
+    stage2_result = result['stage_requirements'].find { |sr| sr['stage']['name'] == '成熟期' }
+    assert_nil stage2_result['nutrients']
+  end
 end
