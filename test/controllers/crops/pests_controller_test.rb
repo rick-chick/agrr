@@ -40,6 +40,63 @@ module Crops
       assert_equal I18n.t('crops.flash.no_permission'), flash[:alert]
     end
 
+    test "admin should not access other user's crop" do
+      admin_user = create(:user, admin: true)
+      sign_in_as admin_user
+      
+      other_user = create(:user)
+      other_crop = create(:crop, user: other_user)
+
+      get crop_pests_path(other_crop)
+      assert_redirected_to crops_path
+      assert_equal I18n.t('crops.flash.no_permission'), flash[:alert]
+    end
+
+    test "admin should see only reference pests and own pests in crop pests index" do
+      admin_user = create(:user, admin: true)
+      sign_in_as admin_user
+      admin_crop = create(:crop, user: admin_user)
+      
+      reference_pest = create(:pest, is_reference: true, user_id: nil)
+      admin_pest = create(:pest, :user_owned, user: admin_user)
+      other_user = create(:user)
+      other_user_pest = create(:pest, :user_owned, user: other_user)
+      
+      # 害虫を作物に関連付け
+      create(:crop_pest, crop: admin_crop, pest: reference_pest)
+      create(:crop_pest, crop: admin_crop, pest: admin_pest)
+      create(:crop_pest, crop: admin_crop, pest: other_user_pest)
+      
+      get crop_pests_path(admin_crop)
+      assert_response :success
+      
+      # 管理者は参照害虫と自分の害虫のみ表示される
+      response_body = response.body
+      assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
+      assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
+      assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+    end
+
+    test "admin should not access other user's pest through crop" do
+      admin_user = create(:user, admin: true)
+      sign_in_as admin_user
+      admin_crop = create(:crop, user: admin_user)
+      
+      other_user = create(:user)
+      other_crop = create(:crop, user: other_user)
+      other_user_pest = create(:pest, :user_owned, user: other_user)
+      create(:crop_pest, crop: other_crop, pest: other_user_pest)
+      
+      # 他人の作物の害虫管理画面にアクセス試行（まず作物へのアクセスが拒否される）
+      get crop_pests_path(other_crop)
+      assert_redirected_to crops_path
+      
+      # もし何らかの方法で害虫にアクセスしようとした場合
+      get crop_pest_path(admin_crop, other_user_pest)
+      # 害虫が作物に関連付けられていないので、リダイレクトされる
+      assert_redirected_to crop_pests_path(admin_crop)
+    end
+
     test "should access reference crop" do
       reference_crop = create(:crop, :reference)
 

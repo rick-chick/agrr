@@ -78,10 +78,109 @@ class FertilizeTest < ActiveSupport::TestCase
   end
 
   test "reference scope should return only reference fertilizes" do
-    create(:fertilize, is_reference: true)
-    create(:fertilize, is_reference: false)
+    create(:fertilize, is_reference: true, user_id: nil)
+    user = create(:user)
+    create(:fertilize, :user_owned, user: user)
     
     assert_equal 1, Fertilize.reference.count
+  end
+
+  # ========== user_id バリデーションのテスト ==========
+  
+  test "should validate user presence when is_reference is false" do
+    fertilize = Fertilize.new(
+      name: "テスト肥料",
+      is_reference: false,
+      user_id: nil
+    )
+    assert_not fertilize.valid?
+    assert_includes fertilize.errors[:user], "を入力してください"
+  end
+
+  test "should allow nil user_id when is_reference is true" do
+    fertilize = Fertilize.new(
+      name: "テスト肥料",
+      is_reference: true,
+      user_id: nil
+    )
+    assert fertilize.valid?
+  end
+
+  test "should allow user_id when is_reference is false" do
+    user = create(:user)
+    fertilize = Fertilize.new(
+      name: "テスト肥料",
+      is_reference: false,
+      user_id: user.id
+    )
+    assert fertilize.valid?
+  end
+
+  test "should require user_id when is_reference changes from true to false" do
+    user = create(:user)
+    fertilize = create(:fertilize, is_reference: true, user_id: nil)
+    
+    fertilize.is_reference = false
+    assert_not fertilize.valid?
+    assert_includes fertilize.errors[:user], "を入力してください"
+    
+    fertilize.user_id = user.id
+    assert fertilize.valid?
+  end
+
+  test "should belong to user" do
+    user = create(:user)
+    fertilize = create(:fertilize, :user_owned, user: user)
+    
+    assert_equal user.id, fertilize.user_id
+    assert_equal user, fertilize.user
+  end
+
+  test "should allow nil user for reference fertilizes" do
+    fertilize = create(:fertilize, is_reference: true, user_id: nil)
+    
+    assert_nil fertilize.user_id
+    assert_nil fertilize.user
+  end
+
+  test "user should have many fertilizes" do
+    user = create(:user)
+    fertilize1 = create(:fertilize, :user_owned, user: user)
+    fertilize2 = create(:fertilize, :user_owned, user: user)
+    
+    assert_includes user.fertilizes, fertilize1
+    assert_includes user.fertilizes, fertilize2
+    assert_equal 2, user.fertilizes.count
+  end
+
+  test "should filter fertilizes by is_reference and user_id combination" do
+    user1 = create(:user)
+    user2 = create(:user)
+    
+    ref_fertilize = create(:fertilize, is_reference: true, user_id: nil)
+    user1_fertilize = create(:fertilize, :user_owned, user: user1)
+    user2_fertilize = create(:fertilize, :user_owned, user: user2)
+    
+    # 一般ユーザーの視点（自身の肥料のみ）
+    visible_fertilizes = Fertilize.where(user_id: user1.id, is_reference: false)
+    
+    assert_includes visible_fertilizes, user1_fertilize
+    assert_not_includes visible_fertilizes, ref_fertilize
+    assert_not_includes visible_fertilizes, user2_fertilize
+    
+    # 管理者の視点（参照肥料または自身の肥料）
+    admin_user = create(:user, admin: true)
+    admin_visible_fertilizes = Fertilize.where("is_reference = ? OR user_id = ?", true, admin_user.id)
+    
+    assert_includes admin_visible_fertilizes, ref_fertilize
+  end
+
+  test "user_owned scope should return only user owned fertilizes" do
+    create(:fertilize, is_reference: true, user_id: nil)
+    user_fertilize = create(:fertilize, :user_owned)
+    
+    assert_equal 1, Fertilize.user_owned.count
+    assert_includes Fertilize.user_owned, user_fertilize
   end
 end
 

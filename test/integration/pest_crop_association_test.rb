@@ -315,5 +315,80 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     assert_equal 1, pest.crops.count
     assert pest.crops.include?(@crop1)
   end
+
+  test "admin should not see other user's pests" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+    
+    admin_crop = create(:crop, user: admin_user)
+    admin_pest = create(:pest, :user_owned, user: admin_user)
+    reference_pest = create(:pest, is_reference: true, user_id: nil)
+    other_user = create(:user)
+    other_crop = create(:crop, user: other_user)
+    other_user_pest = create(:pest, :user_owned, user: other_user)
+    
+    # 管理者の害虫一覧には参照害虫と自分の害虫のみ表示される
+    get pests_path
+    assert_response :success
+    response_body = response.body
+    assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
+    assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
+    assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+    
+    # 管理者は他人の害虫の詳細にアクセスできない
+    get pest_path(other_user_pest)
+    assert_redirected_to pests_path
+    assert_equal I18n.t('pests.flash.no_permission'), flash[:alert]
+    
+    # 管理者は他人の作物にアクセスできない
+    get crop_pests_path(other_crop)
+    assert_redirected_to crops_path
+    assert_equal I18n.t('crops.flash.no_permission'), flash[:alert]
+    
+    # 管理者の作物の害虫一覧には参照害虫と自分の害虫のみ表示される
+    create(:crop_pest, crop: admin_crop, pest: reference_pest)
+    create(:crop_pest, crop: admin_crop, pest: admin_pest)
+    create(:crop_pest, crop: admin_crop, pest: other_user_pest)
+    
+    get crop_pests_path(admin_crop)
+    assert_response :success
+    response_body = response.body
+    assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
+    assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
+    assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+  end
+
+  test "admin should access reference pests and own pests" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+    
+    admin_crop = create(:crop, user: admin_user)
+    admin_pest = create(:pest, :user_owned, user: admin_user)
+    reference_pest = create(:pest, is_reference: true, user_id: nil)
+    
+    # 管理者は参照害虫にアクセス可能
+    get pest_path(reference_pest)
+    assert_response :success
+    
+    get edit_pest_path(reference_pest)
+    assert_response :success
+    
+    # 管理者は自分の害虫にアクセス可能
+    get pest_path(admin_pest)
+    assert_response :success
+    
+    get edit_pest_path(admin_pest)
+    assert_response :success
+    
+    # 管理者の作物からも参照害虫と自分の害虫にアクセス可能
+    create(:crop_pest, crop: admin_crop, pest: reference_pest)
+    create(:crop_pest, crop: admin_crop, pest: admin_pest)
+    
+    get crop_pest_path(admin_crop, reference_pest)
+    assert_response :success
+    
+    get crop_pest_path(admin_crop, admin_pest)
+    assert_response :success
+  end
 end
 

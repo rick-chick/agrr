@@ -10,14 +10,20 @@
 #   description: 説明文
 #   package_size: 容量（kg、数値型）
 #   is_reference: 参照肥料フラグ（デフォルト: true）
+#   user_id: 所有ユーザー（参照肥料の場合はnull）
 #
 # is_reference フラグについて:
 #   - true: システムが提供する参照用肥料
+#     - user_idはnull（システム所有）
 #   - false: ユーザーが作成した個人の肥料
+#     - user_idが設定される（ユーザー所有）
 class Fertilize < ApplicationRecord
+  belongs_to :user, optional: true
+  
   # バリデーション
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :is_reference, inclusion: { in: [true, false] }
+  validates :user, presence: true, unless: :is_reference?
   validates :n, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
@@ -25,6 +31,7 @@ class Fertilize < ApplicationRecord
   
   # スコープ
   scope :reference, -> { where(is_reference: true) }
+  scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
   
   # ヘルパーメソッド

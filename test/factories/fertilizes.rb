@@ -32,6 +32,11 @@ FactoryBot.define do
       k { 60.0 }
       description { "カリ肥料として使用される" }
     end
+
+    trait :user_owned do
+      is_reference { false }
+      association :user
+    end
   end
 end
 
