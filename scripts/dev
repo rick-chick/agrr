@@ -40,6 +40,58 @@ cd "$(dirname "$0")/.."
 
 # 既存のプロセスをクリーンアップ
 print_status "Checking for existing processes..."
+
+# ポート3000を使用しているプロセスをチェック
+# まずポート3000を直接チェック（最も確実な方法）
+PORT_PID=$(lsof -ti:3000 2>/dev/null | head -1 || ss -tlnp 2>/dev/null | grep :3000 | awk '{print $6}' | cut -d, -f2 | cut -d= -f2 | head -1 || true)
+
+# lsofが使えない場合、ssからPIDを取得
+if [ -z "$PORT_PID" ]; then
+    PORT_INFO=$(ss -tlnp 2>/dev/null | grep :3000 | head -1 || true)
+    if [ -n "$PORT_INFO" ]; then
+        PORT_PID=$(echo "$PORT_INFO" | grep -oP 'pid=\K\d+' | head -1 || true)
+    fi
+fi
+
+# ポートを使用しているプロセスが見つかった場合
+if [ -n "$PORT_PID" ] && [ "$PORT_PID" != "" ]; then
+    if ps -p "$PORT_PID" > /dev/null 2>&1; then
+        PROC_NAME=$(ps -p "$PORT_PID" -o comm= 2>/dev/null || echo "unknown")
+        PROC_ARGS=$(ps -p "$PORT_PID" -o args= 2>/dev/null || echo "")
+        print_warning "Port 3000 is already in use by process $PORT_PID ($PROC_NAME)"
+        if echo "$PROC_ARGS" | grep -qE "(puma|rails|ruby|rack)" 2>/dev/null || echo "$PROC_NAME" | grep -qE "(puma|ruby)" 2>/dev/null; then
+            print_warning "Stopping process $PORT_PID..."
+            kill "$PORT_PID" 2>/dev/null || true
+            sleep 2
+            # 再確認
+            if lsof -ti:3000 > /dev/null 2>&1 || ss -tlnp 2>/dev/null | grep -q :3000; then
+                print_error "Port 3000 is still in use. Please manually stop the process or use a different port."
+                exit 1
+            fi
+        else
+            print_error "Port 3000 is in use by $PROC_NAME. Please stop it manually or use a different port."
+            exit 1
+        fi
+    fi
+fi
+
+# Puma/Railsプロセスを直接確認（追加チェック）
+PUMA_PIDS=$(pgrep -f "puma\|rails server" 2>/dev/null || true)
+if [ -n "$PUMA_PIDS" ]; then
+    for PID in $PUMA_PIDS; do
+        if ps -p "$PID" > /dev/null 2>&1; then
+            PROC_ARGS=$(ps -p "$PID" -o args= 2>/dev/null || echo "")
+            # ポート3000を使用しているか確認
+            if echo "$PROC_ARGS" | grep -qE "3000|tcp://.*:3000" 2>/dev/null || lsof -p "$PID" 2>/dev/null | grep -q ":3000"; then
+                print_warning "Found Puma/Rails process $PID using port 3000, stopping it..."
+                kill "$PID" 2>/dev/null || true
+                sleep 1
+            fi
+        fi
+    done
+    sleep 1
+fi
+
 if [ -f tmp/pids/server.pid ]; then
     OLD_PID=$(cat tmp/pids/server.pid)
     if kill -0 "$OLD_PID" 2>/dev/null; then
@@ -55,6 +107,77 @@ if pgrep -f "puma\|rails server" > /dev/null 2>&1; then
     print_warning "Found existing Puma/Rails server processes, stopping them..."
     pkill -f "puma\|rails server" 2>/dev/null || true
     sleep 1
+fi
+
+# ログファイルの権限チェックと修正
+if [ -d "log" ]; then
+    LOG_FILE="log/development.log"
+    CURRENT_USER=$(whoami)
+    LOG_WRITABLE=false
+    
+    # logディレクトリの権限チェック
+    if [ ! -w "log" ]; then
+        LOG_DIR_OWNER=$(stat -c '%U' "log" 2>/dev/null || stat -f '%Su' "log" 2>/dev/null || echo "")
+        print_warning "Log directory 'log' is not writable (owned by: ${LOG_DIR_OWNER:-unknown})"
+        print_warning "This will cause Rails startup errors."
+    fi
+    
+    if [ -f "$LOG_FILE" ]; then
+        LOG_OWNER=$(stat -c '%U' "$LOG_FILE" 2>/dev/null || stat -f '%Su' "$LOG_FILE" 2>/dev/null || echo "")
+        if [ -n "$LOG_OWNER" ] && [ "$LOG_OWNER" != "$CURRENT_USER" ]; then
+            print_warning "Log file $LOG_FILE is owned by $LOG_OWNER, but current user is $CURRENT_USER"
+            
+            # まず権限を変更してみる
+            if chmod 666 "$LOG_FILE" 2>/dev/null && [ -w "$LOG_FILE" ]; then
+                print_status "✓ Log file permissions updated"
+                LOG_WRITABLE=true
+            # 削除して再作成を試みる
+            elif rm -f "$LOG_FILE" 2>/dev/null && touch "$LOG_FILE" 2>/dev/null; then
+                chmod 664 "$LOG_FILE" 2>/dev/null || true
+                print_status "✓ Log file recreated with correct permissions"
+                LOG_WRITABLE=true
+            else
+                LOG_WRITABLE=false
+            fi
+            
+            if [ "$LOG_WRITABLE" = false ]; then
+                print_error ""
+                print_error "⚠️  Cannot fix log file permissions automatically."
+                print_error ""
+                print_error "Please run the following commands to fix:"
+                print_error "  sudo chown -R $CURRENT_USER:$CURRENT_USER log/"
+                print_error "  sudo chmod -R 775 log/"
+                print_error ""
+                print_error "Or if you prefer to keep the old log:"
+                print_error "  sudo mv log/development.log log/development.log.backup"
+                print_error "  sudo touch log/development.log"
+                print_error "  sudo chown $CURRENT_USER:$CURRENT_USER log/development.log"
+                print_error ""
+                print_warning "Continuing anyway, but Rails may fail to start..."
+            fi
+        elif [ ! -w "$LOG_FILE" ]; then
+            # 書き込み権限がない場合
+            print_warning "Log file $LOG_FILE is not writable, attempting to fix..."
+            if chmod 664 "$LOG_FILE" 2>/dev/null && [ -w "$LOG_FILE" ]; then
+                print_status "✓ Log file permissions fixed"
+                LOG_WRITABLE=true
+            else
+                print_warning "Cannot change permissions, but continuing..."
+                LOG_WRITABLE=false
+            fi
+        else
+            LOG_WRITABLE=true
+        fi
+    else
+        # ログファイルが存在しない場合は作成
+        if touch "$LOG_FILE" 2>/dev/null; then
+            chmod 664 "$LOG_FILE" 2>/dev/null || true
+            LOG_WRITABLE=true
+        else
+            print_warning "Cannot create log file $LOG_FILE (permission denied)"
+            LOG_WRITABLE=false
+        fi
+    fi
 fi
 
 print_step "🚀 Starting development server setup..."
