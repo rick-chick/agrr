@@ -38,6 +38,8 @@ module Agrr
           execute_optimize_command(command_args)
         when 'predict'
           execute_predict_command(command_args)
+        when 'schedule'
+          execute_schedule_command(command_args)
         else
           raise ExecutionError, "Unsupported command: #{command}"
         end
@@ -400,6 +402,48 @@ module Agrr
         days: days,
         model: model,
         metrics: metrics
+      )
+    end
+    
+    def execute_schedule_command(args)
+      crop_name = nil
+      variety = nil
+      stage_requirements = nil
+      agricultural_tasks = nil
+      output = nil
+      
+      i = 0
+      while i < args.length
+        case args[i]
+        when '--crop-name', '-c'
+          crop_name = args[i + 1]
+          i += 2
+        when '--variety', '-v'
+          variety = args[i + 1]
+          i += 2
+        when '--stage-requirements', '-sr'
+          stage_requirements = args[i + 1]
+          i += 2
+        when '--agricultural-tasks', '-at'
+          agricultural_tasks = args[i + 1]
+          i += 2
+        when '--output', '-o'
+          output = args[i + 1]
+          i += 2
+        else
+          i += 1
+        end
+      end
+      
+      raise ArgumentError, "Crop name, variety, stage requirements, and agricultural tasks are required" unless crop_name && variety && stage_requirements && agricultural_tasks
+      
+      @agrr_service.schedule(
+        crop_name: crop_name,
+        variety: variety,
+        stage_requirements: stage_requirements,
+        agricultural_tasks: agricultural_tasks,
+        output: output,
+        json: true
       )
     end
     

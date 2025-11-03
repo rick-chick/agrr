@@ -33,4 +33,23 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_respond_to @service, :forecast
     assert_respond_to @service, :crop
   end
+
+  test 'should respond to schedule method' do
+    assert_respond_to @service, :schedule
+  end
+
+  test 'should raise error when schedule called without daemon' do
+    File.stub(:exist?, false) do
+      File.stub(:socket?, false) do
+        assert_raises(AgrrService::DaemonNotRunningError) do
+          @service.schedule(
+            crop_name: 'トマト',
+            variety: 'アイコ',
+            stage_requirements: '/path/to/stage.json',
+            agricultural_tasks: '/path/to/tasks.json'
+          )
+        end
+      end
+    end
+  end
 end
