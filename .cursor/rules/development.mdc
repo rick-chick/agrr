@@ -1,0 +1,30 @@
+# 開発ルール
+
+## タスク前に必須
+1. 呼び出し元・データフロー・依存関係を調査
+2. 責任範囲を明確化（単一責任の原則）
+3. 変更影響を評価
+
+## 実装例
+```ruby
+# ❌ 悪い例
+if farm.weather_data_status == 'completed'
+  cultivation_plan.phase_optimizing!(channel_class)  # 次のジョブの責任
+end
+
+# ✅ 良い例
+if farm.weather_data_status == 'completed'
+  Rails.logger.info "Weather data completed, next job will handle phase transition"
+end
+```
+- [ ] 変更影響を評価した
+- [ ] 単一責任の原則に従っている
+- [ ] 他のコンポーネントの責務を侵していない
+
+## AGRRコマンド実行前の必須事項
+
+### daemon起動
+- AGRRコマンド（`lib/core/agrr` で始まるコマンド）を実行する前に、必ずdaemonを起動すること
+- コマンド: `lib/core/agrr daemon start`
+- エラーメッセージ "Daemon is not running" が出た場合は、先にdaemonを起動してからコマンドを再実行すること
+- ヘルプ確認時も同様（`--help`オプションでもdaemonが必要な場合がある）
