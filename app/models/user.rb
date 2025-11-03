@@ -11,6 +11,7 @@ class User < ApplicationRecord
   has_many :pesticides, dependent: :destroy
   has_many :pests, dependent: :destroy
   has_many :fertilizes, dependent: :destroy
+  has_many :agricultural_tasks, dependent: :destroy
 
   # Validations
   validates :email, presence: true, 

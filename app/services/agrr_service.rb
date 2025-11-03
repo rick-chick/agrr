@@ -106,6 +106,18 @@ class AgrrService
     execute_command(args)
   end
 
+  # Generate task schedule
+  def schedule(crop_name:, variety:, stage_requirements:, agricultural_tasks:, output: nil, json: true)
+    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
+
+    args = ['schedule', '--crop-name', crop_name, '--variety', variety,
+            '--stage-requirements', stage_requirements, '--agricultural-tasks', agricultural_tasks]
+    args += ['--output', output] if output
+    args << '--json' if json
+
+    execute_command(args)
+  end
+
   private
 
   def execute_command(args)
