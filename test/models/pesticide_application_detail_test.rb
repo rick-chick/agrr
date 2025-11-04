@@ -78,3 +78,6 @@ class PesticideApplicationDetailTest < ActiveSupport::TestCase
   end
 end
 
+
+
+

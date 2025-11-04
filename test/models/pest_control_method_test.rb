@@ -94,3 +94,6 @@ class PestControlMethodTest < ActiveSupport::TestCase
   end
 end
 
+
+
+

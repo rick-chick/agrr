@@ -1,0 +1,109 @@
+<div class="form-card">
+  <%= form_with(model: @agricultural_task) do |f| %>
+    <% if @agricultural_task.errors.any? %>
+      <div class="errors">
+        <h3><%= t('agricultural_tasks.form.errors.title', count: @agricultural_task.errors.count) %></h3>
+        <ul>
+          <% @agricultural_task.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :name, t('agricultural_tasks.form.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, required: true, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :description, t('agricultural_tasks.form.description_label'), class: 'form-label' %>
+      <%= f.text_area :description, rows: 4, class: 'form-control' %>
+      <div class="form-text"><%= t('agricultural_tasks.form.description_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :time_per_sqm, t('agricultural_tasks.form.time_per_sqm_label'), class: 'form-label' %>
+      <div class="input-group">
+        <%= f.number_field :time_per_sqm, step: :any, min: 0, class: 'form-control' %>
+        <span class="input-group-text">h/㎡</span>
+      </div>
+      <div class="form-text"><%= t('agricultural_tasks.form.time_per_sqm_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :weather_dependency, t('agricultural_tasks.form.weather_dependency_label'), class: 'form-label' %>
+      <%= f.select :weather_dependency, 
+          options_for_select([
+            [t('agricultural_tasks.form.weather_dependency_low'), 'low'],
+            [t('agricultural_tasks.form.weather_dependency_medium'), 'medium'],
+            [t('agricultural_tasks.form.weather_dependency_high'), 'high']
+          ], @agricultural_task.weather_dependency),
+          { include_blank: t('agricultural_tasks.form.weather_dependency_blank') },
+          { class: 'form-control' } %>
+      <div class="form-text"><%= t('agricultural_tasks.form.weather_dependency_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :required_tools, t('agricultural_tasks.form.required_tools_label'), class: 'form-label' %>
+      <%= text_area_tag 'agricultural_task[required_tools]', 
+          @required_tools_text || @agricultural_task.required_tools&.join("\n") || '',
+          rows: 4, 
+          class: 'form-control' %>
+      <div class="form-text"><%= t('agricultural_tasks.form.required_tools_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :skill_level, t('agricultural_tasks.form.skill_level_label'), class: 'form-label' %>
+      <%= f.select :skill_level,
+          options_for_select([
+            [t('agricultural_tasks.form.skill_level_beginner'), 'beginner'],
+            [t('agricultural_tasks.form.skill_level_intermediate'), 'intermediate'],
+            [t('agricultural_tasks.form.skill_level_advanced'), 'advanced']
+          ], @agricultural_task.skill_level),
+          { include_blank: t('agricultural_tasks.form.skill_level_blank') },
+          { class: 'form-control' } %>
+      <div class="form-text"><%= t('agricultural_tasks.form.skill_level_help') %></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label"><%= t('agricultural_tasks.form.crops_label') %></label>
+      <% if @available_crops.any? %>
+        <div class="crop-checkboxes">
+          <% @available_crops.each do |crop| %>
+            <div class="checkbox-item">
+              <%= check_box_tag 'crop_ids[]', crop.id, @agricultural_task.crop_ids.include?(crop.id), id: "crop_#{crop.id}" %>
+              <%= label_tag "crop_#{crop.id}", crop.name do %>
+                <%= crop.name %>
+                <% if crop.variety.present? %>
+                  <span class="crop-variety">(<%= crop.variety %>)</span>
+                <% end %>
+                <% if crop.is_reference %>
+                  <span class="crop-type reference">[<%= t('agricultural_tasks.form.reference_crop') %>]</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="form-text"><%= t('agricultural_tasks.form.no_crops_available') %></div>
+      <% end %>
+      <div class="form-text"><%= t('agricultural_tasks.form.crops_help') %></div>
+    </div>
+
+    <% if admin_user? %>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <%= f.check_box :is_reference, class: 'form-control' %>
+          <%= f.label :is_reference, t('agricultural_tasks.form.is_reference_label'), class: 'form-label' %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="actions">
+      <%= f.submit t("agricultural_tasks.form.submit_#{@agricultural_task.new_record? ? 'create' : 'update'}"), class: 'btn btn-success' %>
+      <%= link_to t('agricultural_tasks.form.cancel'), @agricultural_task.persisted? ? agricultural_task_path(@agricultural_task) : agricultural_tasks_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>
+

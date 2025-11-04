@@ -29,6 +29,46 @@
     </div>
 
     <div class="form-group">
+      <button type="button" id="ai-save-pest-btn" class="btn btn-ai" 
+              data-controller="pest-ai"
+              data-is-new-record="<%= @pest.new_record? %>"
+              data-pest-id="<%= @pest.persisted? ? @pest.id : '' %>"
+              data-enter-name="<%= t('js.pest_ai.enter_name') %>"
+              data-fetching="<%= t('js.pest_ai.fetching') %>"
+              data-button-fetching="<%= t('js.pest_ai.button_fetching') %>"
+              data-created-success="<%= t('js.pest_ai.created_success', name: '%{name}') %>"
+              data-updated-success="<%= t('js.pest_ai.updated_success', name: '%{name}') %>"
+              data-fetch-failed="<%= t('js.pest_ai.fetch_failed') %>"
+              data-network-error="<%= t('js.pest_ai.network_error') %>"
+              data-button-idle="<%= t('pests.form.ai_button') %>">
+      </button>
+      <div id="ai-save-status" class="form-text d-none"></div>
+      <div class="form-text"><%= t('pests.form.ai_help') %></div>
+    </div>
+
+    <!-- AI処理中の広告ポップアップ -->
+    <div id="ad-popup-overlay" class="ad-popup-overlay">
+      <div class="ad-popup-container">
+        <div class="ad-popup-status">
+          <div class="ad-popup-status-title">
+            <%= t('pests.form.ai_processing_title') %>
+          </div>
+          <p class="ad-popup-status-message"><%= t('pests.form.ai_processing_message') %></p>
+        </div>
+
+        <div class="ad-popup-progress">
+          <p class="ad-popup-progress-text"><%= t('pests.form.ai_progress_text') %></p>
+          <div class="ad-popup-progress-bar">
+            <div class="ad-popup-progress-fill"></div>
+          </div>
+        </div>
+        
+        <!-- Google AdSense 広告 -->
+        <%= render 'shared/adsense_display_ad', ad_slot: '0000000000', ad_format: 'rectangle' %>
+      </div>
+    </div>
+
+    <div class="form-group">
       <%= f.label :name_scientific, t('pests.form.name_scientific_label'), class: 'form-label' %>
       <%= f.text_field :name_scientific, class: 'form-control' %>
       <div class="form-text"><%= t('pests.form.name_scientific_help') %></div>
@@ -62,8 +102,8 @@
         <div class="crops-checkbox-group">
           <% @available_crops.each do |crop| %>
             <div class="crop-checkbox-item">
-              <%= check_box_tag 'crop_ids[]', crop.id, @pest.persisted? && @pest.crop_ids.include?(crop.id), id: "crop_#{crop.id}", class: 'form-checkbox' %>
-              <%= label_tag "crop_#{crop.id}", crop.name, class: 'form-label' %>
+              <%= check_box_tag 'crop_ids[]', crop.id, @pest.persisted? && @pest.crop_ids.include?(crop.id), id: "crop_#{crop.id}", class: 'form-checkbox', data: { crop_name: crop.name } %>
+              <%= label_tag "crop_#{crop.id}", crop.name, class: 'form-label', data: { crop_name: crop.name } %>
               <% if crop.is_reference %>
                 <span class="crop-reference-badge"><%= t('pests.form.reference_crop') %></span>
               <% end %>

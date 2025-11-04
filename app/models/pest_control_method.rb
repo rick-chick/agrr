@@ -21,3 +21,6 @@ class PestControlMethod < ApplicationRecord
   scope :physical, -> { where(method_type: 'physical') }
 end
 
+
+
+

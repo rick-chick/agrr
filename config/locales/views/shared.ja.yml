@@ -8,6 +8,7 @@ ja:
       fertilizes: "肥料"
       pesticides: "農薬"
       pests: "害虫"
+      agricultural_tasks: "作業"
       interaction_rules: "連作"
       login: "ログイン"
       logout: "ログアウト"

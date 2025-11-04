@@ -118,6 +118,15 @@ class AgrrService
     execute_command(args)
   end
 
+  # Get pest profile by pest name
+  def pest_to_crop(pest:, crops:, language: 'ja')
+    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
+
+    args = ['pest-to-crop', '--pest', pest, '--crops', crops, '--language', language]
+
+    execute_command(args)
+  end
+
   private
 
   def execute_command(args)

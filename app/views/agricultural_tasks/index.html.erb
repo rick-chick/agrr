@@ -1,0 +1,60 @@
+<% content_for :title, "#{t('.title')} - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title"><%= t('.title') %></h1>
+  <%= link_to t('.new_agricultural_task'), new_agricultural_task_path, class: "btn btn-success" %>
+</div>
+
+<% if @agricultural_tasks.any? %>
+  <div class="crops-grid">
+    <% @agricultural_tasks.each do |task| %>
+      <div class="crop-card">
+        <h3 class="crop-name"><%= task.name %></h3>
+        <% if task.description.present? %>
+          <div class="crop-variety"><%= truncate(task.description, length: 50) %></div>
+        <% end %>
+        <% if task.time_per_sqm.present? %>
+          <div class="crop-variety"><%= t('.time_per_sqm') %>: <%= task.time_per_sqm %> h/㎡</div>
+        <% end %>
+        <% if admin_user? && task.is_reference %>
+          <div class="crop-type reference"><%= t('.reference_task') %></div>
+        <% end %>
+        <div class="crop-actions">
+          <%= link_to t('.actions.show'), agricultural_task_path(task), class: "btn btn-info btn-sm" %>
+          <% if task.is_reference %>
+            <%# Reference tasks: admin only %>
+            <% if admin_user? %>
+              <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
+              <%= link_to t('.actions.delete'), agricultural_task_path(task), method: :delete, 
+                          class: "btn btn-error btn-sm", 
+                          data: { 
+                            turbo_method: :delete,
+                            turbo_confirm: t('.actions.delete_confirm')
+                          } %>
+            <% end %>
+          <% else %>
+            <%# User tasks: owner only %>
+            <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
+            <%= link_to t('.actions.delete'), agricultural_task_path(task), method: :delete, 
+                        class: "btn btn-error btn-sm", 
+                        data: { 
+                          turbo_method: :delete,
+                          turbo_confirm: t('.actions.delete_confirm')
+                        } %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty-state">
+    <div class="empty-state-icon"><%= t('.empty.icon') %></div>
+    <h3><%= t('.empty.title') %></h3>
+    <p><%= t('.empty.description') %></p>
+    <%= link_to t('.empty.button'), new_agricultural_task_path, class: "btn btn-success" %>
+  </div>
+<% end %>
+
+
+
+

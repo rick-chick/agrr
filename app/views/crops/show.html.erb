@@ -81,6 +81,37 @@
     </div>
   </div>
 
+  <div class="agricultural-tasks-section">
+    <h2 class="stages-title">🔧 <%= t('.agricultural_tasks_title') %></h2>
+    <% if @viewable_agricultural_tasks.any? %>
+      <div class="agricultural-tasks-list">
+        <% @viewable_agricultural_tasks.each do |task| %>
+          <div class="agricultural-task-item">
+            <div class="agricultural-task-name">
+              <%= link_to task.name, agricultural_task_path(task), class: "agricultural-task-link" %>
+            </div>
+            <% if task.description.present? %>
+              <div class="agricultural-task-description"><%= truncate(task.description, length: 100) %></div>
+            <% end %>
+            <% if task.time_per_sqm.present? %>
+              <div class="agricultural-task-time">⏱ <%= task.time_per_sqm %> h/㎡</div>
+            <% end %>
+            <% if task.is_reference %>
+              <div class="agricultural-task-type reference">[<%= t('.reference_task') %>]</div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="no-agricultural-tasks">
+        <p><%= t('.no_agricultural_tasks_description') %></p>
+      </div>
+    <% end %>
+    <div class="agricultural-task-actions">
+      <%= link_to t('.manage_agricultural_tasks'), crop_agricultural_tasks_path(@crop), class: "btn btn-secondary btn-sm" %>
+    </div>
+  </div>
+
   <div class="stages-section">
     <h2 class="stages-title"><%= t('.stages_title') %></h2>
     <% if @crop.crop_stages.any? %>

@@ -36,6 +36,7 @@ class Pest < ApplicationRecord
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
+  scope :by_region, ->(region) { where(region: region) }
   scope :recent, -> { order(created_at: :desc) }
 
   # agrr CLI の pest 出力形式からPestを作成または更新

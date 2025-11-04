@@ -1,0 +1,109 @@
+<% content_for :title, "#{@agricultural_task.name} - AGRR" %>
+
+<div class="crop-detail-card">
+  <div class="crop-detail-header">
+    <h1 class="crop-detail-title"><%= @agricultural_task.name %></h1>
+    <% if admin_user? && @agricultural_task.is_reference %>
+      <div class="crop-detail-type reference"><%= t('.reference_task') %></div>
+    <% end %>
+  </div>
+  
+  <div class="crop-basic-info">
+    <div class="info-item">
+      <span class="info-label">📝 <%= t('.name') %>:</span>
+      <span class="info-value"><%= @agricultural_task.name %></span>
+    </div>
+    
+    <% if @agricultural_task.description.present? %>
+      <div class="info-item">
+        <span class="info-label">📄 <%= t('.description') %>:</span>
+        <span class="info-value"><%= simple_format(@agricultural_task.description) %></span>
+      </div>
+    <% end %>
+    
+    <% if @agricultural_task.time_per_sqm.present? %>
+      <div class="info-item">
+        <span class="info-label">⏱ <%= t('.time_per_sqm') %>:</span>
+        <span class="info-value"><%= @agricultural_task.time_per_sqm %> h/㎡</span>
+      </div>
+    <% end %>
+    
+    <% if @agricultural_task.weather_dependency.present? %>
+      <div class="info-item">
+        <span class="info-label">🌤 <%= t('.weather_dependency') %>:</span>
+        <span class="info-value"><%= t(".weather_dependency_#{@agricultural_task.weather_dependency}") %></span>
+      </div>
+    <% end %>
+    
+    <% if @agricultural_task.required_tools.present? && @agricultural_task.required_tools.any? %>
+      <div class="info-item">
+        <span class="info-label">🔧 <%= t('.required_tools') %>:</span>
+        <span class="info-value"><%= @agricultural_task.required_tools.join(', ') %></span>
+      </div>
+    <% end %>
+    
+    <% if @agricultural_task.skill_level.present? %>
+      <div class="info-item">
+        <span class="info-label">👤 <%= t('.skill_level') %>:</span>
+        <span class="info-value"><%= t(".skill_level_#{@agricultural_task.skill_level}") %></span>
+      </div>
+    <% end %>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.created_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@agricultural_task.created_at, format: :long) %></span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label">📅 <%= t('.updated_at') %>:</span>
+      <span class="info-value"><%= I18n.l(@agricultural_task.updated_at, format: :long) %></span>
+    </div>
+  </div>
+  
+  <% if @agricultural_task.crops.any? %>
+    <div class="crop-associations">
+      <h2 class="section-title">🌾 <%= t('.associated_crops') %></h2>
+      <div class="crops-list">
+        <% @agricultural_task.crops.each do |crop| %>
+          <div class="crop-item">
+            <%= link_to crop_path(crop), class: "crop-link" do %>
+              <%= crop.name %>
+              <% if crop.variety.present? %>
+                <span class="crop-variety">(<%= crop.variety %>)</span>
+              <% end %>
+              <% if crop.is_reference %>
+                <span class="crop-type reference">[<%= t('.reference_crop') %>]</span>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="crop-associations">
+      <h2 class="section-title">🌾 <%= t('.associated_crops') %></h2>
+      <p class="no-crops"><%= t('.no_crops_associated') %></p>
+    </div>
+  <% end %>
+  
+  <div class="actions">
+    <%= link_to t('.back_to_list'), agricultural_tasks_path, class: "btn btn-secondary" %>
+    <% if @agricultural_task.is_reference %>
+      <%# 参照タスクは管理者のみ編集・削除可能 %>
+      <% if admin_user? %>
+        <%= link_to t('.edit'), edit_agricultural_task_path(@agricultural_task), class: "btn btn-secondary" %>
+        <%= button_to t('.delete'), @agricultural_task, method: :delete, 
+                    class: "btn btn-error", 
+                    confirm: t('.confirm_delete') %>
+      <% end %>
+    <% else %>
+      <%# ユーザータスクは所有者が編集・削除可能 %>
+      <%= link_to t('.edit'), edit_agricultural_task_path(@agricultural_task), class: "btn btn-secondary" %>
+      <%= button_to t('.delete'), @agricultural_task, method: :delete, 
+                  class: "btn btn-error", 
+                  confirm: t('.confirm_delete') %>
+    <% end %>
+  </div>
+</div>
+
+

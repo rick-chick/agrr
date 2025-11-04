@@ -180,3 +180,6 @@ end
 2. **Gatewayの作成**: 将来的にGatewayが必要になった場合、整合性が取れている
 3. **UseCase/Interactor**: Entityをベースに実装するため、整合性が必要
 
+
+
+
