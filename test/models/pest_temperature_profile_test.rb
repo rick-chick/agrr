@@ -28,3 +28,6 @@ class PestTemperatureProfileTest < ActiveSupport::TestCase
   end
 end
 
+
+
+

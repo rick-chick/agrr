@@ -12,3 +12,6 @@ class PestTemperatureProfile < ApplicationRecord
   validates :pest, presence: true
 end
 
+
+
+

@@ -21,3 +21,6 @@ class AddUserIdToPesticides < ActiveRecord::Migration[8.0]
   end
 end
 
+
+
+

@@ -142,6 +142,20 @@ describe('Crop Form - Template Generation', () => {
     expect(document.querySelector('input[name*="sterility_risk_threshold"]')).toBeTruthy();
   });
 
+  test('nutrient requirement fields should exist', () => {
+    const templateHTML = `
+      <input type="number" name="crop[crop_stages_attributes][0][nutrient_requirement_attributes][daily_uptake_n]">
+      <input type="number" name="crop[crop_stages_attributes][0][nutrient_requirement_attributes][daily_uptake_p]">
+      <input type="number" name="crop[crop_stages_attributes][0][nutrient_requirement_attributes][daily_uptake_k]">
+    `;
+
+    document.body.innerHTML = templateHTML;
+
+    expect(document.querySelector('input[name*="daily_uptake_n"]')).toBeTruthy();
+    expect(document.querySelector('input[name*="daily_uptake_p"]')).toBeTruthy();
+    expect(document.querySelector('input[name*="daily_uptake_k"]')).toBeTruthy();
+  });
+
   test('sunshine requirement fields should exist', () => {
     const templateHTML = `
       <input type="number" name="crop[crop_stages_attributes][0][sunshine_requirement_attributes][minimum_sunshine_hours]">

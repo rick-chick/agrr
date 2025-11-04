@@ -1,0 +1,36 @@
+<% content_for :title, "#{@crop.name} - #{t('.title')} - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title">
+    <%= link_to @crop.name, crop_path(@crop), class: "crop-link" %> - <%= t('.title') %>
+  </h1>
+  <%= link_to t('.back_to_list'), crop_agricultural_tasks_path(@crop), class: "btn btn-secondary" %>
+</div>
+
+<div class="form-section">
+  <h2 class="form-section-title"><%= t('.associate_existing_task') %></h2>
+  <% if @unassociated_agricultural_tasks.any? %>
+    <%= form_with url: crop_agricultural_tasks_path(@crop), method: :post, local: true do |f| %>
+      <div class="form-group">
+        <%= f.label :agricultural_task_id, t('.select_existing_task'), class: 'form-label' %>
+        <%= f.select :agricultural_task_id, 
+            options_from_collection_for_select(@unassociated_agricultural_tasks, :id, :name),
+            { include_blank: t('.select_task_placeholder') },
+            { class: 'form-control' } %>
+      </div>
+      <%= f.submit t('.associate_button'), class: 'btn btn-success' %>
+    <% end %>
+  <% else %>
+    <p><%= t('.no_unassociated_tasks') %></p>
+  <% end %>
+</div>
+
+<div class="form-section">
+  <h2 class="form-section-title"><%= t('.create_new_task') %></h2>
+  <p><%= t('.create_new_task_description') %></p>
+  <%= link_to t('.go_to_create'), new_agricultural_task_path, class: 'btn btn-primary' %>
+</div>
+
+<%= link_to t('.back_to_list'), crop_agricultural_tasks_path(@crop), class: "btn btn-secondary" %>
+
+

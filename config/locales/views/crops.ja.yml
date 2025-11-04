@@ -131,6 +131,10 @@ ja:
       pests_title: "害虫"
       no_pests_description: "まだ害虫が登録されていません。"
       manage_pests: "害虫を管理"
+      agricultural_tasks_title: "作業"
+      no_agricultural_tasks_description: "まだ作業が登録されていません。"
+      manage_agricultural_tasks: "作業を管理"
+      reference_task: "参照作業"
       stages_title: "生育ステージ"
       stage_order: "順序"
       no_stages_title: "まだ生育ステージが登録されていません"
@@ -256,4 +260,36 @@ ja:
         back_to_list: "一覧に戻る"
         back_to_crop: "作物に戻る"
         edit: "編集"
+    
+    agricultural_tasks:
+      flash:
+        associated: "既存の作業を作物に関連付けました。"
+        already_associated: "この作業は既に関連付けられています。"
+        no_permission: "権限がありません。"
+        redirect_to_create: "新しい作業を作成する場合は、作業作成画面に移動します。"
+      
+      index:
+        title: "作業一覧"
+        new_agricultural_task: "新しい作業を追加"
+        reference_task: "参照作業"
+        back_to_crop: "作物に戻る"
+        actions:
+          show: "詳細"
+        empty:
+          icon: "🔧"
+          title: "まだ作業が登録されていません"
+          description: "この作物に関連付けられている作業を追加してください。"
+          button: "作業を追加"
+      
+      new:
+        title: "新しい作業を追加"
+        associate_existing_task: "既存の作業を関連付ける"
+        select_existing_task: "既存の作業を選択"
+        select_task_placeholder: "作業を選択してください"
+        associate_button: "関連付ける"
+        no_unassociated_tasks: "関連付け可能な作業がありません。新しい作業を作成してください。"
+        create_new_task: "新しい作業を作成"
+        create_new_task_description: "新しい作業を作成する場合は、作業作成画面に移動します。"
+        go_to_create: "作業作成画面へ"
+        back_to_list: "一覧に戻る"
 

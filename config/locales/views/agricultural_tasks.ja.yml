@@ -1,0 +1,91 @@
+ja:
+  agricultural_tasks:
+    form:
+      name_label: "タスク名"
+      description_label: "説明"
+      description_help: "タスクの説明を入力してください（任意）"
+      time_per_sqm_label: "単位面積あたりの所要時間"
+      time_per_sqm_help: "1㎡あたりの所要時間を時間単位で入力してください（例: 0.1、任意）"
+      weather_dependency_label: "天候依存度"
+      weather_dependency_low: "低"
+      weather_dependency_medium: "中"
+      weather_dependency_high: "高"
+      weather_dependency_blank: "選択してください（任意）"
+      weather_dependency_help: "天候にどの程度依存するかを選択してください（任意）"
+      required_tools_label: "必要な工具"
+      required_tools_help: "必要な工具を改行区切りで入力してください（例: トラクター\n耕運機、任意）"
+      skill_level_label: "スキルレベル"
+      skill_level_beginner: "初級"
+      skill_level_intermediate: "中級"
+      skill_level_advanced: "上級"
+      skill_level_blank: "選択してください（任意）"
+      skill_level_help: "このタスクに必要なスキルレベルを選択してください（任意）"
+      crops_label: "関連する作物"
+      crops_help: "このタスクに関連する作物を選択してください（複数選択可能）"
+      reference_crop: "参照作物"
+      no_crops_available: "選択可能な作物がありません"
+      is_reference_label: "参照タスク（管理者のみ）"
+      submit_create: "タスクを作成"
+      submit_update: "タスクを更新"
+      cancel: "キャンセル"
+      errors:
+        title: "%{count}件のエラーがあります："
+    
+    flash:
+      created: "タスクが作成されました。"
+      updated: "タスクが更新されました。"
+      destroyed: "タスクが削除されました。"
+      cannot_delete_in_use: "このタスクは他のデータで使用されているため削除できません。"
+      delete_error: "削除中にエラーが発生しました: %{message}"
+      reference_only_admin: "参照タスクは管理者のみ作成できます。"
+      reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
+      no_permission: "権限がありません。"
+      not_found: "指定されたタスクが見つかりません。"
+    
+    index:
+      title: "農業タスク一覧"
+      new_agricultural_task: "新しいタスクを追加"
+      reference_task: "参照タスク（共通データ）"
+      time_per_sqm: "所要時間"
+      actions:
+        show: "詳細"
+        edit: "編集"
+        delete: "削除"
+        delete_confirm: "本当にこのタスクを削除しますか？"
+      empty:
+        icon: "🌾"
+        title: "まだタスクが登録されていません"
+        description: "最初のタスクを追加して始めましょう。"
+        button: "タスクを追加"
+    
+    new:
+      title: "新しいタスクを追加"
+    
+    edit:
+      title: "%{name}を編集"
+    
+    show:
+      reference_task: "参照タスク"
+      name: "タスク名"
+      description: "説明"
+      time_per_sqm: "単位面積あたりの所要時間"
+      weather_dependency: "天候依存度"
+      weather_dependency_low: "低"
+      weather_dependency_medium: "中"
+      weather_dependency_high: "高"
+      required_tools: "必要な工具"
+      skill_level: "スキルレベル"
+      skill_level_beginner: "初級"
+      skill_level_intermediate: "中級"
+      skill_level_advanced: "上級"
+      created_at: "作成日"
+      updated_at: "更新日"
+      associated_crops: "関連する作物"
+      reference_crop: "参照作物"
+      no_crops_associated: "関連する作物がありません"
+      back_to_list: "タスク一覧に戻る"
+      edit: "編集"
+      delete: "削除"
+      confirm_delete: "このタスクを削除しますか？"
+
+

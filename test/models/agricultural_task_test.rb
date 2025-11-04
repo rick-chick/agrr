@@ -9,9 +9,9 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     assert_includes task.errors[:name], "を入力してください"
   end
 
-  test "should initialize with default required_tools as empty array" do
+  test "should have nil required_tools when not set" do
     task = AgriculturalTask.new(name: "テストタスク")
-    assert_equal [], task.required_tools
+    assert_nil task.required_tools
   end
 
   test "should validate time_per_sqm is greater than 0" do
@@ -22,25 +22,6 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
 
   test "should allow nil for time_per_sqm" do
     task = build(:agricultural_task, time_per_sqm: nil)
-    assert task.valid?
-  end
-
-  test "should validate user presence when is_reference is false" do
-    task = AgriculturalTask.new(
-      name: "テストタスク",
-      is_reference: false,
-      user_id: nil
-    )
-    assert_not task.valid?
-    assert_includes task.errors[:user], "を入力してください"
-  end
-
-  test "should allow nil user_id when is_reference is true" do
-    task = AgriculturalTask.new(
-      name: "テストタスク",
-      is_reference: true,
-      user_id: nil
-    )
     assert task.valid?
   end
 
@@ -159,13 +140,32 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     assert_kind_of Array, task.required_tools
   end
 
-  test "should handle nil required_tools and default to empty array" do
+  test "should handle nil required_tools" do
     task = AgriculturalTask.new(name: "テストタスク", required_tools: nil)
-    assert_equal [], task.required_tools
+    assert_nil task.required_tools
   end
 
   # ========== user_id バリデーションのテスト ==========
   
+  test "should validate user presence when is_reference is false" do
+    task = AgriculturalTask.new(
+      name: "テストタスク",
+      is_reference: false,
+      user_id: nil
+    )
+    assert_not task.valid?
+    assert_includes task.errors[:user], "を入力してください"
+  end
+
+  test "should allow nil user_id when is_reference is true" do
+    task = AgriculturalTask.new(
+      name: "テストタスク",
+      is_reference: true,
+      user_id: nil
+    )
+    assert task.valid?
+  end
+
   test "should allow user_id when is_reference is false" do
     user = create(:user)
     task = AgriculturalTask.new(
@@ -290,6 +290,214 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     
     reloaded_task = AgriculturalTask.find(task.id)
     assert_equal complex_tools, reloaded_task.required_tools
+  end
+
+  # ========== is_reference inclusion バリデーションのテスト ==========
+  
+  test "should validate is_reference inclusion" do
+    # is_referenceはnilでもafter_initializeでtrueになる
+    task = AgriculturalTask.new(name: "テストタスク")
+    # after_initializeでtrueに設定される
+    assert task.is_reference?
+    
+    # inclusion validationは[true, false]のみ許可
+    # nilはafter_initializeでtrueになるため、nilでバリデーションを通過することはない
+    # データベースレベルでNOT NULL制約があるため、nilは保存できない
+    task.is_reference = true
+    assert task.valid?
+    
+    task.is_reference = false
+    task.user = create(:user) # user_idが必要
+    assert task.valid?
+  end
+
+  test "should not allow updating to existing other name" do
+    create(:agricultural_task, name: "土壌準備", is_reference: true)
+    task = create(:agricultural_task, name: "播種", is_reference: true)
+    task.name = "土壌準備"  # 別の既存の名前で更新
+    task.valid?
+    assert_includes task.errors[:name], "はすでに存在します"
+  end
+
+  # ========== to_agrr_format の compact 動作テスト ==========
+  
+  test "to_agrr_format should exclude nil values with compact" do
+    task = create(:agricultural_task,
+      name: "テストタスク",
+      description: nil,
+      time_per_sqm: nil,
+      weather_dependency: nil,
+      required_tools: [],
+      skill_level: nil
+    )
+    
+    agrr_format = task.to_agrr_format
+    
+    # compactメソッドにより、nil値のキーが除外される
+    assert_not_nil agrr_format['task_id']
+    assert_not_nil agrr_format['name']
+    assert_not_nil agrr_format['required_tools'] # 空配列なのでnilではない
+    
+    # compactメソッドの動作確認: nil値のキーは除外される
+    # compactはnil値のキーを削除する
+    assert_not agrr_format.key?('description'), "descriptionキーはnil値のため除外される"
+    assert_not agrr_format.key?('time_per_sqm'), "time_per_sqmキーはnil値のため除外される"
+    assert_not agrr_format.key?('weather_dependency'), "weather_dependencyキーはnil値のため除外される"
+    assert_not agrr_format.key?('skill_level'), "skill_levelキーはnil値のため除外される"
+  end
+
+  test "to_agrr_format should include all values when present" do
+    task = create(:agricultural_task,
+      name: "土壌準備",
+      description: "畑の土壌を耕す",
+      time_per_sqm: 0.5,
+      weather_dependency: "medium",
+      required_tools: ["トラクター"],
+      skill_level: "intermediate"
+    )
+    
+    agrr_format = task.to_agrr_format
+    
+    # すべての値が含まれていること
+    assert_not_nil agrr_format['task_id']
+    assert_not_nil agrr_format['name']
+    assert_not_nil agrr_format['description']
+    assert_not_nil agrr_format['time_per_sqm']
+    assert_not_nil agrr_format['weather_dependency']
+    assert_not_nil agrr_format['required_tools']
+    assert_not_nil agrr_format['skill_level']
+  end
+
+  test "to_agrr_format should convert time_per_sqm to float" do
+    task = create(:agricultural_task, time_per_sqm: 1)
+    
+    agrr_format = task.to_agrr_format
+    
+    assert_kind_of Float, agrr_format['time_per_sqm']
+    assert_equal 1.0, agrr_format['time_per_sqm']
+  end
+
+  # ========== name uniqueness の詳細テスト ==========
+  
+  test "should not allow duplicate name within same user for user-owned tasks" do
+    user = create(:user)
+    create(:agricultural_task, name: "カスタムタスク", is_reference: false, user: user)
+    
+    task = AgriculturalTask.new(name: "カスタムタスク", is_reference: false, user: user)
+    task.valid?
+    assert_includes task.errors[:name], "はすでに存在します"
+  end
+
+  test "should allow same name for reference and user-owned tasks" do
+    create(:agricultural_task, name: "土壌準備", is_reference: true)
+    user = create(:user)
+    task = AgriculturalTask.new(name: "土壌準備", is_reference: false, user: user)
+    
+    assert task.valid?, "参照タスクとユーザータスクで同じ名前を使える必要がある"
+  end
+
+  test "should allow different users to have same task name" do
+    user1 = create(:user)
+    user2 = create(:user)
+    create(:agricultural_task, name: "カスタムタスク", is_reference: false, user: user1)
+    
+    task = AgriculturalTask.new(name: "カスタムタスク", is_reference: false, user: user2)
+    assert task.valid?, "異なるユーザーは同じタスク名を使用できる"
+  end
+
+  # ========== required_tools の詳細テスト ==========
+  
+  test "should handle nil required_tools in to_agrr_format" do
+    task = AgriculturalTask.new(name: "テストタスク")
+    task.save(validate: false) # バリデーションをスキップ
+    
+    # after_initializeで空配列に設定されるため、実際にはnilにならない
+    # しかし、データベースから直接読み込んだ場合をテスト
+    task.update_column(:required_tools, nil)
+    task.reload
+    
+    agrr_format = task.to_agrr_format
+    assert_equal [], agrr_format['required_tools']
+  end
+
+  test "should preserve required_tools order" do
+    tools = ["トラクター", "耕運機", "肥料散布機"]
+    task = create(:agricultural_task, required_tools: tools)
+    
+    reloaded_task = AgriculturalTask.find(task.id)
+    assert_equal tools, reloaded_task.required_tools
+    assert_equal tools.first, reloaded_task.required_tools.first
+    assert_equal tools.last, reloaded_task.required_tools.last
+  end
+
+  test "should handle required_tools with special characters" do
+    tools = ["トラクター（大型）", "耕運機-小型", "施肥機_多機能"]
+    task = create(:agricultural_task, required_tools: tools)
+    
+    reloaded_task = AgriculturalTask.find(task.id)
+    assert_equal tools, reloaded_task.required_tools
+  end
+
+  # ========== to_agrr_format_array の詳細テスト ==========
+  
+  test "to_agrr_format_array should handle empty array" do
+    array = AgriculturalTask.to_agrr_format_array([])
+    assert_equal [], array
+  end
+
+  test "to_agrr_format_array should preserve order" do
+    task1 = create(:agricultural_task, name: "タスク1", created_at: 1.day.ago)
+    task2 = create(:agricultural_task, name: "タスク2", created_at: Time.current)
+    
+    array = AgriculturalTask.to_agrr_format_array([task1, task2])
+    
+    assert_equal task1.id.to_s, array[0]['task_id']
+    assert_equal task2.id.to_s, array[1]['task_id']
+  end
+
+  # ========== フィルタリングの詳細テスト ==========
+  
+  test "should filter by is_reference and user_id for admin view" do
+    user1 = create(:user)
+    user2 = create(:user)
+    admin = create(:user, admin: true)
+    
+    ref_task = create(:agricultural_task, is_reference: true, user_id: nil)
+    user1_task = create(:agricultural_task, :user_owned, user: user1)
+    user2_task = create(:agricultural_task, :user_owned, user: user2)
+    admin_task = create(:agricultural_task, :user_owned, user: admin)
+    
+    # 管理者の視点: 参照タスク + 自分のタスク
+    admin_visible = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, admin.id)
+    
+    assert_includes admin_visible, ref_task
+    assert_includes admin_visible, admin_task
+    assert_not_includes admin_visible, user1_task
+    assert_not_includes admin_visible, user2_task
+  end
+
+  # ========== エッジケースのテスト ==========
+  
+  test "should handle zero time_per_sqm validation" do
+    task = build(:agricultural_task, time_per_sqm: 0)
+    task.valid?
+    assert_includes task.errors[:time_per_sqm], "は0より大きい値にしてください"
+  end
+
+  test "should handle negative time_per_sqm validation" do
+    task = build(:agricultural_task, time_per_sqm: -0.1)
+    task.valid?
+    assert_includes task.errors[:time_per_sqm], "は0より大きい値にしてください"
+  end
+
+  test "should handle very small positive time_per_sqm" do
+    task = build(:agricultural_task, time_per_sqm: 0.001)
+    assert task.valid?
+  end
+
+  test "should handle very large time_per_sqm" do
+    task = build(:agricultural_task, time_per_sqm: 1000.0)
+    assert task.valid?
   end
 end
 

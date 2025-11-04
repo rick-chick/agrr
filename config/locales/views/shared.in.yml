@@ -8,6 +8,7 @@ in:
       fertilizes: "उर्वरक"
       pesticides: "कीटनाशक"
       pests: "कीट"
+      agricultural_tasks: "कार्य"
       interaction_rules: "परिक्रमण"
       login: "लॉगिन"
       logout: "लॉगआउट"

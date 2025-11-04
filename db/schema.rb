@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -39,6 +39,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "agricultural_task_crops", force: :cascade do |t|
+    t.integer "agricultural_task_id", null: false
+    t.integer "crop_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agricultural_task_id", "crop_id"], name: "index_agricultural_task_crops_on_task_and_crop", unique: true
+    t.index ["agricultural_task_id"], name: "index_agricultural_task_crops_on_agricultural_task_id"
+    t.index ["crop_id"], name: "index_agricultural_task_crops_on_crop_id"
+  end
+
   create_table "agricultural_tasks", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -50,8 +60,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "region"
     t.index ["is_reference"], name: "index_agricultural_tasks_on_is_reference"
     t.index ["name"], name: "index_agricultural_tasks_on_name", where: "is_reference = true"
+    t.index ["region"], name: "index_agricultural_tasks_on_region"
     t.index ["user_id", "name"], name: "index_agricultural_tasks_on_user_id_and_name", unique: true, where: "is_reference = false"
     t.index ["user_id"], name: "index_agricultural_tasks_on_user_id"
   end
@@ -195,7 +207,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.datetime "updated_at", null: false
     t.float "package_size"
     t.integer "user_id"
+    t.string "region"
     t.index ["name"], name: "index_fertilizes_on_name", unique: true
+    t.index ["region"], name: "index_fertilizes_on_region"
     t.index ["user_id"], name: "index_fertilizes_on_user_id"
   end
 
@@ -347,9 +361,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.integer "crop_id", null: false
     t.integer "pest_id", null: false
     t.integer "user_id"
+    t.string "region"
     t.index ["crop_id"], name: "index_pesticides_on_crop_id"
     t.index ["is_reference"], name: "index_pesticides_on_is_reference"
     t.index ["pest_id"], name: "index_pesticides_on_pest_id"
+    t.index ["region"], name: "index_pesticides_on_region"
     t.index ["user_id"], name: "index_pesticides_on_user_id"
   end
 
@@ -364,7 +380,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.string "region"
     t.index ["is_reference"], name: "index_pests_on_is_reference"
+    t.index ["region"], name: "index_pests_on_region"
     t.index ["user_id"], name: "index_pests_on_user_id"
   end
 
@@ -398,6 +416,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["crop_stage_id"], name: "index_sunshine_requirements_on_crop_stage_id"
+  end
+
+  create_table "task_schedules", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.text "schedule_data"
+    t.text "description"
+    t.integer "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["crop_id"], name: "index_task_schedules_on_crop_id"
+    t.index ["user_id"], name: "index_task_schedules_on_user_id"
   end
 
   create_table "temperature_requirements", force: :cascade do |t|
@@ -463,6 +492,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "agricultural_task_crops", "agricultural_tasks"
+  add_foreign_key "agricultural_task_crops", "crops"
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"
@@ -494,6 +525,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_112701) do
   add_foreign_key "pests", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
+  add_foreign_key "task_schedules", "crops"
   add_foreign_key "temperature_requirements", "crop_stages"
   add_foreign_key "thermal_requirements", "crop_stages"
   add_foreign_key "weather_data", "weather_locations"

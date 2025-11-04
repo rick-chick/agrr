@@ -12,13 +12,16 @@ window.Stimulus = application
 // Register controllers manually
 import CropAiController from "./crop_ai_controller"
 import FertilizeAiController from "./fertilize_ai_controller"
+import PestAiController from "./pest_ai_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
 console.log('[Controllers] FertilizeAiController:', FertilizeAiController)
+console.log('[Controllers] PestAiController:', PestAiController)
 
 application.register("crop-ai", CropAiController)
 application.register("fertilize-ai", FertilizeAiController)
+application.register("pest-ai", PestAiController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)

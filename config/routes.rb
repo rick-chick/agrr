@@ -47,6 +47,7 @@ Rails.application.routes.draw do
     # Crops (HTML) routes
     resources :crops do
       resources :pests, controller: 'crops/pests', except: [:destroy]
+      resources :agricultural_tasks, controller: 'crops/agricultural_tasks', only: [:index, :new, :create]
     end
 
     # Fertilizes (HTML) routes
@@ -60,6 +61,9 @@ Rails.application.routes.draw do
 
     # Interaction Rules (連作ルール) routes
     resources :interaction_rules
+
+    # Agricultural Tasks (農業タスク) routes
+    resources :agricultural_tasks
 
     # Public Plans (公開作付け計画 - 認証不要) routes
     resources :public_plans, only: [:create] do
@@ -100,22 +104,14 @@ Rails.application.routes.draw do
         get 'health', to: 'base#health_check'
         # File management endpoints
         resources :files, only: [:index, :show, :create, :destroy]
-        # Farm and Field management endpoints
-        resources :farms, controller: 'farms/farm_api', only: [:index, :show, :create, :update, :destroy] do
-          resources :fields, controller: 'fields/field_api', only: [:index, :show, :create, :update, :destroy]
-        end
-        resources :crops, controller: 'crops/crop_api', only: [:index, :show, :create, :update, :destroy]
         # AI作物情報取得・保存エンドポイント
         post 'crops/ai_create', to: 'crops#ai_create'
-        resources :fertilizes, controller: 'fertilizes/fertilize_api', only: [:index, :show, :create, :update, :destroy] do
-          # AI肥料情報取得・保存エンドポイント
-          collection do
-            post 'ai_create', to: 'fertilizes#ai_create'
-          end
-          member do
-            post 'ai_update', to: 'fertilizes#ai_update'
-          end
-        end
+        # AI肥料情報取得・保存エンドポイント
+        post 'fertilizes/ai_create', to: 'fertilizes#ai_create'
+        post 'fertilizes/:id/ai_update', to: 'fertilizes#ai_update'
+        # AI害虫情報取得・保存エンドポイント
+        post 'pests/ai_create', to: 'pests#ai_create'
+        post 'pests/:id/ai_update', to: 'pests#ai_update'
         
         # Public Plans API（認証不要）
         namespace :public_plans do

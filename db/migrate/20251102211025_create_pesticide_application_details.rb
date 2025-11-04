@@ -14,3 +14,6 @@ class CreatePesticideApplicationDetails < ActiveRecord::Migration[8.0]
   end
 end
 
+
+
+

@@ -12,3 +12,6 @@ class PestThermalRequirement < ApplicationRecord
   validates :pest, presence: true
 end
 
+
+
+

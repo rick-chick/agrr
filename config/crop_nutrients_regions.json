@@ -1,0 +1,9 @@
+{
+  "jp": { "name": "Japan", "language": "ja", "crops_file": "db/fixtures/reference_crops.json" },
+  "us": { "name": "United States", "language": "en", "crops_file": "db/fixtures/us_reference_crops.json" },
+  "in": { "name": "India", "language": "hi", "crops_file": "db/fixtures/india_reference_crops.json" }
+}
+
+
+
+

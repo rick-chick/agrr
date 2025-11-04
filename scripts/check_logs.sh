@@ -1,8 +1,6 @@
 #!/bin/bash
 # ログ確認用スクリプト
 
-set -e
-
 echo "📋 AGRR ログチェッカー"
 echo "================================"
 echo ""
@@ -29,7 +27,8 @@ echo ""
 # agrrコマンドのエラーログ
 echo "❌ AGRR Errors (last 5):"
 echo "================================"
-ERROR_COUNT=$(tail -n 1000 "${LOG_FILE}" | grep -c "\[AGRR Error\]" || echo "0")
+ERROR_COUNT=$(tail -n 1000 "${LOG_FILE}" 2>/dev/null | grep -c "\[AGRR Error\]" 2>/dev/null || echo "0")
+ERROR_COUNT=$(echo "$ERROR_COUNT" | head -n1 | tr -d '[:space:]')
 if [ "$ERROR_COUNT" -gt 0 ]; then
     tail -n 1000 "${LOG_FILE}" | grep "\[AGRR Error\]" -A 2 | tail -n 15
 else

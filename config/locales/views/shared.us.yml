@@ -8,6 +8,7 @@ us:
       fertilizes: "Fertilizers"
       pesticides: "Pesticides"
       pests: "Pests"
+      agricultural_tasks: "Tasks"
       interaction_rules: "Rotations"
       login: "Login"
       logout: "Logout"

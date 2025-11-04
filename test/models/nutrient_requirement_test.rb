@@ -99,3 +99,6 @@ class NutrientRequirementTest < ActiveSupport::TestCase
     assert_equal 0.8, @crop_stage.nutrient_requirement.daily_uptake_k
   end
 end
+
+
+
