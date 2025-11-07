@@ -115,6 +115,38 @@ class PesticideTest < ActiveSupport::TestCase
     assert pesticide.valid?
   end
 
+  test "should enforce uniqueness of source_pesticide_id per user" do
+    user = create(:user)
+    crop = create(:crop, is_reference: true)
+    pest = create(:pest, is_reference: true)
+    reference = create(:pesticide, is_reference: true, crop: crop, pest: pest)
+
+    create(:pesticide,
+           is_reference: false,
+           user: user,
+           crop: crop,
+           pest: pest,
+           source_pesticide_id: reference.id)
+
+    duplicated = build(:pesticide,
+                       is_reference: false,
+                       user: user,
+                       crop: crop,
+                       pest: pest,
+                       source_pesticide_id: reference.id)
+    assert_not duplicated.valid?
+    assert_includes duplicated.errors[:source_pesticide_id], "はすでに存在します"
+
+    another_user = create(:user)
+    other = build(:pesticide,
+                  is_reference: false,
+                  user: another_user,
+                  crop: crop,
+                  pest: pest,
+                  source_pesticide_id: reference.id)
+    assert other.valid?
+  end
+
   # 関連テスト
   test "should belong to user" do
     user = create(:user)
@@ -264,12 +296,13 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should keep existing usage_constraints when nil is passed" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, crop: @crop, pest: @pest)
     create(:pesticide_usage_constraint, pesticide: existing_pesticide)
     constraint_id = existing_pesticide.reload.pesticide_usage_constraint.id
     original_min_temp = existing_pesticide.pesticide_usage_constraint.min_temperature
 
     pesticide_data_without_constraints = @pesticide_data.dup
+    pesticide_data_without_constraints["pesticide_id"] = existing_pesticide.id.to_s
     pesticide_data_without_constraints["usage_constraints"] = nil
 
     pesticide = Pesticide.from_agrr_output(
@@ -286,12 +319,13 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should keep existing application_details when nil is passed" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, crop: @crop, pest: @pest)
     create(:pesticide_application_detail, pesticide: existing_pesticide)
     detail_id = existing_pesticide.reload.pesticide_application_detail.id
     original_ratio = existing_pesticide.pesticide_application_detail.dilution_ratio
 
     pesticide_data_without_details = @pesticide_data.dup
+    pesticide_data_without_details["pesticide_id"] = existing_pesticide.id.to_s
     pesticide_data_without_details["application_details"] = nil
 
     pesticide = Pesticide.from_agrr_output(
@@ -339,10 +373,13 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should update existing pesticide" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", name: "古い名前", crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, name: "古い名前", crop: @crop, pest: @pest)
+
+    update_data = @pesticide_data.dup
+    update_data["pesticide_id"] = existing_pesticide.id.to_s
 
     pesticide = Pesticide.from_agrr_output(
-      pesticide_data: @pesticide_data,
+      pesticide_data: update_data,
       crop_id: @crop.id,
       pest_id: @pest.id,
       is_reference: true
@@ -354,10 +391,13 @@ class PesticideTest < ActiveSupport::TestCase
 
   test "from_agrr_output should update is_reference flag" do
     user = create(:user)
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", is_reference: false, user: user, crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, is_reference: false, user: user, crop: @crop, pest: @pest)
+
+    update_data = @pesticide_data.dup
+    update_data["pesticide_id"] = existing_pesticide.id.to_s
 
     pesticide = Pesticide.from_agrr_output(
-      pesticide_data: @pesticide_data,
+      pesticide_data: update_data,
       crop_id: @crop.id,
       pest_id: @pest.id,
       is_reference: true
@@ -367,18 +407,20 @@ class PesticideTest < ActiveSupport::TestCase
     assert_equal existing_pesticide.id, pesticide.id
   end
 
-  test "from_agrr_output should raise error when pesticide_id is missing" do
+  # pesticide_id は内部idに統合されたため、missingでもエラーにはならず新規作成として扱われる
+  test "from_agrr_output should not require pesticide_id (treated as new when missing)" do
     invalid_data = @pesticide_data.dup
     invalid_data.delete("pesticide_id")
 
-    assert_raises(StandardError, "Invalid pesticide_data: 'pesticide_id' is required") do
-      Pesticide.from_agrr_output(
-        pesticide_data: invalid_data,
-        crop_id: @crop.id,
-        pest_id: @pest.id,
-        is_reference: true
-      )
-    end
+    pesticide = Pesticide.from_agrr_output(
+      pesticide_data: invalid_data,
+      crop_id: @crop.id,
+      pest_id: @pest.id,
+      is_reference: true
+    )
+
+    assert pesticide.persisted?
+    assert_equal invalid_data["name"], pesticide.name
   end
 
   test "from_agrr_output should raise error when crop_id is missing" do
@@ -434,12 +476,15 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should update existing usage_constraints" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, crop: @crop, pest: @pest)
     create(:pesticide_usage_constraint, pesticide: existing_pesticide, min_temperature: 10.0, max_temperature: 40.0)
     original_min_temp = existing_pesticide.reload.pesticide_usage_constraint.min_temperature
 
+    update_data = @pesticide_data.dup
+    update_data["pesticide_id"] = existing_pesticide.id.to_s
+
     pesticide = Pesticide.from_agrr_output(
-      pesticide_data: @pesticide_data,
+      pesticide_data: update_data,
       crop_id: @crop.id,
       pest_id: @pest.id,
       is_reference: true
@@ -450,12 +495,15 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should update existing application_details" do
-    existing_pesticide = create(:pesticide, pesticide_id: "acetamiprid", crop: @crop, pest: @pest)
+    existing_pesticide = create(:pesticide, crop: @crop, pest: @pest)
     create(:pesticide_application_detail, pesticide: existing_pesticide, dilution_ratio: "2000倍")
     original_ratio = existing_pesticide.reload.pesticide_application_detail.dilution_ratio
 
+    update_data = @pesticide_data.dup
+    update_data["pesticide_id"] = existing_pesticide.id.to_s
+
     pesticide = Pesticide.from_agrr_output(
-      pesticide_data: @pesticide_data,
+      pesticide_data: update_data,
       crop_id: @crop.id,
       pest_id: @pest.id,
       is_reference: true
@@ -467,7 +515,7 @@ class PesticideTest < ActiveSupport::TestCase
 
   # to_agrr_output テスト（agrr CLI出力形式に変換）
   test "should convert to agrr output format" do
-    pesticide = create(:pesticide, :complete, pesticide_id: "acetamiprid")
+    pesticide = create(:pesticide, :complete)
 
     output = pesticide.to_agrr_output
 
@@ -488,7 +536,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should handle nil usage_constraints" do
-    pesticide = create(:pesticide, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide)
 
     output = pesticide.to_agrr_output
 
@@ -496,7 +544,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should handle nil application_details" do
-    pesticide = create(:pesticide, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide)
 
     output = pesticide.to_agrr_output
 
@@ -504,7 +552,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should handle nil values in usage_constraints" do
-    pesticide = create(:pesticide, :with_usage_constraint, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide, :with_usage_constraint)
     pesticide.pesticide_usage_constraint.update(min_temperature: nil, max_temperature: nil)
 
     output = pesticide.to_agrr_output
@@ -514,7 +562,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should handle usage_constraints with all nil values" do
-    pesticide = create(:pesticide, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide)
     create(:pesticide_usage_constraint,
            pesticide: pesticide,
            min_temperature: nil,
@@ -536,7 +584,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should include all usage_constraints fields" do
-    pesticide = create(:pesticide, :with_usage_constraint, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide, :with_usage_constraint)
 
     output = pesticide.to_agrr_output
 
@@ -552,7 +600,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "to_agrr_output should include all application_details fields" do
-    pesticide = create(:pesticide, :with_application_detail, pesticide_id: "test_pesticide")
+    pesticide = create(:pesticide, :with_application_detail)
 
     output = pesticide.to_agrr_output
 
@@ -627,30 +675,7 @@ class PesticideTest < ActiveSupport::TestCase
     assert_equal pesticide.id, found_pesticide.id
   end
 
-  test "pesticide_id uniqueness should work with different formats and scopes" do
-    crop1 = create(:crop, is_reference: true)
-    crop2 = create(:crop, is_reference: true)
-    pest1 = create(:pest, is_reference: true)
-    pest2 = create(:pest, is_reference: true)
-    
-    create(:pesticide, pesticide_id: "001", crop: crop1, pest: pest1)
-    create(:pesticide, pesticide_id: "acetamiprid", crop: crop1, pest: pest1)
-    create(:pesticide, pesticide_id: "imidacloprid_001", crop: crop1, pest: pest1)
-
-    assert_equal 3, Pesticide.count
-
-    # 同じpesticide_id、crop_id、pest_idの組み合わせは重複エラー
-    duplicate = Pesticide.new(pesticide_id: "001", name: "重複", crop: crop1, pest: pest1, is_reference: true)
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:pesticide_id], "はすでに存在します"
-    
-    # 異なるcrop_idまたはpest_idの場合は有効
-    valid = Pesticide.new(pesticide_id: "001", name: "有効", crop: crop2, pest: pest1, is_reference: true)
-    assert valid.valid?
-    
-    valid2 = Pesticide.new(pesticide_id: "001", name: "有効2", crop: crop1, pest: pest2, is_reference: true)
-    assert valid2.valid?
-  end
+  # pesticide_id のユニーク性検証は廃止（内部id統合のため）
 
   # スコープテスト
   test "reference scope should return reference pesticides" do
@@ -722,7 +747,7 @@ class PesticideTest < ActiveSupport::TestCase
 
   # Pesticide経由でのバリデーションエラー検出
   test "should validate usage_constraint temperature constraints through pesticide" do
-    pesticide = build(:pesticide, pesticide_id: "test_pesticide")
+    pesticide = build(:pesticide)
     pesticide.build_pesticide_usage_constraint(
       min_temperature: 40.0,
       max_temperature: 35.0
@@ -734,7 +759,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "should validate application_detail amount and unit consistency through pesticide" do
-    pesticide = build(:pesticide, pesticide_id: "test_pesticide")
+    pesticide = build(:pesticide)
     pesticide.build_pesticide_application_detail(
       amount_per_m2: 0.1,
       amount_unit: nil

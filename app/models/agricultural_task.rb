@@ -23,11 +23,15 @@
 #   - to_agrr_format_array メソッドで複数のタスクを配列に変換
 class AgriculturalTask < ApplicationRecord
   belongs_to :user, optional: true
-  has_many :agricultural_task_crops, dependent: :destroy
-  has_many :crops, through: :agricultural_task_crops
   
   # required_toolsをJSON配列としてシリアライズ
   serialize :required_tools, coder: JSON
+  
+  # デフォルト値を設定
+  after_initialize do
+    self.required_tools ||= []
+    self.is_reference = true if is_reference.nil?
+  end
   
   # バリデーション
   validates :name, presence: true
@@ -35,11 +39,11 @@ class AgriculturalTask < ApplicationRecord
   validates :user, presence: true, unless: :is_reference?
   validates :time_per_sqm, numericality: { greater_than: 0, allow_nil: true }
   validate :name_uniqueness_scope
+  validates :source_agricultural_task_id, uniqueness: { scope: :user_id }, allow_nil: true
   
   # スコープ
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
-  scope :by_region, ->(region) { where(region: region) }
   scope :recent, -> { order(created_at: :desc) }
   
   # agrr CLI の agricultural-tasks フォーマットに変換

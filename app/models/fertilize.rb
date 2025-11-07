@@ -28,6 +28,7 @@ class Fertilize < ApplicationRecord
   validates :p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :package_size, numericality: { greater_than: 0, allow_nil: true }
+  validates :source_fertilize_id, uniqueness: { scope: :user_id }, allow_nil: true
   
   # スコープ
   scope :reference, -> { where(is_reference: true) }
