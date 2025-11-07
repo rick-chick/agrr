@@ -61,7 +61,8 @@ module Api
             k: fertilize_data['k'],
             description: fertilize_data['description'],
             package_size: fertilize_package_size_from_agrr,  # agrrから返されたpackage_size
-            is_reference: is_reference
+            is_reference: is_reference,
+            user_id: current_user.id
           }
 
           if existing_fertilize

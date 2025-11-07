@@ -25,7 +25,8 @@ module Adapters
             k: normalized_data['k'],
             description: normalized_data['description'],
             package_size: normalized_data['package_size'],
-            is_reference: normalized_data.fetch('is_reference', true)  # デフォルトは参照データ
+            is_reference: normalized_data.fetch('is_reference', true),  # デフォルトは参照データ
+            user_id: normalized_data['user_id']
           )
           
           unless record.save
@@ -49,6 +50,7 @@ module Adapters
           update_attributes[:k] = normalized_data['k'] if normalized_data.key?('k')
           update_attributes[:description] = normalized_data['description'] if normalized_data.key?('description')
           update_attributes[:package_size] = normalized_data['package_size'] if normalized_data.key?('package_size')
+          update_attributes[:user_id] = normalized_data['user_id'] if normalized_data.key?('user_id')
           
           record.update!(update_attributes)
           entity_from_record(record.reload)

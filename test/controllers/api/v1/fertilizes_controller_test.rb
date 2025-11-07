@@ -26,7 +26,7 @@ module Api
 
         # agrr_clientの出力をモック
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
@@ -50,7 +50,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "リン酸一安" },
                headers: { "Accept" => "application/json" }
           
@@ -69,7 +69,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "リン酸一安" },
                headers: { "Accept" => "application/json" }
           
@@ -91,7 +91,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
@@ -124,7 +124,7 @@ module Api
         }.to_json
 
         Open3.stub :capture3, [agrr_output, "", OpenStruct.new(success?: true)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
@@ -140,7 +140,7 @@ module Api
         error_output = "Traceback (most recent call last):\nFileNotFoundError: [Errno 2] No such file or directory\n"
 
         Open3.stub :capture3, ["", error_output, OpenStruct.new(success?: false)] do
-          post ai_create_api_v1_fertilizes_path, 
+          post api_v1_fertilizes_ai_create_path, 
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
           
