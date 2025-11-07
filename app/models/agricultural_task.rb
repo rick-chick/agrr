@@ -23,6 +23,8 @@
 #   - to_agrr_format_array メソッドで複数のタスクを配列に変換
 class AgriculturalTask < ApplicationRecord
   belongs_to :user, optional: true
+  has_many :agricultural_task_crops, dependent: :destroy
+  has_many :crops, through: :agricultural_task_crops
   
   # required_toolsをJSON配列としてシリアライズ
   serialize :required_tools, coder: JSON
