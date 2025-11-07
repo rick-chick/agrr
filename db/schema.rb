@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_07_194000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -61,10 +61,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "region"
+    t.integer "source_agricultural_task_id"
+    t.string "task_type"
+    t.integer "task_type_id"
     t.index ["is_reference"], name: "index_agricultural_tasks_on_is_reference"
     t.index ["name"], name: "index_agricultural_tasks_on_name", where: "is_reference = true"
     t.index ["region"], name: "index_agricultural_tasks_on_region"
+    t.index ["task_type"], name: "index_agricultural_tasks_on_task_type"
+    t.index ["task_type_id"], name: "index_agricultural_tasks_on_task_type_id"
     t.index ["user_id", "name"], name: "index_agricultural_tasks_on_user_id_and_name", unique: true, where: "is_reference = false"
+    t.index ["user_id", "source_agricultural_task_id"], name: "idx_on_user_id_source_agricultural_task_id_87cb4ef7da", unique: true, where: "source_agricultural_task_id IS NOT NULL"
     t.index ["user_id"], name: "index_agricultural_tasks_on_user_id"
   end
 
@@ -212,8 +218,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
     t.float "package_size"
     t.integer "user_id"
     t.string "region"
+    t.integer "source_fertilize_id"
     t.index ["name"], name: "index_fertilizes_on_name", unique: true
     t.index ["region"], name: "index_fertilizes_on_region"
+    t.index ["user_id", "source_fertilize_id"], name: "index_fertilizes_on_user_id_and_source_fertilize_id", unique: true, where: "source_fertilize_id IS NOT NULL"
     t.index ["user_id"], name: "index_fertilizes_on_user_id"
   end
 
@@ -372,10 +380,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
     t.integer "pest_id", null: false
     t.integer "user_id"
     t.string "region"
+    t.integer "source_pesticide_id"
     t.index ["crop_id"], name: "index_pesticides_on_crop_id"
     t.index ["is_reference"], name: "index_pesticides_on_is_reference"
     t.index ["pest_id"], name: "index_pesticides_on_pest_id"
     t.index ["region"], name: "index_pesticides_on_region"
+    t.index ["user_id", "source_pesticide_id"], name: "index_pesticides_on_user_id_and_source_pesticide_id", unique: true, where: "source_pesticide_id IS NOT NULL"
     t.index ["user_id"], name: "index_pesticides_on_user_id"
   end
 
@@ -391,8 +401,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.string "region"
+    t.integer "source_pest_id"
     t.index ["is_reference"], name: "index_pests_on_is_reference"
     t.index ["region"], name: "index_pests_on_region"
+    t.index ["user_id", "source_pest_id"], name: "index_pests_on_user_id_and_source_pest_id", unique: true, where: "source_pest_id IS NOT NULL"
     t.index ["user_id"], name: "index_pests_on_user_id"
   end
 

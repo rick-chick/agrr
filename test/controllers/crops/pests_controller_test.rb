@@ -20,7 +20,10 @@ module Crops
 
       get crop_pests_path(@crop)
       assert_response :success
-      assert_select 'h1', text: I18n.t('crops.pests.index.title')
+      assert_select '.page-title' do |elements|
+        assert_select 'a', text: @crop.name
+        assert_includes elements.first.text, I18n.t('crops.pests.index.title')
+      end
       assert_select '.crop-card', count: 2
     end
 
@@ -117,7 +120,10 @@ module Crops
 
       get crop_pest_path(@crop, pest)
       assert_response :success
-      assert_select 'h1', text: pest.name
+      assert_select '.crop-detail-title' do |elements|
+        assert_select 'a', text: @crop.name
+        assert_includes elements.first.text, pest.name
+      end
     end
 
     test "should redirect when pest not associated with crop" do
@@ -155,10 +161,10 @@ module Crops
 
       get new_crop_pest_path(@crop)
       assert_response :success
-      # 関連付けられていない害虫が選択肢に含まれることを確認
-      assert assigns(:unassociated_pests).include?(unassociated_pest1)
-      assert assigns(:unassociated_pests).include?(unassociated_pest2)
-      assert_not assigns(:unassociated_pests).include?(associated_pest)
+
+      assert_select 'select[name="pest_id"] option[value=?]', unassociated_pest1.id.to_s
+      assert_select 'select[name="pest_id"] option[value=?]', unassociated_pest2.id.to_s
+      assert_select 'select[name="pest_id"] option[value=?]', associated_pest.id.to_s, count: 0
     end
 
     # ========== 既存害虫の関連付けテスト ==========

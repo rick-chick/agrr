@@ -51,6 +51,9 @@ module Crops
             redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.already_associated')
             return
           end
+        else
+          redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.not_found')
+          return
         end
       end
 
