@@ -281,20 +281,19 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     admin_user = create(:user, admin: true)
     sign_in_as admin_user
     
-    reference_pest = create(:pest, is_reference: true, user_id: nil)
-    admin_pest = create(:pest, :user_owned, user: admin_user)
+    reference_pest = create(:pest, is_reference: true, user_id: nil, name: '参照害虫A')
+    admin_pest = create(:pest, :user_owned, user: admin_user, name: '管理者害虫B')
     other_user = create(:user)
-    other_user_pest = create(:pest, :user_owned, user: other_user)
+    other_user_pest = create(:pest, :user_owned, user: other_user, name: '他人害虫C')
     
     get pests_path
     assert_response :success
     
     # 管理者は参照害虫と自分の害虫のみ表示される
     # @pest (setupで作成された参照害虫), reference_pest, admin_pest の3つが表示される
-    response_body = response.body
-    assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
-    assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
-    assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+    assert_select '.crop-card .crop-name', text: reference_pest.name, count: 1
+    assert_select '.crop-card .crop-name', text: admin_pest.name, count: 1
+    assert_select '.crop-card .crop-name', text: other_user_pest.name, count: 0
   end
 
   test "admin should not access other user's pest" do
