@@ -139,6 +139,8 @@ module Crops
     # ========== 新規作成画面テスト ==========
 
     test "should get new" do
+      create(:pest, is_reference: true)
+
       get new_crop_pest_path(@crop)
       assert_response :success
       assert_select 'form'
