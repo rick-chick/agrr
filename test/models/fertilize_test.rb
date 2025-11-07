@@ -153,6 +153,21 @@ class FertilizeTest < ActiveSupport::TestCase
     assert_equal 2, user.fertilizes.count
   end
 
+  test "should enforce uniqueness of source_fertilize_id per user" do
+    user = create(:user)
+    reference = create(:fertilize, is_reference: true)
+
+    create(:fertilize, :user_owned, user: user, source_fertilize_id: reference.id)
+
+    duplicated = build(:fertilize, :user_owned, user: user, source_fertilize_id: reference.id)
+    assert_not duplicated.valid?
+    assert_includes duplicated.errors[:source_fertilize_id], "はすでに存在します"
+
+    another_user = create(:user)
+    other = build(:fertilize, :user_owned, user: another_user, source_fertilize_id: reference.id)
+    assert other.valid?
+  end
+
   test "should filter fertilizes by is_reference and user_id combination" do
     user1 = create(:user)
     user2 = create(:user)

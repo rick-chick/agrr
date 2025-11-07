@@ -86,6 +86,21 @@ class PestTest < ActiveSupport::TestCase
     assert pest.valid?
   end
 
+  test "should enforce uniqueness of source_pest_id per user" do
+    user = create(:user)
+    reference = create(:pest, is_reference: true)
+
+    create(:pest, :user_owned, user: user, source_pest_id: reference.id)
+
+    duplicated = build(:pest, :user_owned, user: user, source_pest_id: reference.id)
+    assert_not duplicated.valid?
+    assert_includes duplicated.errors[:source_pest_id], "はすでに存在します"
+
+    another_user = create(:user)
+    other = build(:pest, :user_owned, user: another_user, source_pest_id: reference.id)
+    assert other.valid?
+  end
+
   # 関連テスト
   test "should have one pest_temperature_profile" do
     pest = create(:pest, :with_temperature_profile)
