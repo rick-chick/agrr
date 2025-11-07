@@ -56,25 +56,24 @@ module Crops
       admin_user = create(:user, admin: true)
       sign_in_as admin_user
       admin_crop = create(:crop, user: admin_user)
-      
-      reference_pest = create(:pest, is_reference: true, user_id: nil)
-      admin_pest = create(:pest, :user_owned, user: admin_user)
+
+      reference_pest = create(:pest, is_reference: true, user_id: nil, name: '参照害虫A')
+      admin_pest = create(:pest, :user_owned, user: admin_user, name: '管理者害虫B')
       other_user = create(:user)
-      other_user_pest = create(:pest, :user_owned, user: other_user)
-      
+      other_user_pest = create(:pest, :user_owned, user: other_user, name: '他人害虫C')
+
       # 害虫を作物に関連付け
       create(:crop_pest, crop: admin_crop, pest: reference_pest)
       create(:crop_pest, crop: admin_crop, pest: admin_pest)
       create(:crop_pest, crop: admin_crop, pest: other_user_pest)
-      
+
       get crop_pests_path(admin_crop)
       assert_response :success
-      
+
       # 管理者は参照害虫と自分の害虫のみ表示される
-      response_body = response.body
-      assert response_body.include?(reference_pest.name), "参照害虫が表示されるべき"
-      assert response_body.include?(admin_pest.name), "管理者の害虫が表示されるべき"
-      assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
+      assert_select '.crop-card .crop-name', text: reference_pest.name, count: 1
+      assert_select '.crop-card .crop-name', text: admin_pest.name, count: 1
+      assert_select '.crop-card .crop-name', text: other_user_pest.name, count: 0
     end
 
     test "admin should not access other user's pest through crop" do
