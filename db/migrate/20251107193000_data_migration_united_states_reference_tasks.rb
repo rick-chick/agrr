@@ -16,34 +16,17 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
     self.table_name = 'crops'
   end
 
-  [
-    :ALL_CROPS,
-    :DIRECT_SEEDING_CROPS,
-    :TRANSPLANT_CROPS,
-    :MULCHING_CROPS,
-    :TUNNEL_CROPS,
-    :SUPPORT_STRUCTURE_CROPS,
-    :NET_CROPS,
-    :THINNING_CROPS,
-    :PRUNING_CROPS,
-    :TRAINING_CROPS,
-    :LEGACY_ENGLISH_NAMES,
-    :TASK_DEFINITIONS
-  ].each do |const_name|
-    remove_const(const_name) if const_defined?(const_name, false)
-  end
-
   ALL_CROPS = [
-    'Almonds',
-    'Apples',
+    'Almonds (Nonpareil)',
+    'Apples (Red Delicious)',
     'Barley',
     'Bell Peppers',
     'Blueberries',
     'Broccoli',
     'Cabbage',
-    'Carrots',
+    'Carrots (Standard)',
     'Corn',
-    'Cotton',
+    'Cotton (Upland Cotton)',
     'Cucumbers',
     'Grapes',
     'Lettuce',
@@ -53,40 +36,40 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
     'Peanuts',
     'Pistachios',
     'Potatoes',
-    'Rice',
+    'Rice (Long Grain)',
     'Rye',
     'Sorghum',
-    'Soybeans',
+    'Soybeans (Standard)',
     'Strawberries',
     'Sugar Beets',
     'Sugarcane',
     'Tomatoes',
     'Walnuts',
     'Watermelon',
-    'Wheat'
+    'Wheat (Winter Wheat)'
   ].freeze
 
   DIRECT_SEEDING_CROPS = [
     'Barley',
-    'Carrots',
+    'Carrots (Standard)',
     'Corn',
-    'Cotton',
+    'Cotton (Upland Cotton)',
     'Cucumbers',
     'Lettuce',
     'Oats',
     'Peanuts',
-    'Rice',
+    'Rice (Long Grain)',
     'Rye',
     'Sorghum',
-    'Soybeans',
+    'Soybeans (Standard)',
     'Sugar Beets',
     'Watermelon',
-    'Wheat'
+    'Wheat (Winter Wheat)'
   ].freeze
 
   TRANSPLANT_CROPS = [
-    'Almonds',
-    'Apples',
+    'Almonds (Nonpareil)',
+    'Apples (Red Delicious)',
     'Bell Peppers',
     'Blueberries',
     'Broccoli',
@@ -133,7 +116,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
   ].freeze
 
   THINNING_CROPS = [
-    'Carrots',
+    'Carrots (Standard)',
     'Corn',
     'Lettuce',
     'Sugar Beets',
@@ -141,8 +124,8 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
   ].freeze
 
   PRUNING_CROPS = [
-    'Almonds',
-    'Apples',
+    'Almonds (Nonpareil)',
+    'Apples (Red Delicious)',
     'Bell Peppers',
     'Blueberries',
     'Grapes',
@@ -234,7 +217,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       time_per_sqm: 0.05,
       weather_dependency: 'medium',
       required_tools: ['Shears', 'Harvest Basket'],
-      skill_level: 'beginner',
+      skill_level: 'intermediate',
       crops: ALL_CROPS
     },
     'Shipping Preparation' => {
@@ -320,7 +303,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
   }.freeze
 
   def up
-    say '🌱 United States (us) reference tasks seeding...'
+    say "🌱 United States (us) reference tasks seeding..."
 
     legacy_ids = TempAgriculturalTask.where(name: LEGACY_ENGLISH_NAMES, region: 'us', is_reference: true).pluck(:id)
     if legacy_ids.any?
@@ -352,17 +335,15 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       end
     end
 
-    say '✅ United States reference tasks seeding completed'
+    say "✅ United States reference tasks inserted"
   end
 
   def down
-    say '🗑️ United States (us) reference tasks removal in progress...'
+    say "🗑️ Removing United States (us) reference tasks..."
 
     task_ids = TempAgriculturalTask.where(name: TASK_DEFINITIONS.keys, region: 'us', is_reference: true).pluck(:id)
-    if task_ids.any?
-      TempAgriculturalTaskCrop.where(agricultural_task_id: task_ids).delete_all
-      TempAgriculturalTask.where(id: task_ids).delete_all
-    end
+    TempAgriculturalTaskCrop.where(agricultural_task_id: task_ids).delete_all if task_ids.any?
+    TempAgriculturalTask.where(id: task_ids).delete_all if task_ids.any?
 
     legacy_ids = TempAgriculturalTask.where(name: LEGACY_ENGLISH_NAMES, region: 'us', is_reference: true).pluck(:id)
     if legacy_ids.any?
@@ -370,6 +351,8 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       TempAgriculturalTask.where(id: legacy_ids).delete_all
     end
 
-    say '✅ United States reference tasks removed'
+    say "✅ United States reference tasks removed"
   end
 end
+
+
