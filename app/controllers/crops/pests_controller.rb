@@ -63,6 +63,7 @@ module Crops
       @pest = Pest.new(pest_params)
       unless admin_user?
         @pest.is_reference = false
+        @pest.user = current_user
       end
 
       if @pest.save
