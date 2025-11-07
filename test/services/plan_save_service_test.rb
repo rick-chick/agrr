@@ -116,6 +116,327 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       "Two CultivationPlanCrops should be created (duplicates allowed)"
   end
 
+  test "reuses existing user farm when same reference farm is copied twice" do
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'Farm再利用テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # 参照計画に少なくとも1つの作物を含める
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: '再利用圃場1', area: 120.0 },
+        { name: '再利用圃場2', area: 180.0 }
+      ]
+    }
+
+    before_crops_count = @user.crops.count
+    first_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
+    assert_not first_result.skipped?, 'First copy should not report skips'
+
+    original_farm = @user.farms.where(source_farm_id: @farm.id).first
+    assert_not_nil original_farm, 'User farm copied from reference should exist'
+
+    original_fields = original_farm.fields.order(:id).to_a
+    assert_equal 2, original_fields.size, 'Two fields should be created on first copy'
+
+    farm_count = @user.farms.count
+
+    before_second_crops_count = @user.crops.count
+    second_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
+    assert second_result.skipped?, 'Second copy should report skips when reusing farm'
+    assert_includes second_result.skipped_items[:farm], original_farm.id
+    assert_equal original_fields.map(&:id).sort, second_result.skipped_items[:fields].sort
+
+    assert_equal farm_count, @user.farms.count, 'Farm count should not increase on second copy'
+    assert_equal original_farm.id, @user.farms.where(source_farm_id: @farm.id).pluck(:id).uniq.first,
+                 'Existing farm should be reused on second copy'
+
+    reused_fields = original_farm.fields.order(:id).to_a
+    assert_equal original_fields.map(&:id), reused_fields.map(&:id), 'Existing fields should be reused'
+
+    # 作物も再利用される（source_crop_id対応後）
+    assert_equal before_second_crops_count, @user.crops.count, 'Crop count should not increase on second copy when reusing'
+    original_crop = @user.crops.where(source_crop_id: @crops[0].id).first
+    assert_not_nil original_crop, 'User crop copied from reference should exist'
+    assert_includes second_result.skipped_items[:crops], original_crop.id, 'Crop should be reported as skipped'
+  end
+
+  test "reuses existing user crop when same reference crop is copied twice" do
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'Crop再利用テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # 参照計画に作物を含める
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    first_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
+
+    original_crop = @user.crops.where(source_crop_id: @crops[0].id).first
+    assert_not_nil original_crop, 'User crop copied from reference should exist'
+
+    crop_count = @user.crops.count
+
+    second_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
+    assert second_result.skipped?, 'Second copy should report skips when reusing crop'
+    assert_includes second_result.skipped_items[:crops], original_crop.id
+
+    assert_equal crop_count, @user.crops.count, 'Crop count should not increase on second copy'
+    assert_equal original_crop.id, @user.crops.where(source_crop_id: @crops[0].id).pluck(:id).uniq.first,
+                 'Existing crop should be reused on second copy'
+  end
+
+  test "reuses existing interaction rule when same crop combination is copied twice" do
+    # 参照連作ルールを用意
+    reference_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'GroupA',
+      target_group: 'GroupB',
+      impact_ratio: 0.8,
+      is_directional: false,
+      is_reference: true,
+      region: 'jp'
+    )
+
+    # 参照作物にグループを設定
+    @crops[0].update!(groups: ['GroupA'])
+    @crops[1].update!(groups: ['GroupB'])
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'Interaction再利用テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    [@crops[0], @crops[1]].each do |crop|
+      CultivationPlanCrop.create!(
+        cultivation_plan: plan,
+        crop: crop,
+        name: crop.name,
+        variety: crop.variety,
+        area_per_unit: crop.area_per_unit,
+        revenue_per_area: crop.revenue_per_area
+      )
+    end
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    first_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
+
+    original_rule = @user.interaction_rules.where(rule_type: 'continuous_cultivation', source_group: 'GroupA', target_group: 'GroupB').first
+    assert_not_nil original_rule, 'User interaction rule should be created from reference'
+
+    rule_count = @user.interaction_rules.count
+
+    second_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
+    assert second_result.skipped?, 'Second copy should report skips when reusing interaction rule'
+    assert_includes second_result.skipped_items[:interaction_rules], original_rule.id
+
+    assert_equal rule_count, @user.interaction_rules.count, 'Interaction rule count should not increase on second copy'
+  end
+
+  test "copies all reference interaction rules for user region" do
+    InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'RefGroupA',
+      target_group: 'RefGroupB',
+      impact_ratio: 0.75,
+      is_directional: true,
+      is_reference: true,
+      region: @farm.region
+    )
+
+    InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'RefGroupC',
+      target_group: 'RefGroupD',
+      impact_ratio: 1.1,
+      is_directional: false,
+      is_reference: true,
+      region: @farm.region
+    )
+
+    InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'OtherRegionA',
+      target_group: 'OtherRegionB',
+      impact_ratio: 0.5,
+      is_directional: true,
+      is_reference: true,
+      region: 'us'
+    )
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'InteractionRulesCopyAll',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    user_rules = @user.interaction_rules.where(is_reference: false)
+    assert_equal 2, user_rules.count, 'All reference rules for region should be copied'
+
+    copied_pairs = user_rules.map { |rule| [rule.source_group, rule.target_group] }.sort
+    expected_pairs = [['RefGroupA', 'RefGroupB'], ['RefGroupC', 'RefGroupD']].sort
+    assert_equal expected_pairs, copied_pairs
+
+    user_rules.each do |rule|
+      assert_not_nil rule.source_interaction_rule_id, 'Copied rule should keep source reference'
+    end
+  end
+
+  test "copies all reference crops for user region regardless of plan selection" do
+    reference_crop_a = Crop.create!(
+      user: nil,
+      name: '地域参照作物A',
+      variety: 'A1',
+      is_reference: true,
+      area_per_unit: 0.2,
+      revenue_per_area: 4000.0,
+      region: @farm.region
+    )
+
+    reference_crop_b = Crop.create!(
+      user: nil,
+      name: '地域参照作物B',
+      variety: 'B1',
+      is_reference: true,
+      area_per_unit: 0.25,
+      revenue_per_area: 4500.0,
+      region: @farm.region
+    )
+
+    Crop.create!(
+      user: nil,
+      name: '他地域参照作物',
+      variety: 'X1',
+      is_reference: true,
+      area_per_unit: 0.3,
+      revenue_per_area: 4700.0,
+      region: 'us'
+    )
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 50.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '地域参照作物コピー',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop_a,
+      name: reference_crop_a.name,
+      variety: reference_crop_a.variety,
+      area_per_unit: reference_crop_a.area_per_unit,
+      revenue_per_area: reference_crop_a.revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    user_crops = @user.crops.where(is_reference: false)
+    copied_names = user_crops.map(&:name)
+
+    assert_includes copied_names, reference_crop_a.name
+    assert_includes copied_names, reference_crop_b.name
+    refute_includes copied_names, '他地域参照作物'
+
+    user_crops.each do |crop|
+      next unless [reference_crop_a.name, reference_crop_b.name].include?(crop.name)
+      assert_not_nil crop.source_crop_id, 'Copied crop should keep source reference'
+    end
+  end
+
   test "should handle multiple different crops without duplication" do
     # 異なる作物を選択
     different_crops = [
