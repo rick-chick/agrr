@@ -131,7 +131,7 @@ module Adapters
         test "should find all reference fertilizes" do
           create(:fertilize, name: "尿素1", is_reference: true)
           create(:fertilize, name: "尿素2", is_reference: true)
-          create(:fertilize, name: "尿素3", is_reference: false)
+          create(:fertilize, :user_owned, name: "尿素3")
           
           entities = @gateway.find_all_reference
           

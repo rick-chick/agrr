@@ -105,7 +105,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   end
 
   test "should maintain data integrity across multiple operations" do
-    pest = create(:pest, is_reference: false, name: 'テスト害虫')
+    pest = create(:pest, :user_owned, user: @user, name: 'テスト害虫')
     
     # 1. 最初に関連付け
     create(:crop_pest, crop: @crop1, pest: pest)
@@ -141,7 +141,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     other_crop = create(:crop, user: other_user)
 
     # 他人の作物は関連付けできない
-    pest = create(:pest, is_reference: false, name: 'テスト害虫')
+    pest = create(:pest, :user_owned, user: @user, name: 'テスト害虫')
     assert_difference('CropPest.count', 1) do  # @crop1のみ
       post pests_path, params: { 
         pest: {
@@ -205,7 +205,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle large number of associations" do
-    pest = create(:pest, is_reference: false, name: 'テスト害虫')
+    pest = create(:pest, :user_owned, user: @user, name: 'テスト害虫')
     
     # 10個の作物を作成
     crops = 10.times.map { create(:crop, user: @user) }
@@ -230,7 +230,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle empty associations correctly" do
-    pest = create(:pest, is_reference: false, name: 'テスト害虫')
+    pest = create(:pest, :user_owned, user: @user, name: 'テスト害虫')
 
     # 初期状態では関連付けなし
     get pest_path(pest)
@@ -300,7 +300,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     end
 
     # 存在しない作物IDを含む選択
-    pest = create(:pest, is_reference: false, name: 'テスト害虫')
+    pest = create(:pest, :user_owned, user: @user, name: 'テスト害虫')
     assert_difference('CropPest.count', 1) do  # @crop1のみ
       post pests_path, params: { 
         pest: {
