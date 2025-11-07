@@ -40,6 +40,7 @@ class InteractionRule < ApplicationRecord
   validates :target_group, presence: true
   validates :impact_ratio, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :is_reference, inclusion: { in: [true, false] }
+  validates :source_interaction_rule_id, uniqueness: { scope: :user_id }, allow_nil: true
 
   # Scopes
   scope :reference, -> { where(is_reference: true) }

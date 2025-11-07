@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_07_183959) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -99,7 +99,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.float "revenue_per_area"
     t.text "groups"
     t.string "region"
+    t.integer "source_crop_id"
     t.index ["region"], name: "index_crops_on_region"
+    t.index ["user_id", "source_crop_id"], name: "index_crops_on_user_id_and_source_crop_id", unique: true, where: "source_crop_id IS NOT NULL"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
 
@@ -188,9 +190,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.boolean "is_reference", default: false, null: false
     t.string "region"
     t.text "predicted_weather_data"
+    t.integer "source_farm_id"
     t.index ["is_reference"], name: "index_farms_on_is_reference", where: "is_reference = true"
     t.index ["region"], name: "index_farms_on_region"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
+    t.index ["user_id", "source_farm_id"], name: "index_farms_on_user_id_and_source_farm_id", unique: true, where: "source_farm_id IS NOT NULL"
     t.index ["user_id"], name: "index_farms_on_user_id"
     t.index ["weather_data_status"], name: "index_farms_on_weather_data_status"
     t.index ["weather_location_id"], name: "index_farms_on_weather_location_id"
@@ -277,6 +281,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.integer "user_id"
     t.boolean "is_reference", default: false, null: false
     t.string "region"
+    t.integer "source_interaction_rule_id"
     t.index ["is_reference"], name: "index_interaction_rules_on_is_reference"
     t.index ["region"], name: "index_interaction_rules_on_region"
     t.index ["rule_type", "source_group", "target_group"], name: "index_interaction_rules_on_type_and_groups"
@@ -284,6 +289,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.index ["source_group"], name: "index_interaction_rules_on_source_group"
     t.index ["target_group"], name: "index_interaction_rules_on_target_group"
     t.index ["user_id", "is_reference"], name: "index_interaction_rules_on_user_id_and_is_reference"
+    t.index ["user_id", "source_interaction_rule_id"], name: "idx_on_user_id_source_interaction_rule_id_0cbec4be31", unique: true, where: "source_interaction_rule_id IS NOT NULL"
     t.index ["user_id"], name: "index_interaction_rules_on_user_id"
   end
 
@@ -294,7 +300,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.float "daily_uptake_k"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "region"
+    t.boolean "is_reference", default: true, null: false
     t.index ["crop_stage_id"], name: "index_nutrient_requirements_on_crop_stage_id"
+    t.index ["is_reference"], name: "index_nutrient_requirements_on_is_reference"
+    t.index ["region"], name: "index_nutrient_requirements_on_region"
   end
 
   create_table "pest_control_methods", force: :cascade do |t|
@@ -418,17 +428,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
     t.index ["crop_stage_id"], name: "index_sunshine_requirements_on_crop_stage_id"
   end
 
-  create_table "task_schedules", force: :cascade do |t|
-    t.integer "crop_id", null: false
-    t.text "schedule_data"
-    t.text "description"
-    t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["crop_id"], name: "index_task_schedules_on_crop_id"
-    t.index ["user_id"], name: "index_task_schedules_on_user_id"
-  end
-
   create_table "temperature_requirements", force: :cascade do |t|
     t.integer "crop_stage_id", null: false
     t.float "base_temperature"
@@ -525,7 +524,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_04_074409) do
   add_foreign_key "pests", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
-  add_foreign_key "task_schedules", "crops"
   add_foreign_key "temperature_requirements", "crop_stages"
   add_foreign_key "thermal_requirements", "crop_stages"
   add_foreign_key "weather_data", "weather_locations"

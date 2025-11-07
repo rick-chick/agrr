@@ -1,17 +1,41 @@
 # frozen_string_literal: true
 
-require 'ostruct'
 require 'set'
 
 class PlanSaveService
   include ActiveModel::Model
-  
+
+  class Result
+    attr_accessor :success, :error_message, :new_plan
+    attr_reader :skipped_items
+
+    def initialize
+      @success = false
+      @error_message = nil
+      @new_plan = nil
+      @skipped_items = { farm: [], fields: [], crops: [], interaction_rules: [] }
+    end
+
+    def success?
+      success
+    end
+
+    def skipped?
+      @skipped_items.values.any?(&:present?)
+    end
+
+    def add_skip(category, value)
+      (@skipped_items[category] ||= []) << value
+    end
+  end
+
   attr_accessor :user, :session_data, :result
   
   def initialize(user:, session_data:)
     @user = user
     @session_data = session_data
-    @result = OpenStruct.new(success: false, error_message: nil)
+    @result = Result.new
+    @farm_reused = false
   end
   
   def call
@@ -20,9 +44,20 @@ class PlanSaveService
     ActiveRecord::Base.transaction do
       # 1. マスタデータの作成・取得
       farm = create_or_get_user_farm
-      crops = create_user_crops_from_plan
+      @current_farm_region = farm.region
+
       fields = create_user_fields(farm)
-      interaction_rules = create_interaction_rules(crops)
+      crops = create_user_crops_from_plan
+      interaction_rules = copy_interaction_rules_for_region(farm.region)
+      existing_plan = find_existing_private_plan(farm)
+
+      if existing_plan
+        Rails.logger.info "♻️ [PlanSaveService] Existing private plan detected (##{existing_plan.id}), skipping plan copy"
+        @result.add_skip(:plan, existing_plan.id)
+        @result.new_plan = existing_plan
+        @result.success = true
+        return @result
+      end
       
       # 2. 計画のコピー
       new_plan = copy_cultivation_plan(farm, crops)
@@ -35,6 +70,7 @@ class PlanSaveService
       
       Rails.logger.info I18n.t('services.plan_save_service.messages.service_completed')
       @result.success = true
+      @result.new_plan = new_plan
     end
     
     @result
@@ -53,6 +89,14 @@ class PlanSaveService
     
     reference_farm = Farm.find(farm_id)
     Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_farm_found', farm_name: reference_farm.name)
+
+    existing_farm = @user.farms.find_by(source_farm_id: reference_farm.id)
+    if existing_farm
+      Rails.logger.info "♻️ [PlanSaveService] Reusing existing farm: #{existing_farm.name}"
+      @farm_reused = true
+      @result.add_skip(:farm, existing_farm.id)
+      return existing_farm
+    end
     
     # 新しい農場を作成（バリデーションエラーを捕捉）
     new_farm = @user.farms.build(
@@ -61,7 +105,8 @@ class PlanSaveService
       longitude: reference_farm.longitude,
       region: reference_farm.region,
       is_reference: false,
-      weather_location_id: reference_farm.weather_location_id
+      weather_location_id: reference_farm.weather_location_id,
+      source_farm_id: reference_farm.id
     )
     
     unless new_farm.save
@@ -75,30 +120,39 @@ class PlanSaveService
     end
     
     Rails.logger.info I18n.t('services.plan_save_service.messages.farm_created', farm_name: new_farm.name)
+    @farm_reused = false
     new_farm
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.farm_not_found', farm_id: farm_id)
     raise e
   end
   
+  def find_existing_private_plan(farm)
+    current_year = Date.current.year
+    @user.cultivation_plans.where(plan_type: 'private', plan_year: current_year, farm: farm).first
+  end
+
   def create_user_crops_from_plan
-    # 仕様: セッションにはplan_idのみを持たせる。crop_idsは参照計画から常に導出する。
     plan_id = @session_data[:plan_id] || @session_data['plan_id']
     raise StandardError, 'plan_id is required to derive crops' unless plan_id
 
     reference_plan = CultivationPlan.includes(cultivation_plan_crops: [crop: { crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement] }]).find(plan_id)
-    # 登録順にマッピングするために、参照計画のCultivationPlanCropを順序付きで取得
-    reference_cultivation_plan_crops = reference_plan.cultivation_plan_crops.order(:id).to_a
-    reference_crops = reference_cultivation_plan_crops.map(&:crop).compact
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_crops_found', count: reference_crops.count)
-    
+    reference_region = reference_plan.farm&.region || @current_farm_region
+
+    reference_crops_scope = Crop.reference
+    reference_crops_scope = reference_crops_scope.where(region: [reference_region, nil]) if reference_region.present?
+
     user_crops = []
-    # 参照CPC(ID) -> ユーザーCrop(ID) のマッピング（登録順ベース）
-    @ref_cpc_id_to_user_crop_id = {}
-    
-    reference_cultivation_plan_crops.each do |reference_cpc|
-      reference_crop = reference_cpc.crop
-      # 新しい作物を作成（名前重複は許容）
+
+    reference_crops_scope.find_each do |reference_crop|
+      existing_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
+
+      if existing_crop
+        @result.add_skip(:crops, existing_crop.id)
+        user_crops << existing_crop
+        next
+      end
+
       new_crop = @user.crops.build(
         name: reference_crop.name,
         variety: reference_crop.variety,
@@ -106,28 +160,58 @@ class PlanSaveService
         revenue_per_area: reference_crop.revenue_per_area,
         groups: reference_crop.groups,
         is_reference: false,
-        region: reference_crop.region
+        region: reference_crop.region,
+        source_crop_id: reference_crop.id
       )
-      
+
       unless new_crop.save
         error_message = new_crop.errors.full_messages.join(', ')
         Rails.logger.error "❌ [PlanSaveService] Crop creation failed: #{error_message}"
         raise StandardError, error_message
       end
-      
-      # 作物ステージをコピー
+
       copy_crop_stages(reference_crop, new_crop)
-      
       user_crops << new_crop
-      @ref_cpc_id_to_user_crop_id[reference_cpc.id] = new_crop.id
       Rails.logger.info I18n.t('services.plan_save_service.messages.crop_created', crop_name: new_crop.name)
     end
-    
+
+    reference_cultivation_plan_crops = reference_plan.cultivation_plan_crops.order(:id).to_a
+    @ref_cpc_id_to_user_crop_id = {}
+
+    reference_cultivation_plan_crops.each do |reference_cpc|
+      reference_crop = reference_cpc.crop
+      user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
+
+      unless user_crop
+        user_crop = @user.crops.create!(
+          name: reference_crop.name,
+          variety: reference_crop.variety,
+          area_per_unit: reference_crop.area_per_unit,
+          revenue_per_area: reference_crop.revenue_per_area,
+          groups: reference_crop.groups,
+          is_reference: false,
+          region: reference_crop.region,
+          source_crop_id: reference_crop.id
+        )
+        copy_crop_stages(reference_crop, user_crop)
+        user_crops << user_crop
+      end
+
+      @ref_cpc_id_to_user_crop_id[reference_cpc.id] = user_crop.id
+    end
+
     Rails.logger.info I18n.t('services.plan_save_service.debug.user_crops_created', count: user_crops.count)
     user_crops
   end
   
   def create_user_fields(farm)
+    if @farm_reused
+      Rails.logger.info "♻️ [PlanSaveService] Skipping field creation because farm was reused"
+      existing_fields = farm.fields.where(user: @user).order(:id).to_a
+      existing_fields.each { |field| @result.add_skip(:fields, field.id) }
+      return existing_fields
+    end
+
     field_data = @session_data[:field_data] || @session_data['field_data']
     Rails.logger.debug I18n.t('services.plan_save_service.debug.field_data_extracted', field_data: field_data.inspect)
     
@@ -170,97 +254,49 @@ class PlanSaveService
     user_fields
   end
   
-  def create_interaction_rules(crops)
-    # 作物の組み合わせから連作ルールを作成
-    interaction_rules = []
-    
-    # 2つ以上の作物がある場合のみ連作ルールを作成
-    return interaction_rules if crops.length < 2
-    
-    # 既に処理した組み合わせを記録（重複防止）
-    processed_pairs = Set.new
-    
-    crops.combination(2).each do |crop1, crop2|
-      # 作物のgroups属性を取得（配列の場合は最初の要素を使用、なければ作物名を使用）
-      group1 = extract_crop_group(crop1)
-      group2 = extract_crop_group(crop2)
-      region = crop1.region || crop2.region
-      
-      # 組み合わせの正規化（重複防止のため）
-      pair_key = [group1, group2].sort
-      next if processed_pairs.include?(pair_key)
-      processed_pairs.add(pair_key)
-      
-      # 既存のユーザールールがあるかチェック（存在する場合はそれを使う）
-      existing_rule = find_existing_interaction_rule(group1, group2, region)
-      
-      if existing_rule
-        interaction_rules << existing_rule
-        Rails.logger.info "✅ [PlanSaveService] Using existing user interaction rule: #{group1} ↔ #{group2} (region: #{region})"
-      else
-        # 既存のユーザールールがない場合のみ、参照ルールからコピーしてユーザールールを作成
-        reference_rule = find_reference_interaction_rule(group1, group2, region)
-        
-        if reference_rule
-          # 参照ルールをコピーしてユーザールールを作成
-          new_rule = @user.interaction_rules.create!(
-            rule_type: reference_rule.rule_type,
-            source_group: reference_rule.source_group,
-            target_group: reference_rule.target_group,
-            impact_ratio: reference_rule.impact_ratio.to_f,
-            is_directional: !!reference_rule.is_directional,
-            region: region,
-            description: reference_rule.description || "#{crop1.name}と#{crop2.name}の連作ルール"
-          )
-          interaction_rules << new_rule
-          
-          Rails.logger.info "✅ [PlanSaveService] Created interaction rule from reference: #{group1} ↔ #{group2} (impact: #{reference_rule.impact_ratio})"
-        else
-          # 参照ルールがない場合はスキップ（ルールを作成しない）
-          Rails.logger.debug "⏭️ [PlanSaveService] Skipping interaction rule creation: #{group1} ↔ #{group2} (no reference rule found, region: #{region})"
-        end
-      end
-    end
-    
-    interaction_rules
-  end
-  
-  def extract_crop_group(crop)
-    # groupsが配列の場合は最初の要素を使用、なければ作物名を使用
-    if crop.groups.is_a?(Array) && crop.groups.any?
-      crop.groups.first
-    else
-      crop.name
-    end
-  end
-  
-  def find_existing_interaction_rule(group1, group2, region)
-    # 双方向で既存ユーザールールを検索（ユーザー所有、リージョンでフィルタリング）
-    # is_reference: false を明示してユーザールールのみを検索
-    user_scope = @user.interaction_rules.where(rule_type: 'continuous_cultivation', is_reference: false)
-    user_scope = user_scope.where(region: region) if region.present?
-    
-    user_scope.find_by(
-      source_group: group1,
-      target_group: group2
-    ) || user_scope.find_by(
-      source_group: group2,
-      target_group: group1
-    )
-  end
-  
-  def find_reference_interaction_rule(group1, group2, region)
-    # 参照連作ルールから影響係数をコピー（存在する場合）
+  def copy_interaction_rules_for_region(region)
     reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
-    reference_scope = reference_scope.where(region: region) if region.present?
+    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
 
-    # 優先: 同方向の参照ルール
-    ref_rule_same = reference_scope.find_by(source_group: group1, target_group: group2)
+    interaction_rules = []
 
-    # 次点: 双方向（非方向性）の参照ルール（反対方向でも可）
-    ref_rule_bidirectional = reference_scope.where(is_directional: false).find_by(source_group: group2, target_group: group1)
+    reference_scope.find_each do |reference_rule|
+      existing_rule = @user.interaction_rules.find_by(source_interaction_rule_id: reference_rule.id)
 
-    ref_rule_same || ref_rule_bidirectional
+      unless existing_rule
+        existing_rule = @user.interaction_rules.find_by(
+          rule_type: reference_rule.rule_type,
+          source_group: reference_rule.source_group,
+          target_group: reference_rule.target_group,
+          region: reference_rule.region,
+          is_reference: false
+        )
+      end
+
+      if existing_rule
+        if existing_rule.source_interaction_rule_id.nil?
+          existing_rule.update!(source_interaction_rule_id: reference_rule.id)
+        end
+        @result.add_skip(:interaction_rules, existing_rule.id)
+        interaction_rules << existing_rule
+        next
+      end
+
+      new_rule = @user.interaction_rules.create!(
+        rule_type: reference_rule.rule_type,
+        source_group: reference_rule.source_group,
+        target_group: reference_rule.target_group,
+        impact_ratio: reference_rule.impact_ratio.to_f,
+        is_directional: !!reference_rule.is_directional,
+        region: reference_rule.region,
+        description: reference_rule.description,
+        source_interaction_rule_id: reference_rule.id
+      )
+
+      interaction_rules << new_rule
+    end
+
+    interaction_rules
   end
   
   def copy_cultivation_plan(farm, crops)
