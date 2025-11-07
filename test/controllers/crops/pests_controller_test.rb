@@ -300,7 +300,7 @@ module Crops
     end
 
     test "should not allow regular user to change is_reference flag" do
-      pest = create(:pest, is_reference: false, name: 'ユーザー害虫')
+      pest = create(:pest, :user_owned, user: @user, name: 'ユーザー害虫')
       create(:crop_pest, crop: @crop, pest: pest)
 
       patch crop_pest_path(@crop, pest), params: { pest: {

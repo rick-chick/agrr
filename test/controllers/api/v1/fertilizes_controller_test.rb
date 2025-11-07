@@ -81,7 +81,7 @@ module Api
 
       test "ai_create should update existing fertilize with package_size from agrr" do
         # 既存の肥料を作成
-        existing = create(:fertilize, name: "尿素", is_reference: false, package_size: 20.0)
+        existing = create(:fertilize, :user_owned, user: @user, name: "尿素", package_size: 20.0)
         
         agrr_output = {
           "name" => "尿素",
