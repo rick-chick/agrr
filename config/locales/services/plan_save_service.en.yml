@@ -4,6 +4,10 @@ en:
       messages:
         farm_created: "Farm created: %{farm_name}"
         crop_created: "Crop created: %{crop_name}"
+        fertilize_created: "Fertilize created: %{fertilize_name}"
+        pest_created: "Pest created: %{pest_name}"
+        agricultural_task_created: "Agricultural task created: %{task_name}"
+        pesticide_created: "Pesticide created: %{pesticide_name}"
         field_created: "Field created: %{field_name}"
         plan_created: "Plan created: %{plan_id}"
         interaction_rule_created: "Interaction rule created: %{source_group} → %{target_group}"

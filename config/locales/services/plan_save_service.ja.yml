@@ -4,6 +4,10 @@ ja:
       messages:
         farm_created: "農場を作成しました: %{farm_name}"
         crop_created: "作物を作成しました: %{crop_name}"
+        fertilize_created: "肥料を作成しました: %{fertilize_name}"
+        pest_created: "害虫を作成しました: %{pest_name}"
+        agricultural_task_created: "作業を作成しました: %{task_name}"
+        pesticide_created: "農薬を作成しました: %{pesticide_name}"
         field_created: "圃場を作成しました: %{field_name}"
         plan_created: "計画を作成しました: %{plan_id}"
         interaction_rule_created: "相互作用ルールを作成しました: %{source_group} → %{target_group}"

@@ -13,7 +13,7 @@ class PlanSaveService
       @success = false
       @error_message = nil
       @new_plan = nil
-      @skipped_items = { farm: [], fields: [], crops: [], interaction_rules: [] }
+      @skipped_items = { farm: [], fields: [], crops: [], fertilizes: [], pests: [], agricultural_tasks: [], pesticides: [], interaction_rules: [] }
     end
 
     def success?
@@ -48,7 +48,11 @@ class PlanSaveService
 
       fields = create_user_fields(farm)
       crops = create_user_crops_from_plan
+      pests = copy_pests_for_region(farm.region)
+      agricultural_tasks = copy_agricultural_tasks_for_region(farm.region)
       interaction_rules = copy_interaction_rules_for_region(farm.region)
+      fertilizes = copy_fertilizes_for_region(farm.region)
+      pesticides = copy_pesticides_for_region(farm.region)
       existing_plan = find_existing_private_plan(farm)
 
       if existing_plan
@@ -63,7 +67,7 @@ class PlanSaveService
       new_plan = copy_cultivation_plan(farm, crops)
       
       # 3. マスタデータ間の関連付け
-      establish_master_data_relationships(farm, crops, fields, interaction_rules)
+      establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
       
       # 4. 関連データのコピー
       copy_plan_relations(new_plan)
@@ -143,6 +147,7 @@ class PlanSaveService
     reference_crops_scope = reference_crops_scope.where(region: [reference_region, nil]) if reference_region.present?
 
     user_crops = []
+    @reference_crop_id_to_user_crop_id ||= {}
 
     reference_crops_scope.find_each do |reference_crop|
       existing_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
@@ -150,6 +155,7 @@ class PlanSaveService
       if existing_crop
         @result.add_skip(:crops, existing_crop.id)
         user_crops << existing_crop
+        @reference_crop_id_to_user_crop_id[reference_crop.id] = existing_crop.id
         next
       end
 
@@ -172,6 +178,7 @@ class PlanSaveService
 
       copy_crop_stages(reference_crop, new_crop)
       user_crops << new_crop
+      @reference_crop_id_to_user_crop_id[reference_crop.id] = new_crop.id
       Rails.logger.info I18n.t('services.plan_save_service.messages.crop_created', crop_name: new_crop.name)
     end
 
@@ -197,6 +204,7 @@ class PlanSaveService
         user_crops << user_crop
       end
 
+      @reference_crop_id_to_user_crop_id[reference_crop.id] = user_crop.id
       @ref_cpc_id_to_user_crop_id[reference_cpc.id] = user_crop.id
     end
 
@@ -298,6 +306,317 @@ class PlanSaveService
 
     interaction_rules
   end
+
+  def copy_pests_for_region(region)
+    reference_scope = Pest.reference
+    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+
+    reference_scope = reference_scope.includes(
+      :pest_temperature_profile,
+      :pest_thermal_requirement,
+      :pest_control_methods,
+      crop_pests: :crop
+    )
+
+    user_pests = []
+
+    @reference_pest_id_to_user_pest_id ||= {}
+
+    reference_scope.find_each do |reference_pest|
+      existing_pest = @user.pests.find_by(source_pest_id: reference_pest.id)
+
+      if existing_pest
+        @result.add_skip(:pests, existing_pest.id)
+        user_pests << existing_pest
+        @reference_pest_id_to_user_pest_id[reference_pest.id] = existing_pest.id
+        next
+      end
+
+      new_pest = @user.pests.build(
+        name: reference_pest.name,
+        name_scientific: reference_pest.name_scientific,
+        family: reference_pest.family,
+        order: reference_pest.order,
+        description: reference_pest.description,
+        occurrence_season: reference_pest.occurrence_season,
+        region: reference_pest.region || region,
+        is_reference: false,
+        source_pest_id: reference_pest.id
+      )
+
+      unless new_pest.save
+        error_message = new_pest.errors.full_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Pest creation failed: #{error_message}"
+        raise StandardError, error_message
+      end
+
+      copy_pest_profiles(reference_pest, new_pest)
+      copy_pest_control_methods(reference_pest, new_pest)
+      copy_pest_crop_relationships(reference_pest, new_pest)
+
+      user_pests << new_pest
+      @reference_pest_id_to_user_pest_id[reference_pest.id] = new_pest.id
+      Rails.logger.info I18n.t('services.plan_save_service.messages.pest_created', pest_name: new_pest.name)
+    end
+
+    user_pests
+  end
+
+  def copy_pest_profiles(reference_pest, new_pest)
+    if (reference_profile = reference_pest.pest_temperature_profile)
+      new_pest.create_pest_temperature_profile!(
+        base_temperature: reference_profile.base_temperature,
+        max_temperature: reference_profile.max_temperature
+      )
+    end
+
+    if (reference_thermal = reference_pest.pest_thermal_requirement)
+      new_pest.create_pest_thermal_requirement!(
+        required_gdd: reference_thermal.required_gdd,
+        first_generation_gdd: reference_thermal.first_generation_gdd
+      )
+    end
+  end
+
+  def copy_pest_control_methods(reference_pest, new_pest)
+    reference_pest.pest_control_methods.order(:id).each do |method|
+      new_pest.pest_control_methods.create!(
+        method_type: method.method_type,
+        method_name: method.method_name,
+        description: method.description,
+        timing_hint: method.timing_hint
+      )
+    end
+  end
+
+  def copy_pest_crop_relationships(reference_pest, new_pest)
+    reference_pest.crop_pests.each do |crop_pest|
+      user_crop_id = user_crop_id_for_reference_crop(crop_pest.crop_id)
+      next unless user_crop_id
+
+      CropPest.create!(
+        crop_id: user_crop_id,
+        pest: new_pest
+      )
+    end
+  end
+
+  def user_crop_id_for_reference_crop(reference_crop_id)
+    @reference_crop_id_to_user_crop_id ||= {}
+    return @reference_crop_id_to_user_crop_id[reference_crop_id] if @reference_crop_id_to_user_crop_id.key?(reference_crop_id)
+
+    user_crop = @user.crops.find_by(source_crop_id: reference_crop_id)
+    if user_crop
+      @reference_crop_id_to_user_crop_id[reference_crop_id] = user_crop.id
+      return user_crop.id
+    end
+
+    nil
+  end
+
+  def user_pest_id_for_reference_pest(reference_pest_id)
+    @reference_pest_id_to_user_pest_id ||= {}
+    return @reference_pest_id_to_user_pest_id[reference_pest_id] if @reference_pest_id_to_user_pest_id.key?(reference_pest_id)
+
+    user_pest = @user.pests.find_by(source_pest_id: reference_pest_id)
+    if user_pest
+      @reference_pest_id_to_user_pest_id[reference_pest_id] = user_pest.id
+      return user_pest.id
+    end
+
+    nil
+  end
+
+  def copy_agricultural_tasks_for_region(region)
+    reference_scope = AgriculturalTask.reference
+    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+
+    reference_scope = reference_scope.includes(agricultural_task_crops: :crop)
+
+    user_tasks = []
+
+    reference_scope.find_each do |reference_task|
+      existing_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
+
+      if existing_task
+        @result.add_skip(:agricultural_tasks, existing_task.id)
+        user_tasks << existing_task
+        next
+      end
+
+      new_task = @user.agricultural_tasks.build(
+        name: reference_task.name,
+        description: reference_task.description,
+        time_per_sqm: reference_task.time_per_sqm,
+        weather_dependency: reference_task.weather_dependency,
+        required_tools: reference_task.required_tools ? reference_task.required_tools.dup : [],
+        skill_level: reference_task.skill_level,
+        task_type: reference_task.task_type,
+        task_type_id: reference_task.task_type_id,
+        region: reference_task.region || region,
+        is_reference: false,
+        source_agricultural_task_id: reference_task.id
+      )
+
+      unless new_task.save
+        error_message = new_task.errors.full_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Agricultural task creation failed: #{error_message}"
+        raise StandardError, error_message
+      end
+
+      copy_agricultural_task_crop_relationships(reference_task, new_task)
+
+      user_tasks << new_task
+      Rails.logger.info I18n.t('services.plan_save_service.messages.agricultural_task_created', task_name: new_task.name)
+    end
+
+    user_tasks
+  end
+
+  def copy_agricultural_task_crop_relationships(reference_task, new_task)
+    reference_task.agricultural_task_crops.each do |task_crop|
+      user_crop_id = user_crop_id_for_reference_crop(task_crop.crop_id)
+      next unless user_crop_id
+
+      AgriculturalTaskCrop.create!(
+        agricultural_task: new_task,
+        crop_id: user_crop_id
+      )
+    end
+  end
+
+  def copy_fertilizes_for_region(region)
+    reference_scope = Fertilize.reference
+    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+
+    user_fertilizes = []
+
+    reference_scope.find_each do |reference_fertilize|
+      existing_fertilize = @user.fertilizes.find_by(source_fertilize_id: reference_fertilize.id)
+
+      if existing_fertilize
+        @result.add_skip(:fertilizes, existing_fertilize.id)
+        user_fertilizes << existing_fertilize
+        next
+      end
+
+      new_fertilize = @user.fertilizes.build(
+        name: generate_unique_fertilize_name(reference_fertilize.name),
+        n: reference_fertilize.n,
+        p: reference_fertilize.p,
+        k: reference_fertilize.k,
+        description: reference_fertilize.description,
+        package_size: reference_fertilize.package_size,
+        region: reference_fertilize.region || region,
+        is_reference: false,
+        source_fertilize_id: reference_fertilize.id
+      )
+
+      unless new_fertilize.save
+        error_message = new_fertilize.errors.full_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Fertilize creation failed: #{error_message}"
+        raise StandardError, error_message
+      end
+
+      user_fertilizes << new_fertilize
+      Rails.logger.info I18n.t('services.plan_save_service.messages.fertilize_created', fertilize_name: new_fertilize.name)
+    end
+
+    user_fertilizes
+  end
+
+  def generate_unique_fertilize_name(base_name)
+    candidate = "#{base_name} (コピー)"
+    return candidate unless Fertilize.exists?(name: candidate)
+
+    suffix = 2
+    loop do
+      candidate = "#{base_name} (コピー #{suffix})"
+      break candidate unless Fertilize.exists?(name: candidate)
+      suffix += 1
+    end
+  end
+
+  def copy_pesticides_for_region(region)
+    reference_scope = Pesticide.reference.includes(
+      :pesticide_usage_constraint,
+      :pesticide_application_detail,
+      :crop,
+      :pest
+    )
+    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+
+    user_pesticides = []
+
+    reference_scope.find_each do |reference_pesticide|
+      existing_pesticide = @user.pesticides.find_by(source_pesticide_id: reference_pesticide.id)
+
+      if existing_pesticide
+        @result.add_skip(:pesticides, existing_pesticide.id)
+        user_pesticides << existing_pesticide
+        next
+      end
+
+      user_crop_id = user_crop_id_for_reference_crop(reference_pesticide.crop_id)
+      user_pest_id = user_pest_id_for_reference_pest(reference_pesticide.pest_id)
+
+      unless user_crop_id && user_pest_id
+        Rails.logger.warn "⚠️ [PlanSaveService] Skipping pesticide copy due to missing crop/pest mapping (pesticide_id=#{reference_pesticide.id})"
+        next
+      end
+
+      new_pesticide = @user.pesticides.build(
+        crop_id: user_crop_id,
+        pest_id: user_pest_id,
+        name: reference_pesticide.name,
+        active_ingredient: reference_pesticide.active_ingredient,
+        description: reference_pesticide.description,
+        region: reference_pesticide.region || region,
+        is_reference: false,
+        source_pesticide_id: reference_pesticide.id
+      )
+
+      unless new_pesticide.save
+        error_message = new_pesticide.errors.full_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Pesticide creation failed: #{error_message}"
+        raise StandardError, error_message
+      end
+
+      copy_pesticide_usage_constraint(reference_pesticide, new_pesticide)
+      copy_pesticide_application_detail(reference_pesticide, new_pesticide)
+
+      user_pesticides << new_pesticide
+      Rails.logger.info I18n.t('services.plan_save_service.messages.pesticide_created', pesticide_name: new_pesticide.name)
+    end
+
+    user_pesticides
+  end
+
+  def copy_pesticide_usage_constraint(reference_pesticide, new_pesticide)
+    reference_constraint = reference_pesticide.pesticide_usage_constraint
+    return unless reference_constraint
+
+    new_pesticide.create_pesticide_usage_constraint!(
+      min_temperature: reference_constraint.min_temperature,
+      max_temperature: reference_constraint.max_temperature,
+      max_wind_speed_m_s: reference_constraint.max_wind_speed_m_s,
+      max_application_count: reference_constraint.max_application_count,
+      harvest_interval_days: reference_constraint.harvest_interval_days,
+      other_constraints: reference_constraint.other_constraints
+    )
+  end
+
+  def copy_pesticide_application_detail(reference_pesticide, new_pesticide)
+    reference_detail = reference_pesticide.pesticide_application_detail
+    return unless reference_detail
+
+    new_pesticide.create_pesticide_application_detail!(
+      dilution_ratio: reference_detail.dilution_ratio,
+      amount_per_m2: reference_detail.amount_per_m2,
+      amount_unit: reference_detail.amount_unit,
+      application_method: reference_detail.application_method
+    )
+  end
   
   def copy_cultivation_plan(farm, crops)
     plan_id = @session_data[:plan_id] || @session_data['plan_id']
@@ -341,7 +660,7 @@ class PlanSaveService
     raise e
   end
   
-  def establish_master_data_relationships(farm, crops, fields, interaction_rules)
+  def establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
     # 農場と圃場の関連付けは既にcreate_user_fieldsで完了
     # 作物と連作ルールの関連付けは既にcreate_interaction_rulesで完了
     
@@ -350,6 +669,10 @@ class PlanSaveService
     Rails.logger.info "  - Farm: #{farm.name} (ID: #{farm.id})"
     Rails.logger.info "  - Fields: #{fields.count} fields"
     Rails.logger.info "  - Crops: #{crops.count} crops"
+    Rails.logger.info "  - Pests: #{pests.count} pests"
+    Rails.logger.info "  - Agricultural tasks: #{agricultural_tasks.count} tasks"
+    Rails.logger.info "  - Fertilizes: #{fertilizes.count} fertilizes"
+    Rails.logger.info "  - Pesticides: #{pesticides.count} pesticides"
     Rails.logger.info "  - Interaction rules: #{interaction_rules.count} rules"
     
     # 農場の圃場数が一致しているかチェック
@@ -366,6 +689,22 @@ class PlanSaveService
       raise "Some crops were not properly created"
     end
     
+    unless pests.all?(&:persisted?)
+      raise "Some pests were not properly created"
+    end
+
+    unless agricultural_tasks.all?(&:persisted?)
+      raise "Some agricultural tasks were not properly created"
+    end
+
+    unless fertilizes.all?(&:persisted?)
+      raise "Some fertilizes were not properly created"
+    end
+
+    unless pesticides.all?(&:persisted?)
+      raise "Some pesticides were not properly created"
+    end
+
     unless interaction_rules.all?(&:persisted?)
       raise "Some interaction rules were not properly created"
     end

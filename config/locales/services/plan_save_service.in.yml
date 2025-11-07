@@ -4,6 +4,10 @@ in:
       messages:
         farm_created: "खेत बनाया गया: %{farm_name}"
         crop_created: "फसल बनाई गई: %{crop_name}"
+        fertilize_created: "उर्वरक बनाया गया: %{fertilize_name}"
+        pest_created: "कीट बनाया गया: %{pest_name}"
+        agricultural_task_created: "कृषि कार्य बनाया गया: %{task_name}"
+        pesticide_created: "कीटनाशक बनाया गया: %{pesticide_name}"
         field_created: "खेत का क्षेत्र बनाया गया: %{field_name}"
         plan_created: "योजना बनाई गई: %{plan_id}"
         interaction_rule_created: "अंतर्क्रिया नियम बनाया गया: %{source_group} → %{target_group}"
