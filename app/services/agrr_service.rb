@@ -118,6 +118,17 @@ class AgrrService
     execute_command(args)
   end
 
+  # Plan fertilizer applications
+  def fertilize_plan(crop_file:, use_harvest_start: false, json: true)
+    raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
+
+    args = ['fertilize', 'plan', '--crop-file', crop_file]
+    args << '--use-harvest-start' if use_harvest_start
+    args << '--json' if json
+
+    execute_command(args)
+  end
+
   # Get pest profile by pest name
   def pest_to_crop(pest:, crops:, language: 'ja')
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?

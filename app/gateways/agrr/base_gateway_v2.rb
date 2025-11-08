@@ -40,6 +40,8 @@ module Agrr
           execute_predict_command(command_args)
         when 'schedule'
           execute_schedule_command(command_args)
+        when 'fertilize'
+          execute_fertilize_command(command_args)
         else
           raise ExecutionError, "Unsupported command: #{command}"
         end
@@ -445,6 +447,42 @@ module Agrr
         output: output,
         json: true
       )
+    end
+
+    def execute_fertilize_command(args)
+      subcommand = args[0]
+
+      case subcommand
+      when 'plan'
+        crop_file = nil
+        use_harvest_start = false
+
+        i = 1
+        while i < args.length
+          case args[i]
+          when '--crop-file'
+            crop_file = args[i + 1]
+            i += 2
+          when '--use-harvest-start'
+            use_harvest_start = true
+            i += 1
+          when '--json'
+            i += 1
+          else
+            i += 1
+          end
+        end
+
+        raise ArgumentError, 'Crop file is required' unless crop_file
+
+        @agrr_service.fertilize_plan(
+          crop_file: crop_file,
+          use_harvest_start: use_harvest_start,
+          json: true
+        )
+      else
+        raise ExecutionError, "Unsupported fertilize subcommand: #{subcommand}"
+      end
     end
     
     # stdoutからJSONの部分だけを抽出する
