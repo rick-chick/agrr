@@ -23,9 +23,12 @@ class TaskScheduleGeneratorService
       raise WeatherDataMissingError, "CultivationPlan##{plan.id} に気象予測データが存在しません"
     end
 
+    schedule_cache = {}
+    fertilize_cache = {}
+
     ActiveRecord::Base.transaction do
       plan.field_cultivations.find_each do |field_cultivation|
-        generate_for_field(plan, field_cultivation)
+        generate_for_field(plan, field_cultivation, schedule_cache, fertilize_cache)
       end
     end
   end
@@ -34,7 +37,7 @@ class TaskScheduleGeneratorService
 
   attr_reader :schedule_gateway, :fertilize_gateway, :progress_gateway, :clock
 
-  def generate_for_field(plan, field_cultivation)
+  def generate_for_field(plan, field_cultivation, schedule_cache, fertilize_cache)
     crop = field_cultivation.cultivation_plan_crop&.crop
     return unless crop
 
@@ -49,17 +52,8 @@ class TaskScheduleGeneratorService
       raise ProgressDataMissingError, "GDD進捗データが空です (cultivation_plan_id=#{plan.id})"
     end
 
-    stage_requirements = crop_stage_requirements(crop)
-    agricultural_tasks = crop_agricultural_tasks(crop)
-
-    if agricultural_tasks.any?
-      schedule_response = schedule_gateway.generate(
-        crop_name: crop.name,
-        variety: crop.variety || 'general',
-        stage_requirements: stage_requirements,
-        agricultural_tasks: agricultural_tasks
-      )
-
+    schedule_response = schedule_response_for(crop, schedule_cache)
+    if schedule_response.present? && Array(schedule_response['task_schedules']).any?
       create_schedule!(
         plan: plan,
         field_cultivation: field_cultivation,
@@ -84,11 +78,7 @@ class TaskScheduleGeneratorService
       end
     end
 
-    fertilize_response = fertilize_gateway.plan(
-      crop: crop,
-      use_harvest_start: true
-    )
-
+    fertilize_response = fertilize_response_for(crop, fertilize_cache)
     fertilize_schedule = Array(fertilize_response['schedule'])
     if fertilize_schedule.any?
       create_schedule!(
@@ -126,6 +116,31 @@ class TaskScheduleGeneratorService
   def crop_agricultural_tasks(crop)
     tasks = crop.agricultural_tasks.order(:id)
     AgriculturalTask.to_agrr_format_array(tasks)
+  end
+
+  def schedule_response_for(crop, cache)
+    return cache[crop.id] if cache.key?(crop.id)
+
+    agricultural_tasks = crop_agricultural_tasks(crop)
+    if agricultural_tasks.any?
+      cache[crop.id] = schedule_gateway.generate(
+        crop_name: crop.name,
+        variety: crop.variety || 'general',
+        stage_requirements: crop_stage_requirements(crop),
+        agricultural_tasks: agricultural_tasks
+      )
+    else
+      cache[crop.id] = nil
+    end
+  end
+
+  def fertilize_response_for(crop, cache)
+    return cache[crop.id] if cache.key?(crop.id)
+
+    cache[crop.id] = fertilize_gateway.plan(
+      crop: crop,
+      use_harvest_start: true
+    )
   end
 
   def create_schedule!(plan:, field_cultivation:, category:)
