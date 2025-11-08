@@ -125,6 +125,32 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'generate! reuses agrr gateways per crop across multiple field cultivations' do
+    second_field = create(:cultivation_plan_field, cultivation_plan: @plan)
+    create(:field_cultivation,
+           cultivation_plan: @plan,
+           cultivation_plan_field: second_field,
+           cultivation_plan_crop: @plan_crop,
+           area: 80.0,
+           start_date: Date.new(2025, 4, 10),
+           completion_date: Date.new(2025, 8, 20))
+
+    schedule_gateway = StubScheduleGateway.new(schedule_response)
+    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    progress_gateway = StubProgressGateway.new(progress_response)
+
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: schedule_gateway,
+      fertilize_gateway: fertilize_gateway,
+      progress_gateway: progress_gateway
+    )
+
+    service.generate!(cultivation_plan_id: @plan.id)
+
+    assert_equal 1, schedule_gateway.received_payloads.count, 'schedule gateway should be invoked once per crop'
+    assert_equal 1, fertilize_gateway.received_payloads.count, 'fertilize gateway should be invoked once per crop'
+  end
+
   private
 
   def mocked_weather_data

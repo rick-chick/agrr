@@ -251,6 +251,12 @@ class PublicPlansController < ApplicationController
     optimization_job.channel_class = channel_class
     job_instances << optimization_job
     
+    # 4. 作業予定生成ジョブ
+    task_schedule_job = TaskScheduleGenerationJob.new
+    task_schedule_job.cultivation_plan_id = cultivation_plan_id
+    task_schedule_job.channel_class = channel_class
+    job_instances << task_schedule_job
+    
     Rails.logger.info "✅ [PublicPlansController] Created #{job_instances.length} job instances"
     job_instances
   end

@@ -23,6 +23,24 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
     assert public_plan[:plan_id].present?
     assert_nil public_plan[:crop_ids]
   end
+
+  test 'job chain includes task schedule generation job at the end' do
+    weather_location = WeatherLocation.create!(
+      latitude: 36.0,
+      longitude: 140.0,
+      elevation: 50.0,
+      timezone: 'Asia/Tokyo'
+    )
+
+    farm = create(:farm, weather_location: weather_location, latitude: 36.0, longitude: 140.0, region: 'jp')
+    plan = create(:cultivation_plan, farm: farm, plan_type: 'public')
+
+    controller = PublicPlansController.new
+    job_instances = controller.send(:create_job_instances_for_public_plans, plan.id, OptimizationChannel)
+
+    assert job_instances.last.is_a?(TaskScheduleGenerationJob)
+    assert_equal plan.id, job_instances.last.cultivation_plan_id
+  end
 end
 
 # frozen_string_literal: true
