@@ -42,6 +42,7 @@ class Farm < ApplicationRecord
                        numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, 
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
+  validates :source_farm_id, uniqueness: { scope: :user_id }, allow_nil: true
   
   # ユーザー農場の件数制限（4件まで）
   validates :user, presence: true
