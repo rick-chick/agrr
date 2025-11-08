@@ -493,6 +493,27 @@ pests_list.each_with_index do |pest_name, index|
 
   pest = pest_data['pest']
   
+  raw_affected_crops = pest_data.fetch('affected_crops', nil)
+  raw_damaged_crops = pest_data.fetch('damaged_crops', nil)
+
+  normalized_affected_crops =
+    if raw_damaged_crops.is_a?(Array) && raw_damaged_crops.any?
+      raw_damaged_crops
+    elsif raw_affected_crops.is_a?(Array)
+      raw_affected_crops
+    else
+      []
+    end
+
+  normalized_affected_crops = normalized_affected_crops.map do |crop|
+    next unless crop.is_a?(Hash)
+
+    {
+      'crop_id' => crop['crop_id'] || crop[:crop_id],
+      'crop_name' => crop['crop_name'] || crop[:crop_name]
+    }.compact
+  end.compact
+
   # Store pest data
   all_pests_data[pest_name] = {
     'name' => pest['name'],
@@ -504,7 +525,7 @@ pests_list.each_with_index do |pest_name, index|
     'temperature_profile' => pest['temperature_profile'],
     'thermal_requirement' => pest['thermal_requirement'],
     'control_methods' => pest['control_methods'] || [],
-    'affected_crops' => pest_data['affected_crops'] || []
+    'affected_crops' => normalized_affected_crops
   }
   
   ColorLogger.success("  ✓ Fetched data for #{pest_name}")
