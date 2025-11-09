@@ -38,9 +38,8 @@ class OptimizationJob < ApplicationJob
       optimizer = CultivationPlanOptimizer.new(cultivation_plan, channel_class)
       optimizer.call
       
-      # 最適化完了通知
-      cultivation_plan.phase_completed!(channel_class)
-      cultivation_plan.complete!
+      # 最適化完了通知（作業予定生成へ移行）
+      cultivation_plan.phase_optimization_completed!(channel_class)
       
       Rails.logger.info "✅ [OptimizationJob] Optimization completed for plan ##{cultivation_plan_id}"
       

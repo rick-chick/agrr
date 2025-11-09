@@ -5,6 +5,8 @@ require 'set'
 class PlanSaveService
   include ActiveModel::Model
 
+  class InvalidTaskScheduleItemError < StandardError; end
+
   class Result
     attr_accessor :success, :error_message, :new_plan
     attr_reader :skipped_items
@@ -70,7 +72,8 @@ class PlanSaveService
       establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
       
       # 4. 関連データのコピー
-      copy_plan_relations(new_plan)
+      field_cultivation_map = copy_plan_relations(new_plan)
+      copy_task_schedules(new_plan, field_cultivation_map)
       
       Rails.logger.info I18n.t('services.plan_save_service.messages.service_completed')
       @result.success = true
@@ -78,6 +81,10 @@ class PlanSaveService
     end
     
     @result
+  rescue InvalidTaskScheduleItemError => e
+    Rails.logger.error I18n.t('services.plan_save_service.errors.task_schedule_invalid', error: e.message) if I18n.exists?('services.plan_save_service.errors.task_schedule_invalid')
+    Rails.logger.error e.backtrace.join("\n")
+    raise
   rescue => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.unknown_error', error: e.message)
     Rails.logger.error e.backtrace.join("\n")
@@ -434,6 +441,7 @@ class PlanSaveService
     reference_scope = reference_scope.includes(agricultural_task_crops: :crop)
 
     user_tasks = []
+    @reference_agricultural_task_id_to_user_task_id ||= {}
 
     reference_scope.find_each do |reference_task|
       existing_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
@@ -441,6 +449,7 @@ class PlanSaveService
       if existing_task
         @result.add_skip(:agricultural_tasks, existing_task.id)
         user_tasks << existing_task
+        @reference_agricultural_task_id_to_user_task_id[reference_task.id] = existing_task.id
         next
       end
 
@@ -467,6 +476,7 @@ class PlanSaveService
       copy_agricultural_task_crop_relationships(reference_task, new_task)
 
       user_tasks << new_task
+      @reference_agricultural_task_id_to_user_task_id[reference_task.id] = new_task.id
       Rails.logger.info I18n.t('services.plan_save_service.messages.agricultural_task_created', task_name: new_task.name)
     end
 
@@ -755,6 +765,7 @@ class PlanSaveService
     
     # 3. FieldCultivationを新規作成（IDマッピングを使用）
     field_cultivation_count = 0
+    field_cultivation_map = {}
     reference_plan.field_cultivations.each do |reference_field_cultivation|
       # 圃場は名前でマッチング
       new_field = new_fields.find { |f| f.name == reference_field_cultivation.cultivation_plan_field.name }
@@ -768,7 +779,7 @@ class PlanSaveService
         next
       end
       
-      FieldCultivation.create!(
+      new_field_cultivation = FieldCultivation.create!(
         cultivation_plan: new_plan,
         cultivation_plan_field: new_field,
         cultivation_plan_crop: new_crop,
@@ -781,6 +792,7 @@ class PlanSaveService
         optimization_result: reference_field_cultivation.optimization_result
       )
       field_cultivation_count += 1
+      field_cultivation_map[reference_field_cultivation.id] = new_field_cultivation.id
       
       Rails.logger.debug "✅ [PlanSaveService] Created FieldCultivation: #{new_field.name} + #{new_crop.name}"
     end
@@ -789,9 +801,100 @@ class PlanSaveService
                             fields: new_fields.count, 
                             crops: new_crops.count, 
                             cultivations: field_cultivation_count)
+    field_cultivation_map
   rescue => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.plan_relations_copy_failed', errors: e.message)
     raise e
+  end
+
+  def copy_task_schedules(new_plan, field_cultivation_map)
+    plan_id = @session_data[:plan_id] || @session_data['plan_id']
+    reference_plan = CultivationPlan.includes(task_schedules: { task_schedule_items: :agricultural_task }).find(plan_id)
+
+    invalid_item = TaskScheduleItem
+                     .joins(:task_schedule)
+                     .find_by(task_schedules: { cultivation_plan_id: plan_id }, gdd_trigger: nil)
+    if invalid_item
+      raise InvalidTaskScheduleItemError, "Reference TaskScheduleItem##{invalid_item.id} has nil gdd_trigger"
+    end
+
+    return if field_cultivation_map.blank?
+
+    reference_plan.task_schedules.each do |reference_schedule|
+      new_field_cultivation_id = field_cultivation_map[reference_schedule.field_cultivation_id]
+      next unless new_field_cultivation_id
+
+      new_schedule = TaskSchedule.create!(
+        cultivation_plan: new_plan,
+        field_cultivation_id: new_field_cultivation_id,
+        category: reference_schedule.category,
+        status: reference_schedule.status || 'active',
+        source: 'copied_from_public_plan',
+        generated_at: reference_schedule.generated_at
+      )
+
+      reference_schedule.task_schedule_items.each do |reference_item|
+        source_task_id = reference_item.source_agricultural_task_id || reference_item.agricultural_task&.source_agricultural_task_id || reference_item.agricultural_task_id
+        mapped_task_id = mapped_agricultural_task_id(reference_item)
+
+        if reference_item.gdd_trigger.nil?
+          raise InvalidTaskScheduleItemError, "Reference TaskScheduleItem##{reference_item.id} has nil gdd_trigger"
+        end
+
+        TaskScheduleItem.create!(
+          task_schedule: new_schedule,
+          task_type: reference_item.task_type,
+          name: reference_item.name,
+          stage_name: reference_item.stage_name,
+          stage_order: reference_item.stage_order,
+          gdd_trigger: reference_item.gdd_trigger,
+          gdd_tolerance: reference_item.gdd_tolerance,
+          scheduled_date: reference_item.scheduled_date,
+          priority: reference_item.priority,
+          source: reference_item.source,
+          weather_dependency: reference_item.weather_dependency,
+          time_per_sqm: reference_item.time_per_sqm,
+          amount: reference_item.amount,
+          amount_unit: reference_item.amount_unit,
+          agricultural_task_id: mapped_task_id,
+          source_agricultural_task_id: source_task_id
+        )
+      end
+    end
+  rescue => e
+    Rails.logger.error "❌ [PlanSaveService] Task schedule copy failed: #{e.message}"
+    raise e
+  end
+
+  def mapped_agricultural_task_id(reference_item)
+    task = reference_item.agricultural_task
+    return task.id if task&.user_id == @user.id
+
+    reference_task_id =
+      reference_item.source_agricultural_task_id ||
+      task&.source_agricultural_task_id ||
+      task&.id
+
+    return nil unless reference_task_id
+
+    user_agricultural_task_id_for(reference_task_id)
+  end
+
+  def user_agricultural_task_id_for(reference_task_id)
+    @reference_agricultural_task_id_to_user_task_id ||= {}
+    return @reference_agricultural_task_id_to_user_task_id[reference_task_id] if @reference_agricultural_task_id_to_user_task_id.key?(reference_task_id)
+
+    user_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task_id)
+    if user_task
+      @reference_agricultural_task_id_to_user_task_id[reference_task_id] = user_task.id
+      return user_task.id
+    end
+
+    nil
+  end
+
+  def requires_gdd?(_reference_item)
+    true
   end
   
   def copy_crop_stages(reference_crop, new_crop)
