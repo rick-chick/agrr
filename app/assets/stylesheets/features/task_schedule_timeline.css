@@ -298,12 +298,22 @@
   color: var(--text-secondary);
 }
 
-.timeline-task__badge {
-  font-size: var(--font-size-xs);
-  color: var(--color-primary-dark);
-  background: var(--color-primary-light);
-  border-radius: var(--radius-sm);
-  padding: 2px 6px;
+.timeline-task--status-completed {
+  background: var(--color-success-light);
+  border-left-color: var(--color-success);
+  color: var(--color-success-dark, var(--text-primary));
+}
+
+.timeline-task--status-delayed {
+  background: var(--color-error-light);
+  border-left-color: var(--color-error);
+  color: var(--color-error-dark, var(--text-primary));
+}
+
+.timeline-task--status-cancelled {
+  background: var(--color-gray-100);
+  border-left-color: var(--color-gray-400);
+  color: var(--text-secondary);
 }
 
 .timeline-task--priority-high {

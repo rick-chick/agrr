@@ -264,8 +264,6 @@ export default class extends Controller {
 
     if (task.badge?.status) classes.push(`timeline-task--status-${task.badge.status}`)
 
-    const badge = this.renderTaskBadge(task)
-
     const detailPayload = this.encodeDetailPayload(task)
     const actions = [
       "task-schedule-timeline#showDetails",
@@ -284,16 +282,8 @@ export default class extends Controller {
               draggable="true"
               data-action="${actions.join(" ")}">
         <span class="timeline-task__name">${this.escapeHtml(task.name)}</span>
-        ${badge}
       </button>
     `
-  }
-
-  renderTaskBadge(task) {
-    const statusText = this.statusLabel(task.badge?.status)
-    if (!statusText) return ""
-
-    return `<span class="timeline-task__badge">${this.escapeHtml(statusText)}</span>`
   }
 
   startDrag(event) {
@@ -786,12 +776,6 @@ export default class extends Controller {
 
   isModalOpen() {
     return this.hasModalTarget && this.modalTarget.classList.contains("is-open")
-  }
-
-  statusLabel(status) {
-    if (!status || status === "planned") return ""
-    const labels = this.detailLabels().statuses || {}
-    return labels[status] || status
   }
 
   encodeDetailPayload(task) {
