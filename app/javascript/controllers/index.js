@@ -13,6 +13,7 @@ window.Stimulus = application
 import CropAiController from "./crop_ai_controller"
 import FertilizeAiController from "./fertilize_ai_controller"
 import PestAiController from "./pest_ai_controller"
+import TaskScheduleTimelineController from "./task_schedule_timeline_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -22,6 +23,7 @@ console.log('[Controllers] PestAiController:', PestAiController)
 application.register("crop-ai", CropAiController)
 application.register("fertilize-ai", FertilizeAiController)
 application.register("pest-ai", PestAiController)
+application.register("task-schedule-timeline", TaskScheduleTimelineController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)

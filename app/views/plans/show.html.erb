@@ -13,6 +13,8 @@
               class: "btn-plans-primary",
               data: { confirm: t('plans.show.confirms.optimize') } %>
         <% end %>
+      <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@cultivation_plan),
+          class: "btn-plans-secondary" %>
         <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
             class: "btn-plans-secondary",
             data: { confirm: t('plans.show.confirms.copy_next_year', year: @cultivation_plan.plan_year + 1) } %>

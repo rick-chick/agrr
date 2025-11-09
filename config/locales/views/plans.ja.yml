@@ -117,6 +117,7 @@ ja:
       back_to_list: "← 計画一覧に戻る"
       optimize_button: "最適化"
       copy_plan: "次年度にコピー"
+      view_task_schedule: "作業予定を見る"
       confirms:
         optimize: "この計画を最適化しますか？"
         copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
@@ -148,6 +149,7 @@ ja:
         in_use: "使用中"
       
       detail:
+        title: "栽培詳細"
         loading: "詳細を読み込んでいます..."
         loading_data: "データを読み込んでいます..."
       
@@ -167,6 +169,57 @@ ja:
         intro: "各ステージの詳細な気温条件と積算温度の達成状況を確認できます。"
         loading: "ステージ情報を読み込んでいます..."
   
+    task_schedules:
+      title: "%{name}の作業予定"
+      back_to_plan: "← 計画詳細に戻る"
+      timeline_generated_at: "生成日時: %{datetime}"
+      timeline_generated_unknown: "生成日時: 未取得"
+      nav_prev_week: "前の週"
+      nav_next_week: "次の週"
+      nav_today: "今週"
+      week_label: "%{start} 〜 %{end}"
+      no_schedules: "作業予定がまだ生成されていません。"
+      plan_level_field: "計画全体"
+      field_header:
+        crop_area: "%{crop} / %{area}㎡"
+      general_label: "一般作業"
+      fertilizer_label: "施肥"
+      unscheduled_title: "未確定の作業"
+      empty_cell: "予定なし"
+      loading: "読み込み中..."
+      fetch_error: "作業予定の取得に失敗しました。時間をおいて再度お試しください。"
+      generated_label: "生成日時"
+      detail:
+        title: "作業詳細"
+        empty: "タスクを選択すると詳細が表示されます"
+        scheduled_date: "予定日"
+        stage: "ステージ"
+        priority: "優先度"
+        priority_high: "高"
+        priority_medium: "中"
+        priority_low: "低"
+        priority_unknown: "未設定"
+        weather_dependency: "天候条件"
+        gdd_trigger: "GDD トリガー"
+        gdd_tolerance: "GDD 許容"
+        time_per_sqm: "作業時間 (h/㎡)"
+        amount: "施肥量"
+        amount_unit: "g/㎡"
+        source: "出典"
+        master_name: "作業マスタ"
+        master_description: "作業説明"
+        required_tools: "必要な工具"
+        skill_level: "推奨スキル"
+        skill_level_labels:
+          beginner: "初級"
+          intermediate: "中級"
+          advanced: "上級"
+        not_applicable: "該当なし"
+        statuses:
+          completed: "完了"
+          delayed: "遅延"
+          adjusted: "調整済み"
+
   models:
     cultivation_plan:
       default_plan_name: "メイン計画"

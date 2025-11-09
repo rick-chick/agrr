@@ -92,6 +92,7 @@ Rails.application.routes.draw do
         post :copy
         post :optimize
       end
+      resource :task_schedule, only: [:show], module: :plans
     end
 
     # ActionCable for WebSocket
