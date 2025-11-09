@@ -5,7 +5,14 @@
 class WeatherPredictionService
   class WeatherDataNotFoundError < StandardError; end
   
-  def initialize(farm)
+  def initialize(weather_location:, farm: nil)
+    raise ArgumentError, "weather_location is required" unless weather_location
+    
+    if farm && farm.weather_location_id && farm.weather_location_id != weather_location.id
+      raise ArgumentError, "farm.weather_location does not match provided weather_location"
+    end
+    
+    @weather_location = weather_location
     @farm = farm
     @prediction_gateway = Agrr::PredictionGateway.new
   end
@@ -15,25 +22,17 @@ class WeatherPredictionService
   # @param target_end_date [Date] 予測終了日（デフォルト: 翌年12月31日）
   # @return [Hash] 予測データとメタ情報
   def predict_for_cultivation_plan(cultivation_plan, target_end_date: nil)
-    target_end_date ||= cultivation_plan&.planning_end_date
+    target_end_date = normalize_target_end_date(target_end_date || cultivation_plan&.planning_end_date)
     
     Rails.logger.info "🔮 [WeatherPrediction] Starting prediction for CultivationPlan##{cultivation_plan.id}"
     Rails.logger.info "   Target end date: #{target_end_date}"
     
-    # 天気データを準備
     weather_info = prepare_weather_data(target_end_date)
+    payload = build_prediction_payload(weather_info, target_end_date)
     
-    # 予測データをCultivationPlanに保存
-    cultivation_plan.update!(
-      predicted_weather_data: weather_info[:data].merge(
-        'generated_at' => Time.current.iso8601,
-        'predicted_at' => Time.current.iso8601,
-        'prediction_start_date' => weather_info[:prediction_start_date],
-        'prediction_end_date' => target_end_date.to_s,
-        'target_end_date' => target_end_date.to_s,
-        'model' => 'lightgbm'
-      )
-    )
+    persist_prediction_payload(payload)
+    
+    cultivation_plan.update!(predicted_weather_data: payload)
     
     Rails.logger.info "✅ [WeatherPrediction] Prediction data saved to CultivationPlan##{cultivation_plan.id}"
     
@@ -44,24 +43,19 @@ class WeatherPredictionService
   # @param target_end_date [Date] 予測終了日（デフォルト: 翌年12月31日）
   # @return [Hash] 予測データとメタ情報
   def predict_for_farm(target_end_date: nil)
-    target_end_date ||= cultivation_plan&.planning_end_date
+    raise ArgumentError, "farm is required to save prediction" unless @farm
+    
+    target_end_date = normalize_target_end_date(target_end_date)
     
     Rails.logger.info "🔮 [WeatherPrediction] Starting prediction for Farm##{@farm.id}"
     Rails.logger.info "   Target end date: #{target_end_date}"
     
-    # 天気データを準備
     weather_info = prepare_weather_data(target_end_date)
+    payload = build_prediction_payload(weather_info, target_end_date)
     
-    # 予測データをFarmに保存
-    @farm.update!(
-      predicted_weather_data: weather_info[:data].merge(
-        'generated_at' => Time.current.iso8601,
-        'predicted_at' => Time.current.iso8601,
-        'prediction_start_date' => weather_info[:prediction_start_date],
-        'prediction_end_date' => target_end_date.to_s,
-        'model' => 'lightgbm'
-      )
-    )
+    persist_prediction_payload(payload)
+    
+    @farm.update!(predicted_weather_data: payload)
     
     Rails.logger.info "✅ [WeatherPrediction] Prediction data saved to Farm##{@farm.id}"
     
@@ -74,29 +68,35 @@ class WeatherPredictionService
   # @return [Hash] 予測データとメタ情報
   def get_existing_prediction(target_end_date: nil, cultivation_plan: nil)
     target_end_date ||= cultivation_plan&.planning_end_date
+    target_end_date = normalize_target_end_date(target_end_date)
     
-    Rails.logger.info "🔍 [WeatherPrediction] Checking existing prediction for Farm##{@farm.id}"
+    Rails.logger.info "🔍 [WeatherPrediction] Checking existing prediction for WeatherLocation##{@weather_location.id} (Farm##{@farm&.id || 'N/A'})"
     
-    # 1. CultivationPlanの予測データをチェック（優先）
+    location_result = cached_prediction_result(@weather_location&.predicted_weather_data, target_end_date)
+    return location_result if location_result
+    
     if cultivation_plan && cultivation_plan.predicted_weather_data.present? && cultivation_plan.predicted_weather_data['data'].present?
       Rails.logger.info "✅ [WeatherPrediction] Using existing CultivationPlan prediction data"
-      return {
-        data: cultivation_plan.predicted_weather_data,
-        target_end_date: target_end_date,
-        prediction_start_date: cultivation_plan.predicted_weather_data['prediction_start_date'],
-        prediction_days: cultivation_plan.predicted_weather_data['data'].count
-      }
+      plan_result = cached_prediction_result(cultivation_plan.predicted_weather_data, target_end_date)
+      return plan_result if plan_result
     end
     
-    Rails.logger.info "❌ [WeatherPrediction] No existing prediction found for CultivationPlan##{cultivation_plan&.id}"
+    if @farm&.predicted_weather_data.present?
+      Rails.logger.info "✅ [WeatherPrediction] Using existing Farm prediction data"
+      farm_result = cached_prediction_result(@farm.predicted_weather_data, target_end_date)
+      return farm_result if farm_result
+    end
+    
+    Rails.logger.info "❌ [WeatherPrediction] No existing prediction found for WeatherLocation##{@weather_location&.id}"
     nil
   end
   
   private
   
   def prepare_weather_data(target_end_date)
-    # 天気データを取得
-    weather_location = get_weather_location
+    target_end_date = normalize_target_end_date(target_end_date)
+    
+    weather_location = @weather_location
     training_data = get_training_data(weather_location)
     current_year_data = get_current_year_data(weather_location)
     
@@ -124,21 +124,6 @@ class WeatherPredictionService
       prediction_start_date: prediction_start_date.to_s,
       prediction_days: future['data'].count
     }
-  end
-  
-  def get_weather_location
-    weather_location = WeatherLocation.find_by(
-      latitude: @farm.latitude,
-      longitude: @farm.longitude
-    )
-    
-    unless weather_location
-      raise WeatherDataNotFoundError, 
-            "気象データがありません。座標 #{@farm.latitude}, #{@farm.longitude} の気象データが見つかりません。 " \
-            "管理者に気象データのインポートを依頼してください。"
-    end
-    
-    weather_location
   end
   
   def get_training_data(weather_location)
@@ -182,38 +167,11 @@ class WeatherPredictionService
   end
   
   def get_prediction_data(training_formatted, target_end_date)
-    # Farmの予測データをチェック
-    if @farm.predicted_weather_data.present? && @farm.predicted_weather_data['data'].present?
-      farm_prediction = @farm.predicted_weather_data
-      farm_prediction_start = Date.parse(farm_prediction['prediction_start_date'])
-      farm_prediction_end = Date.parse(farm_prediction['prediction_end_date'])
-      
-      # target_end_dateまでカバーしているか確認
-      if farm_prediction_end >= target_end_date
-        Rails.logger.info "♻️ [WeatherPrediction] Reusing Farm##{@farm.id} cached prediction data"
-        
-        # 必要な期間のデータを抽出
-        filtered_data = farm_prediction['data'].select do |datum|
-          datum_date = Date.parse(datum['date'])
-          datum_date >= farm_prediction_start && datum_date <= target_end_date
-        end
-        
-        future = {
-          'data' => filtered_data.map do |datum|
-            {
-              'time' => datum['date'],
-              'temperature_2m_max' => datum['temperature_max'],
-              'temperature_2m_min' => datum['temperature_min'],
-              'temperature_2m_mean' => datum['temperature_mean'],
-              'precipitation_sum' => datum['precipitation'] || 0.0
-            }
-          end
-        }
-        
-        Rails.logger.info "✅ [WeatherPrediction] Using #{filtered_data.count} days from cached prediction"
-        return future
-      end
-    end
+    cached_future = cached_future_data(@weather_location&.predicted_weather_data, target_end_date)
+    return cached_future if cached_future
+    
+    cached_future = cached_future_data(@farm&.predicted_weather_data, target_end_date)
+    return cached_future if cached_future
     
     # 新規予測を実行
     Rails.logger.info "🔮 [WeatherPrediction] Generating new prediction"
@@ -272,5 +230,104 @@ class WeatherPredictionService
       'timezone' => historical['timezone'],
       'data' => historical['data'] + future['data']
     }
+  end
+
+  def normalize_target_end_date(target_end_date)
+    (target_end_date || Date.current.end_of_year)
+  end
+
+  def build_prediction_payload(weather_info, target_end_date)
+    (weather_info[:data] || {}).merge(
+      'generated_at' => Time.current.iso8601,
+      'predicted_at' => Time.current.iso8601,
+      'prediction_start_date' => weather_info[:prediction_start_date],
+      'prediction_end_date' => target_end_date.to_s,
+      'target_end_date' => target_end_date.to_s,
+      'model' => 'lightgbm'
+    )
+  end
+
+  def persist_prediction_payload(payload)
+    return unless @weather_location
+
+    @weather_location.update!(predicted_weather_data: payload)
+  end
+
+  def cached_prediction_result(payload, target_end_date)
+    return nil unless payload.present?
+
+    prediction_start = parse_date(payload['prediction_start_date'])
+    prediction_end = parse_date(payload['prediction_end_date'])
+    return nil unless prediction_start
+
+    if target_end_date && prediction_end && prediction_end < target_end_date
+      Rails.logger.info "⚠️ [WeatherPrediction] Cached prediction does not cover target end date"
+      return nil
+    end
+
+    {
+      data: payload,
+      target_end_date: target_end_date || prediction_end,
+      prediction_start_date: payload['prediction_start_date'],
+      prediction_days: compute_prediction_days(prediction_start, prediction_end || target_end_date)
+    }
+  end
+
+  def cached_future_data(payload, target_end_date)
+    return nil unless payload.present?
+
+    prediction_start = parse_date(payload['prediction_start_date'])
+    prediction_end = parse_date(payload['prediction_end_date'])
+    return nil unless prediction_start
+
+    if target_end_date && prediction_end && prediction_end < target_end_date
+      Rails.logger.info "⚠️ [WeatherPrediction] Cached future data insufficient for target date"
+      return nil
+    end
+
+    data = Array(payload['data'])
+    filtered = data.filter_map do |datum|
+      datum_date = parse_date(datum['time'] || datum['date'])
+      next unless datum_date
+      next if datum_date < prediction_start
+      next if target_end_date && datum_date > target_end_date
+
+      normalize_prediction_datum(datum)
+    end
+
+    return nil if filtered.empty?
+
+    Rails.logger.info "✅ [WeatherPrediction] Reusing cached prediction data (#{filtered.count} days)"
+    { 'data' => filtered }
+  end
+
+  def normalize_prediction_datum(datum)
+    time = datum['time'] || datum['date']
+    return nil unless time
+
+    {
+      'time' => time,
+      'temperature_2m_max' => datum['temperature_2m_max'] || datum['temperature_max'],
+      'temperature_2m_min' => datum['temperature_2m_min'] || datum['temperature_min'],
+      'temperature_2m_mean' => datum['temperature_2m_mean'] || datum['temperature_mean'],
+      'precipitation_sum' => datum['precipitation_sum'] || datum['precipitation'] || 0.0,
+      'sunshine_duration' => datum['sunshine_duration'] || (datum['sunshine_hours'] ? datum['sunshine_hours'].to_f * 3600.0 : 0.0),
+      'wind_speed_10m_max' => datum['wind_speed_10m_max'] || datum['wind_speed'] || 0.0,
+      'weather_code' => datum['weather_code'] || 0
+    }
+  end
+
+  def parse_date(value)
+    return nil unless value
+
+    Date.parse(value.to_s)
+  rescue ArgumentError
+    nil
+  end
+
+  def compute_prediction_days(prediction_start, prediction_end)
+    return 0 unless prediction_start && prediction_end
+
+    (prediction_end - prediction_start).to_i + 1
   end
 end

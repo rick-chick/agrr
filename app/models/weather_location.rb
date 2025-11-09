@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class WeatherLocation < ApplicationRecord
+  serialize :predicted_weather_data, coder: JSON
+  
   # Associations
   has_many :weather_data, dependent: :destroy
 
