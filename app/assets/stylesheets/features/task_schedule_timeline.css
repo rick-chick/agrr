@@ -1,0 +1,385 @@
+.task-schedule-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6) 0;
+}
+
+.task-schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.task-schedule-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.task-schedule-title {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.task-schedule-plan-meta {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.task-schedule-header__right {
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.task-schedule-week-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  background: var(--color-gray-50);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+.task-schedule-minimap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding: var(--space-2);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.timeline-minimap__week {
+  flex: 0 0 auto;
+  min-width: 4rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+.timeline-minimap__week::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--color-primary);
+  opacity: clamp(0.15, calc(var(--task-count, 0) / 6), 1);
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.timeline-minimap__week.is-active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(58, 151, 212, 0.3);
+}
+
+.timeline-minimap__week:hover {
+  background: var(--color-gray-100);
+}
+
+.timeline-minimap__week--density-low {
+  background: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success-dark, var(--text-primary));
+}
+
+.timeline-minimap__week--density-medium {
+  background: var(--color-warning-light);
+  border-color: var(--color-warning);
+  color: var(--color-warning-dark, var(--text-primary));
+}
+
+.timeline-minimap__week--density-high {
+  background: var(--color-error-light);
+  border-color: var(--color-error);
+  color: var(--color-error-dark, var(--text-primary));
+}
+
+.timeline-minimap__label {
+  flex: 0 0 auto;
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary, var(--text-secondary));
+  padding: var(--space-1) var(--space-2);
+  margin-right: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.task-schedule-week-label {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.task-schedule-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.task-schedule-field {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.task-schedule-field__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.task-schedule-field__name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.task-schedule-field__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.timeline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+
+.timeline-day-header-row,
+.timeline-day-cells {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: var(--space-2);
+}
+
+.timeline-day-label {
+  background: var(--color-gray-100);
+  color: var(--text-secondary);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.timeline-day-label--today {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-semibold);
+}
+
+.timeline-day-cell {
+  min-height: 100px;
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px dashed var(--color-gray-200);
+}
+
+.timeline-day-cell--empty {
+  color: var(--text-secondary);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.timeline-task {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-primary);
+  border: none;
+  padding: var(--space-3);
+  font-size: var(--font-size-sm);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.timeline-task--fertilizer {
+  border-left-color: var(--color-success);
+}
+
+.timeline-task__name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.timeline-task__stage {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.timeline-task__badge {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+
+.timeline-task--priority-high {
+  border-left-color: var(--color-warning-dark);
+}
+
+.timeline-task--priority-medium {
+  border-left-color: var(--color-warning);
+}
+
+.timeline-task--priority-low {
+  border-left-color: var(--color-warning-light);
+}
+
+.timeline-unscheduled {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.timeline-unscheduled__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.timeline-unscheduled__list {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-primary);
+}
+
+.timeline-unscheduled__item {
+  list-style: disc;
+}
+
+.timeline-unscheduled__button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.timeline-unscheduled__button:hover {
+  text-decoration: underline;
+}
+
+.task-schedule-loading,
+.task-schedule-error,
+.task-schedule-empty {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: var(--font-size-base);
+}
+
+.task-schedule-error {
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+}
+
+.task-schedule-detail {
+  margin-top: var(--space-5);
+  background: #fff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.task-schedule-detail.hidden {
+  display: none;
+}
+
+.task-schedule-detail__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.task-schedule-detail__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.detail-row {
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
+}
+
+.detail-row--empty {
+  font-style: italic;
+}
+
+@media (max-width: 1024px) {
+  .timeline-day-header-row,
+  .timeline-day-cells {
+    grid-template-columns: repeat(7, minmax(96px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .task-schedule-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .task-schedule-header__right {
+    text-align: left;
+  }
+
+  .timeline-day-header-row,
+  .timeline-day-cells {
+    grid-template-columns: repeat(7, minmax(80px, 1fr));
+  }
+}
+
+

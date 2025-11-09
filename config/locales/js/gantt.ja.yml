@@ -1,0 +1,12 @@
+ja:
+  js:
+    gantt:
+      api_endpoint_missing: "API エンドポイントが設定されていません。"
+      data_url_missing: "データ取得用のURLが設定されていません。"
+      adjust_url_missing: "調整用のURLが設定されていません。"
+      prompt_field_name: "新しい圃場の名前を入力してください。"
+      prompt_field_area: "圃場の面積 (㎡) を入力してください。"
+      adding_field: "圃場を追加しています..."
+      deleting_field: "圃場を削除しています..."
+      error_occurred: "エラーが発生しました。時間をおいて再度お試しください。"
+
