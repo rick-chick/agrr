@@ -40,7 +40,15 @@ class WeatherPredictionJob < ApplicationJob
       
       # 天気予測処理
       Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction service for plan ##{cultivation_plan_id}"
-      weather_prediction_service = WeatherPredictionService.new(cultivation_plan.farm)
+      weather_location = cultivation_plan.farm&.weather_location
+      unless weather_location
+        raise WeatherPredictionService::WeatherDataNotFoundError,
+              "気象データがありません。農場にWeatherLocationが設定されていません。"
+      end
+      weather_prediction_service = WeatherPredictionService.new(
+        weather_location: weather_location,
+        farm: cultivation_plan.farm
+      )
       weather_prediction_service.predict_for_cultivation_plan(cultivation_plan)
       
       # 天気予測完了通知
