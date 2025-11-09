@@ -151,6 +151,107 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     assert_equal 1, fertilize_gateway.received_payloads.count, 'fertilize gateway should be invoked once per crop'
   end
 
+  test 'progress gateway receives weather data filtered from start date' do
+    schedule_gateway = StubScheduleGateway.new(schedule_response)
+    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    progress_gateway = StubProgressGateway.new(progress_response)
+
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: schedule_gateway,
+      fertilize_gateway: fertilize_gateway,
+      progress_gateway: progress_gateway
+    )
+
+    service.generate!(cultivation_plan_id: @plan.id)
+
+    passed_weather_data = progress_gateway.received_payloads.last[:weather_data]
+    refute_nil passed_weather_data, 'weather data should be passed to progress gateway'
+    filtered_times = Array(passed_weather_data['data']).map { |entry| entry['time'] }
+    assert filtered_times.all? { |time| Date.parse(time) >= @field_cultivation.start_date }, 'weather data should be filtered to start date or later'
+  end
+
+  test 'generate! ignores progress records before field cultivation start date' do
+    early_progress_response = progress_response.merge(
+      'progress_records' => [
+        { 'date' => '2025-03-20T00:00:00', 'cumulative_gdd' => 0.0 },
+        { 'date' => '2025-04-01T00:00:00', 'cumulative_gdd' => 0.0 },
+        { 'date' => '2025-04-06T00:00:00', 'cumulative_gdd' => 165.0 }
+      ]
+    )
+
+    schedule_gateway = StubScheduleGateway.new(schedule_response)
+    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    progress_gateway = StubProgressGateway.new(early_progress_response)
+
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: schedule_gateway,
+      fertilize_gateway: fertilize_gateway,
+      progress_gateway: progress_gateway
+    )
+
+    service.generate!(cultivation_plan_id: @plan.id)
+
+    general_schedule = TaskSchedule.find_by!(cultivation_plan: @plan, field_cultivation: @field_cultivation, category: 'general')
+    fertilizer_schedule = TaskSchedule.find_by!(cultivation_plan: @plan, field_cultivation: @field_cultivation, category: 'fertilizer')
+
+    assert_equal Date.new(2025, 4, 1), general_schedule.task_schedule_items.minimum(:scheduled_date), 'general tasks should not be scheduled before the start date'
+    assert_equal Date.new(2025, 4, 1), fertilizer_schedule.task_schedule_items.minimum(:scheduled_date), 'fertilizer tasks should not be scheduled before the start date'
+  end
+
+  test 'generate! raises error when gdd trigger is missing' do
+    schedule_with_missing_gdd = {
+      'task_schedules' => [
+        {
+          'task_id' => @soil_task.id.to_s,
+          'stage_order' => 1,
+          'gdd_trigger' => nil
+        }
+      ]
+    }
+
+    schedule_gateway = StubScheduleGateway.new(schedule_with_missing_gdd)
+    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    progress_gateway = StubProgressGateway.new(progress_response)
+
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: schedule_gateway,
+      fertilize_gateway: fertilize_gateway,
+      progress_gateway: progress_gateway
+    )
+
+    assert_raises TaskScheduleGeneratorService::GddTriggerMissingError do
+      service.generate!(cultivation_plan_id: @plan.id)
+    end
+  end
+
+  test 'tasks respect increasing gdd triggers and are not all on start date' do
+    staggered_progress = progress_response.merge(
+      'progress_records' => [
+        { 'date' => '2025-04-01T00:00:00', 'cumulative_gdd' => 0.0 },
+        { 'date' => '2025-04-03T00:00:00', 'cumulative_gdd' => 80.0 },
+        { 'date' => '2025-04-05T00:00:00', 'cumulative_gdd' => 165.0 }
+      ]
+    )
+
+    schedule_gateway = StubScheduleGateway.new(schedule_response)
+    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    progress_gateway = StubProgressGateway.new(staggered_progress)
+
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: schedule_gateway,
+      fertilize_gateway: fertilize_gateway,
+      progress_gateway: progress_gateway
+    )
+
+    service.generate!(cultivation_plan_id: @plan.id)
+
+    fertilizer_schedule = TaskSchedule.find_by!(cultivation_plan: @plan, field_cultivation: @field_cultivation, category: 'fertilizer')
+    dates = fertilizer_schedule.task_schedule_items.order(:scheduled_date).pluck(:scheduled_date)
+
+    assert_equal Date.new(2025, 4, 1), dates.first
+    assert dates.second > Date.new(2025, 4, 1), 'tasks with higher GDD thresholds must move to later dates'
+  end
+
   private
 
   def mocked_weather_data
@@ -160,7 +261,13 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
         'longitude' => 135.0,
         'timezone' => 'Asia/Tokyo'
       },
-      'data' => []
+      'data' => [
+        { 'time' => '2025-03-20T00:00:00', 'temperature_2m_mean' => 10.0 },
+        { 'time' => '2025-03-25T00:00:00', 'temperature_2m_mean' => 12.0 },
+        { 'time' => '2025-04-01T00:00:00', 'temperature_2m_mean' => 15.0 },
+        { 'time' => '2025-04-05T00:00:00', 'temperature_2m_mean' => 18.0 },
+        { 'time' => '2025-04-10T00:00:00', 'temperature_2m_mean' => 20.0 }
+      ]
     }
   end
 

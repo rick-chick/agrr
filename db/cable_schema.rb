@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_08_134917) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_08_145000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -473,6 +473,47 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_134917) do
     t.index ["crop_stage_id"], name: "index_sunshine_requirements_on_crop_stage_id"
   end
 
+  create_table "task_schedule_items", force: :cascade do |t|
+    t.integer "task_schedule_id", null: false
+    t.string "task_type", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "stage_name"
+    t.integer "stage_order"
+    t.decimal "gdd_trigger", precision: 10, scale: 2
+    t.decimal "gdd_tolerance", precision: 10, scale: 2
+    t.date "scheduled_date"
+    t.integer "priority"
+    t.string "source", null: false
+    t.string "weather_dependency"
+    t.decimal "time_per_sqm", precision: 8, scale: 2
+    t.decimal "amount", precision: 10, scale: 3
+    t.string "amount_unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "agricultural_task_id"
+    t.bigint "source_agricultural_task_id"
+    t.index ["agricultural_task_id"], name: "index_task_schedule_items_on_agricultural_task_id"
+    t.index ["scheduled_date"], name: "index_task_schedule_items_on_scheduled_date"
+    t.index ["source_agricultural_task_id"], name: "index_task_schedule_items_on_source_agricultural_task_id"
+    t.index ["task_schedule_id", "scheduled_date"], name: "index_task_schedule_items_on_schedule_and_date"
+    t.index ["task_schedule_id"], name: "index_task_schedule_items_on_task_schedule_id"
+  end
+
+  create_table "task_schedules", force: :cascade do |t|
+    t.integer "cultivation_plan_id", null: false
+    t.integer "field_cultivation_id"
+    t.string "category", null: false
+    t.string "status", default: "active", null: false
+    t.string "source", default: "agrr", null: false
+    t.datetime "generated_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cultivation_plan_id", "field_cultivation_id", "category"], name: "index_task_schedules_unique_scope", unique: true
+    t.index ["cultivation_plan_id"], name: "index_task_schedules_on_cultivation_plan_id"
+    t.index ["field_cultivation_id"], name: "index_task_schedules_on_field_cultivation_id"
+  end
+
   create_table "temperature_requirements", force: :cascade do |t|
     t.integer "crop_stage_id", null: false
     t.float "base_temperature"
@@ -570,6 +611,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_134917) do
   add_foreign_key "pests", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "sunshine_requirements", "crop_stages"
+  add_foreign_key "task_schedule_items", "agricultural_tasks"
+  add_foreign_key "task_schedule_items", "task_schedules"
+  add_foreign_key "task_schedules", "cultivation_plans"
+  add_foreign_key "task_schedules", "field_cultivations"
   add_foreign_key "temperature_requirements", "crop_stages"
   add_foreign_key "thermal_requirements", "crop_stages"
   add_foreign_key "weather_data", "weather_locations"
