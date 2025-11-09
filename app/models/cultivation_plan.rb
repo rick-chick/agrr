@@ -7,6 +7,7 @@ class CultivationPlan < ApplicationRecord
   has_many :cultivation_plan_fields, dependent: :destroy
   has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
+  has_many :task_schedules, dependent: :destroy
   
   # == Serialization =======================================================
   serialize :predicted_weather_data, coder: JSON
@@ -92,8 +93,16 @@ class CultivationPlan < ApplicationRecord
     update_phase!('weather_prediction_completed', I18n.t('models.cultivation_plan.phases.weather_prediction_completed'), channel_class)
   end
   
+  def phase_optimization_completed!(channel_class)
+    update_phase!('optimization_completed', I18n.t('models.cultivation_plan.phases.optimization_completed'), channel_class)
+  end
+  
   def phase_optimizing!(channel_class)
     update_phase!('optimizing', I18n.t('models.cultivation_plan.phases.optimizing'), channel_class)
+  end
+  
+  def phase_task_schedule_generating!(channel_class)
+    update_phase!('task_schedule_generating', I18n.t('models.cultivation_plan.phases.task_schedule_generating'), channel_class)
   end
   
   def phase_completed!(channel_class)
@@ -108,6 +117,8 @@ class CultivationPlan < ApplicationRecord
                 I18n.t('models.cultivation_plan.phase_failed.predicting_weather')
               when 'optimizing'
                 I18n.t('models.cultivation_plan.phase_failed.optimizing')
+              when 'task_schedule_generation'
+                I18n.t('models.cultivation_plan.phase_failed.task_schedule_generation')
               else
                 I18n.t('models.cultivation_plan.phase_failed.default')
               end

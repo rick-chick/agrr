@@ -5,10 +5,13 @@ us:
         fetching_weather: "Fetching weather data..."
         predicting_weather: "Predicting weather data..."
         weather_prediction_completed: "Weather prediction completed"
+        optimization_completed: "Optimization finished. Generating task schedules..."
         optimizing: "Optimizing..."
+        task_schedule_generating: "Generating task schedules..."
         completed: "Optimization completed"
       phase_failed:
         fetching_weather: "Failed to fetch weather data"
         predicting_weather: "Failed to predict weather data"
         optimizing: "Optimization failed"
+        task_schedule_generation: "Task schedule generation failed"
         default: "Process failed"
