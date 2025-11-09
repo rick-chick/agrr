@@ -9,7 +9,11 @@ export default class extends Controller {
     "detailPanel",
     "detailTitle",
     "detailList",
-    "minimap"
+    "detailActions",
+    "detailForm",
+    "minimap",
+    "modal",
+    "modalDialog"
   ]
 
   static values = {
@@ -18,11 +22,18 @@ export default class extends Controller {
     loadingMessage: String,
     errorMessage: String,
     emptyMessage: String,
-    unknownMessage: String
+    unknownMessage: String,
+    itemsEndpoint: String
   }
 
   connect() {
     this.state = this.initialStateValue || null
+    this.currentDetail = null
+    this.currentCreateField = null
+    this.formMessageTimer = null
+    this.previousFocus = null
+    this.handleKeydown = this.handleKeydown.bind(this)
+    document.addEventListener("keydown", this.handleKeydown)
     this.render()
   }
 
@@ -30,6 +41,12 @@ export default class extends Controller {
     if (this._abortController) {
       this._abortController.abort()
     }
+    if (this.formMessageTimer) {
+      clearTimeout(this.formMessageTimer)
+      this.formMessageTimer = null
+    }
+    this.hideModal()
+    document.removeEventListener("keydown", this.handleKeydown)
   }
 
   prevWeek() {
@@ -66,7 +83,7 @@ export default class extends Controller {
     }
     this._abortController = new AbortController()
 
-    fetch(url.toString(), {
+    return fetch(url.toString(), {
       headers: { Accept: "application/json" },
       signal: this._abortController.signal
     })
@@ -114,23 +131,55 @@ export default class extends Controller {
   }
 
   resetDetailPanel() {
+    this.resetDetailContent()
+    this.hideModal()
+  }
+
+  resetDetailContent() {
     if (!this.hasDetailPanelTarget) return
 
-    this.detailPanelTarget.classList.add("hidden")
     if (this.hasDetailTitleTarget) this.detailTitleTarget.textContent = this.detailLabels().title || ""
     if (this.hasDetailListTarget) {
       this.detailListTarget.innerHTML = `<div class="detail-row detail-row--empty">${this.escapeHtml(
         this.detailLabels().empty
       )}</div>`
     }
+    if (this.hasDetailActionsTarget) {
+      this.detailActionsTarget.innerHTML = ""
+    }
+    if (this.hasDetailFormTarget) {
+      this.detailFormTarget.innerHTML = ""
+    }
+    this.currentDetail = null
+    this.currentCreateField = null
   }
 
   renderFieldBlock(field, weekDays) {
+    const taskOptionsPayload = this.encodeDataset(field.task_options || [])
+    const defaultCropId = field.crop_id != null ? String(field.crop_id) : ""
+    const defaultCropName = field.crop_name || ""
+
+    const addButton = `
+      <button type="button"
+              class="task-schedule-field__add"
+              data-action="task-schedule-timeline#openCreateForm"
+              data-field-id="${field.field_cultivation_id}"
+              data-field-name="${this.escapeHtml(field.name || "")}"
+              data-crop-id="${defaultCropId}"
+              data-crop-name="${this.escapeHtml(defaultCropName)}"
+              data-task-options="${taskOptionsPayload}">
+        ＋ ${this.escapeHtml(this.addTaskLabel())}
+      </button>
+    `
+
     const fieldHeader = `
       <header class="task-schedule-field__header">
         <div class="task-schedule-field__name">${this.escapeHtml(field.name || "")}</div>
         <div class="task-schedule-field__subtitle">
           ${this.renderFieldSubtitle(field)}
+        </div>
+        <div class="task-schedule-field__actions">
+          ${addButton}
         </div>
       </header>
     `
@@ -161,7 +210,9 @@ export default class extends Controller {
 
     const tasksByDate = this.buildTasksByDate(field)
 
-    const taskRows = weekDays.map((day) => this.renderDayCell(day, tasksByDate.get(day.date) || [])).join("")
+    const taskRows = weekDays
+      .map((day) => this.renderDayCell(field, day, tasksByDate.get(day.date) || []))
+      .join("")
 
     return `
       <div class="timeline-grid">
@@ -171,29 +222,23 @@ export default class extends Controller {
     `
   }
 
-  renderDayCell(day, tasks) {
+  renderDayCell(field, day, tasks) {
     if (!tasks.length) {
       return `<div class="timeline-day-cell timeline-day-cell--empty">${this.escapeHtml(
         this.emptyCellLabel()
       )}</div>`
     }
 
-    const taskHtml = tasks.map((task) => this.renderTask(task)).join("")
+    const taskHtml = tasks.map((task) => this.renderTask(task, field)).join("")
 
     return `<div class="timeline-day-cell">${taskHtml}</div>`
   }
 
-  renderTask(task) {
+  renderTask(task, field) {
     const classes = ["timeline-task"]
     classes.push(task.category === "fertilizer" ? "timeline-task--fertilizer" : "timeline-task--general")
 
-    if (task.badge?.priority_level) classes.push(`timeline-task--${task.badge.priority_level}`)
     if (task.badge?.status) classes.push(`timeline-task--status-${task.badge.status}`)
-
-    const stageLabel =
-      task.details?.stage?.name && task.details.stage.name.length > 0
-        ? `<span class="timeline-task__stage">${this.escapeHtml(task.details.stage.name)}</span>`
-        : ""
 
     const badge = this.renderTaskBadge(task)
 
@@ -203,27 +248,21 @@ export default class extends Controller {
       <button type="button"
               class="${classes.join(" ")}"
               data-detail="${detailPayload}"
+              data-field-id="${field.field_cultivation_id}"
+              data-item-id="${task.item_id}"
+              data-category="${task.category}"
               data-action="task-schedule-timeline#showDetails">
         <span class="timeline-task__name">${this.escapeHtml(task.name)}</span>
-        ${stageLabel}
         ${badge}
       </button>
     `
   }
 
   renderTaskBadge(task) {
-    const parts = []
-    if (task.details?.priority != null) {
-      const priorityText = this.priorityLabel(task.details.priority)
-      if (priorityText) parts.push(priorityText)
-    }
-
     const statusText = this.statusLabel(task.badge?.status)
-    if (statusText) parts.push(statusText)
+    if (!statusText) return ""
 
-    if (parts.length === 0) return ""
-
-    return `<span class="timeline-task__badge">${this.escapeHtml(parts.join(" / "))}</span>`
+    return `<span class="timeline-task__badge">${this.escapeHtml(statusText)}</span>`
   }
 
   renderMinimap() {
@@ -283,14 +322,18 @@ export default class extends Controller {
 
     const listItems = items
       .map((item) => {
+        const enriched = { ...item, field_cultivation_id: field.field_cultivation_id }
         const labelParts = [item.name]
-        if (item.details?.stage?.name) labelParts.push(`(${item.details.stage.name})`)
-        const detailPayload = this.encodeDetailPayload(item)
+        if (enriched.details?.stage?.name) labelParts.push(`(${enriched.details.stage.name})`)
+        const detailPayload = this.encodeDetailPayload(enriched)
         return `
           <li class="timeline-unscheduled__item">
             <button type="button"
                     class="timeline-unscheduled__button"
                     data-detail="${detailPayload}"
+                    data-field-id="${field.field_cultivation_id}"
+                    data-item-id="${enriched.item_id}"
+                    data-category="${enriched.category}"
                     data-action="task-schedule-timeline#showDetails">
               ${this.escapeHtml(labelParts.join(" "))}
             </button>
@@ -311,10 +354,11 @@ export default class extends Controller {
     const map = new Map()
     const pushTask = (task) => {
       if (!task.scheduled_date) return
+      const enriched = { ...task, field_cultivation_id: field.field_cultivation_id }
       if (!map.has(task.scheduled_date)) {
         map.set(task.scheduled_date, [])
       }
-      map.get(task.scheduled_date).push(task)
+      map.get(task.scheduled_date).push(enriched)
     }
 
     ;(field.schedules?.general || []).forEach(pushTask)
@@ -365,9 +409,6 @@ export default class extends Controller {
 
     const labels = this.detailLabels()
     const titleParts = [detail.name]
-    const categoryLabel = this.categoryLabel(detail.category)
-    if (categoryLabel) titleParts.push(`(${categoryLabel})`)
-
     if (this.hasDetailTitleTarget) {
       this.detailTitleTarget.textContent = titleParts.join(" ")
     }
@@ -387,23 +428,6 @@ export default class extends Controller {
         rows.push(this.detailRow(labels.stage, stageValue))
       }
 
-      const priorityValue = this.priorityLabel(detail.details?.priority)
-      if (priorityValue) {
-        rows.push(this.detailRow(labels.priority, priorityValue))
-      }
-
-      if (detail.details?.weather_dependency) {
-        rows.push(this.detailRow(labels.weather_dependency, detail.details.weather_dependency))
-      }
-
-      if (detail.details?.gdd?.trigger) {
-        rows.push(this.detailRow(labels.gdd_trigger, detail.details.gdd.trigger))
-      }
-
-      if (detail.details?.gdd?.tolerance) {
-        rows.push(this.detailRow(labels.gdd_tolerance, detail.details.gdd.tolerance))
-      }
-
       if (detail.details?.time_per_sqm) {
         rows.push(this.detailRow(labels.time_per_sqm, detail.details.time_per_sqm))
       }
@@ -411,10 +435,6 @@ export default class extends Controller {
       if (detail.details?.amount) {
         const unit = detail.details.amount_unit || labels.amount_unit
         rows.push(this.detailRow(labels.amount, `${detail.details.amount} ${unit}`.trim()))
-      }
-
-      if (detail.details?.source) {
-        rows.push(this.detailRow(labels.source, detail.details.source))
       }
 
       const master = detail.details?.master || {}
@@ -427,16 +447,6 @@ export default class extends Controller {
       if (master.required_tools && master.required_tools.length > 0) {
         rows.push(this.detailRow(labels.required_tools, master.required_tools.join(", ")))
       }
-      if (master.skill_level) {
-        rows.push(this.detailRow(labels.skill_level, this.skillLevelLabel(master.skill_level)))
-      }
-      if (master.weather_dependency && !detail.details?.weather_dependency) {
-        rows.push(this.detailRow(labels.weather_dependency, master.weather_dependency))
-      }
-      if (master.time_per_sqm && !detail.details?.time_per_sqm) {
-        rows.push(this.detailRow(labels.time_per_sqm, master.time_per_sqm))
-      }
-
       if (rows.length === 0) {
         rows.push(this.detailRow(labels.not_applicable, labels.not_applicable))
       }
@@ -444,40 +454,58 @@ export default class extends Controller {
       this.detailListTarget.innerHTML = rows.join("")
     }
 
-    this.detailPanelTarget.classList.remove("hidden")
+    if (this.hasDetailFormTarget) {
+      this.detailFormTarget.innerHTML = ""
+    }
+    if (this.hasDetailActionsTarget) {
+      this.renderDetailActions(detail)
+    }
+    this.currentDetail = detail
+    this.currentCreateField = null
+
+    this.openModal()
   }
 
   detailLabels() {
     const labels = this.state?.labels?.detail || {}
-    const skillLevelLabels = labels.skill_level_labels || {}
+    const actionLabels = labels.actions || {}
     return {
       title: labels.title || "作業詳細",
       empty: labels.empty || "タスクを選択すると詳細を表示します",
       scheduled_date: labels.scheduled_date || "予定日",
       stage: labels.stage || "ステージ",
-      priority: labels.priority || "優先度",
-      priority_levels: labels.priority_levels || {
-        high: "高",
-        medium: "中",
-        low: "低",
-        unknown: "未設定"
-      },
-      weather_dependency: labels.weather_dependency || "天候条件",
-      gdd_trigger: labels.gdd_trigger || "GDD トリガー",
-      gdd_tolerance: labels.gdd_tolerance || "GDD 許容",
       time_per_sqm: labels.time_per_sqm || "作業時間 (h/㎡)",
       amount: labels.amount || "施肥量",
       amount_unit: labels.amount_unit || "単位",
-      source: labels.source || "出典",
       master_name: labels.master_name || "作業マスタ",
       master_description: labels.master_description || "作業説明",
       required_tools: labels.required_tools || "必要な工具",
-      skill_level: labels.skill_level || "推奨スキル",
-      skill_level_beginner: skillLevelLabels.beginner || "初級",
-      skill_level_intermediate: skillLevelLabels.intermediate || "中級",
-      skill_level_advanced: skillLevelLabels.advanced || "上級",
       not_applicable: labels.not_applicable || "該当なし",
-      statuses: labels.statuses || { completed: "完了", delayed: "遅延", adjusted: "調整済み" }
+      statuses: labels.statuses || { completed: "完了", delayed: "遅延", adjusted: "調整済み" },
+      actions: {
+        reschedule: actionLabels.reschedule || "日付を変更",
+        reschedule_label: actionLabels.reschedule_label || "新しい日付",
+        updated: actionLabels.updated || "予定を更新しました",
+        update_failed: actionLabels.update_failed || "更新に失敗しました",
+        date_required: actionLabels.date_required || "日付を入力してください",
+        submit: actionLabels.submit || "保存",
+        cancel_form: actionLabels.cancel_form || "閉じる",
+        complete: actionLabels.complete || "実績を登録",
+        completed: actionLabels.completed || "実績を登録しました",
+        complete_failed: actionLabels.complete_failed || "登録に失敗しました",
+        actual_date: actionLabels.actual_date || "実施日",
+        notes: actionLabels.notes || "メモ",
+        notes_placeholder: actionLabels.notes_placeholder || "記録したい内容があれば入力してください",
+        confirm_cancel: actionLabels.confirm_cancel || "この予定をキャンセルしますか？",
+        cancel: actionLabels.cancel || "予定をキャンセル",
+        cancel_failed: actionLabels.cancel_failed || "キャンセルに失敗しました",
+        task_name: actionLabels.task_name || "作業名",
+        task_name_placeholder: actionLabels.task_name_placeholder || "例: 温室換気",
+        scheduled_date: actionLabels.scheduled_date || "予定日",
+        name_required: actionLabels.name_required || "作業名を入力してください",
+        created: actionLabels.created || "予定を追加しました",
+        create_failed: actionLabels.create_failed || "追加に失敗しました"
+      }
     }
   }
 
@@ -485,22 +513,83 @@ export default class extends Controller {
     return `<div class="detail-row">${this.escapeHtml(label)}: ${this.escapeHtml(value)}</div>`
   }
 
-  priorityLabel(priority) {
-    const levels = this.detailLabels().priority_levels
+  renderDetailActions(detail) {
+    if (!this.hasDetailActionsTarget) return
+    const buttons = []
 
-    if (priority == null) return levels.unknown
-    if (priority <= 1) return levels.high
-    if (priority === 2) return levels.medium
-    return levels.low
+    if (detail.item_id) {
+      buttons.push(
+        `<button type="button" class="timeline-action-btn" data-action="task-schedule-timeline#openRescheduleForm">
+          ${this.escapeHtml(this.detailLabels().actions?.reschedule || "日付を変更")}
+        </button>`
+      )
+      buttons.push(
+        `<button type="button" class="timeline-action-btn" data-action="task-schedule-timeline#openCompletionForm">
+          ${this.escapeHtml(this.detailLabels().actions?.complete || "実績を登録")}
+        </button>`
+      )
+      if ((detail.status || detail.badge?.status) !== "cancelled") {
+        buttons.push(
+          `<button type="button" class="timeline-action-btn timeline-action-btn--danger" data-action="task-schedule-timeline#cancelTask">
+            ${this.escapeHtml(this.detailLabels().actions?.cancel || "予定をキャンセル")}
+          </button>`
+        )
+      }
+    }
+
+    this.detailActionsTarget.innerHTML = buttons.join("")
   }
 
-  skillLevelLabel(level) {
-    const mapping = {
-      beginner: this.detailLabels().skill_level_beginner || "初級",
-      intermediate: this.detailLabels().skill_level_intermediate || "中級",
-      advanced: this.detailLabels().skill_level_advanced || "上級"
+  openModal() {
+    if (!this.hasModalTarget) return
+    if (this.modalTarget.classList.contains("is-open")) return
+
+    this.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    this.modalTarget.classList.add("is-open")
+    this.modalTarget.removeAttribute("aria-hidden")
+    document.body.classList.add("timeline-modal-open")
+
+    if (this.hasModalDialogTarget) {
+      this.modalDialogTarget.focus({ preventScroll: true })
     }
-    return mapping[level] || level
+  }
+
+  hideModal() {
+    if (!this.hasModalTarget) return
+    if (!this.modalTarget.classList.contains("is-open")) return
+
+    this.modalTarget.classList.remove("is-open")
+    this.modalTarget.setAttribute("aria-hidden", "true")
+    document.body.classList.remove("timeline-modal-open")
+
+    if (this.previousFocus && typeof this.previousFocus.focus === "function") {
+      this.previousFocus.focus()
+    }
+    this.previousFocus = null
+  }
+
+  closeModal(event) {
+    if (event) event.preventDefault()
+    this.hideModal()
+    this.resetDetailContent()
+  }
+
+  backdropClick(event) {
+    if (!this.hasModalTarget) return
+    if (event.target === this.modalTarget || event.target.classList.contains("timeline-modal__backdrop")) {
+      this.closeModal(event)
+    }
+  }
+
+  handleKeydown(event) {
+    if (event.key === "Escape" && this.isModalOpen()) {
+      event.preventDefault()
+      this.closeModal()
+    }
+  }
+
+  isModalOpen() {
+    return this.hasModalTarget && this.modalTarget.classList.contains("is-open")
   }
 
   statusLabel(status) {
@@ -509,23 +598,505 @@ export default class extends Controller {
     return labels[status] || status
   }
 
-  categoryLabel(category) {
-    if (!this.state?.labels) return category
-    if (category === "general") return this.state.labels.general_label || category
-    if (category === "fertilizer") return this.state.labels.fertilizer_label || category
-    return category
-  }
-
   encodeDetailPayload(task) {
     const payload = {
+      item_id: task.item_id,
+      field_cultivation_id: task.field_cultivation_id,
       name: task.name,
       category: task.category,
       task_type: task.task_type,
       scheduled_date: task.scheduled_date,
+      status: task.badge?.status,
       badge: task.badge || {},
       details: task.details || {}
     }
     return encodeURIComponent(JSON.stringify(payload))
+  }
+
+  encodeDataset(value) {
+    try {
+      return encodeURIComponent(JSON.stringify(value))
+    } catch (error) {
+      console.warn("[TaskScheduleTimeline] failed to encode dataset payload", error)
+      return encodeURIComponent("[]")
+    }
+  }
+
+  decodeDataset(value) {
+    if (!value) return null
+    try {
+      return JSON.parse(decodeURIComponent(value))
+    } catch (error) {
+      console.warn("[TaskScheduleTimeline] failed to decode dataset payload", error)
+      return null
+    }
+  }
+
+  selectTaskChip(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const form = button.closest("form")
+    if (!form) return
+
+    const hiddenTaskId = form.querySelector('input[name="agricultural_task_id"]')
+    const nameInput = form.querySelector('input[name="name"]')
+    if (!hiddenTaskId || !nameInput) return
+
+    const taskId = button.dataset.taskId || ""
+    const taskName = button.dataset.taskName || ""
+
+    hiddenTaskId.value = taskId
+    nameInput.value = taskName
+
+    form.querySelectorAll(".timeline-chip.is-active").forEach((chip) => chip.classList.remove("is-active"))
+    button.classList.add("is-active")
+  }
+
+  handleNameInput(event) {
+    const input = event.currentTarget
+    const form = input.closest("form")
+    if (!form) return
+
+    const hiddenTaskId = form.querySelector('input[name="agricultural_task_id"]')
+    const activeChip = form.querySelector(".timeline-chip.is-active")
+    if (!hiddenTaskId || !activeChip) return
+
+    if (input.value !== activeChip.dataset.taskName) {
+      activeChip.classList.remove("is-active")
+      hiddenTaskId.value = ""
+    }
+  }
+
+  changeScheduledDate(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const delta = Number(button.dataset.dateDelta || 0)
+    if (!delta) return
+
+    const form = button.closest("form")
+    if (!form) return
+    const input = form.querySelector('input[name="scheduled_date"]')
+    if (!input || !input.value) return
+
+    const date = new Date(input.value)
+    if (Number.isNaN(date.getTime())) return
+
+    date.setDate(date.getDate() + delta)
+    input.value = this.formatDateISO(date)
+  }
+
+  openRescheduleForm(event) {
+    event.preventDefault()
+    if (!this.currentDetail?.item_id || !this.hasDetailFormTarget) return
+
+    const defaultDate = this.currentDetail.scheduled_date || this.todayISO()
+    this.detailFormTarget.innerHTML = `
+      <form class="timeline-form" data-action="submit->task-schedule-timeline#submitReschedule">
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.reschedule_label || "新しい日付")}</span>
+          <input type="date" name="scheduled_date" value="${defaultDate}">
+        </label>
+        <div class="timeline-form__actions">
+          <button type="submit" class="btn btn-primary btn-sm">
+            ${this.escapeHtml(this.detailLabels().actions?.submit || "保存")}
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="task-schedule-timeline#closeForm">
+            ${this.escapeHtml(this.detailLabels().actions?.cancel_form || "閉じる")}
+          </button>
+        </div>
+        <p class="timeline-form__message" data-timeline-form-message></p>
+      </form>
+    `
+    this.clearFormMessage()
+    this.openModal()
+  }
+
+  async submitReschedule(event) {
+    event.preventDefault()
+    if (!this.currentDetail?.item_id) return
+
+    const form = event.target
+    const formData = new FormData(form)
+    const scheduledDate = formData.get("scheduled_date")
+
+    if (!scheduledDate) {
+      this.setFormMessage(this.detailLabels().actions?.date_required || "日付を入力してください")
+      return
+    }
+
+    this.setFormPending(form, true)
+    try {
+      await this.patchItem(this.currentDetail.item_id, {
+        task_schedule_item: { scheduled_date: scheduledDate }
+      })
+      this.setFormMessage(this.detailLabels().actions?.updated || "予定を更新しました", "success")
+      await this.refreshCurrentWeek()
+      this.closeForm()
+    } catch (error) {
+      this.setFormMessage(this.detailLabels().actions?.update_failed || "更新に失敗しました")
+      console.error(error)
+    } finally {
+      this.setFormPending(form, false)
+    }
+  }
+
+  openCompletionForm(event) {
+    event.preventDefault()
+    if (!this.currentDetail?.item_id || !this.hasDetailFormTarget) return
+
+    const defaultDate = this.todayISO()
+    this.detailFormTarget.innerHTML = `
+      <form class="timeline-form" data-action="submit->task-schedule-timeline#submitCompletion">
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.actual_date || "実施日")}</span>
+          <input type="date" name="actual_date" value="${defaultDate}">
+        </label>
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.notes || "メモ")}</span>
+          <textarea name="notes" rows="2" placeholder="${this.escapeHtml(
+            this.detailLabels().actions?.notes_placeholder || "記録したい内容があれば入力してください"
+          )}"></textarea>
+        </label>
+        <div class="timeline-form__actions">
+          <button type="submit" class="btn btn-primary btn-sm">
+            ${this.escapeHtml(this.detailLabels().actions?.submit || "保存")}
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="task-schedule-timeline#closeForm">
+            ${this.escapeHtml(this.detailLabels().actions?.cancel_form || "閉じる")}
+          </button>
+        </div>
+        <p class="timeline-form__message" data-timeline-form-message></p>
+      </form>
+    `
+    this.clearFormMessage()
+    this.openModal()
+  }
+
+  async submitCompletion(event) {
+    event.preventDefault()
+    if (!this.currentDetail?.item_id) return
+
+    const form = event.target
+    const formData = new FormData(form)
+    const actualDate = formData.get("actual_date") || this.todayISO()
+    const notes = formData.get("notes")
+
+    this.setFormPending(form, true)
+    try {
+      await this.postCompletion(this.currentDetail.item_id, {
+        completion: { actual_date: actualDate, notes }
+      })
+      this.setFormMessage(this.detailLabels().actions?.completed || "実績を登録しました", "success")
+      await this.refreshCurrentWeek()
+      this.closeForm()
+    } catch (error) {
+      this.setFormMessage(this.detailLabels().actions?.complete_failed || "登録に失敗しました")
+      console.error(error)
+    } finally {
+      this.setFormPending(form, false)
+    }
+  }
+
+  async cancelTask(event) {
+    event.preventDefault()
+    if (!this.currentDetail?.item_id) return
+
+    const confirmed = window.confirm(this.detailLabels().actions?.confirm_cancel || "この予定をキャンセルしますか？")
+    if (!confirmed) return
+
+    try {
+      await this.deleteItem(this.currentDetail.item_id)
+      await this.refreshCurrentWeek()
+      this.resetDetailPanel()
+    } catch (error) {
+      console.error(error)
+      window.alert(this.detailLabels().actions?.cancel_failed || "キャンセルに失敗しました")
+    }
+  }
+
+  openCreateForm(event) {
+    event.preventDefault()
+    const fieldId = Number(event.currentTarget.dataset.fieldId)
+    if (!fieldId || !this.hasDetailFormTarget) return
+
+    const fieldName = event.currentTarget.dataset.fieldName || ""
+    const taskOptions = this.decodeDataset(event.currentTarget.dataset.taskOptions) || []
+    const defaultCropId = event.currentTarget.dataset.cropId || (taskOptions[0]?.id != null ? String(taskOptions[0].id) : "")
+
+    this.currentDetail = null
+    this.currentCreateField = {
+      id: fieldId,
+      name: fieldName,
+      cropName: event.currentTarget.dataset.cropName || "",
+      taskOptions,
+      defaultCropId,
+      defaultScheduledDate: this.state?.week?.start_date || this.todayISO()
+    }
+
+    if (this.hasDetailTitleTarget) {
+      this.detailTitleTarget.textContent = `${fieldName} - ${this.addTaskLabel()}`
+    }
+    if (this.hasDetailListTarget) {
+      this.detailListTarget.innerHTML = ""
+    }
+    if (this.hasDetailActionsTarget) {
+      this.detailActionsTarget.innerHTML = ""
+    }
+
+    this.renderCreateForm(fieldId, this.currentCreateField)
+    this.openModal()
+  }
+
+  renderCreateForm(fieldId, context = {}) {
+    const actions = this.detailLabels().actions || {}
+    const taskOptions = (context.taskOptions || []).map((option) => {
+      const optionId = option?.id != null ? String(option.id) : ""
+      const label = option?.name || ""
+      return { id: optionId, name: label, task_type: option?.task_type }
+    })
+    const defaultCropId = context.defaultCropId || ""
+    const hasCropOptions = Boolean(defaultCropId)
+    const cropLabel = context.cropName || ""
+    const cropLabelText = cropLabel || actions.crop_required || "作物を選択してください"
+
+    this.detailFormTarget.innerHTML = `
+      <form class="timeline-form" data-action="submit->task-schedule-timeline#submitCreate">
+        <input type="hidden" name="field_cultivation_id" value="${fieldId}">
+        <input type="hidden" name="cultivation_plan_crop_id" value="${this.escapeHtml(defaultCropId)}">
+        <input type="hidden" name="agricultural_task_id" value="">
+        <div class="timeline-form__field">
+          <span>${this.escapeHtml(actions.crop || "作物")}</span>
+          <span class="timeline-form__static">${this.escapeHtml(cropLabelText)}</span>
+        </div>
+        ${
+          taskOptions.length > 0
+            ? `<div class="timeline-chip-list" data-task-chip-list>
+                ${taskOptions
+                  .map((option) => {
+                    return `<button type="button"
+                                    class="timeline-chip"
+                                    data-action="task-schedule-timeline#selectTaskChip"
+                                    data-task-id="${this.escapeHtml(option.id)}"
+                                    data-task-name="${this.escapeHtml(option.name)}">
+                              ${this.escapeHtml(option.name)}
+                            </button>`
+                  })
+                  .join("")}
+              </div>`
+            : `<p class="timeline-form__hint">${this.escapeHtml(actions.name_required || "作業名を入力してください")}</p>`
+        }
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.task_name || "作業名")}</span>
+          <input type="text" name="name" required placeholder="${this.escapeHtml(
+            this.detailLabels().actions?.task_name_placeholder || "例: 温室換気"
+          )}" data-action="input->task-schedule-timeline#handleNameInput">
+        </label>
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.scheduled_date || "予定日")}</span>
+          <div class="timeline-date-input">
+            <button type="button"
+                    class="timeline-date-btn"
+                    data-date-delta="-1"
+                    data-action="task-schedule-timeline#changeScheduledDate">−</button>
+            <input type="date" name="scheduled_date" value="${context.defaultScheduledDate}" required>
+            <button type="button"
+                    class="timeline-date-btn"
+                    data-date-delta="1"
+                    data-action="task-schedule-timeline#changeScheduledDate">＋</button>
+          </div>
+        </label>
+        <label class="timeline-form__field">
+          <span>${this.escapeHtml(this.detailLabels().actions?.notes || "メモ")}</span>
+          <textarea name="description" rows="2" placeholder="${this.escapeHtml(
+            this.detailLabels().actions?.notes_placeholder || "現場メモや準備物を入力できます"
+          )}"></textarea>
+        </label>
+        <div class="timeline-form__actions">
+          <button type="submit" class="btn btn-primary btn-sm"${hasCropOptions ? "" : " disabled"}>
+            ${this.escapeHtml(this.detailLabels().actions?.submit || "保存")}
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="task-schedule-timeline#closeForm">
+            ${this.escapeHtml(this.detailLabels().actions?.cancel_form || "閉じる")}
+          </button>
+        </div>
+        <p class="timeline-form__message" data-timeline-form-message></p>
+      </form>
+    `
+    this.clearFormMessage()
+  }
+
+  async submitCreate(event) {
+    event.preventDefault()
+    if (!this.currentCreateField) return
+
+    const form = event.target
+    const formData = new FormData(form)
+    const name = formData.get("name")?.trim()
+    const cropId = formData.get("cultivation_plan_crop_id")
+
+    if (!name) {
+      this.setFormMessage(this.detailLabels().actions?.name_required || "作業名を入力してください")
+      return
+    }
+    if (!cropId) {
+      this.setFormMessage(this.detailLabels().actions?.crop_required || "作物を選択してください")
+      return
+    }
+
+    this.setFormPending(form, true)
+    try {
+      const payload = {
+        task_schedule_item: {
+          field_cultivation_id: this.currentCreateField.id,
+          name,
+          task_type: "field_work",
+          scheduled_date: formData.get("scheduled_date"),
+          agricultural_task_id: formData.get("agricultural_task_id") || null,
+          cultivation_plan_crop_id: cropId,
+          description: formData.get("description")
+        }
+      }
+      await this.postItem(payload)
+      this.setFormMessage(this.detailLabels().actions?.created || "予定を追加しました", "success")
+      await this.refreshCurrentWeek()
+      this.resetDetailPanel()
+    } catch (error) {
+      this.setFormMessage(this.detailLabels().actions?.create_failed || "追加に失敗しました")
+      console.error(error)
+    } finally {
+      this.setFormPending(form, false)
+    }
+  }
+
+  closeForm(event) {
+    if (event) {
+      event.preventDefault()
+    }
+    if (this.hasDetailFormTarget) {
+      this.detailFormTarget.innerHTML = ""
+    }
+    this.clearFormMessage()
+    if (!this.currentDetail) {
+      this.hideModal()
+      this.resetDetailContent()
+    }
+  }
+
+  async postItem(payload) {
+    const response = await fetch(this.itemsEndpointValue, {
+      method: "POST",
+      headers: this.requestHeaders(),
+      body: JSON.stringify(payload)
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || "Failed to create task")
+    }
+    return response.json()
+  }
+
+  async patchItem(itemId, payload) {
+    const response = await fetch(this.itemUrl(itemId), {
+      method: "PATCH",
+      headers: this.requestHeaders(),
+      body: JSON.stringify(payload)
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || "Failed to update task")
+    }
+    return response.json()
+  }
+
+  async deleteItem(itemId) {
+    const response = await fetch(this.itemUrl(itemId), {
+      method: "DELETE",
+      headers: this.requestHeaders()
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || "Failed to cancel task")
+    }
+    return true
+  }
+
+  async postCompletion(itemId, payload) {
+    const response = await fetch(`${this.itemUrl(itemId)}/complete`, {
+      method: "POST",
+      headers: this.requestHeaders(),
+      body: JSON.stringify(payload)
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || "Failed to register completion")
+    }
+    return response.json()
+  }
+
+  setFormPending(form, pending) {
+    Array.from(form.elements).forEach((el) => {
+      el.disabled = pending && el.type !== "hidden"
+    })
+  }
+
+  setFormMessage(message, type = "error") {
+    const el = this.formMessageElement()
+    if (!el) return
+    if (this.formMessageTimer) {
+      clearTimeout(this.formMessageTimer)
+    }
+    el.textContent = message
+    el.classList.remove("timeline-form__message--error", "timeline-form__message--success")
+    el.classList.add(type === "success" ? "timeline-form__message--success" : "timeline-form__message--error")
+    this.formMessageTimer = setTimeout(() => {
+      this.clearFormMessage()
+    }, 4000)
+  }
+
+  clearFormMessage() {
+    const el = this.formMessageElement()
+    if (!el) return
+    el.textContent = ""
+    el.classList.remove("timeline-form__message--error", "timeline-form__message--success")
+    if (this.formMessageTimer) {
+      clearTimeout(this.formMessageTimer)
+      this.formMessageTimer = null
+    }
+  }
+
+  formMessageElement() {
+    if (!this.hasDetailFormTarget) return null
+    return this.detailFormTarget.querySelector("[data-timeline-form-message]")
+  }
+
+  requestHeaders() {
+    return {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-CSRF-Token": this.csrfToken()
+    }
+  }
+
+  csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]')
+    return meta ? meta.getAttribute("content") : ""
+  }
+
+  itemUrl(itemId) {
+    const base = this.itemsEndpointValue || ""
+    return `${base}/${itemId}`
+  }
+
+  refreshCurrentWeek() {
+    if (this.state?.week?.start_date) {
+      return this.loadWeek(this.state.week.start_date)
+    }
+    const monday = this.beginningOfWeek(new Date())
+    return this.loadWeek(this.formatDateISO(monday))
+  }
+
+  todayISO() {
+    return this.formatDateISO(new Date())
   }
 
   formatDisplayDate(value) {
@@ -580,6 +1151,10 @@ export default class extends Controller {
 
   unscheduledTitle() {
     return this.state?.labels?.unscheduled_title || "未確定の作業"
+  }
+
+  addTaskLabel() {
+    return this.state?.labels?.add_task || "予定追加"
   }
 
   generatedLabel() {

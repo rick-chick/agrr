@@ -856,6 +856,12 @@ class PlanSaveService
           time_per_sqm: reference_item.time_per_sqm,
           amount: reference_item.amount,
           amount_unit: reference_item.amount_unit,
+          status: reference_item.status.presence || TaskScheduleItem::STATUSES[:planned],
+          actual_date: reference_item.actual_date,
+          actual_notes: reference_item.actual_notes,
+          rescheduled_at: reference_item.rescheduled_at,
+          cancelled_at: reference_item.cancelled_at,
+          completed_at: reference_item.completed_at,
           agricultural_task_id: mapped_task_id,
           source_agricultural_task_id: source_task_id
         )

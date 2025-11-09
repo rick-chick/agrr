@@ -24,6 +24,7 @@ FactoryBot.define do
     source { 'agrr_schedule' }
     weather_dependency { 'no_rain_24h' }
     time_per_sqm { BigDecimal('0.5') }
+    status { TaskScheduleItem::STATUSES[:planned] }
   end
 end
 
