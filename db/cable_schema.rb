@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_08_145000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_09_123001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -493,9 +493,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_145000) do
     t.datetime "updated_at", null: false
     t.integer "agricultural_task_id"
     t.bigint "source_agricultural_task_id"
+    t.string "status", default: "planned", null: false
+    t.date "actual_date"
+    t.text "actual_notes"
+    t.datetime "rescheduled_at"
+    t.datetime "cancelled_at"
+    t.datetime "completed_at"
     t.index ["agricultural_task_id"], name: "index_task_schedule_items_on_agricultural_task_id"
     t.index ["scheduled_date"], name: "index_task_schedule_items_on_scheduled_date"
     t.index ["source_agricultural_task_id"], name: "index_task_schedule_items_on_source_agricultural_task_id"
+    t.index ["status"], name: "index_task_schedule_items_on_status"
     t.index ["task_schedule_id", "scheduled_date"], name: "index_task_schedule_items_on_schedule_and_date"
     t.index ["task_schedule_id"], name: "index_task_schedule_items_on_task_schedule_id"
   end
@@ -573,6 +580,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_145000) do
     t.string "timezone"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "predicted_weather_data"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
