@@ -162,4 +162,25 @@ class CultivationPlanTest < ActiveSupport::TestCase
     plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
     assert plan.requires_weather_prediction?
   end
+
+  test 'destroying plan removes dependent schedules and items without foreign key errors' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop
+    )
+    task_schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: field_cultivation)
+    create(:task_schedule_item, task_schedule: task_schedule)
+
+    assert_difference('CultivationPlan.count', -1) do
+      assert_nothing_raised { plan.destroy }
+    end
+
+    assert_not TaskSchedule.exists?(task_schedule.id)
+    assert_not FieldCultivation.exists?(field_cultivation.id)
+  end
 end
