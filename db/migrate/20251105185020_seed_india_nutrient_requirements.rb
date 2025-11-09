@@ -116,3 +116,7 @@ class SeedIndiaNutrientRequirements < ActiveRecord::Migration[8.0]
   end
 end
 
+
+
+
+

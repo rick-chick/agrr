@@ -5,6 +5,7 @@ class FieldCultivation < ApplicationRecord
   belongs_to :cultivation_plan
   belongs_to :cultivation_plan_field
   belongs_to :cultivation_plan_crop
+  has_many :task_schedules, dependent: :destroy
   
   # == Validations =========================================================
   validates :area, presence: true, numericality: { greater_than: 0 }
