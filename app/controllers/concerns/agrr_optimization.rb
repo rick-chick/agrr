@@ -397,7 +397,16 @@ module AgrrOptimization
     
     # 天気予測データを取得（既存データまたは新規予測）
     begin
-      weather_prediction_service = WeatherPredictionService.new(farm)
+      weather_location = farm.weather_location
+      unless weather_location
+        raise WeatherPredictionService::WeatherDataNotFoundError,
+              "気象データがありません。農場にWeatherLocationが設定されていません。"
+      end
+
+      weather_prediction_service = WeatherPredictionService.new(
+        weather_location: weather_location,
+        farm: farm
+      )
       
       # 既存の予測データを確認
       existing_prediction = weather_prediction_service.get_existing_prediction(cultivation_plan: cultivation_plan)

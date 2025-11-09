@@ -15,7 +15,17 @@ class CultivationPlanOptimizer
     
     begin
       # 天気予測データを取得
-      weather_prediction_service = WeatherPredictionService.new(@cultivation_plan.farm)
+      weather_location = @cultivation_plan.farm&.weather_location
+      unless weather_location
+        error_message = "農場にWeatherLocationが設定されていません。気象データを取得してください。"
+        Rails.logger.error "❌ [Optimizer] #{error_message}"
+        raise WeatherDataNotFoundError, error_message
+      end
+
+      weather_prediction_service = WeatherPredictionService.new(
+        weather_location: weather_location,
+        farm: @cultivation_plan.farm
+      )
       existing_prediction = weather_prediction_service.get_existing_prediction(cultivation_plan: @cultivation_plan)
       
       unless existing_prediction
