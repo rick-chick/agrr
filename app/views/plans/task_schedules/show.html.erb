@@ -36,6 +36,7 @@
     data-task-schedule-timeline-error-message-value="<%= t('plans.task_schedules.fetch_error') %>"
     data-task-schedule-timeline-empty-message-value="<%= t('plans.task_schedules.no_schedules') %>"
     data-task-schedule-timeline-unknown-message-value="<%= t('plans.task_schedules.timeline_generated_unknown') %>"
+    data-task-schedule-timeline-items-endpoint-value="<%= plan_task_schedule_items_path(@cultivation_plan) %>"
   >
           <div class="task-schedule-minimap"
                data-task-schedule-timeline-target="minimap">
@@ -69,19 +70,43 @@
          data-task-schedule-timeline-target="content">
     </div>
 
-    <aside class="task-schedule-detail hidden"
-           data-task-schedule-timeline-target="detailPanel">
-      <h2 class="task-schedule-detail__title"
-          data-task-schedule-timeline-target="detailTitle">
-        <%= t('plans.task_schedules.detail.title') %>
-      </h2>
-      <div class="task-schedule-detail__body"
-           data-task-schedule-timeline-target="detailList">
-        <div class="detail-row detail-row--empty">
-          <%= t('plans.task_schedules.detail.empty') %>
-        </div>
+    <div class="timeline-modal"
+         data-task-schedule-timeline-target="modal"
+         aria-hidden="true"
+         data-action="click->task-schedule-timeline#backdropClick">
+      <div class="timeline-modal__backdrop"></div>
+      <div class="timeline-modal__dialog"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="task-schedule-detail-title"
+           tabindex="-1"
+           data-task-schedule-timeline-target="modalDialog">
+        <button type="button"
+                class="timeline-modal__close"
+                aria-label="<%= t('plans.task_schedules.detail.actions.cancel_form') %>"
+                data-action="task-schedule-timeline#closeModal">
+          <span aria-hidden="true">×</span>
+        </button>
+        <aside class="task-schedule-detail"
+               data-task-schedule-timeline-target="detailPanel">
+          <h2 class="task-schedule-detail__title"
+              id="task-schedule-detail-title"
+              data-task-schedule-timeline-target="detailTitle">
+            <%= t('plans.task_schedules.detail.title') %>
+          </h2>
+          <div class="task-schedule-detail__body"
+               data-task-schedule-timeline-target="detailList">
+            <div class="detail-row detail-row--empty">
+              <%= t('plans.task_schedules.detail.empty') %>
+            </div>
+          </div>
+          <div class="task-schedule-detail__actions"
+               data-task-schedule-timeline-target="detailActions"></div>
+          <div class="task-schedule-detail__form"
+               data-task-schedule-timeline-target="detailForm"></div>
+        </aside>
       </div>
-    </aside>
+    </div>
   </div>
 </div>
 

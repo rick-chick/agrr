@@ -10,6 +10,19 @@ class TaskScheduleTimelinePresenter
     @params = params || {}
   end
 
+  def task_options_for(field_cultivation)
+    crop = field_cultivation&.cultivation_plan_crop
+    return [] unless crop&.crop
+
+    crop.crop.agricultural_tasks.order(:name).map do |task|
+      {
+        id: task.id,
+        name: task.name,
+        task_type: task.task_type
+      }
+    end
+  end
+
   def as_json(_options = nil)
     {
       plan: plan_payload,
@@ -58,30 +71,46 @@ class TaskScheduleTimelinePresenter
       fertilizer_label: I18n.t('plans.task_schedules.fertilizer_label'),
       generated_unknown: I18n.t('plans.task_schedules.timeline_generated_unknown'),
       generated_label: I18n.t('plans.task_schedules.generated_label'),
+      add_task: I18n.t('plans.task_schedules.add_task'),
       detail: {
         title: I18n.t('plans.task_schedules.detail.title'),
         empty: I18n.t('plans.task_schedules.detail.empty'),
         scheduled_date: I18n.t('plans.task_schedules.detail.scheduled_date'),
         stage: I18n.t('plans.task_schedules.detail.stage'),
-        priority: I18n.t('plans.task_schedules.detail.priority'),
-        priority_levels: {
-          high: I18n.t('plans.task_schedules.detail.priority_high'),
-          medium: I18n.t('plans.task_schedules.detail.priority_medium'),
-          low: I18n.t('plans.task_schedules.detail.priority_low'),
-          unknown: I18n.t('plans.task_schedules.detail.priority_unknown')
-        },
-        weather_dependency: I18n.t('plans.task_schedules.detail.weather_dependency'),
-        gdd_trigger: I18n.t('plans.task_schedules.detail.gdd_trigger'),
-        gdd_tolerance: I18n.t('plans.task_schedules.detail.gdd_tolerance'),
         time_per_sqm: I18n.t('plans.task_schedules.detail.time_per_sqm'),
         amount: I18n.t('plans.task_schedules.detail.amount'),
         amount_unit: I18n.t('plans.task_schedules.detail.amount_unit'),
-        source: I18n.t('plans.task_schedules.detail.source'),
         not_applicable: I18n.t('plans.task_schedules.detail.not_applicable'),
         statuses: {
           completed: I18n.t('plans.task_schedules.detail.statuses.completed'),
           delayed: I18n.t('plans.task_schedules.detail.statuses.delayed'),
           adjusted: I18n.t('plans.task_schedules.detail.statuses.adjusted')
+        },
+        actions: {
+          reschedule: I18n.t('plans.task_schedules.detail.actions.reschedule'),
+          reschedule_label: I18n.t('plans.task_schedules.detail.actions.reschedule_label'),
+          updated: I18n.t('plans.task_schedules.detail.actions.updated'),
+          update_failed: I18n.t('plans.task_schedules.detail.actions.update_failed'),
+          date_required: I18n.t('plans.task_schedules.detail.actions.date_required'),
+          submit: I18n.t('plans.task_schedules.detail.actions.submit'),
+          cancel_form: I18n.t('plans.task_schedules.detail.actions.cancel_form'),
+          complete: I18n.t('plans.task_schedules.detail.actions.complete'),
+          completed: I18n.t('plans.task_schedules.detail.actions.completed'),
+          complete_failed: I18n.t('plans.task_schedules.detail.actions.complete_failed'),
+          actual_date: I18n.t('plans.task_schedules.detail.actions.actual_date'),
+          notes: I18n.t('plans.task_schedules.detail.actions.notes'),
+          notes_placeholder: I18n.t('plans.task_schedules.detail.actions.notes_placeholder'),
+          confirm_cancel: I18n.t('plans.task_schedules.detail.actions.confirm_cancel'),
+          cancel: I18n.t('plans.task_schedules.detail.actions.cancel'),
+          cancel_failed: I18n.t('plans.task_schedules.detail.actions.cancel_failed'),
+          task_name: I18n.t('plans.task_schedules.detail.actions.task_name'),
+          task_name_placeholder: I18n.t('plans.task_schedules.detail.actions.task_name_placeholder'),
+          crop: I18n.t('plans.task_schedules.detail.actions.crop'),
+          crop_required: I18n.t('plans.task_schedules.detail.actions.crop_required'),
+          scheduled_date: I18n.t('plans.task_schedules.detail.actions.scheduled_date'),
+          name_required: I18n.t('plans.task_schedules.detail.actions.name_required'),
+          created: I18n.t('plans.task_schedules.detail.actions.created'),
+          create_failed: I18n.t('plans.task_schedules.detail.actions.create_failed')
         }
       }
     }
@@ -154,7 +183,9 @@ class TaskScheduleTimelinePresenter
       name: field_cultivation&.cultivation_plan_field&.name || I18n.t('plans.task_schedules.plan_level_field'),
       crop_name: field_cultivation&.cultivation_plan_crop&.name || field_cultivation&.cultivation_plan_crop&.crop&.name,
       area_sqm: field_cultivation&.area,
-      field_cultivation_id: field_cultivation&.id
+      field_cultivation_id: field_cultivation&.id,
+      crop_id: field_cultivation&.cultivation_plan_crop_id,
+      task_options: task_options_for(field_cultivation)
     }
   end
 
@@ -176,7 +207,8 @@ class TaskScheduleTimelinePresenter
       'amount' => item.amount&.to_s,
       'amount_unit' => item.amount_unit,
       'status' => derive_status(item),
-      'agricultural_task_id' => item.agricultural_task_id
+      'agricultural_task_id' => item.agricultural_task_id,
+      'field_cultivation_id' => item.task_schedule.field_cultivation_id
     }
     payload['details'] = detail_payload(item)
     payload['badge'] = badge_payload(item, category)
@@ -203,7 +235,16 @@ class TaskScheduleTimelinePresenter
       amount: item.amount&.to_s,
       amount_unit: item.amount_unit,
       source: item.source,
-      master: master_payload(item.agricultural_task)
+      master: master_payload(item.agricultural_task),
+      actual: {
+        date: item.actual_date&.iso8601,
+        notes: item.actual_notes
+      },
+      history: {
+        rescheduled_at: item.rescheduled_at&.iso8601,
+        cancelled_at: item.cancelled_at&.iso8601,
+        completed_at: item.completed_at&.iso8601
+      }
     }
   end
 
@@ -273,7 +314,10 @@ class TaskScheduleTimelinePresenter
     @grouped_schedules ||= begin
       schedules = base_scope.includes(
         :task_schedule_items,
-        field_cultivation: [:cultivation_plan_field, { cultivation_plan_crop: :crop }]
+        field_cultivation: [
+          :cultivation_plan_field,
+          { cultivation_plan_crop: { crop: :agricultural_tasks } }
+        ]
       )
 
       schedules = schedules.select { |schedule| include_category?(schedule.category) }
