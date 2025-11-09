@@ -160,4 +160,100 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test 'RecordInvalid の場合は422とフィールド単位のエラーを返す' do
+    assert_no_difference('TaskScheduleItem.count') do
+      post plan_task_schedule_items_path(@plan),
+           params: {
+             task_schedule_item: {
+               field_cultivation_id: @field_cultivation.id,
+               name: '除草',
+               task_type: 'field_work',
+               scheduled_date: (Date.current + 6.days).iso8601,
+               priority: 3
+             }
+           },
+           headers: @headers,
+           as: :json
+    end
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(response.body)
+
+    assert_equal I18n.t('plans.task_schedules.detail.actions.crop_required'), body['error']
+    assert_equal [I18n.t('plans.task_schedules.detail.actions.crop_required')], body.dig('errors', 'base')
+  end
+
+  test '作業予定のキャンセルが失敗した場合は422とエラー詳細を返す' do
+    invalid_item = @task.dup
+    invalid_item.source = 'agrr'
+    invalid_item.gdd_trigger = nil
+    invalid_item.validate
+    expected_error_messages = invalid_item.errors.full_messages_for(:gdd_trigger)
+    expected_base = ["Validation failed: #{invalid_item.errors.full_messages.first}"]
+
+    @task.update_columns(source: 'agrr', gdd_trigger: nil)
+
+    delete plan_task_schedule_item_path(@plan, @task), headers: @headers, as: :json
+
+    assert_response :unprocessable_entity
+
+    body = JSON.parse(response.body)
+    assert_equal expected_error_messages.first, body['error']
+    assert_equal expected_base, body.dig('errors', 'base')
+    assert_equal expected_error_messages, body.dig('errors', 'gdd_trigger')
+  end
+
+  test '作業予定の完了登録が失敗した場合は422とエラー詳細を返す' do
+    invalid_item = @task.dup
+    invalid_item.source = 'agrr'
+    invalid_item.gdd_trigger = nil
+    invalid_item.validate
+    expected_error_messages = invalid_item.errors.full_messages_for(:gdd_trigger)
+    expected_base = ["Validation failed: #{invalid_item.errors.full_messages.first}"]
+
+    @task.update_columns(source: 'agrr', gdd_trigger: nil)
+
+    post complete_plan_task_schedule_item_path(@plan, @task),
+         params: {
+           completion: {
+             actual_date: Date.current,
+             notes: 'テスト'
+           }
+         },
+         headers: @headers,
+         as: :json
+
+    assert_response :unprocessable_entity
+
+    body = JSON.parse(response.body)
+    assert_equal expected_error_messages.first, body['error']
+    assert_equal expected_base, body.dig('errors', 'base')
+    assert_equal expected_error_messages, body.dig('errors', 'gdd_trigger')
+  end
+
+  test 'RecordNotFound の場合は404とエラーメッセージを返す' do
+    patch plan_task_schedule_item_path(@plan, -1),
+          params: { task_schedule_item: { scheduled_date: (Date.current + 1.day).iso8601 } },
+          headers: @headers,
+          as: :json
+
+    assert_response :not_found
+
+    body = JSON.parse(response.body)
+    expected = I18n.t('controllers.plans.task_schedule_items.errors.not_found')
+    assert_equal expected, body['error']
+    assert_equal [expected], body.dig('errors', 'base')
+  end
+
+  test '必須パラメーター欠如の場合は400とエラーメッセージを返す' do
+    post plan_task_schedule_items_path(@plan), headers: @headers, as: :json
+
+    assert_response :bad_request
+
+    body = JSON.parse(response.body)
+    expected = I18n.t('controllers.plans.task_schedule_items.errors.parameter_missing')
+    assert_equal expected, body['error']
+    assert_equal [expected], body.dig('errors', 'base')
+  end
 end
