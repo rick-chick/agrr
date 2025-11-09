@@ -5,6 +5,9 @@ module Plans
     before_action :authenticate_user!
     before_action :set_cultivation_plan
     before_action :set_task_schedule_item, only: [:update, :destroy, :complete]
+    rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
+    rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
+    rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
 
     def create
       item = TaskScheduleItem.transaction do
@@ -26,21 +29,15 @@ module Plans
       end
 
       render json: serialize_item(item), status: :created
-    rescue ActiveRecord::RecordNotFound
-      head :not_found
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
 
     def update
-    TaskScheduleItem.transaction do
-      attributes = build_update_attributes(update_params)
+      TaskScheduleItem.transaction do
+        attributes = build_update_attributes(update_params)
         @task_schedule_item.update!(attributes)
       end
 
       render json: serialize_item(@task_schedule_item)
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
 
     def destroy
@@ -52,8 +49,6 @@ module Plans
       end
 
       head :no_content
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
 
     def complete
@@ -67,8 +62,6 @@ module Plans
       end
 
       render json: serialize_item(@task_schedule_item)
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
 
     private
@@ -180,6 +173,36 @@ module Plans
         status: item.status,
         category: item.task_schedule.category
       }
+    end
+
+    def handle_record_invalid(exception)
+      record = exception.record
+      errors = build_error_hash(record, exception.message)
+      message = errors.values.flatten.compact.first || exception.message
+      render json: { error: message, errors: errors }, status: :unprocessable_entity
+    end
+
+    def handle_record_not_found(_exception)
+      render_error_response(:not_found, :not_found)
+    end
+
+    def handle_parameter_missing(_exception)
+      render_error_response(:parameter_missing, :bad_request)
+    end
+
+    def render_error_response(message_key, status)
+      message = I18n.t("controllers.plans.task_schedule_items.errors.#{message_key}")
+      render json: { error: message, errors: { 'base' => [message] } }, status: status
+    end
+
+    def build_error_hash(record, fallback_message)
+      return { 'base' => [fallback_message] } unless record&.respond_to?(:errors)
+
+      errors = record.errors.to_hash(true).transform_keys(&:to_s)
+      errors.transform_values! { |messages| Array(messages).compact }
+      errors['base'] = Array(errors['base']).presence || [fallback_message]
+      errors.delete_if { |_attribute, messages| messages.empty? }
+      errors.presence || { 'base' => [fallback_message] }
     end
   end
 end
