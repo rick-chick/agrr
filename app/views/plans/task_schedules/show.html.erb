@@ -1,0 +1,88 @@
+<% content_for :title, t('plans.task_schedules.title', name: @cultivation_plan.display_name) %>
+
+<div class="task-schedule-page">
+  <div class="task-schedule-header">
+    <div class="task-schedule-header__left">
+      <%= link_to t('plans.task_schedules.back_to_plan'),
+                  plan_path(@cultivation_plan),
+                  class: "btn btn-secondary btn-sm" %>
+      <h1 class="task-schedule-title">
+        <%= t('plans.task_schedules.title', name: @cultivation_plan.display_name) %>
+      </h1>
+      <p class="task-schedule-plan-meta">
+        <span><%= @cultivation_plan.farm.display_name %></span>
+        <span>・</span>
+        <span><%= number_with_delimiter(@cultivation_plan.total_area) %>㎡</span>
+      </p>
+    </div>
+    <div class="task-schedule-header__right">
+      <div class="task-schedule-generated-at" data-task-schedule-timeline-target="generatedAt">
+        <% if @timeline_initial_state['plan']['timeline_generated_at_display'].present? %>
+          <%= t('plans.task_schedules.timeline_generated_at',
+                datetime: @timeline_initial_state['plan']['timeline_generated_at_display']) %>
+        <% else %>
+          <%= t('plans.task_schedules.timeline_generated_unknown') %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="task-schedule-timeline-wrapper"
+    data-controller="task-schedule-timeline"
+    data-task-schedule-timeline-endpoint-value="<%= plan_task_schedule_path(@cultivation_plan, format: :json) %>"
+    data-task-schedule-timeline-initial-state-value="<%= raw(json_escape(@timeline_initial_state.to_json)) %>"
+    data-task-schedule-timeline-loading-message-value="<%= t('plans.task_schedules.loading') %>"
+    data-task-schedule-timeline-error-message-value="<%= t('plans.task_schedules.fetch_error') %>"
+    data-task-schedule-timeline-empty-message-value="<%= t('plans.task_schedules.no_schedules') %>"
+    data-task-schedule-timeline-unknown-message-value="<%= t('plans.task_schedules.timeline_generated_unknown') %>"
+  >
+          <div class="task-schedule-minimap"
+               data-task-schedule-timeline-target="minimap">
+          </div>
+
+    <div class="task-schedule-week-controls">
+      <button class="btn btn-secondary btn-sm"
+              data-action="task-schedule-timeline#prevWeek">
+        ◀︎ <%= t('plans.task_schedules.nav_prev_week') %>
+      </button>
+      <button class="btn btn-secondary btn-sm"
+              data-action="task-schedule-timeline#today">
+        ◎ <%= t('plans.task_schedules.nav_today') %>
+      </button>
+      <button class="btn btn-secondary btn-sm"
+              data-action="task-schedule-timeline#nextWeek">
+        <%= t('plans.task_schedules.nav_next_week') %> ▶︎
+      </button>
+      <span class="task-schedule-week-label"
+            data-task-schedule-timeline-target="weekLabel">
+        <% week = @timeline_initial_state['week'] %>
+        <% if week.present? %>
+          <%= t('plans.task_schedules.week_label',
+                start: l(Date.parse(week['start_date']), format: :short),
+                end: l(Date.parse(week['end_date']), format: :short)) %>
+        <% end %>
+      </span>
+    </div>
+
+    <div class="task-schedule-content"
+         data-task-schedule-timeline-target="content">
+    </div>
+
+    <aside class="task-schedule-detail hidden"
+           data-task-schedule-timeline-target="detailPanel">
+      <h2 class="task-schedule-detail__title"
+          data-task-schedule-timeline-target="detailTitle">
+        <%= t('plans.task_schedules.detail.title') %>
+      </h2>
+      <div class="task-schedule-detail__body"
+           data-task-schedule-timeline-target="detailList">
+        <div class="detail-row detail-row--empty">
+          <%= t('plans.task_schedules.detail.empty') %>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+
