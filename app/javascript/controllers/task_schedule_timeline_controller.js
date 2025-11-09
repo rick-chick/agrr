@@ -32,6 +32,11 @@ export default class extends Controller {
     this.currentCreateField = null
     this.formMessageTimer = null
     this.previousFocus = null
+    this.draggedTask = null
+    this.draggedElement = null
+    this.dragActiveCell = null
+    this.dragPendingCell = null
+    this.dragErrorTimer = null
     this.handleKeydown = this.handleKeydown.bind(this)
     document.addEventListener("keydown", this.handleKeydown)
     this.render()
@@ -45,6 +50,11 @@ export default class extends Controller {
       clearTimeout(this.formMessageTimer)
       this.formMessageTimer = null
     }
+    if (this.dragErrorTimer) {
+      clearTimeout(this.dragErrorTimer)
+      this.dragErrorTimer = null
+    }
+    this.clearDragState()
     this.hideModal()
     document.removeEventListener("keydown", this.handleKeydown)
   }
@@ -223,15 +233,29 @@ export default class extends Controller {
   }
 
   renderDayCell(field, day, tasks) {
+    const classes = ["timeline-day-cell"]
+    let content = ""
+
     if (!tasks.length) {
-      return `<div class="timeline-day-cell timeline-day-cell--empty">${this.escapeHtml(
-        this.emptyCellLabel()
-      )}</div>`
+      classes.push("timeline-day-cell--empty")
+      content = this.escapeHtml(this.emptyCellLabel())
+    } else {
+      content = tasks.map((task) => this.renderTask(task, field)).join("")
     }
 
-    const taskHtml = tasks.map((task) => this.renderTask(task, field)).join("")
+    const attrs = [`class="${classes.join(" ")}"`]
+    if (day?.date) {
+      attrs.push(`data-date="${day.date}"`)
+    }
+    if (field?.field_cultivation_id != null) {
+      attrs.push(`data-field-id="${field.field_cultivation_id}"`)
+    }
 
-    return `<div class="timeline-day-cell">${taskHtml}</div>`
+    attrs.push(
+      `data-action="dragenter->task-schedule-timeline#allowDrop dragover->task-schedule-timeline#allowDrop dragleave->task-schedule-timeline#leaveDropZone drop->task-schedule-timeline#dropTask"`
+    )
+
+    return `<div ${attrs.join(" ")}>${content}</div>`
   }
 
   renderTask(task, field) {
@@ -243,6 +267,11 @@ export default class extends Controller {
     const badge = this.renderTaskBadge(task)
 
     const detailPayload = this.encodeDetailPayload(task)
+    const actions = [
+      "task-schedule-timeline#showDetails",
+      "dragstart->task-schedule-timeline#startDrag",
+      "dragend->task-schedule-timeline#endDrag"
+    ]
 
     return `
       <button type="button"
@@ -251,7 +280,9 @@ export default class extends Controller {
               data-field-id="${field.field_cultivation_id}"
               data-item-id="${task.item_id}"
               data-category="${task.category}"
-              data-action="task-schedule-timeline#showDetails">
+              data-scheduled-date="${task.scheduled_date || ""}"
+              draggable="true"
+              data-action="${actions.join(" ")}">
         <span class="timeline-task__name">${this.escapeHtml(task.name)}</span>
         ${badge}
       </button>
@@ -263,6 +294,171 @@ export default class extends Controller {
     if (!statusText) return ""
 
     return `<span class="timeline-task__badge">${this.escapeHtml(statusText)}</span>`
+  }
+
+  startDrag(event) {
+    const button = event.currentTarget
+    if (!(button instanceof HTMLElement)) return
+
+    const itemId = Number(button.dataset.itemId)
+    const fieldId = button.dataset.fieldId
+    if (!itemId || !fieldId) return
+
+    const scheduledDate = button.dataset.scheduledDate || ""
+
+    this.draggedTask = { itemId, fieldId, scheduledDate }
+    this.draggedElement = button
+    button.classList.add("timeline-task--dragging")
+
+    if (event.dataTransfer) {
+      try {
+        event.dataTransfer.setData("application/json", JSON.stringify(this.draggedTask))
+      } catch (error) {
+        console.warn("[TaskScheduleTimeline] failed to attach drag payload", error)
+      }
+      event.dataTransfer.effectAllowed = "move"
+    }
+  }
+
+  endDrag() {
+    this.clearDragState()
+  }
+
+  allowDrop(event) {
+    if (!this.draggedTask) return
+    const cell = event.currentTarget
+    if (!(cell instanceof HTMLElement)) return
+
+    if (this.canDropOnCell(cell)) {
+      event.preventDefault()
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move"
+      }
+      this.highlightDropCell(cell)
+    } else {
+      this.removeDropHighlight(cell)
+    }
+  }
+
+  leaveDropZone(event) {
+    const cell = event.currentTarget
+    if (!(cell instanceof HTMLElement)) return
+    this.removeDropHighlight(cell)
+  }
+
+  async dropTask(event) {
+    if (!this.draggedTask) return
+    const cell = event.currentTarget
+    if (!(cell instanceof HTMLElement)) return
+
+    event.preventDefault()
+
+    if (!this.canDropOnCell(cell)) {
+      this.clearDragState()
+      return
+    }
+
+    const targetDate = cell.dataset.date
+    if (!targetDate || targetDate === this.draggedTask.scheduledDate) {
+      this.clearDragState()
+      return
+    }
+
+    this.removeDropHighlight(cell)
+    this.markCellPending(cell, true)
+
+    try {
+      await this.patchItem(this.draggedTask.itemId, {
+        task_schedule_item: { scheduled_date: targetDate }
+      })
+      await this.refreshCurrentWeek()
+    } catch (error) {
+      this.showDragDropError()
+      console.error("[TaskScheduleTimeline] drag & drop update failed", error)
+    } finally {
+      this.markCellPending(cell, false)
+      this.clearDragState()
+    }
+  }
+
+  canDropOnCell(cell) {
+    if (!this.draggedTask) return false
+    if (!(cell instanceof HTMLElement)) return false
+    const fieldId = cell.dataset.fieldId
+    const date = cell.dataset.date
+    if (!fieldId || !date) return false
+    return fieldId === String(this.draggedTask.fieldId)
+  }
+
+  highlightDropCell(cell) {
+    if (this.dragActiveCell === cell) return
+    this.clearAllDropHighlights()
+    cell.classList.add("timeline-day-cell--drag-over")
+    this.dragActiveCell = cell
+  }
+
+  removeDropHighlight(cell) {
+    if (!(cell instanceof HTMLElement)) return
+    cell.classList.remove("timeline-day-cell--drag-over")
+    if (this.dragActiveCell === cell) {
+      this.dragActiveCell = null
+    }
+  }
+
+  clearAllDropHighlights() {
+    if (!this.element) return
+    this.element.querySelectorAll(".timeline-day-cell--drag-over").forEach((el) => {
+      el.classList.remove("timeline-day-cell--drag-over")
+    })
+    this.dragActiveCell = null
+  }
+
+  markCellPending(cell, pending) {
+    if (!(cell instanceof HTMLElement)) return
+    if (pending) {
+      cell.classList.add("timeline-day-cell--pending")
+      this.dragPendingCell = cell
+    } else {
+      cell.classList.remove("timeline-day-cell--pending")
+      if (this.dragPendingCell === cell) {
+        this.dragPendingCell = null
+      }
+    }
+  }
+
+  showDragDropError() {
+    const message = this.detailLabels().actions?.update_failed || "更新に失敗しました"
+    if (!this.element) return
+
+    let container = this.element.querySelector(".timeline-drag-error")
+    if (!container) {
+      container = document.createElement("div")
+      container.className = "timeline-drag-error"
+      this.element.insertBefore(container, this.element.firstChild)
+    }
+    container.textContent = message
+    container.classList.add("is-visible")
+
+    if (this.dragErrorTimer) {
+      clearTimeout(this.dragErrorTimer)
+    }
+    this.dragErrorTimer = setTimeout(() => {
+      container?.classList.remove("is-visible")
+      this.dragErrorTimer = null
+    }, 4000)
+  }
+
+  clearDragState() {
+    if (this.draggedElement) {
+      this.draggedElement.classList.remove("timeline-task--dragging")
+      this.draggedElement = null
+    }
+    this.draggedTask = null
+    this.clearAllDropHighlights()
+    if (this.dragPendingCell) {
+      this.dragPendingCell.classList.remove("timeline-day-cell--pending")
+      this.dragPendingCell = null
+    }
   }
 
   renderMinimap() {

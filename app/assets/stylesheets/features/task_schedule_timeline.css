@@ -229,6 +229,7 @@
   flex-direction: column;
   gap: var(--space-2);
   border: 1px dashed var(--color-gray-200);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .timeline-day-cell--empty {
@@ -237,6 +238,26 @@
   align-items: center;
   text-align: center;
   font-size: var(--font-size-sm);
+}
+
+.timeline-day-cell--drag-over {
+  border-color: var(--color-primary);
+  background: rgba(58, 151, 212, 0.12);
+  box-shadow: 0 0 0 2px rgba(58, 151, 212, 0.18);
+}
+
+.timeline-day-cell--pending {
+  position: relative;
+  opacity: 0.6;
+}
+
+.timeline-day-cell--pending::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px dashed var(--color-primary);
+  animation: timeline-pending-pulse 1s ease-in-out infinite alternate;
 }
 
 .timeline-task {
@@ -254,10 +275,17 @@
   text-align: left;
   cursor: pointer;
   width: 100%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .timeline-task--fertilizer {
   border-left-color: var(--color-success);
+}
+
+.timeline-task--dragging {
+  opacity: 0.6;
+  transform: scale(0.98);
+  box-shadow: var(--shadow-lg);
 }
 
 .timeline-task__name {
@@ -327,6 +355,32 @@
 
 .timeline-unscheduled__button:hover {
   text-decoration: underline;
+}
+
+.timeline-drag-error {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+  font-size: var(--font-size-sm);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.timeline-drag-error.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes timeline-pending-pulse {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .task-schedule-loading,
