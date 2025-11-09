@@ -1243,6 +1243,73 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_equal '品種B', created_crops[1].variety, "Second variety should be preserved"
   end
 
+  test "copies nutrient requirements for each crop stage" do
+    reference_crop = Crop.create!(
+      user: nil,
+      name: '栄養参照作物',
+      variety: 'NR1',
+      is_reference: true,
+      area_per_unit: 1.0,
+      revenue_per_area: 5000.0,
+      region: @farm.region
+    )
+
+    stage = CropStage.create!(
+      crop: reference_crop,
+      name: '栄養ステージ',
+      order: 1
+    )
+
+    NutrientRequirement.create!(
+      crop_stage: stage,
+      daily_uptake_n: 1.2,
+      daily_uptake_p: 0.3,
+      daily_uptake_k: 0.5
+    )
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '栄養要件コピー検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
+    assert_not_nil user_crop, 'Copied user crop should exist'
+
+    user_stage = user_crop.crop_stages.find_by(name: '栄養ステージ')
+    assert_not_nil user_stage, 'Crop stage should be copied'
+
+    nutrient_requirement = user_stage.nutrient_requirement
+    assert_not_nil nutrient_requirement, 'Nutrient requirement should be copied'
+    assert_in_delta 1.2, nutrient_requirement.daily_uptake_n.to_f, 0.0001
+    assert_in_delta 0.3, nutrient_requirement.daily_uptake_p.to_f, 0.0001
+    assert_in_delta 0.5, nutrient_requirement.daily_uptake_k.to_f, 0.0001
+  end
+
   test "maps crops by registration order and links field cultivations correctly" do
     # 参照作物A/B
     crop_a = Crop.create!(user: nil, name: '参照作物A', variety: 'A1', is_reference: true, area_per_unit: 0.2, revenue_per_area: 4000.0, region: 'jp')
@@ -1321,6 +1388,221 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     fc_b = new_plan.field_cultivations.find { |fc| fc.cultivation_plan_crop.name == '参照作物B' }
     assert_not_nil fc_a
     assert_not_nil fc_b
+  end
+
+  test "copies task schedules and items from reference plan" do
+    reference_crop = Crop.create!(
+      user: nil,
+      name: '参照作業作物',
+      variety: 'R1',
+      is_reference: true,
+      area_per_unit: 1.0,
+      revenue_per_area: 2000.0,
+      region: 'jp'
+    )
+
+    reference_task = AgriculturalTask.create!(
+      name: '除草作業',
+      description: '雑草を取り除く作業',
+      time_per_sqm: 0.5,
+      weather_dependency: 'low',
+      required_tools: ['ホー'],
+      skill_level: 'beginner',
+      is_reference: true,
+      task_type: 'field_work',
+      region: 'jp'
+    )
+
+    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: reference_crop)
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 50.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '作業コピー検証',
+      planning_start_date: Date.current.beginning_of_year,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    field = CultivationPlanField.create!(cultivation_plan: plan, name: 'F1', area: 50, daily_fixed_cost: 5)
+    cpc = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+    fc = FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: cpc,
+      area: 50,
+      start_date: Date.current,
+      completion_date: Date.current + 5,
+      cultivation_days: 6,
+      estimated_cost: 500,
+      status: 'completed'
+    )
+
+    schedule = TaskSchedule.create!(
+      cultivation_plan: plan,
+      field_cultivation: fc,
+      category: 'general',
+      status: 'active',
+      source: 'reference_generator',
+      generated_at: Time.current - 1.day
+    )
+
+    TaskScheduleItem.create!(
+      task_schedule: schedule,
+      task_type: 'field_work',
+      name: '参照作業',
+      stage_name: '初期',
+      stage_order: 1,
+      gdd_trigger: 100,
+      gdd_tolerance: 10,
+      scheduled_date: Date.current + 3,
+      priority: 1,
+      source: 'reference',
+      weather_dependency: 'no_rain_24h',
+      time_per_sqm: 0.5,
+      amount: 2.5,
+      amount_unit: 'kg',
+      agricultural_task: reference_task,
+      source_agricultural_task_id: reference_task.id
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: 'F1', area: 50.0, coordinates: [35.0, 139.0] }
+      ]
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    new_plan = result.new_plan
+    assert_not_nil new_plan
+
+    assert_equal 1, new_plan.task_schedules.count
+    new_schedule = new_plan.task_schedules.first
+    assert_equal 'general', new_schedule.category
+    assert_equal 'copied_from_public_plan', new_schedule.source
+    assert_equal 1, new_schedule.task_schedule_items.count
+
+    copied_item = new_schedule.task_schedule_items.first
+    assert_equal '参照作業', copied_item.name
+    assert_in_delta 0.5, copied_item.time_per_sqm.to_f, 0.0001
+    assert_equal 'kg', copied_item.amount_unit
+    assert_equal '除草作業', copied_item.agricultural_task&.name
+    assert_equal @user.id, copied_item.agricultural_task&.user_id
+    assert_equal reference_task.id, copied_item.source_agricultural_task_id
+  end
+
+  test 'raises error when reference agrr item loses gdd trigger' do
+    user = create(:user)
+    farm = create(:farm, user: user)
+
+    reference_crop = create(:crop, :with_stages, user: nil, is_reference: true, region: 'jp')
+    reference_task = AgriculturalTask.create!(
+      name: '除草作業',
+      description: '雑草を取り除く作業',
+      time_per_sqm: 0.5,
+      weather_dependency: 'low',
+      required_tools: ['ホー'],
+      skill_level: 'beginner',
+      is_reference: true,
+      task_type: 'field_work',
+      region: 'jp'
+    )
+    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: reference_crop)
+
+    plan = CultivationPlan.create!(
+      farm: farm,
+      user: nil,
+      total_area: 50.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: '作業エラーチェック',
+      planning_start_date: Date.current.beginning_of_year,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    field = CultivationPlanField.create!(cultivation_plan: plan, name: 'F1', area: 50, daily_fixed_cost: 5)
+    cpc = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+    fc = FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: cpc,
+      area: 50,
+      start_date: Date.current,
+      completion_date: Date.current + 5,
+      cultivation_days: 6,
+      estimated_cost: 500,
+      status: 'completed'
+    )
+
+    schedule = TaskSchedule.create!(
+      cultivation_plan: plan,
+      field_cultivation: fc,
+      category: 'general',
+      status: 'active',
+      source: 'agrr',
+      generated_at: Time.current - 1.day
+    )
+
+    item = TaskScheduleItem.create!(
+      task_schedule: schedule,
+      task_type: 'field_work',
+      name: '参照作業',
+      stage_name: '初期',
+      stage_order: 1,
+      gdd_trigger: 100,
+      gdd_tolerance: 10,
+      scheduled_date: Date.current + 3,
+      priority: 1,
+      source: 'agrr_schedule',
+      weather_dependency: 'no_rain_24h',
+      time_per_sqm: 0.5,
+      agricultural_task: reference_task,
+      source_agricultural_task_id: reference_task.id
+    )
+    item.update_column(:gdd_trigger, nil)
+    assert_nil item.reload.gdd_trigger
+    plan.reload
+    reference_item_check = plan.task_schedules.first.task_schedule_items.first
+    assert_nil reference_item_check.gdd_trigger
+    assert_equal 'agrr_schedule', reference_item_check.source
+    assert_equal 1, plan.task_schedules.count
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: farm.id,
+      field_data: [
+        { name: 'F1', area: 50.0, coordinates: [35.0, 139.0] }
+      ]
+    }
+
+    service = PlanSaveService.new(user: user, session_data: session_data)
+    assert service.send(:requires_gdd?, item), 'sanity check: item should require gdd'
+    error = assert_raises PlanSaveService::InvalidTaskScheduleItemError do
+      service.call
+    end
+    assert_match(/nil gdd_trigger/, error.message)
   end
 
   test "copies interaction rule impact_ratio from reference when available" do
