@@ -34,7 +34,9 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
       area: 100.0
     )
 
-    @crop = Crop.create!(
+    @crop = FactoryBot.create(
+      :crop,
+      :with_stages,
       user: @user,
       name: "テストトマト",
       variety: "試験品種",

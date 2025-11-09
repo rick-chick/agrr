@@ -4,6 +4,7 @@ class TaskScheduleGeneratorService
   class Error < StandardError; end
   class WeatherDataMissingError < Error; end
   class ProgressDataMissingError < Error; end
+  class GddTriggerMissingError < Error; end
 
   def initialize(schedule_gateway: Agrr::ScheduleGateway.new,
                  fertilize_gateway: Agrr::FertilizeGateway.new,
@@ -41,13 +42,27 @@ class TaskScheduleGeneratorService
     crop = field_cultivation.cultivation_plan_crop&.crop
     return unless crop
 
+    agricultural_tasks_lookup = index_agricultural_tasks(crop)
+
+    start_date = field_cultivation.start_date || plan.planning_start_date
+    filtered_weather_data = filtered_weather_data(plan.predicted_weather_data, start_date)
+
     progress_data = progress_gateway.calculate_progress(
       crop: crop,
-      start_date: field_cultivation.start_date || plan.planning_start_date,
-      weather_data: plan.predicted_weather_data
+      start_date: start_date,
+      weather_data: filtered_weather_data
     )
 
     progress_records = Array(progress_data['progress_records'])
+    filtered_records = if start_date.present?
+      progress_records.select do |record|
+        record_date = safe_parse_date(record['date'])
+        record_date && record_date >= start_date
+      end
+    else
+      []
+    end
+    progress_records = filtered_records if filtered_records.present?
     if progress_records.empty?
       raise ProgressDataMissingError, "GDD進捗データが空です (cultivation_plan_id=#{plan.id})"
     end
@@ -60,10 +75,16 @@ class TaskScheduleGeneratorService
         category: 'general'
       ) do |schedule|
         Array(schedule_response['task_schedules']).each do |task|
-          schedule.task_schedule_items.build(
+          task_id = integer_value(task['task_id'])
+          task_id_str = task_id&.to_s
+          agricultural_task = agricultural_tasks_lookup[task_id_str] || agricultural_tasks_lookup[task_id_str&.to_i]
+
+      schedule.task_schedule_items.build(
             task_type: TaskScheduleItem::FIELD_WORK_TYPE,
-            name: task['task_id'] || task['name'] || 'field_task',
-            description: task['description'],
+            agricultural_task: agricultural_task,
+            source_agricultural_task_id: task_id,
+            name: task['name'] || agricultural_task&.name || 'field_task',
+            description: task['description'] || agricultural_task&.description,
             stage_name: task['stage_name'],
             stage_order: task['stage_order'],
             gdd_trigger: decimal_value(task['gdd_trigger']),
@@ -71,8 +92,8 @@ class TaskScheduleGeneratorService
             scheduled_date: date_for_gdd(progress_records, task['gdd_trigger'], field_cultivation.start_date),
             priority: task['priority'],
             source: 'agrr_schedule',
-            weather_dependency: task['weather_dependency'],
-            time_per_sqm: decimal_value(task['time_per_sqm'])
+            weather_dependency: task['weather_dependency'] || agricultural_task&.weather_dependency,
+            time_per_sqm: decimal_value(task['time_per_sqm']) || agricultural_task&.time_per_sqm
           )
         end
       end
@@ -116,6 +137,15 @@ class TaskScheduleGeneratorService
   def crop_agricultural_tasks(crop)
     tasks = crop.agricultural_tasks.order(:id)
     AgriculturalTask.to_agrr_format_array(tasks)
+  end
+
+  def index_agricultural_tasks(crop)
+    lookup = {}
+    crop.agricultural_tasks.each do |task|
+      lookup[task.id] = task
+      lookup[task.id.to_s] = task
+    end
+    lookup
   end
 
   def schedule_response_for(crop, cache)
@@ -166,6 +196,10 @@ class TaskScheduleGeneratorService
 
   def date_for_gdd(progress_records, target_gdd, fallback_date)
     target_value = decimal_value(target_gdd)
+    if target_value.nil?
+      raise GddTriggerMissingError, 'GDDトリガーが設定されていません'
+    end
+
     progress_records.each do |record|
       cumulative = decimal_value(record['cumulative_gdd'])
       next if target_value.present? && cumulative < target_value
@@ -182,6 +216,45 @@ class TaskScheduleGeneratorService
     return nil if value.nil?
 
     BigDecimal(value.to_s)
+  end
+
+  def integer_value(value)
+    return nil if value.nil?
+
+    str = value.to_s
+    return nil unless str.match?(/\A-?\d+\z/)
+
+    str.to_i
+  end
+
+  def safe_parse_date(value)
+    return value if value.is_a?(Date)
+
+    Date.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def filtered_weather_data(weather_data, start_date)
+    return weather_data unless start_date && weather_data.is_a?(Hash)
+
+    duplicated = weather_data.deep_dup
+    data_array = Array(duplicated['data'] || duplicated[:data])
+
+    filtered = data_array.select do |entry|
+      entry_time = entry['time'] || entry[:time]
+      entry_time.present? && safe_parse_date(entry_time) && safe_parse_date(entry_time) >= start_date
+    end
+
+    if filtered.any?
+      if duplicated.key?('data')
+        duplicated['data'] = filtered
+      else
+        duplicated[:data] = filtered
+      end
+    end
+
+    duplicated
   end
 end
 
