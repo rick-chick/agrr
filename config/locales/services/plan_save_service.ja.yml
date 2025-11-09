@@ -15,6 +15,7 @@ ja:
         temperature_requirement_copied: "温度要件をコピーしました: %{stage_name}"
         sunshine_requirement_copied: "日照要件をコピーしました: %{stage_name}"
         thermal_requirement_copied: "積算温度要件をコピーしました: %{stage_name}"
+        nutrient_requirement_copied: "栄養要件をコピーしました: %{stage_name}"
         cultivation_plan_field_copied: "計画圃場をコピーしました: %{field_name}"
         cultivation_plan_crop_copied: "計画作物をコピーしました: %{crop_name}"
         field_cultivation_copied: "圃場栽培をコピーしました: %{field_name} × %{crop_name}"

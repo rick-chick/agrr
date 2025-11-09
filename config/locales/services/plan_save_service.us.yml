@@ -15,6 +15,7 @@ us:
         temperature_requirement_copied: "Temperature requirement copied: %{stage_name}"
         sunshine_requirement_copied: "Sunshine requirement copied: %{stage_name}"
         thermal_requirement_copied: "Thermal requirement copied: %{stage_name}"
+        nutrient_requirement_copied: "Nutrient requirement copied: %{stage_name}"
         cultivation_plan_field_copied: "Plan field copied: %{field_name}"
         cultivation_plan_crop_copied: "Plan crop copied: %{crop_name}"
         field_cultivation_copied: "Field cultivation copied: %{field_name} × %{crop_name}"

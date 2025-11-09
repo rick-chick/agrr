@@ -15,6 +15,7 @@ in:
         temperature_requirement_copied: "तापमान आवश्यकता कॉपी की गई: %{stage_name}"
         sunshine_requirement_copied: "धूप आवश्यकता कॉपी की गई: %{stage_name}"
         thermal_requirement_copied: "तापीय आवश्यकता कॉपी की गई: %{stage_name}"
+        nutrient_requirement_copied: "पोषक तत्व आवश्यकता कॉपी की गई: %{stage_name}"
         cultivation_plan_field_copied: "योजना क्षेत्र कॉपी किया गया: %{field_name}"
         cultivation_plan_crop_copied: "योजना फसल कॉपी की गई: %{crop_name}"
         field_cultivation_copied: "क्षेत्र खेती कॉपी की गई: %{field_name} × %{crop_name}"

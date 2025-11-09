@@ -943,6 +943,16 @@ class PlanSaveService
         )
         Rails.logger.debug I18n.t('services.plan_save_service.messages.thermal_requirement_copied', stage_name: stage.name)
       end
+
+      if reference_stage.nutrient_requirement && !stage.nutrient_requirement
+        NutrientRequirement.create!(
+          crop_stage_id: stage.id,
+          daily_uptake_n: reference_stage.nutrient_requirement.daily_uptake_n,
+          daily_uptake_p: reference_stage.nutrient_requirement.daily_uptake_p,
+          daily_uptake_k: reference_stage.nutrient_requirement.daily_uptake_k
+        )
+        Rails.logger.debug I18n.t('services.plan_save_service.messages.nutrient_requirement_copied', stage_name: stage.name)
+      end
     end
   rescue => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.crop_stage_copy_failed', errors: e.message)
