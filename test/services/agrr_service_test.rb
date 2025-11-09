@@ -52,4 +52,37 @@ class AgrrServiceTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test 'schedule executes agrr client with json option and returns raw response' do
+    captured_args = nil
+    status = Minitest::Mock.new
+    status.expect(:success?, true)
+    status.expect(:exitstatus, 0)
+
+    File.stub(:exist?, true) do
+      File.stub(:socket?, true) do
+        Open3.stub(:capture3, lambda do |*args|
+          captured_args = args
+          ['{"task_schedules":[{"gdd_trigger":185.0}]}', '', status]
+        end) do
+          result = @service.schedule(
+            crop_name: 'トマト',
+            variety: '一般',
+            stage_requirements: '/tmp/stage.json',
+            agricultural_tasks: '/tmp/tasks.json'
+          )
+
+          binary, *rest = captured_args
+          assert_equal Rails.root.join('bin', 'agrr_client').to_s, binary
+          assert_includes rest, '--json'
+          assert_includes rest, '--crop-name'
+          assert_includes rest, 'トマト'
+
+          assert_equal '{"task_schedules":[{"gdd_trigger":185.0}]}', result
+        end
+      end
+    end
+
+    status.verify
+  end
 end
