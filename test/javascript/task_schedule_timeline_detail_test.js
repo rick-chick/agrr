@@ -43,6 +43,63 @@ describe("TaskScheduleTimelineController detail panel", () => {
     element = document.querySelector("[data-controller='task-schedule-timeline']")
   })
 
+  test("ステータスは背景色で表示しテキストは表示しない", () => {
+    const initialState = {
+      plan: { id: 1, name: "テスト", timeline_generated_at_display: "2025-11-01 09:00" },
+      week: {
+        start_date: "2025-11-03",
+        end_date: "2025-11-09",
+        label: "11/03 〜 11/09",
+        days: [
+          { date: "2025-11-03", weekday: "mon", is_today: false }
+        ]
+      },
+      fields: [
+        {
+          id: 1,
+          field_cultivation_id: 1,
+          name: "圃場A",
+          crop_name: "トマト",
+          area_sqm: 1200,
+          schedules: {
+            general: [
+              {
+                item_id: 1,
+                name: "支柱設置",
+                scheduled_date: "2025-11-03",
+                category: "general",
+                badge: { status: "completed" },
+                details: {}
+              }
+            ],
+            fertilizer: [],
+            unscheduled: []
+          }
+        }
+      ],
+      labels: {
+        empty_cell: "予定なし",
+        detail: {
+          statuses: { completed: "完了" }
+        }
+      },
+      minimap: {
+        start_date: "2025-10-27",
+        end_date: "2025-12-01",
+        weeks: []
+      }
+    }
+
+    buildController(element, initialState)
+
+    const taskElement = element.querySelector(".timeline-task")
+    expect(taskElement).not.toBeNull()
+    expect(taskElement.classList.contains("timeline-task--status-completed")).toBe(true)
+    expect(taskElement.querySelector(".timeline-task__badge")).toBeNull()
+    expect(taskElement.textContent).toContain("支柱設置")
+    expect(taskElement.textContent).not.toContain("完了")
+  })
+
   test("shows detail panel with task information when task is clicked", () => {
     const initialState = {
       plan: { id: 1, name: "テスト", timeline_generated_at_display: "2025-11-01 09:00" },
