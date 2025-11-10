@@ -9,18 +9,22 @@
       <% end %>
     <% else %>
       <%= link_to t('.edit'), edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
-      <%= link_to t('.delete'), interaction_rule_path(@interaction_rule), 
-                  class: "btn btn-error", 
-                  data: { 
+      <%= link_to t('.delete'), interaction_rule_path(@interaction_rule),
+                  class: "btn btn-error",
+                  data: {
+                    controller: "undo-delete",
+                    action: "click->undo-delete#submit",
                     turbo_method: :delete,
-                    turbo_confirm: t('.confirm_delete')
+                    undo_delete_url_value: interaction_rule_path(@interaction_rule),
+                    undo_delete_message_value: t('interaction_rules.undo.toast', source: @interaction_rule.source_group, target: @interaction_rule.target_group),
+                    undo_delete_redirect_url_value: interaction_rules_path
                   } %>
     <% end %>
     <%= link_to t('.back_to_list'), interaction_rules_path, class: "btn btn-ghost" %>
   </div>
 </div>
 
-<div class="rule-detail-card">
+<div class="rule-detail-card" id="<%= dom_id(@interaction_rule) %>" data-undo-delete-record>
   <% if admin_user? && @interaction_rule.is_reference %>
     <div class="mb-4">
       <span class="badge badge-info"><%= t('.system_rule_badge') %></span>

@@ -1,4 +1,10 @@
 us:
+  controllers:
+    plans:
+      task_schedule_items:
+        errors:
+          cancel_failed: "We couldn't cancel the scheduled task. Please try again."
+          undo_failed: "We couldn't prepare the undo action: %{message}"
   # Date/Time formats
   time:
     formats:

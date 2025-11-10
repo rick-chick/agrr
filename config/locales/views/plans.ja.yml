@@ -21,6 +21,7 @@ ja:
       plan_already_exists: "%{year}年の計画は既に存在します。"
       copy_failed: "計画のコピーに失敗しました: %{errors}"
       delete_failed: "計画の削除に失敗しました。"
+      delete_error: "削除中にエラーが発生しました: %{message}"
       already_optimized: "この計画は既に最適化されています。"
       invalid_field_params: "圃場の情報が不正です。"
       cannot_remove_last_field: "最後の圃場は削除できません。"
@@ -36,6 +37,12 @@ ja:
       field_removed: "圃場を削除しました。"
       optimization_started: "最適化を開始しました。"
       reoptimization_started: "再最適化を開始しました。"
+    
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+    task_schedule_items:
+      undo:
+        toast: "%{name} の予定を削除しました。元に戻すことができます。"
     
     index:
       title: "計画一覧"
@@ -113,11 +120,12 @@ ja:
         try_again: "作物を変更してもう一度試す"
         start_over: "計画一覧に戻る"
     
-    show:
-      back_to_list: "← 計画一覧に戻る"
-      optimize_button: "最適化"
-      copy_plan: "次年度にコピー"
-      view_task_schedule: "作業予定を見る"
+      show:
+        back_to_list: "← 計画一覧に戻る"
+        optimize_button: "最適化"
+        copy_plan: "次年度にコピー"
+        delete: "削除"
+        view_task_schedule: "作業予定を見る"
       confirms:
         optimize: "この計画を最適化しますか？"
         copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"

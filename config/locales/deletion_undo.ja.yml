@@ -1,0 +1,35 @@
+ja:
+  deletion_undo:
+    toast_message: "%{resource} を削除しました。元に戻すことができます。"
+    redirect_notice: "%{resource} を削除しました。"
+    restored: "削除を取り消しました。"
+    undo_button: "元に戻す"
+    close_button: "閉じる"
+    expired: "元に戻せる時間が経過しました。"
+    restore_failed: "削除を元に戻せませんでした。"
+    not_found: "元に戻す操作が見つかりませんでした。"
+  pesticides:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  agricultural_tasks:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  crops:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  pests:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  fertilizes:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  farms:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  fields:
+    undo:
+      toast: "%{name} を削除しました。元に戻すことができます。"
+  interaction_rules:
+    undo:
+      toast: "%{source} → %{target} のルールを削除しました。元に戻すことができます。"
+

@@ -1,0 +1,55 @@
+.undo-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #1f2937;
+  color: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 2000;
+}
+
+.undo-toast.hidden {
+  display: none;
+}
+
+.undo-toast__message {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.undo-toast__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.undo-toast__undo-button,
+.undo-toast__close-button {
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.undo-toast__undo-button {
+  background-color: #f97316;
+  color: #fff;
+}
+
+.undo-toast__close-button {
+  background-color: transparent;
+  color: #cbd5f5;
+}
+
+.undo-delete--hidden {
+  display: none !important;
+}
+

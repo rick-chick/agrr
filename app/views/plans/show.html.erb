@@ -1,7 +1,7 @@
 <% content_for :title, t('plans.show.header.title', year: @cultivation_plan.plan_year) %>
 
 <div class="plans-wrapper">
-  <div class="plans-container">
+  <div class="plans-container" id="<%= dom_id(@cultivation_plan) %>" data-undo-delete-record>
     <!-- ヘッダーアクション -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); gap: var(--space-3); flex-wrap: wrap;">
       <%= link_to plans_path, class: "btn-plans-secondary" do %>
@@ -13,11 +13,21 @@
               class: "btn-plans-primary",
               data: { confirm: t('plans.show.confirms.optimize') } %>
         <% end %>
-      <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@cultivation_plan),
-          class: "btn-plans-secondary" %>
+        <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@cultivation_plan),
+            class: "btn-plans-secondary" %>
         <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
             class: "btn-plans-secondary",
             data: { confirm: t('plans.show.confirms.copy_next_year', year: @cultivation_plan.plan_year + 1) } %>
+        <%= link_to t('plans.show.delete'), plan_path(@cultivation_plan),
+            class: "btn btn-error",
+            data: {
+              controller: "undo-delete",
+              action: "click->undo-delete#submit",
+              turbo_method: :delete,
+              undo_delete_url_value: plan_path(@cultivation_plan),
+              undo_delete_message_value: t('plans.undo.toast', name: @cultivation_plan.display_name),
+              undo_delete_redirect_url_value: plans_path
+            } %>
       </div>
     </div>
 

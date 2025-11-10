@@ -8,7 +8,7 @@
 <% if @agricultural_tasks.any? %>
   <div class="crops-grid">
     <% @agricultural_tasks.each do |task| %>
-      <div class="crop-card">
+      <div class="crop-card" id="<%= dom_id(task) %>" data-undo-delete-record>
         <h3 class="crop-name"><%= task.name %></h3>
         <% if task.description.present? %>
           <div class="crop-variety"><%= truncate(task.description, length: 50) %></div>
@@ -25,21 +25,29 @@
             <%# Reference tasks: admin only %>
             <% if admin_user? %>
               <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.actions.delete'), agricultural_task_path(task), method: :delete, 
-                          class: "btn btn-error btn-sm", 
-                          data: { 
+              <%= link_to t('.actions.delete'), agricultural_task_path(task),
+                          class: "btn btn-error btn-sm",
+                          data: {
+                            controller: "undo-delete",
+                            action: "click->undo-delete#submit",
                             turbo_method: :delete,
-                            turbo_confirm: t('.actions.delete_confirm')
+                            undo_delete_url_value: agricultural_task_path(task),
+                            undo_delete_message_value: t('agricultural_tasks.undo.toast', name: task.name),
+                            undo_delete_redirect_url_value: agricultural_tasks_path
                           } %>
             <% end %>
           <% else %>
             <%# User tasks: owner only %>
             <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
-            <%= link_to t('.actions.delete'), agricultural_task_path(task), method: :delete, 
-                        class: "btn btn-error btn-sm", 
-                        data: { 
+            <%= link_to t('.actions.delete'), agricultural_task_path(task),
+                        class: "btn btn-error btn-sm",
+                        data: {
+                          controller: "undo-delete",
+                          action: "click->undo-delete#submit",
                           turbo_method: :delete,
-                          turbo_confirm: t('.actions.delete_confirm')
+                          undo_delete_url_value: agricultural_task_path(task),
+                          undo_delete_message_value: t('agricultural_tasks.undo.toast', name: task.name),
+                          undo_delete_redirect_url_value: agricultural_tasks_path
                         } %>
           <% end %>
         </div>

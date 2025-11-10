@@ -33,13 +33,15 @@
     <%= link_to t('farms.card.detail'), farm, class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
     <%= link_to t('farms.card.fields_list'), farm_fields_path(farm), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
     <%= link_to t('farms.card.edit'), edit_farm_path(farm), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to t('farms.card.delete'), farm, method: :delete, 
-                class: "btn btn-error btn-sm", 
-                data: { 
+    <%= link_to t('farms.card.delete'), farm,
+                class: "btn btn-error btn-sm",
+                data: {
+                  controller: "undo-delete",
+                  action: "click->undo-delete#submit",
                   turbo_frame: "_top",
                   turbo_method: :delete,
-                  turbo_confirm: t('farms.card.confirm_delete')
+                  undo_delete_url_value: farm_path(farm),
+                  undo_delete_message_value: t('farms.undo.toast', name: farm.display_name)
                 } %>
   </div>
 </div>
-

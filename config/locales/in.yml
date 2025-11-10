@@ -1,4 +1,10 @@
 in:
+  controllers:
+    plans:
+      task_schedule_items:
+        errors:
+          cancel_failed: "हम इस निर्धारित कार्य को रद्द नहीं कर सके। कृपया पुनः प्रयास करें।"
+          undo_failed: "हम पूर्ववत कार्रवाई तैयार नहीं कर सके: %{message}"
   # तारीख और समय प्रारूप (Date/Time formats)
   time:
     formats:

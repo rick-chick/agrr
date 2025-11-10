@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  include DeletionUndoResponder
   # Rails 8+ uses built-in forgery protection differently; explicit macro is unnecessary
   
   # I18n locale setting

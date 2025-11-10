@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require 'time'
 
 class FertilizesControllerTest < ActionDispatch::IntegrationTest
+  include ActionView::RecordIdentifier
   setup do
     @user = create(:user)
     @admin_user = create(:user, admin: true)
@@ -280,12 +282,16 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
   test "一般ユーザーは自身の肥料をdestroyできる" do
     sign_in_as @user
     fertilize = create(:fertilize, :user_owned, user: @user)
-    
-    assert_difference('Fertilize.count', -1) do
-      delete fertilize_path(fertilize)
+
+    assert_difference -> { DeletionUndoEvent.count }, +1 do
+      assert_difference('Fertilize.count', -1) do
+        delete fertilize_path(fertilize)
+      end
     end
 
     assert_redirected_to fertilizes_path
+    assert_equal I18n.t('deletion_undo.redirect_notice', resource: fertilize.name), flash[:notice]
+    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
   end
 
   test "一般ユーザーは参照肥料をdestroyできない" do
@@ -315,23 +321,88 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
   test "管理者は参照肥料をdestroyできる" do
     sign_in_as @admin_user
     reference_fertilize = create(:fertilize, is_reference: true, user_id: nil)
-    
-    assert_difference('Fertilize.count', -1) do
-      delete fertilize_path(reference_fertilize)
+
+    assert_difference -> { DeletionUndoEvent.count }, +1 do
+      assert_difference('Fertilize.count', -1) do
+        delete fertilize_path(reference_fertilize)
+      end
     end
 
     assert_redirected_to fertilizes_path
+    assert_equal I18n.t('deletion_undo.redirect_notice', resource: reference_fertilize.name), flash[:notice]
+    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
   end
 
   test "管理者は自身の肥料をdestroyできる" do
     sign_in_as @admin_user
     admin_fertilize = create(:fertilize, :user_owned, user: @admin_user)
-    
-    assert_difference('Fertilize.count', -1) do
-      delete fertilize_path(admin_fertilize)
+
+    assert_difference -> { DeletionUndoEvent.count }, +1 do
+      assert_difference('Fertilize.count', -1) do
+        delete fertilize_path(admin_fertilize)
+      end
     end
 
     assert_redirected_to fertilizes_path
+    assert_equal I18n.t('deletion_undo.redirect_notice', resource: admin_fertilize.name), flash[:notice]
+    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
+  end
+
+  test "destroy_returns_undo_token_json" do
+    sign_in_as @user
+    fertilize = create(:fertilize, :user_owned, user: @user)
+
+    assert_difference -> { DeletionUndoEvent.count }, +1 do
+      assert_difference -> { Fertilize.count }, -1 do
+        delete fertilize_path(fertilize), as: :json
+      end
+    end
+
+    assert_response :success
+
+    body = response.parsed_body
+    assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i, body.fetch('undo_token'))
+    assert_nothing_raised { Time.iso8601(body.fetch('undo_deadline')) }
+    assert body.fetch('toast_message').present?, 'toast_message が存在すること'
+
+    undo_token = body.fetch('undo_token')
+    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch('undo_path')
+    assert_equal fertilizes_path(locale: I18n.locale), body.fetch('redirect_path')
+    assert_equal dom_id(fertilize), body.fetch('resource_dom_id')
+    # TODO: HTMLレスポンスのUndoパスについては実装後に検証する
+  end
+
+  test "undo_endpoint_restores_fertilize" do
+    sign_in_as @user
+    fertilize = create(:fertilize, :user_owned, user: @user)
+
+    assert_difference -> { Fertilize.count }, -1 do
+      delete fertilize_path(fertilize), as: :json
+    end
+
+    assert_response :success
+    undo_token = response.parsed_body.fetch('undo_token')
+
+    event = DeletionUndoEvent.find(undo_token)
+    assert_equal 'scheduled', event.state
+    assert_not Fertilize.exists?(fertilize.id), '削除後はFertilizeが存在しないこと'
+
+    assert_difference -> { Fertilize.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+    end
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal 'restored', body.fetch('status')
+    assert flash.empty?, 'JSON 応答では flash を利用しないこと'
+
+    event.reload
+    assert_equal 'restored', event.state
+
+    restored = Fertilize.find(fertilize.id)
+    assert_equal @user.id, restored.user_id
+    refute restored.is_reference?, 'ユーザー所有の肥料として復元されること'
+    # TODO: HTMLレスポンスのUndoフローは別途追加予定
   end
 
   # ========== new アクションのテスト ==========

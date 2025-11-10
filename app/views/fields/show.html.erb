@@ -17,43 +17,50 @@
   </div>
 </div>
 
-<div class="field-card">
+<div class="field-card" id="<%= dom_id(@field) %>" data-undo-delete-record>
   <div class="field-info">
     <div class="info-item">
       <span class="info-label">📝 <%= t('.name') %>:</span>
       <span class="info-value"><%= @field.name %></span>
     </div>
-    
+
     <% if @field.area.present? %>
-    <div class="info-item">
-      <span class="info-label">📏 <%= t('.area') %>:</span>
-      <span class="info-value"><%= number_with_delimiter(@field.area, delimiter: ',') %> ㎡</span>
-    </div>
+      <div class="info-item">
+        <span class="info-label">📏 <%= t('.area') %>:</span>
+        <span class="info-value"><%= number_with_delimiter(@field.area, delimiter: ',') %> ㎡</span>
+      </div>
     <% end %>
-    
+
     <% if @field.daily_fixed_cost.present? %>
-    <div class="info-item">
-      <span class="info-label">💰 <%= t('.daily_cost') %>:</span>
-      <span class="info-value"><%= t('.daily_cost_value', amount: number_with_delimiter(@field.daily_fixed_cost.to_i, delimiter: ',')) %></span>
-    </div>
+      <div class="info-item">
+        <span class="info-label">💰 <%= t('.daily_cost') %>:</span>
+        <span class="info-value"><%= t('.daily_cost_value', amount: number_with_delimiter(@field.daily_fixed_cost.to_i, delimiter: ',')) %></span>
+      </div>
     <% end %>
-    
+
     <div class="info-item">
       <span class="info-label">📅 <%= t('.created_at') %>:</span>
       <span class="info-value"><%= I18n.l(@field.created_at, format: :long) %></span>
     </div>
-    
+
     <div class="info-item">
       <span class="info-label">📅 <%= t('.updated_at') %>:</span>
       <span class="info-value"><%= I18n.l(@field.updated_at, format: :long) %></span>
     </div>
   </div>
-  
+
   <div class="actions">
     <%= link_to t('.back_to_list'), farm_fields_path(@farm), class: "btn btn-secondary" %>
     <%= link_to t('.edit'), edit_farm_field_path(@farm, @field), class: "btn btn-secondary" %>
-    <%= button_to t('.delete'), farm_field_path(@farm, @field), method: :delete, 
-                class: "btn btn-error", 
-                confirm: t('.confirm_delete') %>
+    <%= link_to t('.delete'), farm_field_path(@farm, @field),
+                class: "btn btn-error",
+                data: {
+                  controller: "undo-delete",
+                  action: "click->undo-delete#submit",
+                  turbo_method: :delete,
+                  undo_delete_url_value: farm_field_path(@farm, @field),
+                  undo_delete_message_value: t('fields.undo.toast', name: @field.display_name),
+                  undo_delete_redirect_url_value: farm_fields_path(@farm)
+                } %>
   </div>
 </div>

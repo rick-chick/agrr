@@ -21,6 +21,7 @@ in:
       plan_already_exists: "%{year} के लिए योजना पहले से मौजूद है।"
       copy_failed: "योजना कॉपी करने में विफल: %{errors}"
       delete_failed: "योजना हटाने में विफल।"
+      delete_error: "हटाते समय त्रुटि हुई: %{message}"
       already_optimized: "यह योजना पहले से अनुकूलित है।"
       invalid_field_params: "खेत की जानकारी अमान्य है।"
       cannot_remove_last_field: "अंतिम खेत नहीं हटाया जा सकता।"
@@ -36,6 +37,12 @@ in:
       field_removed: "खेत हटाया गया।"
       optimization_started: "अनुकूलन शुरू किया गया।"
       reoptimization_started: "पुनः अनुकूलन शुरू किया गया।"
+    
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    task_schedule_items:
+      undo:
+        toast: "%{name} का शेड्यूल हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     
     index:
       title: "खेती योजनाएँ"
@@ -113,12 +120,13 @@ in:
         try_again: "विभिन्न फसलों के साथ पुनः प्रयास करें"
         start_over: "सूची पर वापस जाएं"
     
-    show:
-      back_to_list: "← सूची पर वापस जाएं"
-      optimize_button: "अनुकूलित करें"
-      copy_plan: "अगले वर्ष में कॉपी करें"
-      chart_title: "मौसम डेटा और फसल विकास विश्लेषण"
-      loading_data: "डेटा लोड किया जा रहा है..."
+      show:
+        back_to_list: "← सूची पर वापस जाएं"
+        optimize_button: "अनुकूलित करें"
+        copy_plan: "अगले वर्ष में कॉपी करें"
+        delete: "हटाएं"
+        chart_title: "मौसम डेटा और फसल विकास विश्लेषण"
+        loading_data: "डेटा लोड किया जा रहा है..."
       
       header:
         title: "वर्ष %{year} खेती योजना"

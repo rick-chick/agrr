@@ -8,39 +8,45 @@
 <% if @crops.any? %>
   <div class="crops-grid">
     <% @crops.each do |crop| %>
-      <div class="crop-card">
-        <h3 class="crop-name"><%= crop.name %></h3>
-        <% if crop.variety.present? %>
-          <div class="crop-variety"><%= t('activerecord.attributes.crop.variety') %>: <%= crop.variety %></div>
-        <% end %>
-        <% if admin_user? && crop.is_reference %>
-          <div class="crop-type reference"><%= t('.reference_crops') %></div>
-        <% end %>
-        <div class="crop-actions">
-          <%= link_to t('.actions.show'), crop_path(crop), class: "btn btn-info btn-sm" %>
-          <% if crop.is_reference %>
-            <%# Reference crops: admin only %>
-            <% if admin_user? %>
+      <div class="crop-card" id="<%= dom_id(crop) %>" data-undo-delete-record>
+          <h3 class="crop-name"><%= crop.name %></h3>
+          <% if crop.variety.present? %>
+            <div class="crop-variety"><%= t('activerecord.attributes.crop.variety') %>: <%= crop.variety %></div>
+          <% end %>
+          <% if admin_user? && crop.is_reference %>
+            <div class="crop-type reference"><%= t('.reference_crops') %></div>
+          <% end %>
+          <div class="crop-actions">
+            <%= link_to t('.actions.show'), crop_path(crop), class: "btn btn-info btn-sm" %>
+            <% if crop.is_reference %>
+              <%# Reference crops: admin only %>
+              <% if admin_user? %>
+                <%= link_to t('.actions.edit'), edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
+                <%= link_to t('.actions.delete'), crop_path(crop),
+                            class: "btn btn-error btn-sm",
+                            data: {
+                              controller: "undo-delete",
+                              action: "click->undo-delete#submit",
+                              turbo_method: :delete,
+                              undo_delete_url_value: crop_path(crop),
+                              undo_delete_message_value: t('crops.undo.toast', name: crop.name)
+                            } %>
+              <% end %>
+            <% else %>
+              <%# User crops: owner only %>
               <%= link_to t('.actions.edit'), edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.actions.delete'), crop_path(crop), method: :delete, 
-                          class: "btn btn-error btn-sm", 
-                          data: { 
+              <%= link_to t('.actions.delete'), crop_path(crop),
+                          class: "btn btn-error btn-sm",
+                          data: {
+                            controller: "undo-delete",
+                            action: "click->undo-delete#submit",
                             turbo_method: :delete,
-                            turbo_confirm: t('.actions.delete_confirm')
+                            undo_delete_url_value: crop_path(crop),
+                            undo_delete_message_value: t('crops.undo.toast', name: crop.name)
                           } %>
             <% end %>
-          <% else %>
-            <%# User crops: owner only %>
-            <%= link_to t('.actions.edit'), edit_crop_path(crop), class: "btn btn-secondary btn-sm" %>
-            <%= link_to t('.actions.delete'), crop_path(crop), method: :delete, 
-                        class: "btn btn-error btn-sm", 
-                        data: { 
-                          turbo_method: :delete,
-                          turbo_confirm: t('.actions.delete_confirm')
-                        } %>
-          <% end %>
+          </div>
         </div>
-      </div>
     <% end %>
   </div>
 <% else %>

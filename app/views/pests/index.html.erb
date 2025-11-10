@@ -8,7 +8,7 @@
 <% if @pests.any? %>
   <div class="crops-grid">
     <% @pests.each do |pest| %>
-      <div class="crop-card">
+      <div class="crop-card" id="<%= dom_id(pest) %>" data-undo-delete-record>
         <h3 class="crop-name"><%= pest.name %></h3>
         <% if pest.name_scientific.present? %>
           <div class="crop-variety"><%= t('.scientific_name') %>: <%= pest.name_scientific %></div>
@@ -19,30 +19,36 @@
         <% if admin_user? && pest.is_reference %>
           <div class="crop-type reference"><%= t('.reference_pests') %></div>
         <% end %>
-        <div class="crop-actions">
-          <%= link_to t('.actions.show'), pest_path(pest), class: "btn btn-info btn-sm" %>
-          <% if pest.is_reference %>
-            <%# Reference pests: admin only %>
-            <% if admin_user? %>
+          <div class="crop-actions">
+            <%= link_to t('.actions.show'), pest_path(pest), class: "btn btn-info btn-sm" %>
+            <% if pest.is_reference %>
+              <%# Reference pests: admin only %>
+              <% if admin_user? %>
+                <%= link_to t('.actions.edit'), edit_pest_path(pest), class: "btn btn-secondary btn-sm" %>
+                <%= link_to t('.actions.delete'), pest_path(pest),
+                            class: "btn btn-error btn-sm",
+                            data: {
+                              controller: "undo-delete",
+                              action: "click->undo-delete#submit",
+                              turbo_method: :delete,
+                              undo_delete_url_value: pest_path(pest),
+                              undo_delete_message_value: t('pests.undo.toast', name: pest.name)
+                            } %>
+              <% end %>
+            <% else %>
+              <%# User pests: owner only %>
               <%= link_to t('.actions.edit'), edit_pest_path(pest), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.actions.delete'), pest_path(pest), method: :delete, 
-                          class: "btn btn-error btn-sm", 
-                          data: { 
+              <%= link_to t('.actions.delete'), pest_path(pest),
+                          class: "btn btn-error btn-sm",
+                          data: {
+                            controller: "undo-delete",
+                            action: "click->undo-delete#submit",
                             turbo_method: :delete,
-                            turbo_confirm: t('.actions.delete_confirm')
+                            undo_delete_url_value: pest_path(pest),
+                            undo_delete_message_value: t('pests.undo.toast', name: pest.name)
                           } %>
             <% end %>
-          <% else %>
-            <%# User pests: owner only %>
-            <%= link_to t('.actions.edit'), edit_pest_path(pest), class: "btn btn-secondary btn-sm" %>
-            <%= link_to t('.actions.delete'), pest_path(pest), method: :delete, 
-                        class: "btn btn-error btn-sm", 
-                        data: { 
-                          turbo_method: :delete,
-                          turbo_confirm: t('.actions.delete_confirm')
-                        } %>
-          <% end %>
-        </div>
+          </div>
       </div>
     <% end %>
   </div>

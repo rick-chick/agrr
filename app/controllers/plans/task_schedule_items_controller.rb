@@ -41,14 +41,43 @@ module Plans
     end
 
     def destroy
-      TaskScheduleItem.transaction do
-        @task_schedule_item.update!(
-          status: TaskScheduleItem::STATUSES[:cancelled],
-          cancelled_at: Time.current
-        )
-      end
+      fallback_location = plan_task_schedule_path(@cultivation_plan)
 
-      head :no_content
+      @task_schedule_item.validate!
+      event = DeletionUndo::Manager.schedule(
+        record: @task_schedule_item,
+        actor: current_user,
+        toast_message: I18n.t(
+          'plans.task_schedule_items.undo.toast',
+          name: @task_schedule_item.name
+        )
+      )
+
+      render_deletion_undo_response(
+        event,
+        fallback_location: fallback_location
+      )
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
+      Rails.logger.warn("[Plans::TaskScheduleItemsController] destroy failed: #{e.class} #{e.message}")
+      render_deletion_failure(
+        message: I18n.t('controllers.plans.task_schedule_items.errors.cancel_failed'),
+        fallback_location: fallback_location
+      )
+    rescue DeletionUndo::Error => e
+      Rails.logger.error("[Plans::TaskScheduleItemsController] undo scheduling error: #{e.class} #{e.message}")
+      render_deletion_failure(
+        message: I18n.t(
+          'controllers.plans.task_schedule_items.errors.undo_failed',
+          message: e.message
+        ),
+        fallback_location: fallback_location
+      )
+    rescue StandardError => e
+      Rails.logger.error("[Plans::TaskScheduleItemsController] unexpected destroy error: #{e.class} #{e.message}")
+      render_deletion_failure(
+        message: I18n.t('controllers.plans.task_schedule_items.errors.cancel_failed'),
+        fallback_location: fallback_location
+      )
     end
 
     def complete

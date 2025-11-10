@@ -1,27 +1,21 @@
 ENV["RAILS_ENV"] ||= "test"
-require 'simplecov'
-SimpleCov.start 'rails' do
-  add_filter '/test/'
-  add_filter '/config/'
-  add_filter '/vendor/'
-  add_filter '/tmp/'
-  
-  # Include weather-related files in coverage
-  # (コメントアウト: すべてのファイルを対象にする)
-  # add_filter do |source_file|
-  #   !source_file.filename.include?('crop') && 
-  #   !source_file.filename.include?('application') &&
-  #   !source_file.filename.include?('auth')
-  # end
-  
-  add_group 'Controllers', 'app/controllers'
-  add_group 'Models', 'app/models'
-  add_group 'Views', 'app/views'
-  add_group 'Helpers', 'app/helpers'
-  add_group 'Jobs', 'app/jobs'
-  add_group 'Mailers', 'app/mailers'
-  
-  minimum_coverage 10
+if ENV.fetch("COVERAGE", "true") != "false"
+  require 'simplecov'
+  SimpleCov.start 'rails' do
+    add_filter '/test/'
+    add_filter '/config/'
+    add_filter '/vendor/'
+    add_filter '/tmp/'
+    
+    add_group 'Controllers', 'app/controllers'
+    add_group 'Models', 'app/models'
+    add_group 'Views', 'app/views'
+    add_group 'Helpers', 'app/helpers'
+    add_group 'Jobs', 'app/jobs'
+    add_group 'Mailers', 'app/mailers'
+    
+    minimum_coverage 10
+  end
 end
 
 require_relative "../config/environment"

@@ -1,6 +1,6 @@
 <% content_for :title, "#{@pesticide.name} - AGRR" %>
 
-<div class="crop-detail-card">
+<div class="crop-detail-card" id="<%= dom_id(@pesticide) %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @pesticide.name %></h1>
     <% if admin_user? && @pesticide.is_reference %>
@@ -110,17 +110,31 @@
       <%# 参照農薬は管理者のみ編集・削除可能 %>
       <% if admin_user? %>
         <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @pesticide, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.confirm_delete') %>
+        <%= link_to t('.delete'), pesticide_path(@pesticide),
+                    class: "btn btn-error",
+                    data: {
+                      controller: "undo-delete",
+                      action: "click->undo-delete#submit",
+                      turbo_method: :delete,
+                      undo_delete_url_value: pesticide_path(@pesticide),
+                      undo_delete_message_value: t('pesticides.undo.toast', name: @pesticide.name),
+                      undo_delete_redirect_url_value: pesticides_path
+                    } %>
       <% end %>
     <% else %>
       <%# ユーザー農薬は所有者が編集・削除可能 %>
       <% if @pesticide.user_id == current_user.id || admin_user? %>
         <%= link_to t('.edit'), edit_pesticide_path(@pesticide), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @pesticide, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.confirm_delete') %>
+        <%= link_to t('.delete'), pesticide_path(@pesticide),
+                    class: "btn btn-error",
+                    data: {
+                      controller: "undo-delete",
+                      action: "click->undo-delete#submit",
+                      turbo_method: :delete,
+                      undo_delete_url_value: pesticide_path(@pesticide),
+                      undo_delete_message_value: t('pesticides.undo.toast', name: @pesticide.name),
+                      undo_delete_redirect_url_value: pesticides_path
+                    } %>
       <% end %>
     <% end %>
   </div>

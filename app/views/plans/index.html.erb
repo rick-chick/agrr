@@ -36,28 +36,27 @@
         <% end %>
       </div>
     <% else %>
-      <!-- 年度別の計画一覧 -->
-      <% @available_years.reverse.each_with_index do |year, index| %>
-        <% year_plans = @plans_by_year[year] %>
-        <% is_current_year = year == @current_year %>
-        
-        <div class="plans-year-section">
-          <details <%= 'open' if is_current_year %>>
-            <summary class="plans-year-title" style="cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: var(--space-2);">
-              <span class="year-toggle-icon" style="transition: transform 0.2s;">▼</span>
-              <%= t('plans.index.year_label', year: year) %>
-              <% if year_plans.present? %>
-                <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: normal;">
-                  (<%= year_plans.count %>件)
-                </span>
-              <% end %>
-            </summary>
+        <!-- 年度別の計画一覧 -->
+        <% @available_years.reverse.each_with_index do |year, index| %>
+          <% year_plans = @plans_by_year[year] %>
+
+          <div class="plans-year-section">
+            <details open>
+              <summary class="plans-year-title" style="cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: var(--space-2);">
+                <span class="year-toggle-icon" style="transition: transform 0.2s;">▼</span>
+                <%= t('plans.index.year_label', year: year) %>
+                <% if year_plans.present? %>
+                  <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: normal;">
+                    (<%= year_plans.count %>件)
+                  </span>
+                <% end %>
+              </summary>
             
             <div class="plans-year-content" style="margin-top: var(--space-4);">
               <% if year_plans.present? %>
-                <div class="plans-grid">
+                  <div class="plans-grid">
                   <% year_plans.each do |plan| %>
-                    <div class="plan-card">
+                      <div class="plan-card" id="<%= dom_id(plan) %>" data-undo-delete-record>
                       <!-- ステータスバッジ -->
                       <div class="plan-card-header">
                         <span class="plan-card-status <%= plan.status %>">
@@ -95,25 +94,53 @@
                           <%= button_to t('plans.index.plan_card.copy'), copy_plan_path(plan), method: :post,
                               data: { confirm: t('plans.messages.plan_copied', year: year + 1) },
                               class: "plan-card-action-btn secondary" %>
-                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
-                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
-                              class: "plan-card-action-btn danger" %>
+                            <%= link_to t('plans.index.plan_card.delete'), plan_path(plan),
+                                class: "plan-card-action-btn danger",
+                                data: {
+                                  controller: "undo-delete",
+                                  action: "click->undo-delete#submit",
+                                  turbo_method: :delete,
+                                  undo_delete_url_value: plan_path(plan),
+                                  undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
+                                  undo_delete_redirect_url_value: plans_path
+                                } %>
                         <% elsif plan.status_optimizing? %>
                           <%= link_to t('plans.index.plan_card.view'), optimizing_plan_path(plan), 
                               class: "plan-card-action-btn primary" %>
-                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
-                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
-                              class: "plan-card-action-btn danger" %>
+                            <%= link_to t('plans.index.plan_card.delete'), plan_path(plan),
+                                class: "plan-card-action-btn danger",
+                                data: {
+                                  controller: "undo-delete",
+                                  action: "click->undo-delete#submit",
+                                  turbo_method: :delete,
+                                  undo_delete_url_value: plan_path(plan),
+                                  undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
+                                  undo_delete_redirect_url_value: plans_path
+                                } %>
                         <% elsif plan.status_pending? %>
                           <%= link_to t('plans.index.plan_card.view'), plan_path(plan), 
                               class: "plan-card-action-btn primary" %>
-                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
-                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
-                              class: "plan-card-action-btn danger" %>
+                            <%= link_to t('plans.index.plan_card.delete'), plan_path(plan),
+                                class: "plan-card-action-btn danger",
+                                data: {
+                                  controller: "undo-delete",
+                                  action: "click->undo-delete#submit",
+                                  turbo_method: :delete,
+                                  undo_delete_url_value: plan_path(plan),
+                                  undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
+                                  undo_delete_redirect_url_value: plans_path
+                                } %>
                         <% else %>
-                          <%= button_to t('plans.index.plan_card.delete'), plan_path(plan), method: :delete,
-                              data: { confirm: t('plans.index.plan_card.delete_confirm') },
-                              class: "plan-card-action-btn danger" %>
+                            <%= link_to t('plans.index.plan_card.delete'), plan_path(plan),
+                                class: "plan-card-action-btn danger",
+                                data: {
+                                  controller: "undo-delete",
+                                  action: "click->undo-delete#submit",
+                                  turbo_method: :delete,
+                                  undo_delete_url_value: plan_path(plan),
+                                  undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
+                                  undo_delete_redirect_url_value: plans_path
+                                } %>
                         <% end %>
                       </div>
                       
