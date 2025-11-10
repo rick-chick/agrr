@@ -56,27 +56,51 @@ class FarmsController < ApplicationController
   # DELETE /farms/:id
   def destroy
     if @farm.free_crop_plans.any?
-      redirect_to @farm, alert: I18n.t('farms.flash.cannot_delete', count: @farm.free_crop_plans.count)
-      return
+      return render_deletion_failure(
+        message: I18n.t('farms.flash.cannot_delete', count: @farm.free_crop_plans.count),
+        fallback_location: farm_path(@farm)
+      )
     end
-    
-    begin
-      @farm.destroy
-      redirect_to farms_path, notice: I18n.t('farms.flash.destroyed')
-    rescue ActiveRecord::InvalidForeignKey => e
-      # 外部参照制約エラーの場合
+
+    event = DeletionUndo::Manager.schedule(
+      record: @farm,
+      actor: current_user,
+      toast_message: I18n.t('farms.undo.toast', name: @farm.display_name)
+    )
+
+    render_deletion_undo_response(
+      event.reload,
+      fallback_location: farms_path
+    )
+  rescue ActiveRecord::InvalidForeignKey => e
+    message =
       if e.message.include?('cultivation_plans')
-        redirect_to farms_path, alert: I18n.t('farms.flash.cannot_delete_in_use.plan')
+        I18n.t('farms.flash.cannot_delete_in_use.plan')
       elsif e.message.include?('fields')
-        redirect_to farms_path, alert: I18n.t('farms.flash.cannot_delete_in_use.field')
+        I18n.t('farms.flash.cannot_delete_in_use.field')
       else
-        redirect_to farms_path, alert: I18n.t('farms.flash.cannot_delete_in_use.other')
+        I18n.t('farms.flash.cannot_delete_in_use.other')
       end
-    rescue ActiveRecord::DeleteRestrictionError => e
-      redirect_to farms_path, alert: I18n.t('farms.flash.cannot_delete_in_use.other')
-    rescue StandardError => e
-      redirect_to farms_path, alert: I18n.t('farms.flash.delete_error', message: e.message)
-    end
+
+    render_deletion_failure(
+      message: message,
+      fallback_location: farms_path
+    )
+  rescue ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('farms.flash.cannot_delete_in_use.other'),
+      fallback_location: farms_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('farms.flash.delete_error', message: e.message),
+      fallback_location: farms_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('farms.flash.delete_error', message: e.message),
+      fallback_location: farms_path
+    )
   end
 
   private

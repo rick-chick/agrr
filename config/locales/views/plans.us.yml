@@ -21,6 +21,7 @@ us:
       plan_already_exists: "A plan for %{year} already exists."
       copy_failed: "Failed to copy plan: %{errors}"
       delete_failed: "Failed to delete plan."
+      delete_error: "An error occurred while deleting: %{message}"
       already_optimized: "This plan is already optimized."
       invalid_field_params: "Invalid field information."
       cannot_remove_last_field: "Cannot remove the last field."
@@ -36,6 +37,12 @@ us:
       field_removed: "Field removed."
       optimization_started: "Optimization started."
       reoptimization_started: "Re-optimization started."
+    
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+    task_schedule_items:
+      undo:
+        toast: "%{name}'s schedule was deleted. You can undo this action."
     
     index:
       title: "Cultivation Plans"
@@ -113,12 +120,13 @@ us:
         try_again: "Try Again with Different Crops"
         start_over: "Back to List"
     
-    show:
-      back_to_list: "← Back to List"
-      optimize_button: "Optimize"
-      copy_plan: "Copy to Next Year"
-      chart_title: "Weather Data and Crop Growth Analysis"
-      loading_data: "Loading data..."
+      show:
+        back_to_list: "← Back to List"
+        optimize_button: "Optimize"
+        copy_plan: "Copy to Next Year"
+        delete: "Delete"
+        chart_title: "Weather Data and Crop Growth Analysis"
+        loading_data: "Loading data..."
       
       header:
         title: "Year %{year} Cultivation Plan"

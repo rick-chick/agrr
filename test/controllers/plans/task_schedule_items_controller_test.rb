@@ -142,10 +142,78 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
   test 'ユーザーは作業予定をキャンセルできる' do
     delete plan_task_schedule_item_path(@plan, @task), headers: @headers
 
-    assert_response :no_content
+    assert_redirected_to plan_task_schedule_path(@plan)
+    assert_not TaskScheduleItem.exists?(@task.id), '削除後にTaskScheduleItemが残っています'
+  end
 
-    @task.reload
-    assert_equal 'cancelled', @task.read_attribute('status')
+  test '作業予定のキャンセルはUndo情報を返す' do
+    assert_difference -> { TaskScheduleItem.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete plan_task_schedule_item_path(@plan, @task), headers: @headers, as: :json
+        assert_response :success
+      end
+    end
+
+    body = JSON.parse(response.body)
+    %w[undo_token undo_deadline toast_message undo_path auto_hide_after resource redirect_path resource_dom_id].each do |key|
+      assert body.key?(key), "JSONレスポンスに#{key}が含まれていません"
+      assert body.fetch(key).present?, "#{key} が空です"
+    end
+
+    undo_token = body.fetch('undo_token')
+    event = DeletionUndoEvent.find(undo_token)
+
+    assert_equal 'TaskScheduleItem', event.resource_type
+    assert_equal @task.id.to_s, event.resource_id
+    assert event.scheduled?
+    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch('undo_path')
+    assert_equal ActionView::RecordIdentifier.dom_id(@task), body.fetch('resource_dom_id')
+    assert_equal @task.name, body.fetch('resource')
+    assert_equal plan_task_schedule_path(@plan), body.fetch('redirect_path')
+  end
+
+  test 'Undo APIで作業予定を復元できる' do
+    delete plan_task_schedule_item_path(@plan, @task), headers: @headers, as: :json
+    assert_response :success
+
+    body = JSON.parse(response.body)
+    undo_token = body.fetch('undo_token')
+
+    assert_not TaskScheduleItem.exists?(@task.id), '削除後にTaskScheduleItemが残っています'
+
+    assert_difference -> { TaskScheduleItem.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, headers: @headers, as: :json
+      assert_response :success
+    end
+
+    undo_body = JSON.parse(response.body)
+    assert_equal 'restored', undo_body.fetch('status')
+    assert_equal undo_token, undo_body.fetch('undo_token')
+
+    restored_event = DeletionUndoEvent.find(undo_token)
+    assert restored_event.restored?
+    assert TaskScheduleItem.exists?(@task.id), 'Undo後にTaskScheduleItemが復元されていません'
+  end
+
+  test 'Undo期限切れの場合はエラーを返す' do
+    delete plan_task_schedule_item_path(@plan, @task), headers: @headers, as: :json
+    assert_response :success
+
+    undo_token = JSON.parse(response.body).fetch('undo_token')
+    event = DeletionUndoEvent.find(undo_token)
+
+    travel_to(event.expires_at + 1.minute) do
+      post undo_deletion_path, params: { undo_token: undo_token }, headers: @headers, as: :json
+    end
+
+    assert_response :unprocessable_entity
+
+    body = JSON.parse(response.body)
+    assert_equal 'error', body.fetch('status')
+    assert_equal I18n.t('deletion_undo.expired'), body.fetch('error')
+
+    assert_equal 'expired', DeletionUndoEvent.find(undo_token).state
+    assert_not TaskScheduleItem.exists?(@task.id), '期限切れ後にTaskScheduleItemが復元されています'
   end
 
   test '他ユーザーの作業予定は操作できない' do
@@ -184,14 +252,7 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [I18n.t('plans.task_schedules.detail.actions.crop_required')], body.dig('errors', 'base')
   end
 
-  test '作業予定のキャンセルが失敗した場合は422とエラー詳細を返す' do
-    invalid_item = @task.dup
-    invalid_item.source = 'agrr'
-    invalid_item.gdd_trigger = nil
-    invalid_item.validate
-    expected_error_messages = invalid_item.errors.full_messages_for(:gdd_trigger)
-    expected_base = ["Validation failed: #{invalid_item.errors.full_messages.first}"]
-
+  test '作業予定のキャンセルが失敗した場合は統一メッセージを返す' do
     @task.update_columns(source: 'agrr', gdd_trigger: nil)
 
     delete plan_task_schedule_item_path(@plan, @task), headers: @headers, as: :json
@@ -199,9 +260,9 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
 
     body = JSON.parse(response.body)
-    assert_equal expected_error_messages.first, body['error']
-    assert_equal expected_base, body.dig('errors', 'base')
-    assert_equal expected_error_messages, body.dig('errors', 'gdd_trigger')
+    expected = I18n.t('controllers.plans.task_schedule_items.errors.cancel_failed')
+    assert_equal expected, body['error']
+    assert TaskScheduleItem.exists?(@task.id), '失敗時はレコードが削除されてはいけません'
   end
 
   test '作業予定の完了登録が失敗した場合は422とエラー詳細を返す' do

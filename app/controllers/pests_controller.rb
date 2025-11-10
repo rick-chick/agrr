@@ -92,17 +92,28 @@ class PestsController < ApplicationController
 
   # DELETE /pests/:id
   def destroy
-    begin
-      @pest.destroy
-      redirect_to pests_path, notice: I18n.t('pests.flash.destroyed')
-    rescue ActiveRecord::InvalidForeignKey => e
-      # 外部参照制約エラーの場合
-      redirect_to pests_path, alert: I18n.t('pests.flash.cannot_delete_in_use')
-    rescue ActiveRecord::DeleteRestrictionError => e
-      redirect_to pests_path, alert: I18n.t('pests.flash.cannot_delete_in_use')
-    rescue StandardError => e
-      redirect_to pests_path, alert: I18n.t('pests.flash.delete_error', message: e.message)
-    end
+    event = DeletionUndo::Manager.schedule(
+      record: @pest,
+      actor: current_user,
+      toast_message: I18n.t('pests.undo.toast', name: @pest.name)
+    )
+
+    render_deletion_undo_response(event, fallback_location: pests_path)
+  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('pests.flash.cannot_delete_in_use'),
+      fallback_location: pests_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('pests.flash.delete_error', message: e.message),
+      fallback_location: pests_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('pests.flash.delete_error', message: e.message),
+      fallback_location: pests_path
+    )
   end
 
   private

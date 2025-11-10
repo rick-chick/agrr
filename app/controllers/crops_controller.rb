@@ -78,23 +78,45 @@ class CropsController < ApplicationController
 
   # DELETE /crops/:id
   def destroy
-    begin
-      @crop.destroy
-      redirect_to crops_path, notice: I18n.t('crops.flash.destroyed')
-    rescue ActiveRecord::InvalidForeignKey => e
-      # 外部参照制約エラーの場合
+    event = DeletionUndo::Manager.schedule(
+      record: @crop,
+      actor: current_user,
+      toast_message: I18n.t('crops.undo.toast', name: @crop.name)
+    )
+
+    render_deletion_undo_response(
+      event,
+      fallback_location: crops_path
+    )
+  rescue ActiveRecord::InvalidForeignKey => e
+    message =
       if e.message.include?('cultivation_plan_crops')
-        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.plan')
+        I18n.t('crops.flash.cannot_delete_in_use.plan')
       elsif e.message.include?('field_cultivations')
-        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.field')
+        I18n.t('crops.flash.cannot_delete_in_use.field')
       else
-        redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.other')
+        I18n.t('crops.flash.cannot_delete_in_use.other')
       end
-    rescue ActiveRecord::DeleteRestrictionError => e
-      redirect_to crops_path, alert: I18n.t('crops.flash.cannot_delete_in_use.other')
-    rescue StandardError => e
-      redirect_to crops_path, alert: I18n.t('crops.flash.delete_error', message: e.message)
-    end
+
+    render_deletion_failure(
+      message: message,
+      fallback_location: crops_path
+    )
+  rescue ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('crops.flash.cannot_delete_in_use.other'),
+      fallback_location: crops_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('crops.flash.delete_error', message: e.message),
+      fallback_location: crops_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('crops.flash.delete_error', message: e.message),
+      fallback_location: crops_path
+    )
   end
 
   private

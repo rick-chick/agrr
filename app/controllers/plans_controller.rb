@@ -166,14 +166,38 @@ class PlansController < ApplicationController
   # 計画削除
   def destroy
     plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
-    
-    if plan.destroy
-      redirect_to plans_path, notice: I18n.t('plans.messages.plan_deleted')
-    else
-      redirect_to plans_path, alert: I18n.t('plans.errors.delete_failed')
-    end
+
+    event = DeletionUndo::Manager.schedule(
+      record: plan,
+      actor: current_user,
+      toast_message: I18n.t('plans.undo.toast', name: plan.display_name)
+    )
+
+    render_deletion_undo_response(
+      event,
+      fallback_location: plans_path
+    )
   rescue ActiveRecord::RecordNotFound
-    redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
+    render_deletion_failure(
+      message: I18n.t('plans.errors.not_found'),
+      fallback_location: plans_path,
+      status: :not_found
+    )
+  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('plans.errors.delete_failed'),
+      fallback_location: plans_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('plans.errors.delete_error', message: e.message),
+      fallback_location: plans_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('plans.errors.delete_error', message: e.message),
+      fallback_location: plans_path
+    )
   end
   
   private

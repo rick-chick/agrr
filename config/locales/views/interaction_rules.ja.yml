@@ -4,6 +4,8 @@ ja:
       created: "ルールが正常に作成されました。"
       updated: "ルールが正常に更新されました。"
       destroyed: "ルールが削除されました。"
+      cannot_delete_in_use: "このルールは他のデータで使用されているため削除できません。"
+      delete_error: "削除中にエラーが発生しました: %{message}"
       reference_only_admin: "参照ルールは管理者のみ作成できます。"
       reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
       no_permission: "権限がありません。"

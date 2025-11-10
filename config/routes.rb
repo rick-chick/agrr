@@ -62,6 +62,8 @@ Rails.application.routes.draw do
     # Interaction Rules (連作ルール) routes
     resources :interaction_rules
 
+  post 'undo_deletion', to: 'deletion_undos#create', as: :undo_deletion
+
     # Agricultural Tasks (農業タスク) routes
     resources :agricultural_tasks
 

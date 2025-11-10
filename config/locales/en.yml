@@ -1,4 +1,10 @@
 en:
+  controllers:
+    plans:
+      task_schedule_items:
+        errors:
+          cancel_failed: "We couldn't cancel the scheduled task. Please try again."
+          undo_failed: "We couldn't prepare the undo action: %{message}"
   # JavaScript messages
   js:
     gantt:

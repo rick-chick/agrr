@@ -19,6 +19,7 @@
   <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/cards", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/farm-cards", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "components/undo_toast", "data-turbo-track": "reload" %>
   <!-- Feature-specific styles -->
   <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/crop_ai_ad", "data-turbo-track": "reload" %>
@@ -70,5 +71,31 @@
   
   <!-- Page-specific JavaScripts (loaded at end of body for Turbo compatibility) -->
   <%= yield :javascripts %>
+
+  <div
+    class="undo-toast hidden"
+    data-controller="undo-toast"
+    data-undo-toast-auto-hide-after-value="5000"
+  >
+    <p class="undo-toast__message" data-undo-toast-target="message"></p>
+    <div class="undo-toast__actions">
+      <button
+        type="button"
+        class="undo-toast__undo-button"
+        data-undo-toast-target="undoButton"
+        data-action="click->undo-toast#undo"
+      >
+        <%= t('deletion_undo.undo_button') %>
+      </button>
+      <button
+        type="button"
+        class="undo-toast__close-button"
+        data-undo-toast-target="closeButton"
+        data-action="click->undo-toast#close"
+      >
+        <%= t('deletion_undo.close_button') %>
+      </button>
+    </div>
+  </div>
 </body>
 </html>

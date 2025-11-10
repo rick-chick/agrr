@@ -8,7 +8,7 @@
 <% if @fertilizes.any? %>
   <div class="crops-grid">
     <% @fertilizes.each do |fertilize| %>
-      <div class="crop-card">
+      <div class="crop-card" id="<%= dom_id(fertilize) %>" data-undo-delete-record>
         <h3 class="crop-name"><%= fertilize.name %></h3>
         <% if fertilize.npk_summary.present? %>
           <div class="crop-variety">NPK: <%= fertilize.npk_summary %></div>
@@ -16,29 +16,35 @@
         <% if admin_user? && fertilize.is_reference %>
           <div class="crop-type reference"><%= t('.reference_fertilizes') %></div>
         <% end %>
-        <div class="crop-actions">
-          <%= link_to t('.actions.show'), fertilize_path(fertilize), class: "btn btn-info btn-sm" %>
-          <% if fertilize.is_reference %>
-            <%# Reference fertilizes: admin only %>
-            <% if admin_user? %>
+          <div class="crop-actions">
+            <%= link_to t('.actions.show'), fertilize_path(fertilize), class: "btn btn-info btn-sm" %>
+            <% if fertilize.is_reference %>
+              <%# Reference fertilizes: admin only %>
+              <% if admin_user? %>
+                <%= link_to t('.actions.edit'), edit_fertilize_path(fertilize), class: "btn btn-secondary btn-sm" %>
+                <%= link_to t('.actions.delete'), fertilize_path(fertilize),
+                            class: "btn btn-error btn-sm",
+                            data: {
+                              controller: "undo-delete",
+                              action: "click->undo-delete#submit",
+                              turbo_method: :delete,
+                              undo_delete_url_value: fertilize_path(fertilize),
+                              undo_delete_message_value: t('fertilizes.undo.toast', name: fertilize.name)
+                            } %>
+              <% end %>
+            <% else %>
+              <%# User fertilizes: owner only %>
               <%= link_to t('.actions.edit'), edit_fertilize_path(fertilize), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.actions.delete'), fertilize_path(fertilize), method: :delete, 
-                          class: "btn btn-error btn-sm", 
-                          data: { 
+              <%= link_to t('.actions.delete'), fertilize_path(fertilize),
+                          class: "btn btn-error btn-sm",
+                          data: {
+                            controller: "undo-delete",
+                            action: "click->undo-delete#submit",
                             turbo_method: :delete,
-                            turbo_confirm: t('.actions.delete_confirm')
+                            undo_delete_url_value: fertilize_path(fertilize),
+                            undo_delete_message_value: t('fertilizes.undo.toast', name: fertilize.name)
                           } %>
             <% end %>
-          <% else %>
-            <%# User fertilizes: owner only %>
-            <%= link_to t('.actions.edit'), edit_fertilize_path(fertilize), class: "btn btn-secondary btn-sm" %>
-            <%= link_to t('.actions.delete'), fertilize_path(fertilize), method: :delete, 
-                        class: "btn btn-error btn-sm", 
-                        data: { 
-                          turbo_method: :delete,
-                          turbo_confirm: t('.actions.delete_confirm')
-                        } %>
-          <% end %>
         </div>
       </div>
     <% end %>

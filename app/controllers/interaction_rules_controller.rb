@@ -62,8 +62,35 @@ class InteractionRulesController < ApplicationController
 
   # DELETE /interaction_rules/:id
   def destroy
-    @interaction_rule.destroy
-    redirect_to interaction_rules_path, notice: I18n.t('interaction_rules.flash.destroyed')
+    event = DeletionUndo::Manager.schedule(
+      record: @interaction_rule,
+      actor: current_user,
+      toast_message: I18n.t(
+        'interaction_rules.undo.toast',
+        source: @interaction_rule.source_group,
+        target: @interaction_rule.target_group
+      )
+    )
+
+    render_deletion_undo_response(
+      event,
+      fallback_location: interaction_rules_path
+    )
+  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('interaction_rules.flash.cannot_delete_in_use'),
+      fallback_location: interaction_rules_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('interaction_rules.flash.delete_error', message: e.message),
+      fallback_location: interaction_rules_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('interaction_rules.flash.delete_error', message: e.message),
+      fallback_location: interaction_rules_path
+    )
   end
 
   private

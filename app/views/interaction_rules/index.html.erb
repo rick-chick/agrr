@@ -21,25 +21,28 @@
           </tr>
         </thead>
         <tbody>
-          <% @reference_rules.each do |rule| %>
-            <tr>
-              <td><%= rule.rule_type %></td>
-              <td><%= rule.source_group %></td>
-              <td><%= rule.target_group %></td>
-              <td><%= rule.impact_ratio %></td>
-              <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
-              <td>
-                <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
-                <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
-                <%= link_to t('.actions.delete'), interaction_rule_path(rule), 
-                            class: "btn btn-error btn-sm", 
-                            data: { 
-                              turbo_method: :delete,
-                              turbo_confirm: t('.actions.confirm_delete_system')
-                            } %>
-              </td>
-            </tr>
-          <% end %>
+            <% @reference_rules.each do |rule| %>
+              <tr id="<%= dom_id(rule) %>" data-undo-delete-record>
+                <td><%= rule.rule_type %></td>
+                <td><%= rule.source_group %></td>
+                <td><%= rule.target_group %></td>
+                <td><%= rule.impact_ratio %></td>
+                <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
+                <td>
+                  <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
+                  <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
+                  <%= link_to t('.actions.delete'), interaction_rule_path(rule),
+                              class: "btn btn-error btn-sm",
+                              data: {
+                                controller: "undo-delete",
+                                action: "click->undo-delete#submit",
+                                turbo_method: :delete,
+                                undo_delete_url_value: interaction_rule_path(rule),
+                                undo_delete_message_value: t('interaction_rules.undo.toast', source: rule.source_group, target: rule.target_group)
+                              } %>
+                </td>
+              </tr>
+            <% end %>
         </tbody>
       </table>
     </div>
@@ -64,26 +67,29 @@
           </tr>
         </thead>
         <tbody>
-          <% @interaction_rules.each do |rule| %>
-            <% next if rule.is_reference %>
-            <tr>
-              <td><%= rule.rule_type %></td>
-              <td><%= rule.source_group %></td>
-              <td><%= rule.target_group %></td>
-              <td><%= rule.impact_ratio %></td>
-              <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
-              <td>
-                <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
-                <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
-                <%= link_to t('.actions.delete'), interaction_rule_path(rule), 
-                            class: "btn btn-error btn-sm", 
-                            data: { 
-                              turbo_method: :delete,
-                              turbo_confirm: t('.actions.confirm_delete')
-                            } %>
-              </td>
-            </tr>
-          <% end %>
+            <% @interaction_rules.each do |rule| %>
+              <% next if rule.is_reference %>
+              <tr id="<%= dom_id(rule) %>" data-undo-delete-record>
+                <td><%= rule.rule_type %></td>
+                <td><%= rule.source_group %></td>
+                <td><%= rule.target_group %></td>
+                <td><%= rule.impact_ratio %></td>
+                <td><%= rule.is_directional ? t('.table.directional') : t('.table.bidirectional') %></td>
+                <td>
+                  <%= link_to t('.actions.detail'), interaction_rule_path(rule), class: "btn btn-info btn-sm" %>
+                  <%= link_to t('.actions.edit'), edit_interaction_rule_path(rule), class: "btn btn-secondary btn-sm" %>
+                  <%= link_to t('.actions.delete'), interaction_rule_path(rule),
+                              class: "btn btn-error btn-sm",
+                              data: {
+                                controller: "undo-delete",
+                                action: "click->undo-delete#submit",
+                                turbo_method: :delete,
+                                undo_delete_url_value: interaction_rule_path(rule),
+                                undo_delete_message_value: t('interaction_rules.undo.toast', source: rule.source_group, target: rule.target_group)
+                              } %>
+                </td>
+              </tr>
+            <% end %>
         </tbody>
       </table>
     </div>

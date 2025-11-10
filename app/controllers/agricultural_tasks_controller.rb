@@ -71,14 +71,31 @@ class AgriculturalTasksController < ApplicationController
 
   # DELETE /agricultural_tasks/:id
   def destroy
-    begin
-      @agricultural_task.destroy
-      redirect_to agricultural_tasks_path, notice: I18n.t('agricultural_tasks.flash.destroyed')
-    rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-      redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.cannot_delete_in_use')
-    rescue StandardError => e
-      redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.delete_error', message: e.message)
-    end
+    event = DeletionUndo::Manager.schedule(
+      record: @agricultural_task,
+      actor: current_user,
+      toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name)
+    )
+
+    render_deletion_undo_response(
+      event,
+      fallback_location: agricultural_tasks_path
+    )
+  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('agricultural_tasks.flash.cannot_delete_in_use'),
+      fallback_location: agricultural_tasks_path
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('agricultural_tasks.flash.delete_error', message: e.message),
+      fallback_location: agricultural_tasks_path
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('agricultural_tasks.flash.delete_error', message: e.message),
+      fallback_location: agricultural_tasks_path
+    )
   end
 
   private

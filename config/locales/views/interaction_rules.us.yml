@@ -4,6 +4,8 @@ us:
       created: "Rule was successfully created."
       updated: "Rule was successfully updated."
       destroyed: "Rule was successfully deleted."
+      cannot_delete_in_use: "This rule cannot be deleted because it is in use."
+      delete_error: "An error occurred while deleting: %{message}"
       reference_only_admin: "Only administrators can create reference rules."
       reference_flag_admin_only: "Only administrators can change the reference flag."
       no_permission: "Permission denied."

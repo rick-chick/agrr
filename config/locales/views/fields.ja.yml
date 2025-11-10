@@ -9,6 +9,8 @@ ja:
       created: "圃場が正常に作成されました。"
       updated: "圃場が正常に更新されました。"
       destroyed: "圃場が削除されました。"
+      cannot_delete_in_use: "この圃場は他のデータで使用されているため削除できません。"
+      delete_error: "削除中にエラーが発生しました: %{message}"
       farm_not_found: "指定された農場が見つかりません。"
       not_found: "指定された圃場が見つかりません。"
     

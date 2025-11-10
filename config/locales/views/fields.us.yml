@@ -9,6 +9,8 @@ us:
       created: "Field was successfully created."
       updated: "Field was successfully updated."
       destroyed: "Field was successfully deleted."
+      cannot_delete_in_use: "This field cannot be deleted because it is being used in other data."
+      delete_error: "An error occurred while deleting: %{message}"
       farm_not_found: "Farm not found."
       not_found: "Field not found."
     

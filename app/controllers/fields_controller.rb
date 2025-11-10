@@ -47,8 +47,31 @@ class FieldsController < ApplicationController
 
   # DELETE /farms/:farm_id/fields/:id
   def destroy
-    @field.destroy
-    redirect_to url_for(controller: 'fields', action: 'index', farm_id: @farm.id), notice: I18n.t('fields.flash.destroyed')
+    event = DeletionUndo::Manager.schedule(
+      record: @field,
+      actor: current_user,
+      toast_message: I18n.t('fields.undo.toast', name: @field.display_name)
+    )
+
+    render_deletion_undo_response(
+      event.reload,
+      fallback_location: farm_fields_path(@farm)
+    )
+  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+    render_deletion_failure(
+      message: I18n.t('fields.flash.cannot_delete_in_use'),
+      fallback_location: farm_fields_path(@farm)
+    )
+  rescue DeletionUndo::Error => e
+    render_deletion_failure(
+      message: I18n.t('fields.flash.delete_error', message: e.message),
+      fallback_location: farm_fields_path(@farm)
+    )
+  rescue StandardError => e
+    render_deletion_failure(
+      message: I18n.t('fields.flash.delete_error', message: e.message),
+      fallback_location: farm_fields_path(@farm)
+    )
   end
 
   private

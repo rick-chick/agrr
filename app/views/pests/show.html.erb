@@ -1,6 +1,6 @@
 <% content_for :title, "#{@pest.name} - AGRR" %>
 
-<div class="crop-detail-card">
+<div class="crop-detail-card" id="<%= dom_id(@pest) %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @pest.name %></h1>
     <% if admin_user? && @pest.is_reference %>
@@ -116,51 +116,65 @@
     </div>
   <% end %>
   
-  <% if @crops&.any? %>
-    <div class="stages-section">
-      <h2 class="stages-title"><%= t('.crops_title') %></h2>
-      <div class="crops-list">
-        <% @crops.each do |crop| %>
-          <div class="crop-item">
-            <div class="crop-name">
-              <%= link_to crop.name, crop_path(crop), class: "crop-link" %>
+    <% if @crops&.any? %>
+      <div class="stages-section">
+        <h2 class="stages-title"><%= t('.crops_title') %></h2>
+        <div class="crops-list">
+          <% @crops.each do |crop| %>
+            <div class="crop-item">
+              <div class="crop-name">
+                <%= link_to crop.name, crop_path(crop), class: "crop-link" %>
+              </div>
+              <% if crop.variety.present? %>
+                <div class="crop-variety"><%= crop.variety %></div>
+              <% end %>
+              <% if crop.is_reference %>
+                <span class="crop-reference-badge"><%= t('.reference_crop') %></span>
+              <% end %>
             </div>
-            <% if crop.variety.present? %>
-              <div class="crop-variety"><%= crop.variety %></div>
-            <% end %>
-            <% if crop.is_reference %>
-              <span class="crop-reference-badge"><%= t('.reference_crop') %></span>
-            <% end %>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       </div>
-    </div>
-  <% else %>
-    <div class="stages-section">
-      <h2 class="stages-title"><%= t('.crops_title') %></h2>
-      <div class="no-crops">
-        <p><%= t('.no_crops_description') %></p>
-      </div>
-    </div>
-  <% end %>
-  
-  <div class="actions">
-    <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
-    <% if @pest.is_reference %>
-      <%# 参照害虫は管理者のみ編集・削除可能 %>
-      <% if admin_user? %>
-        <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @pest, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.confirm_delete') %>
-      <% end %>
     <% else %>
-      <%# ユーザー害虫は所有者が編集・削除可能 %>
-      <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-      <%= button_to t('.delete'), @pest, method: :delete, 
-                  class: "btn btn-error", 
-                  confirm: t('.confirm_delete') %>
+      <div class="stages-section">
+        <h2 class="stages-title"><%= t('.crops_title') %></h2>
+        <div class="no-crops">
+          <p><%= t('.no_crops_description') %></p>
+        </div>
+      </div>
     <% end %>
-  </div>
+
+    <div class="actions">
+      <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
+      <% if @pest.is_reference %>
+        <%# 参照害虫は管理者のみ編集・削除可能 %>
+        <% if admin_user? %>
+          <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
+          <%= link_to t('.delete'), pest_path(@pest),
+                      class: "btn btn-error",
+                      data: {
+                        controller: "undo-delete",
+                        action: "click->undo-delete#submit",
+                        turbo_method: :delete,
+                        undo_delete_url_value: pest_path(@pest),
+                        undo_delete_message_value: t('pests.undo.toast', name: @pest.name),
+                        undo_delete_redirect_url_value: pests_path
+                      } %>
+        <% end %>
+      <% else %>
+        <%# ユーザー害虫は所有者が編集・削除可能 %>
+        <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
+        <%= link_to t('.delete'), pest_path(@pest),
+                    class: "btn btn-error",
+                    data: {
+                      controller: "undo-delete",
+                      action: "click->undo-delete#submit",
+                      turbo_method: :delete,
+                      undo_delete_url_value: pest_path(@pest),
+                      undo_delete_message_value: t('pests.undo.toast', name: @pest.name),
+                      undo_delete_redirect_url_value: pests_path
+                    } %>
+      <% end %>
+    </div>
 </div>
 

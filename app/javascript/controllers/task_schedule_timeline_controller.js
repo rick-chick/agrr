@@ -38,7 +38,9 @@ export default class extends Controller {
     this.dragPendingCell = null
     this.dragErrorTimer = null
     this.handleKeydown = this.handleKeydown.bind(this)
+    this.handleUndoRestored = this.handleUndoRestored.bind(this)
     document.addEventListener("keydown", this.handleKeydown)
+    window.addEventListener("undo:restored", this.handleUndoRestored)
     this.render()
   }
 
@@ -57,6 +59,7 @@ export default class extends Controller {
     this.clearDragState()
     this.hideModal()
     document.removeEventListener("keydown", this.handleKeydown)
+    window.removeEventListener("undo:restored", this.handleUndoRestored)
   }
 
   prevWeek() {
@@ -264,6 +267,7 @@ export default class extends Controller {
 
     if (task.badge?.status) classes.push(`timeline-task--status-${task.badge.status}`)
 
+    const domId = this.taskDomId(task)
     const detailPayload = this.encodeDetailPayload(task)
     const actions = [
       "task-schedule-timeline#showDetails",
@@ -271,16 +275,26 @@ export default class extends Controller {
       "dragend->task-schedule-timeline#endDrag"
     ]
 
+    const attributes = [
+      'type="button"',
+      `class="${classes.join(" ")}"`,
+      `data-detail="${detailPayload}"`,
+      `data-field-id="${field.field_cultivation_id}"`,
+      `data-item-id="${task.item_id}"`,
+      `data-category="${task.category}"`,
+      `data-scheduled-date="${task.scheduled_date || ""}"`,
+      'draggable="true"',
+      `data-action="${actions.join(" ")}"`,
+      'data-undo-delete-record="true"'
+    ]
+
+    if (domId) {
+      attributes.unshift(`id="${this.escapeHtml(domId)}"`)
+      attributes.push(`data-dom-id="${this.escapeHtml(domId)}"`)
+    }
+
     return `
-      <button type="button"
-              class="${classes.join(" ")}"
-              data-detail="${detailPayload}"
-              data-field-id="${field.field_cultivation_id}"
-              data-item-id="${task.item_id}"
-              data-category="${task.category}"
-              data-scheduled-date="${task.scheduled_date || ""}"
-              draggable="true"
-              data-action="${actions.join(" ")}">
+        <button ${attributes.join(" ")}>
         <span class="timeline-task__name">${this.escapeHtml(task.name)}</span>
       </button>
     `
@@ -512,10 +526,15 @@ export default class extends Controller {
         const labelParts = [item.name]
         if (enriched.details?.stage?.name) labelParts.push(`(${enriched.details.stage.name})`)
         const detailPayload = this.encodeDetailPayload(enriched)
+        const domId = this.taskDomId(enriched)
+        const idAttr = domId ? ` id="${this.escapeHtml(domId)}"` : ""
+        const dataDomAttr = domId ? ` data-dom-id="${this.escapeHtml(domId)}"` : ""
+
         return `
           <li class="timeline-unscheduled__item">
             <button type="button"
                     class="timeline-unscheduled__button"
+                    data-undo-delete-record="true"${idAttr}${dataDomAttr}
                     data-detail="${detailPayload}"
                     data-field-id="${field.field_cultivation_id}"
                     data-item-id="${enriched.item_id}"
@@ -782,6 +801,7 @@ export default class extends Controller {
     const payload = {
       item_id: task.item_id,
       field_cultivation_id: task.field_cultivation_id,
+      dom_id: this.taskDomId(task),
       name: task.name,
       category: task.category,
       task_type: task.task_type,
@@ -979,13 +999,20 @@ export default class extends Controller {
 
   async cancelTask(event) {
     event.preventDefault()
-    if (!this.currentDetail?.item_id) return
+    const detail = this.currentDetail
+    if (!detail?.item_id) return
 
     const confirmed = window.confirm(this.detailLabels().actions?.confirm_cancel || "この予定をキャンセルしますか？")
     if (!confirmed) return
 
     try {
-      await this.deleteItem(this.currentDetail.item_id)
+      const undoResponse = await this.deleteItem(detail.item_id)
+      if (undoResponse && typeof undoResponse === "object") {
+        const resourceDomId =
+          undoResponse.resource_dom_id || detail.dom_id || this.taskDomId({ item_id: detail.item_id })
+        this.hideTaskElement(resourceDomId, undoResponse.undo_token)
+        window.dispatchEvent(new CustomEvent("undo:show", { detail: undoResponse }))
+      }
       await this.refreshCurrentWeek()
       this.resetDetailPanel()
     } catch (error) {
@@ -1193,11 +1220,11 @@ export default class extends Controller {
       method: "DELETE",
       headers: this.requestHeaders()
     })
+    const data = await response.json().catch(() => ({}))
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
       throw new Error(data.error || "Failed to cancel task")
     }
-    return true
+    return data
   }
 
   async postCompletion(itemId, payload) {
@@ -1211,6 +1238,55 @@ export default class extends Controller {
       throw new Error(data.error || "Failed to register completion")
     }
     return response.json()
+  }
+
+  hideTaskElement(domId, undoToken) {
+    const element = this.findRecordElementByDomId(domId)
+    if (!element) return
+
+    element.classList.add("undo-delete--hidden")
+    if (undoToken) {
+      element.dataset.undoDeleteToken = undoToken
+    }
+  }
+
+  findRecordElementByDomId(domId) {
+    if (!domId) return null
+    const selector = `#${this.escapeSelector(domId)}`
+    if (this.element) {
+      const within = this.element.querySelector(selector)
+      if (within) return within
+    }
+    return document.querySelector(selector)
+  }
+
+  handleUndoRestored(event) {
+    const token = event?.detail?.undo_token
+    if (!token) return
+
+    const selector = `[data-undo-delete-token="${this.escapeSelector(token)}"]`
+    const element = document.querySelector(selector)
+    if (element) {
+      element.classList.remove("undo-delete--hidden")
+      delete element.dataset.undoDeleteToken
+    }
+
+    this.refreshCurrentWeek()
+  }
+
+  taskDomId(task) {
+    if (!task) return null
+    if (task.dom_id) return task.dom_id
+    if (task.resource_dom_id) return task.resource_dom_id
+
+    const rawId = task.item_id ?? task.id
+    if (rawId == null) return null
+
+    const stringId = String(rawId)
+    if (stringId.startsWith("task_schedule_item_")) {
+      return stringId
+    }
+    return `task_schedule_item_${stringId}`
   }
 
   setFormPending(form, pending) {
@@ -1354,6 +1430,13 @@ export default class extends Controller {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;")
+  }
+
+  escapeSelector(value) {
+    if (typeof window !== "undefined" && window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(String(value))
+    }
+    return String(value).replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1")
   }
 }
 

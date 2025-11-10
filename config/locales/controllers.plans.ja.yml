@@ -1,9 +1,11 @@
 ja:
   controllers:
     plans:
-      task_schedule_items:
-        errors:
-          not_found: "作業予定が見つかりません"
-          internal_server_error: "作業予定の処理中にエラーが発生しました"
-          forbidden: "作業予定へのアクセス権限がありません"
-          parameter_missing: "リクエストに必要なパラメーターが不足しています"
+        task_schedule_items:
+          errors:
+            not_found: "作業予定が見つかりません"
+            internal_server_error: "作業予定の処理中にエラーが発生しました"
+            forbidden: "作業予定へのアクセス権限がありません"
+            parameter_missing: "リクエストに必要なパラメーターが不足しています"
+            cancel_failed: "作業予定のキャンセルに失敗しました。もう一度お試しください。"
+            undo_failed: "削除の取り消しを準備できませんでした: %{message}"

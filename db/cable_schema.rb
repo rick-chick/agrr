@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_09_123001) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -178,6 +178,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_123001) do
     t.index ["user_id", "plan_name", "plan_year"], name: "index_cultivation_plans_on_user_plan_name_year", where: "plan_type = 'private'"
     t.index ["user_id", "plan_year"], name: "index_cultivation_plans_on_user_id_and_plan_year", where: "plan_type = 'private'"
     t.index ["user_id"], name: "index_cultivation_plans_on_user_id"
+  end
+
+  create_table "deletion_undo_events", id: :string, force: :cascade do |t|
+    t.string "resource_type", null: false
+    t.string "resource_id", null: false
+    t.json "snapshot", default: {}, null: false
+    t.json "metadata", default: {}, null: false
+    t.string "deleted_by_id"
+    t.datetime "expires_at", null: false
+    t.string "state", default: "scheduled", null: false
+    t.datetime "restored_at"
+    t.datetime "finalized_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_by_id"], name: "index_deletion_undo_events_on_deleted_by_id"
+    t.index ["expires_at"], name: "index_deletion_undo_events_on_expires_at"
+    t.index ["resource_type", "resource_id"], name: "index_deletion_undo_events_on_resource", where: "state = 'scheduled'"
   end
 
   create_table "farm_sizes", force: :cascade do |t|
@@ -597,6 +614,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_123001) do
   add_foreign_key "cultivation_plan_fields", "cultivation_plans"
   add_foreign_key "cultivation_plans", "farms"
   add_foreign_key "cultivation_plans", "users"
+  add_foreign_key "deletion_undo_events", "users", column: "deleted_by_id"
   add_foreign_key "farms", "users"
   add_foreign_key "farms", "weather_locations"
   add_foreign_key "field_cultivations", "cultivation_plan_crops"

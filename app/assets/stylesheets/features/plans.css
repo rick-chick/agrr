@@ -178,6 +178,17 @@
   margin-bottom: var(--space-4);
 }
 
+details .year-toggle-icon {
+  transform: rotate(0deg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+details:not([open]) .year-toggle-icon {
+  transform: rotate(-90deg);
+}
+
 /* ============================================
    Plan Cards Grid
    ============================================ */

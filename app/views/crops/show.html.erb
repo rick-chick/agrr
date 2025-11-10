@@ -1,6 +1,6 @@
 <% content_for :title, "#{@crop.name} - AGRR" %>
 
-<div class="crop-detail-card">
+<div class="crop-detail-card" id="<%= dom_id(@crop) %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @crop.name %></h1>
     <% if admin_user? && @crop.is_reference %>
@@ -188,16 +188,30 @@
       <%# 参照作物は管理者のみ編集・削除可能 %>
       <% if admin_user? %>
         <%= link_to t('.edit'), edit_crop_path(@crop), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @crop, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.confirm_delete') %>
+        <%= link_to t('.delete'), crop_path(@crop),
+                    class: "btn btn-error",
+                    data: {
+                      controller: "undo-delete",
+                      action: "click->undo-delete#submit",
+                      turbo_method: :delete,
+                      undo_delete_url_value: crop_path(@crop),
+                      undo_delete_message_value: t('crops.undo.toast', name: @crop.name),
+                      undo_delete_redirect_url_value: crops_path
+                    } %>
       <% end %>
     <% else %>
       <%# ユーザー作物は所有者が編集・削除可能 %>
       <%= link_to t('.edit'), edit_crop_path(@crop), class: "btn btn-secondary" %>
-      <%= button_to t('.delete'), @crop, method: :delete, 
-                  class: "btn btn-error", 
-                  confirm: t('.confirm_delete') %>
+      <%= link_to t('.delete'), crop_path(@crop),
+                  class: "btn btn-error",
+                  data: {
+                    controller: "undo-delete",
+                    action: "click->undo-delete#submit",
+                    turbo_method: :delete,
+                    undo_delete_url_value: crop_path(@crop),
+                    undo_delete_message_value: t('crops.undo.toast', name: @crop.name),
+                    undo_delete_redirect_url_value: crops_path
+                  } %>
     <% end %>
   </div>
 </div>

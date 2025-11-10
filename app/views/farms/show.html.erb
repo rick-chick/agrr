@@ -10,7 +10,7 @@
 
 <%= turbo_stream_from @farm %>
     
-<div class="farm-card">
+<div class="farm-card" id="<%= dom_id(@farm) %>" data-undo-delete-record>
   <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>
       
       <% if @fields.any? %>
@@ -39,9 +39,16 @@
         <%= link_to t('.back_to_list'), farms_path, class: "btn btn-secondary" %>
         <%= link_to t('.fields_list'), farm_fields_path(@farm), class: "btn btn-info" %>
         <%= link_to t('.edit'), edit_farm_path(@farm), class: "btn btn-secondary" %>
-        <%= button_to t('.delete'), @farm, method: :delete, 
-                    class: "btn btn-error", 
-                    confirm: t('.delete_confirm') %>
+        <%= link_to t('.delete'), farm_path(@farm),
+                    class: "btn btn-error",
+                    data: {
+                      controller: "undo-delete",
+                      action: "click->undo-delete#submit",
+                      turbo_method: :delete,
+                      undo_delete_url_value: farm_path(@farm),
+                      undo_delete_message_value: t('farms.undo.toast', name: @farm.display_name),
+                      undo_delete_redirect_url_value: farms_path
+                    } %>
       </div>
     </div>
 

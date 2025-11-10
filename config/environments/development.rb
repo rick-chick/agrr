@@ -121,6 +121,8 @@ Rails.application.configure do
   # Allow local hosts during development
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"
+  config.hosts << "web"
+  config.hosts << "web:3000"
 
   # Content Security Policy for development
   config.content_security_policy do |policy|

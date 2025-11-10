@@ -3,6 +3,7 @@
 require 'test_helper'
 
 class PestsControllerTest < ActionDispatch::IntegrationTest
+  include ActionView::RecordIdentifier
   setup do
     @user = create(:user)
     sign_in_as @user
@@ -168,11 +169,74 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     # 外部参照のない害虫を作成
     pest = create(:pest, :user_owned, user: @user)
     
-    assert_difference('Pest.count', -1) do
-      delete pest_path(pest)
+    assert_difference -> { Pest.count }, -1 do
+      assert_difference -> { DeletionUndoEvent.count }, +1 do
+        delete pest_path(pest)
+      end
     end
 
     assert_redirected_to pests_path
+    assert_equal I18n.t('deletion_undo.redirect_notice', resource: pest.name), flash[:notice]
+
+    event = DeletionUndoEvent.last
+    assert_equal 'Pest', event.resource_type
+    assert_equal I18n.t('pests.undo.toast', name: pest.name), event.toast_message
+  end
+
+  test "destroy_returns_undo_token_json" do
+    pest = create(:pest, :user_owned, user: @user)
+
+    assert_difference -> { Pest.count }, -1 do
+      assert_difference -> { DeletionUndoEvent.count }, +1 do
+        delete pest_path(pest), as: :json
+        assert_response :success
+      end
+    end
+
+    body = JSON.parse(@response.body)
+    %w[undo_token undo_deadline toast_message undo_path auto_hide_after resource redirect_path resource_dom_id].each do |key|
+      value = body.fetch(key)
+      assert value.present?, "#{key} が空です"
+    end
+
+    undo_token = body.fetch('undo_token')
+    event = DeletionUndoEvent.find(undo_token)
+    assert_equal 'Pest', event.resource_type
+    assert_equal pest.id.to_s, event.resource_id
+    assert_equal 'scheduled', event.state
+    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch('undo_path')
+    assert_equal I18n.t('pests.undo.toast', name: pest.name), body.fetch('toast_message')
+    assert_equal pest.name, body.fetch('resource')
+    assert_equal pests_path(locale: I18n.locale), body.fetch('redirect_path')
+    assert_equal dom_id(pest), body.fetch('resource_dom_id')
+
+    # TODO: HTMLレスポンス向けのUndoトースト表示テストを追加する
+  end
+
+  test "undo_endpoint_restores_pest" do
+    pest = create(:pest, :user_owned, user: @user)
+
+    delete pest_path(pest), as: :json
+    assert_response :success
+
+    body = JSON.parse(@response.body)
+    undo_token = body.fetch('undo_token')
+    event = DeletionUndoEvent.find(undo_token)
+    assert_equal 'scheduled', event.state
+    assert_not Pest.exists?(pest.id), '削除後にPestが残っています'
+
+    assert_difference -> { Pest.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    undo_body = JSON.parse(@response.body)
+    assert_equal 'restored', undo_body.fetch('status')
+    assert_equal undo_token, undo_body.fetch('undo_token')
+
+    event.reload
+    assert_equal 'restored', event.state
+    assert Pest.exists?(pest.id), 'Undo後にPestが復元されていません'
   end
 
   test "should destroy pest with nested associations" do
@@ -650,7 +714,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
         # CropPestも削除されている場合はdependent: :destroyが動作した
         # これは正常な動作（外部キー制約エラーではなく、関連も一緒に削除される）
         assert_redirected_to pests_path
-        assert_equal I18n.t('pests.flash.destroyed'), flash[:notice]
+        assert_equal I18n.t('deletion_undo.redirect_notice', resource: pest.name), flash[:notice]
       end
     end
   end
