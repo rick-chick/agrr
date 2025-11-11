@@ -211,6 +211,108 @@
 }
 
 /* ============================================
+   Agricultural Tasks
+   ============================================ */
+
+.agricultural-tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-5);
+}
+
+.agricultural-task-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.agricultural-task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.agricultural-task-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.agricultural-task-name {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.agricultural-task-type {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+}
+
+.agricultural-task-type.reference {
+  background: rgba(41, 128, 185, 0.12);
+  color: var(--color-info-dark);
+}
+
+.agricultural-task-type.user {
+  background: rgba(39, 174, 96, 0.12);
+  color: var(--color-success-dark);
+}
+
+.agricultural-task-description {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+}
+
+.agricultural-task-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-base);
+  background: var(--color-gray-50);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  width: fit-content;
+}
+
+.agricultural-task-meta__icon {
+  font-size: var(--font-size-base);
+  line-height: 1;
+}
+
+.agricultural-task-meta__label {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+.agricultural-task-meta__value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.agricultural-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* ============================================
    Crop Detail Page
    ============================================ */
 
@@ -276,6 +378,209 @@
 
 .info-value {
   color: var(--text-primary);
+}
+
+/* ============================================
+   Crop Pests
+   ============================================ */
+
+.pests-section {
+  margin-top: var(--space-6);
+}
+
+.pests-section__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.pests-section__header .stages-title {
+  margin-bottom: 0;
+}
+
+.pests-section__action {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.pests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.pest-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: var(--border-width-1) solid var(--border-color-light);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pest-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-color-dark);
+}
+
+.pest-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pest-card__name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.pest-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.pest-card__link:hover {
+  color: var(--color-primary-600);
+}
+
+.pest-card__scientific {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.pest-card__meta {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.pest-card__meta-label {
+  font-weight: var(--font-weight-medium);
+  margin-right: var(--space-1);
+  color: var(--text-primary);
+}
+
+.pest-card__meta-value {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Task Schedule Blueprints
+   ============================================ */
+
+.task-schedule-blueprints__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.task-schedule-blueprints-section {
+  margin-top: var(--space-6);
+}
+
+.task-schedule-blueprints__header .stages-title {
+  margin-bottom: 0;
+}
+
+.task-schedule-blueprints__actions {
+  display: inline-flex;
+  gap: var(--space-2);
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.task-schedule-blueprints__primary-action,
+.task-schedule-blueprints__secondary-action {
+  white-space: nowrap;
+}
+
+/* ============================================
+   Manual Agricultural Tasks
+   ============================================ */
+
+.task-manual-section {
+  margin-top: var(--space-5);
+}
+
+.task-manual-section__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.task-manual-section__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.task-manual-section__count {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.task-manual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.task-manual-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: var(--border-width-1) solid var(--border-color-light);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.task-manual-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-color-dark);
+}
+
+.task-manual-card__name {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.task-manual-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.task-manual-card__link:hover {
+  color: var(--color-primary-600);
+}
+
+.task-manual-card__note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ============================================
@@ -528,7 +833,8 @@
 @media (max-width: 768px) {
   .farms-grid,
   .fields-grid,
-  .crops-grid {
+  .crops-grid,
+  .agricultural-tasks-grid {
     grid-template-columns: 1fr;
   }
 
@@ -549,7 +855,8 @@
 
 @media (max-width: 480px) {
   .field-card,
-  .crop-card {
+  .crop-card,
+  .agricultural-task-card {
     padding: var(--space-4);
   }
 
