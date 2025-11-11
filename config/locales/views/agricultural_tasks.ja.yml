@@ -16,6 +16,7 @@ ja:
       new_agricultural_task: "新しい作業を追加"
       time_per_sqm: "作業時間"
       reference_task: "参照作業"
+      user_task_tag: "自分の作業"
       actions:
         show: "詳細"
         edit: "編集"

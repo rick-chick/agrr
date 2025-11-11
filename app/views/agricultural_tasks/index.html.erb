@@ -6,23 +6,34 @@
 </div>
 
 <% if @agricultural_tasks.any? %>
-  <div class="crops-grid">
+  <div class="agricultural-tasks-grid">
     <% @agricultural_tasks.each do |task| %>
-      <div class="crop-card" id="<%= dom_id(task) %>" data-undo-delete-record>
-        <h3 class="crop-name"><%= task.name %></h3>
+      <div class="agricultural-task-card" id="<%= dom_id(task) %>" data-undo-delete-record>
+        <div class="agricultural-task-card__header">
+          <h3 class="agricultural-task-name"><%= task.name %></h3>
+          <% if admin_user? && task.is_reference %>
+            <span class="agricultural-task-type reference"><%= t('.reference_task') %></span>
+          <% elsif !task.is_reference %>
+            <span class="agricultural-task-type user"><%= t('.user_task_tag') %></span>
+          <% end %>
+        </div>
+
         <% if task.description.present? %>
-          <div class="crop-variety"><%= truncate(task.description, length: 50) %></div>
+          <p class="agricultural-task-description"><%= truncate(task.description, length: 80) %></p>
         <% end %>
+
         <% if task.time_per_sqm.present? %>
-          <div class="crop-variety"><%= t('.time_per_sqm') %>: <%= task.time_per_sqm %> h/㎡</div>
+          <div class="agricultural-task-meta">
+            <span class="agricultural-task-meta__icon">⏱</span>
+            <span class="agricultural-task-meta__label"><%= t('.time_per_sqm') %></span>
+            <span class="agricultural-task-meta__value"><%= task.time_per_sqm %> h/㎡</span>
+          </div>
         <% end %>
-        <% if admin_user? && task.is_reference %>
-          <div class="crop-type reference"><%= t('.reference_task') %></div>
-        <% end %>
-        <div class="crop-actions">
+
+        <div class="agricultural-task-actions">
           <%= link_to t('.actions.show'), agricultural_task_path(task), class: "btn btn-info btn-sm" %>
+
           <% if task.is_reference %>
-            <%# Reference tasks: admin only %>
             <% if admin_user? %>
               <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
               <%= link_to t('.actions.delete'), agricultural_task_path(task),
@@ -37,7 +48,6 @@
                           } %>
             <% end %>
           <% else %>
-            <%# User tasks: owner only %>
             <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
             <%= link_to t('.actions.delete'), agricultural_task_path(task),
                         class: "btn btn-error btn-sm",
