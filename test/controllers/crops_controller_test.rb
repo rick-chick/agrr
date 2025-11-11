@@ -1,3 +1,14 @@
+  class BlueprintServiceDouble
+    attr_reader :calls
+
+    def initialize
+      @calls = []
+    end
+
+    def regenerate!(crop:)
+      @calls << crop
+    end
+  end
 # frozen_string_literal: true
 
 require 'test_helper'
@@ -52,6 +63,83 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     get crop_path(@reference_crop)
     
     assert_response :success
+  end
+
+  test "作業テンプレートが表示される" do
+    sign_in_as @user
+    task = create(:agricultural_task, :soil_preparation)
+    AgriculturalTaskCrop.create!(agricultural_task: task, crop: @user_crop)
+    create(:crop_task_schedule_blueprint,
+           crop: @user_crop,
+           agricultural_task: task,
+           stage_order: 1,
+           stage_name: '定植前整備',
+           gdd_trigger: BigDecimal('0.0'),
+           gdd_tolerance: BigDecimal('5.0'),
+           priority: 1,
+           source: 'agrr_schedule')
+    create(:crop_task_schedule_blueprint,
+           :fertilizer,
+           :without_agricultural_task,
+           crop: @user_crop,
+           stage_order: 2,
+           stage_name: '追肥',
+           gdd_trigger: BigDecimal('150.0'),
+           gdd_tolerance: BigDecimal('10.0'),
+           priority: 2,
+           source_agricultural_task_id: 21_001)
+    manual_task = create(:agricultural_task, :user_owned, user: @user, name: '潅水')
+    AgriculturalTaskCrop.create!(agricultural_task: manual_task, crop: @user_crop)
+
+    get crop_path(@user_crop)
+
+    assert_response :success
+    assert_select '#crop-task-schedule-blueprints'
+    assert_select '#crop-task-schedule-blueprints', text: /定植前整備/
+    assert_select '#crop-task-schedule-blueprints', text: /追肥/
+    assert_select '.task-blueprint-card[data-gdd-trigger="150.0"]'
+    assert_select '.task-schedule-blueprints__header .task-schedule-blueprints__primary-action', text: I18n.t('crops.show.manage_agricultural_tasks')
+    assert_select '.task-manual-grid .task-manual-card', count: 1
+    assert_select '.task-manual-card__name', text: '潅水'
+  end
+
+  test "害虫一覧がカードレイアウトで表示される" do
+    sign_in_as @user
+    older_pest = create(:pest, name: 'コナジラミ', name_scientific: 'Aleyrodidae', created_at: 2.days.ago)
+    recent_pest = create(:pest, name: 'アブラムシ', name_scientific: 'Aphidoidea', created_at: Time.current)
+    create(:crop_pest, crop: @user_crop, pest: older_pest)
+    create(:crop_pest, crop: @user_crop, pest: recent_pest)
+
+    get crop_path(@user_crop)
+
+    assert_response :success
+    assert_select '.pests-grid .pest-card', count: 2
+    assert_select '.pest-card:first-child .pest-card__name', text: 'アブラムシ'
+    assert_select '.pest-card:first-child .pest-card__scientific', text: 'Aphidoidea'
+    assert_select '.pests-section__header .pests-section__action', text: I18n.t('crops.show.manage_pests')
+  end
+
+  test "管理者はAIで作業テンプレートを生成できる" do
+    sign_in_as @admin_user
+    service_double = BlueprintServiceDouble.new
+
+    CropTaskScheduleBlueprintCreateService.stub(:new, service_double) do
+      post generate_task_schedule_blueprints_crop_path(@admin_crop)
+    end
+
+    assert_equal 1, service_double.calls.size
+    assert_equal @admin_crop.id, service_double.calls.first.id
+    assert_redirected_to crop_path(@admin_crop)
+    assert_equal I18n.t('crops.flash.task_schedule_blueprints_generated'), flash[:notice]
+  end
+
+  test "一般ユーザーはAIで作業テンプレートを生成できない" do
+    sign_in_as @user
+
+    post generate_task_schedule_blueprints_crop_path(@user_crop)
+
+    assert_redirected_to root_path
+    assert_equal I18n.t('auth.messages.admin_required'), flash[:alert]
   end
 
   test "一般ユーザーは他のユーザーの作物をshowできない" do

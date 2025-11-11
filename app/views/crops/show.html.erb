@@ -57,18 +57,47 @@
   </div>
   
   <div class="pests-section">
-    <h2 class="stages-title"><%= t('.pests_title') %></h2>
+    <div class="pests-section__header">
+      <h2 class="stages-title"><%= t('.pests_title') %></h2>
+      <%= link_to t('.manage_pests'), crop_pests_path(@crop), class: "btn btn-secondary btn-sm pests-section__action" %>
+    </div>
     <% if @crop.pests.any? %>
-      <div class="pests-list">
+      <div class="pests-grid">
         <% @crop.pests.recent.each do |pest| %>
-          <div class="pest-item">
-            <div class="pest-name">
-              <%= link_to pest.name, crop_pest_path(@crop, pest), class: "pest-link" %>
-            </div>
-            <% if pest.name_scientific.present? %>
-              <div class="pest-scientific"><%= pest.name_scientific %></div>
+          <article class="pest-card">
+            <header class="pest-card__header">
+              <h3 class="pest-card__name">
+                <%= link_to pest.name, crop_pest_path(@crop, pest), class: "pest-card__link" %>
+              </h3>
+              <% if pest.name_scientific.present? %>
+                <div class="pest-card__scientific"><%= pest.name_scientific %></div>
+              <% end %>
+            </header>
+
+            <% if pest.family.present? || pest.order.present? || pest.occurrence_season.present? %>
+              <ul class="pest-card__meta">
+                <% if pest.family.present? %>
+                  <li>
+                    <span class="pest-card__meta-label"><%= t('.pest_family_label') %></span>
+                    <span class="pest-card__meta-value"><%= pest.family %></span>
+                  </li>
+                <% end %>
+                <% if pest.order.present? %>
+                  <li>
+                    <span class="pest-card__meta-label"><%= t('.pest_order_label') %></span>
+                    <span class="pest-card__meta-value"><%= pest.order %></span>
+                  </li>
+                <% end %>
+                <% if pest.occurrence_season.present? %>
+                  <li>
+                    <span class="pest-card__meta-label"><%= t('.pest_occurrence_label') %></span>
+                    <span class="pest-card__meta-value"><%= pest.occurrence_season %></span>
+                  </li>
+                <% end %>
+              </ul>
             <% end %>
-          </div>
+
+          </article>
         <% end %>
       </div>
     <% else %>
@@ -76,40 +105,110 @@
         <p><%= t('.no_pests_description') %></p>
       </div>
     <% end %>
-    <div class="pest-actions">
-      <%= link_to t('.manage_pests'), crop_pests_path(@crop), class: "btn btn-secondary btn-sm" %>
-    </div>
   </div>
 
-  <div class="agricultural-tasks-section">
-    <h2 class="stages-title">🔧 <%= t('.agricultural_tasks_title') %></h2>
-    <% if @viewable_agricultural_tasks.any? %>
-      <div class="agricultural-tasks-list">
-        <% @viewable_agricultural_tasks.each do |task| %>
-          <div class="agricultural-task-item">
-            <div class="agricultural-task-name">
-              <%= link_to task.name, agricultural_task_path(task), class: "agricultural-task-link" %>
-            </div>
-            <% if task.description.present? %>
-              <div class="agricultural-task-description"><%= truncate(task.description, length: 100) %></div>
-            <% end %>
-            <% if task.time_per_sqm.present? %>
-              <div class="agricultural-task-time">⏱ <%= task.time_per_sqm %> h/㎡</div>
-            <% end %>
-            <% if task.is_reference %>
-              <div class="agricultural-task-type reference">[<%= t('.reference_task') %>]</div>
-            <% end %>
-          </div>
+  <div class="task-schedule-blueprints-section" id="crop-task-schedule-blueprints">
+    <div class="task-schedule-blueprints__header">
+      <h2 class="stages-title"><%= t('.task_schedule_blueprints_title') %></h2>
+      <div class="task-schedule-blueprints__actions">
+        <%= link_to t('.manage_agricultural_tasks'),
+                    crop_agricultural_tasks_path(@crop),
+                    class: "btn btn-secondary btn-sm task-schedule-blueprints__primary-action" %>
+        <% if admin_user? %>
+          <%= button_to t('.generate_task_schedule_blueprints_button'),
+                        generate_task_schedule_blueprints_crop_path(@crop),
+                        method: :post,
+                        class: 'btn btn-primary btn-sm task-schedule-blueprints__secondary-action',
+                        form: { data: { turbo_confirm: t('.generate_task_schedule_blueprints_confirm') } } %>
         <% end %>
       </div>
+    </div>
+    <p class="task-schedule-blueprints-description">
+      <%= t('.task_schedule_blueprints_description_html').html_safe %>
+    </p>
+    <% if @task_schedule_blueprints.any? %>
+      <% sorted_blueprints = @task_schedule_blueprints.includes(:agricultural_task).sort_by do |blueprint|
+           [blueprint.gdd_trigger.to_f, blueprint.priority.to_i, blueprint.id]
+         end %>
+
+      <% crop_required_gdd_values = @crop.crop_stages.map { |stage| stage.thermal_requirement&.required_gdd.to_f }.compact %>
+      <% total_required_gdd = crop_required_gdd_values.sum %>
+      <% blueprint_gdd_max = sorted_blueprints.map { |bp| bp.gdd_trigger.to_f }.max %>
+      <% total_required_gdd = blueprint_gdd_max if total_required_gdd <= 0 %>
+      <% total_required_gdd = 1.0 if total_required_gdd.nil? || total_required_gdd <= 0 %>
+      <% lane_count = sorted_blueprints.size %>
+
+      <div class="task-schedule-blueprints-board" style="--lane-count: <%= lane_count %>;">
+        <div class="task-board-canvas">
+          <div class="task-board-grid"></div>
+          <div class="task-board-axis-x-scale">
+            <span class="task-board-axis-x-tick" style="--tick-position: 0%;">0</span>
+            <span class="task-board-axis-x-tick" style="--tick-position: 100%;">
+              <%= number_with_precision(total_required_gdd, precision: 0) %>
+            </span>
+          </div>
+          <div class="task-board-cards">
+            <% sorted_blueprints.each_with_index do |blueprint, index| %>
+              <% gdd_ratio = (blueprint.gdd_trigger.to_f / total_required_gdd).clamp(0.0, 1.0) %>
+              <% left_percent = (gdd_ratio * 100).clamp(8.0, 95.0) %>
+              <% lane_position = ((index + 0.5) / lane_count) * 100 %>
+              <% top_percent = lane_position.clamp(8.0, 92.0) %>
+
+              <% card_tooltip = [
+                   t('.task_schedule_blueprints_order_tooltip', order: index + 1),
+                   "#{t('.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}",
+                   (blueprint.stage_name.presence)
+                 ].compact.join(' / ') %>
+
+              <div class="task-blueprint-card blueprint-<%= blueprint.task_type %>"
+                   data-gdd-trigger="<%= number_with_precision(blueprint.gdd_trigger, precision: 1) %>"
+                   data-order="<%= index + 1 %>"
+                   title="<%= card_tooltip %>"
+                   style="--card-left: <%= left_percent.round(2) %>%; --card-top: <%= top_percent.round(2) %>%;">
+                <div class="task-blueprint-card__title">
+                  <%= blueprint.agricultural_task&.name || t('.task_schedule_blueprints_missing_task') %>
+                </div>
+                <% if blueprint.stage_name.present? %>
+                  <div class="task-blueprint-card__stage">
+                    <%= blueprint.stage_name %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="task-board-axis-label task-board-axis-label-x">
+          <span><%= t('.task_schedule_blueprints_axis_gdd_total', total: number_with_precision(total_required_gdd, precision: 0)) %></span>
+        </div>
+      </div>
     <% else %>
-      <div class="no-agricultural-tasks">
-        <p><%= t('.no_agricultural_tasks_description') %></p>
+      <div class="no-task-schedule-blueprints">
+        <p><%= t('.no_task_schedule_blueprints') %></p>
       </div>
     <% end %>
-    <div class="agricultural-task-actions">
-      <%= link_to t('.manage_agricultural_tasks'), crop_agricultural_tasks_path(@crop), class: "btn btn-secondary btn-sm" %>
-    </div>
+
+    <% if @unassigned_agricultural_tasks.any? %>
+      <div class="task-manual-section">
+        <div class="task-manual-section__header">
+          <h3 class="task-manual-section__title"><%= t('.manual_task_type_label') %></h3>
+          <span class="task-manual-section__count">
+            <%= t('.manual_task_count', count: @unassigned_agricultural_tasks.size) %>
+          </span>
+        </div>
+        <div class="task-manual-grid">
+          <% @unassigned_agricultural_tasks.each do |task| %>
+            <article class="task-manual-card">
+              <h4 class="task-manual-card__name">
+                <%= link_to task.name, agricultural_task_path(task), class: "task-manual-card__link" %>
+              </h4>
+              <p class="task-manual-card__note">
+                <%= task.description.present? ? truncate(task.description, length: 80) : t('.manual_task_hint') %>
+              </p>
+            </article>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <div class="stages-section">
