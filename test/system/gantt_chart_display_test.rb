@@ -130,6 +130,14 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
       area: 100.0,
       daily_fixed_cost: 0.0
     )
+    additional_public_fields = %w[B C].map do |name|
+      CultivationPlanField.create!(
+        cultivation_plan: @public_plan,
+        name: name,
+        area: 80.0,
+        daily_fixed_cost: 0.0
+      )
+    end
     
     # Public計画のCultivationPlanCropを作成
     @public_plan_crop = CultivationPlanCrop.create!(
@@ -157,33 +165,39 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
         accumulated_gdd: 1500.0
       }
     )
+    additional_public_fields.each_with_index do |field, i|
+      FieldCultivation.create!(
+        cultivation_plan: @public_plan,
+        cultivation_plan_field: field,
+        cultivation_plan_crop: @public_plan_crop,
+        start_date: Date.current + (45 + i * 10).days,
+        completion_date: Date.current + (170 + i * 15).days,
+        cultivation_days: 130 + (i * 5),
+        area: 40.0,
+        estimated_cost: 9000.0 + (i * 600),
+        optimization_result: {
+          revenue: 42000.0 + (i * 2500),
+          profit: 31000.0 + (i * 1800),
+          accumulated_gdd: 1250.0 + (i * 120)
+        }
+      )
+    end
     
     # ユーザーのセッションを作成してログイン
     @session = Session.create_for_user(@user)
   end
   
   test "private plans should display gantt chart" do
-    # セッションCookieを設定するため、まずページにアクセス
-    visit root_path(locale: :ja)
-    
-    # Cookieを設定
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: @session.session_id,
-      path: '/'
-    )
-    
-    # Plans詳細ページにアクセス
-    visit plan_path(@private_plan, locale: :ja)
-    
+    login_and_visit plan_path(@private_plan, locale: :ja)
+
     # ページが読み込まれるまで待つ
     assert_selector 'h1', text: /2025/, wait: 10
     
     # ガントチャートコンテナが存在することを確認
-    assert_selector '#gantt-chart-container', wait: 10
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
     
     # ガントチャートのデータ属性が設定されていることを確認
-    gantt_container = find('#gantt-chart-container')
+    gantt_container = find('#gantt-chart-container', visible: :all)
     assert gantt_container['data-cultivation-plan-id'].present?, 'cultivation-plan-id should be present'
     assert gantt_container['data-cultivations'].present?, 'cultivations data should be present'
     assert gantt_container['data-fields'].present?, 'fields data should be present'
@@ -216,38 +230,19 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     assert_selector '.gantt-header', wait: 5
     assert_selector '.gantt-title', wait: 5
     
-    # デバッグ: 実際のHTML構造を出力
-    puts "=== DEBUG: gantt-header HTML structure ==="
-    gantt_header = find('.gantt-header')
-    puts gantt_header.native.attribute('innerHTML')
-    
-    puts "✅ Private plans gantt chart is displayed correctly"
   end
   
   test "public plans should display gantt chart" do
-    # Public計画の結果ページにアクセス（ログイン不要）
-    # まず適当なページにアクセスしてからCookieを設定
-    visit root_path(locale: :ja)
-    
-    # セッションCookieを設定
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: 'test_session_public_gantt',
-      path: '/'
-    )
-    
-    # Public計画の結果ページにアクセス
-    # Note: System testではセッションの直接操作が難しいため、URLパラメータを使用
-    visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
-    
+    login_and_visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
+
     # ページが読み込まれるまで待つ
     assert_selector 'h1', text: /計画/, wait: 10
     
     # ガントチャートコンテナが存在することを確認
-    assert_selector '#gantt-chart-container', wait: 10
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
     
     # ガントチャートのデータ属性が設定されていることを確認
-    gantt_container = find('#gantt-chart-container')
+    gantt_container = find('#gantt-chart-container', visible: :all)
     assert gantt_container['data-cultivation-plan-id'].present?, 'cultivation-plan-id should be present'
     assert gantt_container['data-cultivations'].present?, 'cultivations data should be present'
     assert gantt_container['data-fields'].present?, 'fields data should be present'
@@ -275,55 +270,96 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     assert_selector '.crop-palette-container', wait: 5
     assert_selector '.crop-palette-toggle-btn', wait: 5
     
-    puts "✅ Public plans gantt chart is displayed correctly"
   end
   
   test "both plans and public_plans use the same gantt chart component" do
-    # Private計画のガントチャートを確認
-    visit root_path(locale: :ja)
+    login_and_visit plan_path(@private_plan, locale: :ja)
     
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: @session.session_id,
-      path: '/'
-    )
-    
-    visit plan_path(@private_plan, locale: :ja)
-    
-    assert_selector '#gantt-chart-container', wait: 10
-    private_container = find('#gantt-chart-container')
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    private_container = find('#gantt-chart-container', visible: :all)
     private_cultivations = JSON.parse(private_container['data-cultivations'])
     
     # Public計画のガントチャートを確認
-    visit root_path(locale: :ja)
+    login_and_visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
     
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: 'test_session_public_gantt',
-      path: '/'
-    )
-    
-    visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
-    
-    assert_selector '#gantt-chart-container', wait: 10
-    public_container = find('#gantt-chart-container')
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    public_container = find('#gantt-chart-container', visible: :all)
     public_cultivations = JSON.parse(public_container['data-cultivations'])
     
     # 両方とも同じデータ構造を持つことを確認
-    private_keys = private_cultivations.first.keys.sort
-    public_keys = public_cultivations.first.keys.sort
-    puts "PRIVATE_KEYS: #{private_keys}"
-    puts "PUBLIC_KEYS: #{public_keys}"
-    
     # 両方とも必要なキーを持つことを確認
     required_keys = %w[id field_id field_name crop_name start_date completion_date cultivation_days area estimated_cost profit]
     required_keys.each do |key|
       assert private_cultivations.first.key?(key), "Private plan should have #{key}"
       assert public_cultivations.first.key?(key), "Public plan should have #{key}"
     end
-    
-    puts "✅ Both plans and public_plans use the same gantt chart data structure"
   end
+
+  test "ユーザーはガントチャートをズームしながらタスク表示を切り替えられる" do
+    login_and_visit plan_path(@private_plan, locale: :ja)
+
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    click_button I18n.t('plans.gantt.controls.zoom_in')
+    assert_selector '#gantt-chart-container[data-zoom="in"]', wait: 3
+
+    click_button I18n.t('plans.gantt.controls.zoom_out')
+    assert_selector '#gantt-chart-container[data-zoom="out"]', wait: 3
+
+    click_button I18n.t('plans.gantt.controls.toggle_palette')
+    assert_selector '.crop-palette-container', visible: :hidden
+
+    click_button I18n.t('plans.gantt.controls.toggle_palette')
+    assert_selector '.crop-palette-container', visible: :visible
+  end
+
+  test "大量データでもレンダリング状態とUXメッセージが表示される" do
+    login_and_visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
+
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector '#gantt-loading-indicator', wait: 5, visible: :all
+    within '#gantt-loading-indicator' do
+      assert_text I18n.t('plans.gantt.loading.heavy')
+    end
+
+    assert_no_text I18n.t('plans.gantt.loading.heavy'), wait: 5
+  end
+
+  test "モバイル幅ではスクロールとフォールバックが提供される" do
+    login_and_visit plan_path(@private_plan, locale: :ja)
+    page.driver.browser.manage.window.resize_to(390, 844)
+
+    assert_selector '#gantt-chart-scroll-area', wait: 5, visible: :all
+    scroll_width = page.evaluate_script("document.querySelector('#gantt-chart-scroll-area').scrollWidth").to_i
+    viewport_width = page.evaluate_script('window.innerWidth').to_i
+    assert scroll_width > viewport_width
+
+    page.driver.browser.manage.window.resize_to(320, 480)
+    assert_selector '#gantt-chart-fallback', wait: 5, visible: :all
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
+
+  private
+
+    def eventually(timeout: 5, interval: 0.2)
+      start_time = Time.current
+      loop do
+        result = yield
+        return true if result
+        raise "Condition not met within #{timeout} seconds" if Time.current - start_time > timeout
+        sleep interval
+      end
+    end
+
+    def login_and_visit(url)
+      visit root_path(locale: :ja)
+      page.driver.browser.manage.add_cookie(
+        name: 'session_id',
+        value: @session.session_id,
+        path: '/'
+      )
+      visit url
+    end
 end
 
 

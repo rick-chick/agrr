@@ -47,10 +47,12 @@ export default class extends Controller {
     // Disable button and show loading
     this.button.disabled = true
     this.button.textContent = this.element.dataset.buttonFetching || '🤖 AIで情報を取得中...'
-    this.showStatus(this.element.dataset.fetching || 'AIで肥料情報を取得しています...', 'info')
     
     // Show advertisement popup
     this.showAdPopup()
+    
+    const baseMessage = this.element.dataset.fetching || 'AIで肥料情報を取得しています...'
+    this.showStatus(baseMessage, 'loading')
     
     try {
       const csrfToken = document.querySelector('[name="csrf-token"]')?.content
@@ -78,7 +80,8 @@ export default class extends Controller {
       })
       
       const data = await response.json()
-      
+      console.log('[FertilizeAiController] response status:', response.status, 'ok:', response.ok, 'data:', data)
+
       if (response.ok) {
         // 成功時：広告を閉じて遷移
         // 新規作成時は詳細画面、編集時は編集画面に遷移（Cropの動作に合わせる）
@@ -87,7 +90,7 @@ export default class extends Controller {
           ? (this.element.dataset.createdSuccess || '✓ 肥料「%{name}」の情報を取得して保存しました！').replace('%{name}', data.fertilize_name || '')
           : (this.element.dataset.updatedSuccess || '✓ 肥料「%{name}」の情報を取得して更新しました！').replace('%{name}', data.fertilize_name || ''))
         
-        this.showStatus('✓ ' + successMsg, 'success')
+        this.showStatus(`${baseMessage} / ${successMsg}`, 'success')
         
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
@@ -102,13 +105,15 @@ export default class extends Controller {
         }, 1500)
       } else {
         this.hideAdPopup()
-        this.showStatus(`エラー: ${data.error || (this.element.dataset.fetchFailed || '肥料情報の取得に失敗しました')}` , 'error')
+        const errorMessage = data.error || (this.element.dataset.fetchFailed || '肥料情報の取得に失敗しました')
+        this.showStatus(`${baseMessage} / エラー: ${errorMessage}`, 'error')
         this.resetButton()
       }
     } catch (error) {
       console.error('Error in AI fertilize creation:', error)
       this.hideAdPopup()
-      this.showStatus(this.element.dataset.networkError || 'ネットワークエラーが発生しました', 'error')
+      const networkMessage = this.element.dataset.networkError || 'ネットワークエラーが発生しました'
+      this.showStatus(`${baseMessage} / エラー: ${networkMessage}`, 'error')
       this.resetButton()
     }
   }
@@ -122,8 +127,10 @@ export default class extends Controller {
   }
   
   resetButton() {
-    this.button.disabled = false
-    this.button.textContent = this.element.dataset.buttonIdle || '🤖 AIで肥料情報を取得・保存'
+    window.setTimeout(() => {
+      this.button.disabled = false
+      this.button.textContent = this.element.dataset.buttonIdle || '🤖 AIで肥料情報を取得・保存'
+    }, 300)
   }
   
   showAdPopup() {

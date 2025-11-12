@@ -10,18 +10,7 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
       name: 'Fertilize AI Selenium Test User',
       google_id: "fertilize_ai_selenium_#{SecureRandom.hex(8)}"
     )
-    
-    # ログイン（肥料ページに直接アクセスしてapplication.jsエラーを回避）
-    session = Session.create_for_user(@user)
-    session.save!
-    @user.reload
-    
-    visit new_fertilize_path
-    page.driver.browser.manage.add_cookie(
-      name: 'session_id',
-      value: session.session_id,
-      path: '/'
-    )
+    login_as_system_user(@user)
     visit new_fertilize_path
   end
 
@@ -61,6 +50,49 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
     assert_match(/AIで肥料情報を取得/, status.text, "ローディングメッセージが表示されていません")
   end
 
+  test "AIボタン成功時に広告ポップアップが閉じて詳細ページへ遷移する" do
+    stub = install_fertilize_ai_stub(success_response: {
+      "fertilize" => {
+        "name" => "Selenium尿素",
+        "n" => 46.0,
+        "p" => 0.0,
+        "k" => 0.0,
+        "description" => "Selenium成功",
+        "package_size" => "25kg"
+      }
+    })
+
+    visit new_fertilize_path
+    fill_in 'fertilize[name]', with: 'Selenium尿素'
+    find('#ai-save-fertilize-btn').click
+
+    assert_selector '#ad-popup-overlay.show', wait: 3
+    assert eventually(timeout: 5) { stub.create_calls.size == 1 }
+    assert eventually(timeout: 5) { current_path.match?(/\/fertilizes\/\d+/) }
+  ensure
+    remove_fertilize_ai_stub
+  end
+
+  test "AIボタン失敗時にポップアップが閉じてボタンが再度有効になる" do
+    install_fertilize_ai_stub(error_response: {
+      "success" => false,
+      "error" => "Seleniumテスト失敗",
+      "code" => "daemon_not_running"
+    })
+
+    visit new_fertilize_path
+    fill_in 'fertilize[name]', with: 'Selenium失敗'
+    button = find('#ai-save-fertilize-btn')
+    button.click
+
+    assert_selector '#ai-save-status', text: /Seleniumテスト失敗/, wait: 5, visible: :all
+    status = find('#ai-save-status', visible: :all)
+    assert eventually { !button.disabled? }
+    assert eventually { !page.find('#ad-popup-overlay')[:class].include?('show') }
+  ensure
+    remove_fertilize_ai_stub
+  end
+
   test "fertilize_ai.jsが正しく読み込まれている" do
     # ページのソースを確認してfertilize_ai.jsの読み込みを確認
     page_source = page.html
@@ -73,5 +105,27 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
     assert button['data-enter-name'].present?, "data-enter-nameが設定されていません"
     assert button['data-fetching'].present?, "data-fetchingが設定されていません"
   end
+
+  private
+
+    def install_fertilize_ai_stub(success_response: nil, error_response: nil)
+      stub = FertilizeAiGatewayStub.new(success_response: success_response, error_response: error_response)
+      Rails.configuration.x.fertilize_ai_gateway = stub
+      stub
+    end
+
+    def remove_fertilize_ai_stub
+      Rails.configuration.x.fertilize_ai_gateway = nil
+    end
+
+    def eventually(timeout: 3, interval: 0.1)
+      start_time = Time.current
+      loop do
+        result = yield
+        return true if result
+        raise "Condition not met within #{timeout} seconds" if Time.current - start_time > timeout
+        sleep interval
+      end
+    end
 end
 

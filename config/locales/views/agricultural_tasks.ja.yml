@@ -18,10 +18,17 @@ ja:
       reference_task: "参照作業"
       user_task_tag: "自分の作業"
       actions:
+        search: "検索"
         show: "詳細"
         edit: "編集"
         delete: "削除"
         delete_confirm: "本当にこの作業を削除しますか？"
+      filters:
+        user_tasks: "自分の作業"
+        reference_tasks: "参照作業"
+        all_tasks: "すべて表示"
+      search_label: "作業を検索"
+      search_placeholder: "作業名で検索"
       empty:
         icon: "🔧"
         title: "まだ作業が登録されていません"

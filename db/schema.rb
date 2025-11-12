@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_11_091500) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -92,6 +92,52 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.datetime "updated_at", null: false
     t.index ["crop_id", "order"], name: "index_crop_stages_on_crop_id_and_order", unique: true
     t.index ["crop_id"], name: "index_crop_stages_on_crop_id"
+  end
+
+  create_table "crop_task_schedule_blueprints", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.integer "agricultural_task_id"
+    t.bigint "source_agricultural_task_id"
+    t.integer "stage_order", null: false
+    t.string "stage_name"
+    t.decimal "gdd_trigger", precision: 10, scale: 2, null: false
+    t.decimal "gdd_tolerance", precision: 10, scale: 2
+    t.string "task_type", null: false
+    t.string "source", null: false
+    t.integer "priority", null: false
+    t.decimal "amount", precision: 10, scale: 3
+    t.string "amount_unit"
+    t.text "description"
+    t.string "weather_dependency"
+    t.decimal "time_per_sqm", precision: 8, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agricultural_task_id"], name: "index_crop_task_schedule_blueprints_on_agricultural_task_id"
+    t.index ["crop_id", "stage_order", "agricultural_task_id"], name: "idx_on_crop_id_stage_order_agricultural_task_id_1de52a2f7e", unique: true, where: "agricultural_task_id IS NOT NULL"
+    t.index ["crop_id", "stage_order", "source_agricultural_task_id"], name: "index_blueprints_on_crop_stage_and_source_task", unique: true, where: "agricultural_task_id IS NULL AND source_agricultural_task_id IS NOT NULL"
+    t.index ["crop_id"], name: "index_crop_task_schedule_blueprints_on_crop_id"
+  end
+
+  create_table "crop_task_templates", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.bigint "source_agricultural_task_id"
+    t.string "name", null: false
+    t.text "description"
+    t.float "time_per_sqm"
+    t.string "weather_dependency"
+    t.text "required_tools"
+    t.string "skill_level"
+    t.string "task_type"
+    t.integer "task_type_id"
+    t.boolean "is_reference", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "agricultural_task_id"
+    t.index ["agricultural_task_id"], name: "index_crop_task_templates_on_agricultural_task_id"
+    t.index ["crop_id", "agricultural_task_id"], name: "idx_crop_task_templates_on_crop_and_agricultural_task", unique: true
+    t.index ["crop_id", "name"], name: "index_crop_task_templates_on_crop_id_and_name", unique: true
+    t.index ["crop_id", "source_agricultural_task_id"], name: "idx_crop_task_templates_on_crop_and_source", unique: true
+    t.index ["crop_id"], name: "index_crop_task_templates_on_crop_id"
   end
 
   create_table "crops", force: :cascade do |t|
@@ -459,6 +505,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
 
   create_table "task_schedule_items", force: :cascade do |t|
     t.integer "task_schedule_id", null: false
+    t.integer "agricultural_task_id"
     t.string "task_type", null: false
     t.string "name", null: false
     t.text "description"
@@ -473,10 +520,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.decimal "time_per_sqm", precision: 8, scale: 2
     t.decimal "amount", precision: 10, scale: 3
     t.string "amount_unit"
+    t.bigint "source_agricultural_task_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "agricultural_task_id"
-    t.bigint "source_agricultural_task_id"
     t.string "status", default: "planned", null: false
     t.date "actual_date"
     t.text "actual_notes"
@@ -574,6 +620,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"
+  add_foreign_key "crop_task_schedule_blueprints", "agricultural_tasks"
+  add_foreign_key "crop_task_schedule_blueprints", "crops"
+  add_foreign_key "crop_task_templates", "agricultural_tasks"
+  add_foreign_key "crop_task_templates", "crops"
   add_foreign_key "crops", "users"
   add_foreign_key "cultivation_plan_crops", "crops"
   add_foreign_key "cultivation_plan_crops", "cultivation_plans"

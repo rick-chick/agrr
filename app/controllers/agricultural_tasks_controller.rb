@@ -5,11 +5,19 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks
   def index
-    if admin_user?
-      @agricultural_tasks = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      @agricultural_tasks = AgriculturalTask.where(user_id: current_user.id, is_reference: false).recent
-    end
+    @query = params[:query].to_s.strip
+    @selected_filter = resolve_filter(params[:filter])
+
+    scope =
+      if admin_user?
+        agricultural_tasks_for_admin(@selected_filter)
+      else
+        AgriculturalTask.where(user_id: current_user.id, is_reference: false)
+      end
+
+    scope = apply_search(scope, @query)
+
+    @agricultural_tasks = scope.recent
   end
 
   # GET /agricultural_tasks/:id
@@ -136,6 +144,37 @@ class AgriculturalTasksController < ApplicationController
     attributes[:required_tools] = normalize_required_tools(raw_required_tools)
 
     attributes
+  end
+
+  def resolve_filter(filter_param)
+    allowed_filters = %w[user reference all]
+    filter = filter_param.to_s.presence
+
+    return filter if admin_user? && allowed_filters.include?(filter)
+
+    admin_user? ? 'all' : 'user'
+  end
+
+  def agricultural_tasks_for_admin(filter)
+    case filter
+    when 'reference'
+      AgriculturalTask.where(is_reference: true)
+    when 'all'
+      AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id)
+    else
+      AgriculturalTask.where(user_id: current_user.id, is_reference: false)
+    end
+  end
+
+  def apply_search(scope, term)
+    return scope if term.blank?
+
+    sanitized = ActiveRecord::Base.sanitize_sql_like(term)
+    query = "%#{sanitized}%"
+    scope.where(
+      "agricultural_tasks.name LIKE :query OR COALESCE(agricultural_tasks.description, '') LIKE :query",
+      query: query
+    )
   end
 
   def normalize_required_tools(value)

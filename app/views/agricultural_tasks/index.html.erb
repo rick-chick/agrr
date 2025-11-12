@@ -5,6 +5,47 @@
   <%= link_to t('.new_agricultural_task'), new_agricultural_task_path, class: "btn btn-success" %>
 </div>
 
+<div class="agricultural-tasks-toolbar">
+  <div class="agricultural-task-search">
+    <%= form_with url: agricultural_tasks_path, method: :get, local: true, class: "agricultural-task-search-form" do |f| %>
+      <%= f.label :query, t('.search_label'), class: "visually-hidden" %>
+      <%= f.search_field :query,
+                         id: 'agricultural-task-search',
+                         value: @query,
+                         placeholder: t('.search_placeholder'),
+                         class: "form-control" %>
+      <%= f.hidden_field :filter, value: @selected_filter if @selected_filter.present? %>
+      <%= f.submit t('.actions.search'), class: "btn btn-primary" %>
+    <% end %>
+  </div>
+
+  <% if admin_user? %>
+    <div class="agricultural-task-filters">
+      <%= form_with url: agricultural_tasks_path, method: :get, local: true, class: "agricultural-task-filters-form" do |f| %>
+        <%= f.hidden_field :query, value: @query if @query.present? %>
+
+        <%= button_tag t('.filters.user_tasks'),
+                       type: :submit,
+                       name: :filter,
+                       value: 'user',
+                       class: ["btn", "btn-outline-primary", ("is-active" if @selected_filter == 'user')].compact.join(' ') %>
+
+        <%= button_tag t('.filters.reference_tasks'),
+                       type: :submit,
+                       name: :filter,
+                       value: 'reference',
+                       class: ["btn", "btn-outline-primary", ("is-active" if @selected_filter == 'reference')].compact.join(' ') %>
+
+        <%= button_tag t('.filters.all_tasks'),
+                       type: :submit,
+                       name: :filter,
+                       value: 'all',
+                       class: ["btn", "btn-outline-primary", ("is-active" if @selected_filter == 'all')].compact.join(' ') %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
 <% if @agricultural_tasks.any? %>
   <div class="agricultural-tasks-grid">
     <% @agricultural_tasks.each do |task| %>

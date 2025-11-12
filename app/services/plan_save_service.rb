@@ -447,6 +447,7 @@ class PlanSaveService
       existing_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
 
       if existing_task
+        copy_agricultural_task_crop_relationships(reference_task, existing_task)
         @result.add_skip(:agricultural_tasks, existing_task.id)
         user_tasks << existing_task
         @reference_agricultural_task_id_to_user_task_id[reference_task.id] = existing_task.id
@@ -488,11 +489,35 @@ class PlanSaveService
       user_crop_id = user_crop_id_for_reference_crop(task_crop.crop_id)
       next unless user_crop_id
 
-      AgriculturalTaskCrop.create!(
+      AgriculturalTaskCrop.find_or_create_by!(
         agricultural_task: new_task,
         crop_id: user_crop_id
       )
+
+      ensure_crop_task_template!(crop_id: user_crop_id, task: new_task)
     end
+  end
+
+  def ensure_crop_task_template!(crop_id:, task:)
+    crop = Crop.find_by(id: crop_id)
+    return unless crop
+
+    template = crop.crop_task_templates.find_or_initialize_by(agricultural_task_id: task.id)
+    return if template.persisted?
+
+    template.assign_attributes(
+      name: task.name,
+      description: task.description,
+      source_agricultural_task_id: task.source_agricultural_task_id,
+      time_per_sqm: task.time_per_sqm,
+      weather_dependency: task.weather_dependency,
+      required_tools: task.required_tools,
+      skill_level: task.skill_level,
+      task_type: task.task_type,
+      task_type_id: task.task_type_id,
+      is_reference: task.is_reference
+    )
+    template.save!
   end
 
   def copy_fertilizes_for_region(region)

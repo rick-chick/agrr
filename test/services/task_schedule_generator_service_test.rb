@@ -2,35 +2,28 @@ require 'test_helper'
 
 class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
   class StubScheduleGateway
-    attr_reader :received_payloads
+    attr_reader :called
 
-    def initialize(response)
-      @response = response
-      @received_payloads = []
+    def initialize
+      @called = false
     end
 
-    def generate(crop_name:, variety:, stage_requirements:, agricultural_tasks:)
-      @received_payloads << {
-        crop_name: crop_name,
-        variety: variety,
-        stage_requirements: stage_requirements,
-        agricultural_tasks: agricultural_tasks
-      }
-      @response
+    def generate(*)
+      @called = true
+      {}
     end
   end
 
   class StubFertilizeGateway
-    attr_reader :received_payloads
+    attr_reader :called
 
-    def initialize(response)
-      @response = response
-      @received_payloads = []
+    def initialize
+      @called = false
     end
 
-    def plan(crop:, use_harvest_start:)
-      @received_payloads << { crop: crop, use_harvest_start: use_harvest_start }
-      @response
+    def plan(*)
+      @called = true
+      {}
     end
   end
 
@@ -61,8 +54,36 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     @crop = create(:crop, :with_stages, user: @user, name: 'トマト', variety: 'アイコ')
     @soil_task = create(:agricultural_task, :soil_preparation)
     @planting_task = create(:agricultural_task, :planting)
-    AgriculturalTaskCrop.create!(agricultural_task: @soil_task, crop: @crop)
-    AgriculturalTaskCrop.create!(agricultural_task: @planting_task, crop: @crop)
+    create(
+      :crop_task_template,
+      crop: @crop,
+      agricultural_task: @soil_task,
+      source_agricultural_task_id: @soil_task.id,
+      name: @soil_task.name,
+      description: @soil_task.description,
+      time_per_sqm: @soil_task.time_per_sqm,
+      weather_dependency: @soil_task.weather_dependency,
+      required_tools: @soil_task.required_tools,
+      skill_level: @soil_task.skill_level,
+      task_type: @soil_task.task_type,
+      task_type_id: @soil_task.task_type_id,
+      is_reference: @soil_task.is_reference
+    )
+    create(
+      :crop_task_template,
+      crop: @crop,
+      agricultural_task: @planting_task,
+      source_agricultural_task_id: @planting_task.id,
+      name: @planting_task.name,
+      description: @planting_task.description,
+      time_per_sqm: @planting_task.time_per_sqm,
+      weather_dependency: @planting_task.weather_dependency,
+      required_tools: @planting_task.required_tools,
+      skill_level: @planting_task.skill_level,
+      task_type: @planting_task.task_type,
+      task_type_id: @planting_task.task_type_id,
+      is_reference: @planting_task.is_reference
+    )
 
     @plan_crop = create(:cultivation_plan_crop, cultivation_plan: @plan, crop: @crop, name: @crop.name, variety: @crop.variety)
     @plan_field = create(:cultivation_plan_field, cultivation_plan: @plan)
@@ -73,11 +94,47 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
                                 area: 120.0,
                                 start_date: Date.new(2025, 4, 1),
                                 completion_date: Date.new(2025, 8, 1))
+
+    create(:crop_task_schedule_blueprint,
+           crop: @crop,
+           agricultural_task: @soil_task,
+           stage_order: 1,
+           stage_name: '土壌準備',
+           gdd_trigger: BigDecimal('0.0'),
+           gdd_tolerance: BigDecimal('5.0'),
+           priority: 1,
+           source: 'agrr_schedule',
+           weather_dependency: 'low',
+           time_per_sqm: BigDecimal('0.1'))
+
+    create(:crop_task_schedule_blueprint,
+           :fertilizer,
+           :without_agricultural_task,
+           crop: @crop,
+           stage_order: 0,
+           stage_name: '定植前',
+           gdd_trigger: BigDecimal('0.0'),
+           gdd_tolerance: BigDecimal('5.0'),
+           priority: 1,
+           source_agricultural_task_id: 11_001)
+
+    create(:crop_task_schedule_blueprint,
+           :fertilizer,
+           :without_agricultural_task,
+           crop: @crop,
+           task_type: TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE,
+           stage_order: 2,
+           stage_name: '生育期',
+           gdd_trigger: BigDecimal('160.0'),
+           gdd_tolerance: BigDecimal('10.0'),
+           priority: 2,
+           amount: BigDecimal('4.0'),
+           source_agricultural_task_id: 11_002)
   end
 
-  test 'generate! creates schedules and items with mapped dates' do
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+  test 'generate! creates schedules from blueprints and skips agrr gateways' do
+    schedule_gateway = StubScheduleGateway.new
+    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = TaskScheduleGeneratorService.new(
@@ -95,48 +152,28 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     general_schedule = TaskSchedule.find_by!(cultivation_plan: @plan, field_cultivation: @field_cultivation, category: 'general')
     fertilizer_schedule = TaskSchedule.find_by!(cultivation_plan: @plan, field_cultivation: @field_cultivation, category: 'fertilizer')
 
-    general_item = general_schedule.task_schedule_items.find_by!(task_type: 'field_work')
-    assert_equal Date.new(2025, 4, 1), general_item.scheduled_date
+    general_item = general_schedule.task_schedule_items.find_by!(task_type: TaskScheduleItem::FIELD_WORK_TYPE)
+    assert_equal @soil_task, general_item.agricultural_task
     assert_equal BigDecimal('0.0'), general_item.gdd_trigger
+    assert_equal Date.new(2025, 4, 1), general_item.scheduled_date
+    assert_equal 'agrr_schedule', general_item.source
 
-    basal_item = fertilizer_schedule.task_schedule_items.order(:scheduled_date).first
-    assert_equal 'basal_fertilization', basal_item.task_type
-    assert_equal Date.new(2025, 4, 1), basal_item.scheduled_date
+    fertilizer_items = fertilizer_schedule.task_schedule_items.order(:priority)
+    assert_equal 2, fertilizer_items.count
+    assert_equal TaskScheduleItem::BASAL_FERTILIZATION_TYPE, fertilizer_items.first.task_type
+    assert_equal Date.new(2025, 4, 1), fertilizer_items.first.scheduled_date
+    assert_equal BigDecimal('160.0'), fertilizer_items.second.gdd_trigger
+    assert_equal Date.new(2025, 4, 6), fertilizer_items.second.scheduled_date
 
-    topdress_items = fertilizer_schedule.task_schedule_items.where(task_type: 'topdress_fertilization')
-    assert_equal 1, topdress_items.count
-    assert_equal Date.new(2025, 4, 6), topdress_items.first.scheduled_date
-    assert_equal BigDecimal('160.0'), topdress_items.first.gdd_trigger
+    refute schedule_gateway.called, 'schedule gateway should not be called when blueprints exist'
+    refute fertilize_gateway.called, 'fertilize gateway should not be called when blueprints exist'
   end
 
-  test 'generate! raises error when progress has no records' do
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
-    progress_gateway = StubProgressGateway.new(progress_response.merge('progress_records' => []))
+  test 'generate! raises TemplateMissingError when crop has no blueprints' do
+    @crop.crop_task_schedule_blueprints.delete_all
 
-    service = TaskScheduleGeneratorService.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
-      progress_gateway: progress_gateway
-    )
-
-    assert_raises TaskScheduleGeneratorService::ProgressDataMissingError do
-      service.generate!(cultivation_plan_id: @plan.id)
-    end
-  end
-
-  test 'generate! reuses agrr gateways per crop across multiple field cultivations' do
-    second_field = create(:cultivation_plan_field, cultivation_plan: @plan)
-    create(:field_cultivation,
-           cultivation_plan: @plan,
-           cultivation_plan_field: second_field,
-           cultivation_plan_crop: @plan_crop,
-           area: 80.0,
-           start_date: Date.new(2025, 4, 10),
-           completion_date: Date.new(2025, 8, 20))
-
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    schedule_gateway = StubScheduleGateway.new
+    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = TaskScheduleGeneratorService.new(
@@ -145,15 +182,30 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
       progress_gateway: progress_gateway
     )
 
-    service.generate!(cultivation_plan_id: @plan.id)
+    assert_raises TaskScheduleGeneratorService::TemplateMissingError do
+      service.generate!(cultivation_plan_id: @plan.id)
+    end
 
-    assert_equal 1, schedule_gateway.received_payloads.count, 'schedule gateway should be invoked once per crop'
-    assert_equal 1, fertilize_gateway.received_payloads.count, 'fertilize gateway should be invoked once per crop'
+    refute schedule_gateway.called
+    refute fertilize_gateway.called
+  end
+
+  test 'generate! raises error when progress has no records' do
+    progress_gateway = StubProgressGateway.new(progress_response.merge('progress_records' => []))
+    service = TaskScheduleGeneratorService.new(
+      schedule_gateway: StubScheduleGateway.new,
+      fertilize_gateway: StubFertilizeGateway.new,
+      progress_gateway: progress_gateway
+    )
+
+    assert_raises TaskScheduleGeneratorService::ProgressDataMissingError do
+      service.generate!(cultivation_plan_id: @plan.id)
+    end
   end
 
   test 'progress gateway receives weather data filtered from start date' do
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+    schedule_gateway = StubScheduleGateway.new
+    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = TaskScheduleGeneratorService.new(
@@ -179,13 +231,10 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
       ]
     )
 
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
     progress_gateway = StubProgressGateway.new(early_progress_response)
-
     service = TaskScheduleGeneratorService.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
+      schedule_gateway: StubScheduleGateway.new,
+      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
@@ -198,48 +247,40 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     assert_equal Date.new(2025, 4, 1), fertilizer_schedule.task_schedule_items.minimum(:scheduled_date), 'fertilizer tasks should not be scheduled before the start date'
   end
 
-  test 'generate! raises error when gdd trigger is missing' do
-    schedule_with_missing_gdd = {
-      'task_schedules' => [
-        {
-          'task_id' => @soil_task.id.to_s,
-          'stage_order' => 1,
-          'gdd_trigger' => nil
-        }
-      ]
-    }
-
-    schedule_gateway = StubScheduleGateway.new(schedule_with_missing_gdd)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
+  test 'generate! raises error when gdd trigger is missing in blueprints' do
     progress_gateway = StubProgressGateway.new(progress_response)
-
     service = TaskScheduleGeneratorService.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
+      schedule_gateway: StubScheduleGateway.new,
+      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
-    assert_raises TaskScheduleGeneratorService::GddTriggerMissingError do
-      service.generate!(cultivation_plan_id: @plan.id)
+    broken_blueprints = @crop.crop_task_schedule_blueprints.includes(:agricultural_task).ordered.to_a
+    broken_blueprints.first.gdd_trigger = nil
+
+    service.stub(:blueprints_for, ->(_crop, _cache) { broken_blueprints }) do
+      assert_raises TaskScheduleGeneratorService::GddTriggerMissingError do
+        service.generate!(cultivation_plan_id: @plan.id)
+      end
     end
   end
 
   test 'tasks respect increasing gdd triggers and are not all on start date' do
+    blueprint = CropTaskScheduleBlueprint.find_by!(crop: @crop, task_type: TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
+    blueprint.update!(gdd_trigger: BigDecimal('200.0'))
+
     staggered_progress = progress_response.merge(
       'progress_records' => [
         { 'date' => '2025-04-01T00:00:00', 'cumulative_gdd' => 0.0 },
-        { 'date' => '2025-04-03T00:00:00', 'cumulative_gdd' => 80.0 },
-        { 'date' => '2025-04-05T00:00:00', 'cumulative_gdd' => 165.0 }
+        { 'date' => '2025-04-03T00:00:00', 'cumulative_gdd' => 120.0 },
+        { 'date' => '2025-04-10T00:00:00', 'cumulative_gdd' => 205.0 }
       ]
     )
 
-    schedule_gateway = StubScheduleGateway.new(schedule_response)
-    fertilize_gateway = StubFertilizeGateway.new(fertilize_response)
     progress_gateway = StubProgressGateway.new(staggered_progress)
-
     service = TaskScheduleGeneratorService.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
+      schedule_gateway: StubScheduleGateway.new,
+      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
@@ -267,43 +308,6 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
         { 'time' => '2025-04-01T00:00:00', 'temperature_2m_mean' => 15.0 },
         { 'time' => '2025-04-05T00:00:00', 'temperature_2m_mean' => 18.0 },
         { 'time' => '2025-04-10T00:00:00', 'temperature_2m_mean' => 20.0 }
-      ]
-    }
-  end
-
-  def schedule_response
-    {
-      'task_schedules' => [
-        {
-          'task_id' => 'soil_preparation',
-          'stage_order' => 1,
-          'gdd_trigger' => 0.0,
-          'gdd_tolerance' => 10.0,
-          'priority' => 1,
-          'description' => '土壌準備',
-          'weather_dependency' => 'low'
-        }
-      ]
-    }
-  end
-
-  def fertilize_response
-    {
-      'schedule' => [
-        {
-          'task_id' => 'fertilize',
-          'stage_name' => '定植前',
-          'stage_order' => 0,
-          'gdd_trigger' => 0.0,
-          'amount_g_per_m2' => 3.14
-        },
-        {
-          'task_id' => 'fertilize',
-          'stage_name' => '生育期',
-          'stage_order' => 2,
-          'gdd_trigger' => 160.0,
-          'amount_g_per_m2' => 4.0
-        }
       ]
     }
   end

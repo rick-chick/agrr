@@ -17,6 +17,8 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
       timezone: "Asia/Tokyo"
     )
 
+    ensure_weather_data(@weather_location)
+
     @farm = Farm.create!(
       user: @user,
       name: "ドラッグドロップ農場",
@@ -71,22 +73,6 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
       variety: @crop.variety,
       area_per_unit: @crop.area_per_unit,
       revenue_per_area: @crop.revenue_per_area
-    )
-
-    FieldCultivation.create!(
-      cultivation_plan: @plan,
-      cultivation_plan_field: @plan_field,
-      cultivation_plan_crop: @plan_crop,
-      start_date: Date.new(2025, 3, 1),
-      completion_date: Date.new(2025, 6, 30),
-      cultivation_days: 121,
-      area: 50.0,
-      estimated_cost: 10000.0,
-      optimization_result: {
-        revenue: 50000.0,
-        profit: 40000.0,
-        accumulated_gdd: 1500.0
-      }
     )
 
     @session = Session.create_for_user(@user)
@@ -215,6 +201,38 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
   rescue Timeout::Error
     browser_logs = page.driver.browser.manage.logs.get(:browser)
     flunk "add_cropリクエストが送信されませんでした。ブラウザログ: #{browser_logs}"
+  end
+
+  def ensure_weather_data(weather_location)
+    existing_count = WeatherDatum.where(weather_location: weather_location).count
+    return if existing_count >= 6000
+
+    start_date = Date.current - 20.years
+    end_date = Date.current
+    records = []
+
+    (start_date..end_date).each do |date|
+      records << {
+        weather_location_id: weather_location.id,
+        date: date,
+        temperature_max: 26.0,
+        temperature_min: 14.0,
+        temperature_mean: 20.0,
+        precipitation: 2.0,
+        sunshine_hours: 8.0,
+        wind_speed: 3.0,
+        weather_code: 1,
+        created_at: Time.current,
+        updated_at: Time.current
+      }
+
+      if records.length >= 1000
+        WeatherDatum.insert_all(records)
+        records.clear
+      end
+    end
+
+    WeatherDatum.insert_all(records) if records.any?
   end
 end
 

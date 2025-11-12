@@ -1,3 +1,51 @@
+    agricultural_tasks:
+      flash:
+        template_created: "Template created from the selected task."
+        template_already_exists: "A template for this task already exists."
+        no_permission: "You do not have permission."
+        redirect_to_create: "To create a new task, go to the task creation page."
+        template_updated: "Template updated."
+        template_deleted: "Template deleted."
+      index:
+        title: "Task Templates"
+        new_agricultural_task: "Add Template"
+        reference_task: "Reference Template"
+        back_to_crop: "Back to Crop"
+        actions:
+          show: "Details"
+          edit: "Edit"
+          delete: "Delete"
+          delete_confirm: "Delete this template?"
+        empty:
+          icon: "🔧"
+          title: "No templates yet"
+          description: "Add templates to reuse them when creating schedules."
+          button: "Add Template"
+      new:
+        title: "Add Task Template"
+        associate_existing_task: "Create Template from Existing Task"
+        select_existing_task: "Select a task to convert"
+        select_task_placeholder: "Select a task"
+        associate_button: "Create Template"
+        no_unassociated_tasks: "No available tasks to template. Please create a new task."
+        create_new_task: "Create New Task"
+        create_new_task_description: "If you need a brand-new task, open the task creation page."
+        go_to_create: "Go to Task Creation"
+        back_to_list: "Back to List"
+
+      edit:
+        title: "Edit Template"
+        back_to_list: "Back to List"
+        form:
+          name_label: "Template Name"
+          description_label: "Description"
+          time_per_sqm_label: "Time per sqm (h)"
+          weather_dependency_label: "Weather Dependency"
+          skill_level_label: "Skill Level"
+          required_tools_label: "Required Tools"
+          required_tools_hint: "Enter one per line"
+          submit_update: "Update Template"
+
 us:
   crops:
     form:
@@ -131,10 +179,10 @@ us:
       pest_family_label: "Family"
       pest_order_label: "Order"
       pest_occurrence_label: "Season"
-      agricultural_tasks_title: "Agricultural Tasks"
-      no_agricultural_tasks_description: "No agricultural tasks registered yet."
-      manage_agricultural_tasks: "Manage Agricultural Tasks"
-      reference_task: "Reference Task"
+      agricultural_tasks_title: "Task Templates"
+      no_agricultural_tasks_description: "No task templates registered yet."
+      manage_agricultural_tasks: "Manage Task Templates"
+      reference_task: "Reference Template"
       stages_title: "Growth Stages"
       stage_order: "Order"
       stage_name: "Stage Name"
@@ -172,7 +220,7 @@ us:
       gdd_tolerance: "GDD Tolerance"
       origin_ai_label: "AI"
       origin_manual_label: "Manual"
-      manual_task_type_label: "Registered Task"
+      manual_task_type_label: "Available Templates"
       manual_task_count: "%{count} items"
       source_reference_label: "Reference Data"
       source_user_label: "User Created"

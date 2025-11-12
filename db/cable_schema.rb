@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_11_091500) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -49,13 +49,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.index ["crop_id"], name: "index_agricultural_task_crops_on_crop_id"
   end
 
-  create_table "agricultural_task_types", force: :cascade do |t|
-    t.string "key", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_agricultural_task_types_on_key", unique: true
-  end
-
   create_table "agricultural_tasks", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -68,16 +61,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "region"
-    t.string "task_type"
-    t.integer "created_from"
-    t.integer "task_type_id"
     t.integer "source_agricultural_task_id"
+    t.string "task_type"
+    t.integer "task_type_id"
     t.index ["is_reference"], name: "index_agricultural_tasks_on_is_reference"
     t.index ["name"], name: "index_agricultural_tasks_on_name", where: "is_reference = true"
     t.index ["region"], name: "index_agricultural_tasks_on_region"
     t.index ["task_type"], name: "index_agricultural_tasks_on_task_type"
     t.index ["task_type_id"], name: "index_agricultural_tasks_on_task_type_id"
-    t.index ["user_id", "created_from"], name: "index_agricultural_tasks_on_user_id_and_created_from"
     t.index ["user_id", "name"], name: "index_agricultural_tasks_on_user_id_and_name", unique: true, where: "is_reference = false"
     t.index ["user_id", "source_agricultural_task_id"], name: "idx_on_user_id_source_agricultural_task_id_87cb4ef7da", unique: true, where: "source_agricultural_task_id IS NOT NULL"
     t.index ["user_id"], name: "index_agricultural_tasks_on_user_id"
@@ -103,6 +94,52 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.index ["crop_id"], name: "index_crop_stages_on_crop_id"
   end
 
+  create_table "crop_task_schedule_blueprints", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.integer "agricultural_task_id"
+    t.bigint "source_agricultural_task_id"
+    t.integer "stage_order", null: false
+    t.string "stage_name"
+    t.decimal "gdd_trigger", precision: 10, scale: 2, null: false
+    t.decimal "gdd_tolerance", precision: 10, scale: 2
+    t.string "task_type", null: false
+    t.string "source", null: false
+    t.integer "priority", null: false
+    t.decimal "amount", precision: 10, scale: 3
+    t.string "amount_unit"
+    t.text "description"
+    t.string "weather_dependency"
+    t.decimal "time_per_sqm", precision: 8, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agricultural_task_id"], name: "index_crop_task_schedule_blueprints_on_agricultural_task_id"
+    t.index ["crop_id", "stage_order", "agricultural_task_id"], name: "idx_on_crop_id_stage_order_agricultural_task_id_1de52a2f7e", unique: true, where: "agricultural_task_id IS NOT NULL"
+    t.index ["crop_id", "stage_order", "source_agricultural_task_id"], name: "index_blueprints_on_crop_stage_and_source_task", unique: true, where: "agricultural_task_id IS NULL AND source_agricultural_task_id IS NOT NULL"
+    t.index ["crop_id"], name: "index_crop_task_schedule_blueprints_on_crop_id"
+  end
+
+  create_table "crop_task_templates", force: :cascade do |t|
+    t.integer "crop_id", null: false
+    t.bigint "source_agricultural_task_id"
+    t.string "name", null: false
+    t.text "description"
+    t.float "time_per_sqm"
+    t.string "weather_dependency"
+    t.text "required_tools"
+    t.string "skill_level"
+    t.string "task_type"
+    t.integer "task_type_id"
+    t.boolean "is_reference", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "agricultural_task_id"
+    t.index ["agricultural_task_id"], name: "index_crop_task_templates_on_agricultural_task_id"
+    t.index ["crop_id", "agricultural_task_id"], name: "idx_crop_task_templates_on_crop_and_agricultural_task", unique: true
+    t.index ["crop_id", "name"], name: "index_crop_task_templates_on_crop_id_and_name", unique: true
+    t.index ["crop_id", "source_agricultural_task_id"], name: "idx_crop_task_templates_on_crop_and_source", unique: true
+    t.index ["crop_id"], name: "index_crop_task_templates_on_crop_id"
+  end
+
   create_table "crops", force: :cascade do |t|
     t.integer "user_id"
     t.string "name", null: false
@@ -114,10 +151,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.float "revenue_per_area"
     t.text "groups"
     t.string "region"
-    t.integer "created_from"
     t.integer "source_crop_id"
     t.index ["region"], name: "index_crops_on_region"
-    t.index ["user_id", "created_from"], name: "index_crops_on_user_id_and_created_from"
     t.index ["user_id", "source_crop_id"], name: "index_crops_on_user_id_and_source_crop_id", unique: true, where: "source_crop_id IS NOT NULL"
     t.index ["user_id"], name: "index_crops_on_user_id"
   end
@@ -185,7 +220,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.string "resource_id", null: false
     t.json "snapshot", default: {}, null: false
     t.json "metadata", default: {}, null: false
-    t.string "deleted_by_id"
+    t.integer "deleted_by_id"
     t.datetime "expires_at", null: false
     t.string "state", default: "scheduled", null: false
     t.datetime "restored_at"
@@ -224,11 +259,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.boolean "is_reference", default: false, null: false
     t.string "region"
     t.text "predicted_weather_data"
-    t.integer "created_from"
     t.integer "source_farm_id"
     t.index ["is_reference"], name: "index_farms_on_is_reference", where: "is_reference = true"
     t.index ["region"], name: "index_farms_on_region"
-    t.index ["user_id", "created_from"], name: "index_farms_on_user_id_and_created_from"
     t.index ["user_id", "name"], name: "index_farms_on_user_id_and_name", unique: true
     t.index ["user_id", "source_farm_id"], name: "index_farms_on_user_id_and_source_farm_id", unique: true, where: "source_farm_id IS NOT NULL"
     t.index ["user_id"], name: "index_farms_on_user_id"
@@ -248,11 +281,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.float "package_size"
     t.integer "user_id"
     t.string "region"
-    t.integer "created_from"
     t.integer "source_fertilize_id"
     t.index ["name"], name: "index_fertilizes_on_name", unique: true
     t.index ["region"], name: "index_fertilizes_on_region"
-    t.index ["user_id", "created_from"], name: "index_fertilizes_on_user_id_and_created_from"
     t.index ["user_id", "source_fertilize_id"], name: "index_fertilizes_on_user_id_and_source_fertilize_id", unique: true, where: "source_fertilize_id IS NOT NULL"
     t.index ["user_id"], name: "index_fertilizes_on_user_id"
   end
@@ -321,7 +352,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.integer "user_id"
     t.boolean "is_reference", default: false, null: false
     t.string "region"
-    t.integer "created_from"
     t.integer "source_interaction_rule_id"
     t.index ["is_reference"], name: "index_interaction_rules_on_is_reference"
     t.index ["region"], name: "index_interaction_rules_on_region"
@@ -329,7 +359,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.index ["rule_type"], name: "index_interaction_rules_on_rule_type"
     t.index ["source_group"], name: "index_interaction_rules_on_source_group"
     t.index ["target_group"], name: "index_interaction_rules_on_target_group"
-    t.index ["user_id", "created_from"], name: "index_interaction_rules_on_user_id_and_created_from"
     t.index ["user_id", "is_reference"], name: "index_interaction_rules_on_user_id_and_is_reference"
     t.index ["user_id", "source_interaction_rule_id"], name: "idx_on_user_id_source_interaction_rule_id_0cbec4be31", unique: true, where: "source_interaction_rule_id IS NOT NULL"
     t.index ["user_id"], name: "index_interaction_rules_on_user_id"
@@ -344,8 +373,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.datetime "updated_at", null: false
     t.string "region"
     t.boolean "is_reference", default: true, null: false
-    t.integer "created_from"
-    t.index ["crop_stage_id", "created_from"], name: "index_nutrient_requirements_on_crop_stage_id_and_created_from"
     t.index ["crop_stage_id"], name: "index_nutrient_requirements_on_crop_stage_id"
     t.index ["is_reference"], name: "index_nutrient_requirements_on_is_reference"
     t.index ["region"], name: "index_nutrient_requirements_on_region"
@@ -416,13 +443,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.integer "pest_id", null: false
     t.integer "user_id"
     t.string "region"
-    t.integer "created_from"
     t.integer "source_pesticide_id"
     t.index ["crop_id"], name: "index_pesticides_on_crop_id"
     t.index ["is_reference"], name: "index_pesticides_on_is_reference"
     t.index ["pest_id"], name: "index_pesticides_on_pest_id"
     t.index ["region"], name: "index_pesticides_on_region"
-    t.index ["user_id", "created_from"], name: "index_pesticides_on_user_id_and_created_from"
     t.index ["user_id", "source_pesticide_id"], name: "index_pesticides_on_user_id_and_source_pesticide_id", unique: true, where: "source_pesticide_id IS NOT NULL"
     t.index ["user_id"], name: "index_pesticides_on_user_id"
   end
@@ -439,11 +464,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.string "region"
-    t.integer "created_from"
     t.integer "source_pest_id"
     t.index ["is_reference"], name: "index_pests_on_is_reference"
     t.index ["region"], name: "index_pests_on_region"
-    t.index ["user_id", "created_from"], name: "index_pests_on_user_id_and_created_from"
     t.index ["user_id", "source_pest_id"], name: "index_pests_on_user_id_and_source_pest_id", unique: true, where: "source_pest_id IS NOT NULL"
     t.index ["user_id"], name: "index_pests_on_user_id"
   end
@@ -458,16 +481,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["session_id"], name: "index_sessions_on_session_id", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
-  end
-
-  create_table "solid_cable_messages", force: :cascade do |t|
-    t.binary "channel", limit: 1024, null: false
-    t.binary "payload", limit: 536870912, null: false
-    t.datetime "created_at", null: false
-    t.integer "channel_hash", limit: 8, null: false
-    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
-    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
-    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
   create_table "solid_cache_entries", force: :cascade do |t|
@@ -492,6 +505,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
 
   create_table "task_schedule_items", force: :cascade do |t|
     t.integer "task_schedule_id", null: false
+    t.integer "agricultural_task_id"
     t.string "task_type", null: false
     t.string "name", null: false
     t.text "description"
@@ -506,10 +520,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
     t.decimal "time_per_sqm", precision: 8, scale: 2
     t.decimal "amount", precision: 10, scale: 3
     t.string "amount_unit"
+    t.bigint "source_agricultural_task_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "agricultural_task_id"
-    t.bigint "source_agricultural_task_id"
     t.string "status", default: "planned", null: false
     t.date "actual_date"
     t.text "actual_notes"
@@ -604,10 +617,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_09_160000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agricultural_task_crops", "agricultural_tasks"
   add_foreign_key "agricultural_task_crops", "crops"
-  add_foreign_key "agricultural_tasks", "agricultural_task_types", column: "task_type_id"
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"
+  add_foreign_key "crop_task_schedule_blueprints", "agricultural_tasks"
+  add_foreign_key "crop_task_schedule_blueprints", "crops"
+  add_foreign_key "crop_task_templates", "agricultural_tasks"
+  add_foreign_key "crop_task_templates", "crops"
   add_foreign_key "crops", "users"
   add_foreign_key "cultivation_plan_crops", "crops"
   add_foreign_key "cultivation_plan_crops", "cultivation_plans"

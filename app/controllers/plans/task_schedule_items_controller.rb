@@ -11,10 +11,13 @@ module Plans
 
     def create
       item = TaskScheduleItem.transaction do
-        attrs = create_params
+        raw_params = create_params
+        attrs = raw_params.to_h.symbolize_keys
         field_cultivation = @cultivation_plan.field_cultivations.find(attrs[:field_cultivation_id])
         category = 'general'
         validate_crop_selection!(field_cultivation, attrs[:cultivation_plan_crop_id])
+        template = find_task_template(attrs[:crop_task_template_id])
+        validate_template!(field_cultivation, template)
 
         schedule = field_cultivation.task_schedules.find_or_create_by!(
           category: category,
@@ -25,7 +28,9 @@ module Plans
           record.generated_at = Time.zone.now
         end
 
-        schedule.task_schedule_items.create!(build_create_attributes(attrs))
+        schedule.task_schedule_items.create!(
+          build_create_attributes(attrs.except(:crop_task_template_id), template: template)
+        )
       end
 
       render json: serialize_item(item), status: :created
@@ -115,6 +120,7 @@ module Plans
         :name,
         :cultivation_plan_crop_id,
         :agricultural_task_id,
+        :crop_task_template_id,
         :task_type,
         :description,
         :scheduled_date,
@@ -151,21 +157,33 @@ module Plans
       permitted
     end
 
-    def build_create_attributes(raw_params)
+    def build_create_attributes(raw_params, template: nil)
+      params = raw_params.to_h.symbolize_keys
+
+      name = params[:name].presence || template&.name
+      ensure_name_present!(name)
+
+      task_type = if template
+                    template.task_type || TaskScheduleItem::FIELD_WORK_TYPE
+                  else
+                    params[:task_type].presence || TaskScheduleItem::FIELD_WORK_TYPE
+                  end
+
       {
-        task_type: raw_params[:task_type] || TaskScheduleItem::FIELD_WORK_TYPE,
-        name: raw_params[:name],
-        description: raw_params[:description],
-        scheduled_date: raw_params[:scheduled_date],
-        stage_name: raw_params[:stage_name],
-        stage_order: raw_params[:stage_order],
-        priority: raw_params[:priority],
-        source: 'manual_entry',
-        weather_dependency: raw_params[:weather_dependency],
-        time_per_sqm: raw_params[:time_per_sqm],
-        amount: raw_params[:amount],
-        amount_unit: raw_params[:amount_unit],
-        agricultural_task_id: raw_params[:agricultural_task_id].presence
+        task_type: task_type,
+        name: name,
+        description: params[:description].presence || template&.description,
+        scheduled_date: params[:scheduled_date],
+        stage_name: params[:stage_name],
+        stage_order: params[:stage_order],
+        priority: params[:priority],
+        source: template ? 'template_entry' : 'manual_entry',
+        weather_dependency: params[:weather_dependency].presence || template&.weather_dependency,
+        time_per_sqm: params[:time_per_sqm].presence || template&.time_per_sqm,
+        amount: params[:amount],
+        amount_unit: params[:amount_unit],
+        agricultural_task_id: params[:agricultural_task_id].presence || template&.agricultural_task_id,
+        source_agricultural_task_id: template_source_agricultural_task_id(template)
       }
     end
 
@@ -180,6 +198,21 @@ module Plans
       record = TaskScheduleItem.new
       record.errors.add(:base, I18n.t('plans.task_schedules.detail.actions.crop_required'))
       raise ActiveRecord::RecordInvalid, record
+    end
+
+    def validate_template!(field_cultivation, template)
+      return unless template
+
+      crop_id = field_cultivation&.cultivation_plan_crop&.crop_id
+      if crop_id.blank? || template.crop_id != crop_id
+        record = TaskScheduleItem.new
+        message = I18n.t(
+          'controllers.plans.task_schedule_items.errors.invalid_template',
+          default: '選択した作業テンプレートは利用できません'
+        )
+        record.errors.add(:base, message)
+        raise ActiveRecord::RecordInvalid, record
+      end
     end
 
     def build_update_attributes(raw_params)
@@ -232,6 +265,30 @@ module Plans
       errors['base'] = Array(errors['base']).presence || [fallback_message]
       errors.delete_if { |_attribute, messages| messages.empty? }
       errors.presence || { 'base' => [fallback_message] }
+    end
+
+    def find_task_template(template_id)
+      return nil if template_id.blank?
+
+      CropTaskTemplate.includes(:agricultural_task, :crop).find(template_id)
+    end
+
+    def ensure_name_present!(name)
+      return if name.present?
+
+      record = TaskScheduleItem.new
+      message = I18n.t(
+        'plans.task_schedules.detail.actions.name_required',
+        default: '作業名を入力してください'
+      )
+      record.errors.add(:name, message)
+      raise ActiveRecord::RecordInvalid, record
+    end
+
+    def template_source_agricultural_task_id(template)
+      return nil unless template
+
+      template.source_agricultural_task_id.presence || template.agricultural_task_id
     end
   end
 end

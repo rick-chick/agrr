@@ -19,9 +19,9 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     get agricultural_tasks_path
 
     assert_response :success
-    assert_select '.crop-name', text: @user_task.name
-    assert_select '.crop-name', text: @reference_task.name, count: 0
-    assert_select '.crop-name', text: @admin_task.name, count: 0
+    assert_select '.agricultural-task-name', text: @user_task.name
+    assert_select '.agricultural-task-name', text: @reference_task.name, count: 0
+    assert_select '.agricultural-task-name', text: @admin_task.name, count: 0
   end
 
   test '管理者は参照作業と自分の作業を一覧表示できる' do
@@ -30,8 +30,8 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     get agricultural_tasks_path
 
     assert_response :success
-    assert_select '.crop-name', text: @reference_task.name
-    assert_select '.crop-name', text: @admin_task.name
+    assert_select '.agricultural-task-name', text: @reference_task.name
+    assert_select '.agricultural-task-name', text: @admin_task.name
   end
 
   test '一般ユーザーは新規作業フォームに必要項目を表示できる' do

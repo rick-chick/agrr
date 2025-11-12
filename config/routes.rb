@@ -46,8 +46,11 @@ Rails.application.routes.draw do
 
     # Crops (HTML) routes
     resources :crops do
+      member do
+        post :generate_task_schedule_blueprints
+      end
       resources :pests, controller: 'crops/pests', except: [:destroy]
-      resources :agricultural_tasks, controller: 'crops/agricultural_tasks', only: [:index, :new, :create]
+      resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
     end
 
     # Fertilizes (HTML) routes

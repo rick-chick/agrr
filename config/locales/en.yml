@@ -5,6 +5,7 @@ en:
         errors:
           cancel_failed: "We couldn't cancel the scheduled task. Please try again."
           undo_failed: "We couldn't prepare the undo action: %{message}"
+          invalid_template: "The selected task template cannot be used for this field."
   # JavaScript messages
   js:
     gantt:

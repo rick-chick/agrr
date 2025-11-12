@@ -62,40 +62,76 @@
       <span class="gantt-title-icon">📊</span>
       <span class="gantt-title-text"><%= gantt_title %></span>
     </h2>
-    
-    <%# 作物パレット（public_plansの場合のみ表示） %>
-    <% if show_crop_palette %>
-      <%= render 'shared/crop_palette', 
-                 cultivation_plan: cultivation_plan,
-                 crop_palette_toggle_label: crop_palette_toggle_label,
-                 crop_palette_title: crop_palette_title,
-                 crop_palette_in_use_label: crop_palette_in_use_label %>
-    <% end %>
+    <div class="gantt-header-actions">
+      <div class="gantt-controls" data-gantt-controls="true">
+        <button type="button"
+                class="gantt-control-button"
+                data-gantt-control="zoom-in">
+          <span class="gantt-control-icon" aria-hidden="true">➕</span>
+          <span class="gantt-control-label"><%= t('plans.gantt.controls.zoom_in') %></span>
+        </button>
+        <button type="button"
+                class="gantt-control-button"
+                data-gantt-control="zoom-out">
+          <span class="gantt-control-icon" aria-hidden="true">➖</span>
+          <span class="gantt-control-label"><%= t('plans.gantt.controls.zoom_out') %></span>
+        </button>
+        <button type="button"
+                class="gantt-control-button"
+                data-gantt-control="toggle-palette"
+                aria-pressed="false">
+          <span class="gantt-control-icon" aria-hidden="true">🌱</span>
+          <span class="gantt-control-label"><%= t('plans.gantt.controls.toggle_palette') %></span>
+        </button>
+      </div>
+      
+      <%# 作物パレット（public_plansの場合のみ表示） %>
+      <% if show_crop_palette %>
+        <%= render 'shared/crop_palette', 
+                   cultivation_plan: cultivation_plan,
+                   crop_palette_toggle_label: crop_palette_toggle_label,
+                   crop_palette_title: crop_palette_title,
+                   crop_palette_in_use_label: crop_palette_in_use_label %>
+      <% end %>
+    </div>
   </div>
-  
-  <%# Frappe Gantt コンテナ %>
-  <div id="gantt-chart-container"
-       data-cultivations="<%= cultivation_data.to_json %>"
-       data-fields="<%= fields_data.to_json %>"
-       data-plan-start-date="<%= plan_start_date.to_s %>"
-       data-plan-end-date="<%= plan_end_date.to_s %>"
-       data-cultivation-plan-id="<%= cultivation_plan.id %>"
-       data-plan-type="<%= plan_type %>"
-       <%# API エンドポイント（呼び出し側で設定） %>
-       data-data-url="<%= data_url %>"
-       data-adjust-url="<%= adjust_url %>"
-       data-add-field-url="<%= add_field_url %>"
-       data-remove-field-url="<%= remove_field_url %>"
-       data-add-crop-url="<%= add_crop_url %>"
-       data-optimization-channel="<%= optimization_channel %>"
-       data-api-endpoint-missing="<%= t('js.gantt.api_endpoint_missing') %>"
-       data-data-url-missing="<%= t('js.gantt.data_url_missing') %>"
-       data-adjust-url-missing="<%= t('js.gantt.adjust_url_missing') %>"
-       data-prompt-field-name="<%= t('js.gantt.prompt_field_name') %>"
-       data-prompt-field-area="<%= t('js.gantt.prompt_field_area') %>"
-       data-adding-field="<%= t('js.gantt.adding_field') %>"
-       data-deleting-field="<%= t('js.gantt.deleting_field') %>"
-       data-error-occurred="<%= t('js.gantt.error_occurred') %>">
+
+  <div id="gantt-loading-indicator" class="gantt-loading-indicator" role="status" aria-live="polite">
+    <span class="gantt-loading-spinner" aria-hidden="true"></span>
+    <span class="gantt-loading-text"><%= t('plans.gantt.loading.heavy') %></span>
+  </div>
+
+  <div id="gantt-chart-scroll-area" class="gantt-chart-scroll-area">
+    <div class="gantt-chart-canvas">
+      <div id="gantt-chart-container"
+           data-cultivations="<%= cultivation_data.to_json %>"
+           data-fields="<%= fields_data.to_json %>"
+           data-plan-start-date="<%= plan_start_date.to_s %>"
+           data-plan-end-date="<%= plan_end_date.to_s %>"
+           data-cultivation-plan-id="<%= cultivation_plan.id %>"
+           data-plan-type="<%= plan_type %>"
+           <%# API エンドポイント（呼び出し側で設定） %>
+           data-data-url="<%= data_url %>"
+           data-adjust-url="<%= adjust_url %>"
+           data-add-field-url="<%= add_field_url %>"
+           data-remove-field-url="<%= remove_field_url %>"
+           data-add-crop-url="<%= add_crop_url %>"
+           data-optimization-channel="<%= optimization_channel %>"
+           data-api-endpoint-missing="<%= t('js.gantt.api_endpoint_missing') %>"
+           data-data-url-missing="<%= t('js.gantt.data_url_missing') %>"
+           data-adjust-url-missing="<%= t('js.gantt.adjust_url_missing') %>"
+           data-prompt-field-name="<%= t('js.gantt.prompt_field_name') %>"
+           data-prompt-field-area="<%= t('js.gantt.prompt_field_area') %>"
+           data-adding-field="<%= t('js.gantt.adding_field') %>"
+           data-deleting-field="<%= t('js.gantt.deleting_field') %>"
+           data-error-occurred="<%= t('js.gantt.error_occurred') %>">
+      </div>
+    </div>
+  </div>
+
+  <div id="gantt-chart-fallback" class="gantt-chart-fallback" hidden>
+    <span class="gantt-fallback-icon" aria-hidden="true">📱</span>
+    <span class="gantt-fallback-text"><%= t('plans.gantt.fallback.message') %></span>
   </div>
   
   <%# 詳細パネル（作物クリック時に表示） %>

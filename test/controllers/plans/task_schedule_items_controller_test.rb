@@ -24,6 +24,22 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
                    scheduled_date: Date.current + 3.days,
                    name: '灌水')
 
+    create(
+      :crop_task_template,
+      crop: @field_cultivation.cultivation_plan_crop.crop,
+      agricultural_task: @agricultural_task,
+      source_agricultural_task_id: @agricultural_task.id,
+      name: @agricultural_task.name,
+      description: @agricultural_task.description,
+      time_per_sqm: @agricultural_task.time_per_sqm,
+      weather_dependency: @agricultural_task.weather_dependency,
+      required_tools: @agricultural_task.required_tools,
+      skill_level: @agricultural_task.skill_level,
+      task_type: @agricultural_task.task_type,
+      task_type_id: @agricultural_task.task_type_id,
+      is_reference: @agricultural_task.is_reference
+    )
+
     @field_cultivation.cultivation_plan_crop.crop.agricultural_tasks << @agricultural_task
   end
 
@@ -95,6 +111,34 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Date.current + 6.days, created.scheduled_date
     assert_equal 'planned', created.read_attribute('status')
     assert_equal @agricultural_task.id, created.agricultural_task_id
+  end
+
+  test 'ユーザーは作業テンプレートを適用して予定を追加できる' do
+    template = @field_cultivation.cultivation_plan_crop.crop.crop_task_templates.first
+
+    assert_difference('TaskScheduleItem.count', 1) do
+      post plan_task_schedule_items_path(@plan),
+           params: {
+             task_schedule_item: {
+               field_cultivation_id: @field_cultivation.id,
+               cultivation_plan_crop_id: @field_cultivation.cultivation_plan_crop_id,
+               crop_task_template_id: template.id,
+               scheduled_date: (Date.current + 7.days).iso8601
+             }
+           },
+           headers: @headers,
+           as: :json
+    end
+
+    assert_response :created
+
+    created = TaskScheduleItem.find_by(source: 'template_entry')
+    assert_equal template.name, created.name
+    assert_equal template.agricultural_task_id, created.agricultural_task_id
+    assert_equal 'template_entry', created.source
+    assert_equal template.weather_dependency, created.weather_dependency
+    assert_equal template.time_per_sqm&.to_d, created.time_per_sqm
+    assert_equal template.source_agricultural_task_id || template.agricultural_task_id, created.source_agricultural_task_id
   end
 
   test '休閑では作物選択が必要で未指定は422' do

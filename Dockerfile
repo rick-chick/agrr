@@ -10,9 +10,23 @@ RUN apt-get update -qq && apt-get install -y \
     curl \
     gnupg \
     wget \
+    chromium \
+    chromium-driver \
+    fonts-liberation \
+    libatk-bridge2.0-0 \
+    libasound2 \
+    libgbm1 \
+    libgconf-2-4 \
+    libgtk-3-0 \
+    libnss3 \
+    libxss1 \
+    libxi6 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CHROME_BIN=/usr/bin/chromium \
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Install zlib 1.2.13 (compatible with agrr binary built on host)
 # The agrr binary was built with zlib 1.2.x and is incompatible with zlib 1.3.x

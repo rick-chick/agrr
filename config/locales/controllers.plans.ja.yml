@@ -9,3 +9,4 @@ ja:
             parameter_missing: "リクエストに必要なパラメーターが不足しています"
             cancel_failed: "作業予定のキャンセルに失敗しました。もう一度お試しください。"
             undo_failed: "削除の取り消しを準備できませんでした: %{message}"
+            invalid_template: "選択した作業テンプレートはこの圃場では使用できません"

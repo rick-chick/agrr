@@ -7,6 +7,10 @@
   z-index: 1000;
 }
 
+.crop-palette-container.is-hidden-by-control {
+  display: none !important;
+}
+
 /* トグルボタン */
 .crop-palette-toggle-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'json'
-
 module Api
   module V1
     class FertilizesController < Api::V1::BaseController
@@ -23,9 +20,8 @@ module Api
         end
 
         begin
-          # 1. agrrコマンドで肥料情報を取得（常に実行して最新情報を取得）
           Rails.logger.info "🤖 [AI Fertilize] Querying fertilize info for: #{fertilize_name}"
-          fertilize_info = fetch_fertilize_info_from_agrr(fertilize_name)
+          fertilize_info = ai_gateway.fetch_for_create(name: fertilize_name)
 
           # エラーチェック（エラー時は success: false が返る）
           if fertilize_info['success'] == false
@@ -35,8 +31,7 @@ module Api
             return render json: { error: error_msg }, status: status_code
           end
 
-          # 正常時は fertilize がトップレベルに存在
-          fertilize_data = fertilize_info['fertilize']
+          fertilize_data = normalize_fertilize_payload(fertilize_info)
           
           unless fertilize_data
             return render json: { error: I18n.t('api.errors.fertilizes.invalid_payload') }, status: :unprocessable_entity
@@ -121,7 +116,7 @@ module Api
         begin
           # agrrコマンドで肥料情報を取得
           Rails.logger.info "🤖 [AI Fertilize] Querying fertilize info for update: #{fertilize_name} (ID: #{@fertilize.id})"
-          fertilize_info = fetch_fertilize_info_from_agrr(fertilize_name)
+          fertilize_info = ai_gateway.fetch_for_update(id: @fertilize.id, name: fertilize_name)
 
           # エラーチェック
           if fertilize_info['success'] == false
@@ -130,7 +125,7 @@ module Api
             return render json: { error: error_msg }, status: status_code
           end
 
-          fertilize_data = fertilize_info['fertilize']
+          fertilize_data = normalize_fertilize_payload(fertilize_info)
           unless fertilize_data
             return render json: { error: I18n.t('api.errors.fertilizes.invalid_payload') }, status: :unprocessable_entity
           end
@@ -191,6 +186,52 @@ module Api
         numeric_value == 0.0 && !value.to_s.match?(/\d/) ? nil : numeric_value
       end
 
+      def normalize_fertilize_payload(info)
+        data = info['fertilize']
+        data = data.deep_dup if data.respond_to?(:deep_dup)
+
+        unless data
+          direct_keys = info.slice('name', 'description', 'package_size', 'n', 'p', 'k', 'npk')
+          return nil if direct_keys.blank?
+
+          data = direct_keys.compact
+          if data['n'].nil? && data['npk'].present?
+            npk_values = parse_npk_string(data.delete('npk'))
+            data.merge!(npk_values)
+          else
+            data.delete('npk')
+          end
+        end
+
+        data['package_size'] = parse_package_size(data['package_size'])
+        data['n'] = normalize_nutrient_value(data['n'])
+        data['p'] = normalize_nutrient_value(data['p'])
+        data['k'] = normalize_nutrient_value(data['k'])
+
+        data
+      end
+
+      def parse_npk_string(value)
+        return {} unless value.present?
+
+        numbers = value.to_s.split(/[-\/\\]/).map { |part| part.strip.presence }.compact
+        n_value = numbers[0]&.to_f
+        p_value = numbers[1]&.to_f
+        k_value = numbers[2]&.to_f
+
+        {
+          'n' => normalize_nutrient_value(n_value),
+          'p' => normalize_nutrient_value(p_value),
+          'k' => normalize_nutrient_value(k_value)
+        }
+      end
+
+      def normalize_nutrient_value(value)
+        return nil if value.nil?
+        numeric = value.to_f
+        numeric.zero? ? nil : numeric
+      end
+
       def set_fertilize
         @fertilize = Fertilize.find(params[:id])
       rescue ActiveRecord::RecordNotFound
@@ -203,131 +244,12 @@ module Api
         @update_interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(gateway)
       end
 
-      def fetch_fertilize_info_from_agrr(fertilize_name, max_retries: 3)
-        # AgrrServiceにfertilizeメソッドがない場合、直接コマンドを実行する必要がある
-        # ただし、base_gateway_v2にはfertilizeコマンドの処理がないため、
-        # 一時的にagrr_client経由で実行する
-        agrr_service = AgrrService.new
-        
-        attempt = 0
-        last_error = nil
+      def ai_gateway
+        Rails.configuration.x.fertilize_ai_gateway || default_ai_gateway
+      end
 
-        # リトライループ（ネットワークエラーや一時的なエラーに対応）
-        max_retries.times do |retry_count|
-          attempt = retry_count + 1
-          
-          begin
-            Rails.logger.debug "🔧 [AGRR Fertilize Query] fertilize get --name #{fertilize_name} --json (attempt #{attempt}/#{max_retries})"
-
-            # AgrrServiceにはfertilizeメソッドがないため、直接コマンドを実行
-            # TODO: AgrrServiceにfertilizeメソッドを追加するか、base_gateway_v2で処理する
-            client_path = Rails.root.join('bin', 'agrr_client').to_s
-            stdout, stderr, status = Open3.capture3(client_path, 'fertilize', 'get', '--name', fertilize_name, '--json')
-
-            # 実行に失敗した場合
-            unless status.success?
-              error_msg = stderr.strip
-              
-              # デーモンが起動していない場合（FileNotFoundError: No such file or directory）
-              if error_msg.include?('FileNotFoundError') || 
-                 error_msg.include?('No such file or directory') ||
-                 error_msg.include?('SOCKET_PATH')
-                
-                Rails.logger.error "❌ [AGRR Fertilize Query] Daemon not running: #{error_msg}"
-                return {
-                  'success' => false,
-                  'error' => I18n.t('api.errors.fertilizes.daemon_not_running', default: 'AGRRサービスが起動していません。サービスを起動してから再度お試しください。'),
-                  'code' => 'daemon_not_running'
-                }
-              end
-              
-              # 一時的なネットワークエラーや圧縮エラーの場合はリトライ
-              if error_msg.include?('decompressing') || 
-                 error_msg.include?('Connection') || 
-                 error_msg.include?('timeout') ||
-                 error_msg.include?('Network')
-                
-                Rails.logger.warn "⚠️  [AGRR Fertilize Query] Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}"
-                
-                # リトライ前に指数バックオフで待機
-                if attempt < max_retries
-                  sleep_time = 2 ** attempt # 2秒、4秒、8秒...
-                  Rails.logger.info "⏳ [AGRR Fertilize Query] Retrying in #{sleep_time} seconds..."
-                  sleep(sleep_time)
-                  next
-                end
-              end
-              
-              # リトライしないエラー、または最終試行での失敗
-              Rails.logger.error "❌ [AGRR Fertilize Query Error] Command failed: fertilize get --name #{fertilize_name} --json"
-              Rails.logger.error "   stderr: #{error_msg}"
-              raise "Failed to query fertilize info from agrr: #{error_msg}"
-            end
-
-            # agrrコマンドの生の出力をログに記録（最初の500文字のみ）
-            Rails.logger.debug "📥 [AGRR Fertilize Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
-
-            parsed_data = JSON.parse(stdout)
-
-            # データ構造を検証
-            if parsed_data['success'] == false
-              # エラーレスポンスの場合
-              Rails.logger.error "📊 [AGRR Fertilize Error] #{parsed_data['error']} (code: #{parsed_data['code']})"
-            else
-              # agrrの出力形式に応じてデータを取得
-              # 形式1: {"fertilize": {...}} (期待される形式)
-              # 形式2: {"name": "...", "npk": "46-0-0", ...} (実際の形式)
-              fertilize_data = parsed_data['fertilize'] || parsed_data
-              
-              # npk文字列がある場合はパースしてn, p, kに変換
-              if fertilize_data['npk'] && !fertilize_data['n']
-                npk_values = fertilize_data['npk'].split('-').map { |v| v.to_f }
-                fertilize_data['n'] = npk_values[0] if npk_values[0] && npk_values[0] > 0
-                fertilize_data['p'] = npk_values[1] if npk_values[1] && npk_values[1] > 0
-                fertilize_data['k'] = npk_values[2] if npk_values[2] && npk_values[2] > 0
-              end
-              
-              Rails.logger.debug "📊 [AGRR Fertilize Data] name: #{fertilize_data&.dig('name')}"
-              Rails.logger.debug "📊 [AGRR Fertilize Data] n: #{fertilize_data&.dig('n')}, p: #{fertilize_data&.dig('p')}, k: #{fertilize_data&.dig('k')}"
-              Rails.logger.debug "📊 [AGRR Fertilize Data] package_size: #{fertilize_data&.dig('package_size')}"
-              
-              if attempt > 1
-                Rails.logger.info "✅ [AGRR Fertilize Query] Succeeded after #{attempt} attempts"
-              end
-              
-              # fertilizeキーがない場合は、fertilizeキーでラップした形式に変換
-              parsed_data = { 'fertilize' => fertilize_data, 'success' => true } unless parsed_data['fertilize']
-            end
-
-            return parsed_data
-
-          rescue JSON::ParserError => e
-            # JSONパースエラー（リトライしても意味がない）
-            Rails.logger.error "❌ [AGRR Fertilize Query] JSON parse error: #{e.message}"
-            raise "Invalid JSON response from agrr: #{e.message}"
-            
-          rescue => e
-            # その他の予期しないエラー
-            last_error = e
-            Rails.logger.warn "⚠️  [AGRR Fertilize Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
-            
-            if attempt < max_retries
-              sleep_time = 2 ** attempt
-              Rails.logger.info "⏳ [AGRR Fertilize Query] Retrying in #{sleep_time} seconds..."
-              sleep(sleep_time)
-              next
-            end
-            
-            raise
-          end
-        end
-
-        # 最大リトライ回数を超えた場合
-        if last_error
-          raise last_error
-        else
-          raise "Failed to query fertilize info after #{max_retries} attempts"
-        end
+      def default_ai_gateway
+        @default_ai_gateway ||= Adapters::Fertilize::Gateways::FertilizeCliGateway.new
       end
     end
   end

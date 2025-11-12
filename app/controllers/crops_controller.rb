@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class CropsController < ApplicationController
-  before_action :set_crop, only: [:show, :edit, :update, :destroy]
+  before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints]
+  before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
   # GET /crops
   def index
@@ -16,10 +17,15 @@ class CropsController < ApplicationController
   # GET /crops/:id
   def show
     # 閲覧可能な農業タスクを取得（管理者は参照タスクと自身のタスク、一般ユーザーは自身のタスクのみ）
-    @viewable_agricultural_tasks = if admin_user?
-      @crop.agricultural_tasks.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      @crop.agricultural_tasks.where(user_id: current_user.id, is_reference: false).recent
+    @task_schedule_blueprints = @crop.crop_task_schedule_blueprints
+                                      .includes(:agricultural_task)
+                                      .ordered
+    assigned_task_ids = @task_schedule_blueprints.map(&:agricultural_task_id).compact
+    assigned_source_ids = @task_schedule_blueprints.map(&:source_agricultural_task_id).compact
+
+    @manual_task_templates = @crop.crop_task_templates.includes(:agricultural_task).reject do |template|
+      (template.agricultural_task_id.present? && assigned_task_ids.include?(template.agricultural_task_id)) ||
+        (template.source_agricultural_task_id.present? && assigned_source_ids.include?(template.source_agricultural_task_id))
     end
   end
 
@@ -119,12 +125,27 @@ class CropsController < ApplicationController
     )
   end
 
+  def generate_task_schedule_blueprints
+    service = CropTaskScheduleBlueprintCreateService.new
+    service.regenerate!(crop: @crop)
+    redirect_to crop_path(@crop), notice: I18n.t('crops.flash.task_schedule_blueprints_generated')
+  rescue CropTaskScheduleBlueprintCreateService::MissingAgriculturalTasksError,
+         CropTaskScheduleBlueprintCreateService::GenerationFailedError => e
+    redirect_to crop_path(@crop), alert: e.message
+  rescue StandardError => e
+    Rails.logger.error("❌ [CropsController] Failed to generate blueprints for Crop##{@crop.id}: #{e.class} #{e.message}")
+    Rails.logger.error(e.full_message)
+    redirect_to crop_path(@crop), alert: I18n.t('crops.flash.task_schedule_blueprints_failed')
+  end
+
   private
 
   def set_crop
     @crop = Crop.includes(
       crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement],
-      agricultural_tasks: []
+      agricultural_tasks: [],
+      crop_task_templates: [:agricultural_task],
+      crop_task_schedule_blueprints: [:agricultural_task]
     ).find(params[:id])
     
     # アクションに応じた権限チェック

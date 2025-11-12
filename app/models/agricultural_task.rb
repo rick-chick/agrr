@@ -25,6 +25,7 @@ class AgriculturalTask < ApplicationRecord
   belongs_to :user, optional: true
   has_many :agricultural_task_crops, dependent: :destroy
   has_many :crops, through: :agricultural_task_crops
+  has_many :crop_task_schedule_blueprints, dependent: :restrict_with_exception
   
   # required_toolsをJSON配列としてシリアライズ
   serialize :required_tools, coder: JSON

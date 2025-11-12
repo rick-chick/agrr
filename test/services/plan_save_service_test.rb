@@ -649,6 +649,11 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     user_crop = @user.crops.find_by(source_crop_id: @crops[0].id)
     assert_not_nil user_crop
     assert_includes copied_task.crops, user_crop
+
+    template = user_crop.crop_task_templates.find_by(agricultural_task: copied_task)
+    assert_not_nil template
+    assert_equal copied_task.name, template.name
+    assert_equal copied_task.description, template.description
   end
 
   test "reuses existing user agricultural task when same reference task is copied twice" do
@@ -658,6 +663,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: @farm.region
     )
+    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: @crops[0])
 
     user_task = @user.agricultural_tasks.create!(
       name: '再利用参照作業（コピー）',
@@ -701,6 +707,12 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert result.skipped?, 'Copy should report skips when reusing task'
     assert_includes result.skipped_items[:agricultural_tasks], user_task.id
     assert_equal before_count, @user.agricultural_tasks.count, 'Agricultural task count should not increase when existing record is reused'
+
+    user_crop = @user.crops.find_by(source_crop_id: @crops[0].id)
+    assert_not_nil user_crop
+    template = user_crop.crop_task_templates.find_by(agricultural_task: user_task)
+    assert_not_nil template
+    assert_equal user_task.name, template.name
   end
 
   test "copies reference pesticides for user region with dependencies" do

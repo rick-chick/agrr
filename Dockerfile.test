@@ -60,12 +60,25 @@ RUN apt-get update -qq && apt-get install -y \
     wget \
     build-essential \
     libsqlite3-dev \
+    chromium \
+    chromium-driver \
+    fonts-liberation \
+    libatk-bridge2.0-0 \
+    libasound2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnss3 \
+    libxss1 \
+    libxi6 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && wget https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
     && dpkg -i litestream-v0.3.13-linux-amd64.deb \
     && rm litestream-v0.3.13-linux-amd64.deb \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CHROME_BIN=/usr/bin/chromium \
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Create a non-root user
 RUN useradd -m -u 1000 appuser

@@ -839,14 +839,22 @@ export default class extends Controller {
     if (!form) return
 
     const hiddenTaskId = form.querySelector('input[name="agricultural_task_id"]')
+    const hiddenTemplateId = form.querySelector('input[name="crop_task_template_id"]')
     const nameInput = form.querySelector('input[name="name"]')
     if (!hiddenTaskId || !nameInput) return
 
     const taskId = button.dataset.taskId || ""
     const taskName = button.dataset.taskName || ""
+    const templateId = button.dataset.templateId || ""
 
     hiddenTaskId.value = taskId
+    if (hiddenTemplateId) hiddenTemplateId.value = templateId
     nameInput.value = taskName
+
+    const descriptionInput = form.querySelector('textarea[name="description"]')
+    if (descriptionInput && !descriptionInput.value.trim()) {
+      descriptionInput.value = button.dataset.description || ""
+    }
 
     form.querySelectorAll(".timeline-chip.is-active").forEach((chip) => chip.classList.remove("is-active"))
     button.classList.add("is-active")
@@ -858,12 +866,14 @@ export default class extends Controller {
     if (!form) return
 
     const hiddenTaskId = form.querySelector('input[name="agricultural_task_id"]')
+    const hiddenTemplateId = form.querySelector('input[name="crop_task_template_id"]')
     const activeChip = form.querySelector(".timeline-chip.is-active")
     if (!hiddenTaskId || !activeChip) return
 
     if (input.value !== activeChip.dataset.taskName) {
       activeChip.classList.remove("is-active")
       hiddenTaskId.value = ""
+      if (hiddenTemplateId) hiddenTemplateId.value = ""
     }
   }
 
@@ -1057,9 +1067,19 @@ export default class extends Controller {
   renderCreateForm(fieldId, context = {}) {
     const actions = this.detailLabels().actions || {}
     const taskOptions = (context.taskOptions || []).map((option) => {
-      const optionId = option?.id != null ? String(option.id) : ""
-      const label = option?.name || ""
-      return { id: optionId, name: label, task_type: option?.task_type }
+      const templateId = option?.template_id ?? option?.templateId ?? null
+      return {
+        templateId: templateId != null ? String(templateId) : "",
+        name: option?.name || "",
+        taskType: option?.task_type || "field_work",
+        agriculturalTaskId:
+          option?.agricultural_task_id != null ? String(option.agricultural_task_id) : "",
+        description: option?.description || "",
+        weatherDependency: option?.weather_dependency || "",
+        timePerSqm: option?.time_per_sqm || "",
+        requiredTools: option?.required_tools || [],
+        skillLevel: option?.skill_level || ""
+      }
     })
     const defaultCropId = context.defaultCropId || ""
     const hasCropOptions = Boolean(defaultCropId)
@@ -1071,6 +1091,7 @@ export default class extends Controller {
         <input type="hidden" name="field_cultivation_id" value="${fieldId}">
         <input type="hidden" name="cultivation_plan_crop_id" value="${this.escapeHtml(defaultCropId)}">
         <input type="hidden" name="agricultural_task_id" value="">
+        <input type="hidden" name="crop_task_template_id" value="">
         <div class="timeline-form__field">
           <span>${this.escapeHtml(actions.crop || "作物")}</span>
           <span class="timeline-form__static">${this.escapeHtml(cropLabelText)}</span>
@@ -1083,8 +1104,10 @@ export default class extends Controller {
                     return `<button type="button"
                                     class="timeline-chip"
                                     data-action="task-schedule-timeline#selectTaskChip"
-                                    data-task-id="${this.escapeHtml(option.id)}"
-                                    data-task-name="${this.escapeHtml(option.name)}">
+                                    data-template-id="${this.escapeHtml(option.templateId)}"
+                                    data-task-id="${this.escapeHtml(option.agriculturalTaskId || "")}"
+                                    data-task-name="${this.escapeHtml(option.name)}"
+                                    data-description="${this.escapeHtml(option.description || "")}">
                               ${this.escapeHtml(option.name)}
                             </button>`
                   })
@@ -1162,6 +1185,10 @@ export default class extends Controller {
           cultivation_plan_crop_id: cropId,
           description: formData.get("description")
         }
+      }
+      const templateId = formData.get("crop_task_template_id")
+      if (templateId) {
+        payload.task_schedule_item.crop_task_template_id = templateId
       }
       await this.postItem(payload)
       this.setFormMessage(this.detailLabels().actions?.created || "予定を追加しました", "success")
