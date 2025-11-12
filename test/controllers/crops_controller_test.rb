@@ -68,7 +68,21 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   test "作業テンプレートが表示される" do
     sign_in_as @user
     task = create(:agricultural_task, :soil_preparation)
-    AgriculturalTaskCrop.create!(agricultural_task: task, crop: @user_crop)
+    create(
+      :crop_task_template,
+      crop: @user_crop,
+      agricultural_task: task,
+      source_agricultural_task_id: task.id,
+      name: task.name,
+      description: task.description,
+      time_per_sqm: task.time_per_sqm,
+      weather_dependency: task.weather_dependency,
+      required_tools: task.required_tools,
+      skill_level: task.skill_level,
+      task_type: task.task_type,
+      task_type_id: task.task_type_id,
+      is_reference: task.is_reference
+    )
     create(:crop_task_schedule_blueprint,
            crop: @user_crop,
            agricultural_task: task,
@@ -89,7 +103,11 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
            priority: 2,
            source_agricultural_task_id: 21_001)
     manual_task = create(:agricultural_task, :user_owned, user: @user, name: '潅水')
-    AgriculturalTaskCrop.create!(agricultural_task: manual_task, crop: @user_crop)
+    create(:crop_task_template,
+           crop: @user_crop,
+           agricultural_task: manual_task,
+           source_agricultural_task_id: manual_task.id,
+           name: manual_task.name)
 
     get crop_path(@user_crop)
 

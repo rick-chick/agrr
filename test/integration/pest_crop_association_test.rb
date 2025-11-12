@@ -42,7 +42,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     # 3. 作物詳細画面で害虫一覧を確認
     get crop_path(@crop1)
     assert_response :success
-    assert_select 'a.pest-link', text: 'アブラムシ'
+    assert_select 'a.pest-card__link', text: 'アブラムシ'
 
     # 4. 害虫の関連付けを編集（1つ削除、1つ追加）
     crop4 = create(:crop, user: @user, name: 'キュウリ')

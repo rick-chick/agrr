@@ -27,6 +27,16 @@ in:
       cannot_remove_last_field: "अंतिम खेत नहीं हटाया जा सकता।"
       cannot_remove_field_with_cultivations: "इस खेत में खेती का कार्यक्रम है। कृपया पहले फसलें हटाएं।"
       field_not_found: "खेत नहीं मिला।"
+
+    gantt:
+      controls:
+        zoom_in: "ज़ूम इन"
+        zoom_out: "ज़ूम आउट"
+        toggle_palette: "फसल पैलेट दृश्य बदलें"
+      loading:
+        heavy: "अधिक डेटा लोड किया जा रहा है..."
+      fallback:
+        message: "स्क्रीन बहुत संकरी है। विस्तृत चार्ट देखने के लिए डिवाइस को घुमाएँ या ज़ूम आउट करें।"
     
     messages:
       plan_created: "योजना सफलतापूर्वक बनाई गई।"
@@ -171,6 +181,35 @@ in:
       stages:
         intro: "प्रत्येक चरण के लिए विस्तृत तापमान स्थितियां और संचित तापमान उपलब्धि देखें।"
         loading: "चरण जानकारी लोड की जा रही है..."
+
+    show:
+      back_to_list: "← सूची पर वापस जाएं"
+      optimize_button: "अनुकूलित करें"
+      view_task_schedule: "कार्य अनुसूची देखें"
+      copy_plan: "अगले वर्ष में कॉपी करें"
+      delete: "हटाएं"
+      header:
+        title: "वर्ष %{year} खेती योजना"
+        badge: "पूर्ण"
+        farm: "खेत"
+        total_area: "कुल क्षेत्रफल"
+        field_count: "खेत"
+        field_count_value: "%{count} खेत"
+        planning_period: "योजना अवधि"
+        planning_period_value: "%{start} - %{end}"
+        subtitle: "%{count} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई"
+      gantt:
+        title: "खेती अनुसूची"
+      detail:
+        title: "खेती विवरण"
+        loading: "विवरण लोड किया जा रहा है..."
+      crop_palette:
+        toggle: "फसल पैनल टॉगल करें"
+        title: "फसल जोड़ें"
+        in_use: "उपयोग में"
+      confirms:
+        optimize: "क्या आप इस योजना को अनुकूलित करना चाहते हैं?"
+        copy_next_year: "क्या आप इस योजना को अगले वर्ष (%{year}) में कॉपी करना चाहते हैं?"
 
 models:
   cultivation_plan:

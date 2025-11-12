@@ -93,6 +93,107 @@ if (typeof window.ganttState === 'undefined') {
   };
 }
 
+if (typeof window.ganttControlsInitialized === 'undefined') {
+  window.ganttControlsInitialized = false;
+}
+
+if (typeof window.ganttFallbackResizeListener === 'undefined') {
+  window.ganttFallbackResizeListener = false;
+}
+
+let ganttLoadingIndicatorHideTimer = null;
+
+function getGanttLoadingIndicator() {
+  return document.getElementById('gantt-loading-indicator');
+}
+
+function setLoadingIndicatorVisible(visible) {
+  const indicator = getGanttLoadingIndicator();
+  if (!indicator) return;
+  if (visible) {
+    if (ganttLoadingIndicatorHideTimer) {
+      clearTimeout(ganttLoadingIndicatorHideTimer);
+      ganttLoadingIndicatorHideTimer = null;
+    }
+    indicator.classList.remove('is-hidden');
+  } else {
+    if (ganttLoadingIndicatorHideTimer) {
+      clearTimeout(ganttLoadingIndicatorHideTimer);
+    }
+    ganttLoadingIndicatorHideTimer = window.setTimeout(() => {
+      indicator.classList.add('is-hidden');
+      ganttLoadingIndicatorHideTimer = null;
+    }, 500);
+  }
+}
+
+function getGanttFallbackElement() {
+  return document.getElementById('gantt-chart-fallback');
+}
+
+function updateMobileFallback() {
+  const fallback = getGanttFallbackElement();
+  if (!fallback) return;
+
+  const shouldShow = window.innerWidth <= 360;
+  fallback.classList.toggle('is-visible', shouldShow);
+  fallback.hidden = !shouldShow;
+}
+
+function handleGanttControlClick(event) {
+  const action = event.currentTarget.dataset.ganttControl;
+  if (!action) return;
+
+  const container = document.getElementById('gantt-chart-container');
+  const canvas = document.querySelector('.gantt-chart-canvas');
+
+  switch (action) {
+    case 'zoom-in': {
+      if (container) {
+        container.dataset.zoom = 'in';
+      }
+      if (canvas) {
+        canvas.style.transformOrigin = 'top left';
+        canvas.style.transform = 'scale(1.1)';
+      }
+      break;
+    }
+    case 'zoom-out': {
+      if (container) {
+        container.dataset.zoom = 'out';
+      }
+      if (canvas) {
+        canvas.style.transformOrigin = 'top left';
+        canvas.style.transform = 'scale(0.9)';
+      }
+      break;
+    }
+    case 'toggle-palette': {
+      const paletteContainer = document.querySelector('.crop-palette-container');
+      if (!paletteContainer) return;
+      const isHidden = paletteContainer.classList.toggle('is-hidden-by-control');
+      event.currentTarget.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+function initGanttControls() {
+  const controls = document.querySelector('[data-gantt-controls]');
+  if (!controls) return;
+
+  const buttons = controls.querySelectorAll('[data-gantt-control]');
+  buttons.forEach((btn) => {
+    if (btn.dataset.listenerAdded === 'true') return;
+    btn.addEventListener('click', handleGanttControlClick);
+    btn.dataset.listenerAdded = 'true';
+  });
+
+  window.ganttControlsInitialized = true;
+}
+
 // normalizeFieldId関数は共通ユーティリティ（gantt_data_utils.js）に移動
 
 
@@ -239,13 +340,32 @@ function initCustomGanttChart() {
   }
   
   const ganttContainer = document.getElementById('gantt-chart-container');
+  setLoadingIndicatorVisible(true);
   if (!ganttContainer) {
+    setLoadingIndicatorVisible(false);
     console.warn('⚠️ [Gantt] gantt-chart-container が見つかりません');
     if (typeof window.ClientLogger !== 'undefined') {
       window.ClientLogger.warn('⚠️ [Gantt] gantt-chart-container が見つかりません');
     }
     return;
   }
+
+  if (!window.ganttControlsInitialized) {
+    initGanttControls();
+  }
+
+  if (!window.ganttFallbackResizeListener) {
+    window.addEventListener('resize', updateMobileFallback);
+    window.ganttFallbackResizeListener = true;
+  }
+  updateMobileFallback();
+
+  const ganttCanvas = document.querySelector('.gantt-chart-canvas');
+  if (ganttCanvas) {
+    ganttCanvas.style.transformOrigin = 'top left';
+    ganttCanvas.style.transform = 'scale(1)';
+  }
+  ganttContainer.dataset.zoom = 'default';
 
   console.log('📊 [Gantt] データ属性を取得中...');
   // データ属性からJSONを取得
@@ -431,6 +551,7 @@ function handleOptimizationUpdate(data) {
 // データを再取得してチャートを更新
 function fetchAndUpdateChart() {
   console.log('🔄 データを再取得中...');
+  setLoadingIndicatorVisible(true);
 
   // data属性からURLを取得
   const ganttContainer = document.getElementById('gantt-chart-container');
@@ -528,6 +649,7 @@ function fetchAndUpdateChart() {
       console.error('❌ データ取得に失敗しました');
       alert(getI18nMessage('jsGanttUpdateFailed', 'Failed to update data. Please reload the page manually.'));
       hideLoadingOverlay();
+      setLoadingIndicatorVisible(false);
       window.reoptimizationInProgress = false;
     }
   })
@@ -535,6 +657,7 @@ function fetchAndUpdateChart() {
     console.error('❌ データ取得エラー:', error);
     alert(getI18nMessage('jsGanttFetchError', 'Error occurred while fetching data. Please reload the page manually.'));
     hideLoadingOverlay();
+    setLoadingIndicatorVisible(false);
     window.reoptimizationInProgress = false;
   });
 }
@@ -623,6 +746,14 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     console.log('Using fallback chartWidth:', fallbackChartWidth);
   }
   
+  container.style.minWidth = `${config.width}px`;
+  container.style.width = `${config.width}px`;
+  const canvasWrapper = container.parentElement;
+  if (canvasWrapper && canvasWrapper.classList.contains('gantt-chart-canvas')) {
+    canvasWrapper.style.minWidth = `${config.width}px`;
+    canvasWrapper.style.width = `${config.width}px`;
+  }
+
   // グローバルステートに保存
   window.ganttState.config = config;
   window.ganttState.chartWidth = chartWidth;
@@ -749,6 +880,8 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   
   // グローバルなマウスイベントリスナーを追加（常に最新の参照を使用）
   setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWidth);
+  setLoadingIndicatorVisible(false);
+  updateMobileFallback();
   
   // カスタムイベントを発火（ガントチャート初期化完了を通知）
   const ganttReadyEvent = new CustomEvent('ganttChartReady', {

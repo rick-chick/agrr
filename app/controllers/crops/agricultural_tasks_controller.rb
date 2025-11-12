@@ -2,25 +2,24 @@
 
 module Crops
   class AgriculturalTasksController < ApplicationController
+    before_action :authenticate_user!
     before_action :set_crop
+    before_action :set_template, only: [:edit, :update, :destroy]
 
     # GET /crops/:crop_id/agricultural_tasks
     def index
-      # この作物に関連付けられている作業を取得（アクセス権限のある作業のみ）
-      # 参照作業または自分の作業のみ表示
-      @agricultural_tasks = @crop.agricultural_tasks.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-      # 参照作業も選択可能にするため、利用可能な作業を取得（管理者も参照作業と自分の作業のみ）
-      @available_agricultural_tasks = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+      @templates = @crop.crop_task_templates.includes(:agricultural_task).order(:name)
+      @available_agricultural_tasks = selectable_agricultural_tasks
     end
 
     # GET /crops/:crop_id/agricultural_tasks/new
     def new
       # 既存の作業を選択する場合
       @agricultural_task = AgriculturalTask.new
-      
-      # この作物にまだ関連付けられていない作業のリスト（参照作業または自分の作業のみ）
-      available_tasks = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id)
-      @unassociated_agricultural_tasks = available_tasks.where.not(id: @crop.agricultural_task_ids).recent
+      @unassociated_agricultural_tasks = selectable_agricultural_tasks
+    end
+
+    def edit
     end
 
     # POST /crops/:crop_id/agricultural_tasks
@@ -35,15 +34,30 @@ module Crops
             return
           end
           
-          # 既に関連付けられていないかチェック
-          unless @crop.agricultural_tasks.include?(existing_task)
-            @crop.agricultural_tasks << existing_task
-            redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t('crops.agricultural_tasks.flash.associated')
-            return
-          else
-            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t('crops.agricultural_tasks.flash.already_associated')
+          if template_exists_for?(existing_task)
+            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t('crops.agricultural_tasks.flash.template_already_exists')
             return
           end
+
+          template = @crop.crop_task_templates.create!(
+            agricultural_task: existing_task,
+            source_agricultural_task_id: existing_task.source_agricultural_task_id,
+            name: existing_task.name,
+            description: existing_task.description,
+            time_per_sqm: existing_task.time_per_sqm,
+            weather_dependency: existing_task.weather_dependency,
+            required_tools: existing_task.required_tools,
+            skill_level: existing_task.skill_level,
+            task_type: existing_task.task_type,
+            task_type_id: existing_task.task_type_id,
+            is_reference: existing_task.is_reference
+          )
+
+          AgriculturalTaskCrop.find_or_create_by!(crop: @crop, agricultural_task: existing_task)
+
+          redirect_to crop_agricultural_tasks_path(@crop),
+                      notice: I18n.t('crops.agricultural_tasks.flash.template_created')
+          return
         end
       end
 
@@ -51,10 +65,37 @@ module Crops
       redirect_to new_agricultural_task_path, notice: I18n.t('crops.agricultural_tasks.flash.redirect_to_create')
     end
 
+    def update
+      if @template.update(template_params)
+        redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t('crops.agricultural_tasks.flash.template_updated')
+      else
+        render :edit, status: :unprocessable_entity
+      end
+    end
+
+    def destroy
+      @template.destroy!
+      redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t('crops.agricultural_tasks.flash.template_deleted')
+    end
+
     private
 
     def set_crop
       @crop = Crop.find(params[:crop_id])
+    def set_template
+      @template = @crop.crop_task_templates.find(params[:id])
+    end
+
+    def template_params
+      params.require(:crop_task_template).permit(
+        :name,
+        :description,
+        :time_per_sqm,
+        :weather_dependency,
+        :skill_level,
+        required_tools: []
+      )
+    end
       
       # 作物へのアクセス権限チェック
       # 管理者も参照作物と自身が作成した作物のみアクセス可能
@@ -70,6 +111,21 @@ module Crops
         task.is_reference || task.user_id == current_user.id
       else
         task.user_id == current_user.id && !task.is_reference
+      end
+    end
+
+    def selectable_agricultural_tasks
+      scope = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id)
+      existing_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
+      scope = scope.where.not(id: existing_task_ids) if existing_task_ids.any?
+      scope.recent
+    end
+
+    def template_exists_for?(task)
+      @crop.crop_task_templates.any? do |template|
+        (template.agricultural_task_id.present? && template.agricultural_task_id == task.id) ||
+          (template.source_agricultural_task_id.present? &&
+           template.source_agricultural_task_id == task.source_agricultural_task_id)
       end
     end
   end

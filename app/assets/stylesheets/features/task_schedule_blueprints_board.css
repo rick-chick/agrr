@@ -1,0 +1,220 @@
+/* ============================================
+   Task Schedule Blueprints Board
+   AI作業テンプレートをカードボード形式で表示
+   ============================================ */
+
+.task-schedule-blueprints-board {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(280px, 1fr) auto;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--bg-elevated);
+  border: var(--border-width-1) solid var(--border-color-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  min-height: calc(220px + 100px * (var(--lane-count, 1) - 1));
+}
+
+.task-board-axis-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.task-board-axis-label-x {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  text-align: center;
+}
+
+.task-board-axis-range {
+  font-weight: var(--font-weight-normal);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.task-board-canvas {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  position: relative;
+  border-radius: var(--radius-md);
+  border: var(--border-width-1) dashed var(--border-color-base);
+  background: var(--color-gray-50);
+  overflow: hidden;
+}
+
+.task-board-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(113, 128, 150, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(113, 128, 150, 0.05) 1px, transparent 1px);
+  background-size: 80px 120px;
+  pointer-events: none;
+}
+
+.task-board-axis-x-scale {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}
+
+.task-board-axis-x-scale {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+}
+
+.task-board-axis-x-tick {
+  position: absolute;
+  bottom: 8px;
+  left: var(--tick-position);
+  transform: translate(-50%, 100%);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  white-space: nowrap;
+}
+
+.task-board-cards {
+  position: absolute;
+  inset: 0;
+}
+
+.task-blueprint-card {
+  position: absolute;
+  top: var(--card-top);
+  left: var(--card-left);
+  transform: translate(-50%, -50%);
+  min-width: 168px;
+  max-width: 220px;
+  padding: var(--space-3);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: var(--border-width-1) solid rgba(102, 126, 234, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  cursor: pointer;
+}
+
+.task-blueprint-card:hover {
+  transform: translate(-50%, -50%) scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+.task-blueprint-card__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  line-height: var(--line-height-snug);
+  word-break: break-word;
+}
+
+.task-blueprint-card__stage {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary);
+  background: rgba(102, 126, 234, 0.12);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  display: inline-flex;
+  align-self: flex-start;
+}
+
+.task-schedule-manual-list {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: var(--border-width-1) solid var(--border-color-light);
+  box-shadow: var(--shadow-xs);
+}
+
+.task-schedule-manual-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+  margin-bottom: var(--space-3);
+}
+
+.task-schedule-manual-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.task-schedule-manual-item {
+  border: var(--border-width-1) solid var(--border-color-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-gray-50);
+}
+
+.task-schedule-manual-item__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
+}
+
+.task-schedule-manual-item__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.task-schedule-manual-source {
+  font-weight: var(--font-weight-medium);
+}
+
+.task-schedule-manual-note {
+  color: var(--color-gray-500);
+}
+
+@media (max-width: 768px) {
+  .task-schedule-blueprints-board {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    padding: var(--space-4);
+  }
+
+  .task-board-axis-label-x {
+    justify-content: flex-start;
+  }
+
+  .task-board-canvas {
+    min-height: 280px;
+  }
+  .task-board-axis-x-tick {
+    bottom: 4px;
+  }
+
+  .task-blueprint-card {
+    min-width: 180px;
+  }
+}
+

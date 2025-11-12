@@ -27,6 +27,16 @@ us:
       cannot_remove_last_field: "Cannot remove the last field."
       cannot_remove_field_with_cultivations: "This field contains cultivation schedules. Please delete the crops first."
       field_not_found: "Field not found."
+
+    gantt:
+      controls:
+        zoom_in: "Zoom In"
+        zoom_out: "Zoom Out"
+        toggle_palette: "Toggle Crop Palette"
+      loading:
+        heavy: "Loading a large data set..."
+      fallback:
+        message: "The screen is too narrow for the full chart. Rotate or enlarge your device to view more details."
     
     messages:
       plan_created: "Plan created successfully."
@@ -171,6 +181,35 @@ us:
       stages:
         intro: "View detailed temperature conditions and GDD achievement for each stage."
         loading: "Loading stage information..."
+
+    show:
+      back_to_list: "← Back to List"
+      optimize_button: "Optimize"
+      view_task_schedule: "View Task Schedule"
+      copy_plan: "Copy to Next Year"
+      delete: "Delete"
+      header:
+        title: "Year %{year} Cultivation Plan"
+        badge: "Completed"
+        farm: "Farm"
+        total_area: "Total Area"
+        field_count: "Fields"
+        field_count_value: "%{count} fields"
+        planning_period: "Planning Period"
+        planning_period_value: "%{start} - %{end}"
+        subtitle: "Optimal cultivation periods determined for %{count} fields"
+      gantt:
+        title: "Cultivation Schedule"
+      detail:
+        title: "Cultivation Details"
+        loading: "Loading details..."
+      crop_palette:
+        toggle: "Toggle Crop Palette"
+        title: "Add Crops"
+        in_use: "In Use"
+      confirms:
+        optimize: "Do you want to optimize this plan?"
+        copy_next_year: "Copy this plan to next year (%{year})?"
   
   models:
     cultivation_plan:

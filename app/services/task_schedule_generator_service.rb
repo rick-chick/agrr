@@ -5,6 +5,7 @@ class TaskScheduleGeneratorService
   class WeatherDataMissingError < Error; end
   class ProgressDataMissingError < Error; end
   class GddTriggerMissingError < Error; end
+  class TemplateMissingError < Error; end
 
   def initialize(schedule_gateway: Agrr::ScheduleGateway.new,
                  fertilize_gateway: Agrr::FertilizeGateway.new,
@@ -24,12 +25,11 @@ class TaskScheduleGeneratorService
       raise WeatherDataMissingError, "CultivationPlan##{plan.id} に気象予測データが存在しません"
     end
 
-    schedule_cache = {}
-    fertilize_cache = {}
+    blueprint_cache = {}
 
     ActiveRecord::Base.transaction do
       plan.field_cultivations.find_each do |field_cultivation|
-        generate_for_field(plan, field_cultivation, schedule_cache, fertilize_cache)
+        generate_for_field(plan, field_cultivation, blueprint_cache)
       end
     end
   end
@@ -38,9 +38,19 @@ class TaskScheduleGeneratorService
 
   attr_reader :schedule_gateway, :fertilize_gateway, :progress_gateway, :clock
 
-  def generate_for_field(plan, field_cultivation, schedule_cache, fertilize_cache)
+  def generate_for_field(plan, field_cultivation, blueprint_cache)
     crop = field_cultivation.cultivation_plan_crop&.crop
     return unless crop
+
+    blueprints = blueprints_for(crop, blueprint_cache)
+    if blueprints.empty?
+      raise TemplateMissingError, "Crop##{crop.id} (#{crop.name}) の作業テンプレートが登録されていません"
+    end
+
+    general_blueprints, fertilizer_blueprints = partition_blueprints(blueprints)
+    if general_blueprints.empty?
+      raise TemplateMissingError, "Crop##{crop.id} (#{crop.name}) の一般作業テンプレートが不足しています"
+    end
 
     agricultural_tasks_lookup = index_agricultural_tasks(crop)
 
@@ -67,110 +77,145 @@ class TaskScheduleGeneratorService
       raise ProgressDataMissingError, "GDD進捗データが空です (cultivation_plan_id=#{plan.id})"
     end
 
-    schedule_response = schedule_response_for(crop, schedule_cache)
-    if schedule_response.present? && Array(schedule_response['task_schedules']).any?
-      create_schedule!(
-        plan: plan,
-        field_cultivation: field_cultivation,
-        category: 'general'
-      ) do |schedule|
-        Array(schedule_response['task_schedules']).each do |task|
-          task_id = integer_value(task['task_id'])
-          task_id_str = task_id&.to_s
-          agricultural_task = agricultural_tasks_lookup[task_id_str] || agricultural_tasks_lookup[task_id_str&.to_i]
-
-      schedule.task_schedule_items.build(
-            task_type: TaskScheduleItem::FIELD_WORK_TYPE,
-            agricultural_task: agricultural_task,
-            source_agricultural_task_id: task_id,
-            name: task['name'] || agricultural_task&.name || 'field_task',
-            description: task['description'] || agricultural_task&.description,
-            stage_name: task['stage_name'],
-            stage_order: task['stage_order'],
-            gdd_trigger: decimal_value(task['gdd_trigger']),
-            gdd_tolerance: decimal_value(task['gdd_tolerance']),
-            scheduled_date: date_for_gdd(progress_records, task['gdd_trigger'], field_cultivation.start_date),
-            priority: task['priority'],
-            source: 'agrr_schedule',
-            weather_dependency: task['weather_dependency'] || agricultural_task&.weather_dependency,
-            time_per_sqm: decimal_value(task['time_per_sqm']) || agricultural_task&.time_per_sqm
-          )
-        end
+    create_schedule!(
+      plan: plan,
+      field_cultivation: field_cultivation,
+      category: 'general'
+    ) do |schedule|
+      general_blueprints.each do |blueprint|
+        build_task_from_blueprint(
+          schedule: schedule,
+          blueprint: blueprint,
+          agricultural_tasks_lookup: agricultural_tasks_lookup,
+          progress_records: progress_records,
+          fallback_start_date: field_cultivation.start_date
+        )
       end
     end
 
-    fertilize_response = fertilize_response_for(crop, fertilize_cache)
-    fertilize_schedule = Array(fertilize_response['schedule'])
-    if fertilize_schedule.any?
+    if fertilizer_blueprints.any?
       create_schedule!(
         plan: plan,
         field_cultivation: field_cultivation,
         category: 'fertilizer'
       ) do |schedule|
-        fertilize_schedule.each_with_index do |entry, index|
-          task_type = index.zero? ? TaskScheduleItem::BASAL_FERTILIZATION_TYPE : TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE
-          schedule.task_schedule_items.build(
-            task_type: task_type,
-            name: task_type == TaskScheduleItem::BASAL_FERTILIZATION_TYPE ? '基肥施用' : '追肥施用',
-            description: entry['description'],
-            stage_name: entry['stage_name'],
-            stage_order: entry['stage_order'],
-            gdd_trigger: decimal_value(entry['gdd_trigger']),
-            gdd_tolerance: decimal_value(entry['gdd_tolerance']),
-            scheduled_date: date_for_gdd(progress_records, entry['gdd_trigger'], field_cultivation.start_date),
-            priority: entry['priority'],
-            source: 'agrr_fertilize_plan',
-            weather_dependency: entry['weather_dependency'],
-            amount: decimal_value(entry['amount_g_per_m2']),
-            amount_unit: entry['amount_unit'] || 'g/m2'
+        fertilizer_blueprints.each do |blueprint|
+          build_task_from_blueprint(
+            schedule: schedule,
+            blueprint: blueprint,
+            agricultural_tasks_lookup: agricultural_tasks_lookup,
+            progress_records: progress_records,
+            fallback_start_date: field_cultivation.start_date
           )
         end
       end
+    else
+      clear_schedule(plan: plan, field_cultivation: field_cultivation, category: 'fertilizer')
     end
-  end
-
-  def crop_stage_requirements(crop)
-    requirement = crop.to_agrr_requirement
-    Array(requirement['stage_requirements'])
-  end
-
-  def crop_agricultural_tasks(crop)
-    tasks = crop.agricultural_tasks.order(:id)
-    AgriculturalTask.to_agrr_format_array(tasks)
   end
 
   def index_agricultural_tasks(crop)
     lookup = {}
-    crop.agricultural_tasks.each do |task|
-      lookup[task.id] = task
-      lookup[task.id.to_s] = task
+    crop.crop_task_templates.includes(:agricultural_task).each do |template|
+      task = template.agricultural_task
+      if task
+        lookup[task.id] = task
+        lookup[task.id.to_s] = task
+      end
+
+      if template.source_agricultural_task_id.present?
+        lookup[template.source_agricultural_task_id] = task
+        lookup[template.source_agricultural_task_id.to_s] = task
+      end
     end
     lookup
   end
 
-  def schedule_response_for(crop, cache)
+  def blueprints_for(crop, cache)
     return cache[crop.id] if cache.key?(crop.id)
 
-    agricultural_tasks = crop_agricultural_tasks(crop)
-    if agricultural_tasks.any?
-      cache[crop.id] = schedule_gateway.generate(
-        crop_name: crop.name,
-        variety: crop.variety || 'general',
-        stage_requirements: crop_stage_requirements(crop),
-        agricultural_tasks: agricultural_tasks
-      )
+    cache[crop.id] = crop.crop_task_schedule_blueprints
+                         .includes(:agricultural_task)
+                         .ordered
+                         .to_a
+  end
+
+  def partition_blueprints(blueprints)
+    general = []
+    fertilizer = []
+
+    blueprints.each do |blueprint|
+      case blueprint.task_type
+      when TaskScheduleItem::FIELD_WORK_TYPE
+        general << blueprint
+      when TaskScheduleItem::BASAL_FERTILIZATION_TYPE, TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE
+        fertilizer << blueprint
+      end
+    end
+
+    [general, fertilizer]
+  end
+
+  def build_task_from_blueprint(schedule:, blueprint:, agricultural_tasks_lookup:, progress_records:, fallback_start_date:)
+    gdd_trigger = blueprint.gdd_trigger
+    if gdd_trigger.nil?
+      raise GddTriggerMissingError, 'GDDトリガーが設定されていません'
+    end
+
+    task = find_agricultural_task_for_blueprint(blueprint, agricultural_tasks_lookup)
+    source_task_id = blueprint.source_agricultural_task_id || task&.source_agricultural_task_id || task&.id
+
+    schedule.task_schedule_items.build(
+      task_type: blueprint.task_type,
+      agricultural_task: task,
+      source_agricultural_task_id: source_task_id,
+      name: name_for_blueprint(blueprint, task),
+      description: blueprint.description.presence || task&.description,
+      stage_name: blueprint.stage_name,
+      stage_order: blueprint.stage_order,
+      gdd_trigger: gdd_trigger,
+      gdd_tolerance: blueprint.gdd_tolerance,
+      scheduled_date: date_for_gdd(progress_records, gdd_trigger, fallback_start_date),
+      priority: blueprint.priority,
+      source: blueprint.source,
+      weather_dependency: blueprint.weather_dependency || task&.weather_dependency,
+      time_per_sqm: blueprint.time_per_sqm || task&.time_per_sqm,
+      amount: blueprint.amount,
+      amount_unit: blueprint.amount_unit || (blueprint.amount.present? ? 'g/m2' : nil)
+    )
+  end
+
+  def find_agricultural_task_for_blueprint(blueprint, lookup)
+    return blueprint.agricultural_task if blueprint.agricultural_task.present?
+
+    if blueprint.source_agricultural_task_id.present?
+      lookup[blueprint.source_agricultural_task_id] || lookup[blueprint.source_agricultural_task_id.to_s]
     else
-      cache[crop.id] = nil
+      nil
     end
   end
 
-  def fertilize_response_for(crop, cache)
-    return cache[crop.id] if cache.key?(crop.id)
+  def name_for_blueprint(blueprint, task)
+    return task.name if task&.name.present?
+    return blueprint.description if blueprint.description.present?
+    return blueprint.stage_name if blueprint.stage_name.present?
 
-    cache[crop.id] = fertilize_gateway.plan(
-      crop: crop,
-      use_harvest_start: true
-    )
+    case blueprint.task_type
+    when TaskScheduleItem::BASAL_FERTILIZATION_TYPE
+      '基肥施用'
+    when TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE
+      '追肥施用'
+    else
+      'field_task'
+    end
+  end
+
+  def clear_schedule(plan:, field_cultivation:, category:)
+    TaskSchedule.where(
+      cultivation_plan: plan,
+      field_cultivation: field_cultivation,
+      category: category
+    ).delete_all
   end
 
   def create_schedule!(plan:, field_cultivation:, category:)
@@ -216,15 +261,6 @@ class TaskScheduleGeneratorService
     return nil if value.nil?
 
     BigDecimal(value.to_s)
-  end
-
-  def integer_value(value)
-    return nil if value.nil?
-
-    str = value.to_s
-    return nil unless str.match?(/\A-?\d+\z/)
-
-    str.to_i
   end
 
   def safe_parse_date(value)

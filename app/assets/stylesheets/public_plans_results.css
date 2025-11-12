@@ -103,6 +103,15 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-4);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.gantt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .gantt-title {
@@ -117,6 +126,97 @@
 
 .gantt-title-icon {
   font-size: var(--font-size-3xl);
+}
+
+.gantt-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.gantt-control-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-gray-200);
+  color: var(--color-gray-800);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.gantt-control-button:hover {
+  background: var(--color-gray-300);
+  transform: translateY(-1px);
+}
+
+.gantt-control-icon {
+  font-size: var(--font-size-md);
+  line-height: 1;
+}
+
+.gantt-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+  margin-bottom: var(--space-4);
+}
+
+.gantt-loading-indicator.is-hidden {
+  display: none;
+}
+
+.gantt-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-gray-300);
+  border-top-color: var(--color-primary);
+  animation: gantt-spinner 0.8s linear infinite;
+}
+
+@keyframes gantt-spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gantt-chart-scroll-area {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-4);
+}
+
+.gantt-chart-canvas {
+  min-width: 1200px;
+}
+
+.gantt-chart-fallback {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft, #fef3c7);
+  color: var(--color-warning-text, #92400e);
+  font-size: var(--font-size-sm);
+}
+
+.gantt-chart-fallback.is-visible {
+  display: flex;
+}
+
+.gantt-fallback-icon {
+  font-size: var(--font-size-xl);
 }
 
 .gantt-scroll-hint {

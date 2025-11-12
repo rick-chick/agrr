@@ -43,13 +43,35 @@ class FertilizeAiButtonSimpleTest < ApplicationSystemTestCase
     assert button['data-button-fetching'].present?, "data-button-fetchingが設定されていません"
   end
 
+  test "AIボタンにアクセシビリティ属性が付与されている" do
+    visit new_fertilize_path
+    button = page.find('button[data-controller="fertilize-ai"]', match: :first)
+
+    assert_equal "button", button.tag_name
+    assert button["aria-live"].present?, "AIボタンにaria-liveが設定されていません"
+    assert button["aria-controls"].present?, "AIボタンにaria-controlsが設定されていません"
+    assert button["aria-describedby"].present?, "AIボタンにaria-describedbyが設定されていません"
+  end
+
+  test "キーボード操作でもAIボタンを利用できる" do
+    visit new_fertilize_path
+
+    find("body").send_keys(:tab) until page.evaluate_script("document.activeElement && document.activeElement.id === 'ai-save-fertilize-btn'")
+    page.driver.browser.switch_to.active_element.send_keys(:enter)
+
+    assert_selector "#ai-save-status", wait: 3
+    status = find("#ai-save-status", visible: :all)
+    assert_match(/肥料名を入力してください|AIで肥料情報を取得/, status.text)
+  end
+
   test "編集画面でもAIボタンが存在する" do
     fertilize = Fertilize.create!(
       name: 'テスト肥料_編集',
       n: 10.0,
       p: 5.0,
       k: 5.0,
-      is_reference: false
+      is_reference: false,
+      user: @user
     )
     
     visit edit_fertilize_path(fertilize)

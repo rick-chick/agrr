@@ -27,6 +27,16 @@ ja:
       cannot_remove_last_field: "最後の圃場は削除できません。"
       cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
       field_not_found: "圃場が見つかりません。"
+
+    gantt:
+      controls:
+        zoom_in: "ズームイン"
+        zoom_out: "ズームアウト"
+        toggle_palette: "作物パレット表示切替"
+      loading:
+        heavy: "大量データを読み込んでいます..."
+      fallback:
+        message: "画面幅が狭いため簡易表示に切り替えています。デバイスを回転するか拡大して詳細をご確認ください。"
     
     messages:
       plan_created: "計画を作成しました。"
@@ -176,6 +186,35 @@ ja:
       stages:
         intro: "各ステージの詳細な気温条件と積算温度の達成状況を確認できます。"
         loading: "ステージ情報を読み込んでいます..."
+
+    show:
+      back_to_list: "← 計画一覧に戻る"
+      optimize_button: "最適化"
+      view_task_schedule: "作業予定を見る"
+      copy_plan: "次年度にコピー"
+      delete: "削除"
+      header:
+        title: "%{year}年度 作付け計画"
+        badge: "完了"
+        farm: "農場"
+        total_area: "総面積"
+        field_count: "圃場数"
+        field_count_value: "%{count}圃場"
+        planning_period: "計画期間"
+        planning_period_value: "%{start}〜%{end}"
+        subtitle: "%{count}圃場の最適な栽培期間が決定しました"
+      gantt:
+        title: "栽培スケジュール"
+      detail:
+        title: "栽培詳細"
+        loading: "詳細を読み込んでいます..."
+      crop_palette:
+        toggle: "作物パレットを開閉"
+        title: "作物を追加"
+        in_use: "使用中"
+      confirms:
+        optimize: "この計画を最適化しますか？"
+        copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
   
     task_schedules:
       title: "%{name}の作業予定"

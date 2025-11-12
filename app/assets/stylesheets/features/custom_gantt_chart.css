@@ -5,16 +5,17 @@
    ガントチャートコンテナ
    ============================================ */
 #gantt-chart-container {
-  width: var(--card-max-width); /* 統一されたカード幅を使用 */
-  max-width: var(--card-container-max-width); /* 統一された最大幅を使用 */
+  display: inline-block;
+  min-width: 1200px;
+  width: fit-content;
+  max-width: none;
   background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.05),
     0 10px 40px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: visible;
   position: relative;
   border: 1px solid #e5e7eb;
   /* max-height: 80vh; を削除して2重スクロールを防止 */

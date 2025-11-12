@@ -17,7 +17,9 @@
     </div>
 
     <div class="form-group">
-      <button type="button" id="ai-save-fertilize-btn" class="btn btn-ai" 
+      <button type="button"
+              id="ai-save-fertilize-btn"
+              class="btn btn-ai" 
               data-controller="fertilize-ai"
               data-is-new-record="<%= @fertilize.new_record? %>"
               data-fertilize-id="<%= @fertilize.persisted? ? @fertilize.id : '' %>"
@@ -28,10 +30,14 @@
               data-updated-success="<%= t('js.fertilize_ai.updated_success', name: '%{name}') %>"
               data-fetch-failed="<%= t('js.fertilize_ai.fetch_failed') %>"
               data-network-error="<%= t('js.fertilize_ai.network_error') %>"
-              data-button-idle="<%= t('fertilizes.form.ai_button') %>">
+              data-button-idle="<%= t('fertilizes.form.ai_button') %>"
+              aria-live="polite"
+              aria-controls="ai-save-status"
+              aria-describedby="ai-save-help">
+        <%= t('fertilizes.form.ai_button') %>
       </button>
-      <div id="ai-save-status" class="form-text d-none"></div>
-      <div class="form-text"><%= t('fertilizes.form.ai_help') %></div>
+      <div id="ai-save-status" class="form-text d-none" role="status" aria-live="polite"></div>
+      <div id="ai-save-help" class="form-text"><%= t('fertilizes.form.ai_help') %></div>
     </div>
 
     <!-- AI処理中の広告ポップアップ -->

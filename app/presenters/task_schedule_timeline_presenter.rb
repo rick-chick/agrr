@@ -11,15 +11,24 @@ class TaskScheduleTimelinePresenter
   end
 
   def task_options_for(field_cultivation)
-    crop = field_cultivation&.cultivation_plan_crop
-    return [] unless crop&.crop
+    crop = field_cultivation&.cultivation_plan_crop&.crop
+    return [] unless crop
 
-    crop.crop.agricultural_tasks.order(:name).map do |task|
+    crop.crop_task_templates
+        .includes(:agricultural_task)
+        .order(:name)
+        .map do |template|
       {
-        id: task.id,
-        name: task.name,
-        task_type: task.task_type
-      }
+        template_id: template.id,
+        name: template.name,
+        task_type: template.task_type || TaskScheduleItem::FIELD_WORK_TYPE,
+        agricultural_task_id: template.agricultural_task_id,
+        description: template.description,
+        weather_dependency: template.weather_dependency,
+        time_per_sqm: template.time_per_sqm&.to_s,
+        required_tools: Array(template.required_tools).presence,
+        skill_level: template.skill_level
+      }.compact
     end
   end
 
@@ -316,7 +325,14 @@ class TaskScheduleTimelinePresenter
         :task_schedule_items,
         field_cultivation: [
           :cultivation_plan_field,
-          { cultivation_plan_crop: { crop: :agricultural_tasks } }
+          {
+            cultivation_plan_crop: {
+              crop: [
+                :agricultural_tasks,
+                { crop_task_templates: :agricultural_task }
+              ]
+            }
+          }
         ]
       )
 

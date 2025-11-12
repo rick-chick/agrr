@@ -21,6 +21,22 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
                                                        description: '雑草を取り除く',
                                                        required_tools: ['ホー'])
 
+    @template = create(
+      :crop_task_template,
+      crop: plan_crop.crop,
+      agricultural_task: @agricultural_task,
+      source_agricultural_task_id: @agricultural_task.id,
+      name: '除草テンプレート',
+      description: 'テンプレ説明',
+      time_per_sqm: BigDecimal('0.5'),
+      weather_dependency: 'dry',
+      required_tools: ['ホー'],
+      skill_level: @agricultural_task.skill_level,
+      task_type: @agricultural_task.task_type,
+      task_type_id: @agricultural_task.task_type_id,
+      is_reference: false
+    )
+
     @schedule = TaskSchedule.create!(
       cultivation_plan: @plan,
       field_cultivation: @field_cultivation,
@@ -74,6 +90,18 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
     assert_equal 'field_work', task[:badge][:type]
     assert_equal 'priority-medium', task[:badge][:priority_level]
     assert_equal 'planned', task[:badge][:status]
+  end
+
+  test 'provides task options derived from crop task templates' do
+    presenter = TaskScheduleTimelinePresenter.new(@plan, {})
+    json = presenter.as_json.deep_symbolize_keys
+
+    options = json[:fields].first[:task_options]
+    template_option = options.find { |option| option[:template_id] == @template.id }
+
+    assert_not_nil template_option
+    assert_equal @template.name, template_option[:name]
+    assert_equal @template.agricultural_task_id, template_option[:agricultural_task_id]
   end
 
   test 'provides minimap weeks with task counts' do

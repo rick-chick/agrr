@@ -7,22 +7,34 @@
   <%= link_to t('.new_agricultural_task'), new_crop_agricultural_task_path(@crop), class: "btn btn-success" %>
 </div>
 
-<% if @agricultural_tasks.any? %>
+<% if @templates.any? %>
   <div class="agricultural-tasks-grid">
-    <% @agricultural_tasks.each do |task| %>
+    <% @templates.each do |template| %>
       <div class="agricultural-task-card">
-        <h3 class="agricultural-task-name"><%= task.name %></h3>
-        <% if task.description.present? %>
-          <div class="agricultural-task-description"><%= truncate(task.description, length: 50) %></div>
+        <h3 class="agricultural-task-name"><%= template.name %></h3>
+        <% if template.description.present? %>
+          <div class="agricultural-task-description"><%= truncate(template.description, length: 50) %></div>
         <% end %>
-        <% if task.time_per_sqm.present? %>
-          <div class="agricultural-task-time">⏱ <%= task.time_per_sqm %> h/㎡</div>
+        <% if template.time_per_sqm.present? %>
+          <div class="agricultural-task-time">⏱ <%= template.time_per_sqm %> h/㎡</div>
         <% end %>
-        <% if admin_user? && task.is_reference %>
-          <div class="agricultural-task-type reference"><%= t('.reference_task') %></div>
+        <% if template.agricultural_task&.weather_dependency.present? %>
+          <div class="agricultural-task-meta">
+            🌤 <%= template.agricultural_task.weather_dependency %>
+          </div>
         <% end %>
         <div class="agricultural-task-actions">
-          <%= link_to t('.actions.show'), agricultural_task_path(task), class: "btn btn-info btn-sm" %>
+          <% if template.agricultural_task %>
+            <%= link_to t('.actions.show'), agricultural_task_path(template.agricultural_task), class: "btn btn-info btn-sm" %>
+          <% end %>
+          <%= link_to t('.actions.edit'),
+                      edit_crop_agricultural_task_path(@crop, template),
+                      class: "btn btn-secondary btn-sm" %>
+          <%= button_to t('.actions.delete'),
+                        crop_agricultural_task_path(@crop, template),
+                        method: :delete,
+                        data: { turbo_confirm: t('.actions.delete_confirm') },
+                        class: "btn btn-danger btn-sm" %>
         </div>
       </div>
     <% end %>

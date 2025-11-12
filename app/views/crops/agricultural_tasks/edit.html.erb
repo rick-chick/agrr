@@ -1,0 +1,54 @@
+<% content_for :title, "#{@crop.name} - #{t('.title')} - AGRR" %>
+
+<div class="page-header">
+  <h1 class="page-title">
+    <%= link_to @crop.name, crop_path(@crop), class: "crop-link" %> - <%= t('.title') %>
+  </h1>
+  <%= link_to t('.back_to_list'), crop_agricultural_tasks_path(@crop), class: "btn btn-secondary" %>
+</div>
+
+<div class="form-section">
+  <%= form_with model: [@crop, @template], url: crop_agricultural_task_path(@crop, @template), method: :put, local: true do |f| %>
+    <div class="form-group">
+      <%= f.label :name, t('.form.name_label'), class: 'form-label' %>
+      <%= f.text_field :name, class: 'form-control', required: true %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :description, t('.form.description_label'), class: 'form-label' %>
+      <%= f.text_area :description, rows: 4, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :time_per_sqm, t('.form.time_per_sqm_label'), class: 'form-label' %>
+      <%= f.number_field :time_per_sqm, step: :any, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :weather_dependency, t('.form.weather_dependency_label'), class: 'form-label' %>
+      <%= f.select :weather_dependency,
+                   options_for_select([['-', nil], ['low', 'low'], ['medium', 'medium'], ['high', 'high']], @template.weather_dependency),
+                   {}, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :skill_level, t('.form.skill_level_label'), class: 'form-label' %>
+      <%= f.select :skill_level,
+                   options_for_select([['-', nil], ['beginner', 'beginner'], ['intermediate', 'intermediate'], ['advanced', 'advanced']], @template.skill_level),
+                   {}, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :required_tools, t('.form.required_tools_label'), class: 'form-label' %>
+      <%= f.text_area :required_tools,
+                      value: Array(@template.required_tools).join("\n"),
+                      rows: 3,
+                      class: 'form-control' %>
+      <small class="form-text text-muted"><%= t('.form.required_tools_hint') %></small>
+    </div>
+
+    <%= f.submit t('.form.submit_update'), class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+

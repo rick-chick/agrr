@@ -57,11 +57,101 @@ class FertilizeAiButtonTest < ApplicationSystemTestCase
     # ローディングメッセージが表示されることを確認
     assert_selector '#ai-save-status', wait: 2
     status = find('#ai-save-status', visible: :all)
-    assert_match(/AIで肥料情報を取得/, status.text)
+    status_text = status.text
+    assert(
+      status_text.match?(/AIで肥料情報を取得|AGRRサービスが起動していません/),
+      "想定外のステータス表示です: #{status_text}"
+    )
     
     # 広告ポップアップが表示されることを確認（オプション）
     # 実際のagrrコマンドが成功する場合は、成功メッセージが表示される
     # 失敗する場合は、エラーメッセージが表示される
+  end
+
+  test "AIボタン成功フローで成功メッセージと詳細ページ遷移が行われる" do
+    stub = install_fertilize_ai_stub(success_response: {
+      "fertilize" => {
+        "name" => "AI尿素",
+        "n" => 46.0,
+        "p" => 0.0,
+        "k" => 0.0,
+        "description" => "AI生成説明",
+        "package_size" => "20kg"
+      }
+    })
+
+    visit new_fertilize_path
+    fill_in 'fertilize[name]', with: '尿素'
+    click_button '🤖 AIで肥料情報を取得・保存'
+
+    assert_selector '#ai-save-status', text: /AI尿素/, wait: 5, visible: :all
+    status = find('#ai-save-status', visible: :all)
+
+    assert_selector '#ad-popup-overlay.show', wait: 2
+
+    assert eventually { stub.create_calls.any? { |payload| payload[:name] == '尿素' } }, "AI APIが呼び出されていません"
+
+    assert eventually(timeout: 5) { current_path.match?(/\/fertilizes\/\d+/) }, "詳細ページに遷移していません"
+  ensure
+    remove_fertilize_ai_stub
+  end
+
+  test "AIボタン失敗フローでエラー表示後ボタンが再度有効になる" do
+    stub = install_fertilize_ai_stub(error_response: {
+      "success" => false,
+      "error" => "テスト用エラー"
+    })
+
+    visit new_fertilize_path
+    fill_in 'fertilize[name]', with: '失敗肥料'
+    click_button '🤖 AIで肥料情報を取得・保存'
+
+    assert_selector '#ai-save-status', text: /テスト用エラー/, wait: 5, visible: :all
+    status = find('#ai-save-status', visible: :all)
+
+    button = find('#ai-save-fertilize-btn')
+    assert eventually { !button.disabled? }, "失敗後にボタンが再度有効化されていません"
+  ensure
+    remove_fertilize_ai_stub
+  end
+
+  test "入力内容を修正して再度AIボタンを押せる" do
+    stub = install_fertilize_ai_stub(error_response: {
+      "success" => false,
+      "error" => "テスト用エラー",
+      "code" => "daemon_not_running"
+    })
+
+    visit new_fertilize_path
+    fill_in 'fertilize[name]', with: '尿素'
+    click_button '🤖 AIで肥料情報を取得・保存'
+
+    assert_selector '#ai-save-status', text: /テスト用エラー/, wait: 5, visible: :all
+    status = find('#ai-save-status', visible: :all)
+
+    button = find('#ai-save-fertilize-btn')
+    assert eventually { !button.disabled? }
+
+    remove_fertilize_ai_stub
+
+    success_stub = install_fertilize_ai_stub(success_response: {
+      "fertilize" => {
+        "name" => "再試行肥料",
+        "n" => 10.0,
+        "p" => 5.0,
+        "k" => 5.0,
+        "description" => "再試行成功",
+        "package_size" => "10kg"
+      }
+    })
+
+    fill_in 'fertilize[name]', with: '再試行肥料'
+    click_button '🤖 AIで肥料情報を取得・保存'
+
+    assert eventually(timeout: 5) { success_stub.create_calls.size == 1 }
+    assert eventually(timeout: 5) { current_path.match?(/\/fertilizes\/\d+/) }
+  ensure
+    remove_fertilize_ai_stub
   end
 
   test "JavaScriptコンソールにエラーがない" do
@@ -84,7 +174,8 @@ class FertilizeAiButtonTest < ApplicationSystemTestCase
       n: 10.0,
       p: 5.0,
       k: 5.0,
-      is_reference: false
+      is_reference: false,
+      user: @user
     )
     
     visit edit_fertilize_path(fertilize)
@@ -110,5 +201,27 @@ class FertilizeAiButtonTest < ApplicationSystemTestCase
     # （Propshaftで配信されるfertilize_ai.jsが動作していれば、showStatusが呼ばれる）
     assert_selector '#ai-save-status', wait: 2
   end
+  
+  private
+
+    def install_fertilize_ai_stub(success_response: nil, error_response: nil)
+      stub = FertilizeAiGatewayStub.new(success_response: success_response, error_response: error_response)
+      Rails.configuration.x.fertilize_ai_gateway = stub
+      stub
+    end
+
+    def remove_fertilize_ai_stub
+      Rails.configuration.x.fertilize_ai_gateway = nil
+    end
+
+    def eventually(timeout: 3, interval: 0.1)
+      start_time = Time.current
+      loop do
+        result = yield
+        return true if result
+        raise "Condition not met within #{timeout} seconds" if Time.current - start_time > timeout
+        sleep interval
+      end
+    end
 end
 

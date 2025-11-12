@@ -73,3 +73,4 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
 end
 
 
+
