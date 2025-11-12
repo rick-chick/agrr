@@ -2,28 +2,97 @@
 # Integration testコンテナ用のentrypoint
 # 統合テスト用 - AGRRデーモンを起動
 
-set -e
+set -euo pipefail
+
+APP_ROOT="/app"
+STORAGE_DIR="${APP_ROOT}/storage"
+CACHE_DIR="${APP_ROOT}/.docker/test_db_cache"
+FINGERPRINT_FILE="${CACHE_DIR}/migrations.sha256"
+DB_FILES=("test.sqlite3" "test_queue.sqlite3" "test_cache.sqlite3" "test_cable.sqlite3")
+
+mkdir -p "${CACHE_DIR}"
+
+calculate_fingerprint() {
+  find "${APP_ROOT}/db/migrate" "${APP_ROOT}/db/queue_migrate" "${APP_ROOT}/db/cache_migrate" -type f -name "*.rb" -print0 2>/dev/null \
+    | LC_ALL=C sort -z \
+    | xargs -0 sha256sum \
+    | sha256sum \
+    | awk '{ print $1 }'
+}
+
+restore_cached_databases() {
+  echo "==> Restoring cached test databases..."
+  mkdir -p "${STORAGE_DIR}"
+  local missing="false"
+
+  for db_file in "${DB_FILES[@]}"; do
+    if [ -f "${CACHE_DIR}/${db_file}" ]; then
+      cp "${CACHE_DIR}/${db_file}" "${STORAGE_DIR}/${db_file}"
+    else
+      echo "⚠ Cache missing ${db_file}"
+      missing="true"
+    fi
+  done
+
+  if [ "${missing}" = "true" ]; then
+    echo "⚠ Cache incomplete - fall back to running migrations"
+    return 1
+  fi
+
+  echo "✓ Cached databases restored"
+  return 0
+}
+
+cache_current_databases() {
+  echo "==> Caching migrated test databases for reuse..."
+  mkdir -p "${CACHE_DIR}"
+
+  for db_file in "${DB_FILES[@]}"; do
+    if [ -f "${STORAGE_DIR}/${db_file}" ]; then
+      cp "${STORAGE_DIR}/${db_file}" "${CACHE_DIR}/${db_file}"
+    fi
+  done
+
+  echo "${CURRENT_FINGERPRINT}" > "${FINGERPRINT_FILE}"
+  echo "✓ Cache updated"
+}
 
 # app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
-mkdir -p /app/app/assets/builds
+mkdir -p "${APP_ROOT}/app/assets/builds"
 
 # アセットファイルをクリーンアップ（古いビルドファイルを削除）
 echo "==> Cleaning up old asset files..."
-rm -rf /app/app/assets/builds/*
-rm -rf /app/tmp/cache/assets/*
+rm -rf "${APP_ROOT}/app/assets/builds/"*
+rm -rf "${APP_ROOT}/tmp/cache/assets/"*
 ## Propshaft public assets should not persist between runs in Docker
-rm -rf /app/public/assets/*
+rm -rf "${APP_ROOT}/public/assets/"*
 echo "✓ Asset files cleaned"
 
 # アセットビルド実行（システムテスト用）
 echo "==> Building assets for system tests..."
 npm run build
 
-# すべてのテストDBをセットアップ（primary, queue, cache）
-echo "==> Setting up test databases (primary, queue, cache)..."
-bundle exec rails db:create
-bundle exec rails db:schema:load
-bundle exec rails db:migrate
+CURRENT_FINGERPRINT="$(calculate_fingerprint)"
+CACHE_VALID="false"
+
+if [ -f "${FINGERPRINT_FILE}" ]; then
+  CACHED_FINGERPRINT="$(cat "${FINGERPRINT_FILE}")"
+  if [ "${CURRENT_FINGERPRINT}" = "${CACHED_FINGERPRINT}" ]; then
+    if restore_cached_databases; then
+      CACHE_VALID="true"
+    fi
+  else
+    echo "⚠ Migration fingerprint changed - cache invalid"
+  fi
+fi
+
+if [ "${CACHE_VALID}" != "true" ]; then
+  echo "==> Setting up test databases (primary, queue, cache)..."
+  bundle exec rails db:create
+  bundle exec rails db:migrate
+
+  cache_current_databases
+fi
 
 # AGRRデーモンを起動（統合テスト用）
 echo "==> Starting AGRR daemon for integration tests..."

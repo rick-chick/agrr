@@ -200,6 +200,24 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* ============================================
+   Utility Layouts
+   ============================================ */
+
+.agricultural-task-search-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agricultural-task-search-form .form-control {
+  flex: 1;
+}
+
+.agricultural-task-search-form .btn {
+  white-space: nowrap;
+}
+
 .requirement-fields {
   background: transparent;
 }
@@ -249,6 +267,15 @@
   .form-actions,
   .actions {
     flex-direction: column;
+    width: 100%;
+  }
+
+  .agricultural-task-search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .agricultural-task-search-form .btn {
     width: 100%;
   }
 
