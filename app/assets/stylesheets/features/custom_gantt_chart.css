@@ -5,10 +5,10 @@
    ガントチャートコンテナ
    ============================================ */
 #gantt-chart-container {
-  display: inline-block;
-  min-width: 1200px;
-  width: fit-content;
-  max-width: none;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
   border-radius: 16px;
   padding: 24px;

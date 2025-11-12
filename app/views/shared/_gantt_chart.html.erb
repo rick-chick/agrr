@@ -63,28 +63,6 @@
       <span class="gantt-title-text"><%= gantt_title %></span>
     </h2>
     <div class="gantt-header-actions">
-      <div class="gantt-controls" data-gantt-controls="true">
-        <button type="button"
-                class="gantt-control-button"
-                data-gantt-control="zoom-in">
-          <span class="gantt-control-icon" aria-hidden="true">➕</span>
-          <span class="gantt-control-label"><%= t('plans.gantt.controls.zoom_in') %></span>
-        </button>
-        <button type="button"
-                class="gantt-control-button"
-                data-gantt-control="zoom-out">
-          <span class="gantt-control-icon" aria-hidden="true">➖</span>
-          <span class="gantt-control-label"><%= t('plans.gantt.controls.zoom_out') %></span>
-        </button>
-        <button type="button"
-                class="gantt-control-button"
-                data-gantt-control="toggle-palette"
-                aria-pressed="false">
-          <span class="gantt-control-icon" aria-hidden="true">🌱</span>
-          <span class="gantt-control-label"><%= t('plans.gantt.controls.toggle_palette') %></span>
-        </button>
-      </div>
-      
       <%# 作物パレット（public_plansの場合のみ表示） %>
       <% if show_crop_palette %>
         <%= render 'shared/crop_palette', 
@@ -94,11 +72,6 @@
                    crop_palette_in_use_label: crop_palette_in_use_label %>
       <% end %>
     </div>
-  </div>
-
-  <div id="gantt-loading-indicator" class="gantt-loading-indicator" role="status" aria-live="polite">
-    <span class="gantt-loading-spinner" aria-hidden="true"></span>
-    <span class="gantt-loading-text"><%= t('plans.gantt.loading.heavy') %></span>
   </div>
 
   <div id="gantt-chart-scroll-area" class="gantt-chart-scroll-area">
