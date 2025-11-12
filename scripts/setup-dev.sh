@@ -25,14 +25,14 @@ print_status "Setting up development environment..."
 
 # Check if Ruby is installed
 if ! command -v ruby &> /dev/null; then
-    print_error "Ruby is not installed. Please install Ruby 3.3.9."
+    print_error "Ruby is not installed. Please install Ruby 3.3.10."
     exit 1
 fi
 
 # Check Ruby version
 RUBY_VERSION=$(ruby -v | cut -d' ' -f2 | cut -d'p' -f1)
-if [[ "$RUBY_VERSION" != "3.3.9" ]]; then
-    print_error "Ruby version $RUBY_VERSION is incorrect. Please install Ruby 3.3.9."
+if [[ "$RUBY_VERSION" != "3.3.10" ]]; then
+    print_error "Ruby version $RUBY_VERSION is incorrect. Please install Ruby 3.3.10."
     exit 1
 fi
 
