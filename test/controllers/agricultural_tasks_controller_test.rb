@@ -200,6 +200,61 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [own_crop.id], @user_task.crops.pluck(:id)
   end
 
+  test '管理者が参照フラグを有効に変更するとユーザー作物の関連付けが解除される' do
+    sign_in_as @admin_user
+
+    user_crop = create(:crop, user: @admin_user, name: '管理用きゅうり')
+    @admin_task.crops << user_crop
+
+    patch agricultural_task_path(@admin_task), params: {
+      agricultural_task: {
+        name: @admin_task.name,
+        description: @admin_task.description,
+        time_per_sqm: @admin_task.time_per_sqm,
+        weather_dependency: @admin_task.weather_dependency,
+        skill_level: @admin_task.skill_level,
+        required_tools: @admin_task.required_tools,
+        is_reference: true
+      },
+      selected_crop_ids: [user_crop.id]
+    }
+
+    assert_redirected_to agricultural_task_path(@admin_task)
+    @admin_task.reload
+
+    assert @admin_task.is_reference?
+    assert_nil @admin_task.user_id
+    assert_empty @admin_task.crops
+  end
+
+  test '参照フラグ変更後は許可された作物のみ関連付けられる' do
+    sign_in_as @admin_user
+
+    reference_crop = create(:crop, :reference, name: '参照キャベツ')
+    user_crop = create(:crop, user: @admin_user, name: '管理トマト')
+    AgriculturalTaskCrop.create!(agricultural_task: @reference_task, crop: reference_crop)
+
+    patch agricultural_task_path(@reference_task), params: {
+      agricultural_task: {
+        name: @reference_task.name,
+        description: @reference_task.description,
+        time_per_sqm: @reference_task.time_per_sqm,
+        weather_dependency: @reference_task.weather_dependency,
+        skill_level: @reference_task.skill_level,
+        required_tools: @reference_task.required_tools,
+        is_reference: false
+      },
+      selected_crop_ids: [reference_crop.id, user_crop.id]
+    }
+
+    assert_redirected_to agricultural_task_path(@reference_task)
+    @reference_task.reload
+
+    refute @reference_task.is_reference?
+    assert_equal @admin_user.id, @reference_task.user_id
+    assert_equal [user_crop.id], @reference_task.crops.pluck(:id)
+  end
+
   test 'destroy_returns_undo_token_json' do
     sign_in_as @user
     task = create(:agricultural_task, :user_owned, user: @user)

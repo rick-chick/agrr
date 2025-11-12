@@ -26,9 +26,8 @@ export default class extends Controller {
     })
 
     if (this.hasInputContainerTarget) {
-      const existingInputs = this.inputContainerTarget.querySelectorAll(
-        `input[name="${this.inputName}"]`
-      )
+      const selector = `input[name="${this.inputFieldName}"]`
+      const existingInputs = this.inputContainerTarget.querySelectorAll(selector)
 
       existingInputs.forEach((input) => {
         if (input.value) {
@@ -75,13 +74,24 @@ export default class extends Controller {
       .forEach((id) => {
         const input = document.createElement("input")
         input.type = "hidden"
-        input.name = this.inputName
+        input.name = this.inputFieldName
         input.value = id
         container.appendChild(input)
       })
   }
 
-  get inputName() {
+  clearSelection() {
+    this.selectedIds.clear()
+
+    this.cardTargets.forEach((card) => {
+      card.classList.remove("is-selected")
+      card.dataset.selected = "false"
+    })
+
+    this.refreshInputs()
+  }
+
+  get inputFieldName() {
     if (this.hasInputNameValue && this.inputNameValue) {
       return this.inputNameValue
     }
@@ -89,5 +99,4 @@ export default class extends Controller {
     return "selected_crop_ids[]"
   }
 }
-
 

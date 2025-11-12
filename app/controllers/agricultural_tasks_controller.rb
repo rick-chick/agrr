@@ -64,16 +64,19 @@ class AgriculturalTasksController < ApplicationController
   # PATCH/PUT /agricultural_tasks/:id
   def update
     task_attributes = build_task_attributes
+    requested_reference = requested_reference_flag_from(task_attributes)
+    reference_changed = requested_reference != @agricultural_task.is_reference?
     selected_crop_ids = selected_crop_ids_from_params
 
-    if task_attributes.key?(:is_reference)
-      requested_reference = ActiveModel::Type::Boolean.new.cast(task_attributes[:is_reference]) || false
-      if requested_reference != @agricultural_task.is_reference && !admin_user?
-        return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
-      end
+    if reference_changed && !admin_user?
+      return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
     end
 
-    if @agricultural_task.update(task_attributes.except(:is_reference))
+    update_attributes = task_attributes.except(:is_reference)
+    update_attributes[:is_reference] = requested_reference
+    update_attributes[:user_id] = user_id_for(requested_reference) if reference_changed
+
+    if @agricultural_task.update(update_attributes)
       @agricultural_task.crops = Crop.where(id: selected_crop_ids)
       redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.updated')
     else
@@ -210,7 +213,14 @@ class AgriculturalTasksController < ApplicationController
   def load_crop_selection_data
     return unless action_requires_edit_permission?
 
-    @accessible_crops = accessible_crops_for_selection.to_a
+    preview_task =
+      if params[:action] == 'update'
+        build_preview_task_for_selection
+      else
+        @agricultural_task
+      end
+
+    @accessible_crops = accessible_crops_for_selection(preview_task).to_a
     @accessible_crop_ids = @accessible_crops.map(&:id)
   end
 
@@ -241,20 +251,43 @@ class AgriculturalTasksController < ApplicationController
     normalized_ids.select { |id| @accessible_crop_ids.include?(id) }
   end
 
-  def accessible_crops_for_selection
+  def accessible_crops_for_selection(task)
     scope =
-      if @agricultural_task.is_reference?
+      if task.is_reference?
         Crop.where(is_reference: true)
       else
-        owner_id = @agricultural_task.user_id
+        owner_id = task.user_id
         Crop.where(is_reference: false, user_id: owner_id)
       end
 
-    if @agricultural_task.region.present?
-      scope = scope.where(region: @agricultural_task.region)
+    if task.region.present?
+      scope = scope.where(region: task.region)
     end
 
     scope.order(:name)
+  end
+
+  def build_preview_task_for_selection
+    preview = @agricultural_task.dup
+    requested_flag = requested_reference_flag_from(params.fetch(:agricultural_task, {}))
+    if requested_flag != @agricultural_task.is_reference?
+      preview.is_reference = requested_flag
+      preview.user_id = user_id_for(requested_flag)
+    end
+    preview
+  end
+
+  def user_id_for(reference_flag)
+    return nil if reference_flag
+
+    @agricultural_task.user_id.presence || current_user.id
+  end
+
+  def requested_reference_flag_from(attributes)
+    return @agricultural_task.is_reference? unless attributes.respond_to?(:key?) && attributes.key?(:is_reference)
+
+    casted = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
+    casted.nil? ? false : casted
   end
 end
 
