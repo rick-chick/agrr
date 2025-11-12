@@ -22,16 +22,16 @@ class PestsController < ApplicationController
   # GET /pests/new
   def new
     @pest = Pest.new
+    prepare_crop_selection_for(@pest, selected_ids: normalize_crop_ids_for(@pest, params[:crop_ids]))
     @pest.build_pest_temperature_profile
     @pest.build_pest_thermal_requirement
     @pest.pest_control_methods.build
-    @available_crops = available_crops_for_user
   end
 
   # GET /pests/:id/edit
   def edit
     @pest.pest_control_methods.build if @pest.pest_control_methods.empty?
-    @available_crops = available_crops_for_user
+    prepare_crop_selection_for(@pest)
   end
 
   # POST /pests
@@ -59,13 +59,14 @@ class PestsController < ApplicationController
     end
     
     @pest = Pest.new(pest_attributes)
+    crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
 
     if @pest.save
       # 選択された作物との関連付けを処理
-      associate_crops(@pest, params[:crop_ids])
+      associate_crops(@pest, crop_ids)
       redirect_to pest_path(@pest), notice: I18n.t('pests.flash.created')
     else
-      @available_crops = available_crops_for_user
+      prepare_crop_selection_for(@pest, selected_ids: crop_ids)
       render :new, status: :unprocessable_entity
     end
   end
@@ -80,12 +81,14 @@ class PestsController < ApplicationController
       end
     end
 
+    crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
+
     if @pest.update(pest_params)
       # 選択された作物との関連付けを更新
-      update_crop_associations(@pest, params[:crop_ids])
+      update_crop_associations(@pest, crop_ids)
       redirect_to pest_path(@pest), notice: I18n.t('pests.flash.updated')
     else
-      @available_crops = available_crops_for_user
+      prepare_crop_selection_for(@pest, selected_ids: crop_ids)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -170,46 +173,19 @@ class PestsController < ApplicationController
     )
   end
 
-  # ユーザーが利用可能な作物のリストを取得
-  def available_crops_for_user
-    if admin_user?
-      Crop.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      Crop.where(user_id: current_user.id).recent
-    end
-  end
-
   # 害虫と作物を関連付ける
   def associate_crops(pest, crop_ids)
-    return unless crop_ids.present?
-    
-    # 配列に変換（文字列または配列の両方に対応）
-    ids = Array(crop_ids).compact.reject(&:blank?).map(&:to_i)
-    
-    ids.each do |crop_id|
+    Array(crop_ids).each do |crop_id|
       crop = Crop.find_by(id: crop_id)
-      next unless crop
-      
-      # 権限チェック：作物へのアクセス権があるか確認
-      can_access = if crop.is_reference
-        true # 参照作物は誰でもアクセス可能
-      else
-        crop.user_id == current_user.id || admin_user?
-      end
-      
-      if can_access && !pest.crops.include?(crop)
-        pest.crops << crop
-      end
+      next unless crop && crop_accessible_for_pest?(crop, pest)
+      pest.crops << crop unless pest.crops.include?(crop)
     end
   end
 
   # 害虫と作物の関連付けを更新
   def update_crop_associations(pest, crop_ids)
-    return unless crop_ids.present?
-    
-    # 配列に変換（文字列または配列の両方に対応）
-    new_ids = Array(crop_ids).compact.reject(&:blank?).map(&:to_i).uniq
-    
+    new_ids = Array(crop_ids).map(&:to_i).uniq
+
     # 現在の関連付けを取得
     current_ids = pest.crop_ids
     
@@ -218,20 +194,62 @@ class PestsController < ApplicationController
     to_remove.each do |crop_id|
       crop = Crop.find_by(id: crop_id)
       next unless crop
-      
-      # 権限チェック：作物へのアクセス権があるか確認
-      can_access = if crop.is_reference
-        true # 参照作物は誰でもアクセス可能
-      else
-        crop.user_id == current_user.id || admin_user?
-      end
-      
-      pest.crops.delete(crop) if can_access
+
+      pest.crops.delete(crop)
     end
     
     # 追加すべき関連付け（選択されているが現在ない）
     to_add = new_ids - current_ids
     associate_crops(pest, to_add)
+  end
+
+  def prepare_crop_selection_for(pest, selected_ids: nil)
+    @accessible_crops = accessible_crops_for_selection(pest).to_a
+    allowed_ids = @accessible_crops.map(&:id)
+    normalized_selected = Array(selected_ids || pest.crop_ids).map(&:to_i).uniq & allowed_ids
+
+    @selected_crop_ids = normalized_selected
+    @crop_cards = @accessible_crops.map do |crop|
+      {
+        crop: crop,
+        selected: normalized_selected.include?(crop.id)
+      }
+    end
+  end
+
+  def normalize_crop_ids_for(pest, raw_ids)
+    allowed_ids = accessible_crops_for_selection(pest).pluck(:id)
+    Array(raw_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
+  end
+
+  def accessible_crops_for_selection(pest)
+    scope =
+      if pest.is_reference?
+        Crop.where(is_reference: true)
+      else
+        owner_id = pest.user_id || current_user.id
+        Crop.where(is_reference: false, user_id: owner_id)
+      end
+
+    if pest.region.present?
+      scope = scope.where(region: pest.region)
+    end
+
+    scope.order(:name)
+  end
+
+  def crop_accessible_for_pest?(crop, pest)
+    return false if pest.is_reference? && !crop.is_reference?
+    return false if !pest.is_reference? && crop.is_reference?
+
+    if pest.region.present?
+      return false if crop.region != pest.region
+    end
+
+    return true if pest.is_reference?
+
+    owner_id = pest.user_id || current_user.id
+    crop.user_id == owner_id
   end
 end
 

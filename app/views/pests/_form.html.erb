@@ -95,25 +95,49 @@
       <div class="form-text"><%= t('pests.form.occurrence_season_help') %></div>
     </div>
 
-    <div class="form-section">
-      <h3 class="form-section-title"><%= t('pests.form.crops_title') %></h3>
-      <div class="form-text"><%= t('pests.form.crops_help') %></div>
-      <% if @available_crops&.any? %>
-        <div class="crops-checkbox-group">
-          <% @available_crops.each do |crop| %>
-            <div class="crop-checkbox-item">
-              <%= check_box_tag 'crop_ids[]', crop.id, @pest.persisted? && @pest.crop_ids.include?(crop.id), id: "crop_#{crop.id}", class: 'form-checkbox', data: { crop_name: crop.name } %>
-              <%= label_tag "crop_#{crop.id}", crop.name, class: 'form-label', data: { crop_name: crop.name } %>
-              <% if crop.is_reference %>
-                <span class="crop-reference-badge"><%= t('pests.form.reference_crop') %></span>
-              <% end %>
-            </div>
+    <% if defined?(@crop_cards) %>
+      <section class="form-section crop-selection-section"
+               data-controller="crop-selector"
+               data-crop-selector-input-name-value="crop_ids[]">
+        <h3 class="form-section-title"><%= t('pests.form.crops_title') %></h3>
+        <div class="form-text"><%= t('pests.form.crops_help') %></div>
+
+        <% if @crop_cards.any? %>
+          <div class="crop-selection-grid" data-crop-selector-target="grid">
+            <% @crop_cards.each do |card| %>
+              <% crop = card[:crop] %>
+              <article class="crop-selection-card <%= 'is-selected' if card[:selected] %>"
+                       data-role="crop-card"
+                       data-crop-id="<%= crop.id %>"
+                       data-selected="<%= card[:selected] %>"
+                       data-crop-selector-target="card"
+                       data-action="click->crop-selector#toggle">
+                <header class="crop-selection-card__header">
+                  <h4 class="crop-selection-card__title"><%= crop.name %></h4>
+                  <span class="crop-selection-card__badge <%= crop.is_reference? ? 'is-reference' : 'is-user' %>">
+                    <%= crop.is_reference? ? t('agricultural_tasks.form.crop_selection.reference_badge') : t('agricultural_tasks.form.crop_selection.user_badge') %>
+                  </span>
+                </header>
+                <% if crop.variety.present? %>
+                  <p class="crop-selection-card__variety"><%= crop.variety %></p>
+                <% end %>
+                <% if card[:selected] %>
+                  <span class="crop-selection-card__state"><%= t('agricultural_tasks.form.crop_selection.selected_state') %></span>
+                <% end %>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="form-text"><%= t('pests.form.no_crops_available') %></p>
+        <% end %>
+
+        <div class="crop-selection-inputs" data-crop-selector-target="inputContainer">
+          <% Array(@selected_crop_ids).each do |crop_id| %>
+            <%= hidden_field_tag 'crop_ids[]', crop_id %>
           <% end %>
         </div>
-      <% else %>
-        <p class="form-text"><%= t('pests.form.no_crops_available') %></p>
-      <% end %>
-    </div>
+      </section>
+    <% end %>
 
     <div class="form-section">
       <h3 class="form-section-title"><%= t('pests.form.temperature_profile_title') %></h3>

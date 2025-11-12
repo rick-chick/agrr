@@ -60,7 +60,8 @@
 
   <% if defined?(@crop_cards) %>
     <section class="crop-selection-section"
-             data-controller="crop-selector">
+             data-controller="crop-selector"
+             data-crop-selector-input-name-value="selected_crop_ids[]">
       <header class="crop-selection-section__header">
         <h2 class="crop-selection-section__title"><%= t('agricultural_tasks.form.crop_selection.title') %></h2>
         <p class="crop-selection-section__description"><%= t('agricultural_tasks.form.crop_selection.description') %></p>

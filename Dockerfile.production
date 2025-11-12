@@ -1,5 +1,5 @@
 # Multi-stage build for production
-FROM ruby:3.3.9-slim AS builder
+FROM ruby:3.3.10-slim AS builder
 
 # Install system dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
@@ -48,7 +48,7 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompi
 # This ensures migrations run with the actual production database
 
 # Production stage
-FROM ruby:3.3.9-slim
+FROM ruby:3.3.10-slim
 
 # Install runtime dependencies (including SQLite, Node.js, and Litestream)
 RUN apt-get update -qq && apt-get install -y \

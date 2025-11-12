@@ -1156,22 +1156,21 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
   # ========== 作物選択機能のテスト ==========
 
-  test "should show available crops in new form" do
+  test "should show available crops in new form as cards" do
     crop1 = create(:crop, user: @user)
     crop2 = create(:crop, user: @user)
     reference_crop = create(:crop, :reference)
 
     get new_pest_path
     assert_response :success
-    # レスポンスボディで確認（チェックボックスやラベルとして表示される）
-    response_body = response.body
-    # 作物名が含まれているか確認（label_tagやcheck_box_tagで表示される）
-    assert response_body.include?(crop1.name) || response_body.match(/crop_#{crop1.id}/), "自分の作物が表示されるべき"
-    # 参照作物も含まれる（実装によるが、現状は含まれない可能性がある）
-    # テストを緩和: 少なくとも自分の作物が表示されることを確認
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+    end
   end
 
-  test "should show only user crops for regular user" do
+  test "should show only user crops for regular user in new form" do
     my_crop = create(:crop, user: @user)
     other_user = create(:user)
     other_crop = create(:crop, user: other_user)
@@ -1179,12 +1178,11 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
     get new_pest_path
     assert_response :success
-    response_body = response.body
-    # 作物名またはIDが含まれているか確認
-    assert response_body.include?(my_crop.name) || response_body.match(/crop_#{my_crop.id}/), "自分の作物が表示されるべき"
-    # 他のユーザーの作物は表示されない
-    assert_not response_body.include?(other_crop.name), "他のユーザーの作物は表示されない"
-    assert_not response_body.match(/crop_#{other_crop.id}/), "他のユーザーの作物のIDが表示されない"
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{my_crop.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+    end
   end
 
   test "should create pest with single crop association" do
@@ -1291,12 +1289,12 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_not pest.crops.include?(other_crop)
   end
 
-  test "should associate with reference crop for any user" do
+  test "ユーザー害虫は参照作物と関連付けできない" do
     reference_crop = create(:crop, :reference)
     my_crop = create(:crop, user: @user)
 
     assert_difference('Pest.count', 1) do
-      assert_difference('CropPest.count', 2) do
+      assert_difference('CropPest.count', 1) do
         post pests_path, params: { 
           pest: {
             name: 'テスト害虫',
@@ -1308,9 +1306,34 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     end
 
     pest = Pest.last
-    assert_equal 2, pest.crops.count
-    assert pest.crops.include?(reference_crop)
+    assert_equal 1, pest.crops.count
     assert pest.crops.include?(my_crop)
+    assert_not pest.crops.include?(reference_crop)
+  end
+
+  test "参照害虫は参照作物のみ関連付けられる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    reference_crop = create(:crop, :reference)
+    user_crop = create(:crop, user: admin)
+
+    assert_difference('Pest.count', 1) do
+      assert_difference('CropPest.count', 1) do
+        post pests_path, params: { 
+          pest: {
+            name: '参照害虫',
+            is_reference: true
+          },
+          crop_ids: [reference_crop.id, user_crop.id]
+        }
+      end
+    end
+
+    pest = Pest.last
+    assert_equal true, pest.is_reference?
+    assert_equal 1, pest.crops.count
+    assert pest.crops.include?(reference_crop)
+    assert_not pest.crops.include?(user_crop)
   end
 
   test "should show associated crops in pest detail" do
@@ -1336,19 +1359,56 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select '.crop-item', count: 0
   end
 
-  test "should show available crops and current associations in edit form" do
+  test "ユーザー害虫の編集フォームではユーザー作物カードのみ表示され選択状態が保持される" do
     crop1 = create(:crop, user: @user)
     crop2 = create(:crop, user: @user)
-    crop3 = create(:crop, user: @user)
+    other_user_crop = create(:crop, user: create(:user))
+    reference_crop = create(:crop, :reference)
     pest = create(:pest, :user_owned, user: @user)
     create(:crop_pest, crop: crop1, pest: pest)
-    create(:crop_pest, crop: crop2, pest: pest)
 
     get edit_pest_path(pest)
     assert_response :success
-    # レスポンスが成功することを確認（ビューで@available_cropsが使用されている）
-    response_body = response.body
-    assert response_body.present?, "レスポンスボディが存在するべき"
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"][data-selected="true"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"][data-selected="false"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_user_crop.id}"]), 0
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+    end
+    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="crop_ids[]"][value=?]', crop1.id.to_s
+  end
+
+  test "参照害虫の編集フォームには参照作物のみ表示される" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    reference_crop = create(:crop, :reference)
+    other_reference_crop = create(:crop, :reference)
+    user_crop = create(:crop, user: @user)
+    reference_pest = create(:pest, is_reference: true)
+    create(:crop_pest, crop: reference_crop, pest: reference_pest)
+
+    get edit_pest_path(reference_pest)
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"][data-selected="true"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_reference_crop.id}"][data-selected="false"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{user_crop.id}"]), 0
+    end
+    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="crop_ids[]"][value=?]', reference_crop.id.to_s
+  end
+
+  test "地域指定のある害虫の編集フォームには地域一致の作物のみ表示される" do
+    crop_in_region = create(:crop, user: @user, region: 'jp')
+    crop_out_region = create(:crop, user: @user, region: 'us')
+    pest = create(:pest, :user_owned, user: @user, region: 'jp')
+    create(:crop_pest, crop: crop_in_region, pest: pest)
+
+    get edit_pest_path(pest)
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop_in_region.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop_out_region.id}"]), 0
+    end
   end
 
   test "should add crop association on update" do
@@ -1499,7 +1559,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, pest.crops.count
   end
 
-  test "admin should see all crops in new form" do
+  test "admin should initially see only own crops in new form" do
     admin_user = create(:user, admin: true)
     sign_in_as admin_user
     
@@ -1510,11 +1570,11 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
     get new_pest_path
     assert_response :success
-    response_body = response.body
-    assert response_body.include?(admin_crop.name), "管理者の作物が表示されるべき"
-    assert response_body.include?(reference_crop.name), "参照作物が表示されるべき"
-    # 管理者は他人の作物も見えるか？実装次第
-    # 現在の実装では自分の作物と参照作物のみ
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{admin_crop.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
+    end
   end
 
   test "should not update associations when validation fails" do

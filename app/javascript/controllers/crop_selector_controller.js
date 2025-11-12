@@ -2,6 +2,9 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["card", "inputContainer"]
+  static values = {
+    inputName: String
+  }
 
   initialize() {
     this.selectedIds = new Set()
@@ -24,7 +27,7 @@ export default class extends Controller {
 
     if (this.hasInputContainerTarget) {
       const existingInputs = this.inputContainerTarget.querySelectorAll(
-        'input[name="selected_crop_ids[]"]'
+        `input[name="${this.inputName}"]`
       )
 
       existingInputs.forEach((input) => {
@@ -72,10 +75,18 @@ export default class extends Controller {
       .forEach((id) => {
         const input = document.createElement("input")
         input.type = "hidden"
-        input.name = "selected_crop_ids[]"
+        input.name = this.inputName
         input.value = id
         container.appendChild(input)
       })
+  }
+
+  get inputName() {
+    if (this.hasInputNameValue && this.inputNameValue) {
+      return this.inputNameValue
+    }
+
+    return "selected_crop_ids[]"
   }
 }
 
