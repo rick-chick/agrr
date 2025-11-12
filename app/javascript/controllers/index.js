@@ -16,6 +16,7 @@ import PestAiController from "./pest_ai_controller"
 import TaskScheduleTimelineController from "./task_schedule_timeline_controller"
 import UndoDeleteController from "./undo_delete_controller"
 import UndoToastController from "./undo_toast_controller"
+import CropSelectorController from "./crop_selector_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -28,6 +29,7 @@ application.register("pest-ai", PestAiController)
 application.register("task-schedule-timeline", TaskScheduleTimelineController)
 application.register("undo-delete", UndoDeleteController)
 application.register("undo-toast", UndoToastController)
+application.register("crop-selector", CropSelectorController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)

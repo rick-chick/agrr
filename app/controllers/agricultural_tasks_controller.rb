@@ -2,6 +2,8 @@
 
 class AgriculturalTasksController < ApplicationController
   before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
+  before_action :load_crop_selection_data, only: [:edit, :update]
+  before_action :prepare_crop_cards_for_edit, only: [:edit]
 
   # GET /agricultural_tasks
   def index
@@ -62,6 +64,7 @@ class AgriculturalTasksController < ApplicationController
   # PATCH/PUT /agricultural_tasks/:id
   def update
     task_attributes = build_task_attributes
+    selected_crop_ids = selected_crop_ids_from_params
 
     if task_attributes.key?(:is_reference)
       requested_reference = ActiveModel::Type::Boolean.new.cast(task_attributes[:is_reference]) || false
@@ -71,8 +74,10 @@ class AgriculturalTasksController < ApplicationController
     end
 
     if @agricultural_task.update(task_attributes.except(:is_reference))
+      @agricultural_task.crops = Crop.where(id: selected_crop_ids)
       redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.updated')
     else
+      prepare_crop_cards(selected_ids: selected_crop_ids)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -200,6 +205,56 @@ class AgriculturalTasksController < ApplicationController
       :source_agricultural_task_id,
       required_tools: []
     )
+  end
+
+  def load_crop_selection_data
+    return unless action_requires_edit_permission?
+
+    @accessible_crops = accessible_crops_for_selection.to_a
+    @accessible_crop_ids = @accessible_crops.map(&:id)
+  end
+
+  def prepare_crop_cards_for_edit
+    prepare_crop_cards
+  end
+
+  def prepare_crop_cards(selected_ids: nil)
+    return unless defined?(@accessible_crops)
+
+    selected_ids ||= @agricultural_task.crops.pluck(:id)
+    normalized_ids = Array(selected_ids).map(&:to_i).uniq
+
+    @selected_crop_ids = normalized_ids
+    @crop_cards = @accessible_crops.map do |crop|
+      {
+        crop: crop,
+        selected: normalized_ids.include?(crop.id)
+      }
+    end
+  end
+
+  def selected_crop_ids_from_params
+    return [] unless defined?(@accessible_crop_ids)
+
+    raw_ids = Array(params[:selected_crop_ids]).reject(&:blank?)
+    normalized_ids = raw_ids.map(&:to_i)
+    normalized_ids.select { |id| @accessible_crop_ids.include?(id) }
+  end
+
+  def accessible_crops_for_selection
+    scope =
+      if @agricultural_task.is_reference?
+        Crop.where(is_reference: true)
+      else
+        owner_id = @agricultural_task.user_id
+        Crop.where(is_reference: false, user_id: owner_id)
+      end
+
+    if @agricultural_task.region.present?
+      scope = scope.where(region: @agricultural_task.region)
+    end
+
+    scope.order(:name)
   end
 end
 
