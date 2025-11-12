@@ -65,10 +65,139 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
   test '一般ユーザーは自身の作業詳細を表示できる' do
     sign_in_as @user
 
+    crop = create(:crop, user: @user, variety: '桃太郎')
+    @user_task.crops << crop
+
     get agricultural_task_path(@user_task)
 
     assert_response :success
     assert_select 'h1', text: @user_task.name
+    assert_select '.associated-crops-grid .associated-crop-card', count: 1
+    assert_select '.associated-crop-card__name', text: crop.name
+    assert_select '.associated-crop-card__variety', text: "(#{crop.variety})"
+  end
+
+  test '編集フォームでユーザー自身の作物カードが表示され選択状態を切り替えられる' do
+    sign_in_as @user
+
+    selected_crop = create(:crop, user: @user, name: 'きゅうり')
+    other_crop = create(:crop, user: @user, name: 'トマト')
+    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: selected_crop)
+
+    get edit_agricultural_task_path(@user_task)
+
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select '[data-role="crop-card"]', count: 2
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{selected_crop.id}"][data-selected="true"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"][data-selected="false"]), 1
+    end
+
+    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="selected_crop_ids[]"][value=?]', selected_crop.id.to_s
+  end
+
+  test 'ユーザー作業の編集フォームにはユーザー作物のみ表示される' do
+    sign_in_as @admin_user
+
+    reference_crop = create(:crop, :reference, name: '参照キャベツ')
+    admin_crop = create(:crop, user: @admin_user, name: '管理用トマト')
+    other_user_crop = create(:crop, user: @user, name: '他ユーザー作物')
+
+    AgriculturalTaskCrop.create!(agricultural_task: @admin_task, crop: admin_crop)
+
+    get edit_agricultural_task_path(@admin_task)
+
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{admin_crop.id}"][data-selected="true"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_user_crop.id}"]), 0
+    end
+  end
+
+  test '参照作業の編集フォームには参照作物のみ表示される' do
+    sign_in_as @admin_user
+
+    reference_crop = create(:crop, :reference, name: '参照ほうれん草')
+    user_crop = create(:crop, user: @admin_user, name: '管理用ほうれん草')
+
+    AgriculturalTaskCrop.create!(agricultural_task: @reference_task, crop: reference_crop)
+
+    get edit_agricultural_task_path(@reference_task)
+
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"][data-selected="true"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{user_crop.id}"]), 0
+    end
+  end
+
+  test '地域が設定されている場合は一致する地域の作物のみ表示される' do
+    sign_in_as @user
+
+    @user_task.update!(region: 'jp')
+    matched_crop = create(:crop, user: @user, name: '地域内トマト', region: 'jp')
+    unmatched_crop = create(:crop, user: @user, name: '地域外トマト', region: 'us')
+
+    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: matched_crop)
+
+    get edit_agricultural_task_path(@user_task)
+
+    assert_response :success
+    assert_select '[data-controller="crop-selector"]' do
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{matched_crop.id}"]), 1
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{unmatched_crop.id}"]), 0
+    end
+  end
+
+  test 'updateで選択した作物の関連付けが保存される' do
+    sign_in_as @user
+
+    keep_crop = create(:crop, user: @user, name: '残す')
+    new_crop = create(:crop, user: @user, name: '追加する')
+    removed_crop = create(:crop, user: @user, name: '外す')
+
+    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: keep_crop)
+    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: removed_crop)
+
+    patch agricultural_task_path(@user_task), params: {
+      agricultural_task: {
+        name: @user_task.name,
+        description: @user_task.description,
+        time_per_sqm: @user_task.time_per_sqm,
+        weather_dependency: @user_task.weather_dependency,
+        skill_level: @user_task.skill_level,
+        required_tools: @user_task.required_tools
+      },
+      selected_crop_ids: [keep_crop.id, new_crop.id]
+    }
+
+    assert_redirected_to agricultural_task_path(@user_task)
+    @user_task.reload
+    assert_equal [keep_crop.id, new_crop.id].sort, @user_task.crops.pluck(:id).sort
+  end
+
+  test '利用不可な作物IDは更新時に無視される' do
+    sign_in_as @user
+
+    own_crop = create(:crop, user: @user)
+    other_user_crop = create(:crop, user: create(:user))
+
+    patch agricultural_task_path(@user_task), params: {
+      agricultural_task: {
+        name: @user_task.name,
+        description: @user_task.description,
+        time_per_sqm: @user_task.time_per_sqm,
+        weather_dependency: @user_task.weather_dependency,
+        skill_level: @user_task.skill_level,
+        required_tools: @user_task.required_tools
+      },
+      selected_crop_ids: [own_crop.id, other_user_crop.id]
+    }
+
+    assert_redirected_to agricultural_task_path(@user_task)
+    @user_task.reload
+    assert_equal [own_crop.id], @user_task.crops.pluck(:id)
   end
 
   test 'destroy_returns_undo_token_json' do

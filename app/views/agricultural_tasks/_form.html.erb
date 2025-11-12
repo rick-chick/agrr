@@ -58,6 +58,52 @@
                  class: 'form-control' %>
   </div>
 
+  <% if defined?(@crop_cards) %>
+    <section class="crop-selection-section"
+             data-controller="crop-selector">
+      <header class="crop-selection-section__header">
+        <h2 class="crop-selection-section__title"><%= t('agricultural_tasks.form.crop_selection.title') %></h2>
+        <p class="crop-selection-section__description"><%= t('agricultural_tasks.form.crop_selection.description') %></p>
+      </header>
+
+      <% if @crop_cards.any? %>
+        <div class="crop-selection-grid" data-crop-selector-target="grid">
+          <% @crop_cards.each do |card| %>
+            <% crop = card[:crop] %>
+            <article class="crop-selection-card <%= 'is-selected' if card[:selected] %>"
+                     data-role="crop-card"
+                     data-crop-id="<%= crop.id %>"
+                     data-selected="<%= card[:selected] %>"
+                     data-crop-selector-target="card"
+                     data-action="click->crop-selector#toggle">
+              <header class="crop-selection-card__header">
+                <h3 class="crop-selection-card__title"><%= crop.name %></h3>
+                <span class="crop-selection-card__badge <%= crop.is_reference? ? 'is-reference' : 'is-user' %>">
+                  <%= crop.is_reference? ? t('agricultural_tasks.form.crop_selection.reference_badge') : t('agricultural_tasks.form.crop_selection.user_badge') %>
+                </span>
+              </header>
+              <% if crop.variety.present? %>
+                <p class="crop-selection-card__variety"><%= crop.variety %></p>
+              <% end %>
+              <% if card[:selected] %>
+                <span class="crop-selection-card__state"><%= t('agricultural_tasks.form.crop_selection.selected_state') %></span>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="crop-selection-empty"><%= t('agricultural_tasks.form.crop_selection.empty') %></p>
+      <% end %>
+
+      <div class="crop-selection-inputs"
+           data-crop-selector-target="inputContainer">
+        <% Array(@selected_crop_ids).each do |crop_id| %>
+          <%= hidden_field_tag 'selected_crop_ids[]', crop_id %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
   <% if admin_user? %>
     <div class="form-group form-check">
       <%= f.check_box :is_reference, class: 'form-check-input' %>

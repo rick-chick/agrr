@@ -45,6 +45,13 @@ ja:
       submit_create: "作業を作成"
       submit_update: "作業を更新"
       required_tools_hint: "改行で複数入力できます"
+      crop_selection:
+        title: "紐づける作物を選択"
+        description: "この作業を適用したい作物カードを選択してください。クリックで選択／解除が切り替わります。"
+        reference_badge: "参照作物"
+        user_badge: "自分の作物"
+        selected_state: "選択中"
+        empty: "選択可能な作物がありません。先に作物を登録してください。"
 
     show:
       reference_task: "参照作業"
