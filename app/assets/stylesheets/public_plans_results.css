@@ -194,10 +194,12 @@
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   margin-bottom: var(--space-4);
+  width: 100%;
 }
 
 .gantt-chart-canvas {
-  min-width: 1200px;
+  min-width: 0;
+  width: 100%;
 }
 
 .gantt-chart-fallback {

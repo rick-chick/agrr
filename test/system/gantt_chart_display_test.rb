@@ -295,33 +295,19 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     end
   end
 
-  test "ユーザーはガントチャートをズームしながらタスク表示を切り替えられる" do
+  test "ガントチャートヘッダーは余計な制御を表示しない" do
     login_and_visit plan_path(@private_plan, locale: :ja)
 
     assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    click_button I18n.t('plans.gantt.controls.zoom_in')
-    assert_selector '#gantt-chart-container[data-zoom="in"]', wait: 3
-
-    click_button I18n.t('plans.gantt.controls.zoom_out')
-    assert_selector '#gantt-chart-container[data-zoom="out"]', wait: 3
-
-    click_button I18n.t('plans.gantt.controls.toggle_palette')
-    assert_selector '.crop-palette-container', visible: :hidden
-
-    click_button I18n.t('plans.gantt.controls.toggle_palette')
-    assert_selector '.crop-palette-container', visible: :visible
+    assert_no_selector '[data-gantt-control]', wait: 1
+    assert_no_selector '.gantt-controls', wait: 1
   end
 
   test "大量データでもレンダリング状態とUXメッセージが表示される" do
     login_and_visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
 
     assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_selector '#gantt-loading-indicator', wait: 5, visible: :all
-    within '#gantt-loading-indicator' do
-      assert_text I18n.t('plans.gantt.loading.heavy')
-    end
-
-    assert_no_text I18n.t('plans.gantt.loading.heavy'), wait: 5
+    assert_no_selector '#gantt-loading-indicator', wait: 1
   end
 
   test "モバイル幅ではスクロールとフォールバックが提供される" do
