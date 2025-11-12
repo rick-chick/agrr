@@ -18,7 +18,7 @@ class AgrrService
   end
 
   # Get weather data
-  def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: 'openmeteo', json: true)
+  def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: 'noaa', json: true)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['weather', '--location', location]
