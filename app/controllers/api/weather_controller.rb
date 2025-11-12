@@ -10,7 +10,7 @@ class Api::WeatherController < ApplicationController
     start_date = params[:start_date]
     end_date = params[:end_date]
     days = params[:days]
-    data_source = params[:data_source] || 'openmeteo'
+    data_source = params[:data_source] || 'noaa'
 
     if location.blank?
       render json: { error: I18n.t('api.errors.common.location_required') }, status: :bad_request

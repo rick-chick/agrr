@@ -87,7 +87,7 @@ module Agrr
       start_date = nil
       end_date = nil
       days = nil
-      data_source = 'jma'
+      data_source = 'noaa'
       
       i = 0
       while i < args.length

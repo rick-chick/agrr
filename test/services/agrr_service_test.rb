@@ -38,6 +38,31 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_respond_to @service, :schedule
   end
 
+  test 'weather uses noaa data source by default' do
+    captured_args = nil
+    status = Minitest::Mock.new
+    status.expect(:success?, true)
+    status.expect(:exitstatus, 0)
+
+    File.stub(:exist?, true) do
+      File.stub(:socket?, true) do
+        Open3.stub(:capture3, lambda do |*args|
+          captured_args = args
+          ['{"data":[]}', '', status]
+        end) do
+          @service.weather(location: '35.6762,139.6503', days: 3)
+        end
+      end
+    end
+
+    binary, *rest = captured_args
+    assert_equal Rails.root.join('bin', 'agrr_client').to_s, binary
+    assert_includes rest, '--data-source'
+    data_source_index = rest.index('--data-source')
+    assert_equal 'noaa', rest[data_source_index + 1]
+    status.verify
+  end
+
   test 'should raise error when schedule called without daemon' do
     File.stub(:exist?, false) do
       File.stub(:socket?, false) do
