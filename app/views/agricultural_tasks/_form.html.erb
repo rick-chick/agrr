@@ -1,4 +1,6 @@
-<%= form_with model: @agricultural_task, local: true do |f| %>
+<%= form_with model: @agricultural_task,
+              local: true,
+              data: { controller: 'agricultural-task-form' } do |f| %>
   <% if @agricultural_task.errors.any? %>
     <div class="alert alert-danger">
       <h3><%= t('errors.template.header', count: @agricultural_task.errors.count, model: AgriculturalTask.model_name.human) %></h3>
@@ -60,8 +62,7 @@
 
   <% if defined?(@crop_cards) %>
     <section class="crop-selection-section"
-             data-controller="crop-selector"
-             data-crop-selector-input-name-value="selected_crop_ids[]">
+             data-controller="crop-selector">
       <header class="crop-selection-section__header">
         <h2 class="crop-selection-section__title"><%= t('agricultural_tasks.form.crop_selection.title') %></h2>
         <p class="crop-selection-section__description"><%= t('agricultural_tasks.form.crop_selection.description') %></p>
@@ -107,7 +108,9 @@
 
   <% if admin_user? %>
     <div class="form-group form-check">
-      <%= f.check_box :is_reference, class: 'form-check-input' %>
+      <%= f.check_box :is_reference,
+                      class: 'form-check-input',
+                      data: { action: 'change->agricultural-task-form#toggleReferenceFlag' } %>
       <%= f.label :is_reference, AgriculturalTask.human_attribute_name(:is_reference), class: 'form-check-label' %>
     </div>
   <% end %>
