@@ -40,7 +40,8 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
       is_reference: @agricultural_task.is_reference
     )
 
-    @field_cultivation.cultivation_plan_crop.crop.agricultural_tasks << @agricultural_task
+    # CropTaskTemplateを作成したので、agricultural_tasks関連付けは既に存在する
+    # @field_cultivation.cultivation_plan_crop.crop.agricultural_tasks << @agricultural_task は不要
   end
 
   teardown do

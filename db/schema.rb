@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_11_091500) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,16 +37,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_091500) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "agricultural_task_crops", force: :cascade do |t|
-    t.integer "agricultural_task_id", null: false
-    t.integer "crop_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["agricultural_task_id", "crop_id"], name: "index_agricultural_task_crops_on_task_and_crop", unique: true
-    t.index ["agricultural_task_id"], name: "index_agricultural_task_crops_on_agricultural_task_id"
-    t.index ["crop_id"], name: "index_agricultural_task_crops_on_crop_id"
   end
 
   create_table "agricultural_tasks", force: :cascade do |t|
@@ -615,8 +605,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_091500) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "agricultural_task_crops", "agricultural_tasks"
-  add_foreign_key "agricultural_task_crops", "crops"
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
   add_foreign_key "crop_stages", "crops"

@@ -15,7 +15,7 @@
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
-  min-height: calc(220px + 100px * (var(--lane-count, 1) - 1));
+  min-height: calc(220px + 60px * (var(--lane-count, 1) - 1));
 }
 
 .task-board-axis-label {

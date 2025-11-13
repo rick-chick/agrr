@@ -24,7 +24,7 @@ module Crops
 
       template = @crop.crop_task_templates.find_by!(agricultural_task: @task)
       assert_equal @task.name, template.name
-      assert AgriculturalTaskCrop.exists?(crop: @crop, agricultural_task: @task)
+      assert CropTaskTemplate.exists?(crop: @crop, agricultural_task: @task)
 
       assert_equal I18n.t('crops.agricultural_tasks.flash.template_created'),
                    flash[:notice]
