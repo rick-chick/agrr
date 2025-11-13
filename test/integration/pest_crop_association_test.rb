@@ -17,7 +17,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   test "should complete full workflow: create pest with crops, view, edit associations" do
     # 1. 害虫を作成して複数の作物と関連付け
     assert_difference('Pest.count', 1) do
-      assert_difference('CropPest.count', 3) do
+      assert_difference('CropPest.count', 2) do
         post pests_path, params: { 
           pest: {
             name: 'アブラムシ',
@@ -32,12 +32,12 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     pest = Pest.last
     assert_redirected_to pest_path(pest)
-    assert_equal 3, pest.crops.count
+    assert_equal 2, pest.crops.count
 
     # 2. 害虫詳細画面で作物一覧を確認
     get pest_path(pest)
     assert_response :success
-    assert_select '.related-crop-card', count: 3
+    assert_select '.related-crop-card', count: 2
 
     # 3. 作物詳細画面で害虫一覧を確認
     get crop_path(@crop1)
@@ -46,12 +46,12 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 4. 害虫の関連付けを編集（1つ削除、1つ追加）
     crop4 = create(:crop, user: @user, name: 'キュウリ')
-    assert_difference('CropPest.count', 0) do  # 1つ削除、1つ追加で合計変わらず
+    assert_difference('CropPest.count', 1) do  # crop4を追加（参照作物は最初から関連付けられていない）
       patch pest_path(pest), params: { 
         pest: {
           name: pest.name
         },
-        crop_ids: [@crop1.id, @crop2.id, crop4.id]  # @reference_cropを削除、crop4を追加
+        crop_ids: [@crop1.id, @crop2.id, crop4.id]  # crop4を追加
       }
     end
 
@@ -84,7 +84,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 害虫管理画面から同じ作物を選択して新規害虫を作成
     assert_difference('Pest.count', 1) do
-      assert_difference('CropPest.count', 3) do  # 新規害虫1つ + @crop1, @crop2, @reference_crop
+      assert_difference('CropPest.count', 2) do  # 新規害虫1つ + @crop1, @crop2（参照作物は関連付けられない）
         post pests_path, params: { 
           pest: {
             name: '害虫3',
@@ -98,6 +98,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     pest3 = Pest.last
     assert pest3.crops.include?(@crop1)
     assert pest3.crops.include?(@crop2)
+    assert_not pest3.crops.include?(@reference_crop)
     
     # @crop1には3つの害虫が関連付けられている
     @crop1.reload
