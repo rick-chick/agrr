@@ -11,7 +11,8 @@
   min-width: 0;
   background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
   border-radius: 16px;
-  padding: 24px;
+  padding: 24px 16px 16px 24px;
+  box-sizing: border-box;
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.05),
     0 10px 40px rgba(0, 0, 0, 0.08);
@@ -264,7 +265,7 @@
    ============================================ */
 @media (max-width: 768px) {
   #gantt-chart-container {
-    padding: 16px;
+    padding: 16px 12px 12px 16px;
     border-radius: 12px;
   }
 

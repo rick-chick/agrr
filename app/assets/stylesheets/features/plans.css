@@ -19,11 +19,14 @@
 }
 
 .plans-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 var(--space-5);
-  width: 100%;
+  padding: var(--space-6) var(--space-4);
   box-sizing: border-box;
+}
+
+.plans-gantt-section {
+  margin-bottom: var(--space-6);
 }
 
 /* ============================================
