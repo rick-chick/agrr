@@ -276,6 +276,8 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     login_and_visit plan_path(@private_plan, locale: :ja)
     
     assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector '.plans-gantt-section > .gantt-section', wait: 5, visible: :all
+    assert_no_selector '.content-card .gantt-section', wait: 1
     private_container = find('#gantt-chart-container', visible: :all)
     private_cultivations = JSON.parse(private_container['data-cultivations'])
     
@@ -283,6 +285,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     login_and_visit results_public_plans_path(locale: :ja, plan_id: @public_plan.id)
     
     assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector '.gantt-section', wait: 5, visible: :all
     public_container = find('#gantt-chart-container', visible: :all)
     public_cultivations = JSON.parse(public_container['data-cultivations'])
     
@@ -323,6 +326,42 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     assert_selector '#gantt-chart-fallback', wait: 5, visible: :all
   ensure
     page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
+
+  test "ガントチャートの余白が最小化される" do
+    login_and_visit plan_path(@private_plan, locale: :ja)
+
+    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector 'svg.custom-gantt-chart', wait: 10, visible: :all
+
+    metrics = page.evaluate_script(<<~'JS')
+      (() => {
+        const container = document.getElementById('gantt-chart-container');
+        const svg = container?.querySelector('svg.custom-gantt-chart');
+        if (!container || !svg) { return null; }
+        const containerRect = container.getBoundingClientRect();
+        const svgRect = svg.getBoundingClientRect();
+        return {
+          right: Math.round(containerRect.right - svgRect.right),
+          bottom: Math.round(containerRect.bottom - svgRect.bottom)
+        };
+      })();
+    JS
+
+    refute_nil metrics, "ガントチャートの寸法が取得できませんでした"
+
+    right_gap = metrics["right"] || metrics[:right]
+    bottom_gap = metrics["bottom"] || metrics[:bottom]
+
+    assert_operator right_gap, :>=, 0, "ガントチャート右側の余白計算が負になっています: #{right_gap}"
+    assert_operator bottom_gap, :>=, 0, "ガントチャート下側の余白計算が負になっています: #{bottom_gap}"
+
+    assert_operator right_gap, :<=, 48, "ガントチャート右側の余白が大きすぎます: #{right_gap}px"
+    assert_operator bottom_gap, :<=, 48, "ガントチャート下側の余白が大きすぎます: #{bottom_gap}px"
+
+    page_width = page.evaluate_script("document.body.scrollWidth")
+    viewport_width = page.evaluate_script("window.innerWidth")
+    assert_operator page_width - viewport_width, :<=, 8, "ページ全体に横スクロールが発生しています (body.scrollWidth=#{page_width}, viewport=#{viewport_width})"
   end
 
   private

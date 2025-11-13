@@ -712,29 +712,34 @@ function groupByField(cultivations, fields = []) {
 // SVGガントチャートを描画
 function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   const config = {
-    width: 1200,
-    height: 60 + (fieldGroups.length * 80) + 50, // ヘッダー + 行数 + 圃場追加ボタン分
-    margin: { top: 60, right: 40, bottom: 20, left: 80 },
-    rowHeight: 70,
-    barHeight: 50,
-    barPadding: 10
+    margin: { top: 60, right: 20, bottom: 12, left: 80 },
+    rowHeight: 68,
+    barHeight: 48,
+    barPadding: 8
   };
 
-  // 日付の検証と変換
-  const startDate = typeof planStartDate === 'string' ? new Date(planStartDate) : planStartDate;
-  const endDate = typeof planEndDate === 'string' ? new Date(planEndDate) : planEndDate;
+  const addFieldSpacer = fieldGroups.length > 0 ? config.barPadding + 40 : 0;
+  config.height = config.margin.top + (fieldGroups.length * config.rowHeight) + addFieldSpacer + config.margin.bottom;
+
+  let startDate = planStartDate instanceof Date ? new Date(planStartDate.getTime()) : new Date(planStartDate);
+  let endDate = planEndDate instanceof Date ? new Date(planEndDate.getTime()) : new Date(planEndDate);
   
   // 無効な日付の場合はデフォルト値を設定
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     console.warn('Invalid dates in renderGanttChart:', { planStartDate, planEndDate });
     const now = new Date();
-    const defaultStart = new Date(now.getFullYear(), 0, 1); // 今年の1月1日
-    const defaultEnd = new Date(now.getFullYear(), 11, 31); // 今年の12月31日
-    startDate = defaultStart;
-    endDate = defaultEnd;
+    startDate = new Date(now.getFullYear(), 0, 1); // 今年の1月1日
+    endDate = new Date(now.getFullYear(), 11, 31); // 今年の12月31日
   }
 
-  const totalDays = daysBetween(startDate, endDate);
+  const totalDays = Math.max(daysBetween(startDate, endDate), 1);
+
+  const parentWidth = container.parentElement?.getBoundingClientRect()?.width || 0;
+  const containerWidth = container.getBoundingClientRect()?.width || 0;
+  const fallbackWidth = 720;
+  const availableWidth = Math.max(parentWidth, containerWidth, fallbackWidth);
+  config.width = availableWidth;
+
   const chartWidth = config.width - config.margin.left - config.margin.right;
   const chartHeight = config.height - config.margin.top - config.margin.bottom;
   
@@ -746,12 +751,14 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     console.log('Using fallback chartWidth:', fallbackChartWidth);
   }
   
-  container.style.minWidth = `${config.width}px`;
-  container.style.width = `${config.width}px`;
+  container.style.removeProperty("minWidth");
+  container.style.removeProperty("width");
+  container.style.maxWidth = "100%";
+  container.style.width = "100%";
   const canvasWrapper = container.parentElement;
   if (canvasWrapper && canvasWrapper.classList.contains('gantt-chart-canvas')) {
-    canvasWrapper.style.minWidth = `${config.width}px`;
-    canvasWrapper.style.width = `${config.width}px`;
+    canvasWrapper.style.width = "100%";
+    canvasWrapper.style.minWidth = "100%";
   }
 
   // グローバルステートに保存
@@ -766,6 +773,7 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
     height: config.height,
     class: 'custom-gantt-chart',
     viewBox: `0 0 ${config.width} ${config.height}`,
+    preserveAspectRatio: 'xMinYMin meet',
     style: 'pointer-events: auto;'
   });
 
@@ -798,16 +806,16 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   }));
 
   // タイムラインヘッダーを描画
-  renderTimelineHeader(svg, config, planStartDate, planEndDate, totalDays, chartWidth);
+  renderTimelineHeader(svg, config, startDate, endDate, totalDays, chartWidth);
 
   // 各圃場の行を描画
   fieldGroups.forEach((group, index) => {
     const y = config.margin.top + (index * config.rowHeight);
-    renderFieldRow(svg, config, group, index, y, planStartDate, totalDays, chartWidth);
+    renderFieldRow(svg, config, group, index, y, startDate, totalDays, chartWidth);
   });
   
   // 圃場追加ボタンを描画（最後の行の下）
-  const addFieldBtnY = config.margin.top + (fieldGroups.length * config.rowHeight) + 10;
+  const addFieldBtnY = config.margin.top + (fieldGroups.length * config.rowHeight) + config.barPadding;
   const addFieldBtn = createSVGElement('g', {
     class: 'add-field-btn',
     style: 'cursor: pointer;'
@@ -879,7 +887,7 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   container.appendChild(svg);
   
   // グローバルなマウスイベントリスナーを追加（常に最新の参照を使用）
-  setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWidth);
+  setupGlobalDragHandlers(svg, config, startDate, totalDays, chartWidth);
   setLoadingIndicatorVisible(false);
   updateMobileFallback();
   
@@ -999,7 +1007,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     const newY = currentSvgCoords.y - initialMouseSvgOffset.y;
     
     // Y方向の移動から移動先の圃場インデックスを計算
-    const ROW_HEIGHT = 70;
+    const ROW_HEIGHT = config.rowHeight;
     const originalBarY = parseFloat(cachedBarBg.getAttribute('data-original-y'));
     const deltaY = newY - originalBarY;
     const fieldIndexChange = Math.round(deltaY / ROW_HEIGHT);
@@ -1010,7 +1018,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     
     // ハイライトの更新（圃場が変わった場合のみ）
     if (targetFieldIndex !== lastTargetFieldIndex) {
-      const HEADER_HEIGHT = 60;
+      const HEADER_HEIGHT = config.margin.top;
       const highlightY = HEADER_HEIGHT + (targetFieldIndex * ROW_HEIGHT);
       
       // 圃場が変わる場合のみハイライト表示
@@ -1060,8 +1068,8 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     const originalFieldName = window.ganttState.draggedBar.getAttribute('data-field');
     
     // 現在の位置から新しい日付を計算（SVG属性は既に更新済み）
-    const ROW_HEIGHT = 70;
-    const MARGIN_LEFT = 80;
+    const ROW_HEIGHT = config.rowHeight;
+    const MARGIN_LEFT = config.margin.left;
     
     let newX, newFieldIndex, newFieldName, daysFromStart, newStartDate;
     
@@ -1073,7 +1081,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       
       // 日付計算
       const svg = document.querySelector('svg.custom-gantt-chart');
-      const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - 40 : 1080;
+      const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - config.margin.right : 1080;
       const totalDays = daysBetween(window.ganttState.planStartDate, window.ganttState.planEndDate);
       daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
       newStartDate = new Date(window.ganttState.planStartDate);
