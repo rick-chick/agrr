@@ -26,7 +26,6 @@ if (typeof window.ganttChartReady === 'undefined') {
 
 // ガントチャート準備完了イベントをリッスン
 document.addEventListener('ganttChartReady', () => {
-  console.log('✅ [CropPalette] ガントチャートが準備完了しました');
   window.ganttChartReady = true;
   
   // ガントチャートの準備ができたら、作物パレットのドラッグ機能を初期化
@@ -35,7 +34,6 @@ document.addEventListener('ganttChartReady', () => {
     tryInitialize();
   } else {
     // パレットは初期化済みだが、ドラッグ機能がまだの場合
-    console.log('🔧 [CropPalette] パレット初期化済み - ドラッグ機能のみ追加初期化');
     initCropCardDrag();
     initGanttDropZone();
   }
@@ -46,13 +44,7 @@ function toggleCropPalette() {
   const panel = document.getElementById('crop-palette-panel');
   const toggleBtn = document.getElementById('crop-palette-toggle');
   
-  console.log('🔄 [CropPalette] トグル実行:', { 
-    panelExists: !!panel, 
-    btnExists: !!toggleBtn 
-  });
-  
   if (!panel) {
-    console.error('❌ [CropPalette] パネルが見つかりません');
     return;
   }
   
@@ -70,44 +62,27 @@ function toggleCropPalette() {
   // ローカルストレージに状態を保存
   const isCollapsed = panel.classList.contains('collapsed');
   localStorage.setItem('cropPaletteCollapsed', isCollapsed);
-  console.log('💾 [CropPalette] 状態保存:', isCollapsed ? '閉じた' : '開いた');
 }
 
 // 初期化関数
 function initializeCropPalette() {
-  console.log('🌱 [CropPalette] 初期化開始...', { 
-    initialized: window.cropPaletteInitialized,
-    ganttReady: window.ganttChartReady 
-  });
-  
   const palettePanel = document.getElementById('crop-palette-panel');
   if (!palettePanel) {
-    console.warn('⚠️ [CropPalette] パネルが見つからないため初期化をスキップ');
     return;
   }
-
-  console.log('📋 [CropPalette] パネル発見:', {
-    id: palettePanel.id,
-    classes: palettePanel.className,
-    visible: palettePanel.offsetParent !== null
-  });
 
   // トグルボタンの設定（ガントチャート不要）
   setupToggleButton();
   
   // ガントチャートが準備できている場合のみドラッグ機能を初期化
   if (window.ganttChartReady) {
-    console.log('✅ [CropPalette] ガントチャートの準備ができているため、ドラッグ機能を初期化');
     // 作物カードのドラッグ設定
     initCropCardDrag();
     // ガントチャートのドロップゾーン
     initGanttDropZone();
-  } else {
-    console.warn('⏳ [CropPalette] ガントチャートの準備を待機中... ドラッグ機能は後で初期化します');
   }
   
   window.cropPaletteInitialized = true;
-  console.log('✅ [CropPalette] 初期化完了（ドラッグ機能は', window.ganttChartReady ? '有効' : '待機中', '）');
 }
 
 // トグルボタンの設定
@@ -115,30 +90,24 @@ function setupToggleButton() {
   const toggleBtn = document.getElementById('crop-palette-toggle');
   const panel = document.getElementById('crop-palette-panel');
   
-  console.log('🔧 [CropPalette] ボタン設定開始:', { 
-    btnExists: !!toggleBtn, 
-    panelExists: !!panel 
-  });
-  
   if (!toggleBtn || !panel) {
-    console.error('❌ [CropPalette] ボタンまたはパネルが見つかりません');
     return;
   }
 
-  // 既存のイベントリスナーを削除
-  const newToggleBtn = toggleBtn.cloneNode(true);
-  toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+  // 既にイベントリスナーが設定されている場合はスキップ
+  if (toggleBtn.dataset.listenerAdded === 'true') {
+    return;
+  }
 
   // クリックイベントを設定
-  newToggleBtn.addEventListener('click', function(e) {
+  toggleBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('👆 [CropPalette] クリックイベント発火');
     toggleCropPalette();
   });
 
   // キーボードアクセシビリティ対応
-  newToggleBtn.addEventListener('keydown', function(e) {
+  toggleBtn.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       toggleCropPalette();
@@ -146,38 +115,28 @@ function setupToggleButton() {
   });
 
   // イベントリスナー設定済みフラグ
-  newToggleBtn.dataset.listenerAdded = 'true';
+  toggleBtn.dataset.listenerAdded = 'true';
 
   // 保存された状態を復元
   const savedState = localStorage.getItem('cropPaletteCollapsed');
-  console.log('💾 [CropPalette] localStorage読込:', savedState);
   
   if (savedState === 'true') {
     panel.classList.add('collapsed');
     
     // トグルボタンのアイコンも回転
-    const icon = newToggleBtn.querySelector('.toggle-icon');
+    const icon = toggleBtn.querySelector('.toggle-icon');
     if (icon) {
       icon.style.transform = 'rotate(180deg)';
     }
-    console.log('📦 [CropPalette] 閉じた状態を復元');
   } else {
     // 初期状態では開いている（collapsedクラスを確実に削除）
     panel.classList.remove('collapsed');
     
-    const icon = newToggleBtn.querySelector('.toggle-icon');
+    const icon = toggleBtn.querySelector('.toggle-icon');
     if (icon) {
       icon.style.transform = 'rotate(0deg)';
     }
-    console.log('📦 [CropPalette] 開いた状態を設定');
   }
-  
-  console.log('✅ [CropPalette] ボタン設定完了:', {
-    collapsed: panel.classList.contains('collapsed'),
-    visible: panel.offsetParent !== null,
-    display: window.getComputedStyle(panel).display,
-    visibility: window.getComputedStyle(panel).visibility
-  });
 }
 
 // 初期化関数
@@ -187,23 +146,16 @@ function tryInitialize() {
   }
 }
 
-// 複数のタイミングで初期化を試行（重複を避けるためturbo:frame-renderのみ使用）
+// 複数のタイミングで初期化を試行
 document.addEventListener('DOMContentLoaded', () => {
   tryInitialize();
 });
 
-// Turbo対応（重複を避けるためturbo:frame-renderのみ使用）
+// Turbo対応
 if (typeof Turbo !== 'undefined') {
-  document.addEventListener('turbo:frame-render', () => {
-    console.log('🔄 [CropPalette] turbo:frame-render イベント検出');
-    // Turboでページ遷移した場合は初期化フラグをリセット
+  document.addEventListener('turbo:load', () => {
     window.cropPaletteInitialized = false;
     tryInitialize();
-  });
-  
-  // Turboによるページ離脱を検出
-  document.addEventListener('turbo:before-cache', () => {
-    console.log('💾 [CropPalette] turbo:before-cache - 状態保存');
   });
 }
 
@@ -784,13 +736,8 @@ function showErrorMessage(message) {
   });
 }
 
-// グローバルに公開
+// グローバルに公開（他のスクリプトから使用される可能性があるため）
 window.initCropPalette = initializeCropPalette;
 window.toggleCropPalette = toggleCropPalette;
-
-// 強制的に初期化を実行
-console.log('🚀 作物パレットJavaScript読み込み完了');
-console.log('🔍 toggleCropPalette関数:', typeof window.toggleCropPalette);
-console.log('🔍 initCropPalette関数:', typeof window.initCropPalette);
 
 
