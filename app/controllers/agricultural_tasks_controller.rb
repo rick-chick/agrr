@@ -77,7 +77,39 @@ class AgriculturalTasksController < ApplicationController
     update_attributes[:user_id] = user_id_for(requested_reference) if reference_changed
 
     if @agricultural_task.update(update_attributes)
+      # 作業と作物の紐付けを更新
       @agricultural_task.crops = Crop.where(id: selected_crop_ids)
+      
+      # 作物詳細画面の紐付けが正しいため、CropTaskTemplateも更新
+      # 現在のテンプレートを取得
+      current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
+      
+      # 追加する作物（selected_crop_idsにあって、current_template_crop_idsにない）
+      crops_to_add = selected_crop_ids - current_template_crop_ids
+      crops_to_add.each do |crop_id|
+        crop = Crop.find(crop_id)
+        # 既存のテンプレートがない場合のみ作成
+        unless CropTaskTemplate.exists?(crop: crop, agricultural_task: @agricultural_task)
+          crop.crop_task_templates.create!(
+            agricultural_task: @agricultural_task,
+            name: @agricultural_task.name,
+            description: @agricultural_task.description,
+            time_per_sqm: @agricultural_task.time_per_sqm,
+            weather_dependency: @agricultural_task.weather_dependency,
+            required_tools: @agricultural_task.required_tools,
+            skill_level: @agricultural_task.skill_level
+          )
+        end
+      end
+      
+      # 削除する作物（current_template_crop_idsにあって、selected_crop_idsにない）
+      crops_to_remove = current_template_crop_ids - selected_crop_ids
+      crops_to_remove.each do |crop_id|
+        crop = Crop.find(crop_id)
+        template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
+        template&.destroy
+      end
+      
       redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.updated')
     else
       prepare_crop_cards(selected_ids: selected_crop_ids)
@@ -231,7 +263,8 @@ class AgriculturalTasksController < ApplicationController
   def prepare_crop_cards(selected_ids: nil)
     return unless defined?(@accessible_crops)
 
-    selected_ids ||= @agricultural_task.crops.pluck(:id)
+    # 作物詳細画面の紐付けが正しいため、CropTaskTemplateから取得
+    selected_ids ||= CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
     normalized_ids = Array(selected_ids).map(&:to_i).uniq
 
     @selected_crop_ids = normalized_ids
