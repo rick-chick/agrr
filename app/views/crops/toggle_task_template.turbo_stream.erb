@@ -10,21 +10,23 @@
       <div class="task-manual-grid">
         <% @available_agricultural_tasks.each do |task| %>
           <% is_selected = @selected_task_ids.include?(task.id) %>
-          <%= button_to toggle_task_template_crop_path(@crop, agricultural_task_id: task.id),
+          <%= form_with url: toggle_task_template_crop_path(@crop, agricultural_task_id: task.id),
                         method: :post,
                         class: "task-manual-card #{'task-manual-card--selected' if is_selected}",
-                        form: { data: { turbo: true } } do %>
-            <article class="task-manual-card__content">
-              <h4 class="task-manual-card__name">
-                <span><%= task.name %></span>
-                <% if is_selected %>
-                  <span class="task-manual-card__selected-badge">✓</span>
-                <% end %>
-              </h4>
-              <p class="task-manual-card__note">
-                <%= task.description.present? ? truncate(task.description, length: 80) : t('crops.show.manual_task_hint') %>
-              </p>
-            </article>
+                        data: { turbo: true } do |f| %>
+            <%= f.button type: :submit, class: "task-manual-card__button" do %>
+              <article class="task-manual-card__content">
+                <h4 class="task-manual-card__name">
+                  <span><%= task.name %></span>
+                  <% if is_selected %>
+                    <span class="task-manual-card__selected-badge">✓</span>
+                  <% end %>
+                </h4>
+                <p class="task-manual-card__note">
+                  <%= task.description.present? ? truncate(task.description, length: 80) : t('crops.show.manual_task_hint') %>
+                </p>
+              </article>
+            <% end %>
           <% end %>
         <% end %>
       </div>

@@ -665,7 +665,8 @@
   width: 100%;
 }
 
-.task-manual-card button {
+.task-manual-card button,
+.task-manual-card__button {
   width: 100%;
   border: none;
   background: none;

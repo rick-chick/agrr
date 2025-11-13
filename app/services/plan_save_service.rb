@@ -438,7 +438,7 @@ class PlanSaveService
     reference_scope = AgriculturalTask.reference
     reference_scope = reference_scope.where(region: [region, nil]) if region.present?
 
-    reference_scope = reference_scope.includes(agricultural_task_crops: :crop)
+    reference_scope = reference_scope.includes(crop_task_templates: :crop)
 
     user_tasks = []
     @reference_agricultural_task_id_to_user_task_id ||= {}
@@ -485,14 +485,9 @@ class PlanSaveService
   end
 
   def copy_agricultural_task_crop_relationships(reference_task, new_task)
-    reference_task.agricultural_task_crops.each do |task_crop|
-      user_crop_id = user_crop_id_for_reference_crop(task_crop.crop_id)
+    reference_task.crop_task_templates.each do |template|
+      user_crop_id = user_crop_id_for_reference_crop(template.crop_id)
       next unless user_crop_id
-
-      AgriculturalTaskCrop.find_or_create_by!(
-        agricultural_task: new_task,
-        crop_id: user_crop_id
-      )
 
       ensure_crop_task_template!(crop_id: user_crop_id, task: new_task)
     end
