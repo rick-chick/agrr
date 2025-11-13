@@ -142,7 +142,12 @@ class CropsController < ApplicationController
   def toggle_task_template
     agricultural_task = AgriculturalTask.find(params[:agricultural_task_id])
     
-    existing_template = @crop.crop_task_templates.find_by(agricultural_task: agricultural_task)
+    # agricultural_task_idとsource_agricultural_task_idの両方をチェック
+    existing_template = @crop.crop_task_templates.where(
+      agricultural_task: agricultural_task
+    ).or(
+      @crop.crop_task_templates.where(source_agricultural_task_id: agricultural_task.id)
+    ).first
     
     if existing_template
       # テンプレートを削除
