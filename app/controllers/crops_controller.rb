@@ -152,9 +152,6 @@ class CropsController < ApplicationController
     if existing_template
       # テンプレートを削除
       existing_template.destroy
-      # 作業と作物の紐付けも削除（作物詳細画面の紐付けが正しいため）
-      existing_crop_association = agricultural_task.agricultural_task_crops.find_by(crop: @crop)
-      existing_crop_association&.destroy
     else
       # テンプレートを作成
       @crop.crop_task_templates.create!(
@@ -166,10 +163,6 @@ class CropsController < ApplicationController
         required_tools: agricultural_task.required_tools,
         skill_level: agricultural_task.skill_level
       )
-      # 作業と作物の紐付けも作成（作物詳細画面の紐付けが正しいため）
-      unless agricultural_task.crops.include?(@crop)
-        agricultural_task.agricultural_task_crops.create!(crop: @crop)
-      end
     end
     
     # Turbo Stream用に変数を再取得

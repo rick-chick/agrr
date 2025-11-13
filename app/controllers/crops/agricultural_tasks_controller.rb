@@ -53,8 +53,6 @@ module Crops
             is_reference: existing_task.is_reference
           )
 
-          AgriculturalTaskCrop.find_or_create_by!(crop: @crop, agricultural_task: existing_task)
-
           redirect_to crop_agricultural_tasks_path(@crop),
                       notice: I18n.t('crops.agricultural_tasks.flash.template_created')
           return

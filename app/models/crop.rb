@@ -23,10 +23,9 @@ class Crop < ApplicationRecord
   has_many :crop_stages, dependent: :destroy
   has_many :crop_pests, dependent: :destroy
   has_many :pests, through: :crop_pests
-  has_many :agricultural_task_crops, dependent: :destroy
-  has_many :agricultural_tasks, through: :agricultural_task_crops
   has_many :crop_task_schedule_blueprints, dependent: :destroy
   has_many :crop_task_templates, dependent: :destroy
+  has_many :agricultural_tasks, through: :crop_task_templates
 
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
 

@@ -77,10 +77,7 @@ class AgriculturalTasksController < ApplicationController
     update_attributes[:user_id] = user_id_for(requested_reference) if reference_changed
 
     if @agricultural_task.update(update_attributes)
-      # 作業と作物の紐付けを更新
-      @agricultural_task.crops = Crop.where(id: selected_crop_ids)
-      
-      # 作物詳細画面の紐付けが正しいため、CropTaskTemplateも更新
+      # 作業と作物の紐付けをCropTaskTemplateで更新
       # 現在のテンプレートを取得
       current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
       
