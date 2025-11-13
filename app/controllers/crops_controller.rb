@@ -23,10 +23,8 @@ class CropsController < ApplicationController
 
     # 利用可能な農業タスクを取得
     @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
-    # 既にテンプレートとして登録されているタスクIDを取得（agricultural_task_idとsource_agricultural_task_idの両方を考慮）
-    template_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
-    template_source_ids = @crop.crop_task_templates.pluck(:source_agricultural_task_id).compact
-    @selected_task_ids = (template_task_ids + template_source_ids).uniq
+    # 既にテンプレートとして登録されているタスクIDを取得
+    @selected_task_ids = selected_task_ids_for_crop(@crop)
   end
 
   # GET /crops/new
@@ -167,9 +165,7 @@ class CropsController < ApplicationController
     
     # Turbo Stream用に変数を再取得
     @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
-    template_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
-    template_source_ids = @crop.crop_task_templates.pluck(:source_agricultural_task_id).compact
-    @selected_task_ids = (template_task_ids + template_source_ids).uniq
+    @selected_task_ids = selected_task_ids_for_crop(@crop)
     
     respond_to do |format|
       format.turbo_stream
@@ -282,6 +278,17 @@ class CropsController < ApplicationController
     
     # どちらでもない場合は空のコレクション
     AgriculturalTask.none
+  end
+
+  # 作物に既にテンプレートとして登録されているタスクIDを取得
+  # agricultural_task_idとsource_agricultural_task_idの両方を考慮
+  def selected_task_ids_for_crop(crop)
+    # 1回のクエリで両方のカラムを取得
+    templates = crop.crop_task_templates
+                    .pluck(:agricultural_task_id, :source_agricultural_task_id)
+    
+    # 両方のIDを1つの配列にまとめて、nilを除外してユニークにする
+    templates.flat_map { |task_id, source_id| [task_id, source_id] }.compact.uniq
   end
 end
 
