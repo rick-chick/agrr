@@ -140,6 +140,8 @@ class CropsController < ApplicationController
   def toggle_task_template
     agricultural_task = AgriculturalTask.find(params[:agricultural_task_id])
     
+    Rails.logger.info("🔍 [CropsController] toggle_task_template called: crop_id=#{@crop.id}, task_id=#{agricultural_task.id}")
+    
     # agricultural_task_idとsource_agricultural_task_idの両方をチェック
     existing_template = @crop.crop_task_templates.where(
       agricultural_task: agricultural_task
@@ -149,9 +151,14 @@ class CropsController < ApplicationController
     
     if existing_template
       # テンプレートを削除
+      Rails.logger.info("🗑️ [CropsController] Deleting template: template_id=#{existing_template.id}")
       existing_template.destroy
+      # テンプレート削除後にアソシエーションを再読み込み
+      @crop.crop_task_templates.reload
+      Rails.logger.info("✅ [CropsController] Template deleted successfully")
     else
       # テンプレートを作成
+      Rails.logger.info("➕ [CropsController] Creating new template")
       @crop.crop_task_templates.create!(
         agricultural_task: agricultural_task,
         name: agricultural_task.name,
@@ -161,14 +168,20 @@ class CropsController < ApplicationController
         required_tools: agricultural_task.required_tools,
         skill_level: agricultural_task.skill_level
       )
+      Rails.logger.info("✅ [CropsController] Template created successfully")
     end
     
     # Turbo Stream用に変数を再取得
     @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
     @selected_task_ids = selected_task_ids_for_crop(@crop)
     
+    Rails.logger.info("📊 [CropsController] Updated state: available_tasks=#{@available_agricultural_tasks.size}, selected_ids=#{@selected_task_ids.inspect}")
+    
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream do
+        Rails.logger.info("📡 [CropsController] Rendering turbo_stream response")
+        render :toggle_task_template
+      end
       format.html { redirect_to crop_path(@crop) }
     end
   rescue ActiveRecord::RecordNotFound
