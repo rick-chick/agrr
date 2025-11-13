@@ -37,7 +37,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     # 2. 害虫詳細画面で作物一覧を確認
     get pest_path(pest)
     assert_response :success
-    assert_select '.crop-item', count: 3
+    assert_select '.related-crop-card', count: 3
 
     # 3. 作物詳細画面で害虫一覧を確認
     get crop_path(@crop1)
@@ -226,7 +226,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     # 詳細画面で表示されることを確認
     get pest_path(pest)
     assert_response :success
-    assert_select '.crop-item', count: 10
+    assert_select '.related-crop-card', count: 10
   end
 
   test "should handle empty associations correctly" do
@@ -242,7 +242,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     
     get pest_path(pest)
     assert_response :success
-    assert_select '.crop-item', count: 1
+    assert_select '.related-crop-card', count: 1
 
     # すべての関連付けを削除
     patch pest_path(pest), params: { 

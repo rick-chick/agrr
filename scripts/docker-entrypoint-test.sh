@@ -69,6 +69,10 @@ rm -rf "${APP_ROOT}/tmp/cache/assets/"*
 rm -rf "${APP_ROOT}/public/assets/"*
 echo "✓ Asset files cleaned"
 
+# JavaScript依存関係をインストール（devDependenciesを含む）
+echo "==> Installing JavaScript dependencies for tests..."
+npm install
+
 # アセットビルド実行（システムテスト用）
 echo "==> Building assets for system tests..."
 npm run build
