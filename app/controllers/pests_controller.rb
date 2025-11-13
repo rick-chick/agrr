@@ -239,17 +239,20 @@ class PestsController < ApplicationController
   end
 
   def crop_accessible_for_pest?(crop, pest)
-    return false if pest.is_reference? && !crop.is_reference?
-    return false if !pest.is_reference? && crop.is_reference?
-
+    # 地域チェック（害虫に地域が設定されている場合）
     if pest.region.present?
       return false if crop.region != pest.region
     end
 
-    return true if pest.is_reference?
-
+    # 参照害虫は参照作物のみに関連付け可能
+    if pest.is_reference?
+      return crop.is_reference?
+    end
+    
+    # ユーザー所有の害虫は、自分の作物のみに関連付け可能
     owner_id = pest.user_id || current_user.id
-    crop.user_id == owner_id
+    crop.user_id == owner_id && !crop.is_reference?
   end
 end
+
 
