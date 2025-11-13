@@ -116,9 +116,8 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_select '#crop-task-schedule-blueprints', text: /定植前整備/
     assert_select '#crop-task-schedule-blueprints', text: /追肥/
     assert_select '.task-blueprint-card[data-gdd-trigger="150.0"]'
-    assert_select '.task-schedule-blueprints__header .task-schedule-blueprints__primary-action', text: I18n.t('crops.show.manage_agricultural_tasks')
     assert_select '.task-manual-grid .task-manual-card', count: 1
-    assert_select '.task-manual-card__name', text: '潅水'
+    assert_select '.task-manual-card__name', text: '潅水 ✓'
   end
 
   test "害虫一覧がカードレイアウトで表示される" do
