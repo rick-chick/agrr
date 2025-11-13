@@ -66,7 +66,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
 
     crop = create(:crop, user: @user, variety: '桃太郎')
-    @user_task.crops << crop
+    CropTaskTemplate.create!(
+      crop: crop,
+      agricultural_task: @user_task,
+      name: @user_task.name,
+      description: @user_task.description,
+      time_per_sqm: @user_task.time_per_sqm,
+      weather_dependency: @user_task.weather_dependency,
+      required_tools: @user_task.required_tools,
+      skill_level: @user_task.skill_level
+    )
 
     get agricultural_task_path(@user_task)
 
@@ -82,7 +91,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
 
     selected_crop = create(:crop, user: @user, name: 'きゅうり')
     other_crop = create(:crop, user: @user, name: 'トマト')
-    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: selected_crop)
+    CropTaskTemplate.create!(
+      crop: selected_crop,
+      agricultural_task: @user_task,
+      name: @user_task.name,
+      description: @user_task.description,
+      time_per_sqm: @user_task.time_per_sqm,
+      weather_dependency: @user_task.weather_dependency,
+      required_tools: @user_task.required_tools,
+      skill_level: @user_task.skill_level
+    )
 
     get edit_agricultural_task_path(@user_task)
 
@@ -103,7 +121,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     admin_crop = create(:crop, user: @admin_user, name: '管理用トマト')
     other_user_crop = create(:crop, user: @user, name: '他ユーザー作物')
 
-    AgriculturalTaskCrop.create!(agricultural_task: @admin_task, crop: admin_crop)
+    CropTaskTemplate.create!(
+      crop: admin_crop,
+      agricultural_task: @admin_task,
+      name: @admin_task.name,
+      description: @admin_task.description,
+      time_per_sqm: @admin_task.time_per_sqm,
+      weather_dependency: @admin_task.weather_dependency,
+      required_tools: @admin_task.required_tools,
+      skill_level: @admin_task.skill_level
+    )
 
     get edit_agricultural_task_path(@admin_task)
 
@@ -121,7 +148,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     reference_crop = create(:crop, :reference, name: '参照ほうれん草')
     user_crop = create(:crop, user: @admin_user, name: '管理用ほうれん草')
 
-    AgriculturalTaskCrop.create!(agricultural_task: @reference_task, crop: reference_crop)
+    CropTaskTemplate.create!(
+      crop: reference_crop,
+      agricultural_task: @reference_task,
+      name: @reference_task.name,
+      description: @reference_task.description,
+      time_per_sqm: @reference_task.time_per_sqm,
+      weather_dependency: @reference_task.weather_dependency,
+      required_tools: @reference_task.required_tools,
+      skill_level: @reference_task.skill_level
+    )
 
     get edit_agricultural_task_path(@reference_task)
 
@@ -139,7 +175,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     matched_crop = create(:crop, user: @user, name: '地域内トマト', region: 'jp')
     unmatched_crop = create(:crop, user: @user, name: '地域外トマト', region: 'us')
 
-    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: matched_crop)
+    CropTaskTemplate.create!(
+      crop: matched_crop,
+      agricultural_task: @user_task,
+      name: @user_task.name,
+      description: @user_task.description,
+      time_per_sqm: @user_task.time_per_sqm,
+      weather_dependency: @user_task.weather_dependency,
+      required_tools: @user_task.required_tools,
+      skill_level: @user_task.skill_level
+    )
 
     get edit_agricultural_task_path(@user_task)
 
@@ -157,8 +202,26 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     new_crop = create(:crop, user: @user, name: '追加する')
     removed_crop = create(:crop, user: @user, name: '外す')
 
-    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: keep_crop)
-    AgriculturalTaskCrop.create!(agricultural_task: @user_task, crop: removed_crop)
+    CropTaskTemplate.create!(
+      crop: keep_crop,
+      agricultural_task: @user_task,
+      name: @user_task.name,
+      description: @user_task.description,
+      time_per_sqm: @user_task.time_per_sqm,
+      weather_dependency: @user_task.weather_dependency,
+      required_tools: @user_task.required_tools,
+      skill_level: @user_task.skill_level
+    )
+    CropTaskTemplate.create!(
+      crop: removed_crop,
+      agricultural_task: @user_task,
+      name: @user_task.name,
+      description: @user_task.description,
+      time_per_sqm: @user_task.time_per_sqm,
+      weather_dependency: @user_task.weather_dependency,
+      required_tools: @user_task.required_tools,
+      skill_level: @user_task.skill_level
+    )
 
     patch agricultural_task_path(@user_task), params: {
       agricultural_task: {
@@ -204,7 +267,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @admin_user
 
     user_crop = create(:crop, user: @admin_user, name: '管理用きゅうり')
-    @admin_task.crops << user_crop
+    CropTaskTemplate.create!(
+      crop: user_crop,
+      agricultural_task: @admin_task,
+      name: @admin_task.name,
+      description: @admin_task.description,
+      time_per_sqm: @admin_task.time_per_sqm,
+      weather_dependency: @admin_task.weather_dependency,
+      required_tools: @admin_task.required_tools,
+      skill_level: @admin_task.skill_level
+    )
 
     patch agricultural_task_path(@admin_task), params: {
       agricultural_task: {
@@ -232,7 +304,16 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
 
     reference_crop = create(:crop, :reference, name: '参照キャベツ')
     user_crop = create(:crop, user: @admin_user, name: '管理トマト')
-    AgriculturalTaskCrop.create!(agricultural_task: @reference_task, crop: reference_crop)
+    CropTaskTemplate.create!(
+      crop: reference_crop,
+      agricultural_task: @reference_task,
+      name: @reference_task.name,
+      description: @reference_task.description,
+      time_per_sqm: @reference_task.time_per_sqm,
+      weather_dependency: @reference_task.weather_dependency,
+      required_tools: @reference_task.required_tools,
+      skill_level: @reference_task.skill_level
+    )
 
     patch agricultural_task_path(@reference_task), params: {
       agricultural_task: {

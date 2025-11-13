@@ -579,7 +579,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       region: @farm.region,
       task_type: 'field'
     )
-    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: @crops[0])
+    CropTaskTemplate.create!(
+      crop: @crops[0],
+      agricultural_task: reference_task,
+      name: reference_task.name,
+      description: reference_task.description,
+      time_per_sqm: reference_task.time_per_sqm,
+      weather_dependency: reference_task.weather_dependency,
+      required_tools: reference_task.required_tools,
+      skill_level: reference_task.skill_level
+    )
 
     nil_region_task = AgriculturalTask.create!(
       user: nil,
@@ -588,7 +597,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: nil
     )
-    AgriculturalTaskCrop.create!(agricultural_task: nil_region_task, crop: @crops[0])
+    CropTaskTemplate.create!(
+      crop: @crops[0],
+      agricultural_task: nil_region_task,
+      name: nil_region_task.name,
+      description: nil_region_task.description,
+      time_per_sqm: nil_region_task.time_per_sqm,
+      weather_dependency: nil_region_task.weather_dependency,
+      required_tools: nil_region_task.required_tools,
+      skill_level: nil_region_task.skill_level
+    )
 
     other_region_task = AgriculturalTask.create!(
       user: nil,
@@ -597,7 +615,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: 'us'
     )
-    AgriculturalTaskCrop.create!(agricultural_task: other_region_task, crop: @crops[0])
+    CropTaskTemplate.create!(
+      crop: @crops[0],
+      agricultural_task: other_region_task,
+      name: other_region_task.name,
+      description: other_region_task.description,
+      time_per_sqm: other_region_task.time_per_sqm,
+      weather_dependency: other_region_task.weather_dependency,
+      required_tools: other_region_task.required_tools,
+      skill_level: other_region_task.skill_level
+    )
 
     plan = CultivationPlan.create!(
       farm: @farm,
@@ -663,7 +690,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: @farm.region
     )
-    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: @crops[0])
+    CropTaskTemplate.create!(
+      crop: @crops[0],
+      agricultural_task: reference_task,
+      name: reference_task.name,
+      description: reference_task.description,
+      time_per_sqm: reference_task.time_per_sqm,
+      weather_dependency: reference_task.weather_dependency,
+      required_tools: reference_task.required_tools,
+      skill_level: reference_task.skill_level
+    )
 
     user_task = @user.agricultural_tasks.create!(
       name: '再利用参照作業（コピー）',
@@ -1425,7 +1461,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       region: 'jp'
     )
 
-    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: reference_crop)
+    CropTaskTemplate.create!(
+      crop: reference_crop,
+      agricultural_task: reference_task,
+      name: reference_task.name,
+      description: reference_task.description,
+      time_per_sqm: reference_task.time_per_sqm,
+      weather_dependency: reference_task.weather_dependency,
+      required_tools: reference_task.required_tools,
+      skill_level: reference_task.skill_level
+    )
 
     plan = CultivationPlan.create!(
       farm: @farm,
@@ -1533,7 +1578,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       task_type: 'field_work',
       region: 'jp'
     )
-    AgriculturalTaskCrop.create!(agricultural_task: reference_task, crop: reference_crop)
+    CropTaskTemplate.create!(
+      crop: reference_crop,
+      agricultural_task: reference_task,
+      name: reference_task.name,
+      description: reference_task.description,
+      time_per_sqm: reference_task.time_per_sqm,
+      weather_dependency: reference_task.weather_dependency,
+      required_tools: reference_task.required_tools,
+      skill_level: reference_task.skill_level
+    )
 
     plan = CultivationPlan.create!(
       farm: farm,

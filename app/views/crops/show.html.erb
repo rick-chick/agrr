@@ -149,12 +149,11 @@
               <% gdd_ratio = (blueprint.gdd_trigger.to_f / total_required_gdd).clamp(0.0, 1.0) %>
               <% left_percent = (gdd_ratio * 100).clamp(8.0, 95.0) %>
               <% lane_position = ((index + 0.5) / lane_count) * 100 %>
-              <% top_percent = lane_position.clamp(8.0, 92.0) %>
+              <% top_percent = lane_position %>
 
               <% card_tooltip = [
                    t('.task_schedule_blueprints_order_tooltip', order: index + 1),
-                   "#{t('.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}",
-                   (blueprint.stage_name.presence)
+                   "#{t('.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}"
                  ].compact.join(' / ') %>
 
               <div class="task-blueprint-card blueprint-<%= blueprint.task_type %>"
@@ -165,11 +164,6 @@
                 <div class="task-blueprint-card__title">
                   <%= blueprint.agricultural_task&.name || t('.task_schedule_blueprints_missing_task') %>
                 </div>
-                <% if blueprint.stage_name.present? %>
-                  <div class="task-blueprint-card__stage">
-                    <%= blueprint.stage_name %>
-                  </div>
-                <% end %>
               </div>
             <% end %>
           </div>

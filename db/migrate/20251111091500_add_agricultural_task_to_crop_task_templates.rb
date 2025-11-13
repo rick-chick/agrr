@@ -6,10 +6,13 @@ class AddAgriculturalTaskToCropTaskTemplates < ActiveRecord::Migration[7.1]
               unique: true,
               name: "idx_crop_task_templates_on_crop_and_agricultural_task"
 
-    require Rails.root.join("app/models/crop_task_template")
-    require Rails.root.join("app/services/crop_task_template_backfill_service")
-    CropTaskTemplate.reset_column_information
-    CropTaskTemplateBackfillService.new.call
+    # 注意: このマイグレーションは既に実行済みです
+    # CropTaskTemplateBackfillServiceは移行完了後、削除されました
+    # マイグレーション再実行時は、この行は実行されません（既に実行済みのため）
+    # require Rails.root.join("app/models/crop_task_template")
+    # require Rails.root.join("app/services/crop_task_template_backfill_service")
+    # CropTaskTemplate.reset_column_information
+    # CropTaskTemplateBackfillService.new.call
   end
 
   def down
