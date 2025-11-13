@@ -271,25 +271,24 @@ class CropsController < ApplicationController
 
   # 作物に利用可能な農業タスクを取得
   def available_agricultural_tasks_for_crop(crop)
-    tasks = AgriculturalTask.none
-    
-    # ユーザ作物であればそのユーザの作業
+    # ユーザ作物であればそのユーザの作業のみ
     if !crop.is_reference && crop.user_id.present?
-      tasks = tasks.or(AgriculturalTask.user_owned.where(user_id: crop.user_id))
+      tasks = AgriculturalTask.user_owned.where(user_id: crop.user_id)
+      # 地域が設定されていればその地域も条件に追加
+      tasks = tasks.where(region: crop.region) if crop.region.present?
+      return tasks.order(:name)
     end
     
-    # 参照作物であれば参照作業
+    # 参照作物であれば参照作業のみ
     if crop.is_reference
-      tasks = tasks.or(AgriculturalTask.reference)
+      tasks = AgriculturalTask.reference
+      # 地域が設定されていればその地域も条件に追加
+      tasks = tasks.where(region: crop.region) if crop.region.present?
+      return tasks.order(:name)
     end
     
-    # 地域が設定されていればその地域の作業
-    if crop.region.present?
-      tasks = tasks.or(AgriculturalTask.where(region: crop.region))
-    end
-    
-    # 重複を除去して返す
-    tasks.distinct.order(:name)
+    # どちらでもない場合は空のコレクション
+    AgriculturalTask.none
   end
 end
 
