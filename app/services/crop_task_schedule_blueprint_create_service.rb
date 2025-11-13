@@ -25,7 +25,7 @@ class CropTaskScheduleBlueprintCreateService
 
     schedule_response = schedule_gateway.generate(
       crop_name: crop.name,
-      variety: crop.variety || 'general',
+      variety: crop.variety.presence || 'general',
       stage_requirements: stage_requirements,
       agricultural_tasks: agricultural_tasks
     )
@@ -54,6 +54,7 @@ class CropTaskScheduleBlueprintCreateService
 
   def persist_blueprints!(crop:, blueprint_attributes:)
     timestamp = Time.current
+    allowed_columns = CropTaskScheduleBlueprint.column_names.map(&:to_sym)
 
     sanitized_attributes = blueprint_attributes.map do |attrs|
       normalized_attrs = attrs.dup
@@ -61,7 +62,10 @@ class CropTaskScheduleBlueprintCreateService
       normalized_attrs[:gdd_tolerance] = normalize_decimal(attrs[:gdd_tolerance])
       normalized_attrs[:amount] = normalize_decimal(attrs[:amount])
       normalized_attrs[:time_per_sqm] = normalize_decimal(attrs[:time_per_sqm])
-      normalized_attrs.merge(created_at: timestamp, updated_at: timestamp)
+      normalized_attrs = normalized_attrs.merge(created_at: timestamp, updated_at: timestamp)
+      
+      # モデルのカラムに存在する属性のみを保持
+      normalized_attrs.select { |key, _| allowed_columns.include?(key) }
     end
 
     CropTaskScheduleBlueprint.transaction do

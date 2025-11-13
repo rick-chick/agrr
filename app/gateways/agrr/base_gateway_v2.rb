@@ -437,7 +437,7 @@ module Agrr
         end
       end
       
-      raise ArgumentError, "Crop name, variety, stage requirements, and agricultural tasks are required" unless crop_name && variety && stage_requirements && agricultural_tasks
+      raise ArgumentError, "Crop name, variety, stage requirements, and agricultural tasks are required" unless crop_name.present? && variety.present? && stage_requirements.present? && agricultural_tasks.present?
       
       @agrr_service.schedule(
         crop_name: crop_name,
