@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CropsController < ApplicationController
-  before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints]
+  before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
   before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
   # GET /crops
@@ -27,6 +27,13 @@ class CropsController < ApplicationController
       (template.agricultural_task_id.present? && assigned_task_ids.include?(template.agricultural_task_id)) ||
         (template.source_agricultural_task_id.present? && assigned_source_ids.include?(template.source_agricultural_task_id))
     end
+
+    # 利用可能な農業タスクを取得
+    @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
+    # 既にテンプレートとして登録されているタスクIDを取得（agricultural_task_idとsource_agricultural_task_idの両方を考慮）
+    template_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
+    template_source_ids = @crop.crop_task_templates.pluck(:source_agricultural_task_id).compact
+    @selected_task_ids = (template_task_ids + template_source_ids).uniq
   end
 
   # GET /crops/new
@@ -138,6 +145,45 @@ class CropsController < ApplicationController
     redirect_to crop_path(@crop), alert: I18n.t('crops.flash.task_schedule_blueprints_failed')
   end
 
+  # POST /crops/:id/toggle_task_template
+  def toggle_task_template
+    agricultural_task = AgriculturalTask.find(params[:agricultural_task_id])
+    
+    existing_template = @crop.crop_task_templates.find_by(agricultural_task: agricultural_task)
+    
+    if existing_template
+      # テンプレートを削除
+      existing_template.destroy
+    else
+      # テンプレートを作成
+      @crop.crop_task_templates.create!(
+        agricultural_task: agricultural_task,
+        name: agricultural_task.name,
+        description: agricultural_task.description,
+        time_per_sqm: agricultural_task.time_per_sqm,
+        weather_dependency: agricultural_task.weather_dependency,
+        required_tools: agricultural_task.required_tools,
+        skill_level: agricultural_task.skill_level
+      )
+    end
+    
+    # Turbo Stream用に変数を再取得
+    @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
+    template_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
+    template_source_ids = @crop.crop_task_templates.pluck(:source_agricultural_task_id).compact
+    @selected_task_ids = (template_task_ids + template_source_ids).uniq
+    
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to crop_path(@crop) }
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to crop_path(@crop), alert: I18n.t('crops.flash.task_not_found')
+  rescue StandardError => e
+    Rails.logger.error("❌ [CropsController] Failed to toggle task template: #{e.class} #{e.message}")
+    redirect_to crop_path(@crop), alert: I18n.t('crops.flash.toggle_task_template_failed')
+  end
+
   private
 
   def set_crop
@@ -216,6 +262,29 @@ class CropsController < ApplicationController
         ]
       ]
     )
+  end
+
+  # 作物に利用可能な農業タスクを取得
+  def available_agricultural_tasks_for_crop(crop)
+    tasks = AgriculturalTask.none
+    
+    # ユーザ作物であればそのユーザの作業
+    if !crop.is_reference && crop.user_id.present?
+      tasks = tasks.or(AgriculturalTask.user_owned.where(user_id: crop.user_id))
+    end
+    
+    # 参照作物であれば参照作業
+    if crop.is_reference
+      tasks = tasks.or(AgriculturalTask.reference)
+    end
+    
+    # 地域が設定されていればその地域の作業
+    if crop.region.present?
+      tasks = tasks.or(AgriculturalTask.where(region: crop.region))
+    end
+    
+    # 重複を除去して返す
+    tasks.distinct.order(:name)
   end
 end
 

@@ -84,6 +84,8 @@ ja:
       destroyed: "作物が削除されました。"
       task_schedule_blueprints_generated: "作業テンプレートを更新しました。"
       task_schedule_blueprints_failed: "作業テンプレートの生成に失敗しました。ログを確認してください。"
+      task_not_found: "指定された作業が見つかりません。"
+      toggle_task_template_failed: "作業テンプレートの選択/解除に失敗しました。"
       cannot_delete_in_use:
         plan: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
         field: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
@@ -179,6 +181,8 @@ ja:
       origin_manual_label: "手動作業"
       manual_task_type_label: "利用可能なテンプレート"
       manual_task_count: "%{count}件"
+      available_task_templates_title: "利用可能な作業テンプレート"
+      available_task_count: "%{count}件"
       source_reference_label: "参照データ"
       source_user_label: "ユーザー作成"
       manual_task_hint: "AIによる提案に紐付けておくとスケジュール最適化で利用されます。"

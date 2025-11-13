@@ -48,6 +48,7 @@ Rails.application.routes.draw do
     resources :crops do
       member do
         post :generate_task_schedule_blueprints
+        post :toggle_task_template
       end
       resources :pests, controller: 'crops/pests', except: [:destroy]
       resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
