@@ -48,8 +48,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # システムテスト前にapplication.jsがビルドされているか確認
     ensure_application_js_built
     
-    DatabaseCleaner.strategy = :truncation
-    DatabaseCleaner.start
+    DatabaseCleaner[:active_record].strategy = :truncation
+    DatabaseCleaner[:active_record].start
     super
   end
   
@@ -84,7 +84,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     Capybara.use_default_driver
   ensure
     # DatabaseCleanerでDBをクリーンアップ
-    DatabaseCleaner.clean
+    DatabaseCleaner[:active_record].clean
   end
 
   def setup_omniauth_test_mode

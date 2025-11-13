@@ -17,9 +17,8 @@ fi
 echo "🛡️  AGRR ホスト環境保護機能のセットアップ"
 echo ""
 echo "このスクリプトは以下を行います："
-echo "1. PREVENT_TEST_IN_DEV環境変数の設定"
-echo "2. railsコマンドのエイリアス設定（Docker強制）"
-echo "3. テスト実行エイリアスの追加"
+echo "1. railsコマンドのエイリアス設定（Docker強制）"
+echo "2. テスト実行エイリアスの追加"
 echo ""
 
 # 既に設定済みかチェック
@@ -52,11 +51,6 @@ agrr_check_dir() {
   fi
   return 1
 }
-
-# PREVENT_TEST_IN_DEV を常に設定（AGRRプロジェクト内）
-if agrr_check_dir; then
-  export PREVENT_TEST_IN_DEV=true
-fi
 
 # railsコマンドのラッパー関数
 rails() {

@@ -7,21 +7,6 @@ require "active_support/core_ext/integer/time"
 # your test database is "scratch space" for the test suite and is wiped
 # and recreated between test runs. Don't rely on the data there!
 
-# Prevent running tests in development container (safety guard)
-if ENV['PREVENT_TEST_IN_DEV'] == 'true'
-  raise <<~ERROR
-    ❌ ERROR: Cannot run tests in development container!
-    
-    This safety mechanism prevents accidental data loss in development database.
-    
-    ✅ Use the correct command:
-       docker compose run --rm test bundle exec rails test
-    
-    Or for specific tests:
-       docker compose run --rm test bundle exec rails test test/integration/crop_ai_save_test.rb
-  ERROR
-end
-
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 

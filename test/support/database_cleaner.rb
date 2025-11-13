@@ -6,9 +6,6 @@ require "database_cleaner/active_record"
 DatabaseCleaner.allow_remote_database_url = true
 DatabaseCleaner.allow_production = false
 
-# テスト開始時の設定
-DatabaseCleaner[:active_record].strategy = :transaction
-
 # Minitest hooks
 module DatabaseCleanerSetup
   def before_setup
@@ -18,8 +15,8 @@ module DatabaseCleanerSetup
     end
     
     # 通常のテストではtransactionを使用
-    DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.start
+    DatabaseCleaner[:active_record].strategy = :transaction
+    DatabaseCleaner[:active_record].start
     super
   end
 
@@ -27,7 +24,7 @@ module DatabaseCleanerSetup
     super
     # SystemTestCaseの場合はApplicationSystemTestCaseでクリーンアップ
     unless self.class < ActionDispatch::SystemTestCase
-      DatabaseCleaner.clean
+      DatabaseCleaner[:active_record].clean
     end
   end
 end
