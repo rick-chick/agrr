@@ -1346,8 +1346,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     get pest_path(pest)
     assert_response :success
     assert_select '.stages-title', text: I18n.t('pests.show.crops_title')
-    assert_select '.crop-item', count: 2
-    assert_select 'a.crop-link', count: 2
+    assert_select '.related-crop-card', count: 2
+    assert_select 'a.related-crop-card__link', count: 2
   end
 
   test "should show no crops message when pest has no associations" do
@@ -1356,7 +1356,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     get pest_path(pest)
     assert_response :success
     assert_select '.no-crops'
-    assert_select '.crop-item', count: 0
+    assert_select '.related-crop-card', count: 0
   end
 
   test "ユーザー害虫の編集フォームではユーザー作物カードのみ表示され選択状態が保持される" do

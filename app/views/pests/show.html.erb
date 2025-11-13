@@ -116,33 +116,35 @@
     </div>
   <% end %>
   
-    <% if @crops&.any? %>
-      <div class="stages-section">
-        <h2 class="stages-title"><%= t('.crops_title') %></h2>
-        <div class="crops-list">
-          <% @crops.each do |crop| %>
-            <div class="crop-item">
-              <div class="crop-name">
-                <%= link_to crop.name, crop_path(crop), class: "crop-link" %>
-              </div>
-              <% if crop.variety.present? %>
-                <div class="crop-variety"><%= crop.variety %></div>
-              <% end %>
+  <% if @crops&.any? %>
+    <div class="stages-section">
+      <h2 class="stages-title"><%= t('.crops_title') %></h2>
+      <div class="related-crops-grid">
+        <% @crops.each do |crop| %>
+          <article class="related-crop-card">
+            <div class="related-crop-card__header">
+              <h3 class="related-crop-card__name">
+                <%= link_to crop.name, crop_path(crop), class: "related-crop-card__link" %>
+              </h3>
               <% if crop.is_reference %>
-                <span class="crop-reference-badge"><%= t('.reference_crop') %></span>
+                <span class="related-crop-card__badge"><%= t('.reference_crop') %></span>
               <% end %>
             </div>
-          <% end %>
-        </div>
+            <% if crop.variety.present? %>
+              <p class="related-crop-card__variety"><%= crop.variety %></p>
+            <% end %>
+          </article>
+        <% end %>
       </div>
-    <% else %>
-      <div class="stages-section">
-        <h2 class="stages-title"><%= t('.crops_title') %></h2>
-        <div class="no-crops">
-          <p><%= t('.no_crops_description') %></p>
-        </div>
+    </div>
+  <% else %>
+    <div class="stages-section">
+      <h2 class="stages-title"><%= t('.crops_title') %></h2>
+      <div class="no-crops">
+        <p><%= t('.no_crops_description') %></p>
       </div>
-    <% end %>
+    </div>
+  <% end %>
 
     <div class="actions">
       <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
