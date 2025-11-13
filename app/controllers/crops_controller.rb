@@ -20,13 +20,6 @@ class CropsController < ApplicationController
     @task_schedule_blueprints = @crop.crop_task_schedule_blueprints
                                       .includes(:agricultural_task)
                                       .ordered
-    assigned_task_ids = @task_schedule_blueprints.map(&:agricultural_task_id).compact
-    assigned_source_ids = @task_schedule_blueprints.map(&:source_agricultural_task_id).compact
-
-    @manual_task_templates = @crop.crop_task_templates.includes(:agricultural_task).reject do |template|
-      (template.agricultural_task_id.present? && assigned_task_ids.include?(template.agricultural_task_id)) ||
-        (template.source_agricultural_task_id.present? && assigned_source_ids.include?(template.source_agricultural_task_id))
-    end
 
     # 利用可能な農業タスクを取得
     @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
