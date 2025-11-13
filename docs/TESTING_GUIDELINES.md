@@ -265,6 +265,12 @@ docker compose run --rm test bundle exec rails test test/integration/
 docker compose run --rm test bundle exec rails test
 ```
 
+### Docker Test Environment Operations
+- **マイグレーション追加時**: `docker compose build test` → `docker compose run --rm test bundle exec rails db:migrate` を実行して `.docker/test_db_cache` を更新し、そのままテストを走らせる。
+- **環境再構築時**（新しいマシンやボリューム削除直後など）: `docker compose build test` 後に `docker compose run --rm test bundle exec rails db:setup` もしくは `db:migrate` を1度実行し、基盤となる SQLite キャッシュを生成してから通常のテストコマンドを使う。
+- **マイグレーション差分が無い場合**: `docker compose run --rm test bundle exec rails test` だけで OK。キャッシュがそのまま再利用される。
+- **依存ライブラリ追加時**（Gem / npm）: `Gemfile` や `package.json` を更新後、`docker compose build test`（必要なら `docker compose build web`）で新しい依存を取り込む。コンテナ内で個別に `bundle install` や `npm install` を行わない。
+
 ### Test Coverage Requirements
 - [ ] Model-level validation: 100% coverage
 - [ ] Integration scenarios: All critical paths

@@ -27,7 +27,6 @@ services:
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
-      - PREVENT_TEST_IN_DEV=true  # テスト実行防止フラグ
       - USE_AGRR_DAEMON=true  # Daemon mode enabled by default
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - ASYNC_DAEMON_START=true  # 完全非同期daemon起動（Railsサーバーを即座に起動）
@@ -72,7 +71,6 @@ services:
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
-      - PREVENT_TEST_IN_DEV=true
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
     command: bundle exec rails server -b 0.0.0.0
@@ -108,7 +106,6 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
       - USE_AGRR_DAEMON=false  # 通常のテストではdaemonを使用しない
-      - PREVENT_TEST_IN_DEV=  # テスト環境では無効化
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
@@ -142,7 +139,6 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
       - USE_AGRR_DAEMON=true  # 統合テストではdaemonを使用
-      - PREVENT_TEST_IN_DEV=  # テスト環境では無効化
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8
