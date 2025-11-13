@@ -218,33 +218,6 @@
         </div>
       </div>
     <% end %>
-    
-    <% if @manual_task_templates.any? %>
-      <div class="task-manual-section">
-        <div class="task-manual-section__header">
-          <h3 class="task-manual-section__title"><%= t('.manual_task_type_label') %></h3>
-          <span class="task-manual-section__count">
-            <%= t('.manual_task_count', count: @manual_task_templates.size) %>
-          </span>
-        </div>
-        <div class="task-manual-grid">
-          <% @manual_task_templates.each do |template| %>
-            <article class="task-manual-card">
-              <h4 class="task-manual-card__name">
-                <% if template.agricultural_task %>
-                  <%= link_to template.name, agricultural_task_path(template.agricultural_task), class: "task-manual-card__link" %>
-                <% else %>
-                  <span><%= template.name %></span>
-                <% end %>
-              </h4>
-              <p class="task-manual-card__note">
-                <%= template.description.present? ? truncate(template.description, length: 80) : t('.manual_task_hint') %>
-              </p>
-            </article>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
   </div>
 
   <div class="stages-section">
