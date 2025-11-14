@@ -12,8 +12,8 @@
     ]
   
   使用例（外部から独立して使用可能）:
-    <%= render 'crops/pests_section', crop: Crop.find(1) %>
-    <%= render 'crops/pests_section', crop: @selected_crop %>
+    render 'crops/pests_section', crop: Crop.find(1)
+    render 'crops/pests_section', crop: @selected_crop
 %>
 
 <div class="pests-section">

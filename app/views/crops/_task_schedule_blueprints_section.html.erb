@@ -17,12 +17,12 @@
     ]
   
   使用例（外部から独立して使用可能）:
-    <%= render 'crops/task_schedule_blueprints_section', 
-               crop: Crop.find(1), 
-               task_schedule_blueprints: Crop.find(1).crop_task_schedule_blueprints %>
-    <%= render 'crops/task_schedule_blueprints_section', 
-               crop: @my_crop, 
-               task_schedule_blueprints: @custom_blueprints %>
+    render 'crops/task_schedule_blueprints_section', 
+           crop: Crop.find(1), 
+           task_schedule_blueprints: Crop.find(1).crop_task_schedule_blueprints
+    render 'crops/task_schedule_blueprints_section', 
+           crop: @my_crop, 
+           task_schedule_blueprints: @custom_blueprints
 %>
 
 <div class="task-schedule-blueprints-section" id="crop-task-schedule-blueprints">
