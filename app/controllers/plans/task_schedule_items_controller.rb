@@ -182,8 +182,7 @@ module Plans
         time_per_sqm: params[:time_per_sqm].presence || template&.time_per_sqm,
         amount: params[:amount],
         amount_unit: params[:amount_unit],
-        agricultural_task_id: params[:agricultural_task_id].presence || template&.agricultural_task_id,
-        source_agricultural_task_id: template_source_agricultural_task_id(template)
+        agricultural_task_id: params[:agricultural_task_id].presence || template&.agricultural_task_id
       }
     end
 
@@ -285,10 +284,5 @@ module Plans
       raise ActiveRecord::RecordInvalid, record
     end
 
-    def template_source_agricultural_task_id(template)
-      return nil unless template
-
-      template.source_agricultural_task_id.presence || template.agricultural_task_id
-    end
   end
 end

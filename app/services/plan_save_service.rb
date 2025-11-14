@@ -503,7 +503,6 @@ class PlanSaveService
     template.assign_attributes(
       name: task.name,
       description: task.description,
-      source_agricultural_task_id: task.source_agricultural_task_id,
       time_per_sqm: task.time_per_sqm,
       weather_dependency: task.weather_dependency,
       required_tools: task.required_tools,
@@ -854,7 +853,6 @@ class PlanSaveService
       )
 
       reference_schedule.task_schedule_items.each do |reference_item|
-        source_task_id = reference_item.source_agricultural_task_id || reference_item.agricultural_task&.source_agricultural_task_id || reference_item.agricultural_task_id
         mapped_task_id = mapped_agricultural_task_id(reference_item)
 
         if reference_item.gdd_trigger.nil?
@@ -882,8 +880,7 @@ class PlanSaveService
           rescheduled_at: reference_item.rescheduled_at,
           cancelled_at: reference_item.cancelled_at,
           completed_at: reference_item.completed_at,
-          agricultural_task_id: mapped_task_id,
-          source_agricultural_task_id: source_task_id
+          agricultural_task_id: mapped_task_id
         )
       end
     end
@@ -896,11 +893,7 @@ class PlanSaveService
     task = reference_item.agricultural_task
     return task.id if task&.user_id == @user.id
 
-    reference_task_id =
-      reference_item.source_agricultural_task_id ||
-      task&.source_agricultural_task_id ||
-      task&.id
-
+    reference_task_id = task&.id
     return nil unless reference_task_id
 
     user_agricultural_task_id_for(reference_task_id)

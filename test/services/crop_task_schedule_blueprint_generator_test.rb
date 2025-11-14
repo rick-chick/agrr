@@ -8,7 +8,6 @@ class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
       :crop_task_template,
       crop: @crop,
       agricultural_task: @soil_task,
-      source_agricultural_task_id: @soil_task.id,
       name: @soil_task.name,
       description: @soil_task.description,
       time_per_sqm: @soil_task.time_per_sqm,
@@ -39,10 +38,13 @@ class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
         }
       ]
     }
+    basal_task = create(:agricultural_task, name: '基肥')
+    topdress_task = create(:agricultural_task, name: '追肥')
+
     fertilize_response = {
       'schedule' => [
         {
-          'task_id' => '1200',
+          'task_id' => basal_task.id.to_s,
           'stage_name' => '定植前',
           'stage_order' => 0,
           'gdd_trigger' => 0,
@@ -52,7 +54,7 @@ class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
           'weather_dependency' => 'medium'
         },
         {
-          'task_id' => '1201',
+          'task_id' => topdress_task.id.to_s,
           'stage_name' => '追肥',
           'stage_order' => 2,
           'gdd_trigger' => 150,
@@ -81,14 +83,13 @@ class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
     assert_equal BigDecimal('0.2'), general_blueprint[:time_per_sqm]
 
     basal_blueprint = blueprints.find { |attrs| attrs[:task_type] == TaskScheduleItem::BASAL_FERTILIZATION_TYPE }
-    assert_nil basal_blueprint[:agricultural_task_id]
-    assert_equal 1200, basal_blueprint[:source_agricultural_task_id]
+    assert_not_nil basal_blueprint[:agricultural_task_id]
     assert_equal BigDecimal('3.5'), basal_blueprint[:amount]
     assert_equal 'g/m2', basal_blueprint[:amount_unit]
     assert_equal 'agrr_fertilize_plan', basal_blueprint[:source]
 
     topdress_blueprint = blueprints.find { |attrs| attrs[:task_type] == TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE }
-    assert_equal 1201, topdress_blueprint[:source_agricultural_task_id]
+    assert_not_nil topdress_blueprint[:agricultural_task_id]
     assert_equal BigDecimal('150'), topdress_blueprint[:gdd_trigger]
     assert_equal 2, topdress_blueprint[:priority]
   end

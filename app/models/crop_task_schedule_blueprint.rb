@@ -18,18 +18,8 @@ class CropTaskScheduleBlueprint < ApplicationRecord
   validates :priority, presence: true, numericality: { only_integer: true }
   validates :time_per_sqm, numericality: true, allow_nil: true
   validates :amount, numericality: true, allow_nil: true
-  validates :source_agricultural_task_id,
-            presence: { message: 'must be present when agricultural_task is missing' },
-            if: -> { agricultural_task_id.nil? }
-
   validates :agricultural_task_id,
             uniqueness: { scope: [:crop_id, :stage_order], allow_nil: true }
-  validates :source_agricultural_task_id,
-            uniqueness: {
-              scope: [:crop_id, :stage_order],
-              allow_nil: true,
-              message: 'has already been taken'
-            }
 
   scope :ordered, -> { order(:stage_order, :priority, :id) }
 end

@@ -58,7 +58,6 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
       :crop_task_template,
       crop: @crop,
       agricultural_task: @soil_task,
-      source_agricultural_task_id: @soil_task.id,
       name: @soil_task.name,
       description: @soil_task.description,
       time_per_sqm: @soil_task.time_per_sqm,
@@ -73,7 +72,6 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
       :crop_task_template,
       crop: @crop,
       agricultural_task: @planting_task,
-      source_agricultural_task_id: @planting_task.id,
       name: @planting_task.name,
       description: @planting_task.description,
       time_per_sqm: @planting_task.time_per_sqm,
@@ -107,29 +105,29 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
            weather_dependency: 'low',
            time_per_sqm: BigDecimal('0.1'))
 
+    basal_task = create(:agricultural_task, :user_owned, user: @user, name: '基肥')
     create(:crop_task_schedule_blueprint,
            :fertilizer,
-           :without_agricultural_task,
            crop: @crop,
+           agricultural_task: basal_task,
            stage_order: 0,
            stage_name: '定植前',
            gdd_trigger: BigDecimal('0.0'),
            gdd_tolerance: BigDecimal('5.0'),
-           priority: 1,
-           source_agricultural_task_id: 11_001)
+           priority: 1)
 
+    topdress_task = create(:agricultural_task, :user_owned, user: @user, name: '追肥')
     create(:crop_task_schedule_blueprint,
            :fertilizer,
-           :without_agricultural_task,
            crop: @crop,
+           agricultural_task: topdress_task,
            task_type: TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE,
            stage_order: 2,
            stage_name: '生育期',
            gdd_trigger: BigDecimal('160.0'),
            gdd_tolerance: BigDecimal('10.0'),
            priority: 2,
-           amount: BigDecimal('4.0'),
-           source_agricultural_task_id: 11_002)
+           amount: BigDecimal('4.0'))
   end
 
   test 'generate! creates schedules from blueprints and skips agrr gateways' do

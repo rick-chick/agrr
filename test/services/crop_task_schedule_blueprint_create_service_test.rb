@@ -30,7 +30,6 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
       :crop_task_template,
       crop: @crop,
       agricultural_task: @soil_task,
-      source_agricultural_task_id: @soil_task.id,
       name: @soil_task.name,
       description: @soil_task.description,
       time_per_sqm: @soil_task.time_per_sqm,
@@ -58,10 +57,11 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
       ]
     }
 
+    @fertilizer_task = create(:agricultural_task, name: '基肥')
     @fertilize_response = {
       'schedule' => [
         {
-          'task_id' => '1200',
+          'task_id' => @fertilizer_task.id.to_s,
           'stage_name' => '定植前',
           'stage_order' => 0,
           'gdd_trigger' => 0,
@@ -90,7 +90,7 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
     assert_equal 'agrr_schedule', general_blueprint.source
 
     fertilizer_blueprint = @crop.crop_task_schedule_blueprints.find_by(task_type: TaskScheduleItem::BASAL_FERTILIZATION_TYPE)
-    assert_equal 1200, fertilizer_blueprint.source_agricultural_task_id
+    assert_not_nil fertilizer_blueprint.agricultural_task_id
     assert_equal BigDecimal('3.5'), fertilizer_blueprint.amount
   end
 
@@ -199,10 +199,11 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
         }
       ]
     }
+    precise_fertilizer_task = create(:agricultural_task, name: '追肥2')
     precise_fertilize = {
       'schedule' => [
         {
-          'task_id' => '3400',
+          'task_id' => precise_fertilizer_task.id.to_s,
           'stage_name' => '追肥2',
           'stage_order' => 3,
           'gdd_trigger' => '210.75',
@@ -228,7 +229,7 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
     assert_equal BigDecimal('12.5'), precise_blueprint.gdd_tolerance
     assert_equal BigDecimal('0.45'), precise_blueprint.time_per_sqm
 
-    fertilizer_blueprint = @crop.crop_task_schedule_blueprints.find_by!(source_agricultural_task_id: 3400)
+    fertilizer_blueprint = @crop.crop_task_schedule_blueprints.find_by!(task_type: TaskScheduleItem::BASAL_FERTILIZATION_TYPE)
     assert_equal BigDecimal('210.75'), fertilizer_blueprint.gdd_trigger
     assert_equal BigDecimal('8.25'), fertilizer_blueprint.gdd_tolerance
     assert_equal BigDecimal('4.25'), fertilizer_blueprint.amount

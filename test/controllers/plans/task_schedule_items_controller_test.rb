@@ -28,7 +28,6 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
       :crop_task_template,
       crop: @field_cultivation.cultivation_plan_crop.crop,
       agricultural_task: @agricultural_task,
-      source_agricultural_task_id: @agricultural_task.id,
       name: @agricultural_task.name,
       description: @agricultural_task.description,
       time_per_sqm: @agricultural_task.time_per_sqm,
@@ -139,7 +138,7 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'template_entry', created.source
     assert_equal template.weather_dependency, created.weather_dependency
     assert_equal template.time_per_sqm&.to_d, created.time_per_sqm
-    assert_equal template.source_agricultural_task_id || template.agricultural_task_id, created.source_agricultural_task_id
+    assert_equal template.agricultural_task_id, created.agricultural_task_id
   end
 
   test '休閑では作物選択が必要で未指定は422' do

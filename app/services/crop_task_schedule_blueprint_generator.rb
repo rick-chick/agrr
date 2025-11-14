@@ -31,12 +31,11 @@ class CropTaskScheduleBlueprintGenerator
   def build_general_blueprint(task)
     task_id = integer_value(task['task_id'])
     template = template_for_task(task_id)
-    agricultural_task = template&.agricultural_task
+    agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
 
     {
       crop_id: crop.id,
       agricultural_task_id: agricultural_task&.id,
-      source_agricultural_task_id: template&.source_agricultural_task_id || task_id,
       stage_order: integer_value(task['stage_order']),
       stage_name: task['stage_name'],
       gdd_trigger: decimal_value(task['gdd_trigger']),
@@ -56,11 +55,11 @@ class CropTaskScheduleBlueprintGenerator
     task_type = entry['task_type'] ||
       (index.zero? ? TaskScheduleItem::BASAL_FERTILIZATION_TYPE : TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
     task_id = integer_value(entry['task_id'])
+    agricultural_task = AgriculturalTask.find_by(id: task_id)
 
     {
       crop_id: crop.id,
-      agricultural_task_id: nil,
-      source_agricultural_task_id: task_id,
+      agricultural_task_id: agricultural_task&.id,
       stage_order: integer_value(entry['stage_order']),
       stage_name: entry['stage_name'],
       gdd_trigger: decimal_value(entry['gdd_trigger']),
@@ -78,12 +77,9 @@ class CropTaskScheduleBlueprintGenerator
 
   def template_lookup
     @template_lookup ||= templates.each_with_object({}) do |template, memo|
-      keys = []
-      keys << template.source_agricultural_task_id if template.source_agricultural_task_id.present?
-      keys << template.agricultural_task_id if template.agricultural_task_id.present?
-      keys.compact.uniq.each do |key|
-        memo[key] = template
-        memo[key.to_s] = template
+      if template.agricultural_task_id.present?
+        memo[template.agricultural_task_id] = template
+        memo[template.agricultural_task_id.to_s] = template
       end
     end
   end

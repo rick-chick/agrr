@@ -26,7 +26,6 @@ FactoryBot.define do
 
     trait :without_agricultural_task do
       agricultural_task { nil }
-      sequence(:source_agricultural_task_id) { |n| 10_000 + n }
     end
   end
 end

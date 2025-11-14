@@ -142,11 +142,9 @@ class CropsController < ApplicationController
     
     Rails.logger.info("🔍 [CropsController] toggle_task_template called: crop_id=#{@crop.id}, task_id=#{agricultural_task.id}")
     
-    # agricultural_task_idとsource_agricultural_task_idの両方をチェック
+    # agricultural_task_idでチェック
     existing_template = @crop.crop_task_templates.where(
       agricultural_task: agricultural_task
-    ).or(
-      @crop.crop_task_templates.where(source_agricultural_task_id: agricultural_task.id)
     ).first
     
     if existing_template
@@ -294,14 +292,8 @@ class CropsController < ApplicationController
   end
 
   # 作物に既にテンプレートとして登録されているタスクIDを取得
-  # agricultural_task_idとsource_agricultural_task_idの両方を考慮
   def selected_task_ids_for_crop(crop)
-    # 1回のクエリで両方のカラムを取得
-    templates = crop.crop_task_templates
-                    .pluck(:agricultural_task_id, :source_agricultural_task_id)
-    
-    # 両方のIDを1つの配列にまとめて、nilを除外してユニークにする
-    templates.flat_map { |task_id, source_id| [task_id, source_id] }.compact.uniq
+    crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
   end
 end
 

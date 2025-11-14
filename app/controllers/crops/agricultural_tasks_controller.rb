@@ -41,7 +41,6 @@ module Crops
 
           template = @crop.crop_task_templates.create!(
             agricultural_task: existing_task,
-            source_agricultural_task_id: existing_task.source_agricultural_task_id,
             name: existing_task.name,
             description: existing_task.description,
             time_per_sqm: existing_task.time_per_sqm,
@@ -121,9 +120,7 @@ module Crops
 
     def template_exists_for?(task)
       @crop.crop_task_templates.any? do |template|
-        (template.agricultural_task_id.present? && template.agricultural_task_id == task.id) ||
-          (template.source_agricultural_task_id.present? &&
-           template.source_agricultural_task_id == task.source_agricultural_task_id)
+        template.agricultural_task_id.present? && template.agricultural_task_id == task.id
       end
     end
   end
