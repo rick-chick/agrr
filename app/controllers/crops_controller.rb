@@ -150,6 +150,16 @@ class CropsController < ApplicationController
     if existing_template
       # テンプレートを削除
       Rails.logger.info("🗑️ [CropsController] Deleting template: template_id=#{existing_template.id}")
+      
+      # 対応するブループリントを削除（agricultural_task_idに関連するすべてのブループリント）
+      related_blueprints = @crop.crop_task_schedule_blueprints
+                                 .where(agricultural_task: agricultural_task)
+      if related_blueprints.any?
+        Rails.logger.info("🗑️ [CropsController] Deleting #{related_blueprints.count} blueprints for agricultural_task_id=#{agricultural_task.id}")
+        Rails.logger.info("🗑️ [CropsController] Blueprint sources: #{related_blueprints.pluck(:source).join(', ')}")
+        related_blueprints.destroy_all
+      end
+      
       existing_template.destroy
       # テンプレート削除後にアソシエーションを再読み込み
       @crop.crop_task_templates.reload
@@ -167,11 +177,17 @@ class CropsController < ApplicationController
         skill_level: agricultural_task.skill_level
       )
       Rails.logger.info("✅ [CropsController] Template created successfully")
+      
+      # 対応するブループリントを作成
+      create_blueprint_for_template(agricultural_task)
     end
     
     # Turbo Stream用に変数を再取得
     @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
     @selected_task_ids = selected_task_ids_for_crop(@crop)
+    @task_schedule_blueprints = @crop.crop_task_schedule_blueprints
+                                      .includes(:agricultural_task)
+                                      .ordered
     
     Rails.logger.info("📊 [CropsController] Updated state: available_tasks=#{@available_agricultural_tasks.size}, selected_ids=#{@selected_task_ids.inspect}")
     
@@ -186,6 +202,7 @@ class CropsController < ApplicationController
     redirect_to crop_path(@crop), alert: I18n.t('crops.flash.task_not_found')
   rescue StandardError => e
     Rails.logger.error("❌ [CropsController] Failed to toggle task template: #{e.class} #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
     redirect_to crop_path(@crop), alert: I18n.t('crops.flash.toggle_task_template_failed')
   end
 
@@ -294,6 +311,51 @@ class CropsController < ApplicationController
   # 作物に既にテンプレートとして登録されているタスクIDを取得
   def selected_task_ids_for_crop(crop)
     crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
+  end
+
+  # テンプレートからブループリントを作成
+  def create_blueprint_for_template(agricultural_task)
+    # 既存のブループリントの最大stage_orderとpriorityを取得
+    existing_blueprints = @crop.crop_task_schedule_blueprints
+    max_stage_order = existing_blueprints.maximum(:stage_order) || -1
+    max_priority = existing_blueprints.maximum(:priority) || 0
+
+    # 同じagricultural_task_idで既にブループリントが存在する場合は作成しない
+    existing_blueprint = existing_blueprints.find_by(
+      agricultural_task: agricultural_task,
+      source: 'manual'
+    )
+    if existing_blueprint
+      Rails.logger.info("ℹ️ [CropsController] Blueprint already exists: blueprint_id=#{existing_blueprint.id}")
+      return existing_blueprint
+    end
+
+    # テンプレートを取得
+    template = @crop.crop_task_templates.find_by(agricultural_task: agricultural_task)
+    
+    # ブループリントを作成
+    blueprint = @crop.crop_task_schedule_blueprints.create!(
+      agricultural_task: agricultural_task,
+      stage_order: max_stage_order + 1,
+      gdd_trigger: BigDecimal('0.0'),
+      task_type: TaskScheduleItem::FIELD_WORK_TYPE,
+      source: 'manual',
+      priority: max_priority + 1,
+      description: template&.description || agricultural_task.description || agricultural_task.name,
+      weather_dependency: template&.weather_dependency || agricultural_task.weather_dependency,
+      time_per_sqm: template&.time_per_sqm || agricultural_task.time_per_sqm,
+      stage_name: nil,
+      gdd_tolerance: nil,
+      amount: nil,
+      amount_unit: nil
+    )
+    
+    Rails.logger.info("✅ [CropsController] Blueprint created: blueprint_id=#{blueprint.id}, stage_order=#{blueprint.stage_order}, priority=#{blueprint.priority}")
+    blueprint
+  rescue StandardError => e
+    Rails.logger.error("❌ [CropsController] Failed to create blueprint: #{e.class} #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    raise
   end
 end
 
