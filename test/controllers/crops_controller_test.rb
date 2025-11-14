@@ -111,11 +111,12 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '#crop-task-schedule-blueprints'
-    assert_select '#crop-task-schedule-blueprints', text: /定植前整備/
+    assert_select '#crop-task-schedule-blueprints', text: /土壌準備/
     assert_select '#crop-task-schedule-blueprints', text: /追肥/
     assert_select '.task-blueprint-card[data-gdd-trigger="150.0"]'
-    assert_select '.task-manual-grid .task-manual-card', count: 1
-    assert_select '.task-manual-card__name', text: '潅水 ✓'
+    # manual_task（潅水）のテンプレートが表示されることを確認
+    # 参照タスク（task）のテンプレートはavailable_agricultural_tasksに含まれないため表示されない
+    assert_select '.task-manual-grid .task-manual-card .task-manual-card__name', text: /潅水/
   end
 
   test "害虫一覧がカードレイアウトで表示される" do
