@@ -13,11 +13,6 @@ class CropTaskTemplate < ApplicationRecord
   validates :name, presence: true
   validates :time_per_sqm, numericality: { greater_than: 0, allow_nil: true }
   validates :crop, presence: true
-  validates :source_agricultural_task_id,
-            uniqueness: {
-              scope: :crop_id,
-              allow_nil: true
-            }
   validates :agricultural_task_id,
             uniqueness: {
               scope: :crop_id,
@@ -43,7 +38,7 @@ class CropTaskTemplate < ApplicationRecord
   private
 
   def agrr_task_id
-    source_agricultural_task_id || agricultural_task_id || id
+    agricultural_task_id || id
   end
 end
 

@@ -25,7 +25,6 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
       :crop_task_template,
       crop: plan_crop.crop,
       agricultural_task: @agricultural_task,
-      source_agricultural_task_id: @agricultural_task.id,
       name: '除草テンプレート',
       description: 'テンプレ説明',
       time_per_sqm: BigDecimal('0.5'),
@@ -59,8 +58,7 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
       source: 'agrr_schedule',
       weather_dependency: 'no_rain_24h',
       time_per_sqm: BigDecimal('0.75'),
-      agricultural_task: @agricultural_task,
-      source_agricultural_task_id: @agricultural_task.source_agricultural_task_id
+      agricultural_task: @agricultural_task
     )
   end
 

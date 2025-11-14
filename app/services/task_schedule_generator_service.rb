@@ -122,11 +122,6 @@ class TaskScheduleGeneratorService
         lookup[task.id] = task
         lookup[task.id.to_s] = task
       end
-
-      if template.source_agricultural_task_id.present?
-        lookup[template.source_agricultural_task_id] = task
-        lookup[template.source_agricultural_task_id.to_s] = task
-      end
     end
     lookup
   end
@@ -163,12 +158,10 @@ class TaskScheduleGeneratorService
     end
 
     task = find_agricultural_task_for_blueprint(blueprint, agricultural_tasks_lookup)
-    source_task_id = blueprint.source_agricultural_task_id || task&.source_agricultural_task_id || task&.id
 
     schedule.task_schedule_items.build(
       task_type: blueprint.task_type,
       agricultural_task: task,
-      source_agricultural_task_id: source_task_id,
       name: name_for_blueprint(blueprint, task),
       description: blueprint.description.presence || task&.description,
       stage_name: blueprint.stage_name,
@@ -186,13 +179,7 @@ class TaskScheduleGeneratorService
   end
 
   def find_agricultural_task_for_blueprint(blueprint, lookup)
-    return blueprint.agricultural_task if blueprint.agricultural_task.present?
-
-    if blueprint.source_agricultural_task_id.present?
-      lookup[blueprint.source_agricultural_task_id] || lookup[blueprint.source_agricultural_task_id.to_s]
-    else
-      nil
-    end
+    blueprint.agricultural_task
   end
 
   def name_for_blueprint(blueprint, task)

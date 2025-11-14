@@ -72,7 +72,6 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
       :crop_task_template,
       crop: @user_crop,
       agricultural_task: task,
-      source_agricultural_task_id: task.id,
       name: task.name,
       description: task.description,
       time_per_sqm: task.time_per_sqm,
@@ -92,21 +91,20 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
            gdd_tolerance: BigDecimal('5.0'),
            priority: 1,
            source: 'agrr_schedule')
+    fertilizer_task = create(:agricultural_task, :user_owned, user: @user, name: '追肥')
     create(:crop_task_schedule_blueprint,
            :fertilizer,
-           :without_agricultural_task,
            crop: @user_crop,
+           agricultural_task: fertilizer_task,
            stage_order: 2,
            stage_name: '追肥',
            gdd_trigger: BigDecimal('150.0'),
            gdd_tolerance: BigDecimal('10.0'),
-           priority: 2,
-           source_agricultural_task_id: 21_001)
+           priority: 2)
     manual_task = create(:agricultural_task, :user_owned, user: @user, name: '潅水')
     create(:crop_task_template,
            crop: @user_crop,
            agricultural_task: manual_task,
-           source_agricultural_task_id: manual_task.id,
            name: manual_task.name)
 
     get crop_path(@user_crop)
