@@ -18,6 +18,7 @@ import UndoDeleteController from "./undo_delete_controller"
 import UndoToastController from "./undo_toast_controller"
 import CropSelectorController from "./crop_selector_controller"
 import AgriculturalTaskFormController from "./agricultural_task_form_controller"
+import TaskBlueprintCardDragController from "./task_blueprint_card_drag_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -32,6 +33,7 @@ application.register("undo-delete", UndoDeleteController)
 application.register("undo-toast", UndoToastController)
 application.register("crop-selector", CropSelectorController)
 application.register("agricultural-task-form", AgriculturalTaskFormController)
+application.register("task-blueprint-card-drag", TaskBlueprintCardDragController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)
