@@ -122,6 +122,59 @@
   box-shadow: var(--shadow-md);
 }
 
+/* GDDツールチップ */
+
+.task-blueprint-card::after {
+  content: attr(data-gdd-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--color-gray-900);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base), transform var(--transition-base);
+  z-index: var(--z-index-tooltip);
+  box-shadow: var(--shadow-lg);
+}
+
+.task-blueprint-card:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ツールチップの矢印 */
+.task-blueprint-card::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-gray-900);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+  z-index: calc(var(--z-index-tooltip) + 1);
+}
+
+.task-blueprint-card:hover::before {
+  opacity: 1;
+}
+
+/* ドラッグ中はツールチップを非表示 */
+.task-blueprint-card.card-dragging::after,
+.task-blueprint-card.card-dragging::before {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .task-blueprint-card.card-dragging {
   z-index: 1000;
   transform: translate(-50%, -50%) scale(1.05);
@@ -135,12 +188,61 @@
   transform: translate(-50%, -50%) scale(1.05);
 }
 
+.task-blueprint-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+}
+
 .task-blueprint-card__title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
   line-height: var(--line-height-snug);
   word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-blueprint-card__delete-form {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.task-blueprint-card__delete-btn {
+  background: transparent;
+  border: none;
+  padding: var(--space-1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.task-blueprint-card__delete-btn:hover {
+  background: var(--color-red-50);
+  color: var(--color-red-600);
+  opacity: 1;
+}
+
+.task-blueprint-card__delete-btn:active {
+  background: var(--color-red-100);
+  transform: scale(0.95);
+}
+
+.task-blueprint-card__delete-icon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 .task-blueprint-card__stage {

@@ -255,6 +255,9 @@
     // データ属性を更新
     card.dataset.gddTrigger = gddTrigger.toFixed(1);
     card.dataset.priority = priority.toString();
+    
+    // ツールチップのテキストを更新
+    updateGddTooltip(card, gddTrigger);
 
     // CSRFトークンを取得
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -286,6 +289,8 @@
       // サーバーから返された値で更新
       if (data.gdd_trigger !== undefined) {
         card.dataset.gddTrigger = data.gdd_trigger.toFixed(1);
+        // ツールチップも更新
+        updateGddTooltip(card, data.gdd_trigger);
       }
       if (data.priority !== undefined) {
         card.dataset.priority = data.priority.toString();
@@ -357,6 +362,29 @@
       const gddTrigger = parseFloat(card.dataset.gddTrigger) || 0;
       updateCardVisualPosition(card, gddTrigger, index + 1);
     });
+  }
+
+  /**
+   * GDDツールチップのテキストを更新
+   */
+  function updateGddTooltip(card, gddTrigger) {
+    // 既存のツールチップからラベル部分を抽出
+    const currentTooltip = card.getAttribute('data-gdd-tooltip') || '';
+    let label = 'GDDトリガー'; // デフォルト
+    
+    // 既存のツールチップからラベルを抽出（例: "GDDトリガー: 100.0" → "GDDトリガー"）
+    const match = currentTooltip.match(/^([^:]+):/);
+    if (match) {
+      label = match[1].trim();
+    } else {
+      // 既存のツールチップがない場合、グローバル関数を試す
+      if (typeof getI18nMessage === 'function') {
+        label = getI18nMessage('crops.show.gdd_trigger', 'GDDトリガー');
+      }
+    }
+    
+    const tooltipText = `${label}: ${gddTrigger.toFixed(1)}`;
+    card.setAttribute('data-gdd-tooltip', tooltipText);
   }
 
   /**

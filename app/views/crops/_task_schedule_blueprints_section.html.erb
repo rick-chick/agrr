@@ -75,12 +75,14 @@
                  t('crops.show.task_schedule_blueprints_order_tooltip', order: index + 1),
                  "#{t('crops.show.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}"
                ].compact.join(' / ') %>
+            <% gdd_tooltip_text = "#{t('crops.show.gdd_trigger')}: #{number_with_precision(blueprint.gdd_trigger, precision: 1)}" %>
 
             <div class="task-blueprint-card blueprint-<%= blueprint.task_type %> draggable-card"
                  id="blueprint-card-<%= blueprint.id %>"
                  data-blueprint-id="<%= blueprint.id %>"
                  data-crop-id="<%= crop.id %>"
                  data-gdd-trigger="<%= number_with_precision(blueprint.gdd_trigger, precision: 1) %>"
+                 data-gdd-tooltip="<%= gdd_tooltip_text %>"
                  data-priority="<%= blueprint.priority %>"
                  data-order="<%= index + 1 %>"
                  data-total-gdd="<%= total_required_gdd %>"
@@ -88,8 +90,32 @@
                  data-update-url="<%= update_position_crop_task_schedule_blueprint_path(crop, blueprint) %>"
                  title="<%= card_tooltip %>"
                  style="--card-left: <%= left_percent.round(2) %>%; --card-top: <%= top_percent.round(2) %>%;">
-              <div class="task-blueprint-card__title">
-                <%= blueprint.agricultural_task&.name || blueprint.description || blueprint.stage_name || t('crops.show.task_schedule_blueprints_missing_task') %>
+              <div class="task-blueprint-card__header">
+                <div class="task-blueprint-card__title">
+                  <%= blueprint.agricultural_task&.name || blueprint.description || blueprint.stage_name || t('crops.show.task_schedule_blueprints_missing_task') %>
+                </div>
+                <% if admin_user? || (!crop.is_reference && crop.user_id == current_user&.id) %>
+                  <%= button_to crop_task_schedule_blueprint_path(crop, blueprint),
+                                method: :delete,
+                                class: "task-blueprint-card__delete-btn",
+                                title: t('crops.show.delete_blueprint'),
+                                data: { 
+                                  turbo_confirm: t('crops.show.delete_blueprint_confirm'),
+                                  action: "click->stopPropagation"
+                                },
+                                onclick: "event.stopPropagation();",
+                                form: { 
+                                  class: "task-blueprint-card__delete-form",
+                                  onclick: "event.stopPropagation();"
+                                } do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="task-blueprint-card__delete-icon">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                  <% end %>
+                <% end %>
               </div>
             </div>
           <% end %>

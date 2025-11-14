@@ -89,6 +89,8 @@ ja:
       blueprint_position_updated: "作業予定カードの位置を更新しました。"
       blueprint_update_failed: "作業予定カードの位置更新に失敗しました。"
       blueprint_not_found: "指定された作業予定カードが見つかりません。"
+      blueprint_deleted: "作業予定カードを削除しました。"
+      blueprint_delete_failed: "作業予定カードの削除に失敗しました。"
       cannot_delete_in_use:
         plan: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
         field: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
@@ -195,6 +197,8 @@ ja:
         topdress_fertilization: "追肥施用"
       generate_task_schedule_blueprints_button: "AIで作業テンプレートを更新"
       generate_task_schedule_blueprints_confirm: "AGRRを利用して作業テンプレートを再生成します。よろしいですか？"
+      delete_blueprint: "作業予定を削除"
+      delete_blueprint_confirm: "この作業予定を削除しますか？"
       back_to_list: "作物一覧に戻る"
       edit: "編集"
       delete: "削除"
