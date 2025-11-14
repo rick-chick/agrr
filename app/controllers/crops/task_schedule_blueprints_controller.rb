@@ -3,7 +3,7 @@
 module Crops
   class TaskScheduleBlueprintsController < ApplicationController
     before_action :set_crop
-    before_action :set_blueprint, only: [:update_position]
+    before_action :set_blueprint, only: [:update_position, :destroy]
 
     # PATCH /crops/:crop_id/task_schedule_blueprints/:id/update_position
     def update_position
@@ -49,6 +49,38 @@ module Crops
       render json: { error: I18n.t('crops.flash.blueprint_update_failed') }, status: :internal_server_error
     end
 
+    # DELETE /crops/:crop_id/task_schedule_blueprints/:id
+    def destroy
+      unless can_edit_crop?
+        return render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
+      end
+
+      blueprint_id = @blueprint.id
+      @blueprint.destroy!
+      @blueprint_id = blueprint_id
+
+      # 利用可能な作業テンプレート情報を取得
+      @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
+      @selected_task_ids = selected_task_ids_for_crop(@crop)
+
+      respond_to do |format|
+        format.turbo_stream
+        format.json { render json: { message: I18n.t('crops.flash.blueprint_deleted') } }
+      end
+    rescue ActiveRecord::RecordNotFound
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
+        format.json { render json: { error: I18n.t('crops.flash.blueprint_not_found') }, status: :not_found }
+      end
+    rescue StandardError => e
+      Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to delete blueprint: #{e.class} #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{@blueprint.id}", partial: 'crops/task_schedule_blueprints/error', locals: { error: I18n.t('crops.flash.blueprint_delete_failed') }) }
+        format.json { render json: { error: I18n.t('crops.flash.blueprint_delete_failed') }, status: :internal_server_error }
+      end
+    end
+
     private
 
     def set_crop
@@ -80,6 +112,33 @@ module Crops
       blueprints.each_with_index do |blueprint, index|
         blueprint.update_column(:priority, index + 1) if blueprint.priority != index + 1
       end
+    end
+
+    # 作物に利用可能な農業タスクを取得
+    def available_agricultural_tasks_for_crop(crop)
+      # ユーザ作物であればそのユーザの作業のみ
+      if !crop.is_reference && crop.user_id.present?
+        tasks = AgriculturalTask.user_owned.where(user_id: crop.user_id)
+        # 地域が設定されていればその地域も条件に追加
+        tasks = tasks.where(region: crop.region) if crop.region.present?
+        return tasks.order(:name)
+      end
+      
+      # 参照作物であれば参照作業のみ
+      if crop.is_reference
+        tasks = AgriculturalTask.reference
+        # 地域が設定されていればその地域も条件に追加
+        tasks = tasks.where(region: crop.region) if crop.region.present?
+        return tasks.order(:name)
+      end
+      
+      # どちらでもない場合は空のコレクション
+      AgriculturalTask.none
+    end
+
+    # 作物に既にテンプレートとして登録されているタスクIDを取得
+    def selected_task_ids_for_crop(crop)
+      crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
     end
   end
 end

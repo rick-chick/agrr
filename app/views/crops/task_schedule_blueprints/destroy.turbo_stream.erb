@@ -1,0 +1,15 @@
+<%= turbo_stream.remove "blueprint-card-#{@blueprint_id}" %>
+
+<%= turbo_stream.replace "available-task-templates" do %>
+  <%= render 'crops/available_task_templates_section',
+             crop: @crop,
+             available_agricultural_tasks: @available_agricultural_tasks,
+             selected_task_ids: @selected_task_ids %>
+<% end %>
+
+<%= turbo_stream.replace "crop-task-schedule-blueprints" do %>
+  <%= render 'crops/task_schedule_blueprints_section', 
+             crop: @crop, 
+             task_schedule_blueprints: @crop.crop_task_schedule_blueprints.includes(:agricultural_task) %>
+<% end %>
+
