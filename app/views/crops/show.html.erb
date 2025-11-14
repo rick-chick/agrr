@@ -162,7 +162,7 @@
                    title="<%= card_tooltip %>"
                    style="--card-left: <%= left_percent.round(2) %>%; --card-top: <%= top_percent.round(2) %>%;">
                 <div class="task-blueprint-card__title">
-                  <%= blueprint.agricultural_task&.name || t('.task_schedule_blueprints_missing_task') %>
+                  <%= blueprint.agricultural_task&.name || blueprint.description || blueprint.stage_name || t('.task_schedule_blueprints_missing_task') %>
                 </div>
               </div>
             <% end %>
