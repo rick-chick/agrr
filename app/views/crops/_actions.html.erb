@@ -1,0 +1,51 @@
+<%# app/views/crops/_actions.html.erb %>
+<%# 作物詳細画面のアクションボタンセクション %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+  
+  必要なデータ例:
+    crop.id = 1
+    crop.name = "トマト"
+    crop.is_reference = false
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/actions', crop: Crop.find(1) %>
+    <%= render 'crops/actions', crop: @my_crop_object %>
+    
+  注意: このパーシャルは詳細画面に依存せず、任意のCropオブジェクトで使用可能
+%>
+
+<div class="actions">
+  <%= link_to t('crops.show.back_to_list'), crops_path, class: "btn btn-secondary" %>
+  <% if crop.is_reference %>
+    <%# 参照作物は管理者のみ編集・削除可能 %>
+    <% if admin_user? %>
+      <%= link_to t('crops.show.edit'), edit_crop_path(crop), class: "btn btn-secondary" %>
+      <%= link_to t('crops.show.delete'), crop_path(crop),
+                  class: "btn btn-error",
+                  data: {
+                    controller: "undo-delete",
+                    action: "click->undo-delete#submit",
+                    turbo_method: :delete,
+                    undo_delete_url_value: crop_path(crop),
+                    undo_delete_message_value: t('crops.undo.toast', name: crop.name),
+                    undo_delete_redirect_url_value: crops_path
+                  } %>
+    <% end %>
+  <% else %>
+    <%# ユーザー作物は所有者が編集・削除可能 %>
+    <%= link_to t('crops.show.edit'), edit_crop_path(crop), class: "btn btn-secondary" %>
+    <%= link_to t('crops.show.delete'), crop_path(crop),
+                class: "btn btn-error",
+                data: {
+                  controller: "undo-delete",
+                  action: "click->undo-delete#submit",
+                  turbo_method: :delete,
+                  undo_delete_url_value: crop_path(crop),
+                  undo_delete_message_value: t('crops.undo.toast', name: crop.name),
+                  undo_delete_redirect_url_value: crops_path
+                } %>
+  <% end %>
+</div>
+

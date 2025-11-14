@@ -1,0 +1,98 @@
+<%# app/views/crops/_stages_section.html.erb %>
+<%# 作物詳細画面のステージセクション %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+  
+  必要なデータ例:
+    crop.crop_stages = [
+      { 
+        name: "発芽期", 
+        order: 1,
+        temperature_requirement: { 
+          base_temperature: 10, optimal_min: 20, optimal_max: 30,
+          low_stress_threshold: 5, high_stress_threshold: 35,
+          frost_threshold: 0, sterility_risk_threshold: 40, max_temperature: 45
+        },
+        thermal_requirement: { required_gdd: 100 },
+        sunshine_requirement: { minimum_sunshine_hours: 6, target_sunshine_hours: 8 },
+        nutrient_requirement: { daily_uptake_n: 0.5, daily_uptake_p: 0.2, daily_uptake_k: 0.3 }
+      },
+      { name: "成長期", order: 2, thermal_requirement: { required_gdd: 200 } }
+    ]
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/stages_section', crop: Crop.find(1) %>
+    <%= render 'crops/stages_section', crop: @custom_crop_with_stages %>
+%>
+
+<div class="stages-section">
+  <h2 class="stages-title"><%= t('crops.show.stages_title') %></h2>
+  <% if crop.crop_stages.any? %>
+    <ol class="stages-list">
+      <% crop.crop_stages.order(:order).each do |stage| %>
+        <li class="stage-item">
+          <div class="stage-name"><%= stage.name %></div>
+          <div class="stage-order"><%= t('crops.show.stage_order') %>: <%= stage.order %></div>
+          
+          <% if stage.temperature_requirement || stage.thermal_requirement || stage.sunshine_requirement || stage.nutrient_requirement %>
+            <div class="stage-requirements">
+              <% if stage.temperature_requirement %>
+                <div class="requirement-item">
+                  <div class="requirement-label">🌡️ <%= t('crops.show.temperature_requirement') %></div>
+                  <div class="requirement-value">
+                    <%= t('crops.show.base_temperature') %>: <%= stage.temperature_requirement.base_temperature %>°C<br>
+                    <%= t('crops.show.optimal_temperature') %>: <%= stage.temperature_requirement.optimal_min %>〜<%= stage.temperature_requirement.optimal_max %>°C<br>
+                    <%= t('crops.show.low_stress_threshold') %>: <%= stage.temperature_requirement.low_stress_threshold %>°C<br>
+                    <%= t('crops.show.high_stress_threshold') %>: <%= stage.temperature_requirement.high_stress_threshold %>°C<br>
+                    <%= t('crops.show.frost_threshold') %>: <%= stage.temperature_requirement.frost_threshold %>°C<br>
+                    <%= t('crops.show.sterility_risk_threshold') %>: <%= stage.temperature_requirement.sterility_risk_threshold %>°C<br>
+                    <%= t('crops.show.max_temperature') %>: <%= stage.temperature_requirement.max_temperature %>°C
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if stage.thermal_requirement %>
+                <div class="requirement-item">
+                  <div class="requirement-label">🌡️ <%= t('crops.show.thermal_requirement') %></div>
+                  <div class="requirement-value">
+                    <%= t('crops.show.required_gdd') %>: <%= stage.thermal_requirement.required_gdd %>°C・日
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if stage.sunshine_requirement %>
+                <div class="requirement-item">
+                  <div class="requirement-label">☀️ <%= t('crops.show.sunshine_requirement') %></div>
+                  <div class="requirement-value">
+                    <%= t('crops.show.minimum_sunshine_hours') %>: <%= stage.sunshine_requirement.minimum_sunshine_hours %>時間<br>
+                    <%= t('crops.show.target_sunshine_hours') %>: <%= stage.sunshine_requirement.target_sunshine_hours %>時間
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if stage.nutrient_requirement %>
+                <div class="requirement-item">
+                  <div class="requirement-label">🌱 <%= t('crops.show.nutrient_requirement') %></div>
+                  <div class="requirement-value">
+                    <%= t('crops.show.daily_uptake_n') %>: <%= stage.nutrient_requirement.daily_uptake_n %> g/m²/day<br>
+                    <%= t('crops.show.daily_uptake_p') %>: <%= stage.nutrient_requirement.daily_uptake_p %> g/m²/day<br>
+                    <%= t('crops.show.daily_uptake_k') %>: <%= stage.nutrient_requirement.daily_uptake_k %> g/m²/day
+                  </div>
+                </div>
+              <% end %>
+              
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <div class="no-stages">
+      <div class="empty-state-icon">🌱</div>
+      <h3><%= t('crops.show.no_stages_title') %></h3>
+      <p><%= t('crops.show.no_stages_description') %></p>
+    </div>
+  <% end %>
+</div>
+

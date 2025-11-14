@@ -1,0 +1,22 @@
+<%# app/views/crops/_header.html.erb %>
+<%# 作物詳細画面のヘッダー部分 %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+  
+  必要なデータ例:
+    crop.name = "トマト"
+    crop.is_reference = false
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/header', crop: Crop.find(1) %>
+    <%= render 'crops/header', crop: @my_crop_object %>
+%>
+
+<div class="crop-detail-header">
+  <h1 class="crop-detail-title"><%= crop.name %></h1>
+  <% if admin_user? && crop.is_reference %>
+    <div class="crop-detail-type reference"><%= t('crops.show.reference_crop') %></div>
+  <% end %>
+</div>
+

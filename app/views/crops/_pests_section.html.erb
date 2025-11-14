@@ -1,0 +1,69 @@
+<%# app/views/crops/_pests_section.html.erb %>
+<%# 作物詳細画面の害虫セクション %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+  
+  必要なデータ例:
+    crop.id = 1
+    crop.pests = [
+      { name: "アブラムシ", name_scientific: "Aphidoidea", family: "アブラムシ科", order: "カメムシ目", occurrence_season: "春〜秋" },
+      { name: "ハダニ", name_scientific: "Tetranychidae", family: "ハダニ科", order: "ダニ目", occurrence_season: "夏" }
+    ]
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/pests_section', crop: Crop.find(1) %>
+    <%= render 'crops/pests_section', crop: @selected_crop %>
+%>
+
+<div class="pests-section">
+  <div class="pests-section__header">
+    <h2 class="stages-title"><%= t('crops.show.pests_title') %></h2>
+    <%= link_to t('crops.show.manage_pests'), crop_pests_path(crop), class: "btn btn-secondary btn-sm pests-section__action" %>
+  </div>
+  <% if crop.pests.any? %>
+    <div class="pests-grid">
+      <% crop.pests.recent.each do |pest| %>
+        <article class="pest-card">
+          <header class="pest-card__header">
+            <h3 class="pest-card__name">
+              <%= link_to pest.name, crop_pest_path(crop, pest), class: "pest-card__link" %>
+            </h3>
+            <% if pest.name_scientific.present? %>
+              <div class="pest-card__scientific"><%= pest.name_scientific %></div>
+            <% end %>
+          </header>
+
+          <% if pest.family.present? || pest.order.present? || pest.occurrence_season.present? %>
+            <ul class="pest-card__meta">
+              <% if pest.family.present? %>
+                <li>
+                  <span class="pest-card__meta-label"><%= t('crops.show.pest_family_label') %></span>
+                  <span class="pest-card__meta-value"><%= pest.family %></span>
+                </li>
+              <% end %>
+              <% if pest.order.present? %>
+                <li>
+                  <span class="pest-card__meta-label"><%= t('crops.show.pest_order_label') %></span>
+                  <span class="pest-card__meta-value"><%= pest.order %></span>
+                </li>
+              <% end %>
+              <% if pest.occurrence_season.present? %>
+                <li>
+                  <span class="pest-card__meta-label"><%= t('crops.show.pest_occurrence_label') %></span>
+                  <span class="pest-card__meta-value"><%= pest.occurrence_season %></span>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="no-pests">
+      <p><%= t('crops.show.no_pests_description') %></p>
+    </div>
+  <% end %>
+</div>
+

@@ -186,8 +186,8 @@ class TaskScheduleGeneratorService
     # 関連作業が設定されている場合は、その名前を優先
     return task.name if task&.name.present?
     # 関連作業が未設定の場合、agrrが返した作業名（description）を優先的に使用
+    # agrrが返したnameを優先し、stage_nameは使用しない
     return blueprint.description if blueprint.description.present?
-    return blueprint.stage_name if blueprint.stage_name.present?
 
     case blueprint.task_type
     when TaskScheduleItem::BASAL_FERTILIZATION_TYPE
