@@ -38,9 +38,6 @@
       </div>
     <% end %>
   </div>
-  <p class="task-schedule-blueprints-description">
-    <%= t('crops.show.task_schedule_blueprints_description_html').html_safe %>
-  </p>
   <% if task_schedule_blueprints.any? %>
     <% sorted_blueprints = task_schedule_blueprints.includes(:agricultural_task).sort_by do |blueprint|
          [blueprint.gdd_trigger.to_f, blueprint.priority.to_i, blueprint.id]

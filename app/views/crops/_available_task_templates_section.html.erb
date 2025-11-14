@@ -26,8 +26,8 @@
            selected_task_ids: @selected_ids
 %>
 
-<% if available_agricultural_tasks.any? %>
-  <div class="task-manual-section" id="available-task-templates">
+<div class="task-manual-section" id="available-task-templates">
+  <% if available_agricultural_tasks.any? %>
     <div class="task-manual-section__header">
       <h3 class="task-manual-section__title"><%= t('crops.show.available_task_templates_title') %></h3>
       <span class="task-manual-section__count">
@@ -57,6 +57,6 @@
         <% end %>
       <% end %>
     </div>
-  </div>
-<% end %>
+  <% end %>
+</div>
 

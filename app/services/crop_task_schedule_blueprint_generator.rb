@@ -58,7 +58,11 @@ class CropTaskScheduleBlueprintGenerator
     task_type = entry['task_type'] ||
       (index.zero? ? TaskScheduleItem::BASAL_FERTILIZATION_TYPE : TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
     task_id = integer_value(entry['task_id'])
-    agricultural_task = AgriculturalTask.find_by(id: task_id)
+    template = template_for_task(task_id)
+    agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
+
+    # fertilizeコマンドでは、stage_nameに作業名（「追肥」「基肥」など）が入る
+    agrr_task_name = entry['stage_name'] || entry['description']
 
     {
       crop_id: crop.id,
@@ -70,11 +74,11 @@ class CropTaskScheduleBlueprintGenerator
       task_type: task_type,
       source: 'agrr_fertilize_plan',
       priority: integer_value(entry['priority']),
-      description: entry['description'],
+      description: agrr_task_name || template&.description,
       amount: decimal_value(entry['amount_g_per_m2']),
       amount_unit: entry['amount_unit'] || (entry['amount_g_per_m2'].present? ? 'g/m2' : nil),
-      weather_dependency: entry['weather_dependency'],
-      time_per_sqm: decimal_value(entry['time_per_sqm'])
+      weather_dependency: entry['weather_dependency'] || template&.weather_dependency,
+      time_per_sqm: decimal_value(entry['time_per_sqm']) || template&.time_per_sqm
     }
   end
 
