@@ -1547,6 +1547,13 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     new_plan = result.new_plan
     assert_not_nil new_plan
 
+    # 推測原因1: copy_agricultural_tasks_for_regionで参照タスクがコピーされているか確認
+    user_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
+    assert_not_nil user_task, "参照タスク(#{reference_task.id})がユーザータスクにコピーされていません"
+    assert_equal @user.id, user_task.user_id, "コピーされたタスクのuser_idが正しくありません"
+    assert_equal '除草作業', user_task.name, "コピーされたタスクの名前が正しくありません"
+    assert_equal false, user_task.is_reference, "コピーされたタスクがis_reference=falseになっていません"
+
     assert_equal 1, new_plan.task_schedules.count
     new_schedule = new_plan.task_schedules.first
     assert_equal 'general', new_schedule.category
@@ -1560,6 +1567,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_equal '除草作業', copied_item.agricultural_task&.name
     assert_equal @user.id, copied_item.agricultural_task&.user_id
     assert_equal reference_task.id, copied_item.source_agricultural_task_id
+    assert_equal user_task.id, copied_item.agricultural_task_id
   end
 
   test 'raises error when reference agrr item loses gdd trigger' do

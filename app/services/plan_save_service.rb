@@ -880,7 +880,8 @@ class PlanSaveService
           rescheduled_at: reference_item.rescheduled_at,
           cancelled_at: reference_item.cancelled_at,
           completed_at: reference_item.completed_at,
-          agricultural_task_id: mapped_task_id
+          agricultural_task_id: mapped_task_id,
+          source_agricultural_task_id: reference_item.source_agricultural_task_id || reference_item.agricultural_task&.id
         )
       end
     end
