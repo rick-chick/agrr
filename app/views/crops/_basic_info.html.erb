@@ -14,8 +14,8 @@
     crop.updated_at = 2024-01-15 14:30:00
   
   使用例（外部から独立して使用可能）:
-    <%= render 'crops/basic_info', crop: Crop.find(1) %>
-    <%= render 'crops/basic_info', crop: @custom_crop %>
+    render 'crops/basic_info', crop: Crop.find(1)
+    render 'crops/basic_info', crop: @custom_crop
 %>
 
 <div class="crop-basic-info">

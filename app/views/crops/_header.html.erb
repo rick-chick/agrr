@@ -9,8 +9,8 @@
     crop.is_reference = false
   
   使用例（外部から独立して使用可能）:
-    <%= render 'crops/header', crop: Crop.find(1) %>
-    <%= render 'crops/header', crop: @my_crop_object %>
+    render 'crops/header', crop: Crop.find(1)
+    render 'crops/header', crop: @my_crop_object
 %>
 
 <div class="crop-detail-header">
