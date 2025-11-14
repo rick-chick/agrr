@@ -52,11 +52,14 @@
 
     <div class="task-schedule-blueprints-board" 
          id="task-schedule-blueprints-board"
+         data-controller="task-blueprint-card-drag"
+         data-task-blueprint-card-drag-board-target="board"
          data-crop-id="<%= crop.id %>"
          data-total-gdd="<%= total_required_gdd %>"
          data-lane-count="<%= lane_count %>"
          style="--lane-count: <%= lane_count %>;">
-      <div class="task-board-canvas" id="task-board-canvas">
+      <div class="task-board-canvas" id="task-board-canvas"
+           data-task-blueprint-card-drag-target="canvas">
         <div class="task-board-grid"></div>
         <div class="task-board-axis-x-scale">
           <span class="task-board-axis-x-tick" style="--tick-position: 0%;">0</span>
@@ -79,6 +82,7 @@
 
             <div class="task-blueprint-card blueprint-<%= blueprint.task_type %> draggable-card"
                  id="blueprint-card-<%= blueprint.id %>"
+                 data-task-blueprint-card-drag-target="card"
                  data-blueprint-id="<%= blueprint.id %>"
                  data-crop-id="<%= crop.id %>"
                  data-gdd-trigger="<%= number_with_precision(blueprint.gdd_trigger, precision: 1) %>"
