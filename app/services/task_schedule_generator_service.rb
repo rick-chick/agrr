@@ -183,7 +183,9 @@ class TaskScheduleGeneratorService
   end
 
   def name_for_blueprint(blueprint, task)
+    # 関連作業が設定されている場合は、その名前を優先
     return task.name if task&.name.present?
+    # 関連作業が未設定の場合、agrrが返した作業名（description）を優先的に使用
     return blueprint.description if blueprint.description.present?
     return blueprint.stage_name if blueprint.stage_name.present?
 

@@ -33,6 +33,9 @@ class CropTaskScheduleBlueprintGenerator
     template = template_for_task(task_id)
     agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
 
+    # agrrが返した作業名を優先的に使用（関連作業が未設定の場合でも作業名を設定するため）
+    agrr_task_name = task['name'] || task['description']
+
     {
       crop_id: crop.id,
       agricultural_task_id: agricultural_task&.id,
@@ -43,7 +46,7 @@ class CropTaskScheduleBlueprintGenerator
       task_type: TaskScheduleItem::FIELD_WORK_TYPE,
       source: 'agrr_schedule',
       priority: integer_value(task['priority']),
-      description: task['description'] || template&.description,
+      description: agrr_task_name || template&.description,
       amount: nil,
       amount_unit: nil,
       weather_dependency: task['weather_dependency'] || template&.weather_dependency,
