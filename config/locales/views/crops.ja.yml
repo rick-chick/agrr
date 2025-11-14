@@ -86,6 +86,9 @@ ja:
       task_schedule_blueprints_failed: "作業テンプレートの生成に失敗しました。ログを確認してください。"
       task_not_found: "指定された作業が見つかりません。"
       toggle_task_template_failed: "作業テンプレートの選択/解除に失敗しました。"
+      blueprint_position_updated: "作業予定カードの位置を更新しました。"
+      blueprint_update_failed: "作業予定カードの位置更新に失敗しました。"
+      blueprint_not_found: "指定された作業予定カードが見つかりません。"
       cannot_delete_in_use:
         plan: "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
         field: "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"

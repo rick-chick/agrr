@@ -111,12 +111,28 @@
   flex-direction: column;
   gap: var(--space-2);
   transition: transform var(--transition-base), box-shadow var(--transition-base);
-  cursor: pointer;
+  cursor: move;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .task-blueprint-card:hover {
   transform: translate(-50%, -50%) scale(1.02);
   box-shadow: var(--shadow-md);
+}
+
+.task-blueprint-card.card-dragging {
+  z-index: 1000;
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(102, 126, 234, 0.5);
+  transition: none;
+  cursor: grabbing;
+}
+
+.task-blueprint-card.card-dragging:hover {
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 .task-blueprint-card__title {

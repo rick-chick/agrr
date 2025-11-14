@@ -52,6 +52,11 @@ Rails.application.routes.draw do
       end
       resources :pests, controller: 'crops/pests', except: [:destroy]
       resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
+      resources :task_schedule_blueprints, only: [], controller: 'crops/task_schedule_blueprints' do
+        member do
+          patch :update_position
+        end
+      end
     end
 
     # Fertilizes (HTML) routes
