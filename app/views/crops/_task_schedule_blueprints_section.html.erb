@@ -50,8 +50,13 @@
     <% total_required_gdd = 1.0 if total_required_gdd.nil? || total_required_gdd <= 0 %>
     <% lane_count = sorted_blueprints.size %>
 
-    <div class="task-schedule-blueprints-board" style="--lane-count: <%= lane_count %>;">
-      <div class="task-board-canvas">
+    <div class="task-schedule-blueprints-board" 
+         id="task-schedule-blueprints-board"
+         data-crop-id="<%= crop.id %>"
+         data-total-gdd="<%= total_required_gdd %>"
+         data-lane-count="<%= lane_count %>"
+         style="--lane-count: <%= lane_count %>;">
+      <div class="task-board-canvas" id="task-board-canvas">
         <div class="task-board-grid"></div>
         <div class="task-board-axis-x-scale">
           <span class="task-board-axis-x-tick" style="--tick-position: 0%;">0</span>
@@ -59,7 +64,7 @@
             <%= number_with_precision(total_required_gdd, precision: 0) %>
           </span>
         </div>
-        <div class="task-board-cards">
+        <div class="task-board-cards" id="task-board-cards">
           <% sorted_blueprints.each_with_index do |blueprint, index| %>
             <% gdd_ratio = (blueprint.gdd_trigger.to_f / total_required_gdd).clamp(0.0, 1.0) %>
             <% left_percent = (gdd_ratio * 100).clamp(8.0, 95.0) %>
@@ -71,9 +76,16 @@
                  "#{t('crops.show.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}"
                ].compact.join(' / ') %>
 
-            <div class="task-blueprint-card blueprint-<%= blueprint.task_type %>"
+            <div class="task-blueprint-card blueprint-<%= blueprint.task_type %> draggable-card"
+                 id="blueprint-card-<%= blueprint.id %>"
+                 data-blueprint-id="<%= blueprint.id %>"
+                 data-crop-id="<%= crop.id %>"
                  data-gdd-trigger="<%= number_with_precision(blueprint.gdd_trigger, precision: 1) %>"
+                 data-priority="<%= blueprint.priority %>"
                  data-order="<%= index + 1 %>"
+                 data-total-gdd="<%= total_required_gdd %>"
+                 data-lane-count="<%= lane_count %>"
+                 data-update-url="<%= update_position_crop_task_schedule_blueprint_path(crop, blueprint) %>"
                  title="<%= card_tooltip %>"
                  style="--card-left: <%= left_percent.round(2) %>%; --card-top: <%= top_percent.round(2) %>%;">
               <div class="task-blueprint-card__title">
