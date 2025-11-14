@@ -1,0 +1,99 @@
+<%# app/views/crops/_task_schedule_blueprints_section.html.erb %>
+<%# 作物詳細画面の作業スケジュールブループリントセクション %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+    task_schedule_blueprints: Array<CropTaskScheduleBlueprint> - 作業スケジュールブループリントの配列
+  
+  必要なデータ例:
+    crop.id = 1
+    crop.crop_stages = [
+      { thermal_requirement: { required_gdd: 500 } },
+      { thermal_requirement: { required_gdd: 300 } }
+    ]
+    task_schedule_blueprints = [
+      { id: 1, gdd_trigger: 100.0, priority: 1, task_type: "planting", agricultural_task: { name: "種まき" } },
+      { id: 2, gdd_trigger: 200.0, priority: 2, task_type: "fertilizing", agricultural_task: { name: "施肥" } }
+    ]
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/task_schedule_blueprints_section', 
+               crop: Crop.find(1), 
+               task_schedule_blueprints: Crop.find(1).crop_task_schedule_blueprints %>
+    <%= render 'crops/task_schedule_blueprints_section', 
+               crop: @my_crop, 
+               task_schedule_blueprints: @custom_blueprints %>
+%>
+
+<div class="task-schedule-blueprints-section" id="crop-task-schedule-blueprints">
+  <div class="task-schedule-blueprints__header">
+    <h2 class="stages-title"><%= t('crops.show.task_schedule_blueprints_title') %></h2>
+    <% if admin_user? %>
+      <div class="task-schedule-blueprints__actions">
+        <%= button_to t('crops.show.generate_task_schedule_blueprints_button'),
+                      generate_task_schedule_blueprints_crop_path(crop),
+                      method: :post,
+                      class: 'btn btn-primary btn-sm task-schedule-blueprints__secondary-action',
+                      form: { data: { turbo_confirm: t('crops.show.generate_task_schedule_blueprints_confirm') } } %>
+      </div>
+    <% end %>
+  </div>
+  <p class="task-schedule-blueprints-description">
+    <%= t('crops.show.task_schedule_blueprints_description_html').html_safe %>
+  </p>
+  <% if task_schedule_blueprints.any? %>
+    <% sorted_blueprints = task_schedule_blueprints.includes(:agricultural_task).sort_by do |blueprint|
+         [blueprint.gdd_trigger.to_f, blueprint.priority.to_i, blueprint.id]
+       end %>
+
+    <% crop_required_gdd_values = crop.crop_stages.map { |stage| stage.thermal_requirement&.required_gdd.to_f }.compact %>
+    <% total_required_gdd = crop_required_gdd_values.sum %>
+    <% blueprint_gdd_max = sorted_blueprints.map { |bp| bp.gdd_trigger.to_f }.max %>
+    <% total_required_gdd = blueprint_gdd_max if total_required_gdd <= 0 %>
+    <% total_required_gdd = 1.0 if total_required_gdd.nil? || total_required_gdd <= 0 %>
+    <% lane_count = sorted_blueprints.size %>
+
+    <div class="task-schedule-blueprints-board" style="--lane-count: <%= lane_count %>;">
+      <div class="task-board-canvas">
+        <div class="task-board-grid"></div>
+        <div class="task-board-axis-x-scale">
+          <span class="task-board-axis-x-tick" style="--tick-position: 0%;">0</span>
+          <span class="task-board-axis-x-tick" style="--tick-position: 100%;">
+            <%= number_with_precision(total_required_gdd, precision: 0) %>
+          </span>
+        </div>
+        <div class="task-board-cards">
+          <% sorted_blueprints.each_with_index do |blueprint, index| %>
+            <% gdd_ratio = (blueprint.gdd_trigger.to_f / total_required_gdd).clamp(0.0, 1.0) %>
+            <% left_percent = (gdd_ratio * 100).clamp(8.0, 95.0) %>
+            <% lane_position = ((index + 0.5) / lane_count) * 100 %>
+            <% top_percent = lane_position %>
+
+            <% card_tooltip = [
+                 t('crops.show.task_schedule_blueprints_order_tooltip', order: index + 1),
+                 "#{t('crops.show.gdd_trigger')} #{number_with_precision(blueprint.gdd_trigger, precision: 1)}"
+               ].compact.join(' / ') %>
+
+            <div class="task-blueprint-card blueprint-<%= blueprint.task_type %>"
+                 data-gdd-trigger="<%= number_with_precision(blueprint.gdd_trigger, precision: 1) %>"
+                 data-order="<%= index + 1 %>"
+                 title="<%= card_tooltip %>"
+                 style="--card-left: <%= left_percent.round(2) %>%; --card-top: <%= top_percent.round(2) %>%;">
+              <div class="task-blueprint-card__title">
+                <%= blueprint.agricultural_task&.name || blueprint.description || blueprint.stage_name || t('crops.show.task_schedule_blueprints_missing_task') %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <div class="task-board-axis-label task-board-axis-label-x">
+        <span><%= t('crops.show.task_schedule_blueprints_axis_gdd_total', total: number_with_precision(total_required_gdd, precision: 0)) %></span>
+      </div>
+    </div>
+  <% else %>
+    <div class="no-task-schedule-blueprints">
+      <p><%= t('crops.show.no_task_schedule_blueprints') %></p>
+    </div>
+  <% end %>
+</div>
+

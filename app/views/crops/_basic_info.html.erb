@@ -1,0 +1,68 @@
+<%# app/views/crops/_basic_info.html.erb %>
+<%# 作物詳細画面の基本情報セクション %>
+<%# 
+  パラメータ:
+    crop: Crop - 表示する作物オブジェクト
+  
+  必要なデータ例:
+    crop.name = "トマト"
+    crop.variety = "桃太郎"
+    crop.area_per_unit = 0.5
+    crop.revenue_per_area = 1500
+    crop.groups = ["果菜類", "夏野菜"]
+    crop.created_at = 2024-01-01 10:00:00
+    crop.updated_at = 2024-01-15 14:30:00
+  
+  使用例（外部から独立して使用可能）:
+    <%= render 'crops/basic_info', crop: Crop.find(1) %>
+    <%= render 'crops/basic_info', crop: @custom_crop %>
+%>
+
+<div class="crop-basic-info">
+  <div class="info-item">
+    <span class="info-label">📝 <%= t('crops.show.name') %>:</span>
+    <span class="info-value"><%= crop.name %></span>
+  </div>
+  
+  <% if crop.variety.present? %>
+    <div class="info-item">
+      <span class="info-label">🌱 <%= t('crops.show.variety') %>:</span>
+      <span class="info-value"><%= crop.variety %></span>
+    </div>
+  <% end %>
+  
+  <% if crop.area_per_unit.present? %>
+    <div class="info-item">
+      <span class="info-label">📏 <%= t('crops.show.area_per_unit') %>:</span>
+      <span class="info-value"><%= crop.area_per_unit %> ㎡</span>
+    </div>
+  <% end %>
+  
+  <% if crop.revenue_per_area.present? %>
+    <div class="info-item">
+      <span class="info-label">💰 <%= t('crops.show.revenue_per_area') %>:</span>
+      <span class="info-value"><%= number_to_currency(crop.revenue_per_area, unit: '¥', precision: 0) %>/㎡</span>
+    </div>
+  <% end %>
+  
+  <% if crop.groups.present? %>
+    <% groups_array = crop.groups.is_a?(Array) ? crop.groups : [crop.groups] %>
+    <% if groups_array.any? %>
+      <div class="info-item">
+        <span class="info-label">🏷️ <%= t('crops.show.groups') %>:</span>
+        <span class="info-value"><%= groups_array.join(', ') %></span>
+      </div>
+    <% end %>
+  <% end %>
+  
+  <div class="info-item">
+    <span class="info-label">📅 <%= t('crops.show.created_at') %>:</span>
+    <span class="info-value"><%= I18n.l(crop.created_at, format: :long) %></span>
+  </div>
+  
+  <div class="info-item">
+    <span class="info-label">📅 <%= t('crops.show.updated_at') %>:</span>
+    <span class="info-value"><%= I18n.l(crop.updated_at, format: :long) %></span>
+  </div>
+</div>
+
