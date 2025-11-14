@@ -56,8 +56,29 @@ module Crops
       end
 
       blueprint_id = @blueprint.id
+      agricultural_task_id = @blueprint.agricultural_task_id
+      
       @blueprint.destroy!
       @blueprint_id = blueprint_id
+
+      # blueprintを削除した後、対応するtemplateも削除する必要がある
+      # 同じagricultural_task_idに対応する他のblueprintが存在しない場合、templateも削除
+      if agricultural_task_id.present?
+        remaining_blueprints = @crop.crop_task_schedule_blueprints
+                                      .where(agricultural_task_id: agricultural_task_id)
+        
+        if remaining_blueprints.empty?
+          # 同じagricultural_task_idに対応するblueprintが存在しない場合、templateも削除
+          template = @crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task_id)
+          if template
+            Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deleting template: template_id=#{template.id}, agricultural_task_id=#{agricultural_task_id}")
+            template.destroy!
+          end
+        end
+      end
+
+      # @cropを再読み込みして、削除後の状態を反映
+      @crop.reload
 
       # 利用可能な作業テンプレート情報を取得
       @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
