@@ -1,0 +1,33 @@
+ja:
+  planning_schedules:
+    fields_selection:
+      title: "ほ場選択"
+      subtitle: "作付け計画表に表示するほ場を選択してください"
+      farm_label: "農場選択"
+      fields_label: "ほ場選択（デフォルトで全選択）"
+      period_label: "表示期間"
+      period_default: "今年から5年分"
+      select_all: "すべて選択"
+      deselect_all: "すべて解除"
+      show_schedule: "選択したほ場で計画表を表示"
+      no_fields: "ほ場がありません"
+      no_farms: "農場がありません"
+    schedule:
+      title: "作付け計画表"
+      subtitle: "数年に渡る作付け計画を確認"
+      field_label: "ほ場"
+      period_label: "期間"
+      year_navigation:
+        previous: "前"
+        next: "次"
+      granularity:
+        month: "月"
+        quarter: "四半期"
+        half: "半期"
+      no_cultivation: "作付けなし"
+      select_fields: "ほ場を選択"
+      change_fields: "ほ場を変更"
+    errors:
+      select_fields: "ほ場を選択してください"
+      farm_not_found: "農場が見つかりません"
+

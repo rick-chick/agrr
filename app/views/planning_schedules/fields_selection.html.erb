@@ -1,0 +1,212 @@
+<% content_for :title, t('planning_schedules.fields_selection.title') %>
+
+<div class="plans-wrapper">
+  <div class="plans-container">
+    <!-- ヘッダー -->
+    <div class="plans-header">
+      <div class="plans-header-main">
+        <div>
+          <h1 class="plans-header-title">
+            📅 <%= t('planning_schedules.fields_selection.title') %>
+          </h1>
+          <p class="plans-header-subtitle">
+            <%= t('planning_schedules.fields_selection.subtitle') %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <% if @farms.empty? %>
+      <!-- 農場がない場合 -->
+      <div class="plans-empty">
+        <div class="plans-empty-icon">🌾</div>
+        <h2 class="plans-empty-title">
+          <%= t('planning_schedules.fields_selection.no_farms') %>
+        </h2>
+        <p class="plans-empty-subtitle">
+          <%= link_to t('shared.navbar.farms'), farms_path %>から農場を作成してください。
+        </p>
+      </div>
+    <% else %>
+      <%= form_with url: schedule_planning_schedules_path, method: :get, local: true, class: "planning-schedule-form", id: "planning-schedule-form" do |f| %>
+        <!-- 農場選択 -->
+        <div class="form-section">
+          <label class="form-label">
+            <%= t('planning_schedules.fields_selection.farm_label') %>
+          </label>
+          <%= f.select :farm_id, 
+              options_from_collection_for_select(@farms, :id, :name, @selected_farm_id),
+              {},
+              {
+                class: "form-select",
+                onchange: "this.form.submit()"
+              } %>
+        </div>
+
+        <% if @selected_farm %>
+          <% if @fields.present? %>
+            <!-- ほ場選択 -->
+            <div class="form-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                <label class="form-label">
+                  <%= t('planning_schedules.fields_selection.fields_label') %>
+                </label>
+                <div style="display: flex; gap: var(--space-2);">
+                  <button type="button" class="btn-secondary btn-sm" onclick="selectAllFields()">
+                    <%= t('planning_schedules.fields_selection.select_all') %>
+                  </button>
+                  <button type="button" class="btn-secondary btn-sm" onclick="deselectAllFields()">
+                    <%= t('planning_schedules.fields_selection.deselect_all') %>
+                  </button>
+                </div>
+              </div>
+              <div class="fields-checkbox-list">
+                <% @fields.each do |field| %>
+                  <label class="field-checkbox-item">
+                    <%= check_box_tag "field_ids[]", field[:id], @selected_field_ids.include?(field[:id]), 
+                        class: "field-checkbox" %>
+                    <span class="field-checkbox-label">
+                      <%= field[:name] %> (<%= number_with_delimiter(field[:area].to_i) %>㎡)
+                    </span>
+                  </label>
+                <% end %>
+              </div>
+              <p style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--text-secondary);">
+                <%= t('planning_schedules.fields_selection.period_label') %>: 
+                <%= @year_range.first %>年度 〜 <%= @year_range.last %>年度
+                (<%= t('planning_schedules.fields_selection.period_default') %>)
+              </p>
+            </div>
+
+            <!-- 送信ボタン -->
+            <div class="form-actions">
+              <%= f.submit t('planning_schedules.fields_selection.show_schedule'), 
+                  class: "btn-plans-primary",
+                  disabled: @selected_field_ids.empty? %>
+            </div>
+          <% else %>
+            <!-- ほ場がない場合 -->
+            <div class="plans-empty" style="margin-top: var(--space-6);">
+              <div class="plans-empty-icon">🌾</div>
+              <h2 class="plans-empty-title">
+                <%= t('planning_schedules.fields_selection.no_fields') %>
+              </h2>
+              <p class="plans-empty-subtitle">
+                <%= link_to t('shared.navbar.plans'), plans_path %>から計画を作成してください。
+              </p>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  function selectAllFields() {
+    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    updateSubmitButton();
+  }
+
+  function deselectAllFields() {
+    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    updateSubmitButton();
+  }
+
+  function updateSubmitButton() {
+    const checkedCount = document.querySelectorAll('.field-checkbox:checked').length;
+    const submitButton = document.querySelector('input[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = checkedCount === 0;
+    }
+  }
+
+  // チェックボックスの変更を監視
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', updateSubmitButton);
+    });
+    updateSubmitButton();
+  });
+</script>
+
+<style>
+  .planning-schedule-form {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+  }
+
+  .form-section {
+    margin-bottom: var(--space-6);
+  }
+
+  .form-label {
+    display: block;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .form-select {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-base);
+  }
+
+  .fields-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 400px;
+    overflow-y: auto;
+    padding: var(--space-3);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-base);
+  }
+
+  .field-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    cursor: pointer;
+    border-radius: var(--radius-base);
+    transition: background-color 0.2s;
+  }
+
+  .field-checkbox-item:hover {
+    background: var(--color-gray-100);
+  }
+
+  .field-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .field-checkbox-label {
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+  }
+
+  .form-actions {
+    margin-top: var(--space-6);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .btn-sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+</style>
+

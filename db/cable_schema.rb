@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_14_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,16 +37,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "agricultural_task_crops", force: :cascade do |t|
-    t.integer "agricultural_task_id", null: false
-    t.integer "crop_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["agricultural_task_id", "crop_id"], name: "index_agricultural_task_crops_on_task_and_crop", unique: true
-    t.index ["agricultural_task_id"], name: "index_agricultural_task_crops_on_agricultural_task_id"
-    t.index ["crop_id"], name: "index_agricultural_task_crops_on_crop_id"
   end
 
   create_table "agricultural_task_types", force: :cascade do |t|
@@ -106,7 +96,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
   create_table "crop_task_schedule_blueprints", force: :cascade do |t|
     t.integer "crop_id", null: false
     t.integer "agricultural_task_id"
-    t.bigint "source_agricultural_task_id"
     t.integer "stage_order", null: false
     t.string "stage_name"
     t.decimal "gdd_trigger", precision: 10, scale: 2, null: false
@@ -121,9 +110,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
     t.decimal "time_per_sqm", precision: 8, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
     t.index ["agricultural_task_id"], name: "index_crop_task_schedule_blueprints_on_agricultural_task_id"
     t.index ["crop_id", "stage_order", "agricultural_task_id"], name: "idx_on_crop_id_stage_order_agricultural_task_id_1de52a2f7e", unique: true, where: "agricultural_task_id IS NOT NULL"
-    t.index ["crop_id", "stage_order", "source_agricultural_task_id"], name: "index_blueprints_on_crop_stage_and_source_task", unique: true, where: "agricultural_task_id IS NULL AND source_agricultural_task_id IS NOT NULL"
     t.index ["crop_id"], name: "index_crop_task_schedule_blueprints_on_crop_id"
   end
 
@@ -652,8 +641,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "agricultural_task_crops", "agricultural_tasks"
-  add_foreign_key "agricultural_task_crops", "crops"
   add_foreign_key "agricultural_tasks", "agricultural_task_types", column: "task_type_id"
   add_foreign_key "crop_pests", "crops"
   add_foreign_key "crop_pests", "pests"
