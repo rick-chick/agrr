@@ -264,11 +264,7 @@
 }
 
 .timeline-task {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: calc(var(--space-0) * 1.5625);
+  display: block;
   background: #fff;
   border-radius: var(--radius-lg);
   border-left: 4px solid var(--color-primary);
@@ -278,10 +274,18 @@
   line-height: 1.3;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   text-align: left;
-  cursor: pointer;
+  cursor: grab;
   width: 100%;
+  min-height: 32px;
+  box-sizing: border-box;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .timeline-task + .timeline-task {
@@ -303,12 +307,18 @@
   opacity: 0.6;
   transform: scale(0.98);
   box-shadow: var(--shadow-lg);
+  cursor: grabbing;
 }
 
 .timeline-task__name {
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  font-size: calc(var(--font-size-sm) * 1.5625);
+  font-size: var(--font-size-sm);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  display: block;
 }
 
 .timeline-task__stage {
