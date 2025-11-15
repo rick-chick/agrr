@@ -1,0 +1,232 @@
+<% content_for :title, t('planning_schedules.schedule.title') %>
+
+<div class="plans-wrapper">
+  <div class="plans-container">
+    <!-- ヘッダー -->
+    <div class="plans-header">
+      <div class="plans-header-main">
+        <div>
+          <h1 class="plans-header-title">
+            📊 <%= t('planning_schedules.schedule.title') %>
+          </h1>
+          <p class="plans-header-subtitle">
+            <%= t('planning_schedules.schedule.subtitle') %>
+          </p>
+        </div>
+        <div style="display: flex; gap: var(--space-2);">
+          <%= link_to fields_selection_planning_schedules_path, class: "btn-secondary" do %>
+            <%= t('planning_schedules.schedule.change_fields') %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- コントロールパネル -->
+    <div class="schedule-controls">
+      <div class="schedule-control-group">
+        <label class="schedule-control-label">
+          <%= t('planning_schedules.schedule.year_navigation.previous') %> / <%= t('planning_schedules.schedule.year_navigation.next') %>
+        </label>
+        <div style="display: flex; gap: var(--space-2); align-items: center;">
+          <%= link_to schedule_planning_schedules_path(farm_id: @farm.id, field_ids: @selected_fields.map { |f| f[:id] }, year: @current_year - 1, granularity: @granularity),
+              class: "btn-secondary btn-sm",
+              style: (@current_year <= @year_range.first ? "opacity: 0.5; pointer-events: none;" : "") do %>
+            ← <%= t('planning_schedules.schedule.year_navigation.previous') %>
+          <% end %>
+          <span class="schedule-year-display"><%= @current_year %>年度</span>
+          <%= link_to schedule_planning_schedules_path(farm_id: @farm.id, field_ids: @selected_fields.map { |f| f[:id] }, year: @current_year + 1, granularity: @granularity),
+              class: "btn-secondary btn-sm",
+              style: (@current_year >= @year_range.last ? "opacity: 0.5; pointer-events: none;" : "") do %>
+            <%= t('planning_schedules.schedule.year_navigation.next') %> →
+          <% end %>
+        </div>
+      </div>
+      <div class="schedule-control-group">
+        <label class="schedule-control-label">
+          <%= t('planning_schedules.schedule.granularity.month') %> / <%= t('planning_schedules.schedule.granularity.quarter') %> / <%= t('planning_schedules.schedule.granularity.half') %>
+        </label>
+        <div style="display: flex; gap: var(--space-2);">
+          <%= link_to schedule_planning_schedules_path(farm_id: @farm.id, field_ids: @selected_fields.map { |f| f[:id] }, year: @current_year, granularity: 'month'),
+              class: "btn-secondary btn-sm #{'active' if @granularity == 'month'}" do %>
+            <%= t('planning_schedules.schedule.granularity.month') %>
+          <% end %>
+          <%= link_to schedule_planning_schedules_path(farm_id: @farm.id, field_ids: @selected_fields.map { |f| f[:id] }, year: @current_year, granularity: 'quarter'),
+              class: "btn-secondary btn-sm #{'active' if @granularity == 'quarter'}" do %>
+            <%= t('planning_schedules.schedule.granularity.quarter') %>
+          <% end %>
+          <%= link_to schedule_planning_schedules_path(farm_id: @farm.id, field_ids: @selected_fields.map { |f| f[:id] }, year: @current_year, granularity: 'half'),
+              class: "btn-secondary btn-sm #{'active' if @granularity == 'half'}" do %>
+            <%= t('planning_schedules.schedule.granularity.half') %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- 計画表 -->
+    <div class="schedule-table-wrapper">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th class="schedule-table-period-header"><%= t('planning_schedules.schedule.period_label') %></th>
+            <% @selected_fields.each do |field| %>
+              <th class="schedule-table-field-header">
+                <%= field[:name] %><br>
+                <span style="font-size: var(--font-size-sm); font-weight: normal; color: var(--text-secondary);">
+                  (<%= @farm.name %>)
+                </span>
+              </th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @periods.each do |period| %>
+            <tr>
+              <td class="schedule-table-period-cell">
+                <%= period[:label] %>
+              </td>
+              <% @selected_fields.each do |field| %>
+                <td class="schedule-table-cell">
+                  <% field_id = field[:id] %>
+                  <% cultivations = @cultivations_by_field[field_id] || [] %>
+                  <% period_cultivations = cultivations.select do |c|
+                       c[:start_date] <= period[:end_date] && c[:completion_date] >= period[:start_date]
+                     end %>
+                  <% if period_cultivations.any? %>
+                    <div class="cultivation-items">
+                      <% period_cultivations.each do |cultivation| %>
+                        <div class="cultivation-item">
+                          <div class="cultivation-crop-name"><%= cultivation[:crop_name] %></div>
+                          <div class="cultivation-period">
+                            <%= I18n.l(cultivation[:start_date], format: :short) %> - 
+                            <%= I18n.l(cultivation[:completion_date], format: :short) %>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="cultivation-empty">
+                      <%= t('planning_schedules.schedule.no_cultivation') %>
+                    </div>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .schedule-controls {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-6);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+  }
+
+  .schedule-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .schedule-control-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+  }
+
+  .schedule-year-display {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    padding: 0 var(--space-4);
+  }
+
+  .btn-sm.active {
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .schedule-table-wrapper {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-md);
+    overflow-x: auto;
+  }
+
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    padding: var(--space-3);
+    border: 1px solid var(--color-gray-200);
+    text-align: left;
+  }
+
+  .schedule-table-period-header,
+  .schedule-table-period-cell {
+    background: var(--color-gray-50);
+    font-weight: var(--font-weight-medium);
+    min-width: 120px;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  .schedule-table-field-header {
+    background: var(--color-primary-light);
+    color: var(--color-white);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    min-width: 200px;
+  }
+
+  .schedule-table-cell {
+    vertical-align: top;
+    min-height: 80px;
+  }
+
+  .cultivation-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .cultivation-item {
+    background: var(--color-primary-light);
+    color: var(--color-white);
+    padding: var(--space-2);
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-sm);
+  }
+
+  .cultivation-crop-name {
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--space-1);
+  }
+
+  .cultivation-period {
+    font-size: var(--font-size-xs);
+    opacity: 0.9;
+  }
+
+  .cultivation-empty {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+    padding: var(--space-2);
+  }
+</style>
+

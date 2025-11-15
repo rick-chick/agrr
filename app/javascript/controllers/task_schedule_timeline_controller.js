@@ -85,11 +85,13 @@ export default class extends Controller {
     this.loadWeek(weekStartIso)
   }
 
-  loadWeek(weekStartIso) {
+  loadWeek(weekStartIso, options = {}) {
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("week_start", weekStartIso)
 
-    this.showLoading()
+    if (options.showLoading !== false) {
+      this.showLoading()
+    }
 
     if (this._abortController) {
       this._abortController.abort()
@@ -369,18 +371,16 @@ export default class extends Controller {
     }
 
     this.removeDropHighlight(cell)
-    this.markCellPending(cell, true)
 
     try {
       await this.patchItem(this.draggedTask.itemId, {
         task_schedule_item: { scheduled_date: targetDate }
       })
-      await this.refreshCurrentWeek()
+      await this.refreshCurrentWeek({ showLoading: false })
     } catch (error) {
       this.showDragDropError()
       console.error("[TaskScheduleTimeline] drag & drop update failed", error)
     } finally {
-      this.markCellPending(cell, false)
       this.clearDragState()
     }
   }
@@ -1298,7 +1298,7 @@ export default class extends Controller {
       delete element.dataset.undoDeleteToken
     }
 
-    this.refreshCurrentWeek()
+    this.refreshCurrentWeek({ showLoading: false })
   }
 
   taskDomId(task) {
@@ -1370,12 +1370,12 @@ export default class extends Controller {
     return `${base}/${itemId}`
   }
 
-  refreshCurrentWeek() {
+  refreshCurrentWeek(options = {}) {
     if (this.state?.week?.start_date) {
-      return this.loadWeek(this.state.week.start_date)
+      return this.loadWeek(this.state.week.start_date, options)
     }
     const monday = this.beginningOfWeek(new Date())
-    return this.loadWeek(this.formatDateISO(monday))
+    return this.loadWeek(this.formatDateISO(monday), options)
   }
 
   todayISO() {

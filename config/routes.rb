@@ -114,6 +114,14 @@ Rails.application.routes.draw do
       end
     end
 
+    # Planning Schedules (数年に渡る作付け計画画面)
+    resources :planning_schedules, only: [] do
+      collection do
+        get :fields_selection
+        get :schedule
+      end
+    end
+
     # ActionCable for WebSocket
     mount ActionCable.server => '/cable'
     

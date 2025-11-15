@@ -3,6 +3,7 @@ ja:
     navbar:
       brand: "AGRR"
       plans: "計画"
+      planning_schedules: "計画表"
       farms: "農場"
       crops: "作物"
       fertilizes: "肥料"
