@@ -90,7 +90,8 @@ WORKDIR /app
 COPY --from=builder --chown=appuser:appuser /app /app
 
 # Ensure entrypoint scripts have execute permissions
-RUN chmod +x /app/scripts/*.sh
+# ボリュームマウントで上書きされる可能性があるが、ベースイメージとして権限を設定
+RUN chmod +x /app/scripts/*.sh 2>/dev/null || true
 
 # Copy Litestream configuration for test
 COPY config/litestream.test.yml /etc/litestream.test.yml

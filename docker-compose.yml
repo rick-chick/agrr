@@ -9,7 +9,7 @@ services:
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["/app/scripts/docker-entrypoint-dev-daemon.sh"]
+    entrypoint: ["bash", "/app/scripts/docker-entrypoint-dev-daemon.sh"]
     ports:
       - "3000:3000"
     volumes:
@@ -54,7 +54,7 @@ services:
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["/app/scripts/docker-entrypoint-dev.sh"]
+    entrypoint: ["bash", "/app/scripts/docker-entrypoint-dev.sh"]
     ports:
       - "3001:3000"
     volumes:
@@ -91,7 +91,7 @@ services:
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
+    entrypoint: ["bash", "/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
       # vendor/bundleはコンテナ内のものを使用（Dockerfile.testでインストール済み）
@@ -128,7 +128,7 @@ services:
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["/app/scripts/docker-entrypoint-test-integration.sh"]
+    entrypoint: ["bash", "/app/scripts/docker-entrypoint-test-integration.sh"]
     volumes:
       - .:/app
       - bundle_data:/usr/local/bundle
