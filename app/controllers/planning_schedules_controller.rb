@@ -4,7 +4,7 @@ class PlanningSchedulesController < ApplicationController
   before_action :authenticate_user!
   layout 'application'
   
-  # デフォルト表示期間（今年から5年分）
+  # デフォルト表示期間（来年から過去5年分）
   DEFAULT_YEARS_RANGE = 5
   
   # ほ場選択画面
@@ -27,9 +27,10 @@ class PlanningSchedulesController < ApplicationController
       @selected_field_ids = []
     end
     
-    # 表示期間（今年から5年分）
+    # 表示期間（来年から過去5年分）
     current_year = Date.current.year
-    @year_range = (current_year..(current_year + DEFAULT_YEARS_RANGE - 1)).to_a
+    next_year = current_year + 1
+    @year_range = ((next_year - DEFAULT_YEARS_RANGE + 1)..next_year).to_a.reverse
   end
   
   # 作付け計画表画面
@@ -37,7 +38,9 @@ class PlanningSchedulesController < ApplicationController
     # セッションまたはパラメータから選択情報を取得
     farm_id = params[:farm_id]&.to_i || session[:planning_schedule_farm_id]&.to_i
     field_ids = params[:field_ids]&.map(&:to_i) || session[:planning_schedule_field_ids]&.map(&:to_i) || []
-    start_year = params[:year]&.to_i || Date.current.year
+    current_year = Date.current.year
+    next_year = current_year + 1
+    start_year = params[:year]&.to_i || (next_year - DEFAULT_YEARS_RANGE + 1)
     granularity = params[:granularity] || 'quarter'
     
     # バリデーション
@@ -60,16 +63,15 @@ class PlanningSchedulesController < ApplicationController
     all_fields = collect_fields_from_plans(@farm)
     @selected_fields = all_fields.select { |f| field_ids.include?(f[:id]) }
     
-    # 表示年度の範囲（今年から5年分）
-    current_year = Date.current.year
-    @year_range = (current_year..(current_year + DEFAULT_YEARS_RANGE - 1)).to_a
+    # 表示年度の範囲（来年から過去5年分）
+    @year_range = ((next_year - DEFAULT_YEARS_RANGE + 1)..next_year).to_a.reverse
     
-    # 開始年度のバリデーション（今年から5年分の範囲内）
+    # 開始年度のバリデーション（来年から過去5年分の範囲内）
     unless @year_range.include?(start_year)
-      start_year = current_year
+      start_year = next_year - DEFAULT_YEARS_RANGE + 1
     end
     @start_year = start_year
-    @end_year = start_year + DEFAULT_YEARS_RANGE - 1
+    @end_year = next_year
     @years_range = DEFAULT_YEARS_RANGE
     
     # 表示粒度
@@ -79,8 +81,8 @@ class PlanningSchedulesController < ApplicationController
     period_start = Date.new(start_year, 1, 1)
     period_end = Date.new(@end_year, 12, 31)
     
-    # 期間の行を生成（5年分）
-    @periods = generate_periods(period_start, period_end, granularity)
+    # 期間の行を生成（5年分、降順で表示）
+    @periods = generate_periods(period_start, period_end, granularity).reverse
     
     # 各ほ場の栽培情報を取得（5年分）
     @cultivations_by_field = {}

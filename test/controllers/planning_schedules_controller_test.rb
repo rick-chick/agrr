@@ -437,5 +437,50 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
       assert_equal 1, tomato_cultivations.count, "同じ年度の栽培データが重複して表示されている"
     end
   end
+
+  test "fields_selection displays year_range in descending order" do
+    sign_in_as @user
+    
+    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
+    
+    get fields_selection_planning_schedules_path(farm_id: @farm.id)
+    
+    assert_response :success
+    
+    # ビューに表示される年度範囲を確認
+    # fields_selection.html.erbの76行目で @year_range.first と @year_range.last が表示される
+    doc = Nokogiri::HTML(response.body)
+    period_text = doc.text
+    
+    # 年度範囲が表示されていることを確認
+    current_year = Date.current.year
+    next_year = current_year + 1
+    expected_first = next_year
+    expected_last = next_year - 4
+    
+    # ビューに表示される年度範囲のテキストを確認
+    assert_match(/#{expected_first}年度/, period_text, "Should display next year (#{expected_first})")
+    assert_match(/#{expected_last}年度/, period_text, "Should display 5 years before next year (#{expected_last})")
+  end
+
+  test "schedule displays year_range in descending order" do
+    sign_in_as @user
+    
+    current_year = Date.current.year
+    field_id = 'ほ場1'.hash.abs
+    
+    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
+    
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: current_year,
+      granularity: 'quarter'
+    )
+    
+    assert_response :success
+  end
 end
 
