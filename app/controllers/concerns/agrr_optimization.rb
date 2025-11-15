@@ -192,12 +192,45 @@ module AgrrOptimization
     
     # トランザクション内で既存データを削除し、新しいデータを作成
     ActiveRecord::Base.transaction do
+      # ⚠️ 重要: reloadしてキャッシュをクリア（ダブル送信対策）
+      cultivation_plan.reload
+      
+      # ⭐ task_schedulesを保持するため、削除前に保存
+      # field_cultivation_idと一緒に、圃場・作物情報も保存してマッチングに使用
+      task_schedules_data = cultivation_plan.task_schedules.includes(:field_cultivation, :task_schedule_items).map do |ts|
+        fc = ts.field_cultivation
+        {
+          original_field_cultivation_id: fc&.id,
+          cultivation_plan_field_id: fc&.cultivation_plan_field_id,
+          cultivation_plan_crop_id: fc&.cultivation_plan_crop_id,
+          category: ts.category,
+          status: ts.status,
+          source: ts.source,
+          generated_at: ts.generated_at,
+          task_schedule_items: ts.task_schedule_items.map do |item|
+            {
+              task_type: item.task_type,
+              name: item.name,
+              description: item.description,
+              stage_name: item.stage_name,
+              stage_order: item.stage_order,
+              gdd_trigger: item.gdd_trigger,
+              gdd_tolerance: item.gdd_tolerance,
+              scheduled_date: item.scheduled_date,
+              priority: item.priority,
+              source: item.source,
+              weather_dependency: item.weather_dependency,
+              time_per_sqm: item.time_per_sqm,
+              status: item.status
+            }
+          end
+        }
+      end
+      Rails.logger.info "💾 [Save] task_schedulesを保存: #{task_schedules_data.count}件"
+      
       # ⭐ 既存の栽培スケジュールを全削除
       # temp_cultivationも含め、全てのFieldCultivationを削除
       # これにより、agrrの最適化結果のみがDBに残る
-      
-      # ⚠️ 重要: reloadしてキャッシュをクリア（ダブル送信対策）
-      cultivation_plan.reload
       existing_count = cultivation_plan.field_cultivations.count
       Rails.logger.info "🗑️ [Save] 既存のfield_cultivations削除開始: #{existing_count}件"
       cultivation_plan.field_cultivations.destroy_all
@@ -259,7 +292,7 @@ module AgrrOptimization
             raise "作付け計画作物が見つかりません: crop_id=#{allocation['crop_id']}"
           end
           
-          FieldCultivation.create!(
+          new_field_cultivation = FieldCultivation.create!(
             cultivation_plan: cultivation_plan,
             cultivation_plan_field: plan_field,
             cultivation_plan_crop: plan_crop,
@@ -275,7 +308,88 @@ module AgrrOptimization
             }
           )
           Rails.logger.info "✅ [Save] 新規field_cultivation作成: #{plan_crop.name}"
+          
+          # ⭐ 新しいfield_cultivationに対応するtask_scheduleを復元
+          # 同じ圃場・同じ作物でマッチング
+          matching_task_schedule_data = task_schedules_data.find do |ts_data|
+            ts_data[:cultivation_plan_field_id] == plan_field.id &&
+            ts_data[:cultivation_plan_crop_id] == plan_crop.id
+          end
+          
+          if matching_task_schedule_data
+            # task_scheduleを復元
+            restored_task_schedule = TaskSchedule.create!(
+              cultivation_plan: cultivation_plan,
+              field_cultivation: new_field_cultivation,
+              category: matching_task_schedule_data[:category],
+              status: matching_task_schedule_data[:status],
+              source: matching_task_schedule_data[:source],
+              generated_at: matching_task_schedule_data[:generated_at]
+            )
+            Rails.logger.info "✅ [Save] task_scheduleを復元: category=#{restored_task_schedule.category}"
+            
+            # task_schedule_itemsも復元
+            matching_task_schedule_data[:task_schedule_items].each do |item_data|
+              TaskScheduleItem.create!(
+                task_schedule: restored_task_schedule,
+                task_type: item_data[:task_type],
+                name: item_data[:name],
+                description: item_data[:description],
+                stage_name: item_data[:stage_name],
+                stage_order: item_data[:stage_order],
+                gdd_trigger: item_data[:gdd_trigger],
+                gdd_tolerance: item_data[:gdd_tolerance],
+                scheduled_date: item_data[:scheduled_date],
+                priority: item_data[:priority],
+                source: item_data[:source],
+                weather_dependency: item_data[:weather_dependency],
+                time_per_sqm: item_data[:time_per_sqm],
+                status: item_data[:status]
+              )
+            end
+            Rails.logger.info "✅ [Save] task_schedule_itemsを復元: #{matching_task_schedule_data[:task_schedule_items].count}件"
+            
+            # 復元したtask_schedule_dataを削除（重複復元を防ぐ）
+            task_schedules_data.delete(matching_task_schedule_data)
+          end
         end
+      end
+      
+      # ⭐ マッチしなかったtask_schedulesは、field_cultivation_idをnullにして保持
+      # (task_scheduleはfield_cultivationにoptional: trueで紐付いているため可能)
+      task_schedules_data.each do |ts_data|
+        # 元のtask_scheduleは既に削除されているため、新しく作成する必要がある
+        # ただし、field_cultivation_idはnullのまま
+        restored_task_schedule = TaskSchedule.create!(
+          cultivation_plan: cultivation_plan,
+          field_cultivation: nil,  # optional: trueなのでnullでもOK
+          category: ts_data[:category],
+          status: ts_data[:status],
+          source: ts_data[:source],
+          generated_at: ts_data[:generated_at]
+        )
+        Rails.logger.info "⚠️ [Save] task_scheduleを復元（field_cultivationなし）: category=#{restored_task_schedule.category}"
+        
+        # task_schedule_itemsも復元
+        ts_data[:task_schedule_items].each do |item_data|
+          TaskScheduleItem.create!(
+            task_schedule: restored_task_schedule,
+            task_type: item_data[:task_type],
+            name: item_data[:name],
+            description: item_data[:description],
+            stage_name: item_data[:stage_name],
+            stage_order: item_data[:stage_order],
+            gdd_trigger: item_data[:gdd_trigger],
+            gdd_tolerance: item_data[:gdd_tolerance],
+            scheduled_date: item_data[:scheduled_date],
+            priority: item_data[:priority],
+            source: item_data[:source],
+            weather_dependency: item_data[:weather_dependency],
+            time_per_sqm: item_data[:time_per_sqm],
+            status: item_data[:status]
+          )
+        end
+        Rails.logger.info "✅ [Save] task_schedule_itemsを復元（field_cultivationなし）: #{ts_data[:task_schedule_items].count}件"
       end
       
       # 最適化結果を更新
