@@ -16,7 +16,6 @@ RUN apt-get update -qq && apt-get install -y \
     libatk-bridge2.0-0 \
     libasound2 \
     libgbm1 \
-    libgconf-2-4 \
     libgtk-3-0 \
     libnss3 \
     libxss1 \
