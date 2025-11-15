@@ -89,6 +89,9 @@ WORKDIR /app
 # Copy the application from builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
 
+# Ensure entrypoint scripts have execute permissions
+RUN chmod +x /app/scripts/*.sh
+
 # Copy Litestream configuration for test
 COPY config/litestream.test.yml /etc/litestream.test.yml
 

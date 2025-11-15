@@ -1,3 +1,14 @@
+# Test Helper for AGRR
+#
+# ⚠️ IMPORTANT: Testing guidelines must be followed
+# See: docs/TESTING_GUIDELINES.md
+#
+# Key requirements:
+# - Model-level tests for all validations (REQUIRED)
+# - Integration tests for service objects (REQUIRED)
+# - Resource limit testing (MANDATORY)
+# - No patches - use dependency injection instead
+#
 ENV["RAILS_ENV"] ||= "test"
 if ENV.fetch("COVERAGE", "true") != "false"
   require 'simplecov'

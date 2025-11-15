@@ -93,7 +93,10 @@ services:
     entrypoint: ["/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
-      - bundle_data:/usr/local/bundle
+      # vendor/bundleはコンテナ内のものを使用（Dockerfile.testでインストール済み）
+      - /app/vendor/bundle
+      # bundle_dataはマウントしない（Dockerfile.testでインストールされたgemを使用）
+      # - bundle_data:/usr/local/bundle
       - bundle_cache:/usr/local/bundle/cache
     tmpfs:
       - /app/storage:mode=777  # テスト専用の一時ストレージ（開発環境と完全分離）
