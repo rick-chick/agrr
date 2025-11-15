@@ -326,5 +326,116 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to fields_selection_planning_schedules_path
     assert_equal I18n.t('planning_schedules.errors.farm_not_found'), flash[:alert]
   end
+
+  test "schedule does not show duplicate cultivations from overlapping plan years" do
+    sign_in_as @user
+    
+    # 計画は1年毎に2年分を保持するため、重複が発生する可能性がある
+    # 2024年度の計画: 2024年1月1日〜2025年12月31日
+    # 2025年度の計画: 2025年1月1日〜2026年12月31日
+    # 2026年度の計画: 2026年1月1日〜2027年12月31日
+    
+    target_year = 2025
+    field_name = 'ほ場1'
+    field_id = field_name.hash.abs
+    crop_name = 'トマト'
+    
+    # 2024年度の計画を作成（2024年1月1日〜2025年12月31日）
+    plan_2024 = create(:cultivation_plan,
+      user: @user,
+      farm: @farm,
+      plan_year: 2024,
+      planning_start_date: Date.new(2024, 1, 1),
+      planning_end_date: Date.new(2025, 12, 31)
+    )
+    field_2024 = create(:cultivation_plan_field, cultivation_plan: plan_2024, name: field_name, area: 1000)
+    crop_2024 = create(:cultivation_plan_crop, cultivation_plan: plan_2024, name: crop_name)
+    # 2025年の栽培データを作成
+    create(:field_cultivation,
+      cultivation_plan: plan_2024,
+      cultivation_plan_field: field_2024,
+      cultivation_plan_crop: crop_2024,
+      start_date: Date.new(target_year, 3, 1),
+      completion_date: Date.new(target_year, 5, 31),
+      area: 1000
+    )
+    
+    # 2025年度の計画を作成（2025年1月1日〜2026年12月31日）
+    plan_2025 = create(:cultivation_plan,
+      user: @user,
+      farm: @farm,
+      plan_year: 2025,
+      planning_start_date: Date.new(2025, 1, 1),
+      planning_end_date: Date.new(2026, 12, 31)
+    )
+    field_2025 = create(:cultivation_plan_field, cultivation_plan: plan_2025, name: field_name, area: 1000)
+    crop_2025 = create(:cultivation_plan_crop, cultivation_plan: plan_2025, name: crop_name)
+    # 同じ2025年の栽培データを作成（重複の原因）
+    create(:field_cultivation,
+      cultivation_plan: plan_2025,
+      cultivation_plan_field: field_2025,
+      cultivation_plan_crop: crop_2025,
+      start_date: Date.new(target_year, 3, 1),
+      completion_date: Date.new(target_year, 5, 31),
+      area: 1000
+    )
+    
+    # 2026年度の計画を作成（2026年1月1日〜2027年12月31日）
+    plan_2026 = create(:cultivation_plan,
+      user: @user,
+      farm: @farm,
+      plan_year: 2026,
+      planning_start_date: Date.new(2026, 1, 1),
+      planning_end_date: Date.new(2027, 12, 31)
+    )
+    field_2026 = create(:cultivation_plan_field, cultivation_plan: plan_2026, name: field_name, area: 1000)
+    crop_2026 = create(:cultivation_plan_crop, cultivation_plan: plan_2026, name: crop_name)
+    # 2026年の栽培データを作成（重複しない）
+    create(:field_cultivation,
+      cultivation_plan: plan_2026,
+      cultivation_plan_field: field_2026,
+      cultivation_plan_crop: crop_2026,
+      start_date: Date.new(2026, 3, 1),
+      completion_date: Date.new(2026, 5, 31),
+      area: 1000
+    )
+    
+    # 2025年を表示期間としてscheduleアクションを呼び出す
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: target_year,
+      granularity: 'quarter'
+    )
+    
+    assert_response :success
+    
+    # 2025年の栽培データが重複せず、1回だけ表示されることを確認
+    # コントローラーから取得したデータを直接確認
+    # @cultivations_by_fieldに2025年のデータが1回だけ含まれることを確認
+    doc = Nokogiri::HTML(response.body)
+    
+    # 2025年のQ2（4-6月）の期間を特定
+    # quarter粒度の場合、2025年のQ2は "2025 Q2" というラベルになる
+    q2_period = doc.css('.schedule-table-period-cell').find { |cell| cell.text.include?('2025 Q2') }
+    
+    if q2_period
+      # Q2の行を取得
+      q2_row = q2_period.parent
+      # Q2のセル内の栽培項目を取得
+      q2_cultivations = q2_row.css('.cultivation-item')
+      tomato_in_q2 = q2_cultivations.select { |item| item.text.include?(crop_name) }
+      
+      # 2025年のQ2（4-6月）にトマトが1回だけ表示されることを確認
+      assert_equal 1, tomato_in_q2.count, "2025年のQ2に同じ年度の栽培データが重複して表示されている"
+    else
+      # Q2が見つからない場合は、すべての期間でトマトが表示されている数をカウント
+      cultivation_items = doc.css('.cultivation-item')
+      tomato_cultivations = cultivation_items.select { |item| item.text.include?(crop_name) && item.text.include?('2025') }
+      
+      # 2025年のデータが1回だけ表示されることを確認
+      assert_equal 1, tomato_cultivations.count, "同じ年度の栽培データが重複して表示されている"
+    end
+  end
 end
 
