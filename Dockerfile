@@ -62,6 +62,10 @@ COPY . .
 # Create storage directory for SQLite databases and tmp directories
 RUN mkdir -p storage tmp/cache tmp/pids tmp/sockets
 
+# Ensure entrypoint scripts have execute permissions
+# ボリュームマウントで上書きされる可能性があるが、ベースイメージとして権限を設定
+RUN chmod +x /app/scripts/*.sh 2>/dev/null || true
+
 # Build JavaScript assets
 # Note: This runs as root during image build, but app/assets/builds/ is excluded from
 # volume mounts in docker-compose.yml, so it won't cause permission issues in development.

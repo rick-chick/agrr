@@ -14,6 +14,15 @@
 
 set -euo pipefail
 
+# 権限修正: エントリーポイントスクリプト自体の実行権限を確保
+# ボリュームマウントでホストからマウントされた場合、権限が異なる可能性があるため
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${SCRIPT_DIR}/docker-entrypoint-test.sh" ]; then
+    chmod +x "${SCRIPT_DIR}/docker-entrypoint-test.sh" 2>/dev/null || true
+fi
+# 他のスクリプトも実行可能にする（必要に応じて）
+find "${SCRIPT_DIR}" -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
+
 APP_ROOT="/app"
 STORAGE_DIR="${APP_ROOT}/storage"
 CACHE_DIR="${APP_ROOT}/.docker/test_db_cache"
