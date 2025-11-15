@@ -482,5 +482,123 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     
     assert_response :success
   end
+
+  test "schedule maintains single column per field row when quarter-contained and quarter-spanning cultivations start in same quarter" do
+    sign_in_as @user
+    
+    # テスト用の年度を設定（現在の年度を使用）
+    current_year = Date.current.year
+    test_year = current_year
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    # 計画を作成
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    # ほ場を作成
+    field = create(:cultivation_plan_field,
+      cultivation_plan: plan,
+      name: field_name,
+      area: 1000
+    )
+    
+    # 作物を作成
+    crop1 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    crop2 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
+    
+    # 4半期に収まる作付け（Q1内のみ: 1月15日〜3月15日、rowspan=1）
+    # 注意: Q1は1月1日〜3月31日なので、この作付けはQ1内に収まる
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop1,
+      start_date: Date.new(test_year, 1, 15),
+      completion_date: Date.new(test_year, 3, 15),
+      area: 500
+    )
+    
+    # 同じ4半期に開始するが、4半期をまたぐ作付け（Q1からQ2へ: 3月1日〜6月30日、rowspan=2）
+    # 注意: この作付けはQ1（1月1日〜3月31日）とQ2（4月1日〜6月30日）にまたがる
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop2,
+      start_date: Date.new(test_year, 3, 1),
+      completion_date: Date.new(test_year, 6, 30),
+      area: 500
+    )
+    
+    # スケジュールを取得（来年から過去5年分の範囲内の年度を指定）
+    next_year = current_year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'quarter'
+    )
+    
+    assert_response :success
+    
+    # HTMLをパース
+    doc = Nokogiri::HTML(response.body)
+    
+    # テーブルの各行を取得（期間の行のみ）
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 各行で、各ほ場の列が1つだけであることを確認
+    rows.each_with_index do |row, row_index|
+      # 期間のセルを除外し、ほ場のセル（schedule-table-cell）のみを取得
+      field_cells = row.css('td.schedule-table-cell')
+      period_label = row.css('.schedule-table-period-cell').first&.text || "行#{row_index + 1}"
+      
+      # デバッグ用: すべての行の詳細を出力
+      puts "\n[DEBUG] 期間: #{period_label}, セル数: #{field_cells.count}"
+      field_cells.each_with_index do |cell, cell_index|
+        rowspan = cell['rowspan'] || 'なし'
+        content = cell.text.strip.gsub(/\s+/, ' ')[0..100]
+        puts "  [DEBUG] セル#{cell_index + 1}: rowspan=#{rowspan}, 内容=#{content}"
+      end
+      
+      # 1ほ場のみ選択しているので、各行で1つのセルだけであるべき
+      # ただし、継続中の栽培情報がある場合はセルがスキップされるので0個でもOK
+      # しかし、2個以上は絶対にNG（問題の症状）
+      assert field_cells.count <= 1, 
+        "各行で各ほ場の列は1つ以下であるべきです（実際: #{field_cells.count}個）。期間: #{period_label}"
+    end
+    
+    # Q1で開始する両方の作付けがQ1のセルに含まれることを確認
+    q1_row = rows.find { |r| r.css('.schedule-table-period-cell').first&.text&.include?('Q1') && r.css('.schedule-table-period-cell').first&.text&.include?(test_year.to_s) }
+    if q1_row
+      q1_cells = q1_row.css('td.schedule-table-cell')
+      if q1_cells.count > 0
+        q1_cell_content = q1_cells.first.text
+        assert q1_cell_content.include?('ほうれん草'), 
+          "Q1のセルにほうれん草が含まれるべきです。実際の内容: #{q1_cell_content[0..200]}"
+        assert q1_cell_content.include?('トマト'), 
+          "Q1のセルにトマトが含まれるべきです（同じ期間に開始するため）。実際の内容: #{q1_cell_content[0..200]}"
+      end
+    end
+    
+    # Q2で新しくセルが作成されていないことを確認（トマトはQ1のセルのrowspanで表示されるべき）
+    q2_row = rows.find { |r| r.css('.schedule-table-period-cell').first&.text&.include?('Q2') && r.css('.schedule-table-period-cell').first&.text&.include?(test_year.to_s) }
+    if q2_row
+      q2_cells = q2_row.css('td.schedule-table-cell')
+      if q2_cells.count > 0
+        q2_cell_content = q2_cells.first.text
+        # Q2でトマトが表示されている場合、それは問題（トマトはQ1のセルのrowspanで表示されるべき）
+        if q2_cell_content.include?('トマト')
+          flunk "Q2で新しいセルが作成されています。トマトはQ1のセルのrowspanで表示されるべきです。Q2のセル内容: #{q2_cell_content[0..200]}"
+        end
+      end
+    end
+  end
 end
 
