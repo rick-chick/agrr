@@ -94,6 +94,36 @@ class PlanningSchedulesController < ApplicationController
     end
   end
   
+  # ヘルパーメソッドとして公開（ビューから呼び出し可能にするため）
+  helper_method :get_crop_color_for_schedule
+  
+  # 作物名から一貫した色を取得（スケジュール表示用）
+  def get_crop_color_for_schedule(crop_name)
+    @crop_color_cache ||= {}
+    
+    return @crop_color_cache[crop_name] if @crop_color_cache[crop_name]
+    
+    # 色パレット（一般的な色の組み合わせ）
+    color_palette = [
+      { fill: 'rgba(154, 230, 180, 0.8)', stroke: '#48bb78', text: '#1a202c' },  # 緑1
+      { fill: 'rgba(251, 211, 141, 0.8)', stroke: '#f6ad55', text: '#1a202c' },  # オレンジ
+      { fill: 'rgba(144, 205, 244, 0.8)', stroke: '#4299e1', text: '#1a202c' },  # 青
+      { fill: 'rgba(198, 246, 213, 0.8)', stroke: '#2f855a', text: '#1a202c' },  # 緑2
+      { fill: 'rgba(254, 235, 200, 0.8)', stroke: '#dd6b20', text: '#1a202c' },  # 淡いオレンジ
+      { fill: 'rgba(254, 178, 178, 0.8)', stroke: '#fc8181', text: '#1a202c' },  # 赤
+      { fill: 'rgba(254, 243, 199, 0.8)', stroke: '#d69e2e', text: '#1a202c' },  # 黄色
+      { fill: 'rgba(233, 213, 255, 0.8)', stroke: '#a78bfa', text: '#1a202c' },  # 紫
+      { fill: 'rgba(191, 219, 254, 0.8)', stroke: '#60a5fa', text: '#1a202c' },  # 水色
+      { fill: 'rgba(252, 231, 243, 0.8)', stroke: '#f472b6', text: '#1a202c' }   # ピンク
+    ]
+    
+    # 作物名のハッシュから一貫したインデックスを生成
+    color_index = crop_name.hash.abs % color_palette.size
+    @crop_color_cache[crop_name] = color_palette[color_index]
+    
+    @crop_color_cache[crop_name]
+  end
+  
   private
   
   # 選択した農場のほ場を全計画から集約して取得
@@ -126,22 +156,31 @@ class PlanningSchedulesController < ApplicationController
   
   # 指定したほ場名と期間の栽培情報を取得
   def get_cultivations_for_field(field_name, start_date, end_date)
-    # ユーザーの全計画から、該当ほ場名と期間の栽培情報を取得
+    # 表示期間に含まれる年度の計画のみを取得（重複を防ぐため）
+    # 各計画は2年分のデータを含むため、各栽培データについて、その栽培データの開始年度がplan_yearと一致する計画のみから取得
+    start_year = start_date.year
+    end_year = end_date.year
+    plan_years = (start_year..end_year).to_a
+    
+    # 該当年度の計画のみを取得
     plans = CultivationPlan
       .plan_type_private
       .by_user(current_user)
       .where(farm: @farm)
+      .where(plan_year: plan_years)
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
     
     cultivations = []
     plans.each do |plan|
       plan.field_cultivations.each do |field_cultivation|
         # ほ場名が一致し、期間が重なるものを取得
+        # さらに、栽培データの開始年度がplan_yearと一致する場合のみ取得（重複を防ぐため）
         if field_cultivation.cultivation_plan_field.name == field_name &&
            field_cultivation.start_date &&
            field_cultivation.completion_date &&
            field_cultivation.start_date <= end_date &&
-           field_cultivation.completion_date >= start_date
+           field_cultivation.completion_date >= start_date &&
+           field_cultivation.start_date.year == plan.plan_year
           
           cultivations << {
             crop_name: field_cultivation.cultivation_plan_crop.name,
