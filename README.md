@@ -61,6 +61,22 @@ docker compose run --rm test
 
 ---
 
+## 🧪 テスト
+
+テストは `docker compose run --rm test bundle exec rails test` で実行します。
+
+**重要**: テスト作成時は必ず [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md) を参照してください。
+
+### テスト要件
+- ✅ モデルレベルのバリデーションテスト（必須）
+- ✅ サービスオブジェクトの統合テスト（必須）
+- ✅ リソース制限テスト（必須）
+- ✅ パッチは使わず、依存性注入を使用
+
+詳細: [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md)
+
+---
+
 ## 💡 データ管理
 
 マスターデータ（参照農場・作物）は**データベースマイグレーション**で管理されています。

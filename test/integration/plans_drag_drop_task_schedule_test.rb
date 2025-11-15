@@ -16,8 +16,8 @@ class PlansDragDropTaskScheduleTest < ActionDispatch::IntegrationTest
     # 農場を作成
     @farm = create(:farm, user: @user, name: 'テスト農場')
     
-    # 作物を作成
-    @crop = create(:crop, user: @user, name: 'トマト')
+    # 作物を作成（成長ステージ付き）
+    @crop = create(:crop, :tomato, :with_stages, user: @user)
     
     # 計画を作成
     @plan = create(:cultivation_plan, user: @user, farm: @farm, plan_type: 'private')
@@ -67,8 +67,10 @@ class PlansDragDropTaskScheduleTest < ActionDispatch::IntegrationTest
       longitude: @farm.longitude || 139.0
     )
     
-    # 天気データを追加（過去1年分）
-    (1.year.ago.to_date..Date.current).each do |date|
+    # 天気データを追加（過去20年分、adjust処理に必要）
+    start_date = 20.years.ago.to_date
+    end_date = Date.current
+    (start_date..end_date).each do |date|
       create(:weather_datum,
         weather_location: @weather_location,
         date: date,
@@ -79,6 +81,23 @@ class PlansDragDropTaskScheduleTest < ActionDispatch::IntegrationTest
     end
     
     @farm.update!(weather_location: @weather_location)
+    
+    # 既存の予測データを設定（adjust処理で新規予測を実行しないようにするため）
+    prediction_end_date = @plan.planning_end_date || (Date.current + 1.year).end_of_year
+    mock_prediction_data = mock_weather_data(
+      @weather_location.latitude,
+      @weather_location.longitude,
+      Date.current,
+      prediction_end_date
+    )
+    @plan.update!(
+      predicted_weather_data: {
+        'data' => mock_prediction_data['data'],
+        'target_end_date' => prediction_end_date.to_s,
+        'prediction_start_date' => Date.current.to_s,
+        'prediction_days' => mock_prediction_data['data'].count
+      }
+    )
   end
   
   test "plansでドラッグアンドドロップ後もtask_scheduleが存在すること" do
