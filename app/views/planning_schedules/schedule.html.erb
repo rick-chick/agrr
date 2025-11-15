@@ -258,14 +258,14 @@
   }
 
   .cultivation-item {
-    padding: var(--space-2) var(--space-3);
+    width: 100%;
+    padding: var(--space-3);
     border-radius: var(--radius-base);
     font-size: var(--font-size-sm);
-    line-height: var(--line-height-normal);
+    line-height: var(--line-height-relaxed);
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-sm);
-    flex-shrink: 0;
-    min-height: auto;
+    box-sizing: border-box;
   }
 
   .cultivation-item:hover {
@@ -280,7 +280,7 @@
   }
 
   .cultivation-period {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     opacity: 1;
   }
 
