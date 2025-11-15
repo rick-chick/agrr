@@ -79,6 +79,7 @@
           </tr>
         </thead>
         <tbody>
+          <% crop_index_map = {} %>
           <% @periods.each do |period| %>
             <tr>
               <td class="schedule-table-period-cell">
@@ -94,7 +95,11 @@
                   <% if period_cultivations.any? %>
                     <div class="cultivation-items">
                       <% period_cultivations.each do |cultivation| %>
-                        <div class="cultivation-item">
+                        <% crop_name = cultivation[:crop_name] %>
+                        <% crop_index_map[crop_name] ||= 0 %>
+                        <% is_even = crop_index_map[crop_name].even? %>
+                        <% crop_index_map[crop_name] += 1 %>
+                        <div class="cultivation-item <%= 'cultivation-item-light' if is_even %>">
                           <div class="cultivation-crop-name"><%= cultivation[:crop_name] %></div>
                           <div class="cultivation-period">
                             <%= I18n.l(cultivation[:start_date], format: :short) %> - 
@@ -214,6 +219,10 @@
     border-radius: var(--radius-base);
     font-size: var(--font-size-base);
     line-height: var(--line-height-relaxed);
+  }
+
+  .cultivation-item-light {
+    background: rgba(74, 124, 35, 0.7);
   }
 
   .cultivation-crop-name {
