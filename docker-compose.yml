@@ -82,7 +82,12 @@ services:
       - 8.8.8.8
       - 8.8.4.4
 
-  # Test environment (テストは明示的に実行: docker-compose run --rm test bundle exec rails test)
+  # Test environment
+  # テスト実行方法:
+  #   - 全テスト: docker compose run --rm test bundle exec rails test
+  #   - システムテスト: docker compose run --rm test bundle exec rails test:system
+  #   - 特定テスト: docker compose run --rm test bundle exec rails test test/models/farm_test.rb
+  # 詳細は README.md および docs/TESTING_GUIDELINES.md を参照
   test:
     image: agrr-test:latest
     build:
@@ -120,6 +125,11 @@ services:
     #   - selenium  # Seleniumは統合テストでのみ必要
 
   # Integration test environment (統合テスト専用 - デーモン起動)
+  # テスト実行方法:
+  #   - 全テスト: docker compose run --rm test bundle exec rails test
+  #   - システムテスト: docker compose run --rm test bundle exec rails test:system
+  #   - 特定テスト: docker compose run --rm test bundle exec rails test test/models/farm_test.rb
+  # 詳細は README.md および docs/TESTING_GUIDELINES.md を参照
   test-integration:
     image: agrr-test-integration:latest
     build:

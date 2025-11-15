@@ -2,6 +2,12 @@
 # Testコンテナ用のentrypoint
 # テストDB準備を自動化
 #
+# テスト実行方法:
+#   - 全テスト: docker compose run --rm test bundle exec rails test
+#   - システムテスト: docker compose run --rm test bundle exec rails test:system
+#   - 特定テスト: docker compose run --rm test bundle exec rails test test/models/farm_test.rb
+# 詳細は README.md および docs/TESTING_GUIDELINES.md を参照
+#
 # ⚠️ IMPORTANT: Testing guidelines must be followed
 # See: docs/TESTING_GUIDELINES.md
 #
