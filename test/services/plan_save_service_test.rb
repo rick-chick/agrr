@@ -1870,4 +1870,216 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_includes [crop_a.name, crop_b.name], rule.target_group, "Target group should be one of the crops"
     assert_not_equal rule.source_group, rule.target_group, "Source and target groups should be different"
   end
+
+  test "calculates plan_year from average cultivation period when field_cultivations exist" do
+    current_year = Date.current.year
+    next_year = current_year + 1
+    
+    # 参照計画を作成
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: current_year,
+      plan_name: '年度算出テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # CultivationPlanCropを作成
+    cultivation_plan_crop = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    # CultivationPlanFieldを作成
+    cultivation_plan_field = CultivationPlanField.create!(
+      cultivation_plan: plan,
+      name: '年度算出テスト圃場',
+      area: 100.0,
+      daily_fixed_cost: 1.0
+    )
+
+    # FieldCultivationを作成（今年度と来年度の作付けを混在）
+    # 今年度の作付け: 5月1日 - 9月30日
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: cultivation_plan_field,
+      cultivation_plan_crop: cultivation_plan_crop,
+      area: 50.0,
+      start_date: Date.new(current_year, 5, 1),
+      completion_date: Date.new(current_year, 9, 30),
+      cultivation_days: 153,
+      status: 'completed'
+    )
+
+    # 来年度の作付け: 5月1日 - 9月30日
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: cultivation_plan_field,
+      cultivation_plan_crop: cultivation_plan_crop,
+      area: 50.0,
+      start_date: Date.new(next_year, 5, 1),
+      completion_date: Date.new(next_year, 9, 30),
+      cultivation_days: 153,
+      status: 'completed'
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: '年度算出テスト圃場', area: 100.0 }
+      ]
+    }
+
+    service = PlanSaveService.new(user: @user, session_data: session_data)
+    result = service.call
+
+    assert result.success, "PlanSaveService should succeed: #{result.error_message}"
+
+    new_plan = result.new_plan
+    assert_not_nil new_plan, "New plan should be created"
+
+    # 作付け期間の平均が来年度にあるため、来年度で計画が作成されることを確認
+    # 中間点: (5/1 + 9/30) / 2 ≈ 7/15.5 → 今年度と来年度の平均 ≈ 来年度
+    expected_year = next_year
+    assert_equal expected_year, new_plan.plan_year, 
+      "Plan year should be calculated from average cultivation period"
+  end
+
+  test "uses current year when no field_cultivations exist" do
+    current_year = Date.current.year
+    
+    # 参照計画を作成（field_cultivationsなし）
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: current_year,
+      plan_name: '作付けなし年度算出テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # CultivationPlanCropを作成（field_cultivationは作成しない）
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: '作付けなし年度算出テスト圃場', area: 100.0 }
+      ]
+    }
+
+    service = PlanSaveService.new(user: @user, session_data: session_data)
+    result = service.call
+
+    assert result.success, "PlanSaveService should succeed: #{result.error_message}"
+
+    new_plan = result.new_plan
+    assert_not_nil new_plan, "New plan should be created"
+
+    # 作付けが存在しない場合は現在の年度で計画が作成されることを確認
+    assert_equal current_year, new_plan.plan_year, 
+      "Plan year should be current year when no field_cultivations exist"
+  end
+
+  test "calculates plan_year correctly when cultivations span multiple years" do
+    current_year = Date.current.year
+    
+    # 参照計画を作成
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 300.0,
+      plan_type: 'public',
+      plan_year: current_year,
+      plan_name: '複数年度年度算出テスト計画',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+
+    # CultivationPlanCropを作成
+    cultivation_plan_crop = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    # CultivationPlanFieldを作成
+    cultivation_plan_field = CultivationPlanField.create!(
+      cultivation_plan: plan,
+      name: '複数年度年度算出テスト圃場',
+      area: 100.0,
+      daily_fixed_cost: 1.0
+    )
+
+    # 今年度の作付け: 10月1日 - 12月31日（中間点: 11/15頃）
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: cultivation_plan_field,
+      cultivation_plan_crop: cultivation_plan_crop,
+      area: 50.0,
+      start_date: Date.new(current_year, 10, 1),
+      completion_date: Date.new(current_year, 12, 31),
+      cultivation_days: 92,
+      status: 'completed'
+    )
+
+    # 来年度の作付け: 1月1日 - 3月31日（中間点: 2/14頃）
+    # 平均: (11/15と2/14の平均) ≈ 12/30 → 今年度になる
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: cultivation_plan_field,
+      cultivation_plan_crop: cultivation_plan_crop,
+      area: 50.0,
+      start_date: Date.new(current_year + 1, 1, 1),
+      completion_date: Date.new(current_year + 1, 3, 31),
+      cultivation_days: 90,
+      status: 'completed'
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: '複数年度年度算出テスト圃場', area: 100.0 }
+      ]
+    }
+
+    service = PlanSaveService.new(user: @user, session_data: session_data)
+    result = service.call
+
+    assert result.success, "PlanSaveService should succeed: #{result.error_message}"
+
+    new_plan = result.new_plan
+    assert_not_nil new_plan, "New plan should be created"
+
+    # 作付け期間の平均日が12/30頃になり、今年度で計画が作成されることを確認
+    # 計算: (11/15と2/14の中間点の平均) ≈ 12/30 → 今年度
+    expected_year = current_year
+    assert_equal expected_year, new_plan.plan_year, 
+      "Plan year should be calculated from average cultivation period spanning multiple years"
+  end
 end
