@@ -71,7 +71,7 @@ class PlanningSchedulesController < ApplicationController
       start_year = next_year - DEFAULT_YEARS_RANGE + 1
     end
     @start_year = start_year
-    @end_year = next_year
+    @end_year = start_year + DEFAULT_YEARS_RANGE - 1  # 開始年度から5年分
     @years_range = DEFAULT_YEARS_RANGE
     
     # 表示粒度

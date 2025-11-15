@@ -252,16 +252,20 @@
   .cultivation-items {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    width: 100%;
   }
 
   .cultivation-item {
-    padding: var(--space-4);
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-base);
-    font-size: var(--font-size-base);
-    line-height: var(--line-height-relaxed);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    min-height: auto;
   }
 
   .cultivation-item:hover {
@@ -271,12 +275,12 @@
 
   .cultivation-crop-name {
     font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--space-2);
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-1);
   }
 
   .cultivation-period {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-xs);
     opacity: 1;
   }
 

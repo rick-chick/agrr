@@ -651,12 +651,14 @@ class PlanSaveService
     plan_id = @session_data[:plan_id] || @session_data['plan_id']
     Rails.logger.debug I18n.t('services.plan_save_service.debug.plan_id_extracted', plan_id: plan_id)
     
-    reference_plan = CultivationPlan.find(plan_id)
+    reference_plan = CultivationPlan.includes(:field_cultivations).find(plan_id)
     Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_plan_found', plan_name: reference_plan.plan_name)
     
-    # 今年の計画期間を計算
-    current_year = Date.current.year
-    planning_dates = CultivationPlan.calculate_planning_dates(current_year)
+    # 作付け期間の平均から年度を算出
+    plan_year = calculate_plan_year_from_cultivations(reference_plan)
+    planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
+    
+    Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
     
     # 新しい計画を作成
     new_plan = CultivationPlan.create!(
@@ -664,7 +666,7 @@ class PlanSaveService
       user: @user,
       total_area: reference_plan.total_area,
       plan_type: 'private',
-      plan_year: current_year,
+      plan_year: plan_year,
       plan_name: "#{reference_plan.farm.name}の計画",
       planning_start_date: planning_dates[:start_date],
       planning_end_date: planning_dates[:end_date],
@@ -915,6 +917,42 @@ class PlanSaveService
 
   def requires_gdd?(_reference_item)
     true
+  end
+  
+  # 作付け期間の平均から年度を算出
+  # @param reference_plan [CultivationPlan] 参照プラン
+  # @return [Integer] 計画年度
+  def calculate_plan_year_from_cultivations(reference_plan)
+    field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
+    
+    # 作付けが存在しない場合は現在の年度を返す
+    if field_cultivations.empty?
+      Rails.logger.info "⚠️ [PlanSaveService] No field_cultivations found, using current year: #{Date.current.year}"
+      return Date.current.year
+    end
+    
+    # 各作付けの期間の中間点を計算
+    midpoints = field_cultivations.map do |cultivation|
+      start_date = cultivation.start_date
+      completion_date = cultivation.completion_date
+      
+      # 日数を計算して中間点を取得
+      days_diff = (completion_date - start_date).to_i
+      start_date + days_diff / 2
+    end
+    
+    # 中間点の平均を計算（ユリウス通日を使って平均を計算）
+    julian_days = midpoints.map(&:jd)
+    avg_julian_day = julian_days.sum / julian_days.size
+    avg_date = Date.jd(avg_julian_day.round)
+    
+    plan_year = avg_date.year
+    
+    Rails.logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
+    Rails.logger.debug "📊 [PlanSaveService] Average midpoint date: #{avg_date}"
+    Rails.logger.debug "📊 [PlanSaveService] Calculated plan_year: #{plan_year}"
+    
+    plan_year
   end
   
   def copy_crop_stages(reference_crop, new_crop)
