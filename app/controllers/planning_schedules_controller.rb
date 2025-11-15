@@ -37,7 +37,7 @@ class PlanningSchedulesController < ApplicationController
     # セッションまたはパラメータから選択情報を取得
     farm_id = params[:farm_id]&.to_i || session[:planning_schedule_farm_id]&.to_i
     field_ids = params[:field_ids]&.map(&:to_i) || session[:planning_schedule_field_ids]&.map(&:to_i) || []
-    year = params[:year]&.to_i || Date.current.year
+    start_year = params[:year]&.to_i || Date.current.year
     granularity = params[:granularity] || 'quarter'
     
     # バリデーション
@@ -60,34 +60,36 @@ class PlanningSchedulesController < ApplicationController
     all_fields = collect_fields_from_plans(@farm)
     @selected_fields = all_fields.select { |f| field_ids.include?(f[:id]) }
     
-    # 表示年度の範囲
+    # 表示年度の範囲（今年から5年分）
     current_year = Date.current.year
     @year_range = (current_year..(current_year + DEFAULT_YEARS_RANGE - 1)).to_a
     
-    # 表示年度のバリデーション
-    unless @year_range.include?(year)
-      year = current_year
+    # 開始年度のバリデーション（今年から5年分の範囲内）
+    unless @year_range.include?(start_year)
+      start_year = current_year
     end
-    @current_year = year
+    @start_year = start_year
+    @end_year = start_year + DEFAULT_YEARS_RANGE - 1
+    @years_range = DEFAULT_YEARS_RANGE
     
     # 表示粒度
     @granularity = granularity
     
-    # 年度の開始日と終了日
-    year_start = Date.new(year, 1, 1)
-    year_end = Date.new(year, 12, 31)
+    # 5年分の開始日と終了日
+    period_start = Date.new(start_year, 1, 1)
+    period_end = Date.new(@end_year, 12, 31)
     
-    # 期間の行を生成
-    @periods = generate_periods(year_start, year_end, granularity)
+    # 期間の行を生成（5年分）
+    @periods = generate_periods(period_start, period_end, granularity)
     
-    # 各ほ場の栽培情報を取得
+    # 各ほ場の栽培情報を取得（5年分）
     @cultivations_by_field = {}
     @selected_fields.each do |field|
       field_id = field[:id]
       field_name = field[:name]
       
-      # 該当年度の計画から栽培情報を取得
-      cultivations = get_cultivations_for_field(field_name, year_start, year_end)
+      # 5年分の計画から栽培情報を取得
+      cultivations = get_cultivations_for_field(field_name, period_start, period_end)
       @cultivations_by_field[field_id] = cultivations
     end
   end
