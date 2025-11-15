@@ -84,6 +84,7 @@ services:
 
   # Test environment (テストは明示的に実行: docker-compose run --rm test bundle exec rails test)
   test:
+    image: agrr-test:latest
     build:
       context: .
       dockerfile: Dockerfile.test
@@ -120,6 +121,7 @@ services:
 
   # Integration test environment (統合テスト専用 - デーモン起動)
   test-integration:
+    image: agrr-test-integration:latest
     build:
       context: .
       dockerfile: Dockerfile
