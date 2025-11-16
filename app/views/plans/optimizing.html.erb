@@ -2,9 +2,9 @@
 
 <div class="plans-wrapper pb-0" 
      data-optimizing-container
-     data-cultivation-plan-id="<%= @cultivation_plan.id %>"
+     data-cultivation-plan-id="<%= @vm.plan_id %>"
      data-channel-name="PlansOptimizationChannel"
-     data-redirect-url="<%= plan_path(@cultivation_plan) %>"
+     data-redirect-url="<%= plan_path(@vm.plan_id) %>"
      data-error-message="<%= t('plans.optimizing.error_message') %>">
   <div class="plans-container">
     <!-- Compact Header -->
@@ -15,9 +15,9 @@
         <span class="status-badge optimizing"><%= t('plans.optimizing.status_badge') %></span>
       </div>
       <div class="compact-subtitle">
-        <%= t('plans.optimizing.year_label', year: @cultivation_plan.plan_year) %> · 
-        <%= @cultivation_plan.farm.display_name %> · 
-        <%= t('plans.optimizing.crops_count', count: @cultivation_plan.cultivation_plan_crops.count) %>
+        <%= t('plans.optimizing.year_label', year: @vm.plan.plan_year) %> · 
+        <%= @vm.plan.farm.display_name %> · 
+        <%= t('plans.optimizing.crops_count', count: @vm.plan.cultivation_plan_crops.count) %>
       </div>
     </div>
     
