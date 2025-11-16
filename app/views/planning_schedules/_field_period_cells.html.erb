@@ -1,17 +1,14 @@
 <%# 部分テンプレート: 1ほ場の期間セル群を描画する %>
 <%# locals: arranged_cultivations(Array<Hash>), periods(Array<Hash>), period_index(Integer) %>
-<% cells = ScheduleTableFieldArranger.build_period_cells(
-  arranged_cultivations: arranged_cultivations,
-  periods: periods,
-  period_index: period_index
-) %>
+<% presenter ||= PlanningSchedulePresenter.new(periods: periods) %>
+<% cells = presenter.period_cells(arranged_cultivations: arranged_cultivations, period_index: period_index) %>
 <% cells.each do |cell| %>
-  <% if cell[:type] == :cultivation %>
-    <% if cell[:render] %>
-      <%= raw render_cultivation_cell(cultivation_info: cell[:cultivation], colspan: cell[:colspan], period_index: period_index) %>
+  <% if cell[ScheduleTableFieldArranger::CELL_TYPE_KEY] == :cultivation %>
+    <% if cell[ScheduleTableFieldArranger::CELL_RENDER_KEY] %>
+      <%= raw render_cultivation_cell(cultivation_info: cell[ScheduleTableFieldArranger::CELL_CULTIVATION_KEY], colspan: cell[ScheduleTableFieldArranger::CELL_COLSPAN_KEY], period_index: period_index) %>
     <% end %>
   <% else %>
-    <%= raw render_empty_cell(colspan: cell[:colspan], show_label: cell[:show_label]) %>
+    <%= raw render_empty_cell(colspan: cell[ScheduleTableFieldArranger::CELL_COLSPAN_KEY], show_label: cell[ScheduleTableFieldArranger::CELL_SHOW_LABEL_KEY]) %>
   <% end %>
 <% end %>
 
