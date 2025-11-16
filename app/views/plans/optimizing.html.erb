@@ -1,6 +1,7 @@
 <% content_for :title, t('plans.optimizing.title') %>
 
 <div class="plans-wrapper pb-0" 
+     data-controller="optimizing"
      data-optimizing-container
      data-cultivation-plan-id="<%= @vm.plan_id %>"
      data-channel-name="PlansOptimizationChannel"
@@ -66,8 +67,4 @@
   </div>
 </div>
 
-<!-- JavaScript is loaded from app/assets/javascripts/optimizing.js (共通) -->
-<% content_for :javascripts do %>
-  <%= javascript_include_tag "actioncable", defer: true %>
-  <%= javascript_include_tag "optimizing", defer: true %>
-<% end %>
+<!-- Stimulus optimizing controller handles connection; legacy JS load removed -->

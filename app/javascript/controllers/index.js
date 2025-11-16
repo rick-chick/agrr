@@ -16,6 +16,7 @@ import PestAiController from "./pest_ai_controller"
 import TaskScheduleTimelineController from "./task_schedule_timeline_controller"
 import UndoDeleteController from "./undo_delete_controller"
 import PlansShowController from "./plans_show_controller"
+import OptimizingController from "./optimizing_controller"
 import UndoToastController from "./undo_toast_controller"
 import CropSelectorController from "./crop_selector_controller"
 import AgriculturalTaskFormController from "./agricultural_task_form_controller"
@@ -33,6 +34,7 @@ application.register("fertilize-ai", FertilizeAiController)
 application.register("pest-ai", PestAiController)
 application.register("task-schedule-timeline", TaskScheduleTimelineController)
 application.register("undo-delete", UndoDeleteController)
+application.register("optimizing", OptimizingController)
 application.register("undo-toast", UndoToastController)
 application.register("crop-selector", CropSelectorController)
 application.register("agricultural-task-form", AgriculturalTaskFormController)

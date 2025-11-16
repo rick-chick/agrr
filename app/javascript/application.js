@@ -1,6 +1,13 @@
 // Entry point for the build script in your package.json
 // ライブラリ管理: npm/jsbundling-rails
 import "@hotwired/turbo-rails"
+// 先にレガシー資産（ガント等）を読み込み（グローバル関数が必要）
+import "../assets/javascripts/gantt_data_utils.js"
+import "../assets/javascripts/crop_colors.js"
+import "../assets/javascripts/custom_gantt_chart.js"
+import "../assets/javascripts/crop_palette_drag.js"
+import "../assets/javascripts/crop_palette_style.js"
+
 import "./controllers" // Stimulusコントローラーの自動読み込み
 import "leaflet";
 import "leaflet/dist/leaflet.css";
