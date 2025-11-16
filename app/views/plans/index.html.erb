@@ -80,9 +80,9 @@
                           <span><%= number_with_delimiter(plan.total_area) %> ㎡</span>
                         </div>
                         <div class="plan-card-detail-item">
-                          <span><%= t('plans.index.plan_card.crops_count', count: plan.cultivation_plan_crops.count) %></span>
+                          <span><%= t('plans.index.plan_card.crops_count', count: @vm.crops_count(plan)) %></span>
                           <span>・</span>
-                          <span><%= t('plans.index.plan_card.fields_count', count: plan.cultivation_plan_fields.count) %></span>
+                          <span><%= t('plans.index.plan_card.fields_count', count: @vm.fields_count(plan)) %></span>
                         </div>
                       </div>
                       
