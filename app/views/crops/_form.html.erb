@@ -1,4 +1,4 @@
-<div class="form-card">
+<div class="form-card" data-controller="crop-form">
   <%= form_with(model: @crop) do |f| %>
     <% if @crop.errors.any? %>
       <div class="errors">
@@ -90,7 +90,7 @@
     <div class="form-section">
       <h3 class="section-title"><%= t('crops.form.stages_section_title') %></h3>
       
-      <div id="crop-stages">
+      <div id="crop-stages" data-crop-form-target="stages">
         <%= f.fields_for :crop_stages do |stage_form| %>
           <%= render 'crop_stage_fields', f: stage_form, crop: @crop %>
         <% end %>
@@ -98,7 +98,7 @@
 
       <% if !@crop.is_reference || admin_user? %>
         <div class="form-group">
-          <button type="button" id="add-crop-stage" class="btn btn-secondary"><%= t('crops.form.add_stage_button') %></button>
+          <button type="button" id="add-crop-stage" class="btn btn-secondary" data-action="click->crop-form#addStage"><%= t('crops.form.add_stage_button') %></button>
         </div>
       <% end %>
     </div>

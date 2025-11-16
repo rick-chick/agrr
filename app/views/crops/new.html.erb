@@ -1,8 +1,6 @@
 <% content_for :title, "#{t('.title')} - AGRR" %>
 
-<% content_for :javascripts do %>
-  <%= javascript_include_tag "crop_form", defer: true %>
-<% end %>
+<%# Stimulus に移行したため個別 JS 読み込みは不要 %>
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
