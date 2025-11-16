@@ -8,16 +8,8 @@
         <%= t('plans.show.back_to_list') %>
       <% end %>
       <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
-        <% if @vm.plan.status_pending? %>
-          <%= button_to t('plans.show.optimize_button'), optimize_plan_path(@vm.plan), method: :post,
-              class: "btn-plans-primary",
-              data: { confirm: t('plans.show.confirms.optimize') } %>
-        <% end %>
         <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@vm.plan),
             class: "btn-plans-secondary" %>
-        <%= button_to t('plans.show.copy_plan'), copy_plan_path(@vm.plan), method: :post,
-            class: "btn-plans-secondary",
-            data: { confirm: t('plans.show.confirms.copy_next_year', year: @vm.plan.plan_year + 1) } %>
         <%= link_to t('plans.show.delete'), plan_path(@vm.plan),
             class: "btn btn-error",
             data: {
