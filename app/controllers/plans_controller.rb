@@ -251,15 +251,37 @@ class PlansController < ApplicationController
     optimization_job = OptimizationJob.new
     optimization_job.cultivation_plan_id = cultivation_plan_id
     optimization_job.channel_class = channel_class
-    
-    [
-      # データ取得
+
+    # private plan の場合、blueprint が全作物に存在するときのみ作業予定生成ジョブを追加
+    job_chain = [
       weather_job,
-      # 天気予測
       prediction_job,
-      # 最適化
       optimization_job
     ]
+
+    crops = cultivation_plan.cultivation_plan_crops.includes(:crop).map(&:crop)
+    all_crops_have_blueprints = crops.present? && crops.all? { |crop| crop.crop_task_schedule_blueprints.exists? }
+
+    if all_crops_have_blueprints
+      Rails.logger.info "🧩 [PlansController] Blueprints found for all crops. Enqueue TaskScheduleGenerationJob."
+      task_schedule_job = TaskScheduleGenerationJob.new
+      task_schedule_job.cultivation_plan_id = cultivation_plan_id
+      task_schedule_job.channel_class = channel_class
+      job_chain << task_schedule_job
+      # 作業予定生成後も最終フェーズ更新と完了を保証
+      finalize_job = PlanFinalizeJob.new
+      finalize_job.cultivation_plan_id = cultivation_plan_id
+      finalize_job.channel_class = channel_class
+      job_chain << finalize_job
+    else
+      Rails.logger.info "ℹ️ [PlansController] No blueprints for some or all crops. Skipping schedule generation and finalizing plan."
+      finalize_job = PlanFinalizeJob.new
+      finalize_job.cultivation_plan_id = cultivation_plan_id
+      finalize_job.channel_class = channel_class
+      job_chain << finalize_job
+    end
+
+    job_chain
   end
 
   # 年度範囲を計算するヘルパーメソッド

@@ -10,7 +10,7 @@ class TaskSchedule < ApplicationRecord
   belongs_to :cultivation_plan
   belongs_to :field_cultivation, optional: true
 
-  has_many :task_schedule_items, dependent: :destroy
+  has_many :task_schedule_items, dependent: :delete_all
 
   validates :category, presence: true
   validates :status, presence: true
