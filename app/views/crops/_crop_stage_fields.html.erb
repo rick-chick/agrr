@@ -3,7 +3,7 @@
     <h4 class="nested-title"><%= t('crops.stage.title') %></h4>
     <%= f.hidden_field :_destroy, class: 'destroy-flag' %>
     <% if !local_assigns[:crop]&.is_reference || admin_user? %>
-      <button type="button" class="btn btn-error btn-sm remove-crop-stage"><%= t('crops.stage.remove_button') %></button>
+      <button type="button" class="btn btn-error btn-sm remove-crop-stage" data-action="click->crop-form#removeStage"><%= t('crops.stage.remove_button') %></button>
     <% end %>
   </div>
 
