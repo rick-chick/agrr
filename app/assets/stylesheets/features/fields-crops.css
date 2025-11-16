@@ -112,6 +112,11 @@
   gap: var(--space-5);
 }
 
+/* turbo_stream のソース要素がグリッドの空アイテムとして計上されないようにする */
+.farms-grid turbo-cable-stream-source {
+  display: none;
+}
+
 .field-card {
   background: var(--color-white);
   border-radius: var(--radius-lg);
