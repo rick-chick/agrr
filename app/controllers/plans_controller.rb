@@ -15,8 +15,6 @@ class PlansController < ApplicationController
   
   # 定数
   AVAILABLE_YEARS_RANGE = 1 # 現在年から前後何年まで表示するか
-  PLAN_TYPE_PRIVATE = 'private'
-  SESSION_ID_KEY = :plan_data
   
   # 計画一覧（年度別）
   def index
@@ -24,9 +22,7 @@ class PlansController < ApplicationController
     @available_years = available_years_range
     
     # ユーザーの全計画を取得（年度別にグループ化）
-    @plans_by_year = CultivationPlan
-      .plan_type_private
-      .by_user(current_user)
+    @plans_by_year = find_cultivation_plan_scope
       .includes(:farm, field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
       .recent
       .group_by(&:plan_year)
@@ -69,7 +65,7 @@ class PlansController < ApplicationController
     @total_area = @fields.sum(:area)
     
     # セッションに保存
-    session[SESSION_ID_KEY] = {
+    session[self.class.session_key] = {
       plan_year: @plan_year,
       farm_id: @farm.id,
       plan_name: @plan_name,
@@ -292,7 +288,7 @@ class PlansController < ApplicationController
     end
     
     Rails.logger.info "✅ [PlansController#create] CultivationPlan created: #{result.cultivation_plan.id}"
-    session[SESSION_ID_KEY] = { plan_id: result.cultivation_plan.id }
+    session[self.class.session_key] = { plan_id: result.cultivation_plan.id }
     
     # ジョブチェーンを非同期実行
     job_instances = create_job_instances_for_plans(result.cultivation_plan.id, PlansOptimizationChannel)
@@ -321,7 +317,7 @@ class PlansController < ApplicationController
       crops: crops,
       user: current_user,
       session_id: session_id,
-      plan_type: PLAN_TYPE_PRIVATE,
+      plan_type: self.class.plan_type,
       plan_year: plan_year,
       plan_name: plan_name,
       planning_start_date: planning_dates[:start_date],
@@ -375,7 +371,8 @@ class PlansController < ApplicationController
     Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, plan_year=#{plan_year}"
     
     existing_plan = current_user.cultivation_plans
-      .where(farm: farm, plan_year: plan_year, plan_type: PLAN_TYPE_PRIVATE)
+      .plan_type_private
+      .where(farm: farm, plan_year: plan_year)
       .first
     
     if existing_plan
