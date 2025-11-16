@@ -11,6 +11,19 @@
 class ScheduleTableFieldArranger
   class OverlappingError < StandardError; end
 
+  # 表示セルの共通キー（ドキュメント目的・タイポ防止）
+  CELL_TYPE_KEY        = :type
+  CELL_COLSPAN_KEY     = :colspan
+  CELL_RENDER_KEY      = :render
+  CELL_SHOW_LABEL_KEY  = :show_label
+  CELL_CULTIVATION_KEY = :cultivation
+
+  SLOT_INDEX_PRIMARY   = 0
+  SLOT_INDEX_SECONDARY = 1
+
+  # @param cultivations [Array<Hash>] 作付情報配列
+  # @param periods [Array<Hash>] 降順期間配列
+  # @return [Array<Hash>] 配置済み作付情報配列
   # @param cultivations [Array<Hash>] 作付情報の配列。各要素は以下のキーを持つ:
   #   - :cultivation [Object] 栽培情報オブジェクト
   #   - :start_date [Date] 開始日
@@ -146,6 +159,10 @@ class ScheduleTableFieldArranger
   # @param periods [Array<Hash>] 期間配列（降順）
   # @param period_index [Integer] 対象期間のインデックス
   # @return [Hash] { colspan: Integer, slots: [slot0, slot1] }
+  # @param arranged_cultivations [Array<Hash>] arrangeで得た配置情報
+  # @param periods [Array<Hash>] 降順期間配列
+  # @param period_index [Integer] 期間インデックス
+  # @return [Hash] { colspan: Integer, slots: [slot0, slot1] }
   def self.build_period_layout(arranged_cultivations:, periods:, period_index:)
     current_period = periods[period_index]
 
@@ -167,11 +184,11 @@ class ScheduleTableFieldArranger
       period_index: period_index - 1
     )
     total = cultivations_in_period.size
-    colspan = (total == 2 || prev_total == 2 || next_total == 2) ? 1 : 2
+    colspan = two_columns_required?(total, prev_total, next_total) ? 1 : 2
 
     # スロットに割り当て（開始セルのみ描画するための情報は各作付のstart_period_indexに保持済み）
-    slot0 = cultivations_in_period.find { |c| c[:slot_index] == 0 }
-    slot1 = cultivations_in_period.find { |c| c[:slot_index] == 1 }
+    slot0 = cultivations_in_period.find { |c| c[:slot_index] == SLOT_INDEX_PRIMARY }
+    slot1 = cultivations_in_period.find { |c| c[:slot_index] == SLOT_INDEX_SECONDARY }
 
     { colspan: colspan, slots: [slot0, slot1] }
   end
@@ -191,60 +208,69 @@ class ScheduleTableFieldArranger
     if colspan == 2
       if slot0
         [{
-          type: :cultivation,
-          colspan: 2,
-          render: (slot0[:start_period_index] == period_index),
-          show_label: false,
-          cultivation: slot0
+          CELL_TYPE_KEY => :cultivation,
+          CELL_COLSPAN_KEY => 2,
+          CELL_RENDER_KEY => (slot0[:start_period_index] == period_index),
+          CELL_SHOW_LABEL_KEY => false,
+          CELL_CULTIVATION_KEY => slot0
         }]
       else
         [{
-          type: :empty,
-          colspan: 2,
-          render: true,
-          show_label: true,
-          cultivation: nil
+          CELL_TYPE_KEY => :empty,
+          CELL_COLSPAN_KEY => 2,
+          CELL_RENDER_KEY => true,
+          CELL_SHOW_LABEL_KEY => true,
+          CELL_CULTIVATION_KEY => nil
         }]
       end
     else
       cells = []
       if slot0
         cells << {
-          type: :cultivation,
-          colspan: 1,
-          render: (slot0[:start_period_index] == period_index),
-          show_label: false,
-          cultivation: slot0
+          CELL_TYPE_KEY => :cultivation,
+          CELL_COLSPAN_KEY => 1,
+          CELL_RENDER_KEY => (slot0[:start_period_index] == period_index),
+          CELL_SHOW_LABEL_KEY => false,
+          CELL_CULTIVATION_KEY => slot0
         }
       else
         cells << {
-          type: :empty,
-          colspan: 1,
-          render: true,
-          show_label: false,
-          cultivation: nil
+          CELL_TYPE_KEY => :empty,
+          CELL_COLSPAN_KEY => 1,
+          CELL_RENDER_KEY => true,
+          CELL_SHOW_LABEL_KEY => false,
+          CELL_CULTIVATION_KEY => nil
         }
       end
 
       if slot1
         cells << {
-          type: :cultivation,
-          colspan: 1,
-          render: (slot1[:start_period_index] == period_index),
-          show_label: false,
-          cultivation: slot1
+          CELL_TYPE_KEY => :cultivation,
+          CELL_COLSPAN_KEY => 1,
+          CELL_RENDER_KEY => (slot1[:start_period_index] == period_index),
+          CELL_SHOW_LABEL_KEY => false,
+          CELL_CULTIVATION_KEY => slot1
         }
       else
         cells << {
-          type: :empty,
-          colspan: 1,
-          render: true,
-          show_label: false,
-          cultivation: nil
+          CELL_TYPE_KEY => :empty,
+          CELL_COLSPAN_KEY => 1,
+          CELL_RENDER_KEY => true,
+          CELL_SHOW_LABEL_KEY => false,
+          CELL_CULTIVATION_KEY => nil
         }
       end
       cells
     end
+  end
+
+  # 2カラム（colspan=1を2つ）を必要とするかどうか
+  # @param total [Integer] 当該期の作付数
+  # @param prev_total [Integer] 前期の作付数
+  # @param next_total [Integer] 次期の作付数
+  # @return [Boolean]
+  def self.two_columns_required?(total, prev_total, next_total)
+    total == 2 || prev_total == 2 || next_total == 2
   end
 
   # 2つの期間配列が重なるかどうかを判定

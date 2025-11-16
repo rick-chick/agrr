@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module PlanningSchedulesHelper
+  # CSSクラス定数（見通し向上・タイポ防止）
+  CLASS_SCHEDULE_CELL     = 'schedule-table-cell'
+  CLASS_SCHEDULE_CELL_TOP = 'schedule-table-cell--top'
+
   # 期間のcolspanを決定
   # @param cultivations_in_period [Array<Hash>] この期間に表示される作付情報の配列
   # @param arranged_cultivations [Array<Hash>] arrangeメソッドで配置された作付情報の配列
@@ -75,7 +79,7 @@ module PlanningSchedulesHelper
     rowspan_attrs = rowspan_attributes(cultivation_info[:rowspan])
 
     tag_attrs = {
-      class: 'schedule-table-cell schedule-table-cell--top',
+      class: "#{CLASS_SCHEDULE_CELL} #{CLASS_SCHEDULE_CELL_TOP}",
       colspan: colspan,
       style: nil
     }.merge(rowspan_attrs)

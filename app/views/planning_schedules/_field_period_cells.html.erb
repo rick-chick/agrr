@@ -1,5 +1,5 @@
 <%# 部分テンプレート: 1ほ場の期間セル群を描画する %>
-<%# 期待するlocals: arranged_cultivations:, periods:, period_index: %>
+<%# locals: arranged_cultivations(Array<Hash>), periods(Array<Hash>), period_index(Integer) %>
 <% cells = ScheduleTableFieldArranger.build_period_cells(
   arranged_cultivations: arranged_cultivations,
   periods: periods,
