@@ -73,7 +73,23 @@ class PlansController < ApplicationController
     
     farm = find_farm_from_session
     crops = find_selected_crops
-    return unless validate_crops_selection(crops)
+    
+    if crops.empty?
+      # Turbo対応: フォールバックせず同画面を422で再描画
+      @vm = Plans::SelectCropPresenter.new(
+        current_user: current_user,
+        plan_year: session_data[:plan_year],
+        farm_id: session_data[:farm_id]
+      )
+      @plan_year = @vm.plan_year
+      @farm = @vm.farm
+      @plan_name = @vm.plan_name
+      @crops = @vm.crops
+      @fields = @vm.fields
+      @total_area = @vm.total_area
+      flash.now[:alert] = I18n.t('plans.errors.select_crop')
+      return render :select_crop, status: :unprocessable_entity
+    end
     
     # 既存の計画があるかチェック
     existing_plan = find_existing_plan(farm)
@@ -354,17 +370,6 @@ class PlansController < ApplicationController
     true
   end
 
-  # 作物選択の検証
-  def validate_crops_selection(crops)
-    Rails.logger.info "🔍 [PlansController#create] Validating crops selection: #{crops.count} crops"
-    if crops.empty?
-      Rails.logger.warn "⚠️ [PlansController#create] No crops selected"
-      redirect_to select_crop_plans_path, alert: I18n.t('plans.errors.select_crop')
-      return false
-    end
-    Rails.logger.info "✅ [PlansController#create] Crops selection validation passed"
-    true
-  end
 
   # セッションから農場を取得
   def find_farm_from_session

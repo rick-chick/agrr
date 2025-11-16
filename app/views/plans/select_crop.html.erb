@@ -1,6 +1,6 @@
 <% content_for :title, t('plans.select_crop.title') %>
 
-<div class="plans-wrapper">
+<div class="plans-wrapper" data-controller="crop-select">
   <div class="plans-container">
     <!-- ヘッダー -->
     <div class="compact-header-card">
@@ -42,7 +42,7 @@
       <h2 class="content-card-title"><%= t('plans.select_crop.title') %></h2>
       <p class="content-card-subtitle"><%= t('plans.select_crop.subtitle') %></p>
       
-      <%= form_with url: plans_path, method: :post, id: "cropForm", data: { turbo: false } do |f| %>
+      <%= form_with url: plans_path, method: :post, id: "cropForm", data: { turbo: true } do |f| %>
         <% if @vm.crops.empty? %>
           <!-- 作物がない場合 -->
           <div class="plans-empty">
@@ -65,7 +65,8 @@
                        name="crop_ids[]" 
                        value="<%= crop.id %>" 
                        id="crop_<%= crop.id %>" 
-                       class="crop-check">
+                       class="crop-check"
+                       data-action="change->crop-select#updateState">
                 <label for="crop_<%= crop.id %>" class="crop-card">
                   <div class="crop-emoji">🥬</div>
                   <div class="crop-name"><%= crop.name %></div>
@@ -84,37 +85,35 @@
       <% end %>
     </div>
   </div>
-</div>
 
-<!-- Fixed Bottom Bar -->
-<% if @vm.crops.any? %>
-  <div class="fixed-bottom-bar">
-    <div class="fixed-bottom-bar-content">
-      <div class="fixed-bottom-bar-left">
-        <%= link_to t('plans.select_crop.bottom_bar.back_button'), new_plan_path, 
-            class: "btn-plans-secondary" %>
-        
-        <div class="selection-counter-group">
-          <span><%= t('plans.select_crop.bottom_bar.selected_label') %>:</span>
-          <span id="counter" class="counter-badge">0</span>
-          <span><%= t('plans.select_crop.bottom_bar.selected_unit') %></span>
+  <!-- Fixed Bottom Bar -->
+  <% if @vm.crops.any? %>
+    <div class="fixed-bottom-bar">
+      <div class="fixed-bottom-bar-content">
+        <div class="fixed-bottom-bar-left">
+          <%= link_to t('plans.select_crop.bottom_bar.back_button'), new_plan_path, 
+              class: "btn-plans-secondary" %>
+          
+          <div class="selection-counter-group">
+            <span><%= t('plans.select_crop.bottom_bar.selected_label') %>:</span>
+            <span id="counter" class="counter-badge" data-crop-select-target="counter">0</span>
+            <span><%= t('plans.select_crop.bottom_bar.selected_unit') %></span>
+          </div>
         </div>
+        
+        <button type="submit" form="cropForm" id="submitBtn" 
+                disabled
+                data-crop-select-target="submit"
+                class="btn-plans-primary">
+          <%= t('plans.select_crop.bottom_bar.submit_button') %>
+        </button>
       </div>
       
-      <button type="submit" form="cropForm" id="submitBtn" 
-              disabled
-              class="btn-plans-primary">
-        <%= t('plans.select_crop.bottom_bar.submit_button') %>
-      </button>
+      <div id="hint" class="hint-message" data-crop-select-target="hint">
+        <%= t('plans.select_crop.bottom_bar.hint') %>
+      </div>
     </div>
-    
-    <div id="hint" class="hint-message">
-      <%= t('plans.select_crop.bottom_bar.hint') %>
-    </div>
-  </div>
-<% end %>
+  <% end %>
+</div>
 
-<!-- JavaScript is loaded from app/assets/javascripts/plans_select_crop.js -->
-<% content_for :javascripts do %>
-  <%= javascript_include_tag "plans_select_crop", "data-turbo-track": "reload" %>
-<% end %>
+<!-- Stimulus controller handles interactions; legacy JS include removed -->
