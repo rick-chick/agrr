@@ -111,7 +111,7 @@
                     period_index: period_index
                   )
                 %>
-                <%= render partial: 'planning_schedules/field_period_cells', locals: { period_layout: period_layout, period_index: period_index } %>
+                <%= render partial: 'planning_schedules/field_period_cells', locals: { arranged_cultivations: arranged_cultivations, periods: @periods, period_index: period_index } %>
               <% end %>
             </tr>
           <% end %>

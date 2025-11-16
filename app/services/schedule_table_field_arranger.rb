@@ -176,6 +176,77 @@ class ScheduleTableFieldArranger
     { colspan: colspan, slots: [slot0, slot1] }
   end
 
+  # 期間レイアウトをセル配列に展開（ビューはこの配列をそのまま描画すればよい）
+  # セル要素の構造:
+  #   { type: :cultivation|:empty, colspan: 1|2, render: true|false, show_label: true|false, cultivation: Hash|nil }
+  def self.build_period_cells(arranged_cultivations:, periods:, period_index:)
+    layout = build_period_layout(
+      arranged_cultivations: arranged_cultivations,
+      periods: periods,
+      period_index: period_index
+    )
+    colspan = layout[:colspan]
+    slot0, slot1 = layout[:slots]
+
+    if colspan == 2
+      if slot0
+        [{
+          type: :cultivation,
+          colspan: 2,
+          render: (slot0[:start_period_index] == period_index),
+          show_label: false,
+          cultivation: slot0
+        }]
+      else
+        [{
+          type: :empty,
+          colspan: 2,
+          render: true,
+          show_label: true,
+          cultivation: nil
+        }]
+      end
+    else
+      cells = []
+      if slot0
+        cells << {
+          type: :cultivation,
+          colspan: 1,
+          render: (slot0[:start_period_index] == period_index),
+          show_label: false,
+          cultivation: slot0
+        }
+      else
+        cells << {
+          type: :empty,
+          colspan: 1,
+          render: true,
+          show_label: false,
+          cultivation: nil
+        }
+      end
+
+      if slot1
+        cells << {
+          type: :cultivation,
+          colspan: 1,
+          render: (slot1[:start_period_index] == period_index),
+          show_label: false,
+          cultivation: slot1
+        }
+      else
+        cells << {
+          type: :empty,
+          colspan: 1,
+          render: true,
+          show_label: false,
+          cultivation: nil
+        }
+      end
+      cells
+    end
+  end
+
   # 2つの期間配列が重なるかどうかを判定
   # @param periods1 [Array<Hash>] 期間の配列
   # @param periods2 [Array<Hash>] 期間の配列
