@@ -47,11 +47,12 @@ module PlanningSchedulesHelper
   # rowspan属性をHTML属性文字列に変換
   # @param rowspan [Integer] rowspanの値
   # @return [String] HTML属性文字列（例: 'rowspan="3"' または ''）
-  def rowspan_attr_string(rowspan)
-    attrs = rowspan_attributes(rowspan)
-    return '' if attrs.empty?
-    attrs.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
-  end
+  # （未使用のため将来のために残す場合はコメントアウト）
+  # def rowspan_attr_string(rowspan)
+  #   attrs = rowspan_attributes(rowspan)
+  #   return '' if attrs.empty?
+  #   attrs.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
+  # end
 
   # 作付が開始する期間かどうかを判定
   # @param cultivation_info [Hash] 作付情報
@@ -70,13 +71,13 @@ module PlanningSchedulesHelper
     return '' unless cultivation_starts_in_period?(cultivation_info, period_index)
 
     cultivation = cultivation_info[:cultivation]
-    crop_color = get_crop_color_for_schedule(cultivation[:crop_name])
+    crop_color = get_crop_color_for_schedule(cultivation[:crop_name].to_s)
     rowspan_attrs = rowspan_attributes(cultivation_info[:rowspan])
 
     tag_attrs = {
-      class: 'schedule-table-cell',
+      class: 'schedule-table-cell schedule-table-cell--top',
       colspan: colspan,
-      style: 'vertical-align: top;'
+      style: nil
     }.merge(rowspan_attrs)
 
     content_tag(:td, tag_attrs) do
