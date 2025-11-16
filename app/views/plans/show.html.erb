@@ -1,31 +1,31 @@
-<% content_for :title, t('plans.show.header.title', year: @cultivation_plan.plan_year) %>
+<% content_for :title, t('plans.show.header.title', year: @vm.plan.plan_year) %>
 
 <div class="plans-wrapper">
-  <div class="plans-container" id="<%= dom_id(@cultivation_plan) %>" data-undo-delete-record>
+  <div class="plans-container" id="<%= dom_id(@vm.plan) %>" data-undo-delete-record>
     <!-- ヘッダーアクション -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); gap: var(--space-3); flex-wrap: wrap;">
       <%= link_to plans_path, class: "btn-plans-secondary" do %>
         <%= t('plans.show.back_to_list') %>
       <% end %>
       <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
-        <% if @cultivation_plan.status_pending? %>
-          <%= button_to t('plans.show.optimize_button'), optimize_plan_path(@cultivation_plan), method: :post,
+        <% if @vm.plan.status_pending? %>
+          <%= button_to t('plans.show.optimize_button'), optimize_plan_path(@vm.plan), method: :post,
               class: "btn-plans-primary",
               data: { confirm: t('plans.show.confirms.optimize') } %>
         <% end %>
-        <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@cultivation_plan),
+        <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@vm.plan),
             class: "btn-plans-secondary" %>
-        <%= button_to t('plans.show.copy_plan'), copy_plan_path(@cultivation_plan), method: :post,
+        <%= button_to t('plans.show.copy_plan'), copy_plan_path(@vm.plan), method: :post,
             class: "btn-plans-secondary",
-            data: { confirm: t('plans.show.confirms.copy_next_year', year: @cultivation_plan.plan_year + 1) } %>
-        <%= link_to t('plans.show.delete'), plan_path(@cultivation_plan),
+            data: { confirm: t('plans.show.confirms.copy_next_year', year: @vm.plan.plan_year + 1) } %>
+        <%= link_to t('plans.show.delete'), plan_path(@vm.plan),
             class: "btn btn-error",
             data: {
               controller: "undo-delete",
               action: "click->undo-delete#submit",
               turbo_method: :delete,
-              undo_delete_url_value: plan_path(@cultivation_plan),
-              undo_delete_message_value: t('plans.undo.toast', name: @cultivation_plan.display_name),
+              undo_delete_url_value: plan_path(@vm.plan),
+              undo_delete_message_value: t('plans.undo.toast', name: @vm.plan.display_name),
               undo_delete_redirect_url_value: plans_path
             } %>
       </div>
@@ -35,7 +35,7 @@
     <div class="content-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
         <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin: 0;">
-          <%= t('plans.show.header.title', year: @cultivation_plan.plan_year) %>
+          <%= t('plans.show.header.title', year: @vm.plan.plan_year) %>
         </h1>
         <span class="plan-card-status completed">
           <%= t('plans.show.header.badge') %>
@@ -43,7 +43,7 @@
       </div>
       
       <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
-        <%= t('plans.show.header.subtitle', count: @cultivation_plan.field_cultivations.count) %>
+        <%= t('plans.show.header.subtitle', count: @vm.plan.field_cultivations.count) %>
       </p>
       
       <!-- 統計情報グリッド -->
@@ -53,7 +53,7 @@
             <%= t('plans.show.header.farm') %>
           </div>
           <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
-            <%= @cultivation_plan.farm.display_name %>
+            <%= @vm.plan.farm.display_name %>
           </div>
         </div>
         <div>
@@ -61,7 +61,7 @@
             <%= t('plans.show.header.total_area') %>
           </div>
           <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
-            <%= number_with_delimiter(@cultivation_plan.total_area) %> ㎡
+            <%= number_with_delimiter(@vm.plan.total_area) %> ㎡
           </div>
         </div>
         <div>
@@ -69,7 +69,7 @@
             <%= t('plans.show.header.field_count') %>
           </div>
           <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
-            <%= t('plans.show.header.field_count_value', count: @cultivation_plan.cultivation_plan_fields.count) %>
+            <%= t('plans.show.header.field_count_value', count: @vm.plan.cultivation_plan_fields.count) %>
           </div>
         </div>
         <div>
@@ -78,8 +78,8 @@
           </div>
           <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
             <%= t('plans.show.header.planning_period_value', 
-                   start: @cultivation_plan.planning_start_date.year,
-                   end: @cultivation_plan.planning_end_date.year) %>
+                   start: @vm.plan.planning_start_date.year,
+                   end: @vm.plan.planning_end_date.year) %>
           </div>
         </div>
       </div>
@@ -88,14 +88,14 @@
     <!-- ガントチャート -->
     <div class="plans-gantt-section">
       <%= render 'shared/gantt_chart', 
-                 cultivation_plan: @cultivation_plan,
+                 cultivation_plan: @vm.plan,
                  show_crop_palette: true,
                  plan_type: 'private',
-                 data_url: data_api_v1_plans_cultivation_plan_path(@cultivation_plan),
-                 adjust_url: adjust_api_v1_plans_cultivation_plan_path(@cultivation_plan),
-                 add_field_url: add_field_api_v1_plans_cultivation_plan_path(@cultivation_plan),
-                 remove_field_url: remove_field_api_v1_plans_cultivation_plan_path(id: @cultivation_plan.id, field_id: 'PLACEHOLDER'),
-                 add_crop_url: add_crop_api_v1_plans_cultivation_plan_path(@cultivation_plan),
+                 data_url: data_api_v1_plans_cultivation_plan_path(@vm.plan),
+                 adjust_url: adjust_api_v1_plans_cultivation_plan_path(@vm.plan),
+                 add_field_url: add_field_api_v1_plans_cultivation_plan_path(@vm.plan),
+                 remove_field_url: remove_field_api_v1_plans_cultivation_plan_path(id: @vm.plan.id, field_id: 'PLACEHOLDER'),
+                 add_crop_url: add_crop_api_v1_plans_cultivation_plan_path(@vm.plan),
                  optimization_channel: 'PlansOptimizationChannel',
                  gantt_title: t('plans.show.gantt.title'),
                  detail_title: t('plans.show.detail.title'),

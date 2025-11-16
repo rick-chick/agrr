@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <% if @plans_by_year.empty? %>
+    <% if @vm.plans_by_year.empty? %>
       <!-- 計画がない場合 -->
       <div class="plans-empty">
         <div class="plans-empty-icon">📅</div>
@@ -37,8 +37,8 @@
       </div>
     <% else %>
         <!-- 年度別の計画一覧 -->
-        <% @available_years.reverse.each_with_index do |year, index| %>
-          <% year_plans = @plans_by_year[year] %>
+        <% @vm.available_years.reverse.each_with_index do |year, index| %>
+          <% year_plans = @vm.plans_by_year[year] %>
 
           <div class="plans-year-section">
             <details open>

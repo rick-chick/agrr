@@ -22,11 +22,11 @@
             <%= t('plans.new.plan_year_label') %>
           </label>
           <p class="plans-form-hint">
-            <%= t('plans.new.plan_year_hint', start_year: @current_year - 1, end_year: @current_year + 1) %>
+            <%= t('plans.new.plan_year_hint', start_year: @vm.current_year - 1, end_year: @vm.current_year + 1) %>
           </p>
           <select name="plan_year" required class="plans-form-select">
-            <% @available_years.each do |year| %>
-              <option value="<%= year %>" <%= 'selected' if year == @current_year %>>
+            <% @vm.available_years.each do |year| %>
+              <option value="<%= year %>" <%= 'selected' if year == @vm.current_year %>>
                 <%= year %>年度（<%= year - 1 %>年1月〜<%= year + 1 %>年12月）
               </option>
             <% end %>
@@ -43,7 +43,7 @@
             <%= t('plans.new.farm_hint') %>
           </p>
 
-          <% if @farms.empty? %>
+          <% if @vm.farms.empty? %>
             <!-- 農場がない場合 -->
             <div class="plans-empty">
               <div class="plans-empty-icon">🌾</div>
@@ -59,7 +59,7 @@
           <% else %>
             <!-- 農場カードグリッド -->
             <div class="radio-card-grid">
-              <% @farms.each do |farm| %>
+              <% @vm.farms.each do |farm| %>
                 <label class="radio-card-wrapper">
                   <input type="radio" name="farm_id" value="<%= farm.id %>" required
                          class="radio-card-input" />
@@ -85,7 +85,7 @@
         </div>
 
         <!-- 送信ボタン -->
-        <% if @farms.any? %>
+        <% if @vm.farms.any? %>
           <div style="text-align: center; margin-top: var(--space-8);">
             <button type="submit" class="btn-plans-primary" style="width: 100%; max-width: 400px;">
               <%= t('plans.new.next_button') %>

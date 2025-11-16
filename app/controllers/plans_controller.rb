@@ -19,29 +19,20 @@ class PlansController < ApplicationController
   
   # 計画一覧（年度別）
   def index
-    @current_year = Date.current.year
-    @available_years = available_years_range
-    
-    # ユーザーの全計画を取得（年度別にグループ化）
-    @plans_by_year = find_cultivation_plan_scope
-      .includes(:farm, field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
-      .recent
-      .group_by(&:plan_year)
-    
+    @vm = Plans::IndexPresenter.new(current_user: current_user)
+    @current_year = @vm.current_year
+    @available_years = @vm.available_years
+    @plans_by_year = @vm.plans_by_year
     Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plans: #{@plans_by_year.keys.inspect}"
   end
   
   # Step 1: 年度・農場選択
   def new
-    @current_year = Date.current.year
-    @available_years = available_years_range
-    
-    # ユーザーの農場を取得
-    @farms = current_user.farms.user_owned.to_a
-    
-    # デフォルト計画名
-    @default_plan_name = I18n.t('plans.default_plan_name')
-    
+    @vm = Plans::NewPresenter.new(current_user: current_user)
+    @current_year = @vm.current_year
+    @available_years = @vm.available_years
+    @farms = @vm.farms
+    @default_plan_name = @vm.default_plan_name
     Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@farms.count}"
   end
   
@@ -50,20 +41,18 @@ class PlansController < ApplicationController
     unless params[:plan_year].present? && params[:farm_id].present?
       redirect_to new_plan_path, alert: I18n.t('plans.errors.select_year_and_farm') and return
     end
-    
-    @plan_year = params[:plan_year].to_i
-    @farm = current_user.farms.find(params[:farm_id])
-    # 計画名は農場名を自動設定
-    @plan_name = @farm.name
-    
-    # ユーザーの作物のみ取得
-    @crops = current_user.crops.where(is_reference: false).order(:name)
-    
-    # 農場の圃場を取得
-    @fields = @farm.fields.order(:name)
-    
-    # 総面積を計算
-    @total_area = @fields.sum(:area)
+
+    @vm = Plans::SelectCropPresenter.new(
+      current_user: current_user,
+      plan_year: params[:plan_year],
+      farm_id: params[:farm_id]
+    )
+    @plan_year = @vm.plan_year
+    @farm = @vm.farm
+    @plan_name = @vm.plan_name
+    @crops = @vm.crops
+    @fields = @vm.fields
+    @total_area = @vm.total_area
     
     # セッションに保存
     session[self.class.session_key] = {
@@ -116,6 +105,7 @@ class PlansController < ApplicationController
   # Step 4: 最適化進捗画面
   def optimizing
     Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{params[:id]}"
+    @vm = Plans::OptimizingPresenter.new(plan_id: params[:id])
     handle_optimizing(force_weather_only: true)
   end
   
@@ -126,6 +116,7 @@ class PlansController < ApplicationController
     
     # 最適化中の場合のみ進捗画面へ
     redirect_to optimizing_plan_path(@cultivation_plan.id) if @cultivation_plan.status_optimizing?
+    @vm = Plans::ShowPresenter.new(cultivation_plan: @cultivation_plan)
   end
   
   # 計画コピー（前年度の計画を新年度にコピー）
