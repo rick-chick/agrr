@@ -64,59 +64,61 @@
 
     <!-- 計画表 -->
     <div class="schedule-table-wrapper">
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th class="schedule-table-period-header"><%= t('planning_schedules.schedule.period_label') %></th>
-            <% @selected_fields.each do |field| %>
-              <%# 各ほ場のヘッダーを2列に分割（colspan=2として見た目を保つが、内部構造は2列） %>
-              <th class="schedule-table-field-header" colspan="2">
-                <%= field[:name] %><br>
-                <span style="font-size: var(--font-size-base); font-weight: normal; opacity: 0.9;">
-                  (<%= @farm.name %>)
-                </span>
-              </th>
-            <% end %>
-          </tr>
-        </thead>
-        <tbody>
-          <% 
-            # 各圃場について、新しいアルゴリズムで作付を配置
-            field_cultivation_data = @selected_fields.map do |field|
-              field_id = field[:id]
-              cultivations = @cultivations_by_field[field_id] || []
-              
-              # ScheduleTableFieldArrangerを使って作付を配置
-              arranged_cultivations = ScheduleTableFieldArranger.arrange(
-                cultivations: cultivations,
-                periods: @periods
-              )
-              
-              { field: field, field_id: field_id, arranged_cultivations: arranged_cultivations }
-            end
-          %>
-          <% @periods.each_with_index do |period, period_index| %>
+      <div class="schedule-table-scroll">
+        <table class="schedule-table">
+          <thead>
             <tr>
-              <td class="schedule-table-period-cell">
-                <%= period[:label] %>
-              </td>
-              <% field_cultivation_data.each do |field_data| %>
-                <% 
-                  field = field_data[:field]
-                  arranged_cultivations = field_data[:arranged_cultivations]
-                  
-                  period_layout = ScheduleTableFieldArranger.build_period_layout(
-                    arranged_cultivations: arranged_cultivations,
-                    periods: @periods,
-                    period_index: period_index
-                  )
-                %>
-                <%= render partial: 'planning_schedules/field_period_cells', locals: { presenter: @schedule_presenter, arranged_cultivations: arranged_cultivations, periods: @periods, period_index: period_index } %>
+              <th class="schedule-table-period-header"><%= t('planning_schedules.schedule.period_label') %></th>
+              <% @selected_fields.each do |field| %>
+                <%# 各ほ場のヘッダーを2列に分割（colspan=2として見た目を保つが、内部構造は2列） %>
+                <th class="schedule-table-field-header" colspan="2">
+                  <%= field[:name] %><br>
+                  <span style="font-size: var(--font-size-base); font-weight: normal; opacity: 0.9;">
+                    (<%= @farm.name %>)
+                  </span>
+                </th>
               <% end %>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% 
+              # 各圃場について、新しいアルゴリズムで作付を配置
+              field_cultivation_data = @selected_fields.map do |field|
+                field_id = field[:id]
+                cultivations = @cultivations_by_field[field_id] || []
+                
+                # ScheduleTableFieldArrangerを使って作付を配置
+                arranged_cultivations = ScheduleTableFieldArranger.arrange(
+                  cultivations: cultivations,
+                  periods: @periods
+                )
+                
+                { field: field, field_id: field_id, arranged_cultivations: arranged_cultivations }
+              end
+            %>
+            <% @periods.each_with_index do |period, period_index| %>
+              <tr>
+                <td class="schedule-table-period-cell">
+                  <%= period[:label] %>
+                </td>
+                <% field_cultivation_data.each do |field_data| %>
+                  <% 
+                    field = field_data[:field]
+                    arranged_cultivations = field_data[:arranged_cultivations]
+                    
+                    period_layout = ScheduleTableFieldArranger.build_period_layout(
+                      arranged_cultivations: arranged_cultivations,
+                      periods: @periods,
+                      period_index: period_index
+                    )
+                  %>
+                  <%= render partial: 'planning_schedules/field_period_cells', locals: { presenter: @schedule_presenter, arranged_cultivations: arranged_cultivations, periods: @periods, period_index: period_index } %>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -162,7 +164,12 @@
     border-radius: var(--radius-lg);
     padding: var(--space-4);
     box-shadow: var(--shadow-md);
+    overflow: hidden; /* 左余白にスクロール内容が見えないようにする */
+  }
+
+  .schedule-table-scroll {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .schedule-table {
