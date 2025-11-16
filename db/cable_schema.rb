@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_16_054000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -96,7 +96,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
   create_table "crop_task_schedule_blueprints", force: :cascade do |t|
     t.integer "crop_id", null: false
     t.integer "agricultural_task_id"
-    t.bigint "source_agricultural_task_id"
     t.integer "stage_order", null: false
     t.string "stage_name"
     t.decimal "gdd_trigger", precision: 10, scale: 2, null: false
@@ -111,6 +110,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
     t.decimal "time_per_sqm", precision: 8, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
+    t.bigint "source_agricultural_task_id"
     t.index ["agricultural_task_id"], name: "index_crop_task_schedule_blueprints_on_agricultural_task_id"
     t.index ["crop_id", "stage_order", "agricultural_task_id"], name: "idx_on_crop_id_stage_order_agricultural_task_id_1de52a2f7e", unique: true, where: "agricultural_task_id IS NOT NULL"
     t.index ["crop_id", "stage_order", "source_agricultural_task_id"], name: "index_blueprints_on_crop_stage_and_source_task", unique: true, where: "agricultural_task_id IS NULL AND source_agricultural_task_id IS NOT NULL"
@@ -220,9 +221,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_13_211624) do
     t.index ["user_id"], name: "index_cultivation_plans_on_user_id"
   end
 
-# Could not dump table "deletion_undo_events" because of following StandardError
-#   Unknown type 'uuid' for column 'id'
-
+  create_table "deletion_undo_events", id: :string, force: :cascade do |t|
+    t.string "resource_type", null: false
+    t.string "resource_id", null: false
+    t.json "snapshot", default: {}, null: false
+    t.json "metadata", default: {}, null: false
+    t.integer "deleted_by_id"
+    t.datetime "expires_at", null: false
+    t.string "state", default: "scheduled", null: false
+    t.datetime "restored_at"
+    t.datetime "finalized_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_by_id"], name: "index_deletion_undo_events_on_deleted_by_id"
+    t.index ["expires_at"], name: "index_deletion_undo_events_on_expires_at"
+    t.index ["resource_type", "resource_id"], name: "index_deletion_undo_events_on_resource", where: "state = 'scheduled'"
+  end
 
   create_table "farm_sizes", force: :cascade do |t|
     t.string "name", null: false
