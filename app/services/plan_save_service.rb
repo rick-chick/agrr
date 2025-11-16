@@ -72,6 +72,7 @@ class PlanSaveService
       establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
       
       # 4. 関連データのコピー
+      copy_crop_task_schedule_blueprints_for_user_crops
       field_cultivation_map = copy_plan_relations(new_plan)
       copy_task_schedules(new_plan, field_cultivation_map)
       
@@ -93,6 +94,62 @@ class PlanSaveService
   end
   
   private
+  
+  def copy_crop_task_schedule_blueprints_for_user_crops
+    return unless @reference_crop_id_to_user_crop_id.present?
+    
+    @reference_crop_id_to_user_crop_id.each do |reference_crop_id, user_crop_id|
+      reference_blueprints = CropTaskScheduleBlueprint
+                               .where(crop_id: reference_crop_id)
+                               .includes(:agricultural_task)
+                               .ordered
+                               .to_a
+      next if reference_blueprints.empty?
+      
+      timestamp = Time.current
+      allowed_columns = CropTaskScheduleBlueprint.column_names.map(&:to_sym)
+      
+      blueprint_attributes = reference_blueprints.map do |bp|
+        # 参照元タスクIDの決定（sourceがあれば優先、無ければ自身のagri task）
+        reference_task_id = bp.source_agricultural_task_id.presence || bp.agricultural_task_id
+        mapped_user_task_id = reference_task_id ? user_agricultural_task_id_for(reference_task_id) : nil
+        
+        attrs = {
+          crop_id: user_crop_id,
+          agricultural_task_id: mapped_user_task_id,
+          source_agricultural_task_id: reference_task_id,
+          stage_order: bp.stage_order,
+          stage_name: bp.stage_name,
+          gdd_trigger: normalize_decimal(bp.gdd_trigger),
+          gdd_tolerance: normalize_decimal(bp.gdd_tolerance),
+          task_type: bp.task_type,
+          source: bp.source,
+          priority: bp.priority,
+          amount: normalize_decimal(bp.amount),
+          amount_unit: bp.amount_unit,
+          description: bp.description,
+          weather_dependency: bp.weather_dependency,
+          time_per_sqm: normalize_decimal(bp.time_per_sqm),
+          created_at: timestamp,
+          updated_at: timestamp
+        }
+        
+        # モデルカラムに存在するものだけ
+        attrs.select { |key, _| allowed_columns.include?(key) || [:created_at, :updated_at].include?(key) }
+      end
+      
+      CropTaskScheduleBlueprint.transaction do
+        CropTaskScheduleBlueprint.where(crop_id: user_crop_id).delete_all
+        CropTaskScheduleBlueprint.insert_all!(blueprint_attributes)
+      end
+    end
+  end
+  
+  def normalize_decimal(value)
+    return nil if value.nil?
+    decimal = value.is_a?(BigDecimal) ? value : BigDecimal(value.to_s)
+    decimal.to_s('F')
+  end
   
   def create_or_get_user_farm
     farm_id = @session_data[:farm_id] || @session_data['farm_id']

@@ -55,6 +55,264 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       ]
     end
   end
+  
+  test "result success? reflects internal state" do
+    result = PlanSaveService::Result.new
+    assert_equal false, result.success?
+    result.success = true
+    assert_equal true, result.success?
+  end
+
+  test "handles invalid farm_id by capturing RecordNotFound and returning failure result" do
+    # 存在しないfarm_idを指定して異常系を検証（フォールバックせずraiseされること）
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 10.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'InvalidFarmTest',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: -1, # 不正ID
+      field_data: []
+    }
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert_equal false, result.success
+    assert_match(/Couldn't find Farm|存在しない|見つかりません/i, result.error_message.to_s)
+  end
+
+  test "creates missing user crop in CPC loop when reference_crops_scope excludes it" do
+    # 参照計画上には 'us' の作物を含めるが、reference_crops_scope は region: [jp, nil] で除外される
+    us_reference_crop = Crop.create!(
+      user: nil,
+      name: 'US参照作物',
+      variety: 'USV',
+      is_reference: true,
+      area_per_unit: 0.5,
+      revenue_per_area: 7000.0,
+      region: 'us'
+    )
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 50.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'CPC欠落作物作成検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: us_reference_crop,
+      name: us_reference_crop.name,
+      variety: us_reference_crop.variety,
+      area_per_unit: us_reference_crop.area_per_unit,
+      revenue_per_area: us_reference_crop.revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    # CPCループで create! されたか（source_crop_id が us 作物）
+    created = @user.crops.find_by(source_crop_id: us_reference_crop.id)
+    assert_not_nil created, 'CPCループで不足作物がcreate!されるべき'
+  end
+
+  test "fills source_interaction_rule_id for existing user rule without it" do
+    # 参照ルール
+    reference_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'GroupX',
+      target_group: 'GroupY',
+      impact_ratio: 0.6,
+      is_directional: true,
+      is_reference: true,
+      region: @farm.region
+    )
+
+    # 参照計画（作物グループに対応するため、作物名をグループ名に揃える）
+    crop_x = Crop.create!(user: nil, name: 'GroupX', variety: 'X', is_reference: true, area_per_unit: 0.2, revenue_per_area: 1000.0, region: @farm.region)
+    crop_y = Crop.create!(user: nil, name: 'GroupY', variety: 'Y', is_reference: true, area_per_unit: 0.2, revenue_per_area: 1000.0, region: @farm.region)
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 20.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'Interaction補完検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+    CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_x, name: crop_x.name, variety: crop_x.variety, area_per_unit: crop_x.area_per_unit, revenue_per_area: crop_x.revenue_per_area)
+    CultivationPlanCrop.create!(cultivation_plan: plan, crop: crop_y, name: crop_y.name, variety: crop_y.variety, area_per_unit: crop_y.area_per_unit, revenue_per_area: crop_y.revenue_per_area)
+
+    # 既存のユーザールール（source_interaction_rule_id が nil）
+    existing_rule = @user.interaction_rules.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'GroupX',
+      target_group: 'GroupY',
+      impact_ratio: 0.4,
+      is_directional: true,
+      is_reference: false,
+      region: @farm.region
+    )
+    assert_nil existing_rule.source_interaction_rule_id
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    assert_not_nil existing_rule.reload.source_interaction_rule_id, '既存ルールのsource_interaction_rule_idが補完されるべき'
+    assert_equal reference_rule.id, existing_rule.source_interaction_rule_id
+  end
+
+  test "copies crop task schedule blueprints from reference crops to user crops" do
+    # 参照作物・参照作業・blueprint 準備
+    reference_crop = Crop.create!(user: nil, name: 'Blueprint参照作物', variety: 'BV1', is_reference: true, area_per_unit: 1.0, revenue_per_area: 2000.0, region: @farm.region)
+    reference_task = AgriculturalTask.create!(
+      name: '土壌準備',
+      description: '畝立てなど',
+      time_per_sqm: 0.2,
+      weather_dependency: 'low',
+      required_tools: ['鍬'],
+      skill_level: 'beginner',
+      is_reference: true,
+      task_type: TaskScheduleItem::FIELD_WORK_TYPE,
+      region: @farm.region
+    )
+    # 作業テンプレート（PlanSaveService内でテンプレートを作物に張り付けるのに利用）
+    CropTaskTemplate.create!(
+      crop: reference_crop,
+      agricultural_task: reference_task,
+      name: reference_task.name,
+      description: reference_task.description,
+      time_per_sqm: reference_task.time_per_sqm,
+      weather_dependency: reference_task.weather_dependency,
+      required_tools: reference_task.required_tools,
+      skill_level: reference_task.skill_level
+    )
+    # 参照blueprint（agricultural_task_idあり）
+    create(:crop_task_schedule_blueprint,
+      crop: reference_crop,
+      agricultural_task: reference_task,
+      stage_order: 1,
+      stage_name: '整備',
+      task_type: TaskScheduleItem::FIELD_WORK_TYPE,
+      gdd_trigger: BigDecimal('0'),
+      gdd_tolerance: BigDecimal('10'),
+      priority: 1,
+      source: 'agrr_schedule',
+      time_per_sqm: BigDecimal('0.2')
+    )
+    # 参照blueprint（source_agricultural_task_idのみで、agriタスクはnil）
+    create(:crop_task_schedule_blueprint,
+      :without_agricultural_task,
+      crop: reference_crop,
+      stage_order: 2,
+      stage_name: '基肥',
+      task_type: TaskScheduleItem::BASAL_FERTILIZATION_TYPE,
+      gdd_trigger: BigDecimal('100'),
+      gdd_tolerance: BigDecimal('5'),
+      priority: 2,
+      source: 'agrr_fertilize_plan',
+      amount: BigDecimal('3.5'),
+      amount_unit: 'g/m2',
+      time_per_sqm: BigDecimal('0.1'),
+      source_agricultural_task_id: reference_task.id
+    )
+
+    # 参照計画（public）に参照作物を含める
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 50.0,
+      plan_type: 'public',
+      plan_year: Date.current.year,
+      plan_name: 'Blueprintコピー検証',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: 'completed'
+    )
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: []
+    }
+
+    result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert result.success, result.error_message
+
+    user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
+    assert_not_nil user_crop, 'User crop should be created'
+
+    # user側にblueprintがコピーされていること
+    user_blueprints = user_crop.crop_task_schedule_blueprints.ordered.to_a
+    assert_equal 2, user_blueprints.size, 'Two blueprints should be copied to user crop'
+
+    first_bp = user_blueprints[0]
+    second_bp = user_blueprints[1]
+
+    # 1つ目: agriタスクがマッピングされている
+    assert_equal 1, first_bp.stage_order
+    assert_equal '整備', first_bp.stage_name
+    assert_equal TaskScheduleItem::FIELD_WORK_TYPE, first_bp.task_type
+    assert_in_delta 0, first_bp.gdd_trigger.to_f, 0.0001
+    assert_equal 'agrr_schedule', first_bp.source
+    assert_not_nil first_bp.agricultural_task_id, 'agricultural_task should be mapped to user task'
+
+    # 2つ目: source_agricultural_task_idからのマッピング
+    assert_equal 2, second_bp.stage_order
+    assert_equal '基肥', second_bp.stage_name
+    assert_equal TaskScheduleItem::BASAL_FERTILIZATION_TYPE, second_bp.task_type
+    assert_in_delta 100, second_bp.gdd_trigger.to_f, 0.0001
+    assert_equal 'agrr_fertilize_plan', second_bp.source
+    assert_not_nil second_bp.agricultural_task_id, 'agricultural_task should be mapped from source_agricultural_task_id'
+    assert_equal reference_task.id, second_bp.source_agricultural_task_id
+
+    # 既存があれば置換されることを確認（再実行で件数は変わらない）
+    second_result = PlanSaveService.new(user: @user, session_data: session_data).call
+    assert second_result.success, second_result.error_message
+    assert_equal 2, user_crop.crop_task_schedule_blueprints.count
+  end
 
   test "should allow CultivationPlanCrop duplication when same crop appears multiple times" do
     # 参照計画を作成（同じ作物を複数含む - 名前重複は許容）
