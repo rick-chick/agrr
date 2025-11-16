@@ -277,38 +277,8 @@ class PlansController < ApplicationController
     current_year = Date.current.year
     ((current_year - AVAILABLE_YEARS_RANGE)..(current_year + AVAILABLE_YEARS_RANGE)).to_a
   end
-
-  # セッションデータの検証
-  def validate_session_data
-    unless session_data[:farm_id] && session_data[:plan_year]
-      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart')
-      return false
-    end
-    true
-  end
-
-  # セッションから農場を取得
-  def find_farm_from_session
-    current_user.farms.find(session_data[:farm_id])
-  end
-
-  # 選択された作物を取得
-  def find_selected_crops
-    Rails.logger.debug "🔍 [PlansController] crop_ids: #{crop_ids.inspect}"
-    crops = current_user.crops.where(id: crop_ids.map(&:to_i), is_reference: false)
-    Rails.logger.debug "🔍 [PlansController] found crops: #{crops.count}"
-    crops.each { |crop| Rails.logger.debug "  - #{crop.name} (ID: #{crop.id})" }
-    crops
-  end
-
-  # 作物選択の検証
-  def validate_crops_selection(crops)
-    if crops.empty?
-      redirect_to select_crop_plans_path, alert: I18n.t('plans.errors.select_crop')
-      return false
-    end
-    true
-  end
+  # 以降のセクションで詳細版の実装が存在するため、
+  # 同等の機能を持つ重複メソッドは削除（振る舞いは不変）
 
   # 栽培計画作成とジョブ実行
   def create_cultivation_plan_with_jobs(farm, crops)
@@ -405,7 +375,7 @@ class PlansController < ApplicationController
     Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, plan_year=#{plan_year}"
     
     existing_plan = current_user.cultivation_plans
-      .where(farm: farm, plan_year: plan_year, plan_type: 'private')
+      .where(farm: farm, plan_year: plan_year, plan_type: PLAN_TYPE_PRIVATE)
       .first
     
     if existing_plan
