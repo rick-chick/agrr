@@ -111,9 +111,22 @@
   cursor: pointer;
 }
 
-.btn-plans-primary:hover {
+.btn-plans-primary:not(:disabled) {
+  cursor: pointer;
+}
+
+.btn-plans-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--shadow-primary-hover);
+}
+
+.btn-plans-primary:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .btn-plans-secondary {
