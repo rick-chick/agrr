@@ -1,0 +1,28 @@
+<%# 部分テンプレート: 1ほ場の期間セル群を描画する %>
+<%# 期待するlocals: period_layout:, period_index: %>
+<% period_colspan = period_layout[:colspan] %>
+<% slot_0_cultivation, slot_1_cultivation = period_layout[:slots] %>
+
+<% if period_colspan == 2 && slot_0_cultivation.nil? && slot_1_cultivation.nil? %>
+  <%= raw render_empty_cell(colspan: 2) %>
+<% elsif period_colspan == 2 %>
+  <% if slot_0_cultivation %>
+    <%= raw render_cultivation_cell(cultivation_info: slot_0_cultivation, colspan: 2, period_index: period_index) %>
+  <% else %>
+    <%= raw render_empty_cell(colspan: 2) %>
+  <% end %>
+<% else %>
+  <% if slot_0_cultivation %>
+    <%= raw render_cultivation_cell(cultivation_info: slot_0_cultivation, colspan: 1, period_index: period_index) %>
+  <% else %>
+    <%= raw render_empty_cell(colspan: 1, show_label: false) %>
+  <% end %>
+  
+  <% if slot_1_cultivation %>
+    <%= raw render_cultivation_cell(cultivation_info: slot_1_cultivation, colspan: 1, period_index: period_index) %>
+  <% else %>
+    <%= raw render_empty_cell(colspan: 1, show_label: false) %>
+  <% end %>
+<% end %>
+
+
