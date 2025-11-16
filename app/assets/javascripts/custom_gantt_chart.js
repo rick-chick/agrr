@@ -314,6 +314,8 @@ function cleanupGanttChart() {
   if (document.readyState !== 'loading') {
     console.log('🔄 [Gantt Chart] 既にDOM読み込み済み、即座に初期化');
     triggerInit();
+    // モバイルフォールバック状態も評価
+    updateMobileFallback();
   }
 
   if (typeof Turbo !== 'undefined') {
@@ -323,6 +325,7 @@ function cleanupGanttChart() {
     document.addEventListener('turbo:load', () => {
       console.log('🔄 [Gantt Chart] turbo:load イベント検出');
       triggerInit();
+      updateMobileFallback();
     });
     
     // ページキャッシュ前にクリーンアップ
@@ -350,6 +353,13 @@ function initCustomGanttChart() {
     return;
   }
 
+  // 二重初期化防止（Turbo遷移や複数スクリプトからの呼び出し対策）
+  if (ganttContainer.dataset.ganttInitialized === 'true') {
+    console.log('ℹ️ [Gantt] 既に初期化済みのためスキップ');
+    setLoadingIndicatorVisible(false);
+    return;
+  }
+
   if (!window.ganttControlsInitialized) {
     initGanttControls();
   }
@@ -366,6 +376,8 @@ function initCustomGanttChart() {
     ganttCanvas.style.transform = 'scale(1)';
   }
   ganttContainer.dataset.zoom = 'default';
+  // 初期化済みフラグ
+  ganttContainer.dataset.ganttInitialized = 'true';
 
   console.log('📊 [Gantt] データ属性を取得中...');
   // データ属性からJSONを取得
@@ -422,6 +434,8 @@ function initCustomGanttChart() {
   } catch (error) {
     console.error('❌ [Gantt] データ正規化エラー:', error);
     console.error('❌ [Gantt] スタックトレース:', error.stack);
+    // 初期化フラグ解除（次回再試行を可能に）
+    delete ganttContainer.dataset.ganttInitialized;
     // エラー時も初期化フラグをリセット
     window.ganttRetryCount = 0;
     console.log('✅ [Gantt Chart] エラー後、フラグをリセットしました');
@@ -568,6 +582,7 @@ function fetchAndUpdateChart() {
     console.error('❌ data-data-url属性が設定されていません');
     const container = document.getElementById('gantt-container');
     alert(container?.dataset.apiEndpointMissing);
+    setLoadingIndicatorVisible(false);
     return;
   }
 
@@ -684,19 +699,14 @@ function groupByField(cultivations, fields = []) {
     const fieldId = cultivation.field_id;
     
     if (!fieldId) {
-      console.warn('⚠️ cultivation.field_idが未定義です:', cultivation);
-      return;
+      console.error('❌ cultivation.field_idが未定義です:', cultivation);
+      throw new Error('cultivation.field_id is required');
     }
     
     // field_idでグループを検索
     if (!groups[fieldId]) {
-      console.warn('⚠️ field_idに対応する圃場が見つかりません:', fieldId);
-      // 圃場が見つからない場合は新しいグループを作成
-      groups[fieldId] = {
-        fieldName: cultivation.field_name || `圃場${fieldId}`,
-        fieldId: fieldId,
-        cultivations: []
-      };
+      console.error('❌ field_idに対応する圃場が見つかりません:', fieldId);
+      throw new Error(`Field not found for field_id=${fieldId}`);
     }
     groups[fieldId].cultivations.push(cultivation);
   });
@@ -726,10 +736,9 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   
   // 無効な日付の場合はデフォルト値を設定
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    console.warn('Invalid dates in renderGanttChart:', { planStartDate, planEndDate });
-    const now = new Date();
-    startDate = new Date(now.getFullYear(), 0, 1); // 今年の1月1日
-    endDate = new Date(now.getFullYear(), 11, 31); // 今年の12月31日
+    console.error('❌ Invalid dates in renderGanttChart:', { planStartDate, planEndDate });
+    setLoadingIndicatorVisible(false);
+    throw new Error('Invalid plan dates');
   }
 
   const totalDays = Math.max(daysBetween(startDate, endDate), 1);
@@ -758,7 +767,8 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   const canvasWrapper = container.parentElement;
   if (canvasWrapper && canvasWrapper.classList.contains('gantt-chart-canvas')) {
     canvasWrapper.style.width = "100%";
-    canvasWrapper.style.minWidth = "100%";
+    // スクロールエリアがコンテンツ幅（SVG幅）に追随するよう最小幅を確保
+    canvasWrapper.style.minWidth = `${config.width}px`;
   }
 
   // グローバルステートに保存
@@ -1328,6 +1338,8 @@ function executeReoptimization() {
     console.error('❌ data-adjust-url属性が設定されていません');
     const container = document.getElementById('gantt-container');
     alert(container?.dataset.apiEndpointMissing);
+    hideLoadingOverlay();
+    window.reoptimizationInProgress = false;
     return;
   }
   
