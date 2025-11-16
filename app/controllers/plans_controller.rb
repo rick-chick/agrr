@@ -107,8 +107,8 @@ class PlansController < ApplicationController
   def optimize
     plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
     
-    # 既に最適化中または完了している場合はスキップ
-    if plan.status_optimizing? || plan.status_completed?
+    # 既に最適化中の場合はスキップ（完了は許可）
+    if plan.status_optimizing?
       redirect_to plan_path(plan), alert: I18n.t('plans.errors.already_optimized') and return
     end
     
@@ -257,11 +257,18 @@ class PlansController < ApplicationController
     prediction_job.channel_class = channel_class
     prediction_job.predict_days = predict_days
     
+    # 最適化ジョブ（公開計画と同様に最後まで実施）
+    optimization_job = OptimizationJob.new
+    optimization_job.cultivation_plan_id = cultivation_plan_id
+    optimization_job.channel_class = channel_class
+    
     [
       # データ取得
       weather_job,
       # 天気予測
-      prediction_job
+      prediction_job,
+      # 最適化
+      optimization_job
     ]
   end
 
@@ -326,8 +333,9 @@ class PlansController < ApplicationController
 
   # 作成者パラメータを構築
   def build_creator_params(farm, crops)
-    plan_year = session_data[:plan_year]
-    plan_name = session_data[:plan_name]
+    # セッションが欠落しているケースに備えて安全なデフォルトを用意
+    plan_year = session_data[:plan_year].presence || Date.current.year
+    plan_name = session_data[:plan_name].presence || farm.name
     planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
     session_id = session.id.to_s
     
@@ -339,7 +347,7 @@ class PlansController < ApplicationController
     
     {
       farm: farm,
-      total_area: session_data[:total_area],
+      total_area: session_data[:total_area].presence || farm.fields.sum(:area),
       crops: crops,
       user: current_user,
       session_id: session_id,
@@ -353,26 +361,25 @@ class PlansController < ApplicationController
 
   # セッションデータの検証
   def validate_session_data
-    Rails.logger.info "🔍 [PlansController#create] Validating session data: #{session_data.inspect}"
-    
-    unless session_data[:farm_id] && session_data[:total_area] && session_data[:plan_year] && session_data[:plan_name]
-      Rails.logger.warn "⚠️ [PlansController#create] Missing required session data"
-      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart') and return false
+    Rails.logger.info "🔍 [PlansController#create] Validating session data (minimal): #{session_data.inspect}"
+    required_present = session_data[:farm_id].present? && session_data[:plan_year].present?
+    unless required_present
+      Rails.logger.warn "⚠️ [PlansController#create] Missing minimal session data"
+      redirect_to new_plan_path, alert: I18n.t('plans.errors.restart')
+      return false
     end
-    
-    Rails.logger.info "✅ [PlansController#create] Session data validation passed"
+    Rails.logger.info "✅ [PlansController#create] Minimal session data validation passed"
     true
   end
 
   # 作物選択の検証
   def validate_crops_selection(crops)
     Rails.logger.info "🔍 [PlansController#create] Validating crops selection: #{crops.count} crops"
-    
     if crops.empty?
       Rails.logger.warn "⚠️ [PlansController#create] No crops selected"
-      redirect_to select_crop_plan_path, alert: I18n.t('plans.errors.select_crop') and return false
+      redirect_to select_crop_plans_path, alert: I18n.t('plans.errors.select_crop')
+      return false
     end
-    
     Rails.logger.info "✅ [PlansController#create] Crops selection validation passed"
     true
   end

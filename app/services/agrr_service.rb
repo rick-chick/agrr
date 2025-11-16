@@ -119,11 +119,13 @@ class AgrrService
   end
 
   # Plan fertilizer applications
-  def fertilize_plan(crop_file:, use_harvest_start: false, json: true)
+  def fertilize_plan(crop_file:, use_harvest_start: false, max_applications: 2, json: true)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
     args = ['fertilize', 'plan', '--crop-file', crop_file]
     args << '--use-harvest-start' if use_harvest_start
+    # デフォルトで最大施用回数を2に制限
+    args += ['--max-applications', max_applications.to_s] if max_applications
     args << '--json' if json
 
     execute_command(args)

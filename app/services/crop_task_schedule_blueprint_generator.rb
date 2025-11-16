@@ -61,14 +61,15 @@ class CropTaskScheduleBlueprintGenerator
     template = template_for_task(task_id)
     agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
 
-    # fertilizeコマンドでは、stage_nameに作業名（「追肥」「基肥」など）が入る
-    agrr_task_name = entry['stage_name'] || entry['description']
+    # 1回目は「基肥」、2回目は「追肥」として固定（AGRRのstage_nameに依存しない）
+    fixed_stage_name = index.zero? ? '基肥' : '追肥'
+    agrr_task_name = fixed_stage_name
 
     {
       crop_id: crop.id,
       agricultural_task_id: agricultural_task&.id,
       stage_order: integer_value(entry['stage_order']),
-      stage_name: entry['stage_name'],
+      stage_name: fixed_stage_name,
       gdd_trigger: decimal_value(entry['gdd_trigger']),
       gdd_tolerance: decimal_value(entry['gdd_tolerance']),
       task_type: task_type,

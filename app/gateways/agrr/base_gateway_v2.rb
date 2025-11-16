@@ -456,6 +456,7 @@ module Agrr
       when 'plan'
         crop_file = nil
         use_harvest_start = false
+        max_applications = 2
 
         i = 1
         while i < args.length
@@ -466,6 +467,9 @@ module Agrr
           when '--use-harvest-start'
             use_harvest_start = true
             i += 1
+          when '--max-applications'
+            max_applications = args[i + 1].to_i
+            i += 2
           when '--json'
             i += 1
           else
@@ -478,6 +482,7 @@ module Agrr
         @agrr_service.fertilize_plan(
           crop_file: crop_file,
           use_harvest_start: use_harvest_start,
+          max_applications: max_applications,
           json: true
         )
       else
