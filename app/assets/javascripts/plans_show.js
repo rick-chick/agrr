@@ -64,6 +64,10 @@ function initializePlansShow() {
     
     // custom_gantt_chart.jsの初期化関数を呼び出す
     if (typeof window.initCustomGanttChart === 'function') {
+      // 事前に初期化済みフラグを解除し、最新データで再初期化させる
+      if (chartContainer.dataset.ganttInitialized === 'true') {
+        delete chartContainer.dataset.ganttInitialized;
+      }
       window.initCustomGanttChart();
       console.log('✅ [Plans Show] Gantt chart initialized successfully');
     } else {
