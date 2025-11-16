@@ -15,6 +15,7 @@ import FertilizeAiController from "./fertilize_ai_controller"
 import PestAiController from "./pest_ai_controller"
 import TaskScheduleTimelineController from "./task_schedule_timeline_controller"
 import UndoDeleteController from "./undo_delete_controller"
+import PlansShowController from "./plans_show_controller"
 import UndoToastController from "./undo_toast_controller"
 import CropSelectorController from "./crop_selector_controller"
 import AgriculturalTaskFormController from "./agricultural_task_form_controller"
@@ -22,6 +23,8 @@ import TaskBlueprintCardDragController from "./task_blueprint_card_drag_controll
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
+
+application.register("plans-show", PlansShowController)
 console.log('[Controllers] FertilizeAiController:', FertilizeAiController)
 console.log('[Controllers] PestAiController:', PestAiController)
 

@@ -86,7 +86,7 @@
     </div>
 
     <!-- ガントチャート -->
-    <div class="plans-gantt-section">
+    <div class="plans-gantt-section" data-controller="plans-show">
       <%= render 'shared/gantt_chart', 
                  cultivation_plan: @vm.plan,
                  show_crop_palette: true,
@@ -115,8 +115,6 @@
   <%= javascript_include_tag "crop_colors", "data-turbo-track": "reload" %>
   <%# ガントチャート（色パレット管理を含む） %>
   <%= javascript_include_tag "custom_gantt_chart", "data-turbo-track": "reload" %>
-  <%# 計画詳細画面の初期化（APIからデータを取得） %>
-  <%= javascript_include_tag "plans_show", "data-turbo-track": "reload" %>
   <%# 作物パレットのドラッグ&ドロップ %>
   <%= javascript_include_tag "crop_palette_drag", "data-turbo-track": "reload" %>
   <%# 作物パレットのスタイル適用 %>
