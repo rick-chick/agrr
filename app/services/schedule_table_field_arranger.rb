@@ -141,6 +141,41 @@ class ScheduleTableFieldArranger
     sorted_cultivations
   end
 
+  # 期間レイアウト情報を構築（ビューはこの情報のみで描画可能）
+  # @param arranged_cultivations [Array<Hash>] arrangeメソッドで配置された作付情報
+  # @param periods [Array<Hash>] 期間配列（降順）
+  # @param period_index [Integer] 対象期間のインデックス
+  # @return [Hash] { colspan: Integer, slots: [slot0, slot1] }
+  def self.build_period_layout(arranged_cultivations:, periods:, period_index:)
+    current_period = periods[period_index]
+
+    # この期間に属する作付（開始/継続どちらも含む）
+    cultivations_in_period = cultivations_for_period_in_sorted(
+      sorted_cultivations: arranged_cultivations,
+      period: current_period
+    )
+
+    # 前後の期間の総数を見て、この期間のcolspanを決める（既存ロジックと同一）
+    prev_total = count_cultivations_in_period(
+      sorted_cultivations: arranged_cultivations,
+      periods: periods,
+      period_index: period_index + 1
+    )
+    next_total = count_cultivations_in_period(
+      sorted_cultivations: arranged_cultivations,
+      periods: periods,
+      period_index: period_index - 1
+    )
+    total = cultivations_in_period.size
+    colspan = (total == 2 || prev_total == 2 || next_total == 2) ? 1 : 2
+
+    # スロットに割り当て（開始セルのみ描画するための情報は各作付のstart_period_indexに保持済み）
+    slot0 = cultivations_in_period.find { |c| c[:slot_index] == 0 }
+    slot1 = cultivations_in_period.find { |c| c[:slot_index] == 1 }
+
+    { colspan: colspan, slots: [slot0, slot1] }
+  end
+
   # 2つの期間配列が重なるかどうかを判定
   # @param periods1 [Array<Hash>] 期間の配列
   # @param periods2 [Array<Hash>] 期間の配列

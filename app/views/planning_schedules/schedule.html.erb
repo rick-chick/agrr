@@ -105,32 +105,23 @@
                   field = field_data[:field]
                   arranged_cultivations = field_data[:arranged_cultivations]
                   
-                  cultivations_in_period = ScheduleTableFieldArranger.cultivations_for_period(
+                  period_layout = ScheduleTableFieldArranger.build_period_layout(
                     arranged_cultivations: arranged_cultivations,
                     periods: @periods,
                     period_index: period_index
                   )
-                  
-                  period_colspan = calculate_period_colspan(
-                    cultivations_in_period: cultivations_in_period,
-                    arranged_cultivations: arranged_cultivations,
-                    periods: @periods,
-                    period_index: period_index
-                  )
+                  period_colspan = period_layout[:colspan]
+                  slot_0_cultivation, slot_1_cultivation = period_layout[:slots]
                 %>
-                <% if cultivations_in_period.empty? %>
+                <% if period_colspan == 2 && slot_0_cultivation.nil? && slot_1_cultivation.nil? %>
                   <%= raw render_empty_cell(colspan: 2) %>
                 <% elsif period_colspan == 2 %>
-                  <% cultivation_info = cultivations_in_period.first %>
-                  <% if cultivation_info %>
-                    <%= raw render_cultivation_cell(cultivation_info: cultivation_info, colspan: 2, period_index: period_index) %>
+                  <% if slot_0_cultivation %>
+                    <%= raw render_cultivation_cell(cultivation_info: slot_0_cultivation, colspan: 2, period_index: period_index) %>
                   <% else %>
                     <%= raw render_empty_cell(colspan: 2) %>
                   <% end %>
                 <% else %>
-                  <% slot_0_cultivation = cultivations_in_period.find { |c| c[:slot_index] == 0 } %>
-                  <% slot_1_cultivation = cultivations_in_period.find { |c| c[:slot_index] == 1 } %>
-                  
                   <% if slot_0_cultivation %>
                     <%= raw render_cultivation_cell(cultivation_info: slot_0_cultivation, colspan: 1, period_index: period_index) %>
                   <% else %>
