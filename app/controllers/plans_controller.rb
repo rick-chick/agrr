@@ -69,7 +69,7 @@ class PlansController < ApplicationController
     @total_area = @fields.sum(:area)
     
     # セッションに保存
-    session[:plan_data] = {
+    session[SESSION_ID_KEY] = {
       plan_year: @plan_year,
       farm_id: @farm.id,
       plan_name: @plan_name,
