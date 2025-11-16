@@ -7,6 +7,33 @@ class AgrrServiceTest < ActiveSupport::TestCase
     @service = AgrrService.new
   end
 
+  test 'fertilize_plan appends --max-applications with default 2' do
+    captured_args = nil
+    status = Minitest::Mock.new
+    status.expect(:success?, true)
+    status.expect(:exitstatus, 0)
+
+    File.stub(:exist?, true) do
+      File.stub(:socket?, true) do
+        Open3.stub(:capture3, lambda do |*args|
+          captured_args = args
+          ['{"schedule":[]}', '', status]
+        end) do
+          @service.fertilize_plan(crop_file: '/tmp/crop.json')
+        end
+      end
+    end
+
+    binary, *rest = captured_args
+    assert_equal Rails.root.join('bin', 'agrr_client').to_s, binary
+    assert_includes rest, 'fertilize'
+    assert_includes rest, 'plan'
+    idx = rest.index('--max-applications')
+    assert idx, 'must include --max-applications'
+    assert_equal '2', rest[idx + 1]
+    status.verify
+  end
+
   test 'should check daemon running status' do
     # Mock the socket file check
     File.stub(:exist?, false) do
