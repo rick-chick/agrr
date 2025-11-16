@@ -4,6 +4,16 @@ module Plans
   class ShowPresenter
     def initialize(cultivation_plan:)
       @cultivation_plan = cultivation_plan
+      # 最小限の関連のみ事前読込（壊れにくい安全策）
+      ActiveRecord::Associations::Preloader.new(
+        records: @cultivation_plan,
+        associations: [
+          :farm,
+          :cultivation_plan_fields,
+          :field_cultivations,
+          :cultivation_plan_crops
+        ]
+      )
     end
 
     def plan
