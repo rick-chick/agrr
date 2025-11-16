@@ -9,6 +9,7 @@
     <%= render 'public_plans/results/header', cultivation_plan: @cultivation_plan %>
     
     <%# ガントチャート（作物パレットを含む） - 共通パーシャルを使用 %>
+    <div data-controller="plans-show">
     <%= render 'shared/gantt_chart', 
                cultivation_plan: @cultivation_plan,
                show_crop_palette: true,
@@ -25,6 +26,7 @@
                crop_palette_toggle_label: t('public_plans.results.crop_palette.toggle', default: '作物を追加'),
                crop_palette_title: t('public_plans.results.crop_palette.title', default: '作物を追加'),
                crop_palette_in_use_label: t('public_plans.results.crop_palette.in_use', default: '使用中') %>
+    </div>
     
     <%# 気温・GDDチャート表示エリア（作物クリック時に表示、climate_chart.jsが内容を生成） %>
     <div id="climate-chart-display" 
@@ -67,15 +69,4 @@
 
 <%# Chart.js は npm で管理され application.js にバンドル済み %>
 
-<% content_for :javascripts do %>
-  <%# ガントチャートデータ変換ユーティリティ（最初に読み込み） %>
-  <%= javascript_include_tag "gantt_data_utils", defer: true, "data-turbo-track": "reload" %>
-  <%# ガントチャート（色パレット管理を含む） %>
-  <%= javascript_include_tag "custom_gantt_chart", defer: true, "data-turbo-track": "reload" %>
-  <%# 作物パレットのドラッグ&ドロップ %>
-  <%= javascript_include_tag "crop_palette_drag", defer: true, "data-turbo-track": "reload" %>
-  <%# 作物パレットのスタイル適用 %>
-  <%= javascript_include_tag "crop_palette_style", defer: true, "data-turbo-track": "reload" %>
-  <%# その他の機能 %>
-  <%= javascript_include_tag "cultivation_results", defer: true, "data-turbo-track": "reload" %>
-<% end %>
+<%# レガシーJSの個別読み込みは廃止（application.js にバンドル済み） %>

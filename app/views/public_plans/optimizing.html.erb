@@ -1,5 +1,6 @@
 <%# encoding: UTF-8 %>
 <div class="public-plans-wrapper pb-0" 
+     data-controller="optimizing"
      data-optimizing-container
      data-cultivation-plan-id="<%= @cultivation_plan.id %>"
      data-channel-name="OptimizationChannel"
@@ -63,6 +64,4 @@
   </div>
 </div>
 
-<!-- JavaScript is loaded from app/assets/javascripts/optimizing.js (共通) -->
-<%= javascript_include_tag "actioncable", defer: true %>
-<%= javascript_include_tag "optimizing", defer: true %>
+<!-- Stimulus optimizing controller が接続を制御（レガシー読込は不要） -->
