@@ -4,6 +4,9 @@
 # - Viewに渡すための純粋なデータ変換（Domain ViewModel）
 # - 期間配列を保持し、FieldArrangerのcells結果を供給する
 class PlanningSchedulePresenter
+  # @return [Array<Hash>] 降順の期間配列
+  attr_reader :periods
+
   # @param periods [Array<Hash>] 降順の期間配列
   def initialize(periods:)
     @periods = periods

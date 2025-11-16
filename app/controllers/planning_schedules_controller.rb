@@ -83,6 +83,8 @@ class PlanningSchedulesController < ApplicationController
     
     # 期間の行を生成（5年分、降順で表示）
     @periods = generate_periods(period_start, period_end, granularity).reverse
+    # Presenter（ViewModel）
+    @schedule_presenter = PlanningSchedulePresenter.new(periods: @periods)
     
     # 各ほ場の栽培情報を取得（5年分）
     @cultivations_by_field = {}

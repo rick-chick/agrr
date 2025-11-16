@@ -3,6 +3,37 @@
 require 'test_helper'
 
 class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
+  # --- Test DOM helpers (behavior-invariant refactor) ---
+  # 期間ラベルに一致する行を返す
+  def find_period_row(doc, label_text)
+    rows = doc.css('.schedule-table tbody tr')
+    rows.find do |r|
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?(label_text)
+    end
+  end
+
+  # 期間行のフィールドセル(td)を返す
+  def field_cells_in_row(row)
+    row.css('td.schedule-table-cell')
+  end
+
+  # セル配列のテキストを結合して返す
+  def joined_cell_text(cells)
+    cells.map { |cell| cell.text.strip }.join(' ')
+  end
+
+  # 行の中でrowspanを持つセルを返す（なければnil）
+  def cell_with_rowspan(cells, rowspan_value = nil)
+    return cells.find { |cell| cell['rowspan'] } unless rowspan_value
+    cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == rowspan_value.to_i }
+  end
+
+  # ひとつのセルのcolspan文字列を返す（なければnil）
+  def colspan_of(cell)
+    cell && cell['colspan']
+  end
+
   setup do
     @user = create(:user)
     @farm = create(:farm, user: @user, name: 'テスト農場')
@@ -1103,28 +1134,17 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
-    rows = doc.css('.schedule-table tbody tr')
-    
-    # 6月の行を取得
-    june_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年06月")
-    }
+    june_row = find_period_row(doc, "#{test_year}年06月")
     assert_not_nil june_row, "6月の行が見つかりません"
-    
-    june_cells = june_row.css('td.schedule-table-cell')
-    
-    # 6月に作付が表示されていることを確認
-    june_cell_content = june_cells.map { |cell| cell.text.strip }.join(' ')
+    june_cells = field_cells_in_row(june_row)
+    june_cell_content = joined_cell_text(june_cells)
     assert june_cell_content.include?('トマト'), "6月にトマトが表示されていません"
-    
-    # 6月のセルにrowspanがないことを確認（単一期間に収まるため）
-    june_cell_with_rowspan = june_cells.find { |cell| cell['rowspan'] }
+
+    june_cell_with_rowspan = cell_with_rowspan(june_cells)
     assert_nil june_cell_with_rowspan, "6月のセルにrowspanが設定されていますが、単一期間に収まるため不要です"
-    
-    # 6月のセルにcolspan=2があることを確認（作付が1つのため）
+
     june_cell = june_cells.first
-    assert_equal '2', june_cell['colspan'], "6月のセルにcolspan=2が設定されていません。作付が1つのため、colspan=2であるべきです"
+    assert_equal '2', colspan_of(june_cell), "6月のセルにcolspan=2が設定されていません。作付が1つのため、colspan=2であるべきです"
   end
 
   test "schedule_renders_single_cultivation_spanning_multiple_periods_with_rowspan_in_descending_order_with_month_granularity" do
@@ -1168,19 +1188,10 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
-    rows = doc.css('.schedule-table tbody tr')
-    
-    # 8月の行を取得（降順で最新の期間）
-    august_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年08月")
-    }
+    august_row = find_period_row(doc, "#{test_year}年08月")
     assert_not_nil august_row, "8月の行が見つかりません"
-    
-    august_cells = august_row.css('td.schedule-table-cell')
-    
-    # 8月のセルにrowspan=3があることを確認（8月、7月、6月の3ヶ月にまたがるため）
-    august_cell_with_rowspan = august_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    august_cells = field_cells_in_row(august_row)
+    august_cell_with_rowspan = cell_with_rowspan(august_cells, 3)
     assert_not_nil august_cell_with_rowspan, 
                    "8月のセルにrowspan=3が設定されていません。8月、7月、6月の3ヶ月にまたがるため、rowspan=3であるべきです"
     
@@ -1189,27 +1200,21 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert august_cell_content.include?('ほうれん草'), "8月にほうれん草が表示されていません"
     
     # 7月の行を取得（継続中のセルは描画されない）
-    july_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年07月")
-    }
+    july_row = find_period_row(doc, "#{test_year}年07月")
     assert_not_nil july_row, "7月の行が見つかりません"
     
     # 7月の行にはセルが描画されない（rowspanでマージされるため）
-    july_cells = july_row.css('td.schedule-table-cell')
+    july_cells = field_cells_in_row(july_row)
     july_cell_count = july_cells.count
     assert_equal 0, july_cell_count, 
                  "7月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{july_cell_count}"
     
     # 6月の行を取得（継続中のセルは描画されない）
-    june_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年06月")
-    }
+    june_row = find_period_row(doc, "#{test_year}年06月")
     assert_not_nil june_row, "6月の行が見つかりません"
     
     # 6月の行にはセルが描画されない（rowspanでマージされるため）
-    june_cells = june_row.css('td.schedule-table-cell')
+    june_cells = field_cells_in_row(june_row)
     june_cell_count = june_cells.count
     assert_equal 0, june_cell_count, 
                  "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}"
@@ -1266,28 +1271,20 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
-    rows = doc.css('.schedule-table tbody tr')
-    
-    # 6月の行を取得
-    june_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年06月")
-    }
+    june_row = find_period_row(doc, "#{test_year}年06月")
     assert_not_nil june_row, "6月の行が見つかりません"
     
-    june_cells = june_row.css('td.schedule-table-cell')
+    june_cells = field_cells_in_row(june_row)
     
     # 6月の行に2つのセルが描画されていることを確認（colspan=1を2つ使う）
     assert_equal 2, june_cells.count, 
                  "6月の行に2つのセルが描画されていません。作付が2つあるため、colspan=1を2つ使う必要があります。セル数: #{june_cells.count}"
     
     # 各セルにcolspan=1があることを確認
-    june_cells.each do |cell|
-      assert_equal '1', cell['colspan'], "6月のセルにcolspan=1が設定されていません。作付が2つあるため、colspan=1であるべきです"
-    end
+    june_cells.each { |cell| assert_equal '1', colspan_of(cell), "6月のセルにcolspan=1が設定されていません。作付が2つあるため、colspan=1であるべきです" }
     
     # 6月に両方の作付が表示されていることを確認
-    june_cell_content = june_cells.map { |cell| cell.text.strip }.join(' ')
+    june_cell_content = joined_cell_text(june_cells)
     assert june_cell_content.include?('トマト'), "6月にトマトが表示されていません"
     assert june_cell_content.include?('きゅうり'), "6月にきゅうりが表示されていません"
   end
@@ -1343,19 +1340,13 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     
     doc = Nokogiri::HTML(response.body)
-    rows = doc.css('.schedule-table tbody tr')
-    
-    # 7月の行を取得（降順で最新の期間、6月-7月の作付が開始）
-    july_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年07月")
-    }
+    july_row = find_period_row(doc, "#{test_year}年07月")
     assert_not_nil july_row, "7月の行が見つかりません"
     
-    july_cells = july_row.css('td.schedule-table-cell')
+    july_cells = field_cells_in_row(july_row)
     
     # 7月のセルにrowspan=2があることを確認（7月、6月の2ヶ月にまたがるため）
-    july_cell_with_rowspan = july_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 2 }
+    july_cell_with_rowspan = cell_with_rowspan(july_cells, 2)
     assert_not_nil july_cell_with_rowspan, 
                    "7月のセルにrowspan=2が設定されていません。7月、6月の2ヶ月にまたがるため、rowspan=2であるべきです"
     
@@ -1365,28 +1356,22 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert july_cell_content.include?('06/08'), "7月に開始日（06/08）が表示されていません"
     
     # 6月の行にはセルが描画されない（rowspanでマージされるため）
-    june_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年06月")
-    }
+    june_row = find_period_row(doc, "#{test_year}年06月")
     assert_not_nil june_row, "6月の行が見つかりません"
     
-    june_cells = june_row.css('td.schedule-table-cell')
+    june_cells = field_cells_in_row(june_row)
     june_cell_count = june_cells.count
     assert_equal 0, june_cell_count, 
                  "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}"
     
     # 10月の行を取得（降順で最新の期間、8月-10月の作付が開始）
-    october_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年10月")
-    }
+    october_row = find_period_row(doc, "#{test_year}年10月")
     assert_not_nil october_row, "10月の行が見つかりません"
     
-    october_cells = october_row.css('td.schedule-table-cell')
+    october_cells = field_cells_in_row(october_row)
     
     # 10月のセルにrowspan=3があることを確認（10月、9月、8月の3ヶ月にまたがるため）
-    october_cell_with_rowspan = october_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    october_cell_with_rowspan = cell_with_rowspan(october_cells, 3)
     assert_not_nil october_cell_with_rowspan, 
                    "10月のセルにrowspan=3が設定されていません。10月、9月、8月の3ヶ月にまたがるため、rowspan=3であるべきです"
     
@@ -1396,25 +1381,19 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert october_cell_content.include?('08/30'), "10月に開始日（08/30）が表示されていません"
     
     # 9月の行にはセルが描画されない（rowspanでマージされるため）
-    september_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年09月")
-    }
+    september_row = find_period_row(doc, "#{test_year}年09月")
     assert_not_nil september_row, "9月の行が見つかりません"
     
-    september_cells = september_row.css('td.schedule-table-cell')
+    september_cells = field_cells_in_row(september_row)
     september_cell_count = september_cells.count
     assert_equal 0, september_cell_count, 
                  "9月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{september_cell_count}"
     
     # 8月の行にはセルが描画されない（rowspanでマージされるため）
-    august_row = rows.find { |r| 
-      period_cell = r.css('.schedule-table-period-cell').first
-      period_cell && period_cell.text.include?("#{test_year}年08月")
-    }
+    august_row = find_period_row(doc, "#{test_year}年08月")
     assert_not_nil august_row, "8月の行が見つかりません"
     
-    august_cells = august_row.css('td.schedule-table-cell')
+    august_cells = field_cells_in_row(august_row)
     august_cell_count = august_cells.count
     assert_equal 0, august_cell_count, 
                  "8月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{august_cell_count}"

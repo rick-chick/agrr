@@ -12,6 +12,12 @@ class ScheduleTableFieldArranger
   class OverlappingError < StandardError; end
 
   # 表示セルの共通キー（ドキュメント目的・タイポ防止）
+  # 値域:
+  # - CELL_TYPE_KEY: :cultivation | :empty
+  # - CELL_COLSPAN_KEY: 1 | 2
+  # - CELL_RENDER_KEY: true | false（開始期間のみtrue）
+  # - CELL_SHOW_LABEL_KEY: true | false（空欄表示の文言有無）
+  # - CELL_CULTIVATION_KEY: Hash | nil
   CELL_TYPE_KEY        = :type
   CELL_COLSPAN_KEY     = :colspan
   CELL_RENDER_KEY      = :render
