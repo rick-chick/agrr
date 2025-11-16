@@ -1,5 +1,6 @@
 <div class="form-card" 
      data-pest-form
+     data-controller="pest-form"
      data-i18n-control-methods-title="<%= t('pests.form.control_methods_title') %>"
      data-i18n-method-type-label="<%= t('pests.form.method_type_label') %>"
      data-i18n-select-method-type="<%= t('pests.form.select_method_type') %>"
@@ -179,7 +180,7 @@
 
     <div class="form-section">
       <h3 class="form-section-title"><%= t('pests.form.control_methods_title') %></h3>
-      <div id="control-methods-list">
+      <div id="control-methods-list" data-pest-form-target="methodsContainer">
         <%= f.fields_for :pest_control_methods do |method_form| %>
           <div class="control-method-fields nested-fields">
             <div class="nested-fields-header">
@@ -224,7 +225,7 @@
           </div>
         <% end %>
       </div>
-      <button type="button" id="add-control-method" class="btn btn-secondary btn-sm">
+      <button type="button" id="add-control-method" class="btn btn-secondary btn-sm" data-action="click->pest-form#addControlMethod">
         <%= t('pests.form.add_control_method') %>
       </button>
     </div>

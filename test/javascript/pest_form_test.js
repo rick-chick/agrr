@@ -182,7 +182,9 @@ describe('Pest Form - Control Method Management', () => {
     // methodIndexは非表示要素を除外して計算されるため、1から始まる
     addButton.click();
     
-    const newMethod = container.querySelectorAll('.control-method-fields')[1];
+    // 末尾に追加された新規要素を取得（hidden要素もNodeListに含まれるため、最後の要素を選ぶ）
+    const methods = container.querySelectorAll('.control-method-fields');
+    const newMethod = methods[methods.length - 1];
     const methodNameInput = newMethod.querySelector('input[name*="[method_name]"]');
     // インデックスが1（既存の表示要素が0）になっていることを確認
     expect(methodNameInput.name).toContain('[1]');
