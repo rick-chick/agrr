@@ -6,6 +6,7 @@ class PlansController < ApplicationController
   include WeatherDataManagement
   
   before_action :authenticate_user!
+  before_action :set_plan, only: [:optimize, :destroy, :copy]
   layout 'application'
   
   # Concern設定
@@ -101,15 +102,13 @@ class PlansController < ApplicationController
   
   # 計画の最適化を実行
   def optimize
-    plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
-    
     # 既に最適化中の場合はスキップ（完了は許可）
-    if plan.status_optimizing?
-      redirect_to plan_path(plan), alert: I18n.t('plans.errors.already_optimized') and return
+    if @plan.status_optimizing?
+      redirect_to plan_path(@plan), alert: I18n.t('plans.errors.already_optimized') and return
     end
     
     # 最適化は計画作成時に既に実行されているため、進捗画面にリダイレクト
-    redirect_to optimizing_plan_path(plan.id), notice: I18n.t('plans.messages.optimization_started')
+    redirect_to optimizing_plan_path(@plan.id), notice: I18n.t('plans.messages.optimization_started')
   rescue ActiveRecord::RecordNotFound
     redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
   end
@@ -131,7 +130,7 @@ class PlansController < ApplicationController
   
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
-    source_plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+    source_plan = @plan
     
     # 新しい年度を決定（現在の計画年度 + 1）
     new_year = source_plan.plan_year + 1
@@ -161,7 +160,7 @@ class PlansController < ApplicationController
   
   # 計画削除
   def destroy
-    plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+    plan = @plan
 
     event = DeletionUndo::Manager.schedule(
       record: plan,
@@ -199,6 +198,10 @@ class PlansController < ApplicationController
   private
   
   # Concernで実装すべきメソッド
+  
+  def set_plan
+    @plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+  end
   
   def find_cultivation_plan_scope
     CultivationPlan
