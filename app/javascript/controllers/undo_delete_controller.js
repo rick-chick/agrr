@@ -102,9 +102,8 @@ export default class extends Controller {
     const undoToken = typeof detail.undo_token === "string" ? detail.undo_token.trim() : detail.undo_token
 
     if (recordElement) {
-      recordElement.classList.add(HIDDEN_CLASS)
-
       if (undoToken) {
+        recordElement.classList.add(HIDDEN_CLASS)
         recordElement.dataset.undoDeleteToken = undoToken
       } else {
         console.warn("[UndoDelete] undo_token is missing or blank", {
@@ -112,7 +111,9 @@ export default class extends Controller {
           url: this.urlValue || this.element.dataset.url,
           response: detail
         })
+        // トークンが無い場合はUIを変更せず、明示的にエラーを通知する
         this.dispatchError({ error: "missing_undo_token", recordId })
+        return
       }
     }
 

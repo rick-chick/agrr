@@ -7,7 +7,7 @@ class CultivationPlan < ApplicationRecord
   has_many :cultivation_plan_fields, dependent: :destroy
   has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
-  has_many :task_schedules, dependent: :destroy
+  has_many :task_schedules, dependent: :delete_all
   
   # == Serialization =======================================================
   serialize :predicted_weather_data, coder: JSON

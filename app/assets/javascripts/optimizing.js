@@ -11,6 +11,8 @@
   let startTime = null;
   let currentPlanId = null;
   let cableManagerWaitCount = 0;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_ATTEMPTS = 1;
   
   function initOptimizingWebSocket() {
     // 最適化画面の要素を確認
@@ -28,9 +30,7 @@
     if (typeof window.CableSubscriptionManager === 'undefined') {
       cableManagerWaitCount++;
       if (cableManagerWaitCount > 50) {
-        if (window.ClientLogger) {
-          window.ClientLogger.log('error', '❌ [Optimizing] CableSubscriptionManager failed to load after 5 seconds');
-        }
+        showConnectionError('❌ CableSubscriptionManager failed to load after 5 seconds');
         return;
       }
       if (window.ClientLogger) {
@@ -96,8 +96,7 @@
       subscription = null;
     }
     
-    // フォールバックタイマー設定（30秒後にポーリングに戻る）
-    setupFallback();
+    // ページリロードによるフォールバックは廃止
     
     // 経過時間タイマーを開始
     startElapsedTimer();
@@ -116,19 +115,23 @@
           if (window.ClientLogger) {
             window.ClientLogger.log('info', `✅ [Optimizing] Connected to ${channelName}`);
           }
-          // タイムアウトタイマーをクリア
-          if (fallbackTimer) {
-            clearTimeout(fallbackTimer);
-            fallbackTimer = null;
-          }
+          // タイムアウトタイマーは未使用
         },
         
         onDisconnected: () => {
           if (window.ClientLogger) {
             window.ClientLogger.log('warn', `❌ [Optimizing] Disconnected from ${channelName}`);
           }
-          // 30秒後にフォールバック
-          setupFallback();
+          // 最大1回のみ再接続。失敗したら明示エラー表示
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts += 1;
+            if (window.ClientLogger) {
+              window.ClientLogger.log('info', `⏳ [Optimizing] Retrying to connect... attempt=${reconnectAttempts}`);
+            }
+            setTimeout(initOptimizingWebSocket, 200);
+          } else {
+            showConnectionError('❌ 接続が切断されました。しばらくしてからやり直してください。');
+          }
         },
         
         onReceived: (data) => {
@@ -325,15 +328,27 @@
     }
   }
   
-  // フォールバック機能（WebSocket接続失敗時にリロード）
-  function setupFallback() {
-    if (fallbackTimer) {
-      clearTimeout(fallbackTimer);
+  // 接続エラー時のUI表示（ページリロードせず明示エラーに遷移）
+  function showConnectionError(message) {
+    if (window.ClientLogger) {
+      window.ClientLogger.log('error', `❌ [Optimizing] ${message}`);
+    } else {
+      console.error(`❌ [Optimizing] ${message}`);
     }
-    fallbackTimer = setTimeout(() => {
-      console.warn('⚠️ [Optimizing] WebSocket timeout, reloading page');
-      window.location.reload();
-    }, 30000); // 30秒
+    // public_plans用のエラーUI
+    const errorContainer = document.getElementById('error-message-container');
+    const errorDetail = document.getElementById('error-detail');
+    if (errorContainer && errorDetail) {
+      errorDetail.textContent = message;
+      errorContainer.style.display = 'flex';
+    }
+    // 進行UIを停止
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.classList.add('hidden');
+    const durationHint = document.getElementById('progress-duration-hint');
+    if (durationHint) durationHint.style.display = 'none';
+    const elapsedTime = document.getElementById('elapsed-time');
+    if (elapsedTime) elapsedTime.style.display = 'none';
   }
   
   // 経過時間タイマーを開始
@@ -395,10 +410,6 @@
   
   // ページ離脱時に購読を解除
   function cleanupSubscription() {
-    if (fallbackTimer) {
-      clearTimeout(fallbackTimer);
-      fallbackTimer = null;
-    }
     if (elapsedTimer) {
       clearInterval(elapsedTimer);
       elapsedTimer = null;
@@ -415,6 +426,7 @@
     startTime = null;
     currentPlanId = null;
     cableManagerWaitCount = 0;
+    reconnectAttempts = 0;
   }
   
   // Turboのページ遷移時に実行

@@ -164,6 +164,19 @@ module AgrrOptimization
     Rails.logger.info "💾 [Save Adjusted Result] result keys: #{result.keys}"
     Rails.logger.info "💾 [Save Adjusted Result] field_schedules: #{result[:field_schedules]&.count || 'nil'}"
     
+    # 事前に使用されるcrop_idを集約し、findループを回避
+    used_crop_ids = Set.new
+    result[:field_schedules]&.each do |fs|
+      fs['allocations']&.each do |alloc|
+        used_crop_ids.add(alloc['crop_id'])
+      end
+    end
+    crop_by_id = Crop.where(id: used_crop_ids.to_a).index_by { |c| c.id.to_s }
+    
+    # plan内の参照も事前にインデックス化
+    plan_fields_by_id = cultivation_plan.cultivation_plan_fields.index_by(&:id)
+    plan_crops_by_crop_id = cultivation_plan.cultivation_plan_crops.index_by { |pc| pc.crop.id.to_s }
+    
     # 全field_schedulesのallocation_idをリスト化して重複チェック
     all_allocation_ids = []
     result[:field_schedules]&.each do |fs|
@@ -172,13 +185,13 @@ module AgrrOptimization
       end
     end
     
-    Rails.logger.info "💾 [Save] Total allocations to create: #{all_allocation_ids.count}"
+    Rails.logger.info "💾 [Save] Total allocations in result: #{all_allocation_ids.count}"
     Rails.logger.info "💾 [Save] Unique allocations: #{all_allocation_ids.uniq.count}"
     
-    if all_allocation_ids.count != all_allocation_ids.uniq.count
-      duplicates = all_allocation_ids.select { |id| all_allocation_ids.count(id) > 1 }.uniq
+    if all_allocation_ids.compact.count != all_allocation_ids.compact.uniq.count
+      duplicates = all_allocation_ids.compact.select { |id| all_allocation_ids.count(id) > 1 }.uniq
       Rails.logger.error "❌ [Save] CRITICAL: 重複したallocation_idが検出されました: #{duplicates}"
-      Rails.logger.error "❌ [Save] Total allocations: #{all_allocation_ids.count}, Unique: #{all_allocation_ids.uniq.count}"
+      Rails.logger.error "❌ [Save] Total allocations: #{all_allocation_ids.count}, Unique(compact): #{all_allocation_ids.compact.uniq.count}"
       raise "重複したallocation_idが検出されました: #{duplicates.join(', ')}"
     end
     
@@ -190,77 +203,22 @@ module AgrrOptimization
       raise "最適化結果が空です: field_schedules が存在しません"
     end
     
-    # トランザクション内で既存データを削除し、新しいデータを作成
+    # トランザクション内で差分更新（全削除→全作成を廃止）
     ActiveRecord::Base.transaction do
-      # ⚠️ 重要: reloadしてキャッシュをクリア（ダブル送信対策）
+      # ⚠️ reloadしてキャッシュをクリア（ダブル送信対策）
       cultivation_plan.reload
+      now = Time.current
       
-      # ⭐ task_schedulesを保持するため、削除前に保存
-      # field_cultivation_idと一緒に、圃場・作物情報も保存してマッチングに使用
-      task_schedules_data = cultivation_plan.task_schedules.includes(:field_cultivation, :task_schedule_items).map do |ts|
-        fc = ts.field_cultivation
-        {
-          original_field_cultivation_id: fc&.id,
-          cultivation_plan_field_id: fc&.cultivation_plan_field_id,
-          cultivation_plan_crop_id: fc&.cultivation_plan_crop_id,
-          category: ts.category,
-          status: ts.status,
-          source: ts.source,
-          generated_at: ts.generated_at,
-          task_schedule_items: ts.task_schedule_items.map do |item|
-            {
-              task_type: item.task_type,
-              name: item.name,
-              description: item.description,
-              stage_name: item.stage_name,
-              stage_order: item.stage_order,
-              gdd_trigger: item.gdd_trigger,
-              gdd_tolerance: item.gdd_tolerance,
-              scheduled_date: item.scheduled_date,
-              priority: item.priority,
-              source: item.source,
-              weather_dependency: item.weather_dependency,
-              time_per_sqm: item.time_per_sqm,
-              status: item.status
-            }
-          end
-        }
-      end
-      Rails.logger.info "💾 [Save] task_schedulesを保存: #{task_schedules_data.count}件"
+      # 既存の栽培を取得（idインデックス）
+      existing_fcs = cultivation_plan.field_cultivations.to_a
+      existing_by_id = existing_fcs.index_by(&:id)
       
-      # ⭐ 既存の栽培スケジュールを全削除
-      # temp_cultivationも含め、全てのFieldCultivationを削除
-      # これにより、agrrの最適化結果のみがDBに残る
-      existing_count = cultivation_plan.field_cultivations.count
-      Rails.logger.info "🗑️ [Save] 既存のfield_cultivations削除開始: #{existing_count}件"
-      cultivation_plan.field_cultivations.destroy_all
-      Rails.logger.info "✅ [Save] 既存のfield_cultivations削除完了"
-      
-      # AGRR結果に含まれる作物IDを収集
-      used_crop_ids = Set.new
-      result[:field_schedules].each do |field_schedule|
-        field_schedule['allocations']&.each do |allocation|
-          used_crop_ids.add(allocation['crop_id'])
-        end
-      end
-      
-      # 使われていない作物を削除（ゴミデータのクリーンアップ）
-      unused_crops = cultivation_plan.cultivation_plan_crops.reject do |crop|
-        used_crop_ids.include?(crop.crop.id.to_s)
-      end
-      
-      if unused_crops.any?
-        Rails.logger.info "🗑️ [Save] 使われていない作物を削除: #{unused_crops.map(&:name).join(', ')}"
-        unused_crops.each(&:destroy)
-      end
-      
-      # 新しい栽培スケジュールを作成
+      # 結果から望ましいレコード群を正規化
+      desired_records = []
       result[:field_schedules].each do |field_schedule|
         field_id = field_schedule['field_id']
-        
         next unless field_id
-        
-        plan_field = cultivation_plan.cultivation_plan_fields.find { |f| f.id == field_id }
+        plan_field = plan_fields_by_id[field_id]
         unless plan_field
           Rails.logger.error "❌ [Save] CRITICAL: plan_field not found for field_id: #{field_id}"
           Rails.logger.error "❌ [Save] Available field_ids: #{cultivation_plan.cultivation_plan_fields.map(&:id)}"
@@ -268,13 +226,9 @@ module AgrrOptimization
           raise "圃場が見つかりません: field_id=#{field_id}"
         end
         
-        # allocationsが存在しないか空の場合は、このfield_scheduleをスキップ
         next unless field_schedule['allocations']&.present?
-        
-        field_schedule['allocations']&.each do |allocation|
-          
-          # AGRR CLI側のcrop_idはRails側のcrop.idを使用
-          crop = Crop.find_by(id: allocation['crop_id'])
+        field_schedule['allocations'].each do |allocation|
+          crop = crop_by_id[allocation['crop_id']]
           unless crop
             Rails.logger.error "❌ [Save] CRITICAL: crop not found for crop_id: #{allocation['crop_id']}"
             Rails.logger.error "❌ [Save] Available crop_ids: #{Crop.pluck(:id)}"
@@ -282,9 +236,7 @@ module AgrrOptimization
             raise "作物が見つかりません: crop_id=#{allocation['crop_id']}"
           end
           
-          plan_crop = cultivation_plan.cultivation_plan_crops.find do |c|
-            c.crop.id.to_s == allocation['crop_id']
-          end
+          plan_crop = plan_crops_by_crop_id[allocation['crop_id']]
           unless plan_crop
             Rails.logger.error "❌ [Save] CRITICAL: plan_crop not found for crop_id: #{allocation['crop_id']}"
             Rails.logger.error "❌ [Save] Available crop_ids: #{cultivation_plan.cultivation_plan_crops.map { |c| c.crop.id.to_s }}"
@@ -292,104 +244,67 @@ module AgrrOptimization
             raise "作付け計画作物が見つかりません: crop_id=#{allocation['crop_id']}"
           end
           
-          new_field_cultivation = FieldCultivation.create!(
-            cultivation_plan: cultivation_plan,
-            cultivation_plan_field: plan_field,
-            cultivation_plan_crop: plan_crop,
-            start_date: Date.parse(allocation['start_date']),
-            completion_date: Date.parse(allocation['completion_date']),
-            cultivation_days: (Date.parse(allocation['completion_date']) - Date.parse(allocation['start_date'])).to_i + 1,
-            area: allocation['area_used'] || allocation['area'],
-            estimated_cost: allocation['total_cost'] || allocation['cost'],
-            optimization_result: {
-              revenue: allocation['expected_revenue'] || allocation['revenue'],
-              profit: allocation['profit'],
-              accumulated_gdd: allocation['accumulated_gdd']
+          start_date = Date.parse(allocation['start_date'])
+          completion_date = Date.parse(allocation['completion_date'])
+          desired_records << {
+            allocation_id: allocation['allocation_id'],
+            attrs: {
+              cultivation_plan_id: cultivation_plan.id,
+              cultivation_plan_field_id: plan_field.id,
+              cultivation_plan_crop_id: plan_crop.id,
+              start_date: start_date,
+              completion_date: completion_date,
+              cultivation_days: (completion_date - start_date).to_i + 1,
+              area: allocation['area_used'] || allocation['area'],
+              estimated_cost: allocation['total_cost'] || allocation['cost'],
+              optimization_result: {
+                revenue: allocation['expected_revenue'] || allocation['revenue'],
+                profit: allocation['profit'],
+                accumulated_gdd: allocation['accumulated_gdd']
+              },
+              updated_at: now,
+              created_at: now
             }
-          )
-          Rails.logger.info "✅ [Save] 新規field_cultivation作成: #{plan_crop.name}"
-          
-          # ⭐ 新しいfield_cultivationに対応するtask_scheduleを復元
-          # 同じ圃場・同じ作物でマッチング
-          matching_task_schedule_data = task_schedules_data.find do |ts_data|
-            ts_data[:cultivation_plan_field_id] == plan_field.id &&
-            ts_data[:cultivation_plan_crop_id] == plan_crop.id
-          end
-          
-          if matching_task_schedule_data
-            # task_scheduleを復元
-            restored_task_schedule = TaskSchedule.create!(
-              cultivation_plan: cultivation_plan,
-              field_cultivation: new_field_cultivation,
-              category: matching_task_schedule_data[:category],
-              status: matching_task_schedule_data[:status],
-              source: matching_task_schedule_data[:source],
-              generated_at: matching_task_schedule_data[:generated_at]
-            )
-            Rails.logger.info "✅ [Save] task_scheduleを復元: category=#{restored_task_schedule.category}"
-            
-            # task_schedule_itemsも復元
-            matching_task_schedule_data[:task_schedule_items].each do |item_data|
-              TaskScheduleItem.create!(
-                task_schedule: restored_task_schedule,
-                task_type: item_data[:task_type],
-                name: item_data[:name],
-                description: item_data[:description],
-                stage_name: item_data[:stage_name],
-                stage_order: item_data[:stage_order],
-                gdd_trigger: item_data[:gdd_trigger],
-                gdd_tolerance: item_data[:gdd_tolerance],
-                scheduled_date: item_data[:scheduled_date],
-                priority: item_data[:priority],
-                source: item_data[:source],
-                weather_dependency: item_data[:weather_dependency],
-                time_per_sqm: item_data[:time_per_sqm],
-                status: item_data[:status]
-              )
-            end
-            Rails.logger.info "✅ [Save] task_schedule_itemsを復元: #{matching_task_schedule_data[:task_schedule_items].count}件"
-            
-            # 復元したtask_schedule_dataを削除（重複復元を防ぐ）
-            task_schedules_data.delete(matching_task_schedule_data)
-          end
+          }
         end
       end
       
-      # ⭐ マッチしなかったtask_schedulesは、field_cultivation_idをnullにして保持
-      # (task_scheduleはfield_cultivationにoptional: trueで紐付いているため可能)
-      task_schedules_data.each do |ts_data|
-        # 元のtask_scheduleは既に削除されているため、新しく作成する必要がある
-        # ただし、field_cultivation_idはnullのまま
-        restored_task_schedule = TaskSchedule.create!(
-          cultivation_plan: cultivation_plan,
-          field_cultivation: nil,  # optional: trueなのでnullでもOK
-          category: ts_data[:category],
-          status: ts_data[:status],
-          source: ts_data[:source],
-          generated_at: ts_data[:generated_at]
-        )
-        Rails.logger.info "⚠️ [Save] task_scheduleを復元（field_cultivationなし）: category=#{restored_task_schedule.category}"
-        
-        # task_schedule_itemsも復元
-        ts_data[:task_schedule_items].each do |item_data|
-          TaskScheduleItem.create!(
-            task_schedule: restored_task_schedule,
-            task_type: item_data[:task_type],
-            name: item_data[:name],
-            description: item_data[:description],
-            stage_name: item_data[:stage_name],
-            stage_order: item_data[:stage_order],
-            gdd_trigger: item_data[:gdd_trigger],
-            gdd_tolerance: item_data[:gdd_tolerance],
-            scheduled_date: item_data[:scheduled_date],
-            priority: item_data[:priority],
-            source: item_data[:source],
-            weather_dependency: item_data[:weather_dependency],
-            time_per_sqm: item_data[:time_per_sqm],
-            status: item_data[:status]
-          )
+      # 更新対象/新規作成/削除対象を分類
+      desired_with_existing = desired_records.select { |r| r[:allocation_id].present? && existing_by_id.key?(r[:allocation_id]) }
+      to_update = desired_with_existing
+      to_create = desired_records.reject { |r| r[:allocation_id].present? && existing_by_id.key?(r[:allocation_id]) }
+      
+      desired_existing_ids = desired_with_existing.map { |r| r[:allocation_id] }
+      to_delete_ids = existing_by_id.keys - desired_existing_ids
+      
+      Rails.logger.info "🛠️ [Save] to_update: #{to_update.size}, to_create: #{to_create.size}, to_delete: #{to_delete_ids.size}"
+      
+      # 1) 更新（個別 update: 変更のあったもののみ）
+      to_update.each do |rec|
+        fc = existing_by_id[rec[:allocation_id]]
+        fc.update!(rec[:attrs].except(:created_at))
+      end
+      
+      # 2) 新規一括挿入
+      if to_create.any?
+        insert_rows = to_create.map { |r| r[:attrs] }
+        FieldCultivation.insert_all!(insert_rows)
+      end
+      
+      # 3) 削除（紐付く TaskSchedule は field_cultivation_id を null にして保持）
+      if to_delete_ids.any?
+        TaskSchedule.where(field_cultivation_id: to_delete_ids).update_all(field_cultivation_id: nil)
+        FieldCultivation.where(id: to_delete_ids).delete_all
+      end
+      
+      # 使われていない作物を削除（簡易クリーンアップ）
+      if used_crop_ids.any?
+        used_plan_crop_ids = cultivation_plan.cultivation_plan_crops.select { |pc| used_crop_ids.include?(pc.crop.id.to_s) }.map(&:id)
+        unused_plan_crops = cultivation_plan.cultivation_plan_crops.where.not(id: used_plan_crop_ids)
+        if unused_plan_crops.exists?
+          Rails.logger.info "🗑️ [Save] 使われていない作物を削除: #{unused_plan_crops.pluck(:name).join(', ')}"
+          unused_plan_crops.delete_all
         end
-        Rails.logger.info "✅ [Save] task_schedule_itemsを復元（field_cultivationなし）: #{ts_data[:task_schedule_items].count}件"
       end
       
       # 最適化結果を更新
@@ -453,6 +368,14 @@ module AgrrOptimization
   def adjust_with_db_weather(cultivation_plan, moves)
     perf_start = Time.current
     Rails.logger.info "⏱️ [PERF] adjust_with_db_weather() 開始: #{perf_start}"
+    
+    # 関連を事前読込してN+1を防止
+    preloaded_plan = CultivationPlan.includes(
+      :cultivation_plan_fields,
+      { cultivation_plan_crops: :crop },
+      { field_cultivations: [:cultivation_plan_field, { cultivation_plan_crop: :crop }] }
+    ).find(cultivation_plan.id)
+    cultivation_plan = preloaded_plan
     
     perf_db_load = Time.current
     Rails.logger.info "⏱️ [PERF] DB読み込み完了: #{((perf_db_load - perf_start) * 1000).round(2)}ms"
