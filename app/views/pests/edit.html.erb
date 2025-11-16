@@ -1,7 +1,4 @@
 <% content_for :title, t('.title', name: @pest.name) %>
-<% content_for :javascripts do %>
-  <%= javascript_include_tag "pest_form", "data-turbo-track": "reload" %>
-<% end %>
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title', name: @pest.name) %></h1>

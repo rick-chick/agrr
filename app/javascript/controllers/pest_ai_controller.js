@@ -107,12 +107,14 @@ export default class extends Controller {
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
           this.hideAdPopup()
-          if (this.isNewRecord) {
-            // 新規作成時：詳細画面に遷移（Cropと同じ動作）
-            window.location.href = `/pests/${data.pest_id}`
+          const id = data.pest_id
+          const redirectTo = id
+            ? (this.isNewRecord ? `/pests/${id}` : `/pests/${id}/edit`)
+            : '/pests' // フォールバック
+          if (window.Turbo && window.Turbo.visit) {
+            window.Turbo.visit(redirectTo)
           } else {
-            // 編集時：編集画面に戻る
-            window.location.href = `/pests/${data.pest_id}/edit`
+            window.location.href = redirectTo
           }
         }, 1500)
       } else {
