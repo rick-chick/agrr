@@ -19,6 +19,7 @@ import PlansShowController from "./plans_show_controller"
 import OptimizingController from "./optimizing_controller"
 import UndoToastController from "./undo_toast_controller"
 import CropSelectorController from "./crop_selector_controller"
+import CropSelectController from "./crop_select_controller"
 import AgriculturalTaskFormController from "./agricultural_task_form_controller"
 import TaskBlueprintCardDragController from "./task_blueprint_card_drag_controller"
 import PestFormController from "./pest_form_controller"
@@ -39,6 +40,7 @@ application.register("undo-delete", UndoDeleteController)
 application.register("optimizing", OptimizingController)
 application.register("undo-toast", UndoToastController)
 application.register("crop-selector", CropSelectorController)
+application.register("crop-select", CropSelectController)
 application.register("agricultural-task-form", AgriculturalTaskFormController)
 application.register("task-blueprint-card-drag", TaskBlueprintCardDragController)
 application.register("pest-form", PestFormController)

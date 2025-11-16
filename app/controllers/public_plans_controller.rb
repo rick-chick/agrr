@@ -99,7 +99,12 @@ class PublicPlansController < ApplicationController
     crops.each { |crop| Rails.logger.debug "  - #{crop.name} (ID: #{crop.id})" }
     
     if crops.empty?
-      redirect_to select_crop_public_plans_path, alert: I18n.t('public_plans.errors.select_crop') and return
+      # Turbo対応: フォールバックせず同画面を422で再描画
+      @farm = farm
+      @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == session_data[:farm_size_id] }
+      @crops = Crop.reference.where(region: @farm.region).order(:name)
+      flash.now[:alert] = I18n.t('public_plans.errors.select_crop')
+      return render :select_crop, status: :unprocessable_entity
     end
     
     # セッションIDを取得

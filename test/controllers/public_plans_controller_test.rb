@@ -162,6 +162,26 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "作物未選択のままcreateにPOSTすると422でselect_cropを再描画" do
+    # Step 1: 地域選択
+    get public_plans_path
+    assert_response :success
+
+    # Step 2: 農場サイズ選択（セッションにfarm_id保存）
+    get select_farm_size_public_plans_path(farm_id: @japan_farm.id)
+    assert_response :success
+
+    # Step 3: 作物選択画面（セッションにfarm_size/total_area保存）
+    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    assert_response :success
+
+    # Step 4: 作物未選択でPOST
+    post public_plans_path, params: { crop_ids: [] }
+    assert_response :unprocessable_entity
+    assert_select "h2" # 同画面を再描画
+    assert_includes @response.body, I18n.t('public_plans.errors.select_crop')
+  end
+
   test "最適化処理の実際の動作をテスト（気象データ不足のバグを発見）" do
     # 計画を直接作成
     cultivation_plan = CultivationPlan.create!(

@@ -1,5 +1,5 @@
 <%# encoding: UTF-8 %>
-<div class="public-plans-wrapper">
+<div class="public-plans-wrapper" data-controller="crop-select">
   <div class="free-plans-container">
     <!-- Compact Header with Progress -->
     <div class="compact-header-card">
@@ -50,7 +50,7 @@
       <h2 class="content-card-title"><%= t('.title') %></h2>
       <p class="content-card-subtitle"><%= t('.subtitle') %></p>
       
-      <%= form_with url: public_plans_path, method: :post, id: "cropForm", data: { turbo: false } do |f| %>
+      <%= form_with url: public_plans_path, method: :post, id: "cropForm", data: { turbo: true } do |f| %>
         <div class="enhanced-grid">
           <% @crops.each do |crop| %>
             <div class="crop-item">
@@ -58,7 +58,8 @@
                      name="crop_ids[]" 
                      value="<%= crop.id %>" 
                      id="crop_<%= crop.id %>" 
-                     class="crop-check">
+                     class="crop-check"
+                     data-action="change->crop-select#updateState">
               <label for="crop_<%= crop.id %>" class="crop-card">
                 <div class="crop-emoji">🥬</div>
                 <div class="crop-name"><%= crop.name %></div>
@@ -75,32 +76,29 @@
       <% end %>
     </div>
   </div>
-</div>
 
-<div class="fixed-bottom-bar">
-  <div class="fixed-bottom-bar-container">
-    <div class="fixed-bottom-bar-content">
-      <div class="fixed-bottom-bar-left">
-        <%= link_to select_farm_size_public_plans_path(farm_id: @farm.id), class: "btn-white back-button" do %>
-          <%= t('.bottom_bar.back_button') %>
-        <% end %>
-        <div class="selection-counter-group">
-          <span class="counter-label"><%= t('.bottom_bar.selected_label') %></span>
-          <div id="counter" class="counter-badge">0</div>
-          <span class="counter-unit"><%= t('.bottom_bar.selected_unit') %></span>
+  <div class="fixed-bottom-bar">
+    <div class="fixed-bottom-bar-container">
+      <div class="fixed-bottom-bar-content">
+        <div class="fixed-bottom-bar-left">
+          <%= link_to select_farm_size_public_plans_path(farm_id: @farm.id), class: "btn-white back-button" do %>
+            <%= t('.bottom_bar.back_button') %>
+          <% end %>
+          <div class="selection-counter-group">
+            <span class="counter-label"><%= t('.bottom_bar.selected_label') %></span>
+            <div id="counter" class="counter-badge" data-crop-select-target="counter">0</div>
+            <span class="counter-unit"><%= t('.bottom_bar.selected_unit') %></span>
+          </div>
         </div>
+        <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient submit-button" disabled data-crop-select-target="submit">
+          <%= t('.bottom_bar.submit_button') %>
+        </button>
       </div>
-      <button type="submit" form="cropForm" id="submitBtn" class="btn-gradient submit-button" disabled>
-        <%= t('.bottom_bar.submit_button') %>
-      </button>
-    </div>
-    <div id="hint" class="hint-message">
-      <%= t('.bottom_bar.hint') %>
+      <div id="hint" class="hint-message" data-crop-select-target="hint">
+        <%= t('.bottom_bar.hint') %>
+      </div>
     </div>
   </div>
 </div>
 
-<% content_for :javascripts do %>
-  <%= javascript_include_tag "crop_selection", "data-turbo-track": "reload" %>
-<% end %>
-
+<%# Stimulus controller handles interactions; legacy JS include removed %>
