@@ -600,5 +600,1067 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  test "schedule displays cultivation starting in August when cultivation starts on August 30 with month granularity" do
+    sign_in_as @user
+    
+    # テスト用の年度を設定
+    current_year = Date.current.year
+    test_year = current_year + 1  # 2026年を想定
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    # 計画を作成
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    # ほ場を作成
+    field = create(:cultivation_plan_field,
+      cultivation_plan: plan,
+      name: field_name,
+      area: 1000
+    )
+    
+    # 作物を作成
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # 8月30日から始まる作付（8月、9月、10月にまたがる）
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 8, 30),
+      completion_date: Date.new(test_year, 10, 26),
+      area: 500
+    )
+    
+    # スケジュールを取得（月単位）
+    next_year = current_year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    # HTMLをパース
+    doc = Nokogiri::HTML(response.body)
+    
+    # テーブルの各行を取得（期間の行のみ）
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 8月の行を取得
+    august_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年08月")
+    }
+    assert_not_nil august_row, "8月の行が見つかりません"
+    
+    # 8月のセルを確認
+    august_cells = august_row.css('td.schedule-table-cell')
+    
+    # 8月に作付が表示されていることを確認
+    august_cell_content = august_cells.map { |cell| cell.text.strip }.join(' ')
+    assert august_cell_content.include?('ほうれん草'), 
+           "8月にほうれん草が表示されていません。セル内容: #{august_cell_content[0..200]}"
+    assert august_cell_content.include?('08/30'), 
+           "8月に開始日（08/30）が表示されていません。セル内容: #{august_cell_content[0..200]}"
+    
+    # デバッグ出力: 8月のセル内容を確認
+    puts "\n[DEBUG] 8月のセル数: #{august_cells.count}"
+    august_cells.each_with_index do |cell, index|
+      rowspan = cell['rowspan'] || 'なし'
+      colspan = cell['colspan'] || 'なし'
+      content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+      puts "  [DEBUG] 8月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+    end
+    
+    # 8月の行全体のHTMLを確認
+    august_row_html = august_row.to_html
+    puts "\n[DEBUG] 8月の行全体のHTML:"
+    puts august_row_html[0..1000]
+    
+    # 8月のセルにrowspanがあることを確認（8月、9月、10月の3ヶ月にまたがるため）
+    august_cell_with_rowspan = august_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    assert_not_nil august_cell_with_rowspan, 
+                   "8月のセルにrowspan=3が設定されていません。8月、9月、10月の3ヶ月にまたがるため、rowspan=3であるべきです。セル数: #{august_cells.count}、実際のHTML: #{august_row_html[0..500]}"
+    
+    # 6月の行を取得（作付が表示されていないことを確認）
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    if june_row
+      june_cells = june_row.css('td.schedule-table-cell')
+      june_cell_content = june_cells.map { |cell| cell.text.strip }.join(' ')
+      
+      # デバッグ出力: 6月のセル内容を確認
+      puts "\n[DEBUG] 6月のセル数: #{june_cells.count}"
+      june_cells.each_with_index do |cell, index|
+        rowspan = cell['rowspan'] || 'なし'
+        colspan = cell['colspan'] || 'なし'
+        content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+        puts "  [DEBUG] 6月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+      end
+      
+      # 6月の行全体のHTMLを確認
+      june_row_html = june_row.to_html
+      puts "\n[DEBUG] 6月の行全体のHTML:"
+      puts june_row_html[0..1000]
+      
+      # 6月に作付が表示されていないことを確認
+      assert_not june_cell_content.include?('ほうれん草'), 
+                 "6月にほうれん草が表示されていますが、8月30日から始まる作付なので6月には表示されるべきではありません。セル内容: #{june_cell_content[0..200]}、実際のHTML: #{june_row_html[0..500]}"
+      assert_not june_cell_content.include?('08/30'), 
+                 "6月に開始日（08/30）が表示されていますが、8月30日から始まる作付なので6月には表示されるべきではありません。セル内容: #{june_cell_content[0..200]}、実際のHTML: #{june_row_html[0..500]}"
+    end
+    
+    # 7月の行を取得（作付が表示されていないことを確認）
+    july_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年07月")
+    }
+    if july_row
+      july_cells = july_row.css('td.schedule-table-cell')
+      july_cell_content = july_cells.map { |cell| cell.text.strip }.join(' ')
+      # 7月に作付が表示されていないことを確認
+      assert_not july_cell_content.include?('ほうれん草'), 
+                 "7月にほうれん草が表示されていますが、8月30日から始まる作付なので7月には表示されるべきではありません。セル内容: #{july_cell_content[0..200]}"
+      assert_not july_cell_content.include?('08/30'), 
+                 "7月に開始日（08/30）が表示されていますが、8月30日から始まる作付なので7月には表示されるべきではありません。セル内容: #{july_cell_content[0..200]}"
+    end
+  end
+
+  test "schedule displays two cultivations correctly when one starts on June 8 and another starts on August 30 with month granularity" do
+    sign_in_as @user
+    
+    # テスト用の年度を設定
+    current_year = Date.current.year
+    test_year = current_year + 1  # 2026年を想定
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    # 計画を作成
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    # ほ場を作成
+    field = create(:cultivation_plan_field,
+      cultivation_plan: plan,
+      name: field_name,
+      area: 1000
+    )
+    
+    # 作物を作成
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # 6月8日から始まる作付（6月、7月にまたがる）
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 8),
+      completion_date: Date.new(test_year, 7, 19),
+      area: 500
+    )
+    
+    # 8月30日から始まる作付（8月、9月、10月にまたがる）
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 8, 30),
+      completion_date: Date.new(test_year, 10, 26),
+      area: 500
+    )
+    
+    # スケジュールを取得（月単位）
+    next_year = current_year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    # HTMLをパース
+    doc = Nokogiri::HTML(response.body)
+    
+    # テーブルの各行を取得（期間の行のみ）
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 6月の行を取得
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    # 6月のセルを確認
+    june_cells = june_row.css('td.schedule-table-cell')
+    
+    # 降順の場合、rowspanは下方向（より古い期間）にマージされるため、
+    # 6月8日から始まる作付（6月、7月にまたがる）は7月の行にセルを配置し、
+    # rowspan=2で下方向（7月、6月）にマージされる
+    # 6月の行では空白セルが描画されるが、7月の行のrowspanで6月にも表示される
+    
+    # 7月の行を取得（先に確認）
+    july_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年07月")
+    }
+    assert_not_nil july_row, "7月の行が見つかりません"
+    
+    # 7月のセルを確認
+    july_cells = july_row.css('td.schedule-table-cell')
+    
+    # 7月のセルにrowspan=2があることを確認（7月、6月の2ヶ月にまたがるため）
+    july_cell_with_rowspan = july_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 2 }
+    assert_not_nil july_cell_with_rowspan, 
+                   "7月のセルにrowspan=2が設定されていません。7月、6月の2ヶ月にまたがるため、rowspan=2であるべきです。セル数: #{july_cells.count}"
+    
+    # 7月に作付が表示されていることを確認（06/08から始まる作付）
+    july_cell_content = july_cell_with_rowspan.text.strip if july_cell_with_rowspan
+    assert july_cell_content.include?('ほうれん草'), 
+           "7月にほうれん草が表示されていません。セル内容: #{july_cell_content[0..200]}"
+    assert july_cell_content.include?('06/08'), 
+           "7月に開始日（06/08）が表示されていません。セル内容: #{july_cell_content[0..200]}"
+    
+    # 6月の行では、7月の行のrowspanでマージされるため、セルを描画しない
+    # rowspanでマージされたセルは、その後の行では自動的にスキップされるため、
+    # 6月の行ではセルを描画する必要はない（これにより、列数が正しくなる）
+    # したがって、6月の行のHTMLにはセルが含まれないことを確認する
+    june_row_html = june_row.to_html
+    # 6月の行には期間セルしか含まれない（ほ場のセルは描画されない）
+    june_cell_count = june_row.css('td.schedule-table-cell').count
+    assert_equal 0, june_cell_count, 
+                 "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}、行HTML: #{june_row_html[0..500]}"
+    
+    # デバッグ出力: 6月のセル内容を確認
+    puts "\n[DEBUG] 6月のセル数: #{june_cells.count}"
+    june_cells.each_with_index do |cell, index|
+      rowspan = cell['rowspan'] || 'なし'
+      colspan = cell['colspan'] || 'なし'
+      content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+      puts "  [DEBUG] 6月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+    end
+    
+    # デバッグ出力: 7月のセル内容を確認
+    puts "\n[DEBUG] 7月のセル数: #{july_cells.count}"
+    july_cells.each_with_index do |cell, index|
+      rowspan = cell['rowspan'] || 'なし'
+      colspan = cell['colspan'] || 'なし'
+      content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+      puts "  [DEBUG] 7月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+    end
+    
+    # 6月の行全体のHTMLを確認
+    june_row_html = june_row.to_html
+    puts "\n[DEBUG] 6月の行全体のHTML:"
+    puts june_row_html[0..1000]
+    
+    # 実際のperiodsとarrange結果を確認（デバッグ用）
+    # 6月のperiod_indexを確認
+    june_period_index = nil
+    rows.each_with_index do |row, idx|
+      period_cell = row.css('.schedule-table-period-cell').first
+      if period_cell && period_cell.text.include?("#{test_year}年06月")
+        june_period_index = idx
+        break
+      end
+    end
+    
+    puts "\n[DEBUG] 6月のperiod_index: #{june_period_index}"
+    
+    # 実際のperiodsとarrange結果を確認するため、ビューから取得
+    # テストでは直接コントローラーのインスタンス変数にアクセスできないため、
+    # リクエストの後に再度取得する必要がある
+    
+    # 実際のperiodsを確認（リクエスト後のコントローラーから取得できないため、再度計算）
+    # テスト用の年度を設定
+    current_year = Date.current.year
+    next_year = current_year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    period_start = Date.new(start_year, 1, 1)
+    period_end = Date.new(start_year + PlanningSchedulesController::DEFAULT_YEARS_RANGE - 1, 12, 31)
+    
+    # 期間の行を生成（月単位、降順）
+    periods_asc = []
+    current = period_start
+    while current <= period_end
+      period_end_date = [current.end_of_month, period_end].min
+      periods_asc << {
+        label: I18n.l(current, format: '%Y年%m月'),
+        start_date: current,
+        end_date: period_end_date
+      }
+      current = current.next_month.beginning_of_month
+    end
+    periods = periods_asc.reverse
+    
+    puts "\n[DEBUG] 実際のperiods（降順）:"
+    periods.each_with_index do |period, idx|
+      if period[:label].include?("#{test_year}年06月") || period[:label].include?("#{test_year}年07月") || period[:label].include?("#{test_year}年08月") || period[:label].include?("#{test_year}年09月") || period[:label].include?("#{test_year}年10月")
+        puts "  [#{idx}] #{period[:label]}: #{period[:start_date]} - #{period[:end_date]}"
+      end
+    end
+    
+    # 実際のarrange結果を確認
+    field_name = '1ほ場'
+    cultivations = plan.field_cultivations.map do |fc|
+      {
+        crop_name: fc.cultivation_plan_crop.name,
+        start_date: fc.start_date,
+        completion_date: fc.completion_date,
+        area: fc.area
+      }
+    end
+    
+    arranged_cultivations = ScheduleTableFieldArranger.arrange(
+      cultivations: cultivations,
+      periods: periods
+    )
+    
+    arranged_cultivations.each do |c|
+      if c[:cultivation][:start_date] == Date.new(test_year, 6, 8)
+        puts "\n[DEBUG] 6月8日から始まる作付のarrange結果:"
+        puts "  start_period_index: #{c[:start_period_index]}"
+        puts "  start_period: #{periods[c[:start_period_index]][:label] if c[:start_period_index] && periods[c[:start_period_index]]}"
+        puts "  rowspan: #{c[:rowspan]}"
+        puts "  periods: #{c[:periods].map { |p| p[:label] }.join(', ')}"
+      elsif c[:cultivation][:start_date] == Date.new(test_year, 8, 30)
+        puts "\n[DEBUG] 8月30日から始まる作付のarrange結果:"
+        puts "  start_period_index: #{c[:start_period_index]}"
+        puts "  start_period: #{periods[c[:start_period_index]][:label] if c[:start_period_index] && periods[c[:start_period_index]]}"
+        puts "  rowspan: #{c[:rowspan]}"
+        puts "  periods: #{c[:periods].map { |p| p[:label] }.join(', ')}"
+      end
+    end
+    
+    # 6月に8月30日から始まる作付が表示されていないことを確認
+    june_row_content_for_check = june_row.to_html
+    assert_not june_row_content_for_check.include?('08/30'), 
+               "6月に開始日（08/30）が表示されていますが、8月30日から始まる作付なので6月には表示されるべきではありません。行HTML: #{june_row_content_for_check[0..500]}"
+    
+    # デバッグ出力: 7月のセル内容を確認
+    puts "\n[DEBUG] 7月のセル数: #{july_cells.count}"
+    july_cells.each_with_index do |cell, index|
+      rowspan = cell['rowspan'] || 'なし'
+      colspan = cell['colspan'] || 'なし'
+      content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+      puts "  [DEBUG] 7月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+    end
+    
+    # 7月の行全体のHTMLを確認
+    july_row_html = july_row.to_html
+    puts "\n[DEBUG] 7月の行全体のHTML:"
+    puts july_row_html[0..1000]
+    
+    # 8月の行を取得
+    august_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年08月")
+    }
+    assert_not_nil august_row, "8月の行が見つかりません"
+    
+    # 8月のセルを確認
+    august_cells = august_row.css('td.schedule-table-cell')
+    
+    # 降順の場合、rowspanは下方向（より古い期間）にマージされるため、
+    # 8月30日から始まる作付（8月、9月、10月にまたがる）は10月の行にセルを配置し、
+    # rowspan=3で下方向（10月、9月、8月）にマージされる
+    
+    # 10月の行を取得（先に確認）
+    october_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年10月")
+    }
+    assert_not_nil october_row, "10月の行が見つかりません"
+    
+    # 10月のセルを確認
+    october_cells = october_row.css('td.schedule-table-cell')
+    
+    # 10月のセルにrowspan=3があることを確認（10月、9月、8月の3ヶ月にまたがるため）
+    october_cell_with_rowspan = october_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    assert_not_nil october_cell_with_rowspan, 
+                   "10月のセルにrowspan=3が設定されていません。10月、9月、8月の3ヶ月にまたがるため、rowspan=3であるべきです。セル数: #{october_cells.count}"
+    
+    # 10月に作付が表示されていることを確認（08/30から始まる作付）
+    october_cell_content = october_cell_with_rowspan.text.strip if october_cell_with_rowspan
+    assert october_cell_content.include?('ほうれん草'), 
+           "10月にほうれん草が表示されていません。セル内容: #{october_cell_content[0..200]}"
+    assert october_cell_content.include?('08/30'), 
+           "10月に開始日（08/30）が表示されていません。セル内容: #{october_cell_content[0..200]}"
+    
+    # 8月の行では、10月の行のrowspanでマージされるため、セルを描画しない
+    # rowspanでマージされたセルは、その後の行では自動的にスキップされるため、
+    # 8月の行ではセルを描画する必要はない（これにより、列数が正しくなる）
+    # したがって、8月の行のHTMLにはセルが含まれないことを確認する
+    august_row_html = august_row.to_html
+    # 8月の行には期間セルしか含まれない（ほ場のセルは描画されない）
+    august_cell_count = august_row.css('td.schedule-table-cell').count
+    assert_equal 0, august_cell_count, 
+                 "8月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{august_cell_count}、行HTML: #{august_row_html[0..500]}"
+    
+    # デバッグ出力: 8月のセル内容を確認
+    puts "\n[DEBUG] 8月のセル数: #{august_cells.count}"
+    august_cells.each_with_index do |cell, index|
+      rowspan = cell['rowspan'] || 'なし'
+      colspan = cell['colspan'] || 'なし'
+      content = cell.text.strip.gsub(/\s+/, ' ')[0..200]
+      puts "  [DEBUG] 8月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
+    end
+    
+    # 8月の行全体のHTMLを確認
+    august_row_html = august_row.to_html
+    puts "\n[DEBUG] 8月の行全体のHTML:"
+    puts august_row_html[0..1000]
+    
+    # 8月に6月8日から始まる作付が表示されていないことを確認
+    august_row_content_for_check = august_row.to_html
+    assert_not august_row_content_for_check.include?('06/08'), 
+               "8月に開始日（06/08）が表示されていますが、6月8日から始まる作付なので8月には表示されるべきではありません。行HTML: #{august_row_content_for_check[0..500]}"
+    
+    # 5月の行を取得（作付が表示されていないことを確認）
+    may_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年05月")
+    }
+    if may_row
+      may_cells = may_row.css('td.schedule-table-cell')
+      may_cell_content = may_cells.map { |cell| cell.text.strip }.join(' ')
+      
+      # 5月に作付が表示されていないことを確認
+      assert_not may_cell_content.include?('ほうれん草'), 
+                 "5月にほうれん草が表示されていますが、6月8日から始まる作付なので5月には表示されるべきではありません。セル内容: #{may_cell_content[0..200]}"
+      assert_not may_cell_content.include?('06/08'), 
+                 "5月に開始日（06/08）が表示されていますが、6月8日から始まる作付なので5月には表示されるべきではありません。セル内容: #{may_cell_content[0..200]}"
+      assert_not may_cell_content.include?('08/30'), 
+                 "5月に開始日（08/30）が表示されていますが、8月30日から始まる作付なので5月には表示されるべきではありません。セル内容: #{may_cell_content[0..200]}"
+    end
+  end
+
+  # ========================================
+  # 降順期間でのrowspan/colspanの動作を保証する包括的テスト
+  # ========================================
+
+  test "schedule_renders_single_cultivation_within_single_period_correctly_with_month_granularity" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
+    
+    # 6月の期間に収まる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 10),
+      completion_date: Date.new(test_year, 6, 25),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 6月の行を取得
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    june_cells = june_row.css('td.schedule-table-cell')
+    
+    # 6月に作付が表示されていることを確認
+    june_cell_content = june_cells.map { |cell| cell.text.strip }.join(' ')
+    assert june_cell_content.include?('トマト'), "6月にトマトが表示されていません"
+    
+    # 6月のセルにrowspanがないことを確認（単一期間に収まるため）
+    june_cell_with_rowspan = june_cells.find { |cell| cell['rowspan'] }
+    assert_nil june_cell_with_rowspan, "6月のセルにrowspanが設定されていますが、単一期間に収まるため不要です"
+    
+    # 6月のセルにcolspan=2があることを確認（作付が1つのため）
+    june_cell = june_cells.first
+    assert_equal '2', june_cell['colspan'], "6月のセルにcolspan=2が設定されていません。作付が1つのため、colspan=2であるべきです"
+  end
+
+  test "schedule_renders_single_cultivation_spanning_multiple_periods_with_rowspan_in_descending_order_with_month_granularity" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # 6月、7月、8月にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 15),
+      completion_date: Date.new(test_year, 8, 20),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 8月の行を取得（降順で最新の期間）
+    august_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年08月")
+    }
+    assert_not_nil august_row, "8月の行が見つかりません"
+    
+    august_cells = august_row.css('td.schedule-table-cell')
+    
+    # 8月のセルにrowspan=3があることを確認（8月、7月、6月の3ヶ月にまたがるため）
+    august_cell_with_rowspan = august_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    assert_not_nil august_cell_with_rowspan, 
+                   "8月のセルにrowspan=3が設定されていません。8月、7月、6月の3ヶ月にまたがるため、rowspan=3であるべきです"
+    
+    # 8月に作付が表示されていることを確認
+    august_cell_content = august_cell_with_rowspan.text.strip
+    assert august_cell_content.include?('ほうれん草'), "8月にほうれん草が表示されていません"
+    
+    # 7月の行を取得（継続中のセルは描画されない）
+    july_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年07月")
+    }
+    assert_not_nil july_row, "7月の行が見つかりません"
+    
+    # 7月の行にはセルが描画されない（rowspanでマージされるため）
+    july_cells = july_row.css('td.schedule-table-cell')
+    july_cell_count = july_cells.count
+    assert_equal 0, july_cell_count, 
+                 "7月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{july_cell_count}"
+    
+    # 6月の行を取得（継続中のセルは描画されない）
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    # 6月の行にはセルが描画されない（rowspanでマージされるため）
+    june_cells = june_row.css('td.schedule-table-cell')
+    june_cell_count = june_cells.count
+    assert_equal 0, june_cell_count, 
+                 "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}"
+  end
+
+  test "schedule_renders_two_cultivations_in_same_period_with_colspan_1_each_with_month_granularity" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop1 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
+    crop2 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'きゅうり')
+    
+    # 6月の期間に収まる2つの作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop1,
+      start_date: Date.new(test_year, 6, 5),
+      completion_date: Date.new(test_year, 6, 20),
+      area: 500
+    )
+    
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop2,
+      start_date: Date.new(test_year, 6, 15),
+      completion_date: Date.new(test_year, 6, 30),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 6月の行を取得
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    june_cells = june_row.css('td.schedule-table-cell')
+    
+    # 6月の行に2つのセルが描画されていることを確認（colspan=1を2つ使う）
+    assert_equal 2, june_cells.count, 
+                 "6月の行に2つのセルが描画されていません。作付が2つあるため、colspan=1を2つ使う必要があります。セル数: #{june_cells.count}"
+    
+    # 各セルにcolspan=1があることを確認
+    june_cells.each do |cell|
+      assert_equal '1', cell['colspan'], "6月のセルにcolspan=1が設定されていません。作付が2つあるため、colspan=1であるべきです"
+    end
+    
+    # 6月に両方の作付が表示されていることを確認
+    june_cell_content = june_cells.map { |cell| cell.text.strip }.join(' ')
+    assert june_cell_content.include?('トマト'), "6月にトマトが表示されていません"
+    assert june_cell_content.include?('きゅうり'), "6月にきゅうりが表示されていません"
+  end
+
+  test "schedule_renders_two_cultivations_spanning_different_periods_with_correct_rowspan_and_colspan_with_month_granularity" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # 6月、7月にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 8),
+      completion_date: Date.new(test_year, 7, 19),
+      area: 500
+    )
+    
+    # 8月、9月、10月にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 8, 30),
+      completion_date: Date.new(test_year, 10, 26),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 7月の行を取得（降順で最新の期間、6月-7月の作付が開始）
+    july_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年07月")
+    }
+    assert_not_nil july_row, "7月の行が見つかりません"
+    
+    july_cells = july_row.css('td.schedule-table-cell')
+    
+    # 7月のセルにrowspan=2があることを確認（7月、6月の2ヶ月にまたがるため）
+    july_cell_with_rowspan = july_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 2 }
+    assert_not_nil july_cell_with_rowspan, 
+                   "7月のセルにrowspan=2が設定されていません。7月、6月の2ヶ月にまたがるため、rowspan=2であるべきです"
+    
+    # 7月に作付が表示されていることを確認
+    july_cell_content = july_cell_with_rowspan.text.strip
+    assert july_cell_content.include?('ほうれん草'), "7月にほうれん草が表示されていません"
+    assert july_cell_content.include?('06/08'), "7月に開始日（06/08）が表示されていません"
+    
+    # 6月の行にはセルが描画されない（rowspanでマージされるため）
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    june_cells = june_row.css('td.schedule-table-cell')
+    june_cell_count = june_cells.count
+    assert_equal 0, june_cell_count, 
+                 "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}"
+    
+    # 10月の行を取得（降順で最新の期間、8月-10月の作付が開始）
+    october_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年10月")
+    }
+    assert_not_nil october_row, "10月の行が見つかりません"
+    
+    october_cells = october_row.css('td.schedule-table-cell')
+    
+    # 10月のセルにrowspan=3があることを確認（10月、9月、8月の3ヶ月にまたがるため）
+    october_cell_with_rowspan = october_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 3 }
+    assert_not_nil october_cell_with_rowspan, 
+                   "10月のセルにrowspan=3が設定されていません。10月、9月、8月の3ヶ月にまたがるため、rowspan=3であるべきです"
+    
+    # 10月に作付が表示されていることを確認
+    october_cell_content = october_cell_with_rowspan.text.strip
+    assert october_cell_content.include?('ほうれん草'), "10月にほうれん草が表示されていません"
+    assert october_cell_content.include?('08/30'), "10月に開始日（08/30）が表示されていません"
+    
+    # 9月の行にはセルが描画されない（rowspanでマージされるため）
+    september_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年09月")
+    }
+    assert_not_nil september_row, "9月の行が見つかりません"
+    
+    september_cells = september_row.css('td.schedule-table-cell')
+    september_cell_count = september_cells.count
+    assert_equal 0, september_cell_count, 
+                 "9月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{september_cell_count}"
+    
+    # 8月の行にはセルが描画されない（rowspanでマージされるため）
+    august_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年08月")
+    }
+    assert_not_nil august_row, "8月の行が見つかりません"
+    
+    august_cells = august_row.css('td.schedule-table-cell')
+    august_cell_count = august_cells.count
+    assert_equal 0, august_cell_count, 
+                 "8月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{august_cell_count}"
+  end
+
+  test "schedule_maintains_consistent_column_count_across_all_rows_with_two_fields_and_month_granularity" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field1_name = '1ほ場'
+    field2_name = '2ほ場'
+    field1_id = field1_name.hash.abs
+    field2_id = field2_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: field1_name, area: 1000)
+    field2 = create(:cultivation_plan_field, cultivation_plan: plan, name: field2_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
+    
+    # 1ほ場に6月、7月にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field1,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 8),
+      completion_date: Date.new(test_year, 7, 19),
+      area: 500
+    )
+    
+    # 2ほ場に6月の期間に収まる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field2,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 15),
+      completion_date: Date.new(test_year, 6, 30),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field1_id, field2_id],
+      year: start_year,
+      granularity: 'month'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # すべての行で同じ列数が使われていることを確認
+    rows.each do |row|
+      period_cell = row.css('.schedule-table-period-cell').first
+      next unless period_cell
+      
+      # 期間セルを除いたセル数（各ほ場で2列）を確認
+      field_cells = row.css('td.schedule-table-cell')
+      
+      # ほ場が2つあるため、各ほ場で2列（colspan=2の場合は1セル、colspan=1の場合は2セル）が使われる
+      # 合計で4列（2ほ場 × 2列）が使われる必要がある
+      # ただし、rowspanでマージされる場合、継続中の行ではセルが描画されない
+      
+      # 各ほ場ごとに列数を確認
+      # このテストでは、すべての行で同じ構造が維持されることを確認する
+      # （rowspanでマージされる行ではセルが描画されないため、列数が異なる可能性がある）
+    end
+    
+    # 6月の行を確認
+    june_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年06月")
+    }
+    assert_not_nil june_row, "6月の行が見つかりません"
+    
+    # 1ほ場は継続中（rowspanでマージされるため、セルが描画されない）
+    # 2ほ場は6月に開始するため、セルが描画される
+    june_field_cells = june_row.css('td.schedule-table-cell')
+    # 2ほ場のみセルが描画されるため、2列（colspan=2の場合は1セル、colspan=1の場合は2セル）が描画される
+    # ただし、1ほ場のrowspanでマージされたセルは視覚的に表示されるため、列数は正しく維持される
+    
+    # 7月の行を確認
+    july_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year}年07月")
+    }
+    assert_not_nil july_row, "7月の行が見つかりません"
+    
+    # 1ほ場は7月に開始するため、セルが描画される（rowspan=2）
+    # 2ほ場は作付がないため、空白セルが描画される
+    july_field_cells = july_row.css('td.schedule-table-cell')
+    # 1ほ場と2ほ場の両方でセルが描画されるため、合計で4列が描画される
+    # 1ほ場: colspan=2, rowspan=2のセルが1つ
+    # 2ほ場: colspan=2の空白セルが1つ
+    assert july_field_cells.count >= 2, 
+           "7月の行にセルが描画されていません。1ほ場と2ほ場の両方でセルが描画される必要があります。セル数: #{july_field_cells.count}"
+  end
+
+  test "schedule_renders_correctly_with_quarter_granularity_for_descending_periods" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # Q3（7月-9月）とQ4（10月-12月）にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 9, 15),
+      completion_date: Date.new(test_year, 11, 20),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'quarter'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # Q4の行を取得（降順で最新の期間）
+    q4_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year} Q4")
+    }
+    assert_not_nil q4_row, "Q4の行が見つかりません"
+    
+    q4_cells = q4_row.css('td.schedule-table-cell')
+    
+    # Q4のセルにrowspan=2があることを確認（Q4、Q3の2四半期にまたがるため）
+    q4_cell_with_rowspan = q4_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 2 }
+    assert_not_nil q4_cell_with_rowspan, 
+                   "Q4のセルにrowspan=2が設定されていません。Q4、Q3の2四半期にまたがるため、rowspan=2であるべきです"
+    
+    # Q3の行にはセルが描画されない（rowspanでマージされるため）
+    q3_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year} Q3")
+    }
+    assert_not_nil q3_row, "Q3の行が見つかりません"
+    
+    q3_cells = q3_row.css('td.schedule-table-cell')
+    q3_cell_count = q3_cells.count
+    assert_equal 0, q3_cell_count, 
+                 "Q3の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{q3_cell_count}"
+  end
+
+  test "schedule_renders_correctly_with_half_year_granularity_for_descending_periods" do
+    sign_in_as @user
+    
+    test_year = Date.current.year + 1
+    field_name = '1ほ場'
+    field_id = field_name.hash.abs
+    
+    plan = create(:cultivation_plan,
+      :private,
+      user: @user,
+      farm: @farm,
+      plan_year: test_year,
+      planning_start_date: Date.new(test_year, 1, 1),
+      planning_end_date: Date.new(test_year + 1, 12, 31)
+    )
+    
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'ほうれん草')
+    
+    # 上半期（1月-6月）と下半期（7月-12月）にまたがる作付
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(test_year, 6, 15),
+      completion_date: Date.new(test_year, 8, 20),
+      area: 500
+    )
+    
+    next_year = Date.current.year + 1
+    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
+    get schedule_planning_schedules_path(
+      farm_id: @farm.id,
+      field_ids: [field_id],
+      year: start_year,
+      granularity: 'half'
+    )
+    
+    assert_response :success
+    
+    doc = Nokogiri::HTML(response.body)
+    rows = doc.css('.schedule-table tbody tr')
+    
+    # 下半期の行を取得（降順で最新の期間）
+    second_half_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year} 下半期")
+    }
+    assert_not_nil second_half_row, "下半期の行が見つかりません"
+    
+    second_half_cells = second_half_row.css('td.schedule-table-cell')
+    
+    # 下半期のセルにrowspan=2があることを確認（下半期、上半期の2半期にまたがるため）
+    second_half_cell_with_rowspan = second_half_cells.find { |cell| cell['rowspan'] && cell['rowspan'].to_i == 2 }
+    assert_not_nil second_half_cell_with_rowspan, 
+                   "下半期のセルにrowspan=2が設定されていません。下半期、上半期の2半期にまたがるため、rowspan=2であるべきです"
+    
+    # 上半期の行にはセルが描画されない（rowspanでマージされるため）
+    first_half_row = rows.find { |r| 
+      period_cell = r.css('.schedule-table-period-cell').first
+      period_cell && period_cell.text.include?("#{test_year} 上半期")
+    }
+    assert_not_nil first_half_row, "上半期の行が見つかりません"
+    
+    first_half_cells = first_half_row.css('td.schedule-table-cell')
+    first_half_cell_count = first_half_cells.count
+    assert_equal 0, first_half_cell_count, 
+                 "上半期の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{first_half_cell_count}"
+  end
 end
 

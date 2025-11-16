@@ -69,7 +69,8 @@
           <tr>
             <th class="schedule-table-period-header"><%= t('planning_schedules.schedule.period_label') %></th>
             <% @selected_fields.each do |field| %>
-              <th class="schedule-table-field-header">
+              <%# 各ほ場のヘッダーを2列に分割（colspan=2として見た目を保つが、内部構造は2列） %>
+              <th class="schedule-table-field-header" colspan="2">
                 <%= field[:name] %><br>
                 <span style="font-size: var(--font-size-base); font-weight: normal; opacity: 0.9;">
                   (<%= @farm.name %>)
@@ -80,23 +81,18 @@
         </thead>
         <tbody>
           <% 
-            # 各圃場について、各栽培情報がどの期間にまたがるかを事前に計算
+            # 各圃場について、新しいアルゴリズムで作付を配置
             field_cultivation_data = @selected_fields.map do |field|
               field_id = field[:id]
               cultivations = @cultivations_by_field[field_id] || []
-              cultivation_periods = cultivations.map do |c|
-                spanning_periods = @periods.select do |p|
-                  c[:start_date] <= p[:end_date] && c[:completion_date] >= p[:start_date]
-                end
-                start_period_index = spanning_periods.any? ? @periods.index(spanning_periods.first) : nil
-                {
-                  cultivation: c,
-                  periods: spanning_periods,
-                  start_period_index: start_period_index,
-                  rowspan: spanning_periods.size
-                }
-              end
-              { field: field, field_id: field_id, cultivation_periods: cultivation_periods }
+              
+              # ScheduleTableFieldArrangerを使って作付を配置
+              arranged_cultivations = ScheduleTableFieldArranger.arrange(
+                cultivations: cultivations,
+                periods: @periods
+              )
+              
+              { field: field, field_id: field_id, arranged_cultivations: arranged_cultivations }
             end
           %>
           <% @periods.each_with_index do |period, period_index| %>
@@ -107,56 +103,46 @@
               <% field_cultivation_data.each do |field_data| %>
                 <% 
                   field = field_data[:field]
-                  cultivation_periods = field_data[:cultivation_periods]
+                  arranged_cultivations = field_data[:arranged_cultivations]
                   
-                  # この期間に開始する栽培情報を取得
-                  starting_cultivations = cultivation_periods.select do |cp|
-                    cp[:start_period_index] == period_index
-                  end
+                  cultivations_in_period = ScheduleTableFieldArranger.cultivations_for_period(
+                    arranged_cultivations: arranged_cultivations,
+                    periods: @periods,
+                    period_index: period_index
+                  )
                   
-                  # この期間に継続している栽培情報（前の期間から続いているもの）を取得
-                  continuing_cultivations = cultivation_periods.select do |cp|
-                    cp[:start_period_index] != nil &&
-                    cp[:start_period_index] < period_index && 
-                    cp[:periods].any? { |p| p == period }
-                  end
-                  
-                  # この期間に表示すべき栽培情報（開始するもののみ）
-                  display_cultivations = starting_cultivations
+                  period_colspan = calculate_period_colspan(
+                    cultivations_in_period: cultivations_in_period,
+                    arranged_cultivations: arranged_cultivations,
+                    periods: @periods,
+                    period_index: period_index
+                  )
                 %>
-                <% if display_cultivations.any? %>
-                  <% 
-                    # 最初の栽培情報にrowspanを設定
-                    first_cp = display_cultivations.first
-                    cultivation = first_cp[:cultivation]
-                    crop_name = cultivation[:crop_name]
-                    crop_color = get_crop_color_for_schedule(crop_name)
-                  %>
-                  <td class="schedule-table-cell" rowspan="<%= first_cp[:rowspan] %>" style="vertical-align: top;">
-                    <div class="cultivation-items">
-                      <% display_cultivations.each do |cp| %>
-                        <% cultivation_item = cp[:cultivation] %>
-                        <% crop_name_item = cultivation_item[:crop_name] %>
-                        <% crop_color_item = get_crop_color_for_schedule(crop_name_item) %>
-                        <div class="cultivation-item" style="background-color: <%= crop_color_item[:fill] %>; border-left: 4px solid <%= crop_color_item[:stroke] %>; color: <%= crop_color_item[:text] %>;">
-                          <div class="cultivation-crop-name"><%= cultivation_item[:crop_name] %></div>
-                          <div class="cultivation-period">
-                            <%= I18n.l(cultivation_item[:start_date], format: :short) %> - 
-                            <%= I18n.l(cultivation_item[:completion_date], format: :short) %>
-                          </div>
-                        </div>
-                      <% end %>
-                    </div>
-                  </td>
-                <% elsif continuing_cultivations.any? %>
-                  <%# 継続中の栽培情報は前の期間のrowspanで表示されるため、ここではセルをスキップ %>
+                <% if cultivations_in_period.empty? %>
+                  <%= raw render_empty_cell(colspan: 2) %>
+                <% elsif period_colspan == 2 %>
+                  <% cultivation_info = cultivations_in_period.first %>
+                  <% if cultivation_info %>
+                    <%= raw render_cultivation_cell(cultivation_info: cultivation_info, colspan: 2, period_index: period_index) %>
                   <% else %>
-                  <td class="schedule-table-cell">
-                    <div class="cultivation-empty">
-                      <%= t('planning_schedules.schedule.no_cultivation') %>
-                    </div>
-                  </td>
+                    <%= raw render_empty_cell(colspan: 2) %>
                   <% end %>
+                <% else %>
+                  <% slot_0_cultivation = cultivations_in_period.find { |c| c[:slot_index] == 0 } %>
+                  <% slot_1_cultivation = cultivations_in_period.find { |c| c[:slot_index] == 1 } %>
+                  
+                  <% if slot_0_cultivation %>
+                    <%= raw render_cultivation_cell(cultivation_info: slot_0_cultivation, colspan: 1, period_index: period_index) %>
+                  <% else %>
+                    <%= raw render_empty_cell(colspan: 1, show_label: false) %>
+                  <% end %>
+                  
+                  <% if slot_1_cultivation %>
+                    <%= raw render_cultivation_cell(cultivation_info: slot_1_cultivation, colspan: 1, period_index: period_index) %>
+                  <% else %>
+                    <%= raw render_empty_cell(colspan: 1, show_label: false) %>
+                  <% end %>
+                <% end %>
               <% end %>
             </tr>
           <% end %>
