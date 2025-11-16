@@ -28,7 +28,7 @@
         </p>
       </div>
     <% else %>
-      <%= form_with url: schedule_planning_schedules_path, method: :get, local: true, class: "planning-schedule-form", id: "planning-schedule-form" do |f| %>
+      <%= form_with url: schedule_planning_schedules_path, method: :get, local: true, class: "planning-schedule-form", id: "planning-schedule-form", data: { controller: "planning-schedules-fields-selection" } do |f| %>
         <!-- 農場選択 -->
         <div class="form-section">
           <label class="form-label">
@@ -52,10 +52,10 @@
                   <%= t('planning_schedules.fields_selection.fields_label') %>
                 </label>
                 <div style="display: flex; gap: var(--space-2);">
-                  <button type="button" class="btn-secondary btn-sm" onclick="selectAllFields()">
+                  <button type="button" class="btn-secondary btn-sm" data-action="planning-schedules-fields-selection#selectAll">
                     <%= t('planning_schedules.fields_selection.select_all') %>
                   </button>
-                  <button type="button" class="btn-secondary btn-sm" onclick="deselectAllFields()">
+                  <button type="button" class="btn-secondary btn-sm" data-action="planning-schedules-fields-selection#deselectAll">
                     <%= t('planning_schedules.fields_selection.deselect_all') %>
                   </button>
                 </div>
@@ -82,6 +82,7 @@
             <div class="form-actions">
               <%= f.submit t('planning_schedules.fields_selection.show_schedule'), 
                   class: "btn-plans-primary",
+                  data: { "planning-schedules-fields-selection-target": "submit" },
                   disabled: @selected_field_ids.empty? %>
             </div>
           <% else %>
@@ -102,37 +103,7 @@
   </div>
 </div>
 
-<script>
-  function selectAllFields() {
-    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
-      checkbox.checked = true;
-    });
-    updateSubmitButton();
-  }
-
-  function deselectAllFields() {
-    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
-      checkbox.checked = false;
-    });
-    updateSubmitButton();
-  }
-
-  function updateSubmitButton() {
-    const checkedCount = document.querySelectorAll('.field-checkbox:checked').length;
-    const submitButton = document.querySelector('input[type="submit"]');
-    if (submitButton) {
-      submitButton.disabled = checkedCount === 0;
-    }
-  }
-
-  // チェックボックスの変更を監視
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.field-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', updateSubmitButton);
-    });
-    updateSubmitButton();
-  });
-</script>
+ 
 
 <style>
   .planning-schedule-form {
