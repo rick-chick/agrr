@@ -91,9 +91,6 @@
                         <% if plan.status_completed? %>
                           <%= link_to t('plans.index.plan_card.view'), plan_path(plan), 
                               class: "plan-card-action-btn primary" %>
-                          <%= button_to t('plans.index.plan_card.copy'), copy_plan_path(plan), method: :post,
-                              data: { confirm: t('plans.messages.plan_copied', year: year + 1) },
-                              class: "plan-card-action-btn secondary" %>
                             <%= link_to t('plans.index.plan_card.delete'), plan_path(plan),
                                 class: "plan-card-action-btn danger",
                                 data: {
