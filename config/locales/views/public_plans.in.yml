@@ -90,6 +90,7 @@ in:
     
     results:
       create_new_plan: "← नई योजना बनाएं"
+      view_my_plans: "मेरी योजनाएं देखें"
       chart_title: "मौसम डेटा और फसल वृद्धि विश्लेषण"
       loading_data: "डेटा लोड हो रहा है..."
       

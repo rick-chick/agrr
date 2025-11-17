@@ -31,9 +31,14 @@
         <p class="plans-empty-subtitle">
           <%= t('plans.index.no_plans_hint') %>
         </p>
-        <%= link_to new_plan_path, class: "btn-plans-primary" do %>
-          <%= t('plans.index.create_new') %>
-        <% end %>
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center;">
+          <%= link_to new_plan_path, class: "btn-plans-primary" do %>
+            <%= t('plans.index.create_new') %>
+          <% end %>
+          <%= link_to public_plans_path, class: "btn-plans-primary", style: "background-color: var(--color-primary-light);" do %>
+            <%= t('plans.index.try_public_plans') %>
+          <% end %>
+        </div>
       </div>
     <% else %>
         <!-- 年度別の計画一覧 -->

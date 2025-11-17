@@ -90,6 +90,7 @@ us:
     
     results:
       create_new_plan: "← Create New Plan"
+      view_my_plans: "View My Plans"
       chart_title: "Climate Data and Crop Growth Analysis"
       loading_data: "Loading data..."
       
