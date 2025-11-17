@@ -59,6 +59,12 @@
   background: var(--color-gray-50);
 }
 
+.nav-link-active {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  font-weight: var(--font-weight-semibold);
+}
+
 /* ============================================
    Navbar-specific Button Overrides
    Note: 基本のボタンスタイルは components/buttons.css を使用
@@ -199,6 +205,14 @@
 .nav-dropdown-item:hover {
   background: var(--color-gray-50);
   color: var(--color-primary);
+}
+
+.nav-dropdown-item-active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  border-left: 3px solid var(--color-primary);
+  padding-left: calc(var(--space-4) - 3px);
 }
 
 /* ============================================

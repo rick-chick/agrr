@@ -6,6 +6,8 @@ export default class extends Controller {
 
   connect() {
     this.isOpen = false
+    // Initialize aria attributes
+    this.updateMenu()
     // Close menu when clicking outside
     this.boundClickOutside = this.clickOutside.bind(this)
     document.addEventListener("click", this.boundClickOutside)
@@ -29,10 +31,19 @@ export default class extends Controller {
   }
 
   updateMenu() {
+    const menuId = this.menuTarget.id || "navbar-menu"
+    if (!this.menuTarget.id) {
+      this.menuTarget.id = menuId
+    }
+    
     if (this.isOpen) {
       this.element.setAttribute("data-navbar-open", "true")
+      this.toggleTarget.setAttribute("aria-expanded", "true")
+      this.toggleTarget.setAttribute("aria-controls", menuId)
     } else {
       this.element.removeAttribute("data-navbar-open")
+      this.toggleTarget.setAttribute("aria-expanded", "false")
+      this.toggleTarget.setAttribute("aria-controls", menuId)
     }
   }
 

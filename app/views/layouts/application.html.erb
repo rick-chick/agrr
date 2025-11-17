@@ -57,20 +57,20 @@
 </head>
 <body>
   <!-- i18n data attributes (hidden) for static and app pages -->
-  <div id="js-i18n" hidden <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>></div>
+  <div id="js-i18n" hidden aria-hidden="true" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>></div>
   <%= render "shared/navbar" %>
   
-  <div class="container">
+  <main class="container">
     <% if flash[:notice] %>
-      <div class="alert alert-success"><%= flash[:notice] %></div>
+      <div class="alert alert-success" role="status" aria-live="polite"><%= flash[:notice] %></div>
     <% end %>
     
     <% if flash[:alert] %>
-      <div class="alert alert-danger"><%= flash[:alert] %></div>
+      <div class="alert alert-danger" role="alert" aria-live="assertive"><%= flash[:alert] %></div>
     <% end %>
     
     <%= yield %>
-  </div>
+  </main>
   
   <%= render "shared/footer" %>
   

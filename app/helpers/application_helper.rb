@@ -79,5 +79,24 @@ module ApplicationHelper
       js_cultivation_gdd_target_label: t('js.cultivation_results.gdd_target_label', target: '__TARGET__')
     }
   end
+
+  # 現在のページが指定されたパスと一致するか判定
+  def current_page?(path)
+    request.path == path || request.path.start_with?("#{path}/")
+  end
+
+  # ナビゲーションリンクのクラスを返す（現在地の強調用）
+  def nav_link_class(path, base_class = "nav-link")
+    classes = [base_class]
+    classes << "nav-link-active" if current_page?(path)
+    classes.join(" ")
+  end
+
+  # ドロップダウンアイテムのクラスを返す（現在地の強調用）
+  def nav_dropdown_item_class(path, base_class = "nav-dropdown-item")
+    classes = [base_class]
+    classes << "nav-dropdown-item-active" if current_page?(path)
+    classes.join(" ")
+  end
 end
 
