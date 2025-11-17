@@ -148,6 +148,18 @@
   box-shadow: var(--shadow-xl);
 }
 
+.feature-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+
+.feature-card-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .feature-icon {
   font-size: var(--font-size-5xl);
   margin-bottom: var(--space-4);

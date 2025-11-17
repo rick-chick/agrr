@@ -40,53 +40,53 @@
     <p class="section-subtitle"><%= t('.features.subtitle') %></p>
     
     <div class="features-grid">
-      <div class="feature-card">
+      <%= link_to public_plans_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.weather.icon') %></div>
         <h3 class="feature-title"><%= t('.features.weather.title') %></h3>
         <p class="feature-description">
           <%= t('.features.weather.description') %>
         </p>
-      </div>
+      <% end %>
 
-      <div class="feature-card">
+      <%= link_to public_plans_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.ai.icon') %></div>
         <h3 class="feature-title"><%= t('.features.ai.title') %></h3>
         <p class="feature-description">
           <%= t('.features.ai.description') %>
         </p>
-      </div>
+      <% end %>
 
-      <div class="feature-card">
+      <%= link_to public_plans_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.optimization.icon') %></div>
         <h3 class="feature-title"><%= t('.features.optimization.title') %></h3>
         <p class="feature-description">
           <%= t('.features.optimization.description') %>
         </p>
-      </div>
+      <% end %>
 
-      <div class="feature-card">
+      <%= link_to logged_in? ? farms_path : about_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.field_management.icon') %></div>
         <h3 class="feature-title"><%= t('.features.field_management.title') %></h3>
         <p class="feature-description">
           <%= t('.features.field_management.description') %>
         </p>
-      </div>
+      <% end %>
 
-      <div class="feature-card">
+      <%= link_to public_plans_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.growth_prediction.icon') %></div>
         <h3 class="feature-title"><%= t('.features.growth_prediction.title') %></h3>
         <p class="feature-description">
           <%= t('.features.growth_prediction.description') %>
         </p>
-      </div>
+      <% end %>
 
-      <div class="feature-card">
+      <%= link_to about_path, class: "feature-card feature-card-link" do %>
         <div class="feature-icon"><%= t('.features.cloud.icon') %></div>
         <h3 class="feature-title"><%= t('.features.cloud.title') %></h3>
         <p class="feature-description">
           <%= t('.features.cloud.description') %>
         </p>
-      </div>
+      <% end %>
     </div>
   </section>
 
