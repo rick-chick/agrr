@@ -7,32 +7,23 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <!-- Bundled JavaScript and CSS (includes Leaflet) -->
+    <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
     
-    <!-- i18n Helper (共通i18nユーティリティ) -->
-    <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+    <!-- Core Design System - 必ず最初に読み込む -->
+    <%= render_core_stylesheets %>
     
-    <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
-    <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
+    <!-- Utility CSS classes -->
+    <%= render_utility_stylesheets %>
     
-    <!-- Notification & Dialog System (共通UI) -->
-    <%= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
-    <%= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
-    <%= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
-    
-    <!-- Core Design System -->
-    <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
     <!-- Components -->
-    <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "components/footer", "data-turbo-track": "reload" %>
+    <%= render_component_stylesheets %>
+    
     <!-- Layout-specific styles -->
-    <%= stylesheet_link_tag "layouts/admin", "data-turbo-track": "reload" %>
+    <%= render_feature_stylesheets(features: ["layouts/admin"]) %>
+    
+    <!-- Bundled JavaScript (includes Leaflet) -->
+    <%= render_common_javascripts(include_shared_systems: true) %>
   </head>
 
   <body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>

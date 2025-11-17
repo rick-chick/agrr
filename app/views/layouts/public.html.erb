@@ -3,41 +3,33 @@
 <head>
   <%= render "shared/meta_tags" %>
   
-  <!-- Bundled JavaScript and CSS (includes Leaflet) -->
+  <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   
-  <!-- i18n Helper (共通i18nユーティリティ) -->
-  <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
+  <!-- Core Design System - 必ず最初に読み込む -->
+  <%= render_core_stylesheets %>
   
-  <%# TODO: Fix Propshaft asset loading issue for other utilities %>
-  <%#= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
-  <%#= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
-  <%#= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
-  <%#= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
-  <%#= javascript_include_tag "progress_bar", "data-turbo-track": "reload", defer: true %>
+  <!-- Utility CSS classes -->
+  <%= render_utility_stylesheets %>
   
-  <!-- Core Design System -->
-  <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
   <!-- Components -->
-  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/cards", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/layouts", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/footer", "data-turbo-track": "reload" %>
+  <%= render_component_stylesheets %>
+  
   <!-- Feature-specific styles -->
-  <%= stylesheet_link_tag "features/public-plans", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/optimizing", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/results", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "public_plans_results", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/custom_gantt_chart", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/gantt_chart", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/climate_chart", "data-turbo-track": "reload" %>
+  <%= render_feature_stylesheets(features: [
+    "features/public-plans",
+    "features/optimizing",
+    "features/results",
+    "public_plans_results",
+    "features/fields-crops",
+    "features/custom_gantt_chart",
+    "features/gantt_chart",
+    "features/crop_palette",
+    "features/climate_chart"
+  ]) %>
+  
+  <!-- Bundled JavaScript (includes Leaflet) -->
+  <%= render_common_javascripts(include_shared_systems: false) %>
 </head>
 <body>
   <!-- i18n data attributes (hidden) -->
