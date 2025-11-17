@@ -7,23 +7,10 @@
 
 /* ============================================
    Wrapper & Container
+   Note: .plans-wrapper と .plans-container の基本スタイルは
+   components/layouts.css で定義されています。
+   ここでは plans 固有の調整のみを定義します。
    ============================================ */
-
-.plans-wrapper {
-  background: var(--color-gray-50);
-  padding: var(--space-3) 0 0 0;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-.plans-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
-  box-sizing: border-box;
-}
 
 .plans-gantt-section {
   margin-bottom: var(--space-6);

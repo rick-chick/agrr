@@ -23,23 +23,37 @@
   --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-success: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
   --gradient-warning: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  --gradient-success-surface: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
   
   /* Functional Colors - 機能的な色 */
   --color-success: #48bb78;
   --color-success-light: #9ae6b4;
   --color-success-dark: #2f855a;
+  --color-success-bg: #d4edda;
+  --color-success-border: #c3e6cb;
+  --color-success-text: #155724;
   
   --color-warning: #f6ad55;
   --color-warning-light: #fbd38d;
   --color-warning-dark: #dd6b20;
+  --color-warning-bg: #fff3cd;
+  --color-warning-border: #ffc107;
+  --color-warning-text: #856404;
   
   --color-error: #fc8181;
   --color-error-light: #feb2b2;
   --color-error-dark: #e53e3e;
+  --color-error-bg: #f8d7da;
+  --color-error-border: #f5c6cb;
+  --color-error-text: #721c24;
   
   --color-info: #4299e1;
   --color-info-light: #90cdf4;
   --color-info-dark: #2b6cb0;
+  --color-info-bg: #d1ecf1;
+  --color-info-border: #bee5eb;
+  --color-info-text: #0c5460;
+  --color-info-surface: #ebf8ff;
   
   /* Neutral Colors - グレースケール */
   --color-white: #ffffff;
@@ -224,6 +238,11 @@
   /* カードの最大幅を統一（ガントチャートと気象データカードの横幅を一致させる） */
   --card-max-width: 100%;
   --card-container-max-width: 1400px;
+  
+  /* ページレイアウトコンテナ */
+  --page-container-max-width: 1400px;
+  --page-container-padding-vertical: var(--space-6);
+  --page-container-padding-horizontal: var(--space-5);
 }
 
 /* ============================================

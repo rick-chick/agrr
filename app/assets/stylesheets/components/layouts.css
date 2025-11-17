@@ -1,0 +1,89 @@
+/* ============================================
+   Layout Components
+   Created: 2025-01-27
+   Purpose: 統一されたレイアウトコンポーネント（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Page Shell - ページ全体のラッパー
+   ============================================ */
+
+.page-shell,
+.plans-wrapper,
+.public-plans-wrapper {
+  background: var(--color-gray-50);
+  padding: var(--space-3) 0 0 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  min-height: calc(100vh - var(--navbar-height));
+}
+
+/* ============================================
+   Page Container - ページコンテンツのコンテナ
+   ============================================ */
+
+.page-container,
+.plans-container,
+.free-plans-container {
+  max-width: var(--page-container-max-width);
+  margin: 0 auto;
+  padding: var(--page-container-padding-vertical) var(--page-container-padding-horizontal);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* コンテナサイズバリエーション */
+.page-container-sm {
+  max-width: var(--container-sm);
+}
+
+.page-container-md {
+  max-width: var(--container-md);
+}
+
+.page-container-lg {
+  max-width: var(--container-lg);
+}
+
+.page-container-xl {
+  max-width: var(--container-xl);
+}
+
+/* ============================================
+   Section - セクション区切り
+   ============================================ */
+
+.page-section {
+  margin-bottom: var(--space-6);
+}
+
+.page-section:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--space-4) var(--space-4);
+  }
+  
+  .page-section {
+    margin-bottom: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--space-3) var(--space-3);
+  }
+  
+  .page-section {
+    margin-bottom: var(--space-3);
+  }
+}
+
