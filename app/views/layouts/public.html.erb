@@ -25,6 +25,7 @@
   <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "components/footer", "data-turbo-track": "reload" %>
   <!-- Feature-specific styles -->
   <%= stylesheet_link_tag "features/public-plans", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/optimizing", "data-turbo-track": "reload" %>
@@ -32,18 +33,9 @@
   <%= stylesheet_link_tag "public_plans_results", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/custom_gantt_chart", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "features/gantt_chart", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "features/climate_chart", "data-turbo-track": "reload" %>
-  
-  <style>
-    /* Layout-specific adjustments using design tokens */
-    body {
-      padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
-      min-height: 100vh;
-      /* overflow-x: hidden; を削除して2重スクロールを防止 */
-    }
-    
-  </style>
 </head>
 <body>
   <!-- i18n data attributes (hidden) -->
@@ -51,15 +43,17 @@
   <%= render "shared/navbar" %>
 
   <!-- Flash Messages -->
-  <% if flash[:notice] %>
-    <div class="alert alert-success" style="max-width: 1280px; margin: 20px auto; padding: 16px;"><%= flash[:notice] %></div>
-  <% end %>
-  
-  <% if flash[:alert] %>
-    <div class="alert alert-danger" style="max-width: 1280px; margin: 20px auto; padding: 16px;"><%= flash[:alert] %></div>
-  <% end %>
-
-  <%= yield %>
+  <main class="container">
+    <% if flash[:notice] %>
+      <div class="alert alert-success" role="status" aria-live="polite"><%= flash[:notice] %></div>
+    <% end %>
+    
+    <% if flash[:alert] %>
+      <div class="alert alert-danger" role="alert" aria-live="assertive"><%= flash[:alert] %></div>
+    <% end %>
+    
+    <%= yield %>
+  </main>
   
   <%= render "shared/footer" %>
   

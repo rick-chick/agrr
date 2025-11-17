@@ -7,24 +7,10 @@
 
 /* ============================================
    Wrapper & Container
+   Note: .public-plans-wrapper と .free-plans-container の基本スタイルは
+   components/layouts.css で定義されています。
+   ここでは public-plans 固有の調整のみを定義します。
    ============================================ */
-
-.public-plans-wrapper {
-  background: var(--color-gray-50);
-  padding: var(--space-3) 0 0 0;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-.free-plans-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 var(--space-5);
-  width: 100%;
-  box-sizing: border-box;
-}
 
 /* ============================================
    Progress Steps
@@ -126,8 +112,8 @@
 }
 
 .compact-header-card.success {
-  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
-  border: var(--border-width-1) solid #9ae6b4;
+  background: var(--gradient-success-surface);
+  border: var(--border-width-1) solid var(--color-success-light);
 }
 
 .compact-header-title {
@@ -366,7 +352,7 @@
   display: flex;
   align-items: center;
   padding: var(--space-3);
-  background: #f7fafc;
+  background: var(--color-gray-100);
   border-radius: var(--radius-base);
 }
 
@@ -587,7 +573,7 @@
 
 .crop-selection-card.selected {
   border-color: var(--color-info) !important;
-  background: #ebf8ff !important;
+  background: var(--color-info-surface) !important;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2) !important;
   transform: translateY(-2px) !important;
 }
@@ -628,7 +614,7 @@
 }
 
 .crop-selection-card.selected .enhanced-card-title {
-  color: #2b6cb0 !important;
+  color: var(--color-info-dark) !important;
   font-weight: var(--font-weight-extrabold) !important;
 }
 
@@ -709,14 +695,14 @@
 
 .plan-progress-item.completed {
   border-color: var(--color-success);
-  background: #f0fff4;
+  background: var(--gradient-success-surface);
 }
 
 .progress-icon {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: #edf2f7;
+  background: var(--color-gray-200);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -747,7 +733,7 @@
 .mini-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid #f3f3f3;
+  border: 2px solid var(--color-gray-200);
   border-top: 2px solid var(--color-secondary);
   border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
@@ -901,7 +887,7 @@
 .crop-card {
   display: block;
   background: white;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-gray-300);
   border-radius: 12px;
   padding: 2rem 1.5rem;
   text-align: center;
@@ -913,7 +899,7 @@
 }
 
 .crop-card:hover {
-  border-color: #4299e1;
+  border-color: var(--color-info);
   transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
 }
@@ -925,7 +911,7 @@
   width: 32px;
   height: 32px;
   background: white;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-gray-300);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -938,14 +924,14 @@
 
 .crop-check:checked + .crop-card {
   background: #ebf8ff;
-  border-color: #4299e1;
+  border-color: var(--color-info);
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
 }
 
 .crop-check:checked + .crop-card .check-mark {
   opacity: 1;
-  background: #4299e1;
-  border-color: #4299e1;
+  background: var(--color-info);
+  border-color: var(--color-info);
 }
 
 /* Fixed Bottom Bar Styles */
@@ -1006,7 +992,7 @@
 
 .counter-label {
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--color-gray-600);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1014,12 +1000,12 @@
 .counter-badge {
   width: 44px;
   height: 44px;
-  background: #e2e8f0;
+  background: var(--color-gray-300);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a0aec0;
+  color: var(--color-gray-500);
   font-size: 1.5rem;
   font-weight: 900;
   transition: all 0.3s ease;
@@ -1029,7 +1015,7 @@
 .counter-unit {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--color-gray-800);
   white-space: nowrap;
 }
 
@@ -1050,7 +1036,7 @@
   text-align: center;
   margin-top: 0.75rem;
   font-size: 0.875rem;
-  color: #e53e3e;
+  color: var(--color-error-dark);
 }
 
 /* Responsive Design for Small Screens */
@@ -1163,7 +1149,7 @@
   .selection-counter-group::before {
     content: "選択: ";
     font-size: 0.7rem;
-    color: #718096;
+    color: var(--color-gray-600);
     font-weight: 600;
     position: absolute;
     top: -16px;
@@ -1313,7 +1299,7 @@
 .btn-white {
   background: white;
   color: var(--color-gray-700);
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-gray-300);
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -1350,8 +1336,8 @@
 }
 
 .btn-gradient:disabled {
-  background: #e2e8f0;
-  color: #a0aec0;
+  background: var(--color-gray-300);
+  color: var(--color-gray-500);
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.6;

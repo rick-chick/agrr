@@ -9,17 +9,13 @@
   <!-- Core Design System -->
   <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
   <!-- Components -->
+  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
   <!-- Auth-specific styles -->
   <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" %>
-  
-  <style>
-    /* Auth layout adjustments with navbar */
-    body {
-      padding-top: 80px; /* ナビゲーションバーの高さ分の余白 */
-    }
-  </style>
 </head>
 <body class="auth-body" data-shared-navbar-brand="<%= t('shared.navbar.brand') %>" data-shared-navbar-plans="<%= t('shared.navbar.plans') %>" data-shared-navbar-farms="<%= t('shared.navbar.farms') %>" data-shared-navbar-crops="<%= t('shared.navbar.crops') %>" data-shared-navbar-interaction-rules="<%= t('shared.navbar.interaction_rules') %>" data-shared-navbar-login="<%= t('shared.navbar.login') %>" data-shared-navbar-logout="<%= t('shared.navbar.logout') %>" data-shared-navbar-logout-confirm="<%= t('shared.navbar.logout_confirm') %>">
   

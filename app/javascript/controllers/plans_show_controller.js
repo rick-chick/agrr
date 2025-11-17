@@ -62,9 +62,9 @@ export default class extends Controller {
   showError(container, message) {
     if (!container) return;
     container.innerHTML = `
-      <div style="padding: var(--space-8); text-align: center; background: var(--color-gray-50); border-radius: var(--radius-lg);">
-        <div style="font-size: 3rem; margin-bottom: var(--space-4);">⚠️</div>
-        <p style="color: var(--color-danger); font-weight: var(--font-weight-semibold);">${message}</p>
+      <div class="gantt-error-container">
+        <div class="gantt-error-icon">⚠️</div>
+        <p class="gantt-error-message">${message}</p>
       </div>
     `;
   }

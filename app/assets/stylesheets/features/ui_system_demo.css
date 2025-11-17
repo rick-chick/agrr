@@ -1,0 +1,122 @@
+/* ============================================
+   UI System Demo Page Styles
+   Created: 2025-01-27
+   Purpose: UI Systemデモページのスタイル（デザイントークン活用）
+   ============================================ */
+
+.ui-demo-container {
+  max-width: var(--container-xl);
+  margin: var(--space-10) auto;
+  padding: var(--space-5);
+}
+
+.ui-demo-title {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+}
+
+.ui-demo-description {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-10);
+}
+
+.ui-demo-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  margin-bottom: var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-demo-section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-5);
+  color: var(--text-primary);
+}
+
+.ui-demo-section-description {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+.ui-demo-button-group {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.ui-demo-button-group:last-child {
+  margin-bottom: 0;
+}
+
+.ui-demo-result-box {
+  padding: var(--space-4);
+  background: var(--color-gray-100);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  min-height: 50px;
+}
+
+.ui-demo-docs-section {
+  background: rgba(66, 153, 225, 0.1);
+  border: var(--border-width-2) solid rgba(66, 153, 225, 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+}
+
+.ui-demo-docs-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-4);
+  color: var(--color-info-dark);
+}
+
+.ui-demo-docs-text {
+  color: var(--color-info-dark);
+  margin-bottom: var(--space-4);
+}
+
+.ui-demo-docs-list {
+  color: var(--color-info-dark);
+  padding-left: var(--space-5);
+}
+
+.ui-demo-docs-list li {
+  margin-bottom: var(--space-2);
+}
+
+.ui-demo-code {
+  background: var(--color-white);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .ui-demo-container {
+    padding: var(--space-4);
+    margin: var(--space-6) auto;
+  }
+
+  .ui-demo-section {
+    padding: var(--space-5);
+  }
+
+  .ui-demo-button-group {
+    flex-direction: column;
+  }
+
+  .ui-demo-button-group .btn {
+    width: 100%;
+  }
+}
+

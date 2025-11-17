@@ -108,12 +108,12 @@
   </div>
   
   <%# 詳細パネル（作物クリック時に表示） %>
-  <div id="detail-panel" style="margin-top: var(--space-6); display: none;">
-    <div style="background: var(--color-gray-50); border-radius: var(--radius-lg); padding: var(--space-6);">
-      <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--space-4);">
+  <div id="detail-panel" class="gantt-detail-panel">
+    <div class="gantt-detail-panel-container">
+      <h3 class="gantt-detail-panel-title">
         <%= detail_title %>
       </h3>
-      <div id="detail-content">
+      <div id="detail-content" class="gantt-detail-content">
         <%= detail_loading %>
       </div>
     </div>

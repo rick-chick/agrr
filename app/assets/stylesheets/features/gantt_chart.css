@@ -1,0 +1,53 @@
+/* ============================================
+   Gantt Chart Feature Styles
+   Created: 2025-01-27
+   Purpose: ガントチャート関連のスタイル（デザイントークン活用）
+   ============================================ */
+
+/* ============================================
+   Detail Panel
+   ============================================ */
+
+.gantt-detail-panel {
+  margin-top: var(--space-6);
+  display: none;
+}
+
+.gantt-detail-panel-container {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.gantt-detail-panel-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.gantt-detail-content {
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Error Display
+   ============================================ */
+
+.gantt-error-container {
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.gantt-error-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+}
+
+.gantt-error-message {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+

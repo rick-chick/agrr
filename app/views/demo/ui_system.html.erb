@@ -1,24 +1,25 @@
 <% content_for :title, 'UI System Demo' %>
+<%= stylesheet_link_tag "features/ui_system_demo", "data-turbo-track": "reload" %>
 
-<div class="container" style="max-width: 1200px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 30px; color: #111827;">
+<div class="ui-demo-container">
+  <h1 class="ui-demo-title">
     🎨 UI System Demo
   </h1>
   
-  <p style="color: #6B7280; margin-bottom: 40px;">
+  <p class="ui-demo-description">
     統一的な通知・ダイアログシステムのデモページです。各ボタンをクリックして動作を確認できます。
   </p>
   
   <!-- Toast Notifications -->
-  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+  <section class="ui-demo-section">
+    <h2 class="ui-demo-section-title">
       📬 Toast Notifications（トースト通知）
     </h2>
-    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+    <p class="ui-demo-section-description">
       画面下部に表示される軽量な通知。自動的に消えます（デフォルト4秒）。
     </p>
     
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div class="ui-demo-button-group">
       <button class="btn btn-success" onclick="Notify.success('保存が完了しました')">
         ✅ Success
       </button>
@@ -38,15 +39,15 @@
   </section>
   
   <!-- Snackbar -->
-  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+  <section class="ui-demo-section">
+    <h2 class="ui-demo-section-title">
       📋 Snackbar（スナックバー）
     </h2>
-    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+    <p class="ui-demo-section-description">
       アクション付きの重要な通知。画面下部に表示され、やや長く表示されます（デフォルト6秒）。
     </p>
     
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div class="ui-demo-button-group">
       <button class="btn btn-success" onclick="Notify.snackbar('作物を削除しました', { type: 'success', action: { text: '元に戻す', callback: () => Notify.success('削除を取り消しました') } })">
         Delete with Undo
       </button>
@@ -57,15 +58,15 @@
   </section>
   
   <!-- Dialog System -->
-  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+  <section class="ui-demo-section">
+    <h2 class="ui-demo-section-title">
       💬 Dialog System（ダイアログ）
     </h2>
-    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+    <p class="ui-demo-section-description">
       ネイティブの alert/confirm/prompt を置き換えるモダンなダイアログ。
     </p>
     
-    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+    <div class="ui-demo-button-group">
       <button class="btn btn-primary" onclick="testAlert()">
         Alert Dialog
       </button>
@@ -83,21 +84,21 @@
       </button>
     </div>
     
-    <div id="dialog-result" style="padding: 15px; background: #F3F4F6; border-radius: 8px; color: #374151; font-size: 14px; min-height: 50px;">
+    <div id="dialog-result" class="ui-demo-result-box">
       結果がここに表示されます
     </div>
   </section>
   
   <!-- Loading System -->
-  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+  <section class="ui-demo-section">
+    <h2 class="ui-demo-section-title">
       ⏳ Loading System（ローディング表示）
     </h2>
-    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+    <p class="ui-demo-section-description">
       長時間かかる処理の進捗表示。プログレスバーにも対応。
     </p>
     
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div class="ui-demo-button-group">
       <button class="btn btn-primary" onclick="testBasicLoading()">
         Basic Loading
       </button>
@@ -114,15 +115,15 @@
   </section>
   
   <!-- Combined Example -->
-  <section style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #111827;">
+  <section class="ui-demo-section">
+    <h2 class="ui-demo-section-title">
       🚀 Combined Example（実践的な例）
     </h2>
-    <p style="color: #6B7280; margin-bottom: 20px; font-size: 14px;">
+    <p class="ui-demo-section-description">
       実際の使用シーンを想定した組み合わせ例。
     </p>
     
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div class="ui-demo-button-group">
       <button class="btn btn-primary" onclick="exampleFormSubmit()">
         Form Submit Simulation
       </button>
@@ -136,16 +137,15 @@
   </section>
   
   <!-- Documentation Links -->
-  <section style="background: #EFF6FF; border: 2px solid #BFDBFE; border-radius: 12px; padding: 30px;">
-    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 15px; color: #1E40AF;">
+  <section class="ui-demo-docs-section">
+    <h2 class="ui-demo-docs-title">
       📚 Documentation
     </h2>
-    <p style="color: #1E3A8A; margin-bottom: 15px;">
+    <p class="ui-demo-docs-text">
       詳細なガイドと使用例は以下のドキュメントを参照してください：
     </p>
-    <ul style="color: #1E3A8A; padding-left: 20px;">
-      <li style="margin-bottom: 8px;"><code style="background: white; padding: 2px 6px; border-radius: 4px;">docs/UI_SYSTEM_GUIDE.md</code> - 完全なAPIガイド</li>
-      <li><code style="background: white; padding: 2px 6px; border-radius: 4px;">docs/UI_SYSTEM_EXAMPLES.md</code> - 実装例集</li>
+    <ul class="ui-demo-docs-list">
+      <li><code class="ui-demo-code">docs/design/UI_SYSTEM_GUIDE.md</code> - 完全なAPIガイド</li>
     </ul>
   </section>
 </div>

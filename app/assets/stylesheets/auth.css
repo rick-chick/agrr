@@ -1,23 +1,27 @@
-/* Auth Pages - Login/Logout Styles */
+/* ============================================
+   Auth Pages - Login/Logout Styles
+   Created: 2025-01-27
+   Purpose: 認証ページのスタイル（デザイントークン活用）
+   ============================================ */
 
 /* Body and Container */
 .auth-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: var(--font-family-base);
+  background: var(--gradient-primary);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 80px; /* Account for navbar */
+  /* padding-topはreset.cssで統一 */
 }
 
 .login-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 3rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  padding: var(--space-8);
   text-align: center;
   max-width: 400px;
   width: 90%;
@@ -25,16 +29,16 @@
 
 /* Logo and Branding */
 .login-logo {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 0.5rem;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
 }
 
 .subtitle {
-  color: #666;
-  margin-bottom: 2rem;
-  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+  font-size: var(--font-size-lg);
 }
 
 /* Google OAuth Button */
@@ -49,13 +53,13 @@
   align-items: center;
   justify-content: center;
   background: #4285f4;
-  color: white;
+  color: var(--text-inverse);
   text-decoration: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
   border: none;
   cursor: pointer;
   width: 100%;
@@ -65,19 +69,19 @@
 .google-btn:hover {
   background: #3367d6;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .google-icon {
   width: 20px;
   height: 20px;
-  margin-right: 12px;
-  background: white;
-  border-radius: 4px;
+  margin-right: var(--space-3);
+  background: var(--color-white);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: var(--space-1);
 }
 
 .google-icon svg {
@@ -85,69 +89,50 @@
   height: 18px;
 }
 
-/* Flash Messages */
-.alert {
-  background: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  border: 1px solid #fcc;
-}
-
-.notice {
-  background: #efe;
-  color: #363;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  border: 1px solid #cfc;
-}
-
 /* OAuth Error Display */
 .oauth-error {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 2rem;
+  background: var(--color-warning-light);
+  border: var(--border-width-1) solid var(--color-warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .oauth-error-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-4);
 }
 
 .oauth-error h3 {
-  color: #856404;
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
+  color: var(--color-warning-dark);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-xl);
 }
 
 .oauth-error p {
-  color: #856404;
+  color: var(--color-warning-dark);
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
 
 /* Development Mock Login Section */
 .dev-login-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: var(--border-width-1) solid var(--border-color-light);
 }
 
 .dev-login-title {
-  color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
 }
 
 .dev-login-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -155,13 +140,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-inverse);
   text-decoration: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
   border: none;
   cursor: pointer;
   width: 100%;
@@ -170,78 +155,81 @@
 
 .mock-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .mock-btn-developer {
-  background: #007bff;
+  background: var(--color-info);
 }
 
 .mock-btn-developer:hover {
-  background: #0056b3;
+  background: var(--color-info-dark);
 }
 
 .mock-btn-farmer {
-  background: #28a745;
+  background: var(--color-success);
 }
 
 .mock-btn-farmer:hover {
-  background: #1e7e34;
+  background: var(--color-success-dark);
 }
 
 .mock-btn-researcher {
-  background: #6f42c1;
+  background: var(--color-secondary);
 }
 
 .mock-btn-researcher:hover {
-  background: #5a32a3;
+  background: var(--color-secondary-dark);
 }
 
 .mock-btn-icon {
-  background: white;
+  background: var(--color-white);
   color: currentColor;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   width: 20px;
   height: 20px;
-  margin-right: 12px;
+  margin-right: var(--space-3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .dev-note {
-  margin-top: 1rem;
-  color: #999;
-  font-size: 0.8rem;
+  margin-top: var(--space-4);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
 /* Footer Text */
 .auth-footer {
-  margin-top: 2rem;
-  color: #666;
-  font-size: 0.9rem;
+  margin-top: var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
 }
 
-/* Responsive Design */
+/* ============================================
+   Responsive Design
+   ============================================ */
+
 @media (max-width: 768px) {
   .login-container {
-    padding: 2rem;
+    padding: var(--space-6);
     width: 95%;
   }
 
   .login-logo {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
   }
 
   .subtitle {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
 
   .google-btn,
   .mock-btn {
-    font-size: 14px;
-    padding: 10px 20px;
+    font-size: var(--font-size-sm);
+    padding: var(--space-3) var(--space-5);
   }
 }
 
