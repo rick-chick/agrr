@@ -3,11 +3,11 @@
 <div class="plans-wrapper">
   <div class="plans-container" id="<%= dom_id(@vm.plan) %>" data-undo-delete-record>
     <!-- ヘッダーアクション -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); gap: var(--space-3); flex-wrap: wrap;">
+    <div class="action-bar">
       <%= link_to plans_path, class: "btn-plans-secondary" do %>
         <%= t('plans.show.back_to_list') %>
       <% end %>
-      <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+      <div class="action-bar-group">
         <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@vm.plan),
             class: "btn-plans-secondary" %>
         <%= link_to t('plans.show.delete'), plan_path(@vm.plan),
@@ -25,8 +25,8 @@
 
     <!-- サマリーカード -->
     <div class="content-card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
-        <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin: 0;">
+      <div class="content-card-header">
+        <h1 class="content-card-header-title">
           <%= t('plans.show.header.title', year: @vm.plan.plan_year) %>
         </h1>
         <span class="plan-card-status completed">
@@ -34,41 +34,41 @@
         </span>
       </div>
       
-      <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+      <p class="content-card-description">
         <%= t('plans.show.header.subtitle', count: @vm.plan.field_cultivations.count) %>
       </p>
       
       <!-- 統計情報グリッド -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
-        <div>
-          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">
             <%= t('plans.show.header.farm') %>
           </div>
-          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+          <div class="stat-value">
             <%= @vm.plan.farm.display_name %>
           </div>
         </div>
-        <div>
-          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+        <div class="stat-item">
+          <div class="stat-label">
             <%= t('plans.show.header.total_area') %>
           </div>
-          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+          <div class="stat-value">
             <%= number_with_delimiter(@vm.plan.total_area) %> ㎡
           </div>
         </div>
-        <div>
-          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+        <div class="stat-item">
+          <div class="stat-label">
             <%= t('plans.show.header.field_count') %>
           </div>
-          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+          <div class="stat-value">
             <%= t('plans.show.header.field_count_value', count: @vm.plan.cultivation_plan_fields.count) %>
           </div>
         </div>
-        <div>
-          <div style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+        <div class="stat-item">
+          <div class="stat-label">
             <%= t('plans.show.header.planning_period') %>
           </div>
-          <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary);">
+          <div class="stat-value">
             <%= t('plans.show.header.planning_period_value', 
                    start: @vm.plan.planning_start_date.year,
                    end: @vm.plan.planning_end_date.year) %>
