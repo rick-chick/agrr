@@ -7,51 +7,41 @@
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   
   <!-- Core Design System - 必ず最初に読み込む -->
-  <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
+  <%= render_core_stylesheets %>
   
   <!-- Utility CSS classes -->
-  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
+  <%= render_utility_stylesheets %>
   
   <!-- Components -->
-  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/cards", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/layouts", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/footer", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/crop_selection", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/farm-cards", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/undo_toast", "data-turbo-track": "reload" %>
+  <%= render_component_stylesheets(components: [
+    "components/buttons",
+    "components/forms",
+    "components/navbar",
+    "components/cards",
+    "components/layouts",
+    "components/footer",
+    "components/crop_selection",
+    "components/farm-cards",
+    "components/undo_toast"
+  ]) %>
+  
   <!-- Feature-specific styles -->
-  <%= stylesheet_link_tag "features/fields-crops", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/crop_ai_ad", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/interaction-rules", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/crop_palette", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/task_schedule_blueprints_board", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/plans", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/optimizing", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/climate_chart", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/task_schedule_timeline", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/gantt_chart", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "features/pages", "data-turbo-track": "reload" %>
+  <%= render_feature_stylesheets(features: [
+    "features/fields-crops",
+    "features/crop_ai_ad",
+    "features/interaction-rules",
+    "features/crop_palette",
+    "features/task_schedule_blueprints_board",
+    "features/plans",
+    "features/optimizing",
+    "features/climate_chart",
+    "features/task_schedule_timeline",
+    "features/gantt_chart",
+    "features/pages"
+  ]) %>
   
   <!-- Bundled JavaScript (includes Leaflet) -->
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
-  
-  <!-- i18n Helper (共通i18nユーティリティ) -->
-  <%= javascript_include_tag "i18n_helper", "data-turbo-track": "reload", defer: true %>
-  
-  <!-- SVG Drag & Drop Utilities (共通ユーティリティ) -->
-  <%= javascript_include_tag "svg_drag_utils", "data-turbo-track": "reload", defer: true %>
-  
-  <!-- Task Blueprint Card Drag (作業予定カードのドラッグアンドドロップ) -->
-  <%# Stimulusコントローラーに移行したため、既存のJavaScriptファイルは無効化 %>
-  
-  <!-- Notification & Dialog System (共通UI) -->
-  <%= javascript_include_tag "shared/notification_system", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_include_tag "shared/dialog_system", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_include_tag "shared/loading_system", "data-turbo-track": "reload", defer: true %>
+  <%= render_common_javascripts(include_shared_systems: true) %>
   
   <!-- Development: Client-side logging to server -->
   <% if Rails.env.development? %>

@@ -98,5 +98,68 @@ module ApplicationHelper
     classes << "nav-dropdown-item-active" if current_page?(path)
     classes.join(" ")
   end
+
+  # ============================================
+  # UI/UX統一: スタイルシート読み込み順序の統一
+  # ============================================
+  
+  # コアデザインシステムのスタイルシートを読み込む（必須・最初に読み込む）
+  def render_core_stylesheets
+    capture do
+      concat stylesheet_link_tag("core/variables", "data-turbo-track": "reload")
+      concat stylesheet_link_tag("core/reset", "data-turbo-track": "reload")
+    end
+  end
+
+  # ユーティリティクラスのスタイルシートを読み込む
+  def render_utility_stylesheets
+    stylesheet_link_tag("utilities", "data-turbo-track": "reload")
+  end
+
+  # 共通コンポーネントのスタイルシートを読み込む
+  def render_component_stylesheets(components: nil)
+    default_components = [
+      "components/buttons",
+      "components/forms",
+      "components/navbar",
+      "components/cards",
+      "components/layouts",
+      "components/footer"
+    ]
+    
+    components_to_load = components || default_components
+    
+    capture do
+      components_to_load.each do |component|
+        concat stylesheet_link_tag(component, "data-turbo-track": "reload")
+      end
+    end
+  end
+
+  # 機能固有のスタイルシートを読み込む
+  def render_feature_stylesheets(features: [])
+    return "" if features.empty?
+    
+    capture do
+      features.each do |feature|
+        concat stylesheet_link_tag(feature, "data-turbo-track": "reload")
+      end
+    end
+  end
+
+  # 共通JavaScriptを読み込む
+  def render_common_javascripts(include_shared_systems: true)
+    capture do
+      concat javascript_include_tag("application", "data-turbo-track": "reload", type: "module")
+      concat javascript_include_tag("i18n_helper", "data-turbo-track": "reload", defer: true)
+      
+      if include_shared_systems
+        concat javascript_include_tag("svg_drag_utils", "data-turbo-track": "reload", defer: true)
+        concat javascript_include_tag("shared/notification_system", "data-turbo-track": "reload", defer: true)
+        concat javascript_include_tag("shared/dialog_system", "data-turbo-track": "reload", defer: true)
+        concat javascript_include_tag("shared/loading_system", "data-turbo-track": "reload", defer: true)
+      end
+    end
+  end
 end
 
