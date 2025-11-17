@@ -1,7 +1,7 @@
 <%# app/views/public_plans/results/_detail_panel.html.erb %>
 <%# 詳細パネル（モーダル/展開パネル） - JavaScriptで表示制御 %>
 
-<div class="detail-panel" id="detailPanel" style="display: none;">
+<div class="detail-panel hidden" id="detailPanel">
   <%# オーバーレイ（モバイル用） %>
   <div class="detail-panel-overlay" id="panelOverlay"></div>
   
@@ -45,15 +45,15 @@
       </div>
       
       <%# タブコンテンツ（JavaScriptで動的に切り替え） %>
-      <div id="tab-info-content" class="detail-tab-content active" style="display: none;">
+      <div id="tab-info-content" class="detail-tab-content active hidden">
         <%= render 'public_plans/results/detail_info_tab' %>
       </div>
       
-      <div id="tab-temperature-content" class="detail-tab-content" style="display: none;">
+      <div id="tab-temperature-content" class="detail-tab-content hidden">
         <%= render 'public_plans/results/detail_temperature_tab' %>
       </div>
       
-      <div id="tab-stages-content" class="detail-tab-content" style="display: none;">
+      <div id="tab-stages-content" class="detail-tab-content hidden">
         <%= render 'public_plans/results/detail_stages_tab' %>
       </div>
     </div>

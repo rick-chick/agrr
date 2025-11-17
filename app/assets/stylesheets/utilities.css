@@ -157,6 +157,31 @@ body {
 .d-flex { display: flex !important; }
 .d-grid { display: grid !important; }
 
+/* Visibility Utilities - インラインスタイル置き換え用 */
+.hidden { display: none !important; }
+.visible { display: block !important; }
+.invisible { visibility: hidden !important; }
+
+/* Flexbox Utilities - よく使われる組み合わせ */
+.flex { display: flex !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.flex-nowrap { flex-wrap: nowrap !important; }
+.gap-1 { gap: var(--space-1) !important; }
+.gap-2 { gap: var(--space-2) !important; }
+.gap-3 { gap: var(--space-3) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+
+/* Width Utilities */
+.w-full { width: 100% !important; }
+.w-auto { width: auto !important; }
+.max-w-full { max-width: 100% !important; }
+.max-w-sm { max-width: 400px !important; }
+.max-w-md { max-width: 600px !important; }
+.max-w-lg { max-width: 800px !important; }
+
+/* Spacer Utilities */
+.spacer-height-120 { height: 120px !important; }
+
 /* Debug Info Box */
 .debug-box {
   background: var(--color-warning-light);
