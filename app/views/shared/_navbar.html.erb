@@ -1,17 +1,55 @@
 <!-- Navigation Bar -->
-<nav class="navbar">
+<nav class="navbar" data-controller="navbar">
   <a href="<%= root_path %>" class="navbar-brand">🌾 <%= t('shared.navbar.brand') %></a>
-  <div class="navbar-nav">
+  
+  <!-- Mobile Menu Toggle Button -->
+  <button class="navbar-toggle" data-navbar-target="toggle" data-action="click->navbar#toggle" aria-label="<%= t('shared.navbar.menu_toggle') %>">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="navbar-toggle-icon">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="navbar-toggle-icon navbar-toggle-icon-close">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+  
+  <div class="navbar-nav" data-navbar-target="menu">
     <% if logged_in? %>
-      <%= link_to t('shared.navbar.plans'), plans_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.planning_schedules'), fields_selection_planning_schedules_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.farms'), farms_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.crops'), crops_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.fertilizes'), fertilizes_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.pesticides'), pesticides_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.pests'), pests_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.agricultural_tasks'), agricultural_tasks_path, class: "nav-link" %>
-      <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: "nav-link" %>
+      <!-- Planning Dropdown -->
+      <div class="nav-dropdown" data-controller="dropdown">
+        <button class="nav-link nav-dropdown-toggle" data-dropdown-target="toggle" data-action="click->dropdown#toggle">
+          <%= t('shared.navbar.menu_planning') %>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-dropdown-icon">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div class="nav-dropdown-menu" data-dropdown-target="menu">
+          <%= link_to t('shared.navbar.plans'), plans_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.planning_schedules'), fields_selection_planning_schedules_path, class: "nav-dropdown-item" %>
+        </div>
+      </div>
+      
+      <!-- Master Data Dropdown -->
+      <div class="nav-dropdown" data-controller="dropdown">
+        <button class="nav-link nav-dropdown-toggle" data-dropdown-target="toggle" data-action="click->dropdown#toggle">
+          <%= t('shared.navbar.menu_master_data') %>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-dropdown-icon">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div class="nav-dropdown-menu" data-dropdown-target="menu">
+          <%= link_to t('shared.navbar.farms'), farms_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.crops'), crops_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.fertilizes'), fertilizes_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.pesticides'), pesticides_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.pests'), pests_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.agricultural_tasks'), agricultural_tasks_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: "nav-dropdown-item" %>
+        </div>
+      </div>
+      
       <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: t('shared.navbar.logout'), data: { turbo_confirm: t('shared.navbar.logout_confirm') } do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

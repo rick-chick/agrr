@@ -3,6 +3,7 @@ in:
     navbar:
       brand: "AGRR"
       plans: "योजनाएं"
+      planning_schedules: "योजना अनुसूची"
       farms: "खेत"
       crops: "फसलें"
       fertilizes: "उर्वरक"
@@ -13,6 +14,9 @@ in:
       login: "लॉगिन"
       logout: "लॉगआउट"
       logout_confirm: "क्या आप वाकई लॉगआउट करना चाहते हैं?"
+      menu_planning: "योजना"
+      menu_master_data: "मास्टर डेटा"
+      menu_toggle: "मेनू"
       
     footer:
       brand_description: "कृषि फसल योजना सहायता प्रणाली\nस्थायी कृषि का लक्ष्य"

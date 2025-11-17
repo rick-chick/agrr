@@ -3,6 +3,7 @@ us:
     navbar:
       brand: "AGRR"
       plans: "Plans"
+      planning_schedules: "Planning Schedules"
       farms: "Farms"
       crops: "Crops"
       fertilizes: "Fertilizers"
@@ -13,6 +14,9 @@ us:
       login: "Login"
       logout: "Logout"
       logout_confirm: "Are you sure you want to logout?"
+      menu_planning: "Planning"
+      menu_master_data: "Master Data"
+      menu_toggle: "Menu"
       
     footer:
       brand_description: "Agricultural Crop Planning Support System\nAiming for Sustainable Agriculture"
