@@ -65,8 +65,9 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_respond_to @service, :schedule
   end
 
-  test 'weather uses noaa data source by default' do
+  test 'weather uses noaa data source by default and reads json from output file' do
     captured_args = nil
+    output_path = nil
     status = Minitest::Mock.new
     status.expect(:success?, true)
     status.expect(:exitstatus, 0)
@@ -75,9 +76,14 @@ class AgrrServiceTest < ActiveSupport::TestCase
       File.stub(:socket?, true) do
         Open3.stub(:capture3, lambda do |*args|
           captured_args = args
-          ['{"data":[]}', '', status]
+          output_index = args.index('--output')
+          raise 'missing --output flag' unless output_index
+          output_path = args[output_index + 1]
+          File.write(output_path, '{"data":[]}') if output_path
+          ['', '', status]
         end) do
-          @service.weather(location: '35.6762,139.6503', days: 3)
+          result = @service.weather(location: '35.6762,139.6503', days: 3)
+          assert_equal '{"data":[]}', result
         end
       end
     end
@@ -87,6 +93,38 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_includes rest, '--data-source'
     data_source_index = rest.index('--data-source')
     assert_equal 'noaa', rest[data_source_index + 1]
+    assert_includes rest, '--output'
+    status.verify
+    refute_nil output_path
+    refute File.exist?(output_path), 'weather output file must be cleaned up'
+  end
+
+  test 'weather writes output json internally without exposing output argument' do
+    captured_args = nil
+    wrote_path = nil
+    status = Minitest::Mock.new
+    status.expect(:success?, true)
+    status.expect(:exitstatus, 0)
+
+    File.stub(:exist?, true) do
+      File.stub(:socket?, true) do
+        Open3.stub(:capture3, lambda do |*args|
+          captured_args = args
+          output_index = args.index('--output')
+          raise 'missing --output flag' unless output_index
+          wrote_path = args[output_index + 1]
+          File.write(wrote_path, '{"data":[{"time":"2025-01-01"}]}')
+          ['', '', status]
+        end) do
+          result = @service.weather(location: '35.0,139.0', days: 1)
+          assert_equal '{"data":[{"time":"2025-01-01"}]}', result
+        end
+      end
+    end
+
+    refute_nil captured_args
+    assert_includes captured_args, '--output'
+    refute File.exist?(wrote_path), 'output file should be removed after reading'
     status.verify
   end
 
