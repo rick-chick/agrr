@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'open3'
+require 'tempfile'
 
 class AgrrService
   class AgrrError < StandardError; end
@@ -21,14 +22,41 @@ class AgrrService
   def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: 'noaa', json: true)
     raise DaemonNotRunningError, 'AGRR daemon is not running' unless daemon_running?
 
+    output_file = nil
+    output_path = nil
+
+    output_file = Tempfile.new(['weather_output', '.json'])
+    output_path = output_file.path
+    output_file.close
+
     args = ['weather', '--location', location]
     args += ['--start-date', start_date] if start_date
     args += ['--end-date', end_date] if end_date
     args += ['--days', days.to_s] if days
     args += ['--data-source', data_source] if data_source
+    args += ['--output', output_path]
     args << '--json' if json
 
     execute_command(args)
+
+    unless output_path && File.exist?(output_path)
+      raise CommandExecutionError, 'Weather command did not produce an output file'
+    end
+
+    output_content = File.read(output_path)
+    if output_content.blank?
+      raise CommandExecutionError, 'Weather command produced an empty output file'
+    end
+
+    output_content
+  ensure
+    if output_file
+      begin
+        output_file.close!
+      rescue Errno::ENOENT, IOError
+        # already removed or closed
+      end
+    end
   end
 
   # Get weather forecast
