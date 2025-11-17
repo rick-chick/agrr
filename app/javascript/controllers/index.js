@@ -24,6 +24,8 @@ import AgriculturalTaskFormController from "./agricultural_task_form_controller"
 import TaskBlueprintCardDragController from "./task_blueprint_card_drag_controller"
 import PestFormController from "./pest_form_controller"
 import PlanningSchedulesFieldsSelectionController from "./planning_schedules_fields_selection_controller"
+import NavbarController from "./navbar_controller"
+import DropdownController from "./dropdown_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -45,6 +47,8 @@ application.register("agricultural-task-form", AgriculturalTaskFormController)
 application.register("task-blueprint-card-drag", TaskBlueprintCardDragController)
 application.register("pest-form", PestFormController)
 application.register("planning-schedules-fields-selection", PlanningSchedulesFieldsSelectionController)
+application.register("navbar", NavbarController)
+application.register("dropdown", DropdownController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)
