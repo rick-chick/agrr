@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'json'
 require_relative 'concerns/job_arguments_provider'
 
 class FetchWeatherDataJob < ApplicationJob
@@ -237,47 +235,13 @@ class FetchWeatherDataJob < ApplicationJob
   private
 
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
-    agrr_path = Rails.root.join('lib', 'core', 'agrr').to_s
-    
-    # NOAAをデフォルトで使用（高品質な気象データ）
-    # NASA POWERはグローバル対応だが、NOAAの方が精度が高い
-    # 環境変数で上書き可能: WEATHER_DATA_SOURCE=nasa-power など
-    data_source = ENV.fetch('WEATHER_DATA_SOURCE', 'noaa')
-    
-    command = [
-      agrr_path,
-      'weather',
-      '--location', "#{latitude},#{longitude}",
-      '--start-date', start_date.to_s,
-      '--end-date', end_date.to_s,
-      '--data-source', data_source,
-      '--json'
-    ]
-
-    Rails.logger.debug "🔧 [AGRR Command] #{command.join(' ')}"
-    
-    stdout, stderr, status = Open3.capture3(*command)
-
-    unless status.success?
-      Rails.logger.error "❌ [AGRR Error] Command failed: #{command.join(' ')}"
-      Rails.logger.error "   stderr: #{stderr}"
-      raise "Failed to fetch weather data from agrr: #{stderr}"
-    end
-
-    # agrrコマンドの生の出力をログに記録（最初の500文字のみ）
-    Rails.logger.debug "📥 [AGRR Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
-    
-    parsed_data = JSON.parse(stdout)
-    
-    # データ構造を検証
-    Rails.logger.debug "📊 [AGRR Data] data_count: #{parsed_data['data']&.count || 0}"
-    Rails.logger.debug "📊 [AGRR Data] location: #{parsed_data['location']&.slice('latitude', 'longitude')}"
-    if parsed_data['data']&.any?
-      first_record = parsed_data['data'].first
-      Rails.logger.debug "📊 [AGRR Sample] First record: #{first_record.inspect}"
-    end
-    
-    parsed_data
+    weather_gateway = Agrr::WeatherGateway.new
+    weather_gateway.fetch_by_date_range(
+      latitude: latitude,
+      longitude: longitude,
+      start_date: start_date,
+      end_date: end_date
+    )
   end
 
 end

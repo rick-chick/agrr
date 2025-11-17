@@ -86,8 +86,8 @@
 
         <!-- 送信ボタン -->
         <% if @vm.farms.any? %>
-          <div style="text-align: center; margin-top: var(--space-8);">
-            <button type="submit" class="btn-plans-primary" style="width: 100%; max-width: 400px;">
+          <div class="text-center mt-8">
+            <button type="submit" class="btn-plans-primary w-full max-w-sm">
               <%= t('plans.new.next_button') %>
             </button>
           </div>
@@ -95,8 +95,8 @@
       <% end %>
 
       <!-- 戻るリンク -->
-      <div style="margin-top: var(--space-6); text-align: center;">
-        <%= link_to plans_path, style: "color: var(--color-primary); text-decoration: none;" do %>
+      <div class="mt-6 text-center">
+        <%= link_to plans_path, class: "text-primary", style: "text-decoration: none;" do %>
           ← <%= t('plans.show.back_to_list') %>
         <% end %>
       </div>

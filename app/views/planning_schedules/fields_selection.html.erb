@@ -47,11 +47,11 @@
           <% if @fields.present? %>
             <!-- ほ場選択 -->
             <div class="form-section">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+              <div class="flex justify-between align-center mb-2">
                 <label class="form-label">
                   <%= t('planning_schedules.fields_selection.fields_label') %>
                 </label>
-                <div style="display: flex; gap: var(--space-2);">
+                <div class="flex gap-2">
                   <button type="button" class="btn-secondary btn-sm" data-action="planning-schedules-fields-selection#selectAll">
                     <%= t('planning_schedules.fields_selection.select_all') %>
                   </button>
