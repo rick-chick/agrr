@@ -14,6 +14,7 @@ us:
       login: "Login"
       logout: "Logout"
       logout_confirm: "Are you sure you want to logout?"
+      create_plan: "Create Crop Plan"
       menu_planning: "Planning"
       menu_master_data: "Master Data"
       menu_toggle: "Menu"

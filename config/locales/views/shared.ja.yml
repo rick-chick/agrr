@@ -14,6 +14,7 @@ ja:
       login: "ログイン"
       logout: "ログアウト"
       logout_confirm: "ログアウトしますか？"
+      create_plan: "作付け計画を作成"
       menu_planning: "計画"
       menu_master_data: "マスタデータ"
       menu_toggle: "メニュー"
