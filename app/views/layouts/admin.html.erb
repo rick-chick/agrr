@@ -40,11 +40,11 @@
     
     <div class="admin-container">
       <% if notice %>
-        <div class="alert alert-success"><%= notice %></div>
+        <div class="alert alert-success" role="status" aria-live="polite"><%= notice %></div>
       <% end %>
       
       <% if alert %>
-        <div class="alert alert-error"><%= alert %></div>
+        <div class="alert alert-danger" role="alert" aria-live="assertive"><%= alert %></div>
       <% end %>
       
       <%= yield %>

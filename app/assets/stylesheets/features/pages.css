@@ -1,0 +1,255 @@
+/* ============================================
+   Pages Component System
+   Created: 2025-01-27
+   Purpose: 静的ページ（About, Contact, Privacy, Terms）の統一スタイル
+   ============================================ */
+
+/* ============================================
+   Page Container
+   ============================================ */
+
+.page-content-container {
+  max-width: 900px;
+  margin: var(--space-10) auto;
+  padding: var(--space-5);
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-8);
+  border-bottom: var(--border-width-4) solid var(--color-success);
+  padding-bottom: var(--space-3);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Page Content
+   ============================================ */
+
+.page-content {
+  line-height: var(--line-height-loose);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Page Section
+   ============================================ */
+
+.page-section {
+  margin-bottom: var(--space-10);
+}
+
+.page-section-title {
+  font-size: var(--font-size-2xl);
+  margin-top: var(--space-10);
+  margin-bottom: var(--space-5);
+  color: var(--color-success-dark);
+}
+
+.page-section-content {
+  margin-bottom: var(--space-4);
+}
+
+/* ============================================
+   Feature Cards (About page)
+   ============================================ */
+
+.feature-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.feature-card {
+  background-color: var(--color-gray-50);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+}
+
+.feature-card-title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-3);
+  color: var(--color-success);
+}
+
+.feature-card-content {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Info Boxes
+   ============================================ */
+
+.info-box {
+  background-color: var(--color-gray-50);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-8);
+}
+
+.info-box-title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-5);
+  color: var(--color-success-dark);
+}
+
+.info-box-content {
+  margin-bottom: var(--space-4);
+}
+
+.info-box-link {
+  color: var(--color-success-dark);
+  text-decoration: underline;
+  font-weight: var(--font-weight-semibold);
+}
+
+.info-box-link:hover {
+  color: var(--color-success);
+  text-decoration: none;
+}
+
+/* ============================================
+   Warning Box (Contact page)
+   ============================================ */
+
+.warning-box {
+  background-color: var(--color-warning-bg);
+  padding: var(--space-5);
+  border-left: var(--border-width-4) solid var(--color-warning);
+  margin-bottom: var(--space-8);
+}
+
+.warning-box-title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-4);
+  color: var(--color-warning-text);
+}
+
+.warning-box-content {
+  margin-bottom: var(--space-3);
+  color: var(--color-warning-text);
+}
+
+.warning-box-list {
+  margin-left: var(--space-5);
+  color: var(--color-warning-text);
+}
+
+.warning-box-list li {
+  margin-bottom: var(--space-2);
+}
+
+/* ============================================
+   Highlight Box (About page)
+   ============================================ */
+
+.highlight-box {
+  background-color: var(--color-success-light);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.highlight-box-title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-5);
+  color: var(--color-success-dark);
+}
+
+.highlight-box-content {
+  margin-bottom: var(--space-5);
+}
+
+.highlight-box-button {
+  display: inline-block;
+  background-color: var(--color-success);
+  color: var(--color-white);
+  padding: var(--space-3) var(--space-8);
+  text-decoration: none;
+  border-radius: var(--radius-base);
+  font-weight: var(--font-weight-bold);
+  transition: background-color var(--transition-fast);
+}
+
+.highlight-box-button:hover {
+  background-color: var(--color-success-dark);
+  color: var(--color-white);
+}
+
+/* ============================================
+   Lists
+   ============================================ */
+
+.page-list {
+  margin-left: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.page-list li {
+  margin-bottom: var(--space-3);
+}
+
+/* ============================================
+   Footer Text
+   ============================================ */
+
+.page-footer-text {
+  margin-top: var(--space-10);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.page-footer-text-right {
+  margin-top: var(--space-10);
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .page-content-container {
+    margin: var(--space-6) auto;
+    padding: var(--space-4);
+  }
+
+  .page-header {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-6);
+  }
+
+  .page-section {
+    margin-bottom: var(--space-8);
+  }
+
+  .page-section-title {
+    font-size: var(--font-size-xl);
+    margin-top: var(--space-8);
+  }
+
+  .info-box,
+  .warning-box,
+  .highlight-box {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content-container {
+    padding: var(--space-3);
+  }
+
+  .page-header {
+    font-size: var(--font-size-xl);
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
