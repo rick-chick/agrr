@@ -47,17 +47,17 @@
 
           <div class="plans-year-section">
             <details open>
-              <summary class="plans-year-title" style="cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: var(--space-2);">
-                <span class="year-toggle-icon" style="transition: transform 0.2s;">▼</span>
-                <%= t('plans.index.year_label', year: year) %>
+              <summary class="plans-year-title">
+                <span class="year-toggle-icon"></span>
+                <span class="plans-year-label"><%= t('plans.index.year_label', year: year) %></span>
                 <% if year_plans.present? %>
-                  <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: normal;">
+                  <span class="plans-year-count">
                     (<%= year_plans.count %>件)
                   </span>
                 <% end %>
               </summary>
             
-            <div class="plans-year-content" style="margin-top: var(--space-4);">
+            <div class="plans-year-content">
               <% if year_plans.present? %>
                   <div class="plans-grid">
                   <% year_plans.each do |plan| %>

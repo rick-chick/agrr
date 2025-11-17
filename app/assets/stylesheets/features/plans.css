@@ -188,21 +188,64 @@
 }
 
 .plans-year-title {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin-bottom: var(--space-4);
+  padding: var(--space-2) 0;
+  transition: color var(--transition-fast);
 }
 
-details .year-toggle-icon {
-  transform: rotate(0deg);
+.plans-year-title:hover {
+  color: var(--color-primary);
+}
+
+.year-toggle-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  transition: transform var(--transition-base);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.year-toggle-icon::before {
+  content: "▼";
+  display: block;
+  line-height: 1;
+}
+
+details[open] .year-toggle-icon {
+  transform: rotate(0deg);
 }
 
 details:not([open]) .year-toggle-icon {
   transform: rotate(-90deg);
+}
+
+.plans-year-label {
+  flex: 1;
+}
+
+.plans-year-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-normal);
+  background: var(--color-gray-100);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.plans-year-content {
+  margin-top: var(--space-4);
 }
 
 /* ============================================
@@ -292,26 +335,34 @@ details:not([open]) .year-toggle-icon {
 .plan-card-actions {
   display: flex;
   gap: var(--space-2);
+  align-items: stretch;
 }
 
 .plan-card-action-btn {
   flex: 1;
   text-align: center;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
 }
 
 .plan-card-action-btn.primary {
   background: var(--gradient-primary);
   color: var(--color-white);
+  box-shadow: var(--shadow-sm);
 }
 
 .plan-card-action-btn.primary:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .plan-card-action-btn.secondary {
@@ -321,6 +372,18 @@ details:not([open]) .year-toggle-icon {
 
 .plan-card-action-btn.secondary:hover {
   background: var(--color-gray-200);
+}
+
+.plan-card-action-btn.danger {
+  background: var(--color-white);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.plan-card-action-btn.danger:hover {
+  background: var(--color-error);
+  color: var(--color-white);
+  box-shadow: var(--shadow-error);
 }
 
 .plan-card-meta {

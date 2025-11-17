@@ -3,7 +3,7 @@
   <a href="<%= root_path %>" class="navbar-brand">🌾 <%= t('shared.navbar.brand') %></a>
   
   <!-- Mobile Menu Toggle Button -->
-  <button class="navbar-toggle" data-navbar-target="toggle" data-action="click->navbar#toggle" aria-label="<%= t('shared.navbar.menu_toggle') %>">
+  <button class="navbar-toggle" data-navbar-target="toggle" data-action="click->navbar#toggle" aria-label="<%= t('shared.navbar.menu_toggle') %>" aria-expanded="false" aria-controls="navbar-menu">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="navbar-toggle-icon">
       <line x1="3" y1="12" x2="21" y2="12"></line>
       <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -15,7 +15,7 @@
     </svg>
   </button>
   
-  <div class="navbar-nav" data-navbar-target="menu">
+  <div class="navbar-nav" id="navbar-menu" data-navbar-target="menu">
     <% if logged_in? %>
       <!-- Planning Dropdown -->
       <div class="nav-dropdown" data-controller="dropdown">
@@ -26,9 +26,9 @@
           </svg>
         </button>
         <div class="nav-dropdown-menu" data-dropdown-target="menu">
-          <%= link_to t('shared.navbar.plans'), plans_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.planning_schedules'), fields_selection_planning_schedules_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.create_plan'), public_plans_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.plans'), plans_path, class: nav_dropdown_item_class(plans_path) %>
+          <%= link_to t('shared.navbar.planning_schedules'), fields_selection_planning_schedules_path, class: nav_dropdown_item_class(fields_selection_planning_schedules_path) %>
+          <%= link_to t('shared.navbar.create_plan'), public_plans_path, class: nav_dropdown_item_class(public_plans_path) %>
         </div>
       </div>
       
@@ -41,13 +41,13 @@
           </svg>
         </button>
         <div class="nav-dropdown-menu" data-dropdown-target="menu">
-          <%= link_to t('shared.navbar.farms'), farms_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.crops'), crops_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.fertilizes'), fertilizes_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.pesticides'), pesticides_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.pests'), pests_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.agricultural_tasks'), agricultural_tasks_path, class: "nav-dropdown-item" %>
-          <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: "nav-dropdown-item" %>
+          <%= link_to t('shared.navbar.farms'), farms_path, class: nav_dropdown_item_class(farms_path) %>
+          <%= link_to t('shared.navbar.crops'), crops_path, class: nav_dropdown_item_class(crops_path) %>
+          <%= link_to t('shared.navbar.fertilizes'), fertilizes_path, class: nav_dropdown_item_class(fertilizes_path) %>
+          <%= link_to t('shared.navbar.pesticides'), pesticides_path, class: nav_dropdown_item_class(pesticides_path) %>
+          <%= link_to t('shared.navbar.pests'), pests_path, class: nav_dropdown_item_class(pests_path) %>
+          <%= link_to t('shared.navbar.agricultural_tasks'), agricultural_tasks_path, class: nav_dropdown_item_class(agricultural_tasks_path) %>
+          <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: nav_dropdown_item_class(interaction_rules_path) %>
         </div>
       </div>
       
@@ -59,7 +59,7 @@
         </svg>
       <% end %>
     <% else %>
-      <%= link_to t('shared.navbar.create_plan'), public_plans_path, class: "nav-link" %>
+      <%= link_to t('shared.navbar.create_plan'), public_plans_path, class: nav_link_class(public_plans_path) %>
       <%= link_to auth_login_path, class: "btn-icon", title: t('shared.navbar.login') do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
