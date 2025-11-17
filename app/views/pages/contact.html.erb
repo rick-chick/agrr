@@ -1,42 +1,42 @@
 <% content_for :title, "#{t('pages.contact.title')} | AGRR" %>
 <% content_for :description, t('pages.contact.description', default: "AGRRへのお問い合わせはこちらから。サービスに関するご質問、ご要望、技術的なサポートなど、お気軽にご連絡ください。") %>
 
-<div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;"><%= t('.heading') %></h1>
+<div class="page-content-container">
+  <h1 class="page-header"><%= t('.heading') %></h1>
   
-  <div style="line-height: 1.8; color: #333;">
-    <p style="margin-bottom: 30px;"><%= t('.intro') %></p>
+  <div class="page-content">
+    <p class="page-section-content"><%= t('.intro') %></p>
 
-    <div style="background-color: #f5f5f5; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.email_section_title') %></h2>
-      <p style="margin-bottom: 15px;"><%= t('.email_intro') %></p>
-      <p style="font-size: 1.2rem; margin-bottom: 20px;">
-        <a href="mailto:support@agrr.net" style="color: #2E7D32; text-decoration: underline; font-weight: bold;">support@agrr.net</a>
+    <div class="info-box">
+      <h2 class="info-box-title"><%= t('.email_section_title') %></h2>
+      <p class="info-box-content"><%= t('.email_intro') %></p>
+      <p class="info-box-content text-xl">
+        <a href="mailto:support@agrr.net" class="info-box-link">support@agrr.net</a>
       </p>
-      <p style="color: #666; font-size: 0.9rem;"><%= t('.email_note') %></p>
+      <p class="text-sm text-secondary"><%= t('.email_note') %></p>
     </div>
 
-    <div style="background-color: #f5f5f5; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.notes_title') %></h2>
-      <ul style="margin-left: 20px;">
+    <div class="info-box">
+      <h2 class="info-box-title"><%= t('.notes_title') %></h2>
+      <ul class="page-list">
         <% t('.notes').each do |note| %>
-          <li style="margin-bottom: 10px;"><%= note %></li>
+          <li><%= note %></li>
         <% end %>
       </ul>
     </div>
 
-    <div style="background-color: #fff3cd; padding: 20px; border-left: 4px solid #ffc107; margin-bottom: 30px;">
-      <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #856404;"><%= t('.faq_title') %></h3>
-      <p style="margin-bottom: 10px; color: #856404;"><%= t('.faq_intro') %></p>
-      <ul style="margin-left: 20px; color: #856404;">
+    <div class="warning-box">
+      <h3 class="warning-box-title"><%= t('.faq_title') %></h3>
+      <p class="warning-box-content"><%= t('.faq_intro') %></p>
+      <ul class="warning-box-list">
         <% t('.faq_items').each do |item| %>
-          <li style="margin-bottom: 8px;"><%= item %></li>
+          <li><%= item %></li>
         <% end %>
       </ul>
     </div>
 
-    <div style="text-align: center; margin-top: 40px;">
-      <p style="color: #666;"><%= t('.footer_message') %></p>
+    <div class="text-center mt-10">
+      <p class="text-secondary"><%= t('.footer_message') %></p>
     </div>
   </div>
 </div>

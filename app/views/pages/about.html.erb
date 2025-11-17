@@ -1,50 +1,50 @@
 <% content_for :title, "#{t('pages.about.title')} | AGRR" %>
 <% content_for :description, t('pages.about.description', default: "AGRRは気象データとAIを活用した農業作付け計画支援システムです。主な機能、特徴、開発コンセプトについてご紹介します。") %>
 
-<div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;"><%= t('.heading') %></h1>
+<div class="page-content-container">
+  <h1 class="page-header"><%= t('.heading') %></h1>
   
-  <div style="line-height: 1.8; color: #333;">
-    <section style="margin-bottom: 40px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.what_is.title') %></h2>
-      <p style="margin-bottom: 15px;"><%= t('.what_is.content') %></p>
+  <div class="page-content">
+    <section class="page-section">
+      <h2 class="page-section-title"><%= t('.what_is.title') %></h2>
+      <p class="page-section-content"><%= t('.what_is.content') %></p>
     </section>
 
-    <section style="margin-bottom: 40px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.features_section.title') %></h2>
-      <div style="display: grid; gap: 20px;">
+    <section class="page-section">
+      <h2 class="page-section-title"><%= t('.features_section.title') %></h2>
+      <div class="feature-grid">
         <% t('.features_section.items').each do |item| %>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #388E3C;"><%= item[:icon] %> <%= item[:title] %></h3>
-            <p style="margin-bottom: 0;"><%= item[:description] %></p>
+          <div class="feature-card">
+            <h3 class="feature-card-title"><%= item[:icon] %> <%= item[:title] %></h3>
+            <p class="feature-card-content"><%= item[:description] %></p>
           </div>
         <% end %>
       </div>
     </section>
 
-    <section style="margin-bottom: 40px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.characteristics.title') %></h2>
-      <p style="margin-bottom: 15px;"><%= t('.characteristics.intro') %></p>
-      <ul style="margin-left: 20px;">
+    <section class="page-section">
+      <h2 class="page-section-title"><%= t('.characteristics.title') %></h2>
+      <p class="page-section-content"><%= t('.characteristics.intro') %></p>
+      <ul class="page-list">
         <% t('.characteristics.items').each do |item| %>
-          <li style="margin-bottom: 10px;"><%= item.html_safe %></li>
+          <li><%= item.html_safe %></li>
         <% end %>
       </ul>
     </section>
 
-    <section style="margin-bottom: 40px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.development.title') %></h2>
-      <p style="margin-bottom: 15px;"><%= t('.development.paragraph1') %></p>
-      <p style="margin-bottom: 15px;"><%= t('.development.paragraph2') %></p>
+    <section class="page-section">
+      <h2 class="page-section-title"><%= t('.development.title') %></h2>
+      <p class="page-section-content"><%= t('.development.paragraph1') %></p>
+      <p class="page-section-content"><%= t('.development.paragraph2') %></p>
     </section>
 
-    <section style="background-color: #e8f5e9; padding: 30px; border-radius: 8px; text-align: center;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: #2E7D32;"><%= t('.contact_section.title') %></h2>
-      <p style="margin-bottom: 20px;"><%= t('.contact_section.message') %></p>
-      <%= link_to t('.contact_section.button_text'), contact_path, style: 'display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;' %>
+    <section class="highlight-box">
+      <h2 class="highlight-box-title"><%= t('.contact_section.title') %></h2>
+      <p class="highlight-box-content"><%= t('.contact_section.message') %></p>
+      <%= link_to t('.contact_section.button_text'), contact_path, class: "highlight-box-button" %>
     </section>
 
-    <p style="margin-top: 40px; text-align: center; color: #666;"><%= t('.copyright') %></p>
+    <p class="page-footer-text"><%= t('.copyright') %></p>
   </div>
 </div>
 

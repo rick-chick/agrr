@@ -1,59 +1,59 @@
 <% content_for :title, "#{t('pages.terms.title')} | AGRR" %>
 <% content_for :description, t('pages.terms.description', default: "AGRRの利用規約です。サービスの利用条件、禁止事項、免責事項について詳しく説明しています。") %>
 
-<div class="container" style="max-width: 900px; margin: 40px auto; padding: 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;"><%= t('.heading') %></h1>
+<div class="page-content-container">
+  <h1 class="page-header"><%= t('.heading') %></h1>
   
-  <div style="line-height: 1.8; color: #333;">
-    <p style="margin-bottom: 20px;"><%= t('.intro') %></p>
+  <div class="page-content">
+    <p class="page-section-content"><%= t('.intro') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article1.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article1.content') %></p>
+    <h2 class="page-section-title"><%= t('.article1.title') %></h2>
+    <p class="page-section-content"><%= t('.article1.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article2.title') %></h2>
-    <p style="margin-bottom: 15px;"><%= t('.article2.intro') %></p>
-    <ul style="margin-left: 20px; margin-bottom: 20px;">
+    <h2 class="page-section-title"><%= t('.article2.title') %></h2>
+    <p class="page-section-content"><%= t('.article2.intro') %></p>
+    <ul class="page-list">
       <% t('.article2.items').each do |item| %>
-        <li style="margin-bottom: 10px;"><%= item %></li>
+        <li><%= item %></li>
       <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article3.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article3.content') %></p>
+    <h2 class="page-section-title"><%= t('.article3.title') %></h2>
+    <p class="page-section-content"><%= t('.article3.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article4.title') %></h2>
-    <p style="margin-bottom: 15px;"><%= t('.article4.intro') %></p>
-    <ul style="margin-left: 20px; margin-bottom: 20px;">
+    <h2 class="page-section-title"><%= t('.article4.title') %></h2>
+    <p class="page-section-content"><%= t('.article4.intro') %></p>
+    <ul class="page-list">
       <% t('.article4.items').each do |item| %>
-        <li style="margin-bottom: 10px;"><%= item %></li>
+        <li><%= item %></li>
       <% end %>
     </ul>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article5.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article5.content') %></p>
+    <h2 class="page-section-title"><%= t('.article5.title') %></h2>
+    <p class="page-section-content"><%= t('.article5.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article6.title') %></h2>
-    <p style="margin-bottom: 15px;"><%= t('.article6.intro') %></p>
-    <ul style="margin-left: 20px; margin-bottom: 20px;">
+    <h2 class="page-section-title"><%= t('.article6.title') %></h2>
+    <p class="page-section-content"><%= t('.article6.intro') %></p>
+    <ul class="page-list">
       <% t('.article6.items').each do |item| %>
-        <li style="margin-bottom: 10px;"><%= item %></li>
+        <li><%= item %></li>
       <% end %>
     </ul>
-    <p style="margin-bottom: 20px;"><%= t('.article6.note') %></p>
+    <p class="page-section-content"><%= t('.article6.note') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article7.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article7.content') %></p>
+    <h2 class="page-section-title"><%= t('.article7.title') %></h2>
+    <p class="page-section-content"><%= t('.article7.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article8.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article8.content') %></p>
+    <h2 class="page-section-title"><%= t('.article8.title') %></h2>
+    <p class="page-section-content"><%= t('.article8.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article9.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article9.content') %></p>
+    <h2 class="page-section-title"><%= t('.article9.title') %></h2>
+    <p class="page-section-content"><%= t('.article9.content') %></p>
 
-    <h2 style="font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: #2E7D32;"><%= t('.article10.title') %></h2>
-    <p style="margin-bottom: 20px;"><%= t('.article10.content_html', contact_link: link_to(t('.article10.contact_link_text'), contact_path, style: 'color: #2E7D32; text-decoration: underline;')).html_safe %></p>
+    <h2 class="page-section-title"><%= t('.article10.title') %></h2>
+    <p class="page-section-content"><%= t('.article10.content_html', contact_link: link_to(t('.article10.contact_link_text'), contact_path, class: 'info-box-link')).html_safe %></p>
 
-    <p style="margin-top: 40px; text-align: right; color: #666;"><%= t('.effective_date') %></p>
+    <p class="page-footer-text-right"><%= t('.effective_date') %></p>
   </div>
 </div>
 
