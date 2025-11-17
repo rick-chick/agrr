@@ -184,14 +184,99 @@ body {
 .align-center { align-items: center !important; }
 .align-end { align-items: flex-end !important; }
 
+/* ============================================
+   Empty State Component (統一された空状態)
+   ============================================ */
+
+.empty-state {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  margin: var(--space-6) 0;
+}
+
+.empty-state-icon {
+  font-size: 6rem;
+  margin-bottom: var(--space-4);
+  line-height: 1;
+}
+
+.empty-state h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.empty-state p {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+}
+
+.empty-state .btn {
+  margin-top: var(--space-4);
+}
+
+/* Plans用の空状態は.empty-stateを継承 */
+.plans-empty {
+  /* .empty-stateと同じスタイルを継承 */
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.plans-empty-icon {
+  font-size: 6rem;
+  margin-bottom: var(--space-4);
+  line-height: 1;
+}
+
+.plans-empty-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.plans-empty-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+}
+
 /* Responsive Utilities */
 @media (max-width: 768px) {
   .d-md-none { display: none !important; }
   .d-md-block { display: block !important; }
+  
+  .empty-state,
+  .plans-empty {
+    padding: var(--space-8);
+  }
+  
+  .empty-state-icon,
+  .plans-empty-icon {
+    font-size: 4rem;
+  }
 }
 
 @media (max-width: 640px) {
   .d-sm-none { display: none !important; }
   .d-sm-block { display: block !important; }
+  
+  .empty-state,
+  .plans-empty {
+    padding: var(--space-6);
+  }
+  
+  .empty-state-icon,
+  .plans-empty-icon {
+    font-size: 3rem;
+  }
 }
 

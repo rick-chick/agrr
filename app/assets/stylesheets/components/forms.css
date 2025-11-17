@@ -72,7 +72,7 @@
 }
 
 /* ============================================
-   Error Messages
+   Error Messages (統一されたエラー表示)
    ============================================ */
 
 .error-message {
@@ -82,13 +82,14 @@
   display: block;
 }
 
+/* フォーム用エラーコンテナ */
 .errors {
-  background: #f8d7da;
-  color: #721c24;
-  padding: var(--space-3);
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+  padding: var(--space-4);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-4);
-  border: var(--border-width-1) solid #f5c6cb;
+  border: var(--border-width-1) solid var(--color-error);
 }
 
 .errors h3 {
@@ -100,6 +101,53 @@
 .errors ul {
   margin: 0;
   padding-left: var(--space-5);
+}
+
+/* 統一されたエラーメッセージコンテナ（最適化ページなどで使用） */
+.error-message-container {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-error-light);
+  border-radius: var(--radius-md);
+  border-left: var(--border-width-4) solid var(--color-error);
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.error-icon {
+  font-size: var(--font-size-2xl);
+  flex-shrink: 0;
+}
+
+.error-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.error-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-error-dark);
+  margin: 0;
+}
+
+.error-detail {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: var(--line-height-relaxed);
+  white-space: pre-line;
+  margin: 0;
+}
+
+.error-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
 }
 
 /* ============================================

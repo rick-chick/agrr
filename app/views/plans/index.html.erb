@@ -31,11 +31,11 @@
         <p class="plans-empty-subtitle">
           <%= t('plans.index.no_plans_hint') %>
         </p>
-        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center;">
+        <div class="plans-empty-actions">
           <%= link_to new_plan_path, class: "btn-plans-primary" do %>
             <%= t('plans.index.create_new') %>
           <% end %>
-          <%= link_to public_plans_path, class: "btn-plans-primary", style: "background-color: var(--color-primary-light);" do %>
+          <%= link_to public_plans_path, class: "btn-plans-primary" do %>
             <%= t('plans.index.try_public_plans') %>
           <% end %>
         </div>
@@ -47,11 +47,11 @@
 
           <div class="plans-year-section">
             <details open>
-              <summary class="plans-year-title">
-                <span class="year-toggle-icon"></span>
+              <summary class="plans-year-title plans-year-summary">
+                <span class="year-toggle-icon">▼</span>
                 <span class="plans-year-label"><%= t('plans.index.year_label', year: year) %></span>
                 <% if year_plans.present? %>
-                  <span class="plans-year-count">
+                  <span class="year-count">
                     (<%= year_plans.count %>件)
                   </span>
                 <% end %>
@@ -156,7 +156,7 @@
               <% else %>
                 <!-- その年度に計画がない場合 -->
                 <div class="content-card">
-                  <p style="text-align: center; color: var(--text-secondary);">
+                  <p class="content-card-empty">
                     <%= t('plans.index.no_plans') %>
                   </p>
                 </div>
