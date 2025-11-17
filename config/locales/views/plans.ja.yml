@@ -58,6 +58,7 @@ ja:
       title: "計画一覧"
       subtitle: "年度別の計画を管理"
       create_new: "+ 新しい計画を作成"
+      try_public_plans: "無料プランから始める"
       no_plans: "まだ計画がありません"
       no_plans_hint: "新しい計画を作成して栽培スケジュールを最適化しましょう。"
       year_label: "%{year}年度"

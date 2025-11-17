@@ -58,6 +58,7 @@ us:
       title: "Cultivation Plans"
       subtitle: "Manage your yearly cultivation plans"
       create_new: "+ Create New Plan"
+      try_public_plans: "Try Free Plans"
       no_plans: "No plans yet"
       no_plans_hint: "Create a new plan to optimize your cultivation schedule."
       year_label: "Year %{year}"

@@ -84,6 +84,7 @@ ja:
     
     results:
       create_new_plan: "← 新しい計画を作成"
+      view_my_plans: "マイプランを見る"
       chart_title: "気象データと作物成長分析"
       loading_data: "データを読み込んでいます..."
       

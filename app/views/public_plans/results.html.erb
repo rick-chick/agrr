@@ -59,6 +59,11 @@
       <%= form_with url: save_plan_public_plans_path, method: :post, local: true, id: "save-plan-form" do |f| %>
         <%= f.submit t('public_plans.save.button'), class: "btn-primary", id: "save-plan-button" %>
       <% end %>
+      <% if logged_in? %>
+        <%= link_to plans_path, class: "btn-white" do %>
+          <%= t('public_plans.results.view_my_plans') %>
+        <% end %>
+      <% end %>
       <%= link_to public_plans_path, class: "btn-white" do %>
         <%= t('.create_new_plan') %>
       <% end %>
