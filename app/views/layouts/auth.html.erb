@@ -1,30 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale %>">
 <head>
-  <title><%= content_for?(:title) ? yield(:title) : "Login - AGRR (Agriculture Resource and Rotation planner)" %></title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
+  <%= render "shared/meta_tags" %>
   
-  <!-- Core Design System -->
-  <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "utilities", "data-turbo-track": "reload" %>
+  <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  
+  <!-- Core Design System - 必ず最初に読み込む -->
+  <%= render_core_stylesheets %>
+  
+  <!-- Utility CSS classes -->
+  <%= render_utility_stylesheets %>
+  
   <!-- Components -->
-  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/forms", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-  <!-- Auth-specific styles -->
-  <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" %>
-</head>
-<body class="auth-body" data-shared-navbar-brand="<%= t('shared.navbar.brand') %>" data-shared-navbar-plans="<%= t('shared.navbar.plans') %>" data-shared-navbar-farms="<%= t('shared.navbar.farms') %>" data-shared-navbar-crops="<%= t('shared.navbar.crops') %>" data-shared-navbar-interaction-rules="<%= t('shared.navbar.interaction_rules') %>" data-shared-navbar-login="<%= t('shared.navbar.login') %>" data-shared-navbar-logout="<%= t('shared.navbar.logout') %>" data-shared-navbar-logout-confirm="<%= t('shared.navbar.logout_confirm') %>">
+  <%= render_component_stylesheets(components: [
+    "components/buttons",
+    "components/forms",
+    "components/navbar"
+  ]) %>
   
+  <!-- Auth-specific styles -->
+  <%= render_feature_stylesheets(features: ["auth"]) %>
+  
+  <!-- Bundled JavaScript (includes Leaflet) -->
+  <%= render_common_javascripts(include_shared_systems: false) %>
+</head>
+<body class="auth-body" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>>
   <%= render "shared/navbar" %>
   
-  <%= yield %>
+  <main class="container">
+    <%= render "shared/flash_messages" %>
+    
+    <%= yield %>
+  </main>
   
   <%= yield :javascripts %>
-  
 </body>
 </html>
 

@@ -13,17 +13,7 @@
   <%= render_utility_stylesheets %>
   
   <!-- Components -->
-  <%= render_component_stylesheets(components: [
-    "components/buttons",
-    "components/forms",
-    "components/navbar",
-    "components/cards",
-    "components/layouts",
-    "components/footer",
-    "components/crop_selection",
-    "components/farm-cards",
-    "components/undo_toast"
-  ]) %>
+  <%= render_component_stylesheets %>
   
   <!-- Feature-specific styles -->
   <%= render_feature_stylesheets(features: [
@@ -55,13 +45,7 @@
   <%= render "shared/navbar" %>
   
   <main class="container">
-    <% if flash[:notice] %>
-      <div class="alert alert-success" role="status" aria-live="polite"><%= flash[:notice] %></div>
-    <% end %>
-    
-    <% if flash[:alert] %>
-      <div class="alert alert-danger" role="alert" aria-live="assertive"><%= flash[:alert] %></div>
-    <% end %>
+    <%= render "shared/flash_messages" %>
     
     <%= yield %>
   </main>
