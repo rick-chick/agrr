@@ -1,0 +1,17 @@
+<%# Flashメッセージ表示の統一パーシャル %>
+<% if flash[:notice] %>
+  <div class="alert alert-success" role="status" aria-live="polite"><%= flash[:notice] %></div>
+<% end %>
+
+<% if flash[:alert] %>
+  <div class="alert alert-danger" role="alert" aria-live="assertive"><%= flash[:alert] %></div>
+<% end %>
+
+<% if flash[:warning] %>
+  <div class="alert alert-warning" role="alert" aria-live="polite"><%= flash[:warning] %></div>
+<% end %>
+
+<% if flash[:info] %>
+  <div class="alert alert-info" role="status" aria-live="polite"><%= flash[:info] %></div>
+<% end %>
+

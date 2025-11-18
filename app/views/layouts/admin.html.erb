@@ -1,11 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale %>">
   <head>
-    <title>Admin - <%= content_for?(:title) ? yield(:title) : "AGRR" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= render "shared/meta_tags" %>
     <meta name="turbo-visit-control" content="reload">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
 
     <!-- Bundled CSS (Leaflet など npm パッケージ) - esbuild でビルド -->
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -26,17 +23,11 @@
     <%= render_common_javascripts(include_shared_systems: true) %>
   </head>
 
-  <body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(v)}\"" }.join(' ') %>>
+  <body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>>
     <%= render "shared/navbar" %>
     
     <div class="admin-container">
-      <% if notice %>
-        <div class="alert alert-success" role="status" aria-live="polite"><%= notice %></div>
-      <% end %>
-      
-      <% if alert %>
-        <div class="alert alert-danger" role="alert" aria-live="assertive"><%= alert %></div>
-      <% end %>
+      <%= render "shared/flash_messages" %>
       
       <%= yield %>
     </div>

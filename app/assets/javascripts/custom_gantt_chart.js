@@ -2072,6 +2072,9 @@ function showClimateChart(cultivationId) {
     }
   }
   
+  // hiddenクラスを削除（display: none !important; を解除するため）
+  chartContainer.classList.remove('hidden');
+  
   // ClimateChartが読み込まれていることを確認
   if (typeof window.ClimateChart === 'undefined') {
     console.error('ClimateChart not loaded');

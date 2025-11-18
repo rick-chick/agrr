@@ -38,13 +38,7 @@
 
   <!-- Flash Messages -->
   <main class="container">
-    <% if flash[:notice] %>
-      <div class="alert alert-success" role="status" aria-live="polite"><%= flash[:notice] %></div>
-    <% end %>
-    
-    <% if flash[:alert] %>
-      <div class="alert alert-danger" role="alert" aria-live="assertive"><%= flash[:alert] %></div>
-    <% end %>
+    <%= render "shared/flash_messages" %>
     
     <%= yield %>
   </main>

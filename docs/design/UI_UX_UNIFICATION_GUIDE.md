@@ -23,11 +23,25 @@
 
 ```erb
 <!-- レイアウトファイルでの使用例 -->
+<!-- Bundled CSS (npmパッケージ) -->
+<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
+<!-- Core Design System - 必ず最初に読み込む -->
 <%= render_core_stylesheets %>
+
+<!-- Utility CSS classes -->
 <%= render_utility_stylesheets %>
+
+<!-- Components -->
 <%= render_component_stylesheets %>
+<!-- または、特定のコンポーネントのみ読み込む場合 -->
+<%= render_component_stylesheets(components: ["components/buttons", "components/forms"]) %>
+
+<!-- Feature-specific styles -->
 <%= render_feature_stylesheets(features: ["features/your_feature"]) %>
 ```
+
+**重要**: すべてのレイアウトファイル（`application.html.erb`, `public.html.erb`, `admin.html.erb`, `auth.html.erb`）では、この順序とヘルパーメソッドの使用を統一してください。
 
 ### 2. デザイントークン（CSS変数）
 
@@ -157,23 +171,21 @@
 </div>
 ```
 
-### アラートメッセージ
+### アラートメッセージ（Flashメッセージ）
 
-フラッシュメッセージは統一されたアラートクラスを使用：
+フラッシュメッセージは統一されたパーシャルを使用：
 
 ```erb
-<% if flash[:notice] %>
-  <div class="alert alert-success" role="status" aria-live="polite">
-    <%= flash[:notice] %>
-  </div>
-<% end %>
-
-<% if flash[:alert] %>
-  <div class="alert alert-danger" role="alert" aria-live="assertive">
-    <%= flash[:alert] %>
-  </div>
-<% end %>
+<%= render "shared/flash_messages" %>
 ```
+
+**重要**: すべてのレイアウトファイルでは、直接Flashメッセージを記述せず、必ずこのパーシャルを使用してください。
+
+パーシャル内でサポートされているFlashタイプ：
+- `flash[:notice]`: 成功メッセージ（`alert-success`）
+- `flash[:alert]`: エラーメッセージ（`alert-danger`）
+- `flash[:warning]`: 警告メッセージ（`alert-warning`）
+- `flash[:info]`: 情報メッセージ（`alert-info`）
 
 利用可能なアラートタイプ：
 - `alert-success` / `notice`: 成功メッセージ
@@ -288,6 +300,35 @@ CSS変数で定義されたブレークポイントを使用：
 - `shared/dialog_system.js`: ダイアログシステム
 - `shared/loading_system.js`: ローディングシステム
 
+## レイアウトファイルの統一
+
+### 必須要素
+
+すべてのレイアウトファイルには以下を含める必要があります：
+
+1. **メタタグ**: `<%= render "shared/meta_tags" %>`
+2. **スタイルシート読み込み**: 統一されたヘルパーメソッドを使用
+3. **i18n属性**: JavaScript用のi18nデータ属性をbodyタグに追加
+4. **ナビゲーションバー**: `<%= render "shared/navbar" %>`
+5. **Flashメッセージ**: `<%= render "shared/flash_messages" %>`
+6. **フッター**: 必要に応じて `<%= render "shared/footer" %>`
+7. **JavaScript読み込み**: `<%= render_common_javascripts %>`
+
+### i18n属性の統一
+
+すべてのレイアウトファイルで、bodyタグにi18n属性を追加：
+
+```erb
+<body <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>>
+```
+
+または、i18n属性が必要ない場合は：
+
+```erb
+<body>
+  <div id="js-i18n" hidden aria-hidden="true" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>></div>
+```
+
 ## チェックリスト
 
 新しい機能を実装する際は、以下を確認：
@@ -296,9 +337,10 @@ CSS変数で定義されたブレークポイントを使用：
 - [ ] ハードコードされた色やスペーシングがないか
 - [ ] 共通コンポーネントを使用しているか
 - [ ] レイアウトファイルで統一されたヘルパーメソッドを使用しているか
+- [ ] Flashメッセージに統一されたパーシャル（`shared/flash_messages`）を使用しているか
 - [ ] レスポンシブデザインに対応しているか
 - [ ] アクセシビリティ属性（`role`, `aria-live`など）を適切に使用しているか
-- [ ] フラッシュメッセージに統一されたアラートクラスを使用しているか
+- [ ] メタタグに統一されたパーシャル（`shared/meta_tags`）を使用しているか
 
 ## トラブルシューティング
 

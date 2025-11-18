@@ -117,6 +117,7 @@ module ApplicationHelper
   end
 
   # 共通コンポーネントのスタイルシートを読み込む
+  # デフォルトコンポーネントリストは統一性のため、application.html.erbで使用される全コンポーネントを含む
   def render_component_stylesheets(components: nil)
     default_components = [
       "components/buttons",
@@ -124,7 +125,10 @@ module ApplicationHelper
       "components/navbar",
       "components/cards",
       "components/layouts",
-      "components/footer"
+      "components/footer",
+      "components/crop_selection",
+      "components/farm-cards",
+      "components/undo_toast"
     ]
     
     components_to_load = components || default_components

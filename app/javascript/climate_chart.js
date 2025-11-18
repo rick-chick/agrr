@@ -94,6 +94,7 @@ class ClimateChart {
    */
   hide(container) {
     if (container) {
+      container.classList.add('hidden');
       container.style.display = 'none';
     }
     this.destroyCharts();
