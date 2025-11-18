@@ -163,11 +163,12 @@
    Alert Components
    ============================================ */
 
+/* Note: 基本の.alert定義はutilities.cssに統一されています */
+/* 以下はinteraction-rules機能固有の拡張スタイルです */
+
+/* interaction-rules固有のmargin-bottom調整 */
 .alert {
-  padding: var(--space-4);
   margin-bottom: var(--space-5);
-  border-radius: var(--radius-md);
-  border: var(--border-width-1) solid transparent;
 }
 
 .alert-danger {

@@ -52,6 +52,8 @@ body {
   margin-bottom: var(--space-4);
   border-radius: var(--radius-md);
   border: var(--border-width-1) solid transparent;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
 }
 
 .alert-success,
