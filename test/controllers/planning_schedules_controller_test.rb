@@ -495,6 +495,23 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_match(/#{expected_last}年度/, period_text, "Should display 5 years before next year (#{expected_last})")
   end
 
+  test "fields_selection auto selects fields when params field_ids are blank" do
+    sign_in_as @user
+
+    farm_with_plan = create(:farm, user: @user, name: '計画農場')
+    plan = create(:cultivation_plan, :private, user: @user, farm: farm_with_plan, plan_year: Date.current.year)
+    create(:cultivation_plan_field, cultivation_plan: plan, name: '計画ほ場', area: 1000)
+
+    get fields_selection_planning_schedules_path(
+      farm_id: farm_with_plan.id,
+      field_ids: ['']
+    )
+
+    assert_response :success
+    field_id = '計画ほ場'.hash.abs
+    assert_select "input.field-checkbox[value='#{field_id}'][checked='checked']", count: 1
+  end
+
   test "schedule displays year_range in descending order" do
     sign_in_as @user
     

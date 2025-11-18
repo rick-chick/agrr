@@ -3,16 +3,14 @@
 <div class="plans-wrapper">
   <div class="plans-container">
     <!-- ヘッダー -->
-    <div class="plans-header">
-      <div class="plans-header-main">
-        <div>
-          <h1 class="plans-header-title">
-            📅 <%= t('planning_schedules.fields_selection.title') %>
-          </h1>
-          <p class="plans-header-subtitle">
-            <%= t('planning_schedules.fields_selection.subtitle') %>
-          </p>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          📅 <%= t('planning_schedules.fields_selection.title') %>
+        </h1>
+        <p class="page-subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: var(--space-2) 0 0 0;">
+          <%= t('planning_schedules.fields_selection.subtitle') %>
+        </p>
       </div>
     </div>
 
@@ -81,7 +79,7 @@
             <!-- 送信ボタン -->
             <div class="form-actions">
               <%= f.submit t('planning_schedules.fields_selection.show_schedule'), 
-                  class: "btn-plans-primary",
+                  class: "btn btn-primary",
                   data: { "planning-schedules-fields-selection-target": "submit" },
                   disabled: @selected_field_ids.empty? %>
             </div>

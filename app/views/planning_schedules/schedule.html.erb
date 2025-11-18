@@ -3,21 +3,19 @@
 <div class="plans-wrapper">
   <div class="plans-container">
     <!-- ヘッダー -->
-    <div class="plans-header">
-      <div class="plans-header-main">
-        <div>
-          <h1 class="plans-header-title">
-            📊 <%= t('planning_schedules.schedule.title') %>
-          </h1>
-          <p class="plans-header-subtitle">
-            <%= t('planning_schedules.schedule.subtitle') %>
-          </p>
-        </div>
-        <div class="flex gap-2">
-          <%= link_to fields_selection_planning_schedules_path, class: "btn-secondary" do %>
-            <%= t('planning_schedules.schedule.change_fields') %>
-          <% end %>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          📊 <%= t('planning_schedules.schedule.title') %>
+        </h1>
+        <p class="page-subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: var(--space-2) 0 0 0;">
+          <%= t('planning_schedules.schedule.subtitle') %>
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <%= link_to fields_selection_planning_schedules_path, class: "btn btn-secondary" do %>
+          <%= t('planning_schedules.schedule.change_fields') %>
+        <% end %>
       </div>
     </div>
 

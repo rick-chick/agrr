@@ -72,31 +72,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Plans用のプライマリボタン（.btn-plans-primaryの互換性） */
-.btn-plans-primary {
-  /* .btn-primaryと同じスタイルを継承 */
-  background: var(--gradient-primary);
-  color: var(--color-white);
-  border-color: transparent;
-  box-shadow: var(--shadow-primary);
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-weight-semibold);
-}
-
-.btn-plans-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary-hover, var(--shadow-md));
-}
-
-.btn-plans-primary:disabled {
-  background: var(--color-gray-300);
-  color: var(--color-gray-500);
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 0.6;
-  pointer-events: none;
-}
-
 /* Secondary Button - Secondary actions */
 .btn-secondary {
   background: var(--color-white);
@@ -115,22 +90,6 @@
 .btn-secondary:active {
   transform: translateY(0);
   background: var(--color-secondary-dark);
-}
-
-/* Plans用のセカンダリボタン（.btn-plans-secondaryの互換性） */
-.btn-plans-secondary {
-  /* .btn-secondaryに近いスタイル */
-  background: var(--color-gray-100);
-  color: var(--text-primary);
-  border-color: transparent;
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-weight-medium);
-}
-
-.btn-plans-secondary:hover {
-  background: var(--color-gray-200);
-  transform: none;
-  box-shadow: none;
 }
 
 /* Success Button - Positive actions */
@@ -246,6 +205,27 @@
 
 .btn-link:active {
   color: var(--color-info-dark);
+}
+
+/* White Button - Subtle white background button */
+.btn-white {
+  background: var(--color-white);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+  border-width: var(--border-width-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-white:hover:not(:disabled) {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-white:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================

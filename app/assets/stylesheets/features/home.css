@@ -61,32 +61,32 @@
   animation: fadeInUp 1s ease-out 0.4s both;
 }
 
-.hero-button {
+/* Hero button style - 標準ボタンシステムを拡張 */
+.hero-button-style {
   background: var(--color-white);
   color: var(--color-secondary);
-  padding: var(--space-4) var(--space-8);
+  border-color: transparent;
   border-radius: var(--radius-full);
-  text-decoration: none;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  transition: all var(--transition-fast);
   box-shadow: var(--shadow-2xl);
 }
 
-.hero-button:hover {
+.hero-button-style:hover:not(:disabled) {
   transform: translateY(-3px);
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
 
-.hero-button-outline {
+.hero-button-outline-style {
   background: transparent;
   color: var(--color-white);
   border: var(--border-width-2) solid var(--color-white);
+  border-radius: var(--radius-full);
 }
 
-.hero-button-outline:hover {
+.hero-button-outline-style:hover:not(:disabled) {
   background: var(--color-white);
   color: var(--color-secondary);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* ============================================

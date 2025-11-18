@@ -25,7 +25,8 @@
     "features/custom_gantt_chart",
     "features/gantt_chart",
     "features/crop_palette",
-    "features/climate_chart"
+    "features/climate_chart",
+    "features/home"
   ]) %>
   
   <!-- Bundled JavaScript (includes Leaflet) -->
@@ -37,7 +38,7 @@
   <%= render "shared/navbar" %>
 
   <!-- Flash Messages -->
-  <main class="container">
+  <main class="<%= controller_name == 'home' && action_name == 'index' ? '' : 'container' %>">
     <%= render "shared/flash_messages" %>
     
     <%= yield %>

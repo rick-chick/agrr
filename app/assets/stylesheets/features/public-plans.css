@@ -1294,24 +1294,8 @@
 
 /* ============================================
    Button Styles for Fixed Bottom Bar
+   Note: .btn-whiteは標準ボタンシステム(components/buttons.css)で定義されています。
    ============================================ */
-
-.btn-white {
-  background: white;
-  color: var(--color-gray-700);
-  border: 2px solid var(--color-gray-300);
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.btn-white:hover {
-  background: var(--color-gray-50);
-  border-color: var(--color-gray-400);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
 .btn-gradient {
   background: var(--color-success);

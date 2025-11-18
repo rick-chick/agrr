@@ -20,93 +20,37 @@
    Header
    ============================================ */
 
-/* ガントチャートヘッダー（タイトルと作物パレットを横並び） */
-.gantt-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.gantt-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: 0; /* gantt-headerで制御するためmarginは0に */
-  color: var(--color-gray-800);
-}
-
+/* ガントチャートタイトルアイコンとテキストのスタイル */
 .gantt-title-icon {
   font-size: var(--font-size-3xl);
   line-height: 1;
+  margin-right: var(--space-2);
 }
 
 .gantt-title-text {
   line-height: 1.2;
 }
 
-.plans-header {
-  background: var(--color-white);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
-  box-shadow: var(--shadow-md);
-}
-
-.plans-header-main {
+/* ガントチャートのpage-header内のタイトル調整 */
+.gantt-section .page-header .page-title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.plans-header-title {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.plans-header-subtitle {
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-  margin: 0;
+  gap: var(--space-2);
+  font-size: var(--font-size-2xl);
+  margin-bottom: 0;
 }
 
 /* ============================================
-   Buttons
-   Note: 基本スタイルは components/buttons.css で定義
-   ここでは plans 固有の調整のみ
+   Header
+   Note: plans-headerは標準のpage-headerに統一されました。
+   ここでは plans 固有の調整のみを定義します。
    ============================================ */
 
-.btn-plans-primary,
-.btn-plans-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-6);
-  font-size: var(--font-size-base);
-  text-decoration: none;
-  transition: all var(--transition-base);
-  border: none;
-  cursor: pointer;
-}
-
-.btn-plans-secondary {
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-gray-100);
-  color: var(--text-primary);
-  border: 1px solid var(--color-gray-300);
-}
-
-.btn-plans-secondary:hover {
-  background: var(--color-gray-200);
-  border-color: var(--color-gray-400);
-}
+/* ============================================
+   Buttons
+   Note: ボタンスタイルは components/buttons.css で統一されています。
+   ここでは plans 固有の調整は不要となりました。
+   ============================================ */
 
 /* ============================================
    Empty State
@@ -977,17 +921,13 @@ details:not([open]) .year-toggle-icon::before {
     padding: var(--space-4) var(--space-3);
   }
   
-  .plans-header {
-    padding: var(--space-4);
-    margin-bottom: var(--space-4);
-  }
-  
-  .plans-header-main {
+  .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: var(--space-4);
   }
   
-  .plans-header-title {
+  .page-title {
     font-size: var(--font-size-2xl);
   }
   
@@ -1043,8 +983,7 @@ details:not([open]) .year-toggle-icon::before {
     width: 100%;
   }
   
-  .plans-empty-actions .btn-plans-primary,
-  .plans-empty-actions .btn-plans-secondary {
+  .plans-empty-actions .btn {
     width: 100%;
     justify-content: center;
   }

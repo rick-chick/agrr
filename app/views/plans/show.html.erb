@@ -4,12 +4,12 @@
   <div class="plans-container" id="<%= dom_id(@vm.plan) %>" data-undo-delete-record>
     <!-- ヘッダーアクション -->
     <div class="action-bar">
-      <%= link_to plans_path, class: "btn-plans-secondary" do %>
+      <%= link_to plans_path, class: "btn btn-ghost" do %>
         <%= t('plans.show.back_to_list') %>
       <% end %>
       <div class="action-bar-group">
         <%= link_to t('plans.show.view_task_schedule'), plan_task_schedule_path(@vm.plan),
-            class: "btn-plans-secondary" %>
+            class: "btn btn-ghost" %>
         <%= link_to t('plans.show.delete'), plan_path(@vm.plan),
             class: "btn btn-error",
             data: {

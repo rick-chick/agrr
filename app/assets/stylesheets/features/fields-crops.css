@@ -66,6 +66,12 @@
   font-weight: var(--font-weight-bold);
 }
 
+.page-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: var(--space-2) 0 0 0;
+}
+
 /* ============================================
    Map Container
    ============================================ */
