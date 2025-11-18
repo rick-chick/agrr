@@ -26,7 +26,7 @@
         </p>
       </div>
     <% else %>
-      <%= form_with url: schedule_planning_schedules_path, method: :get, local: true, class: "planning-schedule-form", id: "planning-schedule-form", data: { controller: "planning-schedules-fields-selection" } do |f| %>
+      <%= form_with url: fields_selection_planning_schedules_path, method: :get, local: true, class: "planning-schedule-form", id: "planning-schedule-form", data: { controller: "planning-schedules-fields-selection" } do |f| %>
         <!-- 農場選択 -->
         <div class="form-section">
           <label class="form-label">
@@ -37,7 +37,10 @@
               {},
               {
                 class: "form-select",
-                onchange: "this.form.submit()"
+                data: {
+                  "planning-schedules-fields-selection-target": "farmSelect",
+                  action: "change->planning-schedules-fields-selection#onFarmChange"
+                }
               } %>
         </div>
 
@@ -80,6 +83,7 @@
             <div class="form-actions">
               <%= f.submit t('planning_schedules.fields_selection.show_schedule'), 
                   class: "btn btn-primary",
+                  formaction: schedule_planning_schedules_path,
                   data: { "planning-schedules-fields-selection-target": "submit" },
                   disabled: @selected_field_ids.empty? %>
             </div>

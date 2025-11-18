@@ -1,11 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["submit"]
+  static targets = ["submit", "farmSelect"]
 
   connect() {
     this.updateSubmitButton()
     this.#bindCheckboxChangeHandlers()
+  }
+
+  onFarmChange() {
+    this.element.submit()
   }
 
   selectAll() {
