@@ -166,7 +166,8 @@
 /* Note: 基本の.alert定義はutilities.cssに統一されています */
 /* 以下はinteraction-rules機能固有の拡張スタイルです */
 
-/* interaction-rules固有のmargin-bottom調整 */
+/* interaction-rules固有のmargin-bottom調整
+   utilities.cssの基本定義を上書きして、margin-bottomを調整しています */
 .alert {
   margin-bottom: var(--space-5);
 }

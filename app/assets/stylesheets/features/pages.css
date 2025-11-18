@@ -63,6 +63,11 @@
   gap: var(--space-5);
 }
 
+/* Note: .feature-cardはpages/about.html.erb専用のスタイルです
+   - hover効果なし
+   - padding: var(--space-5)
+   - border-radius: var(--radius-lg)
+   - home/index.html.erbで使用される.feature-cardとは異なるスタイルです */
 .feature-card {
   background-color: var(--color-gray-50);
   padding: var(--space-5);
