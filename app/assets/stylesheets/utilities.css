@@ -222,6 +222,8 @@ body {
    Empty State Component (統一された空状態)
    ============================================ */
 
+/* 標準の空状態コンポーネント
+   使用箇所: farms, crops, fields, pests, pesticides, interaction_rules等の標準画面 */
 .empty-state {
   background: var(--color-white);
   border-radius: var(--radius-xl);
@@ -254,9 +256,11 @@ body {
   margin-top: var(--space-4);
 }
 
-/* Plans用の空状態は.empty-stateを継承 */
+/* Plans用の空状態コンポーネント
+   使用箇所: plans/index.html.erb, plans/new.html.erb, plans/select_crop.html.erb等
+   Note: .empty-stateとほぼ同じスタイルですが、marginが設定されていない点が異なります
+   将来的に.empty-stateに統合することを検討してください */
 .plans-empty {
-  /* .empty-stateと同じスタイルを継承 */
   background: var(--color-white);
   border-radius: var(--radius-xl);
   padding: var(--space-12);

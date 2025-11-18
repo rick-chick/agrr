@@ -92,7 +92,8 @@ table tbody tr:hover {
    ============================================ */
 
 /* Note: 基本の.alert定義はutilities.cssに統一されています */
-/* 以下は管理画面固有の拡張スタイルです */
+/* 以下は管理画面固有の拡張スタイルです
+   utilities.cssの基本定義を上書きして、管理画面専用の色を適用しています */
 
 .alert-success {
   background-color: #d1fae5;
