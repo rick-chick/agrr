@@ -54,7 +54,7 @@
               <%= t('plans.select_crop.no_crops_hint') %>
             </p>
             <%= link_to t('plans.select_crop.create_crop_link'), new_crop_path, 
-                class: "btn-plans-primary" %>
+                class: "btn btn-primary" %>
           </div>
         <% else %>
           <!-- 作物選択グリッド -->
@@ -92,7 +92,7 @@
       <div class="fixed-bottom-bar-content">
         <div class="fixed-bottom-bar-left">
           <%= link_to t('plans.select_crop.bottom_bar.back_button'), new_plan_path, 
-              class: "btn-plans-secondary" %>
+              class: "btn btn-ghost" %>
           
           <div class="selection-counter-group">
             <span><%= t('plans.select_crop.bottom_bar.selected_label') %>:</span>
@@ -104,7 +104,7 @@
         <button type="submit" form="cropForm" id="submitBtn" 
                 disabled
                 data-crop-select-target="submit"
-                class="btn-plans-primary">
+                class="btn btn-primary">
           <%= t('plans.select_crop.bottom_bar.submit_button') %>
         </button>
       </div>

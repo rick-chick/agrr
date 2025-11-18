@@ -54,7 +54,7 @@
                 <%= t('plans.new.no_farms_hint') %>
               </p>
               <%= link_to t('plans.new.create_farm_link'), new_farm_path, 
-                  class: "btn-plans-primary" %>
+                  class: "btn btn-primary" %>
             </div>
           <% else %>
             <!-- 農場カードグリッド -->
@@ -87,7 +87,7 @@
         <!-- 送信ボタン -->
         <% if @vm.farms.any? %>
           <div class="text-center mt-8">
-            <button type="submit" class="btn-plans-primary w-full max-w-sm">
+            <button type="submit" class="btn btn-primary w-full max-w-sm">
               <%= t('plans.new.next_button') %>
             </button>
           </div>

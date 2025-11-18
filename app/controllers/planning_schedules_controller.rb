@@ -17,7 +17,12 @@ class PlanningSchedulesController < ApplicationController
       if @selected_farm
         # 選択した農場のほ場を全計画から集約して取得
         @fields = collect_fields_from_plans(@selected_farm)
-        @selected_field_ids = params[:field_ids]&.map(&:to_i) || @fields.map { |f| f[:id] }
+        requested_field_ids = Array(params[:field_ids]).filter_map do |field_id|
+          value = field_id.to_s.strip
+          next if value.blank?
+          value.to_i
+        end
+        @selected_field_ids = requested_field_ids.presence || @fields.map { |f| f[:id] }
       else
         @fields = []
         @selected_field_ids = []

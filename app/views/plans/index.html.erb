@@ -3,21 +3,19 @@
 <div class="plans-wrapper">
   <div class="plans-container">
     <!-- ヘッダー -->
-    <div class="plans-header">
-      <div class="plans-header-main">
-        <div>
-          <h1 class="plans-header-title">
-            <%= t('plans.index.title') %>
-          </h1>
-          <p class="plans-header-subtitle">
-            <%= t('plans.index.subtitle') %>
-          </p>
-        </div>
-        <div>
-          <%= link_to new_plan_path, class: "btn-plans-primary" do %>
-            <%= t('plans.index.create_new') %>
-          <% end %>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <%= t('plans.index.title') %>
+        </h1>
+        <p class="page-subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: var(--space-2) 0 0 0;">
+          <%= t('plans.index.subtitle') %>
+        </p>
+      </div>
+      <div>
+        <%= link_to new_plan_path, class: "btn btn-primary" do %>
+          <%= t('plans.index.create_new') %>
+        <% end %>
       </div>
     </div>
 
@@ -32,10 +30,10 @@
           <%= t('plans.index.no_plans_hint') %>
         </p>
         <div class="plans-empty-actions">
-          <%= link_to new_plan_path, class: "btn-plans-primary" do %>
+          <%= link_to new_plan_path, class: "btn btn-primary" do %>
             <%= t('plans.index.create_new') %>
           <% end %>
-          <%= link_to public_plans_path, class: "btn-plans-secondary" do %>
+          <%= link_to public_plans_path, class: "btn btn-ghost" do %>
             <%= t('plans.index.try_public_plans') %>
           <% end %>
         </div>

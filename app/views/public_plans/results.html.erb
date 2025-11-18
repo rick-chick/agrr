@@ -60,11 +60,11 @@
         <%= f.submit t('public_plans.save.button'), class: "btn-primary", id: "save-plan-button" %>
       <% end %>
       <% if logged_in? %>
-        <%= link_to plans_path, class: "btn-white" do %>
+        <%= link_to plans_path, class: "btn btn-white" do %>
           <%= t('public_plans.results.view_my_plans') %>
         <% end %>
       <% end %>
-      <%= link_to public_plans_path, class: "btn-white" do %>
+      <%= link_to public_plans_path, class: "btn btn-white" do %>
         <%= t('.create_new_plan') %>
       <% end %>
     </div>

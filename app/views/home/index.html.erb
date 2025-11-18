@@ -1,27 +1,7 @@
 <% content_for :title, t('.title') %>
 <% content_for :description, t('.description') %>
 
-<!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
-<head>
-  <%= render "shared/meta_tags" %>
-  <!-- Bundled JavaScript and CSS (includes Leaflet) -->
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
-  
-  <!-- Core Design System -->
-  <%= stylesheet_link_tag "core/variables", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "core/reset", "data-turbo-track": "reload" %>
-  <!-- Components -->
-  <%= stylesheet_link_tag "components/buttons", "data-turbo-track": "reload" %>
-  <%= stylesheet_link_tag "components/navbar", "data-turbo-track": "reload" %>
-  <!-- Page-specific styles -->
-  <%= stylesheet_link_tag "features/home", "data-turbo-track": "reload" %>
-</head>
-<body>
-  <%= render "shared/navbar" %>
-
-  <!-- Hero Section -->
+<!-- Hero Section -->
   <section class="hero">
     <div class="hero-content">
       <h1 class="hero-title"><%= t('.hero.title') %></h1>
@@ -29,7 +9,7 @@
         <%= t('.hero.subtitle_html').html_safe %>
       </p>
       <div class="hero-buttons">
-        <%= link_to t('.hero.cta_button'), public_plans_path, class: "hero-button" %>
+        <%= link_to t('.hero.cta_button'), public_plans_path, class: "btn btn-primary btn-lg hero-button-style" %>
       </div>
     </div>
   </section>
@@ -97,11 +77,7 @@
       <%= t('.cta.description_html').html_safe %>
     </p>
     <div class="cta-buttons">
-      <%= link_to t('.cta.button_primary'), public_plans_path, class: "hero-button" %>
-      <%= link_to t('.cta.button_secondary'), about_path, class: "hero-button hero-button-outline" %>
+      <%= link_to t('.cta.button_primary'), public_plans_path, class: "btn btn-primary btn-lg hero-button-style" %>
+      <%= link_to t('.cta.button_secondary'), about_path, class: "btn btn-lg hero-button-outline-style" %>
     </div>
   </section>
-
-  <%= render "shared/footer" %>
-</body>
-</html>

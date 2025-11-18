@@ -57,11 +57,13 @@
 %>
 
 <div class="gantt-section">
-  <div class="gantt-header">
-    <h2 class="gantt-title">
-      <span class="gantt-title-icon">📊</span>
-      <span class="gantt-title-text"><%= gantt_title %></span>
-    </h2>
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">
+        <span class="gantt-title-icon">📊</span>
+        <span class="gantt-title-text"><%= gantt_title %></span>
+      </h2>
+    </div>
     <div class="gantt-header-actions">
       <%# 作物パレット（public_plansの場合のみ表示） %>
       <% if show_crop_palette %>
