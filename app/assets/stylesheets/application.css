@@ -15,70 +15,7 @@
    ============================================ */
 
 /* ============================================
-   Utility Classes - 汎用クラス
-   ============================================ */
-
-/* Container */
-.container {
-  width: 100%;
-  max-width: var(--container-xl);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--space-5);
-  padding-right: var(--space-5);
-  box-sizing: border-box;
-}
-
-.container-sm {
-  max-width: var(--container-sm);
-}
-
-.container-md {
-  max-width: var(--container-md);
-}
-
-.container-lg {
-  max-width: var(--container-lg);
-}
-
-/* Alert Messages - フラッシュメッセージ */
-.alert {
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-  border-radius: var(--radius-md);
-  border: var(--border-width-1) solid transparent;
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
-}
-
-.alert-success,
-.notice {
-  background-color: var(--color-success-bg);
-  border-color: var(--color-success-border);
-  color: var(--color-success-text);
-}
-
-.alert-info {
-  background-color: var(--color-info-bg);
-  border-color: var(--color-info-border);
-  color: var(--color-info-text);
-}
-
-.alert-warning {
-  background-color: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
-  color: var(--color-warning-text);
-}
-
-.alert-danger,
-.alert-error {
-  background-color: var(--color-error-bg);
-  border-color: var(--color-error-border);
-  color: var(--color-error-text);
-}
-
-/* ============================================
-   Note: ユーティリティクラスは utilities.css に統一されています
+   Note: ユーティリティクラス（.container, .alert等）は utilities.css に統一されています
    重複を避けるため、ここではアプリケーション固有のスタイルのみを定義します
    ============================================ */
 

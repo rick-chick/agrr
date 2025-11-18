@@ -91,12 +91,8 @@ table tbody tr:hover {
    Alerts
    ============================================ */
 
-.alert {
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-  border-radius: var(--radius-md);
-  border: var(--border-width-1) solid transparent;
-}
+/* Note: 基本の.alert定義はutilities.cssに統一されています */
+/* 以下は管理画面固有の拡張スタイルです */
 
 .alert-success {
   background-color: #d1fae5;
