@@ -26,6 +26,7 @@ import PestFormController from "./pest_form_controller"
 import PlanningSchedulesFieldsSelectionController from "./planning_schedules_fields_selection_controller"
 import NavbarController from "./navbar_controller"
 import DropdownController from "./dropdown_controller"
+import StopPropagationController from "./stop_propagation_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -49,6 +50,7 @@ application.register("pest-form", PestFormController)
 application.register("planning-schedules-fields-selection", PlanningSchedulesFieldsSelectionController)
 application.register("navbar", NavbarController)
 application.register("dropdown", DropdownController)
+application.register("stop-propagation", StopPropagationController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)
