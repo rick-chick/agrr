@@ -105,12 +105,15 @@
                                 title: t('crops.show.delete_blueprint'),
                                 data: { 
                                   turbo_confirm: t('crops.show.delete_blueprint_confirm'),
-                                  action: "click->stopPropagation"
+                                  controller: "stop-propagation",
+                                  action: "click->stop-propagation#stop"
                                 },
-                                onclick: "event.stopPropagation();",
                                 form: { 
                                   class: "task-blueprint-card__delete-form",
-                                  onclick: "event.stopPropagation();"
+                                  data: {
+                                    controller: "stop-propagation",
+                                    action: "click->stop-propagation#stop"
+                                  }
                                 } do %>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="task-blueprint-card__delete-icon">
                       <polyline points="3 6 5 6 21 6"></polyline>
