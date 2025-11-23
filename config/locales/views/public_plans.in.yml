@@ -30,6 +30,7 @@ in:
       restart: "कृपया शुरू से फिर से शुरू करें।"
       create_failed: "योजना बनाने में विफल: %{errors}"
       not_found: "खेती योजना नहीं मिली।"
+      schedule_generation_failed: "कार्य अनुसूची पंजीकरण विफल"
     
     save:
       button: "मेरी योजनाओं में सहेजें"

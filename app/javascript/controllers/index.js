@@ -27,6 +27,7 @@ import PlanningSchedulesFieldsSelectionController from "./planning_schedules_fie
 import NavbarController from "./navbar_controller"
 import DropdownController from "./dropdown_controller"
 import StopPropagationController from "./stop_propagation_controller"
+import ToastNotificationController from "./toast_notification_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -51,6 +52,7 @@ application.register("planning-schedules-fields-selection", PlanningSchedulesFie
 application.register("navbar", NavbarController)
 application.register("dropdown", DropdownController)
 application.register("stop-propagation", StopPropagationController)
+application.register("toast-notification", ToastNotificationController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)

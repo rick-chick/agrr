@@ -151,6 +151,18 @@ class PublicPlansController < ApplicationController
     
     # まだ完了していない場合は進捗画面へ
     redirect_to optimizing_public_plans_path unless @cultivation_plan.status_completed?
+    
+    # 作業予定が空の場合は警告トーストを表示するためのフラグを設定
+    # 計画内の各圃場に対して作業予定が生成されているか確認
+    # テンプレートがない作物がある場合、その圃場には作業予定が生成されない
+    field_cultivations_with_schedules = @cultivation_plan.field_cultivations.select do |fc|
+      @cultivation_plan.task_schedules.where(field_cultivation: fc).any? do |schedule|
+        schedule.task_schedule_items.any?
+      end
+    end
+    
+    # 全ての圃場に作業予定が生成されていない場合は警告を表示
+    @show_schedule_warning = field_cultivations_with_schedules.count < @cultivation_plan.field_cultivations.count
   end
   
   # 保存ボタンクリック時の処理
@@ -281,7 +293,7 @@ class PublicPlansController < ApplicationController
     end
     
     find_cultivation_plan_scope
-      .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
+      .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop], task_schedules: :task_schedule_items)
       .find(plan_id)
   rescue ActiveRecord::RecordNotFound
     redirect_to public_plans_path, alert: I18n.t('public_plans.errors.not_found')
