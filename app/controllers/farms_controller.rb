@@ -118,7 +118,12 @@ class FarmsController < ApplicationController
   end
 
   def farm_params
-    params.require(:farm).permit(:name, :latitude, :longitude)
+    permitted = [:name, :latitude, :longitude]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:farm).permit(*permitted)
   end
 end
 

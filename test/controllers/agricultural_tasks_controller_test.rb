@@ -391,6 +391,88 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトとflashのテストを追加する
+
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照作業のregionを更新できる" do
+    sign_in_as @admin_user
+    
+    patch agricultural_task_path(@reference_task), params: {
+      agricultural_task: {
+        name: @reference_task.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to agricultural_task_path(@reference_task)
+    @reference_task.reload
+    assert_equal 'us', @reference_task.region
+  end
+
+  test "管理者は自身の作業のregionを更新できる" do
+    sign_in_as @admin_user
+    task = create(:agricultural_task, :user_owned, user: @admin_user, region: 'jp')
+    
+    patch agricultural_task_path(task), params: {
+      agricultural_task: {
+        name: task.name,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to agricultural_task_path(task)
+    task.reload
+    assert_equal 'in', task.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    sign_in_as @user
+    task = create(:agricultural_task, :user_owned, user: @user, region: 'jp')
+    
+    patch agricultural_task_path(task), params: {
+      agricultural_task: {
+        name: task.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to agricultural_task_path(task)
+    task.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', task.region
+  end
+
+  test "管理者は新規作業作成時にregionを設定できる" do
+    sign_in_as @admin_user
+    
+    post agricultural_tasks_path, params: {
+      agricultural_task: {
+        name: '新規作業',
+        is_reference: true,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to agricultural_task_path(AgriculturalTask.last)
+    task = AgriculturalTask.last
+    assert_equal 'us', task.region
+  end
+
+  test "一般ユーザーは新規作業作成時にregionを設定できない" do
+    sign_in_as @user
+    
+    post agricultural_tasks_path, params: {
+      agricultural_task: {
+        name: '新規作業',
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to agricultural_task_path(AgriculturalTask.last)
+    task = AgriculturalTask.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil task.region
+  end
 end
 
 

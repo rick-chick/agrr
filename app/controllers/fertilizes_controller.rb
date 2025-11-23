@@ -126,7 +126,7 @@ class FertilizesController < ApplicationController
   end
 
   def fertilize_params
-    params.require(:fertilize).permit(
+    permitted = [
       :name,
       :n,
       :p,
@@ -134,7 +134,12 @@ class FertilizesController < ApplicationController
       :description,
       :package_size,
       :is_reference
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:fertilize).permit(*permitted)
   end
 end
 

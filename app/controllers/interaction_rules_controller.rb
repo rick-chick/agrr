@@ -127,7 +127,7 @@ class InteractionRulesController < ApplicationController
   end
 
   def interaction_rule_params
-    params.require(:interaction_rule).permit(
+    permitted = [
       :rule_type,
       :source_group,
       :target_group,
@@ -135,7 +135,12 @@ class InteractionRulesController < ApplicationController
       :is_directional,
       :description,
       :is_reference
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:interaction_rule).permit(*permitted)
   end
 end
 

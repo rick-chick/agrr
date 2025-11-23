@@ -102,6 +102,19 @@
           <%= f.label :is_reference, t('fertilizes.form.is_reference_label'), class: 'form-label' %>
         </div>
       </div>
+      
+      <div class="form-group">
+        <%= f.label :region, t('fertilizes.form.region_label'), class: 'form-label' %>
+        <%= f.select :region, 
+            options_for_select([
+              [t('fertilizes.form.region_jp'), 'jp'],
+              [t('fertilizes.form.region_us'), 'us'],
+              [t('fertilizes.form.region_in'), 'in']
+            ], @fertilize.region), 
+            { include_blank: t('fertilizes.form.region_blank') }, 
+            { class: 'form-control' } %>
+        <div class="form-text"><%= t('fertilizes.form.region_help') %></div>
+      </div>
     <% end %>
 
     <div class="actions">

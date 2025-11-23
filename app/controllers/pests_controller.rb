@@ -142,7 +142,7 @@ class PestsController < ApplicationController
   end
 
   def pest_params
-    params.require(:pest).permit(
+    permitted = [
       :name,
       :name_scientific,
       :family,
@@ -170,7 +170,12 @@ class PestsController < ApplicationController
         :timing_hint,
         :_destroy
       ]
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:pest).permit(*permitted)
   end
 
   # 害虫と作物を関連付ける

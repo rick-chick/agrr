@@ -240,7 +240,7 @@ class CropsController < ApplicationController
   end
 
   def crop_params
-    params.require(:crop).permit(
+    permitted = [
       :name, 
       :variety, 
       :is_reference,
@@ -283,7 +283,12 @@ class CropsController < ApplicationController
           :_destroy
         ]
       ]
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:crop).permit(*permitted)
   end
 
   # 作物に利用可能な農業タスクを取得

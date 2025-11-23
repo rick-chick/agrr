@@ -226,17 +226,21 @@ class AgriculturalTasksController < ApplicationController
   end
 
   def agricultural_task_params
-    params.require(:agricultural_task).permit(
+    permitted = [
       :name,
       :description,
       :time_per_sqm,
       :weather_dependency,
       :skill_level,
       :is_reference,
-      :region,
       :source_agricultural_task_id,
       required_tools: []
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:agricultural_task).permit(*permitted)
   end
 
   def load_crop_selection_data

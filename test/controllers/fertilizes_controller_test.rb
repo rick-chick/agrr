@@ -412,4 +412,92 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     get new_fertilize_path
     assert_response :success
   end
+
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照肥料のregionを更新できる" do
+    sign_in_as @admin_user
+    
+    patch fertilize_path(@reference_fertilize), params: {
+      fertilize: {
+        name: @reference_fertilize.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to fertilize_path(@reference_fertilize)
+    @reference_fertilize.reload
+    assert_equal 'us', @reference_fertilize.region
+  end
+
+  test "管理者は自身の肥料のregionを更新できる" do
+    sign_in_as @admin_user
+    fertilize = create(:fertilize, :user_owned, user: @admin_user, region: 'jp')
+    
+    patch fertilize_path(fertilize), params: {
+      fertilize: {
+        name: fertilize.name,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to fertilize_path(fertilize)
+    fertilize.reload
+    assert_equal 'in', fertilize.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    sign_in_as @user
+    fertilize = create(:fertilize, :user_owned, user: @user, region: 'jp')
+    
+    patch fertilize_path(fertilize), params: {
+      fertilize: {
+        name: fertilize.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to fertilize_path(fertilize)
+    fertilize.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', fertilize.region
+  end
+
+  test "管理者は新規肥料作成時にregionを設定できる" do
+    sign_in_as @admin_user
+    
+    post fertilizes_path, params: {
+      fertilize: {
+        name: '新規肥料',
+        n: 20.0,
+        p: 10.0,
+        k: 10.0,
+        is_reference: true,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to fertilize_path(Fertilize.last)
+    fertilize = Fertilize.last
+    assert_equal 'us', fertilize.region
+  end
+
+  test "一般ユーザーは新規肥料作成時にregionを設定できない" do
+    sign_in_as @user
+    
+    post fertilizes_path, params: {
+      fertilize: {
+        name: '新規肥料',
+        n: 20.0,
+        p: 10.0,
+        k: 10.0,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to fertilize_path(Fertilize.last)
+    fertilize = Fertilize.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil fertilize.region
+  end
 end

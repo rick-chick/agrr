@@ -638,5 +638,119 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトフローのテストを追加する
+
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照作物のregionを更新できる" do
+    sign_in_as @admin_user
+    
+    patch crop_path(@reference_crop), params: {
+      crop: {
+        name: @reference_crop.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to crop_path(@reference_crop)
+    @reference_crop.reload
+    assert_equal 'us', @reference_crop.region
+  end
+
+  test "管理者は自身の作物のregionを更新できる" do
+    sign_in_as @admin_user
+    crop = create(:crop, user: @admin_user, region: 'jp')
+    
+    patch crop_path(crop), params: {
+      crop: {
+        name: crop.name,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to crop_path(crop)
+    crop.reload
+    assert_equal 'in', crop.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    sign_in_as @user
+    crop = create(:crop, user: @user, region: 'jp')
+    
+    patch crop_path(crop), params: {
+      crop: {
+        name: crop.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to crop_path(crop)
+    crop.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', crop.region
+  end
+
+  test "管理者は新規作物作成時にregionを設定できる" do
+    sign_in_as @admin_user
+    
+    post crops_path, params: {
+      crop: {
+        name: '新規作物',
+        is_reference: true,
+        region: 'us',
+        crop_stages_attributes: [{
+          name: '発芽期',
+          order: 1,
+          temperature_requirement_attributes: {
+            base_temperature: 10.0,
+            optimal_min: 15.0,
+            optimal_max: 25.0,
+            low_stress_threshold: 5.0,
+            high_stress_threshold: 30.0,
+            frost_threshold: 0.0,
+            max_temperature: 40.0
+          },
+          thermal_requirement_attributes: {
+            required_gdd: 100.0
+          }
+        }]
+      }
+    }
+    
+    assert_redirected_to crop_path(Crop.last)
+    crop = Crop.last
+    assert_equal 'us', crop.region
+  end
+
+  test "一般ユーザーは新規作物作成時にregionを設定できない" do
+    sign_in_as @user
+    
+    post crops_path, params: {
+      crop: {
+        name: '新規作物',
+        region: 'us',
+        crop_stages_attributes: [{
+          name: '発芽期',
+          order: 1,
+          temperature_requirement_attributes: {
+            base_temperature: 10.0,
+            optimal_min: 15.0,
+            optimal_max: 25.0,
+            low_stress_threshold: 5.0,
+            high_stress_threshold: 30.0,
+            frost_threshold: 0.0,
+            max_temperature: 40.0
+          },
+          thermal_requirement_attributes: {
+            required_gdd: 100.0
+          }
+        }]
+      }
+    }
+    
+    assert_redirected_to crop_path(Crop.last)
+    crop = Crop.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil crop.region
+  end
 end
 

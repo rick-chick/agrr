@@ -63,5 +63,100 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトフローのテストを追加する
+
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照農場のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    ref_farm = create(:farm, is_reference: true, user: User.anonymous_user, region: 'jp')
+    
+    patch farm_path(ref_farm), params: {
+      farm: {
+        name: ref_farm.name,
+        latitude: ref_farm.latitude,
+        longitude: ref_farm.longitude,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to farm_path(ref_farm)
+    ref_farm.reload
+    assert_equal 'us', ref_farm.region
+  end
+
+  test "管理者は自身の農場のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    farm = create(:farm, user: admin, region: 'jp')
+    
+    patch farm_path(farm), params: {
+      farm: {
+        name: farm.name,
+        latitude: farm.latitude,
+        longitude: farm.longitude,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to farm_path(farm)
+    farm.reload
+    assert_equal 'in', farm.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    sign_in_as @user
+    farm = create(:farm, user: @user, region: 'jp')
+    
+    patch farm_path(farm), params: {
+      farm: {
+        name: farm.name,
+        latitude: farm.latitude,
+        longitude: farm.longitude,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to farm_path(farm)
+    farm.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', farm.region
+  end
+
+  test "管理者は新規農場作成時にregionを設定できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    
+    post farms_path, params: {
+      farm: {
+        name: '新規農場',
+        latitude: 35.0,
+        longitude: 139.0,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to farm_path(Farm.last)
+    farm = Farm.last
+    assert_equal 'us', farm.region
+  end
+
+  test "一般ユーザーは新規農場作成時にregionを設定できない" do
+    sign_in_as @user
+    
+    post farms_path, params: {
+      farm: {
+        name: '新規農場',
+        latitude: 35.0,
+        longitude: 139.0,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to farm_path(Farm.last)
+    farm = Farm.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil farm.region
+  end
 end
 
