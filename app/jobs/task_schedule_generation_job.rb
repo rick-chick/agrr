@@ -38,6 +38,9 @@ class TaskScheduleGenerationJob < ApplicationJob
     cultivation_plan.phase_completed!(channel_class)
 
     Rails.logger.info "✅ [TaskScheduleGenerationJob] Completed generation for CultivationPlan##{cultivation_plan_id}"
+  rescue TaskScheduleGeneratorService::TemplateMissingError => e
+    Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Template missing for CultivationPlan##{cultivation_plan_id}: #{e.message}"
+    handle_template_missing(cultivation_plan, channel_class, e)
   rescue TaskScheduleGeneratorService::WeatherDataMissingError,
          TaskScheduleGeneratorService::ProgressDataMissingError,
          TaskScheduleGeneratorService::GddTriggerMissingError => e
@@ -61,5 +64,21 @@ class TaskScheduleGenerationJob < ApplicationJob
 
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Handling failure for CultivationPlan##{cultivation_plan.id}: #{error.message}"
     cultivation_plan.phase_failed!('task_schedule_generation', channel_class)
+  end
+
+  def handle_template_missing(cultivation_plan, channel_class, error)
+    return unless cultivation_plan
+
+    Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Handling template missing for CultivationPlan##{cultivation_plan.id}: #{error.message}"
+    
+    # 計画を完了状態にする（テンプレートがない場合でも計画は完成させる）
+    # トーストはresults画面で表示されるため、ここでは通常の完了通知のみ送信
+    cultivation_plan.complete!
+    cultivation_plan.phase_completed!(channel_class)
+  rescue => e
+    Rails.logger.error "❌ [TaskScheduleGenerationJob] Failed to handle template missing: #{e.message}"
+    # エラーが発生しても計画は完了状態にする
+    cultivation_plan.complete! if cultivation_plan
+    cultivation_plan.phase_completed!(channel_class) if cultivation_plan
   end
 end

@@ -30,6 +30,7 @@ ja:
       restart: "最初からやり直してください。"
       create_failed: "計画作成に失敗しました: %{errors}"
       not_found: "作付け計画が見つかりません。"
+      schedule_generation_failed: "作業予定の登録に失敗しました"
     
     save:
       button: "マイプランに保存"

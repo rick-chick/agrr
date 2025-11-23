@@ -30,6 +30,7 @@ us:
       restart: "Please start over."
       create_failed: "Failed to create plan: %{errors}"
       not_found: "Crop plan not found."
+      schedule_generation_failed: "Failed to register work schedule"
     
     save:
       button: "Save to My Plans"

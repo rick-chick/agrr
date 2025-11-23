@@ -2,6 +2,16 @@
 <%# app/views/public_plans/results.html.erb %>
 <%# 作付け計画完成画面 - ガントチャート形式 %>
 
+<%# 作業予定の警告トースト %>
+<% if @show_schedule_warning %>
+  <div data-controller="toast-notification" 
+       data-toast-notification-type-value="warning"
+       data-toast-notification-message-value="<%= t('public_plans.errors.schedule_generation_failed') %>"
+       data-toast-notification-auto-show-value="true"
+       style="display: none;">
+  </div>
+<% end %>
+
 <div class="public-plans-wrapper">
   <div class="cultivation-results-container">
     
