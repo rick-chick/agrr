@@ -149,7 +149,7 @@ class PesticidesController < ApplicationController
   end
 
   def pesticide_params
-    params.require(:pesticide).permit(
+    permitted = [
       :name,
       :active_ingredient,
       :description,
@@ -174,7 +174,12 @@ class PesticidesController < ApplicationController
         :application_method,
         :_destroy
       ]
-    )
+    ]
+    
+    # 管理者のみregionを許可
+    permitted << :region if admin_user?
+    
+    params.require(:pesticide).permit(*permitted)
   end
 end
 

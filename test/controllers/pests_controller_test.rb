@@ -1596,6 +1596,89 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     pest.reload
     assert_equal 1, pest.crops.count  # 変更されていない
   end
+
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照害虫のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    ref_pest = create(:pest, is_reference: true, user_id: nil, region: 'jp')
+    
+    patch pest_path(ref_pest), params: {
+      pest: {
+        name: ref_pest.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pest_path(ref_pest)
+    ref_pest.reload
+    assert_equal 'us', ref_pest.region
+  end
+
+  test "管理者は自身の害虫のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    pest = create(:pest, :user_owned, user: admin, region: 'jp')
+    
+    patch pest_path(pest), params: {
+      pest: {
+        name: pest.name,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to pest_path(pest)
+    pest.reload
+    assert_equal 'in', pest.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    pest = create(:pest, :user_owned, user: @user, region: 'jp')
+    
+    patch pest_path(pest), params: {
+      pest: {
+        name: pest.name,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pest_path(pest)
+    pest.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', pest.region
+  end
+
+  test "管理者は新規害虫作成時にregionを設定できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    
+    post pests_path, params: {
+      pest: {
+        name: '新規害虫',
+        is_reference: true,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pest_path(Pest.last)
+    pest = Pest.last
+    assert_equal 'us', pest.region
+  end
+
+  test "一般ユーザーは新規害虫作成時にregionを設定できない" do
+    post pests_path, params: {
+      pest: {
+        name: '新規害虫',
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pest_path(Pest.last)
+    pest = Pest.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil pest.region
+  end
 end
 
 

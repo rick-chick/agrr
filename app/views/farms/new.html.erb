@@ -51,6 +51,21 @@
           </div>
         </div>
         
+        <% if admin_user? %>
+          <div class="form-group">
+            <%= form.label :region, t('farms.new.form.region_label'), class: "form-label" %>
+            <%= form.select :region, 
+                options_for_select([
+                  [t('farms.new.form.region_jp'), 'jp'],
+                  [t('farms.new.form.region_us'), 'us'],
+                  [t('farms.new.form.region_in'), 'in']
+                ], @farm.region), 
+                { include_blank: t('farms.new.form.region_blank') }, 
+                { class: "form-control" } %>
+            <div class="form-text"><%= t('farms.new.form.region_help') %></div>
+          </div>
+        <% end %>
+        
         <div class="actions">
           <%= form.submit t('.form.submit'), class: "btn btn-success" %>
           <%= link_to t('.form.cancel'), farms_path, class: "btn btn-secondary" %>

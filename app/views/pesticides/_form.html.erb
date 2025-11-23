@@ -125,6 +125,19 @@
           <%= f.label :is_reference, t('pesticides.form.is_reference_label'), class: 'form-label' %>
         </div>
       </div>
+      
+      <div class="form-group">
+        <%= f.label :region, t('pesticides.form.region_label'), class: 'form-label' %>
+        <%= f.select :region, 
+            options_for_select([
+              [t('pesticides.form.region_jp'), 'jp'],
+              [t('pesticides.form.region_us'), 'us'],
+              [t('pesticides.form.region_in'), 'in']
+            ], @pesticide.region), 
+            { include_blank: t('pesticides.form.region_blank') }, 
+            { class: 'form-control' } %>
+        <div class="form-text"><%= t('pesticides.form.region_help') %></div>
+      </div>
     <% end %>
 
     <div class="actions">

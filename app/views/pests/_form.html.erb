@@ -237,6 +237,19 @@
           <%= f.label :is_reference, t('pests.form.is_reference_label'), class: 'form-label' %>
         </div>
       </div>
+      
+      <div class="form-group">
+        <%= f.label :region, t('pests.form.region_label'), class: 'form-label' %>
+        <%= f.select :region, 
+            options_for_select([
+              [t('pests.form.region_jp'), 'jp'],
+              [t('pests.form.region_us'), 'us'],
+              [t('pests.form.region_in'), 'in']
+            ], @pest.region), 
+            { include_blank: t('pests.form.region_blank') }, 
+            { class: 'form-control' } %>
+        <div class="form-text"><%= t('pests.form.region_help') %></div>
+      </div>
     <% end %>
 
     <div class="actions">

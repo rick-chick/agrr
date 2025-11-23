@@ -255,5 +255,97 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'restored', event.state
   end
 
+  # ========== region編集のテスト ==========
+
+  test "管理者は参照農薬のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    ref_pesticide = create(:pesticide, crop: @crop, pest: @pest, is_reference: true, user_id: nil, region: 'jp')
+    
+    patch pesticide_path(ref_pesticide), params: {
+      pesticide: {
+        name: ref_pesticide.name,
+        crop_id: ref_pesticide.crop_id,
+        pest_id: ref_pesticide.pest_id,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pesticide_path(ref_pesticide)
+    ref_pesticide.reload
+    assert_equal 'us', ref_pesticide.region
+  end
+
+  test "管理者は自身の農薬のregionを更新できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    pesticide = create(:pesticide, :user_owned, user: admin, crop: @crop, pest: @pest, region: 'jp')
+    
+    patch pesticide_path(pesticide), params: {
+      pesticide: {
+        name: pesticide.name,
+        crop_id: pesticide.crop_id,
+        pest_id: pesticide.pest_id,
+        region: 'in'
+      }
+    }
+    
+    assert_redirected_to pesticide_path(pesticide)
+    pesticide.reload
+    assert_equal 'in', pesticide.region
+  end
+
+  test "一般ユーザーはregionを更新できない" do
+    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, region: 'jp')
+    
+    patch pesticide_path(pesticide), params: {
+      pesticide: {
+        name: pesticide.name,
+        crop_id: pesticide.crop_id,
+        pest_id: pesticide.pest_id,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pesticide_path(pesticide)
+    pesticide.reload
+    # regionは変更されない（パラメータに含まれても無視される）
+    assert_equal 'jp', pesticide.region
+  end
+
+  test "管理者は新規農薬作成時にregionを設定できる" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    
+    post pesticides_path, params: {
+      pesticide: {
+        name: '新規農薬',
+        crop_id: @crop.id,
+        pest_id: @pest.id,
+        is_reference: true,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pesticide_path(Pesticide.last)
+    pesticide = Pesticide.last
+    assert_equal 'us', pesticide.region
+  end
+
+  test "一般ユーザーは新規農薬作成時にregionを設定できない" do
+    post pesticides_path, params: {
+      pesticide: {
+        name: '新規農薬',
+        crop_id: @crop.id,
+        pest_id: @pest.id,
+        region: 'us'
+      }
+    }
+    
+    assert_redirected_to pesticide_path(Pesticide.last)
+    pesticide = Pesticide.last
+    # regionは設定されない（パラメータに含まれても無視される）
+    assert_nil pesticide.region
+  end
 end
 
