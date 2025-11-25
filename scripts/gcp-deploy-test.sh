@@ -166,13 +166,13 @@ EOF
     print_status "Deployment initiated ✓"
     
     # Get service URL
-    local service_url=$(gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)')
+    local service_url=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format 'value(status.url)')
     print_status "Service URL: $service_url"
     
     # Test health
     print_status "Testing health endpoint..."
     sleep 5
-    if curl -s "$service_url/up" > /dev/null; then
+    if [ -n "$service_url" ] && curl -s "$service_url/up" > /dev/null; then
         print_status "Health check passed ✓"
     else
         print_warning "Health check failed (service may still be starting)"

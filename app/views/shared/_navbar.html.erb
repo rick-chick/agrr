@@ -1,6 +1,6 @@
 <!-- Navigation Bar -->
-<nav class="navbar" data-controller="navbar">
-  <a href="<%= root_path %>" class="navbar-brand">🌾 <%= t('shared.navbar.brand') %></a>
+  <nav class="navbar" data-controller="navbar">
+    <a href="<%= root_path %>" class="navbar-brand">🌾 <%= t('shared.navbar.brand') %></a>
   
   <!-- Mobile Menu Toggle Button -->
   <button class="navbar-toggle" data-navbar-target="toggle" data-action="click->navbar#toggle" aria-label="<%= t('shared.navbar.menu_toggle') %>" aria-expanded="false" aria-controls="navbar-menu">
@@ -51,6 +51,8 @@
         </div>
       </div>
       
+      <%= link_to t('shared.navbar.reports'), "/research/", class: nav_link_class("/research") %>
+      
       <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: t('shared.navbar.logout'), data: { turbo_confirm: t('shared.navbar.logout_confirm') } do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -60,6 +62,7 @@
       <% end %>
     <% else %>
       <%= link_to t('shared.navbar.create_plan'), public_plans_path, class: nav_link_class(public_plans_path) %>
+      <%= link_to t('shared.navbar.reports'), "/research/", class: nav_link_class("/research") %>
       <%= link_to auth_login_path, class: "btn-icon", title: t('shared.navbar.login') do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>

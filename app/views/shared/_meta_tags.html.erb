@@ -57,11 +57,7 @@ end %>">
 <% end %>
 
 <!-- Google AdSense -->
-<%= tag.script "", 
-    src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256",
-    async: true,
-    crossorigin: "anonymous",
-    nonce: content_security_policy_nonce %>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256" crossorigin="anonymous" nonce="<%= content_security_policy_nonce %>"></script>
 
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>

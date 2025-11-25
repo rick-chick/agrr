@@ -88,15 +88,13 @@ echo "Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
 # Wait a moment for worker to initialize
 sleep 3
 
-echo "Step 6: Starting Rails server..."
-bundle exec rails server -b 0.0.0.0 -p $PORT -e production &
-RAILS_PID=$!
-echo "Rails server started (PID: $RAILS_PID)"
+echo "Step 6: Starting Rails server (foreground process for Cloud Run)..."
+# Railsサーバーをフォアグラウンドで起動（Cloud Runのメインプロセスとして）
+# これにより、Cloud Runがコンテナの起動を正しく検知できる
 
 # Cleanup function
 cleanup() {
     echo "Shutting down services..."
-    kill -TERM $RAILS_PID 2>/dev/null || true
     kill -TERM $SOLID_QUEUE_PID 2>/dev/null || true
     kill -TERM $LITESTREAM_PID 2>/dev/null || true
     
@@ -115,5 +113,6 @@ cleanup() {
 # Register cleanup on signals
 trap cleanup SIGTERM SIGINT SIGHUP
 
-# Wait for all background processes
-wait $RAILS_PID $SOLID_QUEUE_PID $LITESTREAM_PID
+# Railsサーバーをフォアグラウンドで起動（これがメインプロセスになる）
+# サーバーが終了すると、trapでクリーンアップが実行される
+exec bundle exec rails server -b 0.0.0.0 -p $PORT -e production

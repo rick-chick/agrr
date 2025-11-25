@@ -89,6 +89,217 @@ module Api
           }
         end
         
+        # GET /api/v1/backdoor/users
+        # Get list of users (excluding anonymous users)
+        def users
+          users = User.where(is_anonymous: false).order(created_at: :desc)
+          
+          user_data = users.map do |user|
+            {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              google_id: user.google_id,
+              admin: user.admin?,
+              avatar_url: user.avatar_url,
+              created_at: user.created_at.iso8601,
+              updated_at: user.updated_at.iso8601,
+              farms_count: user.farms.count,
+              plans_count: user.cultivation_plans.count
+            }
+          end
+          
+          render json: {
+            timestamp: Time.current.iso8601,
+            total_users: users.count,
+            users: user_data
+          }
+        end
+        
+        # POST /api/v1/backdoor/users
+        # Create a new user
+        def create_user
+          user_params = user_create_params
+          
+          user = User.new(user_params)
+          user.is_anonymous = false
+          
+          if user.save
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: true,
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                google_id: user.google_id,
+                admin: user.admin?,
+                avatar_url: user.avatar_url,
+                created_at: user.created_at.iso8601,
+                updated_at: user.updated_at.iso8601
+              }
+            }, status: :created
+          else
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              errors: user.errors.full_messages
+            }, status: :unprocessable_entity
+          end
+        end
+        
+        # PATCH/PUT /api/v1/backdoor/users/:id
+        # Update an existing user
+        def update_user
+          user = User.find_by(id: params[:id])
+          
+          unless user
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              error: 'User not found'
+            }, status: :not_found
+            return
+          end
+          
+          user_params = user_update_params
+          
+          if user.update(user_params)
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: true,
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                google_id: user.google_id,
+                admin: user.admin?,
+                avatar_url: user.avatar_url,
+                created_at: user.created_at.iso8601,
+                updated_at: user.updated_at.iso8601
+              }
+            }
+          else
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              errors: user.errors.full_messages
+            }, status: :unprocessable_entity
+          end
+        end
+        
+        # GET /api/v1/backdoor/db/stats
+        # Get database statistics before clearing
+        def db_stats
+          stats = {
+            users: User.where(is_anonymous: false).count,
+            anonymous_users: User.where(is_anonymous: true).count,
+            farms: Farm.count,
+            fields: Field.count,
+            crops: Crop.count,
+            cultivation_plans: CultivationPlan.count,
+            interaction_rules: InteractionRule.count,
+            pesticides: Pesticide.count,
+            pests: Pest.count,
+            fertilizes: Fertilize.count,
+            agricultural_tasks: AgriculturalTask.count,
+            sessions: Session.count
+          }
+          
+          render json: {
+            timestamp: Time.current.iso8601,
+            stats: stats,
+            warning: '⚠️ Clearing database will delete ALL data except anonymous users'
+          }
+        end
+        
+        # POST /api/v1/backdoor/db/clear
+        # ⚠️ DANGEROUS: Clear all data from production database
+        # Requires confirmation_token parameter matching the backdoor token
+        def clear_db
+          confirmation_token = params[:confirmation_token]
+          
+          unless confirmation_token.present?
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              error: 'Missing confirmation_token parameter',
+              warning: '⚠️ This operation will DELETE ALL DATA. Provide confirmation_token matching your backdoor token.'
+            }, status: :bad_request
+            return
+          end
+          
+          unless confirmation_token == ::BackdoorConfig.token
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              error: 'Invalid confirmation_token',
+              warning: 'confirmation_token must match your backdoor token for security'
+            }, status: :forbidden
+            return
+          end
+          
+          # Log the dangerous operation
+          Rails.logger.error "🚨 DANGEROUS OPERATION: Database clear requested via backdoor API at #{Time.current.iso8601}"
+          Rails.logger.error "   Request IP: #{request.remote_ip}"
+          Rails.logger.error "   User Agent: #{request.user_agent}"
+          
+          begin
+            # Get stats before clearing
+            before_stats = {
+              users: User.where(is_anonymous: false).count,
+              farms: Farm.count,
+              fields: Field.count,
+              crops: Crop.count,
+              cultivation_plans: CultivationPlan.count
+            }
+            
+            # Clear all data (except anonymous users)
+            ActiveRecord::Base.transaction do
+              # Delete in order to respect foreign key constraints
+              Session.delete_all
+              AgriculturalTask.delete_all
+              Fertilize.delete_all
+              Pest.delete_all
+              Pesticide.delete_all
+              InteractionRule.delete_all
+              CultivationPlan.delete_all
+              Crop.delete_all
+              Field.delete_all
+              Farm.delete_all
+              User.where(is_anonymous: false).delete_all
+            end
+            
+            after_stats = {
+              users: User.where(is_anonymous: false).count,
+              farms: Farm.count,
+              fields: Field.count,
+              crops: Crop.count,
+              cultivation_plans: CultivationPlan.count
+            }
+            
+            Rails.logger.error "✅ Database cleared successfully. Before: #{before_stats}, After: #{after_stats}"
+            
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: true,
+              message: 'Database cleared successfully',
+              before_stats: before_stats,
+              after_stats: after_stats,
+              warning: '⚠️ All data has been deleted. This action is irreversible.'
+            }
+          rescue => e
+            Rails.logger.error "❌ Error clearing database: #{e.message}"
+            Rails.logger.error e.backtrace.join("\n")
+            
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: false,
+              error: "Failed to clear database: #{e.message}"
+            }, status: :internal_server_error
+          end
+        end
+        
         private
         
         def check_backdoor_enabled
@@ -110,6 +321,14 @@ module Api
             render json: { error: 'Invalid authentication token' }, status: :forbidden
             return
           end
+        end
+        
+        def user_create_params
+          params.require(:user).permit(:email, :name, :google_id, :avatar_url, :admin)
+        end
+        
+        def user_update_params
+          params.require(:user).permit(:email, :name, :google_id, :avatar_url, :admin)
         end
       end
     end

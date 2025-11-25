@@ -2,7 +2,7 @@
   "name": "app",
   "private": true,
   "scripts": {
-    "build": "npx esbuild app/javascript/application.js --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --external:*.png --external:*.jpg --external:*.jpeg --external:*.gif --external:*.svg",
+    "build": "node_modules/.bin/esbuild app/javascript/application.js --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --external:*.png --external:*.jpg --external:*.jpeg --external:*.gif --external:*.svg",
     "test": "jest --env=jsdom"
   },
   "dependencies": {
