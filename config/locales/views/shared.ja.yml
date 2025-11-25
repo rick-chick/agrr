@@ -18,7 +18,8 @@ ja:
       menu_planning: "計画"
       menu_master_data: "マスタデータ"
       menu_toggle: "メニュー"
-      
+      reports: "レポート"
+    
     footer:
       brand_description: "農業作付け計画支援システム\n持続可能な農業の実現を目指して"
       services: "サービス"

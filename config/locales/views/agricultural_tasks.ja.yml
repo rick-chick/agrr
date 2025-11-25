@@ -45,6 +45,12 @@ ja:
       submit_create: "作業を作成"
       submit_update: "作業を更新"
       required_tools_hint: "改行で複数入力できます"
+      region_label: "地域"
+      region_jp: "日本"
+      region_us: "米国"
+      region_in: "インド"
+      region_blank: "選択してください"
+      region_help: "この作業が適用される地域を選択してください（任意）"
       crop_selection:
         title: "紐づける作物を選択"
         description: "この作業を適用したい作物カードを選択してください。クリックで選択／解除が切り替わります。"
