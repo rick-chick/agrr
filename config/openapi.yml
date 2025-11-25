@@ -1,0 +1,826 @@
+openapi: 3.0.3
+info:
+  title: AGRR Master Data Management API
+  description: |
+    マスタ管理用のCRUD JSON API
+    
+    ## 認証
+    
+    APIキー認証が必要です。以下のいずれかの方法でAPIキーを送信してください：
+    
+    - `X-API-Key`ヘッダー: `X-API-Key: <your_api_key>`
+    - `Authorization`ヘッダー: `Authorization: Bearer <your_api_key>`
+    - クエリパラメータ: `?api_key=<your_api_key>`
+    
+    APIキーは `/api_keys` から生成・管理できます。
+    
+    ## エラーレスポンス
+    
+    エラーが発生した場合、以下の形式で返されます：
+    
+    ```json
+    {
+      "error": "メッセージ"
+    }
+    ```
+    
+    または、バリデーションエラーの場合：
+    
+    ```json
+    {
+      "errors": ["メッセージ1", "メッセージ2"]
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: AGRR Support
+
+servers:
+  - url: http://localhost:3000
+    description: ローカル開発環境
+  - url: https://agrr.example.com
+    description: 本番環境
+
+tags:
+  - { name: Crops, description: 作物マスタ管理 }
+  - { name: Fertilizes, description: 肥料マスタ管理 }
+  - { name: Pests, description: 害虫マスタ管理 }
+  - { name: Pesticides, description: 農薬マスタ管理 }
+  - { name: Farms, description: 農場マスタ管理 }
+  - { name: Fields, description: 圃場マスタ管理 }
+  - { name: AgriculturalTasks, description: 農業タスクマスタ管理 }
+  - { name: InteractionRules, description: 連作ルールマスタ管理 }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: APIキー認証
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: Bearer形式のAPIキー認証
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ
+
+    ValidationError:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: バリデーションエラーメッセージ
+
+    Crop:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        variety: { type: string, nullable: true }
+        area_per_unit: { type: number, format: float, nullable: true }
+        revenue_per_area: { type: number, format: float, nullable: true }
+        region: { type: string, nullable: true }
+        groups:
+          type: array
+          items: { type: string }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CropInput:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string }
+        variety: { type: string }
+        area_per_unit: { type: number, format: float }
+        revenue_per_area: { type: number, format: float }
+        region: { type: string }
+        groups:
+          type: array
+          items: { type: string }
+
+    Fertilize:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        n: { type: number, format: float, nullable: true }
+        p: { type: number, format: float, nullable: true }
+        k: { type: number, format: float, nullable: true }
+        description: { type: string, nullable: true }
+        package_size: { type: number, format: float, nullable: true }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    FertilizeInput:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string }
+        n: { type: number, format: float }
+        p: { type: number, format: float }
+        k: { type: number, format: float }
+        description: { type: string }
+        package_size: { type: number, format: float }
+        region: { type: string }
+
+    Pest:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        name_scientific: { type: string, nullable: true }
+        family: { type: string, nullable: true }
+        order: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        occurrence_season: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PestInput:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string }
+        name_scientific: { type: string }
+        family: { type: string }
+        order: { type: string }
+        description: { type: string }
+        occurrence_season: { type: string }
+        region: { type: string }
+
+    Pesticide:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        active_ingredient: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        crop_id: { type: integer }
+        pest_id: { type: integer }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PesticideInput:
+      type: object
+      required: [ name, crop_id, pest_id ]
+      properties:
+        name: { type: string }
+        active_ingredient: { type: string }
+        description: { type: string }
+        crop_id: { type: integer }
+        pest_id: { type: integer }
+        region: { type: string }
+
+    Farm:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        latitude: { type: number, format: float }
+        longitude: { type: number, format: float }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        weather_data_status: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    FarmInput:
+      type: object
+      required: [ name, latitude, longitude ]
+      properties:
+        name: { type: string }
+        latitude: { type: number, format: float }
+        longitude: { type: number, format: float }
+        region: { type: string }
+
+    Field:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        area: { type: number, format: float, nullable: true }
+        daily_fixed_cost: { type: number, format: float, nullable: true }
+        farm_id: { type: integer }
+        user_id: { type: integer }
+        region: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    FieldInput:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string }
+        area: { type: number, format: float }
+        daily_fixed_cost: { type: number, format: float }
+        region: { type: string }
+
+    AgriculturalTask:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        time_per_sqm: { type: number, format: float, nullable: true }
+        weather_dependency: { type: string, nullable: true }
+        required_tools:
+          type: array
+          items: { type: string }
+        skill_level: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AgriculturalTaskInput:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        time_per_sqm: { type: number, format: float }
+        weather_dependency: { type: string }
+        required_tools:
+          type: array
+          items: { type: string }
+        skill_level: { type: string }
+        region: { type: string }
+
+    InteractionRule:
+      type: object
+      properties:
+        id: { type: integer }
+        rule_type: { type: string }
+        source_group: { type: string }
+        target_group: { type: string }
+        impact_ratio: { type: number, format: float }
+        is_directional: { type: boolean }
+        description: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        user_id: { type: integer }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    InteractionRuleInput:
+      type: object
+      required: [ rule_type, source_group, target_group, impact_ratio ]
+      properties:
+        rule_type: { type: string }
+        source_group: { type: string }
+        target_group: { type: string }
+        impact_ratio: { type: number, format: float }
+        is_directional: { type: boolean }
+        description: { type: string }
+        region: { type: string }
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /api/v1/masters/crops:
+    get:
+      tags: [ Crops ]
+      summary: 作物一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Crop' }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 作物を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ crop ]
+              properties:
+                crop: { $ref: '#/components/schemas/CropInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Crop' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/crops/{id}:
+    get:
+      tags: [ Crops ]
+      summary: 作物の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Crop' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 作物を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ crop ]
+              properties:
+                crop: { $ref: '#/components/schemas/CropInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Crop' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 作物を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/fertilizes:
+    get:
+      tags: [ Fertilizes ]
+      summary: 肥料一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Fertilize' }
+    post:
+      tags: [ Fertilizes ]
+      summary: 肥料を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ fertilize ]
+              properties:
+                fertilize: { $ref: '#/components/schemas/FertilizeInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Fertilize' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/fertilizes/{id}:
+    get:
+      tags: [ Fertilizes ]
+      summary: 肥料の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Fertilize' } } } }
+        '404': { description: 肥料が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Fertilizes ]
+      summary: 肥料を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ fertilize ]
+              properties:
+                fertilize: { $ref: '#/components/schemas/FertilizeInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Fertilize' } } } }
+        '404': { description: 肥料が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Fertilizes ]
+      summary: 肥料を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 肥料が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/pests:
+    get:
+      tags: [ Pests ]
+      summary: 害虫一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Pest' }
+    post:
+      tags: [ Pests ]
+      summary: 害虫を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ pest ]
+              properties:
+                pest: { $ref: '#/components/schemas/PestInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pest' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/pests/{id}:
+    get:
+      tags: [ Pests ]
+      summary: 害虫の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pest' } } } }
+        '404': { description: 害虫が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Pests ]
+      summary: 害虫を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ pest ]
+              properties:
+                pest: { $ref: '#/components/schemas/PestInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pest' } } } }
+        '404': { description: 害虫が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Pests ]
+      summary: 害虫を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 害虫が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/pesticides:
+    get:
+      tags: [ Pesticides ]
+      summary: 農薬一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Pesticide' }
+    post:
+      tags: [ Pesticides ]
+      summary: 農薬を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ pesticide ]
+              properties:
+                pesticide: { $ref: '#/components/schemas/PesticideInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pesticide' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/pesticides/{id}:
+    get:
+      tags: [ Pesticides ]
+      summary: 農薬の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pesticide' } } } }
+        '404': { description: 農薬が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Pesticides ]
+      summary: 農薬を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ pesticide ]
+              properties:
+                pesticide: { $ref: '#/components/schemas/PesticideInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Pesticide' } } } }
+        '404': { description: 農薬が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Pesticides ]
+      summary: 農薬を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 農薬が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/farms:
+    get:
+      tags: [ Farms ]
+      summary: 農場一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Farm' }
+    post:
+      tags: [ Farms ]
+      summary: 農場を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ farm ]
+              properties:
+                farm: { $ref: '#/components/schemas/FarmInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Farm' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/farms/{id}:
+    get:
+      tags: [ Farms ]
+      summary: 農場の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Farm' } } } }
+        '404': { description: 農場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Farms ]
+      summary: 農場を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ farm ]
+              properties:
+                farm: { $ref: '#/components/schemas/FarmInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Farm' } } } }
+        '404': { description: 農場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Farms ]
+      summary: 農場を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 農場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/farms/{farm_id}/fields:
+    get:
+      tags: [ Fields ]
+      summary: 圃場一覧を取得
+      parameters:
+        - { name: farm_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Field' }
+        '404': { description: 農場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Fields ]
+      summary: 圃場を作成
+      parameters:
+        - { name: farm_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ field ]
+              properties:
+                field: { $ref: '#/components/schemas/FieldInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/Field' } } } }
+        '404': { description: 農場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/fields/{id}:
+    get:
+      tags: [ Fields ]
+      summary: 圃場の詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/Field' } } } }
+        '404': { description: 圃場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Fields ]
+      summary: 圃場を更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ field ]
+              properties:
+                field: { $ref: '#/components/schemas/FieldInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/Field' } } } }
+        '404': { description: 圃場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Fields ]
+      summary: 圃場を削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 圃場が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/agricultural_tasks:
+    get:
+      tags: [ AgriculturalTasks ]
+      summary: 農業タスク一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AgriculturalTask' }
+    post:
+      tags: [ AgriculturalTasks ]
+      summary: 農業タスクを作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ agricultural_task ]
+              properties:
+                agricultural_task: { $ref: '#/components/schemas/AgriculturalTaskInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/AgriculturalTask' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/agricultural_tasks/{id}:
+    get:
+      tags: [ AgriculturalTasks ]
+      summary: 農業タスクの詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/AgriculturalTask' } } } }
+        '404': { description: 農業タスクが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ AgriculturalTasks ]
+      summary: 農業タスクを更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ agricultural_task ]
+              properties:
+                agricultural_task: { $ref: '#/components/schemas/AgriculturalTaskInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/AgriculturalTask' } } } }
+        '404': { description: 農業タスクが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ AgriculturalTasks ]
+      summary: 農業タスクを削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 農業タスクが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/interaction_rules:
+    get:
+      tags: [ InteractionRules ]
+      summary: 連作ルール一覧を取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/InteractionRule' }
+    post:
+      tags: [ InteractionRules ]
+      summary: 連作ルールを作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ interaction_rule ]
+              properties:
+                interaction_rule: { $ref: '#/components/schemas/InteractionRuleInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/InteractionRule' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/interaction_rules/{id}:
+    get:
+      tags: [ InteractionRules ]
+      summary: 連作ルールの詳細を取得
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/InteractionRule' } } } }
+        '404': { description: 連作ルールが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ InteractionRules ]
+      summary: 連作ルールを更新
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ interaction_rule ]
+              properties:
+                interaction_rule: { $ref: '#/components/schemas/InteractionRuleInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/InteractionRule' } } } }
+        '404': { description: 連作ルールが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ InteractionRules ]
+      summary: 連作ルールを削除
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '404': { description: 連作ルールが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

@@ -33,6 +33,11 @@ FactoryBot.define do
       description { "カリ肥料として使用される" }
     end
 
+    trait :reference do
+      is_reference { true }
+      user { nil }
+    end
+
     trait :user_owned do
       is_reference { false }
       association :user

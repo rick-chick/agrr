@@ -42,6 +42,9 @@ Rails.application.routes.draw do
     post '/api_keys/generate', to: 'api_keys#generate', as: 'generate_api_key'
     post '/api_keys/regenerate', to: 'api_keys#regenerate', as: 'regenerate_api_key'
 
+    # API Documentation
+    get '/api/docs', to: 'api_docs#index', as: 'api_docs'
+
     # Farms and Fields routes (nested)
     resources :farms do
       resources :fields
@@ -212,6 +215,12 @@ Rails.application.routes.draw do
           resources :fertilizes, only: [:index, :show, :create, :update, :destroy]
           resources :pests, only: [:index, :show, :create, :update, :destroy]
           resources :pesticides, only: [:index, :show, :create, :update, :destroy]
+          resources :farms, only: [:index, :show, :create, :update, :destroy] do
+            resources :fields, only: [:index, :show, :create, :update, :destroy], controller: 'fields'
+          end
+          resources :fields, only: [:show, :update, :destroy] # 直接アクセス用（farm_id不要）
+          resources :agricultural_tasks, only: [:index, :show, :create, :update, :destroy]
+          resources :interaction_rules, only: [:index, :show, :create, :update, :destroy]
         end
       end
     end

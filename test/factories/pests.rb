@@ -11,6 +11,11 @@ FactoryBot.define do
     is_reference { true }
     user_id { nil } # 参照害虫の場合はuser_idはnil
     
+    trait :reference do
+      is_reference { true }
+      user_id { nil }
+    end
+
     trait :user_owned do
       is_reference { false }
       association :user, factory: :user

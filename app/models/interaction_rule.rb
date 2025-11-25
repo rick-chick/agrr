@@ -70,7 +70,7 @@ class InteractionRule < ApplicationRecord
   # JSON出力をカスタマイズ
   def as_json(options = {})
     result = super(options.merge(
-      only: [:id, :rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description],
+      only: [:id, :rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description, :user_id, :is_reference],
       methods: []
     ))
     # impact_ratioをFloatに変換（DBから取得すると文字列になる場合がある）
