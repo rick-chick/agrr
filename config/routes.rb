@@ -37,6 +37,11 @@ Rails.application.routes.draw do
     get '/auth/failure', to: 'auth#failure'
     delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
 
+    # API Key management routes
+    get '/api_keys', to: 'api_keys#show', as: 'api_keys'
+    post '/api_keys/generate', to: 'api_keys#generate', as: 'generate_api_key'
+    post '/api_keys/regenerate', to: 'api_keys#regenerate', as: 'regenerate_api_key'
+
     # Farms and Fields routes (nested)
     resources :farms do
       resources :fields
@@ -199,6 +204,14 @@ Rails.application.routes.draw do
           put 'users/:id', to: 'backdoor#update_user'
           get 'db/stats', to: 'backdoor#db_stats'
           post 'db/clear', to: 'backdoor#clear_db'
+        end
+        
+        # Master Data Management API (API Key認証)
+        namespace :masters do
+          resources :crops, only: [:index, :show, :create, :update, :destroy]
+          resources :fertilizes, only: [:index, :show, :create, :update, :destroy]
+          resources :pests, only: [:index, :show, :create, :update, :destroy]
+          resources :pesticides, only: [:index, :show, :create, :update, :destroy]
         end
       end
     end

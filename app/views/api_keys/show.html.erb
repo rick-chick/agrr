@@ -1,0 +1,88 @@
+<div class="page-header">
+  <h1>APIキー管理</h1>
+</div>
+
+<div class="card">
+  <div class="card__body">
+    <p class="text-muted">
+      APIキーを使用して、マスタ管理用のCRUD APIにアクセスできます。
+    </p>
+
+    <% if current_user.has_api_key? %>
+      <div class="form-group">
+        <label for="api_key">APIキー</label>
+        <div class="input-group">
+          <input 
+            type="text" 
+            id="api_key" 
+            class="form-control" 
+            value="<%= current_user.api_key %>" 
+            readonly
+            data-controller="copy-to-clipboard"
+            data-copy-to-clipboard-target="source"
+          >
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            data-action="click->copy-to-clipboard#copy"
+            data-copy-to-clipboard-target="button"
+          >
+            コピー
+          </button>
+        </div>
+        <small class="form-text text-muted">
+          ⚠️ APIキーは安全な場所に保存してください。再生成すると古いキーは無効になります。
+        </small>
+      </div>
+
+      <div class="form-group">
+        <%= button_to "APIキーを再生成", regenerate_api_key_path, 
+            method: :post, 
+            class: "btn btn-warning",
+            data: { 
+              confirm: "APIキーを再生成すると、現在のキーは無効になります。続行しますか？" 
+            } %>
+      </div>
+    <% else %>
+      <div class="alert alert-info">
+        <p>APIキーが設定されていません。以下のボタンをクリックしてAPIキーを生成してください。</p>
+      </div>
+
+      <div class="form-group">
+        <%= button_to "APIキーを生成", generate_api_key_path, 
+            method: :post, 
+            class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card__header">
+    <h2>使用方法</h2>
+  </div>
+  <div class="card__body">
+    <h3>リクエストヘッダーでの指定</h3>
+    <pre class="code-block"><code>X-API-Key: <%= current_user.api_key if current_user.has_api_key? %></code></pre>
+    <p>または</p>
+    <pre class="code-block"><code>Authorization: Bearer <%= current_user.api_key if current_user.has_api_key? %></code></pre>
+
+    <h3 class="mt-4">クエリパラメータでの指定</h3>
+    <pre class="code-block"><code>GET /api/v1/masters/crops?api_key=<%= current_user.api_key if current_user.has_api_key? %></code></pre>
+
+    <h3 class="mt-4">利用可能なエンドポイント</h3>
+    <ul>
+      <li><code>GET /api/v1/masters/crops</code> - 作物一覧</li>
+      <li><code>POST /api/v1/masters/crops</code> - 作物作成</li>
+      <li><code>GET /api/v1/masters/crops/:id</code> - 作物詳細</li>
+      <li><code>PATCH /api/v1/masters/crops/:id</code> - 作物更新</li>
+      <li><code>DELETE /api/v1/masters/crops/:id</code> - 作物削除</li>
+      <li><code>GET /api/v1/masters/fertilizes</code> - 肥料一覧</li>
+      <li><code>POST /api/v1/masters/fertilizes</code> - 肥料作成</li>
+      <li><code>GET /api/v1/masters/pests</code> - 害虫一覧</li>
+      <li><code>POST /api/v1/masters/pests</code> - 害虫作成</li>
+      <li><code>GET /api/v1/masters/pesticides</code> - 農薬一覧</li>
+      <li><code>POST /api/v1/masters/pesticides</code> - 農薬作成</li>
+    </ul>
+  </div>
+</div>

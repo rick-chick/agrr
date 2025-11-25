@@ -48,6 +48,8 @@
           <%= link_to t('shared.navbar.pests'), pests_path, class: nav_dropdown_item_class(pests_path) %>
           <%= link_to t('shared.navbar.agricultural_tasks'), agricultural_tasks_path, class: nav_dropdown_item_class(agricultural_tasks_path) %>
           <%= link_to t('shared.navbar.interaction_rules'), interaction_rules_path, class: nav_dropdown_item_class(interaction_rules_path) %>
+          <div class="nav-dropdown-divider"></div>
+          <%= link_to "APIキー管理", api_keys_path, class: nav_dropdown_item_class(api_keys_path) %>
         </div>
       </div>
       

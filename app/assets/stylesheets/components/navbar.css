@@ -202,6 +202,13 @@
   border-bottom: none;
 }
 
+.nav-dropdown-divider {
+  height: 1px;
+  margin: 0.5rem 0;
+  background-color: var(--color-border);
+  border: none;
+}
+
 .nav-dropdown-item:hover {
   background: var(--color-gray-50);
   color: var(--color-primary);

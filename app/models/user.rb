@@ -60,6 +60,37 @@ class User < ApplicationRecord
     update!(admin: false)
   end
 
+  # API Key methods
+  def generate_api_key!
+    max_retries = 10
+    retries = 0
+    
+    loop do
+      new_key = SecureRandom.hex(32)
+      if update(api_key: new_key)
+        break self.api_key = new_key
+      end
+      
+      retries += 1
+      raise "Failed to generate unique API key after #{max_retries} attempts" if retries >= max_retries
+    end
+    api_key
+  end
+
+  def regenerate_api_key!
+    generate_api_key!
+  end
+
+  def has_api_key?
+    api_key.present?
+  end
+
+  # Class method to find user by API key
+  def self.find_by_api_key(key)
+    return nil if key.blank?
+    find_by(api_key: key)
+  end
+
   # Class method to find or create user from OmniAuth hash
   def self.from_omniauth(auth_hash)
     # Validate required fields from auth hash
