@@ -24,8 +24,8 @@ Rails.application.configure do
     policy.font_src    :self, :data, "https://fonts.gstatic.com"
     policy.img_src     :self, :data, "https:", "http:"
     policy.object_src  :none
-    policy.script_src  :self, "https://accounts.google.com", "https://pagead2.googlesyndication.com", "https://adservice.google.com", "https://www.googletagmanager.com", "https://www.google-analytics.com"
-    policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
+    policy.script_src  :self, "https://accounts.google.com", "https://pagead2.googlesyndication.com", "https://adservice.google.com", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://unpkg.com"
+    policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com", "https://unpkg.com"
     # WebSocket接続のため wss: を追加
     policy.connect_src :self, "wss:", "https://accounts.google.com", "https://tile.openstreetmap.org", "https://www.google-analytics.com", "https://analytics.google.com"
     

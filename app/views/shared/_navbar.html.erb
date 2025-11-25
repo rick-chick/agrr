@@ -54,6 +54,7 @@
       </div>
       
       <%= link_to t('shared.navbar.reports'), "/research/", class: nav_link_class("/research") %>
+      <%= link_to "API リファレンス", api_docs_path, class: nav_link_class(api_docs_path), target: "_blank" %>
       
       <%= button_to auth_logout_path, method: :delete, class: "btn-icon btn-icon-logout", title: t('shared.navbar.logout'), data: { turbo_confirm: t('shared.navbar.logout_confirm') } do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

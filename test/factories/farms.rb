@@ -15,6 +15,11 @@ FactoryBot.define do
       association :user, factory: [:user, :anonymous]
     end
 
+    trait :user_owned do
+      is_reference { false }
+      association :user
+    end
+
     trait :with_weather_data do
       weather_data_status { :completed }
       weather_data_fetched_years { 25 }

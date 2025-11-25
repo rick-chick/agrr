@@ -14,6 +14,11 @@ FactoryBot.define do
       user { nil }
     end
 
+    trait :user_owned do
+      is_reference { false }
+      association :user
+    end
+
     trait :tomato do
       name { "トマト" }
       variety { "桃太郎" }

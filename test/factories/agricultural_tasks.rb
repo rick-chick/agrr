@@ -28,6 +28,11 @@ FactoryBot.define do
       skill_level { "beginner" }
     end
 
+    trait :reference do
+      is_reference { true }
+      user { nil }
+    end
+
     trait :user_owned do
       is_reference { false }
       association :user
