@@ -193,6 +193,12 @@ Rails.application.routes.draw do
         namespace :backdoor do
           get 'status', to: 'backdoor#status'
           get 'health', to: 'backdoor#health'
+          get 'users', to: 'backdoor#users'
+          post 'users', to: 'backdoor#create_user'
+          patch 'users/:id', to: 'backdoor#update_user'
+          put 'users/:id', to: 'backdoor#update_user'
+          get 'db/stats', to: 'backdoor#db_stats'
+          post 'db/clear', to: 'backdoor#clear_db'
         end
       end
     end

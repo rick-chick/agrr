@@ -96,6 +96,257 @@ module Api
           json = JSON.parse(response.body)
           assert_includes json['error'], 'not enabled'
         end
+        
+        # User creation tests
+        test "should create user with valid parameters" do
+          user_params = {
+            user: {
+              email: 'test@example.com',
+              name: 'Test User',
+              google_id: 'google123',
+              admin: false
+            }
+          }
+          
+          assert_difference 'User.count', 1 do
+            post "/api/v1/backdoor/users", 
+                 params: user_params,
+                 headers: { 'X-Backdoor-Token' => @token }
+          end
+          
+          assert_response :created
+          json = JSON.parse(response.body)
+          
+          assert json['success']
+          assert json.key?('user')
+          assert_equal 'test@example.com', json['user']['email']
+          assert_equal 'Test User', json['user']['name']
+          assert_equal 'google123', json['user']['google_id']
+          assert_equal false, json['user']['admin']
+          assert json['user'].key?('id')
+          assert json['user'].key?('created_at')
+        end
+        
+        test "should require authentication for user creation" do
+          user_params = {
+            user: {
+              email: 'test@example.com',
+              name: 'Test User',
+              google_id: 'google123'
+            }
+          }
+          
+          post "/api/v1/backdoor/users", params: user_params
+          
+          assert_response :unauthorized
+        end
+        
+        test "should reject user creation with invalid parameters" do
+          user_params = {
+            user: {
+              email: 'invalid-email',
+              name: '',
+              google_id: ''
+            }
+          }
+          
+          assert_no_difference 'User.count' do
+            post "/api/v1/backdoor/users",
+                 params: user_params,
+                 headers: { 'X-Backdoor-Token' => @token }
+          end
+          
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          
+          assert_not json['success']
+          assert json.key?('errors')
+          assert json['errors'].is_a?(Array)
+        end
+        
+        test "should reject user creation with duplicate email" do
+          existing_user = User.create!(
+            email: 'existing@example.com',
+            name: 'Existing User',
+            google_id: 'existing123',
+            is_anonymous: false
+          )
+          
+          user_params = {
+            user: {
+              email: 'existing@example.com',
+              name: 'New User',
+              google_id: 'new123'
+            }
+          }
+          
+          assert_no_difference 'User.count' do
+            post "/api/v1/backdoor/users",
+                 params: user_params,
+                 headers: { 'X-Backdoor-Token' => @token }
+          end
+          
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          
+          assert_not json['success']
+          assert json.key?('errors')
+        end
+        
+        test "should reject user creation with duplicate google_id" do
+          existing_user = User.create!(
+            email: 'existing@example.com',
+            name: 'Existing User',
+            google_id: 'existing123',
+            is_anonymous: false
+          )
+          
+          user_params = {
+            user: {
+              email: 'new@example.com',
+              name: 'New User',
+              google_id: 'existing123'
+            }
+          }
+          
+          assert_no_difference 'User.count' do
+            post "/api/v1/backdoor/users",
+                 params: user_params,
+                 headers: { 'X-Backdoor-Token' => @token }
+          end
+          
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          
+          assert_not json['success']
+          assert json.key?('errors')
+        end
+        
+        # User update tests
+        test "should update user with valid parameters" do
+          user = User.create!(
+            email: 'original@example.com',
+            name: 'Original User',
+            google_id: 'original123',
+            is_anonymous: false
+          )
+          
+          update_params = {
+            user: {
+              email: 'updated@example.com',
+              name: 'Updated User',
+              admin: true
+            }
+          }
+          
+          patch "/api/v1/backdoor/users/#{user.id}",
+                params: update_params,
+                headers: { 'X-Backdoor-Token' => @token }
+          
+          assert_response :success
+          json = JSON.parse(response.body)
+          
+          assert json['success']
+          assert json.key?('user')
+          assert_equal 'updated@example.com', json['user']['email']
+          assert_equal 'Updated User', json['user']['name']
+          assert_equal true, json['user']['admin']
+          assert_equal user.id, json['user']['id']
+          
+          user.reload
+          assert_equal 'updated@example.com', user.email
+          assert_equal 'Updated User', user.name
+          assert_equal true, user.admin?
+        end
+        
+        test "should require authentication for user update" do
+          user = User.create!(
+            email: 'test@example.com',
+            name: 'Test User',
+            google_id: 'test123',
+            is_anonymous: false
+          )
+          
+          update_params = {
+            user: {
+              name: 'Updated Name'
+            }
+          }
+          
+          patch "/api/v1/backdoor/users/#{user.id}", params: update_params
+          
+          assert_response :unauthorized
+        end
+        
+        test "should return not found for non-existent user" do
+          update_params = {
+            user: {
+              name: 'Updated Name'
+            }
+          }
+          
+          patch "/api/v1/backdoor/users/99999",
+                params: update_params,
+                headers: { 'X-Backdoor-Token' => @token }
+          
+          assert_response :not_found
+          json = JSON.parse(response.body)
+          
+          assert_not json['success']
+          assert_equal 'User not found', json['error']
+        end
+        
+        test "should reject user update with invalid parameters" do
+          user = User.create!(
+            email: 'test@example.com',
+            name: 'Test User',
+            google_id: 'test123',
+            is_anonymous: false
+          )
+          
+          update_params = {
+            user: {
+              email: 'invalid-email',
+              name: ''
+            }
+          }
+          
+          patch "/api/v1/backdoor/users/#{user.id}",
+                params: update_params,
+                headers: { 'X-Backdoor-Token' => @token }
+          
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          
+          assert_not json['success']
+          assert json.key?('errors')
+          assert json['errors'].is_a?(Array)
+        end
+        
+        test "should support PUT method for user update" do
+          user = User.create!(
+            email: 'test@example.com',
+            name: 'Test User',
+            google_id: 'test123',
+            is_anonymous: false
+          )
+          
+          update_params = {
+            user: {
+              name: 'Updated Name'
+            }
+          }
+          
+          put "/api/v1/backdoor/users/#{user.id}",
+              params: update_params,
+              headers: { 'X-Backdoor-Token' => @token }
+          
+          assert_response :success
+          json = JSON.parse(response.body)
+          
+          assert json['success']
+          assert_equal 'Updated Name', json['user']['name']
+        end
       end
     end
   end

@@ -42,6 +42,7 @@ RUN npm run build
 RUN mkdir -p storage
 
 # Precompile assets (with dummy master key if needed)
+# Note: javascript:build will run again, but it uses node_modules/.bin/esbuild (no network needed)
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
 
 # Note: Database setup is done at runtime by start_app_test.sh

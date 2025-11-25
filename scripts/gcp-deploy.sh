@@ -53,12 +53,34 @@ print_status "Region: $REGION"
 print_status "Service Name: $SERVICE_NAME"
 print_status "AGRR Daemon Mode: $USE_AGRR_DAEMON"
 
+# Warn if daemon mode is disabled
+if [ "$USE_AGRR_DAEMON" != "true" ]; then
+    print_warning "AGRR daemon mode is DISABLED (USE_AGRR_DAEMON=false)"
+    print_warning "This means AGRR daemon will NOT start in production"
+    print_warning "To enable daemon mode, set USE_AGRR_DAEMON=true in .env.gcp"
+fi
+
 # Check prerequisites
 check_prerequisites() {
     print_header "Checking Prerequisites"
     
     if ! command -v gcloud &> /dev/null; then
         print_error "gcloud CLI not installed"
+        echo ""
+        echo "To install gcloud CLI on Linux:"
+        echo "  1. Download the installer:"
+        echo "     curl https://sdk.cloud.google.com | bash"
+        echo "  2. Restart your shell or run:"
+        echo "     exec -l \$SHELL"
+        echo "  3. Initialize gcloud:"
+        echo "     gcloud init"
+        echo ""
+        echo "Or install via package manager:"
+        echo "  Ubuntu/Debian:"
+        echo "    echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main\" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list"
+        echo "    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -"
+        echo "    sudo apt-get update && sudo apt-get install google-cloud-cli"
+        echo ""
         exit 1
     fi
     print_status "gcloud CLI: $(gcloud --version | head -1)"
@@ -70,11 +92,12 @@ check_prerequisites() {
     print_status "Docker: $(docker --version)"
     
     # Check gcloud auth
-    if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" &> /dev/null; then
+    local auth_account=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
+    if [ -z "$auth_account" ]; then
         print_error "Not authenticated. Run: gcloud auth login"
         exit 1
     fi
-    print_status "Authenticated: $(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+    print_status "Authenticated: $auth_account"
 }
 
 # Build Docker image
@@ -88,7 +111,7 @@ build_image() {
     print_status "Building: $image_tag" >&2
     
     cd "$PROJECT_ROOT"
-    docker build -f Dockerfile.production -t "$image_tag" -t "$image_latest" . >&2
+    docker build --network=host -f Dockerfile.production -t "$image_tag" -t "$image_latest" . >&2
     
     print_status "Docker image built successfully ✓" >&2
     echo "$image_tag"
@@ -121,6 +144,37 @@ deploy_service() {
     
     local image_tag="$1"
     
+    # Check required environment variables (warn if not set, but allow deployment to proceed)
+    if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+        print_warning "Google OAuth credentials are not set in .env.gcp"
+        print_warning "GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-NOT SET}"
+        print_warning "GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:+SET (hidden)}${GOOGLE_CLIENT_SECRET:-NOT SET}"
+        print_warning ""
+        print_warning "Attempting to use existing values from Cloud Run service..."
+        
+        # Try to get existing values from Cloud Run
+        local existing_client_id=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format 'value(spec.template.spec.containers[0].env[?(@.name=="GOOGLE_CLIENT_ID")].value)' 2>/dev/null || echo "")
+        local existing_client_secret=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format 'value(spec.template.spec.containers[0].env[?(@.name=="GOOGLE_CLIENT_SECRET")].value)' 2>/dev/null || echo "")
+        
+        if [ -n "$existing_client_id" ] && [ "$existing_client_id" != "null" ]; then
+            GOOGLE_CLIENT_ID="$existing_client_id"
+            print_status "Using existing GOOGLE_CLIENT_ID from Cloud Run"
+        fi
+        
+        if [ -n "$existing_client_secret" ] && [ "$existing_client_secret" != "null" ]; then
+            GOOGLE_CLIENT_SECRET="$existing_client_secret"
+            print_status "Using existing GOOGLE_CLIENT_SECRET from Cloud Run"
+        fi
+        
+        if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ] || [ "$GOOGLE_CLIENT_ID" = "null" ] || [ "$GOOGLE_CLIENT_SECRET" = "null" ]; then
+            print_warning "Google OAuth credentials not found. They may be set via Secret Manager or will be set manually."
+            print_warning "Continuing deployment without setting GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
+            print_warning "If needed, set them manually after deployment or use Secret Manager."
+            GOOGLE_CLIENT_ID=""
+            GOOGLE_CLIENT_SECRET=""
+        fi
+    fi
+    
     # Create temporary env vars file in YAML format
     local env_file=$(mktemp)
     local timestamp=$(date +%Y%m%d-%H%M%S)
@@ -135,10 +189,15 @@ ALLOWED_HOSTS: "$ALLOWED_HOSTS"
 DEPLOY_TIMESTAMP: "$timestamp"
 SOLID_QUEUE_IN_PUMA: "false"
 USE_AGRR_DAEMON: "$USE_AGRR_DAEMON"
-GOOGLE_CLIENT_ID: "$GOOGLE_CLIENT_ID"
-GOOGLE_CLIENT_SECRET: "$GOOGLE_CLIENT_SECRET"
 AGRR_BACKDOOR_TOKEN: "$AGRR_BACKDOOR_TOKEN"
 EOF
+    # Only add Google OAuth credentials if they are set
+    if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
+        cat >> "$env_file" <<EOF
+GOOGLE_CLIENT_ID: "$GOOGLE_CLIENT_ID"
+GOOGLE_CLIENT_SECRET: "$GOOGLE_CLIENT_SECRET"
+EOF
+    fi
     
     print_status "Deploying $SERVICE_NAME..."
     
@@ -169,13 +228,13 @@ EOF
     print_status "Deployment initiated ✓"
     
     # Get service URL
-    local service_url=$(gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)')
+    local service_url=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format 'value(status.url)')
     print_status "Service URL: $service_url"
     
     # Test health
     print_status "Testing health endpoint..."
     sleep 5
-    if curl -s "$service_url/up" > /dev/null; then
+    if [ -n "$service_url" ] && curl -s "$service_url/up" > /dev/null; then
         print_status "Health check passed ✓"
     else
         print_warning "Health check failed (service may still be starting)"

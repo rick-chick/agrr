@@ -1,0 +1,1 @@
+import{_ as r,c as t,o as a,ag as s}from"./chunks/framework.BADI-Nii.js";const c=JSON.parse('{"title":"AGRR","description":"","frontmatter":{},"headers":[],"relativePath":"index.md","filePath":"index.md"}'),h={name:"index.md"};function n(o,e,i,d,_,l){return a(),t("div",null,[...e[0]||(e[0]=[s("",37)])])}const p=r(h,[["render",n]]);export{c as __pageData,p as default};

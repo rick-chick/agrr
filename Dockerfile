@@ -72,6 +72,7 @@ RUN chmod +x /app/scripts/*.sh 2>/dev/null || true
 RUN npm run build
 
 # Precompile Rails assets (Propshaft)
+# Note: javascript:build will run again, but it uses node_modules/.bin/esbuild (no network needed)
 RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 
 # Create a non-root user and set permissions
