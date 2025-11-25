@@ -28,6 +28,7 @@ import NavbarController from "./navbar_controller"
 import DropdownController from "./dropdown_controller"
 import StopPropagationController from "./stop_propagation_controller"
 import ToastNotificationController from "./toast_notification_controller"
+import CopyToClipboardController from "./copy_to_clipboard_controller"
 
 console.log('[Controllers] Registering controllers...')
 console.log('[Controllers] CropAiController:', CropAiController)
@@ -53,6 +54,7 @@ application.register("navbar", NavbarController)
 application.register("dropdown", DropdownController)
 application.register("stop-propagation", StopPropagationController)
 application.register("toast-notification", ToastNotificationController)
+application.register("copy-to-clipboard", CopyToClipboardController)
 
 console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
 console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)

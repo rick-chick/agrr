@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_16_054000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_25_052813) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -611,6 +611,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_16_054000) do
     t.datetime "updated_at", null: false
     t.boolean "admin"
     t.boolean "is_anonymous", default: false, null: false
+    t.string "api_key"
+    t.index ["api_key"], name: "index_users_on_api_key", unique: true, where: "api_key IS NOT NULL"
     t.index ["email"], name: "index_users_on_email", unique: true, where: "is_anonymous = false"
     t.index ["google_id"], name: "index_users_on_google_id", unique: true, where: "is_anonymous = false"
   end
