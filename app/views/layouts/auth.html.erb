@@ -15,8 +15,7 @@
   <!-- Components -->
   <%= render_component_stylesheets(components: [
     "components/buttons",
-    "components/forms",
-    "components/navbar"
+    "components/forms"
   ]) %>
   
   <!-- Auth-specific styles -->
@@ -26,13 +25,7 @@
   <%= render_common_javascripts(include_shared_systems: false) %>
 </head>
 <body class="auth-body" <%= raw (js_i18n_data.merge(js_i18n_templates)).map { |k, v| "data-#{k.to_s.dasherize}=\"#{ERB::Util.html_escape(ActionView::Base.full_sanitizer.sanitize(v.to_s))}\"" }.join(' ') %>>
-  <%= render "shared/navbar" %>
-  
-  <main class="container">
-    <%= render "shared/flash_messages" %>
-    
-    <%= yield %>
-  </main>
+  <%= yield %>
   
   <%= yield :javascripts %>
 </body>
