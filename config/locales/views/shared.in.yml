@@ -18,7 +18,8 @@ in:
       menu_planning: "योजना"
       menu_master_data: "मास्टर डेटा"
       menu_toggle: "मेनू"
-      
+      reports: "रिपोर्ट"
+    
     footer:
       brand_description: "कृषि फसल योजना सहायता प्रणाली\nस्थायी कृषि का लक्ष्य"
       services: "सेवाएं"
