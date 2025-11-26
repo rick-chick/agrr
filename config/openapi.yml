@@ -297,6 +297,127 @@ components:
         description: { type: string }
         region: { type: string }
 
+    CropTaskTemplate:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_id: { type: integer }
+        agricultural_task_id: { type: integer, nullable: true }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        time_per_sqm: { type: number, format: float, nullable: true }
+        weather_dependency: { type: string, nullable: true }
+        required_tools:
+          type: array
+          items: { type: string }
+        skill_level: { type: string, nullable: true }
+        agricultural_task:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            description: { type: string, nullable: true }
+            is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CropStage:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_id: { type: integer }
+        name: { type: string }
+        order: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CropStageInput:
+      type: object
+      required: [ name, order ]
+      properties:
+        name: { type: string }
+        order: { type: integer }
+
+    TemperatureRequirement:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_stage_id: { type: integer }
+        base_temperature: { type: number, format: float, nullable: true }
+        optimal_min: { type: number, format: float, nullable: true }
+        optimal_max: { type: number, format: float, nullable: true }
+        low_stress_threshold: { type: number, format: float, nullable: true }
+        high_stress_threshold: { type: number, format: float, nullable: true }
+        frost_threshold: { type: number, format: float, nullable: true }
+        sterility_risk_threshold: { type: number, format: float, nullable: true }
+        max_temperature: { type: number, format: float, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TemperatureRequirementInput:
+      type: object
+      properties:
+        base_temperature: { type: number, format: float }
+        optimal_min: { type: number, format: float }
+        optimal_max: { type: number, format: float }
+        low_stress_threshold: { type: number, format: float }
+        high_stress_threshold: { type: number, format: float }
+        frost_threshold: { type: number, format: float }
+        sterility_risk_threshold: { type: number, format: float }
+        max_temperature: { type: number, format: float }
+
+    SunshineRequirement:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_stage_id: { type: integer }
+        minimum_sunshine_hours: { type: number, format: float, nullable: true }
+        target_sunshine_hours: { type: number, format: float, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    SunshineRequirementInput:
+      type: object
+      properties:
+        minimum_sunshine_hours: { type: number, format: float }
+        target_sunshine_hours: { type: number, format: float }
+
+    ThermalRequirement:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_stage_id: { type: integer }
+        required_gdd: { type: number, format: float, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ThermalRequirementInput:
+      type: object
+      properties:
+        required_gdd: { type: number, format: float }
+
+    NutrientRequirement:
+      type: object
+      properties:
+        id: { type: integer }
+        crop_stage_id: { type: integer }
+        daily_uptake_n: { type: number, format: float, nullable: true }
+        daily_uptake_p: { type: number, format: float, nullable: true }
+        daily_uptake_k: { type: number, format: float, nullable: true }
+        region: { type: string, nullable: true }
+        is_reference: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    NutrientRequirementInput:
+      type: object
+      properties:
+        daily_uptake_n: { type: number, format: float }
+        daily_uptake_p: { type: number, format: float }
+        daily_uptake_k: { type: number, format: float }
+        region: { type: string }
+
 security:
   - ApiKeyAuth: []
   - BearerAuth: []
@@ -370,6 +491,486 @@ paths:
         '204': { description: 削除成功 }
         '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
         '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/pests:
+    get:
+      tags: [ Crops ]
+      summary: 作物に紐づく害虫一覧を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Pest' }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 作物に害虫を関連付け
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ pest_id ]
+              properties:
+                pest_id: { type: integer, description: 害虫ID }
+      responses:
+        '201':
+          description: 関連付け成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  crop_id: { type: integer }
+                  pest_id: { type: integer }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: 権限なし, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または害虫が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: 既に関連付けられている、またはバリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/pests/{id}:
+    delete:
+      tags: [ Crops ]
+      summary: 作物から害虫の関連を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer }, description: 害虫ID }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、害虫、または関連が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/agricultural_tasks:
+    get:
+      tags: [ Crops ]
+      summary: 作物に紐づく農業タスク一覧を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CropTaskTemplate' }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 作物に農業タスクを関連付け
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ agricultural_task_id ]
+              properties:
+                agricultural_task_id: { type: integer, description: 農業タスクID }
+                name: { type: string, description: タスク名（中間テーブルの属性、任意） }
+                time_per_sqm: { type: number, format: float, description: 単位面積あたりの時間（中間テーブルの属性、任意） }
+                description: { type: string, description: 説明（中間テーブルの属性、任意） }
+                weather_dependency: { type: string, description: 天候依存性（中間テーブルの属性、任意） }
+                required_tools: { type: array, items: { type: string }, description: 必要な道具（中間テーブルの属性、任意） }
+                skill_level: { type: string, description: スキルレベル（中間テーブルの属性、任意） }
+      responses:
+        '201': { description: 関連付け成功, content: { application/json: { schema: { $ref: '#/components/schemas/CropTaskTemplate' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: 権限なし, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または農業タスクが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: 既に関連付けられている、またはバリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/agricultural_tasks/{id}:
+    patch:
+      tags: [ Crops ]
+      summary: 中間テーブルの属性を更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer }, description: 中間テーブル（CropTaskTemplate）のID }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, description: タスク名（任意） }
+                time_per_sqm: { type: number, format: float, description: 単位面積あたりの時間（任意） }
+                description: { type: string, description: 説明（任意） }
+                weather_dependency: { type: string, description: 天候依存性（任意） }
+                required_tools: { type: array, items: { type: string }, description: 必要な道具（任意） }
+                skill_level: { type: string, description: スキルレベル（任意） }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/CropTaskTemplate' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または関連が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 作物から農業タスクの関連を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer }, description: 中間テーブル（CropTaskTemplate）のID }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または関連が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages:
+    get:
+      tags: [ Crops ]
+      summary: 作物に紐づく生育ステージ一覧を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CropStage' }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 作物に生育ステージを作成
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ crop_stage ]
+              properties:
+                crop_stage: { $ref: '#/components/schemas/CropStageInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/CropStage' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{id}:
+    get:
+      tags: [ Crops ]
+      summary: 生育ステージの詳細を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/CropStage' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 生育ステージを更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ crop_stage ]
+              properties:
+                crop_stage: { $ref: '#/components/schemas/CropStageInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/CropStage' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 生育ステージを削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/pesticides:
+    get:
+      tags: [ Crops ]
+      summary: 作物に紐づく農薬一覧を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Pesticide' }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{crop_stage_id}/temperature_requirement:
+    get:
+      tags: [ Crops ]
+      summary: 温度要件を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/TemperatureRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 温度要件を作成
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ temperature_requirement ]
+              properties:
+                temperature_requirement: { $ref: '#/components/schemas/TemperatureRequirementInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/TemperatureRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 温度要件を更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ temperature_requirement ]
+              properties:
+                temperature_requirement: { $ref: '#/components/schemas/TemperatureRequirementInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/TemperatureRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 温度要件を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{crop_stage_id}/sunshine_requirement:
+    get:
+      tags: [ Crops ]
+      summary: 日照要件を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/SunshineRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または日照要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 日照要件を作成
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ sunshine_requirement ]
+              properties:
+                sunshine_requirement: { $ref: '#/components/schemas/SunshineRequirementInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/SunshineRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 日照要件を更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ sunshine_requirement ]
+              properties:
+                sunshine_requirement: { $ref: '#/components/schemas/SunshineRequirementInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/SunshineRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または日照要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 日照要件を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または日照要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{crop_stage_id}/thermal_requirement:
+    get:
+      tags: [ Crops ]
+      summary: 積算温度要件を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/ThermalRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または積算温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 積算温度要件を作成
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ thermal_requirement ]
+              properties:
+                thermal_requirement: { $ref: '#/components/schemas/ThermalRequirementInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/ThermalRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 積算温度要件を更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ thermal_requirement ]
+              properties:
+                thermal_requirement: { $ref: '#/components/schemas/ThermalRequirementInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/ThermalRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または積算温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 積算温度要件を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または積算温度要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/v1/masters/crops/{crop_id}/crop_stages/{crop_stage_id}/nutrient_requirement:
+    get:
+      tags: [ Crops ]
+      summary: 栄養素要件を取得
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/NutrientRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または栄養素要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      tags: [ Crops ]
+      summary: 栄養素要件を作成
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ nutrient_requirement ]
+              properties:
+                nutrient_requirement: { $ref: '#/components/schemas/NutrientRequirementInput' }
+      responses:
+        '201': { description: 作成成功, content: { application/json: { schema: { $ref: '#/components/schemas/NutrientRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物または生育ステージが見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    patch:
+      tags: [ Crops ]
+      summary: 栄養素要件を更新
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ nutrient_requirement ]
+              properties:
+                nutrient_requirement: { $ref: '#/components/schemas/NutrientRequirementInput' }
+      responses:
+        '200': { description: 更新成功, content: { application/json: { schema: { $ref: '#/components/schemas/NutrientRequirement' } } } }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または栄養素要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: バリデーションエラー, content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } } }
+    delete:
+      tags: [ Crops ]
+      summary: 栄養素要件を削除
+      parameters:
+        - { name: crop_id, in: path, required: true, schema: { type: integer } }
+        - { name: crop_stage_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 削除成功 }
+        '401': { description: APIキーが無効, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 作物、生育ステージ、または栄養素要件が見つからない, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
 
   /api/v1/masters/fertilizes:
     get:
