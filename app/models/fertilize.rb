@@ -24,6 +24,7 @@ class Fertilize < ApplicationRecord
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :is_reference, inclusion: { in: [true, false] }
   validates :user, presence: true, unless: :is_reference?
+  validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :n, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
@@ -52,6 +53,13 @@ class Fertilize < ApplicationRecord
   
   def npk_summary
     [n, p, k].compact.map { |v| v.to_i }.join('-')
+  end
+
+  # 参照肥料は user を持たない（システム所有）
+  def user_must_be_nil_for_reference
+    return unless is_reference? && user_id.present?
+
+    errors.add(:user, "は参照データには設定できません")
   end
 end
 

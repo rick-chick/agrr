@@ -68,6 +68,14 @@ class PestTest < ActiveSupport::TestCase
     assert pest.valid?
   end
 
+  test "should not allow user for reference pests" do
+    user = create(:user)
+    pest = Pest.new(name: "参照害虫", is_reference: true, user: user)
+    pest.valid?
+
+    assert_includes pest.errors[:user], "は参照データには設定できません"
+  end
+
   test "should allow user_id when is_reference is false" do
     user = create(:user)
     pest = Pest.new(name: "テスト害虫", is_reference: false, user_id: user.id)

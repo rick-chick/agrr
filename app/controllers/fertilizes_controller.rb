@@ -6,12 +6,8 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes
   def index
-    # 管理者は自身の肥料と参照肥料を表示、一般ユーザーは自身の肥料のみ表示
-    if admin_user?
-      @fertilizes = Fertilize.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      @fertilizes = Fertilize.where(user_id: current_user.id, is_reference: false).recent
-    end
+    # 管理者は参照肥料も表示、一般ユーザーは自分の非参照肥料のみ
+    @fertilizes = FertilizePolicy.visible_scope(current_user).recent
   end
 
   # GET /fertilizes/:id

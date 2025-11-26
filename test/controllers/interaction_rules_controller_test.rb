@@ -22,6 +22,103 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
+  # ========== index アクションのテスト ==========
+
+  test '一般ユーザーのindexは自身のルールのみ表示し参照ルールは表示しない' do
+    sign_in_as @user
+
+    own_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'OwnSource',
+      target_group: 'OwnTarget',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '自分のルール',
+      is_reference: false,
+      user: @user
+    )
+    other_user = create(:user)
+    other_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'OtherSource',
+      target_group: 'OtherTarget',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '他人のルール',
+      is_reference: false,
+      user: other_user
+    )
+    reference_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'RefSource',
+      target_group: 'RefTarget',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '参照ルール',
+      is_reference: true,
+      user_id: nil
+    )
+
+    get interaction_rules_path
+    assert_response :success
+
+    body = response.body
+    assert_includes body, own_rule.source_group
+    assert_includes body, own_rule.target_group
+    refute_includes body, other_rule.source_group
+    refute_includes body, other_rule.target_group
+    refute_includes body, reference_rule.source_group
+    refute_includes body, reference_rule.target_group
+  end
+
+  test '管理者のindexは自身のルールと参照ルールを表示し他人のルールは表示しない' do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+
+    admin_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'AdminSource',
+      target_group: 'AdminTarget',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '管理者のルール',
+      is_reference: false,
+      user: admin
+    )
+    other_user = create(:user)
+    other_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'OtherUserSource',
+      target_group: 'OtherUserTarget',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '他人のルール',
+      is_reference: false,
+      user: other_user
+    )
+    reference_rule = InteractionRule.create!(
+      rule_type: 'continuous_cultivation',
+      source_group: 'RefSourceAdmin',
+      target_group: 'RefTargetAdmin',
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: '参照ルール',
+      is_reference: true,
+      user_id: nil
+    )
+
+    get interaction_rules_path
+    assert_response :success
+
+    body = response.body
+    assert_includes body, admin_rule.source_group
+    assert_includes body, admin_rule.target_group
+    assert_includes body, reference_rule.source_group
+    assert_includes body, reference_rule.target_group
+    refute_includes body, other_rule.source_group
+    refute_includes body, other_rule.target_group
+  end
+
   test 'destroy_returns_undo_token_json' do
     sign_in_as @user
     interaction_rule = create_interaction_rule(user: @user)

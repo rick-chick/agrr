@@ -15,7 +15,7 @@ class AgriculturalTasksController < ApplicationController
       if admin_user?
         agricultural_tasks_for_admin(@selected_filter)
       else
-        AgriculturalTask.where(user_id: current_user.id, is_reference: false)
+        AgriculturalTaskPolicy.visible_scope(current_user)
       end
 
     scope = apply_search(scope, @query)
