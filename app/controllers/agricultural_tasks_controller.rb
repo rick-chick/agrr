@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class AgriculturalTasksController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
   before_action :load_crop_selection_data, only: [:edit, :update]
   before_action :prepare_crop_cards_for_edit, only: [:edit]
@@ -116,30 +117,12 @@ class AgriculturalTasksController < ApplicationController
 
   # DELETE /agricultural_tasks/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @agricultural_task,
-      actor: current_user,
-      toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name)
-    )
-
-    render_deletion_undo_response(
-      event,
-      fallback_location: agricultural_tasks_path
-    )
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('agricultural_tasks.flash.cannot_delete_in_use'),
-      fallback_location: agricultural_tasks_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('agricultural_tasks.flash.delete_error', message: e.message),
-      fallback_location: agricultural_tasks_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('agricultural_tasks.flash.delete_error', message: e.message),
-      fallback_location: agricultural_tasks_path
+      toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name),
+      fallback_location: agricultural_tasks_path,
+      in_use_message_key: 'agricultural_tasks.flash.cannot_delete_in_use',
+      delete_error_message_key: 'agricultural_tasks.flash.delete_error'
     )
   end
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class FieldsController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_farm
   before_action :set_field, only: [:show, :edit, :update, :destroy]
 
@@ -47,30 +48,12 @@ class FieldsController < ApplicationController
 
   # DELETE /farms/:farm_id/fields/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @field,
-      actor: current_user,
-      toast_message: I18n.t('fields.undo.toast', name: @field.display_name)
-    )
-
-    render_deletion_undo_response(
-      event.reload,
-      fallback_location: farm_fields_path(@farm)
-    )
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('fields.flash.cannot_delete_in_use'),
-      fallback_location: farm_fields_path(@farm)
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('fields.flash.delete_error', message: e.message),
-      fallback_location: farm_fields_path(@farm)
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('fields.flash.delete_error', message: e.message),
-      fallback_location: farm_fields_path(@farm)
+      toast_message: I18n.t('fields.undo.toast', name: @field.display_name),
+      fallback_location: farm_fields_path(@farm),
+      in_use_message_key: 'fields.flash.cannot_delete_in_use',
+      delete_error_message_key: 'fields.flash.delete_error'
     )
   end
 

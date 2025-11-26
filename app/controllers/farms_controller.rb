@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class FarmsController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_farm, only: [:show, :edit, :update, :destroy]
 
   # GET /farms
@@ -62,15 +63,12 @@ class FarmsController < ApplicationController
       )
     end
 
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @farm,
-      actor: current_user,
-      toast_message: I18n.t('farms.undo.toast', name: @farm.display_name)
-    )
-
-    render_deletion_undo_response(
-      event.reload,
-      fallback_location: farms_path
+      toast_message: I18n.t('farms.undo.toast', name: @farm.display_name),
+      fallback_location: farms_path,
+      in_use_message_key: nil,
+      delete_error_message_key: 'farms.flash.delete_error'
     )
   rescue ActiveRecord::InvalidForeignKey => e
     message =
@@ -89,16 +87,6 @@ class FarmsController < ApplicationController
   rescue ActiveRecord::DeleteRestrictionError
     render_deletion_failure(
       message: I18n.t('farms.flash.cannot_delete_in_use.other'),
-      fallback_location: farms_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('farms.flash.delete_error', message: e.message),
-      fallback_location: farms_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('farms.flash.delete_error', message: e.message),
       fallback_location: farms_path
     )
   end

@@ -637,7 +637,24 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert Crop.exists?(crop.id), 'Undo後にCropが復元されていません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトフローのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    crop = create(:crop, user: @user, name: 'テスト作物')
+    crop_name = crop.name
+
+    assert_difference -> { Crop.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete crop_path(crop) # HTMLリクエスト
+        assert_redirected_to crops_path
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: crop_name
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 
   # ========== region編集のテスト ==========
 

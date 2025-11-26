@@ -64,5 +64,22 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert Field.exists?(field.id), 'Undo後にFieldが復元されていません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトとflashのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    field = create(:field, farm: @farm, user: @user, name: 'テスト圃場')
+    display_name = field.display_name
+
+    assert_difference -> { Field.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete farm_field_path(@farm, field) # HTMLリクエスト
+        assert_redirected_to farm_fields_path(@farm)
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: display_name
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 end

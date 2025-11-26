@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class CropsController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
   before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
@@ -82,15 +83,12 @@ class CropsController < ApplicationController
 
   # DELETE /crops/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @crop,
-      actor: current_user,
-      toast_message: I18n.t('crops.undo.toast', name: @crop.name)
-    )
-
-    render_deletion_undo_response(
-      event,
-      fallback_location: crops_path
+      toast_message: I18n.t('crops.undo.toast', name: @crop.name),
+      fallback_location: crops_path,
+      in_use_message_key: nil,
+      delete_error_message_key: 'crops.flash.delete_error'
     )
   rescue ActiveRecord::InvalidForeignKey => e
     message =
@@ -109,16 +107,6 @@ class CropsController < ApplicationController
   rescue ActiveRecord::DeleteRestrictionError
     render_deletion_failure(
       message: I18n.t('crops.flash.cannot_delete_in_use.other'),
-      fallback_location: crops_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('crops.flash.delete_error', message: e.message),
-      fallback_location: crops_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('crops.flash.delete_error', message: e.message),
       fallback_location: crops_path
     )
   end

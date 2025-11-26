@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class FertilizesController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_fertilize, only: [:show, :edit, :update, :destroy]
 
   # GET /fertilizes
@@ -69,27 +70,12 @@ class FertilizesController < ApplicationController
 
   # DELETE /fertilizes/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @fertilize,
-      actor: current_user,
-      toast_message: I18n.t('fertilizes.undo.toast', name: @fertilize.name)
-    )
-
-    render_deletion_undo_response(event, fallback_location: fertilizes_path)
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('fertilizes.flash.cannot_delete_in_use'),
-      fallback_location: fertilizes_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('fertilizes.flash.delete_error', message: e.message),
-      fallback_location: fertilizes_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('fertilizes.flash.delete_error', message: e.message),
-      fallback_location: fertilizes_path
+      toast_message: I18n.t('fertilizes.undo.toast', name: @fertilize.name),
+      fallback_location: fertilizes_path,
+      in_use_message_key: 'fertilizes.flash.cannot_delete_in_use',
+      delete_error_message_key: 'fertilizes.flash.delete_error'
     )
   end
 
