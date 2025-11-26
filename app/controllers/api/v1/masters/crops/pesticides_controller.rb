@@ -24,10 +24,9 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物が見つからない
           def index
-            # 参照農薬または自分の農薬のみ表示
-            @pesticides = Pesticide.where(crop_id: @crop.id)
-                                   .where("is_reference = ? OR user_id = ?", true, current_user.id)
-                                   .recent
+            # Policy経由で選択可能な農薬のみ表示（参照農薬も含む）
+            accessible_pesticide_ids = PesticidePolicy.selectable_scope(current_user).pluck(:id)
+            @pesticides = Pesticide.where(crop_id: @crop.id, id: accessible_pesticide_ids).recent
             render json: @pesticides
           end
 

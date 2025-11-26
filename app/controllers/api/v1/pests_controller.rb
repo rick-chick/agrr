@@ -418,34 +418,17 @@ module Api
           
           Rails.logger.info "🔗 [AI Pest] Processing crop: #{crop.name} (ID: #{crop.id}, is_reference: #{crop.is_reference}, user_id: #{crop.user_id})"
           
-          # 権限チェック：作物へのアクセス権があるか確認
-          # 認証不要エンドポイント（ai_create）のため、HTMLフォームから送信された作物に関しては
-          # 参照作物は確実に関連付け可能、ユーザー作物はcurrent_userが存在し自分のものであれば関連付け可能
-          # ただし、セッションクッキーが送信されていない場合、current_userはアノニマスユーザーになる
+          # 権限チェック：参照作物は常にアクセス可能（AI API特有のロジック）
+          # ユーザー作物の場合はPolicy経由で関連付け可否を判定
           can_access = if crop.is_reference
-            true # 参照作物は誰でもアクセス可能
+            # 参照作物は誰でもアクセス可能（AI API特有のロジック）
+            true
+          elsif current_user.nil? || current_user.anonymous?
+            # アノニマスユーザーの場合、ユーザー作物は許可しない（セキュリティのため）
+            false
           else
-            # ユーザー作物の場合
-            if current_user.nil?
-              Rails.logger.warn "⚠️  [AI Pest] current_user is nil, cannot access user crop: #{crop.name}"
-              false
-            elsif current_user.anonymous?
-              # アノニマスユーザーの場合、セッションが認識されていない可能性がある
-              # 認証不要エンドポイントなので、フォームから送信された作物IDは信頼できる情報として扱う
-              # ただし、セキュリティのため、ユーザー作物の場合は厳密にチェックする
-              # available_crops_for_userで表示される作物のみがフォームに表示されるため、
-              # 選択された作物は基本的にユーザーがアクセス可能なはずだが、APIリクエストでは
-              # セッションが認識されない場合があるため、一旦falseとする
-              Rails.logger.warn "⚠️  [AI Pest] Anonymous user detected (session may not be sent), cannot access user crop: #{crop.name}. Please ensure credentials: 'include' is set in fetch request."
-              false
-            else
-              # ログインユーザーの場合、自分の作物にアクセス可能
-              can_access_crop = crop.user_id == current_user.id
-              if !can_access_crop
-                Rails.logger.warn "⚠️  [AI Pest] Cannot access crop: #{crop.name} (user_id: #{crop.user_id}, current_user_id: #{current_user.id})"
-              end
-              can_access_crop
-            end
+            # Policy経由で関連付け可否を判定
+            PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: current_user)
           end
           
           Rails.logger.info "🔗 [AI Pest] Can access crop #{crop.name}? #{can_access}"

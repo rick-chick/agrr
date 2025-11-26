@@ -33,7 +33,9 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物が見つからない
           def index
-            @pests = @crop.pests.where("is_reference = ? OR user_id = ?", true, current_user.id)
+            # Policy経由で選択可能な害虫のみ表示（参照害虫も含む）
+            accessible_pest_ids = PestPolicy.selectable_scope(current_user).pluck(:id)
+            @pests = @crop.pests.where(id: accessible_pest_ids)
             render json: @pests
           end
 
@@ -60,8 +62,8 @@ module Api
               return
             end
 
-            # 権限チェック: 参照害虫または自分の害虫のみ関連付け可能
-            unless pest.is_reference || pest.user_id == current_user.id
+            # 権限チェック: Policy経由で関連付け可否を判定（参照害虫も含む）
+            unless PestPolicy.selectable_scope(current_user).exists?(id: pest.id)
               render json: { error: 'You do not have permission to associate this pest' }, status: :forbidden
               return
             end
