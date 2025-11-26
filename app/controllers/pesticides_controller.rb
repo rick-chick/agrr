@@ -37,12 +37,7 @@ class PesticidesController < ApplicationController
       return redirect_to pesticides_path, alert: I18n.t('pesticides.flash.reference_only_admin')
     end
 
-    @pesticide = Pesticide.new(pesticide_params)
-    if is_reference
-      @pesticide.user_id = nil
-    else
-      @pesticide.user_id ||= current_user.id
-    end
+    @pesticide = PesticidePolicy.build_for_create(current_user, pesticide_params)
 
     if @pesticide.save
       redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.created')
@@ -62,7 +57,7 @@ class PesticidesController < ApplicationController
       end
     end
 
-    if @pesticide.update(pesticide_params)
+    if PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
       redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.updated')
     else
       load_crops_and_pests

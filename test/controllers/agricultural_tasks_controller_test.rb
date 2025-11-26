@@ -263,6 +263,22 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [own_crop.id], @user_task.crops.pluck(:id)
   end
 
+  test '一般ユーザーは参照作業を作成できない' do
+    sign_in_as @user
+
+    assert_no_difference('AgriculturalTask.count') do
+      post agricultural_tasks_path, params: {
+        agricultural_task: {
+          name: '参照作業',
+          is_reference: true
+        }
+      }
+    end
+
+    assert_redirected_to agricultural_tasks_path
+    assert_equal I18n.t('agricultural_tasks.flash.reference_only_admin'), flash[:alert]
+  end
+
   test '管理者が参照フラグを有効に変更するとユーザー作物の関連付けが解除される' do
     sign_in_as @admin_user
 
@@ -334,6 +350,29 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     refute @reference_task.is_reference?
     assert_equal @admin_user.id, @reference_task.user_id
     assert_equal [user_crop.id], @reference_task.crops.pluck(:id)
+  end
+
+  test '一般ユーザーは参照フラグを変更できない' do
+    sign_in_as @user
+    task = create(:agricultural_task, :user_owned, user: @user, is_reference: false)
+
+    patch agricultural_task_path(task), params: {
+      agricultural_task: {
+        name: task.name,
+        description: task.description,
+        time_per_sqm: task.time_per_sqm,
+        weather_dependency: task.weather_dependency,
+        skill_level: task.skill_level,
+        required_tools: task.required_tools,
+        is_reference: true
+      }
+    }
+
+    assert_redirected_to agricultural_task_path(task)
+    assert_equal I18n.t('agricultural_tasks.flash.reference_flag_admin_only'), flash[:alert]
+    task.reload
+    refute task.is_reference?
+    assert_equal @user.id, task.user_id
   end
 
   test 'destroy_returns_undo_token_json' do
@@ -489,6 +528,20 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     task = AgriculturalTask.last
     # regionは設定されない（パラメータに含まれても無視される）
     assert_nil task.region
+  end
+
+  test '作成時に必須項目が欠けていると422でnewを再表示する' do
+    sign_in_as @user
+
+    assert_no_difference('AgriculturalTask.count') do
+      post agricultural_tasks_path, params: {
+        agricultural_task: {
+          name: '' # 必須項目を空にする
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
   end
 end
 

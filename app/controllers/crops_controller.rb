@@ -43,12 +43,7 @@ class CropsController < ApplicationController
       return redirect_to crops_path, alert: I18n.t('crops.flash.reference_only_admin')
     end
 
-    @crop = Crop.new(crop_params)
-    if is_reference
-      @crop.user_id = nil
-    else
-      @crop.user_id ||= current_user.id
-    end
+    @crop = CropPolicy.build_for_create(current_user, crop_params)
 
     # groupsをカンマ区切りテキストから配列に変換
     if params.dig(:crop, :groups).is_a?(String)
@@ -73,7 +68,7 @@ class CropsController < ApplicationController
       @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
     end
 
-    if @crop.update(crop_params)
+    if CropPolicy.apply_update!(current_user, @crop, crop_params)
       redirect_to crop_path(@crop), notice: I18n.t('crops.flash.updated')
     else
       render :edit, status: :unprocessable_entity

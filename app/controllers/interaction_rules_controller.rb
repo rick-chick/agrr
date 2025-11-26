@@ -36,12 +36,7 @@ class InteractionRulesController < ApplicationController
       return redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.reference_only_admin')
     end
 
-    @interaction_rule = InteractionRule.new(interaction_rule_params)
-    if is_reference
-      @interaction_rule.user_id = nil
-    else
-      @interaction_rule.user_id ||= current_user.id
-    end
+    @interaction_rule, = InteractionRulePolicy.build_for_create(current_user, interaction_rule_params.to_h)
 
     if @interaction_rule.save
       redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.created')
@@ -56,7 +51,7 @@ class InteractionRulesController < ApplicationController
       return redirect_to @interaction_rule, alert: I18n.t('interaction_rules.flash.reference_flag_admin_only')
     end
 
-    if @interaction_rule.update(interaction_rule_params)
+    if InteractionRulePolicy.apply_update!(current_user, @interaction_rule, interaction_rule_params.to_h)
       redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.updated')
     else
       render :edit, status: :unprocessable_entity

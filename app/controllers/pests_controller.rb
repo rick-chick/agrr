@@ -38,23 +38,7 @@ class PestsController < ApplicationController
       return redirect_to pests_path, alert: I18n.t('pests.flash.reference_only_admin')
     end
 
-    # pest_paramsを取得して、user_idを追加
-    pest_attributes = pest_params.to_h
-    # 一般ユーザーが作成する場合は、is_referenceをfalseに強制設定し、user_idを設定
-    unless admin_user?
-      pest_attributes[:is_reference] = false
-      pest_attributes[:user_id] = current_user.id
-    else
-      # 管理者が作成する場合も、参照害虫の場合はuser_idをnilに、そうでない場合は管理者のIDを設定
-      is_reference = ActiveModel::Type::Boolean.new.cast(pest_attributes[:is_reference]) || false
-      if is_reference
-        pest_attributes[:user_id] = nil
-      else
-        pest_attributes[:user_id] ||= current_user.id
-      end
-    end
-    
-    @pest = Pest.new(pest_attributes)
+    @pest = PestPolicy.build_for_create(current_user, pest_params)
     crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
 
     if @pest.save
@@ -79,7 +63,7 @@ class PestsController < ApplicationController
 
     crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
 
-    if @pest.update(pest_params)
+    if PestPolicy.apply_update!(current_user, @pest, pest_params)
       # 選択された作物との関連付けを更新
       update_crop_associations(@pest, crop_ids)
       redirect_to pest_path(@pest), notice: I18n.t('pests.flash.updated')
