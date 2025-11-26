@@ -129,28 +129,15 @@ class AgriculturalTasksController < ApplicationController
   private
 
   def set_agricultural_task
-    @agricultural_task = AgriculturalTask.find(params[:id])
-
-    unless accessible_for_current_user?(@agricultural_task)
-      redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.no_permission')
-      return
+    if action_requires_edit_permission?
+      @agricultural_task = AgriculturalTaskPolicy.find_editable!(current_user, params[:id])
+    else
+      @agricultural_task = AgriculturalTaskPolicy.find_visible!(current_user, params[:id])
     end
-
-    if action_requires_edit_permission? && !editable_by_current_user?(@agricultural_task)
-      redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.no_permission')
-    end
+  rescue PolicyPermissionDenied
+    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
-  end
-
-  def accessible_for_current_user?(task)
-    return true if admin_user?
-    task.is_reference || task.user_id == current_user.id
-  end
-
-  def editable_by_current_user?(task)
-    return true if admin_user?
-    !task.is_reference && task.user_id == current_user.id
   end
 
   def action_requires_edit_permission?

@@ -223,8 +223,35 @@
 1. **`is_reference` + 所有権ルールのPolicy化**
    - 影響モデルが多く、HTML/JSON両方で頻出する。
    - ここをPolicy層に寄せることで、**仕様変更時の修正ポイントが一気に減る**。
+   - 2025-11 時点の実装状況:
+     - 共通モジュール `ReferencableResourcePolicy` を用意し、`visible_scope_for(user)` を定義。
+     - `CropPolicy` / `FertilizePolicy` / `PesticidePolicy` / `PestPolicy` / `InteractionRulePolicy` / `AgriculturalTaskPolicy` から各モデルに `include` 済み。
+     - HTML側の以下の `index` アクションは、すでに `*Policy.visible_scope(current_user)` に移行済み:
+       - `CropsController#index`
+       - `FertilizesController#index`
+       - `PesticidesController#index`
+       - `PestsController#index`
+       - `InteractionRulesController#index`
+       - `AgriculturalTasksController#index`（一般ユーザー側のスコープ）
+     - モデルレベルで不変条件をバリデーションとして明文化:
+       - `is_reference: false` のとき: `user` 必須（既存どおり）
+       - `is_reference: true` のとき: `user_id` は必ず `nil`（参照データはシステム所有）
+       - 対象モデル: `Crop`, `Fertilize`, `Pesticide`, `Pest`, `AgriculturalTask`, `InteractionRule`
+     - 上記不変条件をテストで固定するため、各モデルの `*_test.rb` に **参照データに user を付けるとエラーになる** ことを確認するテストを追加済み。
 2. **削除 + Undo 処理のConcern統一**
    - パターンが揃っており、UI/UX上も重要な機能。
+   - 2025-11 時点の実装状況:
+     - Concern `DeletionUndoFlow` を追加し、`schedule_deletion_with_undo(record:, toast_message:, fallback_location:, in_use_message_key:, delete_error_message_key:)` を提供。
+     - 以下のHTMLコントローラで `destroy` アクションから共通フローを利用:
+       - `CropsController`
+       - `FertilizesController`
+       - `PesticidesController`
+       - `PestsController`
+       - `InteractionRulesController`
+       - `AgriculturalTasksController`
+       - `FarmsController`
+       - `FieldsController`
+     - 既存の詳細なエラーメッセージ分岐が重要な箇所（例: `PlansController`, `Plans::TaskScheduleItemsController`）は、現時点では個別実装を維持。
 3. **CRUD 成功/失敗レスポンスのテンプレート化（HTML/JSON別Concern）**
    - APIのレスポンス仕様とHTMLのバリデーションエラー挙動を揃えられる。
 
@@ -511,3 +538,73 @@
 ---
 
 この一覧を前提に、実際の実装では「どのグループから着手するか（例: 参照マスタ系Policy + Html/Api CrudResponder）」を決めて段階的に導入していく。
+
+---
+
+## 7. 現在の進捗と今後の計画（2025-11 時点）
+
+### 7.1 実装済みの統一ポイント
+
+- **削除 + Undo フロー**
+  - Concern `DeletionUndoFlow` を実装し、代表的な参照マスタ系HTMLコントローラ（crops, fertilizes, pesticides, pests, interaction_rules, agricultural_tasks, farms, fields）の `destroy` に適用済み。
+  - JSON/HTML両方のレスポンス形式は既存の `DeletionUndoResponder` に委譲しつつ、各コントローラではほぼ1〜2行で呼び出せる形に整理。
+- **参照マスタ系の一覧スコープ共通化**
+  - `ReferencableResourcePolicy` + `*Policy.visible_scope(user)` を導入し、以下のHTML `index` アクションをPolicy経由のスコープに統一:
+    - `CropsController#index`
+    - `FertilizesController#index`
+    - `PesticidesController#index`
+    - `PestsController#index`
+    - `InteractionRulesController#index`
+    - `AgriculturalTasksController#index`（一般ユーザー側）
+  - それぞれのコントローラテストに、「どのレコードが含まれ・含まれないか」を HTML レスポンスのテキストレベルで検証するテストを追加し、挙動を固定。
+- **モデルレベルの `is_reference` / `user_id` 不変条件の明文化**
+  - 参照マスタ系モデルに以下の制約を追加:
+    - `is_reference: false` → `user` 必須（一般ユーザー/管理者のユーザー所有レコード）
+    - `is_reference: true` → `user_id` は必ず `nil`（システム所有参照レコード）
+  - 対象モデル:
+    - `Crop`, `Fertilize`, `Pesticide`, `Pest`, `AgriculturalTask`, `InteractionRule`
+  - これらの制約を検証するモデルテストを追加し、今後のPolicy/Service実装の前提として仕様を固定。
+  - `Pesticide.from_agrr_output` などのインポート系ロジックも、`is_reference: true` の場合は `user_id=nil` を強制するよう更新済み。
+
+### 7.2 まだコントローラに残っている「参照まわり」ロジック
+
+- **作成/更新時の参照フラグ操作ロジック**
+  - 例: `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController` などで、
+    - 一般ユーザーは `is_reference` を操作できない（強制false）
+    - 管理者のみ `is_reference` を true/false に変更可能
+    - `is_reference` に応じて `user_id` を `nil` / `current_user.id` に設定
+  - これらは現在もコントローラに直接記述されており、今後 `*Policy` / Service に寄せる余地がある。
+- **`set_*` 系のアクセス制御ロジック**
+  - 例: `FertilizesController#set_fertilize`, `PesticidesController#set_pesticide`, `InteractionRulesController#set_interaction_rule` などで、
+    - 「参照＋管理者」「ユーザー所有のみ」といった条件を `where` や `unless` で直接表現している。
+  - 将来的には `Policy.find_visible!(user, id)` / `Policy.find_editable!(user, id)` のような形に寄せていく。
+- **JSON API 側の参照/所有スコープ**
+  - `Api::V1::Masters::*` コントローラ群では、まだ `current_user.*.where(is_reference: false)` などが直接書かれている。
+  - HTML側で確認済みの `*Policy.visible_scope(user)` / モデル不変条件を土台に、API側も順次Policy経由に置き換えていく予定。
+
+### 7.3 今後の具体的なステップ（優先度順）
+
+1. **HTMLコントローラの show/edit/update/destroy 用単体取得を Policy 化**
+   - 目標:
+     - `set_*` メソッド内の `if admin_user? ... else ... end` を、`*Policy.find_visible!(current_user, params[:id])` / `find_editable!` に寄せる。
+   - 対象（優先順）:
+     - `CropsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `InteractionRulesController`, `AgriculturalTasksController`
+2. **参照フラグ変更ロジックの Policy / Service 化**
+   - 目標:
+     - `create` / `update` 内の `is_reference` キャストと `user_id` セット処理を、`*Policy.build_for_create(user, params)` / `apply_update!(user, record, params)` に移す。
+   - 特に `PestsController` / `AgriculturalTasksController` など、ロジックが太い箇所から段階的に適用。
+3. **JSON マスタ API の index / show を Policy 化**
+   - 目標:
+     - `Api::V1::Masters::*Controller#index` / `#show` で、HTML側と同じ `visible_scope` / `find_visible!` を使う。
+   - 着手候補:
+     - `Api::V1::Masters::CropsController`
+     - `Api::V1::Masters::PestsController`
+     - `Api::V1::Masters::FertilizesController`
+     - `Api::V1::Masters::PesticidesController`
+4. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
+   - 目標:
+     - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。
+   - そのうえで、HTML/JSON 両方から同じルールを利用する。
+5. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+   - 削除 + Undo と参照ポリシーまわりの整理が一段落したあとに着手し、
+   - HTML/JSONのエラーレスポンス仕様の統一を図る。

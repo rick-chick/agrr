@@ -44,8 +44,11 @@ class CropsController < ApplicationController
     end
 
     @crop = Crop.new(crop_params)
-    @crop.user_id = nil if is_reference
-    @crop.user_id ||= current_user.id
+    if is_reference
+      @crop.user_id = nil
+    else
+      @crop.user_id ||= current_user.id
+    end
 
     # groupsをカンマ区切りテキストから配列に変換
     if params.dig(:crop, :groups).is_a?(String)
@@ -193,32 +196,25 @@ class CropsController < ApplicationController
   private
 
   def set_crop
+    action = params[:action].to_sym
+
+    # まず権限チェック（編集系か閲覧系かで分岐）
+    authorized_crop =
+      if action.in?([:edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template])
+        CropPolicy.find_editable!(current_user, params[:id])
+      else
+        CropPolicy.find_visible!(current_user, params[:id])
+      end
+
+    # 付加情報を preload したレコードとして再取得
     @crop = Crop.includes(
       crop_stages: [:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement],
       agricultural_tasks: [],
       crop_task_templates: [:agricultural_task],
       crop_task_schedule_blueprints: [:agricultural_task]
-    ).find(params[:id])
-    
-    # アクションに応じた権限チェック
-    action = params[:action].to_sym
-    
-    if action.in?([:edit, :update, :destroy])
-      # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（すべての作物を編集可能）
-      # - ユーザー作物の所有者
-      unless admin_user? || (!@crop.is_reference && @crop.user_id == current_user.id)
-        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
-      end
-    elsif action == :show
-      # 詳細表示は以下の場合に許可
-      # - 参照作物（誰でも閲覧可能）
-      # - 自分の作物
-      # - 管理者
-      unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
-        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
-      end
-    end
+    ).find(authorized_crop.id)
+  rescue PolicyPermissionDenied
+    redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
   end

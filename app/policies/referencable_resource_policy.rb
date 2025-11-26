@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+class PolicyPermissionDenied < StandardError; end
+
 module ReferencableResourcePolicy
   extend ActiveSupport::Concern
 

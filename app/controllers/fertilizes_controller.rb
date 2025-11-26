@@ -78,31 +78,9 @@ class FertilizesController < ApplicationController
   private
 
   def set_fertilize
-    # 管理者は自身の肥料と参照肥料のみアクセス可能、一般ユーザーは自分の肥料のみアクセス可能
-    if admin_user?
-      @fertilize = Fertilize.where("is_reference = ? OR user_id = ?", true, current_user.id).find(params[:id])
-    else
-      @fertilize = Fertilize.where(user_id: current_user.id, is_reference: false).find(params[:id])
-    end
-    
-    # アクションに応じた権限チェック
-    action = params[:action].to_sym
-    
-    if action.in?([:edit, :update, :destroy])
-      # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（参照肥料または自身の肥料を編集可能）
-      # - 参照肥料でない場合、かつ所有者である場合（一般ユーザーが作成した肥料）
-      unless admin_user? || (!@fertilize.is_reference && @fertilize.user_id == current_user.id)
-        redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
-      end
-    elsif action == :show
-      # 詳細表示は以下の場合に許可
-      # - 管理者（参照肥料または自身の肥料を閲覧可能）
-      # - 自分の肥料（一般ユーザー）
-      unless admin_user? || (@fertilize.user_id == current_user.id && !@fertilize.is_reference)
-        redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
-      end
-    end
+    @fertilize = FertilizePolicy.find_visible!(current_user, params[:id])
+  rescue PolicyPermissionDenied
+    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.not_found')
   end

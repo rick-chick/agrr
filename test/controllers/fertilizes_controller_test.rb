@@ -61,7 +61,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     get fertilize_path(@reference_fertilize)
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "一般ユーザーは他のユーザーの肥料をshowできない" do
@@ -69,7 +69,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     get fertilize_path(@other_user_fertilize)
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "管理者は参照肥料をshowできる" do
@@ -100,7 +100,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     get edit_fertilize_path(@reference_fertilize)
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "一般ユーザーは他のユーザーの肥料をeditできない" do
@@ -108,7 +108,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     get edit_fertilize_path(@other_user_fertilize)
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "管理者は参照肥料をeditできる" do
@@ -223,7 +223,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     } }
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
     
     @reference_fertilize.reload
     assert_equal old_n, @reference_fertilize.n
@@ -239,7 +239,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     } }
     
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
     
     @other_user_fertilize.reload
     assert_equal old_n, @other_user_fertilize.n
@@ -309,7 +309,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "一般ユーザーは他のユーザーの肥料をdestroyできない" do
@@ -321,7 +321,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to fertilizes_path
-    assert_equal I18n.t('fertilizes.flash.not_found'), flash[:alert]
+    assert_equal I18n.t('fertilizes.flash.no_permission'), flash[:alert]
   end
 
   test "管理者は参照肥料をdestroyできる" do
