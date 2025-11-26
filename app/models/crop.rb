@@ -49,9 +49,10 @@ class Crop < ApplicationRecord
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :source_crop_id, uniqueness: { scope: :user_id }, allow_nil: true
   
-  # ユーザー作物の件数制限（20件まで）
+  # ユーザー作物の件数制限（20件まで）と参照作物/userの組み合わせ制約
   validates :user, presence: true, unless: :is_reference?
   validate :user_crop_count_limit, unless: :is_reference?
+  validate :user_must_be_nil_for_reference, if: :is_reference?
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
@@ -179,5 +180,12 @@ class Crop < ApplicationRecord
     if current_count >= 20
       errors.add(:user, :crop_limit_exceeded)
     end
+  end
+
+  # 参照作物は user を持たない（システム所有）
+  def user_must_be_nil_for_reference
+    return unless is_reference? && user_id.present?
+
+    errors.add(:user, "は参照データには設定できません")
   end
 end

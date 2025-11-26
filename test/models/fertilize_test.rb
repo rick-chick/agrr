@@ -106,6 +106,18 @@ class FertilizeTest < ActiveSupport::TestCase
     assert fertilize.valid?
   end
 
+  test "should not allow user for reference fertilizes" do
+    user = create(:user)
+    fertilize = Fertilize.new(
+      name: "参照肥料",
+      is_reference: true,
+      user: user
+    )
+    fertilize.valid?
+
+    assert_includes fertilize.errors[:user], "は参照データには設定できません"
+  end
+
   test "should allow user_id when is_reference is false" do
     user = create(:user)
     fertilize = Fertilize.new(

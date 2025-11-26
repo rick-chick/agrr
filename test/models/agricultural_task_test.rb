@@ -44,6 +44,18 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     assert task.valid?
   end
 
+  test "should not allow user for reference tasks" do
+    user = create(:user)
+    task = AgriculturalTask.new(
+      name: "参照タスク",
+      is_reference: true,
+      user: user
+    )
+    task.valid?
+
+    assert_includes task.errors[:user], "は参照データには設定できません"
+  end
+
   test "reference scope should return only reference tasks" do
     create(:agricultural_task, is_reference: true, user_id: nil)
     user = create(:user)

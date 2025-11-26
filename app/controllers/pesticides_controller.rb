@@ -6,12 +6,8 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides
   def index
-    # 管理者は自身の農薬と参照農薬のみ表示、一般ユーザーは自分の農薬のみ表示
-    if admin_user?
-      @pesticides = Pesticide.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      @pesticides = Pesticide.where(user_id: current_user.id, is_reference: false).recent
-    end
+    # 管理者は参照農薬も表示、一般ユーザーは自分の非参照農薬のみ
+    @pesticides = PesticidePolicy.visible_scope(current_user).recent
   end
 
   # GET /pesticides/:id

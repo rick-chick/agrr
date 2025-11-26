@@ -6,13 +6,8 @@ class PestsController < ApplicationController
 
   # GET /pests
   def index
-    # 管理者は参照害虫と自身が作成した害虫のみ表示、一般ユーザーは自分が作成した害虫のみ表示
-    if admin_user?
-      @pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-    else
-      # 一般ユーザー: 自分の害虫のみ表示（参照害虫は表示しない）
-      @pests = Pest.where(user_id: current_user.id).recent
-    end
+    # 管理者は参照害虫も表示、一般ユーザーは自分の非参照害虫のみ
+    @pests = PestPolicy.visible_scope(current_user).recent
   end
 
   # GET /pests/:id

@@ -75,6 +75,13 @@ class CropTest < ActiveSupport::TestCase
     assert_includes crop.errors[:user], "を入力してください"
   end
 
+  test "should not allow user for reference crops" do
+    crop = Crop.new(user: @user, name: "参照作物", is_reference: true)
+    crop.valid?
+
+    assert_includes crop.errors[:user], "は参照データには設定できません"
+  end
+
   # Pest関連テスト
   test "should have many crop_pests" do
     crop = create(:crop)

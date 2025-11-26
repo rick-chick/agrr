@@ -109,7 +109,7 @@ module Crops
       session_id = create_session_for(admin)
       headers = session_cookie_header(session_id)
 
-      reference_crop = create(:crop, is_reference: true)
+      reference_crop = create(:crop, :reference)
       reference_task = create(:agricultural_task, is_reference: true, name: '参照作業')
       
       reference_template = CropTaskTemplate.create!(

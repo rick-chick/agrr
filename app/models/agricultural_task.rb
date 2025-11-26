@@ -40,6 +40,7 @@ class AgriculturalTask < ApplicationRecord
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
   validates :user, presence: true, unless: :is_reference?
+  validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :time_per_sqm, numericality: { greater_than: 0, allow_nil: true }
   validate :name_uniqueness_scope
   validates :source_agricultural_task_id, uniqueness: { scope: :user_id }, allow_nil: true
@@ -84,6 +85,13 @@ class AgriculturalTask < ApplicationRecord
       existing = existing.where.not(id: id) if persisted?
       errors.add(:name, :taken) if existing.exists?
     end
+  end
+
+  # 参照タスクは user を持たない（システム所有）
+  def user_must_be_nil_for_reference
+    return unless is_reference? && user_id.present?
+
+    errors.add(:user, "は参照データには設定できません")
   end
 end
 

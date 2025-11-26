@@ -13,9 +13,39 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     @pesticide = create(:pesticide, crop: @crop, pest: @pest, is_reference: true)
   end
 
-  test "should get index" do
+  # ========== index アクションのテスト ==========
+
+  test "一般ユーザーのindexは自身の非参照農薬のみ表示" do
+    user_pesticide = create(:pesticide, :user_owned, user: @user, is_reference: false, name: 'ユーザー農薬')
+    other_user = create(:user)
+    other_pesticide = create(:pesticide, :user_owned, user: other_user, is_reference: false, name: '他人農薬')
+    reference_pesticide = create(:pesticide, crop: @crop, pest: @pest, is_reference: true, user_id: nil, name: '参照農薬')
+
     get pesticides_path
     assert_response :success
+
+    body = response.body
+    assert_includes body, user_pesticide.name
+    refute_includes body, other_pesticide.name
+    refute_includes body, reference_pesticide.name
+  end
+
+  test "管理者のindexは自身の農薬と参照農薬を表示し他人の農薬は表示しない" do
+    admin_user = create(:user, admin: true)
+    sign_in_as admin_user
+
+    admin_pesticide = create(:pesticide, :user_owned, user: admin_user, is_reference: false, name: '管理者農薬')
+    other_user = create(:user)
+    other_pesticide = create(:pesticide, :user_owned, user: other_user, is_reference: false, name: '他人農薬')
+    reference_pesticide = create(:pesticide, crop: @crop, pest: @pest, is_reference: true, user_id: nil, name: '参照農薬')
+
+    get pesticides_path
+    assert_response :success
+
+    body = response.body
+    assert_includes body, admin_pesticide.name
+    assert_includes body, reference_pesticide.name
+    refute_includes body, other_pesticide.name
   end
 
   test "should show pesticide" do

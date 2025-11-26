@@ -29,6 +29,7 @@ class Pesticide < ApplicationRecord
   validates :name, presence: true
   validates :is_reference, inclusion: { in: [true, false] }
   validates :user, presence: true, unless: :is_reference?
+  validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :crop, presence: true
   validates :pest, presence: true
   validates :source_pesticide_id, uniqueness: { scope: :user_id }, allow_nil: true
@@ -70,6 +71,8 @@ class Pesticide < ApplicationRecord
       description: pesticide_data['description'],
       is_reference: is_reference
     )
+    # 参照データとして取り込む場合はシステム所有（user_idを必ずnilにする）
+    pesticide.user_id = nil if is_reference
     pesticide.save!
 
     # 使用制約を作成または更新
@@ -127,6 +130,13 @@ class Pesticide < ApplicationRecord
         'application_method' => pesticide_application_detail.application_method
       } : nil
     }
+  end
+
+  # 参照農薬は user を持たない（システム所有）
+  def user_must_be_nil_for_reference
+    return unless is_reference? && user_id.present?
+
+    errors.add(:user, "は参照データには設定できません")
   end
 end
 

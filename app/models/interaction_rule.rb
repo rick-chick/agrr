@@ -40,6 +40,8 @@ class InteractionRule < ApplicationRecord
   validates :target_group, presence: true
   validates :impact_ratio, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :is_reference, inclusion: { in: [true, false] }
+  validates :user, presence: true, unless: :is_reference?
+  validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :source_interaction_rule_id, uniqueness: { scope: :user_id }, allow_nil: true
 
   # Scopes
@@ -83,6 +85,13 @@ class InteractionRule < ApplicationRecord
   # @return [Array<Hash>] agrr CLI形式のルール配列
   def self.to_agrr_format_array(rules)
     rules.map(&:to_agrr_format)
+  end
+
+  # 参照ルールは user を持たない（システム所有）
+  def user_must_be_nil_for_reference
+    return unless is_reference? && user_id.present?
+
+    errors.add(:user, "は参照データには設定できません")
   end
 end
 

@@ -6,15 +6,14 @@ class InteractionRulesController < ApplicationController
 
   # GET /interaction_rules
   def index
-    if admin_user?
-      # 管理者: 自分のルール + 参照ルール
-      @interaction_rules = InteractionRule.where("user_id = ? OR is_reference = ?", current_user.id, true).recent
-      @reference_rules = InteractionRule.reference.recent
-    else
-      # 一般ユーザー: 自分のルールのみ（参照ルールは非表示）
-      @interaction_rules = InteractionRule.where(user_id: current_user.id).recent
-      @reference_rules = []
-    end
+    # 管理者は参照ルールも一覧に含め、別枠で参照ルール一覧も表示
+    @interaction_rules = InteractionRulePolicy.visible_scope(current_user).recent
+    @reference_rules =
+      if admin_user?
+        InteractionRule.reference.recent
+      else
+        []
+      end
   end
 
   # GET /interaction_rules/:id

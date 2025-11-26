@@ -22,23 +22,29 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
 
   # ========== index アクションのテスト ==========
   
-  test "一般ユーザーのindexは自身の肥料のみ表示" do
+  test "一般ユーザーのindexは自身の非参照肥料のみ表示" do
     sign_in_as @user
     get fertilizes_path
     
     assert_response :success
-    # 一般ユーザーの肥料のみが表示される
-    assert_select '.crop-card', count: 1
-    # 参照肥料や他のユーザーの肥料は表示されない
+    body = response.body
+    # 自分の非参照肥料のみ表示される
+    assert_includes body, @user_fertilize.name
+    refute_includes body, @reference_fertilize.name
+    refute_includes body, @other_user_fertilize.name
+    refute_includes body, @admin_fertilize.name
   end
 
-  test "管理者のindexは自身の肥料と参照肥料を表示" do
+  test "管理者のindexは自身の肥料と参照肥料を表示し他人の肥料は表示しない" do
     sign_in_as @admin_user
     get fertilizes_path
     
     assert_response :success
-    # 管理者の肥料と参照肥料が表示される（最低2つ）
-    # 注: 実際の表示件数はビューで確認する必要があるが、ここではリクエストが成功することを確認
+    body = response.body
+    assert_includes body, @admin_fertilize.name
+    assert_includes body, @reference_fertilize.name
+    refute_includes body, @user_fertilize.name
+    refute_includes body, @other_user_fertilize.name
   end
 
   # ========== show アクションのテスト ==========
