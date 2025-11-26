@@ -251,12 +251,12 @@ module Api
           field_cultivation = FieldCultivation.find(params[:id])
           cultivation_plan = field_cultivation.cultivation_plan
           
-          # ユーザーの計画であることを確認
-          unless cultivation_plan.plan_type_private? && cultivation_plan.user_id == current_user.id
-            raise ActiveRecord::RecordNotFound
-          end
+          # ユーザーの private 計画であることを確認（Policy 経由）
+          PlanPolicy.find_private_owned!(current_user, cultivation_plan.id)
           
           field_cultivation
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
         end
         
         def field_cultivation_params

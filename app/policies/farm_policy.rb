@@ -4,7 +4,7 @@ class FarmPolicy
   # HTML/JSON 双方から利用する、Farm の所有権ポリシー
   #
   # - ユーザー所有農場（is_reference: false, user_id = user.id）のみを「所有」とみなす
-  # - 参照農場（is_reference: true）は本ポリシーの対象外（PublicPlans 等で個別に利用）
+  # - 参照農場（is_reference: true）は PublicPlans 等で個別に利用
 
   # ユーザー所有の農場スコープ
   # Usage: FarmPolicy.user_owned_scope(user)
@@ -40,6 +40,14 @@ class FarmPolicy
     attributes[:is_reference] = false
 
     Farm.new(attributes)
+  end
+
+  # 参照農場のスコープ（region でフィルタ可能）
+  # Usage: FarmPolicy.reference_scope(region: 'jp')
+  def self.reference_scope(region: nil)
+    scope = Farm.reference
+    scope = scope.where(region: region) if region
+    scope
   end
 end
 

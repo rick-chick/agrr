@@ -19,9 +19,14 @@ module Api
         # Concernで実装すべきメソッド
         
         def find_api_cultivation_plan
+          # public plan であることを確認（Policy 経由）
+          plan = PlanPolicy.find_public!(params[:id])
+          
           CultivationPlan
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
-            .find(params[:id])
+            .find(plan.id)
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
         end
         
         def get_crop_for_add_crop(crop_id)

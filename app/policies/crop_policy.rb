@@ -91,4 +91,12 @@ class CropPolicy
 
     crop.update(attributes)
   end
+
+  # 参照作物のスコープ（region でフィルタ可能）
+  # Usage: CropPolicy.reference_scope(region: 'jp')
+  def self.reference_scope(region: nil)
+    scope = Crop.reference
+    scope = scope.where(region: region) if region
+    scope
+  end
 end
