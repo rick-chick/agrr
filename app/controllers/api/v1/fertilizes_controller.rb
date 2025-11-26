@@ -44,31 +44,36 @@ module Api
           
           Rails.logger.info "📊 [AI Fertilize] Retrieved data: name=#{fertilize_name_from_agrr}, n=#{fertilize_data['n']}, p=#{fertilize_data['p']}, k=#{fertilize_data['k']}, package_size=#{fertilize_package_size_from_agrr}"
 
-          # 既存の肥料を検索（AI作成は常にユーザー肥料）
-          is_reference = false
-          existing_fertilize = ::Fertilize.find_by(name: fertilize_name_from_agrr, is_reference: is_reference)
-
-          # agrrから返された商品名とpackage_sizeを使用
-          attrs = {
+          base_attrs = {
             name: fertilize_name_from_agrr,  # agrrから返された商品名
             n: fertilize_data['n'],
             p: fertilize_data['p'],
             k: fertilize_data['k'],
             description: fertilize_data['description'],
-            package_size: fertilize_package_size_from_agrr,  # agrrから返されたpackage_size
-            is_reference: is_reference,
-            user_id: current_user.id
+            package_size: fertilize_package_size_from_agrr  # agrrから返されたpackage_size
           }
 
+          # 既存のユーザー肥料を検索（所有者は current_user のみ）
+          existing_fertilize = ::Fertilize.find_by(
+            name: fertilize_name_from_agrr,
+            is_reference: false,
+            user_id: current_user.id
+          )
+
           if existing_fertilize
-            # 既存の肥料を更新
+            # 既存の肥料を更新（所有者・参照フラグは変更しない）
             Rails.logger.info "🔄 [AI Fertilize] Updating existing fertilize##{existing_fertilize.id}: #{fertilize_name_from_agrr}"
-            result = @update_interactor.call(existing_fertilize.id, attrs)
+            result = @update_interactor.call(existing_fertilize.id, base_attrs)
             status_code = :ok
           else
-            # 新規作成
+            # 新規作成（所有者・参照フラグの決定は Policy に委譲）
             Rails.logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name_from_agrr}"
-            result = @create_interactor.call(attrs)
+            policy_fertilize = FertilizePolicy.build_for_create(current_user, base_attrs)
+            attrs_for_create = base_attrs.merge(
+              user_id: policy_fertilize.user_id,
+              is_reference: policy_fertilize.is_reference
+            )
+            result = @create_interactor.call(attrs_for_create)
             status_code = :created
           end
 
@@ -233,9 +238,12 @@ module Api
       end
 
       def set_fertilize
-        @fertilize = Fertilize.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        @fertilize = nil
+        @fertilize =
+          begin
+            FertilizePolicy.find_editable!(current_user, params[:id])
+          rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+            nil
+          end
       end
 
       def set_interactors

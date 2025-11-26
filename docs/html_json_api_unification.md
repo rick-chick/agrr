@@ -590,6 +590,31 @@
       - 同上の各Policyに実装。
       - HTMLコントローラの `update` は、`*Policy.apply_update!(current_user, @record, params)` の戻り値（`update` の成否）で分岐し、成功時 `redirect` / 失敗時 `render :edit, status: :unprocessable_entity` を行う形に統一。
   - これらの変更に先立ち、`create` / `update` の全パス（一般ユーザー/管理者、参照/非参照、バリデーションエラー、groups/required_tools などの周辺ロジック）をカバーするコントローラテストを追加し、挙動をテストで固定したうえでリファクタを実施済み。
+  - 参照まわりのロジックについては、HTML側は「参照フラグを操作しようとしたときのadminガード」を除き、Policy層に寄せ終わっている。
+- **JSON 参照マスタ系コントローラの index / show / create / update のPolicy化**
+  - 対象コントローラ（`Api::V1::Masters` 配下・参照マスタ系）:
+    - `Api::V1::Masters::CropsController`
+    - `Api::V1::Masters::PestsController`
+    - `Api::V1::Masters::FertilizesController`
+    - `Api::V1::Masters::PesticidesController`
+    - `Api::V1::Masters::AgriculturalTasksController`
+    - `Api::V1::Masters::InteractionRulesController`
+  - `index`:
+    - すべて `*Policy.visible_scope(current_user)` を利用するよう変更し、HTML側と同じ「管理者=参照+自分 / 一般ユーザー=自分の非参照のみ」のスコープに揃えた。
+  - `show` / `update` / `destroy` 向けの `set_*`:
+    - `*Policy.find_editable!(current_user, params[:id])`（一部 `find_visible!` を併用）を利用するよう変更。
+    - 権限がない場合は `PolicyPermissionDenied` を発生させ、JSONでは `403 Forbidden` + `error: <no_permissionメッセージ>` を返す。
+    - レコードが存在しない場合は `404 Not Found` + `"XXX not found"` を返す。
+  - `create`:
+    - HTML側と同じく、`*Policy.build_for_create(current_user, params)` を利用して `is_reference` / `user_id` の整合をとったうえで保存する形に統一。
+    - JSONマスタAPIでは `is_reference` パラメータ自体は許可しておらず、常に「ユーザー所有・非参照」として扱う前提は維持。
+  - `update`:
+    - HTML側と同様に、`*Policy.apply_update!(current_user, record, params)` を利用して `is_reference` 変更時の `user_id` 調整を行う（実際にはJSONマスタAPIでは `is_reference` を受け取っていないため、現状の挙動は「ユーザー所有レコードの通常更新」のまま）。
+  - コントローラテスト:
+    - 各 `Api::V1::Masters::*ControllerTest` で以下を明示的に検証するテストを追加:
+      - 一覧に含まれる/含まれないレコード（自分のレコード・参照レコード・他人のレコード）。
+      - 他ユーザーのレコードに対する `show` / `update` / `destroy` が `403 Forbidden` + `no_permission` メッセージになること。
+      - 自分のレコードの `create` / `update` / `destroy` が成功することと、`user_id` / `is_reference` の値。
 
 ### 7.2 まだコントローラに残っている「参照まわり」ロジック
 
@@ -598,9 +623,9 @@
     - `create` / `update` の `is_reference` と `user_id` に関するロジックを `*Policy.build_for_create` / `apply_update!` に集約済み。
     - コントローラに残っているのは、**「一般ユーザーが参照フラグを操作しようとした場合に 403 相当（`reference_only_admin` / `reference_flag_admin_only`）を返すガード」のみ**。
   - このため、HTML 側については「参照フラグ操作ロジックのPolicy化」は完了している。
-- **JSON API 側の参照/所有スコープ**
-  - `Api::V1::Masters::*` コントローラ群では、まだ `current_user.*.where(is_reference: false)` などが直接書かれている。
-  - HTML側で確認済みの `*Policy.visible_scope(user)` / モデル不変条件を土台に、API側も順次Policy経由に置き換えていく予定。
+- **参照まわり以外のJSON APIロジック**
+  - 参照マスタ系 JSON API については、index/show/create/update のOwnership・PermissionまわりはPolicy化済み。
+  - それ以外のJSON API（AI upsert系、Farms/Fields/Plans系など）では、まだ `current_user` 起点の所有権チェックや upsert ロジックがコントローラ側に残っているため、今後Policy/Serviceに寄せていく。
 - **Farm / Field / Plan 系の所有権チェック**
   - `FarmsController` / `FieldsController` / `PlansController` および対応する API コントローラでは、
     - 「current_user に紐づくものだけ操作可能」といった所有権チェックがまだコントローラに直接記述されている。
@@ -608,21 +633,12 @@
 
 ### 7.3 今後の具体的なステップ（優先度順）
 
-1. **JSON マスタ API の index / show / create / update を Policy 化**
-   - 目標:
-     - `Api::V1::Masters::*Controller` で、HTML側と同じ `visible_scope` / `find_visible!` / `build_for_create` / `apply_update!` を使い、
-       参照マスタまわりの挙動（is_reference と user_id の関係、管理者/一般ユーザーのアクセス範囲）を完全に揃える。
-   - 着手候補:
-     - `Api::V1::Masters::CropsController`
-     - `Api::V1::Masters::PestsController`
-     - `Api::V1::Masters::FertilizesController`
-     - `Api::V1::Masters::PesticidesController`
-2. **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合**
+1. **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合**
    - 目標:
      - `Api::V1::CropsController#ai_create` や `Api::V1::FertilizesController#ai_create/#ai_update` 等で、
        通常の `*Policy` を経由して作成/更新を行うようにし、`is_reference: false` / `user_id` の扱いを通常CRUDと完全に一致させる。
    - 必要に応じて、共通の `*AiUpsertService` を導入し、名前検索〜Policy経由での更新/作成を一箇所に集約する。
-3. **Farm / Field / Plan 系の Policy 導入**
+2. **Farm / Field / Plan 系の Policy 導入**
    - 目標:
      - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を導入し、所有権・公開/非公開ルールをPolicyに集約する。
    - 対象:
@@ -630,10 +646,10 @@
      - API: `Api::V1::Masters::FarmsController`, `Api::V1::Masters::FieldsController`,
        `Api::V1::Plans::FieldCultivationsController`, `Api::V1::PublicPlans::FieldCultivationsController`,
        `Api::V1::Plans::CultivationPlansController`, `Api::V1::PublicPlans::CultivationPlansController`
-4. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
+3. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
    - 目標:
      - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。
    - そのうえで、HTML/JSON 両方から同じルールを利用する。
-5. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+4. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
    - 削除 + Undo と参照ポリシーまわりの整理が一段落したあとに着手し、
    - HTML/JSONのエラーレスポンス仕様の統一を図る。
