@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class InteractionRulesController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_interaction_rule, only: [:show, :edit, :update, :destroy]
 
   # GET /interaction_rules
@@ -62,34 +63,18 @@ class InteractionRulesController < ApplicationController
 
   # DELETE /interaction_rules/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
-      record: @interaction_rule,
-      actor: current_user,
-      toast_message: I18n.t(
-        'interaction_rules.undo.toast',
-        source: @interaction_rule.source_group,
-        target: @interaction_rule.target_group
-      )
+    toast = I18n.t(
+      'interaction_rules.undo.toast',
+      source: @interaction_rule.source_group,
+      target: @interaction_rule.target_group
     )
 
-    render_deletion_undo_response(
-      event,
-      fallback_location: interaction_rules_path
-    )
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('interaction_rules.flash.cannot_delete_in_use'),
-      fallback_location: interaction_rules_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('interaction_rules.flash.delete_error', message: e.message),
-      fallback_location: interaction_rules_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('interaction_rules.flash.delete_error', message: e.message),
-      fallback_location: interaction_rules_path
+    schedule_deletion_with_undo(
+      record: @interaction_rule,
+      toast_message: toast,
+      fallback_location: interaction_rules_path,
+      in_use_message_key: 'interaction_rules.flash.cannot_delete_in_use',
+      delete_error_message_key: 'interaction_rules.flash.delete_error'
     )
   end
 

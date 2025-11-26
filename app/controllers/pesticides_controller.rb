@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
+  include DeletionUndoFlow
   before_action :set_pesticide, only: [:show, :edit, :update, :destroy]
 
   # GET /pesticides
@@ -72,27 +73,12 @@ class PesticidesController < ApplicationController
 
   # DELETE /pesticides/:id
   def destroy
-    event = DeletionUndo::Manager.schedule(
+    schedule_deletion_with_undo(
       record: @pesticide,
-      actor: current_user,
-      toast_message: I18n.t('pesticides.undo.toast', name: @pesticide.name)
-    )
-
-    render_deletion_undo_response(event, fallback_location: pesticides_path)
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('pesticides.flash.cannot_delete_in_use'),
-      fallback_location: pesticides_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t('pesticides.flash.delete_error', message: e.message),
-      fallback_location: pesticides_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t('pesticides.flash.delete_error', message: e.message),
-      fallback_location: pesticides_path
+      toast_message: I18n.t('pesticides.undo.toast', name: @pesticide.name),
+      fallback_location: pesticides_path,
+      in_use_message_key: 'pesticides.flash.cannot_delete_in_use',
+      delete_error_message_key: 'pesticides.flash.delete_error'
     )
   end
 

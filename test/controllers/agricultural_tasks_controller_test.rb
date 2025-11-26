@@ -390,7 +390,24 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert AgriculturalTask.exists?(task.id), 'Undo後にAgriculturalTaskが復元されていません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトとflashのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    task = create(:agricultural_task, :user_owned, user: @user, name: 'テスト作業')
+    task_name = task.name
+
+    assert_difference -> { AgriculturalTask.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete agricultural_task_path(task) # HTMLリクエスト
+        assert_redirected_to agricultural_tasks_path
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: task_name
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 
   # ========== region編集のテスト ==========
 

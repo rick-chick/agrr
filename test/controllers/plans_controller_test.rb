@@ -141,6 +141,23 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal plan.id, restored_plan_crop.cultivation_plan_id, '作物の計画IDが一致していません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトとflashのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    plan = create(:cultivation_plan, :private, user: @user)
+    display_name = plan.display_name
+
+    assert_difference -> { CultivationPlan.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete plan_path(plan) # HTMLリクエスト
+        assert_redirected_to plans_path
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: display_name
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 end
 

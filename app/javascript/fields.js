@@ -1,45 +1,5 @@
 // fields.js - 地図機能とフォーム連携のためのJavaScript
 
-// Leafletの読み込み完了を待つ関数
-function waitForLeaflet(callback, maxAttempts = 100) {
-  console.log('Waiting for Leaflet, attempts remaining:', maxAttempts);
-  
-  if (typeof L !== 'undefined' && L.Map) {
-    console.log('Leaflet is ready, version:', L.version);
-    callback();
-    return;
-  }
-  
-  if (maxAttempts <= 0) {
-    console.error('Leaflet library failed to load after maximum attempts');
-    const errorPlaceholder = document.getElementById('map-placeholder');
-    const mapEl = document.getElementById('map');
-    const labels = {
-      libraryLoadFailed: mapEl?.dataset.mapLibraryLoadFailed || '地図ライブラリの読み込みに失敗しました',
-      reloadPage: mapEl?.dataset.reloadPage || 'ページを再読み込み'
-    };
-    
-    if (errorPlaceholder) {
-      errorPlaceholder.style.display = 'block';
-      errorPlaceholder.innerHTML = `
-        <div>
-          <div style="margin-bottom: 10px;">⚠️ ${labels.libraryLoadFailed}</div>
-          <button type="button" onclick="location.reload()" class="btn btn-small">
-            🔄 ${labels.reloadPage}
-          </button>
-        </div>
-      `;
-    }
-    // 地図要素を非表示にする
-    if (mapEl) {
-      mapEl.style.display = 'none';
-    }
-    return;
-  }
-  
-  setTimeout(() => waitForLeaflet(callback, maxAttempts - 1), 100);
-}
-
 // Turbo対応: turbo:loadイベントでページ読み込み時とTurbo遷移時の両方で地図を初期化
 document.addEventListener('turbo:load', function() {
   // 地図要素が存在する場合のみ初期化
@@ -48,8 +8,8 @@ document.addEventListener('turbo:load', function() {
     return;
   }
 
-  // Leafletの読み込み完了を待つ
-  waitForLeaflet(initializeMapComponents);
+  // Leaflet は application.js 側で先に import 済みなので直接初期化する
+  initializeMapComponents();
 });
 
 // Turboキャッシュ前に地図をクリーンアップ
@@ -342,9 +302,7 @@ window.retryMapInitialization = function() {
     placeholder.innerHTML = `<div>🗺️ ${mapLoading}</div>`;
   }
   
-  // 強制的に初期化フラグをリセット
+  // 強制的に初期化フラグをリセットして再初期化
   isInitialized = false;
-  
-  // Leafletの読み込み完了を待って再初期化
-  waitForLeaflet(initializeMapComponents);
+  initializeMapComponents();
 };

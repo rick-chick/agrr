@@ -62,7 +62,24 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert Farm.exists?(farm.id), 'Undo後にFarmが復元されていません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスに対するリダイレクトフローのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: 'テスト農場')
+    display_name = farm.display_name
+
+    assert_difference -> { Farm.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete farm_path(farm) # HTMLリクエスト
+        assert_redirected_to farms_path
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: display_name
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 
   # ========== region編集のテスト ==========
 

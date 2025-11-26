@@ -79,7 +79,25 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     assert InteractionRule.exists?(interaction_rule.id), 'Undo後にInteractionRuleが復元されていません'
   end
 
-  # TODO: destroyアクションのHTMLレスポンスのテストを追加する
+  test 'destroy_via_html_redirects_with_undo_notice' do
+    sign_in_as @user
+    interaction_rule = create_interaction_rule(user: @user)
+
+    expected_label = "#{InteractionRule.model_name.human} ##{interaction_rule.id}"
+
+    assert_difference -> { InteractionRule.count }, -1 do
+      assert_difference 'DeletionUndoEvent.count', +1 do
+        delete interaction_rule_path(interaction_rule) # HTMLリクエスト
+        assert_redirected_to interaction_rules_path
+      end
+    end
+
+    expected_notice = I18n.t(
+      'deletion_undo.redirect_notice',
+      resource: expected_label
+    )
+    assert_equal expected_notice, flash[:notice]
+  end
 
   # ========== region編集のテスト ==========
 
