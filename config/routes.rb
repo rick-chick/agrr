@@ -211,7 +211,17 @@ Rails.application.routes.draw do
         
         # Master Data Management API (API Key認証)
         namespace :masters do
-          resources :crops, only: [:index, :show, :create, :update, :destroy]
+          resources :crops, only: [:index, :show, :create, :update, :destroy] do
+            resources :pests, only: [:index, :create, :destroy], controller: 'crops/pests'
+            resources :agricultural_tasks, only: [:index, :create, :update, :destroy], controller: 'crops/agricultural_tasks'
+            resources :crop_stages, only: [:index, :show, :create, :update, :destroy], controller: 'crops/crop_stages' do
+              resource :temperature_requirement, only: [:show, :create, :update, :destroy], controller: 'crops/crop_stages/temperature_requirements'
+              resource :sunshine_requirement, only: [:show, :create, :update, :destroy], controller: 'crops/crop_stages/sunshine_requirements'
+              resource :thermal_requirement, only: [:show, :create, :update, :destroy], controller: 'crops/crop_stages/thermal_requirements'
+              resource :nutrient_requirement, only: [:show, :create, :update, :destroy], controller: 'crops/crop_stages/nutrient_requirements'
+            end
+            resources :pesticides, only: [:index], controller: 'crops/pesticides'
+          end
           resources :fertilizes, only: [:index, :show, :create, :update, :destroy]
           resources :pests, only: [:index, :show, :create, :update, :destroy]
           resources :pesticides, only: [:index, :show, :create, :update, :destroy]
