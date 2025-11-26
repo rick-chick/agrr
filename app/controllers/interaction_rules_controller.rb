@@ -37,8 +37,11 @@ class InteractionRulesController < ApplicationController
     end
 
     @interaction_rule = InteractionRule.new(interaction_rule_params)
-    @interaction_rule.user_id = nil if is_reference
-    @interaction_rule.user_id ||= current_user.id
+    if is_reference
+      @interaction_rule.user_id = nil
+    else
+      @interaction_rule.user_id ||= current_user.id
+    end
 
     if @interaction_rule.save
       redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.created')
@@ -80,32 +83,16 @@ class InteractionRulesController < ApplicationController
   private
 
   def set_interaction_rule
-    if admin_user?
-      # 管理者: すべてのルールにアクセス可能
-      @interaction_rule = InteractionRule.find(params[:id])
-    else
-      # 一般ユーザー: 自分のルールのみ
-      @interaction_rule = InteractionRule.where(user_id: current_user.id).find(params[:id])
-    end
-
-    # アクションに応じた権限チェック
     action = params[:action].to_sym
-    
-    if action.in?([:edit, :update, :destroy])
-      # 編集・更新・削除は以下の場合のみ許可
-      # - 管理者（すべてのルールを編集可能）
-      # - ユーザールールの所有者
-      unless admin_user? || (!@interaction_rule.is_reference && @interaction_rule.user_id == current_user.id)
-        redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
+
+    @interaction_rule =
+      if action.in?([:edit, :update, :destroy])
+        InteractionRulePolicy.find_editable!(current_user, params[:id])
+      else
+        InteractionRulePolicy.find_visible!(current_user, params[:id])
       end
-    elsif action == :show
-      # 詳細表示は以下の場合に許可
-      # - 管理者（参照ルールも含めすべて閲覧可能）
-      # - 自分のルール
-      unless @interaction_rule.user_id == current_user.id || admin_user?
-        redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
-      end
-    end
+  rescue PolicyPermissionDenied
+    redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.not_found')
   end

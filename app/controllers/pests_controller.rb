@@ -103,21 +103,16 @@ class PestsController < ApplicationController
   private
 
   def set_pest
-    @pest = Pest.find(params[:id])
-    
-    # アクションに応じた権限チェック
     action = params[:action].to_sym
-    
-    # アクセス権限チェック: 参照害虫または自分の害虫のみアクセス可能
-    # 管理者も他人のユーザー害虫にはアクセスできない
-    unless @pest.is_reference || @pest.user_id == current_user.id
-      redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
-    end
-    
-    # 編集・更新・削除は参照害虫の場合、管理者のみ許可
-    if action.in?([:edit, :update, :destroy]) && @pest.is_reference && !admin_user?
-      redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
-    end
+
+    @pest =
+      if action.in?([:edit, :update, :destroy])
+        PestPolicy.find_editable!(current_user, params[:id])
+      else
+        PestPolicy.find_visible!(current_user, params[:id])
+      end
+  rescue PolicyPermissionDenied
+    redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to pests_path, alert: I18n.t('pests.flash.not_found')
   end
