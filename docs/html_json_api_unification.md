@@ -259,8 +259,12 @@
 
 4. **Pest–Crop / Pesticide–Crop/Pest 関連ポリシー**
    - ドメインルールが複雑なため、controller外に出す価値が大きい。
-5. **Farm / Field / Plan のAccessPolicy**
-   - 将来的に新規API/画面追加があっても、Policyの利用で安全にスケールできる。
+5. **Farm / Field / Plan のAccessPolicy（一部完了）**
+   - 2025-11 時点の実装状況:
+     - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を実装済み。
+     - HTMLコントローラ（`FarmsController`, `FieldsController`, `PlansController`）と Masters API（`Api::V1::Masters::FarmsController`, `FieldsController`）、Plans API（`Api::V1::Plans::CultivationPlansController`）への適用が完了。
+   - 残り:
+     - `Api::V1::Plans::FieldCultivationsController` / `Api::V1::PublicPlans::FieldCultivationsController` / `Api::V1::PublicPlans::CultivationPlansController` / `PublicPlansController`（HTML側）への適用が未完了。
 
 ### 4.3 既に良い設計が進んでいる部分
 
@@ -418,21 +422,30 @@
     - ユーザー所有オブジェクトのみ操作可能にする。
     - private plan / public plan でアクセス制御を切り替える。
   - 対象Policy と主な対象ファイル（grep: `current_user.(farms|fields)` / plan系controller）:
-    - `FarmPolicy`
-      - `app/controllers/farms_controller.rb`
-      - `app/controllers/api/v1/masters/farms_controller.rb`
-    - `FieldPolicy`
-      - `app/controllers/fields_controller.rb`
-      - `app/controllers/farms/weather_data_controller.rb`
-      - `app/controllers/api/v1/masters/fields_controller.rb`
-      - `app/controllers/api/v1/plans/field_cultivations_controller.rb`
-      - `app/controllers/api/v1/public_plans/field_cultivations_controller.rb`
-    - `PlanPolicy`
-      - `app/controllers/plans_controller.rb`
-      - `app/controllers/public_plans_controller.rb`
-      - `app/controllers/planning_schedules_controller.rb`
-      - `app/controllers/api/v1/plans/cultivation_plans_controller.rb`
-      - `app/controllers/api/v1/public_plans/cultivation_plans_controller.rb`
+    - `FarmPolicy`（実装済み）
+      - 提供メソッド: `user_owned_scope(user)`, `find_owned!(user, id)`, `build_for_create(user, attrs)`
+      - 適用済み:
+        - `app/controllers/farms_controller.rb`（`create`, `set_farm`）
+        - `app/controllers/fields_controller.rb`（`set_farm`）
+        - `app/controllers/api/v1/masters/farms_controller.rb`（`index`, `create`, `set_farm`）
+      - 未適用:
+        - `app/controllers/farms/weather_data_controller.rb`（必要に応じて）
+    - `FieldPolicy`（実装済み）
+      - 提供メソッド: `scope_for_farm(user, farm)`, `find_owned!(user, id)`, `build_for_create(user, farm, attrs)`
+      - 適用済み:
+        - `app/controllers/api/v1/masters/fields_controller.rb`（`index`, `create`, `set_field`）
+      - 未適用:
+        - `app/controllers/api/v1/plans/field_cultivations_controller.rb`
+        - `app/controllers/api/v1/public_plans/field_cultivations_controller.rb`
+    - `PlanPolicy`（実装済み）
+      - 提供メソッド: `private_scope(user)`, `find_private_owned!(user, id)`
+      - 適用済み:
+        - `app/controllers/plans_controller.rb`（`set_plan`, `find_cultivation_plan_scope`）
+        - `app/controllers/api/v1/plans/cultivation_plans_controller.rb`（`find_api_cultivation_plan`）
+      - 未適用:
+        - `app/controllers/public_plans_controller.rb`（public plan のアクセス制御）
+        - `app/controllers/planning_schedules_controller.rb`（必要に応じて）
+        - `app/controllers/api/v1/public_plans/cultivation_plans_controller.rb`
     - （必要に応じて）`FieldCultivationPolicy`
       - `app/controllers/api/v1/plans/field_cultivations_controller.rb`
       - `app/controllers/api/v1/public_plans/field_cultivations_controller.rb`
@@ -646,6 +659,38 @@
       - 新規作成時の `assert_difference "Fertilize.count", +1` / `assert_difference "Pest.count", +1`
       - 作成/更新後の `user_id` / `is_reference` の検証
       を追加し、AI upsert の所有者・参照フラグのふるまいを明示的に固定。
+- **Farm / Field / Plan 系の Policy 導入（HTML / Masters API / Plans API）**
+  - 対象Policy:
+    - `FarmPolicy`: `user_owned_scope(user)`, `find_owned!(user, id)`, `build_for_create(user, attrs)`
+    - `FieldPolicy`: `scope_for_farm(user, farm)`, `find_owned!(user, id)`, `build_for_create(user, farm, attrs)`
+    - `PlanPolicy`: `private_scope(user)`, `find_private_owned!(user, id)`
+  - HTMLコントローラへの適用:
+    - `FarmsController`:
+      - `create`: `FarmPolicy.build_for_create(current_user, farm_params)` 経由で「ユーザー所有・非参照」Farmを作成。
+      - `set_farm`: 一般ユーザー側を `FarmPolicy.find_owned!(current_user, params[:id])` 経由に変更（管理者は従来どおり全農場アクセス可）。
+    - `FieldsController`:
+      - `set_farm`: 一般ユーザー側を `FarmPolicy.find_owned!(current_user, params[:farm_id])` 経由に変更（管理者は従来どおり全農場アクセス可）。
+    - `PlansController`:
+      - `set_plan`: `PlanPolicy.find_private_owned!(current_user, params[:id])` 経由で「private plan かつ本人所有」のみ取得。
+      - `find_cultivation_plan_scope`: `PlanPolicy.private_scope(current_user)` 経由に変更。
+  - APIコントローラへの適用:
+    - `Api::V1::Masters::FarmsController`:
+      - `index`: `FarmPolicy.user_owned_scope(current_user)` 経由で「ユーザー所有・非参照農場」のみ返却。
+      - `create`: `FarmPolicy.build_for_create(current_user, farm_params)` 経由で作成。
+      - `set_farm`: `FarmPolicy.find_owned!(current_user, params[:id])` 経由に変更。権限なし/存在しない場合は `"Farm not found"` の 404 JSON を返す。
+    - `Api::V1::Masters::FieldsController`:
+      - `index`: `FarmPolicy.find_owned!` で所有農場を確認後、`FieldPolicy.scope_for_farm(current_user, farm)` 経由で圃場一覧を返却。
+      - `create`: `FarmPolicy.find_owned!` で所有農場を確認後、`FieldPolicy.build_for_create(current_user, farm, field_params)` 経由で作成。
+      - `set_field`: `params[:farm_id]` あり時は `FarmPolicy.find_owned!` → `FieldPolicy.scope_for_farm(...).find(params[:id])`、なし時は `FieldPolicy.find_owned!(current_user, params[:id])` を利用。いずれも権限なし/存在しない場合は `"Field not found"` の 404 JSON を返す。
+    - `Api::V1::Plans::CultivationPlansController`:
+      - `find_api_cultivation_plan`: `PlanPolicy.private_scope(current_user).includes(...).find(params[:id])` 経由に変更し、「private plan かつ本人所有」のみ取得するルールをPolicy側に集約。
+  - テスト:
+    - `Api::V1::Masters::FarmsControllerTest` に `cannot access other user's farm` を追加し、他ユーザー農場への `show/update/destroy` がすべて 404 になることを検証。
+    - `Api::V1::Masters::FieldsControllerTest` に `cannot access field that belongs to other user's farm` を追加し、他ユーザー農場の圃場への `show/update/destroy` が 404 になることを検証。
+  - 実装詳細:
+    - `PolicyPermissionDenied` を `app/policies/policy_permission_denied.rb` に切り出し、Rails のオートロードで確実に読まれるようにした。
+    - Farm/Field/Plan 系は「参照データ（`is_reference: true`）」を扱わないため、参照マスタ系Policyとは異なり、`user_owned_scope` / `find_owned!` という命名で「ユーザー所有のみ」を明確化。
+    - `FieldPolicy.scope_for_farm` は「指定ユーザーが所有する farm に属する Field のみ」を返すスコープを提供し、`FieldPolicy.find_owned!` は「farm.user_id == user.id（または admin）」な Field のみ取得。
 
 ### 7.2 まだコントローラに残っている「参照まわり」ロジック
 
@@ -657,21 +702,36 @@
 - **参照まわり以外のJSON APIロジック**
   - 参照マスタ系 JSON API については、index/show/create/update のOwnership・PermissionまわりはPolicy化済み。
   - それ以外のJSON API（AI upsert系、Farms/Fields/Plans系など）では、まだ `current_user` 起点の所有権チェックや upsert ロジックがコントローラ側に残っているため、今後Policy/Serviceに寄せていく。
-- **Farm / Field / Plan 系の所有権チェック**
-  - `FarmsController` / `FieldsController` / `PlansController` および対応する API コントローラでは、
-    - 「current_user に紐づくものだけ操作可能」といった所有権チェックがまだコントローラに直接記述されている。
-  - 今後 `FarmPolicy` / `FieldPolicy` / `PlanPolicy` に寄せ、HTML/JSON 双方で同じルールを再利用できる形に整理する。
+- **Farm / Field / Plan 系の所有権チェック（一部残存）**
+  - 2025-11 時点の実装状況:
+    - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を実装済み。
+    - HTMLコントローラ:
+      - `FarmsController`: `create` と `set_farm` を `FarmPolicy.build_for_create` / `find_owned!` 経由に変更済み。
+      - `FieldsController`: `set_farm` を `FarmPolicy.find_owned!` 経由に変更済み。
+      - `PlansController`: `set_plan` と `find_cultivation_plan_scope` を `PlanPolicy.find_private_owned!` / `private_scope` 経由に変更済み。
+    - APIコントローラ:
+      - `Api::V1::Masters::FarmsController`: `index` / `create` / `set_farm` を `FarmPolicy.user_owned_scope` / `build_for_create` / `find_owned!` 経由に変更済み。
+      - `Api::V1::Masters::FieldsController`: `index` / `create` / `set_field` を `FarmPolicy.find_owned!` / `FieldPolicy.scope_for_farm` / `build_for_create` / `find_owned!` 経由に変更済み。
+      - `Api::V1::Plans::CultivationPlansController`: `find_api_cultivation_plan` を `PlanPolicy.private_scope` 経由に変更済み。
+    - テスト:
+      - `Api::V1::Masters::FarmsControllerTest` に「他ユーザーの農場へのアクセスが 404 になる」テストを追加済み。
+      - `Api::V1::Masters::FieldsControllerTest` に「他ユーザー農場の圃場へのアクセスが 404 になる」テストを追加済み。
+  - まだPolicy化されていない箇所:
+    - `Api::V1::Plans::FieldCultivationsController`: `find_field_cultivation` で `plan_type_private? && user_id == current_user.id` チェックが直接記述されている。
+    - `Api::V1::PublicPlans::FieldCultivationsController`: public plan のアクセス制御（現状は認証不要で全公開）。
+    - `Api::V1::PublicPlans::CultivationPlansController`: public plan のアクセス制御。
+    - `PublicPlansController`（HTML側）: public plan の作成・表示ロジック（参照農場・参照作物の利用）。
 
 ### 7.3 今後の具体的なステップ（優先度順）
 
-1. **Farm / Field / Plan 系の Policy 導入**
+1. **Farm / Field / Plan 系の Policy 導入（残り）**
    - 目標:
-     - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を導入し、所有権・公開/非公開ルールをPolicyに集約する。
+     - 残りの FieldCultivations / PublicPlans 系コントローラにも Policy を適用し、所有権・公開/非公開ルールを完全にPolicy層に集約する。
    - 対象:
-     - HTML: `FarmsController`, `FieldsController`, `PlansController`, `PublicPlansController`
-     - API: `Api::V1::Masters::FarmsController`, `Api::V1::Masters::FieldsController`,
-       `Api::V1::Plans::FieldCultivationsController`, `Api::V1::PublicPlans::FieldCultivationsController`,
-       `Api::V1::Plans::CultivationPlansController`, `Api::V1::PublicPlans::CultivationPlansController`
+     - `Api::V1::Plans::FieldCultivationsController`: `find_field_cultivation` を `PlanPolicy.find_private_owned!` 経由に変更。
+     - `Api::V1::PublicPlans::FieldCultivationsController`: public plan のアクセス制御を Policy で明文化（現状は認証不要で全公開のため、Policy は「常に許可」相当）。
+     - `Api::V1::PublicPlans::CultivationPlansController`: public plan のアクセス制御を Policy で明文化。
+     - `PublicPlansController`（HTML側）: 参照農場・参照作物の取得ロジックを Policy 経由に統一（現状は `Farm.reference` / `Crop.reference` を直接利用）。
 2. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
    - 目標:
      - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。

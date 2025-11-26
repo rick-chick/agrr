@@ -5,10 +5,14 @@ module Api
     module PublicPlans
       class FieldCultivationsController < ApplicationController
         skip_before_action :verify_authenticity_token, only: [:update]
-        skip_before_action :authenticate_user!, only: [:show, :climate_data]
+        skip_before_action :authenticate_user!, only: [:show, :climate_data, :update]
         
         def show
           @field_cultivation = FieldCultivation.find(params[:id])
+          cultivation_plan = @field_cultivation.cultivation_plan
+          
+          # public plan であることを確認（Policy 経由）
+          PlanPolicy.find_public!(cultivation_plan.id)
           
           render json: {
             id: @field_cultivation.id,
@@ -22,6 +26,8 @@ module Api
             gdd: @field_cultivation.optimization_result&.dig('raw', 'total_gdd'),
             status: @field_cultivation.status
           }
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
         end
         
         # GET /api/v1/public_plans/field_cultivations/:id/climate_data
@@ -29,6 +35,10 @@ module Api
         def climate_data
           @field_cultivation = FieldCultivation.find(params[:id])
           cultivation_plan = @field_cultivation.cultivation_plan
+          
+          # public plan であることを確認（Policy 経由）
+          PlanPolicy.find_public!(cultivation_plan.id)
+          
           farm = cultivation_plan.farm
           
           # crop_idから参照作物を取得
@@ -215,10 +225,16 @@ module Api
             success: false,
             message: "成長進捗の計算に失敗しました: #{e.message}"
           }, status: :internal_server_error
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
         end
         
         def update
           @field_cultivation = FieldCultivation.find(params[:id])
+          cultivation_plan = @field_cultivation.cultivation_plan
+          
+          # public plan であることを確認（Policy 経由）
+          PlanPolicy.find_public!(cultivation_plan.id)
           
           if @field_cultivation.update(field_cultivation_params)
             # 栽培日数を再計算
@@ -244,6 +260,8 @@ module Api
               errors: @field_cultivation.errors.full_messages
             }, status: :unprocessable_entity
           end
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
         end
         
         private
