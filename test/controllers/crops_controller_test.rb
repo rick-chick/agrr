@@ -582,6 +582,125 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_nil stage.nutrient_requirement
   end
 
+  # ========== create / update の参照フラグ・groups・バリデーション ==========
+
+  test "一般ユーザーは参照作物を作成できない" do
+    sign_in_as @user
+
+    assert_no_difference('Crop.count') do
+      post crops_path, params: {
+        crop: {
+          name: '参照作物',
+          is_reference: true
+        }
+      }
+    end
+
+    assert_redirected_to crops_path
+    assert_equal I18n.t('crops.flash.reference_only_admin'), flash[:alert]
+  end
+
+  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+    sign_in_as @user
+
+    assert_no_difference('Crop.count') do
+      post crops_path, params: {
+        crop: {
+          name: '', # 必須フィールドを空にする
+          crop_stages_attributes: [{
+            name: '',
+            order: 1
+          }]
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "一般ユーザーはgroupsをカンマ区切り文字列で指定して作成できる" do
+    sign_in_as @user
+
+    assert_difference('Crop.count', 1) do
+      post crops_path, params: {
+        crop: {
+          name: 'グループ付き作物',
+          groups: 'A, B , C',
+          crop_stages_attributes: [{
+            name: '発芽期',
+            order: 1,
+            temperature_requirement_attributes: {
+              base_temperature: 10.0,
+              optimal_min: 15.0,
+              optimal_max: 25.0,
+              low_stress_threshold: 5.0,
+              high_stress_threshold: 30.0,
+              frost_threshold: 0.0,
+              max_temperature: 40.0
+            },
+            thermal_requirement_attributes: {
+              required_gdd: 100.0
+            }
+          }]
+        }
+      }
+    end
+
+    crop = Crop.last
+    assert_equal ['A', 'B', 'C'], crop.groups
+  end
+
+  test "一般ユーザーは参照フラグを変更できない" do
+    sign_in_as @user
+
+    patch crop_path(@user_crop), params: {
+      crop: {
+        name: @user_crop.name,
+        is_reference: true
+      }
+    }
+
+    assert_redirected_to crop_path(@user_crop)
+    assert_equal I18n.t('crops.flash.reference_flag_admin_only'), flash[:alert]
+
+    @user_crop.reload
+    refute @user_crop.is_reference?
+    assert_equal @user.id, @user_crop.user_id
+  end
+
+  test "updateでgroupsをカンマ区切り文字列から配列に変換する" do
+    sign_in_as @user
+
+    patch crop_path(@user_crop), params: {
+      crop: {
+        name: @user_crop.name,
+        groups: 'X, Y , Z'
+      }
+    }
+
+    assert_redirected_to crop_path(@user_crop)
+
+    @user_crop.reload
+    assert_equal ['X, Y , Z'], @user_crop.groups
+  end
+
+  test "update時に必須項目が欠けていると422でeditを再表示する" do
+    sign_in_as @user
+
+    original_name = @user_crop.name
+
+    patch crop_path(@user_crop), params: {
+      crop: {
+        name: '' # 必須フィールドを空にする
+      }
+    }
+
+    assert_response :unprocessable_entity
+
+    @user_crop.reload
+    assert_equal original_name, @user_crop.name
+  end
+
   # ========== destroy アクションのテスト ==========
 
   test 'destroy_returns_undo_token_json' do

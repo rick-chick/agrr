@@ -8,6 +8,31 @@ class PestPolicy
     Pest.visible_scope_for(user)
   end
 
+  # create 用ビルダー
+  # - 管理者: is_reference=true なら user_id=nil / false なら user_id=admin.id
+  # - 一般ユーザー: is_reference は controller 側で false に強制・user_id=current_user.id に強制
+  def self.build_for_create(user, params, admin_forced: false)
+    attrs = params.to_h
+    is_reference = ActiveModel::Type::Boolean.new.cast(attrs[:is_reference]) || false
+
+    if user.admin? || admin_forced
+      # 管理者作成時のルール
+      if is_reference
+        attrs[:user_id] = nil
+        attrs[:is_reference] = true
+      else
+        attrs[:user_id] ||= user.id
+        attrs[:is_reference] = false
+      end
+    else
+      # 一般ユーザーは常にユーザー害虫
+      attrs[:user_id] = user.id
+      attrs[:is_reference] = false
+    end
+
+    Pest.new(attrs)
+  end
+
   # show 用の1件取得
   # - 参照害虫 または 自分の害虫（管理者も他人のユーザー害虫にはアクセス不可）
   def self.find_visible!(user, id)
@@ -36,5 +61,29 @@ class PestPolicy
     raise PolicyPermissionDenied unless allowed
 
     pest
+  end
+
+  # update 用適用メソッド
+  # - is_reference の変更可否そのものは controller 側でガード
+  # - ここでは is_reference が変わる場合のみ user_id を整合させる
+  def self.apply_update!(user, pest, params)
+    attrs = params.to_h
+
+    if attrs.key?(:is_reference)
+      requested_reference = ActiveModel::Type::Boolean.new.cast(attrs[:is_reference]) || false
+      reference_changed = requested_reference != pest.is_reference
+
+      if reference_changed
+        if requested_reference
+          # 参照化: システム所有
+          attrs[:user_id] = nil
+        else
+          # 非参照化: 編集ユーザー所有（到達するのは管理者のみ）
+          attrs[:user_id] = user.id
+        end
+      end
+    end
+
+    pest.update(attrs)
   end
 end

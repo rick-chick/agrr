@@ -170,6 +170,52 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 5.0, constraint.min_temperature
   end
 
+  test "一般ユーザーはis_referenceフラグを変更できない" do
+    # ユーザー所有の非参照農薬
+    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, is_reference: false)
+    original_is_reference = pesticide.is_reference
+
+    patch pesticide_path(pesticide), params: { pesticide: {
+      name: pesticide.name,
+      active_ingredient: pesticide.active_ingredient,
+      is_reference: true
+    } }
+
+    assert_redirected_to pesticide_path(pesticide)
+    assert_equal I18n.t('pesticides.flash.reference_flag_admin_only'), flash[:alert]
+
+    pesticide.reload
+    assert_equal original_is_reference, pesticide.is_reference
+    assert_equal @user.id, pesticide.user_id
+  end
+
+  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+    # name を空にしてバリデーションエラーを発生させる
+    assert_no_difference('Pesticide.count') do
+      post pesticides_path, params: { pesticide: {
+        name: '',
+        crop_id: @crop.id,
+        pest_id: @pest.id
+      } }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update時に必須項目が欠けていると422でeditを再表示する" do
+    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: '元の名前')
+    original_name = pesticide.name
+
+    patch pesticide_path(pesticide), params: { pesticide: {
+      name: ''
+    } }
+
+    assert_response :unprocessable_entity
+
+    pesticide.reload
+    assert_equal original_name, pesticide.name
+  end
+
   test "should not update reference pesticide as non-admin" do
     # 参照農薬は管理者のみ更新可能（一般ユーザーは参照農薬が見つからない）
     patch pesticide_path(@pesticide), params: { pesticide: {

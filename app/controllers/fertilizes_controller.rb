@@ -31,14 +31,7 @@ class FertilizesController < ApplicationController
       return redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.reference_only_admin')
     end
 
-    @fertilize = Fertilize.new(fertilize_params)
-    if is_reference
-      @fertilize.user_id = nil
-      @fertilize.is_reference = true
-    else
-      @fertilize.user_id = current_user.id
-      @fertilize.is_reference = false
-    end
+    @fertilize = FertilizePolicy.build_for_create(current_user, fertilize_params)
 
     if @fertilize.save
       redirect_to fertilize_path(@fertilize), notice: I18n.t('fertilizes.flash.created')
@@ -57,7 +50,7 @@ class FertilizesController < ApplicationController
       end
     end
 
-    if @fertilize.update(fertilize_params)
+    if FertilizePolicy.apply_update!(current_user, @fertilize, fertilize_params)
       redirect_to fertilize_path(@fertilize), notice: I18n.t('fertilizes.flash.updated')
     else
       render :edit, status: :unprocessable_entity

@@ -45,15 +45,7 @@ class AgriculturalTasksController < ApplicationController
       return redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.reference_only_admin')
     end
 
-    @agricultural_task = AgriculturalTask.new(task_attributes.except(:is_reference))
-
-    if is_reference
-      @agricultural_task.is_reference = true
-      @agricultural_task.user_id = nil
-    else
-      @agricultural_task.is_reference = false
-      @agricultural_task.user_id = current_user.id
-    end
+    @agricultural_task = AgriculturalTaskPolicy.build_for_create(current_user, task_attributes)
 
     if @agricultural_task.save
       redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.created')
@@ -73,11 +65,7 @@ class AgriculturalTasksController < ApplicationController
       return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
     end
 
-    update_attributes = task_attributes.except(:is_reference)
-    update_attributes[:is_reference] = requested_reference
-    update_attributes[:user_id] = user_id_for(requested_reference) if reference_changed
-
-    if @agricultural_task.update(update_attributes)
+    if AgriculturalTaskPolicy.apply_update!(current_user, @agricultural_task, task_attributes)
       # 作業と作物の紐付けをCropTaskTemplateで更新
       # 現在のテンプレートを取得
       current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)

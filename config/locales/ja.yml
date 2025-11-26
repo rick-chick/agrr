@@ -297,6 +297,8 @@ ja:
   
   # エラーメッセージ（ActiveRecordとその他で共通）
   errors:
+    template:
+      header: "%{model}に%{count}件のエラーがあります"
     format: "%{attribute}%{message}"
     messages:
       required: "を入力してください"

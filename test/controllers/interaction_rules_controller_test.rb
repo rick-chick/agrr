@@ -297,9 +297,11 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
       }
     }
     
-    assert_redirected_to interaction_rule_path(InteractionRule.last)
     rule = InteractionRule.last
+    assert_redirected_to interaction_rule_path(rule)
     assert_equal 'us', rule.region
+    assert rule.is_reference?
+    assert_nil rule.user_id
   end
 
   test "一般ユーザーは新規ルール作成時にregionを設定できない" do
@@ -319,6 +321,99 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     rule = InteractionRule.last
     # regionは設定されない（パラメータに含まれても無視される）
     assert_nil rule.region
+  end
+
+  # ========== create / update の参照・権限制御 ==========
+
+  test "一般ユーザーは参照ルールを作成できない" do
+    sign_in_as @user
+
+    assert_no_difference("InteractionRule.count") do
+      post interaction_rules_path, params: {
+        interaction_rule: {
+          rule_type: "continuous_cultivation",
+          source_group: "UserSource",
+          target_group: "UserTarget",
+          impact_ratio: 1.0,
+          is_directional: true,
+          description: "一般ユーザー参照ルール",
+          is_reference: true
+        }
+      }
+    end
+
+    assert_redirected_to interaction_rules_path
+    assert_equal I18n.t("interaction_rules.flash.reference_only_admin"), flash[:alert]
+  end
+
+  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+    sign_in_as @user
+
+    assert_no_difference("InteractionRule.count") do
+      post interaction_rules_path, params: {
+        interaction_rule: {
+          rule_type: "",
+          source_group: "",
+          target_group: "",
+          impact_ratio: nil
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "一般ユーザーはis_referenceフラグを変更できない" do
+    sign_in_as @user
+    rule = InteractionRule.create!(
+      rule_type: "continuous_cultivation",
+      source_group: "UserSource",
+      target_group: "UserTarget",
+      impact_ratio: 1.0,
+      is_directional: true,
+      description: "一般ユーザー用ルール",
+      is_reference: false,
+      user: @user
+    )
+
+    original_is_reference = rule.is_reference
+
+    patch interaction_rule_path(rule), params: {
+      interaction_rule: {
+        rule_type: rule.rule_type,
+        source_group: rule.source_group,
+        target_group: rule.target_group,
+        impact_ratio: rule.impact_ratio,
+        is_reference: true
+      }
+    }
+
+    assert_redirected_to interaction_rule_path(rule)
+    assert_equal I18n.t("interaction_rules.flash.reference_flag_admin_only"), flash[:alert]
+
+    rule.reload
+    assert_equal original_is_reference, rule.is_reference
+    assert_equal @user.id, rule.user_id
+  end
+
+  test "update時に必須項目が欠けていると422でeditを再表示する" do
+    sign_in_as @user
+    rule = create_interaction_rule(user: @user)
+    original_rule_type = rule.rule_type
+
+    patch interaction_rule_path(rule), params: {
+      interaction_rule: {
+        rule_type: "",
+        source_group: rule.source_group,
+        target_group: rule.target_group,
+        impact_ratio: rule.impact_ratio
+      }
+    }
+
+    assert_response :unprocessable_entity
+
+    rule.reload
+    assert_equal original_rule_type, rule.rule_type
   end
 end
 
