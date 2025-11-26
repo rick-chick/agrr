@@ -65,9 +65,9 @@ class FieldsController < ApplicationController
       @farm = Farm.find(params[:farm_id])
     else
       # Regular users can only access their own farms
-      @farm = current_user.farms.find(params[:farm_id])
+      @farm = FarmPolicy.find_owned!(current_user, params[:farm_id])
     end
-  rescue ActiveRecord::RecordNotFound
+  rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
     redirect_to farms_path, alert: I18n.t('fields.flash.farm_not_found')
   end
 

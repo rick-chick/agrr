@@ -104,6 +104,39 @@ module Api
 
           assert_response :no_content
         end
+
+        test "cannot access field that belongs to other user's farm" do
+          other_user = create(:user)
+          other_farm = create(:farm, :user_owned, user: other_user)
+          other_field = create(:field, farm: other_farm, user: other_user)
+
+          # show
+          get api_v1_masters_field_path(other_field),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+          assert_response :not_found
+
+          # update
+          patch api_v1_masters_field_path(other_field),
+                params: {
+                  field: { name: "更新されない" }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+          assert_response :not_found
+
+          # destroy
+          delete api_v1_masters_field_path(other_field),
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          assert_response :not_found
+        end
       end
     end
   end

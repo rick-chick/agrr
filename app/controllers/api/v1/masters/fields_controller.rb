@@ -8,11 +8,20 @@ module Api
 
         # GET /api/v1/masters/farms/:farm_id/fields
         def index
-          farm = current_user.farms.where(is_reference: false).find(params[:farm_id])
-          @fields = farm.fields
+          farm =
+            begin
+              FarmPolicy.find_owned!(current_user, params[:farm_id])
+            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+              nil
+            end
+
+          unless farm
+            render json: { error: 'Farm not found' }, status: :not_found
+            return
+          end
+
+          @fields = FieldPolicy.scope_for_farm(current_user, farm)
           render json: @fields
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Farm not found' }, status: :not_found
         end
 
         # GET /api/v1/masters/fields/:id
@@ -22,9 +31,19 @@ module Api
 
         # POST /api/v1/masters/farms/:farm_id/fields
         def create
-          farm = current_user.farms.where(is_reference: false).find(params[:farm_id])
-          @field = farm.fields.build(field_params)
-          @field.user = current_user
+          farm =
+            begin
+              FarmPolicy.find_owned!(current_user, params[:farm_id])
+            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+              nil
+            end
+
+          unless farm
+            render json: { error: 'Farm not found' }, status: :not_found
+            return
+          end
+
+          @field = FieldPolicy.build_for_create(current_user, farm, field_params)
 
           if @field.save
             render json: @field, status: :created
@@ -58,20 +77,36 @@ module Api
         def set_field
           # ユーザーが所有する農場の圃場のみアクセス可能
           if params[:farm_id].present?
-            # ネストされたルートの場合
-            farm = current_user.farms.where(is_reference: false).find(params[:farm_id])
-            @field = farm.fields.find(params[:id])
-          else
-            # 直接アクセスの場合
-            farm = current_user.farms.where(is_reference: false).joins(:fields).where(fields: { id: params[:id] }).first
+            farm =
+              begin
+                FarmPolicy.find_owned!(current_user, params[:farm_id])
+              rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+                nil
+              end
+
             unless farm
               render json: { error: 'Field not found' }, status: :not_found
               return
             end
-            @field = farm.fields.find(params[:id])
+
+            @field =
+              begin
+                FieldPolicy.scope_for_farm(current_user, farm).find(params[:id])
+              rescue ActiveRecord::RecordNotFound, PolicyPermissionDenied
+                nil
+              end
+          else
+            @field =
+              begin
+                FieldPolicy.find_owned!(current_user, params[:id])
+              rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+                nil
+              end
           end
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Field not found' }, status: :not_found
+
+          unless @field
+            render json: { error: 'Field not found' }, status: :not_found
+          end
         end
 
         def field_params

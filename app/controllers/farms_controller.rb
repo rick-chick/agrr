@@ -34,7 +34,7 @@ class FarmsController < ApplicationController
 
   # POST /farms
   def create
-    @farm = current_user.farms.build(farm_params)
+    @farm = FarmPolicy.build_for_create(current_user, farm_params)
 
     if @farm.save
       Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
@@ -99,9 +99,9 @@ class FarmsController < ApplicationController
       @farm = Farm.find(params[:id])
     else
       # Regular users can only access their own farms
-      @farm = current_user.farms.find(params[:id])
+      @farm = FarmPolicy.find_owned!(current_user, params[:id])
     end
-  rescue ActiveRecord::RecordNotFound
+  rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
     redirect_to farms_path, alert: I18n.t('farms.flash.not_found')
   end
 

@@ -615,6 +615,37 @@
       - 一覧に含まれる/含まれないレコード（自分のレコード・参照レコード・他人のレコード）。
       - 他ユーザーのレコードに対する `show` / `update` / `destroy` が `403 Forbidden` + `no_permission` メッセージになること。
       - 自分のレコードの `create` / `update` / `destroy` が成功することと、`user_id` / `is_reference` の値。
+- **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合（Crops/Fertilizes/Pests）**
+  - 対象エンドポイント:
+    - `Api::V1::CropsController#ai_create`
+    - `Api::V1::FertilizesController#ai_create` / `#ai_update`
+    - `Api::V1::PestsController#ai_create` / `#ai_update`
+  - 所有権・参照フラグ:
+    - いずれも「ユーザー所有・非参照」を前提としており、作成・更新時の `user_id` / `is_reference` の決定は既存の `*Policy.build_for_create` / `find_editable!` のルールに揃えた。
+    - Crops/Fertilizes/Pests の AI upsert で作成・更新されたレコードは、HTML/JSON の通常 CRUD と同じ不変条件（`is_reference: false` → `user_id` 必須）を満たす。
+  - 実装ポイント:
+    - `CropsController#ai_create`:
+      - 件数制限チェック用のダミー `Crop` を直接 new する代わりに、`CropPolicy.build_for_create(current_user, name: 'dummy')` を利用することで通常作成パスと同じ制約を通す。
+      - AGRR 応答で `crop_id` が返ってきた場合は `CropPolicy.find_editable!(current_user, crop_id)` を利用して「編集可能な既存作物」のみを更新対象とし、権限がなければ新規作成にフォールバック。
+      - 新規作成時の `user_id` / `is_reference` は `CropPolicy.build_for_create(current_user, base_attrs)` の結果から反映し、Interactor/Gateway には Policy 済みの属性だけを渡す。
+    - `FertilizesController#ai_create`:
+      - AGRR からの値を `base_attrs` にまとめた上で、`name + user_id + is_reference: false` で既存肥料を検索し、見つかれば `base_attrs` のみで更新（`user_id` / `is_reference` は維持）。
+      - 見つからない場合は `FertilizePolicy.build_for_create(current_user, base_attrs)` で所有権フラグを決め、`attrs_for_create` として Interactor に渡す。
+      - `ai_update` では、更新対象の取得を `FertilizePolicy.find_editable!` に委譲しつつ、レスポンス仕様（見つからないときに 404 を返す）自体は従来どおり維持。
+    - `PestsController#ai_create`:
+      - 既存害虫の探索を「`name` + `is_reference: false` + `user_id: current_user.id`」に限定し、他ユーザーのユーザー害虫を誤って更新しないようにする。
+      - 新規作成時は Pest 本体の属性を `base_attrs` にまとめ、`PestPolicy.build_for_create(current_user, {})` で決めた `user_id` / `is_reference` だけを合成して Gateway に渡す（温度プロファイルや防除方法の構造は Gateway 側に委譲）。
+    - `PestsController#ai_update`:
+      - 更新対象の取得を `PestPolicy.find_editable!(current_user, params[:id])` に変更し、権限のない ID を指定した場合は従来どおり 404 を返すようにしつつ、内部的には「編集可能性」を Policy で判定。
+  - コントローラテスト:
+    - `test/controllers/api/v1/crops_controller_test.rb` を新設し、AI 経由の作成・更新で
+      - 新規作成時に `Crop.count` が 1 増加すること
+      - 既存作物の `area_per_unit` / `revenue_per_area` / `groups` は更新される一方、`user_id` / `is_reference` は Policy どおりに維持されること
+      を検証。
+    - `FertilizesControllerTest` / `PestsControllerTest` では、既存テストに
+      - 新規作成時の `assert_difference "Fertilize.count", +1` / `assert_difference "Pest.count", +1`
+      - 作成/更新後の `user_id` / `is_reference` の検証
+      を追加し、AI upsert の所有者・参照フラグのふるまいを明示的に固定。
 
 ### 7.2 まだコントローラに残っている「参照まわり」ロジック
 
@@ -633,12 +664,7 @@
 
 ### 7.3 今後の具体的なステップ（優先度順）
 
-1. **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合**
-   - 目標:
-     - `Api::V1::CropsController#ai_create` や `Api::V1::FertilizesController#ai_create/#ai_update` 等で、
-       通常の `*Policy` を経由して作成/更新を行うようにし、`is_reference: false` / `user_id` の扱いを通常CRUDと完全に一致させる。
-   - 必要に応じて、共通の `*AiUpsertService` を導入し、名前検索〜Policy経由での更新/作成を一箇所に集約する。
-2. **Farm / Field / Plan 系の Policy 導入**
+1. **Farm / Field / Plan 系の Policy 導入**
    - 目標:
      - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を導入し、所有権・公開/非公開ルールをPolicyに集約する。
    - 対象:
@@ -646,10 +672,10 @@
      - API: `Api::V1::Masters::FarmsController`, `Api::V1::Masters::FieldsController`,
        `Api::V1::Plans::FieldCultivationsController`, `Api::V1::PublicPlans::FieldCultivationsController`,
        `Api::V1::Plans::CultivationPlansController`, `Api::V1::PublicPlans::CultivationPlansController`
-3. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
+2. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
    - 目標:
      - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。
    - そのうえで、HTML/JSON 両方から同じルールを利用する。
-4. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+3. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
    - 削除 + Undo と参照ポリシーまわりの整理が一段落したあとに着手し、
    - HTML/JSONのエラーレスポンス仕様の統一を図る。
