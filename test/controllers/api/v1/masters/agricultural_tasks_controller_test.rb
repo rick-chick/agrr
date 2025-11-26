@@ -21,8 +21,8 @@ module Api
           other_user = create(:user)
           other_task = create(:agricultural_task, :user_owned, user: other_user)
 
-          get api_v1_masters_agricultural_tasks_path, 
-              headers: { 
+          get api_v1_masters_agricultural_tasks_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -40,8 +40,8 @@ module Api
         test "should show agricultural_task" do
           task = create(:agricultural_task, :user_owned, user: @user, name: "テストタスク")
 
-          get api_v1_masters_agricultural_task_path(task), 
-              headers: { 
+          get api_v1_masters_agricultural_task_path(task),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -52,17 +52,32 @@ module Api
           assert_equal "テストタスク", json_response["name"]
         end
 
+        test "should not show other user's agricultural_task" do
+          other_user = create(:user)
+          other_task = create(:agricultural_task, :user_owned, user: other_user)
+
+          get api_v1_masters_agricultural_task_path(other_task),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("agricultural_tasks.flash.no_permission"), json_response["error"]
+        end
+
         test "should create agricultural_task" do
           assert_difference("@user.agricultural_tasks.where(is_reference: false).count", 1) do
-            post api_v1_masters_agricultural_tasks_path, 
-                 params: { 
+            post api_v1_masters_agricultural_tasks_path,
+                 params: {
                    agricultural_task: {
                      name: "新規タスク",
                      description: "テスト説明",
                      time_per_sqm: 0.5
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -78,13 +93,13 @@ module Api
         test "should update agricultural_task" do
           task = create(:agricultural_task, :user_owned, user: @user, name: "元の名前")
 
-          patch api_v1_masters_agricultural_task_path(task), 
-                params: { 
+          patch api_v1_masters_agricultural_task_path(task),
+                params: {
                   agricultural_task: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -94,18 +109,54 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
+        test "should not update other user's agricultural_task" do
+          other_user = create(:user)
+          other_task = create(:agricultural_task, :user_owned, user: other_user, name: "他のユーザーのタスク")
+
+          patch api_v1_masters_agricultural_task_path(other_task),
+                params: {
+                  agricultural_task: {
+                    name: "変更しようとした名前"
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+
+          other_task.reload
+          assert_equal "他のユーザーのタスク", other_task.name
+        end
+
         test "should destroy agricultural_task" do
           task = create(:agricultural_task, :user_owned, user: @user)
 
           assert_difference("@user.agricultural_tasks.where(is_reference: false).count", -1) do
-            delete api_v1_masters_agricultural_task_path(task), 
-                   headers: { 
+            delete api_v1_masters_agricultural_task_path(task),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
           assert_response :no_content
+        end
+
+        test "should not destroy other user's agricultural_task" do
+          other_user = create(:user)
+          other_task = create(:agricultural_task, :user_owned, user: other_user)
+
+          assert_no_difference("AgriculturalTask.count") do
+            delete api_v1_masters_agricultural_task_path(other_task),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :forbidden
         end
       end
     end

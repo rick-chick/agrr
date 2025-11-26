@@ -21,8 +21,8 @@ module Api
           other_user = create(:user)
           other_fertilize = create(:fertilize, :user_owned, user: other_user)
 
-          get api_v1_masters_fertilizes_path, 
-              headers: { 
+          get api_v1_masters_fertilizes_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -40,8 +40,8 @@ module Api
         test "should show fertilize" do
           fertilize = create(:fertilize, :user_owned, user: @user, name: "テスト肥料")
 
-          get api_v1_masters_fertilize_path(fertilize), 
-              headers: { 
+          get api_v1_masters_fertilize_path(fertilize),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -52,10 +52,25 @@ module Api
           assert_equal "テスト肥料", json_response["name"]
         end
 
+        test "should not show other user's fertilize" do
+          other_user = create(:user)
+          other_fertilize = create(:fertilize, :user_owned, user: other_user)
+
+          get api_v1_masters_fertilize_path(other_fertilize),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("fertilizes.flash.no_permission"), json_response["error"]
+        end
+
         test "should create fertilize" do
           assert_difference("@user.fertilizes.where(is_reference: false).count", 1) do
-            post api_v1_masters_fertilizes_path, 
-                 params: { 
+            post api_v1_masters_fertilizes_path,
+                 params: {
                    fertilize: {
                      name: "新規肥料",
                      n: 10.0,
@@ -64,7 +79,7 @@ module Api
                      package_size: 25.0
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -81,13 +96,13 @@ module Api
         test "should update fertilize" do
           fertilize = create(:fertilize, :user_owned, user: @user, name: "元の名前")
 
-          patch api_v1_masters_fertilize_path(fertilize), 
-                params: { 
+          patch api_v1_masters_fertilize_path(fertilize),
+                params: {
                   fertilize: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -97,18 +112,54 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
+        test "should not update other user's fertilize" do
+          other_user = create(:user)
+          other_fertilize = create(:fertilize, :user_owned, user: other_user, name: "他のユーザーの肥料")
+
+          patch api_v1_masters_fertilize_path(other_fertilize),
+                params: {
+                  fertilize: {
+                    name: "変更しようとした名前"
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+
+          other_fertilize.reload
+          assert_equal "他のユーザーの肥料", other_fertilize.name
+        end
+
         test "should destroy fertilize" do
           fertilize = create(:fertilize, :user_owned, user: @user)
 
           assert_difference("@user.fertilizes.where(is_reference: false).count", -1) do
-            delete api_v1_masters_fertilize_path(fertilize), 
-                   headers: { 
+            delete api_v1_masters_fertilize_path(fertilize),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
           assert_response :no_content
+        end
+
+        test "should not destroy other user's fertilize" do
+          other_user = create(:user)
+          other_fertilize = create(:fertilize, :user_owned, user: other_user)
+
+          assert_no_difference("Fertilize.count") do
+            delete api_v1_masters_fertilize_path(other_fertilize),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :forbidden
         end
       end
     end

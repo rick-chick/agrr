@@ -8,7 +8,8 @@ module Api
 
         # GET /api/v1/masters/pests
         def index
-          @pests = current_user.pests.where(is_reference: false)
+          # HTML側と同様、Policyのvisible_scopeを利用
+          @pests = PestPolicy.visible_scope(current_user)
           render json: @pests
         end
 
@@ -19,8 +20,8 @@ module Api
 
         # POST /api/v1/masters/pests
         def create
-          @pest = current_user.pests.build(pest_params)
-          @pest.is_reference = false
+          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
+          @pest = PestPolicy.build_for_create(current_user, pest_params)
 
           if @pest.save
             render json: @pest, status: :created
@@ -31,7 +32,8 @@ module Api
 
         # PATCH/PUT /api/v1/masters/pests/:id
         def update
-          if @pest.update(pest_params)
+          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
+          if PestPolicy.apply_update!(current_user, @pest, pest_params)
             render json: @pest
           else
             render json: { errors: @pest.errors.full_messages }, status: :unprocessable_entity
@@ -50,7 +52,16 @@ module Api
         private
 
         def set_pest
-          @pest = current_user.pests.where(is_reference: false).find(params[:id])
+          action = params[:action].to_sym
+
+          @pest =
+            if action.in?([:update, :destroy])
+              PestPolicy.find_editable!(current_user, params[:id])
+            else
+              PestPolicy.find_visible!(current_user, params[:id])
+            end
+        rescue PolicyPermissionDenied
+          render json: { error: I18n.t('pests.flash.no_permission') }, status: :forbidden
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Pest not found' }, status: :not_found
         end

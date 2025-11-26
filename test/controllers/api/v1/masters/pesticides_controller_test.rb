@@ -25,8 +25,8 @@ module Api
           other_pest = create(:pest, :user_owned, user: other_user)
           other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest)
 
-          get api_v1_masters_pesticides_path, 
-              headers: { 
+          get api_v1_masters_pesticides_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -44,8 +44,8 @@ module Api
         test "should show pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "テスト農薬")
 
-          get api_v1_masters_pesticide_path(pesticide), 
-              headers: { 
+          get api_v1_masters_pesticide_path(pesticide),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -56,10 +56,27 @@ module Api
           assert_equal "テスト農薬", json_response["name"]
         end
 
+        test "should not show other user's pesticide" do
+          other_user = create(:user)
+          other_crop = create(:crop, :user_owned, user: other_user)
+          other_pest = create(:pest, :user_owned, user: other_user)
+          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest)
+
+          get api_v1_masters_pesticide_path(other_pesticide),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("pesticides.flash.no_permission"), json_response["error"]
+        end
+
         test "should create pesticide" do
           assert_difference("@user.pesticides.where(is_reference: false).count", 1) do
-            post api_v1_masters_pesticides_path, 
-                 params: { 
+            post api_v1_masters_pesticides_path,
+                 params: {
                    pesticide: {
                      name: "新規農薬",
                      active_ingredient: "テスト成分",
@@ -67,7 +84,7 @@ module Api
                      pest_id: @pest.id
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -83,13 +100,13 @@ module Api
         test "should update pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "元の名前")
 
-          patch api_v1_masters_pesticide_path(pesticide), 
-                params: { 
+          patch api_v1_masters_pesticide_path(pesticide),
+                params: {
                   pesticide: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -99,18 +116,58 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
+        test "should not update other user's pesticide" do
+          other_user = create(:user)
+          other_crop = create(:crop, :user_owned, user: other_user)
+          other_pest = create(:pest, :user_owned, user: other_user)
+          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest, name: "他のユーザーの農薬")
+
+          patch api_v1_masters_pesticide_path(other_pesticide),
+                params: {
+                  pesticide: {
+                    name: "変更しようとした名前"
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+
+          other_pesticide.reload
+          assert_equal "他のユーザーの農薬", other_pesticide.name
+        end
+
         test "should destroy pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
 
           assert_difference("@user.pesticides.where(is_reference: false).count", -1) do
-            delete api_v1_masters_pesticide_path(pesticide), 
-                   headers: { 
+            delete api_v1_masters_pesticide_path(pesticide),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
           assert_response :no_content
+        end
+
+        test "should not destroy other user's pesticide" do
+          other_user = create(:user)
+          other_crop = create(:crop, :user_owned, user: other_user)
+          other_pest = create(:pest, :user_owned, user: other_user)
+          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest)
+
+          assert_no_difference("Pesticide.count") do
+            delete api_v1_masters_pesticide_path(other_pesticide),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :forbidden
         end
       end
     end
