@@ -138,38 +138,18 @@ class PestsController < ApplicationController
     params.require(:pest).permit(*permitted)
   end
 
-  # 害虫と作物を関連付ける
+  # 害虫と作物を関連付ける（Service経由）
   def associate_crops(pest, crop_ids)
-    Array(crop_ids).each do |crop_id|
-      crop = Crop.find_by(id: crop_id)
-      next unless crop && crop_accessible_for_pest?(crop, pest)
-      pest.crops << crop unless pest.crops.include?(crop)
-    end
+    PestCropAssociationService.associate_crops(pest, crop_ids, user: current_user)
   end
 
-  # 害虫と作物の関連付けを更新
+  # 害虫と作物の関連付けを更新（Service経由）
   def update_crop_associations(pest, crop_ids)
-    new_ids = Array(crop_ids).map(&:to_i).uniq
-
-    # 現在の関連付けを取得
-    current_ids = pest.crop_ids
-    
-    # 削除すべき関連付け（現在あるが選択されていない）
-    to_remove = current_ids - new_ids
-    to_remove.each do |crop_id|
-      crop = Crop.find_by(id: crop_id)
-      next unless crop
-
-      pest.crops.delete(crop)
-    end
-    
-    # 追加すべき関連付け（選択されているが現在ない）
-    to_add = new_ids - current_ids
-    associate_crops(pest, to_add)
+    PestCropAssociationService.update_crop_associations(pest, crop_ids, user: current_user)
   end
 
   def prepare_crop_selection_for(pest, selected_ids: nil)
-    @accessible_crops = accessible_crops_for_selection(pest).to_a
+    @accessible_crops = PestCropAssociationPolicy.accessible_crops_scope(pest, user: current_user).to_a
     allowed_ids = @accessible_crops.map(&:id)
     normalized_selected = Array(selected_ids || pest.crop_ids).map(&:to_i).uniq & allowed_ids
 
@@ -183,40 +163,7 @@ class PestsController < ApplicationController
   end
 
   def normalize_crop_ids_for(pest, raw_ids)
-    allowed_ids = accessible_crops_for_selection(pest).pluck(:id)
-    Array(raw_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
-  end
-
-  def accessible_crops_for_selection(pest)
-    scope =
-      if pest.is_reference?
-        Crop.where(is_reference: true)
-      else
-        owner_id = pest.user_id || current_user.id
-        Crop.where(is_reference: false, user_id: owner_id)
-      end
-
-    if pest.region.present?
-      scope = scope.where(region: pest.region)
-    end
-
-    scope.order(:name)
-  end
-
-  def crop_accessible_for_pest?(crop, pest)
-    # 地域チェック（害虫に地域が設定されている場合）
-    if pest.region.present?
-      return false if crop.region != pest.region
-    end
-
-    # 参照害虫は参照作物のみに関連付け可能
-    if pest.is_reference?
-      return crop.is_reference?
-    end
-    
-    # ユーザー所有の害虫は、自分の作物のみに関連付け可能
-    owner_id = pest.user_id || current_user.id
-    crop.user_id == owner_id && !crop.is_reference?
+    PestCropAssociationService.normalize_crop_ids(pest, raw_ids, user: current_user)
   end
 end
 

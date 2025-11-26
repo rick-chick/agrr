@@ -4,8 +4,17 @@ class PesticidePolicy
   Pesticide.include(ReferencableResourcePolicy) unless Pesticide.singleton_class.included_modules.include?(ReferencableResourcePolicy)
 
   # ユーザーにとって閲覧可能な Pesticide 一覧スコープ
+  # - 管理者: 参照農薬 + 自分の農薬
+  # - 一般ユーザー: 自分の非参照農薬のみ
   def self.visible_scope(user)
     Pesticide.visible_scope_for(user)
+  end
+
+  # 選択可能な Pesticide 一覧スコープ（参照データも含む）
+  # - 管理者: 参照農薬 + 自分の農薬
+  # - 一般ユーザー: 参照農薬 + 自分の農薬（選択候補として参照データも含む）
+  def self.selectable_scope(user)
+    Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
   end
 
   # create 用ビルダー

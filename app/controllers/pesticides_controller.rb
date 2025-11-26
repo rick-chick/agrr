@@ -87,23 +87,11 @@ class PesticidesController < ApplicationController
   end
 
   def load_crops_and_pests
-    # 作物の選択範囲を決定
-    if admin_user?
-      # 管理ユーザー: 自身の作物と参照作物のみ選択可能
-      @crops = Crop.where("is_reference = ? OR user_id = ?", true, current_user.id).order(:name)
-    else
-      # 一般ユーザー: 自身の作物のみ選択可能
-      @crops = Crop.where(user_id: current_user.id, is_reference: false).order(:name)
-    end
+    # 作物の選択範囲を決定（Policy経由）
+    @crops = PesticideAssociationPolicy.accessible_crops_scope(current_user)
     
-    # 害虫の選択範囲を決定
-    if admin_user?
-      # 管理ユーザー: 自身の害虫と参照害虫のみ選択可能
-      @pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id).order(:name)
-    else
-      # 一般ユーザー: 自身の害虫のみ選択可能
-      @pests = Pest.where(user_id: current_user.id, is_reference: false).order(:name)
-    end
+    # 害虫の選択範囲を決定（Policy経由）
+    @pests = PesticideAssociationPolicy.accessible_pests_scope(current_user)
   end
 
   def pesticide_params

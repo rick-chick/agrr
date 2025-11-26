@@ -4,8 +4,17 @@ class PestPolicy
   Pest.include(ReferencableResourcePolicy) unless Pest.singleton_class.included_modules.include?(ReferencableResourcePolicy)
 
   # ユーザーにとって閲覧可能な Pest 一覧スコープ
+  # - 管理者: 参照害虫 + 自分の害虫
+  # - 一般ユーザー: 自分の非参照害虫のみ
   def self.visible_scope(user)
     Pest.visible_scope_for(user)
+  end
+
+  # 選択可能な Pest 一覧スコープ（参照データも含む）
+  # - 管理者: 参照害虫 + 自分の害虫
+  # - 一般ユーザー: 参照害虫 + 自分の害虫（選択候補として参照データも含む）
+  def self.selectable_scope(user)
+    Pest.where("is_reference = ? OR user_id = ?", true, user.id)
   end
 
   # create 用ビルダー

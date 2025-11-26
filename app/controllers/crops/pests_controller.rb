@@ -8,10 +8,11 @@ module Crops
     # GET /crops/:crop_id/pests
     def index
       # この作物に関連付けられている害虫を取得（アクセス権限のある害虫のみ）
-      # 参照害虫または自分の害虫のみ表示
-      @pests = @crop.pests.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
-      # 参照害虫も選択可能にするため、利用可能な害虫を取得（管理者も参照害虫と自分の害虫のみ）
-      @available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id).recent
+      # Policy経由で選択可能な害虫のみ表示（参照害虫も含む）
+      accessible_pest_ids = PestPolicy.selectable_scope(current_user).pluck(:id)
+      @pests = @crop.pests.where(id: accessible_pest_ids).recent
+      # 参照害虫も選択可能にするため、利用可能な害虫を取得（Policy経由）
+      @available_pests = PestPolicy.selectable_scope(current_user).recent
     end
 
     # GET /crops/:crop_id/pests/:id
@@ -26,8 +27,8 @@ module Crops
       @pest.build_pest_thermal_requirement
       @pest.pest_control_methods.build
       
-      # この作物にまだ関連付けられていない害虫のリスト（参照害虫または自分の害虫のみ）
-      available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id)
+      # この作物にまだ関連付けられていない害虫のリスト（Policy経由、参照害虫も含む）
+      available_pests = PestPolicy.selectable_scope(current_user)
       @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
     end
 
@@ -74,7 +75,7 @@ module Crops
         @crop.pests << @pest unless @crop.pests.include?(@pest)
         redirect_to crop_pest_path(@crop, @pest), notice: I18n.t('crops.pests.flash.created')
       else
-        available_pests = Pest.where("is_reference = ? OR user_id = ?", true, current_user.id)
+        available_pests = PestPolicy.selectable_scope(current_user)
         @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
         render :new, status: :unprocessable_entity
       end
