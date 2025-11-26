@@ -30,10 +30,12 @@ module Api
           error_response: nil
         )
 
-        post api_v1_fertilizes_ai_create_path, 
+        assert_difference "Fertilize.count", +1 do
+          post api_v1_fertilizes_ai_create_path, 
              params: { name: "尿素" },
              headers: { "Accept" => "application/json" }
-        
+        end
+
         assert_response :created
         json_response = JSON.parse(response.body)
         assert json_response["success"]
@@ -42,6 +44,10 @@ module Api
         assert_nil json_response["p"]
         assert_nil json_response["k"]
         assert_equal 25.0, json_response["package_size"]
+
+        fertilize = Fertilize.find(json_response["fertilize_id"])
+        assert_equal @user.id, fertilize.user_id
+        assert_not fertilize.is_reference
       end
 
       test "ai_create should handle package_size from agrr" do
@@ -100,10 +106,12 @@ module Api
           error_response: nil
         )
 
-        post api_v1_fertilizes_ai_create_path, 
-             params: { name: "尿素" },
-             headers: { "Accept" => "application/json" }
-        
+        assert_no_difference "Fertilize.count" do
+          post api_v1_fertilizes_ai_create_path, 
+               params: { name: "尿素" },
+               headers: { "Accept" => "application/json" }
+        end
+
         assert_response :ok
         json_response = JSON.parse(response.body)
         assert json_response["success"]
@@ -112,6 +120,8 @@ module Api
         # DBを確認
         existing.reload
         assert_equal 25.0, existing.package_size
+        assert_equal @user.id, existing.user_id
+        assert_not existing.is_reference
       end
 
       test "ai_create should handle fertilize key format" do

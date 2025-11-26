@@ -67,33 +67,44 @@ module Api
           Rails.logger.info "📊 [AI Pest] Retrieved data: name=#{pest_data['name']}, family=#{pest_data['family']}"
 
           # 2. 既存の害虫を検索（AI作成は常にユーザー害虫）
-          is_reference = false
-          existing_pest = ::Pest.find_by(name: pest_data['name'], is_reference: is_reference)
+          existing_pest = ::Pest.find_by(
+            name: pest_data['name'],
+            is_reference: false,
+            user_id: current_user.id
+          )
 
-          # 3. pest_dataを整形
-          attrs = {
+          # 3. pest_dataを整形（所有者・参照フラグは Policy に委譲）
+          base_attrs = {
             name: pest_data['name'],
             name_scientific: pest_data['name_scientific'],
             family: pest_data['family'],
             order: pest_data['order'],
             description: pest_data['description'],
             occurrence_season: pest_data['occurrence_season'],
-            is_reference: is_reference,
-            user_id: current_user.id,
             temperature_profile: pest_data['temperature_profile'],
             thermal_requirement: pest_data['thermal_requirement'],
             control_methods: pest_data['control_methods'] || []
           }
 
           if existing_pest
-            # 既存の害虫を更新
+            # 既存の害虫を更新（所有者・参照フラグは変更しない）
             Rails.logger.info "🔄 [AI Pest] Updating existing pest##{existing_pest.id}: #{pest_data['name']}"
-            result = @update_interactor.call(existing_pest.id, attrs)
+            result = @update_interactor.call(existing_pest.id, base_attrs)
             status_code = :ok
           else
-            # 新規作成
+            # 新規作成（所有者・参照フラグの決定は Policy に委譲）
             Rails.logger.info "🆕 [AI Pest] Creating new pest: #{pest_data['name']}"
-            result = @create_interactor.call(attrs)
+
+            # build_for_create は Pest モデルの属性のみを前提としているため、
+            # 所有者・参照フラグの決定だけを利用する
+            ownership_sample = PestPolicy.build_for_create(current_user, {})
+
+            attrs_for_create = base_attrs.merge(
+              user_id: ownership_sample.user_id,
+              is_reference: ownership_sample.is_reference
+            )
+
+            result = @create_interactor.call(attrs_for_create)
             status_code = :created
           end
 
@@ -225,9 +236,12 @@ module Api
       private
 
       def set_pest
-        @pest = Pest.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        @pest = nil
+        @pest =
+          begin
+            PestPolicy.find_editable!(current_user, params[:id])
+          rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+            nil
+          end
       end
 
       def set_interactors

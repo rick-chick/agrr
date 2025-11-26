@@ -22,7 +22,7 @@ module Api
 
         begin
           # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
-          dummy_crop = ::Crop.new(user: current_user, name: 'dummy', is_reference: false)
+          dummy_crop = CropPolicy.build_for_create(current_user, name: 'dummy')
           # user_crop_count_limitバリデーションをチェック
           unless dummy_crop.valid?
             # 件数制限エラーを返す（:user または :base にエラーがある）
@@ -54,7 +54,12 @@ module Api
           Rails.logger.info "📊 [AI Crop] Retrieved data: crop_id=#{crop_id}, area=#{crop_data['area_per_unit']}, revenue=#{crop_data['revenue_per_area']}, stages=#{stage_requirements&.count || 0}"
 
           # crop_idで作物を探す（ユーザー作物のみ）
-          existing_crop = ::Crop.find_by(id: crop_id, user_id: current_user.id, is_reference: false)
+          existing_crop =
+            begin
+              crop_id.present? ? CropPolicy.find_editable!(current_user, crop_id) : nil
+            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+              nil
+            end
           
           if existing_crop
             # 既存作物が見つかった → 更新
@@ -90,20 +95,22 @@ module Api
 
           # 4. 新規作成（見つからなかった場合）
           Rails.logger.info "🆕 [AI Crop] Creating new crop: #{crop_name} (crop_id: #{crop_id})"
-          is_reference = false # AI作成は常にユーザー作物
-          user_id = current_user.id
-
-          attrs = {
-            user_id: user_id,
+          base_attrs = {
             name: crop_name,
             variety: variety || crop_data['variety'],
             area_per_unit: crop_data['area_per_unit'],
             revenue_per_area: crop_data['revenue_per_area'],
-            is_reference: is_reference,
             groups: crop_data['groups'] || []
           }
 
-          result = @create_interactor.call(attrs)
+          # 所有者・参照フラグの決定は Policy に委譲
+          policy_crop = CropPolicy.build_for_create(current_user, base_attrs)
+          attrs_for_create = base_attrs.merge(
+            user_id: policy_crop.user_id,
+            is_reference: policy_crop.is_reference
+          )
+
+          result = @create_interactor.call(attrs_for_create)
 
           if result.success?
             crop_entity = result.data

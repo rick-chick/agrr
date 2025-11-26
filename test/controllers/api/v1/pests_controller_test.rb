@@ -59,16 +59,18 @@ module Api
           end
         end
 
-        post api_v1_pests_ai_create_path, 
-             params: { 
-               name: "アオムシ",
-               affected_crops: [
-                 { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
-                 { "crop_id" => @crop2.id.to_s, "crop_name" => "ほうれん草" }
-               ]
-             },
-             headers: { "Accept" => "application/json" }
-        
+        assert_difference "Pest.count", +1 do
+          post api_v1_pests_ai_create_path, 
+               params: { 
+                 name: "アオムシ",
+                 affected_crops: [
+                   { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
+                   { "crop_id" => @crop2.id.to_s, "crop_name" => "ほうれん草" }
+                 ]
+               },
+               headers: { "Accept" => "application/json" }
+        end
+
         assert_response :created
         json_response = JSON.parse(response.body)
         assert json_response["success"]
@@ -78,6 +80,8 @@ module Api
         # 害虫が作成されたことを確認
         pest = Pest.find(json_response["pest_id"])
         assert_not_nil pest
+        assert_equal @user.id, pest.user_id
+        assert_not pest.is_reference
         assert_equal 2, pest.crops.count
         assert pest.crops.include?(@crop1)
         assert pest.crops.include?(@crop2)
