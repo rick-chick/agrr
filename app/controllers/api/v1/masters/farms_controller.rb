@@ -8,7 +8,7 @@ module Api
 
         # GET /api/v1/masters/farms
         def index
-          @farms = current_user.farms.where(is_reference: false)
+          @farms = FarmPolicy.user_owned_scope(current_user)
           render json: @farms
         end
 
@@ -19,8 +19,7 @@ module Api
 
         # POST /api/v1/masters/farms
         def create
-          @farm = current_user.farms.build(farm_params)
-          @farm.is_reference = false
+          @farm = FarmPolicy.build_for_create(current_user, farm_params)
 
           if @farm.save
             render json: @farm, status: :created
@@ -50,9 +49,16 @@ module Api
         private
 
         def set_farm
-          @farm = current_user.farms.where(is_reference: false).find(params[:id])
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Farm not found' }, status: :not_found
+          @farm =
+            begin
+              FarmPolicy.find_owned!(current_user, params[:id])
+            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+              nil
+            end
+
+          unless @farm
+            render json: { error: 'Farm not found' }, status: :not_found
+          end
         end
 
         def farm_params

@@ -19,21 +19,14 @@ module Api
         private
         
         def find_api_cultivation_plan
-          plan = CultivationPlan
-            .plan_type_private
+          PlanPolicy
+            .private_scope(current_user)
             .includes(
               field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop],
               cultivation_plan_fields: [],
               cultivation_plan_crops: []
             )
             .find(params[:id])
-          
-          # ユーザーの計画であることを確認
-          unless plan.user_id == current_user.id
-            raise ActiveRecord::RecordNotFound
-          end
-          
-          plan
         end
         
         def get_crop_for_add_crop(crop_id)

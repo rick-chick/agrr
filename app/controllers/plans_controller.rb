@@ -207,13 +207,11 @@ class PlansController < ApplicationController
   # Concernで実装すべきメソッド
   
   def set_plan
-    @plan = current_user.cultivation_plans.plan_type_private.find(params[:id])
+    @plan = PlanPolicy.find_private_owned!(current_user, params[:id])
   end
   
   def find_cultivation_plan_scope
-    CultivationPlan
-      .plan_type_private
-      .by_user(current_user)
+    PlanPolicy.private_scope(current_user)
   end
   
   def select_crop_redirect_path
