@@ -21,8 +21,8 @@ module Api
           other_user = create(:user)
           other_rule = create(:interaction_rule, :user_owned, user: other_user)
 
-          get api_v1_masters_interaction_rules_path, 
-              headers: { 
+          get api_v1_masters_interaction_rules_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -40,8 +40,8 @@ module Api
         test "should show interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user, source_group: "テストグループ")
 
-          get api_v1_masters_interaction_rule_path(rule), 
-              headers: { 
+          get api_v1_masters_interaction_rule_path(rule),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -52,10 +52,25 @@ module Api
           assert_equal "テストグループ", json_response["source_group"]
         end
 
+        test "should not show other user's interaction_rule" do
+          other_user = create(:user)
+          other_rule = create(:interaction_rule, :user_owned, user: other_user)
+
+          get api_v1_masters_interaction_rule_path(other_rule),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("interaction_rules.flash.no_permission"), json_response["error"]
+        end
+
         test "should create interaction_rule" do
           assert_difference("@user.interaction_rules.where(is_reference: false).count", 1) do
-            post api_v1_masters_interaction_rules_path, 
-                 params: { 
+            post api_v1_masters_interaction_rules_path,
+                 params: {
                    interaction_rule: {
                      rule_type: "continuous_cultivation",
                      source_group: "ソースグループ",
@@ -63,7 +78,7 @@ module Api
                      impact_ratio: 0.7
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -79,13 +94,13 @@ module Api
         test "should update interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user, source_group: "元のグループ")
 
-          patch api_v1_masters_interaction_rule_path(rule), 
-                params: { 
+          patch api_v1_masters_interaction_rule_path(rule),
+                params: {
                   interaction_rule: {
                     source_group: "更新されたグループ"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -95,18 +110,54 @@ module Api
           assert_equal "更新されたグループ", json_response["source_group"]
         end
 
+        test "should not update other user's interaction_rule" do
+          other_user = create(:user)
+          other_rule = create(:interaction_rule, :user_owned, user: other_user, source_group: "他のユーザーのルール")
+
+          patch api_v1_masters_interaction_rule_path(other_rule),
+                params: {
+                  interaction_rule: {
+                    source_group: "変更しようとしたグループ"
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+
+          other_rule.reload
+          assert_equal "他のユーザーのルール", other_rule.source_group
+        end
+
         test "should destroy interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user)
 
           assert_difference("@user.interaction_rules.where(is_reference: false).count", -1) do
-            delete api_v1_masters_interaction_rule_path(rule), 
-                   headers: { 
+            delete api_v1_masters_interaction_rule_path(rule),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
           assert_response :no_content
+        end
+
+        test "should not destroy other user's interaction_rule" do
+          other_user = create(:user)
+          other_rule = create(:interaction_rule, :user_owned, user: other_user)
+
+          assert_no_difference("InteractionRule.count") do
+            delete api_v1_masters_interaction_rule_path(other_rule),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :forbidden
         end
       end
     end

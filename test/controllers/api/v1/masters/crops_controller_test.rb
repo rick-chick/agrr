@@ -56,15 +56,15 @@ module Api
           other_user = create(:user)
           other_crop = create(:crop, :user_owned, user: other_user)
 
-          get api_v1_masters_crop_path(other_crop), 
-              headers: { 
+          get api_v1_masters_crop_path(other_crop),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
 
-          assert_response :not_found
+          assert_response :forbidden
           json_response = JSON.parse(response.body)
-          assert_equal "Crop not found", json_response["error"]
+          assert_equal I18n.t("crops.flash.no_permission"), json_response["error"]
         end
 
         test "should create crop" do
@@ -137,18 +137,18 @@ module Api
           other_user = create(:user)
           other_crop = create(:crop, :user_owned, user: other_user, name: "他のユーザーの作物")
 
-          patch api_v1_masters_crop_path(other_crop), 
-                params: { 
+          patch api_v1_masters_crop_path(other_crop),
+                params: {
                   crop: {
                     name: "変更しようとした名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
 
-          assert_response :not_found
+          assert_response :forbidden
           
           other_crop.reload
           assert_equal "他のユーザーの作物", other_crop.name
@@ -173,14 +173,14 @@ module Api
           other_crop = create(:crop, :user_owned, user: other_user)
 
           assert_no_difference("Crop.count") do
-            delete api_v1_masters_crop_path(other_crop), 
-                   headers: { 
+            delete api_v1_masters_crop_path(other_crop),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
-          assert_response :not_found
+          assert_response :forbidden
         end
       end
     end

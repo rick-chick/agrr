@@ -34,7 +34,8 @@ module Api
         # @return [200] 成功
         # @return [401] APIキーが無効
         def index
-          @crops = current_user.crops.where(is_reference: false)
+          # HTML側と同様、Policyのvisible_scopeを利用して参照作物/ユーザー作物の両方を扱う
+          @crops = CropPolicy.visible_scope(current_user)
           render json: @crops
         end
 
@@ -63,8 +64,8 @@ module Api
         # @return [401] APIキーが無効
         # @return [422] バリデーションエラー
         def create
-          @crop = current_user.crops.build(crop_params)
-          @crop.is_reference = false
+          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
+          @crop = CropPolicy.build_for_create(current_user, crop_params)
 
           if @crop.save
             render json: @crop, status: :created
@@ -83,7 +84,8 @@ module Api
         # @return [404] 作物が見つからない
         # @return [422] バリデーションエラー
         def update
-          if @crop.update(crop_params)
+          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
+          if CropPolicy.apply_update!(current_user, @crop, crop_params)
             render json: @crop
           else
             render json: { errors: @crop.errors.full_messages }, status: :unprocessable_entity
@@ -108,7 +110,16 @@ module Api
         private
 
         def set_crop
-          @crop = current_user.crops.where(is_reference: false).find(params[:id])
+          action = params[:action].to_sym
+
+          @crop =
+            if action.in?([:update, :destroy])
+              CropPolicy.find_editable!(current_user, params[:id])
+            else
+              CropPolicy.find_visible!(current_user, params[:id])
+            end
+        rescue PolicyPermissionDenied
+          render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Crop not found' }, status: :not_found
         end

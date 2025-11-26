@@ -8,7 +8,8 @@ module Api
 
         # GET /api/v1/masters/interaction_rules
         def index
-          @interaction_rules = current_user.interaction_rules.where(is_reference: false)
+          # HTML側と同様、Policyのvisible_scopeを利用
+          @interaction_rules = InteractionRulePolicy.visible_scope(current_user)
           render json: @interaction_rules
         end
 
@@ -19,8 +20,8 @@ module Api
 
         # POST /api/v1/masters/interaction_rules
         def create
-          @interaction_rule = current_user.interaction_rules.build(interaction_rule_params)
-          @interaction_rule.is_reference = false
+          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
+          @interaction_rule, = InteractionRulePolicy.build_for_create(current_user, interaction_rule_params.to_h)
 
           if @interaction_rule.save
             render json: @interaction_rule, status: :created
@@ -31,7 +32,8 @@ module Api
 
         # PATCH/PUT /api/v1/masters/interaction_rules/:id
         def update
-          if @interaction_rule.update(interaction_rule_params)
+          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
+          if InteractionRulePolicy.apply_update!(current_user, @interaction_rule, interaction_rule_params.to_h)
             render json: @interaction_rule
           else
             render json: { errors: @interaction_rule.errors.full_messages }, status: :unprocessable_entity
@@ -50,7 +52,9 @@ module Api
         private
 
         def set_interaction_rule
-          @interaction_rule = current_user.interaction_rules.where(is_reference: false).find(params[:id])
+          @interaction_rule = InteractionRulePolicy.find_editable!(current_user, params[:id])
+        rescue PolicyPermissionDenied
+          render json: { error: I18n.t('interaction_rules.flash.no_permission') }, status: :forbidden
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'InteractionRule not found' }, status: :not_found
         end

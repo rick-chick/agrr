@@ -21,8 +21,8 @@ module Api
           other_user = create(:user)
           other_pest = create(:pest, :user_owned, user: other_user)
 
-          get api_v1_masters_pests_path, 
-              headers: { 
+          get api_v1_masters_pests_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -40,8 +40,8 @@ module Api
         test "should show pest" do
           pest = create(:pest, :user_owned, user: @user, name: "テスト害虫")
 
-          get api_v1_masters_pest_path(pest), 
-              headers: { 
+          get api_v1_masters_pest_path(pest),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -52,17 +52,32 @@ module Api
           assert_equal "テスト害虫", json_response["name"]
         end
 
+        test "should not show other user's pest" do
+          other_user = create(:user)
+          other_pest = create(:pest, :user_owned, user: other_user)
+
+          get api_v1_masters_pest_path(other_pest),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("pests.flash.no_permission"), json_response["error"]
+        end
+
         test "should create pest" do
           assert_difference("@user.pests.where(is_reference: false).count", 1) do
-            post api_v1_masters_pests_path, 
-                 params: { 
+            post api_v1_masters_pests_path,
+                 params: {
                    pest: {
                      name: "新規害虫",
                      name_scientific: "Testus pestus",
                      family: "テスト科"
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -78,13 +93,13 @@ module Api
         test "should update pest" do
           pest = create(:pest, :user_owned, user: @user, name: "元の名前")
 
-          patch api_v1_masters_pest_path(pest), 
-                params: { 
+          patch api_v1_masters_pest_path(pest),
+                params: {
                   pest: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -94,18 +109,54 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
+        test "should not update other user's pest" do
+          other_user = create(:user)
+          other_pest = create(:pest, :user_owned, user: other_user, name: "他のユーザーの害虫")
+
+          patch api_v1_masters_pest_path(other_pest),
+                params: {
+                  pest: {
+                    name: "変更しようとした名前"
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+
+          other_pest.reload
+          assert_equal "他のユーザーの害虫", other_pest.name
+        end
+
         test "should destroy pest" do
           pest = create(:pest, :user_owned, user: @user)
 
           assert_difference("@user.pests.where(is_reference: false).count", -1) do
-            delete api_v1_masters_pest_path(pest), 
-                   headers: { 
+            delete api_v1_masters_pest_path(pest),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
           assert_response :no_content
+        end
+
+        test "should not destroy other user's pest" do
+          other_user = create(:user)
+          other_pest = create(:pest, :user_owned, user: other_user)
+
+          assert_no_difference("Pest.count") do
+            delete api_v1_masters_pest_path(other_pest),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :forbidden
         end
       end
     end

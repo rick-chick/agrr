@@ -570,15 +570,34 @@
   - 対象HTMLコントローラの `before_action :set_*` を、これらのPolicy経由（`*Policy.find_visible!` / `find_editable!`）に統一。
   - `PolicyPermissionDenied` 例外を導入し、「レコードが存在しない（404）」と「存在するが権限がない（403相当）」を明確に分離。
   - 各コントローラで `rescue PolicyPermissionDenied` により `no_permission`、`rescue ActiveRecord::RecordNotFound` により `not_found` を返すよう統一し、テストも `no_permission` / `not_found` の双方を明示的に検証。
+- **HTML 参照マスタ系コントローラの `create` / `update` における参照フラグ・所有者ロジックのPolicy化**
+  - 対象コントローラ:
+    - `PestsController`
+    - `AgriculturalTasksController`
+    - `CropsController`
+    - `FertilizesController`
+    - `PesticidesController`
+    - `InteractionRulesController`
+  - 各コントローラの `create` / `update` に散在していた以下のロジックを、対応する `*Policy` に移動済み:
+    - `is_reference` パラメータのキャスト
+    - `is_reference` と `current_user` に応じた `user_id` の決定（参照=システム所有、非参照=ユーザー所有）
+    - `is_reference` フラグの変更に伴う `user_id` の更新（参照化/非参照化）
+  - 各 `*Policy` に追加された主なインタフェース:
+    - `build_for_create(user, params)`:
+      - `CropPolicy`, `PestPolicy`, `FertilizePolicy`, `PesticidePolicy`, `InteractionRulePolicy`, `AgriculturalTaskPolicy`
+      - HTMLコントローラの `create` は、`*Policy.build_for_create(current_user, params)` でモデルインスタンスを構築し、`save` するだけに簡素化。
+    - `apply_update!(user, record, params)`:
+      - 同上の各Policyに実装。
+      - HTMLコントローラの `update` は、`*Policy.apply_update!(current_user, @record, params)` の戻り値（`update` の成否）で分岐し、成功時 `redirect` / 失敗時 `render :edit, status: :unprocessable_entity` を行う形に統一。
+  - これらの変更に先立ち、`create` / `update` の全パス（一般ユーザー/管理者、参照/非参照、バリデーションエラー、groups/required_tools などの周辺ロジック）をカバーするコントローラテストを追加し、挙動をテストで固定したうえでリファクタを実施済み。
 
 ### 7.2 まだコントローラに残っている「参照まわり」ロジック
 
 - **作成/更新時の参照フラグ操作ロジック（HTML側）**
-  - 例: `CropsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `InteractionRulesController`, `AgriculturalTasksController` などで、
-    - 一般ユーザーは `is_reference` を操作できない（強制false）
-    - 管理者のみ `is_reference` を true/false に変更可能
-    - `is_reference` に応じて `user_id` を `nil` / `current_user.id` に設定
-  - これらは現在も各コントローラの `create` / `update` に直接記述されており、今後 `*Policy.build_for_create(user, params)` / `apply_update!(user, record, params)` に寄せる余地がある。
+  - 上記 7.1 のとおり、参照マスタ系 HTML コントローラ（`Pests`, `AgriculturalTasks`, `Crops`, `Fertilizes`, `Pesticides`, `InteractionRules`）については、
+    - `create` / `update` の `is_reference` と `user_id` に関するロジックを `*Policy.build_for_create` / `apply_update!` に集約済み。
+    - コントローラに残っているのは、**「一般ユーザーが参照フラグを操作しようとした場合に 403 相当（`reference_only_admin` / `reference_flag_admin_only`）を返すガード」のみ**。
+  - このため、HTML 側については「参照フラグ操作ロジックのPolicy化」は完了している。
 - **JSON API 側の参照/所有スコープ**
   - `Api::V1::Masters::*` コントローラ群では、まだ `current_user.*.where(is_reference: false)` などが直接書かれている。
   - HTML側で確認済みの `*Policy.visible_scope(user)` / モデル不変条件を土台に、API側も順次Policy経由に置き換えていく予定。
@@ -589,15 +608,7 @@
 
 ### 7.3 今後の具体的なステップ（優先度順）
 
-1. **参照フラグ変更ロジックの Policy / Service 化（HTML側）**
-   - 目標:
-     - 参照マスタ系HTMLコントローラの `create` / `update` 内に散在している `is_reference` キャストと `user_id` セット処理を、
-       `*Policy.build_for_create(user, params)` / `apply_update!(user, record, params)` に移す。
-   - 対象（優先順）:
-     - `PestsController`, `AgriculturalTasksController`, `CropsController`, `FertilizesController`, `PesticidesController`, `InteractionRulesController`
-   - テスト方針:
-     - 各コントローラの `create` / `update` について、「一般ユーザーは参照フラグを立てられない」「管理者が参照フラグを操作したときに user_id が正しく nil / current_user.id になる」ことをテストで固定する。
-2. **JSON マスタ API の index / show / create / update を Policy 化**
+1. **JSON マスタ API の index / show / create / update を Policy 化**
    - 目標:
      - `Api::V1::Masters::*Controller` で、HTML側と同じ `visible_scope` / `find_visible!` / `build_for_create` / `apply_update!` を使い、
        参照マスタまわりの挙動（is_reference と user_id の関係、管理者/一般ユーザーのアクセス範囲）を完全に揃える。
@@ -606,12 +617,12 @@
      - `Api::V1::Masters::PestsController`
      - `Api::V1::Masters::FertilizesController`
      - `Api::V1::Masters::PesticidesController`
-3. **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合**
+2. **AI向け upsert API（`ai_create` / `ai_update`）の Policy 統合**
    - 目標:
      - `Api::V1::CropsController#ai_create` や `Api::V1::FertilizesController#ai_create/#ai_update` 等で、
        通常の `*Policy` を経由して作成/更新を行うようにし、`is_reference: false` / `user_id` の扱いを通常CRUDと完全に一致させる。
    - 必要に応じて、共通の `*AiUpsertService` を導入し、名前検索〜Policy経由での更新/作成を一箇所に集約する。
-4. **Farm / Field / Plan 系の Policy 導入**
+3. **Farm / Field / Plan 系の Policy 導入**
    - 目標:
      - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を導入し、所有権・公開/非公開ルールをPolicyに集約する。
    - 対象:
@@ -619,10 +630,10 @@
      - API: `Api::V1::Masters::FarmsController`, `Api::V1::Masters::FieldsController`,
        `Api::V1::Plans::FieldCultivationsController`, `Api::V1::PublicPlans::FieldCultivationsController`,
        `Api::V1::Plans::CultivationPlansController`, `Api::V1::PublicPlans::CultivationPlansController`
-5. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
+4. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
    - 目標:
      - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。
    - そのうえで、HTML/JSON 両方から同じルールを利用する。
-6. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+5. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
    - 削除 + Undo と参照ポリシーまわりの整理が一段落したあとに着手し、
    - HTML/JSONのエラーレスポンス仕様の統一を図る。

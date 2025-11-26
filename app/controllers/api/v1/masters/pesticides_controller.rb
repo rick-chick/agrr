@@ -8,7 +8,8 @@ module Api
 
         # GET /api/v1/masters/pesticides
         def index
-          @pesticides = current_user.pesticides.where(is_reference: false)
+          # HTML側と同様、Policyのvisible_scopeを利用
+          @pesticides = PesticidePolicy.visible_scope(current_user)
           render json: @pesticides
         end
 
@@ -19,8 +20,8 @@ module Api
 
         # POST /api/v1/masters/pesticides
         def create
-          @pesticide = current_user.pesticides.build(pesticide_params)
-          @pesticide.is_reference = false
+          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
+          @pesticide = PesticidePolicy.build_for_create(current_user, pesticide_params)
 
           if @pesticide.save
             render json: @pesticide, status: :created
@@ -31,7 +32,8 @@ module Api
 
         # PATCH/PUT /api/v1/masters/pesticides/:id
         def update
-          if @pesticide.update(pesticide_params)
+          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
+          if PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
             render json: @pesticide
           else
             render json: { errors: @pesticide.errors.full_messages }, status: :unprocessable_entity
@@ -50,7 +52,9 @@ module Api
         private
 
         def set_pesticide
-          @pesticide = current_user.pesticides.where(is_reference: false).find(params[:id])
+          @pesticide = PesticidePolicy.find_editable!(current_user, params[:id])
+        rescue PolicyPermissionDenied
+          render json: { error: I18n.t('pesticides.flash.no_permission') }, status: :forbidden
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Pesticide not found' }, status: :not_found
         end

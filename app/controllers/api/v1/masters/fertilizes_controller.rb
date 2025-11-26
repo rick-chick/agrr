@@ -8,7 +8,8 @@ module Api
 
         # GET /api/v1/masters/fertilizes
         def index
-          @fertilizes = current_user.fertilizes.where(is_reference: false)
+          # HTML側と同様、Policyのvisible_scopeを利用
+          @fertilizes = FertilizePolicy.visible_scope(current_user)
           render json: @fertilizes
         end
 
@@ -19,8 +20,8 @@ module Api
 
         # POST /api/v1/masters/fertilizes
         def create
-          @fertilize = current_user.fertilizes.build(fertilize_params)
-          @fertilize.is_reference = false
+          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
+          @fertilize = FertilizePolicy.build_for_create(current_user, fertilize_params)
 
           if @fertilize.save
             render json: @fertilize, status: :created
@@ -31,7 +32,8 @@ module Api
 
         # PATCH/PUT /api/v1/masters/fertilizes/:id
         def update
-          if @fertilize.update(fertilize_params)
+          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
+          if FertilizePolicy.apply_update!(current_user, @fertilize, fertilize_params)
             render json: @fertilize
           else
             render json: { errors: @fertilize.errors.full_messages }, status: :unprocessable_entity
@@ -50,7 +52,9 @@ module Api
         private
 
         def set_fertilize
-          @fertilize = current_user.fertilizes.where(is_reference: false).find(params[:id])
+          @fertilize = FertilizePolicy.find_editable!(current_user, params[:id])
+        rescue PolicyPermissionDenied
+          render json: { error: I18n.t('fertilizes.flash.no_permission') }, status: :forbidden
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Fertilize not found' }, status: :not_found
         end
