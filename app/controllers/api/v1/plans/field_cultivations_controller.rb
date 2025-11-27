@@ -31,11 +31,9 @@ module Api
           cultivation_plan = @field_cultivation.cultivation_plan
           farm = cultivation_plan.farm
           
-          # plan_crop から作物を取得
+          # plan_crop から作物を取得（CropPolicy経由でユーザー所有・非参照作物のみ許可）
           plan_crop = @field_cultivation.cultivation_plan_crop
-          
-          # ユーザーの作物から検索（is_reference: false）
-          crop = current_user.crops.find_by(id: plan_crop.crop_id, is_reference: false)
+          crop = CropPolicy.visible_scope(current_user).find_by(id: plan_crop.crop_id, is_reference: false)
           
           Rails.logger.info "🔍 [Plans Climate Data] plan_crop.crop_id: #{plan_crop&.crop_id}, found crop: #{crop&.id}"
           

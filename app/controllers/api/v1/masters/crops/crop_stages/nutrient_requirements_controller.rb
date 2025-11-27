@@ -65,7 +65,7 @@ module Api
             private
 
             def set_crop
-              @crop = current_user.crops.where(is_reference: false).find(params[:crop_id])
+              @crop = CropPolicy.visible_scope(current_user).where(is_reference: false).find(params[:crop_id])
             rescue ActiveRecord::RecordNotFound
               render json: { error: 'Crop not found' }, status: :not_found
             end

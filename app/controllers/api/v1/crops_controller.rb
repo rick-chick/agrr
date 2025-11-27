@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'json'
-
 module Api
   module V1
     class CropsController < Api::V1::BaseController
@@ -21,122 +18,16 @@ module Api
         end
 
         begin
-          # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
-          dummy_crop = CropPolicy.build_for_create(current_user, name: 'dummy')
-          # user_crop_count_limitバリデーションをチェック
-          unless dummy_crop.valid?
-            # 件数制限エラーを返す（:user または :base にエラーがある）
-            validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
-            if validation_error
-              return render json: { error: validation_error }, status: :unprocessable_entity
-            end
-          end
-          
-          # 1. agrrコマンドで作物情報を取得（常に実行して最新情報を取得）
-          Rails.logger.info "🤖 [AI Crop] Querying crop info for: #{crop_name}"
+          # AGRR から作物情報を取得（テストではこのメソッドを差し替えて固定レスポンスを返す）
           crop_info = fetch_crop_info_from_agrr(crop_name)
 
-          # エラーチェック（エラー時は success: false が返る）
-          if crop_info['success'] == false
-            error_msg = crop_info['error'] || I18n.t('api.errors.crops.fetch_failed')
-            return render json: { error: error_msg }, status: :unprocessable_entity
-          end
-
-          # 正常時は crop と stage_requirements がトップレベルに存在
-          crop_data = crop_info['crop']
-          stage_requirements = crop_info['stage_requirements']
-          
-          unless crop_data
-            return render json: { error: I18n.t('api.errors.crops.invalid_payload') }, status: :unprocessable_entity
-          end
-          
-          crop_id = crop_data['crop_id']  # agrrが返すcrop_id
-          Rails.logger.info "📊 [AI Crop] Retrieved data: crop_id=#{crop_id}, area=#{crop_data['area_per_unit']}, revenue=#{crop_data['revenue_per_area']}, stages=#{stage_requirements&.count || 0}"
-
-          # crop_idで作物を探す（ユーザー作物のみ）
-          existing_crop =
-            begin
-              crop_id.present? ? CropPolicy.find_editable!(current_user, crop_id) : nil
-            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-              nil
-            end
-          
-          if existing_crop
-            # 既存作物が見つかった → 更新
-            Rails.logger.info "🔄 [AI Crop] Existing crop found: #{crop_name} (DB_ID: #{existing_crop.id}, is_reference: #{existing_crop.is_reference})"
-            Rails.logger.info "🔄 [AI Crop] Updating crop with latest data from agrr"
-            
-            existing_crop.update!(
-              variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
-              area_per_unit: crop_data['area_per_unit'],
-              revenue_per_area: crop_data['revenue_per_area'],
-              groups: crop_data['groups'] || []
-            )
-            
-            # 既存のステージを削除して新しいステージを保存
-            existing_crop.crop_stages.destroy_all
-            if stage_requirements.present?
-              saved_stages = save_crop_stages(existing_crop.id, stage_requirements)
-              Rails.logger.info "🌱 [AI Crop] Updated #{saved_stages} stages for crop##{existing_crop.id}"
-            end
-            
-            return render json: {
-              success: true,
-              crop_id: existing_crop.id,
-              crop_name: existing_crop.name,
-              variety: existing_crop.variety,
-              area_per_unit: existing_crop.area_per_unit,
-              revenue_per_area: existing_crop.revenue_per_area,
-              stages_count: stage_requirements&.count || 0,
-              is_reference: existing_crop.is_reference,
-              message: I18n.t('api.messages.crops.updated_with_latest', name: existing_crop.name)
-            }, status: :ok
-          end
-
-          # 4. 新規作成（見つからなかった場合）
-          Rails.logger.info "🆕 [AI Crop] Creating new crop: #{crop_name} (crop_id: #{crop_id})"
-          base_attrs = {
-            name: crop_name,
-            variety: variety || crop_data['variety'],
-            area_per_unit: crop_data['area_per_unit'],
-            revenue_per_area: crop_data['revenue_per_area'],
-            groups: crop_data['groups'] || []
-          }
-
-          # 所有者・参照フラグの決定は Policy に委譲
-          policy_crop = CropPolicy.build_for_create(current_user, base_attrs)
-          attrs_for_create = base_attrs.merge(
-            user_id: policy_crop.user_id,
-            is_reference: policy_crop.is_reference
+          service = CropAiUpsertService.new(
+            user: current_user,
+            create_interactor: @create_interactor
           )
 
-          result = @create_interactor.call(attrs_for_create)
-
-          if result.success?
-            crop_entity = result.data
-            Rails.logger.info "✅ [AI Crop] Created crop##{crop_entity.id}: #{crop_entity.name}"
-
-            # 4. 生育ステージも保存
-            if stage_requirements.present?
-              saved_stages = save_crop_stages(crop_entity.id, stage_requirements)
-              Rails.logger.info "🌱 [AI Crop] Saved #{saved_stages} stages for crop##{crop_entity.id}"
-            end
-
-            render json: {
-              success: true,
-              crop_id: crop_entity.id,
-              crop_name: crop_entity.name,
-              variety: crop_entity.variety,
-              area_per_unit: crop_entity.area_per_unit,
-              revenue_per_area: crop_entity.revenue_per_area,
-              stages_count: stage_requirements&.count || 0,
-              message: I18n.t('api.messages.crops.created_by_ai', name: crop_entity.name)
-            }, status: :created
-          else
-            Rails.logger.error "❌ [AI Crop] Failed to create: #{result.error}"
-            render json: { error: result.error }, status: :unprocessable_entity
-          end
-
+          result = service.call(crop_name: crop_name, variety: variety, crop_info: crop_info)
+          render json: result.body, status: result.status
         rescue => e
           Rails.logger.error "❌ [AI Crop] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
@@ -248,81 +139,6 @@ module Api
           raise "Failed to query crop info after #{max_retries} attempts"
         end
       end
-
-      # 生育ステージを保存
-      def save_crop_stages(crop_id, stages_data)
-        saved_count = 0
-        
-        stages_data.each do |stage_requirement|
-          # stage_requirementの構造: { "stage": {...}, "temperature": {...}, "thermal": {...}, "sunshine": {...} }
-          stage_info = stage_requirement['stage']
-          
-          # CropStageを作成
-          stage = ::CropStage.create!(
-            crop_id: crop_id,
-            name: stage_info['name'],
-            order: stage_info['order']
-          )
-          
-          # 温度要件を作成
-          if stage_requirement['temperature'].present?
-            temp_data = stage_requirement['temperature']
-            ::TemperatureRequirement.create!(
-              crop_stage_id: stage.id,
-              base_temperature: temp_data['base_temperature'],
-              optimal_min: temp_data['optimal_min'],
-              optimal_max: temp_data['optimal_max'],
-              low_stress_threshold: temp_data['low_stress_threshold'],
-              high_stress_threshold: temp_data['high_stress_threshold'],
-              frost_threshold: temp_data['frost_threshold'],
-              sterility_risk_threshold: temp_data['sterility_risk_threshold']
-            )
-          end
-          
-          # 日照要件を作成
-          if stage_requirement['sunshine'].present?
-            sunshine_data = stage_requirement['sunshine']
-            ::SunshineRequirement.create!(
-              crop_stage_id: stage.id,
-              minimum_sunshine_hours: sunshine_data['minimum_sunshine_hours'],
-              target_sunshine_hours: sunshine_data['target_sunshine_hours']
-            )
-          end
-          
-          # 熱量要件を作成
-          if stage_requirement['thermal'].present?
-            thermal_data = stage_requirement['thermal']
-            ::ThermalRequirement.create!(
-              crop_stage_id: stage.id,
-              required_gdd: thermal_data['required_gdd']
-            )
-          end
-          
-          # 栄養素要件を作成
-          if stage_requirement['nutrients'].present?
-            nutrients_data = stage_requirement['nutrients']
-            daily_uptake = nutrients_data['daily_uptake']
-            if daily_uptake.present?
-              ::NutrientRequirement.create!(
-                crop_stage_id: stage.id,
-                daily_uptake_n: daily_uptake['N'],
-                daily_uptake_p: daily_uptake['P'],
-                daily_uptake_k: daily_uptake['K']
-              )
-            end
-          end
-          
-          saved_count += 1
-          Rails.logger.debug "  🌱 Stage #{stage.order}: #{stage.name} (ID: #{stage.id})"
-        end
-        
-        saved_count
-      rescue => e
-        Rails.logger.error "❌ [AI Crop] Failed to save stages: #{e.message}"
-        Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-        0
-      end
     end
   end
 end
-

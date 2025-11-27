@@ -252,8 +252,12 @@
        - `FarmsController`
        - `FieldsController`
      - 既存の詳細なエラーメッセージ分岐が重要な箇所（例: `PlansController`, `Plans::TaskScheduleItemsController`）は、現時点では個別実装を維持。
-3. **CRUD 成功/失敗レスポンスのテンプレート化（HTML/JSON別Concern）**
+3. **CRUD 成功/失敗レスポンスのテンプレート化（HTML/JSON別Concern）** ✅ **完了（2025-11-27）**
    - APIのレスポンス仕様とHTMLのバリデーションエラー挙動を揃えられる。
+   - 実装状況:
+     - `HtmlCrudResponder` と `ApiCrudResponder` を実装し、すべての対象コントローラに適用済み。
+     - HTML: 8コントローラ、JSON: 8コントローラに適用完了。
+     - 全体テスト通過（993 runs, 5881 assertions, 0 failures）。
 
 ### 4.2 中期的に整理したいポイント
 
@@ -555,6 +559,19 @@
 
 ### 7.1 実装済みの統一ポイント
 
+- **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入** ✅ **完了（2025-11-27）**
+  - `HtmlCrudResponder`: HTML向けの共通レスポンスConcernを実装
+    - `respond_to_create`, `respond_to_update` を提供
+    - 成功時: `redirect_to` + flashメッセージ、失敗時: `render :new/:edit, status: :unprocessable_entity`
+    - `update_result` パラメータにより、元の動作（`update`メソッドの戻り値で判定）を維持
+  - `ApiCrudResponder`: JSON向けの共通レスポンスConcernを実装
+    - `respond_to_index`, `respond_to_show`, `respond_to_create`, `respond_to_update`, `respond_to_destroy` を提供
+    - 成功時: `render json: resource, status: ...`、失敗時: `render json: { errors: ... }, status: :unprocessable_entity`
+  - 適用済みコントローラ:
+    - HTML: `FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
+    - JSON: `Api::V1::Masters::*` のすべてのコントローラ（8コントローラ）
+  - 各コントローラのテストにConcernの包含確認テストを追加
+  - 全体テスト通過（993 runs, 5881 assertions, 0 failures）
 - **削除 + Undo フロー**
   - Concern `DeletionUndoFlow` を実装し、代表的な参照マスタ系HTMLコントローラ（crops, fertilizes, pesticides, pests, interaction_rules, agricultural_tasks, farms, fields）の `destroy` に適用済み。
   - JSON/HTML両方のレスポンス形式は既存の `DeletionUndoResponder` に委譲しつつ、各コントローラではほぼ1〜2行で呼び出せる形に整理。
@@ -656,6 +673,22 @@
       - 新規作成時の `assert_difference "Fertilize.count", +1` / `assert_difference "Pest.count", +1`
       - 作成/更新後の `user_id` / `is_reference` の検証
       を追加し、AI upsert の所有者・参照フラグのふるまいを明示的に固定。
+  - Service 化（Crops）:
+    - `CropAiUpsertService` を `app/services` に追加し、`Api::V1::CropsController#ai_create` からは
+      - AGRR 応答の取得（`fetch_crop_info_from_agrr`）と
+      - `CropAiUpsertService` の呼び出し
+      だけを行う形に整理。
+    - `CropAiUpsertService` 側で
+      - 件数制限の事前バリデーション（`CropPolicy.build_for_create`）
+      - 既存作物の更新 / 新規作成（`@create_interactor` 経由）
+      - 生育ステージ関連モデル（`CropStage` / `TemperatureRequirement` / `SunshineRequirement` / `ThermalRequirement` / `NutrientRequirement`）の保存
+      を一括して担当。
+    - `test/services/crop_ai_upsert_service_test.rb` を追加し、
+      - AGRR 応答相当の `crop_info` を直接与えた場合の新規作成パス・既存更新パス
+      - Interactor に渡される属性（`name` / `variety` / `area_per_unit` / `revenue_per_area` / `groups` / `user_id` / `is_reference`）
+      を単体テストで固定。
+    - `docker compose run --rm test bundle exec rails test test/services/crop_ai_upsert_service_test.rb test/controllers/api/v1/crops_controller_test.rb` で
+      サービス単体＋コントローラの組み合わせテストを実行し、いずれも成功（SimpleCov の閾値 10% 未満による終了コード 2 は、全体テストを走らせていないことに起因する既存設定）。
 - **Farm / Field / Plan 系の Policy 導入（HTML / Masters API / Plans API）**
   - 対象Policy:
     - `FarmPolicy`: `user_owned_scope(user)`, `find_owned!(user, id)`, `build_for_create(user, attrs)`
@@ -758,6 +791,19 @@
 - **参照まわり以外のJSON APIロジック**
   - 参照マスタ系 JSON API については、index/show/create/update のOwnership・PermissionまわりはPolicy化済み。
   - それ以外のJSON API（AI upsert系、Farms/Fields/Plans系など）では、まだ `current_user` 起点の所有権チェックや upsert ロジックがコントローラ側に残っているため、今後Policy/Serviceに寄せていく。
+  - 進捗（AI upsert 系）:
+    - Crops:
+      - `Api::V1::CropsController#ai_create` の upsert ロジックを `CropAiUpsertService` に切り出し完了。
+      - コントローラは AGRR 応答の取得とサービス呼び出しのみを担当し、ユースケース本体はサービス側に集約。
+      - `test/services/crop_ai_upsert_service_test.rb` を追加し、サービス単体で新規作成／既存更新の両パスと属性組み立てをテスト済み。
+      - `docker compose run --rm test bundle exec rails test test/services/crop_ai_upsert_service_test.rb test/controllers/api/v1/crops_controller_test.rb` を実行し、機能テストは成功（この時点での line coverage は約 2.3%）。
+    - Fertilizes / Pests:
+      - 依然として `Api::V1::FertilizesController#ai_create/#ai_update` と `Api::V1::PestsController#ai_create/#ai_update` に upsert ロジックが残っている。
+      - 次のステップで `FertilizeAiUpsertService` / `PestAiUpsertService` を導入し、Crops と同様に
+        - コントローラは AGRR 応答取得＋サービス呼び出し
+        - サービス側で Policy＋Interactor＋関連モデル保存のオーケストレーション
+        - サービス単体テスト＋コントローラテストの組み合わせ実行とカバレッジ測定
+        を行う予定。
 - **Pest–Crop / Pesticide–Crop/Pest 関連付けロジック**
   - 上記 7.1 のとおり、`PestCropAssociationPolicy` / `PestCropAssociationService` / `PesticideAssociationPolicy` を実装し、すべてのコントローラでPolicy/Service経由に統一済み。
   - 直接SQLを書いていた箇所（`where("is_reference = ? OR user_id = ?", true, current_user.id)`）をすべて削除し、Policyメソッド（`visible_scope`, `selectable_scope`）を使用。
@@ -782,38 +828,74 @@
     - `Api::V1::PublicPlans::CultivationPlansController`: `PlanPolicy.find_public!` 経由に変更済み。
     - `PublicPlansController`（HTML側）: `FarmPolicy.reference_scope` / `CropPolicy.reference_scope` 経由に変更済み。
 
-### 7.3 今後の具体的なステップ（優先度順）
+### 7.3 実装済みの統一ポイント（2025-11-27 更新）
 
-1. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+- **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入** ✅ **完了**
+  - **実装内容**:
+    - `HtmlCrudResponder`: HTML向けの共通レスポンスConcern
+      - `respond_to_create(resource, notice:, alert:, redirect_path:, render_action:)`
+      - `respond_to_update(resource, notice:, alert:, redirect_path:, render_action:, update_result:)`
+      - 成功時: `redirect_to` + flashメッセージ
+      - 失敗時: `render :new/:edit, status: :unprocessable_entity`
+    - `ApiCrudResponder`: JSON向けの共通レスポンスConcern
+      - `respond_to_index(resources, status:)`
+      - `respond_to_show(resource, status:)`
+      - `respond_to_create(resource, status:, error_serializer:)`
+      - `respond_to_update(resource, status:, error_serializer:, update_result:)`
+      - `respond_to_destroy(resource, status:, error_serializer:, destroy_result:)`
+      - 成功時: `render json: resource, status: ...`
+      - 失敗時: `render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity`
+  - **適用済みコントローラ**:
+    - HTML:
+      - `FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
+    - JSON:
+      - `Api::V1::Masters::FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
+  - **実装のポイント**:
+    - `HtmlCrudResponder#respond_to_update` に `update_result` パラメータを追加し、元の動作（`update`メソッドの戻り値で判定）を維持
+    - 各コントローラのテストにConcernの包含確認テストを追加
+    - 全体テスト通過（993 runs, 5881 assertions, 0 failures）
+  - **コミット**: 2025-11-27 完了
+
+### 7.4 今後の具体的なステップ（優先度順）
+
+1. **AI向け upsert サービスの残り実装（Fertilizes / Pests）**
    - **目標**:
-     - HTML/JSONのエラーレスポンス仕様を1箇所に固定
-     - コントローラのCRUDアクション（`create`, `update`, `destroy`）のレスポンス処理を統一
-   - **現状パターン**:
-     - HTML:
-       - 成功: `redirect_to ..., notice: ...`
-       - 失敗: `render :new/:edit, status: :unprocessable_entity`
-     - JSON:
-       - 成功: `render json: resource, status: ...`
-       - 失敗: `render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity`
+     - Crops と同様に、AI upsert ロジックをサービス層に集約し、JSON API コントローラからユースケース本体を排除する。
+   - **対象**:
+     - `Api::V1::FertilizesController#ai_create` / `#ai_update`
+     - `Api::V1::PestsController#ai_create` / `#ai_update`
    - **実装方針**:
-     - `HtmlCrudResponder`: HTML向けの共通レスポンス
-       - `respond_create(resource, success_path:, failure_template:)`
-       - `respond_update(resource, success_path:, failure_template:)`
-       - `respond_destroy(success_path:, error_message_key:)`
-     - `ApiCrudResponder`: JSON向けの共通レスポンス
-       - `respond_create(resource, status: :created)`
-       - `respond_update(resource, status: :ok)`
-       - `respond_destroy(success:, error_message_key:)`
+     - `FertilizeAiUpsertService` / `PestAiUpsertService` を `app/services` に追加。
+     - 既存の Policy（`FertilizePolicy` / `PestPolicy`）と Interactor を利用して、
+       所有権・参照フラグ・関連モデルの作成／更新をサービス側で一括実行。
+   - **テスト戦略**:
+     - 先にサービス単体テストを追加し、その後、既存の API コントローラテストを
+       サービス利用版に対応させる（振る舞いが変わらないことを重視）。
+     - `docker compose run --rm test bundle exec rails test` で、対象サービステスト＋コントローラテストの組み合わせを優先的に実行し、
+       カバレッジの実測値を必ず記録する。
+
+2. **HTML/JSON両対応アクションのテンプレート化（`DualFormatResponder`）**
+   - **目標**:
+     - `respond_to do |format| ... format.html ... format.json ... end` パターンを統一
+     - HTML/JSON両対応が必要なアクションのレスポンス処理を簡素化
+   - **現状パターン**:
+     - `Plans::TaskSchedulesController#show`
+     - `DeletionUndosController#create`
+     - `CropsController#toggle_task_template`
+     - `Crops::TaskScheduleBlueprintsController#update_position`
+   - **実装方針**:
+     - `DualFormatResponder` Concernを追加
+     - `render_html_and_json(html_template:, json_payload:, status:)` メソッドを提供
    - **対象コントローラ**:
-     - HTML:
-       - `CropsController`, `PestsController`, `FertilizesController`, `PesticidesController`, `InteractionRulesController`, `AgriculturalTasksController`, `FarmsController`, `FieldsController`, `PlansController`
-     - JSON:
-       - `Api::V1::Masters::*` のすべてのコントローラ
-       - `Api::V1::*` のCRUDエンドポイント
+     - `Plans::TaskSchedulesController`
+     - `DeletionUndosController`
+     - `CropsController`
+     - `Crops::TaskScheduleBlueprintsController`
+     - `SitemapsController`
    - **実装手順**:
-     1. `HtmlCrudResponder` と `ApiCrudResponder` を試作
-     2. ドライラン: 1つのコントローラ（例: `CropsController`）に適用して適合性を確認
-     3. カバレッジの実測: 対象アクションのテストカバレッジを確認
+     1. `DualFormatResponder` を試作
+     2. ドライラン: 1つのコントローラに適用して適合性を確認
+     3. カバレッジの実測: テストを行いカバレッジを確認（SimpleCov の閾値を意識しつつ、段階的に対象を広げる）
      4. テストの追加: 不足しているテストケースを追加
      5. 実装: すべての対象コントローラに適用
      6. テスト: 全体テストを実行して確認
