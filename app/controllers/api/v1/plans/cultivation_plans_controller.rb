@@ -30,7 +30,7 @@ module Api
         end
         
         def get_crop_for_add_crop(crop_id)
-          current_user.crops.find_by(id: crop_id, is_reference: false)
+          CropPolicy.visible_scope(current_user).find_by(id: crop_id, is_reference: false)
         end
       end
     end
