@@ -10,6 +10,10 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     @pest = create(:pest, :complete, is_reference: true)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes PestsController.included_modules, HtmlCrudResponder
+  end
+
   test "should get index" do
     get pests_path
     assert_response :success

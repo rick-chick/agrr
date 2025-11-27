@@ -20,6 +20,10 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     @admin_fertilize = create(:fertilize, :user_owned, user: @admin_user)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes FertilizesController.included_modules, HtmlCrudResponder
+  end
+
   # ========== index アクションのテスト ==========
   
   test "一般ユーザーのindexは自身の非参照肥料のみ表示" do

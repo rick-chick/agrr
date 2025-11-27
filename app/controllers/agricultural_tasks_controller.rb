@@ -2,6 +2,7 @@
 
 class AgriculturalTasksController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
   before_action :load_crop_selection_data, only: [:edit, :update]
   before_action :prepare_crop_cards_for_edit, only: [:edit]
@@ -48,9 +49,9 @@ class AgriculturalTasksController < ApplicationController
     @agricultural_task = AgriculturalTaskPolicy.build_for_create(current_user, task_attributes)
 
     if @agricultural_task.save
-      redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.created')
+      respond_to_create(@agricultural_task, notice: I18n.t('agricultural_tasks.flash.created'), redirect_path: agricultural_task_path(@agricultural_task))
     else
-      render :new, status: :unprocessable_entity
+      respond_to_create(@agricultural_task, notice: nil)
     end
   end
 
@@ -65,7 +66,8 @@ class AgriculturalTasksController < ApplicationController
       return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
     end
 
-    if AgriculturalTaskPolicy.apply_update!(current_user, @agricultural_task, task_attributes)
+    update_result = AgriculturalTaskPolicy.apply_update!(current_user, @agricultural_task, task_attributes)
+    if update_result
       # 作業と作物の紐付けをCropTaskTemplateで更新
       # 現在のテンプレートを取得
       current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
@@ -96,10 +98,10 @@ class AgriculturalTasksController < ApplicationController
         template&.destroy
       end
       
-      redirect_to agricultural_task_path(@agricultural_task), notice: I18n.t('agricultural_tasks.flash.updated')
+      respond_to_update(@agricultural_task, notice: I18n.t('agricultural_tasks.flash.updated'), redirect_path: agricultural_task_path(@agricultural_task), update_result: update_result)
     else
       prepare_crop_cards(selected_ids: selected_crop_ids)
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@agricultural_task, notice: nil, update_result: update_result)
     end
   end
 

@@ -2,6 +2,7 @@
 
 class PesticidesController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_pesticide, only: [:show, :edit, :update, :destroy]
 
   # GET /pesticides
@@ -40,10 +41,10 @@ class PesticidesController < ApplicationController
     @pesticide = PesticidePolicy.build_for_create(current_user, pesticide_params)
 
     if @pesticide.save
-      redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.created')
+      respond_to_create(@pesticide, notice: I18n.t('pesticides.flash.created'), redirect_path: pesticide_path(@pesticide))
     else
       load_crops_and_pests
-      render :new, status: :unprocessable_entity
+      respond_to_create(@pesticide, notice: nil)
     end
   end
 
@@ -57,11 +58,12 @@ class PesticidesController < ApplicationController
       end
     end
 
-    if PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
-      redirect_to pesticide_path(@pesticide), notice: I18n.t('pesticides.flash.updated')
+    update_result = PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
+    if update_result
+      respond_to_update(@pesticide, notice: I18n.t('pesticides.flash.updated'), redirect_path: pesticide_path(@pesticide), update_result: update_result)
     else
       load_crops_and_pests
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@pesticide, notice: nil, update_result: update_result)
     end
   end
 

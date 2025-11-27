@@ -2,6 +2,7 @@
 
 class PestsController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_pest, only: [:show, :edit, :update, :destroy]
 
   # GET /pests
@@ -44,10 +45,10 @@ class PestsController < ApplicationController
     if @pest.save
       # 選択された作物との関連付けを処理
       associate_crops(@pest, crop_ids)
-      redirect_to pest_path(@pest), notice: I18n.t('pests.flash.created')
+      respond_to_create(@pest, notice: I18n.t('pests.flash.created'), redirect_path: pest_path(@pest))
     else
       prepare_crop_selection_for(@pest, selected_ids: crop_ids)
-      render :new, status: :unprocessable_entity
+      respond_to_create(@pest, notice: nil)
     end
   end
 
@@ -63,13 +64,14 @@ class PestsController < ApplicationController
 
     crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
 
-    if PestPolicy.apply_update!(current_user, @pest, pest_params)
+    update_result = PestPolicy.apply_update!(current_user, @pest, pest_params)
+    if update_result
       # 選択された作物との関連付けを更新
       update_crop_associations(@pest, crop_ids)
-      redirect_to pest_path(@pest), notice: I18n.t('pests.flash.updated')
+      respond_to_update(@pest, notice: I18n.t('pests.flash.updated'), redirect_path: pest_path(@pest), update_result: update_result)
     else
       prepare_crop_selection_for(@pest, selected_ids: crop_ids)
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@pest, notice: nil, update_result: update_result)
     end
   end
 

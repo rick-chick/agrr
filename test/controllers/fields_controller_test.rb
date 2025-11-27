@@ -10,6 +10,10 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     @farm = create(:farm, user: @user)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes FieldsController.included_modules, HtmlCrudResponder
+  end
+
   test 'destroy_returns_undo_token_json' do
     sign_in_as @user
     field = create(:field, farm: @farm, user: @user)

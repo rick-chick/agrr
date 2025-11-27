@@ -4,49 +4,40 @@ module Api
   module V1
     module Masters
       class PestsController < BaseController
+        include ApiCrudResponder
         before_action :set_pest, only: [:show, :update, :destroy]
 
         # GET /api/v1/masters/pests
         def index
           # HTML側と同様、Policyのvisible_scopeを利用
           @pests = PestPolicy.visible_scope(current_user)
-          render json: @pests
+          respond_to_index(@pests)
         end
 
         # GET /api/v1/masters/pests/:id
         def show
-          render json: @pest
+          respond_to_show(@pest)
         end
 
         # POST /api/v1/masters/pests
         def create
           # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
           @pest = PestPolicy.build_for_create(current_user, pest_params)
-
-          if @pest.save
-            render json: @pest, status: :created
-          else
-            render json: { errors: @pest.errors.full_messages }, status: :unprocessable_entity
-          end
+          @pest.save
+          respond_to_create(@pest)
         end
 
         # PATCH/PUT /api/v1/masters/pests/:id
         def update
           # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          if PestPolicy.apply_update!(current_user, @pest, pest_params)
-            render json: @pest
-          else
-            render json: { errors: @pest.errors.full_messages }, status: :unprocessable_entity
-          end
+          update_result = PestPolicy.apply_update!(current_user, @pest, pest_params)
+          respond_to_update(@pest, update_result: update_result)
         end
 
         # DELETE /api/v1/masters/pests/:id
         def destroy
-          if @pest.destroy
-            head :no_content
-          else
-            render json: { errors: @pest.errors.full_messages }, status: :unprocessable_entity
-          end
+          destroy_result = @pest.destroy
+          respond_to_destroy(@pest, destroy_result: destroy_result)
         end
 
         private

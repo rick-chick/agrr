@@ -2,6 +2,7 @@
 
 class FertilizesController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_fertilize, only: [:show, :edit, :update, :destroy]
 
   # GET /fertilizes
@@ -34,9 +35,9 @@ class FertilizesController < ApplicationController
     @fertilize = FertilizePolicy.build_for_create(current_user, fertilize_params)
 
     if @fertilize.save
-      redirect_to fertilize_path(@fertilize), notice: I18n.t('fertilizes.flash.created')
+      respond_to_create(@fertilize, notice: I18n.t('fertilizes.flash.created'), redirect_path: fertilize_path(@fertilize))
     else
-      render :new, status: :unprocessable_entity
+      respond_to_create(@fertilize, notice: nil)
     end
   end
 
@@ -50,10 +51,11 @@ class FertilizesController < ApplicationController
       end
     end
 
-    if FertilizePolicy.apply_update!(current_user, @fertilize, fertilize_params)
-      redirect_to fertilize_path(@fertilize), notice: I18n.t('fertilizes.flash.updated')
+    update_result = FertilizePolicy.apply_update!(current_user, @fertilize, fertilize_params)
+    if update_result
+      respond_to_update(@fertilize, notice: I18n.t('fertilizes.flash.updated'), redirect_path: fertilize_path(@fertilize), update_result: update_result)
     else
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@fertilize, notice: nil, update_result: update_result)
     end
   end
 

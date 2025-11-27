@@ -2,6 +2,7 @@
 
 class CropsController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
   before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
@@ -51,9 +52,9 @@ class CropsController < ApplicationController
     end
 
     if @crop.save
-      redirect_to crop_path(@crop), notice: I18n.t('crops.flash.created')
+      respond_to_create(@crop, notice: I18n.t('crops.flash.created'), redirect_path: crop_path(@crop))
     else
-      render :new, status: :unprocessable_entity
+      respond_to_create(@crop, notice: nil)
     end
   end
 
@@ -68,10 +69,11 @@ class CropsController < ApplicationController
       @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
     end
 
-    if CropPolicy.apply_update!(current_user, @crop, crop_params)
-      redirect_to crop_path(@crop), notice: I18n.t('crops.flash.updated')
+    update_result = CropPolicy.apply_update!(current_user, @crop, crop_params)
+    if update_result
+      respond_to_update(@crop, notice: I18n.t('crops.flash.updated'), redirect_path: crop_path(@crop), update_result: update_result)
     else
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@crop, notice: nil, update_result: update_result)
     end
   end
 

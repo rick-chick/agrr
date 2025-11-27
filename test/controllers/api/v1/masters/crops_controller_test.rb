@@ -6,6 +6,9 @@ module Api
   module V1
     module Masters
       class CropsControllerTest < ActionDispatch::IntegrationTest
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::CropsController.included_modules, ApiCrudResponder
+        end
         setup do
           @user = create(:user)
           @user.generate_api_key!

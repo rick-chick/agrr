@@ -12,6 +12,10 @@ module Api
           @api_key = @user.api_key
         end
 
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, ApiCrudResponder
+        end
+
         test "should get index" do
           task1 = create(:agricultural_task, :user_owned, user: @user)
           task2 = create(:agricultural_task, :user_owned, user: @user)
