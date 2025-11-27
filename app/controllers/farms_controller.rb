@@ -2,6 +2,7 @@
 
 class FarmsController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_farm, only: [:show, :edit, :update, :destroy]
 
   # GET /farms
@@ -38,19 +39,20 @@ class FarmsController < ApplicationController
 
     if @farm.save
       Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
-      redirect_to @farm, notice: I18n.t('farms.flash.created')
+      respond_to_create(@farm, notice: I18n.t('farms.flash.created'))
     else
       Rails.logger.warn "⚠️  Failed to create farm: #{@farm.errors.full_messages.join(', ')}"
-      render :new, status: :unprocessable_entity
+      respond_to_create(@farm, notice: nil)
     end
   end
 
   # PATCH/PUT /farms/:id
   def update
-    if @farm.update(farm_params)
-      redirect_to @farm, notice: I18n.t('farms.flash.updated')
+    update_result = @farm.update(farm_params)
+    if update_result
+      respond_to_update(@farm, notice: I18n.t('farms.flash.updated'), update_result: update_result)
     else
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@farm, notice: nil, update_result: update_result)
     end
   end
 

@@ -4,6 +4,7 @@ module Api
   module V1
     module Masters
       class FieldsController < BaseController
+        include ApiCrudResponder
         before_action :set_field, only: [:show, :update, :destroy]
 
         # GET /api/v1/masters/farms/:farm_id/fields
@@ -21,12 +22,12 @@ module Api
           end
 
           @fields = FieldPolicy.scope_for_farm(current_user, farm)
-          render json: @fields
+          respond_to_index(@fields)
         end
 
         # GET /api/v1/masters/fields/:id
         def show
-          render json: @field
+          respond_to_show(@field)
         end
 
         # POST /api/v1/masters/farms/:farm_id/fields
@@ -44,32 +45,22 @@ module Api
           end
 
           @field = FieldPolicy.build_for_create(current_user, farm, field_params)
-
-          if @field.save
-            render json: @field, status: :created
-          else
-            render json: { errors: @field.errors.full_messages }, status: :unprocessable_entity
-          end
+          @field.save
+          respond_to_create(@field)
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Farm not found' }, status: :not_found
         end
 
         # PATCH/PUT /api/v1/masters/fields/:id
         def update
-          if @field.update(field_params)
-            render json: @field
-          else
-            render json: { errors: @field.errors.full_messages }, status: :unprocessable_entity
-          end
+          update_result = @field.update(field_params)
+          respond_to_update(@field, update_result: update_result)
         end
 
         # DELETE /api/v1/masters/fields/:id
         def destroy
-          if @field.destroy
-            head :no_content
-          else
-            render json: { errors: @field.errors.full_messages }, status: :unprocessable_entity
-          end
+          destroy_result = @field.destroy
+          respond_to_destroy(@field, destroy_result: destroy_result)
         end
 
         private

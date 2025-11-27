@@ -13,6 +13,10 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     @pesticide = create(:pesticide, crop: @crop, pest: @pest, is_reference: true)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes PesticidesController.included_modules, HtmlCrudResponder
+  end
+
   # ========== index アクションのテスト ==========
 
   test "一般ユーザーのindexは自身の非参照農薬のみ表示" do

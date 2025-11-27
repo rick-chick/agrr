@@ -26,6 +26,7 @@ module Api
       # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
       # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
       class CropsController < BaseController
+        include ApiCrudResponder
         before_action :set_crop, only: [:show, :update, :destroy]
 
         # 作物一覧を取得
@@ -36,7 +37,7 @@ module Api
         def index
           # HTML側と同様、Policyのvisible_scopeを利用して参照作物/ユーザー作物の両方を扱う
           @crops = CropPolicy.visible_scope(current_user)
-          render json: @crops
+          respond_to_index(@crops)
         end
 
         # 作物の詳細を取得
@@ -47,7 +48,7 @@ module Api
         # @return [401] APIキーが無効
         # @return [404] 作物が見つからない
         def show
-          render json: @crop
+          respond_to_show(@crop)
         end
 
         # 作物を作成
@@ -66,12 +67,8 @@ module Api
         def create
           # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
           @crop = CropPolicy.build_for_create(current_user, crop_params)
-
-          if @crop.save
-            render json: @crop, status: :created
-          else
-            render json: { errors: @crop.errors.full_messages }, status: :unprocessable_entity
-          end
+          @crop.save
+          respond_to_create(@crop)
         end
 
         # 作物を更新
@@ -85,11 +82,8 @@ module Api
         # @return [422] バリデーションエラー
         def update
           # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          if CropPolicy.apply_update!(current_user, @crop, crop_params)
-            render json: @crop
-          else
-            render json: { errors: @crop.errors.full_messages }, status: :unprocessable_entity
-          end
+          update_result = CropPolicy.apply_update!(current_user, @crop, crop_params)
+          respond_to_update(@crop, update_result: update_result)
         end
 
         # 作物を削除
@@ -100,11 +94,8 @@ module Api
         # @return [404] 作物が見つからない
         # @return [422] 削除エラー
         def destroy
-          if @crop.destroy
-            head :no_content
-          else
-            render json: { errors: @crop.errors.full_messages }, status: :unprocessable_entity
-          end
+          destroy_result = @crop.destroy
+          respond_to_destroy(@crop, destroy_result: destroy_result)
         end
 
         private

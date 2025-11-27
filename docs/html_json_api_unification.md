@@ -551,7 +551,7 @@
 
 ---
 
-## 7. 現在の進捗と今後の計画（2025-11 時点）
+## 7. 現在の進捗と今後の計画（2025-11-27 時点）
 
 ### 7.1 実装済みの統一ポイント
 
@@ -703,6 +703,50 @@
     - `Api::V1::Plans::FieldCultivationsControllerTest` に `show` と `update` のテストを追加。
     - `Api::V1::PublicPlans::FieldCultivationsControllerTest` を新規作成（認証不要の public plan アクセス制御をテスト）。
     - `Api::V1::PublicPlans::CultivationPlansControllerTest` を新規作成（public plan の取得をテスト）。
+- **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
+  - 対象Policy/Service:
+    - `PestCropAssociationPolicy`: 害虫と作物の関連付け可否を判定するPolicy
+      - `accessible_crops_scope(pest, user:)`: 害虫に対して選択可能な作物のスコープを返す
+      - `crop_accessible_for_pest?(crop, pest, user:)`: 特定の作物が害虫と関連付け可能か判定
+      - ルール: region一致、参照害虫は参照作物のみ、ユーザー害虫はそのユーザーの非参照作物のみ
+    - `PestCropAssociationService`: 害虫と作物の関連付け・更新を実行するService
+      - `associate_crops(pest, crop_ids, user:)`: 害虫と作物を関連付ける
+      - `update_crop_associations(pest, crop_ids, user:)`: 関連付けを更新（差分更新）
+      - `normalize_crop_ids(pest, raw_ids, user:)`: 作物IDを正規化（選択可能な作物IDのみを抽出）
+    - `PesticideAssociationPolicy`: 農薬に対して選択可能な作物・害虫のスコープを提供するPolicy
+      - `accessible_crops_scope(user)`: 農薬に対して選択可能な作物のスコープを返す
+      - `accessible_pests_scope(user)`: 農薬に対して選択可能な害虫のスコープを返す
+      - ルール: 管理者=参照データ+自分のデータ、一般ユーザー=自分の非参照データのみ
+  - HTMLコントローラへの適用:
+    - `PestsController`:
+      - `associate_crops`: `PestCropAssociationService.associate_crops` 経由
+      - `update_crop_associations`: `PestCropAssociationService.update_crop_associations` 経由
+      - `prepare_crop_selection_for`: `PestCropAssociationPolicy.accessible_crops_scope` 経由
+      - `normalize_crop_ids_for`: `PestCropAssociationService.normalize_crop_ids` 経由
+    - `PesticidesController`:
+      - `load_crops_and_pests`: `PesticideAssociationPolicy.accessible_crops_scope` / `accessible_pests_scope` 経由
+    - `Crops::PestsController`:
+      - `index`: `PestPolicy.selectable_scope` 経由（参照害虫も含む）
+      - `new`: `PestPolicy.selectable_scope` 経由（参照害虫も含む）
+  - JSON APIコントローラへの適用:
+    - `Api::V1::PestsController`:
+      - `associate_crops_from_api`: `PestCropAssociationPolicy.crop_accessible_for_pest?` 経由（参照作物は常にアクセス可能なAI API特有のロジックを維持）
+    - `Api::V1::Masters::Crops::PesticidesController`:
+      - `index`: `PesticidePolicy.selectable_scope` 経由（参照農薬も含む）
+    - `Api::V1::Masters::Crops::PestsController`:
+      - `index`: `PestPolicy.selectable_scope` 経由（参照害虫も含む）
+      - `create`: `PestPolicy.selectable_scope` 経由（参照害虫も含む）
+  - Policy拡張:
+    - `PestPolicy` と `PesticidePolicy` に `selectable_scope` メソッドを追加
+      - `visible_scope`: 一般ユーザーは自分の非参照データのみ（既存の動作を維持）
+      - `selectable_scope`: 一般ユーザーでも参照データを含む（選択候補として使用）
+  - 直接SQLの削除:
+    - すべてのコントローラで `where("is_reference = ? OR user_id = ?", true, current_user.id)` を削除し、Policyメソッドを使用
+  - テスト:
+    - `PestCropAssociationPolicy` のテストを追加
+    - `PestCropAssociationService` のテストを追加
+    - `PesticideAssociationPolicy` のテストを追加
+    - 既存のコントローラテストがすべて通過（966 runs, 5822 assertions, 0 failures）
 
 ### 7.2 まだコントローラに残っている「参照まわり」ロジック
 
@@ -714,6 +758,10 @@
 - **参照まわり以外のJSON APIロジック**
   - 参照マスタ系 JSON API については、index/show/create/update のOwnership・PermissionまわりはPolicy化済み。
   - それ以外のJSON API（AI upsert系、Farms/Fields/Plans系など）では、まだ `current_user` 起点の所有権チェックや upsert ロジックがコントローラ側に残っているため、今後Policy/Serviceに寄せていく。
+- **Pest–Crop / Pesticide–Crop/Pest 関連付けロジック**
+  - 上記 7.1 のとおり、`PestCropAssociationPolicy` / `PestCropAssociationService` / `PesticideAssociationPolicy` を実装し、すべてのコントローラでPolicy/Service経由に統一済み。
+  - 直接SQLを書いていた箇所（`where("is_reference = ? OR user_id = ?", true, current_user.id)`）をすべて削除し、Policyメソッド（`visible_scope`, `selectable_scope`）を使用。
+  - このため、「Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化」は完了している。
 - **Farm / Field / Plan 系の所有権チェック（一部残存）**
   - 2025-11 時点の実装状況:
     - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を実装済み。
@@ -736,10 +784,37 @@
 
 ### 7.3 今後の具体的なステップ（優先度順）
 
-1. **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
-   - 目標:
-     - `PestsController` / `PesticidesController` に散在する「関連付け可否」ロジックを `PestCropAssociationPolicy` / `PesticideAssociationPolicy` + Service に移動。
-   - そのうえで、HTML/JSON 両方から同じルールを利用する。
-2. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
-   - 削除 + Undo と参照ポリシーまわりの整理が一段落したあとに着手し、
-   - HTML/JSONのエラーレスポンス仕様の統一を図る。
+1. **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入**
+   - **目標**:
+     - HTML/JSONのエラーレスポンス仕様を1箇所に固定
+     - コントローラのCRUDアクション（`create`, `update`, `destroy`）のレスポンス処理を統一
+   - **現状パターン**:
+     - HTML:
+       - 成功: `redirect_to ..., notice: ...`
+       - 失敗: `render :new/:edit, status: :unprocessable_entity`
+     - JSON:
+       - 成功: `render json: resource, status: ...`
+       - 失敗: `render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity`
+   - **実装方針**:
+     - `HtmlCrudResponder`: HTML向けの共通レスポンス
+       - `respond_create(resource, success_path:, failure_template:)`
+       - `respond_update(resource, success_path:, failure_template:)`
+       - `respond_destroy(success_path:, error_message_key:)`
+     - `ApiCrudResponder`: JSON向けの共通レスポンス
+       - `respond_create(resource, status: :created)`
+       - `respond_update(resource, status: :ok)`
+       - `respond_destroy(success:, error_message_key:)`
+   - **対象コントローラ**:
+     - HTML:
+       - `CropsController`, `PestsController`, `FertilizesController`, `PesticidesController`, `InteractionRulesController`, `AgriculturalTasksController`, `FarmsController`, `FieldsController`, `PlansController`
+     - JSON:
+       - `Api::V1::Masters::*` のすべてのコントローラ
+       - `Api::V1::*` のCRUDエンドポイント
+   - **実装手順**:
+     1. `HtmlCrudResponder` と `ApiCrudResponder` を試作
+     2. ドライラン: 1つのコントローラ（例: `CropsController`）に適用して適合性を確認
+     3. カバレッジの実測: 対象アクションのテストカバレッジを確認
+     4. テストの追加: 不足しているテストケースを追加
+     5. 実装: すべての対象コントローラに適用
+     6. テスト: 全体テストを実行して確認
+     7. コミット

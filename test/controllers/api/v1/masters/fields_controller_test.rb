@@ -13,6 +13,10 @@ module Api
           @farm = create(:farm, :user_owned, user: @user)
         end
 
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::FieldsController.included_modules, ApiCrudResponder
+        end
+
         test "should get index" do
           field1 = create(:field, farm: @farm, user: @user)
           field2 = create(:field, farm: @farm, user: @user)

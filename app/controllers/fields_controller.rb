@@ -2,6 +2,7 @@
 
 class FieldsController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_farm
   before_action :set_field, only: [:show, :edit, :update, :destroy]
 
@@ -31,18 +32,21 @@ class FieldsController < ApplicationController
     @field.user = current_user
 
     if @field.save
-      redirect_to url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id), notice: I18n.t('fields.flash.created')
+      redirect_path = url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id)
+      respond_to_create(@field, notice: I18n.t('fields.flash.created'), redirect_path: redirect_path)
     else
-      render :new, status: :unprocessable_entity
+      respond_to_create(@field, notice: nil)
     end
   end
 
   # PATCH/PUT /farms/:farm_id/fields/:id
   def update
-    if @field.update(field_params)
-      redirect_to url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id), notice: I18n.t('fields.flash.updated')
+    update_result = @field.update(field_params)
+    redirect_path = url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id)
+    if update_result
+      respond_to_update(@field, notice: I18n.t('fields.flash.updated'), redirect_path: redirect_path, update_result: update_result)
     else
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@field, notice: nil, redirect_path: redirect_path, update_result: update_result)
     end
   end
 

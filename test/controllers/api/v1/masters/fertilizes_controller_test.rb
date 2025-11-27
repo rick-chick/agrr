@@ -12,6 +12,10 @@ module Api
           @api_key = @user.api_key
         end
 
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, ApiCrudResponder
+        end
+
         test "should get index" do
           fertilize1 = create(:fertilize, :user_owned, user: @user)
           fertilize2 = create(:fertilize, :user_owned, user: @user)

@@ -9,6 +9,10 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     @user = create(:user)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes InteractionRulesController.included_modules, HtmlCrudResponder
+  end
+
   def create_interaction_rule(user:)
     InteractionRule.create!(
       rule_type: 'continuous_cultivation',

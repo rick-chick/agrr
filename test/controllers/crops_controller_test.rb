@@ -30,6 +30,10 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     @admin_crop = create(:crop, :with_stages, user: @admin_user)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes CropsController.included_modules, HtmlCrudResponder
+  end
+
   # ========== index アクションのテスト ==========
   
   test "一般ユーザーのindexは自身の作物のみ表示" do

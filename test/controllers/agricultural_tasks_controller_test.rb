@@ -13,6 +13,10 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     @admin_task = create(:agricultural_task, :user_owned, user: @admin_user)
   end
 
+  test "includes HtmlCrudResponder" do
+    assert_includes AgriculturalTasksController.included_modules, HtmlCrudResponder
+  end
+
   test '一般ユーザーは自分の作業のみ一覧表示できる' do
     sign_in_as @user
 

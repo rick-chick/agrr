@@ -2,6 +2,7 @@
 
 class InteractionRulesController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_interaction_rule, only: [:show, :edit, :update, :destroy]
 
   # GET /interaction_rules
@@ -39,9 +40,9 @@ class InteractionRulesController < ApplicationController
     @interaction_rule, = InteractionRulePolicy.build_for_create(current_user, interaction_rule_params.to_h)
 
     if @interaction_rule.save
-      redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.created')
+      respond_to_create(@interaction_rule, notice: I18n.t('interaction_rules.flash.created'))
     else
-      render :new, status: :unprocessable_entity
+      respond_to_create(@interaction_rule, notice: nil)
     end
   end
 
@@ -51,10 +52,11 @@ class InteractionRulesController < ApplicationController
       return redirect_to @interaction_rule, alert: I18n.t('interaction_rules.flash.reference_flag_admin_only')
     end
 
-    if InteractionRulePolicy.apply_update!(current_user, @interaction_rule, interaction_rule_params.to_h)
-      redirect_to @interaction_rule, notice: I18n.t('interaction_rules.flash.updated')
+    update_result = InteractionRulePolicy.apply_update!(current_user, @interaction_rule, interaction_rule_params.to_h)
+    if update_result
+      respond_to_update(@interaction_rule, notice: I18n.t('interaction_rules.flash.updated'), update_result: update_result)
     else
-      render :edit, status: :unprocessable_entity
+      respond_to_update(@interaction_rule, notice: nil, update_result: update_result)
     end
   end
 

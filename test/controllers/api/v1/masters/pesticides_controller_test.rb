@@ -14,6 +14,10 @@ module Api
           @pest = create(:pest, :user_owned, user: @user)
         end
 
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, ApiCrudResponder
+        end
+
         test "should get index" do
           pesticide1 = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
           pesticide2 = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)

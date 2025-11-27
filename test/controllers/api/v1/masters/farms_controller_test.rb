@@ -12,6 +12,10 @@ module Api
           @api_key = @user.api_key
         end
 
+        test "includes ApiCrudResponder" do
+          assert_includes Api::V1::Masters::FarmsController.included_modules, ApiCrudResponder
+        end
+
         test "should get index" do
           farm1 = create(:farm, :user_owned, user: @user)
           farm2 = create(:farm, :user_owned, user: @user)
