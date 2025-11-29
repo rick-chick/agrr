@@ -8,6 +8,12 @@ class AgriculturalTaskPolicy
     AgriculturalTask.visible_scope_for(user)
   end
 
+  # 指定ユーザーが所有する非参照タスクのみのスコープ
+  # - 管理者/一般ユーザーの別なく、「user_id が一致し、is_reference: false」のタスクを返す
+  def self.user_owned_non_reference_scope(user)
+    AgriculturalTask.where(user_id: user.id, is_reference: false)
+  end
+
   # create 用ビルダー
   # - 管理者: is_reference=true なら user_id=nil / false なら user_id=admin.id
   # - 一般ユーザー: 参照フラグは controller 側で弾かれる前提で、常に user_id=current_user.id, is_reference=false

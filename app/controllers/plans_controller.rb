@@ -412,8 +412,8 @@ class PlansController < ApplicationController
       return []
     end
     
-    # ユーザーの作物のみ取得
-    crops = current_user.crops.where(id: crop_ids, is_reference: false)
+    # ユーザー所有かつ非参照の作物のみ取得（Policy 経由）
+    crops = CropPolicy.user_owned_non_reference_scope(current_user).where(id: crop_ids)
     Rails.logger.info "🌾 [PlansController#create] Found #{crops.count} crops for user #{current_user.id}"
     crops.each { |crop| Rails.logger.info "  - #{crop.name} (ID: #{crop.id})" }
     
