@@ -78,10 +78,8 @@ class MonitorMigrationStatusJob < ApplicationJob
         { pending: pending.size }
       end
     else
-      { pending: 0, error: "Unknown database: #{database}" }
+      raise "Unknown database: #{database}"
     end
-  rescue => e
-    { pending: -1, error: e.message }
   end
 end
 

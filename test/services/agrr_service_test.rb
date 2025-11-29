@@ -175,4 +175,107 @@ class AgrrServiceTest < ActiveSupport::TestCase
 
     status.verify
   end
+
+  test 'execute_command retries once after starting daemon when connection error occurs' do
+    client_path = Rails.root.join('bin', 'agrr_client').to_s
+
+    client_fail_status = Minitest::Mock.new
+    client_fail_status.expect(:success?, false)
+    client_fail_status.expect(:exitstatus, 1)
+
+    client_success_status = Minitest::Mock.new
+    client_success_status.expect(:success?, true)
+    client_success_status.expect(:exitstatus, 0)
+
+    daemon_start_status = Minitest::Mock.new
+    daemon_start_status.expect(:success?, true)
+
+    calls = []
+
+    call_count = 0
+    @service.stub(:daemon_running?, -> {
+      call_count += 1
+      # 1回目: 実行前チェック, 2回目: start_daemon_if_not_running直後, 3回目以降: 起動済みとみなす
+      call_count >= 3
+    }) do
+      @service.stub(:find_agrr_binary, '/usr/local/bin/agrr') do
+        Open3.stub(:capture3, lambda do |*args|
+          calls << args
+
+          if args[0] == '/usr/local/bin/agrr'
+            # agrr daemon start
+            ['', '', daemon_start_status]
+          elsif args[0] == client_path
+            # 最初のクライアント呼び出しは接続エラー、2回目は成功
+            if calls.count { |c| c[0] == client_path } == 1
+              ['', 'Connection refused', client_fail_status]
+            else
+              ['{"ok":true}', '', client_success_status]
+            end
+          else
+            raise "unexpected command: #{args.inspect}"
+          end
+        end) do
+          result = @service.send(:execute_command, ['weather', '--location', '35.0,139.0'])
+          assert_equal '{"ok":true}', result
+        end
+      end
+    end
+
+    # クライアントコマンドは2回、daemon startは1回呼ばれる想定
+    client_calls = calls.select { |c| c[0] == client_path }
+    daemon_calls = calls.select { |c| c[0] == '/usr/local/bin/agrr' }
+
+    assert_equal 2, client_calls.size
+    assert_equal 1, daemon_calls.size
+
+    client_fail_status.verify
+    client_success_status.verify
+    daemon_start_status.verify
+  end
+
+  test 'execute_command raises DaemonNotRunningError when daemon auto-start fails' do
+    client_path = Rails.root.join('bin', 'agrr_client').to_s
+
+    client_fail_status = Minitest::Mock.new
+    client_fail_status.expect(:success?, false)
+    client_fail_status.expect(:exitstatus, 1)
+
+    daemon_fail_status = Minitest::Mock.new
+    daemon_fail_status.expect(:success?, false)
+
+    calls = []
+
+    @service.stub(:daemon_running?, false) do
+      @service.stub(:find_agrr_binary, '/usr/local/bin/agrr') do
+        Open3.stub(:capture3, lambda do |*args|
+          calls << args
+
+          if args[0] == '/usr/local/bin/agrr'
+            # agrr daemon start 失敗
+            ['', 'failed to start', daemon_fail_status]
+          elsif args[0] == client_path
+            # クライアント呼び出しは常に接続エラー
+            ['', 'Connection refused', client_fail_status]
+          else
+            raise "unexpected command: #{args.inspect}"
+          end
+        end) do
+          assert_raises(AgrrService::DaemonNotRunningError) do
+            @service.send(:execute_command, ['weather', '--location', '35.0,139.0'])
+          end
+        end
+      end
+    end
+
+    # 自動起動を試みてからエラーを返していること
+    client_calls = calls.select { |c| c[0] == client_path }
+    daemon_calls = calls.select { |c| c[0] == '/usr/local/bin/agrr' }
+
+    assert_equal 1, client_calls.size
+    assert_equal 1, daemon_calls.size
+
+    client_fail_status.verify
+    daemon_fail_status.verify
+  end
 end
