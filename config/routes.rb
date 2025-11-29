@@ -197,6 +197,15 @@ Rails.application.routes.draw do
         get 'internal/farms/:farm_id/weather_status', to: 'internal#weather_status'
         get 'internal/farms/:farm_id/weather_data', to: 'internal#get_weather_data'
         
+        # GCP Cloud Scheduler用APIエンドポイント
+        namespace :internal do
+          resources :jobs, only: [] do
+            collection do
+              post 'trigger_weather_update'
+            end
+          end
+        end
+        
         # Backdoor API (ランダムトークン認証)
         namespace :backdoor do
           get 'status', to: 'backdoor#status'
