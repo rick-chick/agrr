@@ -157,9 +157,9 @@ class AgriculturalTasksController < ApplicationController
     when 'reference'
       AgriculturalTask.where(is_reference: true)
     when 'all'
-      AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id)
+      AgriculturalTaskPolicy.visible_scope(current_user)
     else
-      AgriculturalTask.where(user_id: current_user.id, is_reference: false)
+      AgriculturalTaskPolicy.user_owned_non_reference_scope(current_user)
     end
   end
 

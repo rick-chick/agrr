@@ -10,6 +10,12 @@ class CropPolicy
     Crop.visible_scope_for(user)
   end
 
+  # 指定ユーザーが所有する非参照作物のみのスコープ
+  # PlansController などで「ユーザー作物（is_reference: false）」を扱う用途で使用する
+  def self.user_owned_non_reference_scope(user)
+    Crop.where(user_id: user.id, is_reference: false)
+  end
+
   # create 用ビルダー
   # - 管理者: is_reference=true なら user_id=nil / false なら user_id=admin.id
   # - 一般ユーザー: controller 側で参照作物作成は弾かれる前提で、常に user_id=current_user.id, is_reference=false
