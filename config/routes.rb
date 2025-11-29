@@ -18,6 +18,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
+  # Can be used by uptime monitors and load balancers.
+  # Optimized: Only checks primary database for faster startup
+  # NOTE: This route is defined outside the locale scope so that Cloud Run and load balancers
+  # can reliably access `/up` without a locale prefix.
+  get "/up" => "health#show", as: :rails_health_check
+
   # Locale switching with default locale optimization
   scope "(:locale)", locale: /ja|us|in/, defaults: { locale: 'ja' } do
     namespace :admin do
@@ -25,10 +32,6 @@ Rails.application.routes.draw do
       root to: redirect('/crops')
     end
     # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-    # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-    # Can be used by uptime monitors and load balancers.
-    get "up" => "rails/health#show", as: :rails_health_check
 
     # Authentication routes
     get '/auth/login', to: 'auth#login', as: 'auth_login'
