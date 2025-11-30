@@ -21,6 +21,13 @@ FactoryBot.define do
       planning_end_date { Date.new(Date.current.year + 1, 12, 31) }
     end
 
+    trait :annual_planning do
+      # 通年計画（plan_yearなし）
+      plan_year { nil }
+      planning_start_date { Date.new(Date.current.year, 1, 1) }
+      planning_end_date { Date.new(Date.current.year + 1, 12, 31) }
+    end
+
     trait :completed do
       status { 'completed' }
     end

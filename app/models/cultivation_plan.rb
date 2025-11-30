@@ -17,16 +17,16 @@ class CultivationPlan < ApplicationRecord
   validates :status, presence: true, inclusion: { in: %w[pending optimizing completed failed] }
   validates :plan_type, presence: true, inclusion: { in: %w[public private] }
   validates :user_id, presence: true, if: :plan_type_private?
-  validates :plan_year, presence: true, numericality: { only_integer: true, greater_than: 2020 }, if: :plan_type_private?
+  # plan_yearは後方互換性のためオプショナル（既存データのため）
+  validates :plan_year, numericality: { only_integer: true, greater_than: 2020 }, allow_nil: true, if: :plan_type_private?
   validates :planning_start_date, presence: true, if: :plan_type_private?
   validates :planning_end_date, presence: true, if: :plan_type_private?
   
-  # 農場とユーザと年で一意制約（private計画のみ）
+  # 農場とユーザで一意制約（private計画のみ、plan_yearを除外）
   validates :farm_id, uniqueness: { 
-    scope: [:user_id, :plan_year], 
-    message: I18n.t('activerecord.errors.models.cultivation_plan.attributes.farm_id.taken'),
-    if: :plan_type_private?
-  }
+    scope: [:user_id], 
+    message: I18n.t('activerecord.errors.models.cultivation_plan.attributes.farm_id.taken')
+  }, if: :plan_type_private?
   
   # == Enums ===============================================================
   enum :status, {
@@ -138,7 +138,13 @@ class CultivationPlan < ApplicationRecord
   def display_name
     if plan_type_private?
       name = plan_name.presence || I18n.t('models.cultivation_plan.default_plan_name')
-      "#{name} (#{plan_year})"
+      if plan_year.present?
+        "#{name} (#{plan_year})"
+      elsif planning_start_date && planning_end_date
+        "#{name} (#{planning_start_date.year}〜#{planning_end_date.year})"
+      else
+        name
+      end
     else
       I18n.t('models.cultivation_plan.public_plan_name')
     end

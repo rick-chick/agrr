@@ -10,7 +10,8 @@ in:
       completed: "✓"
     
     errors:
-      select_year_and_farm: "कृपया वर्ष और खेत चुनें।"
+      select_year_and_farm: "कृपया वर्ष और खेत चुनें।" # पिछड़े संगतता के लिए रखा गया
+      select_farm: "कृपया एक खेत चुनें।"
       select_crop: "कृपया कम से कम एक फसल चुनें।"
       restart: "कृपया फिर से शुरू करें।"
       create_failed: "योजना बनाने में विफल: %{errors}"
@@ -19,7 +20,9 @@ in:
       crop_not_found: "फसल नहीं मिली।"
       unauthorized: "इस योजना तक पहुँचने की अनुमति नहीं है।"
       plan_already_exists: "%{year} के लिए योजना पहले से मौजूद है।"
+      plan_already_exists_annual: "इस खेत के लिए योजना पहले से मौजूद है।"
       copy_failed: "योजना कॉपी करने में विफल: %{errors}"
+      copy_not_available_for_annual_planning: "वार्षिक योजना के लिए कॉपी फ़ंक्शन उपलब्ध नहीं है।"
       delete_failed: "योजना हटाने में विफल।"
       delete_error: "हटाते समय त्रुटि हुई: %{message}"
       already_optimized: "यह योजना पहले से अनुकूलित है।"

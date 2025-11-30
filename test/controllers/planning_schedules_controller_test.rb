@@ -58,7 +58,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
     
     # 計画を作成
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     field2 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場2', area: 2000)
     
@@ -103,7 +103,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
     
     # 計画を作成
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     crop1 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
     
@@ -136,11 +136,16 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    # 5年分の計画を作成
+    # 通年計画を作成（5年分のデータを含む）
+    plan = create(:cultivation_plan, user: @user, farm: @farm, 
+                  plan_year: nil,
+                  planning_start_date: Date.new(current_year, 1, 1),
+                  planning_end_date: Date.new(current_year + 4, 12, 31))
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
+    
+    # 5年分の作付を作成
     (0..4).each do |year_offset|
       year = current_year + year_offset
-      plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: year)
-      field = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
       crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: "作物#{year_offset + 1}")
       create(:field_cultivation,
         cultivation_plan: plan,
@@ -174,25 +179,28 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    # 複数年度にまたがる計画を作成
-    plan1 = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
-    field1 = create(:cultivation_plan_field, cultivation_plan: plan1, name: 'ほ場1', area: 1000)
-    crop1 = create(:cultivation_plan_crop, cultivation_plan: plan1, name: 'トマト')
+    # 通年計画を作成（複数年度にまたがる）
+    plan = create(:cultivation_plan, user: @user, farm: @farm, 
+                  plan_year: nil,
+                  planning_start_date: Date.new(current_year, 1, 1),
+                  planning_end_date: Date.new(current_year + 2, 12, 31))
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
+    
+    # 複数年度の作付を作成
+    crop1 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
     create(:field_cultivation,
-      cultivation_plan: plan1,
-      cultivation_plan_field: field1,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
       cultivation_plan_crop: crop1,
       start_date: Date.new(current_year, 1, 15),
       completion_date: Date.new(current_year, 3, 20),
       area: 1000
     )
     
-    plan2 = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year + 2)
-    field2 = create(:cultivation_plan_field, cultivation_plan: plan2, name: 'ほ場1', area: 1000)
-    crop2 = create(:cultivation_plan_crop, cultivation_plan: plan2, name: 'キャベツ')
+    crop2 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'キャベツ')
     create(:field_cultivation,
-      cultivation_plan: plan2,
-      cultivation_plan_field: field2,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
       cultivation_plan_crop: crop2,
       start_date: Date.new(current_year + 2, 1, 15),
       completion_date: Date.new(current_year + 2, 3, 20),
@@ -217,7 +225,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get schedule_planning_schedules_path(
@@ -238,7 +246,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get schedule_planning_schedules_path(
@@ -259,7 +267,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get schedule_planning_schedules_path(
@@ -280,7 +288,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get schedule_planning_schedules_path(
@@ -303,7 +311,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
   test "schedule supports different granularities" do
     sign_in_as @user
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     crop1 = create(:cultivation_plan_crop, cultivation_plan: plan, name: 'トマト')
     create(:field_cultivation,
@@ -361,71 +369,44 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
   test "schedule does not show duplicate cultivations from overlapping plan years" do
     sign_in_as @user
     
-    # 計画は1年毎に2年分を保持するため、重複が発生する可能性がある
-    # 2024年度の計画: 2024年1月1日〜2025年12月31日
-    # 2025年度の計画: 2025年1月1日〜2026年12月31日
-    # 2026年度の計画: 2026年1月1日〜2027年12月31日
+    # 新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、
+    # このテストは通年計画を使用するように修正
+    # 通年計画では、1つの計画内で重複した作付は発生しないため、
+    # このテストは後方互換性のためスキップする
+    
+    skip "新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、このテストは無効になりました"
     
     target_year = 2025
     field_name = 'ほ場1'
     field_id = field_name.hash.abs
     crop_name = 'トマト'
     
-    # 2024年度の計画を作成（2024年1月1日〜2025年12月31日）
-    plan_2024 = create(:cultivation_plan,
+    # 通年計画を作成（2024年1月1日〜2027年12月31日）
+    plan = create(:cultivation_plan,
       user: @user,
       farm: @farm,
-      plan_year: 2024,
+      plan_year: nil,
       planning_start_date: Date.new(2024, 1, 1),
-      planning_end_date: Date.new(2025, 12, 31)
-    )
-    field_2024 = create(:cultivation_plan_field, cultivation_plan: plan_2024, name: field_name, area: 1000)
-    crop_2024 = create(:cultivation_plan_crop, cultivation_plan: plan_2024, name: crop_name)
-    # 2025年の栽培データを作成
-    create(:field_cultivation,
-      cultivation_plan: plan_2024,
-      cultivation_plan_field: field_2024,
-      cultivation_plan_crop: crop_2024,
-      start_date: Date.new(target_year, 3, 1),
-      completion_date: Date.new(target_year, 5, 31),
-      area: 1000
-    )
-    
-    # 2025年度の計画を作成（2025年1月1日〜2026年12月31日）
-    plan_2025 = create(:cultivation_plan,
-      user: @user,
-      farm: @farm,
-      plan_year: 2025,
-      planning_start_date: Date.new(2025, 1, 1),
-      planning_end_date: Date.new(2026, 12, 31)
-    )
-    field_2025 = create(:cultivation_plan_field, cultivation_plan: plan_2025, name: field_name, area: 1000)
-    crop_2025 = create(:cultivation_plan_crop, cultivation_plan: plan_2025, name: crop_name)
-    # 同じ2025年の栽培データを作成（重複の原因）
-    create(:field_cultivation,
-      cultivation_plan: plan_2025,
-      cultivation_plan_field: field_2025,
-      cultivation_plan_crop: crop_2025,
-      start_date: Date.new(target_year, 3, 1),
-      completion_date: Date.new(target_year, 5, 31),
-      area: 1000
-    )
-    
-    # 2026年度の計画を作成（2026年1月1日〜2027年12月31日）
-    plan_2026 = create(:cultivation_plan,
-      user: @user,
-      farm: @farm,
-      plan_year: 2026,
-      planning_start_date: Date.new(2026, 1, 1),
       planning_end_date: Date.new(2027, 12, 31)
     )
-    field_2026 = create(:cultivation_plan_field, cultivation_plan: plan_2026, name: field_name, area: 1000)
-    crop_2026 = create(:cultivation_plan_crop, cultivation_plan: plan_2026, name: crop_name)
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: field_name, area: 1000)
+    crop = create(:cultivation_plan_crop, cultivation_plan: plan, name: crop_name)
+    
+    # 2025年の栽培データを作成（1つのみ、重複なし）
+    create(:field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
+      start_date: Date.new(target_year, 3, 1),
+      completion_date: Date.new(target_year, 5, 31),
+      area: 1000
+    )
+    
     # 2026年の栽培データを作成（重複しない）
     create(:field_cultivation,
-      cultivation_plan: plan_2026,
-      cultivation_plan_field: field_2026,
-      cultivation_plan_crop: crop_2026,
+      cultivation_plan: plan,
+      cultivation_plan_field: field,
+      cultivation_plan_crop: crop,
       start_date: Date.new(2026, 3, 1),
       completion_date: Date.new(2026, 5, 31),
       area: 1000
@@ -472,7 +453,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
   test "fields_selection displays year_range in descending order" do
     sign_in_as @user
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get fields_selection_planning_schedules_path(farm_id: @farm.id)
@@ -499,7 +480,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
 
     farm_with_plan = create(:farm, user: @user, name: '計画農場')
-    plan = create(:cultivation_plan, :private, user: @user, farm: farm_with_plan, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: farm_with_plan, plan_year: Date.current.year)
     create(:cultivation_plan_field, cultivation_plan: plan, name: '計画ほ場', area: 1000)
 
     get fields_selection_planning_schedules_path(
@@ -518,7 +499,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get schedule_planning_schedules_path(
@@ -542,7 +523,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     
     # 計画を作成
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -653,7 +633,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     
     # 計画を作成
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -800,7 +779,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     
     # 計画を作成
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1119,7 +1097,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1173,7 +1150,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1246,7 +1222,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1315,7 +1290,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1427,7 +1401,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field2_id = field2_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1528,7 +1501,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,
@@ -1598,7 +1570,6 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     field_id = field_name.hash.abs
     
     plan = create(:cultivation_plan,
-      :private,
       user: @user,
       farm: @farm,
       plan_year: test_year,

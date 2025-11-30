@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <% if @vm.plans_by_year.empty? %>
+    <% if @plans_by_farm.empty? %>
       <!-- 計画がない場合 -->
       <div class="plans-empty">
         <div class="plans-empty-icon">📅</div>
@@ -39,18 +39,18 @@
         </div>
       </div>
     <% else %>
-        <!-- 年度別の計画一覧 -->
-        <% @vm.available_years.reverse.each_with_index do |year, index| %>
-          <% year_plans = @vm.plans_by_year[year] %>
+        <!-- 農場別の計画一覧 -->
+        <% @plans_by_farm.each_with_index do |(farm_id, farm_plans), index| %>
+          <% farm = farm_plans.first.farm %>
 
           <div class="plans-year-section">
             <details <%= 'open' if index == 0 %>>
               <summary class="plans-year-title plans-year-summary">
                 <span class="year-toggle-icon"></span>
-                <span class="plans-year-label"><%= t('plans.index.year_label', year: year) %></span>
-                <% if year_plans.present? %>
+                <span class="plans-year-label"><%= farm.display_name %></span>
+                <% if farm_plans.present? %>
                   <span class="year-count">
-                    (<%= year_plans.count %>件)
+                    (<%= farm_plans.count %>件)
                   </span>
                 <% else %>
                   <span class="year-count year-count-empty">
@@ -60,9 +60,9 @@
               </summary>
             
             <div class="plans-year-content">
-              <% if year_plans.present? %>
+              <% if farm_plans.present? %>
                   <div class="plans-grid">
-                  <% year_plans.each do |plan| %>
+                  <% farm_plans.each do |plan| %>
                       <div class="plan-card" id="<%= dom_id(plan) %>" data-undo-delete-record>
                       <!-- ステータスバッジ -->
                       <div class="plan-card-header">
@@ -75,6 +75,17 @@
                       <h3 class="plan-card-title">
                         <%= plan.display_name %>
                       </h3>
+                      
+                      <!-- 計画期間 -->
+                      <% if plan.planning_start_date && plan.planning_end_date %>
+                        <div class="plan-card-details">
+                          <div class="plan-card-detail-item">
+                            <span class="plan-card-detail-icon">📅</span>
+                            <span class="plan-card-detail-label">計画期間:</span>
+                            <span><%= l(plan.planning_start_date, format: :short) %> 〜 <%= l(plan.planning_end_date, format: :short) %></span>
+                          </div>
+                        </div>
+                      <% end %>
                       
                       <!-- 農場情報 -->
                       <div class="plan-card-details">

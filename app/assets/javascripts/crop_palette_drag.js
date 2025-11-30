@@ -212,8 +212,7 @@ function initCropCardDrag() {
       dragData = {
         crop_id: card.dataset.cropId,
         crop_name: card.dataset.cropName,
-        crop_variety: card.dataset.cropVariety,
-        crop_id: card.dataset.cropId
+        crop_variety: card.dataset.cropVariety
       };
       
       console.log('🚀 ドラッグ開始:', dragData);
@@ -316,8 +315,19 @@ function initCropCardDrag() {
         
         console.log('📍 [DROP] ドロップ位置計算:', { x: svgCoords.x, y: svgCoords.y });
         
-        const dropInfo = calculateDropInfo(svgCoords);
-        console.log('📍 [DROP] 計算結果:', dropInfo);
+        let dropInfo;
+        try {
+          dropInfo = calculateDropInfo(svgCoords);
+          console.log('📍 [DROP] 計算結果:', dropInfo);
+        } catch (error) {
+          console.error('❌ [DROP] ドロップ位置計算エラー:', error);
+          const errorMessage = getI18nMessage(
+            'cropPaletteDropCalculationError',
+            'ドロップ位置の計算中にエラーが発生しました。ページを再読み込みしてください。'
+          );
+          alert(errorMessage);
+          return;
+        }
         
         if (dropInfo) {
           console.log('✅ [DROP] ドロップ位置が有効 - addCropToSchedule呼び出し');
@@ -325,6 +335,12 @@ function initCropCardDrag() {
           addCropToSchedule(dragData, dropInfo);
         } else {
           console.log('❌ [DROP] ドロップ位置が無効（範囲外）');
+          // 表示範囲外へのドロップを拒否
+          const errorMessage = getI18nMessage(
+            'cropPaletteDropOutsideRange',
+            '表示範囲外には作物を追加できません。表示範囲内にドロップしてください。'
+          );
+          alert(errorMessage);
         }
         
         // イベントリスナーを削除
@@ -356,15 +372,21 @@ function initGanttDropZone() {
 // ドロップ位置から圃場と日付を計算
 function calculateDropInfo(svgCoords) {
   // ganttStateはcustom_gantt_chart.jsで定義されている
-  if (typeof ganttState === 'undefined' || !ganttState.config) {
+  if (typeof window.ganttState === 'undefined' || !window.ganttState.config) {
     return null;
   }
 
+  const ganttState = window.ganttState;
   const config = ganttState.config;
   const chartWidth = ganttState.chartWidth;
-  const totalDays = ganttState.totalDays;
-  const planStartDate = ganttState.planStartDate;
+  
+  // 表示範囲が設定されている場合は表示範囲の開始日と終了日を使用、なければ計画の開始日と終了日を使用
+  const displayStartDate = ganttState.displayStartDate || ganttState.planStartDate;
+  const displayEndDate = ganttState.displayEndDate || ganttState.planEndDate;
   const fieldGroups = ganttState.fieldGroups;
+  
+  // 表示範囲の日数を計算（表示範囲が設定されている場合は表示範囲の日数、なければ計画期間の日数）
+  const totalDays = daysBetween(displayStartDate, displayEndDate);
 
   // Y座標から圃場を判定
   const ROW_HEIGHT = 70;
@@ -389,9 +411,20 @@ function calculateDropInfo(svgCoords) {
     return null;
   }
 
-  const daysFromStart = Math.round(((svgCoords.x - MARGIN_LEFT) / chartWidth) * totalDays);
-  const startDate = new Date(planStartDate);
-  startDate.setDate(startDate.getDate() + daysFromStart);
+  // 表示範囲の開始日を基準に日付を計算
+  const daysFromDisplayStart = Math.round(((svgCoords.x - MARGIN_LEFT) / chartWidth) * totalDays);
+  const startDate = new Date(displayStartDate);
+  startDate.setDate(startDate.getDate() + daysFromDisplayStart);
+
+  // 表示範囲のチェック
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const displayStartDateStr = new Date(displayStartDate).toISOString().split('T')[0];
+  const displayEndDateStr = new Date(displayEndDate).toISOString().split('T')[0];
+  
+  // 表示範囲外の場合はnullを返す（ドロップを拒否）
+  if (startDateStr < displayStartDateStr || startDateStr > displayEndDateStr) {
+    return null;
+  }
 
   // field_idを正規化（window.normalizeFieldIdを使用）
   const normalizedFieldId = typeof window.normalizeFieldId === 'function' 
@@ -401,8 +434,25 @@ function calculateDropInfo(svgCoords) {
   return {
     field_id: normalizedFieldId,
     field_name: targetField.fieldName,
-    start_date: startDate.toISOString().split('T')[0]
+    start_date: startDateStr
   };
+}
+
+// 2つの日付間の日数を計算（crop_palette_drag.js用のヘルパー関数）
+function daysBetween(date1, date2) {
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  
+  // 無効な日付の場合はエラーを発生（異常系はフォールバックではなくエラーを上げる）
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+    throw new Error(`Invalid date in daysBetween: date1=${date1}, date2=${date2}, d1=${d1}, d2=${d2}`);
+  }
+  
+  const oneDay = 24 * 60 * 60 * 1000;
+  const result = Math.round(Math.abs((d2 - d1) / oneDay));
+  
+  // 結果が0以下の場合は最小値を返す（単一日の表示範囲でも座標計算が正しく動作するように）
+  return Math.max(result, 1);
 }
 
 // 作物種類の上限
@@ -411,7 +461,7 @@ if (typeof window.MAX_CROP_TYPES === 'undefined') {
 }
 
 // リクエスト中フラグ（二重送信防止）
-if (typeof window.window.isAddingCrop === "undefined") { window.window.isAddingCrop = false; }
+if (typeof window.isAddingCrop === "undefined") { window.isAddingCrop = false; }
 
 // 作物をスケジュールに追加
 function addCropToSchedule(cropData, dropInfo) {
@@ -426,11 +476,12 @@ function addCropToSchedule(cropData, dropInfo) {
   }
   
   // ganttStateから計画IDを取得
-  if (typeof ganttState === 'undefined' || !ganttState.cultivation_plan_id) {
+  if (typeof window.ganttState === 'undefined' || !window.ganttState.cultivation_plan_id) {
     alert(getI18nMessage('cropPalettePlanIdMissing', 'Error: Could not retrieve plan ID'));
     return;
   }
 
+  const ganttState = window.ganttState;
   const cultivation_plan_id = ganttState.cultivation_plan_id;
   
   // 作物種類数の制限チェック（同じ作物の複数配置はOK）

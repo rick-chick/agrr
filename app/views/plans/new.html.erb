@@ -16,24 +16,6 @@
       <p class="content-card-subtitle"><%= t('plans.new.subtitle') %></p>
 
       <%= form_with url: select_crop_plans_path, method: :get, local: true do |f| %>
-        <!-- 計画年度選択 -->
-        <div class="plans-form-group">
-          <label class="plans-form-label">
-            <%= t('plans.new.plan_year_label') %>
-          </label>
-          <p class="plans-form-hint">
-            <%= t('plans.new.plan_year_hint', start_year: @vm.current_year - 1, end_year: @vm.current_year + 1) %>
-          </p>
-          <select name="plan_year" required class="plans-form-select">
-            <% @vm.available_years.each do |year| %>
-              <option value="<%= year %>" <%= 'selected' if year == @vm.current_year %>>
-                <%= year %>年度（<%= year - 1 %>年1月〜<%= year + 1 %>年12月）
-              </option>
-            <% end %>
-          </select>
-        </div>
-
-
         <!-- 農場選択 -->
         <div class="plans-form-group">
           <label class="plans-form-label">

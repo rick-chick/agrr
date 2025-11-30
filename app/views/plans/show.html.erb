@@ -1,4 +1,4 @@
-<% content_for :title, t('plans.show.header.title', year: @vm.plan.plan_year) %>
+<% content_for :title, @vm.plan.display_name %>
 
 <div class="plans-wrapper">
   <div class="plans-container" id="<%= dom_id(@vm.plan) %>" data-undo-delete-record>
@@ -27,7 +27,7 @@
     <div class="content-card">
       <div class="content-card-header">
         <h1 class="content-card-header-title">
-          <%= t('plans.show.header.title', year: @vm.plan.plan_year) %>
+          <%= @vm.plan.display_name %>
         </h1>
         <span class="plan-card-status completed">
           <%= t('plans.show.header.badge') %>
@@ -72,6 +72,40 @@
             <%= t('plans.show.header.planning_period_value', 
                    start: @vm.plan.planning_start_date.year,
                    end: @vm.plan.planning_end_date.year) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表示範囲選択 -->
+    <div class="content-card">
+      <h3 class="content-card-title">表示範囲の設定</h3>
+      <div class="plans-form-group">
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <div>
+            <label class="plans-form-label">開始日</label>
+            <input type="date" 
+                   id="display-start-date" 
+                   class="plans-form-input"
+                   value="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                   min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                   max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+          </div>
+          <div>
+            <label class="plans-form-label">終了日</label>
+            <input type="date" 
+                   id="display-end-date" 
+                   class="plans-form-input"
+                   value="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>"
+                   min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                   max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+          </div>
+          <div style="margin-top: 1.5rem;">
+            <button type="button" 
+                    id="apply-display-range" 
+                    class="btn btn-primary">
+              適用
+            </button>
           </div>
         </div>
       </div>

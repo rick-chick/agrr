@@ -11,7 +11,7 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
 
   test 'destroy_returns_undo_token_json' do
     sign_in_as @user
-    plan = create(:cultivation_plan, :private, user: @user)
+    plan = create(:cultivation_plan, user: @user)
 
     assert_difference -> { CultivationPlan.count }, -1 do
       assert_difference 'DeletionUndoEvent.count', +1 do
@@ -41,7 +41,7 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
 
   test 'undo_endpoint_restores_plan' do
     sign_in_as @user
-    plan = create(:cultivation_plan, :private, user: @user)
+    plan = create(:cultivation_plan, user: @user)
 
     delete plan_path(plan), as: :json
     assert_response :success
@@ -67,7 +67,7 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
 
   test 'undo_endpoint_restores_plan_with_field_cultivations' do
     sign_in_as @user
-    plan = create(:cultivation_plan, :private, user: @user)
+    plan = create(:cultivation_plan, user: @user)
     
     # 圃場を作成
     field = create(:cultivation_plan_field, cultivation_plan: plan)
@@ -143,7 +143,7 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
 
   test 'destroy_via_html_redirects_with_undo_notice' do
     sign_in_as @user
-    plan = create(:cultivation_plan, :private, user: @user)
+    plan = create(:cultivation_plan, user: @user)
     display_name = plan.display_name
 
     assert_difference -> { CultivationPlan.count }, -1 do
@@ -158,6 +158,44 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
       resource: display_name
     )
     assert_equal expected_notice, flash[:notice]
+  end
+
+  test 'index displays plans including annual plans' do
+    sign_in_as @user
+    farm1 = create(:farm, user: @user, name: '農場1')
+    farm2 = create(:farm, user: @user, name: '農場2')
+    
+    # 年度ベースの計画を作成
+    plan1 = create(:cultivation_plan, user: @user, farm: farm1, plan_year: 2025)
+    # 通年計画を作成
+    plan2 = create(:cultivation_plan, :annual_planning, user: @user, farm: farm2)
+    
+    get plans_path
+    assert_response :success
+    
+    # 両方の計画が表示されることを確認
+    assert_select 'a[href=?]', plan_path(plan1)
+    assert_select 'a[href=?]', plan_path(plan2)
+  end
+
+  test 'index displays annual plan with period in display_name' do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: 'テスト農場')
+    
+    # 通年計画を作成
+    plan = create(:cultivation_plan, :annual_planning, 
+                 user: @user, 
+                 farm: farm,
+                 planning_start_date: Date.new(2025, 1, 1),
+                 planning_end_date: Date.new(2026, 12, 31))
+    
+    get plans_path
+    assert_response :success
+    
+    # display_nameメソッドが計画期間を表示することを確認
+    display_name = plan.display_name
+    assert_match /2025/, display_name
+    assert_match /2026/, display_name
   end
 end
 

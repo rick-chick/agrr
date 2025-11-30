@@ -4,15 +4,13 @@ require 'test_helper'
 
 class PlanSaveServiceTest < ActiveSupport::TestCase
   def setup
-    @user = User.where(is_anonymous: false).first
-    if @user.nil?
-      @user = User.create!(
-        email: 'test@example.com',
-        name: 'Test User',
-        google_id: 'test_google_id_123',
-        is_anonymous: false
-      )
-    end
+    # 各テストで独立したユーザーを作成（テスト間でデータが累積しないようにする）
+    @user = User.create!(
+      email: "test_#{SecureRandom.hex(8)}@example.com",
+      name: "Test User #{SecureRandom.hex(4)}",
+      google_id: "test_google_id_#{SecureRandom.hex(8)}",
+      is_anonymous: false
+    )
     
     # 理想的な移送方法: セッションデータから農場IDを取得
     # 実際のフローでは、ユーザーが選択した農場IDがセッションデータに保存される
@@ -488,6 +486,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "reuses existing interaction rule when same crop combination is copied twice" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     # 参照連作ルールを用意
     reference_rule = InteractionRule.create!(
       rule_type: 'continuous_cultivation',
@@ -504,7 +515,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     @crops[1].update!(groups: ['GroupB'])
 
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 300.0,
       plan_type: 'public',
@@ -528,7 +539,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: []
     }
 
@@ -549,6 +560,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "copies all reference interaction rules for user region" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     InteractionRule.create!(
       rule_type: 'continuous_cultivation',
       source_group: 'RefGroupA',
@@ -556,7 +580,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       impact_ratio: 0.75,
       is_directional: true,
       is_reference: true,
-      region: @farm.region
+      region: jp_farm.region
     )
 
     InteractionRule.create!(
@@ -566,7 +590,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       impact_ratio: 1.1,
       is_directional: false,
       is_reference: true,
-      region: @farm.region
+      region: jp_farm.region
     )
 
     InteractionRule.create!(
@@ -580,7 +604,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     )
 
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 100.0,
       plan_type: 'public',
@@ -591,6 +615,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       status: 'completed'
     )
 
+    # テストで作成したルールのグループ名と一致するように作物を設定
+    @crops[0].update!(name: 'RefGroupA', groups: ['RefGroupA'])
+    crop_for_group_c = Crop.create!(
+      user: nil,
+      name: 'RefGroupC',
+      variety: 'テスト品種',
+      is_reference: true,
+      area_per_unit: 0.25,
+      revenue_per_area: 5000.0,
+      region: 'jp',
+      groups: ['RefGroupC']
+    )
+    
     CultivationPlanCrop.create!(
       cultivation_plan: plan,
       crop: @crops[0],
@@ -599,10 +636,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       area_per_unit: @crops[0].area_per_unit,
       revenue_per_area: @crops[0].revenue_per_area
     )
+    
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: crop_for_group_c,
+      name: crop_for_group_c.name,
+      variety: crop_for_group_c.variety,
+      area_per_unit: crop_for_group_c.area_per_unit,
+      revenue_per_area: crop_for_group_c.revenue_per_area
+    )
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: []
     }
 
@@ -621,7 +667,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "copies all reference crops for user region regardless of plan selection" do
+  test "copies reference crops from plan only" do
+    # 20件のCrop制限を考慮し、参照計画に含まれている作物のみをコピーすることを確認
     reference_crop_a = Crop.create!(
       user: nil,
       name: '地域参照作物A',
@@ -685,17 +732,32 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     user_crops = @user.crops.where(is_reference: false)
     copied_names = user_crops.map(&:name)
 
+    # 参照計画に含まれている作物のみがコピーされることを確認
     assert_includes copied_names, reference_crop_a.name
-    assert_includes copied_names, reference_crop_b.name
+    # 参照計画に含まれていない作物はコピーされないことを確認
+    refute_includes copied_names, reference_crop_b.name
     refute_includes copied_names, '他地域参照作物'
 
     user_crops.each do |crop|
-      next unless [reference_crop_a.name, reference_crop_b.name].include?(crop.name)
+      next unless [reference_crop_a.name].include?(crop.name)
       assert_not_nil crop.source_crop_id, 'Copied crop should keep source reference'
     end
   end
 
   test "copies reference fertilizes for user region" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     reference_fertilize_a = Fertilize.create!(
       user: nil,
       name: '地域参照肥料A',
@@ -703,7 +765,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       p: 5,
       k: 3,
       is_reference: true,
-      region: @farm.region
+      region: jp_farm.region
     )
 
     reference_fertilize_b = Fertilize.create!(
@@ -713,7 +775,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       p: 4,
       k: 6,
       is_reference: true,
-      region: @farm.region
+      region: jp_farm.region
     )
 
     other_region_fertilize = Fertilize.create!(
@@ -727,7 +789,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     )
 
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 50.0,
       plan_type: 'public',
@@ -749,7 +811,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: []
     }
 
@@ -764,7 +826,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     refute_includes copied_source_ids, other_region_fertilize.id
 
     copied_fertilize = user_fertilizes.find_by(source_fertilize_id: reference_fertilize_a.id)
-    assert_equal @farm.region, copied_fertilize.region
+    assert_equal jp_farm.region, copied_fertilize.region
   end
 
   test "reuses existing user fertilize when same reference fertilize is copied twice" do
@@ -825,6 +887,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "copies reference agricultural tasks for user region with crop associations" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     reference_task = AgriculturalTask.create!(
       user: nil,
       name: '地域参照作業A',
@@ -834,7 +909,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       required_tools: ['hoe', 'gloves'],
       skill_level: 'beginner',
       is_reference: true,
-      region: @farm.region,
+      region: jp_farm.region,
       task_type: 'field'
     )
     CropTaskTemplate.create!(
@@ -885,7 +960,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     )
 
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 45.0,
       plan_type: 'public',
@@ -907,7 +982,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: []
     }
 
@@ -929,7 +1004,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_equal ['hoe', 'gloves'], copied_task.required_tools
     assert_equal 'beginner', copied_task.skill_level
     assert_equal 'field', copied_task.task_type
-    assert_equal @farm.region, copied_task.region
+    assert_equal jp_farm.region, copied_task.region
 
     user_crop = @user.crops.find_by(source_crop_id: @crops[0].id)
     assert_not_nil user_crop
@@ -1024,6 +1099,9 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: @farm.region
     )
+    
+    # 参照計画に含まれている作物に関連付ける
+    CropPest.create!(crop: reference_crop, pest: reference_pest)
 
     reference_pesticide = Pesticide.create!(
       user: nil,
@@ -1062,6 +1140,10 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: nil
     )
+    
+    # 参照計画に含まれている作物に関連付ける
+    CropPest.create!(crop: nil_region_crop, pest: nil_region_pest)
+    
     nil_region_pesticide = Pesticide.create!(
       user: nil,
       crop: nil_region_crop,
@@ -1252,6 +1334,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "copies reference pests for user region with related data" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     reference_pest = Pest.create!(
       user: nil,
       name: '地域参照害虫A',
@@ -1261,7 +1356,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       description: '地域に多い害虫',
       occurrence_season: 'spring',
       is_reference: true,
-      region: @farm.region
+      region: jp_farm.region
     )
     reference_pest.create_pest_temperature_profile!(base_temperature: 10.5, max_temperature: 35.0)
     reference_pest.create_pest_thermal_requirement!(required_gdd: 450.0, first_generation_gdd: 250.0)
@@ -1287,7 +1382,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     CropPest.create!(crop: @crops[0], pest: other_region_pest)
 
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 40.0,
       plan_type: 'public',
@@ -1309,7 +1404,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: []
     }
 
@@ -1330,7 +1425,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     assert_equal 'Testoptera', user_pest.order
     assert_equal '地域に多い害虫', user_pest.description
     assert_equal 'spring', user_pest.occurrence_season
-    assert_equal @farm.region, user_pest.region
+    assert_equal jp_farm.region, user_pest.region
 
     temp_profile = user_pest.pest_temperature_profile
     assert_not_nil temp_profile
@@ -1358,6 +1453,9 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       is_reference: true,
       region: @farm.region
     )
+    
+    # 参照計画に含まれている作物に関連付ける
+    CropPest.create!(crop: @crops[0], pest: reference_pest)
 
     user_pest = @user.pests.create!(
       name: '再利用参照害虫（コピー）',
@@ -1730,8 +1828,21 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
       skill_level: reference_task.skill_level
     )
 
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 50.0,
       plan_type: 'public',
@@ -1793,7 +1904,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: [
         { name: 'F1', area: 50.0, coordinates: [35.0, 139.0] }
       ]
@@ -1938,6 +2049,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "copies interaction rule impact_ratio from reference when available" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     # 参照作物A/B（同じregion）
     crop_a = Crop.create!(user: nil, name: '参照A', variety: 'A1', is_reference: true, area_per_unit: 0.2, revenue_per_area: 4000.0, region: 'jp')
     crop_b = Crop.create!(user: nil, name: '参照B', variety: 'B1', is_reference: true, area_per_unit: 0.3, revenue_per_area: 6000.0, region: 'jp')
@@ -1956,7 +2080,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
 
     # 参照計画
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 100.0,
       plan_type: 'public',
@@ -1974,7 +2098,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     # セッションデータ
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: [
         { name: 'F1', area: 100.0, coordinates: [35.0, 139.0] }
       ]
@@ -2034,6 +2158,19 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
 
   test "should prevent duplicate interaction rules for same crop combination" do
+    # テスト用にjp地域の農場を取得または作成
+    jp_farm = Farm.reference.where(region: 'jp').first
+    if jp_farm.nil?
+      jp_farm = Farm.create!(
+        user: User.anonymous_user,
+        name: 'Test JP Farm',
+        latitude: 35.0,
+        longitude: 139.0,
+        is_reference: true,
+        region: 'jp'
+      )
+    end
+    
     # 異なる作物を選択
     crop_a = Crop.create!(
       user: nil,
@@ -2068,7 +2205,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     
     # 参照計画を作成
     plan = CultivationPlan.create!(
-      farm: @farm,
+      farm: jp_farm,
       user: nil,
       total_area: 300.0,
       plan_type: 'public',
@@ -2100,7 +2237,7 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
     # セッションデータを構築
     session_data = {
       plan_id: plan.id,
-      farm_id: @farm.id,
+      farm_id: jp_farm.id,
       field_data: [
         { name: '連作重複防止テスト圃場1', area: 100.0, coordinates: [35.0, 139.0] },
         { name: '連作重複防止テスト圃場2', area: 200.0, coordinates: [35.1, 139.1] }

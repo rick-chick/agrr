@@ -5,20 +5,19 @@ require 'test_helper'
 class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
   setup do
     @user = create(:user)
+    @farm = create(:farm, user: @user)
     sign_in_as @user
   end
 
   # SCOPE: index/new の表示系が 200 を返し、主要要素があることを確認
-  test 'index renders successfully and groups plans by year' do
-    # データ準備: 今年と昨年のプライベート計画を複数作成
-    this_year = Date.current.year
-    last_year = this_year - 1
-
+  test 'index renders successfully and groups plans by farm' do
+    # データ準備: 異なる農場のプライベート計画を作成（通年計画対応）
     farm_a = create(:farm, user: @user)
     farm_b = create(:farm, user: @user)
-    create(:cultivation_plan, :private, user: @user, farm: farm_a, plan_year: this_year)
-    create(:cultivation_plan, :private, user: @user, farm: farm_b, plan_year: this_year)
-    create(:cultivation_plan, :private, user: @user, farm: farm_a, plan_year: last_year)
+    create(:cultivation_plan, user: @user, farm: farm_a, plan_year: nil, 
+           planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
+    create(:cultivation_plan, user: @user, farm: farm_b, plan_year: nil,
+           planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
 
     get plans_path
     assert_response :success
@@ -62,14 +61,14 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
 
   # SCOPE: optimize/optimizing の遷移
   test 'optimize redirects to optimizing when not already optimizing' do
-    plan = create(:cultivation_plan, :private, user: @user, status: 'pending')
+    plan = create(:cultivation_plan, user: @user, status: 'pending')
     post optimize_plan_path(plan)
     assert_redirected_to optimizing_plan_path(plan.id)
     assert_equal I18n.t('plans.messages.optimization_started'), flash[:notice]
   end
 
   test 'optimize redirects back with alert when already optimizing' do
-    plan = create(:cultivation_plan, :private, user: @user, status: 'optimizing')
+    plan = create(:cultivation_plan, user: @user, status: 'optimizing')
     post optimize_plan_path(plan)
     assert_redirected_to plan_path(plan)
     assert_equal I18n.t('plans.errors.already_optimized'), flash[:alert]
@@ -77,35 +76,26 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
 
   test 'optimizing renders successfully' do
     # optimizing は内部で handle_optimizing を呼ぶが、画面自体の到達を確認
-    plan = create(:cultivation_plan, :private, user: @user, status: 'pending')
+    plan = create(:cultivation_plan, user: @user, status: 'pending')
     get optimizing_plan_path(plan.id)
     assert_response :success
     assert_select 'body', true
   end
 
   # SCOPE: copy 正常/異常
-  test 'copy duplicates plan to next year and redirects to new plan' do
-    plan = create(:cultivation_plan, :private, user: @user, plan_year: Date.current.year, plan_name: 'X')
-    # PlanCopier はサービスに委譲されるため、ここでは成功パスの最小確認
-    # 前提: 同名の翌年計画が存在しない
-    post copy_plan_path(plan)
-    assert_response :redirect
-    follow_redirect!
-    assert_match %r{/plans/\d+}, path
-    assert_equal I18n.t('plans.messages.plan_copied', year: plan.plan_year + 1), flash[:notice]
-  end
-
-  test 'copy prevents duplication when same year plan exists' do
-    plan = create(:cultivation_plan, :private, user: @user, plan_year: Date.current.year, plan_name: 'X')
-    create(:cultivation_plan, :private, user: @user, plan_year: plan.plan_year + 1, plan_name: plan.plan_name)
+  # SCOPE: copy 正常/異常
+  test 'copy is disabled due to new uniqueness constraint' do
+    # 新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、
+    # コピー機能は完全に無効化されました
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year, plan_name: 'X')
     post copy_plan_path(plan)
     assert_redirected_to plans_path
-    assert_equal I18n.t('plans.errors.plan_already_exists', year: plan.plan_year + 1), flash[:alert]
+    assert_equal I18n.t('plans.errors.copy_not_available_for_annual_planning'), flash[:alert]
   end
 
   # SCOPE: destroy の HTML リクエスト（JSON は既存テストで網羅）
   test 'destroy via HTML redirects to index with flash' do
-    plan = create(:cultivation_plan, :private, user: @user)
+    plan = create(:cultivation_plan, user: @user)
     delete plan_path(plan) # デフォルトはHTML
     # DeletionUndoはJSONを返す設計のため、HTMLは失敗時/異常時のフォールバックを検査
     # 実装では render_deletion_undo_response がHTMLに対応していなければ、失敗ハンドリング側へ落ちる

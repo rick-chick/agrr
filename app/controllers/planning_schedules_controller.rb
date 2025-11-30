@@ -165,38 +165,39 @@ class PlanningSchedulesController < ApplicationController
   
   # 指定したほ場名と期間の栽培情報を取得
   def get_cultivations_for_field(field_name, start_date, end_date)
-    # 表示期間に含まれる年度の計画のみを取得（重複を防ぐため）
-    # 各計画は2年分のデータを含むため、各栽培データについて、その栽培データの開始年度がplan_yearと一致する計画のみから取得
-    start_year = start_date.year
-    end_year = end_date.year
-    plan_years = (start_year..end_year).to_a
-    
-    # 該当年度の計画のみを取得
+    # 表示期間と重複する計画を取得（planning_start_date/planning_end_dateベース）
+    # 既存データ（plan_yearあり）と通年計画（plan_yearがnull）の両方に対応
     plans = CultivationPlan
       .plan_type_private
       .by_user(current_user)
       .where(farm: @farm)
-      .where(plan_year: plan_years)
+      .where(
+        # 計画期間が表示期間と重複する条件
+        '(planning_start_date <= ? AND planning_end_date >= ?)',
+        end_date, start_date
+      )
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
     
     cultivations = []
     plans.each do |plan|
       plan.field_cultivations.each do |field_cultivation|
         # ほ場名が一致し、期間が重なるものを取得
-        # さらに、栽培データの開始年度がplan_yearと一致する場合のみ取得（重複を防ぐため）
         if field_cultivation.cultivation_plan_field.name == field_name &&
            field_cultivation.start_date &&
            field_cultivation.completion_date &&
            field_cultivation.start_date <= end_date &&
-           field_cultivation.completion_date >= start_date &&
-           field_cultivation.start_date.year == plan.plan_year
+           field_cultivation.completion_date >= start_date
           
-          cultivations << {
-            crop_name: field_cultivation.cultivation_plan_crop.name,
-            start_date: field_cultivation.start_date,
-            completion_date: field_cultivation.completion_date,
-            area: field_cultivation.area
-          }
+          # 既存データ（plan_yearあり）の場合、重複防止のため開始年度がplan_yearと一致する場合のみ取得
+          # 通年計画（plan_yearがnull）の場合は全て取得
+          if plan.plan_year.nil? || field_cultivation.start_date.year == plan.plan_year
+            cultivations << {
+              crop_name: field_cultivation.cultivation_plan_crop.name,
+              start_date: field_cultivation.start_date,
+              completion_date: field_cultivation.completion_date,
+              area: field_cultivation.area
+            }
+          end
         end
       end
     end

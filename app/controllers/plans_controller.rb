@@ -14,23 +14,16 @@ class PlansController < ApplicationController
   self.session_key = :plan_data
   self.redirect_path_method = :plans_path
   
-  # 定数
-  AVAILABLE_YEARS_RANGE = 1 # 現在年から前後何年まで表示するか
-  
-  # 計画一覧（年度別）
+  # 計画一覧（農場別）
   def index
     @vm = Plans::IndexPresenter.new(current_user: current_user)
-    @current_year = @vm.current_year
-    @available_years = @vm.available_years
-    @plans_by_year = @vm.plans_by_year
-    Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plans: #{@plans_by_year.keys.inspect}"
+    @plans_by_farm = @vm.plans_by_farm
+    Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plans by farm: #{@plans_by_farm.keys.inspect}"
   end
   
-  # Step 1: 年度・農場選択
+  # Step 1: 農場選択
   def new
     @vm = Plans::NewPresenter.new(current_user: current_user)
-    @current_year = @vm.current_year
-    @available_years = @vm.available_years
     @farms = @vm.farms
     @default_plan_name = @vm.default_plan_name
     Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@farms.count}"
@@ -38,25 +31,22 @@ class PlansController < ApplicationController
   
   # Step 2: 作物選択
   def select_crop
-    unless params[:plan_year].present? && params[:farm_id].present?
-      redirect_to new_plan_path, alert: I18n.t('plans.errors.select_year_and_farm') and return
+    unless params[:farm_id].present?
+      redirect_to new_plan_path, alert: I18n.t('plans.errors.select_farm') and return
     end
 
     @vm = Plans::SelectCropPresenter.new(
       current_user: current_user,
-      plan_year: params[:plan_year],
       farm_id: params[:farm_id]
     )
-    @plan_year = @vm.plan_year
     @farm = @vm.farm
     @plan_name = @vm.plan_name
     @crops = @vm.crops
     @fields = @vm.fields
     @total_area = @vm.total_area
     
-    # セッションに保存
+    # セッションに保存（plan_yearを削除）
     session[self.class.session_key] = {
-      plan_year: @plan_year,
       farm_id: @farm.id,
       plan_name: @plan_name,
       total_area: @total_area
@@ -78,10 +68,8 @@ class PlansController < ApplicationController
       # Turbo対応: フォールバックせず同画面を422で再描画
       @vm = Plans::SelectCropPresenter.new(
         current_user: current_user,
-        plan_year: session_data[:plan_year],
         farm_id: session_data[:farm_id]
       )
-      @plan_year = @vm.plan_year
       @farm = @vm.farm
       @plan_name = @vm.plan_name
       @crops = @vm.crops
@@ -91,11 +79,15 @@ class PlansController < ApplicationController
       return render :select_crop, status: :unprocessable_entity
     end
     
-    # 既存の計画があるかチェック
+    # 既存の計画があるかチェック（通年計画: farm_id × user_idのみで検索）
     existing_plan = find_existing_plan(farm)
     if existing_plan
       Rails.logger.info "⚠️ [PlansController#create] Existing plan found: #{existing_plan.id}"
-      redirect_to plan_path(existing_plan), alert: I18n.t('plans.errors.plan_already_exists', year: existing_plan.plan_year)
+      if existing_plan.plan_year.present?
+        redirect_to plan_path(existing_plan), alert: I18n.t('plans.errors.plan_already_exists', year: existing_plan.plan_year)
+      else
+        redirect_to plan_path(existing_plan), alert: I18n.t('plans.errors.plan_already_exists_annual')
+      end
       return
     end
     
@@ -139,28 +131,11 @@ class PlansController < ApplicationController
   def copy
     source_plan = @plan
     
-    # 新しい年度を決定（現在の計画年度 + 1）
-    new_year = source_plan.plan_year + 1
-    
-    # 既に同じ年度の計画がある場合はエラー
-    if current_user.cultivation_plans.plan_type_private.exists?(plan_year: new_year, plan_name: source_plan.plan_name)
-      redirect_to plans_path, alert: I18n.t('plans.errors.plan_already_exists', year: new_year) and return
-    end
-    
-    # PlanCopierサービスで計画をコピー
-    session_id = session.id.to_s
-    result = PlanCopier.new(
-      source_plan: source_plan,
-      new_year: new_year,
-      user: current_user,
-      session_id: session_id
-    ).call
-    
-    if result.success?
-      redirect_to plan_path(result.new_plan), notice: I18n.t('plans.messages.plan_copied', year: new_year)
-    else
-      redirect_to plans_path, alert: I18n.t('plans.errors.copy_failed', errors: result.errors.join(', '))
-    end
+    # 新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、
+    # コピー機能は無効化されました（通年計画と年度ベースの計画の両方）
+    # 既存の年度ベースの計画は後方互換性のために保持されますが、
+    # 新しい計画は通年計画として作成されるため、コピー機能は不要です
+    redirect_to plans_path, alert: I18n.t('plans.errors.copy_not_available_for_annual_planning') and return
   rescue ActiveRecord::RecordNotFound
     redirect_to plans_path, alert: I18n.t('plans.errors.not_found')
   end
@@ -298,14 +273,6 @@ class PlansController < ApplicationController
     job_chain
   end
 
-  # 年度範囲を計算するヘルパーメソッド
-  def available_years_range
-    current_year = Date.current.year
-    ((current_year - AVAILABLE_YEARS_RANGE)..(current_year + AVAILABLE_YEARS_RANGE)).to_a
-  end
-  # 以降のセクションで詳細版の実装が存在するため、
-  # 同等の機能を持つ重複メソッドは削除（振る舞いは不変）
-
   # 栽培計画作成とジョブ実行
   def create_cultivation_plan_with_jobs(farm, crops)
     creator_params = build_creator_params(farm, crops)
@@ -329,10 +296,11 @@ class PlansController < ApplicationController
 
   # 作成者パラメータを構築
   def build_creator_params(farm, crops)
-    # セッションが欠落しているケースに備えて安全なデフォルトを用意
-    plan_year = session_data[:plan_year].presence || Date.current.year
+    # 通年計画: plan_yearを使わずにplanning_start_dateとplanning_end_dateを設定
     plan_name = session_data[:plan_name].presence || farm.name
-    planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
+    # デフォルトは現在年から2年間
+    planning_start_date = Date.current.beginning_of_year
+    planning_end_date = Date.new(Date.current.year + 1, 12, 31)
     session_id = session.id.to_s
     
     Rails.logger.info "🔑 [PlansController#create] Using session_id: #{session_id}"
@@ -340,6 +308,7 @@ class PlansController < ApplicationController
     Rails.logger.info "🏡 [PlansController#create] Farm: #{farm.name} (#{farm.id})"
     Rails.logger.info "🌾 [PlansController#create] Crops: #{crops.count} crops"
     Rails.logger.info "📊 [PlansController#create] Session data: #{session_data.inspect}"
+    Rails.logger.info "📅 [PlansController#create] Planning dates: #{planning_start_date} to #{planning_end_date}"
     
     {
       farm: farm,
@@ -348,17 +317,18 @@ class PlansController < ApplicationController
       user: current_user,
       session_id: session_id,
       plan_type: self.class.plan_type,
-      plan_year: plan_year,
+      plan_year: nil, # 通年計画ではplan_yearをnullにする
       plan_name: plan_name,
-      planning_start_date: planning_dates[:start_date],
-      planning_end_date: planning_dates[:end_date]
+      planning_start_date: planning_start_date,
+      planning_end_date: planning_end_date
     }
   end
 
   # セッションデータの検証
   def validate_session_data
     Rails.logger.info "🔍 [PlansController#create] Validating session data (minimal): #{session_data.inspect}"
-    required_present = session_data[:farm_id].present? && session_data[:plan_year].present?
+    # 通年計画: plan_yearのチェックを削除
+    required_present = session_data[:farm_id].present?
     unless required_present
       Rails.logger.warn "⚠️ [PlansController#create] Missing minimal session data"
       redirect_to new_plan_path, alert: I18n.t('plans.errors.restart')
@@ -384,18 +354,17 @@ class PlansController < ApplicationController
     farm
   end
 
-  # 既存の計画を検索
+  # 既存の計画を検索（通年計画: farm_id × user_idのみで検索）
   def find_existing_plan(farm)
-    plan_year = session_data[:plan_year]
-    Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, plan_year=#{plan_year}"
+    Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, user_id=#{current_user.id}"
     
     existing_plan = current_user.cultivation_plans
       .plan_type_private
-      .where(farm: farm, plan_year: plan_year)
+      .where(farm: farm)
       .first
     
     if existing_plan
-      Rails.logger.info "⚠️ [PlansController#create] Found existing plan: ID=#{existing_plan.id}, name=#{existing_plan.plan_name}"
+      Rails.logger.info "⚠️ [PlansController#create] Found existing plan: ID=#{existing_plan.id}, name=#{existing_plan.plan_name}, plan_year=#{existing_plan.plan_year}"
     else
       Rails.logger.info "✅ [PlansController#create] No existing plan found"
     end

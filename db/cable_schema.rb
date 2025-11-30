@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_25_052813) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_29_180621) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -211,7 +211,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_25_052813) do
     t.string "plan_type", default: "public", null: false
     t.string "plan_name"
     t.integer "plan_year"
-    t.index ["farm_id", "user_id", "plan_year"], name: "index_cultivation_plans_on_farm_user_year_unique", unique: true, where: "plan_type = 'private'"
+    t.index ["farm_id", "user_id"], name: "index_cultivation_plans_on_farm_user_unique", unique: true, where: "plan_type = 'private'"
     t.index ["farm_id"], name: "index_cultivation_plans_on_farm_id"
     t.index ["plan_type"], name: "index_cultivation_plans_on_plan_type"
     t.index ["session_id"], name: "index_cultivation_plans_on_session_id"
