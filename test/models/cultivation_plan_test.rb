@@ -224,4 +224,247 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_not TaskSchedule.exists?(task_schedule.id)
     assert_not FieldCultivation.exists?(field_cultivation.id)
   end
+
+  # 計算メソッドのテスト
+  test 'calculated_planning_start_date with field_cultivations' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # plan_yearが設定されている場合は保存されているカラムを優先
+    expected_start_date = plan.planning_start_date
+    assert_equal expected_start_date, plan.calculated_planning_start_date
+  end
+
+  test 'calculated_planning_start_date without field_cultivations for private plan' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan.field_cultivations.destroy_all
+    
+    assert_equal Date.current.beginning_of_year, plan.calculated_planning_start_date
+  end
+
+  test 'calculated_planning_start_date without field_cultivations for public plan' do
+    plan = create(:cultivation_plan, :public_plan, farm: @farm)
+    plan.field_cultivations.destroy_all
+    
+    assert_equal Date.current, plan.calculated_planning_start_date
+  end
+
+  test 'calculated_planning_end_date with field_cultivations' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # plan_yearが設定されている場合は保存されているカラムを優先
+    expected_end_date = plan.planning_end_date
+    assert_equal expected_end_date, plan.calculated_planning_end_date
+  end
+
+  test 'calculated_planning_end_date without field_cultivations for private plan' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan.field_cultivations.destroy_all
+    
+    assert_equal Date.new(Date.current.year + 1, 12, 31), plan.calculated_planning_end_date
+  end
+
+  test 'calculated_planning_end_date without field_cultivations for public plan' do
+    plan = create(:cultivation_plan, :public_plan, farm: @farm)
+    plan.field_cultivations.destroy_all
+    
+    assert_equal Date.current.end_of_year, plan.calculated_planning_end_date
+  end
+
+  test 'calculated_planning_start_date prioritizes stored column when plan_year is set' do
+    plan_year = 2025
+    plan = create(:cultivation_plan, 
+                  farm: @farm, 
+                  user: @user, 
+                  plan_year: plan_year,
+                  planning_start_date: Date.new(plan_year, 1, 1),
+                  planning_end_date: Date.new(plan_year + 1, 12, 31))
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    # field_cultivationsが2025年のみに存在しても、plan_yearが設定されている場合は保存されているカラムを優先
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(plan_year, 4, 1),
+      completion_date: Date.new(plan_year, 10, 31)
+    )
+    
+    # plan_yearが設定されている場合は保存されているカラムを優先（2025年1月1日）
+    assert_equal Date.new(plan_year, 1, 1), plan.calculated_planning_start_date
+    # field_cultivationsから計算すると2025年1月1日になるが、カラムの値が優先される
+  end
+
+  test 'calculated_planning_end_date prioritizes stored column when plan_year is set' do
+    plan_year = 2025
+    plan = create(:cultivation_plan, 
+                  farm: @farm, 
+                  user: @user, 
+                  plan_year: plan_year,
+                  planning_start_date: Date.new(plan_year, 1, 1),
+                  planning_end_date: Date.new(plan_year + 1, 12, 31))
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    # field_cultivationsが2025年のみに存在しても、plan_yearが設定されている場合は保存されているカラムを優先
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(plan_year, 4, 1),
+      completion_date: Date.new(plan_year, 10, 31)
+    )
+    
+    # plan_yearが設定されている場合は保存されているカラムを優先（2026年12月31日）
+    assert_equal Date.new(plan_year + 1, 12, 31), plan.calculated_planning_end_date
+    # field_cultivationsから計算すると2025年12月31日になるが、カラムの値が優先される
+  end
+
+  test 'calculated_planning_start_date uses field_cultivations when plan_year is not set' do
+    plan = create(:cultivation_plan, 
+                  farm: @farm, 
+                  user: @user, 
+                  plan_year: nil,
+                  planning_start_date: Date.new(2025, 1, 1),
+                  planning_end_date: Date.new(2026, 12, 31))
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # plan_yearが設定されていない場合はfield_cultivationsから計算（2025年1月1日）
+    assert_equal Date.new(2025, 1, 1), plan.calculated_planning_start_date
+  end
+
+  test 'calculated_planning_end_date uses field_cultivations when plan_year is not set' do
+    plan = create(:cultivation_plan, 
+                  farm: @farm, 
+                  user: @user, 
+                  plan_year: nil,
+                  planning_start_date: Date.new(2025, 1, 1),
+                  planning_end_date: Date.new(2026, 12, 31))
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # plan_yearが設定されていない場合はfield_cultivationsから計算（2025年12月31日）
+    assert_equal Date.new(2025, 12, 31), plan.calculated_planning_end_date
+  end
+
+  test 'calculated_planning_start_date with nil dates' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: nil,
+      completion_date: nil
+    )
+    
+    # nilの場合はデフォルト値を返す
+    assert_equal Date.current.beginning_of_year, plan.calculated_planning_start_date
+  end
+
+  test 'calculated_planning_range returns hash with start and end dates' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    range = plan.calculated_planning_range
+    # plan_yearが設定されている場合は保存されているカラムを優先
+    assert_equal plan.planning_start_date, range[:start_date]
+    assert_equal plan.planning_end_date, range[:end_date]
+  end
+
+  test 'planning_start_date returns nil when column is nil (for validation)' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # カラムの値をnilに設定
+    plan.update_column(:planning_start_date, nil)
+    plan.reload
+    
+    # カラムがnilの場合はnilを返す（バリデーションのため）
+    assert_nil plan.planning_start_date
+    
+    # 計算メソッドは別途使用可能
+    assert_equal Date.new(2025, 1, 1), plan.calculated_planning_start_date
+  end
+
+  test 'planning_end_date returns nil when column is nil (for validation)' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
+    field_cultivation = create(
+      :field_cultivation,
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
+    
+    # カラムの値をnilに設定
+    plan.update_column(:planning_end_date, nil)
+    plan.reload
+    
+    # カラムがnilの場合はnilを返す（バリデーションのため）
+    assert_nil plan.planning_end_date
+    
+    # 計算メソッドは別途使用可能
+    assert_equal Date.new(2025, 12, 31), plan.calculated_planning_end_date
+  end
 end

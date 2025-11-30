@@ -165,21 +165,22 @@ class PlanningSchedulesController < ApplicationController
   
   # 指定したほ場名と期間の栽培情報を取得
   def get_cultivations_for_field(field_name, start_date, end_date)
-    # 表示期間と重複する計画を取得（planning_start_date/planning_end_dateベース）
+    # 表示期間と重複する計画を取得（作付計画の期間ベース）
     # 既存データ（plan_yearあり）と通年計画（plan_yearがnull）の両方に対応
     plans = CultivationPlan
       .plan_type_private
       .by_user(current_user)
       .where(farm: @farm)
-      .where(
-        # 計画期間が表示期間と重複する条件
-        '(planning_start_date <= ? AND planning_end_date >= ?)',
-        end_date, start_date
-      )
       .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
     
     cultivations = []
     plans.each do |plan|
+      # 計画の計算された期間が表示期間と重複するかチェック
+      plan_start = plan.calculated_planning_start_date
+      plan_end = plan.calculated_planning_end_date
+      next unless plan_start && plan_end
+      next unless plan_start <= end_date && plan_end >= start_date
+      
       plan.field_cultivations.each do |field_cultivation|
         # ほ場名が一致し、期間が重なるものを取得
         if field_cultivation.cultivation_plan_field.name == field_name &&

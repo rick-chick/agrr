@@ -140,8 +140,20 @@ class CultivationPlan < ApplicationRecord
       name = plan_name.presence || I18n.t('models.cultivation_plan.default_plan_name')
       if plan_year.present?
         "#{name} (#{plan_year})"
-      elsif planning_start_date && planning_end_date
-        "#{name} (#{planning_start_date.year}〜#{planning_end_date.year})"
+      elsif has_attribute?(:planning_start_date) && read_attribute(:planning_start_date).present? &&
+            has_attribute?(:planning_end_date) && read_attribute(:planning_end_date).present?
+        start_date = read_attribute(:planning_start_date)
+        end_date = read_attribute(:planning_end_date)
+        "#{name} (#{start_date.year}〜#{end_date.year})"
+      elsif !has_attribute?(:planning_start_date) || !has_attribute?(:planning_end_date)
+        # カラムが存在しない場合は計算メソッドを使用
+        start_date = calculated_planning_start_date
+        end_date = calculated_planning_end_date
+        if start_date && end_date
+          "#{name} (#{start_date.year}〜#{end_date.year})"
+        else
+          name
+        end
       else
         name
       end
@@ -181,7 +193,89 @@ class CultivationPlan < ApplicationRecord
     update!(planning_start_date: dates[:start_date], planning_end_date: dates[:end_date])
   end
   
+  # 計画期間をメソッドとして計算
+  # plan_yearが設定されている場合は保存されているカラムを優先
+  def calculated_planning_start_date
+    # plan_yearが設定されている場合は保存されているカラムを優先
+    if plan_year.present? && has_attribute?(:planning_start_date) && read_attribute(:planning_start_date).present?
+      return read_attribute(:planning_start_date)
+    end
+    
+    # plan_yearが設定されていない場合はfield_cultivationsから計算
+    if field_cultivations.any?
+      min_date = field_cultivations.pluck(:start_date).compact.min
+      return default_planning_start_date unless min_date
+      min_date.beginning_of_year
+    else
+      # 作付計画がない場合のデフォルト値（最適化前など）
+      default_planning_start_date
+    end
+  end
+  
+  def calculated_planning_end_date
+    # plan_yearが設定されている場合は保存されているカラムを優先
+    if plan_year.present? && has_attribute?(:planning_end_date) && read_attribute(:planning_end_date).present?
+      return read_attribute(:planning_end_date)
+    end
+    
+    # plan_yearが設定されていない場合はfield_cultivationsから計算
+    if field_cultivations.any?
+      max_date = field_cultivations.pluck(:completion_date).compact.max
+      return default_planning_end_date unless max_date
+      max_date.end_of_year
+    else
+      # 作付計画がない場合のデフォルト値（最適化前など）
+      default_planning_end_date
+    end
+  end
+  
+  def calculated_planning_range
+    {
+      start_date: calculated_planning_start_date,
+      end_date: calculated_planning_end_date
+    }
+  end
+  
+  # 互換性のためのエイリアス（段階的移行用）
+  # 注意: カラムが存在する場合はカラムを優先し、存在しない場合は計算メソッドを使用
+  # バリデーションではカラムの値のみをチェックするため、カラムがnilの場合はnilを返す
+  def planning_start_date
+    if has_attribute?(:planning_start_date)
+      read_attribute(:planning_start_date)
+    else
+      calculated_planning_start_date
+    end
+  end
+  
+  def planning_end_date
+    if has_attribute?(:planning_end_date)
+      read_attribute(:planning_end_date)
+    else
+      calculated_planning_end_date
+    end
+  end
+  
   private
+  
+  def default_planning_start_date
+    # プライベート計画: 現在年の1月1日
+    # 公開計画: 今日
+    if plan_type_private?
+      Date.current.beginning_of_year
+    else
+      Date.current
+    end
+  end
+  
+  def default_planning_end_date
+    # プライベート計画: 次の年の12月31日
+    # 公開計画: 今年の12月31日
+    if plan_type_private?
+      Date.new(Date.current.year + 1, 12, 31)
+    else
+      Date.current.end_of_year
+    end
+  end
   
   def check_optimization_completion
     return unless status_optimizing?

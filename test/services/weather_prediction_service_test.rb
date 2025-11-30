@@ -40,6 +40,17 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
 
   test "predict_for_cultivation_plan persists prediction on weather_location" do
     cultivation_plan = create(:cultivation_plan, farm: @farm, user: @user, planning_end_date: Date.new(2025, 12, 31))
+    # 作付計画を作成してcalculated_planning_end_dateが正しい値を返すようにする
+    plan_field = create(:cultivation_plan_field, cultivation_plan: cultivation_plan)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: cultivation_plan)
+    create(
+      :field_cultivation,
+      cultivation_plan: cultivation_plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.new(2025, 4, 1),
+      completion_date: Date.new(2025, 10, 31)
+    )
 
     fake_weather_info = {
       data: {
@@ -52,7 +63,7 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
         ]
       },
       prediction_start_date: "2025-01-01",
-      target_end_date: cultivation_plan.planning_end_date,
+      target_end_date: cultivation_plan.calculated_planning_end_date,
       prediction_days: 365
     }
 
