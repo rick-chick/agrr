@@ -268,8 +268,8 @@ module CultivationPlanApi
         plan_name: @cultivation_plan.plan_name,
         status: @cultivation_plan.status,
         total_area: @cultivation_plan.total_area,
-        planning_start_date: @cultivation_plan.planning_start_date,
-        planning_end_date: @cultivation_plan.planning_end_date,
+        planning_start_date: @cultivation_plan.calculated_planning_start_date,
+        planning_end_date: @cultivation_plan.calculated_planning_end_date,
         fields: fields_data,
         crops: crops_data,
         cultivations: cultivations_data

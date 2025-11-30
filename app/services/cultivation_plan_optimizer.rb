@@ -53,12 +53,15 @@ class CultivationPlanOptimizer
         Rails.logger.info "📋 [AGRR] Using #{interaction_rules.count} interaction rules"
       end
       
+      # 計画期間の計算（作付計画がある場合は作付計画の期間から計算、ない場合はデフォルト期間を使用）
+      planning_start, planning_end = calculate_planning_period
+      
       allocation_result = @allocation_gateway.allocate(
         fields: fields_data,
         crops: crops_data,
         weather_data: weather_info[:data],
-        planning_start: @cultivation_plan.planning_start_date,
-        planning_end: @cultivation_plan.planning_end_date,
+        planning_start: planning_start,
+        planning_end: planning_end,
         interaction_rules: interaction_rules
       )
       
@@ -90,6 +93,28 @@ class CultivationPlanOptimizer
   
   private
   
+  def calculate_planning_period
+    # 作付計画がある場合は作付計画の期間から計算
+    if @cultivation_plan.field_cultivations.any?
+      start_date = @cultivation_plan.calculated_planning_start_date
+      end_date = @cultivation_plan.calculated_planning_end_date
+      [start_date, end_date]
+    else
+      # 作付計画がない場合はデフォルト期間を使用
+      # プライベート計画と公開計画で異なるデフォルト値
+      if @cultivation_plan.plan_type_private?
+        [
+          Date.current.beginning_of_year,
+          Date.new(Date.current.year + 1, 12, 31)
+        ]
+      else
+        [
+          Date.current,
+          Date.current.end_of_year
+        ]
+      end
+    end
+  end
   
   def prepare_interaction_rules
     # 農場の地域を取得

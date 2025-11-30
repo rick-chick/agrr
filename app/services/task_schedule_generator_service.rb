@@ -54,7 +54,7 @@ class TaskScheduleGeneratorService
 
     agricultural_tasks_lookup = index_agricultural_tasks(crop)
 
-    start_date = field_cultivation.start_date || plan.planning_start_date
+    start_date = field_cultivation.start_date || plan.calculated_planning_start_date
     filtered_weather_data = filtered_weather_data(plan.predicted_weather_data, start_date)
 
     progress_data = progress_gateway.calculate_progress(

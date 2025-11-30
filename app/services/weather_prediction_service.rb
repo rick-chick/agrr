@@ -22,7 +22,7 @@ class WeatherPredictionService
   # @param target_end_date [Date] 予測終了日（デフォルト: 翌年12月31日）
   # @return [Hash] 予測データとメタ情報
   def predict_for_cultivation_plan(cultivation_plan, target_end_date: nil)
-    target_end_date = normalize_target_end_date(target_end_date || cultivation_plan&.planning_end_date)
+    target_end_date = normalize_target_end_date(target_end_date || cultivation_plan&.calculated_planning_end_date)
     
     Rails.logger.info "🔮 [WeatherPrediction] Starting prediction for CultivationPlan##{cultivation_plan.id}"
     Rails.logger.info "   Target end date: #{target_end_date}"
@@ -67,7 +67,7 @@ class WeatherPredictionService
   # @param cultivation_plan [CultivationPlan] 栽培計画（オプション）
   # @return [Hash] 予測データとメタ情報
   def get_existing_prediction(target_end_date: nil, cultivation_plan: nil)
-    target_end_date ||= cultivation_plan&.planning_end_date
+    target_end_date ||= cultivation_plan&.calculated_planning_end_date
     target_end_date = normalize_target_end_date(target_end_date)
     
     Rails.logger.info "🔍 [WeatherPrediction] Checking existing prediction for WeatherLocation##{@weather_location.id} (Farm##{@farm&.id || 'N/A'})"
