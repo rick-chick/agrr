@@ -27,10 +27,15 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_includes plan.errors[:user_id], "を入力してください"
   end
 
-  test 'should require plan_year for private plans' do
-    plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: nil)
-    assert_not plan.valid?
-    assert_includes plan.errors[:plan_year], "を入力してください"
+  test 'should allow plan_year to be null for private plans (annual planning)' do
+    # 通年計画ではplan_yearがnullでも有効
+    plan = build(:cultivation_plan, 
+                 farm: @farm, 
+                 user: @user, 
+                 plan_year: nil,
+                 planning_start_date: Date.new(2025, 1, 1),
+                 planning_end_date: Date.new(2026, 12, 31))
+    assert plan.valid?, "plan_yearがnullでも有効であるべき: #{plan.errors.full_messages}"
   end
 
   test 'should validate plan_year is greater than 2020' do
@@ -39,13 +44,33 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_includes plan.errors[:plan_year], 'は2020より大きい値にしてください'
   end
 
-  test 'should validate uniqueness of farm_id scoped to user_id and plan_year for private plans' do
-    # 最初の計画を作成
+  test 'should validate uniqueness of farm_id scoped to user_id for private plans (annual planning)' do
+    # 最初の計画を作成（plan_yearあり）
     create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
     
-    # 同じ農場、ユーザ、年で2つ目の計画を作成しようとする
-    duplicate_plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
-    assert_not duplicate_plan.valid?
+    # 同じ農場、ユーザで2つ目の計画を作成しようとする（plan_yearが異なる）
+    duplicate_plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year + 1)
+    assert_not duplicate_plan.valid?, "同じfarm_id × user_idで複数の計画を作成できないべき"
+    assert_includes duplicate_plan.errors[:farm_id], 'この農場の計画は既に存在します'
+  end
+
+  test 'should validate uniqueness of farm_id scoped to user_id for private plans without plan_year' do
+    # 最初の通年計画を作成（plan_yearなし）
+    create(:cultivation_plan, 
+           farm: @farm, 
+           user: @user, 
+           plan_year: nil,
+           planning_start_date: Date.new(2025, 1, 1),
+           planning_end_date: Date.new(2026, 12, 31))
+    
+    # 同じ農場、ユーザで2つ目の通年計画を作成しようとする
+    duplicate_plan = build(:cultivation_plan, 
+                           farm: @farm, 
+                           user: @user, 
+                           plan_year: nil,
+                           planning_start_date: Date.new(2027, 1, 1),
+                           planning_end_date: Date.new(2028, 12, 31))
+    assert_not duplicate_plan.valid?, "同じfarm_id × user_idで複数の通年計画を作成できないべき"
     assert_includes duplicate_plan.errors[:farm_id], 'この農場の計画は既に存在します'
   end
 
@@ -61,22 +86,14 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert other_plan.valid?
   end
 
-  test 'should allow same farm_id and user with different plan_year for private plans' do
-    # 最初の計画を作成
+  test 'should not allow same farm_id and user with different plan_year for private plans (annual planning)' do
+    # 最初の計画を作成（plan_yearあり）
     create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
     
-    # 異なる年で計画を作成
+    # 異なる年で計画を作成しようとする（通年計画では同じfarm_id × user_idで複数の計画を作成できない）
     different_year_plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year + 1)
-    assert different_year_plan.valid?
-  end
-
-  test 'should allow same farm_id and user with different plan_year for private plans (previous year)' do
-    # 最初の計画を作成
-    create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
-    
-    # 前の年で計画を作成
-    previous_year_plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year - 1)
-    assert previous_year_plan.valid?
+    assert_not different_year_plan.valid?, "同じfarm_id × user_idで複数の計画を作成できないべき"
+    assert_includes different_year_plan.errors[:farm_id], 'この農場の計画は既に存在します'
   end
 
   test 'should not validate uniqueness for public plans' do
@@ -140,9 +157,21 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_equal expected_dates[:end_date], plan.planning_end_date
   end
 
-  test 'should return correct display name for private plan' do
+  test 'should return correct display name for private plan with plan_year' do
     plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year, plan_name: 'テスト計画')
     expected_name = "テスト計画 (#{@plan_year})"
+    assert_equal expected_name, plan.display_name
+  end
+
+  test 'should return display name with date range for private plan without plan_year' do
+    plan = create(:cultivation_plan, 
+                  farm: @farm, 
+                  user: @user, 
+                  plan_year: nil,
+                  plan_name: 'テスト計画',
+                  planning_start_date: Date.new(2025, 1, 1),
+                  planning_end_date: Date.new(2026, 12, 31))
+    expected_name = "テスト計画 (2025〜2026)"
     assert_equal expected_name, plan.display_name
   end
 
@@ -150,6 +179,18 @@ class CultivationPlanTest < ActiveSupport::TestCase
     plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year, plan_name: nil)
     expected_name = I18n.t('models.cultivation_plan.default_plan_name') + " (#{@plan_year})"
     assert_equal expected_name, plan.display_name
+  end
+
+  test 'should return display name without year for private plan without plan_year and dates' do
+    plan = build(:cultivation_plan, 
+                 farm: @farm, 
+                 user: @user, 
+                 plan_year: nil,
+                 plan_name: 'テスト計画',
+                 planning_start_date: nil,
+                 planning_end_date: nil)
+    # planning_start_dateとplanning_end_dateがnullの場合はplan_nameのみ
+    assert_equal 'テスト計画', plan.display_name
   end
 
   test 'should return public plan name for public plan' do

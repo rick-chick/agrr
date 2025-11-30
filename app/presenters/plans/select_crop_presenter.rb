@@ -2,14 +2,9 @@
 
 module Plans
   class SelectCropPresenter
-    def initialize(current_user:, plan_year:, farm_id:)
+    def initialize(current_user:, farm_id:)
       @current_user = current_user
-      @plan_year = Integer(plan_year)
       @farm = @current_user.farms.find(farm_id)
-    end
-
-    def plan_year
-      @plan_year
     end
 
     def farm

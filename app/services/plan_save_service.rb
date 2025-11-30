@@ -196,8 +196,8 @@ class PlanSaveService
   end
   
   def find_existing_private_plan(farm)
-    current_year = Date.current.year
-    @user.cultivation_plans.where(plan_type: 'private', plan_year: current_year, farm: farm).first
+    # 通年計画: farm_id × user_idのみで検索（plan_yearを除外）
+    @user.cultivation_plans.where(plan_type: 'private', farm: farm).first
   end
 
   def create_user_crops_from_plan
@@ -207,45 +207,11 @@ class PlanSaveService
     reference_plan = CultivationPlan.includes(cultivation_plan_crops: [crop: { crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement] }]).find(plan_id)
     reference_region = reference_plan.farm&.region || @current_farm_region
 
-    reference_crops_scope = Crop.reference
-    reference_crops_scope = reference_crops_scope.where(region: [reference_region, nil]) if reference_region.present?
-
     user_crops = []
     @reference_crop_id_to_user_crop_id ||= {}
 
-    reference_crops_scope.find_each do |reference_crop|
-      existing_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
-
-      if existing_crop
-        @result.add_skip(:crops, existing_crop.id)
-        user_crops << existing_crop
-        @reference_crop_id_to_user_crop_id[reference_crop.id] = existing_crop.id
-        next
-      end
-
-      new_crop = @user.crops.build(
-        name: reference_crop.name,
-        variety: reference_crop.variety,
-        area_per_unit: reference_crop.area_per_unit,
-        revenue_per_area: reference_crop.revenue_per_area,
-        groups: reference_crop.groups,
-        is_reference: false,
-        region: reference_crop.region,
-        source_crop_id: reference_crop.id
-      )
-
-      unless new_crop.save
-        error_message = new_crop.errors.full_messages.join(', ')
-        Rails.logger.error "❌ [PlanSaveService] Crop creation failed: #{error_message}"
-        raise StandardError, error_message
-      end
-
-      copy_crop_stages(reference_crop, new_crop)
-      user_crops << new_crop
-      @reference_crop_id_to_user_crop_id[reference_crop.id] = new_crop.id
-      Rails.logger.info I18n.t('services.plan_save_service.messages.crop_created', crop_name: new_crop.name)
-    end
-
+    # 参照計画のcultivation_plan_cropsに含まれている作物のみをコピー
+    # （20件のCrop制限を考慮し、参照計画に含まれている作物のみをコピー）
     reference_cultivation_plan_crops = reference_plan.cultivation_plan_crops.order(:id).to_a
     @ref_cpc_id_to_user_crop_id = {}
 
@@ -253,7 +219,10 @@ class PlanSaveService
       reference_crop = reference_cpc.crop
       user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
 
-      unless user_crop
+      if user_crop
+        @result.add_skip(:crops, user_crop.id)
+        user_crops << user_crop
+      else
         user_crop = @user.crops.create!(
           name: reference_crop.name,
           variety: reference_crop.variety,
@@ -327,12 +296,20 @@ class PlanSaveService
   end
   
   def copy_interaction_rules_for_region(region)
+    # 参照計画に含まれている作物のグループを取得
+    reference_crop_groups = get_reference_crop_groups
+    return [] if reference_crop_groups.empty?
+
     reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
     reference_scope = reference_scope.where(region: [region, nil]) if region.present?
 
     interaction_rules = []
 
     reference_scope.find_each do |reference_rule|
+      # 参照計画に含まれている作物のグループに関連するルールのみをコピー
+      next unless reference_crop_groups.include?(reference_rule.source_group) || 
+                  reference_crop_groups.include?(reference_rule.target_group)
+
       existing_rule = @user.interaction_rules.find_by(source_interaction_rule_id: reference_rule.id)
 
       unless existing_rule
@@ -372,6 +349,10 @@ class PlanSaveService
   end
 
   def copy_pests_for_region(region)
+    # 参照計画に含まれている作物のIDを取得
+    reference_crop_ids = get_reference_crop_ids
+    return [] if reference_crop_ids.empty?
+
     reference_scope = Pest.reference
     reference_scope = reference_scope.where(region: [region, nil]) if region.present?
 
@@ -387,9 +368,15 @@ class PlanSaveService
     @reference_pest_id_to_user_pest_id ||= {}
 
     reference_scope.find_each do |reference_pest|
-      existing_pest = @user.pests.find_by(source_pest_id: reference_pest.id)
+      # 参照計画に含まれている作物に関連する害虫のみをコピー
+      pest_crop_ids = reference_pest.crop_pests.pluck(:crop_id)
+      next unless (pest_crop_ids & reference_crop_ids).any?
+
+      # 既存の害虫を検索（リロードしてキャッシュの問題を回避）
+      existing_pest = @user.pests.reload.find_by(source_pest_id: reference_pest.id)
 
       if existing_pest
+        copy_pest_crop_relationships(reference_pest, existing_pest)
         @result.add_skip(:pests, existing_pest.id)
         user_pests << existing_pest
         @reference_pest_id_to_user_pest_id[reference_pest.id] = existing_pest.id
@@ -409,8 +396,37 @@ class PlanSaveService
       )
 
       unless new_pest.save
-        error_message = new_pest.errors.full_messages.join(', ')
-        Rails.logger.error "❌ [PlanSaveService] Pest creation failed: #{error_message}"
+        # 一意制約違反の場合、既存の害虫を取得して再利用
+        error_messages = new_pest.errors.full_messages
+        error_keys = new_pest.errors.keys
+        
+        # source_pest_idの一意制約違反、またはエラーメッセージに「Pest」と「すでに存在」が含まれる場合
+        # エラーメッセージのパターン: "Pestはすでに存在します" または "Source pestはすでに存在します"
+        is_uniqueness_error = error_keys.include?(:source_pest_id) || 
+                              error_messages.any? { |msg| (msg.include?('Pest') || msg.include?('pest')) && (msg.include?('すでに存在') || msg.include?('already') || msg.include?('taken')) }
+        
+        if is_uniqueness_error
+          # 再度既存の害虫を検索（並行処理などで作成された可能性がある）
+          # リロードしてキャッシュの問題を回避
+          existing_pest = @user.pests.reload.find_by(source_pest_id: reference_pest.id)
+          if existing_pest
+            copy_pest_crop_relationships(reference_pest, existing_pest)
+            @result.add_skip(:pests, existing_pest.id)
+            user_pests << existing_pest
+            @reference_pest_id_to_user_pest_id[reference_pest.id] = existing_pest.id
+            next
+          else
+            # 既存の害虫が見つからない場合、データ不整合の可能性があるためエラーを発生
+            # （異常系はフォールバックではなくエラーを上げる）
+            error_message = "Pest uniqueness constraint violation but existing pest not found: source_pest_id=#{reference_pest.id}, user_id=#{@user.id}, error_messages=#{error_messages.join(', ')}"
+            Rails.logger.error "❌ [PlanSaveService] #{error_message}"
+            raise StandardError, error_message
+          end
+        end
+        
+        # 一意制約違反でない場合はエラーを発生
+        error_message = error_messages.join(', ')
+        Rails.logger.error "❌ [PlanSaveService] Pest creation failed: #{error_message} (keys: #{error_keys.inspect})"
         raise StandardError, error_message
       end
 
@@ -478,6 +494,24 @@ class PlanSaveService
     nil
   end
 
+  def get_reference_crop_ids
+    @reference_crop_id_to_user_crop_id ||= {}
+    @reference_crop_id_to_user_crop_id.keys
+  end
+
+  def get_reference_crop_groups
+    reference_crop_ids = get_reference_crop_ids
+    return [] if reference_crop_ids.empty?
+
+    crops = Crop.where(id: reference_crop_ids)
+    # 連作ルールは作物のnameとgroupsの両方を使用する可能性があるため、両方を取得
+    groups = crops.pluck(:name)
+    crops.each do |crop|
+      groups.concat(crop.groups) if crop.groups.present?
+    end
+    groups.compact.uniq
+  end
+
   def user_pest_id_for_reference_pest(reference_pest_id)
     @reference_pest_id_to_user_pest_id ||= {}
     return @reference_pest_id_to_user_pest_id[reference_pest_id] if @reference_pest_id_to_user_pest_id.key?(reference_pest_id)
@@ -492,6 +526,10 @@ class PlanSaveService
   end
 
   def copy_agricultural_tasks_for_region(region)
+    # 参照計画に含まれている作物のIDを取得
+    reference_crop_ids = get_reference_crop_ids
+    return [] if reference_crop_ids.empty?
+
     reference_scope = AgriculturalTask.reference
     reference_scope = reference_scope.where(region: [region, nil]) if region.present?
 
@@ -501,6 +539,10 @@ class PlanSaveService
     @reference_agricultural_task_id_to_user_task_id ||= {}
 
     reference_scope.find_each do |reference_task|
+      # 参照計画に含まれている作物に関連する作業のみをコピー
+      task_crop_ids = reference_task.crop_task_templates.pluck(:crop_id)
+      next unless (task_crop_ids & reference_crop_ids).any?
+
       existing_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
 
       if existing_task
@@ -711,11 +753,18 @@ class PlanSaveService
     reference_plan = CultivationPlan.includes(:field_cultivations).find(plan_id)
     Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_plan_found', plan_name: reference_plan.plan_name)
     
-    # 作付け期間の平均から年度を算出
-    plan_year = calculate_plan_year_from_cultivations(reference_plan)
-    planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
-    
-    Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
+    # 参照計画が通年計画（plan_yearがnull）の場合は、plan_yearを設定せず、期間を計算
+    if reference_plan.plan_year.nil?
+      # 通年計画: 作付け期間からplanning_start_dateとplanning_end_dateを計算
+      planning_dates = calculate_planning_dates_from_cultivations(reference_plan)
+      plan_year = nil
+      Rails.logger.info "📅 [PlanSaveService] Reference plan is annual planning (plan_year is null), calculated dates from cultivations"
+    else
+      # 既存データ（plan_yearあり）: 従来通りplan_yearから計算
+      plan_year = calculate_plan_year_from_cultivations(reference_plan)
+      planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
+      Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
+    end
     
     # 新しい計画を作成
     new_plan = CultivationPlan.create!(
@@ -976,7 +1025,7 @@ class PlanSaveService
     true
   end
   
-  # 作付け期間の平均から年度を算出
+  # 作付け期間の平均から年度を算出（既存データ用）
   # @param reference_plan [CultivationPlan] 参照プラン
   # @return [Integer] 計画年度
   def calculate_plan_year_from_cultivations(reference_plan)
@@ -1010,6 +1059,42 @@ class PlanSaveService
     Rails.logger.debug "📊 [PlanSaveService] Calculated plan_year: #{plan_year}"
     
     plan_year
+  end
+
+  # 作付け期間から計画期間を計算（通年計画用）
+  # @param reference_plan [CultivationPlan] 参照プラン
+  # @return [Hash] { start_date: Date, end_date: Date }
+  def calculate_planning_dates_from_cultivations(reference_plan)
+    field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
+    
+    # 作付けが存在しない場合は現在年から2年間を返す
+    if field_cultivations.empty?
+      Rails.logger.info "⚠️ [PlanSaveService] No field_cultivations found, using default 2-year period from current date"
+      return {
+        start_date: Date.current.beginning_of_year,
+        end_date: Date.new(Date.current.year + 1, 12, 31)
+      }
+    end
+    
+    # 全ての作付けの開始日と終了日から最小・最大を取得
+    start_dates = field_cultivations.pluck(:start_date).compact
+    end_dates = field_cultivations.pluck(:completion_date).compact
+    
+    min_start_date = start_dates.min
+    max_end_date = end_dates.max
+    
+    # 計画期間は作付け期間の前後1年を追加
+    planning_start_date = min_start_date.beginning_of_year
+    planning_end_date = max_end_date.end_of_year
+    
+    Rails.logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
+    Rails.logger.debug "📊 [PlanSaveService] Min start date: #{min_start_date}, Max end date: #{max_end_date}"
+    Rails.logger.debug "📊 [PlanSaveService] Calculated planning dates: #{planning_start_date} to #{planning_end_date}"
+    
+    {
+      start_date: planning_start_date,
+      end_date: planning_end_date
+    }
   end
   
   def copy_crop_stages(reference_crop, new_crop)

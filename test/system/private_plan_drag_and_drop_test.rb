@@ -113,6 +113,70 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
     assert_equal true, result.dig("data", "success"), "add_crop APIのレスポンスが成功を示していません: #{result}"
   end
 
+  test "ユーザーは通年計画で作物をガントチャートにドラッグ&ドロップできる" do
+    # 通年計画を作成（plan_yearがnull）
+    annual_plan = CultivationPlan.create!(
+      farm: @farm,
+      user: @user,
+      total_area: 100.0,
+      status: "completed",
+      plan_type: "private",
+      plan_year: nil,
+      plan_name: "通年計画テスト",
+      planning_start_date: Date.current.beginning_of_year,
+      planning_end_date: Date.current.end_of_year + 1.year
+    )
+
+    plan_field = CultivationPlanField.create!(
+      cultivation_plan: annual_plan,
+      name: @field.name,
+      area: @field.area,
+      daily_fixed_cost: 0.0
+    )
+
+    plan_crop = CultivationPlanCrop.create!(
+      cultivation_plan: annual_plan,
+      crop: @crop,
+      name: @crop.name,
+      variety: @crop.variety,
+      area_per_unit: @crop.area_per_unit,
+      revenue_per_area: @crop.revenue_per_area
+    )
+
+    visit root_path(locale: :ja)
+
+    page.driver.browser.manage.add_cookie(
+      name: "session_id",
+      value: @session.session_id,
+      path: "/"
+    )
+
+    visit plan_path(annual_plan, locale: :ja)
+
+    assert_selector "#gantt-chart-container", wait: 10
+    assert_selector "svg.custom-gantt-chart", wait: 10
+    assert_selector ".crop-palette-card", wait: 10
+
+    # パレットが閉じていれば開いておく
+    page.execute_script(<<~JS)
+      const panel = document.getElementById("crop-palette-panel");
+      if (panel && panel.classList.contains("collapsed")) {
+        panel.classList.remove("collapsed");
+      }
+    JS
+
+    instrument_fetch_for_add_crop
+    simulate_drag_from_palette_to_chart
+
+    wait_for_add_crop_request
+
+    result = page.evaluate_script("window.__addCropCalls[window.__addCropCalls.length - 1]")
+
+    assert result, "add_cropリクエストが記録されていません"
+    assert_equal 200, result["status"], "add_crop APIが成功ステータスを返しませんでした: #{result}"
+    assert_equal true, result.dig("data", "success"), "add_crop APIのレスポンスが成功を示していません: #{result}"
+  end
+
   private
 
   def instrument_fetch_for_add_crop

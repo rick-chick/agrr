@@ -10,7 +10,8 @@ us:
       completed: "✓"
     
     errors:
-      select_year_and_farm: "Please select a year and farm."
+      select_year_and_farm: "Please select a year and farm." # Kept for backward compatibility
+      select_farm: "Please select a farm."
       select_crop: "Please select at least one crop."
       restart: "Please start over."
       create_failed: "Failed to create plan: %{errors}"
@@ -19,7 +20,9 @@ us:
       crop_not_found: "Crop not found."
       unauthorized: "You don't have permission to access this plan."
       plan_already_exists: "A plan for %{year} already exists."
+      plan_already_exists_annual: "A plan for this farm already exists."
       copy_failed: "Failed to copy plan: %{errors}"
+      copy_not_available_for_annual_planning: "Copy function is not available for annual planning."
       delete_failed: "Failed to delete plan."
       delete_error: "An error occurred while deleting: %{message}"
       already_optimized: "This plan is already optimized."

@@ -6,14 +6,11 @@ module Plans
       @current_user = current_user
     end
 
-    def current_year
-      @current_year ||= Date.current.year
+    def plans_by_farm
+      @plans_by_farm ||= plans.group_by(&:farm_id)
     end
 
-    def available_years
-      @available_years ||= ((current_year - 1)..(current_year + 1)).to_a
-    end
-
+    # 後方互換性のため残す（既存データの表示に使用される可能性がある）
     def plans_by_year
       @plans_by_year ||= plans.group_by(&:plan_year)
     end
@@ -32,7 +29,7 @@ module Plans
       @plans ||= CultivationPlan
                   .plan_type_private
                   .by_user(@current_user)
-                  .select(:id, :status, :plan_year, :plan_name, :total_area, :farm_id, :created_at, :updated_at)
+                  .select(:id, :status, :plan_year, :plan_name, :total_area, :farm_id, :planning_start_date, :planning_end_date, :created_at, :updated_at)
                   .preload(:farm)
                   .recent
     end

@@ -13,7 +13,7 @@ class PlanningSchedulesControllerInstanceTest < ActionController::TestCase
   end
 
   test "fields_selection sets year_range in descending order" do
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: Date.current.year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: Date.current.year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get :fields_selection, params: { farm_id: @farm.id }
@@ -45,7 +45,7 @@ class PlanningSchedulesControllerInstanceTest < ActionController::TestCase
     current_year = Date.current.year
     field_id = 'ほ場1'.hash.abs
     
-    plan = create(:cultivation_plan, :private, user: @user, farm: @farm, plan_year: current_year)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, plan_year: current_year)
     field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: 'ほ場1', area: 1000)
     
     get :schedule, params: {
