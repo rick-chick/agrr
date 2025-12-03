@@ -211,6 +211,15 @@ class AgrrService
     end
     
     if status.success?
+      # 成功ステータスだがstdoutが空でstderrに明らかなエラーが含まれているケースをエラーとして扱う
+      if (clean_output.nil? || clean_output.strip.empty?) && stderr.present?
+        if stderr.include?('Traceback (most recent call last):') || stderr.downcase.include?('error')
+          Rails.logger.error "❌ [AgrrService] Command reported success but stderr contains error output"
+          Rails.logger.error "❌ [AgrrService] stderr: #{stderr}"
+          raise CommandExecutionError, stderr
+        end
+      end
+
       clean_output || stdout
     elsif has_valid_json && stderr.blank?
       # Exit code is non-zero but we have valid JSON and no stderr

@@ -82,6 +82,10 @@
   </div>
 </div>
 
-<%# Chart.js は npm で管理され application.js にバンドル済み %>
-
-<%# レガシーJSの個別読み込みは廃止（application.js にバンドル済み） %>
+<% content_for :javascripts do %>
+  <%= javascript_include_tag "gantt_data_utils", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_colors", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "custom_gantt_chart", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_palette_drag", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "crop_palette_style", "data-turbo-track": "reload" %>
+<% end %>

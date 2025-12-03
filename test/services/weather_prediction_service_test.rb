@@ -63,7 +63,7 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
         ]
       },
       prediction_start_date: "2025-01-01",
-      target_end_date: cultivation_plan.calculated_planning_end_date,
+      target_end_date: cultivation_plan.prediction_target_end_date,
       prediction_days: 365
     }
 

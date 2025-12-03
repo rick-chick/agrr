@@ -45,7 +45,7 @@ class PlansController < ApplicationController
     @fields = @vm.fields
     @total_area = @vm.total_area
     
-    # セッションに保存（plan_yearを削除）
+    # セッションに保存（plan_yearは使用しない - 年度という概念は削除されました）
     session[self.class.session_key] = {
       farm_id: @farm.id,
       plan_name: @plan_name,
@@ -80,6 +80,7 @@ class PlansController < ApplicationController
     end
     
     # 既存の計画があるかチェック（通年計画: farm_id × user_idのみで検索）
+    # @deprecated plan_yearの参照は後方互換性のため残していますが、新しい計画ではplan_yearはnilです。
     existing_plan = find_existing_plan(farm)
     if existing_plan
       Rails.logger.info "⚠️ [PlansController#create] Existing plan found: #{existing_plan.id}"
@@ -127,6 +128,7 @@ class PlansController < ApplicationController
     @vm = Plans::ShowPresenter.new(cultivation_plan: @cultivation_plan)
   end
   
+  # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
     source_plan = @plan
@@ -297,6 +299,7 @@ class PlansController < ApplicationController
   # 作成者パラメータを構築
   def build_creator_params(farm, crops)
     # 通年計画: plan_yearを使わずにplanning_start_dateとplanning_end_dateを設定
+    # @deprecated 年度という概念は削除されました。plan_yearは常にnilです。
     plan_name = session_data[:plan_name].presence || farm.name
     # デフォルトは現在年から2年間
     planning_start_date = Date.current.beginning_of_year
@@ -317,7 +320,7 @@ class PlansController < ApplicationController
       user: current_user,
       session_id: session_id,
       plan_type: self.class.plan_type,
-      plan_year: nil, # 通年計画ではplan_yearをnullにする
+      plan_year: nil, # @deprecated 年度という概念は削除されました。常にnilです。
       plan_name: plan_name,
       planning_start_date: planning_start_date,
       planning_end_date: planning_end_date
@@ -327,7 +330,7 @@ class PlansController < ApplicationController
   # セッションデータの検証
   def validate_session_data
     Rails.logger.info "🔍 [PlansController#create] Validating session data (minimal): #{session_data.inspect}"
-    # 通年計画: plan_yearのチェックを削除
+    # 通年計画: plan_yearのチェックを削除（年度という概念は削除されました）
     required_present = session_data[:farm_id].present?
     unless required_present
       Rails.logger.warn "⚠️ [PlansController#create] Missing minimal session data"
@@ -355,6 +358,7 @@ class PlansController < ApplicationController
   end
 
   # 既存の計画を検索（通年計画: farm_id × user_idのみで検索）
+  # @deprecated plan_yearの参照は後方互換性のため残していますが、新しい計画ではplan_yearはnilです。
   def find_existing_plan(farm)
     Rails.logger.info "🔍 [PlansController#create] Checking for existing plan: farm_id=#{farm.id}, user_id=#{current_user.id}"
     

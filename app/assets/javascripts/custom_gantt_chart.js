@@ -103,7 +103,12 @@ if (typeof window.ganttFallbackResizeListener === 'undefined') {
   window.ganttFallbackResizeListener = false;
 }
 
-let ganttLoadingIndicatorHideTimer = null;
+// ローディングインジケータの非表示タイマー
+// Turboページ遷移などでスクリプトが複数回評価されても再定義エラーにならないよう、
+// windowプロパティとして管理する
+if (typeof window.ganttLoadingIndicatorHideTimer === 'undefined') {
+  window.ganttLoadingIndicatorHideTimer = null;
+}
 
 function getGanttLoadingIndicator() {
   return document.getElementById('gantt-loading-indicator');
@@ -113,18 +118,18 @@ function setLoadingIndicatorVisible(visible) {
   const indicator = getGanttLoadingIndicator();
   if (!indicator) return;
   if (visible) {
-    if (ganttLoadingIndicatorHideTimer) {
-      clearTimeout(ganttLoadingIndicatorHideTimer);
-      ganttLoadingIndicatorHideTimer = null;
+    if (window.ganttLoadingIndicatorHideTimer) {
+      clearTimeout(window.ganttLoadingIndicatorHideTimer);
+      window.ganttLoadingIndicatorHideTimer = null;
     }
     indicator.classList.remove('is-hidden');
   } else {
-    if (ganttLoadingIndicatorHideTimer) {
-      clearTimeout(ganttLoadingIndicatorHideTimer);
+    if (window.ganttLoadingIndicatorHideTimer) {
+      clearTimeout(window.ganttLoadingIndicatorHideTimer);
     }
-    ganttLoadingIndicatorHideTimer = window.setTimeout(() => {
+    window.ganttLoadingIndicatorHideTimer = window.setTimeout(() => {
       indicator.classList.add('is-hidden');
-      ganttLoadingIndicatorHideTimer = null;
+      window.ganttLoadingIndicatorHideTimer = null;
     }, 500);
   }
 }

@@ -31,17 +31,14 @@ import ToastNotificationController from "./toast_notification_controller"
 import CopyToClipboardController from "./copy_to_clipboard_controller"
 
 console.log('[Controllers] Registering controllers...')
-console.log('[Controllers] CropAiController:', CropAiController)
-
-application.register("plans-show", PlansShowController)
-console.log('[Controllers] FertilizeAiController:', FertilizeAiController)
-console.log('[Controllers] PestAiController:', PestAiController)
 
 application.register("crop-ai", CropAiController)
 application.register("fertilize-ai", FertilizeAiController)
 application.register("pest-ai", PestAiController)
 application.register("task-schedule-timeline", TaskScheduleTimelineController)
 application.register("undo-delete", UndoDeleteController)
+application.register("plans-show", PlansShowController)
+console.log('[Controllers] PlansShowController registered:', PlansShowController)
 application.register("optimizing", OptimizingController)
 application.register("undo-toast", UndoToastController)
 application.register("crop-selector", CropSelectorController)
