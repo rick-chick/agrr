@@ -290,6 +290,21 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_equal Date.current.end_of_year, plan.calculated_planning_end_date
   end
 
+  test 'prediction_target_end_date for private plan delegates to calculated_planning_end_date' do
+    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
+    plan.field_cultivations.destroy_all
+
+    assert_equal plan.calculated_planning_end_date, plan.prediction_target_end_date
+  end
+
+  test 'prediction_target_end_date for public plan uses next year end of year' do
+    plan = create(:cultivation_plan, :public_plan, farm: @farm)
+    plan.field_cultivations.destroy_all
+
+    expected = Date.new(Date.current.year + 1, 12, 31)
+    assert_equal expected, plan.prediction_target_end_date
+  end
+
   test 'calculated_planning_start_date prioritizes stored column when plan_year is set' do
     plan_year = 2025
     plan = create(:cultivation_plan, 

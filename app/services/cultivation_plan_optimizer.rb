@@ -76,11 +76,11 @@ class CultivationPlanOptimizer
       # @cultivation_plan.complete!
       Rails.logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
       true
-    rescue Agrr::BaseGateway::NoAllocationCandidatesError => e
+    rescue Agrr::BaseGatewayV2::NoAllocationCandidatesError => e
       Rails.logger.error "❌ [Optimizer] AGRR allocation failed: #{e.message}"
       Rails.logger.info "🔄 [Optimizer] Re-raising error to job level"
       raise e
-    rescue Agrr::BaseGateway::ExecutionError => e
+    rescue Agrr::BaseGatewayV2::ExecutionError => e
       Rails.logger.error "❌ [Optimizer] AGRR execution failed: #{e.message}"
       Rails.logger.info "🔄 [Optimizer] Re-raising error to job level"
       raise e
@@ -108,9 +108,16 @@ class CultivationPlanOptimizer
           Date.new(Date.current.year + 1, 12, 31)
         ]
       else
+        # 公開計画では、予測ホライズンと整合するように翌年末までを最適化対象期間とする
+        end_date = if @cultivation_plan.respond_to?(:prediction_target_end_date)
+          @cultivation_plan.prediction_target_end_date
+        else
+          Date.new(Date.current.year + 1, 12, 31)
+        end
+
         [
           Date.current,
-          Date.current.end_of_year
+          end_date
         ]
       end
     end

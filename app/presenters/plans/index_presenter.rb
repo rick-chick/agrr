@@ -10,7 +10,9 @@ module Plans
       @plans_by_farm ||= plans.group_by(&:farm_id)
     end
 
-    # 後方互換性のため残す（既存データの表示に使用される可能性がある）
+    # @deprecated 年度によるグループ化は非推奨です。年度という概念は削除されました。
+    # 後方互換性のため残していますが、使用しないでください。
+    # 代わりに plans_by_farm を使用してください。
     def plans_by_year
       @plans_by_year ||= plans.group_by(&:plan_year)
     end
@@ -29,6 +31,7 @@ module Plans
       @plans ||= CultivationPlan
                   .plan_type_private
                   .by_user(@current_user)
+                  # @deprecated plan_yearは後方互換性のためのみ取得（表示には使用しない）
                   .select(:id, :status, :plan_year, :plan_name, :total_area, :farm_id, :planning_start_date, :planning_end_date, :created_at, :updated_at)
                   .preload(:farm)
                   .recent

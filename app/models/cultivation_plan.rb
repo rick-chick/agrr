@@ -17,7 +17,8 @@ class CultivationPlan < ApplicationRecord
   validates :status, presence: true, inclusion: { in: %w[pending optimizing completed failed] }
   validates :plan_type, presence: true, inclusion: { in: %w[public private] }
   validates :user_id, presence: true, if: :plan_type_private?
-  # plan_yearは後方互換性のためオプショナル（既存データのため）
+  # @deprecated plan_yearは後方互換性のためオプショナル（既存データのため）
+  # 年度という概念は削除されました。新しい計画ではplan_yearはnilになります。
   validates :plan_year, numericality: { only_integer: true, greater_than: 2020 }, allow_nil: true, if: :plan_type_private?
   validates :planning_start_date, presence: true, if: :plan_type_private?
   validates :planning_end_date, presence: true, if: :plan_type_private?
@@ -47,8 +48,10 @@ class CultivationPlan < ApplicationRecord
   scope :by_session, ->(session_id) { where(session_id: session_id) }
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
+  # @deprecated 年度という概念は削除されました。このスコープは後方互換性のため残していますが、使用しないでください。
   scope :by_plan_year, ->(year) { where(plan_year: year) }
   scope :by_plan_name, ->(name) { where(plan_name: name) }
+  # @deprecated 年度という概念は削除されました。このスコープは後方互換性のため残していますが、使用しないでください。
   scope :for_user_and_year, ->(user, year) { plan_type_private.by_user(user).by_plan_year(year) }
   
   # == Callbacks ===========================================================
@@ -138,6 +141,7 @@ class CultivationPlan < ApplicationRecord
   def display_name
     if plan_type_private?
       name = plan_name.presence || I18n.t('models.cultivation_plan.default_plan_name')
+      # @deprecated plan_yearの表示は後方互換性のため残していますが、新しい計画では使用されません。
       if plan_year.present?
         "#{name} (#{plan_year})"
       elsif has_attribute?(:planning_start_date) && read_attribute(:planning_start_date).present? &&
@@ -170,6 +174,7 @@ class CultivationPlan < ApplicationRecord
     true
   end
   
+  # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
     {
@@ -186,6 +191,7 @@ class CultivationPlan < ApplicationRecord
     }
   end
   
+  # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
   # 計画期間を設定
   def set_planning_dates_from_year!
     return unless plan_year.present?
@@ -194,9 +200,9 @@ class CultivationPlan < ApplicationRecord
   end
   
   # 計画期間をメソッドとして計算
-  # plan_yearが設定されている場合は保存されているカラムを優先
+  # @deprecated plan_yearの参照は後方互換性のため残していますが、新しい計画ではplan_yearはnilです。
   def calculated_planning_start_date
-    # plan_yearが設定されている場合は保存されているカラムを優先
+    # plan_yearが設定されている場合は保存されているカラムを優先（後方互換性のため）
     if plan_year.present? && has_attribute?(:planning_start_date) && read_attribute(:planning_start_date).present?
       return read_attribute(:planning_start_date)
     end
@@ -213,7 +219,8 @@ class CultivationPlan < ApplicationRecord
   end
   
   def calculated_planning_end_date
-    # plan_yearが設定されている場合は保存されているカラムを優先
+    # @deprecated plan_yearの参照は後方互換性のため残していますが、新しい計画ではplan_yearはnilです。
+    # plan_yearが設定されている場合は保存されているカラムを優先（後方互換性のため）
     if plan_year.present? && has_attribute?(:planning_end_date) && read_attribute(:planning_end_date).present?
       return read_attribute(:planning_end_date)
     end
@@ -252,6 +259,21 @@ class CultivationPlan < ApplicationRecord
       read_attribute(:planning_end_date)
     else
       calculated_planning_end_date
+    end
+  end
+  
+  # 予測/最適化用のターゲット終了日
+  #
+  # - プライベート計画: 現行の計画終了日のロジック（calculated_planning_end_date）に従う
+  # - 公開計画: 「翌年の12月31日」までを予測/最適化のホライズンとして扱う
+  #
+  # 表示用の終了日（planning_end_date）とは責務を分離し、public_plans 向けの
+  # 予測ホライズンをユースケース側で明示的に制御するためのメソッド。
+  def prediction_target_end_date
+    if plan_type_private?
+      calculated_planning_end_date
+    else
+      Date.new(Date.current.year + 1, 12, 31)
     end
   end
   

@@ -278,4 +278,30 @@ class AgrrServiceTest < ActiveSupport::TestCase
     client_fail_status.verify
     daemon_fail_status.verify
   end
+
+  test 'treats stderr traceback with empty stdout and exit 0 as command error' do
+    status = Minitest::Mock.new
+    status.expect(:success?, true)
+    status.expect(:exitstatus, 0)
+
+    File.stub(:exist?, true) do
+      File.stub(:socket?, true) do
+        Open3.stub(:capture3, lambda do |*args|
+          binary, *rest = args
+          assert_equal Rails.root.join('bin', 'agrr_client').to_s, binary
+          assert_includes rest, 'forecast'
+
+          stdout = ''
+          stderr = "Traceback (most recent call last):\nValueError: something went wrong\n"
+          [stdout, stderr, status]
+        end) do
+          assert_raises(AgrrService::CommandExecutionError) do
+            @service.forecast(location: '35.0,139.0')
+          end
+        end
+      end
+    end
+
+    status.verify
+  end
 end

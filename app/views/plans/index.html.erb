@@ -43,23 +43,23 @@
         <% @plans_by_farm.each_with_index do |(farm_id, farm_plans), index| %>
           <% farm = farm_plans.first.farm %>
 
-          <div class="plans-year-section">
+          <div class="plans-farm-section">
             <details <%= 'open' if index == 0 %>>
-              <summary class="plans-year-title plans-year-summary">
-                <span class="year-toggle-icon"></span>
-                <span class="plans-year-label"><%= farm.display_name %></span>
+              <summary class="plans-farm-title plans-farm-summary">
+                <span class="farm-toggle-icon"></span>
+                <span class="plans-farm-label"><%= farm.display_name %></span>
                 <% if farm_plans.present? %>
-                  <span class="year-count">
+                  <span class="farm-count">
                     (<%= farm_plans.count %>件)
                   </span>
                 <% else %>
-                  <span class="year-count year-count-empty">
+                  <span class="farm-count farm-count-empty">
                     (計画なし)
                   </span>
                 <% end %>
               </summary>
             
-            <div class="plans-year-content">
+            <div class="plans-farm-content">
               <% if farm_plans.present? %>
                   <div class="plans-grid">
                   <% farm_plans.each do |plan| %>
@@ -184,7 +184,7 @@
                   <% end %>
                 </div>
               <% else %>
-                <!-- その年度に計画がない場合 -->
+                <!-- その農場に計画がない場合 -->
                 <div class="content-card">
                   <p class="content-card-empty">
                     <%= t('plans.index.no_plans') %>

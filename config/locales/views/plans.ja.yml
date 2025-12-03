@@ -4,13 +4,15 @@ ja:
     default_plan_name: "メイン計画"
     
     steps:
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       year: "年度"
       farm: "農場"
       crop: "作物"
       completed: "✓"
     
     errors:
-      select_year_and_farm: "年度と農場を選択してください。" # 後方互換性のため残す
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
+      select_year_and_farm: "年度と農場を選択してください。"
       select_farm: "農場を選択してください。"
       select_crop: "作物を1つ以上選択してください。"
       restart: "最初からやり直してください。"
@@ -19,6 +21,7 @@ ja:
       farm_not_found: "農場が見つかりません。"
       crop_not_found: "作物が見つかりません。"
       unauthorized: "この計画にアクセスする権限がありません。"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       plan_already_exists: "%{year}年の計画は既に存在します。"
       plan_already_exists_annual: "この農場の計画は既に存在します。"
       copy_failed: "計画のコピーに失敗しました: %{errors}"
@@ -43,6 +46,7 @@ ja:
     
     messages:
       plan_created: "計画を作成しました。"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       plan_copied: "%{year}年の計画をコピーしました。"
       plan_copied_annual: "計画をコピーしました。"
       plan_deleted: "計画を削除しました。"
@@ -65,6 +69,7 @@ ja:
       try_public_plans: "無料プランから始める"
       no_plans: "まだ計画がありません"
       no_plans_hint: "新しい計画を作成して栽培スケジュールを最適化しましょう。"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       year_label: "%{year}年度"
       status:
         pending: "作成待ち"
@@ -77,6 +82,7 @@ ja:
         crops_count: "%{count}作物"
         fields_count: "%{count}圃場"
         view: "詳細を見る"
+        # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
         copy: "次年度にコピー"
         delete: "削除"
         delete_confirm: "本当にこの計画を削除しますか？この操作は取り消せません。"
@@ -85,6 +91,7 @@ ja:
     new:
       title: "📅 農場を選択してください"
       subtitle: "計画を作成する農場を選択してください"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       plan_year_label: "計画年度"
       plan_year_hint: "計画年度は%{start_year}年1月〜%{end_year}年12月の2年間です"
       plan_name_label: "計画名（将来的に複数計画を管理できます）"
@@ -101,6 +108,7 @@ ja:
       title: "🌾 栽培したい作物を選択してください"
       subtitle: "複数選択可能です。カードをクリックして選択してください。"
       summary:
+        # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
         year: "年度"
         farm: "農場"
         total_area: "総面積"
@@ -117,6 +125,7 @@ ja:
     optimizing:
       title: "計画"
       status_badge: "最適化中"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       year_label: "%{year}年度"
       crops_count: "%{count}種類の作物"
       error_message: "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。"
@@ -134,71 +143,20 @@ ja:
         title: "計画作成に失敗しました"
         try_again: "作物を変更してもう一度試す"
         start_over: "計画一覧に戻る"
-    
-      show:
-        back_to_list: "← 計画一覧に戻る"
-        optimize_button: "最適化"
-        copy_plan: "次年度にコピー"
-        delete: "削除"
-        view_task_schedule: "作業予定を見る"
-      confirms:
-        optimize: "この計画を最適化しますか？"
-        copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
-      chart_title: "気象データと作物成長分析"
-      loading_data: "データを読み込んでいます..."
-      
-      header:
-        title: "%{year}年度 計画"
-        badge: "完成"
-        farm: "農場"
-        total_area: "総面積"
-        field_count: "圃場数"
-        field_count_value: "%{count}圃場"
-        total_cost: "総コスト"
-        total_revenue: "総収益"
-        total_profit: "総利益"
-        subtitle: "%{count}圃場の最適な栽培期間が決定しました"
-        planning_period: "計画期間"
-        planning_period_value: "%{start}〜%{end}"
-      
-      gantt:
-        title: "栽培スケジュール"
-        month_format: "%{month}月"
-      
-      crop_palette:
-        title: "作物を追加"
-        toggle: "パネルを開閉"
-        hint: "作物をドラッグしてスケジュールに追加できます"
-        in_use: "使用中"
-      
-      detail:
-        title: "栽培詳細"
-        loading: "詳細を読み込んでいます..."
-        loading_data: "データを読み込んでいます..."
-      
-      info:
-        field: "圃場"
-        crop: "作物"
-        area: "面積"
-        planting_date: "播種日"
-        harvest_date: "収穫日"
-        cultivation_days: "栽培日数"
-        gdd: "積算温度"
-        estimated_cost: "推定コスト"
-        stages_title: "栽培ステージ"
-        stages_loading: "ステージ情報を読み込んでいます..."
-      
-      stages:
-        intro: "各ステージの詳細な気温条件と積算温度の達成状況を確認できます。"
-        loading: "ステージ情報を読み込んでいます..."
-
+  
     show:
       back_to_list: "← 計画一覧に戻る"
       optimize_button: "最適化"
       view_task_schedule: "作業予定を見る"
+      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
       copy_plan: "次年度にコピー"
       delete: "削除"
+      confirms:
+        optimize: "この計画を最適化しますか？"
+        # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
+        copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
       header:
+        # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
         title: "%{year}年度 作付け計画"
         badge: "完了"
         farm: "農場"
@@ -217,9 +175,6 @@ ja:
         toggle: "作物パレットを開閉"
         title: "作物を追加"
         in_use: "使用中"
-      confirms:
-        optimize: "この計画を最適化しますか？"
-        copy_next_year: "次年度（%{year}年度）にこの計画をコピーしますか？"
   
     task_schedules:
       title: "%{name}の作業予定"
