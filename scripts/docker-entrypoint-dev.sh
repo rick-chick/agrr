@@ -34,6 +34,12 @@ rm -rf /app/tmp/cache/assets/*
 rm -rf /app/public/assets/*
 echo "✓ Asset files cleaned (including public/assets for Propshaft)"
 
+# .npmrcを無効化（ホスト環境用の設定がコンテナ内でエラーを引き起こすため）
+if [ -f /app/.npmrc ]; then
+    echo "Temporarily disabling .npmrc for container environment..."
+    mv /app/.npmrc /app/.npmrc.bak 2>/dev/null || true
+fi
+
 # アセットビルド実行
 echo "========================================="
 echo "Building assets (JavaScript and CSS)..."
