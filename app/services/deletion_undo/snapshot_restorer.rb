@@ -2,6 +2,7 @@
 
 module DeletionUndo
   class SnapshotRestorer
+    class ReferenceRecordNotFoundError < StandardError; end
     def initialize(snapshot)
       @snapshot = snapshot.deep_dup
     end
@@ -14,6 +15,16 @@ module DeletionUndo
 
     def restore_node(node, parent: nil, reflection: nil, skip_associations: false)
       raise ArgumentError, 'snapshot node must be present' if node.blank?
+
+      # 参照スナップショットの場合は既存レコードのみを再利用し、新規作成しない
+      if node['reference']
+        klass = node.fetch('model').constantize
+        attributes = node.fetch('attributes')
+        primary_key = klass.primary_key.to_s
+        record = klass.find_by(primary_key => attributes[primary_key])
+        raise ReferenceRecordNotFoundError, "Referenced #{klass.name} with #{primary_key}=#{attributes[primary_key].inspect} not found" unless record
+        return record
+      end
 
       klass = node.fetch('model').constantize
       attributes = node.fetch('attributes').dup

@@ -7,6 +7,11 @@ class FieldCultivation < ApplicationRecord
   belongs_to :cultivation_plan_crop
   has_many :task_schedules, dependent: :destroy
   
+  # == Callbacks ============================================================
+  # スナップショット復元などで cultivation_plan_id が未設定のまま保存されると
+  # NOT NULL 制約違反になるため、関連する Field/Crop から自動補完する
+  before_save :ensure_cultivation_plan_from_associations
+  
   # == Validations =========================================================
   validates :area, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true
@@ -93,6 +98,18 @@ class FieldCultivation < ApplicationRecord
   def year_label
     return unless start_date
     start_date.year == Date.current.year ? '今年' : '来年'
+  end
+
+  private
+
+  def ensure_cultivation_plan_from_associations
+    return if cultivation_plan_id.present?
+
+    if cultivation_plan_field&.cultivation_plan
+      self.cultivation_plan = cultivation_plan_field.cultivation_plan
+    elsif cultivation_plan_crop&.cultivation_plan
+      self.cultivation_plan = cultivation_plan_crop.cultivation_plan
+    end
   end
 end
 
