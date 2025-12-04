@@ -83,6 +83,12 @@ rm -rf "${APP_ROOT}/tmp/cache/assets/"*
 rm -rf "${APP_ROOT}/public/assets/"*
 echo "✓ Asset files cleaned"
 
+# .npmrcを無効化（ホスト環境用の設定がコンテナ内でエラーを引き起こすため）
+if [ -f "${APP_ROOT}/.npmrc" ]; then
+    echo "==> Temporarily disabling .npmrc for container environment..."
+    mv "${APP_ROOT}/.npmrc" "${APP_ROOT}/.npmrc.bak" 2>/dev/null || true
+fi
+
 # JavaScript依存関係をインストール（devDependenciesを含む）
 echo "==> Installing JavaScript dependencies for integration tests..."
 npm install
