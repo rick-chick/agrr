@@ -4,10 +4,22 @@ class CultivationPlan < ApplicationRecord
   # == Associations ========================================================
   belongs_to :farm
   belongs_to :user, optional: true
+  # ⚠️ 削除順序に注意:
+  # - TaskSchedule は FieldCultivation に外部キーを持つため、最初に削除する
+  #   - TaskSchedule 自体は dependent: :destroy とし、内部で TaskScheduleItem を delete_all する
+  #   - これにより TaskScheduleItem の外部キー制約違反を防ぐ
+  # - FieldCultivation は CultivationPlanField / CultivationPlanCrop に外部キーを持つため、
+  #   それらの親レコードが削除される「最後」にまとめて削除する必要がある
+  # - そのため、Rails の dependent: :destroy の実行順に合わせて
+  #   - まず TaskSchedule
+  #   - 次に Field / Crop
+  #   - 最後に FieldCultivation
+  #   の順で関連を宣言する
+  # これにより、複雑な関連を持つ計画でも InvalidForeignKey を回避できる
+  has_many :task_schedules, dependent: :destroy
   has_many :cultivation_plan_fields, dependent: :destroy
   has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
-  has_many :task_schedules, dependent: :delete_all
   
   # == Serialization =======================================================
   serialize :predicted_weather_data, coder: JSON
