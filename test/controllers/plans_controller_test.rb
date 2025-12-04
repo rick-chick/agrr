@@ -178,6 +178,47 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     assert_select 'a[href=?]', plan_path(plan2)
   end
 
+  test 'index displays cards with farm name as title and hides plan name, period, and status' do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: 'テスト農場A')
+    plan = create(
+      :cultivation_plan,
+      user: @user,
+      farm: farm,
+      plan_name: 'テスト計画',
+      planning_start_date: Date.new(2025, 1, 1),
+      planning_end_date: Date.new(2025, 12, 31)
+    )
+
+    get plans_path
+    assert_response :success
+
+    # カードタイトルに地名（農場名）が表示されること
+    assert_select 'h3.plan-card-title', text: farm.display_name
+
+    # ステータスバッジが表示されないこと
+    assert_select '.plan-card-status', count: 0
+
+    # 計画名がカード本文に表示されないこと
+    assert_no_match(/テスト計画/, @response.body)
+
+    # 計画期間ラベルが表示されないこと
+    assert_no_match(/計画期間:/, @response.body)
+  end
+
+  test 'index does not render farm accordion sections' do
+    sign_in_as @user
+    farm = create(:farm, user: @user)
+    create(:cultivation_plan, user: @user, farm: farm)
+
+    get plans_path
+    assert_response :success
+
+    # アコーディオン用のdetails/summaryが存在しないこと
+    assert_select 'details', count: 0
+    assert_select '.plans-farm-section', count: 0
+  end
+
   test 'index displays annual plan with period in display_name' do
     sign_in_as @user
     farm = create(:farm, user: @user, name: 'テスト農場')
