@@ -21,6 +21,7 @@ development:
   cable:
     <<: *default
     database: storage/development_cable.sqlite3
+    migrations_paths: db/cable_migrate
     schema_dump: cable_schema.rb
 
 # Warning: The database defined as "test" will be erased and
@@ -47,6 +48,7 @@ test:
   cable:
     <<: *default
     database: storage/test_cable.sqlite3
+    migrations_paths: db/cable_migrate
     schema_dump: cable_schema.rb
 
 # AWS Test environment (SQLite with persistent storage)
@@ -70,4 +72,5 @@ production:
   cable:
     <<: *default
     database: /tmp/production_cable.sqlite3
+    migrations_paths: db/cable_migrate
     schema_dump: cable_schema.rb
