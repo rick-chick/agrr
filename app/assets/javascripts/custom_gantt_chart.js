@@ -390,11 +390,13 @@ function initCustomGanttChart() {
   // データ属性からJSONを取得
   const cultivationsRaw = JSON.parse(ganttContainer.dataset.cultivations || '[]');
   const fieldsDataRaw = JSON.parse(ganttContainer.dataset.fields || '[]');
-  window.ganttState.planStartDate = new Date(ganttContainer.dataset.planStartDate);
-  window.ganttState.planEndDate = new Date(ganttContainer.dataset.planEndDate);
+  // ローカルタイムゾーンで日付を解釈（parseLocalDateを使用）
+  window.ganttState.planStartDate = parseLocalDate(ganttContainer.dataset.planStartDate);
+  window.ganttState.planEndDate = parseLocalDate(ganttContainer.dataset.planEndDate);
   
   // 計画期間の日付が有効であることを確認（異常系はエラーを上げる）
-  if (isNaN(window.ganttState.planStartDate.getTime()) || isNaN(window.ganttState.planEndDate.getTime())) {
+  if (!window.ganttState.planStartDate || !window.ganttState.planEndDate || 
+      isNaN(window.ganttState.planStartDate.getTime()) || isNaN(window.ganttState.planEndDate.getTime())) {
     const errorMessage = `Invalid plan dates: planStartDate="${ganttContainer.dataset.planStartDate}", planEndDate="${ganttContainer.dataset.planEndDate}"`;
     console.error('❌ [Gantt] 無効な計画期間:', {
       planStartDate: ganttContainer.dataset.planStartDate,
@@ -737,7 +739,12 @@ function groupByField(cultivations, fields = []) {
   
   // 栽培を開始日順にソート
   Object.values(groups).forEach(group => {
-    group.cultivations.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    group.cultivations.sort((a, b) => {
+      const dateA = parseLocalDate(a.start_date);
+      const dateB = parseLocalDate(b.start_date);
+      if (!dateA || !dateB) return 0;
+      return dateA - dateB;
+    });
   });
   
   return Object.values(groups);
@@ -1166,7 +1173,7 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
           cultivation_id,
           from_field: originalFieldName,
           to_field: newFieldName,
-          new_start_date: newStartDate.toISOString().split('T')[0],
+          new_start_date: formatLocalDate(newStartDate),
           daysFromStart: daysFromStart
         });
         
@@ -1240,7 +1247,7 @@ function recordMove(allocation_id, to_field_name, to_start_date) {
     allocation_id: allocation_id,
     action: 'move',
     to_field_id: normalizedFieldId,
-    to_start_date: to_start_date.toISOString().split('T')[0]
+    to_start_date: formatLocalDate(to_start_date)
   });
   
   // 自動で再最適化を実行
@@ -1285,19 +1292,33 @@ function applyMovesLocally() {
     const cultivation = window.ganttState.cultivationData.find(c => c.id === cultivation_id);
     
     if (cultivation) {
-      const oldStartDate = new Date(cultivation.start_date);
-      const oldEndDate = new Date(cultivation.completion_date);
+      const oldStartDate = parseLocalDate(cultivation.start_date);
+      const oldEndDate = parseLocalDate(cultivation.completion_date);
+      
+      // 無効な日付の場合はスキップ
+      if (!oldStartDate || !oldEndDate) {
+        console.warn('Invalid cultivation dates in applyMovesLocally:', { cultivation, oldStartDate, oldEndDate });
+        return;
+      }
+      
       const duration = daysBetween(oldStartDate, oldEndDate);
       
       // 楽観的更新: ユーザーが指定した開始日と、元の期間を維持した終了日
       // ⭐ adjustの実際の結果では、開始日も終了日も変わる可能性がある
-      const newStartDate = new Date(move.to_start_date);
+      const newStartDate = parseLocalDate(move.to_start_date);
+      
+      // 無効な新しい開始日の場合はスキップ
+      if (!newStartDate) {
+        console.warn('Invalid new start date in applyMovesLocally:', { move, newStartDate });
+        return;
+      }
+      
       const newEndDate = new Date(newStartDate);
       newEndDate.setDate(newEndDate.getDate() + duration);
       
       // 開始日と終了日の両方を更新
-      cultivation.start_date = newStartDate.toISOString().split('T')[0];
-      cultivation.completion_date = newEndDate.toISOString().split('T')[0];
+      cultivation.start_date = formatLocalDate(newStartDate);
+      cultivation.completion_date = formatLocalDate(newEndDate);
       
       console.log(`📝 楽観的更新 [${cultivation_id}] ${cultivation.crop_name}: ${cultivation.start_date} 〜 ${cultivation.completion_date}`);
       
@@ -1689,12 +1710,12 @@ function renderFieldRow(svg, config, group, index, y, startDate, totalDays, char
 // 栽培バーを描画
 // ⭐ ガントカードの位置と幅は、開始日と終了日の両方から計算される
 function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartDate, totalDays, chartWidth) {
-  // 開始日と終了日を取得
-  const startDate = new Date(cultivation.start_date);
-  const endDate = new Date(cultivation.completion_date);
+  // 開始日と終了日を取得（ローカルタイムゾーンで解釈）
+  const startDate = parseLocalDate(cultivation.start_date);
+  const endDate = parseLocalDate(cultivation.completion_date);
   
   // 無効な日付の場合はスキップ
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     console.warn('Invalid cultivation dates:', { cultivation, startDate, endDate });
     return;
   }
@@ -2404,6 +2425,36 @@ function debugState() {
   console.log('削除ID:', window.ganttState.removedIds);
 }
 
+// ローカル日付をYYYY-MM-DD形式にフォーマットするヘルパー関数
+function formatLocalDate(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return '';
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Date inputからローカルタイムゾーンで日付を読み取るヘルパー関数
+function parseLocalDate(dateString) {
+  if (!dateString) {
+    return null;
+  }
+  // YYYY-MM-DD形式の文字列をパース
+  const parts = dateString.split('-');
+  if (parts.length !== 3) {
+    return null;
+  }
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // 月は0ベース
+  const day = parseInt(parts[2], 10);
+  
+  // ローカルタイムゾーンのmidnightとして解釈
+  // new Date(year, month, day)はローカルタイムゾーンで解釈される
+  return new Date(year, month, day);
+}
+
 // 表示範囲選択UIのイベントハンドラーを設定
 function setupDisplayRangeControls(ganttContainer) {
   const displayStartDateInput = document.getElementById('display-start-date');
@@ -2420,58 +2471,234 @@ function setupDisplayRangeControls(ganttContainer) {
   const displayEndDate = window.ganttState.displayEndDate;
   
   if (displayStartDate instanceof Date && !isNaN(displayStartDate.getTime())) {
-    displayStartDateInput.value = displayStartDate.toISOString().split('T')[0];
+    displayStartDateInput.value = formatLocalDate(displayStartDate);
   } else {
     // 無効な日付の場合は計画期間の開始日を使用
     const planStartDate = window.ganttState.planStartDate;
     if (planStartDate instanceof Date && !isNaN(planStartDate.getTime())) {
-      displayStartDateInput.value = planStartDate.toISOString().split('T')[0];
+      displayStartDateInput.value = formatLocalDate(planStartDate);
       window.ganttState.displayStartDate = planStartDate;
     }
   }
   
   if (displayEndDate instanceof Date && !isNaN(displayEndDate.getTime())) {
-    displayEndDateInput.value = displayEndDate.toISOString().split('T')[0];
+    displayEndDateInput.value = formatLocalDate(displayEndDate);
   } else {
     // 無効な日付の場合は計画期間の終了日を使用
     const planEndDate = window.ganttState.planEndDate;
     if (planEndDate instanceof Date && !isNaN(planEndDate.getTime())) {
-      displayEndDateInput.value = planEndDate.toISOString().split('T')[0];
+      displayEndDateInput.value = formatLocalDate(planEndDate);
       window.ganttState.displayEndDate = planEndDate;
     }
   }
   
   // 適用ボタンのイベントハンドラー
   applyButton.addEventListener('click', function() {
-    const newStartDate = new Date(displayStartDateInput.value);
-    const newEndDate = new Date(displayEndDateInput.value);
-    
-    // バリデーション
-    if (isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
-      alert('有効な日付を選択してください。');
-      return;
-    }
-    
-    if (newStartDate >= newEndDate) {
-      alert('開始日は終了日より前である必要があります。');
-      return;
-    }
-    
-    if (newStartDate < window.ganttState.planStartDate || newEndDate > window.ganttState.planEndDate) {
-      alert('表示範囲は計画期間内である必要があります。');
-      return;
-    }
-    
-    // 表示範囲を更新
-    window.ganttState.displayStartDate = newStartDate;
-    window.ganttState.displayEndDate = newEndDate;
-    
-    // ガントチャートを再描画
-    const container = document.getElementById('gantt-chart-container');
-    if (container) {
-      renderGanttChart(container, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
-    }
+    applyDisplayRange();
   });
+  
+  // クイック選択ボタンのイベントハンドラー
+  const quickButtons = document.querySelectorAll('.display-range-btn[data-display-range-action]');
+  quickButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const action = this.dataset.displayRangeAction;
+      handleQuickRangeAction(action);
+    });
+  });
+}
+
+// 表示範囲を適用する共通関数
+function applyDisplayRange() {
+  const displayStartDateInput = document.getElementById('display-start-date');
+  const displayEndDateInput = document.getElementById('display-end-date');
+  
+  if (!displayStartDateInput || !displayEndDateInput) {
+    return;
+  }
+  
+  // ローカルタイムゾーンで日付を解釈
+  const newStartDate = parseLocalDate(displayStartDateInput.value);
+  const newEndDate = parseLocalDate(displayEndDateInput.value);
+  
+  // バリデーション
+  if (!newStartDate || !newEndDate || isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
+    alert('有効な日付を選択してください。');
+    return;
+  }
+  
+  if (newStartDate >= newEndDate) {
+    alert('開始日は終了日より前である必要があります。');
+    return;
+  }
+  
+  if (newStartDate < window.ganttState.planStartDate || newEndDate > window.ganttState.planEndDate) {
+    alert('表示範囲は計画期間内である必要があります。');
+    return;
+  }
+  
+  // 表示範囲を更新
+  window.ganttState.displayStartDate = newStartDate;
+  window.ganttState.displayEndDate = newEndDate;
+  
+  // ガントチャートを再描画
+  const container = document.getElementById('gantt-chart-container');
+  if (container) {
+    renderGanttChart(container, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
+  }
+}
+
+// クイック選択アクションを処理
+function handleQuickRangeAction(action) {
+  const displayStartDateInput = document.getElementById('display-start-date');
+  const displayEndDateInput = document.getElementById('display-end-date');
+  
+  if (!displayStartDateInput || !displayEndDateInput) {
+    return;
+  }
+  
+  const planStartDate = window.ganttState.planStartDate;
+  const planEndDate = window.ganttState.planEndDate;
+  
+  if (!planStartDate || !planEndDate) {
+    console.error('計画期間が設定されていません');
+    return;
+  }
+  
+  // 現在の表示範囲を取得（なければ計画期間全体）
+  let currentStartDate = window.ganttState.displayStartDate || planStartDate;
+  let currentEndDate = window.ganttState.displayEndDate || planEndDate;
+  
+  // 現在の表示範囲の期間を計算
+  const currentRangeDays = Math.ceil((currentEndDate - currentStartDate) / (1000 * 60 * 60 * 24));
+  
+  let newStartDate, newEndDate;
+  
+  switch (action) {
+    case 'month-back':
+      // 1ヶ月前に移動（同じ期間を保つ）
+      // 日付オーバーフローを防ぐため、月の最初の日を基準に計算
+      newStartDate = new Date(currentStartDate);
+      const startDay = newStartDate.getDate();
+      newStartDate.setDate(1); // 月の最初の日に設定
+      newStartDate.setMonth(newStartDate.getMonth() - 1);
+      // 対象月の最終日を取得
+      const targetMonthLastDay = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
+      // 元の日付と対象月の最終日の小さい方を設定
+      newStartDate.setDate(Math.min(startDay, targetMonthLastDay));
+      newEndDate = new Date(newStartDate);
+      newEndDate.setDate(newEndDate.getDate() + currentRangeDays);
+      break;
+      
+    case 'month-forward':
+      // 1ヶ月後に移動（同じ期間を保つ）
+      // 日付オーバーフローを防ぐため、月の最初の日を基準に計算
+      newStartDate = new Date(currentStartDate);
+      const startDayForward = newStartDate.getDate();
+      newStartDate.setDate(1); // 月の最初の日に設定
+      newStartDate.setMonth(newStartDate.getMonth() + 1);
+      // 対象月の最終日を取得
+      const targetMonthLastDayForward = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
+      // 元の日付と対象月の最終日の小さい方を設定
+      newStartDate.setDate(Math.min(startDayForward, targetMonthLastDayForward));
+      newEndDate = new Date(newStartDate);
+      newEndDate.setDate(newEndDate.getDate() + currentRangeDays);
+      break;
+      
+    case 'range-1year':
+      // 現在の開始日から1年間の範囲を設定
+      // 開始日は現在の開始日のまま
+      newStartDate = new Date(currentStartDate);
+      // 終了日は開始日から1年後（うるう年を考慮して安全に計算）
+      newEndDate = new Date(currentStartDate);
+      const endMonth = newEndDate.getMonth();
+      const endDay = newEndDate.getDate();
+      newEndDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
+      newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+      // 1年後の同じ月・日を設定（うるう年を考慮）
+      newEndDate.setMonth(endMonth);
+      const targetYearLastDay = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
+      newEndDate.setDate(Math.min(endDay, targetYearLastDay));
+      // 計画期間を超えないように調整
+      if (newEndDate > planEndDate) {
+        newEndDate = new Date(planEndDate);
+        // 終了日が計画終了日を超える場合は、開始日を調整
+        newStartDate = new Date(newEndDate);
+        const startMonth = newStartDate.getMonth();
+        const startDayYear = newStartDate.getDate();
+        newStartDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
+        newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+        newStartDate.setMonth(startMonth);
+        const adjustedYearLastDay = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
+        newStartDate.setDate(Math.min(startDayYear, adjustedYearLastDay));
+        if (newStartDate < planStartDate) {
+          newStartDate = new Date(planStartDate);
+        }
+      }
+      break;
+      
+    case 'range-2year':
+      // 現在の開始日から2年間の範囲を設定
+      // 開始日は現在の開始日のまま
+      newStartDate = new Date(currentStartDate);
+      // 終了日は開始日から2年後（うるう年を考慮して安全に計算）
+      newEndDate = new Date(currentStartDate);
+      const endMonth2 = newEndDate.getMonth();
+      const endDay2 = newEndDate.getDate();
+      newEndDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
+      newEndDate.setFullYear(newEndDate.getFullYear() + 2);
+      // 2年後の同じ月・日を設定（うるう年を考慮）
+      newEndDate.setMonth(endMonth2);
+      const targetYearLastDay2 = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
+      newEndDate.setDate(Math.min(endDay2, targetYearLastDay2));
+      // 計画期間を超えないように調整
+      if (newEndDate > planEndDate) {
+        newEndDate = new Date(planEndDate);
+        // 終了日が計画終了日を超える場合は、開始日を調整
+        newStartDate = new Date(newEndDate);
+        const startMonth2 = newStartDate.getMonth();
+        const startDay2Year = newStartDate.getDate();
+        newStartDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
+        newStartDate.setFullYear(newStartDate.getFullYear() - 2);
+        newStartDate.setMonth(startMonth2);
+        const adjustedYearLastDay2 = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
+        newStartDate.setDate(Math.min(startDay2Year, adjustedYearLastDay2));
+        if (newStartDate < planStartDate) {
+          newStartDate = new Date(planStartDate);
+        }
+      }
+      break;
+      
+    case 'full-range':
+      // 計画期間全体を表示
+      newStartDate = new Date(planStartDate);
+      newEndDate = new Date(planEndDate);
+      break;
+      
+    default:
+      console.warn('未知のアクション:', action);
+      return;
+  }
+  
+  // 計画期間内に制約
+  if (newStartDate < planStartDate) {
+    newStartDate = new Date(planStartDate);
+  }
+  if (newEndDate > planEndDate) {
+    newEndDate = new Date(planEndDate);
+  }
+  
+  // 開始日が終了日より後にならないように調整
+  if (newStartDate >= newEndDate) {
+    newStartDate = new Date(planStartDate);
+    newEndDate = new Date(planEndDate);
+  }
+  
+  // 入力フィールドを更新（ローカル日付フォーマットを使用）
+  displayStartDateInput.value = formatLocalDate(newStartDate);
+  displayEndDateInput.value = formatLocalDate(newEndDate);
+  
+  // 自動的に適用
+  applyDisplayRange();
 }
 
 // 作付が表示範囲内に表示されるか判定
@@ -2480,10 +2707,18 @@ function shouldDisplayCultivation(cultivation) {
     return true; // 表示範囲が設定されていない場合は全て表示
   }
   
-  const startDate = new Date(cultivation.start_date);
-  const completionDate = new Date(cultivation.completion_date);
+  // ローカルタイムゾーンで日付を解釈
+  const startDate = parseLocalDate(cultivation.start_date);
+  const completionDate = parseLocalDate(cultivation.completion_date);
   const displayStartDate = window.ganttState.displayStartDate;
   const displayEndDate = window.ganttState.displayEndDate;
+  
+  // 無効な日付の場合は表示しない
+  if (!startDate || !completionDate || !displayStartDate || !displayEndDate ||
+      isNaN(startDate.getTime()) || isNaN(completionDate.getTime()) ||
+      isNaN(displayStartDate.getTime()) || isNaN(displayEndDate.getTime())) {
+    return false;
+  }
   
   // 表示範囲と重複しているか
   return !(completionDate < displayStartDate || startDate > displayEndDate);
@@ -2495,10 +2730,18 @@ function isMovable(cultivation) {
     return true; // 表示範囲が設定されていない場合は移動可能
   }
   
-  const startDate = new Date(cultivation.start_date);
-  const completionDate = new Date(cultivation.completion_date);
+  // ローカルタイムゾーンで日付を解釈
+  const startDate = parseLocalDate(cultivation.start_date);
+  const completionDate = parseLocalDate(cultivation.completion_date);
   const displayStartDate = window.ganttState.displayStartDate;
   const displayEndDate = window.ganttState.displayEndDate;
+  
+  // 無効な日付の場合は移動不可
+  if (!startDate || !completionDate || !displayStartDate || !displayEndDate ||
+      isNaN(startDate.getTime()) || isNaN(completionDate.getTime()) ||
+      isNaN(displayStartDate.getTime()) || isNaN(displayEndDate.getTime())) {
+    return false;
+  }
   
   // 表示範囲内に完全に収まっているか
   return startDate >= displayStartDate && completionDate <= displayEndDate;
