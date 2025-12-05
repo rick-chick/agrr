@@ -102,8 +102,11 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
     # ページが読み込まれるまで待つ
     assert_selector 'h1', text: /計画/, wait: 10
     
-    # 表示範囲の設定セクションが存在することを確認
-    assert_selector '.content-card', text: /表示範囲の設定/, wait: 5
+    # ガントセクションのツールバー内に表示範囲コントロールが存在することを確認
+    assert_selector '.plans-gantt-panel', wait: 5
+    within '.plans-gantt-panel' do
+      assert_selector '.display-range-toolbar', wait: 5
+    end
     
     # 開始日・終了日の入力フィールドが存在することを確認
     assert_selector '#display-start-date', wait: 5
@@ -119,6 +122,21 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
     assert_selector '[data-display-range-action="range-1year"]', wait: 5
     assert_selector '[data-display-range-action="range-2year"]', wait: 5
     assert_selector '[data-display-range-action="full-range"]', wait: 5
+  end
+
+  test "ガントセクションがアクションバー直後に配置される" do
+    login_and_visit plan_path(@private_plan, locale: :ja)
+
+    assert_selector '.plans-container', wait: 10
+    assert_selector '.plans-gantt-panel', wait: 5
+
+    children_classes = page.evaluate_script(<<~JS)
+      Array.from(document.querySelector('.plans-container').children)
+        .map(el => el.className || "")
+    JS
+
+    gantt_index = children_classes.index { |cls| cls.include?('plans-gantt-panel') }
+    assert_equal 2, gantt_index, "ガントセクションはアクションバーとサマリーカード直後に配置される想定です"
   end
   
   test "全体表示ボタンで計画期間全体が表示される" do

@@ -77,98 +77,100 @@
       </div>
     </div>
 
-    <!-- 表示範囲選択 -->
-    <div class="content-card">
-      <h3 class="content-card-title"><%= t('plans.show.display_range.title') %></h3>
-      <div class="plans-form-group">
-        <!-- ボタンとカレンダー入力を一列に配置 -->
-        <div class="display-range-controls-row">
-          <!-- クイック選択ボタン群（左側） -->
-          <div class="display-range-quick-buttons">
-            <!-- 移動系ボタン（1ヶ月前後） -->
-            <div class="display-range-button-group display-range-button-group-move">
-              <button type="button" 
-                      class="btn btn-ghost btn-sm display-range-btn display-range-btn-move" 
-                      data-display-range-action="month-back">
-                <%= t('plans.show.display_range.quick_select.month_back') %>
-              </button>
-              <button type="button" 
-                      class="btn btn-ghost btn-sm display-range-btn display-range-btn-move" 
-                      data-display-range-action="month-forward">
-                <%= t('plans.show.display_range.quick_select.month_forward') %>
-              </button>
-            </div>
-            <!-- 区切り線 -->
-            <div class="display-range-button-divider"></div>
-            <!-- 範囲幅選択ボタン（1年/2年/全体） -->
-            <div class="display-range-button-group display-range-button-group-range">
-              <button type="button" 
-                      class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
-                      data-display-range-action="range-1year">
-                <%= t('plans.show.display_range.quick_select.range_1year') %>
-              </button>
-              <button type="button" 
-                      class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
-                      data-display-range-action="range-2year">
-                <%= t('plans.show.display_range.quick_select.range_2year') %>
-              </button>
-              <button type="button" 
-                      class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
-                      data-display-range-action="full-range">
-                <%= t('plans.show.display_range.quick_select.full_range') %>
-              </button>
+    <!-- ガントチャート（表示範囲ツールバーをヘッダーに集約） -->
+    <div class="plans-gantt-panel plans-gantt-section" data-controller="plans-show">
+      <div class="plans-gantt-panel-header">
+        <div class="plans-gantt-panel-label">
+          <div class="gantt-title-subtext">
+            <%= t('plans.show.display_range.title') %>
+          </div>
+        </div>
+
+        <div class="display-range-toolbar">
+          <div class="display-range-toolbar-left">
+            <div class="display-range-quick-buttons">
+              <div class="display-range-button-group display-range-button-group-move">
+                <button type="button" 
+                        class="btn btn-ghost btn-sm display-range-btn display-range-btn-move" 
+                        data-display-range-action="month-back">
+                  <%= t('plans.show.display_range.quick_select.month_back') %>
+                </button>
+                <button type="button" 
+                        class="btn btn-ghost btn-sm display-range-btn display-range-btn-move" 
+                        data-display-range-action="month-forward">
+                  <%= t('plans.show.display_range.quick_select.month_forward') %>
+                </button>
+              </div>
+              <div class="display-range-button-divider"></div>
+              <div class="display-range-button-group display-range-button-group-range">
+                <button type="button" 
+                        class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
+                        data-display-range-action="range-1year">
+                  <%= t('plans.show.display_range.quick_select.range_1year') %>
+                </button>
+                <button type="button" 
+                        class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
+                        data-display-range-action="range-2year">
+                  <%= t('plans.show.display_range.quick_select.range_2year') %>
+                </button>
+                <button type="button" 
+                        class="btn btn-ghost btn-sm display-range-btn display-range-btn-range" 
+                        data-display-range-action="full-range">
+                  <%= t('plans.show.display_range.quick_select.full_range') %>
+                </button>
+              </div>
             </div>
           </div>
-          <!-- カレンダー入力（右側） -->
-          <div class="display-range-date-inputs">
-            <div class="display-range-date-input-group">
-              <label class="display-range-date-label"><%= t('plans.show.display_range.start_date') %></label>
-              <input type="date" 
-                     id="display-start-date" 
-                     class="display-range-date-input"
-                     value="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                     min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                     max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
-            </div>
-            <div class="display-range-date-input-group">
-              <label class="display-range-date-label"><%= t('plans.show.display_range.end_date') %></label>
-              <input type="date" 
-                     id="display-end-date" 
-                     class="display-range-date-input"
-                     value="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>"
-                     min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                     max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
-            </div>
-            <div class="display-range-apply-wrapper">
-              <button type="button" 
-                      id="apply-display-range" 
-                      class="btn btn-ghost btn-sm display-range-apply-btn">
-                <%= t('plans.show.display_range.apply') %>
-              </button>
+          <div class="display-range-toolbar-right">
+            <div class="display-range-date-inputs">
+              <div class="display-range-date-input-group">
+                <label class="display-range-date-label"><%= t('plans.show.display_range.start_date') %></label>
+                <input type="date" 
+                       id="display-start-date" 
+                       class="display-range-date-input"
+                       value="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                       min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                       max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+              </div>
+              <div class="display-range-date-input-group">
+                <label class="display-range-date-label"><%= t('plans.show.display_range.end_date') %></label>
+                <input type="date" 
+                       id="display-end-date" 
+                       class="display-range-date-input"
+                       value="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>"
+                       min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
+                       max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+              </div>
+              <div class="display-range-apply-wrapper">
+                <button type="button" 
+                        id="apply-display-range" 
+                        class="btn btn-ghost btn-sm display-range-apply-btn">
+                  <%= t('plans.show.display_range.apply') %>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ガントチャート -->
-    <div class="plans-gantt-section" data-controller="plans-show">
-      <%= render 'shared/gantt_chart', 
-                 cultivation_plan: @vm.plan,
-                 show_crop_palette: true,
-                 plan_type: 'private',
-                 data_url: data_api_v1_plans_cultivation_plan_path(@vm.plan),
-                 adjust_url: adjust_api_v1_plans_cultivation_plan_path(@vm.plan),
-                 add_field_url: add_field_api_v1_plans_cultivation_plan_path(@vm.plan),
-                 remove_field_url: remove_field_api_v1_plans_cultivation_plan_path(id: @vm.plan.id, field_id: 'PLACEHOLDER'),
-                 add_crop_url: add_crop_api_v1_plans_cultivation_plan_path(@vm.plan),
-                 optimization_channel: 'PlansOptimizationChannel',
-                 gantt_title: t('plans.show.gantt.title'),
-                 detail_title: t('plans.show.detail.title'),
-                 detail_loading: t('plans.show.detail.loading'),
-                 crop_palette_toggle_label: t('plans.show.crop_palette.toggle', default: '作物を追加'),
-                 crop_palette_title: t('plans.show.crop_palette.title', default: '作物を追加'),
-                 crop_palette_in_use_label: t('plans.show.crop_palette.in_use', default: '使用中') %>
+      <div class="plans-gantt-panel-body">
+        <%= render 'shared/gantt_chart', 
+                   cultivation_plan: @vm.plan,
+                   show_crop_palette: true,
+                   plan_type: 'private',
+                   data_url: data_api_v1_plans_cultivation_plan_path(@vm.plan),
+                   adjust_url: adjust_api_v1_plans_cultivation_plan_path(@vm.plan),
+                   add_field_url: add_field_api_v1_plans_cultivation_plan_path(@vm.plan),
+                   remove_field_url: remove_field_api_v1_plans_cultivation_plan_path(id: @vm.plan.id, field_id: 'PLACEHOLDER'),
+                   add_crop_url: add_crop_api_v1_plans_cultivation_plan_path(@vm.plan),
+                   optimization_channel: 'PlansOptimizationChannel',
+                   gantt_title: t('plans.show.gantt.title'),
+                   detail_title: t('plans.show.detail.title'),
+                   detail_loading: t('plans.show.detail.loading'),
+                   crop_palette_toggle_label: t('plans.show.crop_palette.toggle', default: '作物を追加'),
+                   crop_palette_title: t('plans.show.crop_palette.title', default: '作物を追加'),
+                   crop_palette_in_use_label: t('plans.show.crop_palette.in_use', default: '使用中') %>
+      </div>
     </div>
   </div>
 </div>
