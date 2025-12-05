@@ -19,8 +19,9 @@
 .plans-gantt-panel {
   background: var(--color-white);
   border-radius: var(--radius-xl);
-  padding: var(--space-5) var(--space-6);
-  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  display: block;
 }
 
 .plans-gantt-panel-header {
