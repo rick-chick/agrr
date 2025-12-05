@@ -175,6 +175,17 @@ ja:
         toggle: "作物パレットを開閉"
         title: "作物を追加"
         in_use: "使用中"
+      display_range:
+        title: "表示範囲の設定"
+        start_date: "開始日"
+        end_date: "終了日"
+        apply: "適用"
+        quick_select:
+          month_back: "← 1ヶ月"
+          month_forward: "1ヶ月 →"
+          range_1year: "1年"
+          range_2year: "2年"
+          full_range: "全体"
   
     task_schedules:
       title: "%{name}の作業予定"

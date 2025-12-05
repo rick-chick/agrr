@@ -479,9 +479,7 @@ details:not([open]) .farm-toggle-icon::before {
   gap: var(--space-4);
 }
 
-.stat-item {
-  /* 統計項目のコンテナ */
-}
+/* .stat-item は統計項目のコンテナ（スタイルは不要） */
 
 .stat-label {
   font-size: var(--font-size-sm);
@@ -647,6 +645,208 @@ details:not([open]) .farm-toggle-icon::before {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* ============================================
+   Display Range Controls Row (ボタンとカレンダーを一列に)
+   ============================================ */
+
+.display-range-controls-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   Display Range Date Inputs (控えめなスタイル)
+   ============================================ */
+
+.display-range-date-inputs {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.display-range-date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.display-range-date-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+.display-range-date-input {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-1) solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background: var(--color-white);
+  transition: all var(--transition-fast);
+  min-width: 140px;
+}
+
+.display-range-date-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.display-range-apply-wrapper {
+  display: flex;
+  align-items: flex-end;
+}
+
+.display-range-apply-btn {
+  font-size: var(--font-size-xs);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+
+/* ============================================
+   Display Range Quick Buttons
+   ============================================ */
+
+.display-range-quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.display-range-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.display-range-button-divider {
+  width: 1px;
+  height: 2rem;
+  background: var(--color-gray-300);
+  margin: 0 var(--space-2);
+  flex-shrink: 0;
+}
+
+.display-range-btn {
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+/* 移動系ボタン（前後ろ）のスタイル */
+.display-range-btn-move {
+  font-weight: var(--font-weight-semibold);
+  min-width: 5rem;
+  text-align: center;
+}
+
+.display-range-btn-move:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 範囲幅選択ボタン（1年/2年/全体）のスタイル */
+.display-range-btn-range {
+  font-weight: var(--font-weight-semibold);
+  min-width: 5rem;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.display-range-btn-range:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  /* モバイルでは縦に折りたたむ */
+  .display-range-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  
+  .display-range-quick-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .display-range-date-inputs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+  
+  .display-range-date-input {
+    min-width: 120px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .display-range-button-group {
+    gap: var(--space-1);
+  }
+  
+  .display-range-button-divider {
+    height: 1.5rem;
+    margin: 0 var(--space-1);
+  }
+  
+  .display-range-btn {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .display-range-btn-move {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .display-range-date-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .display-range-date-input-group {
+    width: 100%;
+  }
+  
+  .display-range-date-input {
+    width: 100%;
+  }
+  
+  .display-range-apply-wrapper {
+    width: 100%;
+  }
+  
+  .display-range-apply-btn {
+    width: 100%;
+  }
+  
+  .display-range-button-divider {
+    width: 100%;
+    height: 1px;
+    margin: var(--space-2) 0;
+  }
+  
+  .display-range-btn {
+    flex: 1 1 auto;
+    min-width: auto;
+  }
 }
 
 /* ============================================
