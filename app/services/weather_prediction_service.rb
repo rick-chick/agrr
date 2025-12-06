@@ -270,11 +270,14 @@ class WeatherPredictionService
     prediction_end = parse_date(payload['prediction_end_date'])
     return nil unless prediction_start
 
+    # 既存の予測データがtarget_end_dateをカバーしているかチェック
+    # カバーしている場合は既存データを返す（パフォーマンス最適化）
     if target_end_date && prediction_end && prediction_end < target_end_date
-      Rails.logger.info "⚠️ [WeatherPrediction] Cached prediction does not cover target end date"
+      Rails.logger.info "⚠️ [WeatherPrediction] Cached prediction does not cover target end date (prediction_end: #{prediction_end}, target_end_date: #{target_end_date})"
       return nil
     end
 
+    Rails.logger.info "✅ [WeatherPrediction] Using cached prediction data (prediction_end: #{prediction_end}, target_end_date: #{target_end_date})"
     {
       data: payload,
       target_end_date: target_end_date || prediction_end,
