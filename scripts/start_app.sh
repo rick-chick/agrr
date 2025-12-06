@@ -267,7 +267,8 @@ echo "=== Startup Timing Summary (before Rails server exec) ==="
 echo "Phase 1 (Essential, primary DB ready): ${PHASE1_DURATION}s"
 echo "Phase 3 (Services before Rails server): ${PHASE3_DURATION}s"
 echo "Total pre-Rails startup time: ${TOTAL_DURATION}s"
-# Railsサーバーを起動し、その終了を待機する（シェル終了時にtrapでクリーンアップ）
-bundle exec rails server -b 0.0.0.0 -p $PORT -e production &
-RAILS_SERVER_PID=$!
-wait "$RAILS_SERVER_PID"
+# Railsサーバーをフォアグラウンドで起動（これがメインプロセスになる）
+# execを使うことで、メインプロセスがRailsサーバーに置き換わるため、
+# Cloud Runが直接Railsサーバーをメインプロセスとして認識できる
+# サーバーが終了すると、trapでクリーンアップが実行される
+exec bundle exec rails server -b 0.0.0.0 -p $PORT -e production
