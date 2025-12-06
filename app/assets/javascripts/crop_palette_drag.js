@@ -380,7 +380,9 @@ function calculateDropInfo(svgCoords) {
   const config = ganttState.config;
   const chartWidth = ganttState.chartWidth;
   
-  // 表示範囲が設定されている場合は表示範囲の開始日と終了日を使用、なければ計画の開始日と終了日を使用
+  // 表示範囲が設定されている場合は表示範囲を使用、なければ計画期間を使用（フォールバック）
+  // 注: 表示範囲が未設定の場合は計画期間をフォールバックとして使用するが、
+  //     通常は表示範囲が設定されているため、表示範囲を基準に計算する
   const displayStartDate = ganttState.displayStartDate || ganttState.planStartDate;
   const displayEndDate = ganttState.displayEndDate || ganttState.planEndDate;
   const fieldGroups = ganttState.fieldGroups;

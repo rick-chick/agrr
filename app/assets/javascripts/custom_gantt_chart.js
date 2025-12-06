@@ -87,6 +87,8 @@ if (typeof window.ganttState === 'undefined') {
     dragStartY: 0,
     originalBarX: 0,
     originalFieldIndex: -1,
+    dragStartDisplayStartDate: null, // ドラッグ開始時の表示範囲開始日（ドラッグ中のrenderGanttChart呼び出しから保護）
+    dragStartDisplayEndDate: null, // ドラッグ開始時の表示範囲終了日（ドラッグ中のrenderGanttChart呼び出しから保護）
     cultivation_plan_id: null,
     cableSubscription: null, // Action Cableサブスクリプション
     // イベントハンドラーの参照を保存
@@ -451,7 +453,8 @@ function initCustomGanttChart() {
     
     // SVGガントチャートを描画
     console.log('🎨 [Gantt] チャート描画開始...');
-    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
+    // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
+    renderGanttChart(ganttContainer, window.ganttState.fieldGroups);
     console.log('✅ [Gantt] チャート描画完了');
     
     // 初期化フラグをリセット
@@ -669,7 +672,8 @@ function fetchAndUpdateChart() {
       // チャートを再描画（開始日と終了日の両方が正しく反映される）
       const ganttContainer = document.getElementById('gantt-chart-container');
       if (ganttContainer) {
-        renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
+        // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
+        renderGanttChart(ganttContainer, window.ganttState.fieldGroups);
       }
 
       console.log('✅ チャートを更新しました（開始日・終了日の両方を反映）');
@@ -751,7 +755,8 @@ function groupByField(cultivations, fields = []) {
 }
 
 // SVGガントチャートを描画
-function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
+// 計画期間は引数として受け取らない（表示範囲を使用するため）
+function renderGanttChart(container, fieldGroups) {
   const config = {
     margin: { top: 60, right: 20, bottom: 12, left: 80 },
     rowHeight: 68,
@@ -762,7 +767,7 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   const addFieldSpacer = fieldGroups.length > 0 ? config.barPadding + 40 : 0;
   config.height = config.margin.top + (fieldGroups.length * config.rowHeight) + addFieldSpacer + config.margin.bottom;
 
-  // 表示範囲が設定されている場合はそれを使用、なければ計画期間全体を使用
+  // 表示範囲が設定されている場合はそれを使用、なければ計画期間全体を使用（フォールバック）
   let startDate, endDate;
   if (window.ganttState.displayStartDate && window.ganttState.displayEndDate) {
     startDate = window.ganttState.displayStartDate instanceof Date 
@@ -772,15 +777,23 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
       ? new Date(window.ganttState.displayEndDate.getTime()) 
       : new Date(window.ganttState.displayEndDate);
   } else {
+    // フォールバック: 計画期間を使用
+    const planStartDate = window.ganttState.planStartDate;
+    const planEndDate = window.ganttState.planEndDate;
     startDate = planStartDate instanceof Date ? new Date(planStartDate.getTime()) : new Date(planStartDate);
     endDate = planEndDate instanceof Date ? new Date(planEndDate.getTime()) : new Date(planEndDate);
   }
   
-  // 無効な日付の場合はデフォルト値を設定
+  // 無効な日付の場合はエラーを発生
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    console.error('❌ Invalid dates in renderGanttChart:', { planStartDate, planEndDate });
+    console.error('❌ Invalid dates in renderGanttChart:', { 
+      displayStartDate: window.ganttState.displayStartDate,
+      displayEndDate: window.ganttState.displayEndDate,
+      planStartDate: window.ganttState.planStartDate,
+      planEndDate: window.ganttState.planEndDate
+    });
     setLoadingIndicatorVisible(false);
-    throw new Error('Invalid plan dates');
+    throw new Error('Invalid display range dates');
   }
 
   const totalDays = Math.max(daysBetween(startDate, endDate), 1);
@@ -939,7 +952,9 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
   container.appendChild(svg);
   
   // グローバルなマウスイベントリスナーを追加（常に最新の参照を使用）
-  setupGlobalDragHandlers(svg, config, startDate, totalDays, chartWidth);
+  // startDateは表示範囲の開始日（表示範囲が設定されている場合）または計画期間の開始日
+  // endDateも同様に表示範囲の終了日または計画期間の終了日
+  setupGlobalDragHandlers(svg, config, startDate, endDate, totalDays, chartWidth);
   setLoadingIndicatorVisible(false);
   updateMobileFallback();
   
@@ -951,8 +966,15 @@ function renderGanttChart(container, fieldGroups, planStartDate, planEndDate) {
 }
 
 // グローバルなドラッグハンドラーを設定
-function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWidth) {
+function setupGlobalDragHandlers(svg, config, displayStartDate, displayEndDate, totalDays, chartWidth) {
   const dragThreshold = 5; // 5px以上移動したらドラッグとみなす
+  
+  // ⭐ 重要: ドラッグ中はハンドラを置き換えない（ドラッグ開始時の日付範囲を保護）
+  // ドラッグ中にrenderGanttChartが呼ばれても、既存のハンドラを保持する
+  if (window.ganttState.isDragging || window.ganttState.draggedBar) {
+    console.log('⚠️ ドラッグ中のため、ハンドラの置き換えをスキップします');
+    return;
+  }
   
   // 古いイベントハンドラーを削除
   if (window.ganttState.globalMouseMoveHandler) {
@@ -1131,12 +1153,17 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       const currentY = parseFloat(cachedBarBg.getAttribute('y'));
       const originalBarY = parseFloat(cachedBarBg.getAttribute('data-original-y'));
       
-      // 日付計算
+      // 日付計算（ドラッグ開始時に保存された表示範囲を使用）
+      // ⭐ 重要: ドラッグ中にrenderGanttChartが呼ばれてdisplayStartDate/displayEndDateが
+      // 更新されても、ドラッグ開始時の日付範囲を使用することで正しい日付計算を保証する
       const svg = document.querySelector('svg.custom-gantt-chart');
       const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - config.margin.right : 1080;
-      const totalDays = daysBetween(window.ganttState.planStartDate, window.ganttState.planEndDate);
+      // ドラッグ開始時に保存された日付範囲を使用（なければ現在の表示範囲を使用）
+      const effectiveDisplayStartDate = window.ganttState.dragStartDisplayStartDate || displayStartDate || window.ganttState.planStartDate;
+      const effectiveDisplayEndDate = window.ganttState.dragStartDisplayEndDate || displayEndDate || window.ganttState.planEndDate;
+      const totalDays = daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
       daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
-      newStartDate = new Date(window.ganttState.planStartDate);
+      newStartDate = new Date(effectiveDisplayStartDate);
       newStartDate.setDate(newStartDate.getDate() + daysFromStart);
       
       // 圃場計算
@@ -1159,7 +1186,15 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
       newX = window.ganttState.originalBarX;
       newFieldIndex = window.ganttState.originalFieldIndex;
       newFieldName = originalFieldName;
-      newStartDate = window.ganttState.planStartDate;
+      // ドラッグ開始時に保存された日付範囲を使用（なければ現在の表示範囲を使用）
+      const effectiveDisplayStartDate = window.ganttState.dragStartDisplayStartDate || displayStartDate || window.ganttState.planStartDate;
+      const effectiveDisplayEndDate = window.ganttState.dragStartDisplayEndDate || displayEndDate || window.ganttState.planEndDate;
+      const totalDays = daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
+      const svg = document.querySelector('svg.custom-gantt-chart');
+      const chartWidth = svg ? parseFloat(svg.getAttribute('width')) - MARGIN_LEFT - config.margin.right : 1080;
+      daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
+      newStartDate = new Date(effectiveDisplayStartDate);
+      newStartDate.setDate(newStartDate.getDate() + daysFromStart);
     }
     
     // ⭐ 重要: 実際にドラッグが行われた場合のみ処理
@@ -1209,6 +1244,10 @@ function setupGlobalDragHandlers(svg, config, planStartDate, totalDays, chartWid
     cachedDeleteBtn = null;
     cachedDeleteBtnText = null;
     lastTargetFieldIndex = -1;
+    
+    // ドラッグ開始時に保存した日付範囲をクリア
+    window.ganttState.dragStartDisplayStartDate = null;
+    window.ganttState.dragStartDisplayEndDate = null;
     
     window.ganttState.draggedBar = null;
     window.ganttState.isDragging = false;  // グローバルなドラッグフラグもリセット
@@ -1272,11 +1311,12 @@ function removeCultivation(cultivation_id) {
   // 空の圃場も含めて再グループ化
   window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, window.ganttState.fields);
   
-  // チャートを再描画
-  const ganttContainer = document.getElementById('gantt-chart-container');
-  if (ganttContainer) {
-    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
-  }
+      // チャートを再描画
+      const ganttContainer = document.getElementById('gantt-chart-container');
+      if (ganttContainer) {
+        // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
+        renderGanttChart(ganttContainer, window.ganttState.fieldGroups);
+      }
   
   // 自動で再最適化を実行
   executeReoptimization();
@@ -1359,7 +1399,8 @@ function applyMovesLocally() {
   // 再描画
   const ganttContainer = document.getElementById('gantt-chart-container');
   if (ganttContainer) {
-    renderGanttChart(ganttContainer, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
+    // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
+    renderGanttChart(ganttContainer, window.ganttState.fieldGroups);
   }
 }
 
@@ -1444,8 +1485,9 @@ function executeReoptimization() {
       
       if (userMessage.includes('Time overlap') || userMessage.includes('considering') || userMessage.includes('fallow period')) {
         userMessage = '移動先の日付では、他の栽培と重複します（休閑期間28日を考慮）。\n別の日付を選択してください。';
-      } else if (userMessage.includes('Cannot complete growth') || userMessage.includes('planning period')) {
-        userMessage = '移動先の日付では、計画期間内に成長が完了しません。\nより早い日付を選択してください。';
+      } else if (userMessage.includes('Cannot complete growth')) {
+        // 計画期間に関する制約を削除: 成長が完了できない場合は、単に成長が完了できないことを示す
+        userMessage = '移動先の日付では、成長が完了しません。\nより早い日付を選択してください。';
       } else if (userMessage.includes('not found')) {
         userMessage = '指定された栽培または圃場が見つかりません。';
       }
@@ -1700,6 +1742,7 @@ function renderFieldRow(svg, config, group, index, y, startDate, totalDays, char
   // startDateは表示範囲の開始日（表示範囲が設定されている場合）または計画期間の開始日
   group.cultivations.forEach((cultivation, cultIndex) => {
     if (shouldDisplayCultivation(cultivation)) {
+      // startDateは表示範囲の開始日として渡す
       renderCultivationBar(rowGroup, config, cultivation, y, startDate, totalDays, chartWidth);
     }
   });
@@ -1709,7 +1752,7 @@ function renderFieldRow(svg, config, group, index, y, startDate, totalDays, char
 
 // 栽培バーを描画
 // ⭐ ガントカードの位置と幅は、開始日と終了日の両方から計算される
-function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartDate, totalDays, chartWidth) {
+function renderCultivationBar(parentGroup, config, cultivation, rowY, displayStartDate, totalDays, chartWidth) {
   // 開始日と終了日を取得（ローカルタイムゾーンで解釈）
   const startDate = parseLocalDate(cultivation.start_date);
   const endDate = parseLocalDate(cultivation.completion_date);
@@ -1722,7 +1765,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   
   // 日数計算（符号を保持して計算）
   // 表示範囲の開始日より前に始まる作付の場合、負の値になる
-  const daysFromStart = daysBetweenSigned(planStartDate, startDate);
+  const daysFromStart = daysBetweenSigned(displayStartDate, startDate);
   const cultivationDays = daysBetween(startDate, endDate) + 1;
   
   if (cultivationDays <= 0) {
@@ -1730,7 +1773,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
       cultivation, 
       daysFromStart, 
       cultivationDays,
-      planStartDate,
+      displayStartDate,
       startDate,
       endDate
     });
@@ -1750,7 +1793,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
   
   // 表示範囲の開始日より前に始まる場合は、表示範囲の開始日から表示
   if (daysFromStart < 0) {
-    visibleStartDate = new Date(planStartDate);
+    visibleStartDate = new Date(displayStartDate);
   }
   
   // 表示範囲の終了日を超える場合は、表示範囲の終了日までに切り詰める
@@ -1779,7 +1822,7 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     barWidth = Math.max(0, (visibleDays / totalDays) * chartWidth);
   } else {
     // 表示範囲の開始日以降に始まる作付の場合
-    const visibleDaysFromStart = daysBetweenSigned(planStartDate, visibleStartDate);
+    const visibleDaysFromStart = daysBetweenSigned(displayStartDate, visibleStartDate);
     barX = config.margin.left + (visibleDaysFromStart / totalDays) * chartWidth;
     barWidth = (visibleDays / totalDays) * chartWidth;
   }
@@ -1896,6 +1939,16 @@ function renderCultivationBar(parentGroup, config, cultivation, rowY, planStartD
     window.ganttState.dragStartX = e.clientX;
     window.ganttState.dragStartY = e.clientY;
     window.ganttState.originalBarX = parseFloat(barBg.getAttribute('x'));
+    
+    // ⭐ 重要: ドラッグ開始時の表示範囲を保存
+    // これにより、ドラッグ中にrenderGanttChartが呼ばれてdisplayStartDate/displayEndDateが
+    // 更新されても、ドラッグ開始時の日付範囲を使用して正しい日付計算ができる
+    window.ganttState.dragStartDisplayStartDate = window.ganttState.displayStartDate 
+      ? new Date(window.ganttState.displayStartDate.getTime())
+      : (window.ganttState.planStartDate ? new Date(window.ganttState.planStartDate.getTime()) : null);
+    window.ganttState.dragStartDisplayEndDate = window.ganttState.displayEndDate
+      ? new Date(window.ganttState.displayEndDate.getTime())
+      : (window.ganttState.planEndDate ? new Date(window.ganttState.planEndDate.getTime()) : null);
     
     // 元のY座標を保存（data-original-y属性として）
     const originalBarY = parseFloat(barBg.getAttribute('y'));
@@ -2540,7 +2593,8 @@ function applyDisplayRange() {
   // ガントチャートを再描画
   const container = document.getElementById('gantt-chart-container');
   if (container) {
-    renderGanttChart(container, window.ganttState.fieldGroups, window.ganttState.planStartDate, window.ganttState.planEndDate);
+    // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
+    renderGanttChart(container, window.ganttState.fieldGroups);
   }
 }
 
