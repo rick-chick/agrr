@@ -128,18 +128,14 @@
                 <input type="date" 
                        id="display-start-date" 
                        class="display-range-date-input"
-                       value="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                       min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                       max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+                       value="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>">
               </div>
               <div class="display-range-date-input-group">
                 <label class="display-range-date-label"><%= t('plans.show.display_range.end_date') %></label>
                 <input type="date" 
                        id="display-end-date" 
                        class="display-range-date-input"
-                       value="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>"
-                       min="<%= @vm.plan.planning_start_date&.strftime('%Y-%m-%d') %>"
-                       max="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
+                       value="<%= @vm.plan.planning_end_date&.strftime('%Y-%m-%d') %>">
               </div>
               <div class="display-range-apply-wrapper">
                 <button type="button" 
