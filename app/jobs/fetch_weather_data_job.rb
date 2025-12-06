@@ -133,7 +133,7 @@ class FetchWeatherDataJob < ApplicationJob
     sleep(0.5)
     
     # agrrコマンドを実行して気象データを取得
-    weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
+    weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
     
     # データが空でないことを確認
     unless weather_data && weather_data['data']&.any?
@@ -234,14 +234,26 @@ class FetchWeatherDataJob < ApplicationJob
 
   private
 
-  def fetch_weather_from_agrr(latitude, longitude, start_date, end_date)
+  def fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
+    # 日本（region == 'jp'）の場合はJMAを使用
+    data_source = determine_data_source(farm_id)
+    farm_info = farm_id ? "[Farm##{farm_id}]" : ""
+    Rails.logger.info "🌍 #{farm_info} Using data source: #{data_source}"
+    
     weather_gateway = Agrr::WeatherGateway.new
     weather_gateway.fetch_by_date_range(
       latitude: latitude,
       longitude: longitude,
       start_date: start_date,
-      end_date: end_date
+      end_date: end_date,
+      data_source: data_source
     )
+  end
+
+  def determine_data_source(farm_id)
+    return 'jma' if farm_id && (farm = Farm.find_by(id: farm_id)) && farm.region == 'jp'
+    return 'nasa-power' if farm_id && (farm = Farm.find_by(id: farm_id)) && farm.region.nil?
+    'noaa'
   end
 
 end
