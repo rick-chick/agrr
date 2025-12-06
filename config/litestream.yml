@@ -1,12 +1,13 @@
 # Litestream configuration for Cloud Storage replication
-# Separate databases for primary, queue, and cache for better performance
+# Separate databases for primary, queue, cache, and cable for better performance
+# All paths are prefixed with 'production/' to ensure complete separation from development
 dbs:
   # Main application database
   - path: /tmp/production.sqlite3
     replicas:
       - type: gcs
         bucket: ${GCS_BUCKET}
-        path: production.sqlite3
+        path: production/primary.sqlite3
         sync-interval: 10s
   
   # Solid Queue database
@@ -14,7 +15,7 @@ dbs:
     replicas:
       - type: gcs
         bucket: ${GCS_BUCKET}
-        path: production_queue.sqlite3
+        path: production/queue.sqlite3
         sync-interval: 10s
   
   # Solid Cache database (optional backup - cache can be recreated)
@@ -22,7 +23,7 @@ dbs:
     replicas:
       - type: gcs
         bucket: ${GCS_BUCKET}
-        path: production_cache.sqlite3
+        path: production/cache.sqlite3
         sync-interval: 30s
   
   # Solid Cable database (Action Cable messages)
@@ -30,6 +31,6 @@ dbs:
     replicas:
       - type: gcs
         bucket: ${GCS_BUCKET}
-        path: production_cable.sqlite3
+        path: production/cable.sqlite3
         sync-interval: 30s
 

@@ -1,0 +1,37 @@
+# Litestream configuration for Cloud Storage replication (Development Environment)
+# Separate databases for primary, queue, cache, and cable for better performance
+# Uses separate GCS bucket from production to avoid conflicts
+# All paths are prefixed with 'development/' to ensure complete separation
+dbs:
+  # Main application database
+  - path: storage/development.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET_DEV}
+        path: development/primary.sqlite3
+        sync-interval: 10s
+  
+  # Solid Queue database
+  - path: storage/development_queue.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET_DEV}
+        path: development/queue.sqlite3
+        sync-interval: 10s
+  
+  # Solid Cache database (optional backup - cache can be recreated)
+  - path: storage/development_cache.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET_DEV}
+        path: development/cache.sqlite3
+        sync-interval: 30s
+  
+  # Solid Cable database (Action Cable messages)
+  - path: storage/development_cable.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET_DEV}
+        path: development/cable.sqlite3
+        sync-interval: 30s
+
