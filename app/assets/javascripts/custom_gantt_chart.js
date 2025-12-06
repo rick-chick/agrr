@@ -2531,10 +2531,7 @@ function applyDisplayRange() {
     return;
   }
   
-  if (newStartDate < window.ganttState.planStartDate || newEndDate > window.ganttState.planEndDate) {
-    alert('表示範囲は計画期間内である必要があります。');
-    return;
-  }
+  // 計画範囲のチェックを削除：計画範囲外の期間にも作付けを作成できるようにする
   
   // 表示範囲を更新
   window.ganttState.displayStartDate = newStartDate;
@@ -2618,22 +2615,7 @@ function handleQuickRangeAction(action) {
       newEndDate.setMonth(endMonth);
       const targetYearLastDay = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
       newEndDate.setDate(Math.min(endDay, targetYearLastDay));
-      // 計画期間を超えないように調整
-      if (newEndDate > planEndDate) {
-        newEndDate = new Date(planEndDate);
-        // 終了日が計画終了日を超える場合は、開始日を調整
-        newStartDate = new Date(newEndDate);
-        const startMonth = newStartDate.getMonth();
-        const startDayYear = newStartDate.getDate();
-        newStartDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
-        newStartDate.setFullYear(newStartDate.getFullYear() - 1);
-        newStartDate.setMonth(startMonth);
-        const adjustedYearLastDay = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
-        newStartDate.setDate(Math.min(startDayYear, adjustedYearLastDay));
-        if (newStartDate < planStartDate) {
-          newStartDate = new Date(planStartDate);
-        }
-      }
+      // 計画範囲の制約を削除：計画範囲外の期間にも作付けを作成できるようにする
       break;
       
     case 'range-2year':
@@ -2650,22 +2632,7 @@ function handleQuickRangeAction(action) {
       newEndDate.setMonth(endMonth2);
       const targetYearLastDay2 = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
       newEndDate.setDate(Math.min(endDay2, targetYearLastDay2));
-      // 計画期間を超えないように調整
-      if (newEndDate > planEndDate) {
-        newEndDate = new Date(planEndDate);
-        // 終了日が計画終了日を超える場合は、開始日を調整
-        newStartDate = new Date(newEndDate);
-        const startMonth2 = newStartDate.getMonth();
-        const startDay2Year = newStartDate.getDate();
-        newStartDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
-        newStartDate.setFullYear(newStartDate.getFullYear() - 2);
-        newStartDate.setMonth(startMonth2);
-        const adjustedYearLastDay2 = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0).getDate();
-        newStartDate.setDate(Math.min(startDay2Year, adjustedYearLastDay2));
-        if (newStartDate < planStartDate) {
-          newStartDate = new Date(planStartDate);
-        }
-      }
+      // 計画範囲の制約を削除：計画範囲外の期間にも作付けを作成できるようにする
       break;
       
     case 'full-range':
@@ -2679,18 +2646,16 @@ function handleQuickRangeAction(action) {
       return;
   }
   
-  // 計画期間内に制約
-  if (newStartDate < planStartDate) {
-    newStartDate = new Date(planStartDate);
-  }
-  if (newEndDate > planEndDate) {
-    newEndDate = new Date(planEndDate);
-  }
-  
-  // 開始日が終了日より後にならないように調整
+  // 計画範囲の制約を削除：計画範囲外の期間にも作付けを作成できるようにする
+  // 開始日が終了日より後にならないようにバリデーション
   if (newStartDate >= newEndDate) {
-    newStartDate = new Date(planStartDate);
-    newEndDate = new Date(planEndDate);
+    console.error('日付計算エラー: 開始日が終了日より後になっています。', {
+      action: action,
+      newStartDate: newStartDate,
+      newEndDate: newEndDate
+    });
+    alert('日付計算エラーが発生しました。開始日が終了日より後になっています。');
+    return;
   }
   
   // 入力フィールドを更新（ローカル日付フォーマットを使用）
