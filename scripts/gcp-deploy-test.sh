@@ -115,6 +115,24 @@ push_image() {
     print_status "Image pushed successfully ✓"
 }
 
+# Clean up local Docker images after push
+cleanup_local_images() {
+    print_header "Cleaning Up Local Docker Images"
+    
+    local image_tag="$1"
+    local latest_tag="$REGION-docker.pkg.dev/$PROJECT_ID/agrr/$IMAGE_NAME:latest"
+    
+    # Remove timestamped image (keep latest tag)
+    print_status "Removing local image: $image_tag"
+    docker rmi "$image_tag" 2>/dev/null || print_warning "Failed to remove $image_tag (may already be removed)"
+    
+    # Optionally remove latest tag as well (since it's already pushed to registry)
+    print_status "Removing local latest tag: $latest_tag"
+    docker rmi "$latest_tag" 2>/dev/null || print_warning "Failed to remove $latest_tag (may already be removed)"
+    
+    print_status "Local image cleanup completed ✓"
+}
+
 # Deploy to Cloud Run
 deploy_service() {
     print_header "Deploying to Cloud Run (Test Environment)"
@@ -189,6 +207,7 @@ main() {
             local image_tag=$(build_image)
             push_image "$image_tag"
             deploy_service "$image_tag"
+            cleanup_local_images "$image_tag"
             print_header "Deployment Complete ✓"
             ;;
         build)
