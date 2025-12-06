@@ -24,4 +24,12 @@ dbs:
         bucket: ${GCS_BUCKET}
         path: production_cache.sqlite3
         sync-interval: 30s
+  
+  # Solid Cable database (Action Cable messages)
+  - path: /tmp/production_cable.sqlite3
+    replicas:
+      - type: gcs
+        bucket: ${GCS_BUCKET}
+        path: production_cable.sqlite3
+        sync-interval: 30s
 

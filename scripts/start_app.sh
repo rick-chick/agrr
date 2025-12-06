@@ -106,8 +106,8 @@ background_init() {
     BACKGROUND_START=$(date +%s)
     echo "[Background] Starting background initialization..."
     
-    # キュー/キャッシュデータベースの復元とマイグレーション
-    echo "[Background] Step 1: Restoring queue and cache databases..."
+    # キュー/キャッシュ/ケーブルデータベースの復元とマイグレーション
+    echo "[Background] Step 1: Restoring queue, cache, and cable databases..."
     
     # キューデータベースの復元
     if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_queue.sqlite3; then
@@ -123,13 +123,20 @@ background_init() {
         echo "[Background] ⚠ No cache database replica found, will be created"
     fi
     
-    # キュー/キャッシュデータベースのマイグレーション
-    echo "[Background] Step 2: Running migrations for queue and cache databases..."
-    if bundle exec rails db:migrate:queue && bundle exec rails db:migrate:cache; then
-        echo "[Background] ✓ Queue and cache databases migrated successfully"
+    # ケーブルデータベースの復元
+    if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_cable.sqlite3; then
+        echo "[Background] ✓ Cable database restored from GCS"
+    else
+        echo "[Background] ⚠ No cable database replica found, will be created"
+    fi
+    
+    # キュー/キャッシュ/ケーブルデータベースのマイグレーション
+    echo "[Background] Step 2: Running migrations for queue, cache, and cable databases..."
+    if bundle exec rails db:migrate:queue && bundle exec rails db:migrate:cache && bundle exec rails db:migrate:cable; then
+        echo "[Background] ✓ Queue, cache, and cable databases migrated successfully"
         touch "$QUEUE_MIGRATION_READY_FILE"
     else
-        echo "[Background] ✗ Queue or cache database migration failed"
+        echo "[Background] ✗ Queue, cache, or cable database migration failed"
         touch "$QUEUE_MIGRATION_ERROR_FILE"
         # マイグレーション失敗時は以降の処理（agrr daemon 起動など）を行わずに終了
         return 1
@@ -178,7 +185,7 @@ litestream replicate -config /etc/litestream.yml &
 LITESTREAM_PID=$!
 echo "✓ Litestream started (PID: $LITESTREAM_PID)"
 
-# Step 4: Solid Queue worker起動前にキュー/キャッシュDBマイグレーション完了を待機
+# Step 4: Solid Queue worker起動前にキュー/キャッシュ/ケーブルDBマイグレーション完了を待機
 QUEUE_MIGRATION_TIMEOUT=${QUEUE_MIGRATION_TIMEOUT:-120}
 
 # 設定値のバリデーション（数値以外が指定された場合はエラーとして終了）
@@ -187,7 +194,7 @@ if ! [[ "$QUEUE_MIGRATION_TIMEOUT" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "Step 3.2: Waiting for queue/cache database migrations to complete (timeout: ${QUEUE_MIGRATION_TIMEOUT}s)..."
+echo "Step 3.2: Waiting for queue, cache, and cable database migrations to complete (timeout: ${QUEUE_MIGRATION_TIMEOUT}s)..."
 WAITED=0
 while [ ! -f "$QUEUE_MIGRATION_READY_FILE" ] && [ ! -f "$QUEUE_MIGRATION_ERROR_FILE" ] && [ $WAITED -lt $QUEUE_MIGRATION_TIMEOUT ]; do
     sleep 1
@@ -195,16 +202,16 @@ while [ ! -f "$QUEUE_MIGRATION_READY_FILE" ] && [ ! -f "$QUEUE_MIGRATION_ERROR_F
 done
 
 if [ -f "$QUEUE_MIGRATION_ERROR_FILE" ]; then
-    echo "ERROR: Queue or cache database migration failed; Solid Queue worker will not be started"
+    echo "ERROR: Queue, cache, or cable database migration failed; Solid Queue worker will not be started"
     exit 1
 fi
 
 if [ ! -f "$QUEUE_MIGRATION_READY_FILE" ]; then
-    echo "ERROR: Timeout waiting for queue/cache database migrations (${QUEUE_MIGRATION_TIMEOUT}s); Solid Queue worker will not be started"
+    echo "ERROR: Timeout waiting for queue, cache, and cable database migrations (${QUEUE_MIGRATION_TIMEOUT}s); Solid Queue worker will not be started"
     exit 1
 fi
 
-echo "✓ Queue/cache database migrations completed (waited ${WAITED}s)"
+echo "✓ Queue, cache, and cable database migrations completed (waited ${WAITED}s)"
 echo "Step 3.3: Starting Solid Queue worker..."
 bundle exec rails solid_queue:start &
 SOLID_QUEUE_PID=$!
