@@ -436,7 +436,8 @@ module AgrrOptimization
       Rails.logger.info "📁 [Adjust] Debug crops saved to: #{debug_crops_path}"
     end
     
-    # 気象データを取得
+    # 気象データの取得は、effective_planning_endを計算した後に行う
+    # （計画期間外でも修正ができるように、必要な範囲の気温データを確保するため）
     farm = cultivation_plan.farm
     unless farm.weather_location
       return {
@@ -446,7 +447,34 @@ module AgrrOptimization
       }
     end
     
-    # 天気予測データを取得（既存データまたは新規予測）
+    # 計画期間を制約として使用しないように、現在の作付の範囲に基づいて動的に計算
+    # 計画期間はadjust処理の必須パラメータだが、制約として使用しないように広い範囲を設定
+    # 気象データ取得前に計算して、必要な気温データの範囲を確定する
+    begin
+      effective_planning_start, effective_planning_end = calculate_effective_planning_period(
+        cultivation_plan,
+        current_allocation,
+        moves
+      )
+    rescue ArgumentError => e
+      Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
+      return {
+        success: false,
+        message: "日付形式が不正です: #{e.message}",
+        status: :bad_request
+      }
+    rescue StandardError => e
+      Rails.logger.error "❌ [Adjust] Failed to calculate planning period: #{e.class.name}: #{e.message}"
+      Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
+      return {
+        success: false,
+        message: "計画期間の計算に失敗しました: #{e.message}",
+        status: :internal_server_error
+      }
+    end
+    
+    # 気象データを取得（effective_planning_endをtarget_end_dateとして使用）
+    # 計画期間外でも修正ができるように、必要な範囲の気温データを確保する
     begin
       weather_location = farm.weather_location
       unless weather_location
@@ -459,15 +487,21 @@ module AgrrOptimization
         farm: farm
       )
       
-      # 既存の予測データを確認
-      existing_prediction = weather_prediction_service.get_existing_prediction(cultivation_plan: cultivation_plan)
+      # effective_planning_endをtarget_end_dateとして使用して既存の予測データを確認
+      existing_prediction = weather_prediction_service.get_existing_prediction(
+        target_end_date: effective_planning_end,
+        cultivation_plan: cultivation_plan
+      )
       if existing_prediction
         weather_data = existing_prediction[:data]
-        Rails.logger.info "♻️ [Adjust] Using existing prediction data"
+        Rails.logger.info "♻️ [Adjust] Using existing prediction data (target_end_date: #{effective_planning_end})"
       else
-        # 新規予測を実行
-        Rails.logger.info "🔮 [Adjust] Generating new prediction data"
-        weather_info = weather_prediction_service.predict_for_cultivation_plan(cultivation_plan)
+        # 既存の予測データが不足している場合は、effective_planning_endまで新規予測を実行
+        Rails.logger.info "🔮 [Adjust] Generating new prediction data (target_end_date: #{effective_planning_end})"
+        weather_info = weather_prediction_service.predict_for_cultivation_plan(
+          cultivation_plan,
+          target_end_date: effective_planning_end
+        )
         weather_data = weather_info[:data]
       end
     rescue => e
@@ -504,6 +538,14 @@ module AgrrOptimization
         success: false,
         message: "日付形式が不正です: #{e.message}",
         status: :bad_request
+      }
+    rescue StandardError => e
+      Rails.logger.error "❌ [Adjust] Failed to calculate planning period: #{e.class.name}: #{e.message}"
+      Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
+      return {
+        success: false,
+        message: "計画期間の計算に失敗しました: #{e.message}",
+        status: :internal_server_error
       }
     end
     
@@ -645,7 +687,7 @@ module AgrrOptimization
     else
       # 作付がない場合は計画期間を使用（フォールバック）
       effective_start = cultivation_plan.planning_start_date || Date.current
-      
+
       # planning_end_dateが設定されている場合はそれを使用
       # 設定されていない場合は、effective_startを基準に2年後の年末を計算
       # これにより、effective_startが未来の日付でも常にeffective_start <= effective_endが保証される
