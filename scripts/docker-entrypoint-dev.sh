@@ -19,8 +19,53 @@ rm -f /app/tmp/pids/server.pid
 echo "Removing schema files for clean migration run..."
 rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb /app/db/cable_schema.rb
 
+# Litestream復元（開発環境でも本番同様にlitestreamを使用）
+LITESTREAM_CONFIG="/app/config/litestream.development.yml"
+if [ -f "$LITESTREAM_CONFIG" ] && [ -n "${GCS_BUCKET_DEV:-}" ]; then
+    echo "========================================="
+    echo "Restoring databases from GCS via Litestream..."
+    echo "========================================="
+    
+    # メインデータベースの復元
+    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development.sqlite3; then
+        echo "✓ Main database restored from GCS"
+    else
+        echo "⚠ No main database replica found, starting fresh"
+    fi
+    
+    # キューデータベースの復元
+    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development_queue.sqlite3; then
+        echo "✓ Queue database restored from GCS"
+    else
+        echo "⚠ No queue database replica found, starting fresh"
+    fi
+    
+    # キャッシュデータベースの復元
+    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development_cache.sqlite3; then
+        echo "✓ Cache database restored from GCS"
+    else
+        echo "⚠ No cache database replica found, will be created"
+    fi
+    
+    # ケーブルデータベースの復元
+    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development_cable.sqlite3; then
+        echo "✓ Cable database restored from GCS"
+    else
+        echo "⚠ No cable database replica found, will be created"
+    fi
+else
+    if [ ! -f "$LITESTREAM_CONFIG" ]; then
+        echo "⚠ Litestream config not found: $LITESTREAM_CONFIG"
+    fi
+    if [ -z "${GCS_BUCKET_DEV:-}" ]; then
+        echo "⚠ GCS_BUCKET_DEV not set, skipping Litestream restore"
+    fi
+fi
+
 # すべてのDBをマイグレーション実行（primary, queue, cache, cable）
+echo "========================================="
 echo "Running migrations for all databases (primary, queue, cache, cable)..."
+echo "========================================="
 bundle exec rails db:migrate
 
 # app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
@@ -73,8 +118,28 @@ else
     exit 1
 fi
 
-# プロセス終了時にwatcherも終了するように設定
-trap "kill $WATCHER_PID 2>/dev/null || true" EXIT
+# Litestreamレプリケーション開始（バックグラウンド）
+LITESTREAM_CONFIG="/app/config/litestream.development.yml"
+if [ -f "$LITESTREAM_CONFIG" ] && [ -n "${GCS_BUCKET_DEV:-}" ]; then
+    echo "========================================="
+    echo "Starting Litestream replication..."
+    echo "========================================="
+    litestream replicate -config "$LITESTREAM_CONFIG" &
+    LITESTREAM_PID=$!
+    echo "✓ Litestream started (PID: $LITESTREAM_PID)"
+    echo ""
+fi
+
+# プロセス終了時にwatcherとlitestreamも終了するように設定
+cleanup() {
+    echo "Cleaning up..."
+    kill $WATCHER_PID 2>/dev/null || true
+    if [ -n "${LITESTREAM_PID:-}" ]; then
+        echo "Stopping Litestream..."
+        kill $LITESTREAM_PID 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
 
 # Railsサーバー起動
 echo "========================================="

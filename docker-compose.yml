@@ -36,6 +36,7 @@ services:
       - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds (when enabled)
       - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (when enabled)
       - AGRR_BACKDOOR_TOKEN=4d2522cd0f306acaca381256ea73cdb2288d12759a318b8b8988975b78ba2a32  # Backdoor API token
+      - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-agrr-development-db}  # Litestream用GCSバケット（開発環境専用、本番とは別バケット）
       # Google OAuth設定（開発環境用）
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -73,6 +74,7 @@ services:
       - DATABASE_URL=sqlite3:storage/development.sqlite3
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
+      - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-agrr-development-db}  # Litestream用GCSバケット（開発環境専用、本番とは別バケット）
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true

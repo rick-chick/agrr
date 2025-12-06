@@ -363,8 +363,11 @@ module AgrrOptimization
     
     Rails.logger.info "✅ [Action Cable] Broadcast sent successfully"
   rescue StandardError => e
-    Rails.logger.error "❌ [Action Cable] Failed to broadcast: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
+    # ブロードキャストの失敗はデータベーストランザクションの成功に影響を与えない
+    # データベースへの保存は既に完了しているため、エラーをログに記録するのみ
+    Rails.logger.error "❌ [Action Cable] Broadcast failed for plan_id=#{cultivation_plan.id}: #{e.class} - #{e.message}"
+    Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
+    # エラーを再発生させない（データベーストランザクションは成功しているため）
   end
   
   
