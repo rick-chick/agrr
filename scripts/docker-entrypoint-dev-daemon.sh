@@ -26,10 +26,10 @@ rm -f /app/tmp/pids/server.pid
 # db:migrateがschema.rbを見つけると、それを使ってDBを作成してしまい
 # schema_migrationsに全マイグレーション実行済みと記録されるため
 echo "Removing schema files for clean migration run..."
-rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb
+rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb /app/db/cable_schema.rb
 
-# すべてのDBをマイグレーション実行（primary, queue, cache）
-echo "Running migrations for all databases (primary, queue, cache)..."
+# すべてのDBをマイグレーション実行（primary, queue, cache, cable）
+echo "Running migrations for all databases (primary, queue, cache, cable)..."
 bundle exec rails db:migrate
 
 # app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）

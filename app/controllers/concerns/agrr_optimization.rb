@@ -244,8 +244,19 @@ module AgrrOptimization
             raise "作付け計画作物が見つかりません: crop_id=#{allocation['crop_id']}"
           end
           
-          start_date = Date.parse(allocation['start_date'])
-          completion_date = Date.parse(allocation['completion_date'])
+          begin
+            start_date = Date.parse(allocation['start_date'])
+          rescue ArgumentError => e
+            Rails.logger.error "❌ [Save] Invalid start_date format: #{allocation['start_date'].inspect}"
+            raise ArgumentError, "不正な開始日付形式です: #{allocation['start_date'].inspect} (allocation_id: #{allocation['allocation_id']})"
+          end
+          
+          begin
+            completion_date = Date.parse(allocation['completion_date'])
+          rescue ArgumentError => e
+            Rails.logger.error "❌ [Save] Invalid completion_date format: #{allocation['completion_date'].inspect}"
+            raise ArgumentError, "不正な完了日付形式です: #{allocation['completion_date'].inspect} (allocation_id: #{allocation['allocation_id']})"
+          end
           desired_records << {
             allocation_id: allocation['allocation_id'],
             attrs: {
@@ -476,10 +487,28 @@ module AgrrOptimization
     perf_after_rules = Time.current
     Rails.logger.info "⏱️ [PERF] 交互作用ルール構築: #{((perf_after_rules - perf_before_rules) * 1000).round(2)}ms"
     
+    # 計画期間を制約として使用しないように、現在の作付の範囲に基づいて動的に計算
+    # 計画期間はadjust処理の必須パラメータだが、制約として使用しないように広い範囲を設定
+    begin
+      effective_planning_start, effective_planning_end = calculate_effective_planning_period(
+        cultivation_plan,
+        current_allocation,
+        moves
+      )
+    rescue ArgumentError => e
+      Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
+      return {
+        success: false,
+        message: "日付形式が不正です: #{e.message}",
+        status: :bad_request
+      }
+    end
+    
     # agrr optimize adjust を実行
     begin
       perf_before_adjust = Time.current
       Rails.logger.info "⏱️ [PERF] AdjustGateway.adjust() 呼び出し開始"
+      Rails.logger.info "📅 [Adjust] 計画期間: #{effective_planning_start} 〜 #{effective_planning_end} (制約として使用しない)"
       adjust_gateway = Agrr::AdjustGateway.new
       result = adjust_gateway.adjust(
         current_allocation: current_allocation,
@@ -487,8 +516,8 @@ module AgrrOptimization
         fields: fields,
         crops: crops,
         weather_data: weather_data,
-        planning_start: cultivation_plan.planning_start_date,
-        planning_end: cultivation_plan.planning_end_date,
+        planning_start: effective_planning_start,
+        planning_end: effective_planning_end,
         interaction_rules: interaction_rules.empty? ? nil : { 'rules' => interaction_rules },
         objective: 'maximize_profit',
         enable_parallel: true
@@ -532,6 +561,13 @@ module AgrrOptimization
           status: :internal_server_error
         }
       end
+    rescue ArgumentError => e
+      Rails.logger.error "❌ [Adjust] Invalid date format: #{e.message}"
+      return {
+        success: false,
+        message: "日付形式が不正です: #{e.message}",
+        status: :bad_request
+      }
     rescue Agrr::BaseGateway::ExecutionError => e
       Rails.logger.error "❌ [Adjust] Failed to adjust: #{e.message}"
       # エラー時はデータを削除しない
@@ -541,6 +577,84 @@ module AgrrOptimization
         status: :internal_server_error
       }
     end
+  end
+  
+  # 計画期間を制約として使用しないように、現在の作付の範囲に基づいて動的に計算
+  # @param cultivation_plan [CultivationPlan] 栽培計画
+  # @param current_allocation [Hash] 現在の割り当てデータ
+  # @param moves [Array<Hash>] 移動指示のリスト
+  # @return [Array<Date, Date>] [effective_planning_start, effective_planning_end]
+  def calculate_effective_planning_period(cultivation_plan, current_allocation, moves)
+    # 現在の作付の日付範囲を取得
+    all_dates = []
+    
+    # 現在の割り当てから日付を抽出
+    if current_allocation[:optimization_result] && current_allocation[:optimization_result][:field_schedules]
+      current_allocation[:optimization_result][:field_schedules].each do |field_schedule|
+        field_schedule[:allocations]&.each do |allocation|
+          if allocation[:start_date]
+            begin
+              all_dates << Date.parse(allocation[:start_date])
+            rescue ArgumentError => e
+              Rails.logger.error "❌ [Calculate Planning Period] Invalid start_date format: #{allocation[:start_date].inspect}"
+              raise ArgumentError, "不正な開始日付形式です: #{allocation[:start_date].inspect} (allocation_id: #{allocation[:allocation_id]})"
+            end
+          end
+          if allocation[:completion_date]
+            begin
+              all_dates << Date.parse(allocation[:completion_date])
+            rescue ArgumentError => e
+              Rails.logger.error "❌ [Calculate Planning Period] Invalid completion_date format: #{allocation[:completion_date].inspect}"
+              raise ArgumentError, "不正な完了日付形式です: #{allocation[:completion_date].inspect} (allocation_id: #{allocation[:allocation_id]})"
+            end
+          end
+        end
+      end
+    end
+    
+    # 移動指示から新しい日付を抽出
+    moves.each do |move|
+      if move[:to_start_date]
+        begin
+          all_dates << Date.parse(move[:to_start_date])
+        rescue ArgumentError => e
+          Rails.logger.error "❌ [Calculate Planning Period] Invalid to_start_date format: #{move[:to_start_date].inspect}"
+          raise ArgumentError, "不正な移動先開始日付形式です: #{move[:to_start_date].inspect} (move: #{move.inspect})"
+        end
+      end
+    end
+    
+    # データベースからも現在の作付の日付を取得（フォールバック）
+    if all_dates.empty?
+      cultivation_plan.field_cultivations.each do |fc|
+        all_dates << fc.start_date if fc.start_date
+        all_dates << fc.completion_date if fc.completion_date
+      end
+    end
+    
+    # 日付範囲を計算（余裕を持たせる）
+    if all_dates.any?
+      min_date = all_dates.min
+      max_date = all_dates.max
+      # 前後1年分の余裕を持たせる（計画期間を制約として使用しないため）
+      effective_start = (min_date - 365).beginning_of_year
+      effective_end = (max_date + 365).end_of_year
+    else
+      # 作付がない場合は計画期間を使用（フォールバック）
+      effective_start = cultivation_plan.planning_start_date || Date.current
+      
+      # planning_end_dateが設定されている場合はそれを使用
+      # 設定されていない場合は、effective_startを基準に2年後の年末を計算
+      # これにより、effective_startが未来の日付でも常にeffective_start <= effective_endが保証される
+      effective_end = cultivation_plan.planning_end_date || (effective_start + 2.years).end_of_year
+      
+      # 念のため、effective_start > effective_endの場合は調整
+      if effective_start > effective_end
+        effective_end = (effective_start + 2.years).end_of_year
+      end
+    end
+    
+    [effective_start, effective_end]
   end
 end
 
