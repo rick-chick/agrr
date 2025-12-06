@@ -262,7 +262,7 @@ PHASE3_END=$(date +%s)
 PHASE3_DURATION=$((PHASE3_END - PHASE3_START))
 TOTAL_DURATION=$((PHASE3_END - START_TIME))
 
-echo "Step 3.4: Starting Rails server (foreground process for Cloud Run)..."
+echo "Step 3.5: Starting Rails server (foreground process for Cloud Run)..."
 echo "=== Startup Timing Summary (before Rails server exec) ==="
 echo "Phase 1 (Essential, primary DB ready): ${PHASE1_DURATION}s"
 echo "Phase 3 (Services before Rails server): ${PHASE3_DURATION}s"
@@ -270,5 +270,6 @@ echo "Total pre-Rails startup time: ${TOTAL_DURATION}s"
 # Railsサーバーをフォアグラウンドで起動（これがメインプロセスになる）
 # execを使うことで、メインプロセスがRailsサーバーに置き換わるため、
 # Cloud Runが直接Railsサーバーをメインプロセスとして認識できる
-# サーバーが終了すると、trapでクリーンアップが実行される
+# Cloud Runがコンテナを終了する際、すべてのプロセスにSIGTERMが送られるため、
+# バックグラウンドプロセス（Litestream、Solid Queue、Background Init）も自動的に終了する
 exec bundle exec rails server -b 0.0.0.0 -p $PORT -e production
