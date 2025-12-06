@@ -179,13 +179,7 @@ BACKGROUND_INIT_PID=$!
 PHASE3_START=$(date +%s)
 echo "Phase 3: Starting services..."
 
-# Step 3: Litestream replication開始（バックグラウンド）
-echo "Step 3.1: Starting Litestream replication..."
-litestream replicate -config /etc/litestream.yml &
-LITESTREAM_PID=$!
-echo "✓ Litestream started (PID: $LITESTREAM_PID)"
-
-# Step 4: Solid Queue worker起動前にキュー/キャッシュ/ケーブルDBマイグレーション完了を待機
+# Step 3.1: Solid Queue worker起動前にキュー/キャッシュ/ケーブルDBマイグレーション完了を待機
 QUEUE_MIGRATION_TIMEOUT=${QUEUE_MIGRATION_TIMEOUT:-120}
 
 # 設定値のバリデーション（数値以外が指定された場合はエラーとして終了）
@@ -194,7 +188,7 @@ if ! [[ "$QUEUE_MIGRATION_TIMEOUT" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "Step 3.2: Waiting for queue, cache, and cable database migrations to complete (timeout: ${QUEUE_MIGRATION_TIMEOUT}s)..."
+echo "Step 3.1: Waiting for queue, cache, and cable database migrations to complete (timeout: ${QUEUE_MIGRATION_TIMEOUT}s)..."
 WAITED=0
 while [ ! -f "$QUEUE_MIGRATION_READY_FILE" ] && [ ! -f "$QUEUE_MIGRATION_ERROR_FILE" ] && [ $WAITED -lt $QUEUE_MIGRATION_TIMEOUT ]; do
     sleep 1
@@ -202,17 +196,49 @@ while [ ! -f "$QUEUE_MIGRATION_READY_FILE" ] && [ ! -f "$QUEUE_MIGRATION_ERROR_F
 done
 
 if [ -f "$QUEUE_MIGRATION_ERROR_FILE" ]; then
-    echo "ERROR: Queue, cache, or cable database migration failed; Solid Queue worker will not be started"
+    echo "ERROR: Queue, cache, or cable database migration failed; services will not be started"
     exit 1
 fi
 
 if [ ! -f "$QUEUE_MIGRATION_READY_FILE" ]; then
-    echo "ERROR: Timeout waiting for queue, cache, and cable database migrations (${QUEUE_MIGRATION_TIMEOUT}s); Solid Queue worker will not be started"
+    echo "ERROR: Timeout waiting for queue, cache, and cable database migrations (${QUEUE_MIGRATION_TIMEOUT}s); services will not be started"
     exit 1
 fi
 
 echo "✓ Queue, cache, and cable database migrations completed (waited ${WAITED}s)"
-echo "Step 3.3: Starting Solid Queue worker..."
+
+# Step 3.2: すべてのデータベースファイルが存在することを確認
+echo "Step 3.2: Verifying all database files exist..."
+DB_FILES=(
+    "/tmp/production.sqlite3"
+    "/tmp/production_queue.sqlite3"
+    "/tmp/production_cache.sqlite3"
+    "/tmp/production_cable.sqlite3"
+)
+
+MISSING_DBS=()
+for DB_FILE in "${DB_FILES[@]}"; do
+    if [ ! -f "$DB_FILE" ]; then
+        MISSING_DBS+=("$DB_FILE")
+        echo "⚠ Warning: Database file does not exist: $DB_FILE"
+    fi
+done
+
+if [ ${#MISSING_DBS[@]} -gt 0 ]; then
+    echo "ERROR: Some database files are missing. This should not happen after migrations."
+    exit 1
+fi
+
+echo "✓ All database files verified"
+
+# Step 3.3: Litestream replication開始（すべてのデータベースが準備できた後に開始）
+echo "Step 3.3: Starting Litestream replication..."
+litestream replicate -config /etc/litestream.yml &
+LITESTREAM_PID=$!
+echo "✓ Litestream started (PID: $LITESTREAM_PID)"
+
+# Step 3.4: Solid Queue worker起動
+echo "Step 3.4: Starting Solid Queue worker..."
 bundle exec rails solid_queue:start &
 SOLID_QUEUE_PID=$!
 echo "✓ Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
@@ -236,7 +262,7 @@ PHASE3_END=$(date +%s)
 PHASE3_DURATION=$((PHASE3_END - PHASE3_START))
 TOTAL_DURATION=$((PHASE3_END - START_TIME))
 
-echo "Step 3.3: Starting Rails server (foreground process for Cloud Run)..."
+echo "Step 3.4: Starting Rails server (foreground process for Cloud Run)..."
 echo "=== Startup Timing Summary (before Rails server exec) ==="
 echo "Phase 1 (Essential, primary DB ready): ${PHASE1_DURATION}s"
 echo "Phase 3 (Services before Rails server): ${PHASE3_DURATION}s"
