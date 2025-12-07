@@ -1,0 +1,77 @@
+/* ============================================
+   Cookie Consent Modal
+   Created: 2025-12-07
+   Purpose: 同意バナーをモーダル表示にするスタイル
+   ============================================ */
+
+.cookie-consent-banner {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1300;
+  padding: var(--space-4);
+  box-sizing: border-box;
+}
+
+.cookie-consent-banner.hidden {
+  display: none;
+}
+
+.cookie-consent-card {
+  background: var(--color-white);
+  color: var(--text-primary);
+  width: min(520px, 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-6);
+  box-sizing: border-box;
+}
+
+.cookie-consent-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.cookie-consent-text {
+  margin: 0 0 var(--space-5) 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.cookie-consent-link {
+  color: var(--color-success-dark);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+}
+
+.cookie-consent-link:hover {
+  color: var(--color-success);
+  text-decoration: none;
+}
+
+.cookie-consent-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .cookie-consent-card {
+    padding: var(--space-5);
+  }
+
+  .cookie-consent-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-consent-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

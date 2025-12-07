@@ -128,7 +128,8 @@ module ApplicationHelper
       "components/footer",
       "components/crop_selection",
       "components/farm-cards",
-      "components/undo_toast"
+      "components/undo_toast",
+      "components/cookie_consent"
     ]
     
     components_to_load = components || default_components

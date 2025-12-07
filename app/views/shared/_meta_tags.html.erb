@@ -69,9 +69,39 @@ end %>">
   </script>
 <% end %>
 
-<!-- Google AdSense -->
+<!-- Google AdSense (load after consent) -->
 <% if Rails.env.production? %>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256" crossorigin="anonymous" nonce="<%= content_security_policy_nonce %>"></script>
+  <script nonce="<%= content_security_policy_nonce %>">
+    window.loadAdSense = function loadAdSense() {
+      if (window.__adsenseLoaded) return;
+      window.__adsenseLoaded = true;
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256";
+      script.crossOrigin = "anonymous";
+      document.head.appendChild(script);
+    };
+
+    // 自動ロード: 既に同意済みなら即時読み込み
+    let consentStatus = null;
+    let canAutoLoad = true;
+
+    if (typeof localStorage === 'undefined') {
+      console.warn('AdSense auto-load skipped: localStorage unavailable');
+      canAutoLoad = false;
+    } else {
+      try {
+        consentStatus = localStorage.getItem('cookieConsentStatus');
+      } catch (error) {
+        console.warn('AdSense auto-load skipped: localStorage unavailable', error);
+        canAutoLoad = false;
+      }
+    }
+
+    if (canAutoLoad && consentStatus === 'granted') {
+      window.loadAdSense();
+    }
+  </script>
 <% end %>
 
 <%= csrf_meta_tags %>
