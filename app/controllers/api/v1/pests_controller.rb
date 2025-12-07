@@ -68,6 +68,16 @@ module Api
             return render json: { error: I18n.t('api.errors.pests.invalid_payload', default: '不正なデータ形式です') }, status: :unprocessable_entity
           end
 
+          affected_crops_from_agrr = pest_info.dig('data', 'affected_crops')
+          if affected_crops_from_agrr.present? && !affected_crops_from_agrr.is_a?(Array)
+            message = I18n.t(
+              'api.errors.pests.invalid_affected_crops',
+              default: 'agrr応答のaffected_cropsが不正です'
+            )
+            Rails.logger.error "❌ [AI Pest] Invalid affected_crops format: #{affected_crops_from_agrr.inspect}"
+            return render json: { error: message }, status: :unprocessable_entity
+          end
+
           Rails.logger.info "📊 [AI Pest] Retrieved data: name=#{pest_data['name']}, family=#{pest_data['family']}"
 
           # 2. 既存の害虫を検索（AI作成は常にユーザー害虫）
@@ -121,7 +131,6 @@ module Api
             Rails.logger.info "🔗 [AI Pest] Before association check: affected_crops.present?=#{affected_crops.present?}, is_a?(Array)=#{affected_crops.is_a?(Array)}"
 
             # agrr応答のaffected_cropsを優先し、無ければUIからのaffected_cropsにフォールバック
-            affected_crops_from_agrr = pest_info.dig('data', 'affected_crops') rescue nil
             chosen_affected_crops = if affected_crops_from_agrr.is_a?(Array) && affected_crops_from_agrr.any?
               Rails.logger.info "🔗 [AI Pest] Using affected_crops from agrr response: #{affected_crops_from_agrr.inspect}"
               affected_crops_from_agrr

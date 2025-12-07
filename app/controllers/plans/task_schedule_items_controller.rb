@@ -217,8 +217,24 @@ module Plans
     def build_update_attributes(raw_params)
       attributes = raw_params.to_h
       if attributes.key?('scheduled_date') && raw_params[:scheduled_date].present?
-        new_date = Date.parse(raw_params[:scheduled_date]) rescue nil
-        if new_date && @task_schedule_item.scheduled_date != new_date
+        new_date =
+          begin
+            Date.iso8601(raw_params[:scheduled_date].to_s)
+          rescue ArgumentError
+            record = TaskScheduleItem.new
+            record.errors.add(
+              :scheduled_date,
+              I18n.t(
+                'controllers.plans.task_schedule_items.errors.invalid_scheduled_date',
+                default: '無効な日付が指定されました'
+              )
+            )
+            raise ActiveRecord::RecordInvalid, record
+          end
+
+        attributes['scheduled_date'] = new_date
+
+        if @task_schedule_item.scheduled_date != new_date
           attributes['rescheduled_at'] = Time.current
           attributes['status'] = TaskScheduleItem::STATUSES[:rescheduled]
         end
