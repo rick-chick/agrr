@@ -63,6 +63,45 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
     assert_equal false, attrs[:is_reference]
   end
 
+  test "rolls back new crop when stage saving fails" do
+    crop_info = {
+      'success' => true,
+      'crop' => {
+        'crop_id' => nil,
+        'name' => 'キャベツ',
+        'variety' => '春系',
+        'area_per_unit' => 5.0,
+        'revenue_per_area' => 1500.0,
+        'groups' => ['leafy']
+      },
+      # order が欠落して save_crop_stages 内で ArgumentError を発生させる
+      'stage_requirements' => [
+        {
+          'stage' => {
+            'name' => '定植',
+            'order' => nil
+          }
+        }
+      ]
+    }
+
+    gateway = Adapters::Crop::Gateways::CropMemoryGateway.new
+    create_interactor = Domain::Crop::Interactors::CropCreateInteractor.new(gateway)
+
+    service = CropAiUpsertService.new(
+      user: @user,
+      create_interactor: create_interactor
+    )
+
+    result = nil
+    assert_no_difference ['Crop.count', 'CropStage.count'] do
+      result = service.call(crop_name: 'キャベツ', variety: '春系', crop_info: crop_info)
+    end
+
+    assert_not result.success?
+    assert_equal :internal_server_error, result.status
+  end
+
   test "updates existing crop when crop_id is editable by user" do
     existing_crop = create(:crop,
                            user: @user,
@@ -106,6 +145,50 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
     assert_equal 20.0, existing_crop.area_per_unit
     assert_equal 3000.0, existing_crop.revenue_per_area
     assert_equal ['leafy', 'ai'], existing_crop.groups
+  end
+
+  test "keeps existing stages when new stage requirements are invalid (should not destroy before validating)" do
+    existing_crop = create(:crop,
+                           user: @user,
+                           is_reference: false,
+                           name: 'トマト',
+                           variety: '既存品種')
+    create(:crop_stage, crop: existing_crop, name: '発芽', order: 0)
+
+    crop_info = {
+      'success' => true,
+      'crop' => {
+        'crop_id' => existing_crop.id,
+        'name' => 'トマト',
+        'variety' => '更新品種',
+        'area_per_unit' => 12.0,
+        'revenue_per_area' => 2500.0,
+        'groups' => []
+      },
+      # order が欠落しており、create! が例外を出す想定
+      'stage_requirements' => [
+        {
+          'stage' => {
+            'name' => '育苗',
+            'order' => nil
+          }
+        }
+      ]
+    }
+
+    service = CropAiUpsertService.new(
+      user: @user,
+      create_interactor: FakeCreateInteractor.new(FakeResult.new(true, existing_crop, nil))
+    )
+
+    result = service.call(crop_name: 'トマト', variety: '更新品種', crop_info: crop_info)
+
+    assert_not result.success?
+    assert_equal :internal_server_error, result.status
+
+    # ステージ生成に失敗しても既存ステージは残ってほしい（現状はdestroy_all後に例外で消える）
+    assert_equal 1, existing_crop.crop_stages.reload.count
+    assert_equal ['発芽'], existing_crop.crop_stages.pluck(:name)
   end
 end
 

@@ -14,6 +14,10 @@ module Api
       # AIで肥料情報を取得して保存
       def ai_create
         fertilize_name = params[:name]&.strip
+        
+        if current_user.anonymous?
+          return render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+        end
 
         unless fertilize_name.present?
           return render json: { error: I18n.t('api.errors.fertilizes.name_required') }, status: :bad_request

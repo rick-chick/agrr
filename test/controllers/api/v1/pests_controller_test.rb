@@ -236,6 +236,49 @@ module Api
         assert pest.crops.include?(@crop1)
         assert_not pest.crops.include?(other_crop)
       end
+
+      test "ai_create should reject anonymous user instead of sharing anonymous pest records" do
+        # サインインを解除して匿名ユーザー状態にする
+        cookies.delete(:session_id)
+        Session.delete_all
+        @integration_session.reset! if defined?(@integration_session) && @integration_session.respond_to?(:reset!)
+        anonymous = User.anonymous_user
+        create(:pest, :user_owned, user: anonymous, name: "匿名害虫")
+
+        agrr_output = {
+          "success" => true,
+          "data" => {
+            "pest" => {
+              "pest_id" => "anon-001",
+              "name" => "匿名害虫",
+              "name_scientific" => "Anon pest",
+              "family" => "Anon family",
+              "order" => "Anon order",
+              "description" => "匿名で上書きされてはいけない",
+              "occurrence_season" => "通年",
+              "temperature_profile" => nil,
+              "thermal_requirement" => nil,
+              "control_methods" => []
+            },
+            "affected_crops" => []
+          }
+        }.to_json
+
+        Api::V1::PestsController.class_eval do
+          define_method(:fetch_pest_info_from_agrr) { |_name, _affected_crops| JSON.parse(agrr_output) }
+        end
+
+        assert_no_difference "Pest.count" do
+          post api_v1_pests_ai_create_path,
+               params: { name: "匿名害虫" },
+               headers: { "Accept" => "application/json" }
+        end
+
+        assert_response :unauthorized
+
+        # 匿名ユーザーの既存レコードが書き換わらないことを期待（現状は上書きされる）
+        assert_equal "匿名害虫", Pest.find_by(name: "匿名害虫", user: anonymous)&.name
+      end
     end
   end
 end
