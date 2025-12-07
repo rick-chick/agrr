@@ -1,0 +1,120 @@
+ja:
+  controllers:
+    api_keys:
+      generate:
+        success: "APIキーを生成しました。"
+        failure: "APIキーの生成に失敗しました。"
+      regenerate:
+        success: "APIキーを再生成しました。"
+        failure: "APIキーの再生成に失敗しました。"
+    auth_test:
+      mock_data_missing: "モック認証データが設定されていません"
+    planning_schedules:
+      half_label: "%{year} %{half}"
+      half:
+        first: "上半期"
+        second: "下半期"
+    cultivation_plans:
+      errors:
+        add_field_failed: "圃場の追加に失敗しました: %{message}"
+    agrr_optimization:
+      errors:
+        duplicate_allocation: "重複したallocation_idが検出されました: %{ids}"
+        result_empty: "最適化結果が空です: field_schedules が存在しません"
+        field_missing: "圃場が見つかりません: field_id=%{field_id}"
+        crop_missing: "作物が見つかりません: crop_id=%{crop_id}"
+        plan_crop_missing: "作付け計画作物が見つかりません: crop_id=%{crop_id}"
+        start_date_invalid: "不正な開始日付形式です: %{value} (allocation_id: %{allocation_id})"
+        completion_date_invalid: "不正な完了日付形式です: %{value} (allocation_id: %{allocation_id})"
+    field_cultivations:
+      errors:
+        predicted_weather_missing: "気象予測データがありません。最適化を実行してから再度お試しください。"
+        weather_format_invalid: "気象データの形式が不正です。最適化を再実行してください。"
+        progress_failed: "成長進捗の計算に失敗しました: %{error}"
+        weather_fetch_failed: "気象データの取得中にエラーが発生しました: %{error}"
+      mock_progress:
+        stage_names:
+          - "播種〜発芽"
+          - "発芽〜成長"
+          - "成長〜収穫"
+
+us:
+  controllers:
+    api_keys:
+      generate:
+        success: "API key generated."
+        failure: "Failed to generate API key."
+      regenerate:
+        success: "API key regenerated."
+        failure: "Failed to regenerate API key."
+    auth_test:
+      mock_data_missing: "Mock authentication data is not configured."
+    planning_schedules:
+      half_label: "%{year} %{half}"
+      half:
+        first: "First half"
+        second: "Second half"
+    cultivation_plans:
+      errors:
+        add_field_failed: "Failed to add field: %{message}"
+    agrr_optimization:
+      errors:
+        duplicate_allocation: "Duplicate allocation_id detected: %{ids}"
+        result_empty: "Optimization result is empty: field_schedules is missing"
+        field_missing: "Field not found: field_id=%{field_id}"
+        crop_missing: "Crop not found: crop_id=%{crop_id}"
+        plan_crop_missing: "Plan crop not found: crop_id=%{crop_id}"
+        start_date_invalid: "Invalid start date format: %{value} (allocation_id: %{allocation_id})"
+        completion_date_invalid: "Invalid completion date format: %{value} (allocation_id: %{allocation_id})"
+    field_cultivations:
+      errors:
+        predicted_weather_missing: "Predicted weather data is missing. Please run optimization and try again."
+        weather_format_invalid: "Weather data format is invalid. Please rerun optimization."
+        progress_failed: "Failed to calculate growth progress: %{error}"
+        weather_fetch_failed: "Error occurred while fetching weather data: %{error}"
+      mock_progress:
+        stage_names:
+          - "Sowing to germination"
+          - "Germination to growth"
+          - "Growth to harvest"
+
+in:
+  controllers:
+    api_keys:
+      generate:
+        success: "API कुंजी बनाई गई।"
+        failure: "API कुंजी बनाने में विफल रहा।"
+      regenerate:
+        success: "API कुंजी दोबारा बनाई गई।"
+        failure: "API कुंजी को दोबारा बनाने में विफल रहा।"
+    auth_test:
+      mock_data_missing: "Mock authentication data is not configured."
+    planning_schedules:
+      half_label: "%{year} %{half}"
+      half:
+        first: "पहला अर्धवार्षिक"
+        second: "दूसरा अर्धवार्षिक"
+    cultivation_plans:
+      errors:
+        add_field_failed: "Field addition failed: %{message}"
+    agrr_optimization:
+      errors:
+        duplicate_allocation: "Duplicate allocation_id detected: %{ids}"
+        result_empty: "Optimization result is empty: field_schedules is missing"
+        field_missing: "Field not found: field_id=%{field_id}"
+        crop_missing: "Crop not found: crop_id=%{crop_id}"
+        plan_crop_missing: "Plan crop not found: crop_id=%{crop_id}"
+        start_date_invalid: "Invalid start date format: %{value} (allocation_id: %{allocation_id})"
+        completion_date_invalid: "Invalid completion date format: %{value} (allocation_id: %{allocation_id})"
+    field_cultivations:
+      errors:
+        predicted_weather_missing: "पूर्वानुमानित मौसम डेटा उपलब्ध नहीं है।最適化を実行してから再度お試しください।"
+        weather_format_invalid: "मौसमデータの形式が不正です。最適化を再実行してください।"
+        progress_failed: "वृद्धि प्रगति計算 में失敗しました: %{error}"
+        weather_fetch_failed: "मौसमデータ取得中にエラーが発生しました: %{error}"
+      mock_progress:
+        stage_names:
+          - "बीजारोपण से अंकुरण"
+          - "अंकुरण से विकास"
+          - "विकास से कटाई"
+

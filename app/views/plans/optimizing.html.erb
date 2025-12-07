@@ -6,7 +6,10 @@
      data-cultivation-plan-id="<%= @vm.plan_id %>"
      data-channel-name="PlansOptimizationChannel"
      data-redirect-url="<%= plan_path(@vm.plan_id) %>"
-     data-error-message="<%= t('plans.optimizing.error_message') %>">
+     data-error-message="<%= t('plans.optimizing.error_message') %>"
+     data-connection-error-message="<%= t('plans.optimizing.error.connection_lost') %>"
+     data-unknown-error-message="<%= t('plans.optimizing.error.unknown_error') %>"
+     data-failed-title="<%= t('plans.optimizing.error.title') %>">
   <div class="plans-container">
     <!-- Compact Header -->
     <div class="compact-header-card">

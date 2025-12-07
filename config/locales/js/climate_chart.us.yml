@@ -1,0 +1,8 @@
+us:
+  js:
+    climate_chart:
+      fetch_failed: "Failed to fetch data."
+      load_failed: "Failed to load data."
+      chart_create_failed: "Failed to create chart."
+      gdd_chart_create_failed: "Failed to create GDD chart."
+

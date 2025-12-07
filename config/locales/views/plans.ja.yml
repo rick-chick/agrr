@@ -143,6 +143,8 @@ ja:
         title: "計画作成に失敗しました"
         try_again: "作物を変更してもう一度試す"
         start_over: "計画一覧に戻る"
+        connection_lost: "❌ 接続が切断されました。しばらくしてからやり直してください。"
+        unknown_error: "不明なエラーが発生しました。時間をおいて再度お試しください。"
   
     show:
       back_to_list: "← 計画一覧に戻る"

@@ -133,6 +133,8 @@ in:
         title: "अनुकूलन विफल"
         try_again: "विभिन्न फसलों के साथ पुनः प्रयास करें"
         start_over: "सूची पर वापस जाएं"
+        connection_lost: "❌ Connection was lost. Please try again."
+        unknown_error: "An unknown error occurred. Please try again later."
     
       show:
         back_to_list: "← सूची पर वापस जाएं"

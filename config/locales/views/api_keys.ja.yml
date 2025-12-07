@@ -1,0 +1,86 @@
+ja:
+  api_keys:
+    title: "APIキー管理"
+    description_html: "APIキーを使用して、マスタ管理用のCRUD APIにアクセスできます。"
+    label: "APIキー"
+    copy:
+      button: "コピー"
+      success: "コピーしました！"
+      failure: "コピーに失敗しました。"
+      fallback: "手動でコピーしてください。"
+    warning: "⚠️ APIキーは安全な場所に保存してください。再生成すると古いキーは無効になります。"
+    actions:
+      generate: "APIキーを生成"
+      regenerate: "APIキーを再生成"
+      regenerate_confirm: "APIキーを再生成すると、現在のキーは無効になります。続行しますか？"
+    notices:
+      missing: "APIキーが設定されていません。以下のボタンをクリックしてAPIキーを生成してください。"
+    usage:
+      heading: "使用方法"
+      headers:
+        header: "リクエストヘッダーでの指定"
+        or: "または"
+      query:
+        heading: "クエリパラメータでの指定"
+      reference_button: "📚 API リファレンスを開く"
+      endpoints:
+        heading: "利用可能なエンドポイント"
+        list_html: |
+          <ul>
+            <li><strong>作物 (Crops)</strong></li>
+            <li><code>GET /api/v1/masters/crops</code> - 作物一覧</li>
+            <li><code>POST /api/v1/masters/crops</code> - 作物作成</li>
+            <li><code>GET /api/v1/masters/crops/:id</code> - 作物詳細</li>
+            <li><code>PATCH /api/v1/masters/crops/:id</code> - 作物更新</li>
+            <li><code>DELETE /api/v1/masters/crops/:id</code> - 作物削除</li>
+            <li><strong>肥料 (Fertilizes)</strong></li>
+            <li><code>GET /api/v1/masters/fertilizes</code> - 肥料一覧</li>
+            <li><code>POST /api/v1/masters/fertilizes</code> - 肥料作成</li>
+            <li><code>GET /api/v1/masters/fertilizes/:id</code> - 肥料詳細</li>
+            <li><code>PATCH /api/v1/masters/fertilizes/:id</code> - 肥料更新</li>
+            <li><code>DELETE /api/v1/masters/fertilizes/:id</code> - 肥料削除</li>
+            <li><strong>害虫 (Pests)</strong></li>
+            <li><code>GET /api/v1/masters/pests</code> - 害虫一覧</li>
+            <li><code>POST /api/v1/masters/pests</code> - 害虫作成</li>
+            <li><code>GET /api/v1/masters/pests/:id</code> - 害虫詳細</li>
+            <li><code>PATCH /api/v1/masters/pests/:id</code> - 害虫更新</li>
+            <li><code>DELETE /api/v1/masters/pests/:id</code> - 害虫削除</li>
+            <li><strong>農薬 (Pesticides)</strong></li>
+            <li><code>GET /api/v1/masters/pesticides</code> - 農薬一覧</li>
+            <li><code>POST /api/v1/masters/pesticides</code> - 農薬作成</li>
+            <li><code>GET /api/v1/masters/pesticides/:id</code> - 農薬詳細</li>
+            <li><code>PATCH /api/v1/masters/pesticides/:id</code> - 農薬更新</li>
+            <li><code>DELETE /api/v1/masters/pesticides/:id</code> - 農薬削除</li>
+            <li><strong>農場 (Farms)</strong></li>
+            <li><code>GET /api/v1/masters/farms</code> - 農場一覧</li>
+            <li><code>POST /api/v1/masters/farms</code> - 農場作成</li>
+            <li><code>GET /api/v1/masters/farms/:id</code> - 農場詳細</li>
+            <li><code>PATCH /api/v1/masters/farms/:id</code> - 農場更新</li>
+            <li><code>DELETE /api/v1/masters/farms/:id</code> - 農場削除</li>
+            <li><strong>圃場 (Fields)</strong></li>
+            <li><code>GET /api/v1/masters/farms/:farm_id/fields</code> - 圃場一覧</li>
+            <li><code>POST /api/v1/masters/farms/:farm_id/fields</code> - 圃場作成</li>
+            <li><code>GET /api/v1/masters/fields/:id</code> - 圃場詳細</li>
+            <li><code>PATCH /api/v1/masters/fields/:id</code> - 圃場更新</li>
+            <li><code>DELETE /api/v1/masters/fields/:id</code> - 圃場削除</li>
+            <li><strong>農業タスク (AgriculturalTasks)</strong></li>
+            <li><code>GET /api/v1/masters/agricultural_tasks</code> - 農業タスク一覧</li>
+            <li><code>POST /api/v1/masters/agricultural_tasks</code> - 農業タスク作成</li>
+            <li><code>GET /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク詳細</li>
+            <li><code>PATCH /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク更新</li>
+            <li><code>DELETE /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク削除</li>
+            <li><strong>連作ルール (InteractionRules)</strong></li>
+            <li><code>GET /api/v1/masters/interaction_rules</code> - 連作ルール一覧</li>
+            <li><code>POST /api/v1/masters/interaction_rules</code> - 連作ルール作成</li>
+            <li><code>GET /api/v1/masters/interaction_rules/:id</code> - 連作ルール詳細</li>
+            <li><code>PATCH /api/v1/masters/interaction_rules/:id</code> - 連作ルール更新</li>
+            <li><code>DELETE /api/v1/masters/interaction_rules/:id</code> - 連作ルール削除</li>
+          </ul>
+    flash:
+      generate:
+        success: "APIキーを生成しました。"
+        failure: "APIキーの生成に失敗しました。"
+      regenerate:
+        success: "APIキーを再生成しました。"
+        failure: "APIキーの再生成に失敗しました。"
+

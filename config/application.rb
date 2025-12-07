@@ -60,8 +60,8 @@ module Agrr
 
     # I18n configuration
     config.i18n.default_locale = :ja
-    config.i18n.available_locales = [:ja, :us, :in]
-    config.i18n.fallbacks = [:us]
+    config.i18n.available_locales = [:ja, :us, :in, :en]
+    config.i18n.fallbacks = [:us, :en]
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
   end
 end

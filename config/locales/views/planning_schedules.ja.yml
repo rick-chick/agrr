@@ -15,8 +15,13 @@ ja:
     schedule:
       title: "作付け計画表"
       subtitle: "数年に渡る作付け計画を確認"
+      display_period_label: "表示期間"
       field_label: "ほ場"
       period_label: "期間"
+      year_range:
+        previous_with_years: "← %{years}年分前へ"
+        label: "%{start}年度 〜 %{end}年度（%{years}年分）"
+        next_with_years: "%{years}年分次へ →"
       year_navigation:
         previous: "前"
         next: "次"

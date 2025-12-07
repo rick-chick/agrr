@@ -19,9 +19,9 @@
 <%# ドロップダウンコンテナ（栽培スケジュールの右上に配置） %>
 <div class="crop-palette-container">
   <%# ドロップダウンボタン %>
-  <button class="crop-palette-toggle-btn" id="crop-palette-toggle" aria-label="<%= crop_palette_toggle_label || '作物を追加' %>">
+  <button class="crop-palette-toggle-btn" id="crop-palette-toggle" aria-label="<%= crop_palette_toggle_label || t('shared.crop_palette.toggle', default: '作物を追加') %>">
     <span class="crop-palette-icon">🌱</span>
-    <span class="toggle-text"><%= crop_palette_title || '作物を追加' %></span>
+    <span class="toggle-text"><%= crop_palette_title || t('shared.crop_palette.title', default: '作物を追加') %></span>
     <span class="toggle-icon">▼</span>
   </button>
   
@@ -38,7 +38,7 @@
             <div class="crop-card-bar">
               <span class="crop-card-label"><%= crop.name %></span>
               <% if used_crop_ids.include?(crop.id) %>
-                <span class="crop-card-badge"><%= crop_palette_in_use_label || '使用中' %></span>
+                <span class="crop-card-badge"><%= crop_palette_in_use_label || t('shared.crop_palette.in_use', default: '使用中') %></span>
               <% end %>
             </div>
           </div>

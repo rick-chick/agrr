@@ -19,6 +19,13 @@ ja:
       menu_master_data: "マスタデータ"
       menu_toggle: "メニュー"
       reports: "レポート"
+      api_keys: "APIキー管理"
+      api_docs: "API"
+
+    crop_palette:
+      toggle: "作物を追加"
+      title: "作物を追加"
+      in_use: "使用中"
     
     footer:
       brand_description: "農業作付け計画支援システム\n持続可能な農業の実現を目指して"

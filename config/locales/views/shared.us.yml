@@ -19,6 +19,13 @@ us:
       menu_master_data: "Master Data"
       menu_toggle: "Menu"
       reports: "Reports"
+      api_keys: "API Keys"
+      api_docs: "API"
+
+    crop_palette:
+      toggle: "Add crops"
+      title: "Add crops"
+      in_use: "In use"
     
     footer:
       brand_description: "Agricultural Crop Planning Support System\nAiming for Sustainable Agriculture"

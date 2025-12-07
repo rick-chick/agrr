@@ -431,7 +431,11 @@ export default class extends Controller {
   }
 
   showDragDropError() {
-    const message = this.detailLabels().actions?.update_failed || "更新に失敗しました"
+    const message =
+      this.detailLabels().actions?.update_failed ||
+      (typeof getI18nMessage === "function"
+        ? getI18nMessage("timelineUpdateFailed", "更新に失敗しました")
+        : "更新に失敗しました")
     if (!this.element) return
 
     let container = this.element.querySelector(".timeline-drag-error")
@@ -691,25 +695,58 @@ export default class extends Controller {
         reschedule: actionLabels.reschedule || "日付を変更",
         reschedule_label: actionLabels.reschedule_label || "新しい日付",
         updated: actionLabels.updated || "予定を更新しました",
-        update_failed: actionLabels.update_failed || "更新に失敗しました",
-        date_required: actionLabels.date_required || "日付を入力してください",
+        update_failed:
+          actionLabels.update_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineUpdateFailed", "更新に失敗しました")
+            : "更新に失敗しました"),
+        date_required:
+          actionLabels.date_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineDateRequired", "日付を入力してください")
+            : "日付を入力してください"),
         submit: actionLabels.submit || "保存",
         cancel_form: actionLabels.cancel_form || "閉じる",
         complete: actionLabels.complete || "実績を登録",
         completed: actionLabels.completed || "実績を登録しました",
-        complete_failed: actionLabels.complete_failed || "登録に失敗しました",
+        complete_failed:
+          actionLabels.complete_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCompleteFailed", "登録に失敗しました")
+            : "登録に失敗しました"),
         actual_date: actionLabels.actual_date || "実施日",
         notes: actionLabels.notes || "メモ",
-        notes_placeholder: actionLabels.notes_placeholder || "記録したい内容があれば入力してください",
+        notes_placeholder:
+          actionLabels.notes_placeholder ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineNotesPlaceholder", "記録したい内容があれば入力してください")
+            : "記録したい内容があれば入力してください"),
         confirm_cancel: actionLabels.confirm_cancel || "この予定をキャンセルしますか？",
         cancel: actionLabels.cancel || "予定をキャンセル",
-        cancel_failed: actionLabels.cancel_failed || "キャンセルに失敗しました",
+        cancel_failed:
+          actionLabels.cancel_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCancelFailed", "キャンセルに失敗しました")
+            : "キャンセルに失敗しました"),
         task_name: actionLabels.task_name || "作業名",
         task_name_placeholder: actionLabels.task_name_placeholder || "例: 温室換気",
         scheduled_date: actionLabels.scheduled_date || "予定日",
-        name_required: actionLabels.name_required || "作業名を入力してください",
+        name_required:
+          actionLabels.name_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineNameRequired", "作業名を入力してください")
+            : "作業名を入力してください"),
         created: actionLabels.created || "予定を追加しました",
-        create_failed: actionLabels.create_failed || "追加に失敗しました"
+        create_failed:
+          actionLabels.create_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCreateFailed", "追加に失敗しました")
+            : "追加に失敗しました"),
+        crop_required:
+          actionLabels.crop_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCropRequired", "作物を選択してください")
+            : "作物を選択してください")
       }
     }
   }
@@ -930,7 +967,12 @@ export default class extends Controller {
     const scheduledDate = formData.get("scheduled_date")
 
     if (!scheduledDate) {
-      this.setFormMessage(this.detailLabels().actions?.date_required || "日付を入力してください")
+      this.setFormMessage(
+        this.detailLabels().actions?.date_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineDateRequired", "日付を入力してください")
+            : "日付を入力してください")
+      )
       return
     }
 
@@ -943,7 +985,12 @@ export default class extends Controller {
       await this.refreshCurrentWeek()
       this.closeForm()
     } catch (error) {
-      this.setFormMessage(this.detailLabels().actions?.update_failed || "更新に失敗しました")
+      this.setFormMessage(
+        this.detailLabels().actions?.update_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineUpdateFailed", "更新に失敗しました")
+            : "更新に失敗しました")
+      )
       console.error(error)
     } finally {
       this.setFormPending(form, false)
@@ -1000,7 +1047,12 @@ export default class extends Controller {
       await this.refreshCurrentWeek()
       this.closeForm()
     } catch (error) {
-      this.setFormMessage(this.detailLabels().actions?.complete_failed || "登録に失敗しました")
+      this.setFormMessage(
+        this.detailLabels().actions?.complete_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCompleteFailed", "登録に失敗しました")
+            : "登録に失敗しました")
+      )
       console.error(error)
     } finally {
       this.setFormPending(form, false)
@@ -1027,7 +1079,12 @@ export default class extends Controller {
       this.resetDetailPanel()
     } catch (error) {
       console.error(error)
-      window.alert(this.detailLabels().actions?.cancel_failed || "キャンセルに失敗しました")
+      window.alert(
+        this.detailLabels().actions?.cancel_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCancelFailed", "キャンセルに失敗しました")
+            : "キャンセルに失敗しました")
+      )
     }
   }
 
@@ -1084,7 +1141,12 @@ export default class extends Controller {
     const defaultCropId = context.defaultCropId || ""
     const hasCropOptions = Boolean(defaultCropId)
     const cropLabel = context.cropName || ""
-    const cropLabelText = cropLabel || actions.crop_required || "作物を選択してください"
+    const cropLabelText =
+      cropLabel ||
+      actions.crop_required ||
+      (typeof getI18nMessage === "function"
+        ? getI18nMessage("timelineCropRequired", "作物を選択してください")
+        : "作物を選択してください")
 
     this.detailFormTarget.innerHTML = `
       <form class="timeline-form" data-action="submit->task-schedule-timeline#submitCreate">
@@ -1113,7 +1175,12 @@ export default class extends Controller {
                   })
                   .join("")}
               </div>`
-            : `<p class="timeline-form__hint">${this.escapeHtml(actions.name_required || "作業名を入力してください")}</p>`
+            : `<p class="timeline-form__hint">${this.escapeHtml(
+                actions.name_required ||
+                  (typeof getI18nMessage === "function"
+                    ? getI18nMessage("timelineNameRequired", "作業名を入力してください")
+                    : "作業名を入力してください")
+              )}</p>`
         }
         <label class="timeline-form__field">
           <span>${this.escapeHtml(this.detailLabels().actions?.task_name || "作業名")}</span>
@@ -1165,11 +1232,21 @@ export default class extends Controller {
     const cropId = formData.get("cultivation_plan_crop_id")
 
     if (!name) {
-      this.setFormMessage(this.detailLabels().actions?.name_required || "作業名を入力してください")
+      this.setFormMessage(
+        this.detailLabels().actions?.name_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineNameRequired", "作業名を入力してください")
+            : "作業名を入力してください")
+      )
       return
     }
     if (!cropId) {
-      this.setFormMessage(this.detailLabels().actions?.crop_required || "作物を選択してください")
+      this.setFormMessage(
+        this.detailLabels().actions?.crop_required ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCropRequired", "作物を選択してください")
+            : "作物を選択してください")
+      )
       return
     }
 
@@ -1195,7 +1272,12 @@ export default class extends Controller {
       await this.refreshCurrentWeek()
       this.resetDetailPanel()
     } catch (error) {
-      this.setFormMessage(this.detailLabels().actions?.create_failed || "追加に失敗しました")
+      this.setFormMessage(
+        this.detailLabels().actions?.create_failed ||
+          (typeof getI18nMessage === "function"
+            ? getI18nMessage("timelineCreateFailed", "追加に失敗しました")
+            : "追加に失敗しました")
+      )
       console.error(error)
     } finally {
       this.setFormPending(form, false)

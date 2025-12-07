@@ -50,7 +50,7 @@ module Api
 
             assert_response :not_found
             json_response = JSON.parse(response.body)
-            assert_equal "Crop not found", json_response["error"]
+            assert_equal I18n.t('api.errors.crop_not_found'), json_response["error"]
           end
 
           test "should create association" do
@@ -69,7 +69,7 @@ module Api
 
             assert_response :created
             json_response = JSON.parse(response.body)
-            assert_equal "Pest associated successfully", json_response["message"]
+            assert_equal I18n.t('api.messages.pests.associated_successfully'), json_response["message"]
             assert_equal @crop.id, json_response["crop_id"]
             assert_equal pest.id, json_response["pest_id"]
           end
@@ -103,7 +103,7 @@ module Api
 
             assert_response :unprocessable_entity
             json_response = JSON.parse(response.body)
-            assert_equal "pest_id is required", json_response["error"]
+            assert_equal I18n.t('api.errors.pests.pest_id_required'), json_response["error"]
           end
 
           test "should not create association with non-existent pest" do
@@ -120,7 +120,7 @@ module Api
 
             assert_response :not_found
             json_response = JSON.parse(response.body)
-            assert_equal "Pest not found", json_response["error"]
+            assert_equal I18n.t('api.errors.pests.not_found'), json_response["error"]
           end
 
           test "should not create association with other user's pest" do
@@ -140,7 +140,7 @@ module Api
 
             assert_response :forbidden
             json_response = JSON.parse(response.body)
-            assert_equal "You do not have permission to associate this pest", json_response["error"]
+            assert_equal I18n.t('api.errors.pests.permission_denied'), json_response["error"]
           end
 
           test "should not create duplicate association" do
@@ -160,7 +160,7 @@ module Api
 
             assert_response :unprocessable_entity
             json_response = JSON.parse(response.body)
-            assert_equal "Pest is already associated with this crop", json_response["error"]
+            assert_equal I18n.t('api.errors.pests.already_associated'), json_response["error"]
           end
 
           test "should destroy association" do
@@ -192,7 +192,7 @@ module Api
 
             assert_response :not_found
             json_response = JSON.parse(response.body)
-            assert_equal "Pest is not associated with this crop", json_response["error"]
+            assert_equal I18n.t('api.errors.pests.not_associated'), json_response["error"]
           end
 
           test "should not destroy association for other user's crop" do

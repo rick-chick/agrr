@@ -74,11 +74,15 @@ export default class extends Controller {
         }
 
         if (attempt >= maxAttempts) {
-          reject(
-            new Error(
-              "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）"
-            )
-          );
+          const ganttNotLoaded =
+            typeof getI18nMessage === "function"
+              ? getI18nMessage(
+                  "plansGanttNotLoaded",
+                  "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）"
+                )
+              : "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）";
+
+          reject(new Error(ganttNotLoaded));
           return;
         }
 
@@ -109,7 +113,10 @@ export default class extends Controller {
       const dataUrl = chartContainer.dataset.dataUrl;
       if (!planId || !dataUrl) {
         console.error("[plans-show] Missing plan ID or data URL");
-        this.showError(chartContainer, "データの読み込みに必要な情報が不足しています");
+        const missing = typeof getI18nMessage === "function"
+          ? getI18nMessage("plansDataMissing", "データの読み込みに必要な情報が不足しています")
+          : "データの読み込みに必要な情報が不足しています";
+        this.showError(chartContainer, missing);
         // エラー時もフラグは維持して、無限リトライを防ぐ
         return;
       }
@@ -123,7 +130,10 @@ export default class extends Controller {
         })
         .then((data) => {
           if (!data.success) {
-            throw new Error(data.message || "読み込みに失敗しました");
+            const loadFailed = typeof getI18nMessage === "function"
+              ? getI18nMessage("plansLoadFailed", "読み込みに失敗しました")
+              : "読み込みに失敗しました";
+            throw new Error(data.message || loadFailed);
           }
           const planData = data.data;
 
@@ -143,12 +153,23 @@ export default class extends Controller {
         })
         .catch((err) => {
           console.error("[plans-show] load error", err);
-          this.showError(chartContainer, `データの読み込みに失敗しました: ${err.message}`);
+          const loadFailed =
+            typeof getI18nMessage === "function"
+              ? getI18nMessage("plansLoadFailed", "読み込みに失敗しました")
+              : "読み込みに失敗しました";
+          const ganttNotLoaded =
+            typeof getI18nMessage === "function"
+              ? getI18nMessage(
+                  "plansGanttNotLoaded",
+                  "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）"
+                )
+              : "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）";
+          this.showError(chartContainer, `${loadFailed}: ${err.message}`);
           // レガシーJS読み込みタイムアウト時は、後続イベントでの再試行を許可するためフラグをリセットする
           if (
             err &&
             typeof err.message === "string" &&
-            err.message.includes("ガントチャート機能が読み込まれていません")
+            err.message.includes(ganttNotLoaded)
           ) {
             this._hasInitialized = false;
           }

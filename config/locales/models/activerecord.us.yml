@@ -118,4 +118,9 @@ us:
               blank: "can't be blank"
             scientific_name:
               blank: "can't be blank"
+        
+        user:
+          attributes:
+            avatar_url:
+              invalid_format: "must be a valid URL or SVG filename"
 

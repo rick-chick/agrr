@@ -21,7 +21,7 @@ class User < ApplicationRecord
   validates :name, presence: true, length: { maximum: 50 }, unless: :is_anonymous?
   validates :google_id, presence: true, uniqueness: { conditions: -> { where(is_anonymous: false) } }, unless: :is_anonymous?
   validates :avatar_url, format: { with: /\A(#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}|[a-zA-Z0-9_-]+\.svg)\z/, 
-                                   message: "must be a valid URL or SVG filename" },
+                                   message: ->(_, _) { I18n.t('activerecord.errors.models.user.attributes.avatar_url.invalid_format') } },
                          allow_blank: true
 
   # Normalize email before validation

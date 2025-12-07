@@ -5,6 +5,13 @@ us:
         errors:
           cancel_failed: "We couldn't cancel the scheduled task. Please try again."
           undo_failed: "We couldn't prepare the undo action: %{message}"
+    api_keys:
+      generate:
+        success: "API key generated successfully."
+        failure: "Failed to generate API key."
+      regenerate:
+        success: "API key regenerated successfully."
+        failure: "Failed to regenerate API key."
   # Date/Time formats
   time:
     formats:
@@ -40,6 +47,7 @@ us:
   optimization:
     messages:
       completed: "Optimization completed"
+      adjust_completed: "Adjustment completed"
 
   # API error messages
   api:
@@ -49,6 +57,42 @@ us:
       no_cultivation_period: "Cultivation period not set"
       weather_forecast_failed: "Failed to fetch weather forecast data"
       data_fetch_failed: "Failed to fetch data"
+      weather_data_invalid_format: "Weather data format is invalid. Please rerun optimization."
+      common:
+        invalid_date_format: "Invalid date format: %{message}"
+      optimization:
+        calculate_period_failed: "Failed to calculate planning period: %{message}"
+        result_empty: "Adjustment result is empty"
+        adjust_failed: "Failed to adjust: %{message}"
+      pests:
+        pest_id_required: "pest_id is required"
+        not_found: "Pest not found"
+        permission_denied: "You do not have permission to associate this pest"
+        already_associated: "Pest is already associated with this crop"
+        not_associated: "Pest is not associated with this crop"
+    messages:
+      pests:
+        associated_successfully: "Pest associated successfully"
+
+  public_plans:
+    errors:
+      field_not_found: "Field not found"
+      cannot_remove_field_with_cultivations: "This field has cultivation schedules. Remove crops first."
+      cannot_remove_last_field: "The last field cannot be removed"
+      max_fields_limit: "You can add up to 5 fields only"
+      field_add_failed: "Failed to add field: %{message}"
+    messages:
+      field_removed: "Field removed."
+
+  plans:
+    errors:
+      field_not_found: "Field not found"
+      cannot_remove_field_with_cultivations: "This field has cultivation schedules. Remove crops first."
+      cannot_remove_last_field: "The last field cannot be removed"
+      max_fields_limit: "You can add up to 5 fields only"
+      field_add_failed: "Failed to add field: %{message}"
+    messages:
+      field_removed: "Field removed."
   
   # JavaScript messages
   js:

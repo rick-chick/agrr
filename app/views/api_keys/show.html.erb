@@ -1,16 +1,14 @@
 <div class="page-header">
-  <h1>APIキー管理</h1>
+  <h1><%= t('api_keys.title') %></h1>
 </div>
 
 <div class="card">
   <div class="card__body">
-    <p class="text-muted">
-      APIキーを使用して、マスタ管理用のCRUD APIにアクセスできます。
-    </p>
+    <p class="text-muted"><%= t('api_keys.description_html').html_safe %></p>
 
     <% if current_user.has_api_key? %>
       <div class="form-group">
-        <label for="api_key">APIキー</label>
+        <label for="api_key"><%= t('api_keys.label') %></label>
         <div class="input-group">
           <input 
             type="text" 
@@ -26,30 +24,33 @@
             class="btn btn-secondary"
             data-action="click->copy-to-clipboard#copy"
             data-copy-to-clipboard-target="button"
+            data-copy-to-clipboard-success-label="<%= t('api_keys.copy.success') %>"
+            data-copy-to-clipboard-failure-label="<%= t('api_keys.copy.failure') %>"
+            data-copy-to-clipboard-fallback-label="<%= t('api_keys.copy.fallback') %>"
           >
-            コピー
+            <%= t('api_keys.copy.button') %>
           </button>
         </div>
         <small class="form-text text-muted">
-          ⚠️ APIキーは安全な場所に保存してください。再生成すると古いキーは無効になります。
+          <%= t('api_keys.warning') %>
         </small>
       </div>
 
       <div class="form-group">
-        <%= button_to "APIキーを再生成", regenerate_api_key_path, 
+        <%= button_to t('api_keys.actions.regenerate'), regenerate_api_key_path, 
             method: :post, 
             class: "btn btn-warning",
             data: { 
-              confirm: "APIキーを再生成すると、現在のキーは無効になります。続行しますか？" 
+              confirm: t('api_keys.actions.regenerate_confirm')
             } %>
       </div>
     <% else %>
       <div class="alert alert-info">
-        <p>APIキーが設定されていません。以下のボタンをクリックしてAPIキーを生成してください。</p>
+        <p><%= t('api_keys.notices.missing') %></p>
       </div>
 
       <div class="form-group">
-        <%= button_to "APIキーを生成", generate_api_key_path, 
+        <%= button_to t('api_keys.actions.generate'), generate_api_key_path, 
             method: :post, 
             class: "btn btn-primary" %>
       </div>
@@ -59,71 +60,22 @@
 
 <div class="card mt-4">
   <div class="card__header">
-    <h2>使用方法</h2>
+    <h2><%= t('api_keys.usage.heading') %></h2>
   </div>
   <div class="card__body">
-    <h3>リクエストヘッダーでの指定</h3>
+    <h3><%= t('api_keys.usage.headers.header') %></h3>
     <pre class="code-block"><code>X-API-Key: <%= current_user.api_key if current_user.has_api_key? %></code></pre>
-    <p>または</p>
+    <p><%= t('api_keys.usage.headers.or') %></p>
     <pre class="code-block"><code>Authorization: Bearer <%= current_user.api_key if current_user.has_api_key? %></code></pre>
 
-    <h3 class="mt-4">クエリパラメータでの指定</h3>
+    <h3 class="mt-4"><%= t('api_keys.usage.query.heading') %></h3>
     <pre class="code-block"><code>GET /api/v1/masters/crops?api_key=<%= current_user.api_key if current_user.has_api_key? %></code></pre>
 
     <div class="mt-4">
-      <%= link_to "📚 API リファレンスを開く", api_docs_path, target: "_blank", class: "btn btn-primary" %>
+      <%= link_to t('api_keys.usage.reference_button'), api_docs_path, target: "_blank", class: "btn btn-primary" %>
     </div>
 
-    <h3 class="mt-4">利用可能なエンドポイント</h3>
-    <ul>
-      <li><strong>作物 (Crops)</strong></li>
-      <li><code>GET /api/v1/masters/crops</code> - 作物一覧</li>
-      <li><code>POST /api/v1/masters/crops</code> - 作物作成</li>
-      <li><code>GET /api/v1/masters/crops/:id</code> - 作物詳細</li>
-      <li><code>PATCH /api/v1/masters/crops/:id</code> - 作物更新</li>
-      <li><code>DELETE /api/v1/masters/crops/:id</code> - 作物削除</li>
-      <li><strong>肥料 (Fertilizes)</strong></li>
-      <li><code>GET /api/v1/masters/fertilizes</code> - 肥料一覧</li>
-      <li><code>POST /api/v1/masters/fertilizes</code> - 肥料作成</li>
-      <li><code>GET /api/v1/masters/fertilizes/:id</code> - 肥料詳細</li>
-      <li><code>PATCH /api/v1/masters/fertilizes/:id</code> - 肥料更新</li>
-      <li><code>DELETE /api/v1/masters/fertilizes/:id</code> - 肥料削除</li>
-      <li><strong>害虫 (Pests)</strong></li>
-      <li><code>GET /api/v1/masters/pests</code> - 害虫一覧</li>
-      <li><code>POST /api/v1/masters/pests</code> - 害虫作成</li>
-      <li><code>GET /api/v1/masters/pests/:id</code> - 害虫詳細</li>
-      <li><code>PATCH /api/v1/masters/pests/:id</code> - 害虫更新</li>
-      <li><code>DELETE /api/v1/masters/pests/:id</code> - 害虫削除</li>
-      <li><strong>農薬 (Pesticides)</strong></li>
-      <li><code>GET /api/v1/masters/pesticides</code> - 農薬一覧</li>
-      <li><code>POST /api/v1/masters/pesticides</code> - 農薬作成</li>
-      <li><code>GET /api/v1/masters/pesticides/:id</code> - 農薬詳細</li>
-      <li><code>PATCH /api/v1/masters/pesticides/:id</code> - 農薬更新</li>
-      <li><code>DELETE /api/v1/masters/pesticides/:id</code> - 農薬削除</li>
-      <li><strong>農場 (Farms)</strong></li>
-      <li><code>GET /api/v1/masters/farms</code> - 農場一覧</li>
-      <li><code>POST /api/v1/masters/farms</code> - 農場作成</li>
-      <li><code>GET /api/v1/masters/farms/:id</code> - 農場詳細</li>
-      <li><code>PATCH /api/v1/masters/farms/:id</code> - 農場更新</li>
-      <li><code>DELETE /api/v1/masters/farms/:id</code> - 農場削除</li>
-      <li><strong>圃場 (Fields)</strong></li>
-      <li><code>GET /api/v1/masters/farms/:farm_id/fields</code> - 圃場一覧</li>
-      <li><code>POST /api/v1/masters/farms/:farm_id/fields</code> - 圃場作成</li>
-      <li><code>GET /api/v1/masters/fields/:id</code> - 圃場詳細</li>
-      <li><code>PATCH /api/v1/masters/fields/:id</code> - 圃場更新</li>
-      <li><code>DELETE /api/v1/masters/fields/:id</code> - 圃場削除</li>
-      <li><strong>農業タスク (AgriculturalTasks)</strong></li>
-      <li><code>GET /api/v1/masters/agricultural_tasks</code> - 農業タスク一覧</li>
-      <li><code>POST /api/v1/masters/agricultural_tasks</code> - 農業タスク作成</li>
-      <li><code>GET /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク詳細</li>
-      <li><code>PATCH /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク更新</li>
-      <li><code>DELETE /api/v1/masters/agricultural_tasks/:id</code> - 農業タスク削除</li>
-      <li><strong>連作ルール (InteractionRules)</strong></li>
-      <li><code>GET /api/v1/masters/interaction_rules</code> - 連作ルール一覧</li>
-      <li><code>POST /api/v1/masters/interaction_rules</code> - 連作ルール作成</li>
-      <li><code>GET /api/v1/masters/interaction_rules/:id</code> - 連作ルール詳細</li>
-      <li><code>PATCH /api/v1/masters/interaction_rules/:id</code> - 連作ルール更新</li>
-      <li><code>DELETE /api/v1/masters/interaction_rules/:id</code> - 連作ルール削除</li>
-    </ul>
+    <h3 class="mt-4"><%= t('api_keys.usage.endpoints.heading') %></h3>
+    <%= t('api_keys.usage.endpoints.list_html').html_safe %>
   </div>
 </div>

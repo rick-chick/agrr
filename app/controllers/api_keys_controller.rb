@@ -13,10 +13,10 @@ class ApiKeysController < ApplicationController
     @user = current_user
     
     if @user.generate_api_key!
-      flash[:notice] = "APIキーを生成しました。"
+      flash[:notice] = I18n.t('api_keys.flash.generate.success')
       redirect_to api_keys_path
     else
-      flash[:alert] = "APIキーの生成に失敗しました。"
+      flash[:alert] = I18n.t('api_keys.flash.generate.failure')
       redirect_to api_keys_path
     end
   end
@@ -26,10 +26,10 @@ class ApiKeysController < ApplicationController
     @user = current_user
     
     if @user.regenerate_api_key!
-      flash[:notice] = "APIキーを再生成しました。"
+      flash[:notice] = I18n.t('api_keys.flash.regenerate.success')
       redirect_to api_keys_path
     else
-      flash[:alert] = "APIキーの再生成に失敗しました。"
+      flash[:alert] = I18n.t('api_keys.flash.regenerate.failure')
       redirect_to api_keys_path
     end
   end

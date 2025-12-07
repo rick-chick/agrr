@@ -114,6 +114,16 @@ module Api
           
           assert_response :not_found
         end
+
+        test "climate_data returns localized message when no predicted weather data" do
+          @cultivation_plan.update!(predicted_weather_data: nil)
+
+          get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+          assert_response :not_found
+
+          data = JSON.parse(response.body)
+          assert_equal I18n.t('api.errors.no_weather_data'), data['message']
+        end
         
         test "climate_data アクションが正常に動作する（認証不要）" do
           # 予測データを作成

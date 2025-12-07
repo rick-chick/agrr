@@ -65,6 +65,9 @@ class ApplicationController < ActionController::Base
     # en-* (英語圏全般) → us
     # 注: AGRRでは現在usのみサポート。将来的にeu等を追加時に再検討
     return 'us' if top_language.start_with?('en')
+
+    # hi-* (ヒンディー) → in
+    return 'in' if top_language.start_with?('hi')
     
     # その他の言語はデフォルト（ja）を返さずnilを返す
     # → デフォルトに委ねる

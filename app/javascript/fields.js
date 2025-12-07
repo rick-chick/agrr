@@ -175,8 +175,8 @@ function initializeMapComponents() {
     const placeholder = document.getElementById('map-placeholder');
     const mapEl2 = document.getElementById('map');
     const labels = {
-      loadFailed: mapEl2?.dataset.mapLoadFailed || '地図の読み込みに失敗しました',
-      retry: mapEl2?.dataset.retry || '再試行'
+      loadFailed: mapEl2?.dataset.mapLoadFailed || (typeof getI18nMessage === 'function' ? getI18nMessage('fieldsMapLoadFailed', '地図の読み込みに失敗しました') : '地図の読み込みに失敗しました'),
+      retry: mapEl2?.dataset.retry || (typeof getI18nMessage === 'function' ? getI18nMessage('fieldsRetry', '再試行') : '再試行')
     };
     
     if (placeholder) {

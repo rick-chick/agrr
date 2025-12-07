@@ -1,0 +1,86 @@
+us:
+  api_keys:
+    title: "API Key Management"
+    description_html: "Use your API key to access CRUD APIs for master data."
+    label: "API Key"
+    copy:
+      button: "Copy"
+      success: "Copied!"
+      failure: "Failed to copy."
+      fallback: "Please copy manually."
+    warning: "⚠️ Keep your API key safe. Regenerating will invalidate the old key."
+    actions:
+      generate: "Generate API Key"
+      regenerate: "Regenerate API Key"
+      regenerate_confirm: "Regenerating will invalidate the current key. Continue?"
+    notices:
+      missing: "No API key is set. Click the button below to generate one."
+    usage:
+      heading: "How to use"
+      headers:
+        header: "Specify in request headers"
+        or: "or"
+      query:
+        heading: "Specify via query parameter"
+      reference_button: "📚 Open API reference"
+      endpoints:
+        heading: "Available endpoints"
+        list_html: |
+          <ul>
+            <li><strong>Crops</strong></li>
+            <li><code>GET /api/v1/masters/crops</code> - List crops</li>
+            <li><code>POST /api/v1/masters/crops</code> - Create crop</li>
+            <li><code>GET /api/v1/masters/crops/:id</code> - Show crop</li>
+            <li><code>PATCH /api/v1/masters/crops/:id</code> - Update crop</li>
+            <li><code>DELETE /api/v1/masters/crops/:id</code> - Delete crop</li>
+            <li><strong>Fertilizers</strong></li>
+            <li><code>GET /api/v1/masters/fertilizes</code> - List fertilizers</li>
+            <li><code>POST /api/v1/masters/fertilizes</code> - Create fertilizer</li>
+            <li><code>GET /api/v1/masters/fertilizes/:id</code> - Show fertilizer</li>
+            <li><code>PATCH /api/v1/masters/fertilizes/:id</code> - Update fertilizer</li>
+            <li><code>DELETE /api/v1/masters/fertilizes/:id</code> - Delete fertilizer</li>
+            <li><strong>Pests</strong></li>
+            <li><code>GET /api/v1/masters/pests</code> - List pests</li>
+            <li><code>POST /api/v1/masters/pests</code> - Create pest</li>
+            <li><code>GET /api/v1/masters/pests/:id</code> - Show pest</li>
+            <li><code>PATCH /api/v1/masters/pests/:id</code> - Update pest</li>
+            <li><code>DELETE /api/v1/masters/pests/:id</code> - Delete pest</li>
+            <li><strong>Pesticides</strong></li>
+            <li><code>GET /api/v1/masters/pesticides</code> - List pesticides</li>
+            <li><code>POST /api/v1/masters/pesticides</code> - Create pesticide</li>
+            <li><code>GET /api/v1/masters/pesticides/:id</code> - Show pesticide</li>
+            <li><code>PATCH /api/v1/masters/pesticides/:id</code> - Update pesticide</li>
+            <li><code>DELETE /api/v1/masters/pesticides/:id</code> - Delete pesticide</li>
+            <li><strong>Farms</strong></li>
+            <li><code>GET /api/v1/masters/farms</code> - List farms</li>
+            <li><code>POST /api/v1/masters/farms</code> - Create farm</li>
+            <li><code>GET /api/v1/masters/farms/:id</code> - Show farm</li>
+            <li><code>PATCH /api/v1/masters/farms/:id</code> - Update farm</li>
+            <li><code>DELETE /api/v1/masters/farms/:id</code> - Delete farm</li>
+            <li><strong>Fields</strong></li>
+            <li><code>GET /api/v1/masters/farms/:farm_id/fields</code> - List fields</li>
+            <li><code>POST /api/v1/masters/farms/:farm_id/fields</code> - Create field</li>
+            <li><code>GET /api/v1/masters/fields/:id</code> - Show field</li>
+            <li><code>PATCH /api/v1/masters/fields/:id</code> - Update field</li>
+            <li><code>DELETE /api/v1/masters/fields/:id</code> - Delete field</li>
+            <li><strong>Agricultural Tasks</strong></li>
+            <li><code>GET /api/v1/masters/agricultural_tasks</code> - List tasks</li>
+            <li><code>POST /api/v1/masters/agricultural_tasks</code> - Create task</li>
+            <li><code>GET /api/v1/masters/agricultural_tasks/:id</code> - Show task</li>
+            <li><code>PATCH /api/v1/masters/agricultural_tasks/:id</code> - Update task</li>
+            <li><code>DELETE /api/v1/masters/agricultural_tasks/:id</code> - Delete task</li>
+            <li><strong>Interaction Rules</strong></li>
+            <li><code>GET /api/v1/masters/interaction_rules</code> - List interaction rules</li>
+            <li><code>POST /api/v1/masters/interaction_rules</code> - Create interaction rule</li>
+            <li><code>GET /api/v1/masters/interaction_rules/:id</code> - Show interaction rule</li>
+            <li><code>PATCH /api/v1/masters/interaction_rules/:id</code> - Update interaction rule</li>
+            <li><code>DELETE /api/v1/masters/interaction_rules/:id</code> - Delete interaction rule</li>
+          </ul>
+    flash:
+      generate:
+        success: "Generated a new API key."
+        failure: "Failed to generate API key."
+      regenerate:
+        success: "Regenerated your API key."
+        failure: "Failed to regenerate API key."
+

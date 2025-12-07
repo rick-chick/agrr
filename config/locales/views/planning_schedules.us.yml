@@ -1,0 +1,38 @@
+us:
+  planning_schedules:
+    fields_selection:
+      title: "Select Fields"
+      subtitle: "Choose fields to display in the schedule"
+      farm_label: "Farm"
+      fields_label: "Fields (all selected by default)"
+      period_label: "Display Period"
+      period_default: "5 years from this year"
+      select_all: "Select all"
+      deselect_all: "Deselect all"
+      show_schedule: "Show schedule with selected fields"
+      no_fields: "No fields available"
+      no_farms: "No farms available"
+    schedule:
+      title: "Planting Schedule"
+      subtitle: "Review multi-year planting plans"
+      display_period_label: "Display Period"
+      field_label: "Field"
+      period_label: "Period"
+      year_range:
+        previous_with_years: "← Go back %{years} years"
+        label: "%{start} - %{end} (for %{years} years)"
+        next_with_years: "Go forward %{years} years →"
+      year_navigation:
+        previous: "Prev"
+        next: "Next"
+      granularity:
+        month: "Month"
+        quarter: "Quarter"
+        half: "Half-year"
+      no_cultivation: "No cultivation"
+      select_fields: "Select fields"
+      change_fields: "Change fields"
+    errors:
+      select_fields: "Please select at least one field"
+      farm_not_found: "Farm not found"
+

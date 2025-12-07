@@ -1,0 +1,8 @@
+in:
+  js:
+    climate_chart:
+      fetch_failed: "डेटा प्राप्त करने में विफल रहा।"
+      load_failed: "डेटा लोड करने में विफल रहा।"
+      chart_create_failed: "चार्ट बनाने में विफल रहा।"
+      gdd_chart_create_failed: "GDD चार्ट बनाने में विफल रहा।"
+

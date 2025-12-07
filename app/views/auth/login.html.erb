@@ -1,8 +1,8 @@
-<% content_for :title, "Login - AGRR (Agriculture Resource and Rotation planner)" %>
+<% content_for :title, t('auth.login.title') %>
 
 <div class="login-container">
   <div class="login-logo">AGRR</div>
-  <div class="subtitle">Agriculture Resource and Rotation planner</div>
+  <div class="subtitle"><%= t('auth.login.subtitle') %></div>
   
   <% if flash[:alert] %>
     <div class="alert"><%= flash[:alert] %></div>
@@ -23,20 +23,20 @@
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
         </div>
-        Sign in with Google
+        <%= t('auth.login.google_button') %>
       <% end %>
     </div>
   <% else %>
     <div class="oauth-error">
       <div class="oauth-error-icon">⚠️</div>
-      <h3>Google OAuth認証が設定されていません</h3>
-      <p>管理者にお問い合わせください。</p>
+      <h3><%= t('auth.login.oauth_not_configured_title') %></h3>
+      <p><%= t('auth.login.oauth_not_configured_description') %></p>
     </div>
   <% end %>
   
   <% if Rails.env.development? %>
     <div class="dev-login-section">
-      <h3 class="dev-login-title">開発用モックログイン</h3>
+      <h3 class="dev-login-title"><%= t('auth.login.dev_login_title') %></h3>
       
       <div class="dev-login-buttons">
         <a href="/auth/test/mock_login_as/developer" class="mock-btn mock-btn-developer">
@@ -45,7 +45,7 @@
               <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/>
             </svg>
           </div>
-          開発者でログイン
+          <%= t('auth.login.dev_login_as_developer') %>
         </a>
         
         <a href="/auth/test/mock_login_as/farmer" class="mock-btn mock-btn-farmer">
@@ -54,7 +54,7 @@
               <path d="M3 2.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.5 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zM4 10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5zm0 2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5z"/>
             </svg>
           </div>
-          農家太郎でログイン
+          <%= t('auth.login.dev_login_as_farmer') %>
         </a>
         
         <a href="/auth/test/mock_login_as/researcher" class="mock-btn mock-btn-researcher">
@@ -63,18 +63,18 @@
               <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM4 5.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/>
             </svg>
           </div>
-          研究員花子でログイン
+          <%= t('auth.login.dev_login_as_researcher') %>
         </a>
       </div>
       
       <p class="dev-note">
-        開発環境でのみ利用可能
+        <%= t('auth.login.dev_login_note') %>
       </p>
     </div>
   <% end %>
   
   <p class="auth-footer">
-    Secure authentication powered by Google OAuth 2.0
+    <%= t('auth.login.footer_note') %>
   </p>
 </div>
 

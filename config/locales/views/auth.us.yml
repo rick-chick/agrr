@@ -17,6 +17,19 @@ us:
       login_required_page: "Please log in to access this page."
       admin_required: "Admin access required."
     
+    login:
+      title: "Login - AGRR (Agriculture Resource and Rotation planner)"
+      subtitle: "Agriculture Resource and Rotation planner"
+      google_button: "Sign in with Google"
+      oauth_not_configured_title: "Google OAuth is not configured"
+      oauth_not_configured_description: "Please contact the administrator."
+      dev_login_title: "Mock login (development)"
+      dev_login_as_developer: "Login as Developer"
+      dev_login_as_farmer: "Login as Farmer Taro"
+      dev_login_as_researcher: "Login as Researcher Hanako"
+      dev_login_note: "Available only in development environment"
+      footer_note: "Secure authentication powered by Google OAuth 2.0"
+    
     api:
       login_required: "Please log in to access this resource."
 

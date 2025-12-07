@@ -21,6 +21,7 @@ en:
       enter_name: "Please enter a crop name"
       fetching: "Fetching crop information with AI..."
       button_fetching: "🤖 Fetching with AI..."
+      button_idle: "🤖 Fetch & save crop info"
       created_success: "✓ Retrieved and saved crop '%{name}'!"
       fetch_failed: "Failed to retrieve crop information"
       network_error: "A network error occurred"
@@ -36,6 +37,26 @@ en:
       crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
       crop_add_failed: "Failed to add crop: %{message}"
       communication_error: "Communication error occurred. Please try again."
+    copy_to_clipboard:
+      success: "Copied!"
+      failure: "Failed to copy."
+      fallback: "Please copy manually."
+    fields:
+      map_load_failed: "Failed to load the map"
+      retry: "Retry"
+    plans:
+      gantt_not_loaded: "Gantt feature was not loaded (script might have failed to load)"
+      data_missing: "Required data is missing for loading"
+      load_failed: "Failed to load data"
+    timeline:
+      update_failed: "Failed to update"
+      date_required: "Please enter a date"
+      complete_failed: "Failed to save"
+      cancel_failed: "Failed to cancel"
+      name_required: "Please enter a task name"
+      create_failed: "Failed to add"
+      crop_required: "Please select a crop"
+      notes_placeholder: "Add notes if needed"
     
     gantt:
       optimization_failed: "Optimization failed"
@@ -253,6 +274,10 @@ en:
   activerecord:
     errors:
       models:
+        task_schedule_item:
+          attributes:
+            gdd_trigger:
+              agrr_required: "GDD trigger is required for AGRR-sourced tasks"
         farm:
           attributes:
             is_reference:
@@ -265,6 +290,7 @@ en:
               crop_limit_exceeded: "You can create up to 20 Crops"
 
   auth_test:
+    mock_data_missing: "Mock authentication data is not configured"
   services:
     plan_save_service:
       messages:
