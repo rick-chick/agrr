@@ -234,6 +234,16 @@ function initWhenReady() {
     window.ganttRetryCount = 0;
   }
   
+  // 対象ページでない場合はリトライを行わず即座にスキップする
+  if (!shouldHaveGanttChart()) {
+    console.log('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
+    if (typeof window.ClientLogger !== 'undefined') {
+      window.ClientLogger.info('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
+    }
+    window.ganttRetryCount = 0;
+    return;
+  }
+
   console.log('🚀 [Gantt Chart] initWhenReady 開始', { retryCount: window.ganttRetryCount });
   
   const container = document.getElementById('gantt-chart-container');
