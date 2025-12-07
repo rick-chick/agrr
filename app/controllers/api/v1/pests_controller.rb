@@ -18,6 +18,10 @@ module Api
       def ai_create
         pest_name = params[:name]&.strip
         
+        if current_user.anonymous?
+          return render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+        end
+
         # affected_cropsを適切に処理（ActionController::Parametersまたは配列に対応）
         affected_crops_raw = params[:affected_crops] || []
         affected_crops = if affected_crops_raw.is_a?(Array)

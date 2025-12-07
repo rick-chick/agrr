@@ -89,17 +89,21 @@ class CropAiUpsertService
     Rails.logger.info "🔄 [AI Crop] Existing crop found: #{existing_crop.name} (DB_ID: #{existing_crop.id}, is_reference: #{existing_crop.is_reference})"
     Rails.logger.info "🔄 [AI Crop] Updating crop with latest data from agrr"
 
-    existing_crop.update!(
-      variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
-      area_per_unit: crop_data['area_per_unit'],
-      revenue_per_area: crop_data['revenue_per_area'],
-      groups: crop_data['groups'] || []
-    )
+    validate_stage_requirements!(stage_requirements)
 
-    existing_crop.crop_stages.destroy_all
-    if stage_requirements.present?
-      saved_stages = save_crop_stages(existing_crop.id, stage_requirements)
-      Rails.logger.info "🌱 [AI Crop] Updated #{saved_stages} stages for crop##{existing_crop.id}"
+    ActiveRecord::Base.transaction do
+      existing_crop.update!(
+        variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
+        area_per_unit: crop_data['area_per_unit'],
+        revenue_per_area: crop_data['revenue_per_area'],
+        groups: crop_data['groups'] || []
+      )
+
+      existing_crop.crop_stages.destroy_all
+      if stage_requirements.present?
+        saved_stages = save_crop_stages(existing_crop.id, stage_requirements)
+        Rails.logger.info "🌱 [AI Crop] Updated #{saved_stages} stages for crop##{existing_crop.id}"
+      end
     end
 
     Result.new(
@@ -129,28 +133,43 @@ class CropAiUpsertService
       groups: crop_data['groups'] || []
     }
 
-    policy_crop = @crop_policy.build_for_create(@user, base_attrs)
-    attrs_for_create = base_attrs.merge(
-      user_id: policy_crop.user_id,
-      is_reference: policy_crop.is_reference
-    )
+    validate_stage_requirements!(stage_requirements)
 
-    result = @create_interactor.call(attrs_for_create)
+    result = nil
+    crop_entity = nil
+    saved_stages = 0
 
-    unless result.success?
-      Rails.logger.error "❌ [AI Crop] Failed to create: #{result.error}"
+    ActiveRecord::Base.transaction do
+      policy_crop = @crop_policy.build_for_create(@user, base_attrs)
+      attrs_for_create = base_attrs.merge(
+        user_id: policy_crop.user_id,
+        is_reference: policy_crop.is_reference
+      )
+
+      result = @create_interactor.call(attrs_for_create)
+
+      unless result.success?
+        Rails.logger.error "❌ [AI Crop] Failed to create: #{result.error}"
+        raise ActiveRecord::Rollback
+      end
+
+      crop_entity = result.data
+
+      if stage_requirements.present?
+        saved_stages = save_crop_stages(crop_entity.id, stage_requirements)
+      end
+    end
+
+    unless result&.success?
       return Result.new(
         success: false,
         status: :unprocessable_entity,
-        body: { error: result.error }
+        body: { error: result&.error }
       )
     end
 
-    crop_entity = result.data
     Rails.logger.info "✅ [AI Crop] Created crop##{crop_entity.id}: #{crop_entity.name}"
-
     if stage_requirements.present?
-      saved_stages = save_crop_stages(crop_entity.id, stage_requirements)
       Rails.logger.info "🌱 [AI Crop] Saved #{saved_stages} stages for crop##{crop_entity.id}"
     end
 
@@ -175,6 +194,10 @@ class CropAiUpsertService
 
     stages_data.each do |stage_requirement|
       stage_info = stage_requirement['stage']
+      raise ArgumentError, 'stage information is required' unless stage_info
+      if stage_info['order'].nil? || stage_info['order'].to_s.strip.empty?
+        raise ArgumentError, 'stage order is required'
+      end
 
       stage = ::CropStage.create!(
         crop_id: crop_id,
@@ -231,10 +254,18 @@ class CropAiUpsertService
     end
 
     saved_count
-  rescue => e
-    Rails.logger.error "❌ [AI Crop] Failed to save stages: #{e.message}"
-    Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-    0
+  end
+
+  def validate_stage_requirements!(stage_requirements)
+    return unless stage_requirements.present?
+
+    stage_requirements.each do |stage_requirement|
+      stage_info = stage_requirement['stage']
+      raise ArgumentError, 'stage information is required' unless stage_info
+      if stage_info['order'].nil? || stage_info['order'].to_s.strip.empty?
+        raise ArgumentError, 'stage order is required'
+      end
+    end
   end
 end
 

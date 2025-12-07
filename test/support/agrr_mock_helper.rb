@@ -35,14 +35,15 @@ module AgrrMockHelper
 
   # Weather情報取得のモック (Minitest用) - 新しいJSON構造
   def stub_fetch_weather_data(latitude: nil, longitude: nil, start_date: nil, end_date: nil)
-    FetchWeatherDataJob.class_eval do
-      define_method(:fetch_weather_from_agrr) do |lat, lon, sd, ed|
-        days = (sd..ed).to_a
-        
+    Agrr::WeatherGateway.class_eval do
+      define_method(:fetch_by_date_range) do |latitude:, longitude:, start_date:, end_date:, data_source: nil|
+        resolved_data_source = data_source || ENV['WEATHER_DATA_SOURCE'] || 'noaa'
+        days = (start_date..end_date).to_a
+
         {
           'location' => {
-            'latitude' => lat.round(2),
-            'longitude' => lon.round(2),
+            'latitude' => latitude.round(2),
+            'longitude' => longitude.round(2),
             'elevation' => 50.0,
             'timezone' => 'Asia/Tokyo'
           },
@@ -58,8 +59,23 @@ module AgrrMockHelper
               'weather_code' => index.even? ? 0 : 61
             }
           end,
-          'total_count' => days.count
+          'total_count' => days.count,
+          'data_source' => resolved_data_source
         }
+      end
+    end
+
+    FetchWeatherDataJob.class_eval do
+      define_method(:fetch_weather_from_agrr) do |lat, lon, sd, ed, _farm_id = nil|
+        data_source = determine_data_source(_farm_id)
+        weather_gateway = Agrr::WeatherGateway.new
+        weather_gateway.fetch_by_date_range(
+          latitude: lat,
+          longitude: lon,
+          start_date: sd,
+          end_date: ed,
+          data_source: data_source
+        )
       end
     end
   end

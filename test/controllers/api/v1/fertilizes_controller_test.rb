@@ -173,6 +173,37 @@ module Api
         json_response = JSON.parse(response.body)
         assert_includes json_response["error"], "AGRRサービスが起動していません"
       end
+
+      test "ai_create should reject anonymous user instead of updating shared anonymous fertilize" do
+        # サインインを解除して匿名ユーザー状態にする
+        cookies.delete(:session_id)
+        Session.delete_all
+        @integration_session.reset! if defined?(@integration_session) && @integration_session.respond_to?(:reset!)
+
+        anonymous = User.anonymous_user
+        create(:fertilize, :user_owned, user: anonymous, name: "匿名肥料", package_size: 10.0)
+
+        Rails.configuration.x.fertilize_ai_gateway = FertilizeAiGatewayStub.new(
+          success_response: {
+            "name" => "匿名肥料",
+            "npk" => "10-10-10",
+            "package_size" => "20kg",
+            "description" => "匿名で上書きされてはいけない"
+          },
+          error_response: nil
+        )
+
+        assert_no_difference "Fertilize.count" do
+          post api_v1_fertilizes_ai_create_path,
+               params: { name: "匿名肥料" },
+               headers: { "Accept" => "application/json" }
+        end
+
+        assert_response :unauthorized
+
+        # 匿名ユーザーのデータが上書きされていないことを期待（現状は上書きされてしまう）
+        assert_equal 10.0, Fertilize.find_by(name: "匿名肥料", user: anonymous)&.package_size
+      end
     end
   end
 end
