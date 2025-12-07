@@ -35,6 +35,16 @@ ja:
         title: "開発・運営"
         paragraph1: "AGRRは、農業のDX（デジタルトランスフォーメーション）を推進し、より効率的で持続可能な農業の実現を目指して開発されています。"
         paragraph2: "サービスの改善や新機能の追加は継続的に行われており、ユーザーの皆様からのフィードバックを大切にしています。"
+      operator:
+        title: "運営者情報"
+        operator_name: "運営者: AGRR（個人運営）"
+        location: "所在地: 日本"
+        initiative: "取り組み: 市民農園での栽培経験に加え、公開されている農業技術資料・論文を参照し、作物別の栽培要件や計画づくりの知見を整理して発信しています。"
+        contact_form: "お問い合わせフォーム"
+        contact_html: "連絡先: %{email_link}（%{contact_link} もご利用ください）"
+        ads_notice_html: "広告: 本サイトでは Google AdSense を利用し、広告配信に Cookie を用いることがあります。詳細は%{privacy_link}をご確認ください。"
+        privacy_link_text: "プライバシーポリシー"
+        sources_and_updates: "各記事末尾に主な参考文献や公開資料のリンクを記載し、内容は随時見直して最新の研究や実測データに基づき更新します。"
       contact_section:
         title: "お問い合わせ"
         message: "サービスに関するご質問、ご要望、フィードバックは、お気軽にお寄せください。"

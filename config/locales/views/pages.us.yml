@@ -35,6 +35,16 @@ us:
         title: "Development & Operations"
         paragraph1: "AGRR is developed to promote agricultural DX (Digital Transformation) and realize more efficient and sustainable agriculture."
         paragraph2: "Service improvements and new feature additions are ongoing, and we value feedback from all our users."
+      operator:
+        title: "Operator Information"
+        operator_name: "Operator: AGRR (individual operator)"
+        location: "Location: Japan"
+        initiative: "Initiative: In addition to hands-on experience at a community garden, we reference publicly available agricultural technical materials and papers to organize crop-specific requirements and planning insights."
+        contact_form: "Contact Form"
+        contact_html: "Contact: %{email_link} (you can also use the %{contact_link})"
+        ads_notice_html: "Ads: This site uses Google AdSense and may use cookies for ad delivery. Please see the %{privacy_link} for details."
+        privacy_link_text: "Privacy Policy"
+        sources_and_updates: "We list key references and public materials at the end of each article and continually update content based on the latest research and field data."
       contact_section:
         title: "Contact"
         message: "Please feel free to send us your questions, requests, and feedback about the service."
