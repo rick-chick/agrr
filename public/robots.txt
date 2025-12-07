@@ -4,8 +4,8 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://agrr-production-czyu2jck5q-an.a.run.app/sitemap.xml
+# Sitemap location (public domain)
+Sitemap: https://agrr.net/sitemap.xml
 
 # Disallow admin and API endpoints
 Disallow: /admin/
