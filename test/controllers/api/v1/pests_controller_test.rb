@@ -191,6 +191,48 @@ module Api
         assert_includes json_response["error"], "AGRRサービスが起動していません"
       end
 
+      test "ai_create は agrr の affected_crops が不正ならエラーを返す" do
+        original_method = Api::V1::PestsController.instance_method(:fetch_pest_info_from_agrr)
+
+        agrr_output = {
+          "success" => true,
+          "data" => {
+            "pest" => {
+              "pest_id" => "test-invalid-affected-crops",
+              "name" => "テスト害虫",
+              "name_scientific" => "Insectus invalidus",
+              "family" => "テスト科",
+              "order" => "テスト目",
+              "description" => "不正なaffected_cropsを含むレスポンス",
+              "occurrence_season" => "通年",
+              "temperature_profile" => nil,
+              "thermal_requirement" => nil,
+              "control_methods" => []
+            },
+            # 本来は配列だが、ここでは不正値を返してコントローラの検証を確認する
+            "affected_crops" => "invalid-payload"
+          }
+        }.to_json
+
+        Api::V1::PestsController.class_eval do
+          define_method(:fetch_pest_info_from_agrr) do |_pest_name, _affected_crops|
+            JSON.parse(agrr_output)
+          end
+        end
+
+        assert_no_difference "Pest.count" do
+          post api_v1_pests_ai_create_path,
+               params: { name: "テスト害虫" },
+               headers: { "Accept" => "application/json" }
+        end
+
+        assert_response :unprocessable_entity
+        json_response = JSON.parse(response.body)
+        assert_includes json_response["error"], "affected_crops"
+      ensure
+        Api::V1::PestsController.define_method(:fetch_pest_info_from_agrr, original_method)
+      end
+
       test "ai_create should prevent accessing other user's crops" do
         other_user = create(:user)
         other_crop = create(:crop, user: other_user, name: '他人の作物')

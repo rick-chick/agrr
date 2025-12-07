@@ -160,7 +160,7 @@ module Farms
         return
       end
       
-      # 過去2年分のデータがあるか確認
+      # 過去2年分のデータがあるか確認（閏年を考慮し日数で判定）
       end_date = Date.today
       start_date = end_date - 2.years
       
@@ -169,11 +169,12 @@ module Farms
         .where.not(temperature_max: nil, temperature_min: nil)
         .count
       
-      if historical_data_count < 365
+      required_days = (start_date.to_date..end_date.to_date).count
+      if historical_data_count < required_days
         render json: {
           success: false,
           message: t('farms.weather_data.insufficient_historical_data')
-        }
+        }, status: :unprocessable_entity
         return
       end
       

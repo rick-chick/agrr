@@ -67,6 +67,28 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'rescheduled', @task.read_attribute('status')
   end
 
+  test '無効な日付では作業予定を更新できず422を返す' do
+    original_date = @task.scheduled_date
+
+    assert_no_changes -> { @task.reload.scheduled_date } do
+      patch plan_task_schedule_item_path(@plan, @task),
+            params: {
+              task_schedule_item: {
+                scheduled_date: '2026-13-40'
+              }
+            },
+            headers: @headers,
+            as: :json
+    end
+
+    assert_response :unprocessable_entity
+
+    @task.reload
+    assert_equal original_date, @task.scheduled_date
+    assert_nil @task.read_attribute('rescheduled_at')
+    assert_equal TaskScheduleItem::STATUSES[:planned], @task.read_attribute('status')
+  end
+
   test 'ユーザーは作業予定の実績を登録できる' do
     post complete_plan_task_schedule_item_path(@plan, @task),
          params: {
