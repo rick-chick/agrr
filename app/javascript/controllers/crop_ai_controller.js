@@ -20,14 +20,14 @@ export default class extends Controller {
     
     // Validation
     if (!cropName) {
-      this.showStatus(this.element.dataset.enterName || '作物名を入力してください', 'error')
+      this.showStatus(this.element.dataset.enterName || this.translate('cropAiEnterName', '作物名を入力してください'), 'error')
       return
     }
     
     // Disable button and show loading
     this.button.disabled = true
-    this.button.textContent = this.element.dataset.buttonFetching || '🤖 AIで情報を取得中...'
-    this.showStatus(this.element.dataset.fetching || 'AIで作物情報を取得しています...', 'info')
+    this.button.textContent = this.element.dataset.buttonFetching || this.translate('cropAiButtonFetching', '🤖 AIで情報を取得中...')
+    this.showStatus(this.element.dataset.fetching || this.translate('cropAiFetching', 'AIで作物情報を取得しています...'), 'info')
     
     // Show advertisement popup
     this.showAdPopup()
@@ -52,7 +52,8 @@ export default class extends Controller {
       
       if (response.ok) {
         // 成功時：広告を閉じて作物詳細画面に遷移
-        this.showStatus((this.element.dataset.createdSuccess || '✓ 作物「%{name}」の情報を取得して保存しました！').replace('%{name}', data.crop_name), 'success')
+        const successTemplate = this.element.dataset.createdSuccess || this.translate('cropAiCreatedSuccess', '✓ 作物「%{name}」の情報を取得して保存しました！')
+        this.showStatus(successTemplate.replace('%{name}', data.crop_name), 'success')
         
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
@@ -61,13 +62,14 @@ export default class extends Controller {
         }, 1500)
       } else {
         this.hideAdPopup()
-        this.showStatus(`エラー: ${data.error || (this.element.dataset.fetchFailed || '作物情報の取得に失敗しました')}` , 'error')
+        const failed = this.element.dataset.fetchFailed || this.translate('cropAiFetchFailed', '作物情報の取得に失敗しました')
+        this.showStatus(`エラー: ${data.error || failed}` , 'error')
         this.resetButton()
       }
     } catch (error) {
       console.error('Error in AI crop creation:', error)
       this.hideAdPopup()
-      this.showStatus(this.element.dataset.networkError || 'ネットワークエラーが発生しました', 'error')
+      this.showStatus(this.element.dataset.networkError || this.translate('cropAiNetworkError', 'ネットワークエラーが発生しました'), 'error')
       this.resetButton()
     }
   }
@@ -82,7 +84,7 @@ export default class extends Controller {
   
   resetButton() {
     this.button.disabled = false
-    this.button.textContent = this.element.dataset.buttonIdle || '🤖 AIで作物情報を取得・保存'
+    this.button.textContent = this.element.dataset.buttonIdle || this.translate('cropAiButtonIdle', '🤖 AIで作物情報を取得・保存')
   }
   
   showAdPopup() {
@@ -116,6 +118,13 @@ export default class extends Controller {
       // Restore body scroll
       document.body.style.overflow = ''
     }
+  }
+
+  translate(key, fallback) {
+    if (typeof getI18nMessage === 'function') {
+      return getI18nMessage(key, fallback)
+    }
+    return fallback
   }
 }
 

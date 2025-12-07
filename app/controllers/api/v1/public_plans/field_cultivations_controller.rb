@@ -68,7 +68,7 @@ module Api
             Rails.logger.error "❌ [Climate Data] No predicted_weather_data found in CultivationPlan##{cultivation_plan.id}"
             return render json: {
               success: false,
-              message: "気象予測データがありません。最適化を実行してから再度お試しください。"
+              message: I18n.t('controllers.field_cultivations.errors.predicted_weather_missing')
             }, status: :not_found
           end
           
@@ -88,7 +88,7 @@ module Api
             Rails.logger.error "❌ [Climate Data] Invalid weather_data format in CultivationPlan##{cultivation_plan.id}"
             return render json: {
               success: false,
-              message: "気象データの形式が不正です。最適化を再実行してください。"
+              message: I18n.t('controllers.field_cultivations.errors.weather_format_invalid')
             }, status: :internal_server_error
           end
           
@@ -223,7 +223,7 @@ module Api
           Rails.logger.error "❌ [AGRR Progress] Failed to calculate progress: #{e.message}"
           render json: {
             success: false,
-            message: "成長進捗の計算に失敗しました: #{e.message}"
+            message: I18n.t('controllers.field_cultivations.errors.progress_failed', error: e.message)
           }, status: :internal_server_error
         rescue PolicyPermissionDenied
           raise ActiveRecord::RecordNotFound
@@ -335,7 +335,7 @@ module Api
           records = []
           current_date = start_date
           cumulative_gdd = 0.0
-          stage_names = ["播種〜発芽", "発芽〜成長", "成長〜収穫"]
+          stage_names = I18n.t('controllers.field_cultivations.mock_progress.stage_names')
           
           # ステージごとの累積GDD閾値を設定（テストデータのステージ要求GDDに合わせる）
           # 実際の作物データベースから取得した値に基づく

@@ -12,7 +12,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     get api_keys_path
     
     assert_response :success
-    assert_select "h1", "APIキー管理"
+    assert_select "h1", I18n.t("api_keys.title")
   end
 
   test "should show generate button when api key is not set" do
@@ -21,7 +21,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     get api_keys_path
     
     assert_response :success
-    assert_select "button", "APIキーを生成"
+    assert_select "button", I18n.t("api_keys.actions.generate")
   end
 
   test "should generate api key" do
@@ -30,7 +30,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     post generate_api_key_path
     
     assert_redirected_to api_keys_path
-    assert_equal "APIキーを生成しました。", flash[:notice]
+    assert_equal I18n.t("api_keys.flash.generate.success"), flash[:notice]
     
     @user.reload
     assert @user.has_api_key?
@@ -53,7 +53,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     post regenerate_api_key_path
     
     assert_redirected_to api_keys_path
-    assert_equal "APIキーを再生成しました。", flash[:notice]
+    assert_equal I18n.t("api_keys.flash.regenerate.success"), flash[:notice]
     
     @user.reload
     assert_not_equal old_key, @user.api_key

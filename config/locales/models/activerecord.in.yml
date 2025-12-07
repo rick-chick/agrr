@@ -118,4 +118,9 @@ in:
               blank: "दर्ज करें"
             scientific_name:
               blank: "दर्ज करें"
+        
+        user:
+          attributes:
+            avatar_url:
+              invalid_format: "कृपया मान्य URL या SVG फ़ाइल नाम दर्ज करें"
 

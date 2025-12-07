@@ -14,4 +14,13 @@ class AuthTestControllerTest < ActionController::TestCase
     get :mock_login_as, params: { user: 'developer' }
     assert_redirected_to process_saved_plan_public_plans_path
   end
+
+  def test_mock_login_as_without_mock_data_returns_translated_alert
+    OmniAuth.config.mock_auth[:developer] = nil
+
+    get :mock_login_as, params: { user: 'developer' }
+
+    assert_redirected_to root_path(locale: I18n.default_locale)
+    assert_equal I18n.t('auth_test.mock_data_missing'), flash[:alert]
+  end
 end

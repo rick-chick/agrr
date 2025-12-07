@@ -119,6 +119,11 @@ ja:
             scientific_name:
               blank: "を入力してください"
         
+        user:
+          attributes:
+            avatar_url:
+              invalid_format: "有効なURLまたはSVGファイル名を入力してください"
+        
         cultivation_plan:
           attributes:
             farm_id:

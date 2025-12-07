@@ -34,7 +34,9 @@ export default class extends Controller {
       this.showSuccess()
     } catch (err) {
       console.error('コピーに失敗しました:', err)
-      alert('コピーに失敗しました。手動でコピーしてください。')
+      const failure = this.translate('Failure', 'コピーに失敗しました。')
+      const fallback = this.translate('Fallback', '手動でコピーしてください。')
+      alert(`${failure}\n${fallback}`)
     }
     
     document.body.removeChild(textArea)
@@ -42,7 +44,7 @@ export default class extends Controller {
 
   showSuccess() {
     const originalText = this.buttonTarget.textContent
-    this.buttonTarget.textContent = "コピーしました！"
+    this.buttonTarget.textContent = this.translate('Success', 'コピーしました！')
     this.buttonTarget.classList.add("btn-success")
     this.buttonTarget.classList.remove("btn-secondary")
     
@@ -51,5 +53,15 @@ export default class extends Controller {
       this.buttonTarget.classList.remove("btn-success")
       this.buttonTarget.classList.add("btn-secondary")
     }, 2000)
+  }
+
+  translate(suffix, fallback) {
+    const datasetKey = `copyToClipboard${suffix}Label`
+    const datasetValue = this.buttonTarget?.dataset?.[datasetKey]
+    if (datasetValue) return datasetValue
+    if (typeof getI18nMessage === "function") {
+      return getI18nMessage(`copyToClipboard${suffix}`, fallback)
+    }
+    return fallback
   }
 }

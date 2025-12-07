@@ -103,7 +103,7 @@ module CultivationPlanApi
     if @cultivation_plan.cultivation_plan_fields.count >= 5
       return render json: {
         success: false,
-        message: '圃場は最大5個までしか追加できません'
+        message: i18n_t('errors.max_fields_limit')
       }, status: :bad_request
     end
     
@@ -147,7 +147,7 @@ module CultivationPlanApi
   rescue ActiveRecord::RecordInvalid => e
     render json: {
       success: false,
-      message: "圃場の追加に失敗しました: #{e.message}"
+      message: i18n_t('errors.field_add_failed', message: e.message)
     }, status: :unprocessable_entity
   rescue => e
     Rails.logger.error "❌ [Add Field] Error: #{e.message}"

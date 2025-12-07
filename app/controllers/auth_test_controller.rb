@@ -55,7 +55,7 @@ class AuthTestController < ApplicationController
     
     # Handle missing mock data gracefully
     unless auth_hash.present? && auth_hash['info'].present?
-      redirect_to root_path(locale: I18n.default_locale), alert: "モック認証データが設定されていません"
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t('auth_test.mock_data_missing')
       return
     end
     

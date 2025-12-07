@@ -17,6 +17,19 @@ in:
       login_required_page: "इस पृष्ठ तक पहुंचने के लिए कृपया लॉगिन करें।"
       admin_required: "व्यवस्थापक पहुंच आवश्यक है।"
     
+    login:
+      title: "लॉगिन - AGRR (Agriculture Resource and Rotation planner)"
+      subtitle: "Agriculture Resource and Rotation planner"
+      google_button: "Google से साइन इन करें"
+      oauth_not_configured_title: "Google OAuth कॉन्फ़िगर नहीं किया गया है"
+      oauth_not_configured_description: "कृपया व्यवस्थापक से संपर्क करें।"
+      dev_login_title: "डेवलपमेंट मॉक लॉगिन"
+      dev_login_as_developer: "डेवलपर के रूप में लॉगिन"
+      dev_login_as_farmer: "किसान तारो के रूप में लॉगिन"
+      dev_login_as_researcher: "शोधकर्ता हनाको के रूप में लॉगिन"
+      dev_login_note: "Available only in development environment"
+      footer_note: "Secure authentication powered by Google OAuth 2.0"
+    
     api:
       login_required: "इस संसाधन तक पहुंचने के लिए कृपया लॉगिन करें।"
 

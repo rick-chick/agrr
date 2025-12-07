@@ -192,7 +192,7 @@ module AgrrOptimization
       duplicates = all_allocation_ids.compact.select { |id| all_allocation_ids.count(id) > 1 }.uniq
       Rails.logger.error "❌ [Save] CRITICAL: 重複したallocation_idが検出されました: #{duplicates}"
       Rails.logger.error "❌ [Save] Total allocations: #{all_allocation_ids.count}, Unique(compact): #{all_allocation_ids.compact.uniq.count}"
-      raise "重複したallocation_idが検出されました: #{duplicates.join(', ')}"
+      raise I18n.t('controllers.agrr_optimization.errors.duplicate_allocation', ids: duplicates.join(', '))
     end
     
     # field_schedulesが存在しない場合はエラーを上げる
@@ -200,7 +200,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Save Adjusted Result] CRITICAL: field_schedules is empty"
       Rails.logger.error "❌ [Save Adjusted Result] Result keys: #{result.keys}"
       Rails.logger.error "❌ [Save Adjusted Result] Full result: #{result.inspect}"
-      raise "最適化結果が空です: field_schedules が存在しません"
+      raise I18n.t('controllers.agrr_optimization.errors.result_empty')
     end
     
     # トランザクション内で差分更新（全削除→全作成を廃止）
@@ -223,7 +223,7 @@ module AgrrOptimization
           Rails.logger.error "❌ [Save] CRITICAL: plan_field not found for field_id: #{field_id}"
           Rails.logger.error "❌ [Save] Available field_ids: #{cultivation_plan.cultivation_plan_fields.map(&:id)}"
           Rails.logger.error "❌ [Save] Field schedule: #{field_schedule.inspect}"
-          raise "圃場が見つかりません: field_id=#{field_id}"
+          raise I18n.t('controllers.agrr_optimization.errors.field_missing', field_id: field_id)
         end
         
         next unless field_schedule['allocations']&.present?
@@ -233,7 +233,7 @@ module AgrrOptimization
             Rails.logger.error "❌ [Save] CRITICAL: crop not found for crop_id: #{allocation['crop_id']}"
             Rails.logger.error "❌ [Save] Available crop_ids: #{Crop.pluck(:id)}"
             Rails.logger.error "❌ [Save] Allocation details: #{allocation.inspect}"
-            raise "作物が見つかりません: crop_id=#{allocation['crop_id']}"
+            raise I18n.t('controllers.agrr_optimization.errors.crop_missing', crop_id: allocation['crop_id'])
           end
           
           plan_crop = plan_crops_by_crop_id[allocation['crop_id']]
@@ -241,21 +241,21 @@ module AgrrOptimization
             Rails.logger.error "❌ [Save] CRITICAL: plan_crop not found for crop_id: #{allocation['crop_id']}"
             Rails.logger.error "❌ [Save] Available crop_ids: #{cultivation_plan.cultivation_plan_crops.map { |c| c.crop.id.to_s }}"
             Rails.logger.error "❌ [Save] Allocation details: #{allocation.inspect}"
-            raise "作付け計画作物が見つかりません: crop_id=#{allocation['crop_id']}"
+            raise I18n.t('controllers.agrr_optimization.errors.plan_crop_missing', crop_id: allocation['crop_id'])
           end
           
           begin
             start_date = Date.parse(allocation['start_date'])
           rescue ArgumentError => e
             Rails.logger.error "❌ [Save] Invalid start_date format: #{allocation['start_date'].inspect}"
-            raise ArgumentError, "不正な開始日付形式です: #{allocation['start_date'].inspect} (allocation_id: #{allocation['allocation_id']})"
+            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.start_date_invalid', value: allocation['start_date'].inspect, allocation_id: allocation['allocation_id'])
           end
           
           begin
             completion_date = Date.parse(allocation['completion_date'])
           rescue ArgumentError => e
             Rails.logger.error "❌ [Save] Invalid completion_date format: #{allocation['completion_date'].inspect}"
-            raise ArgumentError, "不正な完了日付形式です: #{allocation['completion_date'].inspect} (allocation_id: #{allocation['allocation_id']})"
+            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.completion_date_invalid', value: allocation['completion_date'].inspect, allocation_id: allocation['allocation_id'])
           end
           desired_records << {
             allocation_id: allocation['allocation_id'],
@@ -442,7 +442,7 @@ module AgrrOptimization
     unless farm.weather_location
       return {
         success: false,
-        message: '気象データがありません',
+        message: I18n.t('api.errors.no_weather_data'),
         status: :not_found
       }
     end
@@ -460,7 +460,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
       return {
         success: false,
-        message: "日付形式が不正です: #{e.message}",
+        message: I18n.t('api.errors.common.invalid_date_format', message: e.message),
         status: :bad_request
       }
     rescue StandardError => e
@@ -468,7 +468,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
       return {
         success: false,
-        message: "計画期間の計算に失敗しました: #{e.message}",
+        message: I18n.t('api.errors.optimization.calculate_period_failed', message: e.message),
         status: :internal_server_error
       }
     end
@@ -508,7 +508,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Failed to get weather data: #{e.message}"
       return {
         success: false,
-        message: "気象データの取得に失敗しました: #{e.message}",
+        message: I18n.t('api.errors.common.weather_fetch_failed', message: e.message),
         status: :internal_server_error
       }
     end
@@ -536,7 +536,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
       return {
         success: false,
-        message: "日付形式が不正です: #{e.message}",
+        message: I18n.t('api.errors.common.invalid_date_format', message: e.message),
         status: :bad_request
       }
     rescue StandardError => e
@@ -544,7 +544,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
       return {
         success: false,
-        message: "計画期間の計算に失敗しました: #{e.message}",
+        message: I18n.t('api.errors.optimization.calculate_period_failed', message: e.message),
         status: :internal_server_error
       }
     end
@@ -591,7 +591,7 @@ module AgrrOptimization
         
         return {
           success: true,
-          message: '調整が完了しました',
+          message: I18n.t('optimization.messages.adjust_completed'),
           cultivation_plan: {
             id: cultivation_plan.id,
             total_profit: result[:total_profit],
@@ -602,7 +602,7 @@ module AgrrOptimization
         Rails.logger.error "❌ [Adjust] Result has no field_schedules"
         return {
           success: false,
-          message: "調整結果が空です",
+          message: I18n.t('api.errors.optimization.result_empty'),
           status: :internal_server_error
         }
       end
@@ -610,7 +610,7 @@ module AgrrOptimization
       Rails.logger.error "❌ [Adjust] Invalid date format: #{e.message}"
       return {
         success: false,
-        message: "日付形式が不正です: #{e.message}",
+        message: I18n.t('api.errors.common.invalid_date_format', message: e.message),
         status: :bad_request
       }
     rescue Agrr::BaseGateway::ExecutionError => e
@@ -618,7 +618,7 @@ module AgrrOptimization
       # エラー時はデータを削除しない
       return {
         success: false,
-        message: "調整に失敗しました: #{e.message}",
+        message: I18n.t('api.errors.optimization.adjust_failed', message: e.message),
         status: :internal_server_error
       }
     end
@@ -642,7 +642,7 @@ module AgrrOptimization
               all_dates << Date.parse(allocation[:start_date])
             rescue ArgumentError => e
               Rails.logger.error "❌ [Calculate Planning Period] Invalid start_date format: #{allocation[:start_date].inspect}"
-              raise ArgumentError, "不正な開始日付形式です: #{allocation[:start_date].inspect} (allocation_id: #{allocation[:allocation_id]})"
+              raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.start_date_invalid', value: allocation[:start_date].inspect, allocation_id: allocation[:allocation_id])
             end
           end
           if allocation[:completion_date]
@@ -650,7 +650,7 @@ module AgrrOptimization
               all_dates << Date.parse(allocation[:completion_date])
             rescue ArgumentError => e
               Rails.logger.error "❌ [Calculate Planning Period] Invalid completion_date format: #{allocation[:completion_date].inspect}"
-              raise ArgumentError, "不正な完了日付形式です: #{allocation[:completion_date].inspect} (allocation_id: #{allocation[:allocation_id]})"
+              raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.completion_date_invalid', value: allocation[:completion_date].inspect, allocation_id: allocation[:allocation_id])
             end
           end
         end

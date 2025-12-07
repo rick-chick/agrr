@@ -133,6 +133,8 @@ us:
         title: "Optimization Failed"
         try_again: "Try Again with Different Crops"
         start_over: "Back to List"
+        connection_lost: "❌ Connection was lost. Please try again."
+        unknown_error: "An unknown error occurred. Please try again later."
     
       show:
         back_to_list: "← Back to List"

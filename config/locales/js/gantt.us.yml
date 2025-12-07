@@ -1,0 +1,12 @@
+us:
+  js:
+    gantt:
+      api_endpoint_missing: "API endpoint is not configured."
+      data_url_missing: "Data URL is not configured."
+      adjust_url_missing: "Adjustment URL is not configured."
+      prompt_field_name: "Enter the new field name."
+      prompt_field_area: "Enter the field area (㎡)."
+      adding_field: "Adding field..."
+      deleting_field: "Deleting field..."
+      error_occurred: "An error occurred. Please try again later."
+

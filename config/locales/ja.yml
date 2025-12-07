@@ -41,6 +41,16 @@ ja:
   optimization:
     messages:
       completed: "最適化が完了しました"
+      adjust_completed: "調整が完了しました"
+
+  controllers:
+    api_keys:
+      generate:
+        success: "APIキーを生成しました。"
+        failure: "APIキーの生成に失敗しました。"
+      regenerate:
+        success: "APIキーを再生成しました。"
+        failure: "APIキーの再生成に失敗しました。"
 
   # API用エラーメッセージ
   api:
@@ -51,12 +61,16 @@ ja:
         weather_fetch_failed: "天気データの取得に失敗しました: %{message}"
         forecast_fetch_failed: "予報データの取得に失敗しました: %{message}"
         weather_invalid_response: "天気サービスからの応答が不正です"
+        invalid_date_format: "日付形式が不正です: %{message}"
         farm_not_found: "農場が見つかりません"
         weather_location_not_found: "天気取得地点が見つかりません"
         env_only: "このエンドポイントは開発・テスト環境でのみ利用できます"
         files:
           no_file: "ファイルが指定されていません"
           not_found: "ファイルが見つかりません"
+      crop_not_found: "作物情報が見つかりません"
+      no_weather_data: "気象データがありません"
+      weather_data_invalid_format: "気象データの形式が不正です。最適化を再実行してください。"
       crops:
         name_required: "作物名を入力してください"
         invalid_payload: "作物情報が不正な形式です"
@@ -69,6 +83,16 @@ ja:
         invalid_payload: "肥料情報が不正な形式です"
         fetch_failed: "肥料情報の取得に失敗しました"
         fetch_failed_with_reason: "肥料情報の取得に失敗しました: %{message}"
+      pests:
+        pest_id_required: "pest_idを指定してください"
+        not_found: "害虫が見つかりません"
+        permission_denied: "この害虫を関連付ける権限がありません"
+        already_associated: "この作物には既に関連付けられています"
+        not_associated: "この作物には関連付けられていません"
+      optimization:
+        calculate_period_failed: "計画期間の計算に失敗しました: %{message}"
+        result_empty: "調整結果が空です"
+        adjust_failed: "調整に失敗しました: %{message}"
     messages:
       common:
         weather_service_available: "天気サービスは利用可能です"
@@ -83,13 +107,14 @@ ja:
         created_by_ai: "AIで肥料「%{name}」の情報を取得して作成しました"
         updated_by_ai: "肥料「%{name}」を更新しました"
       crop_not_found: "作物情報が見つかりません"
-      no_weather_data: "気象データがありません"
       no_cultivation_period: "栽培期間が設定されていません"
       weather_forecast_failed: "天気予報データの取得に失敗しました"
       data_fetch_failed: "データの取得に失敗しました"
       agrr_daemon_not_running: "AGRRサービスが起動していません"
       agrr_command_failed: "AGRRコマンドの実行に失敗しました"
       agrr_result_parse_failed: "AGRRの結果を解析できませんでした"
+      pests:
+        associated_successfully: "害虫を関連付けました"
   
   # JavaScript用メッセージ
   js:
@@ -97,9 +122,30 @@ ja:
       enter_name: "作物名を入力してください"
       fetching: "AIで作物情報を取得しています..."
       button_fetching: "🤖 AIで情報を取得中..."
+      button_idle: "🤖 AIで作物情報を取得・保存"
       created_success: "✓ 作物「%{name}」の情報を取得して保存しました！"
       fetch_failed: "作物情報の取得に失敗しました"
       network_error: "ネットワークエラーが発生しました"
+    copy_to_clipboard:
+      success: "コピーしました！"
+      failure: "コピーに失敗しました。"
+      fallback: "手動でコピーしてください。"
+    fields:
+      map_load_failed: "地図の読み込みに失敗しました"
+      retry: "再試行"
+    plans:
+      gantt_not_loaded: "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）"
+      data_missing: "データの読み込みに必要な情報が不足しています"
+      load_failed: "読み込みに失敗しました"
+    timeline:
+      update_failed: "更新に失敗しました"
+      date_required: "日付を入力してください"
+      complete_failed: "登録に失敗しました"
+      cancel_failed: "キャンセルに失敗しました"
+      name_required: "作業名を入力してください"
+      create_failed: "追加に失敗しました"
+      crop_required: "作物を選択してください"
+      notes_placeholder: "記録したい内容があれば入力してください"
     fertilize_ai:
       enter_name: "肥料名を入力してください"
       fetching: "AIで肥料情報を取得しています..."
@@ -189,6 +235,8 @@ ja:
       field_not_found: "圃場が見つかりません"
       cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
       cannot_remove_last_field: "最後の圃場は削除できません"
+      max_fields_limit: "圃場は最大5個までしか追加できません"
+      field_add_failed: "圃場の追加に失敗しました: %{message}"
     messages:
       field_removed: "圃場を削除しました。"
   
@@ -197,6 +245,8 @@ ja:
       field_not_found: "圃場が見つかりません"
       cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
       cannot_remove_last_field: "最後の圃場は削除できません"
+      max_fields_limit: "圃場は最大5個までしか追加できません"
+      field_add_failed: "圃場の追加に失敗しました: %{message}"
     messages:
       field_removed: "圃場を削除しました。"
     
@@ -268,6 +318,10 @@ ja:
   activerecord:
     errors:
       models:
+        task_schedule_item:
+          attributes:
+            gdd_trigger:
+              agrr_required: "AGRR由来の作業ではGDDトリガーが必要です"
         farm:
           attributes:
             is_reference:
@@ -279,6 +333,7 @@ ja:
             user:
               crop_limit_exceeded: "作成できるCropは20件までです"
   auth_test:
+    mock_data_missing: "モック認証データが設定されていません"
   services:
     plan_save_service:
       messages:

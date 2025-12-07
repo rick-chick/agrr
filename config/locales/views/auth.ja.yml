@@ -17,6 +17,19 @@ ja:
       login_required_page: "このページにアクセスするにはログインしてください。"
       admin_required: "管理者権限が必要です。"
     
+    login:
+      title: "ログイン - AGRR (Agriculture Resource and Rotation planner)"
+      subtitle: "Agriculture Resource and Rotation planner"
+      google_button: "Googleでサインイン"
+      oauth_not_configured_title: "Google OAuth認証が設定されていません"
+      oauth_not_configured_description: "管理者にお問い合わせください。"
+      dev_login_title: "開発用モックログイン"
+      dev_login_as_developer: "開発者でログイン"
+      dev_login_as_farmer: "農家太郎でログイン"
+      dev_login_as_researcher: "研究員花子でログイン"
+      dev_login_note: "開発環境でのみ利用可能"
+      footer_note: "Secure authentication powered by Google OAuth 2.0"
+    
     api:
       login_required: "このリソースにアクセスするにはログインしてください。"
 

@@ -245,8 +245,10 @@ class PlanningSchedulesController < ApplicationController
       while current <= end_date
         half_end_month = current.month <= 6 ? 6 : 12
         half_end = [Date.new(current.year, half_end_month, -1), end_date].min
+        half_key = current.month <= 6 ? 'first' : 'second'
+        half_label = I18n.t("controllers.planning_schedules.half.#{half_key}")
         periods << {
-          label: "#{current.year} #{current.month <= 6 ? '上半期' : '下半期'}",
+          label: I18n.t('controllers.planning_schedules.half_label', year: current.year, half: half_label),
           start_date: current,
           end_date: half_end
         }

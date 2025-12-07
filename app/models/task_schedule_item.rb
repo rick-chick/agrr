@@ -29,7 +29,9 @@ class TaskScheduleItem < ApplicationRecord
   def gdd_presence_for_agrr_sources
     return unless source.in?(AGRR_SOURCES)
 
-    errors.add(:gdd_trigger, 'must be present for AGRR由来の作業です') if gdd_trigger.nil?
+    if gdd_trigger.nil?
+      errors.add(:gdd_trigger, I18n.t('activerecord.errors.models.task_schedule_item.attributes.gdd_trigger.agrr_required'))
+    end
   end
 end
 

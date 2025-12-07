@@ -32,6 +32,15 @@ export default class extends Controller {
       return;
     }
 
+    this.connectionErrorMessage =
+      container.dataset.connectionErrorMessage ||
+      "Connection lost. Please try again.";
+    this.unknownErrorMessage =
+      container.dataset.unknownErrorMessage ||
+      "An unknown error occurred.";
+    this.failedTitle =
+      container.dataset.failedTitle || "Optimization failed";
+
     if (typeof window.CableSubscriptionManager === "undefined") {
       this.cableManagerWaitCount += 1;
       if (this.cableManagerWaitCount > 50) {
@@ -92,7 +101,7 @@ export default class extends Controller {
             this.reconnectAttempts += 1;
             setTimeout(this.init, 200);
           } else {
-            this.showConnectionError("❌ 接続が切断されました。しばらくしてからやり直してください。");
+            this.showConnectionError(this.connectionErrorMessage);
           }
         },
         onReceived: (data) => {
@@ -173,13 +182,16 @@ export default class extends Controller {
     const errorContainer = document.getElementById("error-message-container");
     const errorDetail = document.getElementById("error-detail");
     if (errorContainer && errorDetail) {
-      errorDetail.textContent = data.phase_message || data.message || "不明なエラーが発生しました。";
+      errorDetail.textContent =
+        data.phase_message || data.message || this.unknownErrorMessage;
       errorContainer.style.display = "flex";
     }
 
     const progressMessageElement = document.getElementById("progressMessage");
     if (progressMessageElement) {
-      const errorTitle = progressMessageElement.dataset.errorTitle || "計画作成に失敗しました";
+      const errorTitle =
+        progressMessageElement.dataset.errorTitle ||
+        this.failedTitle;
       progressMessageElement.textContent = errorTitle;
       progressMessageElement.style.color = "var(--color-danger)";
     }
