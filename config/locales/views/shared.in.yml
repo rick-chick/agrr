@@ -31,4 +31,10 @@ in:
       contact_title: "संपर्क"
       contact_form: "संपर्क फॉर्म"
       copyright: "© %{year} AGRR. सर्वाधिकार सुरक्षित।"
+    cookie_consent:
+      title: "Cookie usage"
+      description_html: "We use cookies for ads delivery and analytics. You can change your choice at any time. See %{privacy_link} for details."
+      privacy_link_text: "Privacy Policy"
+      accept: "Accept"
+      reject: "Reject"
 
