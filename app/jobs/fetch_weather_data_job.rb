@@ -8,6 +8,7 @@ class FetchWeatherDataJob < ApplicationJob
   queue_as :weather_data_sequential
   
   MAX_RETRY_ATTEMPTS = 5
+  ALLOWED_MISSING_RATIO = 0.05
   
   # インスタンス変数の定義
   attr_accessor :latitude, :longitude, :start_date, :end_date, :farm_id, :cultivation_plan_id, :channel_class
@@ -135,14 +136,34 @@ class FetchWeatherDataJob < ApplicationJob
     # agrrコマンドを実行して気象データを取得
     weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
     
-    # データが空でないことを確認
-    unless weather_data && weather_data['data']&.any?
-      error_message = 'No weather data returned from agrr command'
-      raise StandardError, "Weather API returned empty data: #{error_message}"
+    unless weather_data.is_a?(Hash)
+      raise StandardError, 'Weather data response is invalid or missing'
+    end
+
+    data_points = weather_data['data']
+    unless data_points.is_a?(Array)
+      raise StandardError, 'Weather data response is invalid or missing'
+    end
+
+    expected_days = (start_date..end_date).count
+    actual_days = data_points.size
+    missing_days = [expected_days - actual_days, 0].max
+    allowed_missing_days = (expected_days * ALLOWED_MISSING_RATIO).ceil
+
+    if data_points.empty?
+      raise StandardError, "Weather data missing for #{period_str} (0/#{expected_days} days)"
+    elsif missing_days.positive?
+      if missing_days > allowed_missing_days
+        raise StandardError, "Weather data missing #{missing_days} days exceeds allowed #{allowed_missing_days} days (#{(ALLOWED_MISSING_RATIO * 100).round(1)}%)"
+      end
+      Rails.logger.warn "⚠️  #{farm_info} Weather data incomplete for #{period_str}: #{actual_days}/#{expected_days} days (missing #{missing_days}, allowed #{allowed_missing_days})"
     end
 
     # WeatherLocationを作成または取得
     location_data = weather_data['location']
+    unless location_data.is_a?(Hash)
+      raise StandardError, 'Weather data is missing location information'
+    end
     weather_location = WeatherLocation.find_or_create_by_coordinates(
       latitude: location_data['latitude'],
       longitude: location_data['longitude'],
@@ -162,7 +183,7 @@ class FetchWeatherDataJob < ApplicationJob
     # 気象データをバッチ保存（upsert_allで一括処理）
     all_records = []
     
-    weather_data['data'].each_with_index do |daily_data, index|
+    data_points.each_with_index do |daily_data, index|
       date = Date.parse(daily_data['time'])
       
       record_attrs = {
@@ -181,18 +202,19 @@ class FetchWeatherDataJob < ApplicationJob
       all_records << record_attrs
       
       # 最初と最後のレコードの詳細をログ
-      if index == 0 || index == weather_data['data'].length - 1
+      if index == 0 || index == data_points.length - 1
         Rails.logger.debug "💾 [Weather Data ##{index + 1}] date=#{date}, temp=#{record_attrs[:temperature_min]}~#{record_attrs[:temperature_max]}°C"
       end
     end
     
-    # upsert_allで一括挿入・更新（既存データは上書き）
-    result = WeatherDatum.upsert_all(
-      all_records,
-      unique_by: [:weather_location_id, :date],
-      update_only: [:temperature_max, :temperature_min, :temperature_mean, :precipitation, :sunshine_hours, :wind_speed, :weather_code, :updated_at]
-    )
-    
+    if all_records.any?
+      WeatherDatum.upsert_all(
+        all_records,
+        unique_by: [:weather_location_id, :date],
+        update_only: [:temperature_max, :temperature_min, :temperature_mean, :precipitation, :sunshine_hours, :wind_speed, :weather_code, :updated_at]
+      )
+    end
+
     data_count = all_records.size
     Rails.logger.info "💾 [Weather Data Summary] Total: #{data_count} records upserted in single batch"
 
@@ -235,8 +257,11 @@ class FetchWeatherDataJob < ApplicationJob
   private
 
   def fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
-    # 日本（region == 'jp'）の場合はJMAを使用
-    data_source = determine_data_source(farm_id)
+    data_source = determine_data_source(
+      farm_id,
+      latitude: latitude,
+      longitude: longitude
+    )
     farm_info = farm_id ? "[Farm##{farm_id}]" : ""
     Rails.logger.info "🌍 #{farm_info} Using data source: #{data_source}"
     
@@ -250,10 +275,26 @@ class FetchWeatherDataJob < ApplicationJob
     )
   end
 
-  def determine_data_source(farm_id)
-    return 'jma' if farm_id && (farm = Farm.find_by(id: farm_id)) && farm.region == 'jp'
-    return 'nasa-power' if farm_id && (farm = Farm.find_by(id: farm_id)) && farm.region.nil?
+  def determine_data_source(farm_id, latitude: nil, longitude: nil)
+    farm = farm_id && Farm.find_by(id: farm_id)
+    
+    if farm
+      return 'jma' if farm.region == 'jp'
+      return 'jma' if japan_location?(farm.latitude, farm.longitude)
+      return 'nasa-power' if farm.region.nil?
+      return 'noaa'
+    end
+
+    lat = latitude || self.latitude
+    lon = longitude || self.longitude
+
+    return 'jma' if japan_location?(lat, lon)
     'noaa'
+  end
+
+  def japan_location?(latitude, longitude)
+    return false if latitude.nil? || longitude.nil?
+    latitude.between?(24.0, 46.0) && longitude.between?(127.0, 146.0)
   end
 
 end

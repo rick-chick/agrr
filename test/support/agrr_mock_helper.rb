@@ -67,7 +67,7 @@ module AgrrMockHelper
 
     FetchWeatherDataJob.class_eval do
       define_method(:fetch_weather_from_agrr) do |lat, lon, sd, ed, _farm_id = nil|
-        data_source = determine_data_source(_farm_id)
+        data_source = determine_data_source(_farm_id, latitude: lat, longitude: lon)
         weather_gateway = Agrr::WeatherGateway.new
         weather_gateway.fetch_by_date_range(
           latitude: lat,
