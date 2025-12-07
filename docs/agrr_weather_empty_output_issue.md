@@ -71,3 +71,4 @@ bin/agrr_client weather --location 35.5014,134.235 \
   --data-source jma --output /tmp/test.json --json
 ```
 
+
