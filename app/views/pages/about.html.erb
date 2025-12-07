@@ -40,6 +40,22 @@
       <p class="page-section-content"><%= t('.development.paragraph2') %></p>
     </section>
 
+    <section class="page-section" id="operator-info">
+      <h2 class="page-section-title"><%= t('.operator.title') %></h2>
+      <ul class="page-list">
+        <li><%= t('.operator.operator_name') %></li>
+        <li><%= t('.operator.location') %></li>
+        <li><%= t('.operator.initiative') %></li>
+        <li>
+          <%= t('.operator.contact_html',
+                 email_link: mail_to('support@agrr.net', 'support@agrr.net', class: 'info-box-link'),
+                 contact_link: link_to(t('.operator.contact_form'), contact_path, class: 'info-box-link')).html_safe %>
+        </li>
+        <li><%= t('.operator.ads_notice_html', privacy_link: link_to(t('.operator.privacy_link_text'), privacy_path, class: 'info-box-link')).html_safe %></li>
+      </ul>
+      <p class="page-section-content"><%= t('.operator.sources_and_updates') %></p>
+    </section>
+
     <section class="highlight-box">
       <h2 class="highlight-box-title"><%= t('.contact_section.title') %></h2>
       <p class="highlight-box-content"><%= t('.contact_section.message') %></p>
