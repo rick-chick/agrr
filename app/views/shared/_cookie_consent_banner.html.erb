@@ -1,0 +1,64 @@
+<div
+  id="cookie-consent-banner"
+  class="cookie-consent-banner hidden"
+  role="dialog"
+  aria-live="polite"
+  aria-label="<%= t('shared.cookie_consent.title') %>"
+>
+  <div class="cookie-consent-body">
+    <p class="cookie-consent-title"><%= t('shared.cookie_consent.title') %></p>
+    <p class="cookie-consent-text"><%= t('shared.cookie_consent.description_html', privacy_link: link_to(t('shared.cookie_consent.privacy_link_text'), privacy_path, class: 'cookie-consent-link')).html_safe %></p>
+    <div class="cookie-consent-actions">
+      <button id="cookie-consent-accept" class="btn btn-primary"><%= t('shared.cookie_consent.accept') %></button>
+      <button id="cookie-consent-reject" class="btn btn-secondary"><%= t('shared.cookie_consent.reject') %></button>
+    </div>
+  </div>
+</div>
+
+<script nonce="<%= content_security_policy_nonce %>">
+  (() => {
+    const banner = document.getElementById('cookie-consent-banner');
+    if (!banner) return;
+
+    const acceptButton = document.getElementById('cookie-consent-accept');
+    const rejectButton = document.getElementById('cookie-consent-reject');
+    const storageKey = 'cookieConsentStatus';
+
+    const updateConsent = (granted) => {
+      const value = granted ? 'granted' : 'denied';
+      localStorage.setItem(storageKey, value);
+      if (typeof gtag === 'function') {
+        gtag('consent', 'update', {
+          ad_storage: value,
+          ad_user_data: value,
+          ad_personalization: value,
+          analytics_storage: value,
+          functionality_storage: 'granted',
+          security_storage: 'granted'
+        });
+      } else {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(['consent', 'update', {
+          ad_storage: value,
+          ad_user_data: value,
+          ad_personalization: value,
+          analytics_storage: value,
+          functionality_storage: 'granted',
+          security_storage: 'granted'
+        }]);
+      }
+      banner.classList.add('hidden');
+    };
+
+    const saved = localStorage.getItem(storageKey);
+    if (saved === 'granted' || saved === 'denied') {
+      updateConsent(saved === 'granted');
+      return;
+    }
+
+    banner.classList.remove('hidden');
+    acceptButton?.addEventListener('click', () => updateConsent(true));
+    rejectButton?.addEventListener('click', () => updateConsent(false));
+  })();
+</script>
+

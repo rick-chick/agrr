@@ -165,5 +165,21 @@
     </url>
   <% end %>
 
+  <!-- Research Articles -->
+  <% if @research_pages.present? %>
+    <% @research_pages.each do |research_page| %>
+      <% normalized_path = research_page.start_with?('/') ? research_page : "/#{research_page}" %>
+      <% file_path = Rails.root.join('public', research_page.delete_prefix('/')) %>
+      <% raise Errno::ENOENT, "Research sitemap file not found: #{file_path}" unless File.exist?(file_path) %>
+      <% lastmod = File.mtime(file_path).to_date.to_s %>
+      <url>
+        <loc><%= ERB::Util.h("#{@base_url}#{normalized_path}") %></loc>
+        <lastmod><%= lastmod %></lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+      </url>
+    <% end %>
+  <% end %>
+
 </urlset>
 

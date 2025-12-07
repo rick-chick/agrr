@@ -31,4 +31,10 @@ ja:
       contact_title: "お問い合わせ"
       contact_form: "お問い合わせフォーム"
       copyright: "© %{year} AGRR. All rights reserved."
+    cookie_consent:
+      title: "Cookieの利用について"
+      description_html: "本サイトでは、広告配信とアクセス解析のためにCookieを利用します。設定はいつでも変更できます。詳細は%{privacy_link}をご確認ください。"
+      privacy_link_text: "プライバシーポリシー"
+      accept: "同意する"
+      reject: "拒否する"
 

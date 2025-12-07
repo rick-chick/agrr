@@ -5,6 +5,21 @@
 <meta name="keywords" content="<%= t('meta.default.keywords') %>">
 <meta name="author" content="AGRR">
 
+<!-- Consent Mode (default deny until user action) -->
+<script nonce="<%= content_security_policy_nonce %>">
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    functionality_storage: 'granted',
+    security_storage: 'granted',
+    wait_for_update: 500
+  });
+</script>
+
 <!-- Language and Locale -->
 <meta name="language" content="<%= I18n.locale %>">
 <% if Rails.env.production? %>
@@ -46,8 +61,6 @@ end %>">
 <% if Rails.env.production? %>
   <%= javascript_include_tag "https://www.googletagmanager.com/gtag/js?id=G-WNLSL6W4ZT", async: true, nonce: true %>
   <script nonce="<%= content_security_policy_nonce %>">
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-WNLSL6W4ZT', {
       'anonymize_ip': true,
@@ -57,7 +70,9 @@ end %>">
 <% end %>
 
 <!-- Google AdSense -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256" crossorigin="anonymous" nonce="<%= content_security_policy_nonce %>"></script>
+<% if Rails.env.production? %>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7498903562014256" crossorigin="anonymous" nonce="<%= content_security_policy_nonce %>"></script>
+<% end %>
 
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
