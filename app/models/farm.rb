@@ -115,6 +115,9 @@ class Farm < ApplicationRecord
 
   # 天気データ取得の1ブロック分が完了
   def increment_weather_data_progress!
+    return if weather_data_total_years.zero?
+    return if weather_data_fetched_years >= weather_data_total_years
+
     new_fetched = weather_data_fetched_years + 1
     
     Rails.logger.info "🔍 [Farm##{id}] increment_weather_data_progress! called: #{weather_data_fetched_years} -> #{new_fetched}"
