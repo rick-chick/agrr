@@ -67,6 +67,26 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'rescheduled', @task.read_attribute('status')
   end
 
+  test '農薬施用量の単位変更時に換算して保存する' do
+    @task.update!(amount: 100, amount_unit: 'ml/10a')
+
+    patch plan_task_schedule_item_path(@plan, @task),
+          params: {
+            task_schedule_item: {
+              amount: '100',
+              amount_unit: 'L/ha'
+            }
+          },
+          headers: @headers,
+          as: :json
+
+    assert_response :success
+
+    @task.reload
+    assert_in_delta 1.0, @task.amount.to_f, 0.0001
+    assert_equal 'L/ha', @task.amount_unit
+  end
+
   test '無効な日付では作業予定を更新できず422を返す' do
     original_date = @task.scheduled_date
 
