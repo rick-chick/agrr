@@ -9,6 +9,25 @@ module Plans
     rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
     rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
 
+    AMOUNT_NUMERATOR_UNITS = {
+      'ml' => { base: :liter, factor: BigDecimal('0.001') },
+      'l' => { base: :liter, factor: BigDecimal('1') },
+      'g' => { base: :gram, factor: BigDecimal('1') },
+      'kg' => { base: :gram, factor: BigDecimal('1000') }
+    }.freeze
+
+    AREA_UNITS = {
+      'm2' => BigDecimal('1'),
+      '㎡' => BigDecimal('1'),
+      'a' => BigDecimal('100'),
+      '10a' => BigDecimal('1000'),
+      'ha' => BigDecimal('10000')
+    }.freeze
+
+    CONVERSION_TOLERANCE = BigDecimal('0.0001')
+    private_constant :AMOUNT_NUMERATOR_UNITS, :AREA_UNITS, :CONVERSION_TOLERANCE
+    class UnitConversionError < StandardError; end
+
     def create
       item = TaskScheduleItem.transaction do
         raw_params = create_params
@@ -239,7 +258,7 @@ module Plans
           attributes['status'] = TaskScheduleItem::STATUSES[:rescheduled]
         end
       end
-      attributes
+      apply_amount_unit_conversion(attributes)
     end
 
     def serialize_item(item)
@@ -300,5 +319,94 @@ module Plans
       raise ActiveRecord::RecordInvalid, record
     end
 
+    def apply_amount_unit_conversion(attributes)
+      return attributes unless attributes.key?('amount_unit')
+
+      new_unit = attributes['amount_unit']
+      current_unit = @task_schedule_item.amount_unit
+      return attributes if new_unit.blank? || current_unit.blank? || new_unit == current_unit
+
+      current_amount = @task_schedule_item.amount
+      return attributes if current_amount.nil?
+
+      amount_param = attributes['amount']
+      if amount_param.present?
+        param_amount = decimal_from(amount_param)
+        return attributes if param_amount.nil?
+        return attributes unless approx_equal?(param_amount, decimal_from(current_amount))
+      end
+
+      attributes['amount'] = convert_per_area_amount(
+        decimal_from(current_amount),
+        from: current_unit,
+        to: new_unit
+      )
+      attributes
+    rescue UnitConversionError => e
+      Rails.logger.warn("[Plans::TaskScheduleItemsController] Amount unit conversion skipped: #{e.message}")
+      attributes
+    end
+
+    def convert_per_area_amount(amount, from:, to:)
+      amount = decimal_from(amount)
+      raise UnitConversionError, 'amount is required for conversion' if amount.nil?
+
+      from_numerator, from_area = parse_per_area_unit(from)
+      to_numerator, to_area = parse_per_area_unit(to)
+
+      from_meta = AMOUNT_NUMERATOR_UNITS[from_numerator]
+      to_meta = AMOUNT_NUMERATOR_UNITS[to_numerator]
+
+      raise UnitConversionError, "unsupported amount unit: #{from}" if from_meta.nil?
+      raise UnitConversionError, "unsupported amount unit: #{to}" if to_meta.nil?
+      unless from_meta[:base] == to_meta[:base]
+        raise UnitConversionError, "incompatible amount units: #{from} -> #{to}"
+      end
+
+      from_area_factor = area_unit_factor(from_area)
+      to_area_factor = area_unit_factor(to_area)
+
+      amount_in_base = amount * from_meta[:factor]
+      amount_per_m2 = amount_in_base / from_area_factor
+      target_in_base = amount_per_m2 * to_area_factor
+      target_in_base / to_meta[:factor]
+    end
+
+    def parse_per_area_unit(unit)
+      parts = unit.to_s.split('/')
+      raise UnitConversionError, "invalid amount_unit format: #{unit}" if parts.size != 2
+
+      [normalize_amount_unit(parts[0]), normalize_area_unit(parts[1])]
+    end
+
+    def normalize_amount_unit(unit)
+      unit.to_s.strip.downcase
+    end
+
+    def normalize_area_unit(unit)
+      value = unit.to_s.strip.downcase
+      return 'm2' if value == '㎡'
+
+      value
+    end
+
+    def area_unit_factor(unit)
+      factor = AREA_UNITS[normalize_area_unit(unit)]
+      raise UnitConversionError, "unsupported area unit: #{unit}" if factor.nil?
+
+      factor
+    end
+
+    def decimal_from(value)
+      BigDecimal(value.to_s)
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def approx_equal?(left, right)
+      return false if left.nil? || right.nil?
+
+      (left - right).abs <= CONVERSION_TOLERANCE
+    end
   end
 end
