@@ -53,6 +53,9 @@ class PlanCopier
     
     Rails.logger.info "✅ Created new plan ##{@new_plan.id} (year: #{@new_year})"
     
+    copied_attachments = copy_attachments
+    Rails.logger.info "✅ Copied #{copied_attachments} attachments"
+    
     # 圃場をコピー
     @source_plan.cultivation_plan_fields.each do |source_field|
       CultivationPlanField.create!(
@@ -103,6 +106,21 @@ class PlanCopier
     
     Rails.logger.info "✅ Copied #{@source_plan.field_cultivations.count} field cultivations"
     Rails.logger.info "✅ Plan copy completed: #{@source_plan.id} -> #{@new_plan.id}"
+  end
+
+  def copy_attachments
+    attachments = ActiveStorage::Attachment.where(record: @source_plan)
+    attachments_count = attachments.count
+
+    attachments.find_each do |attachment|
+      ActiveStorage::Attachment.create!(
+        name: attachment.name,
+        record: @new_plan,
+        blob: attachment.blob
+      )
+    end
+
+    attachments_count
   end
 end
 
