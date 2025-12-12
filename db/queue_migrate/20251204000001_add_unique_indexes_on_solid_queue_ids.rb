@@ -26,3 +26,5 @@ class AddUniqueIndexesOnSolidQueueIds < ActiveRecord::Migration[8.0]
 end
 
 
+
+
