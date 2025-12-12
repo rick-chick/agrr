@@ -122,3 +122,5 @@ docker compose up web
 ✅ `GCS_BUCKET_DEV` を設定することで、開発環境でもlitestreamが動作します
 
 
+
+
