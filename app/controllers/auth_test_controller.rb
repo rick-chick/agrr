@@ -16,7 +16,7 @@ class AuthTestController < ApplicationController
     user_type = params[:user]
     case user_type
     when 'developer'
-      mock_login_as_user(:google_oauth2)
+      mock_login_as_user(:developer)
     when 'farmer'
       mock_login_as_user(:google_oauth2_farmer)
     when 'researcher'
@@ -69,11 +69,11 @@ class AuthTestController < ApplicationController
       u.name = auth_hash['info']['name']
       u.avatar_url = processed_avatar_url
       # 開発者（developer）は管理者権限を付与
-      u.admin = (auth_key == :google_oauth2)
+      u.admin = [:google_oauth2, :developer].include?(auth_key)
     end
     
     # 既存ユーザーの場合も管理者権限を更新
-    if user.persisted? && auth_key == :google_oauth2 && !user.admin?
+    if user.persisted? && [:google_oauth2, :developer].include?(auth_key) && !user.admin?
       user.update!(admin: true)
     end
     

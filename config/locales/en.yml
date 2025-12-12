@@ -48,6 +48,13 @@ en:
       gantt_not_loaded: "Gantt feature was not loaded (script might have failed to load)"
       data_missing: "Required data is missing for loading"
       load_failed: "Failed to load data"
+      load_error: "Failed to load data"
+      errors:
+        field_not_found: "Field not found"
+        cannot_remove_field_with_cultivations: "This field contains cultivation schedules. Remove crops first."
+        cannot_remove_last_field: "The last field cannot be removed"
+      messages:
+        field_removed: "Field removed."
     timeline:
       update_failed: "Failed to update"
       date_required: "Please enter a date"
@@ -105,9 +112,6 @@ en:
       gdd_axis_label: "GDD (℃·day)"
       gdd_target_label: "Target: %{target}℃·day"
       no_risks: "None ✓"
-    
-    plans:
-      load_error: "Failed to load data"
     
     temperature_chart:
       no_data: "No data available for the selected period."
@@ -291,15 +295,15 @@ en:
 
   auth_test:
     mock_data_missing: "Mock authentication data is not configured"
-  services:
-    plan_save_service:
-      messages:
-        coordinates: "Coordinates: %{lat}, %{lng}"
     invalid_user_type: "Invalid user type."
     mock_logout_success: "Mock logout successful!"
     not_logged_in: "Not logged in."
     create_user_failed: "Failed to create user: %{errors}"
     mock_login_success: "Mock login successful as %{name}!"
+  services:
+    plan_save_service:
+      messages:
+        coordinates: "Coordinates: %{lat}, %{lng}"
   errors:
     format: "%{attribute} %{message}"
     messages:

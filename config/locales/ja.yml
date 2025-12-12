@@ -137,6 +137,13 @@ ja:
       gantt_not_loaded: "ガントチャート機能が読み込まれていません（スクリプトの読み込みに失敗した可能性があります）"
       data_missing: "データの読み込みに必要な情報が不足しています"
       load_failed: "読み込みに失敗しました"
+      load_error: "データの読み込みに失敗しました"
+      errors:
+        field_not_found: "圃場が見つかりません"
+        cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
+        cannot_remove_last_field: "最後の圃場は削除できません"
+      messages:
+        field_removed: "圃場を削除しました。"
     timeline:
       update_failed: "更新に失敗しました"
       date_required: "日付を入力してください"
@@ -216,14 +223,6 @@ ja:
       gdd_target_label: "目標: %{target}℃日"
       no_risks: "なし ✓"
     
-    plans:
-      load_error: "データの読み込みに失敗しました"
-      errors:
-        field_not_found: "圃場が見つかりません"
-        cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
-        cannot_remove_last_field: "最後の圃場は削除できません"
-      messages:
-        field_removed: "圃場を削除しました。"
     messages:
       jsPlansLoadError: "データの読み込みに失敗しました"
       jsPlansLoadErrorWithMessage: "データの読み込みに失敗しました: %{message}"
@@ -334,15 +333,15 @@ ja:
               crop_limit_exceeded: "作成できるCropは20件までです"
   auth_test:
     mock_data_missing: "モック認証データが設定されていません"
-  services:
-    plan_save_service:
-      messages:
-        coordinates: "座標: %{lat}, %{lng}"
     invalid_user_type: "不正なユーザー種別です"
     mock_logout_success: "モックログアウトに成功しました"
     not_logged_in: "ログインしていません"
     create_user_failed: "ユーザー作成に失敗しました: %{errors}"
     mock_login_success: "モックログインに成功しました（%{name}）!"
+  services:
+    plan_save_service:
+      messages:
+        coordinates: "座標: %{lat}, %{lng}"
     errors:
       messages:
         record_invalid: "バリデーションに失敗しました: %{errors}"

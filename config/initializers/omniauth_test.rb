@@ -5,6 +5,21 @@ if Rails.env.development? || Rails.env.test?
   
   # Mock Google OAuth responses for mock-login endpoints
   # Default user (Developer)
+  OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+    provider: 'developer',
+    uid: 'dev_user_001',
+    info: {
+      email: 'developer@agrr.dev',
+      name: '開発者',
+      image: 'dev-avatar.svg'
+    },
+    credentials: {
+      token: 'mock_token_dev_001',
+      refresh_token: 'mock_refresh_token_dev_001',
+      expires_at: 1.hour.from_now.to_i
+    }
+  )
+  
   OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
     provider: 'google_oauth2',
     uid: 'dev_user_001',
