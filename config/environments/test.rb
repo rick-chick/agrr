@@ -79,7 +79,7 @@ Rails.application.configure do
   # Google OAuth test configuration
   config.after_initialize do
     # Set test OAuth credentials
-    ENV['GOOGLE_CLIENT_ID'] ||= 'test_client_id'
-    ENV['GOOGLE_CLIENT_SECRET'] ||= 'test_client_secret'
+    ENV['GOOGLE_CLIENT_ID'] = 'test_client_id' if ENV['GOOGLE_CLIENT_ID'].blank?
+    ENV['GOOGLE_CLIENT_SECRET'] = 'test_client_secret' if ENV['GOOGLE_CLIENT_SECRET'].blank?
   end
 end
