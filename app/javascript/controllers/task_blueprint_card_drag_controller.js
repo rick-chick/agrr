@@ -75,6 +75,7 @@ export default class extends Controller {
     // グローバルイベントリスナーを追加
     document.addEventListener('touchmove', this.handleTouchMove, { passive: false })
     document.addEventListener('touchend', this.handleTouchEnd)
+    document.addEventListener('touchcancel', this.handleTouchCancel)
   }
 
   startDrag(card, clientX, clientY) {
@@ -192,6 +193,10 @@ export default class extends Controller {
     if (this.dragState.isDragging && this.dragState.draggedCard) {
       this.finalizeDrag()
     }
+    this.cleanup()
+  }
+
+  handleTouchCancel = () => {
     this.cleanup()
   }
 
@@ -364,6 +369,7 @@ export default class extends Controller {
     document.removeEventListener('mouseup', this.handleMouseUp)
     document.removeEventListener('touchmove', this.handleTouchMove)
     document.removeEventListener('touchend', this.handleTouchEnd)
+    document.removeEventListener('touchcancel', this.handleTouchCancel)
 
     // カードのイベントリスナーを削除
     this.cardTargets.forEach(card => {
