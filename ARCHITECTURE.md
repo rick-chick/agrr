@@ -5,7 +5,7 @@
 AGRR is an agricultural planning and optimization system with a decoupled frontend and backend.
 
 **Technology Stack:**
-- Frontend: Angular SPA
+- Frontend: Angular SPA (Clean Architecture)
 - Frontend Hosting: S3 + CloudFront
 - Backend: Ruby on Rails 8 (API)
 - Database: SQLite3 (development/test), with Litestream backup
@@ -23,6 +23,19 @@ AGRR is an agricultural planning and optimization system with a decoupled fronte
 - **Models**: ActiveRecord ORM with validations and business rules
 
 **Note:** Server-rendered Rails Views are legacy and will be phased out.
+
+### Frontend: Clean Architecture (Angular)
+
+- **Domain**: Pure entities and business rules (framework-agnostic)
+- **UseCase**: Interactors + Ports + Gateway interfaces
+- **Adapters**: Presenters, Views, API gateway implementations
+- **Infrastructure**: Angular components, services, guards, interceptors
+
+**Dependency Direction (Frontend):**
+- UI components depend on Presenters/Views
+- Presenters depend on UseCase Ports
+- UseCase depends on Domain and Gateway interfaces
+- Adapter Gateways implement UseCase Gateway interfaces
 
 ### Additional: Clean Architecture (AI Features Only)
 
@@ -42,6 +55,17 @@ flowchart TD
   User --> RailsAPI[RailsAPI]
   RailsAPI --> Database[SQLite3]
   RailsAPI --> AgrrCli[AgrrCli]
+```
+
+## 🧩 Frontend Layer Dependencies (Angular Clean Architecture)
+```mermaid
+flowchart TB
+  AngularUI[AngularUI] --> Presenter[Presenter]
+  Presenter --> UseCase[UseCase]
+  UseCase --> Domain[Domain]
+  UseCase --> GatewayInterface[GatewayInterface]
+  GatewayInterface --> InfraAdapter[InfraAdapter]
+  InfraAdapter --> RailsAPI[RailsAPI]
 ```
 
 ## 📊 Core Business Rules
@@ -71,6 +95,11 @@ app/
 ├── gateways/agrr/       # External API gateways
 └── jobs/                # Background jobs
 frontend/                # Angular app (SPA)
+└── src/app/              # Angular Clean Architecture layers
+    ├── domain/           # Entities
+    ├── usecase/          # Interactors, ports, gateway interfaces, DTOs
+    ├── adapters/         # Presenters, views, API gateways, helpers
+    └── infrastructure/   # Components, pages, services, guards, interceptors
 ```
 
 ### Clean Architecture (AI Features Only)
