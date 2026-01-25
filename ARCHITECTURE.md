@@ -2,24 +2,27 @@
 
 ## 🏗️ System Overview
 
-AGRR is a Ruby on Rails application for agricultural planning and optimization.
+AGRR is an agricultural planning and optimization system with a decoupled frontend and backend.
 
 **Technology Stack:**
-- Framework: Ruby on Rails 8
+- Frontend: Angular SPA
+- Frontend Hosting: S3 + CloudFront
+- Backend: Ruby on Rails 8 (API)
 - Database: SQLite3 (development/test), with Litestream backup
-- Architecture: **Traditional Rails MVC** (primary architecture)
+- Architecture: **Decoupled SPA + Rails API** (primary architecture)
 - External Services: Python-based AGRR CLI for advanced predictions
 
 ## 🎯 Architecture Pattern
 
-### Primary: Traditional Rails MVC
+### Primary: Angular SPA + Rails API
 
-**Main Architecture Pattern:** Traditional Rails MVC is used for all features.
+**Main Architecture Pattern:** Decoupled frontend and backend with a JSON API.
 
-- **HTML Controllers**: Direct ActiveRecord Model access
-- **API Controllers**: Traditional Rails MVC pattern (except 3 AI endpoints)
+- **Frontend**: Angular SPA served from S3 + CloudFront
+- **Backend API Controllers**: Rails API endpoints returning JSON
 - **Models**: ActiveRecord ORM with validations and business rules
-- **Views**: Traditional Rails views (HTML, JSON rendering)
+
+**Note:** Server-rendered Rails Views are legacy and will be phased out.
 
 ### Additional: Clean Architecture (AI Features Only)
 
@@ -29,7 +32,17 @@ Clean Architecture is used **only** for 3 AI-powered API endpoints:
 - `/api/v1/fertilizes/ai_create` → Uses `FertilizeCreateInteractor` + `FertilizeMemoryGateway`
 - `/api/v1/fertilizes/:id/ai_update` → Uses `FertilizeUpdateInteractor` + `FertilizeMemoryGateway`
 
-**Note:** All other controllers (HTML and API) use traditional Rails MVC.
+**Note:** All other API controllers use traditional Rails MVC; HTML controllers are legacy.
+
+## 🧩 System Flow (SPA + API)
+```mermaid
+flowchart TD
+  User[User] --> CloudFront[CloudFront]
+  CloudFront --> S3[S3]
+  User --> RailsAPI[RailsAPI]
+  RailsAPI --> Database[SQLite3]
+  RailsAPI --> AgrrCli[AgrrCli]
+```
 
 ## 📊 Core Business Rules
 
@@ -42,21 +55,22 @@ Clean Architecture is used **only** for 3 AI-powered API endpoints:
 
 ## 📁 Directory Structure
 
-### Main Structure (Rails MVC)
+### Main Structure (Rails API + Angular)
 ```
 app/
 ├── controllers/          # Rails controllers
-│   ├── <model>s_controller.rb    # HTML controllers (Rails MVC)
-│   └── api/v1/          # API controllers (mostly Rails MVC)
+│   ├── <model>s_controller.rb    # Legacy HTML controllers (to be removed)
+│   └── api/v1/          # API controllers (JSON)
 │       ├── crops_controller.rb      # AI feature (Clean Architecture)
 │       ├── fertilizes_controller.rb # AI feature (Clean Architecture)
-│       ├── plans/                   # Rails MVC
-│       ├── public_plans/           # Rails MVC
-│       └── ...                      # Other Rails MVC controllers
+│       ├── plans/                   # Rails MVC (API)
+│       ├── public_plans/           # Rails MVC (API)
+│       └── ...                      # Other API controllers
 ├── models/              # ActiveRecord models
 ├── services/            # Application services
 ├── gateways/agrr/       # External API gateways
 └── jobs/                # Background jobs
+frontend/                # Angular app (SPA)
 ```
 
 ### Clean Architecture (AI Features Only)
@@ -80,38 +94,27 @@ lib/adapters/            # Gateway implementations (AI features only)
 
 **Note:** `agricultural_task` domain code exists but is unused.
 
-## 🎯 Rails MVC Pattern (Primary)
+## 🎯 Backend API Pattern (Primary)
 
-### Standard Controller Pattern
+### Standard API Controller Pattern
 ```ruby
-# app/controllers/farms_controller.rb
-class FarmsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :set_farm, only: [:show, :edit, :update, :destroy]
-
-  def index
-    @farms = current_user.farms.where(is_reference: false)
-  end
-
+# app/controllers/api/v1/plans/cultivation_plans_controller.rb
+class Api::V1::Plans::CultivationPlansController < Api::V1::BaseController
   def create
-    @farm = Farm.new(farm_params)
-    @farm.user = current_user
+    @plan = CultivationPlan.new(plan_params)
+    @plan.user = current_user
     
-    if @farm.save
-      redirect_to @farm
+    if @plan.save
+      render json: @plan, status: :created
     else
-      render :new
+      render json: { errors: @plan.errors }, status: :unprocessable_entity
     end
   end
 
   private
 
-  def set_farm
-    @farm = current_user.farms.find(params[:id])
-  end
-
-  def farm_params
-    params.require(:farm).permit(:name, :latitude, :longitude)
+  def plan_params
+    params.require(:cultivation_plan).permit(:name, :planning_start_date, ...)
   end
 end
 ```
@@ -142,28 +145,11 @@ class Farm < ApplicationRecord
 end
 ```
 
-### API Controller Pattern (Traditional MVC)
-```ruby
-# app/controllers/api/v1/plans/cultivation_plans_controller.rb
-class Api::V1::Plans::CultivationPlansController < Api::V1::BaseController
-  def create
-    @plan = CultivationPlan.new(plan_params)
-    @plan.user = current_user
-    
-    if @plan.save
-      render json: @plan, status: :created
-    else
-      render json: { errors: @plan.errors }, status: :unprocessable_entity
-    end
-  end
+## 🧭 Frontend Hosting (Angular SPA)
 
-  private
-
-  def plan_params
-    params.require(:cultivation_plan).permit(:name, :planning_start_date, ...)
-  end
-end
-```
+- Build output is deployed to S3 and served via CloudFront (HTTPS, caching, custom domain).
+- SPA routing uses CloudFront/S3 fallback to `index.html`.
+- Environment configuration is provided at build time (e.g., `environment.prod.ts`).
 
 ## 🎯 Clean Architecture Pattern (AI Features Only)
 
