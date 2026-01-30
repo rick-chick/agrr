@@ -12,8 +12,12 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, ApiCrudResponder
+        test "includes Fertilize Views" do
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeListView
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeDetailView
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeCreateView
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeUpdateView
+          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeDeleteView
         end
 
         test "should get index" do
@@ -39,6 +43,26 @@ module Api
           assert_includes fertilize_ids, fertilize2.id
           assert_not_includes fertilize_ids, reference_fertilize.id
           assert_not_includes fertilize_ids, other_fertilize.id
+        end
+
+        # name が blank のレコードがあると Entity 変換で ArgumentError になるため、
+        # Gateway は name が present なレコードのみ list に含める。このテストで 422 を防ぐことを検証する。
+        test "should return success and exclude fertilizes with blank name" do
+          fertilize_with_name = create(:fertilize, :user_owned, user: @user, name: "Valid")
+          fertilize_blank_name = create(:fertilize, :user_owned, user: @user, name: "Temporary")
+          fertilize_blank_name.update_column(:name, "")
+
+          get api_v1_masters_fertilizes_path,
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          ids = json_response.map { |f| f["id"] }
+          assert_includes ids, fertilize_with_name.id
+          assert_not_includes ids, fertilize_blank_name.id
         end
 
         test "should show fertilize" do
@@ -83,6 +107,7 @@ module Api
                      package_size: 25.0
                    }
                  },
+                 as: :json,
                  headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
@@ -106,6 +131,7 @@ module Api
                     name: "更新された名前"
                   }
                 },
+                as: :json,
                 headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
@@ -148,7 +174,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "should not destroy other user's fertilize" do
