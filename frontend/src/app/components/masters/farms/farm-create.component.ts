@@ -42,13 +42,13 @@ const initialControl: FarmCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">Create Farm</h2>
         <form (ngSubmit)="createFarm()" #farmForm="ngForm" class="form-card__form">
-          <label class="form-card__field">
-            {{ 'farms.new.form.name_label' | translate }}
-            <input name="name" [(ngModel)]="control.formData.name" required />
+          <label class="form-card__field" for="name">
+            <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
+            <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <label class="form-card__field">
-            Region
-            <input name="region" [(ngModel)]="control.formData.region" required />
+          <label class="form-card__field" for="region">
+            <span class="form-card__field-label">Region</span>
+            <input id="region" name="region" [(ngModel)]="control.formData.region" required />
           </label>
           <div class="form-group">
             <label class="form-label">{{ 'farms.new.form.location_label' | translate }}</label>
@@ -60,9 +60,10 @@ const initialControl: FarmCreateViewState = {
               (coordinatesChange)="onCoordinatesChange($event)"
             />
             <div class="coordinates-input">
-              <label class="form-card__field">
-                {{ 'farms.new.form.latitude_label' | translate }}
+              <label class="form-card__field" for="latitude">
+                <span class="form-card__field-label">{{ 'farms.new.form.latitude_label' | translate }}</span>
                 <input
+                  id="latitude"
                   name="latitude"
                   type="number"
                   step="0.000001"
@@ -73,9 +74,10 @@ const initialControl: FarmCreateViewState = {
                   required
                 />
               </label>
-              <label class="form-card__field">
-                {{ 'farms.new.form.longitude_label' | translate }}
+              <label class="form-card__field" for="longitude">
+                <span class="form-card__field-label">{{ 'farms.new.form.longitude_label' | translate }}</span>
                 <input
+                  id="longitude"
                   name="longitude"
                   type="number"
                   step="0.000001"
