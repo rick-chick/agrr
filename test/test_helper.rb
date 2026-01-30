@@ -32,6 +32,7 @@ end
 require_relative "../config/environment"
 require "rails/test_help"
 require "minitest/mock"
+require 'mocha/minitest'
 
 # Load test support files
 Dir[Rails.root.join('test', 'support', '**', '*.rb')].each { |f| require f }

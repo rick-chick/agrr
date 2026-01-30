@@ -1,0 +1,63 @@
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e3e5e8;
+  gap: 16px;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-link {
+  color: #4a5568;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.nav-link.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.login-link,
+.logout-button {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-button {
+  background: #475569;
+}
+
+.status {
+  color: #64748b;
+}

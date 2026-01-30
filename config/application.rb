@@ -39,8 +39,19 @@ module Agrr
     # Configure CORS
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins '*'
-        resource '*', headers: :any, methods: [:get, :post, :put, :patch, :delete, :options, :head]
+        frontend_origins = ENV.fetch('FRONTEND_URL', 'http://localhost:4200')
+                              .split(',')
+                              .map(&:strip)
+                              .reject(&:empty?)
+        origins(*frontend_origins)
+        resource '/api/*',
+                 headers: :any,
+                 methods: [:get, :post, :put, :patch, :delete, :options, :head],
+                 credentials: true
+        resource '/cable',
+                 headers: :any,
+                 methods: [:get, :post, :options],
+                 credentials: true
       end
     end
 

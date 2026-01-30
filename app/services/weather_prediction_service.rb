@@ -247,7 +247,14 @@ class WeatherPredictionService
   end
 
   def build_prediction_payload(weather_info, target_end_date)
-    (weather_info[:data] || {}).merge(
+    # Ensure payload is flat AGRR CLI format
+    data = weather_info[:data]
+    if data['data'].is_a?(Hash) && data['data']['data'].is_a?(Array)
+      Rails.logger.warn "⚠️ [WeatherPrediction] Nested format detected during payload build, flattening"
+      data = data['data']
+    end
+
+    (data || {}).merge(
       'generated_at' => Time.current.iso8601,
       'predicted_at' => Time.current.iso8601,
       'prediction_start_date' => weather_info[:prediction_start_date],

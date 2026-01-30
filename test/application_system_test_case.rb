@@ -32,6 +32,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1400,1400')
+    options.add_argument('--disable-web-security')
+    options.add_argument('--allow-running-insecure-content')
 
     Capybara::Selenium::Driver.new(
       app,
@@ -118,6 +120,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       value: session.session_id,
       path: '/'
     )
+
+    # APIキーをLocalStorageに設定
+    visit root_path
+    page.execute_script("localStorage.setItem('agrr_api_key', '#{user.api_key}')")
+    
+    # デバッグ用にコンソールログを表示
+    page.execute_script("console.log('API Key set')")
     
     # ページをリロードして認証状態を反映
     visit root_path

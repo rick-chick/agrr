@@ -125,6 +125,7 @@ Rails.application.configure do
   config.hosts << "web:3000"
 
   # Content Security Policy for development
+  # connect_src: Angular (4200) → Rails API (3000), WebSocket (ws:/wss:), OAuth/Analytics
   config.content_security_policy do |policy|
     policy.default_src :self, :https
     policy.font_src    :self, :https, :data
@@ -132,6 +133,7 @@ Rails.application.configure do
     policy.object_src  :none
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval
     policy.style_src   :self, :https, :unsafe_inline
+    policy.connect_src :self, "http://localhost:3000", "http://localhost:4200", "http://127.0.0.1:3000", "http://127.0.0.1:4200", "ws:", "wss:", "https://accounts.google.com", "https://tile.openstreetmap.org", "https://www.google-analytics.com", "https://analytics.google.com"
   end
 
   # Google OAuth development configuration

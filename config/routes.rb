@@ -40,98 +40,10 @@ Rails.application.routes.draw do
     get '/auth/failure', to: 'auth#failure'
     delete '/auth/logout', to: 'auth#logout', as: 'auth_logout'
 
-    # API Key management routes
-    get '/api_keys', to: 'api_keys#show', as: 'api_keys'
-    post '/api_keys/generate', to: 'api_keys#generate', as: 'generate_api_key'
-    post '/api_keys/regenerate', to: 'api_keys#regenerate', as: 'regenerate_api_key'
-
     # API Documentation
     get '/api/docs', to: 'api_docs#index', as: 'api_docs'
 
-    # Farms and Fields routes (nested)
-    resources :farms do
-      resources :fields
-      # Weather data endpoint for charts
-      get 'weather_data', to: 'farms/weather_data#index'
-    end
-
-    # Crops (HTML) routes
-    resources :crops do
-      member do
-        post :generate_task_schedule_blueprints
-        post :toggle_task_template
-      end
-      resources :pests, controller: 'crops/pests', except: [:destroy]
-      resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
-      resources :task_schedule_blueprints, only: [:destroy], controller: 'crops/task_schedule_blueprints' do
-        member do
-          patch :update_position
-        end
-      end
-    end
-
-    # Fertilizes (HTML) routes
-    resources :fertilizes
-
-    # Pests (HTML) routes
-    resources :pests
-
-    # Pesticides (HTML) routes
-    resources :pesticides
-
-    # Interaction Rules (連作ルール) routes
-    resources :interaction_rules
-
-  post 'undo_deletion', to: 'deletion_undos#create', as: :undo_deletion
-
-    # Agricultural Tasks (農業タスク) routes
-    resources :agricultural_tasks
-
-    # Public Plans (公開作付け計画 - 認証不要) routes
-    resources :public_plans, only: [:create] do
-      collection do
-        get :new, path: ''  # GET /public_plans → public_plans#new (public_plans_path)
-        get :select_farm_size
-        get :select_crop
-        get :optimizing
-        get :results
-        post :save_plan
-        get :process_saved_plan
-      end
-    end
-
-    # Free Plans (旧システム - リダイレクト用)
-    get '/free_plans', to: redirect('/public_plans/new')
-    get '/free_plans/*path', to: redirect('/public_plans/new')
-    
-    # Plans (個人用作付け計画 - 認証必須)
-    resources :plans do
-      collection do
-        get :select_crop
-      end
-      member do
-        get :optimizing
-        post :copy
-        post :optimize
-      end
-      resource :task_schedule, only: [:show], module: :plans do
-        resources :items,
-                  controller: 'task_schedule_items',
-                  only: [:create, :update, :destroy] do
-          member do
-            post :complete
-          end
-        end
-      end
-    end
-
-    # Planning Schedules (数年に渡る作付け計画画面)
-    resources :planning_schedules, only: [] do
-      collection do
-        get :fields_selection
-        get :schedule
-      end
-    end
+    post 'undo_deletion', to: 'deletion_undos#create', as: :undo_deletion
 
     # ActionCable for WebSocket
     mount ActionCable.server => '/cable'
@@ -141,6 +53,15 @@ Rails.application.routes.draw do
       namespace :v1 do
         # Health check endpoint
         get 'health', to: 'base#health_check'
+        # Auth endpoints
+        get 'auth/me', to: 'auth#me'
+        delete 'auth/logout', to: 'auth#logout'
+        # API Key endpoints
+        post 'api_keys/generate', to: 'api_keys#generate'
+        post 'api_keys/regenerate', to: 'api_keys#regenerate'
+        # Plans summary endpoints
+        get 'plans', to: 'plans#index'
+        get 'plans/:id', to: 'plans#show'
         # File management endpoints
         resources :files, only: [:index, :show, :create, :destroy]
         # AI作物情報取得・保存エンドポイント
@@ -151,9 +72,12 @@ Rails.application.routes.draw do
         # AI害虫情報取得・保存エンドポイント
         post 'pests/ai_create', to: 'pests#ai_create'
         post 'pests/:id/ai_update', to: 'pests#ai_update'
-        
         # Public Plans API（認証不要）
         namespace :public_plans do
+          get :farms, to: 'wizard#farms'
+          get :farm_sizes, to: 'wizard#farm_sizes'
+          get :crops, to: 'wizard#crops'
+          post :plans, to: 'wizard#create'
           resources :field_cultivations, only: [:show, :update] do
             member do
               get :climate_data
@@ -248,15 +172,21 @@ Rails.application.routes.draw do
     end
 
     # Static pages
-    get '/privacy', to: 'pages#privacy', as: 'privacy'
-    get '/terms', to: 'pages#terms', as: 'terms'
-    get '/contact', to: 'pages#contact', as: 'contact'
-    get '/about', to: 'pages#about', as: 'about'
+    # (Angular SPA side handles these routes)
     
     # Sitemap
     get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }
 
-    # Home page
-    root "home#index"
+    # Home page (SPA entry)
+    root "spa#index"
+
+    # SPA fallback (exclude API/auth/rails/cable)
+    get '*path', to: 'spa#index', constraints: lambda { |req|
+      req.format.html? &&
+        !req.path.start_with?('/api') &&
+        !req.path.start_with?('/auth') &&
+        !req.path.start_with?('/rails') &&
+        !req.path.start_with?('/cable')
+    }
   end # locale scope
 end

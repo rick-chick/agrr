@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "plans": "Plans",
+    "farms": "Farms",
+    "weather": "Weather",
+    "login": "Login",
+    "logout": "Logout",
+    "crops": "Crops",
+    "apiKey": "API Key"
+  },
+  "status": {
+    "checking": "Checking authentication..."
+  },
+  "home": {
+    "welcome": "Welcome, {{name}}",
+    "welcomeMessage": "The Angular SPA base layout is active.",
+    "loginRequired": "Login required",
+    "loginPrompt": "Use the login button above to sign in."
+  },
+  "login": {
+    "title": "Login",
+    "description": "Sign in with Google OAuth."
+  }
+}

@@ -26,7 +26,7 @@ const initialControl: PublicPlanResultsViewState = {
   providers: [
     PublicPlanResultsPresenter,
     LoadPublicPlanResultsUseCase,
-    { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useClass: PublicPlanResultsPresenter },
+    { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useExisting: PublicPlanResultsPresenter },
     { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
   ],
   template: `
@@ -137,6 +137,5 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       return;
     }
     // Call save API if logged in
-    console.log('Saving plan...');
   }
 }

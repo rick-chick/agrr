@@ -1,0 +1,57 @@
+.gantt-container {
+  width: 100%;
+  overflow: hidden;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-5);
+}
+
+.gantt-scroll-area {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.custom-gantt-chart {
+  display: block;
+  user-select: none;
+}
+
+.gantt-background {
+  pointer-events: all;
+}
+
+.field-row {
+  transition: transform var(--transition-fast);
+}
+
+.cultivation-bar {
+  cursor: grab;
+  transition: opacity var(--transition-fast);
+}
+
+.cultivation-bar:hover {
+  opacity: 0.8;
+}
+
+.cultivation-bar.dragging {
+  cursor: grabbing;
+  opacity: 0.6;
+}
+
+.month-label {
+  pointer-events: none;
+}
+
+.year-label {
+  pointer-events: none;
+}
+
+.header-label {
+  pointer-events: none;
+}
+
+.field-label {
+  pointer-events: none;
+}

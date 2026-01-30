@@ -115,14 +115,37 @@ module Api
           assert_response :not_found
         end
 
-        test "climate_data returns localized message when no predicted weather data" do
+        test "climate_data アクションで予測データがない場合、自動的に生成を試みる" do
           @cultivation_plan.update!(predicted_weather_data: nil)
-
-          get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"
-          assert_response :not_found
-
-          data = JSON.parse(response.body)
-          assert_equal I18n.t('api.errors.no_weather_data'), data['message']
+          
+          # WeatherPredictionServiceをモック
+          mock_service = Minitest::Mock.new
+          mock_prediction = {
+            data: {
+              'latitude' => @farm.latitude,
+              'longitude' => @farm.longitude,
+              'timezone' => 'Asia/Tokyo',
+              'data' => [
+                {
+                  'time' => @field_cultivation.start_date.to_s,
+                  'temperature_2m_max' => 20.0,
+                  'temperature_2m_min' => 10.0,
+                  'temperature_2m_mean' => 15.0,
+                  'precipitation_sum' => 0.0
+                }
+              ]
+            }
+          }
+          mock_service.expect :predict_for_cultivation_plan, mock_prediction, [@cultivation_plan]
+          
+          WeatherPredictionService.stub :new, mock_service do
+            get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+            
+            assert_response :success
+            data = JSON.parse(response.body)
+            assert data['success']
+            assert_equal @field_cultivation.id, data['field_cultivation']['id']
+          end
         end
         
         test "climate_data アクションが正常に動作する（認証不要）" do
