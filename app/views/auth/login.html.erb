@@ -35,11 +35,12 @@
   <% end %>
   
   <% if Rails.env.development? %>
+    <% mock_login_return_to = (session[:return_to] || params[:return_to]).presence %>
     <div class="dev-login-section">
       <h3 class="dev-login-title"><%= t('auth.login.dev_login_title') %></h3>
       
       <div class="dev-login-buttons">
-        <a href="/auth/test/mock_login_as/developer" class="mock-btn mock-btn-developer">
+        <a href="<%= auth_test_mock_login_as_path('developer', return_to: mock_login_return_to) %>" class="mock-btn mock-btn-developer">
           <div class="mock-btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/>
@@ -48,7 +49,7 @@
           <%= t('auth.login.dev_login_as_developer') %>
         </a>
         
-        <a href="/auth/test/mock_login_as/farmer" class="mock-btn mock-btn-farmer">
+        <a href="<%= auth_test_mock_login_as_path('farmer', return_to: mock_login_return_to) %>" class="mock-btn mock-btn-farmer">
           <div class="mock-btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M3 2.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.5 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zM4 10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5zm0 2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5z"/>
@@ -57,7 +58,7 @@
           <%= t('auth.login.dev_login_as_farmer') %>
         </a>
         
-        <a href="/auth/test/mock_login_as/researcher" class="mock-btn mock-btn-researcher">
+        <a href="<%= auth_test_mock_login_as_path('researcher', return_to: mock_login_return_to) %>" class="mock-btn mock-btn-researcher">
           <div class="mock-btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM4 5.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/>

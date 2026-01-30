@@ -1,0 +1,14 @@
+<app-navbar
+  [apiBaseUrl]="apiBaseUrl"
+  [user]="authService.user()"
+  [loading]="authService.loading()"
+  (logout)="logout()"
+/>
+
+<main class="app-main">
+  <app-flash-message />
+  <router-outlet />
+</main>
+
+<app-footer />
+<app-undo-toast />
