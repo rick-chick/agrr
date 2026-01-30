@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FertilizeListView, FertilizeListViewState } from './fertilize-list.view';
@@ -55,6 +55,7 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
   private readonly loadUseCase = inject(LoadFertilizeListUseCase);
   private readonly deleteUseCase = inject(DeleteFertilizeUseCase);
   private readonly presenter = inject(FertilizeListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeListViewState = initialControl;
   get control(): FertilizeListViewState {
@@ -62,6 +63,7 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
   }
   set control(value: FertilizeListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

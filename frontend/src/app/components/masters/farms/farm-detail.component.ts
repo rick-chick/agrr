@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Channel } from 'actioncable';
@@ -86,6 +86,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly subscribeWeatherUseCase = inject(SubscribeFarmWeatherUseCase);
   private readonly deleteUseCase = inject(DeleteFarmUseCase);
   private readonly presenter = inject(FarmDetailPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
 
@@ -95,6 +96,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   }
   set control(value: FarmDetailViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

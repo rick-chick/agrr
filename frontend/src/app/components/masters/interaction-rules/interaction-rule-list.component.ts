@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   InteractionRuleListView,
@@ -50,6 +50,7 @@ const initialControl: InteractionRuleListViewState = {
 export class InteractionRuleListComponent implements InteractionRuleListView, OnInit {
   private readonly useCase = inject(LoadInteractionRuleListUseCase);
   private readonly presenter = inject(InteractionRuleListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: InteractionRuleListViewState = initialControl;
   get control(): InteractionRuleListViewState {
@@ -57,6 +58,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   }
   set control(value: InteractionRuleListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

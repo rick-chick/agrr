@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -75,6 +75,7 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   private readonly loadUseCase = inject(LoadFarmForEditUseCase);
   private readonly updateUseCase = inject(UpdateFarmUseCase);
   private readonly presenter = inject(FarmEditPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FarmEditViewState = initialControl;
   get control(): FarmEditViewState {
@@ -82,6 +83,7 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   }
   set control(value: FarmEditViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   private get farmId(): number {

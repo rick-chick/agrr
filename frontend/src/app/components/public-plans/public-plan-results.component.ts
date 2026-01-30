@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -97,6 +97,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   private readonly useCase = inject(LoadPublicPlanResultsUseCase);
   private readonly presenter = inject(PublicPlanResultsPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly auth = inject(AuthService);
 
@@ -110,6 +111,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   }
   set control(value: PublicPlanResultsViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

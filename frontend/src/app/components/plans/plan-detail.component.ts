@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { GanttChartComponent } from './gantt-chart.component';
@@ -54,6 +54,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(LoadPlanDetailUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -61,6 +62,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   }
   set control(value: PlanDetailViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

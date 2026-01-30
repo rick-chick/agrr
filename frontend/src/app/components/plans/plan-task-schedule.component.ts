@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
@@ -44,6 +44,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -55,6 +56,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   }
   set control(value: PlanTaskScheduleViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

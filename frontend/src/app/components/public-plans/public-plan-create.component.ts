@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -143,6 +143,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly useCase = inject(LoadPublicPlanFarmsUseCase);
   private readonly presenter = inject(PublicPlanCreatePresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly regions = [
     { value: 'jp', label: 'Japan', flag: '🇯🇵' },
@@ -162,6 +163,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   }
   set control(value: PublicPlanCreateViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
