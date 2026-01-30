@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Channel } from 'actioncable';
@@ -38,6 +38,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
   private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(SubscribePlanOptimizationUseCase);
   private readonly presenter = inject(PlanOptimizingPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
 
@@ -51,6 +52,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
   }
   set control(value: PlanOptimizingViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

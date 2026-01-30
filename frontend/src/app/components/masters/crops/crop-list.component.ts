@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -50,6 +50,7 @@ const initialControl: CropListViewState = {
 export class CropListComponent implements CropListView, OnInit {
   private readonly useCase = inject(LoadCropListUseCase);
   private readonly presenter = inject(CropListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: CropListViewState = initialControl;
   get control(): CropListViewState {
@@ -57,6 +58,7 @@ export class CropListComponent implements CropListView, OnInit {
   }
   set control(value: CropListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -135,6 +135,7 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
   private readonly generateUseCase = inject(GenerateApiKeyUseCase);
   private readonly regenerateUseCase = inject(RegenerateApiKeyUseCase);
   private readonly presenter = inject(ApiKeyPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: ApiKeyViewState = initialControl;
   get control(): ApiKeyViewState {
@@ -142,6 +143,7 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
   }
   set control(value: ApiKeyViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

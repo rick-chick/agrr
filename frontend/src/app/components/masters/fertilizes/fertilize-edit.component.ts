@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -90,6 +90,7 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
   private readonly loadUseCase = inject(LoadFertilizeForEditUseCase);
   private readonly updateUseCase = inject(UpdateFertilizeUseCase);
   private readonly presenter = inject(FertilizeEditPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeEditViewState = initialControl;
   get control(): FertilizeEditViewState {
@@ -97,6 +98,7 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
   }
   set control(value: FertilizeEditViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   private get fertilizeId(): number {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -90,6 +90,7 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   private readonly useCase = inject(SubscribePublicPlanOptimizationUseCase);
   private readonly presenter = inject(PublicPlanOptimizingPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   elapsedTime = 0;
   private channel: Channel | null = null;
@@ -115,6 +116,7 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   }
   set control(value: PublicPlanOptimizingViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

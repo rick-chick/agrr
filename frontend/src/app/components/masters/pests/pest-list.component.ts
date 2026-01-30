@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PestListView, PestListViewState } from './pest-list.view';
 import { LoadPestListUseCase } from '../../../usecase/pests/load-pest-list.usecase';
@@ -42,6 +42,7 @@ const initialControl: PestListViewState = {
 export class PestListComponent implements PestListView, OnInit {
   private readonly useCase = inject(LoadPestListUseCase);
   private readonly presenter = inject(PestListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PestListViewState = initialControl;
   get control(): PestListViewState {
@@ -49,6 +50,7 @@ export class PestListComponent implements PestListView, OnInit {
   }
   set control(value: PestListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

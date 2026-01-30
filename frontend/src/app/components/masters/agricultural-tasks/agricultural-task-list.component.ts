@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AgriculturalTaskListView,
@@ -48,6 +48,7 @@ const initialControl: AgriculturalTaskListViewState = {
 export class AgriculturalTaskListComponent implements AgriculturalTaskListView, OnInit {
   private readonly useCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly presenter = inject(AgriculturalTaskListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: AgriculturalTaskListViewState = initialControl;
   get control(): AgriculturalTaskListViewState {
@@ -55,6 +56,7 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
   }
   set control(value: AgriculturalTaskListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

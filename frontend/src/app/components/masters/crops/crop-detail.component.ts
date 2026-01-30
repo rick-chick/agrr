@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -92,6 +92,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(LoadCropDetailUseCase);
   private readonly presenter = inject(CropDetailPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: CropDetailViewState = initialControl;
   get control(): CropDetailViewState {
@@ -99,6 +100,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   }
   set control(value: CropDetailViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

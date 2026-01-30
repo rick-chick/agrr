@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PesticideListView, PesticideListViewState } from './pesticide-list.view';
 import { LoadPesticideListUseCase } from '../../../usecase/pesticides/load-pesticide-list.usecase';
@@ -42,6 +42,7 @@ const initialControl: PesticideListViewState = {
 export class PesticideListComponent implements PesticideListView, OnInit {
   private readonly useCase = inject(LoadPesticideListUseCase);
   private readonly presenter = inject(PesticideListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PesticideListViewState = initialControl;
   get control(): PesticideListViewState {
@@ -49,6 +50,7 @@ export class PesticideListComponent implements PesticideListView, OnInit {
   }
   set control(value: PesticideListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

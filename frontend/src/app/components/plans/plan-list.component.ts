@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PlanListView, PlanListViewState } from './plan-list.view';
@@ -46,6 +46,7 @@ const initialControl: PlanListViewState = {
 export class PlanListComponent implements PlanListView, OnInit {
   private readonly useCase = inject(LoadPlanListUseCase);
   private readonly presenter = inject(PlanListPresenter);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PlanListViewState = initialControl;
   get control(): PlanListViewState {
@@ -53,6 +54,7 @@ export class PlanListComponent implements PlanListView, OnInit {
   }
   set control(value: PlanListViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {

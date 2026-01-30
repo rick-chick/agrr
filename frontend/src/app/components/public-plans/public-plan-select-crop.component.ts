@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -145,6 +145,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   private readonly createPlanUseCase = inject(CreatePublicPlanUseCase);
   private readonly presenter = inject(PublicPlanSelectCropPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   selectedCropIds = new Set<number>();
   selectedCrops: Crop[] = [];
@@ -162,6 +163,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
   set control(value: PublicPlanSelectCropViewState) {
     this._control = value;
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
