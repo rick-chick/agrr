@@ -98,7 +98,29 @@ class AuthTestController < ApplicationController
       redirect_to process_saved_plan_public_plans_path and return
     end
 
-    redirect_to root_path(locale: I18n.default_locale), notice: I18n.t('auth_test.mock_login_success', name: user.name)
+    # Redirect back to frontend (e.g. Angular 4200) if return_to from params or session
+    return_to = params[:return_to].presence || session.delete(:return_to)
+    if return_to.present? && allowed_return_to?(return_to)
+      redirect_to return_to, allow_other_host: true, notice: I18n.t('auth_test.mock_login_success', name: user.name)
+    else
+      redirect_to root_path(locale: I18n.default_locale), notice: I18n.t('auth_test.mock_login_success', name: user.name)
+    end
+  end
+
+  def allowed_return_to?(url)
+    return false if url.blank?
+    uri = URI.parse(url)
+    return false unless %w[http https].include?(uri.scheme)
+    origin = build_origin(uri)
+    allowed = ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').map(&:strip).reject(&:empty?)
+    allowed_origins = allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
+    allowed_origins.include?(origin)
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def build_origin(uri)
+    "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
   end
   
   def ensure_development_or_test
