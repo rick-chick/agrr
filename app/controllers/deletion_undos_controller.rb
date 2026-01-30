@@ -2,7 +2,9 @@
 
 class DeletionUndosController < ApplicationController
   skip_before_action :authenticate_user!, only: :create, if: -> { Rails.env.test? }
-  protect_from_forgery with: :exception
+  # Angular からの JSON POST は別オリジン（dev: localhost:4200→3000）のため CSRF トークンを送れない。
+  # 復元は undo_token（秘密・一時）とセッション認証で保護されている。
+  skip_before_action :verify_authenticity_token, if: -> { request.format.json? }
 
   def create
     undo_token = params.require(:undo_token)
