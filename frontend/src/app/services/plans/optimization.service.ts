@@ -10,11 +10,15 @@ export type ActionCableCallback = (data: ActionCableMessage) => void;
 
 @Injectable({ providedIn: 'root' })
 export class OptimizationService implements OnDestroy {
-  private consumer: Cable;
+  private consumer: Cable | null = null;
 
-  constructor() {
-    const baseUrl = getApiBaseUrl() || window.location.origin;
-    this.consumer = createConsumer(`${baseUrl}/cable`);
+  private getConsumer(): Cable {
+    if (!this.consumer) {
+      const baseUrl = getApiBaseUrl() || window.location.origin;
+      const wsUrl = `${baseUrl.replace(/^http/, 'ws')}/cable`;
+      this.consumer = createConsumer(wsUrl);
+    }
+    return this.consumer;
   }
 
   subscribe(channel: string, params: Record<string, unknown>, callbacks: {
@@ -23,7 +27,8 @@ export class OptimizationService implements OnDestroy {
     disconnected?: () => void;
     rejected?: () => void;
   }): Channel {
-    return this.consumer.subscriptions.create(
+    const consumer = this.getConsumer();
+    return consumer.subscriptions.create(
       { channel, ...params },
       {
         received: callbacks.received,

@@ -31,8 +31,8 @@ class Farm < ApplicationRecord
   # Callbacks
   before_validation :normalize_longitude
   before_update :reset_weather_data_if_coordinates_changed
-  after_create_commit :enqueue_weather_data_fetch
-  after_update_commit :enqueue_weather_data_fetch_if_coordinates_changed
+  # after_create_commit :enqueue_weather_data_fetch
+  # after_update_commit :enqueue_weather_data_fetch_if_coordinates_changed
   after_update_commit :broadcast_refresh_if_needed
   
   # Validations
@@ -285,25 +285,22 @@ class Farm < ApplicationRecord
   end
   
   def broadcast_now
-    Rails.logger.info "🔍 [Farm##{id}] broadcast_now called - target: #{dom_id(self)}"
+    Rails.logger.info "🔍 [Farm##{id}] broadcast_now called - target: FarmChannel"
     
-    # 一覧画面のカード更新
-    broadcast_replace_to(
+    # ActionCable JSONブロードキャスト
+    FarmChannel.broadcast_to(
       self,
-      target: dom_id(self),
-      partial: "farms/farm_card_wrapper",
-      locals: { farm: self }
+      {
+        id: id,
+        weather_data_status: weather_data_status,
+        weather_data_progress: weather_data_progress,
+        weather_data_fetched_years: weather_data_fetched_years,
+        weather_data_total_years: weather_data_total_years,
+        updated_at: updated_at
+      }
     )
     
-    # 詳細画面の天気セクション更新
-    broadcast_replace_to(
-      self,
-      target: dom_id(self, :weather_section),
-      partial: "farms/farm_weather_section",
-      locals: { farm: self, fields_count: fields.count }
-    )
-    
-    Rails.logger.info "🔍 [Farm##{id}] broadcast_replace_to completed (both index and show)"
+    Rails.logger.info "🔍 [Farm##{id}] ActionCable broadcast completed"
   end
   
   # ActiveRecordのdom_idヘルパーを使えるようにする

@@ -8,29 +8,47 @@ module Api
         # Skip CSRF verification for API endpoints (use API key auth instead)
         skip_before_action :verify_authenticity_token
         
-        # ApplicationControllerの認証をスキップし、APIキー認証を使用
+        # ApplicationControllerの認証をスキップし、APIキーまたはセッション認証を使用
+        # APIキー: プログラムからのアクセス用
+        # セッション: SPAでWebログインしたユーザー用（ほ場管理画面など）
         skip_before_action :authenticate_user!
-        before_action :authenticate_api_key!
+        before_action :authenticate_api_key_or_session!
 
         private
 
-        def authenticate_api_key!
+        def authenticate_api_key_or_session!
           api_key = extract_api_key
-          
-          unless api_key
-            render json: { error: 'API key is required' }, status: :unauthorized
-            return false
+          if api_key.present?
+            user = User.find_by_api_key(api_key)
+            unless user
+              render json: { error: 'Invalid API key' }, status: :unauthorized
+              return false
+            end
+            @current_user = user
+            return true
           end
 
-          user = User.find_by_api_key(api_key)
-          
-          unless user
-            render json: { error: 'Invalid API key' }, status: :unauthorized
-            return false
+          # フォールバック: セッション認証（SPAのWebログインユーザー向け）
+          session_user = resolve_session_user
+          if session_user && !session_user.anonymous?
+            @current_user = session_user
+            return true
           end
 
-          @current_user = user
-          true
+          render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+          false
+        end
+
+        def resolve_session_user
+          session_id = cookies[:session_id]
+          return User.anonymous_user unless session_id
+          return User.anonymous_user unless Session.valid_session_id?(session_id)
+
+          session = Session.active.find_by(session_id: session_id)
+          return User.anonymous_user unless session
+
+          session.extend_expiration if session.expires_at < 1.week.from_now
+          session.user
         end
 
         def extract_api_key

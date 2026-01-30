@@ -140,26 +140,69 @@ module Api
           assert data['weather_data'].is_a?(Array)
         end
         
-        test "予測データがない場合、404エラーを返す" do
+        test "予測データがない場合、自動生成を試みて正常にレスポンスを返す" do
           @cultivation_plan.update!(predicted_weather_data: nil)
           
-          get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+          # WeatherPredictionServiceをモック
+          mock_service = Minitest::Mock.new
+          mock_prediction = {
+            data: {
+              'latitude' => @farm.latitude,
+              'longitude' => @farm.longitude,
+              'timezone' => 'Asia/Tokyo',
+              'data' => [
+                {
+                  'time' => @field_cultivation.start_date.to_s,
+                  'temperature_2m_max' => 20.0,
+                  'temperature_2m_min' => 10.0,
+                  'temperature_2m_mean' => 15.0,
+                  'precipitation_sum' => 0.0
+                }
+              ]
+            }
+          }
+          mock_service.expect :predict_for_cultivation_plan, mock_prediction, [@cultivation_plan]
           
-          assert_response :not_found
-          data = JSON.parse(response.body)
-          assert_not data['success']
-          assert_includes data['message'], '気象予測データがありません'
+          WeatherPredictionService.stub :new, mock_service do
+            get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+            
+            assert_response :success
+            data = JSON.parse(response.body)
+            assert data['success']
+            assert_equal @field_cultivation.id, data['field_cultivation']['id']
+          end
         end
         
-        test "予測データが空の場合、404エラーを返す" do
+        test "予測データが空の場合、自動生成を試みて正常にレスポンスを返す" do
           @cultivation_plan.update!(predicted_weather_data: {})
           
-          get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+          # WeatherPredictionServiceをモック
+          mock_service = Minitest::Mock.new
+          mock_prediction = {
+            data: {
+              'latitude' => @farm.latitude,
+              'longitude' => @farm.longitude,
+              'timezone' => 'Asia/Tokyo',
+              'data' => [
+                {
+                  'time' => @field_cultivation.start_date.to_s,
+                  'temperature_2m_max' => 20.0,
+                  'temperature_2m_min' => 10.0,
+                  'temperature_2m_mean' => 15.0,
+                  'precipitation_sum' => 0.0
+                }
+              ]
+            }
+          }
+          mock_service.expect :predict_for_cultivation_plan, mock_prediction, [@cultivation_plan]
           
-          assert_response :not_found
-          data = JSON.parse(response.body)
-          assert_not data['success']
-          assert_includes data['message'], '気象予測データがありません'
+          WeatherPredictionService.stub :new, mock_service do
+            get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+            
+            assert_response :success
+            data = JSON.parse(response.body)
+            assert data['success']
+          end
         end
         
         test "栽培期間が設定されていない場合、400エラーを返す" do

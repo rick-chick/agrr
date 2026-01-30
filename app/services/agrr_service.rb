@@ -33,6 +33,12 @@ class AgrrService
   def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: 'noaa', json: true)
     ensure_daemon_running!
 
+    # 日本国内の場合はデフォルトのnoaaからjmaまたはopenmeteoに切り替える
+    if data_source == 'noaa' && location_in_japan?(location)
+      Rails.logger.info "🇯🇵 [AgrrService] Location in Japan detected, switching data source from noaa to jma"
+      data_source = 'jma'
+    end
+
     output_file = nil
     output_path = nil
 
@@ -56,7 +62,8 @@ class AgrrService
 
     output_content = File.read(output_path)
     if output_content.blank?
-      raise CommandExecutionError, 'Weather command produced an empty output file'
+      Rails.logger.error "❌ [AgrrService] Weather command produced an empty output file for location: #{location}, source: #{data_source}"
+      raise CommandExecutionError, "Weather data not available for this location from #{data_source}. Please try a different data source."
     end
 
     output_content
@@ -357,5 +364,28 @@ class AgrrService
       combined_error.include?('socket') ||
       combined_error.include?('daemon') ||
       !daemon_running?
+  end
+
+  def location_in_japan?(location)
+    return false unless location.present?
+
+    # location format: "lat,lon"
+    lat, lon = location.split(',').map(&:to_f)
+    return false if lat == 0.0 && lon == 0.0
+
+    # 緯度: 20-46, 経度: 122-154
+    lat.between?(20.0, 46.0) && lon.between?(122.0, 154.0)
+  end
+
+  # 気象データのフォーマットを正規化（古いネスト形式を解消）
+  def self.normalize_weather_data(data)
+    return nil if data.blank?
+
+    if data['data'].is_a?(Hash) && data['data']['data'].is_a?(Array)
+      Rails.logger.warn "⚠️ [AgrrService] Old nested weather format detected, extracting inner data"
+      data['data']
+    else
+      data
+    end
   end
 end

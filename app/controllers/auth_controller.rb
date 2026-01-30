@@ -13,6 +13,12 @@ class AuthController < ApplicationController
   # before_action :check_production_environment
 
   def login
+    # Store return_to for redirect after OAuth (e.g. Angular dev server at 4200)
+    if params[:return_to].present?
+      return_to = params[:return_to].strip
+      session[:return_to] = return_to if allowed_return_to?(return_to)
+    end
+
     # Check if Google OAuth is properly configured
     unless ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
       Rails.logger.error "🚨 Google OAuth not configured for login attempt"
@@ -61,7 +67,13 @@ class AuthController < ApplicationController
           redirect_to process_saved_plan_public_plans_path and return
         end
 
-        redirect_to root_path, notice: I18n.t('auth.flash.login_success')
+        # Redirect back to frontend (e.g. Angular 4200) if return_to was set
+        if session[:return_to].present?
+          return_to = session.delete(:return_to)
+          redirect_to return_to, allow_other_host: true, notice: I18n.t('auth.flash.login_success')
+        else
+          redirect_to root_path, notice: I18n.t('auth.flash.login_success')
+        end
       else
         redirect_to auth_failure_path, alert: I18n.t('auth.flash.create_user_failed')
       end
@@ -131,6 +143,22 @@ class AuthController < ApplicationController
 
   def auth_failure_path
     '/auth/failure'
+  end
+
+  def allowed_return_to?(url)
+    return false if url.blank?
+    uri = URI.parse(url)
+    return false unless %w[http https].include?(uri.scheme)
+    origin = build_origin(uri)
+    allowed = ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').map(&:strip).reject(&:empty?)
+    allowed_origins = allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
+    allowed_origins.include?(origin)
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def build_origin(uri)
+    "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
   end
 end
 

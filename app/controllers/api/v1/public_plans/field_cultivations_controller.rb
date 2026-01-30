@@ -63,24 +63,15 @@ module Api
             return render json: { success: false, message: I18n.t('api.errors.crop_not_found') }, status: :not_found
           end
           
-          # CultivationPlanに保存された予測データを使用（必須）
-          unless cultivation_plan.predicted_weather_data.present?
-            Rails.logger.error "❌ [Climate Data] No predicted_weather_data found in CultivationPlan##{cultivation_plan.id}"
-            return render json: {
-              success: false,
-              message: I18n.t('controllers.field_cultivations.errors.predicted_weather_missing')
-            }, status: :not_found
-          end
-          
-          Rails.logger.info "✅ [Climate Data] Using saved predicted weather data from CultivationPlan##{cultivation_plan.id}"
-          saved_data = cultivation_plan.predicted_weather_data
-          
-          # 古い保存形式（ネスト構造）の場合は修正
-          if saved_data['data'].is_a?(Hash) && saved_data['data']['data'].is_a?(Array)
-            Rails.logger.warn "⚠️ [Climate Data] Old nested format detected, extracting inner data"
-            weather_data_for_cli = saved_data['data']
+          # CultivationPlanに保存された予測データを使用
+          if cultivation_plan.predicted_weather_data.present?
+            Rails.logger.info "✅ [Climate Data] Using saved predicted weather data from CultivationPlan##{cultivation_plan.id}"
+            weather_data_for_cli = AgrrService.normalize_weather_data(cultivation_plan.predicted_weather_data)
           else
-            weather_data_for_cli = saved_data
+            Rails.logger.warn "⚠️ [Climate Data] No predicted_weather_data found in CultivationPlan##{cultivation_plan.id}, generating on-the-fly"
+            prediction_service = WeatherPredictionService.new(weather_location: farm.weather_location, farm: farm)
+            prediction_info = prediction_service.predict_for_cultivation_plan(cultivation_plan)
+            weather_data_for_cli = prediction_info[:data]
           end
           
           # 表示用の気象データレコード（実データと予測データ）
@@ -224,6 +215,13 @@ module Api
           render json: {
             success: false,
             message: I18n.t('controllers.field_cultivations.errors.progress_failed', error: e.message)
+          }, status: :internal_server_error
+        rescue StandardError => e
+          Rails.logger.error "❌ [Climate Data] Unexpected error: #{e.class.name}: #{e.message}"
+          Rails.logger.error "❌ [Climate Data] Backtrace: #{e.backtrace.first(10).join("\n")}"
+          render json: {
+            success: false,
+            message: I18n.t('controllers.field_cultivations.errors.weather_fetch_failed', error: e.message)
           }, status: :internal_server_error
         rescue PolicyPermissionDenied
           raise ActiveRecord::RecordNotFound

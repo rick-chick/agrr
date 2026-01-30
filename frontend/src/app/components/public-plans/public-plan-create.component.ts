@@ -27,7 +27,7 @@ const initialControl: PublicPlanCreateViewState = {
   providers: [
     PublicPlanCreatePresenter,
     LoadPublicPlanFarmsUseCase,
-    { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useClass: PublicPlanCreatePresenter },
+    { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
   ],
   template: `

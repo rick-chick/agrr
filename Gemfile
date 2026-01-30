@@ -84,13 +84,16 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
-  
+
   # Code coverage
   gem "simplecov", "= 0.22.0", require: false
-  
+
   # Database cleanup for system tests
   gem "database_cleaner-active_record", "= 2.2.2"
-  
+
   # Test data factories
   gem "factory_bot_rails", "= 6.5.1"
+
+  # Mocking library
+  gem "mocha", "= 2.7.1"
 end

@@ -26,7 +26,7 @@ const initialControl: PublicPlanOptimizingViewState = {
     SubscribePublicPlanOptimizationUseCase,
     {
       provide: SUBSCRIBE_PUBLIC_PLAN_OPTIMIZATION_OUTPUT_PORT,
-      useClass: PublicPlanOptimizingPresenter
+      useExisting: PublicPlanOptimizingPresenter
     },
     {
       provide: PUBLIC_PLAN_OPTIMIZATION_GATEWAY,

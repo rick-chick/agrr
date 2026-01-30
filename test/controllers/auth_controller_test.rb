@@ -32,4 +32,22 @@ class AuthControllerTest < ActionController::TestCase
     get :google_oauth2_callback
     assert_redirected_to process_saved_plan_public_plans_path
   end
+
+  def test_callback_redirects_to_return_to_when_set
+    @request.session[:return_to] = 'http://localhost:4200/'
+
+    get :google_oauth2_callback
+    assert_redirected_to 'http://localhost:4200/', allow_other_host: true
+    assert_nil session[:return_to]
+  end
+
+  def test_login_stores_allowed_return_to
+    get :login, params: { return_to: 'http://localhost:4200/dashboard' }
+    assert_equal 'http://localhost:4200/dashboard', session[:return_to]
+  end
+
+  def test_login_ignores_disallowed_return_to
+    get :login, params: { return_to: 'https://evil.example.com/' }
+    assert_nil session[:return_to]
+  end
 end

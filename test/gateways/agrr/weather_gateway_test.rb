@@ -41,6 +41,7 @@ class AgrrWeatherGatewayTest < ActiveSupport::TestCase
   end
 
   def setup
+    load Rails.root.join('app/gateways/agrr/weather_gateway.rb')
     @gateway = Agrr::WeatherGateway.new
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)

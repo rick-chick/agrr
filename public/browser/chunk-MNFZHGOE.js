@@ -1,0 +1,1 @@
+import{a as i}from"./chunk-S2ZNJ6LP.js";import{P as t,T as o}from"./chunk-OVGF36KA.js";var s=class r{constructor(e){this.client=e}list(){return this.client.get("/crops")}show(e){return this.client.get(`/crops/${e}`)}static \u0275fac=function(c){return new(c||r)(o(i))};static \u0275prov=t({token:r,factory:r.\u0275fac,providedIn:"root"})};export{s as a};
