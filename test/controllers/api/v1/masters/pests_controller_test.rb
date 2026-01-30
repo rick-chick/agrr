@@ -12,8 +12,12 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::PestsController.included_modules, ApiCrudResponder
+        test "includes Pest Views" do
+          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestListView
+          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestDetailView
+          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestCreateView
+          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestUpdateView
+          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestDeleteView
         end
 
         test "should get index" do
@@ -39,6 +43,24 @@ module Api
           assert_includes pest_ids, pest2.id
           assert_not_includes pest_ids, reference_pest.id
           assert_not_includes pest_ids, other_pest.id
+        end
+
+        # Interactor が StandardError を rescue すると Presenter が 422 を返す。
+        # Gateway#list が name が空の Pest を返すと PestEntity.from_model が ArgumentError を起こし 422 になる。
+        test "index returns 422 when a pest has blank name" do
+          create(:pest, :user_owned, user: @user)
+          pest_invalid = Pest.new(name: "", is_reference: false, user_id: @user.id)
+          pest_invalid.save!(validate: false)
+
+          get api_v1_masters_pests_path,
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          assert_equal "Name is required", json["error"]
         end
 
         test "should show pest" do
@@ -81,6 +103,7 @@ module Api
                      family: "テスト科"
                    }
                  },
+                 as: :json,
                  headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
@@ -145,7 +168,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "should not destroy other user's pest" do
