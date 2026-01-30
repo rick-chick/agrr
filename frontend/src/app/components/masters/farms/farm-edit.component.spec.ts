@@ -106,10 +106,9 @@ describe('FarmEditComponent', () => {
     });
   });
 
-  it('clears error on updateFarm before calling useCase', () => {
+  it('calls updateUseCase on updateFarm when form is valid', () => {
     component.control = {
       ...component.control,
-      error: 'Previous error',
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -120,7 +119,6 @@ describe('FarmEditComponent', () => {
 
     component.updateFarm();
 
-    expect(component.control.error).toBe(null);
     expect(updateUseCase.execute).toHaveBeenCalled();
   });
 

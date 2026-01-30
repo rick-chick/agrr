@@ -33,8 +33,6 @@ const initialControl: InteractionRuleDetailViewState = {
     <main class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
-      } @else if (control.error) {
-        <p class="master-error">{{ control.error }}</p>
       } @else if (control.rule) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.rule.source_group }} → {{ control.rule.target_group }}</h1>

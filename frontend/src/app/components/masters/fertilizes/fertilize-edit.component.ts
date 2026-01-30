@@ -46,8 +46,6 @@ const initialControl: FertilizeEditViewState = {
         <h2 id="form-heading" class="form-card__title">Edit Fertilize</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <form (ngSubmit)="updateFertilize()" #fertilizeForm="ngForm" class="form-card__form">
             <label class="form-card__field">
@@ -78,9 +76,6 @@ const initialControl: FertilizeEditViewState = {
               Description
               <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
-            @if (control.error) {
-              <p class="master-error">{{ control.error }}</p>
-            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">Save</button>
               <a routerLink="/fertilizes" class="btn-secondary">Back to fertilizes</a>

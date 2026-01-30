@@ -69,9 +69,6 @@ const initialControl: InteractionRuleCreateViewState = {
             {{ 'interaction_rules.form.region_label' | translate }}
             <input name="region" [(ngModel)]="control.formData.region" />
           </label>
-          @if (control.error) {
-            <p class="master-error">{{ control.error }}</p>
-          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}

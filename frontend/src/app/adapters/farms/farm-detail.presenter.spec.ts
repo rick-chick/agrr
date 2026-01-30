@@ -7,17 +7,21 @@ import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 describe('FarmDetailPresenter', () => {
   let presenter: FarmDetailPresenter;
   let view: FarmDetailView;
   let lastControl: FarmDetailViewState | null;
+  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
     TestBed.configureTestingModule({
       providers: [
         FarmDetailPresenter,
-        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } }
+        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } },
+        { provide: FlashMessageService, useValue: mockFlashMessageService }
       ]
     });
     presenter = TestBed.inject(FarmDetailPresenter);
@@ -61,7 +65,7 @@ describe('FarmDetailPresenter', () => {
       expect(lastControl!.fields).toEqual(dto.fields);
     });
 
-    it('updates view.control on onError(dto)', () => {
+    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
       const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [] };
       lastControl = initialControl;
 
@@ -69,9 +73,11 @@ describe('FarmDetailPresenter', () => {
 
       presenter.onError(dto);
 
+      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Not found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBe('Not found');
+      expect(lastControl!.error).toBeNull();
     });
   });
 

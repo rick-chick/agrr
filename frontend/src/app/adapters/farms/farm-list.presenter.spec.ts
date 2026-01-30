@@ -6,6 +6,7 @@ import { FarmListDataDto } from '../../usecase/farms/load-farm-list.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 describe('FarmListPresenter', () => {
@@ -13,16 +14,19 @@ describe('FarmListPresenter', () => {
   let view: FarmListView;
   let lastControl: FarmListViewState | null;
   let mockUndoToastService: UndoToastService & { showWithUndo: ReturnType<typeof vi.fn> };
+  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockUndoToastService = {
       showWithUndo: vi.fn()
     } as UndoToastService & { showWithUndo: ReturnType<typeof vi.fn> };
+    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
     TestBed.configureTestingModule({
       providers: [
         FarmListPresenter,
-        { provide: UndoToastService, useValue: mockUndoToastService }
+        { provide: UndoToastService, useValue: mockUndoToastService },
+        { provide: FlashMessageService, useValue: mockFlashMessageService }
       ]
     });
     presenter = TestBed.inject(FarmListPresenter);
@@ -60,7 +64,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms).toEqual(dto.farms);
     });
 
-    it('updates view.control on onError(dto)', () => {
+    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
       const initialControl: FarmListViewState = { loading: true, error: null, farms: [] };
       lastControl = initialControl;
 
@@ -68,9 +72,11 @@ describe('FarmListPresenter', () => {
 
       presenter.onError(dto);
 
+      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Network error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBe('Network error');
+      expect(lastControl!.error).toBeNull();
       expect(lastControl!.farms).toEqual([]); // farms should be preserved
     });
   });

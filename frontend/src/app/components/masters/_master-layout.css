@@ -241,12 +241,6 @@
   font-size: var(--font-size-xs);
 }
 
-/* エラー表示 */
-.master-error {
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-}
-
 /* ローディング表示 */
 .master-loading {
   color: var(--color-text-secondary);

@@ -45,8 +45,6 @@ const initialControl: FarmEditViewState = {
         <h2 id="form-heading" class="form-card__title">Edit Farm</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <form (ngSubmit)="updateFarm()" #farmForm="ngForm" class="form-card__form">
             <label class="form-card__field">
@@ -95,9 +93,6 @@ const initialControl: FarmEditViewState = {
                 </label>
               </div>
             </div>
-            @if (control.error) {
-              <p class="master-error">{{ control.error }}</p>
-            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Save</button>
               <a routerLink="/farms" class="btn-secondary">Back to farms</a>

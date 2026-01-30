@@ -68,9 +68,6 @@ const initialControl: FertilizeCreateViewState = {
             Description
             <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
-          @if (control.error) {
-            <p class="master-error">{{ control.error }}</p>
-          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">Create</button>
             <a routerLink="/fertilizes" class="btn-secondary">Back to fertilizes</a>

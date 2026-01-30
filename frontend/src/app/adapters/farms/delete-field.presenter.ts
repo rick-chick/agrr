@@ -4,10 +4,12 @@ import { FarmDetailView } from '../../components/masters/farms/farm-detail.view'
 import { DeleteFieldOutputDto } from '../../usecase/farms/delete-field.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 @Injectable()
 export class DeleteFieldPresenter implements DeleteFieldOutputPort {
   private readonly undoToastService = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -35,10 +37,11 @@ export class DeleteFieldPresenter implements DeleteFieldOutputPort {
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: dto.message
+      error: null
     };
   }
 }

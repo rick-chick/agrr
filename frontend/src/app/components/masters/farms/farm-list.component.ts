@@ -38,8 +38,6 @@ const initialControl: FarmListViewState = {
         <h2 id="section-list-heading" class="section-title">Farm list</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <a routerLink="/farms/new" class="btn-primary">Create Farm</a>
           <ul class="card-list" role="list">

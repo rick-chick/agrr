@@ -6,10 +6,12 @@ import { FarmListDataDto } from '../../usecase/farms/load-farm-list.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 @Injectable()
 export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutputPort {
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private view: FarmListView | null = null;
 
   setView(view: FarmListView): void {
@@ -27,10 +29,11 @@ export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutp
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: dto.message
+      error: null
     };
   }
 

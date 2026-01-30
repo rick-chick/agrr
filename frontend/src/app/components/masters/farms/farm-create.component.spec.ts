@@ -93,10 +93,9 @@ describe('FarmCreateComponent', () => {
     });
   });
 
-  it('clears error on createFarm before calling useCase', () => {
+  it('calls useCase on createFarm when form is valid', () => {
     component.control = {
       ...component.control,
-      error: 'Previous error',
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
@@ -107,7 +106,6 @@ describe('FarmCreateComponent', () => {
 
     component.createFarm();
 
-    expect(component.control.error).toBe(null);
     expect(useCase.execute).toHaveBeenCalled();
   });
 

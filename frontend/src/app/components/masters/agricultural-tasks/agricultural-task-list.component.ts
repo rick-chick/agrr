@@ -47,8 +47,6 @@ const initialControl: AgriculturalTaskListViewState = {
         <h2 id="section-list-heading" class="section-title">Task list</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <a [routerLink]="['/agricultural_tasks', 'new']" class="btn-primary">New Agricultural Task</a>
           <ul class="card-list" role="list">

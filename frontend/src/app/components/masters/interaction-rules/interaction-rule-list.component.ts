@@ -48,8 +48,6 @@ const initialControl: InteractionRuleListViewState = {
         <h2 id="section-list-heading" class="section-title">{{ 'interaction_rules.index.list_heading' | translate }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <a [routerLink]="['/interaction_rules', 'new']" class="btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
           <ul class="card-list" role="list">
