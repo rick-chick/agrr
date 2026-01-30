@@ -1,5 +1,18 @@
 @import '../_master-layout.css';
 
+.form-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.form-card__field-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
 .form-card__field input {
   display: block;
   width: 100%;
@@ -7,7 +20,18 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);
-  margin-top: var(--space-1);
+  background: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-card__field input:hover {
+  border-color: var(--color-input-hover, var(--color-text-secondary));
+}
+
+.form-card__field input:focus {
+  outline: none;
+  border-color: var(--color-input-focus, var(--color-primary));
+  box-shadow: var(--shadow-input-focus, 0 0 0 2px rgba(37, 99, 235, 0.2));
 }
 
 .form-group {
