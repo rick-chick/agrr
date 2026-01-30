@@ -2013,18 +2013,32 @@
       }
     }
   },
+  "status": {
+    "checking": "確認中..."
+  },
   "nav": {
     "home": "ホーム",
     "farms": "圃場管理",
     "crops": "作物管理",
     "plans": "作付け計画",
     "public_plans": "無料作付け計画",
+    "weather": "気象",
+    "api_keys": "APIキー",
+    "fertilizes": "肥料",
+    "pests": "害虫",
+    "pesticides": "農薬",
+    "agricultural_tasks": "作業",
+    "interaction_rules": "連作ルール",
     "about": "AGRRについて",
     "contact": "お問い合わせ",
+    "privacy": "プライバシー",
+    "terms": "利用規約",
     "login": "ログイン",
     "logout": "ログアウト",
     "admin": "管理画面",
-    "language": "言語"
+    "language": "言語",
+    "menu_masters": "マスタ",
+    "menu_more": "その他"
   },
   "footer": {
     "about": "AGRRについて",
