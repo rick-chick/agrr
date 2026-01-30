@@ -10,8 +10,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     @pest = create(:pest, :complete, is_reference: true)
   end
 
-  test "includes HtmlCrudResponder" do
-    assert_includes PestsController.included_modules, HtmlCrudResponder
+  test "does not include HtmlCrudResponder (Clean Architecture)" do
+    assert_not_includes PestsController.included_modules, HtmlCrudResponder
   end
 
   test "should get index" do
@@ -182,7 +182,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pests_path
     assert_equal I18n.t('deletion_undo.redirect_notice', resource: pest.name), flash[:notice]
 
-    event = DeletionUndoEvent.last
+    event = DeletionUndoEvent.find_by!(resource_type: 'Pest', resource_id: pest.id.to_s)
     assert_equal 'Pest', event.resource_type
     assert_equal I18n.t('pests.undo.toast', name: pest.name), event.toast_message
   end
@@ -1299,11 +1299,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference('Pest.count', 1) do
       assert_difference('CropPest.count', 1) do
-        post pests_path, params: { 
-          pest: {
-            name: 'テスト害虫',
-            is_reference: false
-          },
+        post pests_path, params: {
+          pest: { name: 'テスト害虫', is_reference: false },
           crop_ids: [reference_crop.id, my_crop.id]
         }
       end
