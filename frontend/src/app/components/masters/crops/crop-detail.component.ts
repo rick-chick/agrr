@@ -33,8 +33,6 @@ const initialControl: CropDetailViewState = {
     <main class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
-      } @else if (control.error) {
-        <p class="master-error">{{ control.error }}</p>
       } @else if (control.crop) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.crop.name }}</h1>
@@ -113,6 +111,11 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   load(cropId: number): void {
     this.control = { ...this.control, loading: true };
     this.useCase.execute({ cropId });
+  }
+
+  reload(): void {
+    const cropId = Number(this.route.snapshot.paramMap.get('id'));
+    if (cropId) this.load(cropId);
   }
 
   deleteCrop(): void {

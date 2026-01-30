@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { vi } from 'vitest';
 import { FarmDetailPresenter } from './farm-detail.presenter';
 import { FarmDetailView, FarmDetailViewState } from '../../components/masters/farms/farm-detail.view';
@@ -18,8 +17,7 @@ describe('FarmDetailPresenter', () => {
     TestBed.configureTestingModule({
       providers: [
         FarmDetailPresenter,
-        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } },
-        { provide: Router, useValue: { navigate: vi.fn() } }
+        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } }
       ]
     });
     presenter = TestBed.inject(FarmDetailPresenter);
@@ -31,7 +29,8 @@ describe('FarmDetailPresenter', () => {
       set control(value: FarmDetailViewState) {
         lastControl = value;
       },
-      load: vi.fn()
+      load: vi.fn(),
+      reload: vi.fn()
     };
     presenter.setView(view);
   });
@@ -141,8 +140,7 @@ describe('FarmDetailPresenter', () => {
       // onSuccess does not update view.control directly
       presenter.onSuccess(dto);
 
-      // The actual undo handling is done by UndoToastService and Router
-      // which are injected and not directly testable here
+      // The actual undo handling is done by UndoToastService; on restore, view.reload() is called
     });
   });
 });

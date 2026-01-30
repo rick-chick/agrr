@@ -174,6 +174,11 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     });
   }
 
+  reload(): void {
+    const farmId = Number(this.route.snapshot.paramMap.get('id'));
+    if (farmId) this.load(farmId);
+  }
+
   deleteFarm(): void {
     if (!this.control.farm) return;
     this.deleteUseCase.execute({

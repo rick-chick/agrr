@@ -126,6 +126,11 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
     this.useCase.execute({ agriculturalTaskId });
   }
 
+  reload(): void {
+    const agriculturalTaskId = Number(this.route.snapshot.paramMap.get('id'));
+    if (agriculturalTaskId) this.load(agriculturalTaskId);
+  }
+
   deleteAgriculturalTask(): void {
     if (!this.control.agriculturalTask) return;
     this.deleteUseCase.execute({

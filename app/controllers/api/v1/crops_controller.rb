@@ -38,8 +38,7 @@ module Api
       private
 
       def set_interactors
-        gateway = Adapters::Crop::Gateways::CropMemoryGateway.new
-        @create_interactor = Domain::Crop::Interactors::CropCreateInteractor.new(gateway)
+        @create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(user_id: current_user.id)
       end
 
       def fetch_crop_info_from_agrr(crop_name, max_retries: 3)

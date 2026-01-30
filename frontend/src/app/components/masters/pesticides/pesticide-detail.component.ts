@@ -142,6 +142,11 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
     this.useCase.execute({ pesticideId });
   }
 
+  reload(): void {
+    const pesticideId = Number(this.route.snapshot.paramMap.get('id'));
+    if (pesticideId) this.load(pesticideId);
+  }
+
   deletePesticide(): void {
     if (!this.control.pesticide) return;
     this.deleteUseCase.execute({

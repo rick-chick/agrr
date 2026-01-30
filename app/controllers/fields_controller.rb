@@ -64,7 +64,7 @@ class FieldsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self, farm_id: @farm.id)
+        presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
           output_port: presenter,
           gateway: field_gateway,
@@ -82,6 +82,15 @@ class FieldsController < ApplicationController
         interactor.call(params[:id])
       end
     end
+  end
+
+  # FieldDeletePresenter (format.json) が参照する View インターフェース
+  def render_response(json:, status:)
+    render json: json, status: status
+  end
+
+  def undo_deletion_path(undo_token:)
+    Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
   end
 
   private

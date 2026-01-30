@@ -39,8 +39,6 @@ const initialControl: CropListViewState = {
         <h2 id="section-list-heading" class="section-title">{{ 'crops.index.list_heading' | translate }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <a [routerLink]="['/crops', 'new']" class="btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
           <ul class="card-list" role="list">

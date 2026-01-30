@@ -46,8 +46,6 @@ const initialControl: CropEditViewState = {
         <h2 id="form-heading" class="form-card__title">{{ 'crops.edit.title' | translate }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <form (ngSubmit)="updateCrop()" #cropForm="ngForm" class="form-card__form">
             <label class="form-card__field">
@@ -70,9 +68,6 @@ const initialControl: CropEditViewState = {
               {{ 'crops.form.region_label' | translate }}
               <input name="region" [(ngModel)]="control.formData.region" />
             </label>
-            @if (control.error) {
-              <p class="master-error">{{ control.error }}</p>
-            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="cropForm.invalid || control.saving">
                 {{ 'crops.form.submit_update' | translate }}

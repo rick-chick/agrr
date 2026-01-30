@@ -9,4 +9,6 @@ export type CropDetailViewState = {
 export interface CropDetailView {
   get control(): CropDetailViewState;
   set control(value: CropDetailViewState);
+  /** Reload detail (e.g. after undo restore). */
+  reload(): void;
 }

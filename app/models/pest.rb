@@ -25,6 +25,7 @@ class Pest < ApplicationRecord
   has_many :pest_control_methods, dependent: :destroy
   has_many :crop_pests, dependent: :destroy
   has_many :crops, through: :crop_pests
+  has_many :pesticides, dependent: :restrict_with_exception
 
   accepts_nested_attributes_for :pest_temperature_profile, allow_destroy: true
   accepts_nested_attributes_for :pest_thermal_requirement, allow_destroy: true

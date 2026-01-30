@@ -9,4 +9,6 @@ export type PesticideDetailViewState = {
 export interface PesticideDetailView {
   get control(): PesticideDetailViewState;
   set control(value: PesticideDetailViewState);
+  /** Reload detail (e.g. after undo restore). */
+  reload(): void;
 }

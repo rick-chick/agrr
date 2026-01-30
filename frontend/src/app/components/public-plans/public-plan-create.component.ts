@@ -57,8 +57,8 @@ const initialControl: PublicPlanCreateViewState = {
         </div>
 
         <div class="content-card">
-          <h2 class="content-card-title">{{ 'public_plans.new.title' | translate }}</h2>
-          <p class="content-card-subtitle">{{ 'public_plans.new.subtitle' | translate }}</p>
+          <h2 class="content-card__title">{{ 'public_plans.new.title' | translate }}</h2>
+          <p class="content-card__subtitle">{{ 'public_plans.new.subtitle' | translate }}</p>
 
           <section class="selection-section">
             <h3>{{ 'public_plans.region_selection.title' | translate }}</h3>

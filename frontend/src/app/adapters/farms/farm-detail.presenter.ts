@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FarmDetailView } from '../../components/masters/farms/farm-detail.view';
 import { LoadFarmDetailOutputPort } from '../../usecase/farms/load-farm-detail.output-port';
@@ -15,7 +14,6 @@ export class FarmDetailPresenter
   implements LoadFarmDetailOutputPort, SubscribeFarmWeatherOutputPort, DeleteFarmOutputPort
 {
   private readonly undoToast = inject(UndoToastService);
-  private readonly router = inject(Router);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -70,9 +68,8 @@ export class FarmDetailPresenter
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.router.navigate(['/farms'])
+        () => this.view?.reload()
       );
     }
-    // Navigation is handled by Component's onSuccess callback
   }
 }

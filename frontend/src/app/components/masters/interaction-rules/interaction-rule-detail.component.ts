@@ -115,6 +115,11 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
     this.useCase.execute({ interactionRuleId });
   }
 
+  reload(): void {
+    const interactionRuleId = Number(this.route.snapshot.paramMap.get('id'));
+    if (interactionRuleId) this.load(interactionRuleId);
+  }
+
   deleteInteractionRule(): void {
     if (!this.control.rule) return;
     this.deleteUseCase.execute({

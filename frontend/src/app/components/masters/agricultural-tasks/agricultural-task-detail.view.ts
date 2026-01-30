@@ -9,4 +9,6 @@ export type AgriculturalTaskDetailViewState = {
 export interface AgriculturalTaskDetailView {
   get control(): AgriculturalTaskDetailViewState;
   set control(value: AgriculturalTaskDetailViewState);
+  /** Reload detail (e.g. after undo restore). */
+  reload(): void;
 }

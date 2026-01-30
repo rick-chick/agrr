@@ -37,27 +37,6 @@
   margin-bottom: var(--space-4);
 }
 
-.feature-grid {
-  display: grid;
-  gap: var(--space-5);
-}
-
-.feature-card {
-  background-color: var(--color-gray-50);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-}
-
-.feature-card-title {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-3);
-  color: var(--color-success);
-}
-
-.feature-card-content {
-  margin-bottom: 0;
-}
-
 .info-box {
   background-color: var(--color-gray-50);
   padding: var(--space-8);
