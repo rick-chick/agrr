@@ -121,8 +121,6 @@ lib/adapters/            # Gateway implementations (AI features only)
 └── fertilize/gateways/
 ```
 
-**Note:** `agricultural_task` domain code exists but is unused.
-
 ## 🎯 Backend API Pattern (Primary)
 
 ### Standard API Controller Pattern
