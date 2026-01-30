@@ -31,9 +31,9 @@ export class InteractionRuleListPresenter implements LoadInteractionRuleListOutp
     if (!this.view) throw new Error('Presenter: view not set');
     this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
+      ...this.view.control,
       loading: false,
-      error: null,
-      rules: []
+      error: null
     };
   }
 

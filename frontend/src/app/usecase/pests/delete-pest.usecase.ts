@@ -24,9 +24,13 @@ export class DeletePestUseCase implements DeletePestInputPort {
         });
         dto.onSuccess?.();
       },
-      error: (err: Error & { error?: { errors?: string[] } }) =>
+      error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
         this.outputPort.onError({
-          message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+          message:
+            err?.error?.error ??
+            err?.error?.errors?.join(', ') ??
+            err?.message ??
+            'Unknown error'
         })
     });
   }

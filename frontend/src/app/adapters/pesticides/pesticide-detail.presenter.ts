@@ -31,9 +31,9 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
     if (!this.view) throw new Error('Presenter: view not set');
     this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
+      ...this.view.control,
       loading: false,
-      error: null,
-      pesticide: null
+      error: null
     };
   }
 
