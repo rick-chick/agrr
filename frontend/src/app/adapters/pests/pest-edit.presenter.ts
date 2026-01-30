@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { PestEditView } from '../../components/masters/pests/pest-edit.view';
 import { LoadPestForEditOutputPort } from '../../usecase/pests/load-pest-for-edit.output-port';
 import { LoadPestForEditDataDto } from '../../usecase/pests/load-pest-for-edit.dtos';
 import { UpdatePestOutputPort } from '../../usecase/pests/update-pest.output-port';
 import { UpdatePestSuccessDto } from '../../usecase/pests/update-pest.dtos';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 @Injectable()
 export class PestEditPresenter implements LoadPestForEditOutputPort, UpdatePestOutputPort {
+  private readonly flashMessage = inject(FlashMessageService);
   private view: PestEditView | null = null;
 
   setView(view: PestEditView): void {
@@ -35,11 +37,12 @@ export class PestEditPresenter implements LoadPestForEditOutputPort, UpdatePestO
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
-      error: dto.message
+      error: null
     };
   }
 
