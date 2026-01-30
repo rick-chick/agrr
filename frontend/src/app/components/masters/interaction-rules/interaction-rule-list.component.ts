@@ -97,11 +97,16 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
     this.loadUseCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
   deleteInteractionRule(interactionRuleId: number): void {
     this.deleteUseCase.execute({
       interactionRuleId,
       onSuccess: () => {},
-      onAfterUndo: () => this.load()
+      onAfterUndo: () => this.refreshAfterUndo()
     });
   }
 }

@@ -87,7 +87,12 @@ export class PesticideListComponent implements PesticideListView, OnInit {
     this.loadUseCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
   deletePesticide(pesticideId: number): void {
-    this.deleteUseCase.execute({ pesticideId, onAfterUndo: () => this.load() });
+    this.deleteUseCase.execute({ pesticideId, onAfterUndo: () => this.refreshAfterUndo() });
   }
 }

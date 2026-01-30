@@ -25,6 +25,10 @@ function isValidCoord(lat: number, lng: number): boolean {
   );
 }
 
+/**
+ * options は getter にしないこと。CD のたびに新しいオブジェクトを渡すと Leaflet が再初期化され、
+ * edit 画面が「延々とリロード」して見える。プロパティで持ち、ngOnChanges で入力変更時だけ更新する。
+ */
 @Component({
   selector: 'app-farm-map',
   standalone: true,
@@ -69,22 +73,21 @@ export class FarmMapComponent implements OnChanges {
       : DEFAULT_LNG;
   }
 
-  get options(): {
+  /** Stable reference; updated only in ngOnChanges when lat/lng change to avoid re-init on every CD. */
+  options: {
     layers: ReturnType<typeof tileLayer>[];
     zoom: number;
     center: LatLngExpression;
-  } {
-    return {
-      layers: [
-        tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap'
-        })
-      ],
-      zoom: 13,
-      center: [this.effectiveLat, this.effectiveLng] as LatLngExpression
-    };
-  }
+  } = {
+    layers: [
+      tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      })
+    ],
+    zoom: 13,
+    center: [DEFAULT_LAT, DEFAULT_LNG] as LatLngExpression
+  };
 
   displayLayers: Marker[] = [];
 
@@ -93,6 +96,7 @@ export class FarmMapComponent implements OnChanges {
     const lngChange = changes['longitude'];
     if (latChange || lngChange) {
       const center: LatLngExpression = [this.effectiveLat, this.effectiveLng];
+      this.options = { ...this.options, center };
       if (this.editable) {
         if (this.editableMarker) {
           this.editableMarker.setLatLng(center);
