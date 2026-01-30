@@ -4,14 +4,22 @@ module Api
   module V1
     module Masters
       class BaseController < ApplicationController
+        include DeletionUndoFlow
+
         # API versioning base controller for master data management
         # Skip CSRF verification for API endpoints (use API key auth instead)
         skip_before_action :verify_authenticity_token
-        
+
         # ApplicationControllerの認証をスキップし、APIキーまたはセッション認証を使用
         # APIキー: プログラムからのアクセス用
         # セッション: SPAでWebログインしたユーザー用（ほ場管理画面など）
         skip_before_action :authenticate_user!
+
+        # PolicyPermissionDenied例外を403 Forbiddenとして扱う（domain の Policy が raise するクラス）
+        rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |_exception|
+          render json: { error: I18n.t('agricultural_tasks.flash.no_permission') }, status: :forbidden
+        end
+
         before_action :authenticate_api_key_or_session!
 
         private
