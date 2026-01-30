@@ -1,11 +1,13 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { CropDetailView, CropDetailViewState } from './crop-detail.view';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
+import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
 import { CropDetailPresenter } from '../../../adapters/crops/crop-detail.presenter';
 import { LOAD_CROP_DETAIL_OUTPUT_PORT } from '../../../usecase/crops/load-crop-detail.output-port';
+import { DELETE_CROP_OUTPUT_PORT } from '../../../usecase/crops/delete-crop.output-port';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
 
@@ -22,13 +24,19 @@ const initialControl: CropDetailViewState = {
   providers: [
     CropDetailPresenter,
     LoadCropDetailUseCase,
+    DeleteCropUseCase,
     { provide: LOAD_CROP_DETAIL_OUTPUT_PORT, useExisting: CropDetailPresenter },
+    { provide: DELETE_CROP_OUTPUT_PORT, useExisting: CropDetailPresenter },
     { provide: CROP_GATEWAY, useClass: CropApiGateway }
   ],
   template: `
     <div class="content-card">
       <div class="page-header">
         <a [routerLink]="['/crops']" class="btn btn-white">{{ 'common.back' | translate }}</a>
+        @if (control.crop) {
+          <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn btn-white">{{ 'common.edit' | translate }}</a>
+          <button type="button" class="btn btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
+        }
       </div>
 
       @if (control.loading) {
@@ -90,7 +98,9 @@ const initialControl: CropDetailViewState = {
 })
 export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly useCase = inject(LoadCropDetailUseCase);
+  private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -116,5 +126,13 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   load(cropId: number): void {
     this.control = { ...this.control, loading: true };
     this.useCase.execute({ cropId });
+  }
+
+  deleteCrop(): void {
+    if (!this.control.crop) return;
+    this.deleteUseCase.execute({
+      cropId: this.control.crop.id,
+      onSuccess: () => this.router.navigate(['/crops'])
+    });
   }
 }

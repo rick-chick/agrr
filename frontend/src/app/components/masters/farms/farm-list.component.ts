@@ -69,12 +69,10 @@ export class FarmListComponent implements FarmListView, OnInit {
   }
 
   load(): void {
-    this.control = { ...this.control, loading: true };
     this.loadUseCase.execute();
   }
 
   deleteFarm(farmId: number): void {
-    if (!confirm('Delete this farm?')) return;
-    this.deleteUseCase.execute({ farmId });
+    this.deleteUseCase.execute({ farmId, onAfterUndo: () => this.load() });
   }
 }
