@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { InteractionRuleDetailView } from '../../components/masters/interaction-rules/interaction-rule-detail.view';
 import { LoadInteractionRuleDetailOutputPort } from '../../usecase/interaction-rules/load-interaction-rule-detail.output-port';
@@ -11,7 +10,6 @@ import { UndoToastService } from '../../services/undo-toast.service';
 @Injectable()
 export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetailOutputPort, DeleteInteractionRuleOutputPort {
   private readonly undoToast = inject(UndoToastService);
-  private readonly router = inject(Router);
   private view: InteractionRuleDetailView | null = null;
 
   setView(view: InteractionRuleDetailView): void {
@@ -42,7 +40,7 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.router.navigate(['/interaction_rules'])
+        () => this.view?.reload()
       );
     }
   }

@@ -12,4 +12,6 @@ export interface FarmDetailView {
   get control(): FarmDetailViewState;
   set control(value: FarmDetailViewState);
   load?(farmId: number): void;
+  /** Reload detail (e.g. after undo restore). */
+  reload(): void;
 }

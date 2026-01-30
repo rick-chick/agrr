@@ -17,6 +17,9 @@ class AgriculturalTaskListHtmlPresenterTest < ActiveSupport::TestCase
     task_entity2.expects(:to_model).returns(task_model2)
 
     view_mock.expects(:instance_variable_set).with(:@agricultural_tasks, [task_model1, task_model2])
+    view_mock.expects(:instance_variable_set).with(:@query, '')
+    view_mock.expects(:instance_variable_set).with(:@selected_filter, '')
+    view_mock.expects(:instance_variable_set).with(:@reference_farms, [])
 
     tasks = [task_entity1, task_entity2]
     presenter.on_success(tasks)

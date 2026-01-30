@@ -24,6 +24,8 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new('Pest not found'))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(I18n.t('pests.flash.no_permission')))
+        rescue ActiveRecord::DeleteRestrictionError, ActiveRecord::InvalidForeignKey
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(I18n.t('pests.flash.cannot_delete_in_use')))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

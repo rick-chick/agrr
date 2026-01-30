@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { AgriculturalTaskDetailView } from '../../components/masters/agricultural-tasks/agricultural-task-detail.view';
 import { LoadAgriculturalTaskDetailOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-detail.output-port';
@@ -11,7 +10,6 @@ import { UndoToastService } from '../../services/undo-toast.service';
 @Injectable()
 export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDetailOutputPort, DeleteAgriculturalTaskOutputPort {
   private readonly undoToast = inject(UndoToastService);
-  private readonly router = inject(Router);
   private view: AgriculturalTaskDetailView | null = null;
 
   setView(view: AgriculturalTaskDetailView): void {
@@ -42,7 +40,7 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.router.navigate(['/agricultural_tasks'])
+        () => this.view?.reload()
       );
     }
   }

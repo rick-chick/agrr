@@ -123,6 +123,11 @@ export class PestDetailComponent implements PestDetailView, OnInit {
     this.useCase.execute({ pestId });
   }
 
+  reload(): void {
+    const pestId = Number(this.route.snapshot.paramMap.get('id'));
+    if (pestId) this.load(pestId);
+  }
+
   deletePest(): void {
     if (!this.control.pest) return;
     this.deleteUseCase.execute({

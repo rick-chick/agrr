@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { PestDetailView } from '../../components/masters/pests/pest-detail.view';
 import { LoadPestDetailOutputPort } from '../../usecase/pests/load-pest-detail.output-port';
@@ -11,7 +10,6 @@ import { UndoToastService } from '../../services/undo-toast.service';
 @Injectable()
 export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePestOutputPort {
   private readonly undoToast = inject(UndoToastService);
-  private readonly router = inject(Router);
   private view: PestDetailView | null = null;
 
   setView(view: PestDetailView): void {
@@ -42,7 +40,7 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.router.navigate(['/pests'])
+        () => this.view?.reload()
       );
     }
   }

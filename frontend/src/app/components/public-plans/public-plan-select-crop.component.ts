@@ -78,8 +78,8 @@ const initialControl: PublicPlanSelectCropViewState = {
         </div>
 
         <div class="content-card">
-          <h2 class="content-card-title">{{ 'public_plans.select_crop.title' | translate }}</h2>
-          <p class="content-card-subtitle">{{ 'public_plans.select_crop.subtitle' | translate }}</p>
+          <h2 class="content-card__title">{{ 'public_plans.select_crop.title' | translate }}</h2>
+          <p class="content-card__subtitle">{{ 'public_plans.select_crop.subtitle' | translate }}</p>
 
           @if (control.loading) {
             <p>{{ 'common.loading' | translate }}</p>
