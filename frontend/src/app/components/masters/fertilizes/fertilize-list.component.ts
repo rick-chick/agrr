@@ -40,7 +40,7 @@ const initialControl: FertilizeListViewState = {
       } @else {
         <ul>
           <li *ngFor="let item of control.fertilizes">
-            <strong>{{ item.name }}</strong>
+            <a [routerLink]="['/fertilizes', item.id]"><strong>{{ item.name }}</strong></a>
             <span> (NPK: {{ formatNpk(item) }})</span>
             <a [routerLink]="['/fertilizes', item.id, 'edit']">Edit</a>
             <button type="button" (click)="deleteFertilize(item.id)">Delete</button>
@@ -77,8 +77,7 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
   }
 
   deleteFertilize(fertilizeId: number): void {
-    if (!confirm('Delete this fertilize?')) return;
-    this.deleteUseCase.execute({ fertilizeId });
+    this.deleteUseCase.execute({ fertilizeId, onAfterUndo: () => this.load() });
   }
 
   formatNpk(item: Fertilize): string {
