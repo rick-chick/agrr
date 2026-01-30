@@ -694,18 +694,32 @@
       "network_error": "नेटवर्क त्रुटि हुई"
     }
   },
+  "status": {
+    "checking": "जाँच हो रही है..."
+  },
   "nav": {
     "home": "मुखपृष्ठ",
-    "farms": "खेत प्रबंधन",
-    "crops": "फसल प्रबंधन",
-    "plans": "खेती योजना",
-    "public_plans": "मुफ्त खेती योजना",
+    "farms": "खेत",
+    "crops": "फसल",
+    "plans": "योजना",
+    "public_plans": "मुफ्त योजना",
+    "weather": "मौसम",
+    "api_keys": "API कुंजी",
+    "fertilizes": "उर्वरक",
+    "pests": "कीट",
+    "pesticides": "कीटनाशक",
+    "agricultural_tasks": "कार्य",
+    "interaction_rules": "फसल चक्र",
     "about": "AGRR के बारे में",
-    "contact": "संपर्क करें",
+    "contact": "संपर्क",
+    "privacy": "गोपनीयता",
+    "terms": "नियम",
     "login": "लॉगिन",
     "logout": "लॉगआउट",
     "admin": "व्यवस्थापक",
-    "language": "भाषा"
+    "language": "भाषा",
+    "menu_masters": "मास्टर",
+    "menu_more": "अधिक"
   },
   "footer": {
     "about": "AGRR के बारे में",

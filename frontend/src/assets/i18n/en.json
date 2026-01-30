@@ -168,18 +168,32 @@
     "true": "Yes",
     "false": "No"
   },
+  "status": {
+    "checking": "Checking..."
+  },
   "nav": {
     "home": "Home",
-    "farms": "Farm Management",
-    "crops": "Crop Management",
-    "plans": "Crop Plans",
-    "public_plans": "Free Crop Plans",
-    "about": "About AGRR",
+    "farms": "Farms",
+    "crops": "Crops",
+    "plans": "Plans",
+    "public_plans": "Free Plans",
+    "weather": "Weather",
+    "api_keys": "API Keys",
+    "fertilizes": "Fertilizers",
+    "pests": "Pests",
+    "pesticides": "Pesticides",
+    "agricultural_tasks": "Tasks",
+    "interaction_rules": "Rotation Rules",
+    "about": "About",
     "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Terms",
     "login": "Login",
     "logout": "Logout",
     "admin": "Admin",
-    "language": "Language"
+    "language": "Language",
+    "menu_masters": "Masters",
+    "menu_more": "More"
   },
   "footer": {
     "about": "About AGRR",
