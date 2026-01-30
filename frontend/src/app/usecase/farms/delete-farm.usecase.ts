@@ -13,8 +13,12 @@ export class DeleteFarmUseCase implements DeleteFarmInputPort {
 
   execute(dto: DeleteFarmInputDto): void {
     this.farmGateway.destroy(dto.farmId).subscribe({
-      next: () => {
-        this.outputPort.onSuccess({ deletedFarmId: dto.farmId });
+      next: (response) => {
+        this.outputPort.onSuccess({
+          deletedFarmId: dto.farmId,
+          undo: response,
+          refresh: dto.onAfterUndo
+        });
         dto.onSuccess?.();
       },
       error: (err: Error) =>

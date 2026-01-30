@@ -1,10 +1,5 @@
-.page {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e3e5e8;
-}
+@import '../_master-layout.css';
 
-.error {
-  color: #dc2626;
+.field-actions-bar {
+  margin-bottom: var(--space-3);
 }

@@ -29,31 +29,38 @@ const initialControl: PesticideListViewState = {
     { provide: PESTICIDE_GATEWAY, useClass: PesticideApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>Pesticides</h2>
-      <a [routerLink]="['/pesticides', 'new']" class="btn btn-primary">Create Pesticide</a>
-      @if (control.loading) {
-        <p>Loading...</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <div class="enhanced-grid">
-          @for (pesticide of control.pesticides; track pesticide.id) {
-            <div class="enhanced-selection-card-wrapper">
-              <a [routerLink]="['/pesticides', pesticide.id]" class="enhanced-selection-card">
-                <div class="enhanced-card-icon">🌱</div>
-                <div class="enhanced-card-title">{{ pesticide.name }}</div>
-                <div class="enhanced-card-subtitle" *ngIf="pesticide.active_ingredient">{{ pesticide.active_ingredient }}</div>
-              </a>
-              <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn btn-sm">Edit</a>
-              <button type="button" class="btn btn-sm btn-danger" (click)="deletePesticide(pesticide.id)">
-                Delete
-              </button>
-            </div>
-          }
-        </div>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">Pesticides</h1>
+        <p class="page-description">Manage pesticides.</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">Pesticide list</h2>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a [routerLink]="['/pesticides', 'new']" class="btn-primary">Create Pesticide</a>
+          <ul class="card-list" role="list">
+            @for (pesticide of control.pesticides; track pesticide.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/pesticides', pesticide.id]" class="item-card">
+                  <span class="item-card__title">{{ pesticide.name }}</span>
+                  @if (pesticide.active_ingredient) {
+                    <span class="item-card__meta">{{ pesticide.active_ingredient }}</span>
+                  }
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deletePesticide(pesticide.id)">Delete</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './pesticide-list.component.css'
 })

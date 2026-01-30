@@ -2,27 +2,37 @@
 
 class CropsController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_crop, only: [:show, :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
+  before_action :set_crop, only: [:edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
   before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
   # GET /crops
   def index
-    # 管理者は参照作物も表示、一般ユーザーは自分の非参照作物のみ
-    @crops = CropPolicy.visible_scope(current_user).recent
+    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: self)
+
+    interactor = Domain::Crop::Interactors::CropListInteractor.new(
+      output_port: presenter,
+      gateway: crop_gateway,
+      user_id: current_user.id
+    )
+
+    interactor.call
+  rescue StandardError => e
+    redirect_to root_path, alert: e.message
   end
 
   # GET /crops/:id
   def show
-    # 閲覧可能な農業タスクを取得（管理者は参照タスクと自身のタスク、一般ユーザーは自身のタスクのみ）
-    @task_schedule_blueprints = @crop.crop_task_schedule_blueprints
-                                      .includes(:agricultural_task)
-                                      .ordered
-
-    # 利用可能な農業タスクを取得
-    @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
-    # 既にテンプレートとして登録されているタスクIDを取得
-    @selected_task_ids = selected_task_ids_for_crop(@crop)
+    presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(view: self)
+    interactor = Domain::Crop::Interactors::CropDetailInteractor.new(
+      output_port: presenter,
+      gateway: crop_gateway,
+      user_id: current_user.id
+    )
+    interactor.call(params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
+  rescue StandardError => e
+    redirect_to crops_path, alert: e.message
   end
 
   # GET /crops/new
@@ -44,18 +54,21 @@ class CropsController < ApplicationController
       return redirect_to crops_path, alert: I18n.t('crops.flash.reference_only_admin')
     end
 
-    @crop = CropPolicy.build_for_create(current_user, crop_params)
+    @input_dto = Domain::Crop::Dtos::CropCreateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys })
+    presenter = Presenters::Html::Crop::CropCreateHtmlPresenter.new(view: self)
 
-    # groupsをカンマ区切りテキストから配列に変換
-    if params.dig(:crop, :groups).is_a?(String)
-      @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
-    end
+    interactor = Domain::Crop::Interactors::CropCreateInteractor.new(
+      output_port: presenter,
+      gateway: crop_gateway,
+      user_id: current_user.id
+    )
 
-    if @crop.save
-      respond_to_create(@crop, notice: I18n.t('crops.flash.created'), redirect_path: crop_path(@crop))
-    else
-      respond_to_create(@crop, notice: nil)
-    end
+    interactor.call(@input_dto)
+  rescue StandardError => e
+    @crop = Crop.new(crop_params.to_h.symbolize_keys)
+    @crop.valid? # エラーをセットするためにバリデーションを実行
+    flash.now[:alert] = e.message
+    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /crops/:id
@@ -64,47 +77,48 @@ class CropsController < ApplicationController
       return redirect_to crop_path(@crop), alert: I18n.t('crops.flash.reference_flag_admin_only')
     end
 
-    # groupsをカンマ区切りテキストから配列に変換
-    if params.dig(:crop, :groups).is_a?(String)
-      @crop.groups = params[:crop][:groups].split(',').map(&:strip).reject(&:blank?)
-    end
+    @input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys }, params[:id])
+    presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: self)
 
-    update_result = CropPolicy.apply_update!(current_user, @crop, crop_params)
-    if update_result
-      respond_to_update(@crop, notice: I18n.t('crops.flash.updated'), redirect_path: crop_path(@crop), update_result: update_result)
-    else
-      respond_to_update(@crop, notice: nil, update_result: update_result)
-    end
+    interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(
+      output_port: presenter,
+      gateway: crop_gateway,
+      user_id: current_user.id
+    )
+
+    interactor.call(@input_dto)
+  rescue StandardError => e
+    @crop.assign_attributes(crop_params.to_h.symbolize_keys)
+    @crop.valid? # エラーをセットするためにバリデーションを実行
+    flash.now[:alert] = e.message
+    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /crops/:id
   def destroy
-    schedule_deletion_with_undo(
-      record: @crop,
-      toast_message: I18n.t('crops.undo.toast', name: @crop.name),
-      fallback_location: crops_path,
-      in_use_message_key: nil,
-      delete_error_message_key: 'crops.flash.delete_error'
-    )
-  rescue ActiveRecord::InvalidForeignKey => e
-    message =
-      if e.message.include?('cultivation_plan_crops')
-        I18n.t('crops.flash.cannot_delete_in_use.plan')
-      elsif e.message.include?('field_cultivations')
-        I18n.t('crops.flash.cannot_delete_in_use.field')
-      else
-        I18n.t('crops.flash.cannot_delete_in_use.other')
+    respond_to do |format|
+      format.html do
+        presenter = Presenters::Html::Crop::CropDestroyHtmlPresenter.new(view: self)
+        interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(
+          output_port: presenter,
+          gateway: crop_gateway,
+          user_id: current_user.id
+        )
+        interactor.call(params[:id])
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
       end
 
-    render_deletion_failure(
-      message: message,
-      fallback_location: crops_path
-    )
-  rescue ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t('crops.flash.cannot_delete_in_use.other'),
-      fallback_location: crops_path
-    )
+      format.json do
+        schedule_deletion_with_undo(
+          record: @crop,
+          toast_message: I18n.t('crops.undo.toast', name: @crop.name),
+          fallback_location: crops_path,
+          in_use_message_key: 'crops.flash.cannot_delete_in_use',
+          delete_error_message_key: 'crops.flash.delete_error'
+        )
+      end
+    end
   end
 
   def generate_task_schedule_blueprints
@@ -198,9 +212,9 @@ class CropsController < ApplicationController
     # まず権限チェック（編集系か閲覧系かで分岐）
     authorized_crop =
       if action.in?([:edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template])
-        CropPolicy.find_editable!(current_user, params[:id])
+        Domain::Shared::Policies::CropPolicy.find_editable!(Crop, current_user, params[:id])
       else
-        CropPolicy.find_visible!(current_user, params[:id])
+        Domain::Shared::Policies::CropPolicy.find_visible!(Crop, current_user, params[:id])
       end
 
     # 付加情報を preload したレコードとして再取得
@@ -339,6 +353,9 @@ class CropsController < ApplicationController
     Rails.logger.error(e.backtrace.join("\n"))
     raise
   end
-end
 
+  def crop_gateway
+    @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
+  end
+end
 

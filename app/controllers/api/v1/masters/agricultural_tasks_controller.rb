@@ -4,54 +4,103 @@ module Api
   module V1
     module Masters
       class AgriculturalTasksController < BaseController
-        include ApiCrudResponder
-        before_action :set_agricultural_task, only: [:show, :update, :destroy]
+        include Views::Api::AgriculturalTask::AgriculturalTaskListView
+        include Views::Api::AgriculturalTask::AgriculturalTaskDetailView
+        include Views::Api::AgriculturalTask::AgriculturalTaskCreateView
+        include Views::Api::AgriculturalTask::AgriculturalTaskUpdateView
+        include Views::Api::AgriculturalTask::AgriculturalTaskDeleteView
 
         # GET /api/v1/masters/agricultural_tasks
         def index
-          # HTML側と同様、Policyのvisible_scopeを利用
-          @agricultural_tasks = AgriculturalTaskPolicy.visible_scope(current_user)
-          respond_to_index(@agricultural_tasks)
+          presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskListPresenter.new(view: self)
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
+            output_port: presenter,
+            gateway: agricultural_task_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
         # GET /api/v1/masters/agricultural_tasks/:id
         def show
-          respond_to_show(@agricultural_task)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDetailPresenter.new(view: self)
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
+            output_port: presenter,
+            gateway: agricultural_task_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
         # POST /api/v1/masters/agricultural_tasks
         def create
-          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
-          @agricultural_task = AgriculturalTaskPolicy.build_for_create(current_user, agricultural_task_params)
-          @agricultural_task.save
-          respond_to_create(@agricultural_task)
+          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_create_params?(input_dto)
+            render_response(json: { errors: ['name is required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskCreatePresenter.new(view: self)
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
+            output_port: presenter,
+            gateway: agricultural_task_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/agricultural_tasks/:id
         def update
-          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          update_result = AgriculturalTaskPolicy.apply_update!(current_user, @agricultural_task, agricultural_task_params)
-          respond_to_update(@agricultural_task, update_result: update_result)
+          input_valid?(:update) || return
+          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskUpdatePresenter.new(view: self)
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(
+            output_port: presenter,
+            gateway: agricultural_task_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/agricultural_tasks/:id
         def destroy
-          destroy_result = @agricultural_task.destroy
-          respond_to_destroy(@agricultural_task, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDeletePresenter.new(view: self)
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
+            output_port: presenter,
+            gateway: agricultural_task_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_agricultural_task
-          @agricultural_task = AgriculturalTaskPolicy.find_editable!(current_user, params[:id])
-        rescue PolicyPermissionDenied
-          render json: { error: I18n.t('agricultural_tasks.flash.no_permission') }, status: :forbidden
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'AgriculturalTask not found' }, status: :not_found
+        def agricultural_task_gateway
+          @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
         end
 
-        def agricultural_task_params
-          params.require(:agricultural_task).permit(:name, :description, :time_per_sqm, :weather_dependency, :required_tools, :skill_level, :region, :task_type)
+        def input_valid?(action)
+          case action
+          when :show, :destroy, :update
+            return true if params[:id].present?
+            render_response(json: { error: 'AgriculturalTask not found' }, status: :not_found)
+            false
+          else
+            true
+          end
+        end
+
+        def valid_create_params?(input_dto)
+          input_dto.name.present?
         end
       end
     end

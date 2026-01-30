@@ -4,54 +4,103 @@ module Api
   module V1
     module Masters
       class InteractionRulesController < BaseController
-        include ApiCrudResponder
-        before_action :set_interaction_rule, only: [:show, :update, :destroy]
+        include Views::Api::InteractionRule::InteractionRuleListView
+        include Views::Api::InteractionRule::InteractionRuleDetailView
+        include Views::Api::InteractionRule::InteractionRuleCreateView
+        include Views::Api::InteractionRule::InteractionRuleUpdateView
+        include Views::Api::InteractionRule::InteractionRuleDeleteView
 
         # GET /api/v1/masters/interaction_rules
         def index
-          # HTML側と同様、Policyのvisible_scopeを利用
-          @interaction_rules = InteractionRulePolicy.visible_scope(current_user)
-          respond_to_index(@interaction_rules)
+          presenter = Presenters::Api::InteractionRule::InteractionRuleListPresenter.new(view: self)
+          interactor = Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
+            output_port: presenter,
+            gateway: interaction_rule_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
         # GET /api/v1/masters/interaction_rules/:id
         def show
-          respond_to_show(@interaction_rule)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::InteractionRule::InteractionRuleDetailPresenter.new(view: self)
+          interactor = Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
+            output_port: presenter,
+            gateway: interaction_rule_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
         # POST /api/v1/masters/interaction_rules
         def create
-          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
-          @interaction_rule, = InteractionRulePolicy.build_for_create(current_user, interaction_rule_params.to_h)
-          @interaction_rule.save
-          respond_to_create(@interaction_rule)
+          input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_create_params?(input_dto)
+            render_response(json: { errors: ['rule_type, source_group, target_group, impact_ratio are required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::InteractionRule::InteractionRuleCreatePresenter.new(view: self)
+          interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
+            output_port: presenter,
+            gateway: interaction_rule_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/interaction_rules/:id
         def update
-          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          update_result = InteractionRulePolicy.apply_update!(current_user, @interaction_rule, interaction_rule_params.to_h)
-          respond_to_update(@interaction_rule, update_result: update_result)
+          input_valid?(:update) || return
+          input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::InteractionRule::InteractionRuleUpdatePresenter.new(view: self)
+          interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
+            output_port: presenter,
+            gateway: interaction_rule_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/interaction_rules/:id
         def destroy
-          destroy_result = @interaction_rule.destroy
-          respond_to_destroy(@interaction_rule, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::InteractionRule::InteractionRuleDeletePresenter.new(view: self)
+          interactor = Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
+            output_port: presenter,
+            gateway: interaction_rule_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_interaction_rule
-          @interaction_rule = InteractionRulePolicy.find_editable!(current_user, params[:id])
-        rescue PolicyPermissionDenied
-          render json: { error: I18n.t('interaction_rules.flash.no_permission') }, status: :forbidden
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'InteractionRule not found' }, status: :not_found
+        def interaction_rule_gateway
+          @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
         end
 
-        def interaction_rule_params
-          params.require(:interaction_rule).permit(:rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description, :region)
+        def input_valid?(action)
+          case action
+          when :show, :destroy, :update
+            return true if params[:id].present?
+            render_response(json: { error: 'InteractionRule not found' }, status: :not_found)
+            false
+          else
+            true
+          end
+        end
+
+        def valid_create_params?(input_dto)
+          input_dto.rule_type.present? && input_dto.source_group.present? && input_dto.target_group.present? && !input_dto.impact_ratio.nil?
         end
       end
     end

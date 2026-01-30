@@ -13,8 +13,12 @@ module Api
           @farm = create(:farm, :user_owned, user: @user)
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::FieldsController.included_modules, ApiCrudResponder
+        test "includes Field Views" do
+          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldListView
+          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldDetailView
+          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldCreateView
+          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldUpdateView
+          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldDeleteView
         end
 
         test "should get index" do
@@ -106,7 +110,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "cannot access field that belongs to other user's farm" do

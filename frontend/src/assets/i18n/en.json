@@ -168,6 +168,36 @@
     "true": "Yes",
     "false": "No"
   },
+  "crops": {
+    "index": {
+      "title": "Crops",
+      "description": "Manage crop master list. Reference and your own crops.",
+      "list_heading": "Crop list",
+      "new_crop": "Add Crop"
+    },
+    "new": {
+      "title": "New Crop"
+    },
+    "edit": {
+      "title": "Edit Crop"
+    },
+    "form": {
+      "name_label": "Name",
+      "variety_label": "Variety",
+      "area_per_unit_label": "Area per unit",
+      "revenue_per_area_label": "Revenue per area",
+      "region_label": "Region",
+      "submit_create": "Create Crop",
+      "submit_update": "Update Crop"
+    },
+    "show": {
+      "name": "Name",
+      "variety": "Variety",
+      "stages_title": "Growth stages",
+      "required_gdd": "Required GDD",
+      "optimal_temperature": "Optimal temperature"
+    }
+  },
   "status": {
     "checking": "Checking..."
   },
@@ -1341,6 +1371,7 @@
         "longitude_label": "Longitude",
         "longitude_placeholder": "139.6503",
         "longitude_help": "e.g., 139.6503 (near Tokyo Station)",
+        "coordinates_validation_error": "Latitude must be between -90 and 90. Longitude must be between -180 and 180.",
         "map": {
           "farm_location": "Farm Location",
           "library_load_failed": "Failed to load map library",
@@ -1666,6 +1697,8 @@
     },
     "index": {
       "title": "Crop Rotation Rules",
+      "description": "Manage crop rotation rules: source, target, and impact ratio.",
+      "list_heading": "Rule list",
       "new_rule": "Add New Rule",
       "system_rules": "System Standard Rules",
       "my_rules": "My Rules",
@@ -1714,10 +1747,12 @@
       "impact_ratio_placeholder": "e.g., 0.7",
       "impact_ratio_help": "1.0=no impact, 0.7=30% decrease, 1.2=20% increase",
       "direction_label": "Direction",
+      "is_directional_label": "Is Directional",
       "direction_true": "Directional (Source → Target)",
       "direction_false": "Bidirectional (Mutual impact)",
       "description_label": "Description (Optional)",
       "description_placeholder": "Enter description for this rule",
+      "region_label": "Region",
       "is_reference_label": "Set as system standard rule",
       "is_reference_help": "When checked, this becomes a standard rule automatically applied to all users",
       "submit_create": "Create Rule",
@@ -1738,6 +1773,7 @@
       "directional": "Directional (→)",
       "bidirectional": "Bidirectional (↔)",
       "description": "Description",
+      "region": "Region",
       "created_at": "Created",
       "updated_at": "Updated",
       "decrease": "%{percent}% decrease",
@@ -2307,6 +2343,9 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "policy": {
+      "no_permission": "You do not have permission to access this resource."
     }
   }
 }

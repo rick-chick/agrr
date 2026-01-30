@@ -1,19 +1,29 @@
 # frozen_string_literal: true
 
 class FieldsController < ApplicationController
-  include DeletionUndoFlow
-  include HtmlCrudResponder
   before_action :set_farm
   before_action :set_field, only: [:show, :edit, :update, :destroy]
 
   # GET /farms/:farm_id/fields
   def index
-    @fields = @farm.fields.recent
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: self, farm: @farm)
+    interactor = Domain::Field::Interactors::FieldListInteractor.new(
+      output_port: presenter,
+      gateway: field_gateway,
+      user_id: current_user.id
+    )
+    interactor.call(@farm.id)
   end
 
   # GET /fields/:id
   def show
-    # Field is already loaded by set_field
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: self, farm: @farm)
+    interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
+      output_port: presenter,
+      gateway: field_gateway,
+      user_id: current_user.id
+    )
+    interactor.call(params[:id])
   end
 
   # GET /farms/:farm_id/fields/new
@@ -28,37 +38,50 @@ class FieldsController < ApplicationController
 
   # POST /farms/:farm_id/fields
   def create
-    @field = @farm.fields.build(field_params)
-    @field.user = current_user
-
-    if @field.save
-      redirect_path = url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id)
-      respond_to_create(@field, notice: I18n.t('fields.flash.created'), redirect_path: redirect_path)
-    else
-      respond_to_create(@field, notice: nil)
-    end
+    input_dto = Domain::Field::Dtos::FieldCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+    presenter = Presenters::Html::Field::FieldCreateHtmlPresenter.new(view: self)
+    interactor = Domain::Field::Interactors::FieldCreateInteractor.new(
+      output_port: presenter,
+      gateway: field_gateway,
+      user_id: current_user.id
+    )
+    interactor.call(input_dto, @farm.id)
   end
 
   # PATCH/PUT /farms/:farm_id/fields/:id
   def update
-    update_result = @field.update(field_params)
-    redirect_path = url_for(controller: 'fields', action: 'show', farm_id: @farm.id, id: @field.id)
-    if update_result
-      respond_to_update(@field, notice: I18n.t('fields.flash.updated'), redirect_path: redirect_path, update_result: update_result)
-    else
-      respond_to_update(@field, notice: nil, redirect_path: redirect_path, update_result: update_result)
-    end
+    input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id])
+    presenter = Presenters::Html::Field::FieldUpdateHtmlPresenter.new(view: self)
+    interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(
+      output_port: presenter,
+      gateway: field_gateway,
+      user_id: current_user.id
+    )
+    interactor.call(input_dto)
   end
 
   # DELETE /farms/:farm_id/fields/:id
   def destroy
-    schedule_deletion_with_undo(
-      record: @field,
-      toast_message: I18n.t('fields.undo.toast', name: @field.display_name),
-      fallback_location: farm_fields_path(@farm),
-      in_use_message_key: 'fields.flash.cannot_delete_in_use',
-      delete_error_message_key: 'fields.flash.delete_error'
-    )
+    respond_to do |format|
+      format.html do
+        presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self, farm_id: @farm.id)
+        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
+          output_port: presenter,
+          gateway: field_gateway,
+          user_id: current_user.id
+        )
+        interactor.call(params[:id])
+      end
+      format.json do
+        presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
+        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
+          output_port: presenter,
+          gateway: field_gateway,
+          user_id: current_user.id
+        )
+        interactor.call(params[:id])
+      end
+    end
   end
 
   private
@@ -69,7 +92,7 @@ class FieldsController < ApplicationController
       @farm = Farm.find(params[:farm_id])
     else
       # Regular users can only access their own farms
-      @farm = FarmPolicy.find_owned!(current_user, params[:farm_id])
+      @farm = Domain::Shared::Policies::FarmPolicy.find_owned!(Farm, current_user, params[:farm_id])
     end
   rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
     redirect_to farms_path, alert: I18n.t('fields.flash.farm_not_found')
@@ -81,7 +104,7 @@ class FieldsController < ApplicationController
     redirect_to url_for(controller: 'fields', action: 'index', farm_id: @farm.id), alert: I18n.t('fields.flash.not_found')
   end
 
-  def field_params
-    params.require(:field).permit(:name, :description, :area, :daily_fixed_cost)
+  def field_gateway
+    Adapters::Field::Gateways::FieldActiveRecordGateway.new
   end
 end

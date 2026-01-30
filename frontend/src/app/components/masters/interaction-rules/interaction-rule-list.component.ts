@@ -39,31 +39,38 @@ const initialControl: InteractionRuleListViewState = {
     { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>{{ 'interaction_rules.index.title' | translate }}</h2>
-      <a [routerLink]="['/interaction_rules', 'new']" class="btn btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
-      @if (control.loading) {
-        <p>{{ 'common.loading' | translate }}</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <div class="enhanced-grid">
-          @for (rule of control.rules; track rule.id) {
-            <div class="enhanced-selection-card-wrapper">
-              <a [routerLink]="['/interaction_rules', rule.id]" class="enhanced-selection-card">
-                <div class="enhanced-card-icon">🔄</div>
-                <div class="enhanced-card-title">{{ rule.source_group }} → {{ rule.target_group }}</div>
-                <div class="enhanced-card-subtitle">{{ rule.rule_type }} ({{ rule.impact_ratio }})</div>
-              </a>
-              <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn btn-sm">{{ 'common.edit' | translate }}</a>
-              <button type="button" class="btn btn-sm btn-danger" (click)="deleteInteractionRule(rule.id)">
-                {{ 'common.delete' | translate }}
-              </button>
-            </div>
-          }
-        </div>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">{{ 'interaction_rules.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'interaction_rules.index.description' | translate }}</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">{{ 'interaction_rules.index.list_heading' | translate }}</h2>
+        @if (control.loading) {
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a [routerLink]="['/interaction_rules', 'new']" class="btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
+          <ul class="card-list" role="list">
+            @for (rule of control.rules; track rule.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/interaction_rules', rule.id]" class="item-card">
+                  <span class="item-card__title">{{ rule.source_group }} → {{ rule.target_group }}</span>
+                  <span class="item-card__meta">{{ rule.rule_type }} ({{ rule.impact_ratio }})</span>
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn-secondary btn-sm">{{ 'common.edit' | translate }}</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteInteractionRule(rule.id)">
+                    {{ 'common.delete' | translate }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './interaction-rule-list.component.css'
 })

@@ -9,10 +9,10 @@ module Crops
     def index
       # この作物に関連付けられている害虫を取得（アクセス権限のある害虫のみ）
       # Policy経由で選択可能な害虫のみ表示（参照害虫も含む）
-      accessible_pest_ids = PestPolicy.selectable_scope(current_user).pluck(:id)
+      accessible_pest_ids = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user).pluck(:id)
       @pests = @crop.pests.where(id: accessible_pest_ids).recent
       # 参照害虫も選択可能にするため、利用可能な害虫を取得（Policy経由）
-      @available_pests = PestPolicy.selectable_scope(current_user).recent
+      @available_pests = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user).recent
     end
 
     # GET /crops/:crop_id/pests/:id
@@ -28,7 +28,7 @@ module Crops
       @pest.pest_control_methods.build
       
       # この作物にまだ関連付けられていない害虫のリスト（Policy経由、参照害虫も含む）
-      available_pests = PestPolicy.selectable_scope(current_user)
+      available_pests = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user)
       @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
     end
 
@@ -75,7 +75,7 @@ module Crops
         @crop.pests << @pest unless @crop.pests.include?(@pest)
         redirect_to crop_pest_path(@crop, @pest), notice: I18n.t('crops.pests.flash.created')
       else
-        available_pests = PestPolicy.selectable_scope(current_user)
+        available_pests = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user)
         @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
         render :new, status: :unprocessable_entity
       end

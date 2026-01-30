@@ -30,45 +30,58 @@ const initialControl: InteractionRuleDetailViewState = {
     { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
   ],
   template: `
-    <div class="content-card">
-      <div class="page-header">
-        <a [routerLink]="['/interaction_rules']" class="btn btn-white">{{ 'common.back' | translate }}</a>
-        @if (control.rule) {
-          <a [routerLink]="['/interaction_rules', control.rule.id, 'edit']" class="btn btn-white">{{ 'common.edit' | translate }}</a>
-          <button type="button" class="btn btn-danger" (click)="deleteInteractionRule()">{{ 'common.delete' | translate }}</button>
-        }
-      </div>
-
+    <main class="page-main">
       @if (control.loading) {
-        <p>{{ 'common.loading' | translate }}</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <p class="master-error">{{ control.error }}</p>
       } @else if (control.rule) {
-        <h2 class="page-title">{{ control.rule.source_group }} → {{ control.rule.target_group }}</h2>
-        <section class="info-section">
-          <h3>{{ 'interaction_rules.show.rule_type' | translate }}</h3>
-          <p>{{ control.rule.rule_type }}</p>
-          <h3>{{ 'interaction_rules.show.source_group' | translate }}</h3>
-          <p>{{ control.rule.source_group }}</p>
-          <h3>{{ 'interaction_rules.show.target_group' | translate }}</h3>
-          <p>{{ control.rule.target_group }}</p>
-          <h3>{{ 'interaction_rules.show.impact_ratio' | translate }}</h3>
-          <p>{{ control.rule.impact_ratio }}</p>
-          <h3>{{ 'interaction_rules.show.is_directional' | translate }}</h3>
-          <p>{{ control.rule.is_directional ? 'Yes' : 'No' }}</p>
-          <h3 *ngIf="control.rule.description">{{ 'interaction_rules.show.description' | translate }}</h3>
-          <p *ngIf="control.rule.description">{{ control.rule.description }}</p>
-          <h3 *ngIf="control.rule.region">{{ 'interaction_rules.show.region' | translate }}</h3>
-          <p *ngIf="control.rule.region">{{ control.rule.region }}</p>
+        <section class="detail-card" aria-labelledby="detail-heading">
+          <h1 id="detail-heading" class="detail-card__title">{{ control.rule.source_group }} → {{ control.rule.target_group }}</h1>
+          <dl class="detail-card__list">
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'interaction_rules.show.rule_type' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.rule.rule_type }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'interaction_rules.show.source_group' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.rule.source_group }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'interaction_rules.show.target_group' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.rule.target_group }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'interaction_rules.show.impact_ratio' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.rule.impact_ratio }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'interaction_rules.show.is_directional' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.rule.is_directional ? 'Yes' : 'No' }}</dd>
+            </div>
+            @if (control.rule.description) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'interaction_rules.show.description' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.rule.description }}</dd>
+              </div>
+            }
+            @if (control.rule.region) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'interaction_rules.show.region' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.rule.region }}</dd>
+              </div>
+            }
+          </dl>
+          <div class="detail-card__actions">
+            <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
+            <a [routerLink]="['/interaction_rules', control.rule.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
+            <button type="button" class="btn-danger" (click)="deleteInteractionRule()">{{ 'common.delete' | translate }}</button>
+          </div>
         </section>
       }
-    </div>
+    </main>
   `,
-  styles: [`
-    .info-section {
-      margin-bottom: 2rem;
-    }
-  `]
+  styleUrl: './interaction-rule-detail.component.css'
 })
 export class InteractionRuleDetailComponent implements InteractionRuleDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

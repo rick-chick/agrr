@@ -39,7 +39,7 @@ class PublicPlansController < ApplicationController
     region = locale_to_region(I18n.locale)
     
     # 選択された地域の参照農場のみ取得（Policy 経由）
-    @farms = FarmPolicy.reference_scope(region: region).to_a
+    @farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region).to_a
     
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
@@ -74,7 +74,7 @@ class PublicPlansController < ApplicationController
     end
     
     # 選択された農場の地域の作物のみ取得（Policy 経由）
-    @crops = CropPolicy.reference_scope(region: @farm.region).order(:name)
+    @crops = Domain::Shared::Policies::CropPolicy.reference_scope(Crop, region: @farm.region).order(:name)
     session[:public_plan] = session_data.merge(
       total_area: @farm_size[:area_sqm],
       farm_size_id: @farm_size[:id]
@@ -102,7 +102,7 @@ class PublicPlansController < ApplicationController
       # Turbo対応: フォールバックせず同画面を422で再描画
       @farm = farm
       @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == session_data[:farm_size_id] }
-      @crops = CropPolicy.reference_scope(region: @farm.region).order(:name)
+      @crops = Domain::Shared::Policies::CropPolicy.reference_scope(Crop, region: @farm.region).order(:name)
       flash.now[:alert] = I18n.t('public_plans.errors.select_crop')
       return render :select_crop, status: :unprocessable_entity
     end

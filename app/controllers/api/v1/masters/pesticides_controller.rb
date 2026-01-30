@@ -4,54 +4,107 @@ module Api
   module V1
     module Masters
       class PesticidesController < BaseController
-        include ApiCrudResponder
-        before_action :set_pesticide, only: [:show, :update, :destroy]
+        # PolicyPermissionDenied例外を403 Forbiddenとして扱う
+        rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
+          render json: { error: '権限がありません。' }, status: :forbidden
+        end
+
+        include Views::Api::Pesticide::PesticideListView
+        include Views::Api::Pesticide::PesticideDetailView
+        include Views::Api::Pesticide::PesticideCreateView
+        include Views::Api::Pesticide::PesticideUpdateView
+        include Views::Api::Pesticide::PesticideDeleteView
 
         # GET /api/v1/masters/pesticides
         def index
-          # HTML側と同様、Policyのvisible_scopeを利用
-          @pesticides = PesticidePolicy.visible_scope(current_user)
-          respond_to_index(@pesticides)
+          presenter = Presenters::Api::Pesticide::PesticideListPresenter.new(view: self)
+          interactor = Domain::Pesticide::Interactors::PesticideListInteractor.new(
+            output_port: presenter,
+            gateway: pesticide_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
         # GET /api/v1/masters/pesticides/:id
         def show
-          respond_to_show(@pesticide)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::Pesticide::PesticideDetailPresenter.new(view: self)
+          interactor = Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
+            output_port: presenter,
+            gateway: pesticide_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
         # POST /api/v1/masters/pesticides
         def create
-          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
-          @pesticide = PesticidePolicy.build_for_create(current_user, pesticide_params)
-          @pesticide.save
-          respond_to_create(@pesticide)
+          input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_pesticide_params?(input_dto)
+            render_response(json: { errors: ['name, crop_id, pest_id are required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::Pesticide::PesticideCreatePresenter.new(view: self)
+          interactor = Domain::Pesticide::Interactors::PesticideCreateInteractor.new(
+            output_port: presenter,
+            gateway: pesticide_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/pesticides/:id
         def update
-          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          update_result = PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
-          respond_to_update(@pesticide, update_result: update_result)
+          input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::Pesticide::PesticideUpdatePresenter.new(view: self)
+          interactor = Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
+            output_port: presenter,
+            gateway: pesticide_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/pesticides/:id
         def destroy
-          destroy_result = @pesticide.destroy
-          respond_to_destroy(@pesticide, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::Pesticide::PesticideDeletePresenter.new(view: self)
+          interactor = Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
+            output_port: presenter,
+            gateway: pesticide_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_pesticide
-          @pesticide = PesticidePolicy.find_editable!(current_user, params[:id])
-        rescue PolicyPermissionDenied
-          render json: { error: I18n.t('pesticides.flash.no_permission') }, status: :forbidden
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Pesticide not found' }, status: :not_found
+        def pesticide_gateway
+          @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
         end
 
-        def pesticide_params
-          params.require(:pesticide).permit(:name, :active_ingredient, :description, :crop_id, :pest_id, :region)
+        def input_valid?(action)
+          case action
+          when :show, :destroy
+            return true if params[:id].present?
+            render_response(json: { error: 'Pesticide not found' }, status: :not_found)
+            false
+          else
+            true
+          end
+        end
+
+        def valid_pesticide_params?(input_dto)
+          input_dto.name.present? && input_dto.crop_id.present? && input_dto.pest_id.present?
         end
       end
     end

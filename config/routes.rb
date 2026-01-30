@@ -45,6 +45,60 @@ Rails.application.routes.draw do
 
     post 'undo_deletion', to: 'deletion_undos#create', as: :undo_deletion
 
+    # HTML マスタ（Rails コントローラ・ナビで _path を参照するため）
+    resources :farms do
+      resources :fields, controller: 'fields'
+      get 'weather_data', to: 'farms/weather_data#index', as: 'weather_data'
+    end
+    resources :crops do
+      member do
+        post :generate_task_schedule_blueprints
+        post :toggle_task_template
+      end
+      resources :pests, controller: 'crops/pests'
+      resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
+      resources :task_schedule_blueprints, only: [:destroy], controller: 'crops/task_schedule_blueprints' do
+        member do
+          patch :update_position
+        end
+      end
+    end
+    resources :fertilizes
+    resources :pesticides
+    resources :pests
+    resources :agricultural_tasks
+    resources :interaction_rules
+
+    # APIキー管理（HTML）
+    get 'api_keys', to: 'api_keys#show', as: 'api_keys'
+    post 'api_keys/generate', to: 'api_keys#generate'
+    post 'api_keys/regenerate', to: 'api_keys#regenerate'
+
+    # HTML Plans（ナビ等で plans_path / public_plans_path を参照するため）
+    resources :plans, only: [:index, :show, :new, :create, :destroy] do
+      collection do
+        get :select_crop
+      end
+      member do
+        post :optimize
+        get :optimizing
+        post :copy
+      end
+      resource :task_schedule, only: [:show], controller: 'plans/task_schedules'
+      resources :task_schedule_items, only: [:create, :update, :destroy], controller: 'plans/task_schedule_items' do
+        member do
+          post :complete
+        end
+      end
+    end
+    get 'public_plans', to: 'public_plans#new', as: 'public_plans'
+    get 'public_plans/select_farm_size', to: 'public_plans#select_farm_size', as: 'select_farm_size_public_plans'
+    get 'public_plans/select_crop', to: 'public_plans#select_crop', as: 'select_crop_public_plans'
+
+    # HTML Planning Schedules（ナビで fields_selection_planning_schedules_path を参照するため）
+    get 'planning_schedules/fields_selection', to: 'planning_schedules#fields_selection', as: 'fields_selection_planning_schedules'
+    get 'planning_schedules/schedule', to: 'planning_schedules#schedule', as: 'schedule_planning_schedules'
+
     # ActionCable for WebSocket
     mount ActionCable.server => '/cable'
     
@@ -171,8 +225,13 @@ Rails.application.routes.draw do
       end
     end
 
-    # Static pages
-    # (Angular SPA side handles these routes)
+    # Static pages（ナビ・cookie consent で privacy_path 等を参照）
+    get 'privacy', to: 'pages#privacy', as: 'privacy'
+    get 'terms', to: 'pages#terms', as: 'terms'
+    get 'contact', to: 'pages#contact', as: 'contact'
+    get 'about', to: 'pages#about', as: 'about'
+
+    # Static pages (Angular SPA side handles these routes)
     
     # Sitemap
     get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }

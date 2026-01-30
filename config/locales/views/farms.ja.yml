@@ -26,10 +26,23 @@ ja:
       debug:
         label: "デバッグ:"
     
+    form:
+      region_label: "地域"
+      region_jp: "日本"
+      region_us: "北米"
+      region_in: "インド"
+      region_blank: "未選択"
+      region_help: "栽培地域（管理者のみ変更可能）"
     new:
       title: "新しい農場を追加"
       form:
         name_label: "農場名"
+        region_label: "地域"
+        region_jp: "日本"
+        region_us: "北米"
+        region_in: "インド"
+        region_blank: "未選択"
+        region_help: "栽培地域（管理者のみ変更可能）"
         name_placeholder: "例: 田中農園"
         name_help: "農場の名前を入力してください"
         location_label: "📍 位置情報"
@@ -55,6 +68,12 @@ ja:
     edit:
       title: "農場を編集"
       form:
+        region_label: "地域"
+        region_jp: "日本"
+        region_us: "北米"
+        region_in: "インド"
+        region_blank: "未選択"
+        region_help: "栽培地域（管理者のみ変更可能）"
         submit: "農場を更新"
         cancel: "キャンセル"
       errors:

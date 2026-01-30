@@ -26,97 +26,109 @@ module Api
       # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
       # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
       class CropsController < BaseController
-        include ApiCrudResponder
-        before_action :set_crop, only: [:show, :update, :destroy]
+        # PolicyPermissionDenied例外を403 Forbiddenとして扱う
+        rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
+          render json: { error: '権限がありません。' }, status: :forbidden
+        end
 
-        # 作物一覧を取得
-        #
-        # @return [Array<Crop>] ユーザーが所有する作物の配列
-        # @return [200] 成功
-        # @return [401] APIキーが無効
+        include Views::Api::Crop::CropListView
+        include Views::Api::Crop::CropDetailView
+        include Views::Api::Crop::CropCreateView
+        include Views::Api::Crop::CropUpdateView
+        include Views::Api::Crop::CropDeleteView
+
+        # GET /api/v1/masters/crops
         def index
-          # HTML側と同様、Policyのvisible_scopeを利用して参照作物/ユーザー作物の両方を扱う
-          @crops = CropPolicy.visible_scope(current_user)
-          respond_to_index(@crops)
+          presenter = Presenters::Api::Crop::CropListPresenter.new(view: self)
+          interactor = Domain::Crop::Interactors::CropListInteractor.new(
+            output_port: presenter,
+            gateway: crop_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
-        # 作物の詳細を取得
-        #
-        # @param id [Integer] 作物ID
-        # @return [Crop] 作物オブジェクト
-        # @return [200] 成功
-        # @return [401] APIキーが無効
-        # @return [404] 作物が見つからない
+        # GET /api/v1/masters/crops/:id
         def show
-          respond_to_show(@crop)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::Crop::CropDetailPresenter.new(view: self)
+          interactor = Domain::Crop::Interactors::CropDetailInteractor.new(
+            output_port: presenter,
+            gateway: crop_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
-        # 作物を作成
-        #
-        # @param crop [Hash] 作物のパラメータ
-        # @param crop[name] [String] 作物名（必須）
-        # @param crop[variety] [String] 品種名（任意）
-        # @param crop[area_per_unit] [Float] 単位あたりの栽培面積（㎡、任意）
-        # @param crop[revenue_per_area] [Float] 面積あたりの収益（円/㎡、任意）
-        # @param crop[region] [String] 地域（任意）
-        # @param crop[groups] [Array<String>] 作物グループ（任意）
-        # @return [Crop] 作成された作物オブジェクト
-        # @return [201] 作成成功
-        # @return [401] APIキーが無効
-        # @return [422] バリデーションエラー
+        # POST /api/v1/masters/crops
         def create
-          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
-          @crop = CropPolicy.build_for_create(current_user, crop_params)
-          @crop.save
-          respond_to_create(@crop)
+          input_dto = Domain::Crop::Dtos::CropCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_crop_params?(input_dto)
+            render_response(json: { errors: ['name is required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::Crop::CropCreatePresenter.new(view: self)
+          interactor = Domain::Crop::Interactors::CropCreateInteractor.new(
+            output_port: presenter,
+            gateway: crop_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
-        # 作物を更新
-        #
-        # @param id [Integer] 作物ID
-        # @param crop [Hash] 更新する作物のパラメータ
-        # @return [Crop] 更新された作物オブジェクト
-        # @return [200] 更新成功
-        # @return [401] APIキーが無効
-        # @return [404] 作物が見つからない
-        # @return [422] バリデーションエラー
+        # PATCH/PUT /api/v1/masters/crops/:id
         def update
-          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          update_result = CropPolicy.apply_update!(current_user, @crop, crop_params)
-          respond_to_update(@crop, update_result: update_result)
+          input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::Crop::CropUpdatePresenter.new(view: self)
+          interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(
+            output_port: presenter,
+            gateway: crop_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
-        # 作物を削除
-        #
-        # @param id [Integer] 作物ID
-        # @return [204] 削除成功
-        # @return [401] APIキーが無効
-        # @return [404] 作物が見つからない
-        # @return [422] 削除エラー
+        # DELETE /api/v1/masters/crops/:id
         def destroy
-          destroy_result = @crop.destroy
-          respond_to_destroy(@crop, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::Crop::CropDeletePresenter.new(view: self)
+          interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(
+            output_port: presenter,
+            gateway: crop_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        # View の実装: render は controller.render への委譲のみ
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        # CropDeleteView: undo 用 JSON の undo_path 組み立て
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_crop
-          action = params[:action].to_sym
-
-          @crop =
-            if action.in?([:update, :destroy])
-              CropPolicy.find_editable!(current_user, params[:id])
-            else
-              CropPolicy.find_visible!(current_user, params[:id])
-            end
-        rescue PolicyPermissionDenied
-          render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Crop not found' }, status: :not_found
+        def crop_gateway
+          @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
         end
 
-        def crop_params
-          params.require(:crop).permit(:name, :variety, :area_per_unit, :revenue_per_area, :region, groups: [])
+        def input_valid?(action)
+          case action
+          when :show, :destroy
+            return true if params[:id].present?
+            render_response(json: { error: 'Crop not found' }, status: :not_found)
+            false
+          else
+            true
+          end
+        end
+
+        def valid_crop_params?(input_dto)
+          input_dto.name.present?
         end
       end
     end

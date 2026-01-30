@@ -49,6 +49,7 @@ class Field < ApplicationRecord
 
   # ActionCableで圃場作成をブロードキャスト
   def broadcast_field_created
+    return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field created"
     
     # 圃場一覧画面を更新
@@ -70,6 +71,7 @@ class Field < ApplicationRecord
 
   # ActionCableで圃場更新をブロードキャスト
   def broadcast_field_updated
+    return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field updated"
     
     # 圃場一覧画面を更新
@@ -83,6 +85,7 @@ class Field < ApplicationRecord
 
   # ActionCableで圃場削除をブロードキャスト
   def broadcast_field_destroyed
+    return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field destroyed"
     
     # 圃場一覧画面から削除

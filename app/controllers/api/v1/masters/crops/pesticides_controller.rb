@@ -25,7 +25,7 @@ module Api
           # @return [404] 作物が見つからない
           def index
             # Policy経由で選択可能な農薬のみ表示（参照農薬も含む）
-            accessible_pesticide_ids = PesticidePolicy.selectable_scope(current_user).pluck(:id)
+            accessible_pesticide_ids = Domain::Shared::Policies::PesticidePolicy.selectable_scope(Pesticide, current_user).pluck(:id)
             @pesticides = Pesticide.where(crop_id: @crop.id, id: accessible_pesticide_ids).recent
             render json: @pesticides
           end
@@ -33,7 +33,7 @@ module Api
           private
 
           def set_crop
-            @crop = CropPolicy.visible_scope(current_user).where(is_reference: false).find(params[:crop_id])
+            @crop = Domain::Shared::Policies::CropPolicy.visible_scope(Crop, current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
             render json: { error: 'Crop not found' }, status: :not_found
           end

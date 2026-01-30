@@ -6,5 +6,6 @@ export interface InteractionRule {
   impact_ratio: number;
   is_directional: boolean;
   description?: string | null;
+  region: string | null;
   is_reference: boolean;
 }

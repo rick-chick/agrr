@@ -2,30 +2,49 @@
 
 class AgriculturalTasksController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
   before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
   before_action :load_crop_selection_data, only: [:edit, :update]
   before_action :prepare_crop_cards_for_edit, only: [:edit]
 
   # GET /agricultural_tasks
   def index
-    @query = params[:query].to_s.strip
-    @selected_filter = resolve_filter(params[:filter])
+    filter = resolve_filter(params[:filter])
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInputDto.from_hash({
+      is_admin: admin_user?,
+      filter: filter,
+      query: params[:query].to_s.strip
+    })
 
-    scope =
-      if admin_user?
-        agricultural_tasks_for_admin(@selected_filter)
-      else
-        AgriculturalTaskPolicy.visible_scope(current_user)
-      end
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(view: self)
 
-    scope = apply_search(scope, @query)
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
+      output_port: presenter,
+      gateway: agricultural_task_gateway,
+      user_id: current_user.id
+    )
 
-    @agricultural_tasks = scope.recent
+    interactor.call(input_dto)
+  rescue StandardError => e
+    flash.now[:alert] = e.message
+    @agricultural_tasks = []
+    @reference_farms = []
   end
 
   # GET /agricultural_tasks/:id
   def show
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: self)
+
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
+      output_port: presenter,
+      gateway: agricultural_task_gateway,
+      user_id: current_user.id
+    )
+
+    interactor.call(params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+  rescue StandardError => e
+    redirect_to agricultural_tasks_path, alert: e.message
   end
 
   # GET /agricultural_tasks/new
@@ -46,13 +65,30 @@ class AgriculturalTasksController < ApplicationController
       return redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.reference_only_admin')
     end
 
-    @agricultural_task = AgriculturalTaskPolicy.build_for_create(current_user, task_attributes)
+    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash({ agricultural_task: task_attributes })
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
-    if @agricultural_task.save
-      respond_to_create(@agricultural_task, notice: I18n.t('agricultural_tasks.flash.created'), redirect_path: agricultural_task_path(@agricultural_task))
-    else
-      respond_to_create(@agricultural_task, notice: nil)
-    end
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
+      output_port: presenter,
+      gateway: agricultural_task_gateway,
+      user_id: current_user.id
+    )
+
+    interactor.call(@input_dto)
+  rescue StandardError => e
+    @agricultural_task = current_user.agricultural_tasks.build(
+      name: @input_dto.name,
+      description: @input_dto.description,
+      time_per_sqm: @input_dto.time_per_sqm,
+      weather_dependency: @input_dto.weather_dependency,
+      skill_level: @input_dto.skill_level,
+      is_reference: @input_dto.is_reference,
+      required_tools: @input_dto.required_tools,
+      region: @input_dto.region
+    )
+    @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
+    flash.now[:alert] = e.message
+    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /agricultural_tasks/:id
@@ -66,63 +102,60 @@ class AgriculturalTasksController < ApplicationController
       return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
     end
 
-    update_result = AgriculturalTaskPolicy.apply_update!(current_user, @agricultural_task, task_attributes)
-    if update_result
-      # 作業と作物の紐付けをCropTaskTemplateで更新
-      # 現在のテンプレートを取得
-      current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
-      
-      # 追加する作物（selected_crop_idsにあって、current_template_crop_idsにない）
-      crops_to_add = selected_crop_ids - current_template_crop_ids
-      crops_to_add.each do |crop_id|
-        crop = Crop.find(crop_id)
-        # 既存のテンプレートがない場合のみ作成
-        unless CropTaskTemplate.exists?(crop: crop, agricultural_task: @agricultural_task)
-          crop.crop_task_templates.create!(
-            agricultural_task: @agricultural_task,
-            name: @agricultural_task.name,
-            description: @agricultural_task.description,
-            time_per_sqm: @agricultural_task.time_per_sqm,
-            weather_dependency: @agricultural_task.weather_dependency,
-            required_tools: @agricultural_task.required_tools,
-            skill_level: @agricultural_task.skill_level
-          )
-        end
-      end
-      
-      # 削除する作物（current_template_crop_idsにあって、selected_crop_idsにない）
-      crops_to_remove = current_template_crop_ids - selected_crop_ids
-      crops_to_remove.each do |crop_id|
-        crop = Crop.find(crop_id)
-        template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
-        template&.destroy
-      end
-      
-      respond_to_update(@agricultural_task, notice: I18n.t('agricultural_tasks.flash.updated'), redirect_path: agricultural_task_path(@agricultural_task), update_result: update_result)
-    else
-      prepare_crop_cards(selected_ids: selected_crop_ids)
-      respond_to_update(@agricultural_task, notice: nil, update_result: update_result)
+    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash({ agricultural_task: task_attributes }, params[:id])
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(view: self)
+
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(
+      output_port: presenter,
+      gateway: agricultural_task_gateway,
+      user_id: current_user.id
+    )
+
+    interactor.call(@input_dto)
+
+    # Interactor 成功後に作物紐付けの更新を行う
+    if @input_dto # 成功した場合のみ実行
+      update_crop_task_templates(selected_crop_ids)
     end
+  rescue StandardError => e
+    @agricultural_task.assign_attributes(
+      name: @input_dto&.name || task_attributes[:name],
+      description: @input_dto&.description || task_attributes[:description],
+      time_per_sqm: @input_dto&.time_per_sqm || task_attributes[:time_per_sqm],
+      weather_dependency: @input_dto&.weather_dependency || task_attributes[:weather_dependency],
+      skill_level: @input_dto&.skill_level || task_attributes[:skill_level],
+      is_reference: @input_dto&.is_reference || task_attributes[:is_reference],
+      required_tools: @input_dto&.required_tools || task_attributes[:required_tools],
+      region: @input_dto&.region || task_attributes[:region]
+    )
+    @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
+    prepare_crop_cards(selected_ids: selected_crop_ids)
+    flash.now[:alert] = e.message
+    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /agricultural_tasks/:id
   def destroy
-    schedule_deletion_with_undo(
-      record: @agricultural_task,
-      toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name),
-      fallback_location: agricultural_tasks_path,
-      in_use_message_key: 'agricultural_tasks.flash.cannot_delete_in_use',
-      delete_error_message_key: 'agricultural_tasks.flash.delete_error'
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
+
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
+      output_port: presenter,
+      gateway: agricultural_task_gateway,
+      user_id: current_user.id
     )
+
+    interactor.call(params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
   end
 
   private
 
   def set_agricultural_task
     if action_requires_edit_permission?
-      @agricultural_task = AgriculturalTaskPolicy.find_editable!(current_user, params[:id])
+      @agricultural_task = Domain::Shared::Policies::AgriculturalTaskPolicy.find_editable!(AgriculturalTask, current_user, params[:id])
     else
-      @agricultural_task = AgriculturalTaskPolicy.find_visible!(current_user, params[:id])
+      @agricultural_task = Domain::Shared::Policies::AgriculturalTaskPolicy.find_visible!(AgriculturalTask, current_user, params[:id])
     end
   rescue PolicyPermissionDenied
     redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.no_permission')
@@ -152,14 +185,26 @@ class AgriculturalTasksController < ApplicationController
     admin_user? ? 'all' : 'user'
   end
 
-  def agricultural_tasks_for_admin(filter)
+  def agricultural_tasks_for_admin(filter, base_scope = nil)
+    base_scope ||= AgriculturalTask.all
     case filter
     when 'reference'
-      AgriculturalTask.where(is_reference: true)
+      base_scope.where(is_reference: true)
     when 'all'
-      AgriculturalTaskPolicy.visible_scope(current_user)
+      base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(AgriculturalTask, current_user).pluck(:id))
     else
-      AgriculturalTaskPolicy.user_owned_non_reference_scope(current_user)
+      base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.user_owned_non_reference_scope(AgriculturalTask, current_user).pluck(:id))
+    end
+  end
+
+  def apply_user_filter(scope, filter)
+    case filter
+    when 'reference'
+      scope.where(is_reference: true)
+    when 'user'
+      scope.where(is_reference: false)
+    else
+      scope
     end
   end
 
@@ -282,6 +327,61 @@ class AgriculturalTasksController < ApplicationController
 
     casted = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
     casted.nil? ? false : casted
+  end
+
+  def update_crop_task_templates(selected_crop_ids)
+    # 作業と作物の紐付けをCropTaskTemplateで更新
+    # 現在のテンプレートを取得
+    current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
+
+    # 追加する作物（selected_crop_idsにあって、current_template_crop_idsにない）
+    crops_to_add = selected_crop_ids - current_template_crop_ids
+    crops_to_add.each do |crop_id|
+      crop = Crop.find(crop_id)
+      # 既存のテンプレートがない場合のみ作成
+      unless CropTaskTemplate.exists?(crop: crop, agricultural_task: @agricultural_task)
+        crop.crop_task_templates.create!(
+          agricultural_task: @agricultural_task,
+          name: @agricultural_task.name,
+          description: @agricultural_task.description,
+          time_per_sqm: @agricultural_task.time_per_sqm,
+          weather_dependency: @agricultural_task.weather_dependency,
+          required_tools: @agricultural_task.required_tools,
+          skill_level: @agricultural_task.skill_level
+        )
+      end
+    end
+
+    # 削除する作物（current_template_crop_idsにあって、selected_crop_idsにない）
+    crops_to_remove = current_template_crop_ids - selected_crop_ids
+    crops_to_remove.each do |crop_id|
+      crop = Crop.find(crop_id)
+      template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
+      template&.destroy
+    end
+  end
+
+  # View interface for HTML Presenters（Presenter から呼ばれるため public）
+  def redirect_to(path, notice: nil, alert: nil)
+    super(path, notice: notice, alert: alert)
+  end
+
+  def render_form(action, status: :ok, locals: {})
+    render(action, status: status, locals: locals)
+  end
+
+  def agricultural_task_path(task)
+    Rails.application.routes.url_helpers.agricultural_task_path(task)
+  end
+
+  def agricultural_tasks_path
+    Rails.application.routes.url_helpers.agricultural_tasks_path
+  end
+
+  private
+
+  def agricultural_task_gateway
+    @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
   end
 end
 

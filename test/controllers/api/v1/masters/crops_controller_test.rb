@@ -168,7 +168,10 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :ok
+          json = response.parsed_body
+          assert json["undo_token"].present?
+          assert json["undo_path"].present?
         end
 
         test "should not destroy other user's crop" do
@@ -184,6 +187,25 @@ module Api
           end
 
           assert_response :forbidden
+        end
+
+        test "should return 422 when destroying crop that is in use (cultivation_plan_crops)" do
+          crop = create(:crop, :user_owned, user: @user)
+          plan = create(:cultivation_plan, user: @user)
+          create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+
+          assert_no_difference("Crop.count") do
+            delete api_v1_masters_crop_path(crop),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :unprocessable_entity
+          json = response.parsed_body
+          assert json["error"].present?
+          assert_match(/使用されているため削除できません/, json["error"])
         end
       end
     end

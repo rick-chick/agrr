@@ -1,6 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Fertilize } from '../../domain/fertilizes/fertilize';
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 export interface FertilizeCreatePayload {
   name: string;
@@ -17,7 +18,7 @@ export interface FertilizeGateway {
   show(fertilizeId: number): Observable<Fertilize>;
   create(payload: FertilizeCreatePayload): Observable<Fertilize>;
   update(fertilizeId: number, payload: FertilizeCreatePayload): Observable<Fertilize>;
-  destroy(fertilizeId: number): Observable<void>;
+  destroy(fertilizeId: number): Observable<DeletionUndoResponse>;
 }
 
 export const FERTILIZE_GATEWAY = new InjectionToken<FertilizeGateway>('FERTILIZE_GATEWAY');

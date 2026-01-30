@@ -2,18 +2,26 @@
 
 class PestsController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_pest, only: [:show, :edit, :update, :destroy]
+  before_action :set_pest, only: [:edit, :update, :destroy]
 
   # GET /pests
   def index
-    # 管理者は参照害虫も表示、一般ユーザーは自分の非参照害虫のみ
-    @pests = PestPolicy.visible_scope(current_user).recent
+    presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestListInteractor.new(
+      output_port: presenter,
+      gateway: pest_gateway,
+      user_id: current_user.id
+    ).call
   end
 
   # GET /pests/:id
   def show
-    @crops = @pest.crops.recent
+    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestDetailInteractor.new(
+      output_port: presenter,
+      gateway: pest_gateway,
+      user_id: current_user.id
+    ).call(params[:id])
   end
 
   # GET /pests/new
@@ -33,71 +41,88 @@ class PestsController < ApplicationController
 
   # POST /pests
   def create
-    # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
-    is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
-    if is_reference && !admin_user?
-      return redirect_to pests_path, alert: I18n.t('pests.flash.reference_only_admin')
-    end
-
-    @pest = PestPolicy.build_for_create(current_user, pest_params)
-    crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
-
-    if @pest.save
-      # 選択された作物との関連付けを処理
-      associate_crops(@pest, crop_ids)
-      respond_to_create(@pest, notice: I18n.t('pests.flash.created'), redirect_path: pest_path(@pest))
+    input_dto = Domain::Pest::Dtos::PestCreateInputDto.from_hash(
+      { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] }
+    )
+    presenter = Presenters::Html::Pest::PestCreateHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestCreateInteractor.new(
+      output_port: presenter,
+      gateway: pest_gateway,
+      user_id: current_user.id
+    ).call(input_dto)
+  rescue StandardError => e
+    if e.message == I18n.t('pests.flash.reference_only_admin')
+      redirect_to pests_path, alert: e.message
     else
-      prepare_crop_selection_for(@pest, selected_ids: crop_ids)
-      respond_to_create(@pest, notice: nil)
+      @pest = Pest.new(pest_params.to_h.symbolize_keys)
+      @pest.valid?
+      prepare_crop_selection_for(@pest, selected_ids: normalize_crop_ids_for(@pest, params[:crop_ids]))
+      flash.now[:alert] = e.message
+      render :new, status: :unprocessable_entity
     end
   end
 
   # PATCH/PUT /pests/:id
   def update
-    # is_referenceをbooleanに変換してチェック
-    if pest_params.key?(:is_reference)
-      is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
-      if is_reference != @pest.is_reference && !admin_user?
-        return redirect_to pest_path(@pest), alert: I18n.t('pests.flash.reference_flag_admin_only')
+    if pest_params.key?(:is_reference) && !current_user.admin?
+      requested = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference])
+      if requested != @pest.is_reference
+        redirect_to pest_path(@pest), alert: I18n.t('pests.flash.reference_flag_admin_only')
+        return
       end
     end
 
-    crop_ids = normalize_crop_ids_for(@pest, params[:crop_ids])
-
-    update_result = PestPolicy.apply_update!(current_user, @pest, pest_params)
-    if update_result
-      # 選択された作物との関連付けを更新
-      update_crop_associations(@pest, crop_ids)
-      respond_to_update(@pest, notice: I18n.t('pests.flash.updated'), redirect_path: pest_path(@pest), update_result: update_result)
-    else
-      prepare_crop_selection_for(@pest, selected_ids: crop_ids)
-      respond_to_update(@pest, notice: nil, update_result: update_result)
-    end
+    input_dto = Domain::Pest::Dtos::PestUpdateInputDto.from_hash(
+      { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] },
+      params[:id]
+    )
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestUpdateInteractor.new(
+      output_port: presenter,
+      gateway: pest_gateway,
+      user_id: current_user.id
+    ).call(input_dto)
+  rescue StandardError => e
+    Rails.logger.error "PestsController#update error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+    @pest.assign_attributes(pest_params.to_h.symbolize_keys)
+    @pest.valid?
+    prepare_crop_selection_for(@pest)
+    flash.now[:alert] = e.message
+    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /pests/:id
   def destroy
-    schedule_deletion_with_undo(
-      record: @pest,
-      toast_message: I18n.t('pests.undo.toast', name: @pest.name),
-      fallback_location: pests_path,
-      in_use_message_key: 'pests.flash.cannot_delete_in_use',
-      delete_error_message_key: 'pests.flash.delete_error'
-    )
+    respond_to do |format|
+      format.html do
+        schedule_deletion_with_undo(
+          record: @pest,
+          toast_message: I18n.t('pests.undo.toast', name: @pest.name),
+          fallback_location: pests_path,
+          in_use_message_key: 'pests.flash.cannot_delete_in_use',
+          delete_error_message_key: 'pests.flash.delete_error'
+        )
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to pests_path, alert: I18n.t('pests.flash.not_found')
+      end
+
+      format.json do
+        schedule_deletion_with_undo(
+          record: @pest,
+          toast_message: I18n.t('pests.undo.toast', name: @pest.name),
+          fallback_location: pests_path,
+          in_use_message_key: 'pests.flash.cannot_delete_in_use',
+          delete_error_message_key: 'pests.flash.delete_error'
+        )
+      end
+    end
   end
 
   private
 
   def set_pest
-    action = params[:action].to_sym
-
-    @pest =
-      if action.in?([:edit, :update, :destroy])
-        PestPolicy.find_editable!(current_user, params[:id])
-      else
-        PestPolicy.find_visible!(current_user, params[:id])
-      end
-  rescue PolicyPermissionDenied
+    @pest = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, current_user, params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to pests_path, alert: I18n.t('pests.flash.not_found')
@@ -133,10 +158,11 @@ class PestsController < ApplicationController
         :_destroy
       ]
     ]
-    
-    # 管理者のみregionを許可
+
+    # 管理者のみ region / pest_id を許可
     permitted << :region if admin_user?
-    
+    permitted << :pest_id if admin_user?
+
     params.require(:pest).permit(*permitted)
   end
 
@@ -148,6 +174,22 @@ class PestsController < ApplicationController
   # 害虫と作物の関連付けを更新（Service経由）
   def update_crop_associations(pest, crop_ids)
     PestCropAssociationService.update_crop_associations(pest, crop_ids, user: current_user)
+  end
+
+  def pest_gateway
+    @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new
+  end
+
+  public
+
+  # Presenter から呼ばれるため public
+  def render_form(action, status: :ok, locals: {})
+    render(action, status: status, locals: locals)
+  end
+
+  # Presenter の on_failure から呼ばれるため public
+  def normalize_crop_ids_for(pest, raw_ids)
+    PestCropAssociationService.normalize_crop_ids(pest, raw_ids, user: current_user)
   end
 
   def prepare_crop_selection_for(pest, selected_ids: nil)
@@ -164,9 +206,7 @@ class PestsController < ApplicationController
     end
   end
 
-  def normalize_crop_ids_for(pest, raw_ids)
-    PestCropAssociationService.normalize_crop_ids(pest, raw_ids, user: current_user)
-  end
+  private
 end
 
 

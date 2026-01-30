@@ -1,18 +1,28 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
-  include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_pesticide, only: [:show, :edit, :update, :destroy]
+  before_action :set_pesticide, only: [:edit, :update]
 
   # GET /pesticides
   def index
-    # 管理者は参照農薬も表示、一般ユーザーは自分の非参照農薬のみ
-    @pesticides = PesticidePolicy.visible_scope(current_user).recent
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideListInteractor.new(
+      output_port: presenter,
+      gateway: pesticide_gateway,
+      user_id: current_user.id
+    ).call
   end
 
   # GET /pesticides/:id
   def show
+    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
+      output_port: presenter,
+      gateway: pesticide_gateway,
+      user_id: current_user.id
+    ).call(params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   end
 
   # GET /pesticides/new
@@ -32,25 +42,30 @@ class PesticidesController < ApplicationController
 
   # POST /pesticides
   def create
-    # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
+    # is_referenceをbooleanに変換してチェック（既存のロジックを維持）
     is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
     if is_reference && !admin_user?
       return redirect_to pesticides_path, alert: I18n.t('pesticides.flash.reference_only_admin')
     end
 
-    @pesticide = PesticidePolicy.build_for_create(current_user, pesticide_params)
+    input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
+    presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: self)
 
-    if @pesticide.save
-      respond_to_create(@pesticide, notice: I18n.t('pesticides.flash.created'), redirect_path: pesticide_path(@pesticide))
-    else
-      load_crops_and_pests
-      respond_to_create(@pesticide, notice: nil)
-    end
+    # 失敗時にフォーム再表示するために @pesticide をセット
+    @pesticide = Pesticide.new(pesticide_params)
+
+    Domain::Pesticide::Interactors::PesticideCreateInteractor.new(
+      output_port: presenter,
+      gateway: pesticide_gateway,
+      user_id: current_user.id
+    ).call(input_dto)
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   end
 
   # PATCH/PUT /pesticides/:id
   def update
-    # is_referenceをbooleanに変換してチェック
+    # is_referenceをbooleanに変換してチェック（既存のロジックを維持）
     if pesticide_params.key?(:is_reference)
       is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
       if is_reference != @pesticide.is_reference && !admin_user?
@@ -58,30 +73,37 @@ class PesticidesController < ApplicationController
       end
     end
 
-    update_result = PesticidePolicy.apply_update!(current_user, @pesticide, pesticide_params)
-    if update_result
-      respond_to_update(@pesticide, notice: I18n.t('pesticides.flash.updated'), redirect_path: pesticide_path(@pesticide), update_result: update_result)
-    else
-      load_crops_and_pests
-      respond_to_update(@pesticide, notice: nil, update_result: update_result)
-    end
+    input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys, params[:id])
+    presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: self)
+
+    # 失敗時にフォーム再表示するために @pesticide を更新
+    @pesticide.assign_attributes(pesticide_params)
+
+    Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
+      output_port: presenter,
+      gateway: pesticide_gateway,
+      user_id: current_user.id
+    ).call(input_dto)
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   end
 
   # DELETE /pesticides/:id
   def destroy
-    schedule_deletion_with_undo(
-      record: @pesticide,
-      toast_message: I18n.t('pesticides.undo.toast', name: @pesticide.name),
-      fallback_location: pesticides_path,
-      in_use_message_key: 'pesticides.flash.cannot_delete_in_use',
-      delete_error_message_key: 'pesticides.flash.delete_error'
-    )
+    presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
+      output_port: presenter,
+      gateway: pesticide_gateway,
+      user_id: current_user.id
+    ).call(params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   end
 
   private
 
   def set_pesticide
-    @pesticide = PesticidePolicy.find_visible!(current_user, params[:id])
+    @pesticide = Domain::Shared::Policies::PesticidePolicy.find_visible!(Pesticide, current_user, params[:id])
   rescue PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   rescue ActiveRecord::RecordNotFound
@@ -123,11 +145,15 @@ class PesticidesController < ApplicationController
         :_destroy
       ]
     ]
-    
+
     # 管理者のみregionを許可
     permitted << :region if admin_user?
-    
+
     params.require(:pesticide).permit(*permitted)
+  end
+
+  def pesticide_gateway
+    @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
   end
 end
 

@@ -29,22 +29,38 @@ const initialControl: FarmListViewState = {
     { provide: FARM_GATEWAY, useClass: FarmApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>Farms</h2>
-      <a routerLink="/farms/new">Create Farm</a>
-      @if (control.loading) {
-        <p class="loading">Loading...</p>
-      } @else if (control.error) {
-        <p class="error">Error: {{ control.error }}</p>
-      } @else {
-        <ul>
-          <li *ngFor="let farm of control.farms">
-            <a [routerLink]="['/farms', farm.id]">{{ farm.name }}</a>
-            <button type="button" (click)="deleteFarm(farm.id)">Delete</button>
-          </li>
-        </ul>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">Farms</h1>
+        <p class="page-description">Manage your farms.</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">Farm list</h2>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a routerLink="/farms/new" class="btn-primary">Create Farm</a>
+          <ul class="card-list" role="list">
+            @for (farm of control.farms; track farm.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/farms', farm.id]" class="item-card">
+                  <span class="item-card__title">{{ farm.name }}</span>
+                  @if (farm.region) {
+                    <span class="item-card__meta">{{ farm.region }}</span>
+                  }
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteFarm(farm.id)">Delete</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './farm-list.component.css'
 })

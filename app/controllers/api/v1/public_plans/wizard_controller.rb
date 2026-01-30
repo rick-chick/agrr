@@ -11,10 +11,8 @@ module Api
         skip_before_action :verify_authenticity_token
 
         def farms
-          puts "DEBUG: WizardController#farms called with region: #{params[:region]}"
           region = params[:region].presence || locale_to_region(I18n.locale)
-          farms = FarmPolicy.reference_scope(region: region)
-          puts "DEBUG: Found #{farms.count} farms"
+          farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region)
           render json: farms
         end
 
@@ -24,7 +22,7 @@ module Api
 
         def crops
           farm = Farm.find(params[:farm_id])
-          crops = CropPolicy.reference_scope(region: farm.region).order(:name)
+          crops = Domain::Shared::Policies::CropPolicy.reference_scope(Crop, region: farm.region).order(:name)
           render json: crops
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Farm not found' }, status: :not_found

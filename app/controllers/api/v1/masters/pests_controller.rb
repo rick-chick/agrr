@@ -4,61 +4,102 @@ module Api
   module V1
     module Masters
       class PestsController < BaseController
-        include ApiCrudResponder
-        before_action :set_pest, only: [:show, :update, :destroy]
+        include Views::Api::Pest::PestListView
+        include Views::Api::Pest::PestDetailView
+        include Views::Api::Pest::PestCreateView
+        include Views::Api::Pest::PestUpdateView
+        include Views::Api::Pest::PestDeleteView
 
         # GET /api/v1/masters/pests
         def index
-          # HTML側と同様、Policyのvisible_scopeを利用
-          @pests = PestPolicy.visible_scope(current_user)
-          respond_to_index(@pests)
+          presenter = Presenters::Api::Pest::PestListPresenter.new(view: self)
+          interactor = Domain::Pest::Interactors::PestListInteractor.new(
+            output_port: presenter,
+            gateway: pest_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
         # GET /api/v1/masters/pests/:id
         def show
-          respond_to_show(@pest)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::Pest::PestDetailPresenter.new(view: self)
+          interactor = Domain::Pest::Interactors::PestDetailInteractor.new(
+            output_port: presenter,
+            gateway: pest_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
         # POST /api/v1/masters/pests
         def create
-          # HTML側と同様のownershipルールをPolicyに委譲（APIではis_referenceパラメータは許可していない）
-          @pest = PestPolicy.build_for_create(current_user, pest_params)
-          @pest.save
-          respond_to_create(@pest)
+          input_dto = Domain::Pest::Dtos::PestCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_pest_params?(input_dto)
+            render_response(json: { errors: ['name is required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::Pest::PestCreatePresenter.new(view: self)
+          interactor = Domain::Pest::Interactors::PestCreateInteractor.new(
+            output_port: presenter,
+            gateway: pest_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/pests/:id
         def update
-          # HTML側と同様に、更新時のownership/参照フラグ調整はPolicyに委譲
-          update_result = PestPolicy.apply_update!(current_user, @pest, pest_params)
-          respond_to_update(@pest, update_result: update_result)
+          input_dto = Domain::Pest::Dtos::PestUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::Pest::PestUpdatePresenter.new(view: self)
+          interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(
+            output_port: presenter,
+            gateway: pest_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/pests/:id
         def destroy
-          destroy_result = @pest.destroy
-          respond_to_destroy(@pest, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::Pest::PestDeletePresenter.new(view: self)
+          interactor = Domain::Pest::Interactors::PestDestroyInteractor.new(
+            output_port: presenter,
+            gateway: pest_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_pest
-          action = params[:action].to_sym
-
-          @pest =
-            if action.in?([:update, :destroy])
-              PestPolicy.find_editable!(current_user, params[:id])
-            else
-              PestPolicy.find_visible!(current_user, params[:id])
-            end
-        rescue PolicyPermissionDenied
-          render json: { error: I18n.t('pests.flash.no_permission') }, status: :forbidden
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Pest not found' }, status: :not_found
+        def pest_gateway
+          @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new
         end
 
-        def pest_params
-          params.require(:pest).permit(:name, :name_scientific, :family, :order, :description, :occurrence_season, :region)
+        def input_valid?(action)
+          case action
+          when :show, :destroy
+            return true if params[:id].present?
+            render_response(json: { error: 'Pest not found' }, status: :not_found)
+            false
+          else
+            true
+          end
+        end
+
+        def valid_pest_params?(input_dto)
+          input_dto.name.present?
         end
       end
     end

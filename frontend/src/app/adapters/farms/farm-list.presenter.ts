@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FarmListView } from '../../components/masters/farms/farm-list.view';
 import { LoadFarmListOutputPort } from '../../usecase/farms/load-farm-list.output-port';
 import { FarmListDataDto } from '../../usecase/farms/load-farm-list.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
+import { UndoToastService } from '../../services/undo-toast.service';
 
 @Injectable()
 export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutputPort {
+  private readonly undoToast = inject(UndoToastService);
   private view: FarmListView | null = null;
 
   setView(view: FarmListView): void {
@@ -39,5 +41,13 @@ export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutp
       ...prev,
       farms: prev.farms.filter((f) => f.id !== dto.deletedFarmId)
     };
+    if (dto.undo && dto.refresh) {
+      this.undoToast.showWithUndo(
+        dto.undo.toast_message,
+        dto.undo.undo_path,
+        dto.undo.undo_token,
+        dto.refresh
+      );
+    }
   }
 }

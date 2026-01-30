@@ -264,7 +264,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
   test "管理者は自身の肥料をupdateできる" do
     sign_in_as @admin_user
     patch fertilize_path(@admin_fertilize), params: { fertilize: {
-      name: @admin_fertilize.name,
+      name: "Updated Test Fertilize 4",
       n: 30.0
     } }
     

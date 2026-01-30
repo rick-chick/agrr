@@ -72,7 +72,7 @@ module Api
           else
             # 新規作成（所有者・参照フラグの決定は Policy に委譲）
             Rails.logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name_from_agrr}"
-            policy_fertilize = FertilizePolicy.build_for_create(current_user, base_attrs)
+            policy_fertilize = Domain::Shared::Policies::FertilizePolicy.build_for_create(Fertilize, current_user, base_attrs)
             attrs_for_create = base_attrs.merge(
               user_id: policy_fertilize.user_id,
               is_reference: policy_fertilize.is_reference
@@ -244,7 +244,7 @@ module Api
       def set_fertilize
         @fertilize =
           begin
-            FertilizePolicy.find_editable!(current_user, params[:id])
+            Domain::Shared::Policies::FertilizePolicy.find_editable!(Fertilize, current_user, params[:id])
           rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
             nil
           end

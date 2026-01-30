@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { LoadPlanDetailUseCase } from './load-plan-detail.usecase';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
@@ -29,8 +30,11 @@ describe('LoadPlanDetailUseCase', () => {
     };
 
     const gateway: PlanGateway = {
+      listPlans: () => of([]),
       fetchPlan: () => of(plan),
-      fetchPlanData: () => of(planData)
+      fetchPlanData: () => of(planData),
+      getPublicPlanData: () => of(planData),
+      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: {} } as TaskScheduleResponse)
     };
 
     let receivedDto: PlanDetailDataDto | null = null;

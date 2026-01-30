@@ -58,52 +58,66 @@ const initialControl: FarmDetailViewState = {
     { provide: FARM_WEATHER_GATEWAY, useClass: FarmWeatherChannelGateway }
   ],
   template: `
-    <section class="page">
-      <a [routerLink]="['/farms']">Back to farms</a>
+    <main class="page-main">
       @if (control.loading) {
-        <p>Loading...</p>
+        <p class="master-loading">Loading...</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <p class="master-error">{{ control.error }}</p>
       } @else if (control.farm) {
-        <h2>{{ control.farm.name }}</h2>
-        <p>Location: {{ control.farm.region ?? '-' }}</p>
+        <section class="detail-card" aria-labelledby="detail-heading">
+          <h1 id="detail-heading" class="detail-card__title">{{ control.farm.name }}</h1>
+          <dl class="detail-card__list">
+            <div class="detail-row">
+              <dt class="detail-row__term">Location</dt>
+              <dd class="detail-row__value">{{ control.farm.region ?? '-' }}</dd>
+            </div>
+          </dl>
+          <div class="detail-card__actions">
+            <a [routerLink]="['/farms']" class="btn-secondary">Back to farms</a>
+            <a [routerLink]="['/farms', control.farm.id, 'edit']" class="btn-secondary">Edit</a>
+            <button type="button" class="btn-danger" (click)="deleteFarm()">Delete</button>
+          </div>
+        </section>
 
         @if (control.farm.weather_data_status && control.farm.weather_data_status !== 'completed') {
-          <div class="weather-status">
-            <p>Weather Data Status: {{ control.farm.weather_data_status }}</p>
+          <section class="section-card" aria-labelledby="weather-heading">
+            <h2 id="weather-heading" class="section-title">Weather Data Status</h2>
+            <p>{{ control.farm.weather_data_status }}</p>
             @if (control.farm.weather_data_status === 'fetching') {
               <p>Progress: {{ control.farm.weather_data_progress ?? 0 }}%</p>
               <progress [value]="control.farm.weather_data_progress ?? 0" max="100"></progress>
             }
-          </div>
+          </section>
         }
 
-        <div class="actions">
-          <a [routerLink]="['/farms', control.farm.id, 'edit']">Edit</a>
-          <button type="button" (click)="deleteFarm()">Delete</button>
-        </div>
+        <section class="section-card" aria-labelledby="map-heading">
+          <h2 id="map-heading" class="section-title">Map</h2>
+          <app-farm-map
+            [latitude]="control.farm.latitude"
+            [longitude]="control.farm.longitude"
+            [name]="control.farm.name"
+          />
+        </section>
 
-        <app-farm-map
-          [latitude]="control.farm.latitude"
-          [longitude]="control.farm.longitude"
-          [name]="control.farm.name"
-        />
-
-        <h3>Fields</h3>
-        <div class="field-actions">
-          <button type="button" (click)="addField()">ほ場を追加</button>
-        </div>
-        <ul>
-          <li *ngFor="let field of control.fields; trackBy: trackByFieldId">
-            {{ field.name }} ({{ field.area }} ha)
-            <div class="field-item-actions">
-              <button type="button" (click)="editField(field)">編集</button>
-              <button type="button" (click)="deleteField(field)">削除</button>
-            </div>
-          </li>
-        </ul>
+        <section class="section-card" aria-labelledby="fields-heading">
+          <h2 id="fields-heading" class="section-title">Fields</h2>
+          <div class="list-item-actions field-actions-bar">
+            <button type="button" class="btn-primary" (click)="addField()">Add Field</button>
+          </div>
+          <ul class="card-list" role="list">
+            @for (field of control.fields; track field.id) {
+              <li class="card-list__item">
+                <span class="item-card__title">{{ field.name }} ({{ field.area }} ha)</span>
+                <div class="list-item-actions">
+                  <button type="button" class="btn-secondary btn-sm" (click)="editField(field)">Edit</button>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteField(field)">Delete</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
       }
-    </section>
+    </main>
   `,
   styleUrl: './farm-detail.component.css'
 })
