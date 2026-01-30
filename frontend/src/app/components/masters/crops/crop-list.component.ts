@@ -30,31 +30,40 @@ const initialControl: CropListViewState = {
     { provide: CROP_GATEWAY, useClass: CropApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>{{ 'crops.index.title' | translate }}</h2>
-      <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
-      @if (control.loading) {
-        <p>{{ 'common.loading' | translate }}</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <div class="enhanced-grid">
-          @for (crop of control.crops; track crop.id) {
-            <div class="enhanced-selection-card-wrapper">
-              <a [routerLink]="['/crops', crop.id]" class="enhanced-selection-card">
-                <div class="enhanced-card-icon">🥬</div>
-                <div class="enhanced-card-title">{{ crop.name }}</div>
-                <div class="enhanced-card-subtitle" *ngIf="crop.variety">{{ crop.variety }}</div>
-              </a>
-              <a [routerLink]="['/crops', crop.id, 'edit']" class="btn btn-sm">{{ 'common.edit' | translate }}</a>
-              <button type="button" class="btn btn-sm btn-danger" (click)="deleteCrop(crop.id)">
-                {{ 'common.delete' | translate }}
-              </button>
-            </div>
-          }
-        </div>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">{{ 'crops.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'crops.index.description' | translate }}</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">{{ 'crops.index.list_heading' | translate }}</h2>
+        @if (control.loading) {
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a [routerLink]="['/crops', 'new']" class="btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
+          <ul class="card-list" role="list">
+            @for (crop of control.crops; track crop.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/crops', crop.id]" class="item-card">
+                  <span class="item-card__title">{{ crop.name }}</span>
+                  @if (crop.variety) {
+                    <span class="item-card__meta">{{ crop.variety }}</span>
+                  }
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/crops', crop.id, 'edit']" class="btn-secondary btn-sm">{{ 'common.edit' | translate }}</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteCrop(crop.id)">
+                    {{ 'common.delete' | translate }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './crop-list.component.css'
 })

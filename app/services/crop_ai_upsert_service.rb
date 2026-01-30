@@ -7,10 +7,9 @@ class CropAiUpsertService
     end
   end
 
-  def initialize(user:, create_interactor:, crop_policy: CropPolicy)
+  def initialize(user:, create_interactor:)
     @user = user
     @create_interactor = create_interactor
-    @crop_policy = crop_policy
   end
 
   # 取得済みの crop_info を元に、既存作物の更新 or 新規作成を行う
@@ -21,7 +20,7 @@ class CropAiUpsertService
   # @return [Result] success?/status/body を持つ結果オブジェクト
   def call(crop_name:, variety: nil, crop_info:)
     # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
-    dummy_crop = @crop_policy.build_for_create(@user, name: 'dummy')
+    dummy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, { name: 'dummy' })
     unless dummy_crop.valid?
       validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
       if validation_error
@@ -79,7 +78,7 @@ class CropAiUpsertService
     return nil unless crop_id.present?
 
     begin
-      @crop_policy.find_editable!(@user, crop_id)
+      Domain::Shared::Policies::CropPolicy.find_editable!(Crop, @user, crop_id)
     rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
       nil
     end
@@ -140,7 +139,7 @@ class CropAiUpsertService
     saved_stages = 0
 
     ActiveRecord::Base.transaction do
-      policy_crop = @crop_policy.build_for_create(@user, base_attrs)
+      policy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, base_attrs)
       attrs_for_create = base_attrs.merge(
         user_id: policy_crop.user_id,
         is_reference: policy_crop.is_reference

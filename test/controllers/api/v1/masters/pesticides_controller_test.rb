@@ -14,8 +14,12 @@ module Api
           @pest = create(:pest, :user_owned, user: @user)
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, ApiCrudResponder
+        test "includes Pesticide Views" do
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideListView
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideDetailView
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideCreateView
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideUpdateView
+          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideDeleteView
         end
 
         test "should get index" do
@@ -154,7 +158,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "should not destroy other user's pesticide" do

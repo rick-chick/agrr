@@ -12,8 +12,12 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, ApiCrudResponder
+        test "includes InteractionRule Views" do
+          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleListView
+          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleDetailView
+          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleCreateView
+          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleUpdateView
+          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleDeleteView
         end
 
         test "should get index" do
@@ -146,7 +150,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "should not destroy other user's interaction_rule" do

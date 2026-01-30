@@ -48,6 +48,11 @@ module Agrr
                  headers: :any,
                  methods: [:get, :post, :put, :patch, :delete, :options, :head],
                  credentials: true
+        # undo_deletion: /undo_deletion または /:locale/undo_deletion（Angular からの復元用）
+        resource %r{^(/(ja|us|in))?/undo_deletion$},
+                 headers: :any,
+                 methods: [:post, :options],
+                 credentials: true
         resource '/cable',
                  headers: :any,
                  methods: [:get, :post, :options],

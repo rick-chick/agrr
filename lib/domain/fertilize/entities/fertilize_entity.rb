@@ -4,21 +4,40 @@ module Domain
   module Fertilize
     module Entities
       class FertilizeEntity
-        attr_reader :id, :name, :n, :p, :k, :description, :package_size, :is_reference, :created_at, :updated_at
-        
+        attr_reader :id, :user_id, :name, :n, :p, :k, :description, :package_size, :region, :is_reference, :created_at, :updated_at
+
         def initialize(attributes)
           @id = attributes[:id]
+          @user_id = attributes[:user_id]
           @name = attributes[:name]
           @n = attributes[:n]
           @p = attributes[:p]
           @k = attributes[:k]
           @description = attributes[:description]
           @package_size = attributes[:package_size]
+          @region = attributes[:region]
           @is_reference = attributes[:is_reference]
           @created_at = attributes[:created_at]
           @updated_at = attributes[:updated_at]
-          
+
           validate!
+        end
+
+        def self.from_model(record)
+          new(
+            id: record.id,
+            user_id: record.user_id,
+            name: record.name,
+            n: record.n,
+            p: record.p,
+            k: record.k,
+            description: record.description,
+            package_size: record.package_size,
+            region: record.region,
+            is_reference: record.is_reference,
+            created_at: record.created_at,
+            updated_at: record.updated_at
+          )
         end
         
         def reference?

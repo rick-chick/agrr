@@ -10,6 +10,8 @@ import { LOAD_FARM_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/farms/load-farm
 import { UPDATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/update-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
+import { FarmMapComponent } from './farm-map.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 const initialFormData: FarmEditFormData = {
   name: '',
@@ -28,7 +30,7 @@ const initialControl: FarmEditViewState = {
 @Component({
   selector: 'app-farm-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule],
   providers: [
     FarmEditPresenter,
     LoadFarmForEditUseCase,
@@ -38,36 +40,74 @@ const initialControl: FarmEditViewState = {
     { provide: FARM_GATEWAY, useClass: FarmApiGateway }
   ],
   template: `
-    <section class="page">
-      <a routerLink="/farms">Back to farms</a>
-      <h2>Edit Farm</h2>
-      @if (control.loading) {
-        <p>Loading...</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <form (ngSubmit)="updateFarm()" #farmForm="ngForm">
-          <label>
-            Name
-            <input name="name" [(ngModel)]="control.formData.name" required />
-          </label>
-          <label>
-            Region
-            <input name="region" [(ngModel)]="control.formData.region" required />
-          </label>
-          <label>
-            Latitude
-            <input name="latitude" type="number" step="0.000001" [(ngModel)]="control.formData.latitude" required />
-          </label>
-          <label>
-            Longitude
-            <input name="longitude" type="number" step="0.000001" [(ngModel)]="control.formData.longitude" required />
-          </label>
-          <button type="submit" [disabled]="farmForm.invalid || control.saving">Save</button>
-        </form>
-      }
-    </section>
-  `
+    <main class="page-main">
+      <section class="form-card" aria-labelledby="form-heading">
+        <h2 id="form-heading" class="form-card__title">Edit Farm</h2>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <form (ngSubmit)="updateFarm()" #farmForm="ngForm" class="form-card__form">
+            <label class="form-card__field">
+              {{ 'farms.new.form.name_label' | translate }}
+              <input name="name" [(ngModel)]="control.formData.name" required />
+            </label>
+            <label class="form-card__field">
+              Region
+              <input name="region" [(ngModel)]="control.formData.region" required />
+            </label>
+            <div class="form-group">
+              <label class="form-label">{{ 'farms.new.form.location_label' | translate }}</label>
+              <app-farm-map
+                [editable]="true"
+                [latitude]="control.formData.latitude"
+                [longitude]="control.formData.longitude"
+                [name]="control.formData.name || 'Farm'"
+                (coordinatesChange)="onCoordinatesChange($event)"
+              />
+              <div class="coordinates-input">
+                <label class="form-card__field">
+                  {{ 'farms.new.form.latitude_label' | translate }}
+                  <input
+                    name="latitude"
+                    type="number"
+                    step="0.000001"
+                    min="-90"
+                    max="90"
+                    [placeholder]="'farms.new.form.latitude_placeholder' | translate"
+                    [(ngModel)]="control.formData.latitude"
+                    required
+                  />
+                </label>
+                <label class="form-card__field">
+                  {{ 'farms.new.form.longitude_label' | translate }}
+                  <input
+                    name="longitude"
+                    type="number"
+                    step="0.000001"
+                    min="-180"
+                    max="180"
+                    [placeholder]="'farms.new.form.longitude_placeholder' | translate"
+                    [(ngModel)]="control.formData.longitude"
+                    required
+                  />
+                </label>
+              </div>
+            </div>
+            @if (control.error) {
+              <p class="master-error">{{ control.error }}</p>
+            }
+            <div class="form-card__actions">
+              <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Save</button>
+              <a routerLink="/farms" class="btn-secondary">Back to farms</a>
+            </div>
+          </form>
+        }
+      </section>
+    </main>
+  `,
+  styleUrls: ['./farm-edit.component.css']
 })
 export class FarmEditComponent implements FarmEditView, OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -76,6 +116,7 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   private readonly updateUseCase = inject(UpdateFarmUseCase);
   private readonly presenter = inject(FarmEditPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: FarmEditViewState = initialControl;
   get control(): FarmEditViewState {
@@ -93,15 +134,40 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     if (!this.farmId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid farm id.' };
+      // Presenter will handle invalid farm id error
       return;
     }
     this.loadUseCase.execute({ farmId: this.farmId });
   }
 
+  onCoordinatesChange(event: { latitude: number; longitude: number }): void {
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        latitude: event.latitude,
+        longitude: event.longitude
+      }
+    };
+  }
+
   updateFarm(): void {
-    if (this.control.saving) return;
-    this.control = { ...this.control, saving: true, error: null };
+    const { latitude, longitude } = this.control.formData;
+    if (
+      Number.isNaN(latitude) ||
+      Number.isNaN(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      this.control = {
+        ...this.control,
+        error: this.translate.instant('farms.new.form.coordinates_validation_error')
+      };
+      return;
+    }
+    this.control = { ...this.control, error: null };
     this.updateUseCase.execute({
       farmId: this.farmId,
       name: this.control.formData.name,

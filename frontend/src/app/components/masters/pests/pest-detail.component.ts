@@ -30,57 +30,66 @@ const initialControl: PestDetailViewState = {
     { provide: PEST_GATEWAY, useClass: PestApiGateway }
   ],
   template: `
-    <div class="content-card">
-      <div class="page-header">
-        <a [routerLink]="['/pests']" class="btn btn-white">Back</a>
-        @if (control.pest) {
-          <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn btn-white">Edit</a>
-          <button type="button" class="btn btn-danger" (click)="deletePest()">Delete</button>
-        }
-      </div>
-
+    <main class="page-main">
       @if (control.loading) {
-        <p>Loading...</p>
+        <p class="master-loading">Loading...</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <p class="master-error">{{ control.error }}</p>
       } @else if (control.pest) {
-        <h2 class="page-title">{{ control.pest.name }}</h2>
-        <section class="info-section">
-          <h3>Name</h3>
-          <p>{{ control.pest.name }}</p>
-          @if (control.pest.name_scientific) {
-            <h3>Scientific Name</h3>
-            <p>{{ control.pest.name_scientific }}</p>
-          }
-          @if (control.pest.family) {
-            <h3>Family</h3>
-            <p>{{ control.pest.family }}</p>
-          }
-          @if (control.pest.order) {
-            <h3>Order</h3>
-            <p>{{ control.pest.order }}</p>
-          }
-          @if (control.pest.description) {
-            <h3>Description</h3>
-            <p>{{ control.pest.description }}</p>
-          }
-          @if (control.pest.occurrence_season) {
-            <h3>Occurrence Season</h3>
-            <p>{{ control.pest.occurrence_season }}</p>
-          }
-          @if (control.pest.region) {
-            <h3>Region</h3>
-            <p>{{ control.pest.region }}</p>
-          }
+        <section class="detail-card" aria-labelledby="detail-heading">
+          <h1 id="detail-heading" class="detail-card__title">{{ control.pest.name }}</h1>
+          <dl class="detail-card__list">
+            <div class="detail-row">
+              <dt class="detail-row__term">Name</dt>
+              <dd class="detail-row__value">{{ control.pest.name }}</dd>
+            </div>
+            @if (control.pest.name_scientific) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Scientific Name</dt>
+                <dd class="detail-row__value">{{ control.pest.name_scientific }}</dd>
+              </div>
+            }
+            @if (control.pest.family) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Family</dt>
+                <dd class="detail-row__value">{{ control.pest.family }}</dd>
+              </div>
+            }
+            @if (control.pest.order) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Order</dt>
+                <dd class="detail-row__value">{{ control.pest.order }}</dd>
+              </div>
+            }
+            @if (control.pest.description) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Description</dt>
+                <dd class="detail-row__value">{{ control.pest.description }}</dd>
+              </div>
+            }
+            @if (control.pest.occurrence_season) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Occurrence Season</dt>
+                <dd class="detail-row__value">{{ control.pest.occurrence_season }}</dd>
+              </div>
+            }
+            @if (control.pest.region) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Region</dt>
+                <dd class="detail-row__value">{{ control.pest.region }}</dd>
+              </div>
+            }
+          </dl>
+          <div class="detail-card__actions">
+            <a [routerLink]="['/pests']" class="btn-secondary">Back</a>
+            <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn-secondary">Edit</a>
+            <button type="button" class="btn-danger" (click)="deletePest()">Delete</button>
+          </div>
         </section>
       }
-    </div>
+    </main>
   `,
-  styles: [`
-    .info-section {
-      margin-bottom: 2rem;
-    }
-  `]
+  styleUrl: './pest-detail.component.css'
 })
 export class PestDetailComponent implements PestDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

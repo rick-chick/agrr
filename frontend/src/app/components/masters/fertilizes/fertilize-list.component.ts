@@ -30,24 +30,36 @@ const initialControl: FertilizeListViewState = {
     { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>Fertilizes</h2>
-      <a routerLink="/fertilizes/new">Create Fertilize</a>
-      @if (control.loading) {
-        <p>Loading...</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <ul>
-          <li *ngFor="let item of control.fertilizes">
-            <a [routerLink]="['/fertilizes', item.id]"><strong>{{ item.name }}</strong></a>
-            <span> (NPK: {{ formatNpk(item) }})</span>
-            <a [routerLink]="['/fertilizes', item.id, 'edit']">Edit</a>
-            <button type="button" (click)="deleteFertilize(item.id)">Delete</button>
-          </li>
-        </ul>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">Fertilizes</h1>
+        <p class="page-description">Manage fertilizes.</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">Fertilize list</h2>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a routerLink="/fertilizes/new" class="btn-primary">Create Fertilize</a>
+          <ul class="card-list" role="list">
+            @for (item of control.fertilizes; track item.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/fertilizes', item.id]" class="item-card">
+                  <span class="item-card__title">{{ item.name }}</span>
+                  <span class="item-card__meta">NPK: {{ formatNpk(item) }}</span>
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteFertilize(item.id)">Delete</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './fertilize-list.component.css'
 })

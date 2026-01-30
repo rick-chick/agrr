@@ -4,56 +4,106 @@ module Api
   module V1
     module Masters
       class FarmsController < BaseController
-        include ApiCrudResponder
-        before_action :set_farm, only: [:show, :update, :destroy]
+        include Views::Api::Farm::FarmListView
+        include Views::Api::Farm::FarmDetailView
+        include Views::Api::Farm::FarmCreateView
+        include Views::Api::Farm::FarmUpdateView
+        include Views::Api::Farm::FarmDeleteView
 
         # GET /api/v1/masters/farms
         def index
-          @farms = FarmPolicy.user_owned_scope(current_user)
-          respond_to_index(@farms)
+          input_valid?(:index) || return
+          presenter = Presenters::Api::Farm::FarmListPresenter.new(view: self)
+          interactor = Domain::Farm::Interactors::FarmListInteractor.new(
+            output_port: presenter,
+            gateway: farm_gateway,
+            user_id: current_user.id
+          )
+          interactor.call
         end
 
         # GET /api/v1/masters/farms/:id
         def show
-          respond_to_show(@farm)
+          input_valid?(:show) || return
+          presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
+          interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(
+            output_port: presenter,
+            gateway: farm_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
         end
 
         # POST /api/v1/masters/farms
         def create
-          @farm = FarmPolicy.build_for_create(current_user, farm_params)
-          @farm.save
-          respond_to_create(@farm)
+          input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          unless valid_farm_params?(input_dto)
+            render_response(json: { errors: ['name, region, latitude, longitude are required'] }, status: :unprocessable_entity)
+            return
+          end
+          presenter = Presenters::Api::Farm::FarmCreatePresenter.new(view: self)
+          interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(
+            output_port: presenter,
+            gateway: farm_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/farms/:id
         def update
-          update_result = @farm.update(farm_params)
-          respond_to_update(@farm, update_result: update_result)
+          input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Presenters::Api::Farm::FarmUpdatePresenter.new(view: self)
+          interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(
+            output_port: presenter,
+            gateway: farm_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/farms/:id
         def destroy
-          destroy_result = @farm.destroy
-          respond_to_destroy(@farm, destroy_result: destroy_result)
+          input_valid?(:destroy) || return
+          presenter = Presenters::Api::Farm::FarmDeletePresenter.new(view: self)
+          interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(
+            output_port: presenter,
+            gateway: farm_gateway,
+            user_id: current_user.id
+          )
+          interactor.call(params[:id])
+        end
+
+        # View の実装: render は controller.render への委譲のみ
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
+        # FarmDeleteView: undo 用 JSON の undo_path 組み立て
+        def undo_deletion_path(undo_token:)
+          Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
         private
 
-        def set_farm
-          @farm =
-            begin
-              FarmPolicy.find_owned!(current_user, params[:id])
-            rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-              nil
-            end
+        def farm_gateway
+          @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
+        end
 
-          unless @farm
-            render json: { error: 'Farm not found' }, status: :not_found
+        def input_valid?(action)
+          case action
+          when :show, :destroy
+            return true if params[:id].present?
+            render_response(json: { error: 'Farm not found' }, status: :not_found)
+            false
+          else
+            true
           end
         end
 
-        def farm_params
-          params.require(:farm).permit(:name, :latitude, :longitude, :region)
+        def valid_farm_params?(input_dto)
+          input_dto.name.present? && input_dto.region.present? &&
+            !input_dto.latitude.nil? && !input_dto.longitude.nil?
         end
       end
     end

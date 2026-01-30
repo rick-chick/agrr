@@ -2,7 +2,8 @@
 
 require 'test_helper'
 
-class PestPolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::PestPolicyTest < ActiveSupport::TestCase
+  include Domain::Shared::Policies
   setup do
     @user = create(:user)
     @admin = create(:user, :admin)
@@ -13,8 +14,8 @@ class PestPolicyTest < ActiveSupport::TestCase
     admin_pest = create(:pest, is_reference: false, user: @admin)
     user_pest = create(:pest, is_reference: false, user: @user)
 
-    scope_for_user = PestPolicy.visible_scope(@user)
-    scope_for_admin = PestPolicy.visible_scope(@admin)
+    scope_for_user = Domain::Shared::Policies::PestPolicy.visible_scope(Pest, @user)
+    scope_for_admin = Domain::Shared::Policies::PestPolicy.visible_scope(Pest, @admin)
 
     # 一般ユーザー: 自分の非参照害虫のみ
     assert_includes scope_for_user, user_pest
@@ -32,7 +33,7 @@ class PestPolicyTest < ActiveSupport::TestCase
     user_pest = create(:pest, is_reference: false, user: @user)
     other_user_pest = create(:pest, is_reference: false, user: create(:user))
 
-    scope = PestPolicy.selectable_scope(@user)
+    scope = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, @user)
 
     assert_includes scope, reference_pest
     assert_includes scope, user_pest
@@ -40,7 +41,7 @@ class PestPolicyTest < ActiveSupport::TestCase
   end
 
   test 'build_for_create for admin with reference pest' do
-    pest = PestPolicy.build_for_create(@admin, { name: 'RefPest', is_reference: true })
+    pest = Domain::Shared::Policies::PestPolicy.build_for_create(Pest, @admin, { name: 'RefPest', is_reference: true })
 
     assert pest.is_reference
     assert_nil pest.user_id
@@ -48,7 +49,7 @@ class PestPolicyTest < ActiveSupport::TestCase
   end
 
   test 'build_for_create for admin with user pest (non-reference)' do
-    pest = PestPolicy.build_for_create(@admin, { name: 'UserPest', is_reference: false })
+    pest = Domain::Shared::Policies::PestPolicy.build_for_create(Pest, @admin, { name: 'UserPest', is_reference: false })
 
     assert_not pest.is_reference
     assert_equal @admin.id, pest.user_id
@@ -56,7 +57,7 @@ class PestPolicyTest < ActiveSupport::TestCase
   end
 
   test 'build_for_create for regular user always creates non-reference pest owned by user' do
-    pest = PestPolicy.build_for_create(@user, { name: 'UserPest', is_reference: true })
+    pest = Domain::Shared::Policies::PestPolicy.build_for_create(Pest, @user, { name: 'UserPest', is_reference: true })
 
     assert_not pest.is_reference
     assert_equal @user.id, pest.user_id
@@ -64,7 +65,7 @@ class PestPolicyTest < ActiveSupport::TestCase
   end
 
   test 'build_for_create with admin_forced behaves like admin even for regular user' do
-    pest = PestPolicy.build_for_create(@user, { name: 'RefPest', is_reference: true }, admin_forced: true)
+    pest = Domain::Shared::Policies::PestPolicy.build_for_create(Pest, @user, { name: 'RefPest', is_reference: true }, admin_forced: true)
 
     assert pest.is_reference
     assert_nil pest.user_id
@@ -74,15 +75,15 @@ class PestPolicyTest < ActiveSupport::TestCase
     reference_pest = create(:pest, is_reference: true, user: nil)
     own_pest = create(:pest, is_reference: false, user: @user)
 
-    assert_equal reference_pest, PestPolicy.find_visible!(@user, reference_pest.id)
-    assert_equal own_pest, PestPolicy.find_visible!(@user, own_pest.id)
+    assert_equal reference_pest, Domain::Shared::Policies::PestPolicy.find_visible!(Pest, @user, reference_pest.id)
+    assert_equal own_pest, Domain::Shared::Policies::PestPolicy.find_visible!(Pest, @user, own_pest.id)
   end
 
   test 'find_visible! raises PolicyPermissionDenied for other users non-reference pest' do
     other_pest = create(:pest, is_reference: false, user: create(:user))
 
-    assert_raises(PolicyPermissionDenied) do
-      PestPolicy.find_visible!(@user, other_pest.id)
+    assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
+      Domain::Shared::Policies::PestPolicy.find_visible!(Pest, @user, other_pest.id)
     end
   end
 
@@ -92,28 +93,28 @@ class PestPolicyTest < ActiveSupport::TestCase
     user_pest = create(:pest, is_reference: false, user: @user)
 
     # 管理者: 参照害虫 + 自分の害虫は編集可能
-    assert_equal reference_pest, PestPolicy.find_editable!(@admin, reference_pest.id)
-    assert_equal admin_pest, PestPolicy.find_editable!(@admin, admin_pest.id)
+    assert_equal reference_pest, Domain::Shared::Policies::PestPolicy.find_editable!(Pest, @admin, reference_pest.id)
+    assert_equal admin_pest, Domain::Shared::Policies::PestPolicy.find_editable!(Pest, @admin, admin_pest.id)
 
     # 一般ユーザー: 自分の非参照害虫のみ編集可能
-    assert_equal user_pest, PestPolicy.find_editable!(@user, user_pest.id)
+    assert_equal user_pest, Domain::Shared::Policies::PestPolicy.find_editable!(Pest, @user, user_pest.id)
 
     # 一般ユーザーは参照害虫を編集不可
     assert_raises(PolicyPermissionDenied) do
-      PestPolicy.find_editable!(@user, reference_pest.id)
+      Domain::Shared::Policies::PestPolicy.find_editable!(Pest, @user, reference_pest.id)
     end
   end
 
   test 'apply_update! updates is_reference and user_id when reference flag changes' do
     pest = create(:pest, is_reference: false, user: @user)
 
-    PestPolicy.apply_update!(@admin, pest, { is_reference: true })
+    Domain::Shared::Policies::PestPolicy.apply_update!(@admin, pest, { is_reference: true })
     pest.reload
 
     assert pest.is_reference
     assert_nil pest.user_id
 
-    PestPolicy.apply_update!(@admin, pest, { is_reference: false })
+    Domain::Shared::Policies::PestPolicy.apply_update!(@admin, pest, { is_reference: false })
     pest.reload
 
     assert_not pest.is_reference
@@ -123,7 +124,7 @@ class PestPolicyTest < ActiveSupport::TestCase
   test 'apply_update! leaves user_id as-is when reference flag not present' do
     pest = create(:pest, is_reference: false, user: @user)
 
-    PestPolicy.apply_update!(@user, pest, { name: 'UpdatedName' })
+    Domain::Shared::Policies::PestPolicy.apply_update!(@user, pest, { name: 'UpdatedName' })
     pest.reload
 
     assert_not pest.is_reference

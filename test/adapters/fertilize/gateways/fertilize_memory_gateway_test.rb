@@ -2,13 +2,10 @@
 
 require "test_helper"
 
-module Adapters
-  module Fertilize
-    module Gateways
-      class FertilizeMemoryGatewayTest < ActiveSupport::TestCase
-        def setup
-          @gateway = FertilizeMemoryGateway.new
-        end
+class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport::TestCase
+      def setup
+        @gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
+      end
 
         test "should find fertilize by id" do
           fertilize = create(:fertilize, name: "尿素")
@@ -37,7 +34,8 @@ module Adapters
             'package_size' => 25.0
           }
 
-          entity = @gateway.create(fertilize_data)
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
+          entity = @gateway.create(dto)
 
           assert_not_nil entity
           assert_equal '尿素', entity.name
@@ -65,7 +63,8 @@ module Adapters
             'package_size' => nil
           }
 
-          entity = @gateway.create(fertilize_data)
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
+          entity = @gateway.create(dto)
 
           assert_not_nil entity
           assert_nil entity.package_size
@@ -80,8 +79,9 @@ module Adapters
             'n' => 46.0
           }
 
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
           assert_raises(StandardError) do
-            @gateway.create(fertilize_data)
+            @gateway.create(dto)
           end
         end
 
@@ -93,7 +93,8 @@ module Adapters
             :description => "粒状の尿素肥料"
           }
 
-          entity = @gateway.update(fertilize.id, update_data)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          entity = @gateway.update(fertilize.id, dto)
 
           assert_equal "尿素（粒状）", entity.name
           assert_equal "粒状の尿素肥料", entity.description
@@ -107,7 +108,8 @@ module Adapters
             :package_size => 25.0
           }
 
-          entity = @gateway.update(fertilize.id, update_data)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          entity = @gateway.update(fertilize.id, dto)
 
           assert_equal 25.0, entity.package_size
           assert_equal "尿素", entity.name  # unchanged
@@ -121,47 +123,23 @@ module Adapters
             :n => 50.0
           }
 
-          entity = @gateway.update(fertilize.id, update_data)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          entity = @gateway.update(fertilize.id, dto)
 
           assert_equal "尿素", entity.name  # unchanged
           assert_equal 50.0, entity.n
           assert_nil entity.p
         end
 
-        test "should find all reference fertilizes" do
+        test "should list all fertilizes" do
           create(:fertilize, name: "尿素1", is_reference: true)
           create(:fertilize, name: "尿素2", is_reference: true)
           create(:fertilize, :user_owned, name: "尿素3")
-          
-          entities = @gateway.find_all_reference
-          
-          assert_equal 2, entities.length
-          assert entities.all? { |e| e.reference? }
+
+          entities = @gateway.list
+
+          assert_equal 3, entities.length
         end
 
-        test "should delete fertilize" do
-          fertilize = create(:fertilize, name: "尿素")
-          
-          result = @gateway.delete(fertilize.id)
-          
-          assert result
-          assert_nil ::Fertilize.find_by(id: fertilize.id)
-        end
-
-        test "should return false when delete fails with RecordNotFound" do
-          result = @gateway.delete(9999)
-          
-          assert_not result
-        end
-
-        test "should check existence" do
-          fertilize = create(:fertilize, name: "尿素")
-          
-          assert @gateway.exists?(fertilize.id)
-          assert_not @gateway.exists?(9999)
-        end
-      end
-    end
-  end
 end
 

@@ -30,71 +30,58 @@ const initialControl: CropDetailViewState = {
     { provide: CROP_GATEWAY, useClass: CropApiGateway }
   ],
   template: `
-    <div class="content-card">
-      <div class="page-header">
-        <a [routerLink]="['/crops']" class="btn btn-white">{{ 'common.back' | translate }}</a>
-        @if (control.crop) {
-          <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn btn-white">{{ 'common.edit' | translate }}</a>
-          <button type="button" class="btn btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
-        }
-      </div>
-
+    <main class="page-main">
       @if (control.loading) {
-        <p>{{ 'common.loading' | translate }}</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <p class="master-error">{{ control.error }}</p>
       } @else if (control.crop) {
-        <h2 class="page-title">{{ control.crop.name }}</h2>
-        <section class="info-section">
-          <h3>{{ 'crops.show.name' | translate }}</h3>
-          <p>{{ control.crop.name }}</p>
-          <h3 *ngIf="control.crop.variety">{{ 'crops.show.variety' | translate }}</h3>
-          <p *ngIf="control.crop.variety">{{ control.crop.variety }}</p>
-        </section>
-
-        <section class="stages-section" *ngIf="control.crop.crop_stages?.length">
-          <h3>{{ 'crops.show.stages_title' | translate }}</h3>
-          <div class="stages-grid">
-            @for (stage of control.crop.crop_stages; track stage.id) {
-              <div class="stage-card">
-                <h4>{{ stage.name }}</h4>
-                <div class="stage-details">
-                  <div *ngIf="stage.thermal_requirement">
-                    <strong>{{ 'crops.show.required_gdd' | translate }}:</strong> {{ stage.thermal_requirement.required_gdd }} GDD
-                  </div>
-                  <div *ngIf="stage.temperature_requirement">
-                    <strong>{{ 'crops.show.optimal_temperature' | translate }}:</strong>
-                    {{ stage.temperature_requirement.optimal_min }}°C - {{ stage.temperature_requirement.optimal_max }}°C
-                  </div>
-                </div>
+        <section class="detail-card" aria-labelledby="detail-heading">
+          <h1 id="detail-heading" class="detail-card__title">{{ control.crop.name }}</h1>
+          <dl class="detail-card__list">
+            <div class="detail-row">
+              <dt class="detail-row__term">{{ 'crops.show.name' | translate }}</dt>
+              <dd class="detail-row__value">{{ control.crop.name }}</dd>
+            </div>
+            @if (control.crop.variety) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.variety' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.variety }}</dd>
               </div>
             }
+          </dl>
+          <div class="detail-card__actions">
+            <a [routerLink]="['/crops']" class="btn-secondary">{{ 'common.back' | translate }}</a>
+            <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
+            <button type="button" class="btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
+
+        @if (control.crop.crop_stages?.length) {
+          <section class="section-card" aria-labelledby="stages-heading">
+            <h2 id="stages-heading" class="section-title">{{ 'crops.show.stages_title' | translate }}</h2>
+            <div class="stages-grid">
+              @for (stage of control.crop.crop_stages; track stage.id) {
+                <div class="stage-card">
+                  <h3 class="stage-card__title">{{ stage.name }}</h3>
+                  <div class="stage-details">
+                    @if (stage.thermal_requirement) {
+                      <p><strong>{{ 'crops.show.required_gdd' | translate }}:</strong> {{ stage.thermal_requirement.required_gdd }} GDD</p>
+                    }
+                    @if (stage.temperature_requirement) {
+                      <p><strong>{{ 'crops.show.optimal_temperature' | translate }}:</strong>
+                        {{ stage.temperature_requirement.optimal_min }}°C - {{ stage.temperature_requirement.optimal_max }}°C</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        }
       }
-    </div>
+    </main>
   `,
-  styles: [`
-    .stages-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .stage-card {
-      border: 1px solid var(--color-gray-200);
-      padding: 1rem;
-      border-radius: var(--radius-md);
-      background: var(--color-gray-50);
-    }
-    .stage-card h4 {
-      margin-top: 0;
-      color: var(--color-primary);
-    }
-    .info-section {
-      margin-bottom: 2rem;
-    }
-  `]
+  styleUrl: './crop-detail.component.css'
 })
 export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

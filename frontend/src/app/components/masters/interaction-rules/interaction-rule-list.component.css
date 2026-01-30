@@ -1,10 +1,1 @@
-.page {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e3e5e8;
-}
-
-.error {
-  color: #dc2626;
-}
+@import '../_master-layout.css';

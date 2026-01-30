@@ -26,6 +26,9 @@ class Crop < ApplicationRecord
   has_many :crop_task_schedule_blueprints, dependent: :destroy
   has_many :crop_task_templates, dependent: :destroy
   has_many :agricultural_tasks, through: :crop_task_templates
+  has_many :cultivation_plan_crops, dependent: :restrict_with_exception
+  has_many :free_crop_plans, dependent: :restrict_with_exception
+  has_many :pesticides, dependent: :restrict_with_exception
 
   accepts_nested_attributes_for :crop_stages, allow_destroy: true, reject_if: :all_blank
 

@@ -12,8 +12,12 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::FarmsController.included_modules, ApiCrudResponder
+        test "includes Farm Views" do
+          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmListView
+          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmDetailView
+          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmCreateView
+          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmUpdateView
+          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmDeleteView
         end
 
         test "should get index" do
@@ -58,15 +62,17 @@ module Api
 
         test "should create farm" do
           assert_difference("@user.farms.where(is_reference: false).count", 1) do
-            post api_v1_masters_farms_path, 
-                 params: { 
+            post api_v1_masters_farms_path,
+                 params: {
                    farm: {
                      name: "新規農場",
+                     region: "関東",
                      latitude: 35.6812,
                      longitude: 139.7671
                    }
                  },
-                 headers: { 
+                 as: :json,
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -82,13 +88,14 @@ module Api
         test "should update farm" do
           farm = create(:farm, :user_owned, user: @user, name: "元の名前")
 
-          patch api_v1_masters_farm_path(farm), 
-                params: { 
+          patch api_v1_masters_farm_path(farm),
+                params: {
                   farm: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                as: :json,
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -102,14 +109,18 @@ module Api
           farm = create(:farm, :user_owned, user: @user)
 
           assert_difference("@user.farms.where(is_reference: false).count", -1) do
-            delete api_v1_masters_farm_path(farm), 
-                   headers: { 
+            delete api_v1_masters_farm_path(farm),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "cannot access other user's farm" do

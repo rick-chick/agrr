@@ -3,13 +3,14 @@
 require 'test_helper'
 
 class FarmsControllerTest < ActionDispatch::IntegrationTest
+  include Rails.application.routes.url_helpers
   include ActionView::RecordIdentifier
   setup do
     @user = create(:user)
   end
 
-  test "includes HtmlCrudResponder" do
-    assert_includes FarmsController.included_modules, HtmlCrudResponder
+  test "includes DeletionUndoFlow" do
+    assert_includes FarmsController.included_modules, DeletionUndoFlow
   end
 
   test 'destroy_returns_undo_token_json' do
@@ -18,7 +19,7 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { Farm.count }, -1 do
       assert_difference 'DeletionUndoEvent.count', +1 do
-        delete farm_path(farm), as: :json
+        delete Rails.application.routes.url_helpers.farm_path(farm), as: :json
         assert_response :success
       end
     end

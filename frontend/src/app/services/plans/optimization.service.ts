@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { createConsumer, Cable, Channel } from 'actioncable';
+import * as ActionCable from 'actioncable';
 import { getApiBaseUrl } from '../../core/api-base-url';
 
 export interface ActionCableMessage {
@@ -10,15 +10,16 @@ export type ActionCableCallback = (data: ActionCableMessage) => void;
 
 @Injectable({ providedIn: 'root' })
 export class OptimizationService implements OnDestroy {
-  private consumer: Cable | null = null;
+  private consumer: ActionCable.Cable | null = null;
 
-  private getConsumer(): Cable {
+  private getConsumer(): ActionCable.Cable {
     if (!this.consumer) {
       const baseUrl = getApiBaseUrl() || window.location.origin;
       const wsUrl = `${baseUrl.replace(/^http/, 'ws')}/cable`;
-      this.consumer = createConsumer(wsUrl);
+      // actioncable の createConsumer は IIFE の this に依存するため、Consumer を直接 new する
+      this.consumer = new (ActionCable as any).Consumer(wsUrl);
     }
-    return this.consumer;
+    return this.consumer as ActionCable.Cable;
   }
 
   subscribe(channel: string, params: Record<string, unknown>, callbacks: {
@@ -26,7 +27,7 @@ export class OptimizationService implements OnDestroy {
     connected?: () => void;
     disconnected?: () => void;
     rejected?: () => void;
-  }): Channel {
+  }): ActionCable.Channel {
     const consumer = this.getConsumer();
     return consumer.subscriptions.create(
       { channel, ...params },

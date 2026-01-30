@@ -34,7 +34,7 @@ module Api
           # @return [404] 作物が見つからない
           def index
             # Policy経由で選択可能な害虫のみ表示（参照害虫も含む）
-            accessible_pest_ids = PestPolicy.selectable_scope(current_user).pluck(:id)
+            accessible_pest_ids = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user).pluck(:id)
             @pests = @crop.pests.where(id: accessible_pest_ids)
             render json: @pests
           end
@@ -63,7 +63,7 @@ module Api
             end
 
             # 権限チェック: Policy経由で関連付け可否を判定（参照害虫も含む）
-            unless PestPolicy.selectable_scope(current_user).exists?(id: pest.id)
+            unless Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user).exists?(id: pest.id)
               render json: { error: I18n.t('api.errors.pests.permission_denied') }, status: :forbidden
               return
             end
@@ -98,7 +98,7 @@ module Api
           private
 
           def set_crop
-            @crop = CropPolicy.visible_scope(current_user).where(is_reference: false).find(params[:crop_id])
+            @crop = Domain::Shared::Policies::CropPolicy.visible_scope(Crop, current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
             render json: { error: I18n.t('api.errors.crop_not_found') }, status: :not_found
           end

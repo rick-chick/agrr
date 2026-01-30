@@ -8,4 +8,5 @@ export interface AgriculturalTask {
   skill_level?: 'beginner' | 'intermediate' | 'advanced' | string;
   is_reference: boolean;
   region?: string | null;
+  task_type?: string | null;
 }

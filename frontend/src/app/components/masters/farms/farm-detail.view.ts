@@ -11,4 +11,5 @@ export type FarmDetailViewState = {
 export interface FarmDetailView {
   get control(): FarmDetailViewState;
   set control(value: FarmDetailViewState);
+  load?(farmId: number): void;
 }

@@ -7,6 +7,7 @@ import { FooterComponent } from './components/shared/footer/footer.component';
 import { FlashMessageComponent } from './components/shared/flash-message/flash-message.component';
 import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.component';
 import { AuthService } from './services/auth.service';
+import { UndoToastService } from './services/undo-toast.service';
 import { getApiBaseUrl } from './core/api-base-url';
 
 @Component({
@@ -20,7 +21,12 @@ export class App implements OnInit {
   private readonly translate = inject(TranslateService);
   protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly undoToastService = inject(UndoToastService);
   protected readonly apiBaseUrl = getApiBaseUrl();
+
+  performUndo(): void {
+    this.undoToastService.performUndo();
+  }
 
   logout(): void {
     this.authService.logout().subscribe({

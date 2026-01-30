@@ -38,85 +38,39 @@ const initialControl: AgriculturalTaskListViewState = {
     { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>Agricultural Tasks</h2>
-      <a [routerLink]="['/agricultural_tasks', 'new']" class="btn btn-primary">New Agricultural Task</a>
-      @if (control.loading) {
-        <p>Loading...</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <div class="task-list">
-          @for (task of control.tasks; track task.id) {
-            <div class="task-item">
-              <a [routerLink]="['/agricultural_tasks', task.id]" class="task-link">
-                <div class="task-name">{{ task.name }}</div>
-                <div class="task-info" *ngIf="task.skill_level">Skill: {{ task.skill_level }}</div>
-              </a>
-              <div class="task-actions">
-                <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn btn-sm">Edit</a>
-                <button type="button" class="btn btn-sm btn-danger" (click)="deleteTask(task.id)">Delete</button>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 class="page-title">Agricultural Tasks</h1>
+        <p class="page-description">Manage agricultural tasks.</p>
+      </header>
+      <section class="section-card" aria-labelledby="section-list-heading">
+        <h2 id="section-list-heading" class="section-title">Task list</h2>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="master-error">{{ control.error }}</p>
+        } @else {
+          <a [routerLink]="['/agricultural_tasks', 'new']" class="btn-primary">New Agricultural Task</a>
+          <ul class="card-list" role="list">
+            @for (task of control.tasks; track task.id) {
+              <li class="card-list__item">
+                <a [routerLink]="['/agricultural_tasks', task.id]" class="item-card">
+                  <span class="item-card__title">{{ task.name }}</span>
+                  @if (task.skill_level) {
+                    <span class="item-card__meta">Skill: {{ task.skill_level }}</span>
+                  }
+                </a>
+                <div class="list-item-actions">
+                  <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
+                  <button type="button" class="btn-danger btn-sm" (click)="deleteTask(task.id)">Delete</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
-  styles: [`
-    .task-list {
-      margin-top: 1rem;
-    }
-    .task-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 0.5rem;
-      background: #f9f9f9;
-    }
-    .task-link {
-      flex: 1;
-      text-decoration: none;
-      color: inherit;
-    }
-    .task-link:hover {
-      text-decoration: underline;
-    }
-    .task-name {
-      font-weight: bold;
-    }
-    .task-info {
-      font-size: 0.9em;
-      color: #666;
-    }
-    .task-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .btn {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn-primary {
-      background: #007bff;
-      color: white;
-    }
-    .btn-sm {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.875rem;
-    }
-    .btn-danger {
-      background: #dc3545;
-      color: white;
-    }
-  `],
   styleUrl: './agricultural-task-list.component.css'
 })
 export class AgriculturalTaskListComponent implements AgriculturalTaskListView, OnInit {

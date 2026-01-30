@@ -36,45 +36,50 @@ const initialControl: FertilizeCreateViewState = {
     { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
   ],
   template: `
-    <section class="page">
-      <a routerLink="/fertilizes">Back to fertilizes</a>
-      <h2>Create Fertilize</h2>
-      <form (ngSubmit)="createFertilize()" #fertilizeForm="ngForm">
-        <label>
-          Name
-          <input name="name" [(ngModel)]="control.formData.name" required />
-        </label>
-        <label>
-          Region
-          <input name="region" [(ngModel)]="control.formData.region" />
-        </label>
-        <label>
-          N
-          <input name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
-        </label>
-        <label>
-          P
-          <input name="p" type="number" step="0.01" [(ngModel)]="control.formData.p" />
-        </label>
-        <label>
-          K
-          <input name="k" type="number" step="0.01" [(ngModel)]="control.formData.k" />
-        </label>
-        <label>
-          Package Size (kg)
-          <input name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
-        </label>
-        <label>
-          Description
-          <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
-        </label>
-        <button type="submit" [disabled]="fertilizeForm.invalid || control.saving">Create</button>
-        @if (control.error) {
-          <p class="error">{{ control.error }}</p>
-        }
-      </form>
-    </section>
-  `
+    <main class="page-main">
+      <section class="form-card" aria-labelledby="form-heading">
+        <h2 id="form-heading" class="form-card__title">Create Fertilize</h2>
+        <form (ngSubmit)="createFertilize()" #fertilizeForm="ngForm" class="form-card__form">
+          <label class="form-card__field">
+            Name
+            <input name="name" [(ngModel)]="control.formData.name" required />
+          </label>
+          <label class="form-card__field">
+            Region
+            <input name="region" [(ngModel)]="control.formData.region" />
+          </label>
+          <label class="form-card__field">
+            N
+            <input name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
+          </label>
+          <label class="form-card__field">
+            P
+            <input name="p" type="number" step="0.01" [(ngModel)]="control.formData.p" />
+          </label>
+          <label class="form-card__field">
+            K
+            <input name="k" type="number" step="0.01" [(ngModel)]="control.formData.k" />
+          </label>
+          <label class="form-card__field">
+            Package Size (kg)
+            <input name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
+          </label>
+          <label class="form-card__field">
+            Description
+            <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+          </label>
+          @if (control.error) {
+            <p class="master-error">{{ control.error }}</p>
+          }
+          <div class="form-card__actions">
+            <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">Create</button>
+            <a routerLink="/fertilizes" class="btn-secondary">Back to fertilizes</a>
+          </div>
+        </form>
+      </section>
+    </main>
+  `,
+  styleUrl: './fertilize-create.component.css'
 })
 export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   private readonly router = inject(Router);

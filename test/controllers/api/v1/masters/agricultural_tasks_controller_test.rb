@@ -12,8 +12,12 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, ApiCrudResponder
+        test "includes AgriculturalTask Views" do
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskListView
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskDetailView
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskCreateView
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskUpdateView
+          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskDeleteView
         end
 
         test "should get index" do
@@ -145,7 +149,11 @@ module Api
                    }
           end
 
-          assert_response :no_content
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.key?('undo_token')
+          assert json_response.key?('toast_message')
+          assert json_response.key?('undo_path')
         end
 
         test "should not destroy other user's agricultural_task" do

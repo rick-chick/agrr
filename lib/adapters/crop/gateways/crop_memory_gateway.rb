@@ -4,118 +4,54 @@ module Adapters
   module Crop
     module Gateways
       class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
-        def find_by_id(id)
-          record = ::Crop.includes(crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement]).find_by(id: id)
-          return nil unless record
-          entity_from_record(record)
+        def list(scope = nil)
+          query = scope || ::Crop.all
+          query.map { |record| Domain::Crop::Entities::CropEntity.from_model(record) }
         end
 
-        def find_all_visible_for(user_id)
-          scope = ::Crop.includes(crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement])
-          scope = scope.where("is_reference = ? OR user_id = ?", true, user_id)
-          scope.map { |record| entity_from_record(record) }
-        end
-
-        def create(crop_data)
-          record = ::Crop.new(
-            user_id: crop_data[:user_id],
-            name: crop_data[:name],
-            variety: crop_data[:variety],
-            is_reference: crop_data.fetch(:is_reference, false),
-            area_per_unit: crop_data[:area_per_unit],
-            revenue_per_area: crop_data[:revenue_per_area],
-            groups: crop_data[:groups] || []
-          )
-          
-          unless record.save
-            error_message = record.errors.full_messages.join(', ')
-            raise StandardError, error_message
-          end
-          
-          entity_from_record(record)
-        end
-
-        def update(id, crop_data)
-          record = ::Crop.find(id)
-          update_attributes = {}
-          update_attributes[:name] = crop_data[:name] if crop_data.key?(:name)
-          update_attributes[:variety] = crop_data[:variety] if crop_data.key?(:variety)
-          update_attributes[:is_reference] = crop_data[:is_reference] if crop_data.key?(:is_reference)
-          update_attributes[:area_per_unit] = crop_data[:area_per_unit] if crop_data.key?(:area_per_unit)
-          update_attributes[:revenue_per_area] = crop_data[:revenue_per_area] if crop_data.key?(:revenue_per_area)
-          update_attributes[:groups] = crop_data[:groups] if crop_data.key?(:groups)
-          record.update!(update_attributes)
-          entity_from_record(record.reload)
-        end
-
-        def delete(id)
-          record = ::Crop.find(id)
-          record.destroy!
-          true
+        def find_by_id(crop_id)
+          crop = ::Crop.find(crop_id)
+          Domain::Crop::Entities::CropEntity.from_model(crop)
         rescue ActiveRecord::RecordNotFound
-          false
-        rescue ActiveRecord::InvalidForeignKey => e
-          # 外部参照制約エラーの場合、より分かりやすいメッセージを返す
-          if e.message.include?('cultivation_plan_crops')
-            raise StandardError, "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。"
-          elsif e.message.include?('field_cultivations')
-            raise StandardError, "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。"
-          else
-            raise StandardError, "この作物は他のデータで使用されているため削除できません。"
-          end
-        rescue ActiveRecord::DeleteRestrictionError => e
-          raise StandardError, "この作物は他のデータで使用されているため削除できません。"
+          raise StandardError, 'Crop not found'
         end
 
-        def exists?(id)
-          ::Crop.exists?(id: id)
+        def create(create_input_dto)
+          crop_attributes = {
+            name: create_input_dto.name,
+            variety: create_input_dto.variety,
+            area_per_unit: create_input_dto.area_per_unit,
+            revenue_per_area: create_input_dto.revenue_per_area,
+            region: create_input_dto.region,
+            groups: create_input_dto.groups || []
+          }
+          crop_attributes[:crop_stages_attributes] = create_input_dto.crop_stages_attributes if create_input_dto.crop_stages_attributes.present?
+
+          crop = ::Crop.new(crop_attributes)
+          raise StandardError, crop.errors.full_messages.join(', ') unless crop.save
+
+          Domain::Crop::Entities::CropEntity.from_model(crop)
         end
 
-        private
+        def update(crop_id, update_input_dto)
+          crop = ::Crop.find(crop_id)
+          attrs = {}
+          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
+          attrs[:variety] = update_input_dto.variety if !update_input_dto.variety.nil?
+          attrs[:area_per_unit] = update_input_dto.area_per_unit if !update_input_dto.area_per_unit.nil?
+          attrs[:revenue_per_area] = update_input_dto.revenue_per_area if !update_input_dto.revenue_per_area.nil?
+          attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
+          attrs[:groups] = update_input_dto.groups if !update_input_dto.groups.nil?
+          attrs[:crop_stages_attributes] = update_input_dto.crop_stages_attributes if update_input_dto.crop_stages_attributes.present?
 
-        def entity_from_record(record)
-          stage_entities = record.crop_stages.order(:order).map do |stage|
-            Domain::Crop::Entities::CropStageEntity.new(
-              id: stage.id,
-              crop_id: record.id,
-              name: stage.name,
-              order: stage.order,
-              temperature: stage.temperature_requirement && {
-                base_temperature: stage.temperature_requirement.base_temperature,
-                optimal_min: stage.temperature_requirement.optimal_min,
-                optimal_max: stage.temperature_requirement.optimal_max,
-                low_stress_threshold: stage.temperature_requirement.low_stress_threshold,
-                high_stress_threshold: stage.temperature_requirement.high_stress_threshold,
-                frost_threshold: stage.temperature_requirement.frost_threshold,
-                sterility_risk_threshold: stage.temperature_requirement.sterility_risk_threshold
-              },
-              sunshine: stage.sunshine_requirement && {
-                minimum_sunshine_hours: stage.sunshine_requirement.minimum_sunshine_hours,
-                target_sunshine_hours: stage.sunshine_requirement.target_sunshine_hours
-              },
-              thermal: stage.thermal_requirement && {
-                required_gdd: stage.thermal_requirement.required_gdd
-              }
-            )
-          end
+          crop.update(attrs)
+          raise StandardError, crop.errors.full_messages.join(', ') if crop.errors.any?
 
-          Domain::Crop::Entities::CropEntity.new(
-            id: record.id,
-            user_id: record.user_id,
-            name: record.name,
-            variety: record.variety,
-            is_reference: record.is_reference,
-            area_per_unit: record.area_per_unit,
-            revenue_per_area: record.revenue_per_area,
-            groups: record.groups,
-            created_at: record.created_at,
-            updated_at: record.updated_at
-          ).tap do |entity|
-            # attach stages array for aggregation access pattern
-            entity.instance_variable_set(:@stages, stage_entities)
-            def entity.stages; @stages; end
-          end
+          Domain::Crop::Entities::CropEntity.from_model(crop.reload)
+        rescue ActiveRecord::RecordNotFound
+          raise StandardError, 'Crop not found'
         end
+
       end
     end
   end

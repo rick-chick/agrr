@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FarmDetailView } from '../../components/masters/farms/farm-detail.view';
 import { LoadFarmDetailOutputPort } from '../../usecase/farms/load-farm-detail.output-port';
@@ -7,11 +8,14 @@ import { SubscribeFarmWeatherOutputPort } from '../../usecase/farms/subscribe-fa
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
+import { UndoToastService } from '../../services/undo-toast.service';
 
 @Injectable()
 export class FarmDetailPresenter
   implements LoadFarmDetailOutputPort, SubscribeFarmWeatherOutputPort, DeleteFarmOutputPort
 {
+  private readonly undoToast = inject(UndoToastService);
+  private readonly router = inject(Router);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -60,7 +64,15 @@ export class FarmDetailPresenter
     };
   }
 
-  onSuccess(_dto: DeleteFarmSuccessDto): void {
+  onSuccess(dto: DeleteFarmSuccessDto): void {
+    if (dto.undo) {
+      this.undoToast.showWithUndo(
+        dto.undo.toast_message,
+        dto.undo.undo_path,
+        dto.undo.undo_token,
+        () => this.router.navigate(['/farms'])
+      );
+    }
     // Navigation is handled by Component's onSuccess callback
   }
 }

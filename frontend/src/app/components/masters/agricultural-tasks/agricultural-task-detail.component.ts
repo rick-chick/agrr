@@ -33,45 +33,66 @@ const initialControl: AgriculturalTaskDetailViewState = {
     { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
   ],
   template: `
-    <div class="content-card">
-      <div class="page-header">
-        <a [routerLink]="['/agricultural_tasks']" class="btn btn-white">Back</a>
-        @if (control.agriculturalTask) {
-          <a [routerLink]="['/agricultural_tasks', control.agriculturalTask.id, 'edit']" class="btn btn-white">Edit</a>
-          <button type="button" class="btn btn-danger" (click)="deleteAgriculturalTask()">Delete</button>
-        }
-      </div>
-
+    <main class="page-main">
       @if (control.loading) {
-        <p>Loading...</p>
+        <p class="master-loading">Loading...</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <p class="master-error">{{ control.error }}</p>
       } @else if (control.agriculturalTask) {
-        <h2 class="page-title">{{ control.agriculturalTask.name }}</h2>
-        <section class="info-section">
-          <h3>Name</h3>
-          <p>{{ control.agriculturalTask.name }}</p>
-          <h3 *ngIf="control.agriculturalTask.description">Description</h3>
-          <p *ngIf="control.agriculturalTask.description">{{ control.agriculturalTask.description }}</p>
-          <h3 *ngIf="control.agriculturalTask.time_per_sqm">Time per sqm</h3>
-          <p *ngIf="control.agriculturalTask.time_per_sqm">{{ control.agriculturalTask.time_per_sqm }} hours</p>
-          <h3 *ngIf="control.agriculturalTask.weather_dependency">Weather dependency</h3>
-          <p *ngIf="control.agriculturalTask.weather_dependency">{{ control.agriculturalTask.weather_dependency }}</p>
-          <h3 *ngIf="control.agriculturalTask.skill_level">Skill level</h3>
-          <p *ngIf="control.agriculturalTask.skill_level">{{ control.agriculturalTask.skill_level }}</p>
-          <h3 *ngIf="control.agriculturalTask.region">Region</h3>
-          <p *ngIf="control.agriculturalTask.region">{{ control.agriculturalTask.region }}</p>
-          <h3 *ngIf="control.agriculturalTask.task_type">Task type</h3>
-          <p *ngIf="control.agriculturalTask.task_type">{{ control.agriculturalTask.task_type }}</p>
+        <section class="detail-card" aria-labelledby="detail-heading">
+          <h1 id="detail-heading" class="detail-card__title">{{ control.agriculturalTask.name }}</h1>
+          <dl class="detail-card__list">
+            <div class="detail-row">
+              <dt class="detail-row__term">Name</dt>
+              <dd class="detail-row__value">{{ control.agriculturalTask.name }}</dd>
+            </div>
+            @if (control.agriculturalTask.description) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Description</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.description }}</dd>
+              </div>
+            }
+            @if (control.agriculturalTask.time_per_sqm) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Time per sqm</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.time_per_sqm }} hours</dd>
+              </div>
+            }
+            @if (control.agriculturalTask.weather_dependency) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Weather dependency</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.weather_dependency }}</dd>
+              </div>
+            }
+            @if (control.agriculturalTask.skill_level) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Skill level</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.skill_level }}</dd>
+              </div>
+            }
+            @if (control.agriculturalTask.region) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Region</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.region }}</dd>
+              </div>
+            }
+            @if (control.agriculturalTask.task_type) {
+              <div class="detail-row">
+                <dt class="detail-row__term">Task type</dt>
+                <dd class="detail-row__value">{{ control.agriculturalTask.task_type }}</dd>
+              </div>
+            }
+          </dl>
+          <div class="detail-card__actions">
+            <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">Back</a>
+            <a [routerLink]="['/agricultural_tasks', control.agriculturalTask.id, 'edit']" class="btn-secondary">Edit</a>
+            <button type="button" class="btn-danger" (click)="deleteAgriculturalTask()">Delete</button>
+          </div>
         </section>
       }
-    </div>
+    </main>
   `,
-  styles: [`
-    .info-section {
-      margin-bottom: 2rem;
-    }
-  `]
+  styleUrl: './agricultural-task-detail.component.css'
 })
 export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

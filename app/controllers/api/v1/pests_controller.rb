@@ -111,7 +111,7 @@ module Api
 
             # build_for_create は Pest モデルの属性のみを前提としているため、
             # 所有者・参照フラグの決定だけを利用する
-            ownership_sample = PestPolicy.build_for_create(current_user, {})
+            ownership_sample = Domain::Shared::Policies::PestPolicy.build_for_create(Pest, current_user, {})
 
             attrs_for_create = base_attrs.merge(
               user_id: ownership_sample.user_id,
@@ -251,7 +251,7 @@ module Api
       def set_pest
         @pest =
           begin
-            PestPolicy.find_editable!(current_user, params[:id])
+            Domain::Shared::Policies::PestPolicy.find_editable!(Pest, current_user, params[:id])
           rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
             nil
           end

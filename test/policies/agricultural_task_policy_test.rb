@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class AgriculturalTaskPolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::TestCase
   setup do
     @user = create(:user)
     @admin = create(:user, :admin)
@@ -13,8 +13,8 @@ class AgriculturalTaskPolicyTest < ActiveSupport::TestCase
     admin_task = create(:agricultural_task, :user_owned, user: @admin)
     user_task = create(:agricultural_task, :user_owned, user: @user)
 
-    scope_for_user = AgriculturalTaskPolicy.visible_scope(@user)
-    scope_for_admin = AgriculturalTaskPolicy.visible_scope(@admin)
+    scope_for_user = Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(AgriculturalTask, @user)
+    scope_for_admin = Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(AgriculturalTask, @admin)
 
     # 一般ユーザー: 自分の非参照タスクのみ
     assert_includes scope_for_user, user_task
@@ -32,7 +32,7 @@ class AgriculturalTaskPolicyTest < ActiveSupport::TestCase
     user_task = create(:agricultural_task, :user_owned, user: @user)
     other_user_task = create(:agricultural_task, :user_owned, user: create(:user))
 
-    scope = AgriculturalTaskPolicy.user_owned_non_reference_scope(@user)
+    scope = Domain::Shared::Policies::AgriculturalTaskPolicy.user_owned_non_reference_scope(AgriculturalTask, @user)
 
     assert_includes scope, user_task
     assert_not_includes scope, reference_task
