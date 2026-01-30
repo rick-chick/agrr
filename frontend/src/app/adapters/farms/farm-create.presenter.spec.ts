@@ -1,15 +1,26 @@
+import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { FarmCreatePresenter } from './farm-create.presenter';
 import { FarmCreateView, FarmCreateViewState } from '../../components/masters/farms/farm-create.view';
 import { CreateFarmSuccessDto } from '../../usecase/farms/create-farm.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 describe('FarmCreatePresenter', () => {
   let presenter: FarmCreatePresenter;
   let view: FarmCreateView;
   let lastControl: FarmCreateViewState | null;
+  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    presenter = new FarmCreatePresenter();
+    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
+    TestBed.configureTestingModule({
+      providers: [
+        FarmCreatePresenter,
+        { provide: FlashMessageService, useValue: mockFlashMessageService }
+      ]
+    });
+    presenter = TestBed.inject(FarmCreatePresenter);
     lastControl = null;
     view = {
       get control(): FarmCreateViewState {
@@ -44,7 +55,7 @@ describe('FarmCreatePresenter', () => {
       expect(lastControl).toEqual(initialControl);
     });
 
-    it('updates view.control on onError(dto)', () => {
+    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
       const initialControl: FarmCreateViewState = { saving: true, error: null, formData: { name: 'New Farm', region: 'Region', latitude: 35.0, longitude: 135.0 } };
       lastControl = initialControl;
 
@@ -52,9 +63,11 @@ describe('FarmCreatePresenter', () => {
 
       presenter.onError(dto);
 
+      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Validation error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.saving).toBe(false);
-      expect(lastControl!.error).toBe('Validation error');
+      expect(lastControl!.error).toBeNull();
       expect(lastControl!.formData).toEqual(initialControl.formData); // formData preserved
     });
   });

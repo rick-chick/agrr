@@ -36,8 +36,6 @@ const initialControl: AgriculturalTaskDetailViewState = {
     <main class="page-main">
       @if (control.loading) {
         <p class="master-loading">Loading...</p>
-      } @else if (control.error) {
-        <p class="master-error">{{ control.error }}</p>
       } @else if (control.agriculturalTask) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.agriculturalTask.name }}</h1>

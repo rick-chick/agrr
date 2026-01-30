@@ -47,8 +47,6 @@ const initialControl: PestEditViewState = {
         <h2 id="form-heading" class="form-card__title">Edit Pest</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <form (ngSubmit)="updatePest()" #pestForm="ngForm" class="form-card__form">
             <label class="form-card__field">
@@ -79,9 +77,6 @@ const initialControl: PestEditViewState = {
               Region
               <input name="region" [(ngModel)]="control.formData.region" />
             </label>
-            @if (control.error) {
-              <p class="master-error">{{ control.error }}</p>
-            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
                 {{ control.saving ? 'Updating...' : 'Update Pest' }}

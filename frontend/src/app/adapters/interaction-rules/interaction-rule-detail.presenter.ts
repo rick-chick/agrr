@@ -6,10 +6,12 @@ import { InteractionRuleDetailDataDto } from '../../usecase/interaction-rules/lo
 import { DeleteInteractionRuleOutputPort } from '../../usecase/interaction-rules/delete-interaction-rule.output-port';
 import { DeleteInteractionRuleSuccessDto } from '../../usecase/interaction-rules/delete-interaction-rule.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 @Injectable()
 export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetailOutputPort, DeleteInteractionRuleOutputPort {
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private view: InteractionRuleDetailView | null = null;
 
   setView(view: InteractionRuleDetailView): void {
@@ -27,9 +29,10 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       loading: false,
-      error: dto.message,
+      error: null,
       rule: null
     };
   }

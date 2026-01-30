@@ -88,9 +88,6 @@ const initialControl: FarmCreateViewState = {
               </label>
             </div>
           </div>
-          @if (control.error) {
-            <p class="master-error">{{ control.error }}</p>
-          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Create</button>
             <a routerLink="/farms" class="btn-secondary">Back to farms</a>

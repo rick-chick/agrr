@@ -52,8 +52,6 @@ const initialControl: AgriculturalTaskEditViewState = {
         <h2 id="form-heading" class="form-card__title">Edit Agricultural Task</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <form (ngSubmit)="updateAgriculturalTask()" #taskForm="ngForm" class="form-card__form">
             <label class="form-card__field">
@@ -92,9 +90,6 @@ const initialControl: AgriculturalTaskEditViewState = {
               Task type
               <input name="task_type" [(ngModel)]="control.formData.task_type" />
             </label>
-            @if (control.error) {
-              <p class="master-error">{{ control.error }}</p>
-            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
                 Update Agricultural Task

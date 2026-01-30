@@ -6,10 +6,12 @@ import { PesticideDetailDataDto } from '../../usecase/pesticides/load-pesticide-
 import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesticide.output-port';
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private view: PesticideDetailView | null = null;
 
   setView(view: PesticideDetailView): void {
@@ -27,9 +29,10 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       loading: false,
-      error: dto.message,
+      error: null,
       pesticide: null
     };
   }

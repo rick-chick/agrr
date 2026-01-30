@@ -38,8 +38,6 @@ const initialControl: PestListViewState = {
         <h2 id="section-list-heading" class="section-title">Pest list</h2>
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
-        } @else if (control.error) {
-          <p class="master-error">{{ control.error }}</p>
         } @else {
           <a [routerLink]="['/pests', 'new']" class="btn-primary">Create Pest</a>
           <ul class="card-list" role="list">
