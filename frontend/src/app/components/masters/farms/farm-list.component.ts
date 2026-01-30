@@ -86,7 +86,12 @@ export class FarmListComponent implements FarmListView, OnInit {
     this.loadUseCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
   deleteFarm(farmId: number): void {
-    this.deleteUseCase.execute({ farmId, onAfterUndo: () => this.load() });
+    this.deleteUseCase.execute({ farmId, onAfterUndo: () => this.refreshAfterUndo() });
   }
 }

@@ -131,6 +131,14 @@ if farm.weather_data_status == 'completed'
 end
 ```
 
+## Frontend（Angular）のリロード防止
+
+- **テンプレートにバインドする値で「毎回新しいオブジェクト／配列」を返す getter は使わない。**  
+  子コンポーネントやディレクティブが参照比較で再初期化され、画面が延々とリロードして見える原因になる。
+- オプションやレイヤーなどは **プロパティで持ち、`ngOnChanges` や入力変更時だけ更新する**。
+
+詳細: [docs/analysis/reload-problem-and-fixes.md](analysis/reload-problem-and-fixes.md)
+
 ## チェックリスト
 
 - [ ] 呼び出し元を特定した

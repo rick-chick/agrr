@@ -96,11 +96,16 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
     this.useCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.useCase.execute();
+  }
+
   deleteTask(taskId: number): void {
     this.deleteUseCase.execute({
       agriculturalTaskId: taskId,
       onSuccess: () => {},
-      onAfterUndo: () => this.load()
+      onAfterUndo: () => this.refreshAfterUndo()
     });
   }
 }

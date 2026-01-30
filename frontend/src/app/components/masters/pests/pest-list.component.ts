@@ -87,7 +87,12 @@ export class PestListComponent implements PestListView, OnInit {
     this.loadUseCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
   deletePest(pestId: number): void {
-    this.deleteUseCase.execute({ pestId, onAfterUndo: () => this.load() });
+    this.deleteUseCase.execute({ pestId, onAfterUndo: () => this.refreshAfterUndo() });
   }
 }

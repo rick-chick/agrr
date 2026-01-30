@@ -90,7 +90,12 @@ export class CropListComponent implements CropListView, OnInit {
     this.loadUseCase.execute();
   }
 
+  /** UNDO 後の再取得。ローディング表示にせず一覧を更新する。 */
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
   deleteCrop(cropId: number): void {
-    this.deleteUseCase.execute({ cropId, onAfterUndo: () => this.load() });
+    this.deleteUseCase.execute({ cropId, onAfterUndo: () => this.refreshAfterUndo() });
   }
 }
