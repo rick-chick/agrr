@@ -101,7 +101,7 @@ const initialControl: FarmDetailViewState = {
           />
         </section>
 
-        <section class="section-card section-card--full-width" aria-labelledby="fields-heading">
+        <section class="section-card" aria-labelledby="fields-heading">
           <div class="section-card__header-actions">
             <h2 id="fields-heading" class="section-title">{{ 'farms.show.fields' | translate }}</h2>
             <button type="button" class="btn-primary" (click)="openFieldForm()">{{ 'farms.show.add_field' | translate }}</button>

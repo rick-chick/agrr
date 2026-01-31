@@ -11,7 +11,6 @@ import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gate
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Farm } from '../../domain/farms/farm';
-import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
@@ -31,11 +30,12 @@ const initialControl: PublicPlanCreateViewState = {
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
   ],
   template: `
-    <div class="public-plans-wrapper">
+    <main class="page-main public-plans-wrapper">
+      <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <div class="compact-header-card">
           <div class="compact-header-title">
-            <span class="title-icon">🌱</span>
+            <span class="title-icon" aria-hidden="true">🌱</span>
             <span class="title-text">{{ 'public_plans.title' | translate }}</span>
           </div>
           <div class="compact-progress">
@@ -56,18 +56,19 @@ const initialControl: PublicPlanCreateViewState = {
           </div>
         </div>
 
-        <div class="content-card">
-          <h2 class="content-card__title">{{ 'public_plans.new.title' | translate }}</h2>
-          <p class="content-card__subtitle">{{ 'public_plans.new.subtitle' | translate }}</p>
+        <section class="content-card" aria-labelledby="create-heading">
+          <h2 id="create-heading" class="content-card-title">{{ 'public_plans.select_farm.title' | translate }}</h2>
+          <p class="content-card-subtitle">{{ 'public_plans.select_farm.subtitle' | translate }}</p>
 
-          <section class="selection-section">
-            <h3>{{ 'public_plans.region_selection.title' | translate }}</h3>
+          <section class="selection-section" aria-labelledby="region-heading">
+            <h3 id="region-heading">{{ 'public_plans.region_selection.title' | translate }}</h3>
             <div class="region-tabs">
               @for (region of regions; track region.value) {
                 <button
                   type="button"
                   class="region-tab"
                   [class.active]="selectedRegion === region.value"
+                  [attr.aria-pressed]="selectedRegion === region.value"
                   (click)="selectRegion(region.value)"
                 >
                   <span class="region-flag">{{ region.flag }}</span>
@@ -84,57 +85,30 @@ const initialControl: PublicPlanCreateViewState = {
           } @else if (control.error) {
             <p class="error-message">{{ control.error }}</p>
           } @else {
-            <section class="selection-section mt-6">
-              <h3>{{ 'public_plans.select_farm_size.summary.region' | translate }} ({{ 'public_plans.steps.region' | translate }})</h3>
+            <section class="selection-section mt-6" aria-labelledby="farm-heading">
+              <h3 id="farm-heading">{{ 'public_plans.select_farm_size.summary.region' | translate }} ({{ 'public_plans.steps.region' | translate }})</h3>
               <div class="enhanced-grid">
                 @for (farm of control.farms; track farm.id) {
                   <div
                     class="enhanced-selection-card"
                     [class.active]="selectedFarmId === farm.id"
                     (click)="selectFarm(farm)"
+                    (keydown.enter)="selectFarm(farm)"
+                    (keydown.space)="selectFarm(farm); $event.preventDefault()"
+                    tabindex="0"
+                    role="button"
                   >
-                    <div class="enhanced-card-icon">🚜</div>
+                    <div class="enhanced-card-icon">🌏</div>
                     <div class="enhanced-card-title">{{ farm.name }}</div>
                     <div class="enhanced-card-subtitle">{{ farm.region }}</div>
                   </div>
                 }
               </div>
             </section>
-
-            <section class="selection-section mt-6" *ngIf="selectedFarmId">
-              <h3>{{ 'public_plans.select_farm_size.title' | translate }}</h3>
-              <div class="enhanced-grid">
-                @for (size of control.farmSizes; track size.id) {
-                  <div
-                    class="enhanced-selection-card"
-                    [class.active]="selectedFarmSizeId === size.id"
-                    (click)="selectFarmSize(size)"
-                  >
-                    <div class="enhanced-card-icon">📐</div>
-                    <div class="enhanced-card-title">{{ size.name }}</div>
-                    <div class="enhanced-card-highlight">{{ size.area_sqm }}㎡</div>
-                    <div class="enhanced-card-detail">{{ size.description }}</div>
-                  </div>
-                }
-              </div>
-            </section>
           }
-        </div>
+        </section>
       </div>
-
-      <div class="fixed-bottom-bar" *ngIf="canProceed()">
-        <div class="fixed-bottom-bar-content">
-          <div class="fixed-bottom-bar-left">
-            <span class="selection-summary" *ngIf="selectedFarm && selectedFarmSize">
-              {{ selectedFarm.name }} / {{ selectedFarmSize.name }}
-            </span>
-          </div>
-          <button type="button" class="btn-gradient btn" (click)="goToCropSelection()">
-            {{ 'public_plans.new.title' | translate }} →
-          </button>
-        </div>
-      </div>
-    </div>
+    </main>
   `,
   styleUrl: './public-plan.component.css'
 })
@@ -153,9 +127,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   selectedRegion = 'jp';
   selectedFarmId: number | null = null;
-  selectedFarmSizeId: string | null = null;
   selectedFarm: Farm | null = null;
-  selectedFarmSize: FarmSizeOption | null = null;
 
   private _control: PublicPlanCreateViewState = initialControl;
   get control(): PublicPlanCreateViewState {
@@ -176,10 +148,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     } else {
       this.selectedRegion = this.regionFromPath();
     }
-    if (state.farmSize) {
-      this.selectedFarmSizeId = state.farmSize.id;
-      this.selectedFarmSize = state.farmSize;
-    }
     this.loadFarms(this.selectedRegion);
   }
 
@@ -187,8 +155,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     this.selectedRegion = region;
     this.selectedFarmId = null;
     this.selectedFarm = null;
-    this.selectedFarmSizeId = null;
-    this.selectedFarmSize = null;
     this.control = { ...this.control, loading: true, error: null };
     this.loadFarms(region);
   }
@@ -197,21 +163,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     this.selectedFarmId = farm.id;
     this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
-  }
-
-  selectFarmSize(size: FarmSizeOption): void {
-    this.selectedFarmSizeId = size.id;
-    this.selectedFarmSize = size;
-    this.publicPlanStore.setFarmSize(size);
-  }
-
-  goToCropSelection(): void {
-    if (!this.canProceed()) return;
-    this.router.navigate(['/public-plans/select-crop']);
-  }
-
-  canProceed(): boolean {
-    return Boolean(this.selectedFarmId && this.selectedFarmSizeId);
+    this.router.navigate(['/public-plans/select-farm-size']);
   }
 
   private loadFarms(region: string): void {
