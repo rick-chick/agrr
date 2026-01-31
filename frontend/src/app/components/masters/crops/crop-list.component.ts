@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { CropListView, CropListViewState } from './crop-list.view';
 import { LoadCropListUseCase } from '../../../usecase/crops/load-crop-list.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
@@ -51,6 +52,9 @@ const initialControl: CropListViewState = {
                     @if (crop.variety) {
                       <span class="item-card__meta">{{ crop.variety }}</span>
                     }
+                    @if (auth.user()?.admin && crop.is_reference) {
+                      <span class="item-card__badge">{{ 'crops.show.reference_crop' | translate }}</span>
+                    }
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/crops', crop.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
@@ -69,6 +73,7 @@ const initialControl: CropListViewState = {
   styleUrl: './crop-list.component.css'
 })
 export class CropListComponent implements CropListView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly loadUseCase = inject(LoadCropListUseCase);
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropListPresenter);

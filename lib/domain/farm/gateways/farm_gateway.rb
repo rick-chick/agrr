@@ -4,7 +4,7 @@ module Domain
   module Farm
     module Gateways
       class FarmGateway
-        def list
+        def list(input_dto)
           raise NotImplementedError, "Subclasses must implement list"
         end
 

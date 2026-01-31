@@ -7,27 +7,16 @@ module Domain
         def initialize(output_port:, gateway:, user_id:)
           @output_port = output_port
           @gateway = gateway
+          @gateway.user_id = user_id if @gateway.respond_to?(:user_id=)
           @user_id = user_id
         end
 
         def call(input_dto = nil)
           input_dto ||= Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
-          user = User.find(@user_id)
-          farms = @gateway.list
+          @gateway.user_id = @user_id
+          farms = @gateway.list(input_dto)
 
-          if input_dto.is_admin
-            # 管理者は自分の農場と参照農場の両方を表示
-            owned_farms = Domain::Shared::Policies::FarmPolicy.visible_scope(::Farm, user)
-            reference_farms = ::Farm.reference
-            all_farms = owned_farms.or(reference_farms)
-            filtered_farms = farms.select { |farm_entity| all_farms.exists?(farm_entity.id) }
-          else
-            # 通常ユーザーは自分の農場のみ（参照農場・他ユーザー農場は含めない）
-            user_owned_farms = ::Farm.user_owned.by_user(user)
-            filtered_farms = farms.select { |farm_entity| user_owned_farms.exists?(farm_entity.id) }
-          end
-
-          @output_port.on_success(filtered_farms)
+          @output_port.on_success(farms)
         rescue ActiveRecord::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

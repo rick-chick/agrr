@@ -64,6 +64,24 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms).toEqual(dto.farms);
     });
 
+    it('handles farms with is_reference field for admin users', () => {
+      const dto: FarmListDataDto = {
+        farms: [
+          { id: 1, name: 'User Farm', region: 'jp', latitude: 35.6895, longitude: 139.6917, weather_data_status: 'completed', is_reference: false },
+          { id: 2, name: 'Reference Farm', region: 'jp', latitude: 43.0642, longitude: 141.3468, weather_data_status: 'pending', is_reference: true }
+        ]
+      };
+
+      presenter.present(dto);
+
+      expect(lastControl).not.toBeNull();
+      expect(lastControl!.loading).toBe(false);
+      expect(lastControl!.error).toBeNull();
+      expect(lastControl!.farms).toHaveLength(2);
+      expect(lastControl!.farms[0].is_reference).toBe(false);
+      expect(lastControl!.farms[1].is_reference).toBe(true);
+    });
+
     it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
       const initialControl: FarmListViewState = { loading: true, error: null, farms: [] };
       lastControl = initialControl;

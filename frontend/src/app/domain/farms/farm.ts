@@ -10,4 +10,7 @@ export interface Farm {
   weather_data_fetched_years?: number;
   weather_data_total_years?: number;
   is_reference?: boolean;
+  user_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }

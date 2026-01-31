@@ -10,6 +10,7 @@ export interface CropCreatePayload {
   revenue_per_area: number | null;
   region: string | null;
   groups: string[];
+  is_reference?: boolean;
 }
 
 export interface CropGateway {

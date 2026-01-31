@@ -5,6 +5,8 @@ export type CropEditFormData = {
   revenue_per_area: number | null;
   region: string | null;
   groups: string[];
+  groupsDisplay: string;
+  is_reference: boolean;
 };
 
 export type CropEditViewState = {

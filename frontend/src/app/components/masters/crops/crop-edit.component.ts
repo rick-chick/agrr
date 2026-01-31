@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { CropEditView, CropEditViewState, CropEditFormData } from './crop-edit.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { UpdateCropUseCase } from '../../../usecase/crops/update-crop.usecase';
@@ -18,8 +19,17 @@ const initialFormData: CropEditFormData = {
   area_per_unit: null,
   revenue_per_area: null,
   region: null,
-  groups: []
+  groups: [],
+  groupsDisplay: '',
+  is_reference: false
 };
+
+function parseGroups(s: string): string[] {
+  return (s || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
 
 const initialControl: CropEditViewState = {
   loading: true,
@@ -64,10 +74,20 @@ const initialControl: CropEditViewState = {
               <span class="form-card__field-label">{{ 'crops.form.revenue_per_area_label' | translate }}</span>
               <input id="crop-revenue-per-area" name="revenue_per_area" type="number" step="0.01" [(ngModel)]="control.formData.revenue_per_area" />
             </label>
+            <label for="crop-groups" class="form-card__field">
+              <span class="form-card__field-label">{{ 'crops.form.groups_label' | translate }}</span>
+              <input id="crop-groups" name="groups" [(ngModel)]="control.formData.groupsDisplay" [placeholder]="'crops.form.groups_placeholder' | translate" />
+            </label>
             <label for="crop-region" class="form-card__field">
               <span class="form-card__field-label">{{ 'crops.form.region_label' | translate }}</span>
               <input id="crop-region" name="region" [(ngModel)]="control.formData.region" />
             </label>
+            @if (auth.user()?.admin) {
+              <label class="form-card__field form-card__field--checkbox">
+                <input type="checkbox" name="is_reference" [(ngModel)]="control.formData.is_reference" />
+                <span class="form-card__field-label">{{ 'crops.form.is_reference_label' | translate }}</span>
+              </label>
+            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="cropForm.invalid || control.saving">
                 {{ 'crops.form.submit_update' | translate }}
@@ -82,6 +102,7 @@ const initialControl: CropEditViewState = {
   styleUrl: './crop-edit.component.css'
 })
 export class CropEditComponent implements CropEditView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
@@ -114,9 +135,16 @@ export class CropEditComponent implements CropEditView, OnInit {
   updateCrop(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
+    const fd = this.control.formData;
     this.updateUseCase.execute({
       cropId: this.cropId,
-      ...this.control.formData,
+      name: fd.name,
+      variety: fd.variety,
+      area_per_unit: fd.area_per_unit,
+      revenue_per_area: fd.revenue_per_area,
+      region: fd.region,
+      groups: parseGroups(fd.groupsDisplay),
+      is_reference: fd.is_reference,
       onSuccess: () => this.router.navigate(['/crops', this.cropId])
     });
   }
