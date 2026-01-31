@@ -1,9 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
-import angular from '@angular/vite-plugin-angular';
 
 export default defineConfig({
-  plugins: [angular()],
   test: {
     globals: true,
     environment: 'jsdom',
