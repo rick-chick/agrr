@@ -52,6 +52,10 @@ module Api
           }
 
           result = CultivationPlanCreator.new(**creator_params).call
+          unless result.success?
+            return render json: { error: result.errors.join(', ') }, status: :unprocessable_entity
+          end
+
           cultivation_plan = result.cultivation_plan
           job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
           execute_job_chain_async(job_instances)
@@ -59,6 +63,10 @@ module Api
           render json: { plan_id: cultivation_plan.id }
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Farm not found' }, status: :not_found
+        rescue StandardError => e
+          Rails.logger.error "[Api::V1::PublicPlans::WizardController#create] #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          render json: { error: e.message }, status: :internal_server_error
         end
 
         private
@@ -99,10 +107,8 @@ module Api
         end
 
         def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
-          puts "DEBUG: create_job_instances_for_public_plans called for plan #{cultivation_plan_id}"
-          cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+          cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm = cultivation_plan.farm
-          puts "DEBUG: Farm region: #{farm.region}"
 
           weather_params = calculate_weather_data_params(farm.weather_location)
           predict_days = calculate_predict_days(weather_params[:end_date])

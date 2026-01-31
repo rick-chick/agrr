@@ -58,7 +58,7 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          plan = CultivationPlan.find(json_response["plan_id"])
+          plan = ::CultivationPlan.find(json_response["plan_id"])
           assert_equal "public", plan.plan_type
           assert_equal 30, plan.total_area
         end
