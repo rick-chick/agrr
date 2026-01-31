@@ -57,27 +57,7 @@ const initialControl: PublicPlanCreateViewState = {
         </div>
 
         <section class="content-card" aria-labelledby="create-heading">
-          <h2 id="create-heading" class="content-card-title">{{ 'public_plans.select_farm.title' | translate }}</h2>
-          <p class="content-card-subtitle">{{ 'public_plans.select_farm.subtitle' | translate }}</p>
-
-          <section class="selection-section" aria-labelledby="region-heading">
-            <h3 id="region-heading">{{ 'public_plans.region_selection.title' | translate }}</h3>
-            <div class="region-tabs">
-              @for (region of regions; track region.value) {
-                <button
-                  type="button"
-                  class="region-tab"
-                  [class.active]="selectedRegion === region.value"
-                  [attr.aria-pressed]="selectedRegion === region.value"
-                  (click)="selectRegion(region.value)"
-                >
-                  <span class="region-flag">{{ region.flag }}</span>
-                  <span class="region-name">{{ region.label }}</span>
-                </button>
-              }
-            </div>
-          </section>
-
+          <h2 id="create-heading" class="visually-hidden">{{ 'public_plans.select_farm.available_farms' | translate }}</h2>
           @if (control.loading) {
             <div class="loading-state">
               <p>{{ 'common.loading' | translate }}</p>
@@ -86,7 +66,7 @@ const initialControl: PublicPlanCreateViewState = {
             <p class="error-message">{{ control.error }}</p>
           } @else {
             <section class="selection-section mt-6" aria-labelledby="farm-heading">
-              <h3 id="farm-heading">{{ 'public_plans.select_farm_size.summary.region' | translate }} ({{ 'public_plans.steps.region' | translate }})</h3>
+              <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
               <div class="enhanced-grid">
                 @for (farm of control.farms; track farm.id) {
                   <div
@@ -119,13 +99,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly regions = [
-    { value: 'jp', label: 'Japan', flag: '🇯🇵' },
-    { value: 'us', label: 'United States', flag: '🇺🇸' },
-    { value: 'in', label: 'India', flag: '🇮🇳' }
-  ];
-
-  selectedRegion = 'jp';
+  private readonly defaultRegion = 'jp';
   selectedFarmId: number | null = null;
   selectedFarm: Farm | null = null;
 
@@ -144,19 +118,8 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     if (state.farm) {
       this.selectedFarmId = state.farm.id;
       this.selectedFarm = state.farm;
-      this.selectedRegion = state.farm.region ?? 'jp';
-    } else {
-      this.selectedRegion = this.regionFromPath();
     }
-    this.loadFarms(this.selectedRegion);
-  }
-
-  selectRegion(region: string): void {
-    this.selectedRegion = region;
-    this.selectedFarmId = null;
-    this.selectedFarm = null;
-    this.control = { ...this.control, loading: true, error: null };
-    this.loadFarms(region);
+    this.loadFarms(this.defaultRegion);
   }
 
   selectFarm(farm: Farm): void {
@@ -168,19 +131,5 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   private loadFarms(region: string): void {
     this.useCase.execute({ region });
-  }
-
-  private regionFromPath(): string {
-    const segment = window.location.pathname.split('/').filter(Boolean)[0];
-    switch (segment) {
-      case 'ja':
-        return 'jp';
-      case 'us':
-        return 'us';
-      case 'in':
-        return 'in';
-      default:
-        return 'jp';
-    }
   }
 }

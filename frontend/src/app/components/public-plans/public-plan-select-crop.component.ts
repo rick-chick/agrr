@@ -43,13 +43,13 @@ const initialControl: PublicPlanSelectCropViewState = {
           </div>
           <div class="compact-progress">
             <div class="compact-step completed">
-              <div class="step-number">{{ 'public_plans.steps.completed' | translate }}</div>
-              <span class="step-label">{{ 'public_plans.steps.region' | translate }}</span>
+              <div class="step-number">1</div>
+              <a routerLink="/public-plans/new" class="step-label step-label-link">{{ 'public_plans.steps.region' | translate }}</a>
             </div>
             <div class="compact-step-divider completed"></div>
             <div class="compact-step completed">
-              <div class="step-number">{{ 'public_plans.steps.completed' | translate }}</div>
-              <span class="step-label">{{ 'public_plans.steps.size' | translate }}</span>
+              <div class="step-number">2</div>
+              <a routerLink="/public-plans/select-farm-size" class="step-label step-label-link">{{ 'public_plans.steps.size' | translate }}</a>
             </div>
             <div class="compact-step-divider completed"></div>
             <div class="compact-step active">
@@ -81,13 +81,15 @@ const initialControl: PublicPlanSelectCropViewState = {
         }
 
         <section class="content-card" aria-labelledby="crop-selection-heading">
-          <h2 id="crop-selection-heading" class="content-card-title">{{ 'public_plans.select_crop.title' | translate }}</h2>
-          <p class="content-card-subtitle">{{ 'public_plans.select_crop.subtitle' | translate }}</p>
-
+          <h2 id="crop-selection-heading" class="visually-hidden">{{ 'public_plans.steps.crop' | translate }}</h2>
           @if (control.loading) {
-            <p>{{ 'common.loading' | translate }}</p>
+            <div class="loading-state">
+              <p>{{ 'common.loading' | translate }}</p>
+            </div>
           } @else if (control.error) {
-            <p class="error-message">{{ control.error }}</p>
+            <div class="create-plan-error-center">
+              <p class="create-plan-error-message">{{ 'public_plans.create_failed' | translate:{ errors: control.error } }}</p>
+            </div>
           } @else {
             <div class="enhanced-grid">
               @for (crop of control.crops; track crop.id) {
@@ -113,33 +115,27 @@ const initialControl: PublicPlanSelectCropViewState = {
         </section>
       </div>
 
-      <div class="fixed-bottom-bar">
-        <div class="fixed-bottom-bar-container">
-          <div class="fixed-bottom-bar-content">
-            <div class="fixed-bottom-bar-left">
-              <a [routerLink]="['/public-plans/select-farm-size']" class="btn btn-white back-button">
-                {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
-              </a>
-              <div class="selection-counter-group">
-                <span class="counter-label">{{ 'public_plans.select_crop.bottom_bar.selected_label' | translate }}</span>
-                <div class="counter-badge">{{ selectedCropIds.size }}</div>
-                <span class="counter-unit">{{ 'public_plans.select_crop.bottom_bar.selected_unit' | translate }}</span>
-              </div>
+      @if (!control.error) {
+        <div class="fixed-bottom-bar fixed-bottom-bar--create-plan">
+          <div class="fixed-bottom-bar-container">
+            <div class="fixed-bottom-bar-content fixed-bottom-bar-content--submit-only">
+              <button
+                type="button"
+                class="submit-button btn"
+                (click)="createPlan()"
+                [disabled]="control.saving || selectedCropIds.size === 0"
+              >
+                {{ 'public_plans.select_crop.bottom_bar.submit_button' | translate }}
+              </button>
             </div>
-            <button
-              type="button"
-              class="btn-gradient submit-button btn"
-              (click)="createPlan()"
-              [disabled]="control.saving || selectedCropIds.size === 0"
-            >
-              {{ 'public_plans.select_crop.bottom_bar.submit_button' | translate }}
-            </button>
-          </div>
-          <div class="hint-message">
-            {{ 'public_plans.select_crop.bottom_bar.hint' | translate }}
+            @if (selectedCropIds.size === 0) {
+              <div class="hint-message">
+                {{ 'public_plans.select_crop.bottom_bar.hint' | translate }}
+              </div>
+            }
           </div>
         </div>
-      </div>
+      }
     </main>
   `,
   styleUrl: './public-plan.component.css'
