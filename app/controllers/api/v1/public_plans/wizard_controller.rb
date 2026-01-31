@@ -37,19 +37,27 @@ module Api
         end
 
         def create
+          Rails.logger.info "🌱 [WizardController#create] Called with farm_id: #{params[:farm_id]}, farm_size_id: #{params[:farm_size_id]}, crop_ids: #{params[:crop_ids]}"
+
           farm = Farm.find(params[:farm_id])
+          Rails.logger.info "🌱 [WizardController#create] Found farm: #{farm.id}"
+
           farm_size = find_farm_size(params[:farm_size_id])
           unless farm_size
+            Rails.logger.warn "❌ [WizardController#create] Invalid farm_size_id: #{params[:farm_size_id]}"
             return render json: { error: I18n.t('public_plans.errors.select_farm_size') }, status: :unprocessable_entity
           end
 
           total_area = farm_size[:area_sqm]
           unless total_area.positive?
+            Rails.logger.warn "❌ [WizardController#create] Invalid total_area: #{total_area}"
             return render json: { error: I18n.t('public_plans.errors.invalid_farm_size') }, status: :unprocessable_entity
           end
 
           crops = Crop.where(id: crop_ids)
+          Rails.logger.info "🌱 [WizardController#create] Found #{crops.count} crops for ids: #{crop_ids}"
           if crops.empty?
+            Rails.logger.warn "❌ [WizardController#create] No crops found for ids: #{crop_ids}"
             return render json: { error: I18n.t('public_plans.errors.select_crop') }, status: :unprocessable_entity
           end
 
@@ -64,22 +72,27 @@ module Api
             planning_end_date: Date.current.end_of_year
           }
 
+          Rails.logger.info "🌱 [WizardController#create] Creating cultivation plan with params: #{creator_params.except(:farm, :crops, :user)}"
           result = CultivationPlanCreator.new(**creator_params).call
           unless result.success?
+            Rails.logger.warn "❌ [WizardController#create] CultivationPlanCreator failed: #{result.errors.join(', ')}"
             return render json: { error: result.errors.join(', ') }, status: :unprocessable_entity
           end
 
           cultivation_plan = result.cultivation_plan
+          Rails.logger.info "🌱 [WizardController#create] Created cultivation plan: #{cultivation_plan.id}"
+
           job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
           execute_job_chain_async(job_instances)
 
           render json: { plan_id: cultivation_plan.id }
-        rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Farm not found' }, status: :not_found
-        rescue StandardError => e
-          Rails.logger.error "[Api::V1::PublicPlans::WizardController#create] #{e.message}"
+        rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.warn "❌ [WizardController#create] Record not found: #{e.message}"
+          render json: { error: 'Record not found' }, status: :not_found
+        rescue => e
+          Rails.logger.error "❌ [WizardController#create] Unexpected error: #{e.class} - #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
-          render json: { error: e.message }, status: :internal_server_error
+          render json: { error: 'Internal server error' }, status: :internal_server_error
         end
 
         private

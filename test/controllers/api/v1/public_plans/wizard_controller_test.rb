@@ -85,6 +85,35 @@ module Api
           assert_not_includes crop_ids, @us_crop.id
         end
 
+        test "returns 404 when farm not found" do
+          get "/api/v1/public_plans/crops", params: { farm_id: 999 }
+
+          assert_response :not_found
+          json_response = JSON.parse(response.body)
+          assert_equal "Farm not found", json_response["error"]
+        end
+
+        test "returns crops for farm id 3" do
+          get "/api/v1/public_plans/crops", params: { farm_id: 3 }
+
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response.is_a?(Array)
+          assert json_response.length > 0
+        end
+
+        test "handles errors in crops action gracefully" do
+          # Mock CropPolicy to raise an error
+          error = StandardError.new("Test error")
+          CropPolicy.stub :reference_scope, ->(*) { raise error } do
+            get "/api/v1/public_plans/crops", params: { farm_id: @jp_farm.id }
+
+            assert_response :internal_server_error
+            json_response = JSON.parse(response.body)
+            assert_equal "Internal server error", json_response["error"]
+          end
+        end
+
         test "creates plan and enqueues job chain" do
           assert_enqueued_with(job: ChainedJobRunnerJob) do
             post "/api/v1/public_plans/plans", params: {
@@ -209,6 +238,34 @@ module Api
           json_response = JSON.parse(response.body)
           assert json_response["error"].present?
           assert_equal "農場サイズが無効です。", json_response["error"]
+        end
+
+        test "returns 404 when farm not found in create" do
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: 999,
+            farm_size_id: "home_garden",
+            crop_ids: [@jp_crop.id]
+          }
+
+          assert_response :not_found
+          json_response = JSON.parse(response.body)
+          assert_equal "Record not found", json_response["error"]
+        end
+
+        test "handles unexpected errors in create action gracefully" do
+          # Mock CultivationPlanCreator to raise an error
+          error = StandardError.new("Test error")
+          CultivationPlanCreator.stub :new, ->(*) { raise error } do
+            post "/api/v1/public_plans/plans", params: {
+              farm_id: @jp_farm.id,
+              farm_size_id: "home_garden",
+              crop_ids: [@jp_crop.id]
+            }
+
+            assert_response :internal_server_error
+            json_response = JSON.parse(response.body)
+            assert_equal "Internal server error", json_response["error"]
+          end
         end
       end
     end
