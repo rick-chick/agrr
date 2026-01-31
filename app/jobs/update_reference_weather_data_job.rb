@@ -67,8 +67,17 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     Rails.logger.info "📋 [UpdateReferenceWeatherDataJob] 参照農場#{reference_farms.count}件を発見"
 
     # タイムゾーンを明示的に指定して日付を取得
+    # 利用可能な最新データの日付までを取得（未来の日付は取得できない）
     start_date = Time.zone.today - WEATHER_DATA_LOOKBACK_DAYS.days
     end_date = Time.zone.today
+
+    # 2025年までのデータのみ取得可能（2026年データはまだ利用できない）
+    # 実際のデータ可用性を考慮してend_dateを制限
+    max_available_year = 2025
+    if end_date.year > max_available_year
+      end_date = Date.new(max_available_year, 12, 31)
+      start_date = [start_date, Date.new(max_available_year, 1, 1)].max
+    end
 
     Rails.logger.info "📅 [UpdateReferenceWeatherDataJob] 取得期間: #{start_date} 〜 #{end_date}"
 

@@ -38,7 +38,7 @@ const initialControl: PlanDetailViewState = {
         <p>Status: {{ control.plan.status ?? '-' }}</p>
 
         @if (control.planData) {
-          <app-gantt-chart [data]="control.planData" />
+          <app-gantt-chart [data]="control.planData" planType="private" />
         }
 
         <div class="actions">

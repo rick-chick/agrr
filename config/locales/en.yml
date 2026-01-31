@@ -94,7 +94,36 @@ en:
       daily_uptake_n_placeholder: "e.g., 0.5"
       daily_uptake_p_placeholder: "e.g., 0.2"
       daily_uptake_k_placeholder: "e.g., 0.8"
-    
+
+    crops:
+      edit:
+        title: "Edit Crop"
+        stages_title: "Growth Stages"
+        add_stage: "Add Stage"
+        stage_title: "Stage"
+        stage_name: "Stage Name"
+        stage_order: "Order"
+        requirements_title: "Requirements"
+        temperature_requirement: "Temperature Requirements"
+        thermal_requirement: "Thermal Requirements"
+        sunshine_requirement: "Sunshine Requirements"
+        nutrient_requirement: "Nutrient Requirements"
+        base_temperature: "Base Temperature (°C)"
+        optimal_min: "Optimal Min Temperature (°C)"
+        optimal_max: "Optimal Max Temperature (°C)"
+        low_stress_threshold: "Low Stress Threshold (°C)"
+        high_stress_threshold: "High Stress Threshold (°C)"
+        frost_threshold: "Frost Threshold (°C)"
+        sterility_risk_threshold: "Sterility Risk Threshold (°C)"
+        max_temperature: "Max Temperature (°C)"
+        required_gdd: "Required Growing Degree Days (°C·day)"
+        minimum_sunshine_hours: "Minimum Sunshine Hours (hours/day)"
+        target_sunshine_hours: "Target Sunshine Hours (hours/day)"
+        daily_uptake_n: "Daily Nitrogen Uptake (kg/ha/day)"
+        daily_uptake_p: "Daily Phosphorus Uptake (kg/ha/day)"
+        daily_uptake_k: "Daily Potassium Uptake (kg/ha/day)"
+        region: "Region"
+
     crop_selection:
       max_crops_message: "Maximum %{max} crop types can be selected"
       hint_select: "Please select crops"
@@ -262,6 +291,8 @@ en:
         invalid_payload: "Invalid fertilizer payload format"
         fetch_failed: "Failed to retrieve fertilizer information"
         fetch_failed_with_reason: "Failed to retrieve fertilizer information: %{message}"
+      cultivation_plan:
+        crop_missing_growth_stages: "Crop '%{crop_name}' has no growth stages configured. Please configure growth stages before adjusting."
     messages:
       common:
         weather_service_available: "Weather service is available"

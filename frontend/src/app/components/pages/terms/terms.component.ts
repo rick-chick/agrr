@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-terms',
   standalone: true,
-  imports: [TranslateModule, RouterLink],
+  imports: [TranslateModule],
   template: `
     <div class="page-content-container">
       <h1 class="page-header">{{ 'pages.terms.heading' | translate }}</h1>

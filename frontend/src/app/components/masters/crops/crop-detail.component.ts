@@ -59,7 +59,7 @@ const initialControl: CropDetailViewState = {
                 <dd class="detail-row__value">{{ control.crop.revenue_per_area }} {{ 'crops.show.revenue_unit' | translate }}</dd>
               </div>
             }
-            @if (control.crop.groups?.length) {
+            @if (control.crop.groups.length) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'crops.show.groups' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.crop.groups.join(', ') }}</dd>

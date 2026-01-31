@@ -71,7 +71,7 @@ const initialControl: FarmDetailViewState = {
           <dl class="detail-card__list">
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'farms.show.location' | translate }}</dt>
-              <dd class="detail-row__value">{{ control.farm.region ?? '-' }}</dd>
+              <dd class="detail-row__value">{{ control.farm.region }}</dd>
             </div>
           </dl>
           <div class="detail-card__actions">

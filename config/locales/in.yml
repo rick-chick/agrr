@@ -65,6 +65,8 @@ in:
         calculate_period_failed: "योजना अवधि की गणना विफल: %{message}"
         result_empty: "समायोजन परिणाम खाली है"
         adjust_failed: "समायोजन विफल: %{message}"
+      cultivation_plan:
+        crop_missing_growth_stages: "फसल '%{crop_name}' में कोई विकास चरण कॉन्फ़िगर नहीं हैं। कृपया समायोजन करने से पहले विकास चरण कॉन्फ़िगर करें।"
       pests:
         pest_id_required: "pest_id आवश्यक है"
         not_found: "कीट नहीं मिला"
@@ -167,7 +169,36 @@ in:
       daily_uptake_n_placeholder: "उदा., 0.5"
       daily_uptake_p_placeholder: "उदा., 0.2"
       daily_uptake_k_placeholder: "उदा., 0.8"
-    
+
+    crops:
+      edit:
+        title: "फसल संपादित करें"
+        stages_title: "वृद्धि चरण"
+        add_stage: "चरण जोड़ें"
+        stage_title: "चरण"
+        stage_name: "चरण का नाम"
+        stage_order: "क्रम"
+        requirements_title: "आवश्यकताएँ"
+        temperature_requirement: "तापमान आवश्यकताएँ"
+        thermal_requirement: "थर्मल आवश्यकताएँ"
+        sunshine_requirement: "सूरज की रोशनी आवश्यकताएँ"
+        nutrient_requirement: "पोषक तत्व आवश्यकताएँ"
+        base_temperature: "आधार तापमान (°C)"
+        optimal_min: "इष्टतम न्यूनतम तापमान (°C)"
+        optimal_max: "इष्टतम अधिकतम तापमान (°C)"
+        low_stress_threshold: "कम तनाव सीमा (°C)"
+        high_stress_threshold: "उच्च तनाव सीमा (°C)"
+        frost_threshold: "हिम सीमा (°C)"
+        sterility_risk_threshold: "बाँझपन जोखिम सीमा (°C)"
+        max_temperature: "अधिकतम तापमान (°C)"
+        required_gdd: "आवश्यक बढ़ती डिग्री दिन (°C·day)"
+        minimum_sunshine_hours: "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)"
+        target_sunshine_hours: "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)"
+        daily_uptake_n: "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)"
+        daily_uptake_p: "दैनिक फास्फोरस अवशोषण (kg/ha/day)"
+        daily_uptake_k: "दैनिक पोटैशियम अवशोषण (kg/ha/day)"
+        region: "क्षेत्र"
+
     crop_selection:
       max_crops_message: "आप अधिकतम %{max} फसलें चुन सकते हैं"
       hint_select: "कृपया फसलें चुनें"

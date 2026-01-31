@@ -161,17 +161,16 @@ class WeatherPredictionService
   end
   
   def get_current_year_data(weather_location)
-    # 今年1年間の実績データを取得
+    # 今年1年間の実績データを取得（ある分だけ返す）
     current_year_start = Date.new(Date.current.year, 1, 1)
     current_year_end = Date.current - 2.days
     current_year_data = weather_location.weather_data_for_period(current_year_start, current_year_end)
-    
+
     if current_year_data.empty?
-      raise WeatherDataNotFoundError,
-            "No current year weather data found for period #{current_year_start} to #{current_year_end}. " \
-            "Please run weather data import batch first."
+      Rails.logger.warn "⚠️ [WeatherPrediction] No current year weather data found for period #{current_year_start} to #{current_year_end}. Proceeding with prediction data only."
+      return []
     end
-    
+
     Rails.logger.info "✅ [WeatherPrediction] Current year data loaded: #{current_year_data.count} records"
     current_year_data
   end

@@ -4,16 +4,17 @@ module Domain
   module Crop
     module Entities
       class CropStageEntity
-        attr_reader :id, :crop_id, :name, :order, :temperature, :sunshine, :thermal
+        attr_reader :id, :crop_id, :name, :order, :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement
 
         def initialize(attributes)
           @id = attributes[:id]
           @crop_id = attributes[:crop_id]
           @name = attributes[:name]
           @order = attributes[:order]
-          @temperature = attributes[:temperature]
-          @sunshine = attributes[:sunshine]
-          @thermal = attributes[:thermal]
+          @temperature_requirement = attributes[:temperature_requirement]
+          @thermal_requirement = attributes[:thermal_requirement]
+          @sunshine_requirement = attributes[:sunshine_requirement]
+          @nutrient_requirement = attributes[:nutrient_requirement]
 
           validate!
         end
