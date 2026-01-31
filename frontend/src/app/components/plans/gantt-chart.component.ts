@@ -240,7 +240,11 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const fields = this.data.data.fields;
     const cultivations = this.data.data.cultivations;
 
-    this.fieldGroups = fields.map(f => ({
+    // フィールドをID順でソートして、常に同じ順序で描画されるようにする
+    // これにより、最適化後のフィールド順序変更によるy方向位置ズレを防ぐ
+    const sortedFields = [...fields].sort((a, b) => a.id - b.id);
+
+    this.fieldGroups = sortedFields.map(f => ({
       fieldName: f.name,
       fieldId: f.id,
       cultivations: cultivations.filter(c => c.field_id === f.id)
@@ -852,20 +856,46 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           console.log('✅ 調整が完了しました:', response);
           // サーバーからの最新データで更新
           if (isPublicPlan) {
-            this.planService.getPublicPlanData(planId).subscribe(data => {
-              if (data) {
-                this.data = data;
+            this.planService.getPublicPlanData(planId).subscribe({
+              next: (data) => {
+                if (data && data.data && data.data.fields) {
+                  this.data = data;
+                  this.updateChart();
+                  // 変更検知を強制的に実行して画面を更新
+                  this.cdr.detectChanges();
+                } else {
+                  console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
+                  // データが取得できない場合は既存のデータを維持
+                  this.updateChart();
+                  this.cdr.detectChanges();
+                }
+              },
+              error: (error) => {
+                console.error('❌ データ再取得APIエラー:', error);
+                // エラーの場合は既存のデータを維持
                 this.updateChart();
-                // 変更検知を強制的に実行して画面を更新
                 this.cdr.detectChanges();
               }
             });
           } else {
-            this.planService.getPlanData(planId).subscribe(data => {
-              if (data) {
-                this.data = data;
+            this.planService.getPlanData(planId).subscribe({
+              next: (data) => {
+                if (data && data.data && data.data.fields) {
+                  this.data = data;
+                  this.updateChart();
+                  // 変更検知を強制的に実行して画面を更新
+                  this.cdr.detectChanges();
+                } else {
+                  console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
+                  // データが取得できない場合は既存のデータを維持
+                  this.updateChart();
+                  this.cdr.detectChanges();
+                }
+              },
+              error: (error) => {
+                console.error('❌ データ再取得APIエラー:', error);
+                // エラーの場合は既存のデータを維持
                 this.updateChart();
-                // 変更検知を強制的に実行して画面を更新
                 this.cdr.detectChanges();
               }
             });
