@@ -16,6 +16,7 @@
 .custom-gantt-chart {
   display: block;
   user-select: none;
+  max-width: 100%;
 }
 
 .gantt-background {

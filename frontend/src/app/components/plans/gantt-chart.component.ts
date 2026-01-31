@@ -158,24 +158,39 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private lastTargetFieldIndex = -1;
   private globalMouseMoveHandler: any;
   private globalMouseUpHandler: any;
+  private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
   private planService = inject(PlanService);
 
   constructor(private translate: TranslateService) {}
 
   ngOnInit(): void {
+    // コンテナ要素がまだ利用できないため、updateChart()は呼ばずにフラグを設定
     if (this.data) {
-      this.updateChart();
+      this.needsUpdate = true;
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data'] && this.data) {
-      this.updateChart();
+      // コンテナ要素が利用可能な場合のみupdateChart()を実行、そうでない場合はフラグを設定
+      if (this.container?.nativeElement) {
+        this.updateChart();
+        this.needsUpdate = false;
+      } else {
+        this.needsUpdate = true;
+      }
     }
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.updateDimensions(), 0);
+    // コンテナ要素が確実にレンダリングされた後に幅を取得し、必要に応じてupdateChart()を実行
+    setTimeout(() => {
+      this.updateDimensions();
+      if (this.needsUpdate) {
+        this.updateChart();
+        this.needsUpdate = false;
+      }
+    }, 0);
     window.addEventListener('resize', this.onResize);
   }
 
@@ -202,6 +217,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   private updateChart() {
     if (!this.data) return;
+
+    // コンテナ幅を取得してconfig.widthを更新（スクロール防止）
+    if (this.container?.nativeElement) {
+      const width = this.container.nativeElement.getBoundingClientRect().width;
+      if (width > 0) {
+        this.config.width = Math.max(width, 400);
+      }
+    }
 
     const fields = this.data.data.fields;
     const cultivations = this.data.data.cultivations;
