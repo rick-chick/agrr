@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleEditView, InteractionRuleEditViewState, InteractionRuleEditFormData } from './interaction-rule-edit.view';
 import { LoadInteractionRuleForEditUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-for-edit.usecase';
 import { UpdateInteractionRuleUseCase } from '../../../usecase/interaction-rules/update-interaction-rule.usecase';
@@ -32,7 +33,7 @@ const initialControl: InteractionRuleEditViewState = {
 @Component({
   selector: 'app-interaction-rule-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     InteractionRuleEditPresenter,
     LoadInteractionRuleForEditUseCase,
@@ -73,10 +74,10 @@ const initialControl: InteractionRuleEditViewState = {
               <span class="form-card__field-label">{{ 'interaction_rules.form.description_label' | translate }}</span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
-            <label class="form-card__field" for="region">
-              <span class="form-card__field-label">{{ 'interaction_rules.form.region_label' | translate }}</span>
-              <input id="region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
                 {{ 'interaction_rules.form.submit_update' | translate }}

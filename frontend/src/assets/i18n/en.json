@@ -739,6 +739,20 @@
       "title": "🌍 Select Your Region",
       "subtitle": "Choose the region for agricultural data"
     },
+    "regions": {
+      "jp": {
+        "name": "Japan",
+        "description": "日本"
+      },
+      "us": {
+        "name": "United States",
+        "description": "アメリカ"
+      },
+      "in": {
+        "name": "India",
+        "description": "インド"
+      }
+    },
     "farm_sizes": {
       "home_garden": {
         "name": "Home Garden",

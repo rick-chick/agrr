@@ -16,13 +16,25 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
 
   getFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;
-    return this.apiClient.get<Farm[]>('/api/v1/public_plans/farms', { params });
+    console.log('🌱 [PublicPlanApiGateway] getFarms called with region:', region, 'params:', params);
+    const result = this.apiClient.get<Farm[]>('/api/v1/public_plans/farms', { params });
+    result.subscribe({
+      next: (data) => console.log('🌱 [PublicPlanApiGateway] getFarms response:', data?.length, 'farms'),
+      error: (err) => console.log('🌱 [PublicPlanApiGateway] getFarms error:', err)
+    });
+    return result;
   }
 
   getFarmSizes(): Observable<FarmSizeOption[]> {
-    return this.apiClient.get<FarmSizeOption[]>(
+    console.log('🌱 [PublicPlanApiGateway] getFarmSizes called');
+    const result = this.apiClient.get<FarmSizeOption[]>(
       '/api/v1/public_plans/farm_sizes'
     );
+    result.subscribe({
+      next: (data) => console.log('🌱 [PublicPlanApiGateway] getFarmSizes response:', data?.length, 'sizes'),
+      error: (err) => console.log('🌱 [PublicPlanApiGateway] getFarmSizes error:', err)
+    });
+    return result;
   }
 
   getCrops(farmId: number): Observable<Crop[]> {

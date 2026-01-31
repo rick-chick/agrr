@@ -9,6 +9,7 @@ import { CREATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/create-farm.outp
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
 import { FarmMapComponent } from './farm-map.component';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 const DEFAULT_LAT = 35.6812;
@@ -30,7 +31,7 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule],
   providers: [
     FarmCreatePresenter,
     CreateFarmUseCase,
@@ -46,10 +47,12 @@ const initialControl: FarmCreateViewState = {
             <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
             <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <label class="form-card__field" for="region">
-            <span class="form-card__field-label">Region</span>
-            <input id="region" name="region" [(ngModel)]="control.formData.region" required />
-          </label>
+          <app-region-select
+            id="region"
+            [region]="control.formData.region"
+            [required]="true"
+            (regionChange)="control.formData.region = $event || ''"
+          ></app-region-select>
           <div class="form-group">
             <label class="form-label">{{ 'farms.new.form.location_label' | translate }}</label>
             <app-farm-map

@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { FertilizeEditView, FertilizeEditViewState, FertilizeEditFormData } from './fertilize-edit.view';
 import { LoadFertilizeForEditUseCase } from '../../../usecase/fertilizes/load-fertilize-for-edit.usecase';
 import { UpdateFertilizeUseCase } from '../../../usecase/fertilizes/update-fertilize.usecase';
@@ -31,7 +33,7 @@ const initialControl: FertilizeEditViewState = {
 @Component({
   selector: 'app-fertilize-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     FertilizeEditPresenter,
     LoadFertilizeForEditUseCase,
@@ -52,10 +54,10 @@ const initialControl: FertilizeEditViewState = {
               <span class="form-card__field-label">Name</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <label for="region" class="form-card__field">
-              <span class="form-card__field-label">Region</span>
-              <input id="region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             <label for="n" class="form-card__field">
               <span class="form-card__field-label">N</span>
               <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />

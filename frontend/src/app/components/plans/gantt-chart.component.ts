@@ -38,13 +38,16 @@ interface TimeScale {
   imports: [CommonModule, TranslateModule],
   template: `
     <div class="gantt-container" #container>
-      @if (!data) {
+      @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
         <div class="no-data-message">
-          <p>計画データが読み込まれていません。</p>
-        </div>
-      } @else if (!data.data.fields?.length) {
-        <div class="no-data-message">
-          <p>圃場データがありません。</p>
+          @if (!data) {
+            <p>計画データが読み込まれていません。</p>
+          } @else if (!data.data.fields || data.data.fields.length === 0) {
+            <p>圃場データがありません。</p>
+          } @else {
+            <p>ガントチャートを表示するためのデータがありません。</p>
+            <p>APIレスポンス: {{ debugData() }}</p>
+          }
         </div>
       } @else {
         <div class="gantt-scroll-area">
@@ -175,6 +178,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   constructor(private translate: TranslateService) {}
 
   ngOnInit(): void {
+    console.log('🚀 GanttChartComponent: ngOnInit called', {
+      hasData: !!this.data,
+      dataStructure: this.data ? Object.keys(this.data) : null,
+      fieldsCount: this.data?.data?.fields?.length,
+      cultivationsCount: this.data?.data?.cultivations?.length
+    });
     // コンテナ要素がまだ利用できないため、updateChart()は呼ばずにフラグを設定
     if (this.data) {
       this.needsUpdate = true;
@@ -182,11 +191,20 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('🔄 GanttChartComponent: ngOnChanges called', {
+      hasData: !!this.data,
+      dataStructure: this.data ? Object.keys(this.data) : null,
+      fieldsCount: this.data?.data?.fields?.length,
+      cultivationsCount: this.data?.data?.cultivations?.length,
+      containerReady: !!this.container?.nativeElement
+    });
     if (changes['data'] && this.data) {
       // コンテナ要素が利用可能な場合のみupdateChart()を実行、そうでない場合はフラグを設定
       if (this.container?.nativeElement) {
         this.updateChart();
         this.needsUpdate = false;
+        // データ変更後に画面更新を強制
+        this.cdr.detectChanges();
       } else {
         this.needsUpdate = true;
       }
@@ -201,6 +219,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.updateChart();
         this.needsUpdate = false;
       }
+      // 初期描画後にChangeDetectionを実行して画面を更新
+      this.cdr.detectChanges();
     }, 0);
     window.addEventListener('resize', this.onResize);
   }
@@ -227,7 +247,17 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private updateChart() {
-    if (!this.data) return;
+    console.log('📊 GanttChartComponent: updateChart called', {
+      hasData: !!this.data,
+      fieldsCount: this.data?.data?.fields?.length,
+      cultivationsCount: this.data?.data?.cultivations?.length,
+      containerWidth: this.container?.nativeElement?.getBoundingClientRect().width
+    });
+
+    if (!this.data) {
+      console.warn('❌ GanttChartComponent: No data available');
+      return;
+    }
 
     // コンテナ幅を取得してconfig.widthを更新（スクロール防止）
     if (this.container?.nativeElement) {
@@ -240,6 +270,11 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const fields = this.data.data.fields;
     const cultivations = this.data.data.cultivations;
 
+    console.log('📋 GanttChartComponent: Processing data', {
+      fields: fields?.length || 0,
+      cultivations: cultivations?.length || 0
+    });
+
     // フィールドをID順でソートして、常に同じ順序で描画されるようにする
     // これにより、最適化後のフィールド順序変更によるy方向位置ズレを防ぐ
     const sortedFields = [...fields].sort((a, b) => a.id - b.id);
@@ -251,7 +286,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }));
 
     this.config.height = this.config.margin.top + (this.fieldGroups.length * this.config.rowHeight) + this.config.margin.bottom;
-    
+
     // chartWidthを計算してからdetermineTimeScaleに渡す
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
     this.timeScale = this.determineTimeScale(
@@ -260,6 +295,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       chartWidth
     );
     this.calculateTimeAxis();
+
+    // データ更新後に画面更新を強制
+    this.cdr.detectChanges();
   }
 
   private calculateTimeAxis() {
@@ -828,6 +866,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // fieldGroupsを再構築（圃場が変わった場合のため）
     this.updateChart();
+  }
+
+  debugData(): string {
+    if (!this.data) return 'data: null';
+    if (!this.data.data) return 'data.data: null';
+    return `fields: ${this.data.data.fields?.length || 0}, cultivations: ${this.data.data.cultivations?.length || 0}`;
   }
 
   private adjustCultivation(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropCreateView, CropCreateViewState, CropCreateFormData } from './crop-create.view';
 import { CreateCropUseCase } from '../../../usecase/crops/create-crop.usecase';
 import { CropCreatePresenter } from '../../../adapters/crops/crop-create.presenter';
@@ -38,7 +39,7 @@ const initialControl: CropCreateViewState = {
 @Component({
   selector: 'app-crop-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     CropCreatePresenter,
     CreateCropUseCase,
@@ -70,10 +71,11 @@ const initialControl: CropCreateViewState = {
               <span class="form-card__field-label">{{ 'crops.form.groups_label' | translate }}</span>
               <input id="crop-groups" name="groups" [(ngModel)]="control.formData.groupsDisplay" [placeholder]="'crops.form.groups_placeholder' | translate" />
             </label>
-            <label for="crop-region" class="form-card__field">
-              <span class="form-card__field-label">{{ 'crops.form.region_label' | translate }}</span>
-              <input id="crop-region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              id="crop-region"
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             @if (auth.user()?.admin) {
               <label class="form-card__field form-card__field--checkbox">
                 <input type="checkbox" name="is_reference" [(ngModel)]="control.formData.is_reference" />

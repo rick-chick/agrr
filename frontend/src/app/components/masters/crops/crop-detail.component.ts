@@ -68,7 +68,7 @@ const initialControl: CropDetailViewState = {
             @if (control.crop.region) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'crops.show.region' | translate }}</dt>
-                <dd class="detail-row__value">{{ control.crop.region }}</dd>
+                <dd class="detail-row__value">{{ 'crops.form.region_' + control.crop.region | translate }}</dd>
               </div>
             }
             @if (control.crop.created_at) {

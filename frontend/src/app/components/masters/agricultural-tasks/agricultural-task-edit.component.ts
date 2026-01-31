@@ -15,6 +15,7 @@ import { LOAD_AGRICULTURAL_TASK_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/ag
 import { UPDATE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/update-agricultural-task.output-port';
 import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
 import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: AgriculturalTaskEditFormData = {
   name: '',
@@ -37,7 +38,7 @@ const initialControl: AgriculturalTaskEditViewState = {
 @Component({
   selector: 'app-agricultural-task-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     AgriculturalTaskEditPresenter,
     LoadAgriculturalTaskForEditUseCase,
@@ -82,10 +83,10 @@ const initialControl: AgriculturalTaskEditViewState = {
                 <option value="advanced">Advanced</option>
               </select>
             </label>
-            <label for="region" class="form-card__field">
-              <span class="form-card__field-label">Region</span>
-              <input id="region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             <label for="task_type" class="form-card__field">
               <span class="form-card__field-label">Task type</span>
               <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />

@@ -9,6 +9,7 @@ import { PestCreatePresenter } from '../../../adapters/pests/pest-create.present
 import { CREATE_PEST_OUTPUT_PORT } from '../../../usecase/pests/create-pest.output-port';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: PestCreateFormData = {
   name: '',
@@ -29,7 +30,7 @@ const initialControl: PestCreateViewState = {
 @Component({
   selector: 'app-pest-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     PestCreatePresenter,
     CreatePestUseCase,
@@ -65,10 +66,10 @@ const initialControl: PestCreateViewState = {
             <span class="form-card__field-label">Occurrence Season</span>
             <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
           </label>
-          <label class="form-card__field" for="region">
-            <span class="form-card__field-label">Region</span>
-            <input id="region" name="region" [(ngModel)]="control.formData.region" />
-          </label>
+          <app-region-select
+            [region]="control.formData.region"
+            (regionChange)="control.formData.region = $event"
+          ></app-region-select>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
               {{ control.saving ? 'Creating...' : 'Create Pest' }}

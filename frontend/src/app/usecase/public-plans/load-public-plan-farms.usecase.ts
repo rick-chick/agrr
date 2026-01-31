@@ -17,17 +17,22 @@ export class LoadPublicPlanFarmsUseCase implements LoadPublicPlanFarmsInputPort 
   ) {}
 
   execute(dto: LoadPublicPlanFarmsInputDto): void {
-    forkJoin({
-      farmSizes: this.publicPlanGateway.getFarmSizes(),
-      farms: this.publicPlanGateway.getFarms(dto.region)
-    }).subscribe({
-      next: (data) =>
+    console.log('🌱 [LoadPublicPlanFarmsUseCase] execute called with:', dto);
+    forkJoin([
+      this.publicPlanGateway.getFarmSizes(),
+      this.publicPlanGateway.getFarms(dto.region)
+    ]).subscribe({
+      next: ([farmSizes, farms]) => {
+        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin next - farmSizes:', farmSizes?.length, 'farms:', farms?.length);
         this.outputPort.present({
-          farms: data.farms,
-          farmSizes: data.farmSizes
-        }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+          farms,
+          farmSizes
+        });
+      },
+      error: (err: Error) => {
+        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin error:', err);
+        this.outputPort.onError({ message: err?.message ?? 'Unknown error' });
+      }
     });
   }
 }
