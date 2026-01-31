@@ -151,6 +151,7 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "detail": "Detail",
     "edit": "Edit",
     "delete": "Delete",
     "back": "Back",
@@ -751,6 +752,11 @@
       "subtitle": "Choose the region where your farm is located",
       "empty_message": "No regions available for selection at this time."
     },
+    "select_farm": {
+      "title": "Select Farm",
+      "subtitle": "Click a farm",
+      "available_farms": "Available farms"
+    },
     "select_farm_size": {
       "title": "📏 Select Your Farm Size",
       "subtitle": "Choose the size closest to your farm area",
@@ -770,19 +776,19 @@
         "back_button": "← Back",
         "selected_label": "Selected",
         "selected_unit": "crops",
-        "submit_button": "✓ Create Plan with Selected Crops",
+        "submit_button": "Create Plan",
         "hint": "⚠️ Please select at least one crop"
       }
     },
     "optimizing": {
       "title": "Crop Planning",
       "status_badge": "Optimizing",
-      "crops_count": "%{count} crop types",
+      "crops_count": "{{ count }} crop types",
       "hint": "",
       "error_message": "Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan.",
       "progress": {
-        "elapsed_time": "⏳ %{time} sec",
-        "elapsed_time_minute": "%{minutes}:%{seconds}",
+        "elapsed_time": "⏳ {{ time }} sec",
+        "elapsed_time_minute": "{{ minutes }}:{{ seconds }}",
         "duration_hint": "Takes approximately 1 minute",
         "default_message": "Preparing optimization..."
       },
@@ -1000,7 +1006,7 @@
         "back_button": "← Back",
         "selected_label": "Selected",
         "selected_unit": "crops",
-        "submit_button": "✓ Create Plan",
+        "submit_button": "Create Plan",
         "hint": "⚠️ Please select at least one crop"
       },
       "no_crops": "No crops available",
@@ -1401,16 +1407,35 @@
       "edit": "Edit",
       "delete": "Delete",
       "delete_confirm": "Are you sure you want to delete this farm?",
+      "confirm_delete_field": "Are you sure you want to delete this field?",
       "back": "Back",
       "fields": "Fields",
       "add_field": "Add Field",
       "weather": "Weather Information",
+      "weather_status": "Weather Data Status",
+      "weather_progress": "Progress",
+      "map": "Map",
       "fields_list": "Fields",
       "fields_list_title": "Fields List",
       "no_fields": "No fields registered yet.",
       "add_first_field": "Add First Field",
       "back_to_list": "Back to Farm List",
-      "detail": "Details"
+      "detail": "Details",
+      "location": "Location",
+      "field_form": {
+        "add_title": "Add Field",
+        "edit_title": "Edit Field",
+        "name_label": "Field Name",
+        "name_placeholder": "e.g., North Field",
+        "area_label": "Area (ha)",
+        "area_placeholder": "e.g., 1.5",
+        "daily_fixed_cost_label": "Daily Fixed Cost",
+        "daily_fixed_cost_placeholder": "e.g., 5000",
+        "region_label": "Region",
+        "region_placeholder": "e.g., Kanto",
+        "submit_create": "Create Field",
+        "submit_update": "Update Field"
+      }
     },
     "card": {
       "latitude": "Latitude",

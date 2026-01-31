@@ -75,17 +75,13 @@ const initialControl: PublicPlanOptimizingViewState = {
 
         @if (control.status === 'failed') {
           <div class="error-message-container">
-            <div class="error-icon" aria-hidden="true">⚠️</div>
-            <div class="error-content">
-              <div class="error-title">{{ 'public_plans.optimizing.error.title' | translate }}</div>
-              <div class="error-actions">
-                <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
-                  {{ 'public_plans.optimizing.error.try_again' | translate }}
-                </a>
-                <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
-                  {{ 'public_plans.optimizing.error.start_over' | translate }}
-                </a>
-              </div>
+            <div class="error-actions">
+              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
+                {{ 'public_plans.optimizing.error.try_again' | translate }}
+              </a>
+              <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
+                {{ 'public_plans.optimizing.error.start_over' | translate }}
+              </a>
             </div>
           </div>
         }
