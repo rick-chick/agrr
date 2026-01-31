@@ -34,11 +34,12 @@ const initialControl: PublicPlanOptimizingViewState = {
     }
   ],
   template: `
-    <div class="public-plans-wrapper">
+    <main class="page-main public-plans-wrapper pb-0">
+      <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <div class="compact-header-card">
           <div class="compact-header-title">
-            <span class="title-icon">🌱</span>
+            <span class="title-icon" aria-hidden="true">🌱</span>
             <span class="title-text">{{ 'public_plans.title' | translate }}</span>
             <span class="status-badge optimizing">{{ 'public_plans.optimizing.status_badge' | translate }}</span>
           </div>
@@ -47,38 +48,47 @@ const initialControl: PublicPlanOptimizingViewState = {
           </div>
         </div>
 
-        <div class="content-card optimizing-card">
-          <div class="progress-spinner">
-            <div class="spinner"></div>
-          </div>
+        <div class="spacer-for-fixed-bar"></div>
+      </div>
+    </main>
 
-          <div class="progress-info">
-            <h3 class="phase-message">{{ control.phaseMessage }}</h3>
-            <p class="duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</p>
+    <div class="fixed-progress-bar">
+      <div class="fixed-progress-container">
+        <div class="progress-header">
+          <div class="progress-label-with-spinner">
+            <span class="spinner spinner-sm" [class.hidden]="control.status === 'failed'"></span>
+            <div class="progress-info">
+              <div class="progress-phase-message" [class.error]="control.status === 'failed'">
+                {{ control.status === 'failed' ? ('public_plans.optimizing.error.title' | translate) : control.phaseMessage }}
+              </div>
+              <div class="progress-duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</div>
+            </div>
           </div>
+          <div class="progress-elapsed-time">
+            @if (elapsedTime < 60) {
+              {{ 'public_plans.optimizing.progress.elapsed_time' | translate: { time: elapsedTime } }}
+            } @else {
+              {{ 'public_plans.optimizing.progress.elapsed_time_minute' | translate: { minutes: elapsedMinutes, seconds: elapsedSeconds } }}
+            }
+          </div>
+        </div>
 
-          <div class="progress-bar-container">
-            <div class="progress-bar" [style.width.%]="control.progress"></div>
-          </div>
-          <div class="progress-stats">
-            <span class="progress-percentage">{{ control.progress }}%</span>
-            <span class="elapsed-time">{{ 'public_plans.optimizing.progress.elapsed_time' | translate: { time: elapsedTime } }}</span>
-          </div>
-
-          @if (control.status === 'failed') {
-            <div class="error-container">
-              <p class="error-message">{{ 'public_plans.optimizing.error.title' | translate }}</p>
+        @if (control.status === 'failed') {
+          <div class="error-message-container">
+            <div class="error-icon" aria-hidden="true">⚠️</div>
+            <div class="error-content">
+              <div class="error-title">{{ 'public_plans.optimizing.error.title' | translate }}</div>
               <div class="error-actions">
                 <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
                   {{ 'public_plans.optimizing.error.try_again' | translate }}
                 </a>
-                <a [routerLink]="['/public-plans/new']" class="btn btn-white">
+                <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
                   {{ 'public_plans.optimizing.error.start_over' | translate }}
                 </a>
               </div>
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -95,6 +105,13 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   elapsedTime = 0;
   private channel: Channel | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
+
+  get elapsedMinutes(): number {
+    return Math.floor(this.elapsedTime / 60);
+  }
+  get elapsedSeconds(): number {
+    return this.elapsedTime % 60;
+  }
 
   get farm() {
     return this.publicPlanStore.state.farm;

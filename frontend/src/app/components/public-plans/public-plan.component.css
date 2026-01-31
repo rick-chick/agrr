@@ -1,10 +1,31 @@
+/* 無料作付画面のページレイアウト（page-main 相当） */
+.public-plans-wrapper.page-main {
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-background);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .public-plans-wrapper.page-main {
+    padding: var(--space-4);
+  }
+}
+
+.free-plans-container {
+  width: 100%;
+  max-width: 900px;
+}
+
 .page {
-  padding-bottom: 100px;
+  padding-bottom: var(--bottom-spacer-height);
 }
 
 .selection-section h3 {
   font-size: var(--font-size-base);
-  color: var(--color-gray-600);
+  color: var(--color-text-secondary);
   margin-bottom: var(--space-4);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -35,6 +56,11 @@
   background: var(--color-surface-hover);
 }
 
+.region-tab:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
 .region-tab.active {
   border-color: var(--color-primary);
   background: var(--color-primary);
@@ -62,6 +88,11 @@
   border-color: var(--color-primary);
   background: var(--color-surface-hover);
   transform: translateY(-2px);
+}
+
+.enhanced-selection-card:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .enhanced-selection-card.active {
@@ -109,8 +140,8 @@
 }
 
 .compact-step-divider {
-  width: 40px;
-  height: 2px;
+  width: var(--step-divider-width);
+  height: var(--step-divider-height);
   background: var(--color-border);
 }
 
@@ -124,8 +155,14 @@
 
 .enhanced-summary-items {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .enhanced-summary-items {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .enhanced-summary-row {
@@ -177,6 +214,11 @@
   transform: translateY(-2px);
 }
 
+.crop-card:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
 .crop-check:checked + .crop-card {
   border-color: var(--color-primary);
   background: var(--color-surface-selected);
@@ -200,8 +242,8 @@
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
-  width: 24px;
-  height: 24px;
+  width: var(--check-mark-size);
+  height: var(--check-mark-size);
   background: var(--color-border);
   color: var(--color-text-on-primary);
   border-radius: var(--radius-full);
@@ -218,7 +260,7 @@
 }
 
 .bottom-spacer {
-  height: 100px;
+  height: var(--bottom-spacer-height);
 }
 
 .fixed-bottom-bar-left {
@@ -235,14 +277,14 @@
 
 .counter-badge {
   background: var(--color-info);
-  color: white;
-  width: 28px;
-  height: 28px;
+  color: var(--color-text-on-primary);
+  width: var(--counter-badge-size);
+  height: var(--counter-badge-size);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .hint-message {
@@ -252,22 +294,58 @@
   margin-top: var(--space-2);
 }
 
+/* Rails に合わせた送信ボタン無効スタイル */
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.content-card-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+  text-align: center;
+}
+
+.content-card-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
 .status-badge {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: bold;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
 }
 
 .status-badge.completed {
   background: var(--color-success);
-  color: white;
+  color: var(--color-text-on-primary);
 }
 
 .status-badge.optimizing {
   background: var(--gradient-primary);
   color: white;
+}
+
+.compact-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.compact-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  width: 100%;
+  margin-top: var(--space-1);
 }
 
 .compact-header-card.success {
@@ -282,7 +360,9 @@
 }
 
 .cultivation-results-container {
-  padding-bottom: 60px;
+  width: 100%;
+  max-width: 900px;
+  padding-bottom: var(--fixed-bar-padding-bottom);
 }
 
 .optimizing-card {
@@ -297,10 +377,10 @@
 }
 
 .spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--color-border);
-  border-top: 4px solid var(--color-primary);
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  border: var(--spinner-border-width) solid var(--color-border);
+  border-top: var(--spinner-border-width) solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -324,7 +404,7 @@
 
 .progress-bar-container {
   width: 100%;
-  height: 12px;
+  height: var(--progress-bar-height);
   background: var(--color-border);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -334,7 +414,7 @@
 .progress-bar {
   height: 100%;
   background: var(--gradient-primary);
-  transition: width 0.3s ease-out;
+  transition: width var(--transition-progress);
 }
 
 .progress-stats {
@@ -354,4 +434,181 @@
   gap: var(--space-4);
   justify-content: center;
   margin-top: var(--space-4);
+}
+
+/* ============================================
+   最適化画面: 固定下部バー（Rails 同様）
+   ============================================ */
+.public-plans-wrapper.pb-0 {
+  padding-bottom: 0;
+}
+
+.spacer-for-fixed-bar {
+  height: 100px;
+}
+
+.fixed-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  border-top: 4px solid var(--color-info);
+}
+
+.fixed-progress-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-5);
+}
+
+.fixed-progress-bar .progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fixed-progress-bar .progress-label-with-spinner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.fixed-progress-bar .progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fixed-progress-bar .progress-phase-message {
+  font-size: var(--font-size-base);
+  color: var(--color-info);
+  font-weight: var(--font-weight-semibold);
+}
+
+.fixed-progress-bar .progress-phase-message.error {
+  color: var(--color-error);
+}
+
+.fixed-progress-bar .progress-duration-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.fixed-progress-bar .progress-elapsed-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-weight: var(--font-weight-bold);
+}
+
+.spinner-sm {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+.spinner.hidden {
+  display: none;
+}
+
+.fixed-progress-bar .error-message-container {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.fixed-progress-bar .error-icon {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.fixed-progress-bar .error-content .error-title {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-2);
+}
+
+.fixed-progress-bar .error-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+/* ============================================
+   結果画面: ヘッダー・サマリー（Rails 同様）
+   ============================================ */
+.gantt-results-header {
+  background: var(--gradient-primary);
+  color: var(--color-text-on-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-card);
+}
+
+.gantt-results-header-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.gantt-results-header-icon {
+  font-size: var(--font-size-5xl);
+}
+
+.gantt-results-header-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  flex: 1;
+}
+
+.gantt-results-header-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.gantt-results-header-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.gantt-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+}
+
+.gantt-summary-icon {
+  font-size: var(--font-size-2xl);
+}
+
+.gantt-summary-label {
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+}
+
+.gantt-summary-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.gantt-results-header-subtitle {
+  text-align: center;
+  font-size: var(--font-size-lg);
+  opacity: 0.95;
 }

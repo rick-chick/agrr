@@ -33,21 +33,22 @@ const initialControl: PublicPlanSelectCropViewState = {
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
   ],
   template: `
-    <div class="public-plans-wrapper">
+    <main class="page-main public-plans-wrapper">
+      <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
         <div class="compact-header-card">
           <div class="compact-header-title">
-            <span class="title-icon">🌱</span>
+            <span class="title-icon" aria-hidden="true">🌱</span>
             <span class="title-text">{{ 'public_plans.title' | translate }}</span>
           </div>
           <div class="compact-progress">
             <div class="compact-step completed">
-              <div class="step-number">✓</div>
+              <div class="step-number">{{ 'public_plans.steps.completed' | translate }}</div>
               <span class="step-label">{{ 'public_plans.steps.region' | translate }}</span>
             </div>
             <div class="compact-step-divider completed"></div>
             <div class="compact-step completed">
-              <div class="step-number">✓</div>
+              <div class="step-number">{{ 'public_plans.steps.completed' | translate }}</div>
               <span class="step-label">{{ 'public_plans.steps.size' | translate }}</span>
             </div>
             <div class="compact-step-divider completed"></div>
@@ -58,7 +59,8 @@ const initialControl: PublicPlanSelectCropViewState = {
           </div>
         </div>
 
-        <div class="enhanced-summary-card" *ngIf="farm && farmSize">
+        @if (farm && farmSize) {
+        <div class="enhanced-summary-card">
           <div class="enhanced-summary-items">
             <div class="enhanced-summary-row">
               <div class="enhanced-summary-icon">🌍</div>
@@ -76,10 +78,11 @@ const initialControl: PublicPlanSelectCropViewState = {
             </div>
           </div>
         </div>
+        }
 
-        <div class="content-card">
-          <h2 class="content-card__title">{{ 'public_plans.select_crop.title' | translate }}</h2>
-          <p class="content-card__subtitle">{{ 'public_plans.select_crop.subtitle' | translate }}</p>
+        <section class="content-card" aria-labelledby="crop-selection-heading">
+          <h2 id="crop-selection-heading" class="content-card-title">{{ 'public_plans.select_crop.title' | translate }}</h2>
+          <p class="content-card-subtitle">{{ 'public_plans.select_crop.subtitle' | translate }}</p>
 
           @if (control.loading) {
             <p>{{ 'common.loading' | translate }}</p>
@@ -99,7 +102,7 @@ const initialControl: PublicPlanSelectCropViewState = {
                   <label [for]="'crop_' + crop.id" class="crop-card">
                     <div class="crop-emoji">🥬</div>
                     <div class="crop-name">{{ crop.name }}</div>
-                    <div class="crop-variety" *ngIf="crop.variety">{{ crop.variety }}</div>
+                    @if (crop.variety) { <div class="crop-variety">{{ crop.variety }}</div> }
                     <div class="check-mark">✓</div>
                   </label>
                 </div>
@@ -107,35 +110,37 @@ const initialControl: PublicPlanSelectCropViewState = {
             </div>
             <div class="bottom-spacer"></div>
           }
-        </div>
+        </section>
       </div>
 
       <div class="fixed-bottom-bar">
-        <div class="fixed-bottom-bar-content">
-          <div class="fixed-bottom-bar-left">
-            <a [routerLink]="['/public-plans/new']" class="btn btn-white back-button">
-              {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
-            </a>
-            <div class="selection-counter-group">
-              <span class="counter-label">{{ 'public_plans.select_crop.bottom_bar.selected_label' | translate }}</span>
-              <div class="counter-badge">{{ selectedCropIds.size }}</div>
-              <span class="counter-unit">{{ 'public_plans.select_crop.bottom_bar.selected_unit' | translate }}</span>
+        <div class="fixed-bottom-bar-container">
+          <div class="fixed-bottom-bar-content">
+            <div class="fixed-bottom-bar-left">
+              <a [routerLink]="['/public-plans/select-farm-size']" class="btn btn-white back-button">
+                {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
+              </a>
+              <div class="selection-counter-group">
+                <span class="counter-label">{{ 'public_plans.select_crop.bottom_bar.selected_label' | translate }}</span>
+                <div class="counter-badge">{{ selectedCropIds.size }}</div>
+                <span class="counter-unit">{{ 'public_plans.select_crop.bottom_bar.selected_unit' | translate }}</span>
+              </div>
             </div>
+            <button
+              type="button"
+              class="btn-gradient submit-button btn"
+              (click)="createPlan()"
+              [disabled]="control.saving || selectedCropIds.size === 0"
+            >
+              {{ 'public_plans.select_crop.bottom_bar.submit_button' | translate }}
+            </button>
           </div>
-          <button
-            type="button"
-            class="btn-gradient submit-button btn"
-            (click)="createPlan()"
-            [disabled]="control.saving || selectedCropIds.size === 0"
-          >
-            {{ 'public_plans.select_crop.bottom_bar.submit_button' | translate }}
-          </button>
-        </div>
-        <div class="hint-message" *ngIf="selectedCropIds.size === 0">
-          {{ 'public_plans.select_crop.bottom_bar.hint' | translate }}
+          <div class="hint-message">
+            {{ 'public_plans.select_crop.bottom_bar.hint' | translate }}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   `,
   styleUrl: './public-plan.component.css'
 })
