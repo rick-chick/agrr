@@ -19,6 +19,19 @@ interface FieldGroup {
   cultivations: CultivationData[];
 }
 
+enum TimeUnit {
+  Day = 'day',
+  Week = 'week',
+  Month = 'month',
+  Quarter = 'quarter'
+}
+
+interface TimeScale {
+  unit: TimeUnit;
+  label: string;
+  interval: number; // 何単位ごとにラベルを表示するか
+}
+
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
@@ -50,11 +63,13 @@ interface FieldGroup {
               {{ 'shared.navbar.farms' | translate }}
             </text>
             @for (month of months; track month.date.getTime()) {
-              <text [attr.x]="month.x + (month.width / 2)" y="30" class="month-label" text-anchor="middle" font-size="13" font-weight="600" fill="#1F2937">
-                {{ month.label }}
-              </text>
+              @if (month.showLabel) {
+                <text [attr.x]="month.x + (month.width / 2)" y="30" class="month-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937">
+                  {{ month.label }}
+                </text>
+              }
               @if (month.showYear) {
-                <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="12" font-weight="bold" fill="#6B7280">
+                <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="11" font-weight="bold" fill="#6B7280">
                   {{ month.year }}年
                 </text>
               }
@@ -106,6 +121,7 @@ interface FieldGroup {
 })
 export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   @Input() data: CultivationPlanData | null = null;
+  @Input() planType: 'public' | 'private' = 'private';
 
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
@@ -122,6 +138,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   fieldGroups: FieldGroup[] = [];
   months: any[] = [];
+  timeScale: TimeScale = { unit: TimeUnit.Month, label: '月', interval: 1 };
   
   private isDragging = false;
   draggedCultivation: CultivationData | null = null;
@@ -174,7 +191,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private updateDimensions() {
     if (this.container) {
       const width = this.container.nativeElement.getBoundingClientRect().width;
-      this.config.width = Math.max(width, 800);
+      // 横スクロールなしにするため、コンテナ幅に合わせて調整
+      // 最小幅を400pxに設定（非常に狭い画面でも動作するように）
+      this.config.width = Math.max(width, 400);
       if (this.data) {
         this.updateChart();
       }
@@ -194,10 +213,18 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }));
 
     this.config.height = this.config.margin.top + (this.fieldGroups.length * this.config.rowHeight) + this.config.margin.bottom;
-    this.calculateMonths();
+    
+    // chartWidthを計算してからdetermineTimeScaleに渡す
+    const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
+    this.timeScale = this.determineTimeScale(
+      new Date(this.data.data.planning_start_date),
+      new Date(this.data.data.planning_end_date),
+      chartWidth
+    );
+    this.calculateTimeAxis();
   }
 
-  private calculateMonths() {
+  private calculateTimeAxis() {
     if (!this.data) return;
     const start = new Date(this.data.data.planning_start_date);
     const end = new Date(this.data.data.planning_end_date);
@@ -207,26 +234,131 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.months = [];
     let current = new Date(start);
     let x = this.config.margin.left;
+    let unitIndex = 0;
+
+    // 時間単位に応じて総数を計算
+    // labelIntervalはdetermineTimeScale内で計算済み
+    const labelInterval = this.timeScale.interval;
 
     while (current <= end) {
-      const year = current.getFullYear();
-      const month = current.getMonth() + 1;
-      const dInMonth = new Date(year, month, 0).getDate();
-      const width = (dInMonth / totalDays) * chartWidth;
+      const segment = this.getNextTimeSegment(current, this.timeScale.unit);
+      if (!segment) break;
+
+      const daysInSegment = this.daysBetween(current, segment.end);
+      const width = (daysInSegment / totalDays) * chartWidth;
+
+      // ラベルを表示するかどうかを決定
+      const showLabel = unitIndex % labelInterval === 0;
+
+      // 年ラベルを表示する条件（年初または最初のセグメント）
+      const showYear = this.shouldShowYear(current, segment.end, this.timeScale.unit, unitIndex === 0);
 
       this.months.push({
         date: new Date(current),
-        year,
-        month,
-        label: `${month}月`,
-        showYear: month === 1 || this.months.length === 0,
+        year: current.getFullYear(),
+        month: current.getMonth() + 1,
+        quarter: Math.floor(current.getMonth() / 3) + 1,
+        week: this.getWeekNumber(current),
+        day: current.getDate(),
+        label: this.getTimeLabel(current, segment.end, this.timeScale.unit),
+        showYear,
+        showLabel,
         x,
         width
       });
 
       x += width;
-      current.setMonth(current.getMonth() + 1);
+      current = segment.end;
+      unitIndex++;
     }
+  }
+
+  private getTotalUnits(start: Date, end: Date, unit: TimeUnit): number {
+    switch (unit) {
+      case TimeUnit.Day:
+        return this.getTotalDays(start, end);
+      case TimeUnit.Week:
+        return Math.ceil(this.getTotalDays(start, end) / 7);
+      case TimeUnit.Month:
+        return this.getTotalMonths(start, end);
+      case TimeUnit.Quarter:
+        return Math.ceil(this.getTotalMonths(start, end) / 3);
+      default:
+        return this.getTotalMonths(start, end);
+    }
+  }
+
+  private getNextTimeSegment(current: Date, unit: TimeUnit): { start: Date; end: Date } | null {
+    const start = new Date(current);
+
+    switch (unit) {
+      case TimeUnit.Day:
+        const end = new Date(current);
+        end.setDate(end.getDate() + 1);
+        return { start, end };
+
+      case TimeUnit.Week:
+        const weekStart = new Date(current);
+        const weekEnd = new Date(current);
+        // 月曜日を開始日とする
+        const dayOfWeek = current.getDay();
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        weekStart.setDate(current.getDate() - daysToMonday);
+        weekEnd.setDate(weekStart.getDate() + 7);
+        return { start: weekStart, end: weekEnd };
+
+      case TimeUnit.Month:
+        const monthStart = new Date(current.getFullYear(), current.getMonth(), 1);
+        const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+        return { start: monthStart, end: monthEnd };
+
+      case TimeUnit.Quarter:
+        const quarter = Math.floor(current.getMonth() / 3);
+        const quarterStart = new Date(current.getFullYear(), quarter * 3, 1);
+        const quarterEnd = new Date(current.getFullYear(), (quarter + 1) * 3, 1);
+        return { start: quarterStart, end: quarterEnd };
+
+      default:
+        return null;
+    }
+  }
+
+  private getTimeLabel(start: Date, end: Date, unit: TimeUnit): string {
+    switch (unit) {
+      case TimeUnit.Day:
+        return `${start.getDate()}日`;
+      case TimeUnit.Week:
+        return `${start.getMonth() + 1}/${start.getDate()}`;
+      case TimeUnit.Month:
+        return `${start.getMonth() + 1}月`;
+      case TimeUnit.Quarter:
+        return `Q${Math.floor(start.getMonth() / 3) + 1}`;
+      default:
+        return `${start.getMonth() + 1}月`;
+    }
+  }
+
+  private shouldShowYear(start: Date, end: Date, unit: TimeUnit, isFirst: boolean): boolean {
+    if (isFirst) return true;
+
+    switch (unit) {
+      case TimeUnit.Day:
+        return start.getMonth() === 0 && start.getDate() === 1;
+      case TimeUnit.Week:
+        return start.getMonth() === 0 && this.getWeekNumber(start) === 1;
+      case TimeUnit.Month:
+        return start.getMonth() === 0;
+      case TimeUnit.Quarter:
+        return start.getMonth() === 0;
+      default:
+        return start.getMonth() === 0;
+    }
+  }
+
+  private getWeekNumber(date: Date): number {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   }
 
   getBarParams(cultivation: CultivationData) {
@@ -250,6 +382,50 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   private daysBetween(d1: Date, d2: Date): number {
     return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  private getTotalMonths(start: Date, end: Date): number {
+    return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+  }
+
+  private getTotalDays(start: Date, end: Date): number {
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  private determineTimeScale(start: Date, end: Date, chartWidth: number): TimeScale {
+    const totalDays = this.getTotalDays(start, end);
+    
+    // 日単位: 1日あたり2px以上、かつ総日数×2pxが利用可能幅以下
+    const minPixelsPerDay = 2;
+    if (totalDays * minPixelsPerDay <= chartWidth) {
+      const minLabelWidth = 50;
+      const interval = Math.max(1, Math.ceil((totalDays * minLabelWidth) / chartWidth));
+      return { unit: TimeUnit.Day, label: '日', interval };
+    }
+    
+    // 週単位: 1週間あたり14px以上、かつ総週数×14pxが利用可能幅以下
+    const totalWeeks = Math.ceil(totalDays / 7);
+    const minPixelsPerWeek = 14;
+    if (totalWeeks * minPixelsPerWeek <= chartWidth) {
+      const minLabelWidth = 50;
+      const interval = Math.max(1, Math.ceil((totalWeeks * minLabelWidth) / chartWidth));
+      return { unit: TimeUnit.Week, label: '週', interval };
+    }
+    
+    // 月単位: 1ヶ月あたり30px以上、かつ総月数×30pxが利用可能幅以下
+    const totalMonths = this.getTotalMonths(start, end);
+    const minPixelsPerMonth = 30;
+    if (totalMonths * minPixelsPerMonth <= chartWidth) {
+      const minLabelWidth = 60;
+      const interval = Math.max(1, Math.ceil((totalMonths * minLabelWidth) / chartWidth));
+      return { unit: TimeUnit.Month, label: '月', interval };
+    }
+    
+    // 四半期単位: フォールバック
+    const totalQuarters = Math.ceil(totalMonths / 3);
+    const minLabelWidth = 80;
+    const interval = Math.max(1, Math.ceil((totalQuarters * minLabelWidth) / chartWidth));
+    return { unit: TimeUnit.Quarter, label: 'Q', interval };
   }
 
   getCropColor(name: string): string {
@@ -551,8 +727,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // エラー時はサーバーから最新データを再取得してロールバック
     const planId = this.data.data.id;
-    const isPublicPlan = window.location.pathname.includes('/public-plans');
-    
+    const isPublicPlan = this.planType === 'public';
+
     if (isPublicPlan) {
       this.planService.getPublicPlanData(planId).subscribe(data => {
         if (data) {
@@ -623,9 +799,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const targetField = this.fieldGroups[newFieldIndex];
     if (!targetField) return;
 
-    // planTypeの判定（URLから判定するか、Inputで受け取る）
-    // 暫定的にpublic_plansを使用（後で改善可能）
-    const isPublicPlan = window.location.pathname.includes('/public-plans');
+    // planTypeに応じて適切なエンドポイントを選択
+    const isPublicPlan = this.planType === 'public';
     const endpoint = isPublicPlan
       ? `/api/v1/public_plans/cultivation_plans/${planId}/adjust`
       : `/api/v1/plans/cultivation_plans/${planId}/adjust`;
