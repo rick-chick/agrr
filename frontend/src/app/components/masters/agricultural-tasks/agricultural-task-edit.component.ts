@@ -54,41 +54,41 @@ const initialControl: AgriculturalTaskEditViewState = {
           <p class="master-loading">Loading...</p>
         } @else {
           <form (ngSubmit)="updateAgriculturalTask()" #taskForm="ngForm" class="form-card__form">
-            <label class="form-card__field">
-              Name
-              <input name="name" [(ngModel)]="control.formData.name" required />
+            <label for="name" class="form-card__field">
+              <span class="form-card__field-label">Name</span>
+              <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <label class="form-card__field">
-              Description
-              <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+            <label for="description" class="form-card__field">
+              <span class="form-card__field-label">Description</span>
+              <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
-            <label class="form-card__field">
-              Time per sqm (hours)
-              <input name="time_per_sqm" type="number" step="0.01" [(ngModel)]="control.formData.time_per_sqm" />
+            <label for="time_per_sqm" class="form-card__field">
+              <span class="form-card__field-label">Time per sqm (hours)</span>
+              <input id="time_per_sqm" name="time_per_sqm" type="number" step="0.01" [(ngModel)]="control.formData.time_per_sqm" />
             </label>
-            <label class="form-card__field">
-              Weather dependency
-              <select name="weather_dependency" [(ngModel)]="control.formData.weather_dependency">
+            <label for="weather_dependency" class="form-card__field">
+              <span class="form-card__field-label">Weather dependency</span>
+              <select id="weather_dependency" name="weather_dependency" [(ngModel)]="control.formData.weather_dependency">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
             </label>
-            <label class="form-card__field">
-              Skill level
-              <select name="skill_level" [(ngModel)]="control.formData.skill_level">
+            <label for="skill_level" class="form-card__field">
+              <span class="form-card__field-label">Skill level</span>
+              <select id="skill_level" name="skill_level" [(ngModel)]="control.formData.skill_level">
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
               </select>
             </label>
-            <label class="form-card__field">
-              Region
-              <input name="region" [(ngModel)]="control.formData.region" />
+            <label for="region" class="form-card__field">
+              <span class="form-card__field-label">Region</span>
+              <input id="region" name="region" [(ngModel)]="control.formData.region" />
             </label>
-            <label class="form-card__field">
-              Task type
-              <input name="task_type" [(ngModel)]="control.formData.task_type" />
+            <label for="task_type" class="form-card__field">
+              <span class="form-card__field-label">Task type</span>
+              <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />
             </label>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">

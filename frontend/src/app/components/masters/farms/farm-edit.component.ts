@@ -55,8 +55,8 @@ const initialControl: FarmEditViewState = {
               <span class="form-card__field-label">Region</span>
               <input id="region" name="region" [(ngModel)]="control.formData.region" required />
             </label>
-            <div class="form-group">
-              <label class="form-label">{{ 'farms.new.form.location_label' | translate }}</label>
+            <section class="section-card" aria-labelledby="location-heading">
+              <h3 id="location-heading" class="section-title">{{ 'farms.new.form.location_label' | translate }}</h3>
               <app-farm-map
                 [editable]="true"
                 [latitude]="control.formData.latitude"
@@ -94,7 +94,7 @@ const initialControl: FarmEditViewState = {
                   />
                 </label>
               </div>
-            </div>
+            </section>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Save</button>
               <a routerLink="/farms" class="btn-secondary">Back to farms</a>
