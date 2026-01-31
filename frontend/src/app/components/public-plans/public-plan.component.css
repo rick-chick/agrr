@@ -790,12 +790,13 @@
    結果画面: ヘッダー・サマリー（Rails 同様）
    ============================================ */
 .gantt-results-header {
-  background: var(--color-primary, #2563eb);
-  color: var(--color-white);
+  background: var(--color-surface, #f8fafc);
+  color: var(--color-text, #1e293b);
+  border: 1px solid var(--color-border, #e2e8f0);
   border-radius: var(--radius-xl);
   padding: var(--space-4) var(--space-6);
   margin-bottom: var(--space-6);
-  box-shadow: var(--shadow-primary);
+  box-shadow: var(--shadow-card);
 }
 
 .compact-summary-line {
@@ -807,7 +808,7 @@
   white-space: nowrap;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 .gantt-results-header-icon {
@@ -836,15 +837,16 @@
 
 .compact-text {
   font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #1e293b);
 }
 
 .compact-value {
   font-weight: var(--font-weight-medium);
-  color: var(--color-white, #ffffff);
+  color: var(--color-text, #1e293b);
 }
 
 .compact-separator {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-secondary, #64748b);
   font-weight: var(--font-weight-normal);
 }
 
