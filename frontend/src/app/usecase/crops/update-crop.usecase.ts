@@ -22,7 +22,8 @@ export class UpdateCropUseCase implements UpdateCropInputPort {
         area_per_unit: dto.area_per_unit,
         revenue_per_area: dto.revenue_per_area,
         region: dto.region,
-        groups: dto.groups ?? []
+        groups: dto.groups ?? [],
+        ...(dto.is_reference !== undefined && { is_reference: dto.is_reference })
       })
       .subscribe({
         next: (crop) => {

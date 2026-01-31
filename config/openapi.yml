@@ -97,6 +97,10 @@ components:
         is_reference: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        crop_stages:
+          type: array
+          description: GET detail でのみ含まれる。list では省略。
+          items: { $ref: '#/components/schemas/CropStage' }
 
     CropInput:
       type: object
@@ -110,6 +114,7 @@ components:
         groups:
           type: array
           items: { type: string }
+        is_reference: { type: boolean, description: 管理者のみ許可 }
 
     Fertilize:
       type: object
@@ -331,6 +336,10 @@ components:
         order: { type: integer }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        temperature_requirement: { $ref: '#/components/schemas/TemperatureRequirement' }
+        thermal_requirement: { $ref: '#/components/schemas/ThermalRequirement' }
+        sunshine_requirement: { $ref: '#/components/schemas/SunshineRequirement' }
+        nutrient_requirement: { $ref: '#/components/schemas/NutrientRequirement' }
 
     CropStageInput:
       type: object

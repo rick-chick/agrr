@@ -38,6 +38,63 @@ describe('FarmApiGateway', () => {
       expect(client.get).toHaveBeenCalledWith('/farms');
     });
 
+    it('returns farms with is_reference field for admin users', async () => {
+      const farms: Farm[] = [
+        {
+          id: 1,
+          name: 'ユーザー農場1',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          region: 'jp',
+          is_reference: false,
+          user_id: 123,
+          created_at: '2024-01-01T00:00:00.000Z',
+          updated_at: '2024-01-01T00:00:00.000Z'
+        },
+        {
+          id: 2,
+          name: '参照農場1',
+          latitude: 43.0642,
+          longitude: 141.3468,
+          region: 'jp',
+          is_reference: true,
+          user_id: null,
+          created_at: '2024-01-01T00:00:00.000Z',
+          updated_at: '2024-01-01T00:00:00.000Z'
+        }
+      ];
+      vi.mocked(client.get).mockReturnValue(of(farms));
+
+      const result = await firstValueFrom(gateway.list());
+      expect(result).toEqual(farms);
+      expect(result[0].is_reference).toBe(false);
+      expect(result[1].is_reference).toBe(true);
+      expect(client.get).toHaveBeenCalledWith('/farms');
+    });
+
+    it('returns farms without reference farms for regular users', async () => {
+      const farms: Farm[] = [
+        {
+          id: 1,
+          name: 'ユーザー農場1',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          region: 'jp',
+          is_reference: false,
+          user_id: 123,
+          created_at: '2024-01-01T00:00:00.000Z',
+          updated_at: '2024-01-01T00:00:00.000Z'
+        }
+      ];
+      vi.mocked(client.get).mockReturnValue(of(farms));
+
+      const result = await firstValueFrom(gateway.list());
+      expect(result).toEqual(farms);
+      expect(result).toHaveLength(1);
+      expect(result[0].is_reference).toBe(false);
+      expect(client.get).toHaveBeenCalledWith('/farms');
+    });
+
     it('forwards error when api fails', async () => {
       vi.mocked(client.get).mockReturnValue(throwError(() => new Error('network error')));
 

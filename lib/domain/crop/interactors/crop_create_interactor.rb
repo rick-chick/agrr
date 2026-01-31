@@ -18,7 +18,8 @@ module Domain
             area_per_unit: input_dto.area_per_unit,
             revenue_per_area: input_dto.revenue_per_area,
             region: input_dto.region,
-            groups: input_dto.groups || []
+            groups: input_dto.groups || [],
+            is_reference: input_dto.is_reference
           })
           raise StandardError, crop_model.errors.full_messages.join(', ') unless crop_model.save
 

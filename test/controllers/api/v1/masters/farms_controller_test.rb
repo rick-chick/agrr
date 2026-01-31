@@ -29,8 +29,8 @@ module Api
           other_user = create(:user)
           other_farm = create(:farm, :user_owned, user: other_user)
 
-          get api_v1_masters_farms_path, 
-              headers: { 
+          get api_v1_masters_farms_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -43,6 +43,35 @@ module Api
           assert_not_includes farm_ids, reference_farm.id
           assert_not_includes farm_ids, other_farm.id
           assert_operator json_response.length, :>=, 2
+        end
+
+        test "admin should get index with reference farms" do
+          admin_user = create(:user, :admin)
+          admin_user.generate_api_key!
+          admin_api_key = admin_user.api_key
+
+          farm1 = create(:farm, :user_owned, user: admin_user)
+          farm2 = create(:farm, :user_owned, user: admin_user)
+          # 管理者ユーザーは参照農場も含まれる
+          reference_farm = create(:farm, :reference)
+          # 他のユーザーの農場は含まれない
+          other_user = create(:user)
+          other_farm = create(:farm, :user_owned, user: other_user)
+
+          get api_v1_masters_farms_path,
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => admin_api_key
+              }
+
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          farm_ids = json_response.map { |f| f["id"] }
+          assert_includes farm_ids, farm1.id
+          assert_includes farm_ids, farm2.id
+          assert_includes farm_ids, reference_farm.id
+          assert_not_includes farm_ids, other_farm.id
+          assert_operator json_response.length, :>=, 3
         end
 
         test "should show farm" do

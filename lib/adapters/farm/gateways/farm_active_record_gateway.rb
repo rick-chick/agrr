@@ -4,8 +4,15 @@ module Adapters
   module Farm
     module Gateways
       class FarmActiveRecordGateway < Domain::Farm::Gateways::FarmGateway
-        def list
-          ::Farm.all.map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+        attr_accessor :user_id
+        def list(input_dto)
+          if input_dto.is_admin
+            # 管理者の場合は自分の農場と参照農場の両方を取得
+            ::Farm.where('user_id = ? OR is_reference = ?', @user_id, true).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+          else
+            # 通常ユーザーの場合は自分の農場のみ（参照農場・他ユーザー農場は含めない）
+            ::Farm.where(user_id: @user_id, is_reference: false).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+          end
         end
 
         def find_by_id(farm_id)

@@ -29,7 +29,9 @@ export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropO
         area_per_unit: crop.area_per_unit ?? null,
         revenue_per_area: crop.revenue_per_area ?? null,
         region: crop.region ?? null,
-        groups: crop.groups ?? []
+        groups: crop.groups ?? [],
+        groupsDisplay: (crop.groups ?? []).join(', '),
+        is_reference: crop.is_reference ?? false
       }
     };
   }

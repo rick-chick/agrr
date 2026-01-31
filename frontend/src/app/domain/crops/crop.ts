@@ -45,5 +45,7 @@ export interface Crop {
   revenue_per_area?: number | null;
   groups: string[];
   region?: string | null;
+  created_at?: string;
+  updated_at?: string;
   crop_stages?: CropStage[];
 }

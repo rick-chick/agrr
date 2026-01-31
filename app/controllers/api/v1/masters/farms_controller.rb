@@ -14,13 +14,20 @@ module Api
         # GET /api/v1/masters/farms
         def index
           input_valid?(:index) || return
+
+          # DTO 変換
+          input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: current_user&.admin?)
+
+          # Interactor のインスタンス化と委譲
           presenter = Presenters::Api::Farm::FarmListPresenter.new(view: self)
+          gateway = farm_gateway
+          gateway.user_id = current_user.id
           interactor = Domain::Farm::Interactors::FarmListInteractor.new(
             output_port: presenter,
-            gateway: farm_gateway,
+            gateway: gateway,
             user_id: current_user.id
           )
-          interactor.call
+          interactor.call(input_dto)
         end
 
         # GET /api/v1/masters/farms/:id

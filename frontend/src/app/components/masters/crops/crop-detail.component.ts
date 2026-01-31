@@ -47,6 +47,42 @@ const initialControl: CropDetailViewState = {
                 <dd class="detail-row__value">{{ control.crop.variety }}</dd>
               </div>
             }
+            @if (control.crop.area_per_unit != null) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.area_per_unit' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.area_per_unit }} {{ 'crops.show.area_unit' | translate }}</dd>
+              </div>
+            }
+            @if (control.crop.revenue_per_area != null) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.revenue_per_area' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.revenue_per_area }} {{ 'crops.show.revenue_unit' | translate }}</dd>
+              </div>
+            }
+            @if (control.crop.groups?.length) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.groups' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.groups.join(', ') }}</dd>
+              </div>
+            }
+            @if (control.crop.region) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.region' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.region }}</dd>
+              </div>
+            }
+            @if (control.crop.created_at) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.created_at' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.created_at | date:'medium' }}</dd>
+              </div>
+            }
+            @if (control.crop.updated_at) {
+              <div class="detail-row">
+                <dt class="detail-row__term">{{ 'crops.show.updated_at' | translate }}</dt>
+                <dd class="detail-row__value">{{ control.crop.updated_at | date:'medium' }}</dd>
+              </div>
+            }
           </dl>
           <div class="detail-card__actions">
             <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>

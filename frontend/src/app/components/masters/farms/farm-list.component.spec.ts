@@ -89,4 +89,24 @@ describe('FarmListComponent', () => {
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
+
+  it('displays reference farms with (参照) indicator', () => {
+    const farms = [
+      { id: 1, name: 'User Farm', region: 'jp', latitude: 35.6895, longitude: 139.6917, weather_data_status: 'completed' as const, is_reference: false },
+      { id: 2, name: 'Reference Farm', region: 'jp', latitude: 43.0642, longitude: 141.3468, weather_data_status: 'pending' as const, is_reference: true }
+    ];
+
+    component.control = {
+      loading: false,
+      error: null,
+      farms
+    };
+
+    fixture.detectChanges();
+
+    const farmTitles = fixture.nativeElement.querySelectorAll('.item-card__title');
+    expect(farmTitles).toHaveLength(2);
+    expect(farmTitles[0].textContent).toBe('User Farm');
+    expect(farmTitles[1].textContent).toBe('Reference Farm (参照)');
+  });
 });

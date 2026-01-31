@@ -19,6 +19,7 @@ module Domain
           attrs[:revenue_per_area] = input_dto.revenue_per_area if !input_dto.revenue_per_area.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
           attrs[:groups] = input_dto.groups if !input_dto.groups.nil?
+          attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
           attrs[:crop_stages_attributes] = input_dto.crop_stages_attributes if input_dto.crop_stages_attributes.present?
 
           crop_model = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, user, input_dto.crop_id)

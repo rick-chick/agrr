@@ -46,7 +46,7 @@ const initialControl: FarmListViewState = {
               <li class="card-list__item">
                 <article class="item-card">
                   <a [routerLink]="['/farms', farm.id]" class="item-card__body">
-                    <span class="item-card__title">{{ farm.name }}</span>
+                    <span class="item-card__title">{{ farm.name }} @if (farm.is_reference) { (参照) }</span>
                     @if (farm.region) {
                       <span class="item-card__meta">{{ farm.region }}</span>
                     }

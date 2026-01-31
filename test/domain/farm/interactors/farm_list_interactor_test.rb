@@ -18,19 +18,8 @@ module Domain
           )
         end
 
-        test "should call gateway.list and filter with user_owned.by_user, then output_port.on_success on success for regular user" do
-          all_farms = [
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 1,
-              name: "Reference Farm",
-              latitude: 35.0,
-              longitude: 135.0,
-              region: "Kyoto",
-              user_id: nil,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: true
-            ),
+        test "should call gateway.list with input_dto and output_port.on_success on success for regular user" do
+          filtered_farms = [
             Domain::Farm::Entities::FarmEntity.from_hash(
               id: 2,
               name: "User Farm",
@@ -41,34 +30,14 @@ module Domain
               created_at: Time.current,
               updated_at: Time.current,
               is_reference: false
-            ),
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 3,
-              name: "Other User Farm",
-              latitude: 37.0,
-              longitude: 137.0,
-              region: "Kyoto",
-              user_id: @user_id + 1,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: false
             )
           ]
 
-          User.expects(:find).with(@user_id).returns(@user)
+          input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
+          @mock_gateway.expects(:list).with(input_dto).returns(filtered_farms)
+          @mock_output_port.expects(:on_success).with(filtered_farms)
 
-          # 通常ユーザーは自分の農場のみ（参照・他ユーザーは含めない）
-          user_owned_scope = mock
-          ::Farm.expects(:user_owned).returns(user_owned_scope)
-          user_owned_scope.expects(:by_user).with(@user).returns(user_owned_scope)
-          user_owned_scope.expects(:exists?).with(1).returns(false)
-          user_owned_scope.expects(:exists?).with(2).returns(true)
-          user_owned_scope.expects(:exists?).with(3).returns(false)
-
-          @mock_gateway.expects(:list).returns(all_farms)
-          @mock_output_port.expects(:on_success).with([all_farms[1]]) # user's farm only
-
-          @interactor.call
+          @interactor.call(input_dto)
         end
 
         test "should include reference farms for admin user" do
@@ -105,23 +74,10 @@ module Domain
             )
           ]
 
-          # Mock User.find to return admin user
-          User.expects(:find).with(admin_user_id).returns(admin_user)
-
-          # Mock the policy visible_scope and reference scope
-          visible_scope = mock
-          reference_scope = mock
-          combined_scope = mock
-          Domain::Shared::Policies::FarmPolicy.expects(:visible_scope).with(::Farm, admin_user).returns(visible_scope)
-          ::Farm.expects(:reference).returns(reference_scope)
-          visible_scope.expects(:or).with(reference_scope).returns(combined_scope)
-          combined_scope.expects(:exists?).with(1).returns(true)
-          combined_scope.expects(:exists?).with(2).returns(true)
-
-          @mock_gateway.expects(:list).returns(all_farms)
+          input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
+          @mock_gateway.expects(:list).with(input_dto).returns(all_farms)
           @mock_output_port.expects(:on_success).with(all_farms)
 
-          input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
           admin_interactor.call(input_dto)
         end
 
