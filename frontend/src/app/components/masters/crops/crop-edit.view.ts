@@ -1,4 +1,4 @@
-import { CropStage } from '../../domain/crops/crop';
+import { CropStage } from '../../../domain/crops/crop';
 
 export type CropEditFormData = {
   name: string;

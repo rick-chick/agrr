@@ -120,14 +120,26 @@ describe('CropEditPresenter', () => {
           crop_stages: []
         }
       };
-      lastControl = initialControl;
+      lastControl = { ...initialControl, saving: true };
 
-      const dto: UpdateCropSuccessDto = { success: true };
+      const dto: UpdateCropSuccessDto = {
+        crop: {
+          id: 1,
+          name: 'Test Crop',
+          variety: null,
+          area_per_unit: null,
+          revenue_per_area: null,
+          region: null,
+          groups: [],
+          is_reference: false,
+          crop_stages: []
+        }
+      };
 
       presenter.onSuccess(dto);
 
-      // onSuccess does not update view.control
-      expect(lastControl).toEqual(initialControl);
+      // onSuccess sets saving to false
+      expect(lastControl!.saving).toBe(false);
     });
 
     it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
@@ -246,12 +258,12 @@ describe('CropEditPresenter', () => {
 
   describe('DeleteCropStageOutputPort', () => {
     it('shows success message on present(dto)', () => {
-      const dto: DeleteCropStageOutputDto = { success: true };
+      const dto: DeleteCropStageOutputDto = { success: true, stageId: 1 };
 
       presenter.present(dto);
 
       expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'Stage deleted successfully' });
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'Crop stage deleted successfully' });
     });
   });
 

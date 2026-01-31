@@ -14,8 +14,8 @@ export class DeleteCropStageUseCase implements DeleteCropStageInputPort {
 
   execute(dto: DeleteCropStageInputDto): void {
     this.cropStageGateway.deleteCropStage(dto.cropId, dto.stageId).subscribe({
-      next: () => this.outputPort.present({ success: true }),
-      error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+      next: () => this.outputPort.present({ success: true, stageId: dto.stageId }),
+      error: (err) => this.outputPort.onError({ message: err.message })
     });
   }
 }

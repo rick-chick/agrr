@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -42,7 +42,7 @@ interface TimeScale {
         <div class="no-data-message">
           <p>計画データが読み込まれていません。</p>
         </div>
-      } @else if (!data.data?.fields?.length) {
+      } @else if (!data.data.fields?.length) {
         <div class="no-data-message">
           <p>圃場データがありません。</p>
         </div>
@@ -170,6 +170,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private globalMouseUpHandler: any;
   private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
   private planService = inject(PlanService);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(private translate: TranslateService) {}
 
@@ -855,6 +856,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
               if (data) {
                 this.data = data;
                 this.updateChart();
+                // 変更検知を強制的に実行して画面を更新
+                this.cdr.detectChanges();
               }
             });
           } else {
@@ -862,6 +865,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
               if (data) {
                 this.data = data;
                 this.updateChart();
+                // 変更検知を強制的に実行して画面を更新
+                this.cdr.detectChanges();
               }
             });
           }

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative '../../support/agrr_mock_helper'
+require_relative '../../../../support/agrr_mock_helper'
 
 module Api
   module V1
