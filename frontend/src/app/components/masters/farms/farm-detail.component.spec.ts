@@ -125,28 +125,31 @@ describe('FarmDetailComponent', () => {
     });
   });
 
-  it('calls deleteUseCase.execute on deleteFarm', () => {
+  it('calls deleteUseCase.execute on executeConfirmedDelete when pendingDeleteFarm', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     component.control = { ...component.control, farm };
+    component.pendingDeleteFarm = true;
+    component.pendingDeleteField = null;
 
-    component.deleteFarm();
+    component.executeConfirmedDelete();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
       farmId: 123,
       onSuccess: expect.any(Function)
     });
   });
 
-  it('calls createFieldUseCase.execute on addField with valid inputs', () => {
+  it('calls createFieldUseCase.execute on submitFieldForm with valid inputs', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     component.control = { ...component.control, farm };
+    component.editingField = null;
+    component.fieldFormModel = {
+      name: 'Field Name',
+      area: 10,
+      daily_fixed_cost: 100,
+      region: 'Region'
+    };
 
-    const promptSpy = vi.spyOn(window, 'prompt');
-    promptSpy.mockReturnValueOnce('Field Name'); // name
-    promptSpy.mockReturnValueOnce('10'); // area
-    promptSpy.mockReturnValueOnce('100'); // dailyFixedCost
-    promptSpy.mockReturnValueOnce('Region'); // region
-
-    component.addField();
+    component.submitFieldForm();
     expect(createFieldUseCase.execute).toHaveBeenCalledWith({
       farmId: 123,
       payload: {
@@ -156,11 +159,10 @@ describe('FarmDetailComponent', () => {
         region: 'Region'
       }
     });
-
-    promptSpy.mockRestore();
   });
 
-  it('calls updateFieldUseCase.execute on editField with valid inputs', () => {
+  it('calls updateFieldUseCase.execute on submitFieldForm when editing', () => {
+    const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     const field: Field = {
       id: 456,
       farm_id: 1,
@@ -173,14 +175,16 @@ describe('FarmDetailComponent', () => {
       created_at: '2023-01-01',
       updated_at: '2023-01-01'
     };
+    component.control = { ...component.control, farm };
+    component.editingField = field;
+    component.fieldFormModel = {
+      name: 'New Name',
+      area: 15,
+      daily_fixed_cost: 150,
+      region: 'New Region'
+    };
 
-    const promptSpy = vi.spyOn(window, 'prompt');
-    promptSpy.mockReturnValueOnce('New Name'); // name
-    promptSpy.mockReturnValueOnce('15'); // area
-    promptSpy.mockReturnValueOnce('150'); // dailyFixedCost
-    promptSpy.mockReturnValueOnce('New Region'); // region
-
-    component.editField(field);
+    component.submitFieldForm();
     expect(updateFieldUseCase.execute).toHaveBeenCalledWith({
       fieldId: 456,
       payload: {
@@ -190,14 +194,10 @@ describe('FarmDetailComponent', () => {
         region: 'New Region'
       }
     });
-
-    promptSpy.mockRestore();
   });
 
-  it('calls deleteFieldUseCase.execute on deleteField', () => {
+  it('calls deleteFieldUseCase.execute on executeConfirmedDelete when pendingDeleteField', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
-    component.control = { ...component.control, farm };
-
     const field: Field = {
       id: 456,
       farm_id: 123,
@@ -210,8 +210,11 @@ describe('FarmDetailComponent', () => {
       created_at: '2023-01-01',
       updated_at: '2023-01-01'
     };
+    component.control = { ...component.control, farm };
+    component.pendingDeleteFarm = false;
+    component.pendingDeleteField = field;
 
-    component.deleteField(field);
+    component.executeConfirmedDelete();
     expect(deleteFieldUseCase.execute).toHaveBeenCalledWith({
       fieldId: 456,
       farmId: 123

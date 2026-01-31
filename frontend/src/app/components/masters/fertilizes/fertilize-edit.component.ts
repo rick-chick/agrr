@@ -48,33 +48,33 @@ const initialControl: FertilizeEditViewState = {
           <p class="master-loading">Loading...</p>
         } @else {
           <form (ngSubmit)="updateFertilize()" #fertilizeForm="ngForm" class="form-card__form">
-            <label class="form-card__field">
-              Name
-              <input name="name" [(ngModel)]="control.formData.name" required />
+            <label for="name" class="form-card__field">
+              <span class="form-card__field-label">Name</span>
+              <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <label class="form-card__field">
-              Region
-              <input name="region" [(ngModel)]="control.formData.region" />
+            <label for="region" class="form-card__field">
+              <span class="form-card__field-label">Region</span>
+              <input id="region" name="region" [(ngModel)]="control.formData.region" />
             </label>
-            <label class="form-card__field">
-              N
-              <input name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
+            <label for="n" class="form-card__field">
+              <span class="form-card__field-label">N</span>
+              <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
             </label>
-            <label class="form-card__field">
-              P
-              <input name="p" type="number" step="0.01" [(ngModel)]="control.formData.p" />
+            <label for="p" class="form-card__field">
+              <span class="form-card__field-label">P</span>
+              <input id="p" name="p" type="number" step="0.01" [(ngModel)]="control.formData.p" />
             </label>
-            <label class="form-card__field">
-              K
-              <input name="k" type="number" step="0.01" [(ngModel)]="control.formData.k" />
+            <label for="k" class="form-card__field">
+              <span class="form-card__field-label">K</span>
+              <input id="k" name="k" type="number" step="0.01" [(ngModel)]="control.formData.k" />
             </label>
-            <label class="form-card__field">
-              Package Size (kg)
-              <input name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
+            <label for="package_size" class="form-card__field">
+              <span class="form-card__field-label">Package Size (kg)</span>
+              <input id="package_size" name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
             </label>
-            <label class="form-card__field">
-              Description
-              <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+            <label for="description" class="form-card__field">
+              <span class="form-card__field-label">Description</span>
+              <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">Save</button>

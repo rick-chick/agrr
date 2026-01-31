@@ -41,33 +41,33 @@ const initialControl: InteractionRuleCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.new.title' | translate }}</h2>
         <form (ngSubmit)="createInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.rule_type_label' | translate }}
-            <input name="rule_type" [(ngModel)]="control.formData.rule_type" required />
+          <label class="form-card__field" for="rule_type">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.rule_type_label' | translate }}</span>
+            <input id="rule_type" name="rule_type" [(ngModel)]="control.formData.rule_type" required />
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.source_group_label' | translate }}
-            <input name="source_group" [(ngModel)]="control.formData.source_group" required />
+          <label class="form-card__field" for="source_group">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.source_group_label' | translate }}</span>
+            <input id="source_group" name="source_group" [(ngModel)]="control.formData.source_group" required />
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.target_group_label' | translate }}
-            <input name="target_group" [(ngModel)]="control.formData.target_group" required />
+          <label class="form-card__field" for="target_group">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.target_group_label' | translate }}</span>
+            <input id="target_group" name="target_group" [(ngModel)]="control.formData.target_group" required />
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.impact_ratio_label' | translate }}
-            <input name="impact_ratio" type="number" step="0.01" [(ngModel)]="control.formData.impact_ratio" required />
+          <label class="form-card__field" for="impact_ratio">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.impact_ratio_label' | translate }}</span>
+            <input id="impact_ratio" name="impact_ratio" type="number" step="0.01" [(ngModel)]="control.formData.impact_ratio" required />
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.is_directional_label' | translate }}
-            <input name="is_directional" type="checkbox" [(ngModel)]="control.formData.is_directional" />
+          <label class="form-card__field" for="is_directional">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.is_directional_label' | translate }}</span>
+            <input id="is_directional" name="is_directional" type="checkbox" [(ngModel)]="control.formData.is_directional" />
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.description_label' | translate }}
-            <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+          <label class="form-card__field" for="description">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.description_label' | translate }}</span>
+            <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
-          <label class="form-card__field">
-            {{ 'interaction_rules.form.region_label' | translate }}
-            <input name="region" [(ngModel)]="control.formData.region" />
+          <label class="form-card__field" for="region">
+            <span class="form-card__field-label">{{ 'interaction_rules.form.region_label' | translate }}</span>
+            <input id="region" name="region" [(ngModel)]="control.formData.region" />
           </label>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">

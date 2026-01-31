@@ -40,25 +40,25 @@ const initialControl: CropCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'crops.new.title' | translate }}</h2>
         <form (ngSubmit)="createCrop()" #cropForm="ngForm" class="form-card__form">
-          <label class="form-card__field">
-            {{ 'crops.form.name_label' | translate }}
-            <input name="name" [(ngModel)]="control.formData.name" required />
+          <label for="crop-name" class="form-card__field">
+            <span class="form-card__field-label">{{ 'crops.form.name_label' | translate }}</span>
+            <input id="crop-name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <label class="form-card__field">
-            {{ 'crops.form.variety_label' | translate }}
-            <input name="variety" [(ngModel)]="control.formData.variety" />
+          <label for="crop-variety" class="form-card__field">
+            <span class="form-card__field-label">{{ 'crops.form.variety_label' | translate }}</span>
+            <input id="crop-variety" name="variety" [(ngModel)]="control.formData.variety" />
           </label>
-          <label class="form-card__field">
-            {{ 'crops.form.area_per_unit_label' | translate }}
-            <input name="area_per_unit" type="number" step="0.01" [(ngModel)]="control.formData.area_per_unit" />
+          <label for="crop-area-per-unit" class="form-card__field">
+            <span class="form-card__field-label">{{ 'crops.form.area_per_unit_label' | translate }}</span>
+            <input id="crop-area-per-unit" name="area_per_unit" type="number" step="0.01" [(ngModel)]="control.formData.area_per_unit" />
           </label>
-          <label class="form-card__field">
-            {{ 'crops.form.revenue_per_area_label' | translate }}
-            <input name="revenue_per_area" type="number" step="0.01" [(ngModel)]="control.formData.revenue_per_area" />
+          <label for="crop-revenue-per-area" class="form-card__field">
+            <span class="form-card__field-label">{{ 'crops.form.revenue_per_area_label' | translate }}</span>
+            <input id="crop-revenue-per-area" name="revenue_per_area" type="number" step="0.01" [(ngModel)]="control.formData.revenue_per_area" />
           </label>
-          <label class="form-card__field">
-            {{ 'crops.form.region_label' | translate }}
-            <input name="region" [(ngModel)]="control.formData.region" />
+          <label for="crop-region" class="form-card__field">
+            <span class="form-card__field-label">{{ 'crops.form.region_label' | translate }}</span>
+            <input id="crop-region" name="region" [(ngModel)]="control.formData.region" />
           </label>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="cropForm.invalid || control.saving">

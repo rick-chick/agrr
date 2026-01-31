@@ -48,35 +48,35 @@ const initialControl: PesticideCreateViewState = {
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">Create Pesticide</h2>
         <form (ngSubmit)="createPesticide()" #pesticideForm="ngForm" class="form-card__form">
-          <label class="form-card__field">
-            Name
-            <input name="name" [(ngModel)]="control.formData.name" required />
+          <label for="name" class="form-card__field">
+            <span class="form-card__field-label">Name</span>
+            <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <label class="form-card__field">
+          <label for="active_ingredient" class="form-card__field">
             Active Ingredient
-            <input name="active_ingredient" [(ngModel)]="control.formData.active_ingredient" />
+            <input id="active_ingredient" name="active_ingredient" [(ngModel)]="control.formData.active_ingredient" />
           </label>
-          <label class="form-card__field">
-            Description
-            <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+          <label for="description" class="form-card__field">
+            <span class="form-card__field-label">Description</span>
+            <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
-          <label class="form-card__field">
+          <label for="crop_id" class="form-card__field">
             Crop
-            <select name="crop_id" [(ngModel)]="control.formData.crop_id" required>
+            <select id="crop_id" name="crop_id" [(ngModel)]="control.formData.crop_id" required>
               <option [value]="0">-- Select Crop --</option>
               <option *ngFor="let crop of crops" [value]="crop.id">{{ crop.name }}</option>
             </select>
           </label>
-          <label class="form-card__field">
-            Pest
-            <select name="pest_id" [(ngModel)]="control.formData.pest_id" required>
+          <label for="pest_id" class="form-card__field">
+            <span class="form-card__field-label">Pest</span>
+            <select id="pest_id" name="pest_id" [(ngModel)]="control.formData.pest_id" required>
               <option [value]="0">-- Select Pest --</option>
               <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
             </select>
           </label>
-          <label class="form-card__field">
-            Region
-            <input name="region" [(ngModel)]="control.formData.region" />
+          <label for="region" class="form-card__field">
+            <span class="form-card__field-label">Region</span>
+            <input id="region" name="region" [(ngModel)]="control.formData.region" />
           </label>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">

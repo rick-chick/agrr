@@ -49,33 +49,33 @@ const initialControl: PestEditViewState = {
           <p class="master-loading">Loading...</p>
         } @else {
           <form (ngSubmit)="updatePest()" #pestForm="ngForm" class="form-card__form">
-            <label class="form-card__field">
-              Name
-              <input name="name" [(ngModel)]="control.formData.name" required />
+            <label class="form-card__field" for="name">
+              <span class="form-card__field-label">Name</span>
+              <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <label class="form-card__field">
-              Scientific Name
-              <input name="name_scientific" [(ngModel)]="control.formData.name_scientific" />
+            <label class="form-card__field" for="name_scientific">
+              <span class="form-card__field-label">Scientific Name</span>
+              <input id="name_scientific" name="name_scientific" [(ngModel)]="control.formData.name_scientific" />
             </label>
-            <label class="form-card__field">
-              Family
-              <input name="family" [(ngModel)]="control.formData.family" />
+            <label class="form-card__field" for="family">
+              <span class="form-card__field-label">Family</span>
+              <input id="family" name="family" [(ngModel)]="control.formData.family" />
             </label>
-            <label class="form-card__field">
-              Order
-              <input name="order" [(ngModel)]="control.formData.order" />
+            <label class="form-card__field" for="order">
+              <span class="form-card__field-label">Order</span>
+              <input id="order" name="order" [(ngModel)]="control.formData.order" />
             </label>
-            <label class="form-card__field">
-              Description
-              <textarea name="description" [(ngModel)]="control.formData.description"></textarea>
+            <label class="form-card__field" for="description">
+              <span class="form-card__field-label">Description</span>
+              <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
-            <label class="form-card__field">
-              Occurrence Season
-              <input name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
+            <label class="form-card__field" for="occurrence_season">
+              <span class="form-card__field-label">Occurrence Season</span>
+              <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
             </label>
-            <label class="form-card__field">
-              Region
-              <input name="region" [(ngModel)]="control.formData.region" />
+            <label class="form-card__field" for="region">
+              <span class="form-card__field-label">Region</span>
+              <input id="region" name="region" [(ngModel)]="control.formData.region" />
             </label>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
