@@ -128,9 +128,34 @@ ja:
     
     new:
       title: "新しい作物を追加"
-    
+
     edit:
       title: "%{name}を編集"
+      stages_title: "生育ステージ"
+      add_stage: "+ 生育ステージを追加"
+      stage_title: "ステージ {{order}}"
+      stage_name: "ステージ名"
+      stage_order: "順序"
+      requirements_title: "要件"
+      temperature_requirement: "温度要件"
+      base_temperature: "最低限界温度"
+      optimal_min: "最適温度（最小）"
+      optimal_max: "最適温度（最大）"
+      low_stress_threshold: "低温ストレス閾値"
+      high_stress_threshold: "高温ストレス閾値"
+      frost_threshold: "霜害閾値"
+      sterility_risk_threshold: "不稔リスク閾値"
+      max_temperature: "最大限界温度"
+      thermal_requirement: "熱要件（GDD）"
+      required_gdd: "必要積算温度"
+      sunshine_requirement: "日照要件"
+      minimum_sunshine_hours: "最低日照時間"
+      target_sunshine_hours: "目標日照時間"
+      nutrient_requirement: "栄養素要件"
+      daily_uptake_n: "窒素 (N) 日吸収量"
+      daily_uptake_p: "リン (P) 日吸収量"
+      daily_uptake_k: "カリウム (K) 日吸収量"
+      region: "地域"
     
     show:
       reference_crop: "参照作物"
