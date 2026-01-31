@@ -214,18 +214,34 @@ if (typeof window.MAX_RETRIES === 'undefined') {
 // ガントチャートが存在するページかどうかを判定
 function shouldHaveGanttChart() {
   const currentPath = window.location.pathname;
-  console.log('🔍 [Gantt Chart] ページ判定中:', currentPath);
-  
+  const currentHash = window.location.hash;
+  const currentHref = window.location.href;
+  console.log('🔍 [Gantt Chart] ページ判定中:', currentPath, 'ハッシュ:', currentHash, 'フルURL:', currentHref);
+
   // ガントチャートが表示されるページのパターン
   const ganttPages = [
     '/plans/',  // 計画詳細ページ
     '/public_plans/',  // 公開計画詳細ページ
     '/results/'  // 結果ページ
   ];
-  
-  const shouldHave = ganttPages.some(pattern => currentPath.includes(pattern));
-  console.log('🔍 [Gantt Chart] ページ判定結果:', shouldHave, 'パターン:', ganttPages);
-  
+
+  // パスまたはハッシュ部分をチェック（Angular SPAのハッシュルーティング対応）
+  const pathToCheck = currentPath + currentHash.replace('#', '/');
+
+  // より詳細なパターンマッチング
+  const shouldHave = ganttPages.some(pattern => pathToCheck.includes(pattern)) ||
+                    currentPath === '/public_plans/results' ||
+                    pathToCheck.match(/\/public_plans\/\d+/) ||
+                    pathToCheck.match(/\/plans\/\d+/) ||
+                    currentHash.includes('/public-plans/results');
+
+  console.log('🔍 [Gantt Chart] ページ判定結果:', shouldHave, 'チェック対象パス:', pathToCheck, 'パターン:', ganttPages);
+
+  // 追加デバッグ: public_plansの場合の詳細ログ
+  if (pathToCheck.includes('/public_plans/') || currentHash.includes('/public-plans/')) {
+    console.log('📋 [Gantt Chart] Public plansページを検出:', pathToCheck, 'ハッシュ:', currentHash);
+  }
+
   return shouldHave;
 }
 
@@ -233,7 +249,13 @@ function initWhenReady() {
   if (typeof window.ganttRetryCount === 'undefined') {
     window.ganttRetryCount = 0;
   }
-  
+
+  console.log('🚀 [Gantt Chart] initWhenReady 開始', {
+    retryCount: window.ganttRetryCount,
+    currentPath: window.location.pathname,
+    currentHref: window.location.href
+  });
+
   // 対象ページでない場合はリトライを行わず即座にスキップする
   if (!shouldHaveGanttChart()) {
     console.log('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
@@ -244,10 +266,19 @@ function initWhenReady() {
     return;
   }
 
-  console.log('🚀 [Gantt Chart] initWhenReady 開始', { retryCount: window.ganttRetryCount });
-  
+  console.log('✅ [Gantt Chart] このページはガントチャートを表示すべきページです');
+
   const container = document.getElementById('gantt-chart-container');
   console.log('🔍 [Gantt Chart] コンテナ検索結果:', container ? '見つかった' : '見つからない');
+
+  if (container) {
+    console.log('🔍 [Gantt Chart] コンテナの詳細:', {
+      id: container.id,
+      className: container.className,
+      dataset: container.dataset,
+      innerHTML: container.innerHTML.substring(0, 200) + '...'
+    });
+  }
   
   if (container) {
     console.log('✅ [Gantt Chart] Container found, initializing...');
@@ -262,19 +293,48 @@ function initWhenReady() {
     if (typeof window.ClientLogger !== 'undefined') {
       window.ClientLogger.warn(`⏳ [Gantt Chart] Container not found yet, retrying... (${window.ganttRetryCount}/${window.MAX_RETRIES})`);
     }
-    // 100ms待って再試行
-    setTimeout(initWhenReady, 100);
+    // リトライ間隔を徐々に長くする（100ms, 200ms, 300ms, ...）
+    const retryDelay = Math.min(100 * window.ganttRetryCount, 500);
+    setTimeout(initWhenReady, retryDelay);
   } else {
-    // ガントチャートが期待されるページでない場合は正常終了
-    if (!shouldHaveGanttChart()) {
+    // 最終リトライ後も見つからない場合
+    if (shouldHaveGanttChart()) {
+      console.warn('⚠️ [Gantt Chart] Container not found after all retries - this may indicate a problem');
+      console.warn('⚠️ [Gantt Chart] Current page should have gantt chart but container is missing');
+      console.warn('⚠️ [Gantt Chart] Page info:', {
+        pathname: window.location.pathname,
+        href: window.location.href,
+        readyState: document.readyState
+      });
+
+      // デバッグ用のメッセージを表示（開発環境のみ）
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const debugDiv = document.createElement('div');
+        debugDiv.style.cssText = `
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          background: #fef3c7;
+          border: 1px solid #f59e0b;
+          padding: 10px;
+          border-radius: 4px;
+          z-index: 9999;
+          font-size: 12px;
+          max-width: 300px;
+        `;
+        debugDiv.innerHTML = `
+          <strong>ガントチャートデバッグ:</strong><br>
+          コンテナが見つかりません<br>
+          ページ: ${window.location.pathname}<br>
+          再試行回数: ${window.MAX_RETRIES}<br>
+          <button onclick="this.parentElement.remove()">閉じる</button>
+        `;
+        document.body.appendChild(debugDiv);
+      }
+    } else {
       console.log('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
       if (typeof window.ClientLogger !== 'undefined') {
         window.ClientLogger.info('ℹ️ [Gantt Chart] This page does not require a gantt chart - skipping initialization');
-      }
-    } else {
-      console.log('ℹ️ [Gantt Chart] Container not found - this page may not have a gantt chart');
-      if (typeof window.ClientLogger !== 'undefined') {
-        window.ClientLogger.info('ℹ️ [Gantt Chart] Container not found - this page may not have a gantt chart');
       }
     }
     window.ganttRetryCount = 0;
@@ -322,12 +382,25 @@ function cleanupGanttChart() {
 
 // Turbo対応: Frameレンダリング後に初期化（重複を避けるためturbo:frame-renderのみ使用）
 (function() {
-  console.log('🔧 [Gantt Chart] スクリプト読み込み完了');
+  console.log('🔧 [Gantt Chart] スクリプト読み込み完了', {
+    currentPath: window.location.pathname,
+    readyState: document.readyState,
+    hasTurbo: typeof Turbo !== 'undefined',
+    scriptLoadTime: new Date().toISOString()
+  });
 
   function triggerInit() {
     console.log('🔄 [Gantt Chart] 初期化トリガー起動');
-    setTimeout(initWhenReady, 50);
+    // より長い遅延を設定してDOMが完全に準備できるようにする
+    setTimeout(initWhenReady, 200);
   }
+
+  // スクリプト実行の重複を防ぐためのフラグ
+  if (window.ganttScriptInitialized) {
+    console.log('ℹ️ [Gantt Chart] スクリプトが既に初期化されているためスキップ');
+    return;
+  }
+  window.ganttScriptInitialized = true;
 
   // 初回読み込み時（DOMが既に読み込まれている場合）
   if (document.readyState !== 'loading') {
@@ -335,32 +408,114 @@ function cleanupGanttChart() {
     triggerInit();
     // モバイルフォールバック状態も評価
     updateMobileFallback();
+  } else {
+    // DOM読み込み待機
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🔄 [Gantt Chart] DOMContentLoadedイベント検出、初期化開始');
+      triggerInit();
+      updateMobileFallback();
+    });
   }
 
   if (typeof Turbo !== 'undefined') {
     console.log('🔧 [Gantt Chart] Turbo環境を検出、イベントリスナー登録中...');
-    
+
     // Turbo Driveによるページ遷移時に初期化（全てのケースで確実に発火）
     document.addEventListener('turbo:load', () => {
-      console.log('🔄 [Gantt Chart] turbo:load イベント検出');
-      triggerInit();
-      updateMobileFallback();
+      console.log('🔄 [Gantt Chart] turbo:load イベント検出', {
+        currentPath: window.location.pathname,
+        currentHref: window.location.href,
+        timestamp: new Date().toISOString()
+      });
+      // 少し遅延させてDOMが完全に準備できるようにする
+      setTimeout(() => {
+        triggerInit();
+        updateMobileFallback();
+      }, 100);
     });
-    
+
+    // Turboでのフレームレンダリング時も初期化
+    document.addEventListener('turbo:frame-load', () => {
+      console.log('🔄 [Gantt Chart] turbo:frame-load イベント検出');
+      setTimeout(() => {
+        triggerInit();
+        updateMobileFallback();
+      }, 100);
+    });
+
     // ページキャッシュ前にクリーンアップ
     document.addEventListener('turbo:before-cache', () => {
       console.log('🧹 [Gantt Chart] turbo:before-cache 検出 - クリーンアップを実行');
       cleanupGanttChart();
     });
+
+    // Turboでのレンダリング完了時にも初期化を試行（確実性を高める）
+    document.addEventListener('turbo:render', () => {
+      console.log('🔄 [Gantt Chart] turbo:render イベント検出');
+      setTimeout(() => {
+        // 既に初期化されている場合はスキップ
+        const container = document.getElementById('gantt-chart-container');
+        if (container && !container.dataset.ganttInitialized) {
+          console.log('🔄 [Gantt Chart] turbo:render で初期化を実行');
+          triggerInit();
+        }
+      }, 50);
+    });
+  } else {
+    console.log('⚠️ [Gantt Chart] Turboが利用できません。通常のページ遷移イベントを使用');
+
+    // 通常のページ遷移時のイベント
+    window.addEventListener('load', () => {
+      console.log('🔄 [Gantt Chart] window load イベント検出');
+      setTimeout(triggerInit, 100);
+    });
+  }
+
+  // 確実性を高めるためのMutationObserver（DOM変更を監視）
+  if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver((mutations) => {
+      let shouldTriggerInit = false;
+      mutations.forEach((mutation) => {
+        // gantt-chart-containerが追加された場合
+        mutation.addedNodes.forEach((node) => {
+          if (node.id === 'gantt-chart-container' ||
+              (node.querySelector && node.querySelector('#gantt-chart-container'))) {
+            console.log('🔍 [Gantt Chart] MutationObserverでコンテナ検出');
+            shouldTriggerInit = true;
+          }
+        });
+      });
+
+      if (shouldTriggerInit) {
+        setTimeout(() => {
+          const container = document.getElementById('gantt-chart-container');
+          if (container && !container.dataset.ganttInitialized && shouldHaveGanttChart()) {
+            console.log('🔄 [Gantt Chart] MutationObserverで初期化実行');
+            triggerInit();
+          }
+        }, 100);
+      }
+    });
+
+    // body要素の変更を監視
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    console.log('👁️ [Gantt Chart] MutationObserverを設定しました');
   }
 })();
 
 function initCustomGanttChart() {
-  console.log('🚀 [Gantt] initCustomGanttChart 開始');
+  console.log('🚀 [Gantt] initCustomGanttChart 開始', {
+    currentPath: window.location.pathname,
+    currentHref: window.location.href
+  });
   if (typeof window.ClientLogger !== 'undefined') {
     window.ClientLogger.warn('🚀 [Gantt] initCustomGanttChart 開始');
   }
-  
+
   const ganttContainer = document.getElementById('gantt-chart-container');
   setLoadingIndicatorVisible(true);
   if (!ganttContainer) {
@@ -371,6 +526,13 @@ function initCustomGanttChart() {
     }
     return;
   }
+
+  console.log('✅ [Gantt] コンテナが見つかりました', {
+    containerId: ganttContainer.id,
+    dataset: ganttContainer.dataset,
+    hasDataCultivations: !!ganttContainer.dataset.cultivations,
+    hasDataFields: !!ganttContainer.dataset.fields
+  });
 
   // 二重初期化防止（Turbo遷移や複数スクリプトからの呼び出し対策）
   if (ganttContainer.dataset.ganttInitialized === 'true') {
@@ -405,14 +567,25 @@ function initCustomGanttChart() {
   // ローカルタイムゾーンで日付を解釈（parseLocalDateを使用）
   window.ganttState.planStartDate = parseLocalDate(ganttContainer.dataset.planStartDate);
   window.ganttState.planEndDate = parseLocalDate(ganttContainer.dataset.planEndDate);
-  
+
+  console.log('📊 [Gantt] 生データ取得結果:', {
+    cultivationsCount: cultivationsRaw.length,
+    fieldsCount: fieldsDataRaw.length,
+    planStartDate: ganttContainer.dataset.planStartDate,
+    planEndDate: ganttContainer.dataset.planEndDate,
+    parsedPlanStartDate: window.ganttState.planStartDate,
+    parsedPlanEndDate: window.ganttState.planEndDate
+  });
+
   // 計画期間の日付が有効であることを確認（異常系はエラーを上げる）
-  if (!window.ganttState.planStartDate || !window.ganttState.planEndDate || 
+  if (!window.ganttState.planStartDate || !window.ganttState.planEndDate ||
       isNaN(window.ganttState.planStartDate.getTime()) || isNaN(window.ganttState.planEndDate.getTime())) {
     const errorMessage = `Invalid plan dates: planStartDate="${ganttContainer.dataset.planStartDate}", planEndDate="${ganttContainer.dataset.planEndDate}"`;
     console.error('❌ [Gantt] 無効な計画期間:', {
       planStartDate: ganttContainer.dataset.planStartDate,
-      planEndDate: ganttContainer.dataset.planEndDate
+      planEndDate: ganttContainer.dataset.planEndDate,
+      parsedStart: window.ganttState.planStartDate,
+      parsedEnd: window.ganttState.planEndDate
     });
     throw new Error(errorMessage);
   }
@@ -455,12 +628,20 @@ function initCustomGanttChart() {
 
     // 圃場ごとにグループ化（圃場情報も含める）
     window.ganttState.fieldGroups = groupByField(window.ganttState.cultivationData, normalizedFields);
-    
+
     console.log('🔧 初期化時のグループ化結果:', window.ganttState.fieldGroups);
-    
+
+    // フィールドが空の場合はエラーメッセージを表示
+    if (window.ganttState.fieldGroups.length === 0) {
+      console.warn('⚠️ [Gantt] 圃場データが空です。計画の作成時に問題が発生した可能性があります。');
+      renderEmptyFieldsMessage(ganttContainer);
+      setLoadingIndicatorVisible(false);
+      return;
+    }
+
     // 表示範囲選択UIのイベントハンドラーを設定
     setupDisplayRangeControls(ganttContainer);
-    
+
     // SVGガントチャートを描画
     console.log('🎨 [Gantt] チャート描画開始...');
     // 計画期間は引数として渡さない（関数内で表示範囲を使用するため）
@@ -473,6 +654,28 @@ function initCustomGanttChart() {
   } catch (error) {
     console.error('❌ [Gantt] データ正規化エラー:', error);
     console.error('❌ [Gantt] スタックトレース:', error.stack);
+    // エラー表示
+    setLoadingIndicatorVisible(false);
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      padding: 20px;
+      background-color: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #dc2626;
+      text-align: center;
+      font-size: 14px;
+    `;
+    errorDiv.innerHTML = `
+      <div style="margin-bottom: 10px;">📊 ガントチャートの読み込みに失敗しました</div>
+      <div style="font-size: 12px; color: #7f1d1d;">
+        エラー: ${error.message}<br>
+        ページを再読み込みするか、管理者にお問い合わせください。
+      </div>
+    `;
+    ganttContainer.innerHTML = '';
+    ganttContainer.appendChild(errorDiv);
+
     // 初期化フラグ解除（次回再試行を可能に）
     delete ganttContainer.dataset.ganttInitialized;
     // エラー時も初期化フラグをリセット
@@ -2774,6 +2977,30 @@ function isMovable(cultivation) {
   
   // 表示範囲内に完全に収まっているか
   return startDate >= displayStartDate && completionDate <= displayEndDate;
+}
+
+// フィールドが空の場合のメッセージを表示
+function renderEmptyFieldsMessage(container) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'gantt-empty-fields-message';
+  messageDiv.innerHTML = `
+    <div style="text-align: center; padding: 40px 20px; color: #6b7280;">
+      <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+      <h3 style="font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 8px;">
+        圃場データがありません
+      </h3>
+      <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">
+        計画の作成時に問題が発生した可能性があります。<br>
+        計画を再作成するか、管理者にお問い合わせください。
+      </p>
+      <div style="font-size: 12px; color: #9ca3af;">
+        デバッグ情報: fieldGroups.length = 0
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = '';
+  container.appendChild(messageDiv);
 }
 
 // グローバルに公開
