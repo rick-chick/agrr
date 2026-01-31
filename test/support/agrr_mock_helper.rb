@@ -153,10 +153,46 @@ module AgrrMockHelper
     end
   end
   
+  # 天気予測のモック (Minitest用)
+  def stub_weather_prediction
+    Agrr::PredictionGateway.class_eval do
+      define_method(:predict) do |historical_data:, days:, model:|
+        Rails.logger.info "🧪 [Mock PredictionGateway] Returning mock prediction data for #{days} days"
+
+        # 予測データを生成
+        start_date = Date.current - 1.day
+        prediction_data = (1..days).map do |i|
+          date = start_date + i.days
+          {
+            'time' => date.to_s,
+            'temperature_2m_max' => 25.0 + rand(-5..5),
+            'temperature_2m_min' => 15.0 + rand(-5..5),
+            'temperature_2m_mean' => 20.0 + rand(-3..3),
+            'precipitation_sum' => rand(0..10),
+            'sunshine_duration' => rand(6..12) * 3600, # 秒単位
+            'wind_speed_10m_max' => rand(1..5),
+            'weather_code' => rand(0..3)
+          }
+        end
+
+        # モックデータを返す
+        {
+          'data' => prediction_data,
+          'metadata' => {
+            'prediction_method' => 'mock',
+            'created_at' => Time.current.iso8601,
+            'data_points' => prediction_data.size
+          }
+        }
+      end
+    end
+  end
+
   # すべてのAGRRコマンドをモック化（setup時に使用）
   def stub_all_agrr_commands
     stub_fetch_crop_info
     stub_fetch_weather_data
+    stub_weather_prediction
     mock_agrr_adjust_success
   end
   

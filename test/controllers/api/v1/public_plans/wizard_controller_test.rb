@@ -2,19 +2,57 @@
 
 require "test_helper"
 require "active_job/test_helper"
+require "action_cable/test_helper"
+require "support/agrr_mock_helper"
 
 module Api
   module V1
     module PublicPlans
       class WizardControllerTest < ActionDispatch::IntegrationTest
         include ActiveJob::TestHelper
+        include ActionCable::TestHelper
+        include AgrrMockHelper
 
         setup do
           @weather_location = create(:weather_location)
           @jp_farm = create(:farm, :reference, region: "jp", weather_location: @weather_location)
           @us_farm = create(:farm, :reference, region: "us", weather_location: @weather_location)
-          @jp_crop = create(:crop, :reference, region: "jp")
-          @us_crop = create(:crop, :reference, region: "us")
+          @jp_crop = create(:crop, :reference, :with_stages, region: "jp")
+          @us_crop = create(:crop, :reference, :with_stages, region: "us")
+
+          # AGRRのモックを有効化
+          stub_fetch_weather_data
+          stub_fetch_crop_info
+          stub_weather_prediction
+
+          # テスト用の気象データを作成（過去15年分）
+          create_weather_data_for_location(@weather_location, 15.years.ago.to_date, Date.current)
+        end
+
+        def create_weather_data_for_location(weather_location, start_date, end_date)
+          weather_records = []
+          (start_date..end_date).each do |date|
+            weather_records << {
+              weather_location_id: weather_location.id,
+              date: date,
+              temperature_max: 20.0 + rand(-10..10),
+              temperature_min: 5.0 + rand(-5..5),
+              temperature_mean: 12.5 + rand(-3..3),
+              precipitation: rand(0..15),
+              sunshine_hours: rand(4..10),
+              wind_speed: rand(2..8),
+              weather_code: rand(1..10),
+              created_at: Time.current,
+              updated_at: Time.current
+            }
+
+            # メモリ使用量を抑えるため、1000件ごとにinsert
+            if weather_records.size >= 1000
+              WeatherDatum.insert_all(weather_records)
+              weather_records = []
+            end
+          end
+          WeatherDatum.insert_all(weather_records) unless weather_records.empty?
         end
 
         test "returns farms filtered by region" do
@@ -89,6 +127,28 @@ module Api
           json_response = JSON.parse(response.body)
           plan = ::CultivationPlan.find(json_response["plan_id"])
           assert_equal 30, plan.total_area
+        end
+
+        # RED検証: 計画作成後にジョブチェーンが実行され、OptimizationChannel経由でブロードキャストが行われること
+        # ActionCableが正しく実装されていない場合、このテストは失敗する（RED）。
+        test "creates plan and broadcasts progress via OptimizationChannel" do
+          # ジョブの実行を許可
+          perform_enqueued_jobs do
+            post "/api/v1/public_plans/plans", params: {
+              farm_id: @jp_farm.id,
+              farm_size_id: "home_garden",
+              crop_ids: [@jp_crop.id]
+            }
+          end
+
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          plan = ::CultivationPlan.find(json_response["plan_id"])
+
+          # OptimizationChannel経由でブロードキャストが行われたことを検証
+          # ジョブチェーン実行中にフェーズ更新で複数のブロードキャストが行われるはず
+          # RED: ActionCableが正しく実装されていない場合、このアサーションは失敗する
+          assert_broadcasts OptimizationChannel.broadcasting_for(plan), 9
         end
       end
     end

@@ -3,6 +3,7 @@ ja:
     cultivation_plan:
       phases:
         fetching_weather: "気象データを取得しています..."
+        weather_data_fetched: "気象データの取得が完了しました"
         predicting_weather: "気象データを予測しています..."
         weather_prediction_completed: "気象データの予測が完了しました"
         optimization_completed: "最適化が完了しました。作業予定を生成しています..."

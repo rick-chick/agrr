@@ -102,7 +102,11 @@ class CultivationPlan < ApplicationRecord
   def phase_fetching_weather!(channel_class)
     update_phase!('fetching_weather', I18n.t('models.cultivation_plan.phases.fetching_weather'), channel_class)
   end
-  
+
+  def phase_weather_data_fetched!(channel_class)
+    update_phase!('weather_data_fetched', I18n.t('models.cultivation_plan.phases.weather_data_fetched'), channel_class)
+  end
+
   def phase_predicting_weather!(channel_class)
     update_phase!('predicting_weather', I18n.t('models.cultivation_plan.phases.predicting_weather'), channel_class)
   end
