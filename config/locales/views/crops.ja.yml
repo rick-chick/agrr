@@ -133,7 +133,7 @@ ja:
       title: "%{name}を編集"
       stages_title: "生育ステージ"
       add_stage: "+ 生育ステージを追加"
-      stage_title: "ステージ {{order}}"
+      stage_title: "ステージ"
       stage_name: "ステージ名"
       stage_order: "順序"
       requirements_title: "要件"
