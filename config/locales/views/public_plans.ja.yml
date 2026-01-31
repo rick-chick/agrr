@@ -26,6 +26,7 @@ ja:
     errors:
       select_region: "栽培地域を選択してください。"
       select_farm_size: "農場サイズを選択してください。"
+      invalid_farm_size: "農場サイズが無効です。"
       select_crop: "作物を1つ以上選択してください。"
       restart: "最初からやり直してください。"
       create_failed: "計画作成に失敗しました: %{errors}"
