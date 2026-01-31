@@ -48,49 +48,15 @@ const initialControl: PublicPlanResultsViewState = {
           <p class="error-message">{{ control.error }}</p>
         } @else if (control.data) {
           <div class="gantt-results-header">
-            <div class="gantt-results-header-main">
-              <div class="gantt-results-header-icon" aria-hidden="true">🎉</div>
-              <h1 class="gantt-results-header-title">{{ 'public_plans.results.header.title' | translate }}</h1>
-              <div class="gantt-results-header-badge">{{ 'public_plans.results.header.badge' | translate }}</div>
-            </div>
-
-            <div class="gantt-results-header-summary">
-              <div class="gantt-summary-item">
-                <span class="gantt-summary-icon" aria-hidden="true">🌍</span>
-                <span class="gantt-summary-label">{{ 'public_plans.results.header.region' | translate }}</span>
-                <span class="gantt-summary-value">{{ farm?.name }}</span>
-              </div>
-              <div class="gantt-summary-item">
-                <span class="gantt-summary-icon" aria-hidden="true">📏</span>
-                <span class="gantt-summary-label">{{ 'public_plans.results.header.total_area' | translate }}</span>
-                <span class="gantt-summary-value">{{ control.data.data.total_area | number }}㎡</span>
-              </div>
-              <div class="gantt-summary-item">
-                <span class="gantt-summary-icon" aria-hidden="true">🏞️</span>
-                <span class="gantt-summary-label">{{ 'public_plans.results.header.field_count' | translate }}</span>
-                <span class="gantt-summary-value">{{ 'public_plans.results.header.field_count_value' | translate: { count: control.data.data.fields.length } }}</span>
-              </div>
-              <div class="gantt-summary-item">
-                <span class="gantt-summary-icon" aria-hidden="true">💰</span>
-                <span class="gantt-summary-label">{{ 'public_plans.results.header.total_cost' | translate }}</span>
-                <span class="gantt-summary-value">¥{{ control.data.total_cost | number }}</span>
-              </div>
-              @if (control.data.total_revenue != null && control.data.total_revenue > 0) {
-                <div class="gantt-summary-item">
-                  <span class="gantt-summary-icon" aria-hidden="true">📈</span>
-                  <span class="gantt-summary-label">{{ 'public_plans.results.header.total_revenue' | translate }}</span>
-                  <span class="gantt-summary-value">¥{{ control.data.total_revenue | number }}</span>
-                </div>
-              }
-              <div class="gantt-summary-item">
-                <span class="gantt-summary-icon" aria-hidden="true">💎</span>
-                <span class="gantt-summary-label">{{ 'public_plans.results.header.total_profit' | translate }}</span>
-                <span class="gantt-summary-value">¥{{ control.data.total_profit | number }}</span>
-              </div>
-            </div>
-
-            <div class="gantt-results-header-subtitle">
-              {{ 'public_plans.results.header.subtitle' | translate: { count: control.data.data.fields.length } }}
+            <div class="compact-summary-line">
+              <span class="compact-icon">🎉</span>
+              <span class="compact-text">{{ 'public_plans.results.header.title' | translate }}</span>
+              <span class="compact-separator">•</span>
+              <span class="compact-icon">🌍</span>
+              <span class="compact-value">{{ farm?.name }}</span>
+              <span class="compact-separator">•</span>
+              <span class="compact-icon">📏</span>
+              <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
             </div>
           </div>
 

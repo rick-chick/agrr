@@ -12,6 +12,19 @@
   .public-plans-wrapper.page-main {
     padding: var(--space-4);
   }
+
+  .gantt-results-header {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .compact-summary-line {
+    font-size: var(--font-size-sm);
+    gap: var(--space-1);
+  }
+
+  .compact-icon {
+    font-size: var(--font-size-base);
+  }
 }
 
 .free-plans-container {
@@ -777,19 +790,24 @@
    結果画面: ヘッダー・サマリー（Rails 同様）
    ============================================ */
 .gantt-results-header {
-  background: var(--gradient-primary);
+  background: var(--color-primary, #2563eb);
   color: var(--color-white);
   border-radius: var(--radius-xl);
-  padding: var(--space-6);
+  padding: var(--space-4) var(--space-6);
   margin-bottom: var(--space-6);
   box-shadow: var(--shadow-primary);
 }
 
-.gantt-results-header-main {
+.compact-summary-line {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .gantt-results-header-icon {
@@ -811,20 +829,23 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.gantt-results-header-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+.compact-icon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
 }
 
-.gantt-summary-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  background: rgba(255, 255, 255, 0.1);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
+.compact-text {
+  font-weight: var(--font-weight-semibold);
+}
+
+.compact-value {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-white, #ffffff);
+}
+
+.compact-separator {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: var(--font-weight-normal);
 }
 
 .gantt-summary-icon {
@@ -845,4 +866,6 @@
   text-align: center;
   font-size: var(--font-size-lg);
   opacity: 0.95;
+  margin-bottom: 0;
+  white-space: nowrap;
 }
