@@ -34,6 +34,7 @@ module Domain
           ]
 
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
+          @mock_gateway.expects(:user_id=).with(@user_id)
           @mock_gateway.expects(:list).with(input_dto).returns(filtered_farms)
           @mock_output_port.expects(:on_success).with(filtered_farms)
 
@@ -75,6 +76,7 @@ module Domain
           ]
 
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
+          @mock_gateway.expects(:user_id=).with(admin_user_id)
           @mock_gateway.expects(:list).with(input_dto).returns(all_farms)
           @mock_output_port.expects(:on_success).with(all_farms)
 

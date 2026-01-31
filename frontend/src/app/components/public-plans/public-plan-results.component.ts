@@ -60,7 +60,7 @@ const initialControl: PublicPlanResultsViewState = {
             </div>
           </div>
 
-          <app-gantt-chart [data]="control.data" />
+          <app-gantt-chart [data]="control.data" planType="public" />
 
           <div class="action-buttons">
             <button type="button" class="btn btn-primary" (click)="savePlan()">

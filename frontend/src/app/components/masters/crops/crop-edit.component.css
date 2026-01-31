@@ -1,1 +1,136 @@
 @import '../_master-layout.css';
+
+/* Crop Stages Section */
+.crop-stages-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.crop-stages-section__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+}
+
+.crop-stages-section__actions {
+  margin-bottom: 1.5rem;
+}
+
+.crop-stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Crop Stage Card */
+.crop-stage-card {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.crop-stage-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-background-secondary);
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.crop-stage-card__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-danger:hover {
+  background: var(--color-error-dark);
+}
+
+.btn-small {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.crop-stage-card__content {
+  padding: 1rem;
+}
+
+/* Requirements Section */
+.crop-stage-requirements {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.25rem;
+}
+
+.crop-stage-requirements__summary {
+  padding: 0.75rem;
+  background: var(--color-background-secondary);
+  border-radius: 0.25rem 0.25rem 0 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.crop-stage-requirements__summary:hover {
+  background: var(--color-background-hover);
+}
+
+.requirement-section {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.requirement-section:last-child {
+  border-bottom: none;
+}
+
+.requirement-section__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+.requirement-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.form-card__field--small {
+  margin-bottom: 0.5rem;
+}
+
+.form-card__field--small input {
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .requirement-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .crop-stage-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

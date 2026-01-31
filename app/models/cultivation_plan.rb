@@ -228,7 +228,13 @@ class CultivationPlan < ApplicationRecord
     
     # plan_yearが設定されていない場合はfield_cultivationsから計算
     if field_cultivations.any?
-      min_date = field_cultivations.pluck(:start_date).compact.min
+      # includesでロードされたコレクションの場合はメモリ上のデータを使用
+      # pluckは常にDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用
+      if field_cultivations.loaded?
+        min_date = field_cultivations.map(&:start_date).compact.min
+      else
+        min_date = field_cultivations.pluck(:start_date).compact.min
+      end
       return default_planning_start_date unless min_date
       min_date.beginning_of_year
     else
@@ -246,7 +252,13 @@ class CultivationPlan < ApplicationRecord
     
     # plan_yearが設定されていない場合はfield_cultivationsから計算
     if field_cultivations.any?
-      max_date = field_cultivations.pluck(:completion_date).compact.max
+      # includesでロードされたコレクションの場合はメモリ上のデータを使用
+      # pluckは常にDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用
+      if field_cultivations.loaded?
+        max_date = field_cultivations.map(&:completion_date).compact.max
+      else
+        max_date = field_cultivations.pluck(:completion_date).compact.max
+      end
       return default_planning_end_date unless max_date
       max_date.end_of_year
     else

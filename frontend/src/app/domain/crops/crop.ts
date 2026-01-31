@@ -1,28 +1,36 @@
 export interface TemperatureRequirement {
   id: number;
-  base_temperature: number;
-  optimal_min: number;
-  optimal_max: number;
-  low_stress: number;
-  high_stress: number;
+  crop_stage_id: number;
+  base_temperature?: number | null;
+  optimal_min?: number | null;
+  optimal_max?: number | null;
+  low_stress_threshold?: number | null;
+  high_stress_threshold?: number | null;
+  frost_threshold?: number | null;
+  sterility_risk_threshold?: number | null;
+  max_temperature?: number | null;
 }
 
 export interface ThermalRequirement {
   id: number;
-  required_gdd: number;
+  crop_stage_id: number;
+  required_gdd?: number | null;
 }
 
 export interface SunshineRequirement {
   id: number;
-  minimum_hours: number;
-  target_hours: number;
+  crop_stage_id: number;
+  minimum_sunshine_hours?: number | null;
+  target_sunshine_hours?: number | null;
 }
 
 export interface NutrientRequirement {
   id: number;
-  daily_uptake_n: number;
-  daily_uptake_p: number;
-  daily_uptake_k: number;
+  crop_stage_id: number;
+  daily_uptake_n?: number | null;
+  daily_uptake_p?: number | null;
+  daily_uptake_k?: number | null;
+  region?: string | null;
 }
 
 export interface CropStage {

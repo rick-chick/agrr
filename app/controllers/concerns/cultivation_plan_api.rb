@@ -290,7 +290,10 @@ module CultivationPlanApi
   # 不要な天気予測を実行しないことで高速化されています
   def adjust
     @cultivation_plan = find_api_cultivation_plan
-    
+
+    # 作物に成長段階があるかを事前チェック
+    return unless validate_crops_have_growth_stages(@cultivation_plan)
+
     # 移動指示を受け取る
     moves_raw = params[:moves] || []
     
@@ -349,7 +352,22 @@ module CultivationPlanApi
   end
   
   private
-  
+
+  # 栽培計画の作物に成長段階があるかをバリデーション
+  def validate_crops_have_growth_stages(cultivation_plan)
+    cultivation_plan.cultivation_plan_crops.each do |plan_crop|
+      crop = plan_crop.crop
+      if crop.crop_stages.empty?
+        render json: {
+          success: false,
+          message: I18n.t('api.errors.cultivation_plan.crop_missing_growth_stages', crop_name: crop.name)
+        }, status: :bad_request
+        return false
+      end
+    end
+    true
+  end
+
   # I18n翻訳のヘルパーメソッド
   def i18n_t(key)
     scope = @cultivation_plan&.plan_type == 'private' ? 'plans' : 'public_plans'

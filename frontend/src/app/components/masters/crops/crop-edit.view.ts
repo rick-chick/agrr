@@ -1,3 +1,5 @@
+import { CropStage } from '../../domain/crops/crop';
+
 export type CropEditFormData = {
   name: string;
   variety: string | null;
@@ -7,6 +9,7 @@ export type CropEditFormData = {
   groups: string[];
   groupsDisplay: string;
   is_reference: boolean;
+  crop_stages: CropStage[];
 };
 
 export type CropEditViewState = {

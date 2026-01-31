@@ -93,6 +93,8 @@ ja:
         calculate_period_failed: "計画期間の計算に失敗しました: %{message}"
         result_empty: "調整結果が空です"
         adjust_failed: "調整に失敗しました: %{message}"
+      cultivation_plan:
+        crop_missing_growth_stages: "作物「%{crop_name}」に成長段階が設定されていません。成長段階を設定してから調整を行ってください。"
     messages:
       common:
         weather_service_available: "天気サービスは利用可能です"
@@ -204,7 +206,36 @@ ja:
       daily_uptake_n_placeholder: "例：0.5"
       daily_uptake_p_placeholder: "例：0.2"
       daily_uptake_k_placeholder: "例：0.8"
-    
+
+    crops:
+      edit:
+        title: "作物編集"
+        stages_title: "生育ステージ"
+        add_stage: "ステージ追加"
+        stage_title: "ステージ"
+        stage_name: "ステージ名"
+        stage_order: "順序"
+        requirements_title: "要件"
+        temperature_requirement: "温度要件"
+        thermal_requirement: "積算温度要件"
+        sunshine_requirement: "日照要件"
+        nutrient_requirement: "栄養素要件"
+        base_temperature: "基底温度 (°C)"
+        optimal_min: "最適最低温度 (°C)"
+        optimal_max: "最適最高温度 (°C)"
+        low_stress_threshold: "低温ストレス閾値 (°C)"
+        high_stress_threshold: "高温ストレス閾値 (°C)"
+        frost_threshold: "霜害閾値 (°C)"
+        sterility_risk_threshold: "不稔リスク閾値 (°C)"
+        max_temperature: "最高温度 (°C)"
+        required_gdd: "必要積算温度 (°C·day)"
+        minimum_sunshine_hours: "最低日照時間 (時間/日)"
+        target_sunshine_hours: "目標日照時間 (時間/日)"
+        daily_uptake_n: "日間窒素吸収量 (kg/ha/day)"
+        daily_uptake_p: "日間リン吸収量 (kg/ha/day)"
+        daily_uptake_k: "日間カリウム吸収量 (kg/ha/day)"
+        region: "地域"
+
     crop_selection:
       max_crops_message: "作物は最大%{max}種類まで選択できます"
       hint_select: "作物を選択してください"
