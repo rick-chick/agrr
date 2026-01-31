@@ -5,7 +5,7 @@
   <%= link_to t('.new_fertilize'), new_fertilize_path, class: "btn btn-success" %>
 </div>
 
-<% if @fertilizes.any? %>
+<% if @fertilizes&.any? %>
   <div class="crops-grid">
     <% @fertilizes.each do |fertilize| %>
       <div class="crop-card" id="<%= dom_id(fertilize) %>" data-undo-delete-record>

@@ -47,6 +47,10 @@ module Domain
           !!is_reference
         end
 
+        def to_model
+          ::AgriculturalTask.find(id)
+        end
+
         def to_hash
           {
             id: id,

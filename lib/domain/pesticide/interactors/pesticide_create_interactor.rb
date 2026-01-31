@@ -18,7 +18,8 @@ module Domain
             description: input_dto.description,
             crop_id: input_dto.crop_id,
             pest_id: input_dto.pest_id,
-            region: input_dto.region
+            region: input_dto.region,
+            is_reference: input_dto.is_reference
           }.compact)
           raise StandardError, pesticide_model.errors.full_messages.join(', ') unless pesticide_model.save
 

@@ -35,10 +35,10 @@ module Domain
 
         # show 用の1件取得
         # - 管理者: すべての肥料にアクセス可能
-        # - 一般ユーザー: 参照肥料 または 自分の肥料
+        # - 一般ユーザー: 自分の非参照肥料のみ（参照肥料は閲覧不可）
         def self.find_visible!(model_class, user, id)
           fertilize = model_class.find(id)
-          unless user.admin? || fertilize.is_reference || fertilize.user_id == user.id
+          unless user.admin? || (fertilize.user_id == user.id && !fertilize.is_reference)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           fertilize

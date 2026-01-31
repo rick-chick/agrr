@@ -20,6 +20,8 @@
 | 契約 | ファイル | 備考 |
 |------|----------|------|
 | 栽培計画詳細読み込み | [plan-detail-load-contract.md](plan-detail-load-contract.md) | 既存実装の契約サンプル |
+| 無料作付け計画の保存 | [public-plan-save-contract.md](public-plan-save-contract.md) | 結果画面「保存」→ 個人計画にコピー（API・認証必須） |
+| Crop Update（HTML） | [crop-update-html-contract.md](crop-update-html-contract.md) | 作物編集フォームで crop_stages_attributes / nutrients を Interactor 経由で反映（Rails 内部契約） |
 
 ## 順次対応の進め方
 

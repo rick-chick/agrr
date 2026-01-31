@@ -14,10 +14,11 @@ module Domain
           @description = description
           @package_size = package_size
           @region = region
+          @is_reference = is_reference
         end
 
         def self.from_hash(hash)
-          fp = hash[:fertilize] || hash
+          fp = (hash[:fertilize] || hash).to_h.symbolize_keys
           new(
             name: fp[:name],
             n: fp[:n],

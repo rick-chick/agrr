@@ -2,6 +2,7 @@
 
 class CropsController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_crop, only: [:edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template]
   before_action :authenticate_admin!, only: [:generate_task_schedule_blueprints]
 
@@ -30,6 +31,8 @@ class CropsController < ApplicationController
     )
     interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
+  rescue ActiveRecord::RecordNotFound
     redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
   rescue StandardError => e
     redirect_to crops_path, alert: e.message
@@ -224,7 +227,7 @@ class CropsController < ApplicationController
       crop_task_templates: [:agricultural_task],
       crop_task_schedule_blueprints: [:agricultural_task]
     ).find(authorized_crop.id)
-  rescue PolicyPermissionDenied
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
   rescue ActiveRecord::RecordNotFound
     redirect_to crops_path, alert: I18n.t('crops.flash.not_found')

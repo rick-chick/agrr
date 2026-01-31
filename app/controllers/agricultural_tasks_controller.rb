@@ -2,6 +2,7 @@
 
 class AgriculturalTasksController < ApplicationController
   include DeletionUndoFlow
+  include HtmlCrudResponder
   before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
   before_action :load_crop_selection_data, only: [:edit, :update]
   before_action :prepare_crop_cards_for_edit, only: [:edit]
@@ -113,10 +114,9 @@ class AgriculturalTasksController < ApplicationController
 
     interactor.call(@input_dto)
 
-    # Interactor 成功後に作物紐付けの更新を行う
-    if @input_dto # 成功した場合のみ実行
-      update_crop_task_templates(selected_crop_ids)
-    end
+    # Interactor 成功後は is_reference/user_id が更新済みのため reload してから作物紐付けを行う
+    @agricultural_task.reload
+    update_crop_task_templates(selected_crop_ids)
   rescue StandardError => e
     @agricultural_task.assign_attributes(
       name: @input_dto&.name || task_attributes[:name],
@@ -136,17 +136,33 @@ class AgriculturalTasksController < ApplicationController
 
   # DELETE /agricultural_tasks/:id
   def destroy
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
+    respond_to do |format|
+      format.html do
+        presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
-      output_port: presenter,
-      gateway: agricultural_task_gateway,
-      user_id: current_user.id
-    )
+        interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
+          output_port: presenter,
+          gateway: agricultural_task_gateway,
+          user_id: current_user.id
+        )
 
-    interactor.call(params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+        interactor.call(params[:id])
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+      end
+
+      format.json do
+        schedule_deletion_with_undo(
+          record: @agricultural_task,
+          toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name),
+          fallback_location: agricultural_tasks_path,
+          in_use_message_key: nil,
+          delete_error_message_key: 'agricultural_tasks.flash.delete_error'
+        )
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+      end
+    end
   end
 
   private
@@ -330,12 +346,12 @@ class AgriculturalTasksController < ApplicationController
   end
 
   def update_crop_task_templates(selected_crop_ids)
-    # 作業と作物の紐付けをCropTaskTemplateで更新
-    # 現在のテンプレートを取得
+    # 現在のタスク（reload 後）に対して許可された作物のみを対象にする
+    allowed_crop_ids = accessible_crops_for_selection(@agricultural_task).where(id: selected_crop_ids).pluck(:id)
     current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
 
-    # 追加する作物（selected_crop_idsにあって、current_template_crop_idsにない）
-    crops_to_add = selected_crop_ids - current_template_crop_ids
+    # 追加する作物（allowed_crop_idsにあって、current_template_crop_idsにない）
+    crops_to_add = allowed_crop_ids - current_template_crop_ids
     crops_to_add.each do |crop_id|
       crop = Crop.find(crop_id)
       # 既存のテンプレートがない場合のみ作成
@@ -352,14 +368,16 @@ class AgriculturalTasksController < ApplicationController
       end
     end
 
-    # 削除する作物（current_template_crop_idsにあって、selected_crop_idsにない）
-    crops_to_remove = current_template_crop_ids - selected_crop_ids
+    # 削除する作物（current_template_crop_idsにあって、allowed_crop_idsにない）
+    crops_to_remove = current_template_crop_ids - allowed_crop_ids
     crops_to_remove.each do |crop_id|
       crop = Crop.find(crop_id)
       template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
       template&.destroy
     end
   end
+
+  public
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
   def redirect_to(path, notice: nil, alert: nil)
@@ -371,7 +389,8 @@ class AgriculturalTasksController < ApplicationController
   end
 
   def agricultural_task_path(task)
-    Rails.application.routes.url_helpers.agricultural_task_path(task)
+    id = task.respond_to?(:id) ? task.id : task
+    Rails.application.routes.url_helpers.agricultural_task_path(id)
   end
 
   def agricultural_tasks_path

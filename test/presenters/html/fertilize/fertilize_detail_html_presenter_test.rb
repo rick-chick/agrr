@@ -5,14 +5,19 @@ require 'test_helper'
 class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test 'on_success does nothing' do
+  test 'on_success sets @fertilize from dto' do
     view_mock = mock
     presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
 
+    fertilize_model = mock
     fertilize_entity = mock
-    # HTML の場合、コントローラで @fertilize に代入してビューを表示するだけなので、何もしない
+    fertilize_entity.expects(:to_model).returns(fertilize_model)
+    fertilize_detail_dto = mock
+    fertilize_detail_dto.expects(:fertilize).returns(fertilize_entity)
 
-    presenter.on_success(fertilize_entity)
+    view_mock.expects(:instance_variable_set).with(:@fertilize, fertilize_model)
+
+    presenter.on_success(fertilize_detail_dto)
   end
 
   test 'on_failure sets flash alert and renders show template' do

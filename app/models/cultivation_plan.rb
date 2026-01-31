@@ -20,6 +20,9 @@ class CultivationPlan < ApplicationRecord
   has_many :cultivation_plan_fields, dependent: :destroy
   has_many :cultivation_plan_crops, dependent: :destroy
   has_many :field_cultivations, dependent: :destroy
+
+  # crops との関連付け（CultivationPlanCrop を通じて）
+  has_many :crops, through: :cultivation_plan_crops
   
   # == Serialization =======================================================
   serialize :predicted_weather_data, coder: JSON

@@ -30,6 +30,10 @@ module Domain
           [name, variety].compact.join(" ")
         end
 
+        def to_model
+          ::Crop.find(id)
+        end
+
         # ActiveRecordモデルからの変換
         def self.from_model(crop_model)
           new(

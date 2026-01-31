@@ -6,7 +6,8 @@ import { Crop } from '../../domain/crops/crop';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 import {
   PublicPlanGateway,
-  CreatePublicPlanResponse
+  CreatePublicPlanResponse,
+  SavePublicPlanResponse
 } from '../../usecase/public-plans/public-plan-gateway';
 
 @Injectable()
@@ -38,6 +39,13 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
     return this.apiClient.post<CreatePublicPlanResponse>(
       '/api/v1/public_plans/plans',
       { farm_id: farmId, farm_size_id: farmSizeId, crop_ids: cropIds }
+    );
+  }
+
+  savePlan(planId: number): Observable<SavePublicPlanResponse> {
+    return this.apiClient.post<SavePublicPlanResponse>(
+      '/api/v1/public_plans/save_plan',
+      { plan_id: planId }
     );
   }
 }

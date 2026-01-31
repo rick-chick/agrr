@@ -11,12 +11,13 @@ module WeatherDataManagement
     # 開始日: 今日から20年前
     start_date = Date.current - 20.years
     
-    # 終了日: DBに登録されているその地点の最新の天気データの日付
-    end_date = if location&.latest_weather_date
-                 location.latest_weather_date
-               else
-                 Date.current - 2.days  # デフォルト: 2日前
-               end
+    # 終了日: 予測に必要な「今日の2日前」まで必ず取得する。
+    # latest_weather_date が古い場合でも current year データを取得するため、下限を Date.current - 2.days とする。
+    minimum_end = Date.current - 2.days
+    end_date = [
+      location&.latest_weather_date,
+      minimum_end
+    ].compact.max
     
     # 開始日が終了日より後の場合は調整
     if start_date > end_date

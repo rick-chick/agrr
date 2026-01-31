@@ -1,10 +1,5 @@
 @import '../_master-layout.css';
 
-.section-card--full-width {
-  width: 100%;
-  max-width: 100%;
-}
-
 .section-card__header-actions {
   display: flex;
   flex-wrap: wrap;

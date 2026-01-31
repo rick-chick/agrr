@@ -21,13 +21,15 @@ module Domain
         test "should destroy farm successfully when no crop plans exist" do
           farm_id = 1
           farm_model = mock
+          free_crop_plans_mock = mock
+          free_crop_plans_mock.expects(:any?).returns(false)
           undo_response = mock
           destroy_output_dto = mock
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
-          farm_model.expects(:free_crop_plans).returns(mock)
-          farm_model.free_crop_plans.expects(:any?).returns(false)
+          farm_model.expects(:free_crop_plans).returns(free_crop_plans_mock)
+          farm_model.stubs(:display_name).returns("Test Farm")
           DeletionUndo::Manager.expects(:schedule).with(
             record: farm_model,
             actor: @user,
@@ -42,25 +44,27 @@ module Domain
         test "should raise error when farm has crop plans" do
           farm_id = 1
           farm_model = mock
+          free_crop_plans_mock = mock
+          free_crop_plans_mock.expects(:any?).returns(true)
+          free_crop_plans_mock.expects(:count).returns(2)
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
-          farm_model.expects(:free_crop_plans).returns(mock)
-          farm_model.free_crop_plans.expects(:any?).returns(true)
-          farm_model.free_crop_plans.expects(:count).returns(2)
+          farm_model.stubs(:free_crop_plans).returns(free_crop_plans_mock)
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(farm_id)
         end
 
-        test "should handle policy permission denied" do
+        test "should re-raise policy permission denied" do
           farm_id = 1
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).raises(Domain::Shared::Policies::PolicyPermissionDenied)
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
-          @interactor.call(farm_id)
+          assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
+            @interactor.call(farm_id)
+          end
         end
       end
     end

@@ -18,7 +18,7 @@ module Domain
           )
         end
 
-        test "should call gateway.list and filter with visible_scope, then output_port.on_success on success for regular user" do
+        test "should call gateway.list and filter with user_owned.by_user, then output_port.on_success on success for regular user" do
           all_farms = [
             Domain::Farm::Entities::FarmEntity.from_hash(
               id: 1,
@@ -55,19 +55,18 @@ module Domain
             )
           ]
 
-          # Mock User.find to return a user object
-          user = mock
-          User.expects(:find).with(@user_id).returns(user)
+          User.expects(:find).with(@user_id).returns(@user)
 
-          # Mock the policy visible_scope to return a scope that includes farms with id 1 and 2
-          visible_scope = mock
-          Domain::Shared::Policies::FarmPolicy.expects(:visible_scope).with(::Farm, user).returns(visible_scope)
-          visible_scope.expects(:exists?).with(1).returns(true)
-          visible_scope.expects(:exists?).with(2).returns(true)
-          visible_scope.expects(:exists?).with(3).returns(false)
+          # 通常ユーザーは自分の農場のみ（参照・他ユーザーは含めない）
+          user_owned_scope = mock
+          ::Farm.expects(:user_owned).returns(user_owned_scope)
+          user_owned_scope.expects(:by_user).with(@user).returns(user_owned_scope)
+          user_owned_scope.expects(:exists?).with(1).returns(false)
+          user_owned_scope.expects(:exists?).with(2).returns(true)
+          user_owned_scope.expects(:exists?).with(3).returns(false)
 
           @mock_gateway.expects(:list).returns(all_farms)
-          @mock_output_port.expects(:on_success).with([all_farms[0], all_farms[1]]) # reference and user's farm
+          @mock_output_port.expects(:on_success).with([all_farms[1]]) # user's farm only
 
           @interactor.call
         end

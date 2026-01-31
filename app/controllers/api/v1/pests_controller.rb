@@ -118,7 +118,7 @@ module Api
               is_reference: ownership_sample.is_reference
             )
 
-            result = @create_interactor.call(attrs_for_create)
+            result = @create_interactor.call(attrs_for_create.symbolize_keys)
             status_code = :created
           end
 
@@ -216,7 +216,7 @@ module Api
             control_methods: pest_data['control_methods'] || []
           }
 
-          result = @update_interactor.call(@pest.id, attrs)
+          result = @update_interactor.call(@pest.id, attrs.symbolize_keys)
 
           if result.success?
             pest_entity = result.data
@@ -259,8 +259,8 @@ module Api
 
       def set_interactors
         gateway = Adapters::Pest::Gateways::PestMemoryGateway.new
-        @create_interactor = Domain::Pest::Interactors::PestCreateInteractor.new(gateway)
-        @update_interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(gateway)
+        @create_interactor = Adapters::Pest::PestCreateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
+        @update_interactor = Adapters::Pest::PestUpdateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
       end
 
       def fetch_pest_info_from_agrr(pest_name, affected_crops = [], max_retries: 3)

@@ -67,7 +67,7 @@ module Api
           if existing_fertilize
             # 既存の肥料を更新（所有者・参照フラグは変更しない）
             Rails.logger.info "🔄 [AI Fertilize] Updating existing fertilize##{existing_fertilize.id}: #{fertilize_name_from_agrr}"
-            result = @update_interactor.call(existing_fertilize.id, base_attrs)
+            result = @update_interactor.call(existing_fertilize.id, base_attrs.symbolize_keys)
             status_code = :ok
           else
             # 新規作成（所有者・参照フラグの決定は Policy に委譲）
@@ -154,7 +154,7 @@ module Api
             package_size: fertilize_package_size_from_agrr  # agrrから返されたpackage_size
           }
 
-          result = @update_interactor.call(@fertilize.id, attrs)
+          result = @update_interactor.call(@fertilize.id, attrs.symbolize_keys)
 
           if result.success?
             fertilize_entity = result.data
@@ -252,8 +252,8 @@ module Api
 
       def set_interactors
         gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
-        @create_interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(gateway)
-        @update_interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(gateway)
+        @create_interactor = Adapters::Fertilize::FertilizeCreateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
+        @update_interactor = Adapters::Fertilize::FertilizeUpdateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
       end
 
       def ai_gateway

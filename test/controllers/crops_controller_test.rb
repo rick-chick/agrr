@@ -58,7 +58,7 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   test "一般ユーザーは自身の作物をshowできる" do
     sign_in_as @user
     get crop_path(@user_crop)
-    
+
     assert_response :success
   end
 
@@ -685,7 +685,7 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to crop_path(@user_crop)
 
     @user_crop.reload
-    assert_equal ['X, Y , Z'], @user_crop.groups
+    assert_equal ['X', 'Y', 'Z'], @user_crop.groups
   end
 
   test "update時に必須項目が欠けていると422でeditを再表示する" do

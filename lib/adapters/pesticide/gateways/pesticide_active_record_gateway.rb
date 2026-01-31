@@ -32,7 +32,7 @@ module Adapters
         def update(pesticide_id, update_input_dto)
           pesticide = ::Pesticide.find(pesticide_id)
           attrs = {}
-          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
+          attrs[:name] = update_input_dto.name unless update_input_dto.name.nil?
           attrs[:active_ingredient] = update_input_dto.active_ingredient if !update_input_dto.active_ingredient.nil?
           attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
           attrs[:crop_id] = update_input_dto.crop_id if !update_input_dto.crop_id.nil?

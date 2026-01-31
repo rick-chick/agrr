@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
-  before_action :set_pesticide, only: [:edit, :update]
+  include DeletionUndoFlow
+  include HtmlCrudResponder
+  before_action :set_pesticide, only: [:edit, :update, :destroy]
 
   # GET /pesticides
   def index
@@ -90,21 +92,42 @@ class PesticidesController < ApplicationController
 
   # DELETE /pesticides/:id
   def destroy
-    presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
-      output_port: presenter,
-      gateway: pesticide_gateway,
-      user_id: current_user.id
-    ).call(params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    respond_to do |format|
+      format.html do
+        presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
+        Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
+          output_port: presenter,
+          gateway: pesticide_gateway,
+          user_id: current_user.id
+        ).call(params[:id])
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+      end
+
+      format.json do
+        schedule_deletion_with_undo(
+          record: @pesticide,
+          toast_message: I18n.t('pesticides.undo.toast', name: @pesticide.name),
+          fallback_location: pesticides_path,
+          in_use_message_key: nil,
+          delete_error_message_key: 'pesticides.flash.delete_error'
+        )
+      rescue Domain::Shared::Policies::PolicyPermissionDenied
+        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+      end
+    end
+  end
+
+  # View interface for HTML Presenters（Presenter から呼ばれるため public）
+  def render_form(action, status: :ok, locals: {})
+    render(action, status: status, locals: locals)
   end
 
   private
 
   def set_pesticide
     @pesticide = Domain::Shared::Policies::PesticidePolicy.find_visible!(Pesticide, current_user, params[:id])
-  rescue PolicyPermissionDenied
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
   rescue ActiveRecord::RecordNotFound
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')

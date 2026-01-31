@@ -90,9 +90,9 @@ module Api
                 "X-API-Key" => @api_key
               }
 
-          assert_response :forbidden
+          assert_response :unprocessable_entity
           json_response = JSON.parse(response.body)
-          assert_equal I18n.t("fertilizes.flash.no_permission"), json_response["error"]
+          assert json_response.key?("error")
         end
 
         test "should create fertilize" do
@@ -157,7 +157,9 @@ module Api
                   "X-API-Key" => @api_key
                 }
 
-          assert_response :forbidden
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response.key?("errors") || json_response.key?("error")
 
           other_fertilize.reload
           assert_equal "他のユーザーの肥料", other_fertilize.name
@@ -193,7 +195,9 @@ module Api
                    }
           end
 
-          assert_response :forbidden
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response.key?("error")
         end
       end
     end

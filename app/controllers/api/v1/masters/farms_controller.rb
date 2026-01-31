@@ -4,6 +4,7 @@ module Api
   module V1
     module Masters
       class FarmsController < BaseController
+        include ApiCrudResponder
         include Views::Api::Farm::FarmListView
         include Views::Api::Farm::FarmDetailView
         include Views::Api::Farm::FarmCreateView

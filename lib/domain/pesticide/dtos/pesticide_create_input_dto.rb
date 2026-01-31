@@ -4,15 +4,16 @@ module Domain
   module Pesticide
     module Dtos
       class PesticideCreateInputDto
-        attr_reader :name, :active_ingredient, :description, :crop_id, :pest_id, :region
+        attr_reader :name, :active_ingredient, :description, :crop_id, :pest_id, :region, :is_reference
 
-        def initialize(name:, active_ingredient: nil, description: nil, crop_id: nil, pest_id: nil, region: nil)
+        def initialize(name:, active_ingredient: nil, description: nil, crop_id: nil, pest_id: nil, region: nil, is_reference: nil)
           @name = name
           @active_ingredient = active_ingredient
           @description = description
           @crop_id = crop_id
           @pest_id = pest_id
           @region = region
+          @is_reference = is_reference
         end
 
         def self.from_hash(hash)
@@ -23,7 +24,8 @@ module Domain
             description: pp[:description],
             crop_id: pp[:crop_id],
             pest_id: pp[:pest_id],
-            region: pp[:region]
+            region: pp[:region],
+            is_reference: pp[:is_reference]
           )
         end
       end

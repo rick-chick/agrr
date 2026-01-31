@@ -26,6 +26,7 @@ class FertilizeCreateHtmlPresenterTest < ActiveSupport::TestCase
     error_dto.expects(:respond_to?).with(:message).returns(true)
     error_dto.expects(:message).returns('Test error')
 
+    view_mock.stubs(:params).returns(fertilize: {})
     flash_now_mock = mock
     flash_mock = mock
     view_mock.expects(:flash).returns(flash_mock)

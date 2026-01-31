@@ -1,16 +1,5 @@
-.page {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e3e5e8;
-}
+@import '../masters/_master-layout.css';
 
-.error {
-  color: #dc2626;
-}
-
-.status {
-  margin-left: 8px;
-  color: #6b7280;
-  font-size: 12px;
+.plan-list-error {
+  color: var(--color-error);
 }

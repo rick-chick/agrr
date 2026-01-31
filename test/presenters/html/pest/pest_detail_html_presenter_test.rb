@@ -10,16 +10,19 @@ class PestDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: view_mock)
 
     pest_entity = mock
+    pest_entity.expects(:id).returns(1)
     pest_model = mock
-    crops = mock('crops')
-    crop1 = mock('crop1')
-    crop2 = mock('crop2')
-    pest_entity.expects(:to_model).returns(pest_model).twice
+    crops = mock
+    crop1 = mock
+    crop2 = mock
     pest_model.expects(:crops).returns(crops)
     crops.expects(:recent).returns([crop1, crop2])
 
     pest_detail_dto = mock
-    pest_detail_dto.expects(:pest).returns(pest_entity).twice
+    pest_detail_dto.stubs(:pest_model).returns(nil)
+    pest_detail_dto.stubs(:pest).returns(pest_entity)
+
+    ::Pest.stubs(:find).with(1).returns(pest_model)
 
     view_mock.expects(:instance_variable_set).with(:@pest, pest_model)
     view_mock.expects(:instance_variable_set).with(:@crops, [crop1, crop2])
@@ -27,20 +30,15 @@ class PestDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter.on_success(pest_detail_dto)
   end
 
-  test 'on_failure sets flash alert and redirects' do
+  test 'on_failure redirects with alert' do
     view_mock = mock
     presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns('Test error')
 
-    flash_now_mock = mock
-    flash_mock = mock
-    flash_mock.expects(:now).returns(flash_now_mock)
-    flash_now_mock.expects(:[]=).with(:alert, 'Test error')
-    view_mock.expects(:flash).returns(flash_mock)
     view_mock.expects(:pests_path).returns('/pests')
-    view_mock.expects(:redirect_to).with('/pests')
+    view_mock.expects(:redirect_to).with('/pests', alert: 'Test error')
 
     presenter.on_failure(error_dto)
   end

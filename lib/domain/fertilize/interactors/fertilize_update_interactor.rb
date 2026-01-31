@@ -32,12 +32,14 @@ module Domain
           attrs[:description] = input_dto.description if !input_dto.description.nil?
           attrs[:package_size] = input_dto.package_size if !input_dto.package_size.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
-          Domain::Shared::Policies::FertilizePolicy.apply_update!(user, fertilize_model, attrs)
+          unless Domain::Shared::Policies::FertilizePolicy.apply_update!(user, fertilize_model, attrs)
+            raise StandardError, fertilize_model.errors.full_messages.join(', ')
+          end
 
           fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model.reload)
           @output_port.on_success(fertilize_entity)
-        # rescue StandardError => e
-        #   @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue StandardError => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end
     end

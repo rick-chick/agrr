@@ -59,10 +59,11 @@
   --focus-outline: 2px solid var(--color-primary);
   --focus-outline-offset: 2px;
 
-  /* シャドウ（カード等） */
+  /* シャドウ（カード等・Rails 同様） */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-primary: 0 4px 15px rgba(102, 126, 234, 0.3);
   --shadow-bottom-bar: 0 -4px 20px rgba(0, 0, 0, 0.15);
   --shadow-step-active: 0 4px 12px rgba(66, 153, 225, 0.4);
   --shadow-success: 0 4px 12px rgba(72, 187, 120, 0.3);
@@ -76,6 +77,7 @@
   /* タイポグラフィ（追加） */
   --font-size-2xl: 24px;
   --font-size-3xl: 30px;
+  --font-size-5xl: 3rem; /* 48px - Rails 同様 */
   --font-weight-semibold: 600;
   --line-height-loose: 1.75;
 
