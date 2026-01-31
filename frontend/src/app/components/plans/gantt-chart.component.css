@@ -37,7 +37,11 @@
 
 .cultivation-bar.dragging {
   cursor: grabbing;
-  opacity: 0.6;
+  opacity: 0.8;
+}
+
+.cultivation-bar.dragging .bar-bg {
+  transition: none; /* ドラッグ中の追従性を重視 */
 }
 
 .month-label {
@@ -54,4 +58,11 @@
 
 .field-label {
   pointer-events: none;
+}
+
+.field-row-highlight {
+  fill: #FFEB3B;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }

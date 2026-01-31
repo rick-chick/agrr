@@ -28,4 +28,8 @@ export class PlanService {
   getTaskSchedule(planId: number): Observable<TaskScheduleResponse> {
     return this.apiClient.get<TaskScheduleResponse>(`/api/v1/plans/${planId}/task_schedule`);
   }
+
+  adjustPlan(endpoint: string, body: { moves: Array<{ allocation_id: number; action: string; to_field_id?: number; to_start_date?: string }> }): Observable<{ success: boolean; message?: string; cultivation_plan?: any }> {
+    return this.apiClient.post<{ success: boolean; message?: string; cultivation_plan?: any }>(endpoint, body);
+  }
 }
