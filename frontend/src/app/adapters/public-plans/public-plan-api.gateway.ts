@@ -26,9 +26,10 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
   }
 
   getCrops(farmId: number): Observable<Crop[]> {
-    return this.apiClient.get<Crop[]>('/api/v1/public_plans/crops', {
-      params: { farm_id: farmId.toString() }
-    });
+    console.log('🌱 [PublicPlanApiGateway] getCrops called with farmId:', farmId);
+    const params = { farm_id: farmId.toString() };
+    console.log('🌱 [PublicPlanApiGateway] API call params:', params);
+    return this.apiClient.get<Crop[]>('/api/v1/public_plans/crops', { params });
   }
 
   createPlan(

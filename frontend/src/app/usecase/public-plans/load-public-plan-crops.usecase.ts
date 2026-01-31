@@ -16,10 +16,21 @@ export class LoadPublicPlanCropsUseCase implements LoadPublicPlanCropsInputPort 
   ) {}
 
   execute(dto: LoadPublicPlanCropsInputDto): void {
+    console.log('🌱 [LoadPublicPlanCropsUseCase] execute called with farmId:', dto.farmId);
+    if (!dto.farmId || dto.farmId <= 0) {
+      console.error('🌱 [LoadPublicPlanCropsUseCase] invalid farmId:', dto.farmId);
+      this.outputPort.onError({ message: 'Invalid farm ID' });
+      return;
+    }
     this.publicPlanGateway.getCrops(dto.farmId).subscribe({
-      next: (crops) => this.outputPort.present({ crops }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      next: (crops) => {
+        console.log('🌱 [LoadPublicPlanCropsUseCase] received crops:', crops);
+        this.outputPort.present({ crops });
+      },
+      error: (err: Error) => {
+        console.error('🌱 [LoadPublicPlanCropsUseCase] error:', err);
+        this.outputPort.onError({ message: err?.message ?? 'Unknown error' });
+      }
     });
   }
 }

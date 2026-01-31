@@ -152,7 +152,11 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   selectedCrops: Crop[] = [];
 
   get farm() {
-    return this.publicPlanStore.state.farm;
+    const farm = this.publicPlanStore.state.farm;
+    if (farm && typeof farm.id === 'number' && farm.id > 0) {
+      return farm;
+    }
+    return null;
   }
   get farmSize() {
     return this.publicPlanStore.state.farmSize;
@@ -168,6 +172,9 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
 
   ngOnInit(): void {
+    console.log('🌱 [PublicPlanSelectCrop] ngOnInit called');
+    console.log('🌱 [PublicPlanSelectCrop] farm:', this.farm);
+    console.log('🌱 [PublicPlanSelectCrop] farmSize:', this.farmSize);
     if (!this.farm || !this.farmSize) {
       this.router.navigate(['/public-plans/new']);
       return;
@@ -175,6 +182,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     this.presenter.setView(this);
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
     this.selectedCropIds = new Set(this.selectedCrops.map((c) => c.id));
+    console.log('🌱 [PublicPlanSelectCrop] executing loadCropsUseCase with farmId:', this.farm.id);
     this.loadCropsUseCase.execute({ farmId: this.farm.id });
   }
 

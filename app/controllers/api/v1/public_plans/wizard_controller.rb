@@ -21,11 +21,19 @@ module Api
         end
 
         def crops
+          Rails.logger.info "🌱 [WizardController#crops] Called with farm_id: #{params[:farm_id]}"
           farm = Farm.find(params[:farm_id])
-          crops = Domain::Shared::Policies::CropPolicy.reference_scope(Crop, region: farm.region).order(:name)
+          Rails.logger.info "🌱 [WizardController#crops] Found farm: #{farm.id}, region: #{farm.region}"
+          crops = Domain::Shared::Policies::CropPolicy.reference_scope(::Crop, region: farm.region).order(:name)
+          Rails.logger.info "🌱 [WizardController#crops] Found #{crops.count} crops"
           render json: crops
-        rescue ActiveRecord::RecordNotFound
+        rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]} - #{e.message}"
           render json: { error: 'Farm not found' }, status: :not_found
+        rescue => e
+          Rails.logger.error "❌ [WizardController#crops] Unexpected error: #{e.class} - #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          render json: { error: 'Internal server error' }, status: :internal_server_error
         end
 
         def create
