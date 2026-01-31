@@ -226,7 +226,8 @@ function shouldHaveGanttChart() {
   ];
 
   // パスまたはハッシュ部分をチェック（Angular SPAのハッシュルーティング対応）
-  const pathToCheck = currentPath + currentHash.replace('#', '/');
+  const hashPath = currentHash ? currentHash.replace('#', '') : '';
+  const pathToCheck = hashPath || currentPath;
 
   // より詳細なパターンマッチング
   const shouldHave = ganttPages.some(pattern => pathToCheck.includes(pattern)) ||
