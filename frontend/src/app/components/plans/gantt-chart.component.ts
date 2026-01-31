@@ -38,8 +38,17 @@ interface TimeScale {
   imports: [CommonModule, TranslateModule],
   template: `
     <div class="gantt-container" #container>
-      <div class="gantt-scroll-area">
-        <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
+      @if (!data) {
+        <div class="no-data-message">
+          <p>計画データが読み込まれていません。</p>
+        </div>
+      } @else if (!data.data?.fields?.length) {
+        <div class="no-data-message">
+          <p>圃場データがありません。</p>
+        </div>
+      } @else {
+        <div class="gantt-scroll-area">
+          <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
           <defs>
             <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
@@ -113,8 +122,9 @@ interface TimeScale {
               }
             </g>
           }
-        </svg>
-      </div>
+          </svg>
+        </div>
+      }
     </div>
   `,
   styleUrl: './gantt-chart.component.css'
@@ -159,7 +169,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private globalMouseMoveHandler: any;
   private globalMouseUpHandler: any;
   private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
-  private originalBodyOverflow = ''; // ドラッグ中のスクロール制御用
   private planService = inject(PlanService);
 
   constructor(private translate: TranslateService) {}
@@ -172,35 +181,24 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('GanttChart: ngOnChanges called', { data: this.data, changes });
     if (changes['data'] && this.data) {
-      console.log('GanttChart: data exists, checking container', { container: this.container?.nativeElement });
       // コンテナ要素が利用可能な場合のみupdateChart()を実行、そうでない場合はフラグを設定
       if (this.container?.nativeElement) {
-        console.log('GanttChart: calling updateChart');
         this.updateChart();
         this.needsUpdate = false;
       } else {
-        console.log('GanttChart: container not ready, setting needsUpdate = true');
         this.needsUpdate = true;
       }
-    } else {
-      console.log('GanttChart: no data or no data change');
     }
   }
 
   ngAfterViewInit(): void {
-    console.log('GanttChart: ngAfterViewInit called', { container: this.container?.nativeElement, needsUpdate: this.needsUpdate });
     // コンテナ要素が確実にレンダリングされた後に幅を取得し、必要に応じてupdateChart()を実行
     setTimeout(() => {
-      console.log('GanttChart: setTimeout in ngAfterViewInit');
       this.updateDimensions();
       if (this.needsUpdate) {
-        console.log('GanttChart: needsUpdate is true, calling updateChart');
         this.updateChart();
         this.needsUpdate = false;
-      } else {
-        console.log('GanttChart: needsUpdate is false');
       }
     }, 0);
     window.addEventListener('resize', this.onResize);
@@ -228,11 +226,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private updateChart() {
-    console.log('GanttChart: updateChart called', { data: this.data });
-    if (!this.data) {
-      console.log('GanttChart: no data, returning');
-      return;
-    }
+    if (!this.data) return;
 
     // コンテナ幅を取得してconfig.widthを更新（スクロール防止）
     if (this.container?.nativeElement) {
@@ -531,8 +525,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       if (distance > this.dragThreshold) {
         // ドラッグ開始
         this.isDragging = true;
-        // スクロールを無効化
-        this.disableScroll();
 
         // 要素の参照をキャッシュ
         const barGroup = this.getBarGroupElement(this.draggedCultivation.id);
@@ -721,9 +713,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     // ドラッグ終了時のビジュアルリセット
     this.resetVisualState();
 
-    // スクロールを有効化
-    this.enableScroll();
-
     // 状態をクリア
     this.isDragging = false;
     this.draggedCultivation = null;
@@ -791,7 +780,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private resetVisualState() {
-    const barGroup = this.draggedCultivation
+    const barGroup = this.draggedCultivation 
       ? this.getBarGroupElement(this.draggedCultivation.id)
       : null;
 
@@ -810,37 +799,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.cachedBarBg = null;
     this.cachedLabel = null;
     this.lastTargetFieldIndex = -1;
-  }
-
-  private disableScroll() {
-    // 元のoverflow値を保存
-    this.originalBodyOverflow = document.body.style.overflow || '';
-    // スクロールを無効化
-    document.body.style.overflow = 'hidden';
-
-    // wheelイベントとtouchmoveイベントも防止
-    const preventScroll = (e: Event) => e.preventDefault();
-    document.addEventListener('wheel', preventScroll, { passive: false });
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-
-    // イベントリスナーを保存（後で削除するため）
-    (document as any).__preventScrollHandler = preventScroll;
-  }
-
-  private enableScroll() {
-    // スクロールを有効化
-    document.body.style.overflow = this.originalBodyOverflow;
-
-    // イベントリスナーを削除
-    const preventScrollHandler = (document as any).__preventScrollHandler;
-    if (preventScrollHandler) {
-      document.removeEventListener('wheel', preventScrollHandler);
-      document.removeEventListener('touchmove', preventScrollHandler);
-      delete (document as any).__preventScrollHandler;
-    }
-
-    // 元の値をクリア
-    this.originalBodyOverflow = '';
   }
 
   private applyMovesLocally(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {

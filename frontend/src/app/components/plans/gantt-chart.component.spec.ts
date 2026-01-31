@@ -154,4 +154,103 @@ describe('GanttChartComponent', () => {
       }
     });
   });
+
+  describe('gantt chart visibility', () => {
+    it('should not display gantt chart when fields is empty', () => {
+      // fieldsが空のデータを設定
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [], // 空のfields
+          cultivations: []
+        }
+      } as any;
+
+      // updateChartを実行
+      component['updateChart']();
+
+      // RED: fieldsが空の場合、fieldGroupsが空になるはず
+      expect(component.fieldGroups).toHaveLength(0);
+
+      // RED: config.heightが最小値になるはず（margin.top + margin.bottom = 60 + 12 = 72）
+      expect(component.config.height).toBe(72);
+
+      // fixture.detectChanges() を実行してテンプレートを更新
+      fixture.detectChanges();
+
+      // GREEN: fieldsが空の場合、SVG要素は表示されず、メッセージが表示される
+      const svgElement = fixture.nativeElement.querySelector('svg');
+      expect(svgElement).toBeFalsy();
+
+      // GREEN: メッセージ要素が表示されている
+      const messageElement = fixture.nativeElement.querySelector('.no-data-message');
+      expect(messageElement).toBeTruthy();
+      expect(messageElement.textContent?.trim()).toBe('圃場データがありません。');
+    });
+
+    it('should not display gantt chart when data is null', () => {
+      // dataをnullに設定
+      component.data = null;
+
+      // updateChartを実行
+      component['updateChart']();
+
+      // RED: dataがnullの場合、fieldGroupsが空のままのはず
+      expect(component.fieldGroups).toHaveLength(0);
+
+      // RED: config.heightが初期値のままのはず（500）
+      expect(component.config.height).toBe(500);
+
+      // fixture.detectChanges() を実行してテンプレートを更新
+      fixture.detectChanges();
+
+      // GREEN: dataがnullの場合、SVG要素は表示されず、メッセージが表示される
+      const svgElement = fixture.nativeElement.querySelector('svg');
+      expect(svgElement).toBeFalsy();
+
+      // GREEN: メッセージ要素が表示されている
+      const messageElement = fixture.nativeElement.querySelector('.no-data-message');
+      expect(messageElement).toBeTruthy();
+      expect(messageElement.textContent?.trim()).toBe('計画データが読み込まれていません。');
+    });
+
+    it('should display gantt chart when data is valid', () => {
+      // 有効なデータを設定
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [{
+            id: 14,
+            field_id: 1,
+            field_name: 'Field 1',
+            crop_name: 'Rice',
+            start_date: '2026-01-01',
+            completion_date: '2026-01-31'
+          }]
+        }
+      } as any;
+
+      // updateChartを実行
+      component['updateChart']();
+
+      // GREEN: 有効なデータの場合、fieldGroupsに要素が存在するはず
+      expect(component.fieldGroups).toHaveLength(1);
+
+      // GREEN: config.heightが適切に計算されるはず（margin.top + rowHeight + margin.bottom = 60 + 68 + 12 = 140）
+      expect(component.config.height).toBe(140);
+
+      // fixture.detectChanges() を実行してテンプレートを更新
+      fixture.detectChanges();
+
+      // GREEN: SVG要素の高さが適切に設定されているはず
+      const svgElement = fixture.nativeElement.querySelector('svg');
+      expect(svgElement).toBeTruthy();
+      expect(svgElement.getAttribute('height')).toBe('140');
+    });
+  });
 });
