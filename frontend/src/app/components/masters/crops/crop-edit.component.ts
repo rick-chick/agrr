@@ -85,7 +85,11 @@ const initialControl: CropEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">{{ 'crops.edit.title' | translate:{name: control.formData.name} }}</h2>
+        @if (!control.loading) {
+          <h2 id="form-heading" class="form-card__title">{{ 'crops.edit.title' | translate:{name: control.formData.name} }}</h2>
+        } @else {
+          <h2 id="form-heading" class="form-card__title">{{ 'common.loading' | translate }}</h2>
+        }
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
@@ -139,7 +143,7 @@ const initialControl: CropEditViewState = {
               @for (stage of control.formData.crop_stages; track stage.id) {
                 <div class="crop-stage-card">
                   <div class="crop-stage-card__header">
-                    <h4 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{order: stage.order} }}</h4>
+                    <h4 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate }} {{ stage.order }}</h4>
                     <button type="button" class="btn-danger" (click)="deleteCropStage(stage.id)">
                       {{ 'common.delete' | translate }}
                     </button>
