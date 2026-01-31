@@ -54,7 +54,7 @@ module Api
             return render json: { error: I18n.t('public_plans.errors.invalid_farm_size') }, status: :unprocessable_entity
           end
 
-          crops = Crop.where(id: crop_ids)
+          crops = ::Crop.where(id: crop_ids)
           Rails.logger.info "🌱 [WizardController#create] Found #{crops.count} crops for ids: #{crop_ids}"
           if crops.empty?
             Rails.logger.warn "❌ [WizardController#create] No crops found for ids: #{crop_ids}"
