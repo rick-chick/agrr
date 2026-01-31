@@ -25,21 +25,35 @@ const initialControl: PlanListViewState = {
     { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
   ],
   template: `
-    <section class="page">
-      <h2>Plans</h2>
-      @if (control.loading) {
-        <p>Loading...</p>
-      } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
-      } @else {
-        <ul>
-          <li *ngFor="let plan of control.plans">
-            <a [routerLink]="['/plans', plan.id]">{{ plan.name }}</a>
-            <span class="status">{{ plan.status ?? '-' }}</span>
-          </li>
-        </ul>
-      }
-    </section>
+    <main class="page-main">
+      <header class="page-header">
+        <h1 id="page-title" class="page-title">Plans</h1>
+        <p class="page-description">Manage your cultivation plans.</p>
+      </header>
+      <section class="section-card" aria-labelledby="page-title">
+        <div class="section-card__header-actions">
+          <a routerLink="/plans/new" class="btn-primary">新規計画</a>
+        </div>
+        @if (control.loading) {
+          <p class="master-loading">Loading...</p>
+        } @else if (control.error) {
+          <p class="plan-list-error">{{ control.error }}</p>
+        } @else {
+          <ul class="card-list" role="list">
+            @for (plan of control.plans; track plan.id) {
+              <li class="card-list__item">
+                <article class="item-card">
+                  <a [routerLink]="['/plans', plan.id]" class="item-card__body">
+                    <span class="item-card__title">{{ plan.name }}</span>
+                    <span class="item-card__meta">Status: {{ plan.status ?? '-' }}</span>
+                  </a>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </main>
   `,
   styleUrl: './plan-list.component.css'
 })

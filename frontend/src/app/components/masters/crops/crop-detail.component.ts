@@ -49,8 +49,8 @@ const initialControl: CropDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
+            <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
             <a [routerLink]="['/crops']" class="btn-secondary">{{ 'common.back' | translate }}</a>
-            <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>

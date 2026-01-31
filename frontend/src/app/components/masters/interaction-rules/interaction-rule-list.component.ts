@@ -41,28 +41,31 @@ const initialControl: InteractionRuleListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 class="page-title">{{ 'interaction_rules.index.title' | translate }}</h1>
+        <h1 id="page-title" class="page-title">{{ 'interaction_rules.index.title' | translate }}</h1>
         <p class="page-description">{{ 'interaction_rules.index.description' | translate }}</p>
       </header>
-      <section class="section-card" aria-labelledby="section-list-heading">
-        <h2 id="section-list-heading" class="section-title">{{ 'interaction_rules.index.list_heading' | translate }}</h2>
+      <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
-          <a [routerLink]="['/interaction_rules', 'new']" class="btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
+          <div class="section-card__header-actions">
+            <a [routerLink]="['/interaction_rules', 'new']" class="btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
+          </div>
           <ul class="card-list" role="list">
             @for (rule of control.rules; track rule.id) {
               <li class="card-list__item">
-                <a [routerLink]="['/interaction_rules', rule.id]" class="item-card">
-                  <span class="item-card__title">{{ rule.source_group }} → {{ rule.target_group }}</span>
-                  <span class="item-card__meta">{{ rule.rule_type }} ({{ rule.impact_ratio }})</span>
-                </a>
-                <div class="list-item-actions">
-                  <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn-secondary btn-sm">{{ 'common.edit' | translate }}</a>
-                  <button type="button" class="btn-danger btn-sm" (click)="deleteInteractionRule(rule.id)">
-                    {{ 'common.delete' | translate }}
-                  </button>
-                </div>
+                <article class="item-card">
+                  <a [routerLink]="['/interaction_rules', rule.id]" class="item-card__body">
+                    <span class="item-card__title">{{ rule.source_group }} → {{ rule.target_group }}</span>
+                    <span class="item-card__meta">{{ rule.rule_type }} ({{ rule.impact_ratio }})</span>
+                  </a>
+                  <div class="item-card__actions">
+                    <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
+                    <button type="button" class="btn-danger" (click)="deleteInteractionRule(rule.id)" [attr.aria-label]="'common.delete' | translate">
+                      {{ 'common.delete' | translate }}
+                    </button>
+                  </div>
+                </article>
               </li>
             }
           </ul>

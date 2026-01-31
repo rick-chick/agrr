@@ -71,8 +71,8 @@ const initialControl: InteractionRuleDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
+            <a [routerLink]="['/interaction_rules', control.rule.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
             <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
-            <a [routerLink]="['/interaction_rules', control.rule.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deleteInteractionRule()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
