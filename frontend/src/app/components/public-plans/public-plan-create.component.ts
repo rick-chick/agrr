@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
 import { PublicPlanCreatePresenter } from '../../adapters/public-plans/public-plan-create.presenter';
@@ -10,6 +10,7 @@ import { LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT } from '../../usecase/public-plans/l
 import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { ApiClientService } from '../../services/api-client.service';
 import { Farm } from '../../domain/farms/farm';
 
 const initialControl: PublicPlanCreateViewState = {
@@ -28,7 +29,8 @@ const initialControl: PublicPlanCreateViewState = {
     PublicPlanCreatePresenter,
     LoadPublicPlanFarmsUseCase,
     { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
-    { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
+    { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway },
+    ApiClientService
   ],
   template: `
     <main class="page-main public-plans-wrapper">
@@ -122,13 +124,15 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly useCase = inject(LoadPublicPlanFarmsUseCase);
   private readonly presenter = inject(PublicPlanCreatePresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
-  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   selectedFarmId: number | null = null;
   selectedFarm: Farm | null = null;
   selectedRegionId: string | null = null;
-  selectedRegion: { id: string; name: string; description: string; icon: string } | null = null;
+
+  get selectedRegion(): { id: string; name: string; description: string; icon: string } | null {
+    return this.selectedRegionId ? this.availableRegions.find(r => r.id === this.selectedRegionId) || null : null;
+  }
 
   availableRegions = [
     { id: 'jp', name: 'public_plans.regions.jp.name', description: 'public_plans.regions.jp.description', icon: '🇯🇵' },
@@ -152,19 +156,17 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       this.selectedFarmId = state.farm.id;
       this.selectedFarm = state.farm;
       // If farm is already selected, find the corresponding region
-      this.selectedRegion = this.availableRegions.find(r => r.id === state.farm?.region) || null;
-      this.selectedRegionId = this.selectedRegion?.id || null;
-      // Don't load farms again if we already have a farm
+      this.selectedRegionId = state.farm.region;
+      // Load farms to allow re-selection and avoid stuck loading
+      this.loadFarms(state.farm.region);
     } else {
       // Reset region selection if no farm is selected
-      this.selectedRegion = null;
       this.selectedRegionId = null;
     }
   }
 
   selectRegion(region: { id: string; name: string; description: string; icon: string }): void {
     this.selectedRegionId = region.id;
-    this.selectedRegion = region;
     this.loadFarms(region.id);
   }
 
@@ -176,8 +178,13 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   }
 
   private loadFarms(region: string): void {
-    console.log('🌱 [PublicPlanCreateComponent] loadFarms called with region:', region);
-    console.log('🌱 [PublicPlanCreateComponent] current control state:', this.control);
+    this.control = {
+      ...this.control,
+      loading: true,
+      error: null,
+      farms: [],
+      farmSizes: []
+    };
     this.useCase.execute({ region });
   }
 }
