@@ -9,6 +9,15 @@
 # - Resource limit testing (MANDATORY)
 # - No patches - use dependency injection instead
 #
+# 開発DBを壊さないため: RAILS_ENV=development 等でテスト実行された場合は即終了する
+if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
+  $stderr.puts <<~MSG.strip
+    [AGRR] Rails tests must run with RAILS_ENV=test. Current RAILS_ENV=#{ENV['RAILS_ENV'].inspect} would use the development database and corrupt it.
+    Use: .cursor/skills/test-common/scripts/run-test-rails.sh
+    Or:  docker compose --profile test run --rm test bundle exec rails test
+  MSG
+  exit 1
+end
 ENV["RAILS_ENV"] ||= "test"
 if ENV.fetch("COVERAGE", "true") != "false"
   require 'simplecov'

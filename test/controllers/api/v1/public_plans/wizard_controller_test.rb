@@ -62,6 +62,34 @@ module Api
           assert_equal "public", plan.plan_type
           assert_equal 30, plan.total_area
         end
+
+        # Angular は Content-Type: application/json で body を送る。params に渡ることを確認（原因Aの否定）。
+        test "creates plan when POST body is JSON like Angular client" do
+          assert_enqueued_with(job: ChainedJobRunnerJob) do
+            post "/api/v1/public_plans/plans",
+              params: { farm_id: @jp_farm.id, farm_size_id: "home_garden", crop_ids: [@jp_crop.id] }.to_json,
+              headers: { "Content-Type" => "application/json", "ACCEPT" => "application/json" }
+          end
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert json_response["plan_id"].present?, "response must include plan_id"
+          plan = ::CultivationPlan.find(json_response["plan_id"])
+          assert_equal "public", plan.plan_type
+        end
+
+        # RED検証: farm_size_id が Integer（例: area_sqm の 30）で送られると size[:id] == 30 が false で 422 になる。
+        # その原因が真なら「201 と plan_id が返る」テストは失敗する（RED）。
+        test "returns success when farm_size_id is sent as integer matching area_sqm" do
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: @jp_farm.id,
+            farm_size_id: 30, # home_garden の area_sqm。現状は id が "home_garden" なので一致せず 422 になる
+            crop_ids: [@jp_crop.id]
+          }
+          assert_response :success, "farm_size_id as integer (30) should be accepted when it matches home_garden area_sqm"
+          json_response = JSON.parse(response.body)
+          plan = ::CultivationPlan.find(json_response["plan_id"])
+          assert_equal 30, plan.total_area
+        end
       end
     end
   end
