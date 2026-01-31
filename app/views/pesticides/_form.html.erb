@@ -13,7 +13,7 @@
 
     <div class="form-group">
       <%= f.label :crop_id, t('pesticides.form.crop_label'), class: 'form-label' %>
-      <%= f.collection_select :crop_id, @crops, :id, :name, 
+      <%= f.collection_select :crop_id, @crops || [], :id, :name, 
           { prompt: t('pesticides.form.select_crop') }, 
           { required: true, class: 'form-control' } %>
       <div class="form-text"><%= t('pesticides.form.crop_help') %></div>
@@ -21,7 +21,7 @@
 
     <div class="form-group">
       <%= f.label :pest_id, t('pesticides.form.pest_label'), class: 'form-label' %>
-      <%= f.collection_select :pest_id, @pests, :id, :name, 
+      <%= f.collection_select :pest_id, @pests || [], :id, :name, 
           { prompt: t('pesticides.form.select_pest') }, 
           { required: true, class: 'form-control' } %>
       <div class="form-text"><%= t('pesticides.form.pest_help') %></div>

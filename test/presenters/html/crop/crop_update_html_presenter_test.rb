@@ -9,9 +9,7 @@ class CropUpdateHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: view_mock)
 
     crop_entity = mock
-    crop_model = mock('crop_model')
     crop_entity.expects(:id).returns(1)
-    crop_entity.expects(:to_model).returns(crop_model)
 
     view_mock.expects(:crop_path).with(1).returns('/crops/1')
     view_mock.expects(:redirect_to).with('/crops/1', notice: I18n.t('crops.flash.updated'))

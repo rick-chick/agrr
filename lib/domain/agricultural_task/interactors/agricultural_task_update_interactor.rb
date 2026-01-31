@@ -21,6 +21,10 @@ module Domain
           attrs[:skill_level] = update_input_dto.skill_level if !update_input_dto.skill_level.nil?
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
           attrs[:task_type] = update_input_dto.task_type if !update_input_dto.task_type.nil?
+          if !update_input_dto.is_reference.nil?
+            attrs[:is_reference] = ActiveModel::Type::Boolean.new.cast(update_input_dto.is_reference)
+            attrs[:is_reference] = false if attrs[:is_reference].nil?
+          end
 
           task_model = Domain::Shared::Policies::AgriculturalTaskPolicy.find_editable!(::AgriculturalTask, user, update_input_dto.id)
           Domain::Shared::Policies::AgriculturalTaskPolicy.apply_update!(user, task_model, attrs)

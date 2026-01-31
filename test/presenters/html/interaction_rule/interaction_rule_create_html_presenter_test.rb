@@ -10,12 +10,12 @@ class InteractionRuleCreateHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: view_mock)
 
     rule = mock('rule')
+    rule.expects(:id).returns(1)
 
-    view_mock.expects(:interaction_rules_path).returns('/interaction_rules')
-    view_mock.expects(:redirect_to).with('/interaction_rules', notice: I18n.t('interaction_rules.flash.created'))
+    view_mock.expects(:interaction_rule_path).with(1).returns('/interaction_rules/1')
+    view_mock.expects(:redirect_to).with('/interaction_rules/1', notice: I18n.t('interaction_rules.flash.created'))
 
     presenter.on_success(rule)
-    assert true
   end
 
   test 'on_failure renders new template' do

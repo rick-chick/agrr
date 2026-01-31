@@ -26,6 +26,14 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
     error_dto.expects(:respond_to?).with(:message).returns(true)
     error_dto.expects(:message).returns('Test error')
 
+    fertilize_mock = mock
+    fertilize_mock.expects(:assign_attributes)
+    fertilize_mock.expects(:valid?)
+
+    view_mock.stubs(:instance_variable_get).with(:@fertilize).returns(nil)
+    view_mock.stubs(:params).returns(id: 1, fertilize: {})
+    ::Fertilize.stubs(:find).with(1).returns(fertilize_mock)
+    view_mock.expects(:instance_variable_set).with(:@fertilize, fertilize_mock)
     flash_now_mock = mock
     flash_mock = mock
     view_mock.expects(:flash).returns(flash_mock)

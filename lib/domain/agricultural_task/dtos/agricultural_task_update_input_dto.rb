@@ -5,10 +5,10 @@ module Domain
     module Dtos
       class AgriculturalTaskUpdateInputDto
         attr_reader :id, :name, :description, :time_per_sqm, :weather_dependency,
-                    :required_tools, :skill_level, :region, :task_type
+                    :required_tools, :skill_level, :region, :task_type, :is_reference
 
         def initialize(id:, name: nil, description: nil, time_per_sqm: nil, weather_dependency: nil,
-                       required_tools: nil, skill_level: nil, region: nil, task_type: nil)
+                       required_tools: nil, skill_level: nil, region: nil, task_type: nil, is_reference: nil)
           @id = id
           @name = name
           @description = description
@@ -18,6 +18,7 @@ module Domain
           @skill_level = skill_level
           @region = region
           @task_type = task_type
+          @is_reference = is_reference
         end
 
         def self.from_hash(hash, task_id)
@@ -31,7 +32,8 @@ module Domain
             required_tools: pp[:required_tools],
             skill_level: pp[:skill_level],
             region: pp[:region],
-            task_type: pp[:task_type]
+            task_type: pp[:task_type],
+            is_reference: pp[:is_reference]
           )
         end
       end

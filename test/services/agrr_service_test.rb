@@ -92,7 +92,7 @@ class AgrrServiceTest < ActiveSupport::TestCase
     assert_equal Rails.root.join('bin', 'agrr_client').to_s, binary
     assert_includes rest, '--data-source'
     data_source_index = rest.index('--data-source')
-    assert_equal 'noaa', rest[data_source_index + 1]
+    assert_equal 'jma', rest[data_source_index + 1]
     assert_includes rest, '--output'
     status.verify
     refute_nil output_path

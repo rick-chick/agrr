@@ -26,6 +26,8 @@
            selected_task_ids: @selected_ids
 %>
 
+<% available_agricultural_tasks = local_assigns[:available_agricultural_tasks] || [] %>
+<% selected_task_ids = local_assigns[:selected_task_ids] || [] %>
 <div class="task-manual-section" id="available-task-templates">
   <% if available_agricultural_tasks.any? %>
     <div class="task-manual-section__header">

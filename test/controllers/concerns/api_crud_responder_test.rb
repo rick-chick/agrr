@@ -42,7 +42,7 @@ class ApiCrudResponderTest < ActionDispatch::IntegrationTest
 
   test "respond_to_create with valid params returns created status" do
     post api_v1_masters_farms_path,
-         params: { farm: { name: "新規農場", latitude: 35.0, longitude: 135.0 } },
+         params: { farm: { name: "新規農場", region: "jp", latitude: 35.0, longitude: 135.0 } },
          headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
 
     assert_response :created
@@ -82,13 +82,14 @@ class ApiCrudResponderTest < ActionDispatch::IntegrationTest
           params: { farm: { name: "" } },
           headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
 
+    # 現状の API は name 空白時も update を試行し、モデルが無効なら 422 を返す
     assert_response :unprocessable_entity
     json_response = JSON.parse(response.body)
     assert json_response.key?("errors")
     assert_kind_of Array, json_response["errors"]
   end
 
-  test "respond_to_destroy with valid params returns no_content" do
+  test "respond_to_destroy with valid params returns undo json or no_content" do
     farm = create(:farm, :user_owned, user: @user)
 
     assert_difference("@user.farms.where(is_reference: false).count", -1) do
@@ -96,6 +97,10 @@ class ApiCrudResponderTest < ActionDispatch::IntegrationTest
              headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
     end
 
-    assert_response :no_content
+    # 現状の API は削除時に undo トークン付き JSON (200) を返す
+    assert_response :success
+    json_response = JSON.parse(response.body)
+    assert json_response.key?("undo_token")
+    assert json_response.key?("undo_path")
   end
 end

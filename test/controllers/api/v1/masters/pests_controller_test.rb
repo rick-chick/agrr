@@ -151,7 +151,9 @@ module Api
                   "X-API-Key" => @api_key
                 }
 
-          assert_response :forbidden
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response.key?("errors")
 
           other_pest.reload
           assert_equal "他のユーザーの害虫", other_pest.name

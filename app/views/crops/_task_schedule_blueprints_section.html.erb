@@ -38,7 +38,7 @@
       </div>
     <% end %>
   </div>
-  <% if task_schedule_blueprints.any? %>
+  <% if task_schedule_blueprints&.any? %>
     <% sorted_blueprints = task_schedule_blueprints.includes(:agricultural_task).sort_by do |blueprint|
          [blueprint.gdd_trigger.to_f, blueprint.priority.to_i, blueprint.id]
        end %>

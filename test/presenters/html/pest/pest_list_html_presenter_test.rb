@@ -13,8 +13,10 @@ class PestListHtmlPresenterTest < ActiveSupport::TestCase
     pest_entity2 = mock
     pest_model1 = mock
     pest_model2 = mock
-    pest_entity1.expects(:to_model).returns(pest_model1)
-    pest_entity2.expects(:to_model).returns(pest_model2)
+    pest_entity1.expects(:id).returns(1)
+    pest_entity2.expects(:id).returns(2)
+    Pest.expects(:find).with(1).returns(pest_model1)
+    Pest.expects(:find).with(2).returns(pest_model2)
 
     view_mock.expects(:instance_variable_set).with(:@pests, [pest_model1, pest_model2])
 

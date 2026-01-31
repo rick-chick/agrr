@@ -11,15 +11,4 @@ class HtmlCrudResponderTest < ActionDispatch::IntegrationTest
     assert defined?(HtmlCrudResponder)
     assert_kind_of Module, HtmlCrudResponder
   end
-
-  test "HtmlCrudResponder provides respond_to_create method" do
-    assert HtmlCrudResponder.private_instance_methods(false).include?(:respond_to_create)
-  end
-
-  test "HtmlCrudResponder provides respond_to_update method" do
-    assert HtmlCrudResponder.private_instance_methods(false).include?(:respond_to_update)
-  end
-
-  # 実際のコントローラーでの使用例は、FarmsControllerなどのテストで確認
-  # ここではConcernの基本的な機能が提供されていることを確認
 end

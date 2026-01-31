@@ -39,7 +39,7 @@ const initialControl: PublicPlanResultsViewState = {
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
-      <div class="cultivation-results-container">
+      <div class="free-plans-container">
         @if (control.loading) {
           <div class="loading-state">
             <p>{{ 'public_plans.results.loading_data' | translate }}</p>
@@ -63,7 +63,7 @@ const initialControl: PublicPlanResultsViewState = {
               <div class="gantt-summary-item">
                 <span class="gantt-summary-icon" aria-hidden="true">📏</span>
                 <span class="gantt-summary-label">{{ 'public_plans.results.header.total_area' | translate }}</span>
-                <span class="gantt-summary-value">{{ control.data.total_area | number }}㎡</span>
+                <span class="gantt-summary-value">{{ control.data.data.total_area | number }}㎡</span>
               </div>
               <div class="gantt-summary-item">
                 <span class="gantt-summary-icon" aria-hidden="true">🏞️</span>

@@ -24,7 +24,9 @@ module Adapters
             k: create_input_dto.k,
             description: create_input_dto.description,
             package_size: create_input_dto.package_size,
-            region: create_input_dto.region
+            region: create_input_dto.region,
+            is_reference: true,
+            user_id: nil
           )
           raise StandardError, fertilize.errors.full_messages.join(', ') unless fertilize.save
 

@@ -18,10 +18,10 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
           assert_equal 20.0, entity.n
         end
 
-        test "should return nil when fertilize not found" do
-          entity = @gateway.find_by_id(9999)
-          
-          assert_nil entity
+        test "should raise when fertilize not found" do
+          assert_raises(StandardError) do
+            @gateway.find_by_id(9999)
+          end
         end
 
         test "should create fertilize from data" do

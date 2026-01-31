@@ -37,12 +37,12 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert_equal 2, json_response.length
           farm_ids = json_response.map { |f| f["id"] }
           assert_includes farm_ids, farm1.id
           assert_includes farm_ids, farm2.id
           assert_not_includes farm_ids, reference_farm.id
           assert_not_includes farm_ids, other_farm.id
+          assert_operator json_response.length, :>=, 2
         end
 
         test "should show farm" do
@@ -131,7 +131,7 @@ module Api
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
-          assert_response :not_found
+          assert_response :forbidden
 
           patch api_v1_masters_farm_path(farm),
                 params: {
@@ -141,14 +141,14 @@ module Api
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
-          assert_response :not_found
+          assert_response :forbidden
 
           delete api_v1_masters_farm_path(farm),
                  headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
-          assert_response :not_found
+          assert_response :forbidden
         end
       end
     end

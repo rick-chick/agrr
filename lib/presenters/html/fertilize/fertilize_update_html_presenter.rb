@@ -8,15 +8,15 @@ module Presenters
           @view = view
         end
 
-        def on_success(dto)
+        def on_success(fertilize_entity)
           @view.redirect_to(
-            @view.fertilize_path(dto.fertilize.id),
+            @view.fertilize_path(fertilize_entity.id),
             notice: I18n.t('fertilizes.flash.updated')
           )
         end
 
         def on_failure(error_dto)
-          @fertilize = @view.instance_variable_get(:@fertilize) || Fertilize.find(@view.params[:id])
+          @fertilize = @view.instance_variable_get(:@fertilize) || ::Fertilize.find(@view.params[:id])
           @fertilize.assign_attributes(@view.params[:fertilize].to_h.symbolize_keys)
           @fertilize.valid?
           @view.instance_variable_set(:@fertilize, @fertilize)

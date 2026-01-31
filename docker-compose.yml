@@ -112,6 +112,7 @@ services:
     environment:
       - RAILS_ENV=test
       - DATABASE_URL=sqlite3:storage/test.sqlite3
+      - FRONTEND_URL=http://localhost:4200  # AuthTestController return_to 許可用
       - SELENIUM_HOST=selenium
       - SELENIUM_PORT=4444
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定

@@ -1,0 +1,32 @@
+@import '../masters/_master-layout.css';
+
+.farm-info {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.farm-info p {
+  margin: 0.5rem 0;
+}
+
+.crop-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin: 0;
+}

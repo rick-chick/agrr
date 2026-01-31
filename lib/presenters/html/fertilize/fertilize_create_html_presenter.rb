@@ -16,7 +16,7 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          @view.instance_variable_set(:@fertilize, Fertilize.new(@view.params[:fertilize].to_h.symbolize_keys))
+          @view.instance_variable_set(:@fertilize, ::Fertilize.new(@view.params[:fertilize].to_h.symbolize_keys))
           @view.instance_variable_get(:@fertilize).valid?
           @view.flash.now[:alert] = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           @view.render :new, status: :unprocessable_entity

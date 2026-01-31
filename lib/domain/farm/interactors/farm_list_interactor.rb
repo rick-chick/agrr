@@ -22,9 +22,9 @@ module Domain
             all_farms = owned_farms.or(reference_farms)
             filtered_farms = farms.select { |farm_entity| all_farms.exists?(farm_entity.id) }
           else
-            # 通常ユーザーは自分の農場のみ
-            visible_farms = Domain::Shared::Policies::FarmPolicy.visible_scope(::Farm, user)
-            filtered_farms = farms.select { |farm_entity| visible_farms.exists?(farm_entity.id) }
+            # 通常ユーザーは自分の農場のみ（参照農場・他ユーザー農場は含めない）
+            user_owned_farms = ::Farm.user_owned.by_user(user)
+            filtered_farms = farms.select { |farm_entity| user_owned_farms.exists?(farm_entity.id) }
           end
 
           @output_port.on_success(filtered_farms)

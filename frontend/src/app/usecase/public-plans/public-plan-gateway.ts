@@ -8,6 +8,11 @@ export interface CreatePublicPlanResponse {
   plan_id: number;
 }
 
+export interface SavePublicPlanResponse {
+  success: boolean;
+  error?: string;
+}
+
 export interface PublicPlanGateway {
   getFarms(region?: string): Observable<Farm[]>;
   getFarmSizes(): Observable<FarmSizeOption[]>;
@@ -17,6 +22,7 @@ export interface PublicPlanGateway {
     farmSizeId: string,
     cropIds: number[]
   ): Observable<CreatePublicPlanResponse>;
+  savePlan(planId: number): Observable<SavePublicPlanResponse>;
 }
 
 export const PUBLIC_PLAN_GATEWAY = new InjectionToken<PublicPlanGateway>(

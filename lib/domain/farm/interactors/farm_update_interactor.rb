@@ -13,7 +13,7 @@ module Domain
         def call(input_dto)
           user = User.find(@user_id)
           attrs = {}
-          attrs[:name] = input_dto.name if input_dto.name.present?
+          attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:region] = input_dto.region if input_dto.region.present?
           attrs[:latitude] = input_dto.latitude if !input_dto.latitude.nil?
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
@@ -24,6 +24,8 @@ module Domain
 
           farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model.reload)
           @output_port.on_success(farm_entity)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
         rescue ActiveRecord::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

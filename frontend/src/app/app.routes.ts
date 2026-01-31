@@ -164,10 +164,20 @@ export const routes: Routes = [
   },
   
   // Plans
-  { 
-    path: 'plans', 
+  {
+    path: 'plans',
     loadComponent: () => import('./components/plans/plan-list.component').then(m => m.PlanListComponent),
-    canActivate: [authGuard] 
+    canActivate: [authGuard]
+  },
+  {
+    path: 'plans/new',
+    loadComponent: () => import('./components/plans/plan-new.component').then(m => m.PlanNewComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'plans/select-crop',
+    loadComponent: () => import('./components/plans/plan-select-crop.component').then(m => m.PlanSelectCropComponent),
+    canActivate: [authGuard]
   },
   { 
     path: 'plans/:id', 
@@ -189,6 +199,10 @@ export const routes: Routes = [
   { 
     path: 'public-plans/new', 
     loadComponent: () => import('./components/public-plans/public-plan-create.component').then(m => m.PublicPlanCreateComponent)
+  },
+  { 
+    path: 'public-plans/select-farm-size', 
+    loadComponent: () => import('./components/public-plans/public-plan-select-farm-size.component').then(m => m.PublicPlanSelectFarmSizeComponent)
   },
   { 
     path: 'public-plans/select-crop', 

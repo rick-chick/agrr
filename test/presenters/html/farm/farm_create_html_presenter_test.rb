@@ -9,10 +9,9 @@ class FarmCreateHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::Farm::FarmCreateHtmlPresenter.new(view: view_mock)
 
     farm_entity = mock
-    farm_model = mock('farm_model')
-    farm_entity.expects(:to_model).returns(farm_model)
+    farm_entity.expects(:id).returns(1)
 
-    view_mock.expects(:farm_path).with(farm_model).returns('/farms/1')
+    view_mock.expects(:farm_path).with(1).returns('/farms/1')
     view_mock.expects(:redirect_to).with('/farms/1', notice: I18n.t('farms.flash.created'))
 
     presenter.on_success(farm_entity)
@@ -30,7 +29,7 @@ class FarmCreateHtmlPresenterTest < ActiveSupport::TestCase
     flash_mock.expects(:now).returns(flash_now_mock)
     flash_now_mock.expects(:[]=).with(:alert, 'Test error')
     view_mock.expects(:flash).returns(flash_mock)
-    view_mock.expects(:render).with(:new, status: :unprocessable_entity)
+    view_mock.expects(:render_form).with(:new, status: :unprocessable_entity)
 
     presenter.on_failure(error_dto)
   end

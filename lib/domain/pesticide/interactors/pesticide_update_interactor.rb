@@ -13,7 +13,7 @@ module Domain
         def call(input_dto)
           user = User.find(@user_id)
           attrs = {}
-          attrs[:name] = input_dto.name if input_dto.name.present?
+          attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:active_ingredient] = input_dto.active_ingredient if !input_dto.active_ingredient.nil?
           attrs[:description] = input_dto.description if !input_dto.description.nil?
           attrs[:crop_id] = input_dto.crop_id if !input_dto.crop_id.nil?

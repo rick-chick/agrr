@@ -15,6 +15,7 @@ module Domain
           @description = description
           @package_size = package_size
           @region = region
+          @is_reference = is_reference
         end
 
         def self.from_hash(hash, fertilize_id)

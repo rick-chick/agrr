@@ -26,6 +26,7 @@ module Api
       # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
       # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
       class CropsController < BaseController
+        include ApiCrudResponder
         # PolicyPermissionDenied例外を403 Forbiddenとして扱う
         rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
           render json: { error: '権限がありません。' }, status: :forbidden

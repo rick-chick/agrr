@@ -71,8 +71,8 @@ Rails.application.routes.draw do
 
     # APIキー管理（HTML）
     get 'api_keys', to: 'api_keys#show', as: 'api_keys'
-    post 'api_keys/generate', to: 'api_keys#generate'
-    post 'api_keys/regenerate', to: 'api_keys#regenerate'
+    post 'api_keys/generate', to: 'api_keys#generate', as: 'generate_api_key'
+    post 'api_keys/regenerate', to: 'api_keys#regenerate', as: 'regenerate_api_key'
 
     # HTML Plans（ナビ等で plans_path / public_plans_path を参照するため）
     resources :plans, only: [:index, :show, :new, :create, :destroy] do
@@ -92,8 +92,13 @@ Rails.application.routes.draw do
       end
     end
     get 'public_plans', to: 'public_plans#new', as: 'public_plans'
+    post 'public_plans', to: 'public_plans#create'
     get 'public_plans/select_farm_size', to: 'public_plans#select_farm_size', as: 'select_farm_size_public_plans'
     get 'public_plans/select_crop', to: 'public_plans#select_crop', as: 'select_crop_public_plans'
+    post 'public_plans/save_plan', to: 'public_plans#save_plan', as: 'save_plan_public_plans'
+    get 'public_plans/process_saved_plan', to: 'public_plans#process_saved_plan', as: 'process_saved_plan_public_plans'
+    get 'public_plans/optimizing', to: 'public_plans#optimizing', as: 'optimizing_public_plans'
+    get 'public_plans/results', to: 'public_plans#results', as: 'public_plans_results'
 
     # HTML Planning Schedules（ナビで fields_selection_planning_schedules_path を参照するため）
     get 'planning_schedules/fields_selection', to: 'planning_schedules#fields_selection', as: 'fields_selection_planning_schedules'
@@ -116,6 +121,7 @@ Rails.application.routes.draw do
         # Plans summary endpoints
         get 'plans', to: 'plans#index'
         get 'plans/:id', to: 'plans#show'
+        post 'plans', to: 'plans#create'
         # File management endpoints
         resources :files, only: [:index, :show, :create, :destroy]
         # AI作物情報取得・保存エンドポイント
@@ -132,6 +138,7 @@ Rails.application.routes.draw do
           get :farm_sizes, to: 'wizard#farm_sizes'
           get :crops, to: 'wizard#crops'
           post :plans, to: 'wizard#create'
+          post :save_plan
           resources :field_cultivations, only: [:show, :update] do
             member do
               get :climate_data

@@ -22,7 +22,7 @@ module Api
           # public plan であることを確認（Policy 経由）
           plan = PlanPolicy.find_public!(params[:id])
           
-          CultivationPlan
+          ::CultivationPlan
             .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
             .find(plan.id)
         rescue PolicyPermissionDenied

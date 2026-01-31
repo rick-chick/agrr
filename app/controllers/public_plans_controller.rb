@@ -165,12 +165,19 @@ class PublicPlansController < ApplicationController
     @show_schedule_warning = field_cultivations_with_schedules.count < @cultivation_plan.field_cultivations.count
   end
   
-  # 保存ボタンクリック時の処理
+  # 保存ボタンクリック時の処理（HTML用）およびAPI用
   def save_plan
+    # API リクエストの場合（JSONレスポンス）
+    if request.format.json?
+      handle_api_save_plan
+      return
+    end
+
+    # HTML リクエストの場合（既存の処理）
     Rails.logger.info "🔍 [save_plan] Called - logged_in?: #{logged_in?}"
     @cultivation_plan = find_cultivation_plan
     return unless @cultivation_plan
-    
+
     if logged_in?
       Rails.logger.info "✅ [save_plan] User is logged in, saving to account"
       # ログイン済みの場合、直接保存処理を実行
@@ -197,16 +204,78 @@ class PublicPlansController < ApplicationController
         session.delete(:public_plan_save_data)
         redirect_to plans_path, notice: I18n.t('public_plans.save.success')
       else
-        redirect_to results_public_plans_path, alert: result.error_message || I18n.t('public_plans.save.error')
+        redirect_to public_plans_results_path, alert: result.error_message || I18n.t('public_plans.save.error')
       end
     rescue => e
       Rails.logger.error "❌ [process_saved_plan] Error: #{e.message}"
-      redirect_to results_public_plans_path, alert: I18n.t('public_plans.save.error')
+      redirect_to public_plans_results_path, alert: I18n.t('public_plans.save.error')
     end
   end
   
   private
-  
+
+  # API用の保存処理
+  def handle_api_save_plan
+    Rails.logger.info "🔍 [handle_api_save_plan] Called"
+
+    # 認証チェック
+    unless current_user
+      Rails.logger.warn "❌ [handle_api_save_plan] User not authenticated"
+      render json: { success: false, error: 'Authentication required' }, status: :unauthorized
+      return
+    end
+
+    # JSON body から plan_id を取得
+    plan_id = params[:plan_id]
+    unless plan_id.present?
+      Rails.logger.warn "❌ [handle_api_save_plan] plan_id is missing"
+      render json: { success: false, error: 'plan_id is required' }, status: :bad_request
+      return
+    end
+
+    begin
+      # CultivationPlan を取得
+      cultivation_plan = CultivationPlan.find(plan_id)
+
+      # セッションデータを構築（PlanSaveService用）
+      field_data = cultivation_plan.cultivation_plan_fields.map do |field|
+        {
+          name: field.name,
+          area: field.area,
+          coordinates: [35.0, 139.0] # デフォルト座標
+        }
+      end
+
+      save_data = {
+        plan_id: cultivation_plan.id,
+        farm_id: cultivation_plan.farm_id,
+        crop_ids: cultivation_plan.crops.pluck(:id),
+        field_data: field_data
+      }
+
+      # PlanSaveService を呼び出し
+      result = PlanSaveService.new(
+        user: current_user,
+        session_data: save_data
+      ).call
+
+      if result.success
+        Rails.logger.info "✅ [handle_api_save_plan] Plan saved successfully"
+        render json: { success: true }
+      else
+        Rails.logger.error "❌ [handle_api_save_plan] Save failed: #{result.error_message}"
+        render json: { success: false, error: result.error_message || 'Save failed' }, status: :unprocessable_entity
+      end
+    rescue ActiveRecord::RecordNotFound
+      Rails.logger.warn "❌ [handle_api_save_plan] Plan not found: #{plan_id}"
+      render json: { success: false, error: 'Plan not found' }, status: :not_found
+    rescue => e
+      Rails.logger.error "❌ [handle_api_save_plan] Error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { success: false, error: 'Internal server error' }, status: :internal_server_error
+    end
+  end
+
   # localeから地域コードに変換（/ja → jp, /us → us, /in → in）
   def locale_to_region(locale)
     case locale.to_s
@@ -309,7 +378,7 @@ class PublicPlansController < ApplicationController
   end
   
   def completion_redirect_path
-    :results_public_plans_path
+    :public_plans_results_path
   end
   
   def channel_class
@@ -318,7 +387,7 @@ class PublicPlansController < ApplicationController
   
   # JobExecutionで使用する遷移先パス
   def job_completion_redirect_path
-    results_public_plans_path
+    public_plans_results_path
   end
   
   # セッションに保存データを保存
@@ -375,12 +444,12 @@ class PublicPlansController < ApplicationController
         redirect_to plans_path, notice: I18n.t('public_plans.save.success')
       else
         Rails.logger.error "❌ [save_plan_to_user_account] Save failed: #{result.error_message}"
-        redirect_to results_public_plans_path, alert: result.error_message || I18n.t('public_plans.save.error')
+        redirect_to public_plans_results_path, alert: result.error_message || I18n.t('public_plans.save.error')
       end
     rescue => e
       Rails.logger.error "❌ [save_plan_to_user_account] Error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      redirect_to results_public_plans_path, alert: I18n.t('public_plans.save.error')
+      redirect_to public_plans_results_path, alert: I18n.t('public_plans.save.error')
     end
   end
 end

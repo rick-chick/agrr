@@ -36,6 +36,8 @@ module Domain
             n: 10.0,
             p: 5.0,
             k: 3.0,
+            description: nil,
+            package_size: nil,
             region: "Kyoto",
             is_reference: false
           }).returns(fertilize_model)
@@ -78,6 +80,12 @@ module Domain
           User.expects(:find).with(admin_user_id).returns(admin_user)
           Domain::Shared::Policies::FertilizePolicy.expects(:build_for_create).with(::Fertilize, admin_user, {
             name: "Test Reference Fertilize",
+            n: nil,
+            p: nil,
+            k: nil,
+            description: nil,
+            package_size: nil,
+            region: nil,
             is_reference: true
           }).returns(fertilize_model)
           fertilize_model.expects(:save).returns(true)
@@ -93,8 +101,9 @@ module Domain
           )
 
           fertilize_model = mock
-          fertilize_model.expects(:errors).returns(mock)
-          fertilize_model.errors.expects(:full_messages).returns(["Name can't be blank"])
+          errors_mock = mock
+          errors_mock.expects(:full_messages).returns(["Name can't be blank"])
+          fertilize_model.expects(:errors).returns(errors_mock)
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FertilizePolicy.expects(:build_for_create).returns(fertilize_model)
