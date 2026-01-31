@@ -1,8 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { CropEditComponent } from './crop-edit.component';
+import { CropStage } from '../../../domain/crops/crop';
+
+// Import initialFormData from the component
+const initialFormData = {
+  name: '',
+  variety: null,
+  area_per_unit: null,
+  revenue_per_area: null,
+  region: null,
+  groups: [],
+  groupsDisplay: '',
+  is_reference: false,
+  crop_stages: []
+};
 import { CropEditPresenter } from '../../../adapters/crops/crop-edit.presenter';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { UpdateCropUseCase } from '../../../usecase/crops/update-crop.usecase';
@@ -18,37 +34,46 @@ describe('CropEditComponent', () => {
   let component: CropEditComponent;
   let fixture: ComponentFixture<CropEditComponent>;
   let mockActivatedRoute: any;
-  let mockLoadUseCase: jasmine.SpyObj<LoadCropForEditUseCase>;
-  let mockUpdateUseCase: jasmine.SpyObj<UpdateCropUseCase>;
-  let mockCreateCropStageUseCase: jasmine.SpyObj<CreateCropStageUseCase>;
-  let mockUpdateCropStageUseCase: jasmine.SpyObj<UpdateCropStageUseCase>;
-  let mockDeleteCropStageUseCase: jasmine.SpyObj<DeleteCropStageUseCase>;
-  let mockUpdateTemperatureRequirementUseCase: jasmine.SpyObj<UpdateTemperatureRequirementUseCase>;
-  let mockUpdateThermalRequirementUseCase: jasmine.SpyObj<UpdateThermalRequirementUseCase>;
-  let mockUpdateSunshineRequirementUseCase: jasmine.SpyObj<UpdateSunshineRequirementUseCase>;
-  let mockUpdateNutrientRequirementUseCase: jasmine.SpyObj<UpdateNutrientRequirementUseCase>;
+  let mockLoadUseCase: any;
+  let mockUpdateUseCase: any;
+  let mockCreateCropStageUseCase: any;
+  let mockUpdateCropStageUseCase: any;
+  let mockDeleteCropStageUseCase: any;
+  let mockUpdateTemperatureRequirementUseCase: any;
+  let mockUpdateThermalRequirementUseCase: any;
+  let mockUpdateSunshineRequirementUseCase: any;
+  let mockUpdateNutrientRequirementUseCase: any;
+  let mockTranslateService: any;
 
   beforeEach(async () => {
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
-          get: jasmine.createSpy('get').and.returnValue('1')
+          get: () => '1'
         }
       }
     };
 
-    mockLoadUseCase = jasmine.createSpyObj('LoadCropForEditUseCase', ['execute']);
-    mockUpdateUseCase = jasmine.createSpyObj('UpdateCropUseCase', ['execute']);
-    mockCreateCropStageUseCase = jasmine.createSpyObj('CreateCropStageUseCase', ['execute']);
-    mockUpdateCropStageUseCase = jasmine.createSpyObj('UpdateCropStageUseCase', ['execute']);
-    mockDeleteCropStageUseCase = jasmine.createSpyObj('DeleteCropStageUseCase', ['execute']);
-    mockUpdateTemperatureRequirementUseCase = jasmine.createSpyObj('UpdateTemperatureRequirementUseCase', ['execute']);
-    mockUpdateThermalRequirementUseCase = jasmine.createSpyObj('UpdateThermalRequirementUseCase', ['execute']);
-    mockUpdateSunshineRequirementUseCase = jasmine.createSpyObj('UpdateSunshineRequirementUseCase', ['execute']);
-    mockUpdateNutrientRequirementUseCase = jasmine.createSpyObj('UpdateNutrientRequirementUseCase', ['execute']);
+    mockLoadUseCase = { execute: vi.fn() };
+    mockUpdateUseCase = { execute: vi.fn() };
+    mockCreateCropStageUseCase = { execute: vi.fn() };
+    mockUpdateCropStageUseCase = { execute: vi.fn() };
+    mockDeleteCropStageUseCase = { execute: vi.fn() };
+    mockUpdateTemperatureRequirementUseCase = { execute: vi.fn() };
+    mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
+    mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
+    mockUpdateNutrientRequirementUseCase = { execute: vi.fn() };
+    mockTranslateService = {
+      instant: vi.fn((key: string, params?: any) => {
+        if (key === 'crops.edit.stage_title' && params?.order) {
+          return `ステージ ${params.order}`;
+        }
+        return key; // fallback
+      })
+    };
 
     await TestBed.configureTestingModule({
-      imports: [CropEditComponent],
+      imports: [CropEditComponent, TranslateModule.forRoot()],
       providers: [
         CropEditPresenter,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -60,7 +85,8 @@ describe('CropEditComponent', () => {
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
-        { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase }
+        { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase },
+        { provide: TranslateService, useValue: mockTranslateService }
       ]
     }).compileComponents();
 
@@ -73,7 +99,9 @@ describe('CropEditComponent', () => {
   });
 
   it('should load crop on init', () => {
-    component.ngOnInit();
+    // Ensure cropId is set correctly
+    expect(component['cropId']).toBe(1);
+    fixture.detectChanges(); // This triggers ngOnInit
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
   });
 
@@ -98,7 +126,7 @@ describe('CropEditComponent', () => {
   });
 
   it('should call deleteCropStageUseCase when deleteCropStage is called with confirmation', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     component.deleteCropStage(1);
     expect(mockDeleteCropStageUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
@@ -107,7 +135,7 @@ describe('CropEditComponent', () => {
   });
 
   it('should not call deleteCropStageUseCase when deleteCropStage is cancelled', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
     component.deleteCropStage(1);
     expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
   });
@@ -146,5 +174,64 @@ describe('CropEditComponent', () => {
       stageId: 1,
       payload: { daily_uptake_n: 0.5 }
     });
+  });
+
+  it('should render crop stages without ngModel error after fix', () => {
+    // Set up component with crop stages
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        ...initialFormData,
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    // This should not throw NG01352 error after adding name attributes
+    expect(() => {
+      fixture.detectChanges();
+    }).not.toThrow();
+  });
+
+  it('should translate stage title with correct parameters', () => {
+    // Set up component with crop stages
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        ...initialFormData,
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    // Check that translate service was called with correct parameters for stage title
+    // This test should fail (RED) because the component doesn't pass parameters to translate
+    const stageTitleElement = fixture.nativeElement.querySelector('.crop-stage-card__title');
+    expect(stageTitleElement).toBeTruthy();
+    expect(stageTitleElement.textContent).toContain('ステージ %{order}'); // This should be RED - template not replaced
   });
 });

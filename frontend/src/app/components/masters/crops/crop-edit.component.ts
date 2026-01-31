@@ -143,7 +143,7 @@ const initialControl: CropEditViewState = {
               @for (stage of control.formData.crop_stages; track stage.id) {
                 <div class="crop-stage-card">
                   <div class="crop-stage-card__header">
-                    <h4 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate }} {{ stage.order }}</h4>
+                    <h4 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{order: stage.order} }}</h4>
                     <button type="button" class="btn-danger" (click)="deleteCropStage(stage.id)">
                       {{ 'common.delete' | translate }}
                     </button>
