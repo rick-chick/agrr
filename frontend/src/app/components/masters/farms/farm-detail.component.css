@@ -1,5 +1,120 @@
 @import '../_master-layout.css';
 
-.field-actions-bar {
-  margin-bottom: var(--space-3);
+.section-card--full-width {
+  width: 100%;
+  max-width: 100%;
+}
+
+.section-card__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.section-card__header-actions .section-title {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.fields-empty {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.master-error {
+  color: var(--color-error);
+}
+
+.progress-bar {
+  width: 100%;
+  height: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  accent-color: var(--color-primary);
+}
+
+/* 確認ダイアログ（design: 削除確認は Dialog で） */
+.confirm-dialog {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  max-width: 400px;
+}
+
+.confirm-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.confirm-dialog__message {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-text);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* 圃場フォームダイアログ */
+.form-dialog {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  max-width: var(--form-card-max-width);
+}
+
+.form-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.form-dialog__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin: 0 0 var(--space-4) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.form-dialog .form-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-dialog .form-card__field {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-dialog .form-card__field input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  background: var(--color-surface);
+  margin-top: var(--space-1);
+}
+
+.form-dialog .form-card__field input:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+  box-shadow: var(--shadow-input-focus);
+}
+
+.form-dialog .form-card__field label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
 }
