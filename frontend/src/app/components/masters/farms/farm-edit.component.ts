@@ -12,6 +12,7 @@ import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
 import { FarmMapComponent } from './farm-map.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: FarmEditFormData = {
   name: '',
@@ -30,7 +31,7 @@ const initialControl: FarmEditViewState = {
 @Component({
   selector: 'app-farm-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule, RegionSelectComponent],
   providers: [
     FarmEditPresenter,
     LoadFarmForEditUseCase,
@@ -51,10 +52,11 @@ const initialControl: FarmEditViewState = {
               <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <label class="form-card__field" for="region">
-              <span class="form-card__field-label">Region</span>
-              <input id="region" name="region" [(ngModel)]="control.formData.region" required />
-            </label>
+            <app-region-select
+              [region]="control.formData.region"
+              [required]="true"
+              (regionChange)="control.formData.region = $event || ''"
+            ></app-region-select>
             <section class="section-card" aria-labelledby="location-heading">
               <h3 id="location-heading" class="section-title">{{ 'farms.new.form.location_label' | translate }}</h3>
               <app-farm-map

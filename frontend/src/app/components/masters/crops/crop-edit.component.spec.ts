@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { CropEditComponent } from './crop-edit.component';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropStage } from '../../../domain/crops/crop';
 
 // Import initialFormData from the component
@@ -68,12 +69,29 @@ describe('CropEditComponent', () => {
         if (key === 'crops.edit.stage_title' && params?.order) {
           return `ステージ ${params.order}`;
         }
+        // Add region translation keys
+        if (key === 'crops.form.region_label') return 'Region';
+        if (key === 'crops.form.region_blank') return '';
+        if (key === 'crops.form.region_jp') return 'Japan';
+        if (key === 'crops.form.region_us') return 'United States';
+        if (key === 'crops.form.region_in') return 'India';
         return key; // fallback
+      }),
+      get: vi.fn((key: string, params?: any) => {
+        // Mock get method for TranslatePipe
+        const result = mockTranslateService.instant(key, params);
+        return of(result);
       })
     };
 
     await TestBed.configureTestingModule({
-      imports: [CropEditComponent, TranslateModule.forRoot()],
+      imports: [
+        CropEditComponent,
+        RegionSelectComponent,
+        TranslateModule.forRoot({
+          defaultLanguage: 'en'
+        })
+      ],
       providers: [
         CropEditPresenter,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },

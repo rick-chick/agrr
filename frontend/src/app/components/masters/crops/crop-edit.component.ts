@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropEditView, CropEditViewState, CropEditFormData } from './crop-edit.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { UpdateCropUseCase } from '../../../usecase/crops/update-crop.usecase';
@@ -58,7 +59,7 @@ const initialControl: CropEditViewState = {
 @Component({
   selector: 'app-crop-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
   providers: [
     CropEditPresenter,
     LoadCropForEditUseCase,
@@ -114,10 +115,11 @@ const initialControl: CropEditViewState = {
               <span class="form-card__field-label">{{ 'crops.form.groups_label' | translate }}</span>
               <input id="crop-groups" name="groups" [(ngModel)]="control.formData.groupsDisplay" [placeholder]="'crops.form.groups_placeholder' | translate" />
             </label>
-            <label for="crop-region" class="form-card__field">
-              <span class="form-card__field-label">{{ 'crops.form.region_label' | translate }}</span>
-              <input id="crop-region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              id="crop-region"
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             @if (auth.user()?.admin) {
               <label class="form-card__field form-card__field--checkbox">
                 <input type="checkbox" name="is_reference" [(ngModel)]="control.formData.is_reference" />

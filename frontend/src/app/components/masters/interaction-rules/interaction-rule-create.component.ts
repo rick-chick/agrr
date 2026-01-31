@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleCreateView, InteractionRuleCreateViewState, InteractionRuleCreateFormData } from './interaction-rule-create.view';
 import { CreateInteractionRuleUseCase } from '../../../usecase/interaction-rules/create-interaction-rule.usecase';
 import { InteractionRuleCreatePresenter } from '../../../adapters/interaction-rules/interaction-rule-create.presenter';
@@ -29,7 +30,7 @@ const initialControl: InteractionRuleCreateViewState = {
 @Component({
   selector: 'app-interaction-rule-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     InteractionRuleCreatePresenter,
     CreateInteractionRuleUseCase,
@@ -65,10 +66,10 @@ const initialControl: InteractionRuleCreateViewState = {
             <span class="form-card__field-label">{{ 'interaction_rules.form.description_label' | translate }}</span>
             <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
-          <label class="form-card__field" for="region">
-            <span class="form-card__field-label">{{ 'interaction_rules.form.region_label' | translate }}</span>
-            <input id="region" name="region" [(ngModel)]="control.formData.region" />
-          </label>
+          <app-region-select
+            [region]="control.formData.region"
+            (regionChange)="control.formData.region = $event">
+          </app-region-select>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}

@@ -11,6 +11,7 @@ import { LOAD_PEST_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/pests/load-pest
 import { UPDATE_PEST_OUTPUT_PORT } from '../../../usecase/pests/update-pest.output-port';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: PestEditFormData = {
   name: '',
@@ -32,7 +33,7 @@ const initialControl: PestEditViewState = {
 @Component({
   selector: 'app-pest-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     PestEditPresenter,
     LoadPestForEditUseCase,
@@ -73,10 +74,10 @@ const initialControl: PestEditViewState = {
               <span class="form-card__field-label">Occurrence Season</span>
               <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
             </label>
-            <label class="form-card__field" for="region">
-              <span class="form-card__field-label">Region</span>
-              <input id="region" name="region" [(ngModel)]="control.formData.region" />
-            </label>
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
                 {{ control.saving ? 'Updating...' : 'Update Pest' }}

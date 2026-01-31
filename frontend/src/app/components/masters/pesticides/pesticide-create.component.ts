@@ -9,6 +9,7 @@ import { PesticideCreatePresenter } from '../../../adapters/pesticides/pesticide
 import { CREATE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/create-pesticide.output-port';
 import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
 import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
@@ -34,7 +35,7 @@ const initialControl: PesticideCreateViewState = {
 @Component({
   selector: 'app-pesticide-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
   providers: [
     PesticideCreatePresenter,
     CreatePesticideUseCase,
@@ -74,10 +75,10 @@ const initialControl: PesticideCreateViewState = {
               <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
             </select>
           </label>
-          <label for="region" class="form-card__field">
-            <span class="form-card__field-label">Region</span>
-            <input id="region" name="region" [(ngModel)]="control.formData.region" />
-          </label>
+          <app-region-select
+            [region]="control.formData.region"
+            (regionChange)="control.formData.region = $event"
+          ></app-region-select>
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
               {{ control.saving ? 'Creating...' : 'Create Pesticide' }}

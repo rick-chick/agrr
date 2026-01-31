@@ -2,12 +2,14 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { FertilizeCreateView, FertilizeCreateViewState, FertilizeCreateFormData } from './fertilize-create.view';
 import { CreateFertilizeUseCase } from '../../../usecase/fertilizes/create-fertilize.usecase';
 import { FertilizeCreatePresenter } from '../../../adapters/fertilizes/fertilize-create.presenter';
 import { CREATE_FERTILIZE_OUTPUT_PORT } from '../../../usecase/fertilizes/create-fertilize.output-port';
 import { FERTILIZE_GATEWAY } from '../../../usecase/fertilizes/fertilize-gateway';
 import { FertilizeApiGateway } from '../../../adapters/fertilizes/fertilize-api.gateway';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: FertilizeCreateFormData = {
   name: '',
@@ -28,7 +30,7 @@ const initialControl: FertilizeCreateViewState = {
 @Component({
   selector: 'app-fertilize-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     FertilizeCreatePresenter,
     CreateFertilizeUseCase,
@@ -44,10 +46,7 @@ const initialControl: FertilizeCreateViewState = {
             <span class="form-card__field-label">Name</span>
             <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <label for="region" class="form-card__field">
-            <span class="form-card__field-label">Region</span>
-            <input id="region" name="region" [(ngModel)]="control.formData.region" />
-          </label>
+          <app-region-select [region]="control.formData.region" (regionChange)="control.formData.region = $event"></app-region-select>
           <label for="n" class="form-card__field">
             <span class="form-card__field-label">N</span>
             <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />

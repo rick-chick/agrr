@@ -1608,6 +1608,20 @@
       "title": "🌍 地域を選択してください",
       "subtitle": "農業データを利用する地域を選択してください"
     },
+    "regions": {
+      "jp": {
+        "name": "日本",
+        "description": "Japan"
+      },
+      "us": {
+        "name": "アメリカ",
+        "description": "United States"
+      },
+      "in": {
+        "name": "インド",
+        "description": "India"
+      }
+    },
     "farm_sizes": {
       "home_garden": {
         "name": "家庭菜園",
