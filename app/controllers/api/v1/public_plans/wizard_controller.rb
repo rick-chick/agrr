@@ -35,6 +35,11 @@ module Api
             return render json: { error: I18n.t('public_plans.errors.select_farm_size') }, status: :unprocessable_entity
           end
 
+          total_area = farm_size[:area_sqm]
+          unless total_area.positive?
+            return render json: { error: I18n.t('public_plans.errors.invalid_farm_size') }, status: :unprocessable_entity
+          end
+
           crops = Crop.where(id: crop_ids)
           if crops.empty?
             return render json: { error: I18n.t('public_plans.errors.select_crop') }, status: :unprocessable_entity
@@ -42,7 +47,7 @@ module Api
 
           creator_params = {
             farm: farm,
-            total_area: farm_size[:area_sqm],
+            total_area: total_area,
             crops: crops,
             user: current_user,
             session_id: session.id.to_s,

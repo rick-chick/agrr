@@ -150,6 +150,66 @@ module Api
           # RED: ActionCableが正しく実装されていない場合、このアサーションは失敗する
           assert_broadcasts OptimizationChannel.broadcasting_for(plan), 9
         end
+
+        # RED検証: 不正な farm_id で計画作成が失敗し、404エラーが返される
+        test "returns 404 when farm_id is invalid" do
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: 999999, # 存在しないfarm_id
+            farm_size_id: "home_garden",
+            crop_ids: [@jp_crop.id]
+          }
+
+          assert_response :not_found
+          json_response = JSON.parse(response.body)
+          # RED: 現在は "Farm not found" が返されるが、これはユーザーのエラーとは異なる
+          assert_equal "Farm not found", json_response["error"]
+        end
+
+        # RED検証: 不正な farm_size_id で計画作成が失敗し、422エラーが返される
+        test "returns 422 when farm_size_id is invalid" do
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: @jp_farm.id,
+            farm_size_id: "invalid_size", # 存在しないfarm_size_id
+            crop_ids: [@jp_crop.id]
+          }
+
+          puts "Response status: #{response.status}"
+          puts "Response body: #{response.body}"
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response["error"].present?
+        end
+
+        # RED検証: 空の crop_ids で計画作成が失敗し、422エラーが返される
+        test "returns 422 when crop_ids is empty" do
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: @jp_farm.id,
+            farm_size_id: "home_garden",
+            crop_ids: [] # 空のcrop_ids
+          }
+
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response["error"].present?
+        end
+
+        # RED検証: total_area がマイナスの場合、バリデーションエラーで422が返される
+        test "returns 422 when total_area is negative" do
+          # find_farm_size がマイナスの area_sqm を返すようにモック
+          WizardController.any_instance.stubs(:find_farm_size).returns({ id: "negative", area_sqm: -10 })
+
+          post "/api/v1/public_plans/plans", params: {
+            farm_id: @jp_farm.id,
+            farm_size_id: "negative_size", # モックで -10 が返される
+            crop_ids: [@jp_crop.id]
+          }
+
+          # Controller のバリデーションで防がれ、422 が返される
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response["error"].present?
+          assert_equal "農場サイズが無効です。", json_response["error"]
+        end
       end
     end
   end
