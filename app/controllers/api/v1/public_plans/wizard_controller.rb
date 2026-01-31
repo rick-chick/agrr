@@ -30,7 +30,7 @@ module Api
 
         def create
           farm = Farm.find(params[:farm_id])
-          farm_size = farm_sizes_with_i18n.find { |size| size[:id] == params[:farm_size_id] }
+          farm_size = find_farm_size(params[:farm_size_id])
           unless farm_size
             return render json: { error: I18n.t('public_plans.errors.select_farm_size') }, status: :unprocessable_entity
           end
@@ -86,6 +86,15 @@ module Api
             { id: 'community_garden', area_sqm: 50 },
             { id: 'rental_farm', area_sqm: 300 }
           ]
+        end
+
+        # id（文字列）または area_sqm（Integer）で一致させる。フロントが number で送っても 422 にしない。
+        def find_farm_size(param)
+          return nil if param.blank?
+
+          farm_sizes_with_i18n.find do |size|
+            size[:id].to_s == param.to_s || size[:area_sqm] == param.to_i
+          end
         end
 
         def crop_ids

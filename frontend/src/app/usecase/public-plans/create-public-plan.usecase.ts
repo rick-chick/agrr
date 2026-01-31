@@ -23,10 +23,13 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
           this.outputPort.onSuccess(response);
           dto.onSuccess?.(response);
         },
-        error: (err: Error & { error?: { errors?: string[] } }) =>
+        error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
           this.outputPort.onError({
             message:
-              err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+              err.error?.errors?.join(', ') ??
+              err.error?.error ??
+              err?.message ??
+              'Unknown error'
           })
       });
   }
