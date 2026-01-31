@@ -31,28 +31,31 @@ const initialControl: PestListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 class="page-title">Pests</h1>
+        <h1 id="page-title" class="page-title">Pests</h1>
         <p class="page-description">Manage pests.</p>
       </header>
-      <section class="section-card" aria-labelledby="section-list-heading">
-        <h2 id="section-list-heading" class="section-title">Pest list</h2>
+      <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
         } @else {
-          <a [routerLink]="['/pests', 'new']" class="btn-primary">Create Pest</a>
+          <div class="section-card__header-actions">
+            <a [routerLink]="['/pests', 'new']" class="btn-primary">Create Pest</a>
+          </div>
           <ul class="card-list" role="list">
             @for (pest of control.pests; track pest.id) {
               <li class="card-list__item">
-                <a [routerLink]="['/pests', pest.id]" class="item-card">
-                  <span class="item-card__title">{{ pest.name }}</span>
-                  @if (pest.name_scientific) {
-                    <span class="item-card__meta">{{ pest.name_scientific }}</span>
-                  }
-                </a>
-                <div class="list-item-actions">
-                  <a [routerLink]="['/pests', pest.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
-                  <button type="button" class="btn-danger btn-sm" (click)="deletePest(pest.id)">Delete</button>
-                </div>
+                <article class="item-card">
+                  <a [routerLink]="['/pests', pest.id]" class="item-card__body">
+                    <span class="item-card__title">{{ pest.name }}</span>
+                    @if (pest.name_scientific) {
+                      <span class="item-card__meta">{{ pest.name_scientific }}</span>
+                    }
+                  </a>
+                  <div class="item-card__actions">
+                    <a [routerLink]="['/pests', pest.id, 'edit']" class="btn-secondary">Edit</a>
+                    <button type="button" class="btn-danger" (click)="deletePest(pest.id)" aria-label="Delete">Delete</button>
+                  </div>
+                </article>
               </li>
             }
           </ul>

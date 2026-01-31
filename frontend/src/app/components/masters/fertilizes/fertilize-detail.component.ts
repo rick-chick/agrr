@@ -70,8 +70,8 @@ const initialControl: FertilizeDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
+            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-primary">Edit</a>
             <a [routerLink]="['/fertilizes']" class="btn-secondary">Back to fertilizes</a>
-            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-secondary">Edit</a>
           </div>
         </section>
       }

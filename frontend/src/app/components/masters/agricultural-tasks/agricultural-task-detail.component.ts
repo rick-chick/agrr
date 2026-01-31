@@ -82,8 +82,8 @@ const initialControl: AgriculturalTaskDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
+            <a [routerLink]="['/agricultural_tasks', control.agriculturalTask.id, 'edit']" class="btn-primary">Edit</a>
             <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">Back</a>
-            <a [routerLink]="['/agricultural_tasks', control.agriculturalTask.id, 'edit']" class="btn-secondary">Edit</a>
             <button type="button" class="btn-danger" (click)="deleteAgriculturalTask()">Delete</button>
           </div>
         </section>

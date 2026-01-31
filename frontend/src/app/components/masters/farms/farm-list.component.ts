@@ -31,28 +31,31 @@ const initialControl: FarmListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 class="page-title">Farms</h1>
+        <h1 id="page-title" class="page-title">Farms</h1>
         <p class="page-description">Manage your farms.</p>
       </header>
-      <section class="section-card" aria-labelledby="section-list-heading">
-        <h2 id="section-list-heading" class="section-title">Farm list</h2>
+      <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
         } @else {
-          <a routerLink="/farms/new" class="btn-primary">Create Farm</a>
+          <div class="section-card__header-actions">
+            <a routerLink="/farms/new" class="btn-primary">Create Farm</a>
+          </div>
           <ul class="card-list" role="list">
             @for (farm of control.farms; track farm.id) {
               <li class="card-list__item">
-                <a [routerLink]="['/farms', farm.id]" class="item-card">
-                  <span class="item-card__title">{{ farm.name }}</span>
-                  @if (farm.region) {
-                    <span class="item-card__meta">{{ farm.region }}</span>
-                  }
-                </a>
-                <div class="list-item-actions">
-                  <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
-                  <button type="button" class="btn-danger btn-sm" (click)="deleteFarm(farm.id)">Delete</button>
-                </div>
+                <article class="item-card">
+                  <a [routerLink]="['/farms', farm.id]" class="item-card__body">
+                    <span class="item-card__title">{{ farm.name }}</span>
+                    @if (farm.region) {
+                      <span class="item-card__meta">{{ farm.region }}</span>
+                    }
+                  </a>
+                  <div class="item-card__actions">
+                    <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary">Edit</a>
+                    <button type="button" class="btn-danger" (click)="deleteFarm(farm.id)" aria-label="Delete">Delete</button>
+                  </div>
+                </article>
               </li>
             }
           </ul>

@@ -32,29 +32,39 @@ const initialControl: FertilizeListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 class="page-title">Fertilizes</h1>
+        <h1 id="page-title" class="page-title">Fertilizes</h1>
         <p class="page-description">Manage fertilizes.</p>
       </header>
-      <section class="section-card" aria-labelledby="section-list-heading">
-        <h2 id="section-list-heading" class="section-title">Fertilize list</h2>
+      <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
           <p class="master-loading">Loading...</p>
         } @else {
-          <a routerLink="/fertilizes/new" class="btn-primary">Create Fertilize</a>
-          <ul class="card-list" role="list">
+          <div class="section-card__header-actions">
+            <a routerLink="/fertilizes/new" class="btn-primary">Create Fertilize</a>
+          </div>
+          @if (control.fertilizes.length === 0) {
+            <div class="empty-state">
+              <p class="empty-state__message">No fertilizes found.</p>
+              <p class="empty-state__description">Create your first fertilize to get started.</p>
+            </div>
+          } @else {
+            <ul class="card-list" role="list">
             @for (item of control.fertilizes; track item.id) {
               <li class="card-list__item">
-                <a [routerLink]="['/fertilizes', item.id]" class="item-card">
-                  <span class="item-card__title">{{ item.name }}</span>
-                  <span class="item-card__meta">NPK: {{ formatNpk(item) }}</span>
-                </a>
-                <div class="list-item-actions">
-                  <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary btn-sm">Edit</a>
-                  <button type="button" class="btn-danger btn-sm" (click)="deleteFertilize(item.id)">Delete</button>
-                </div>
+                <article class="item-card">
+                  <a [routerLink]="['/fertilizes', item.id]" class="item-card__body">
+                    <span class="item-card__title">{{ item.name }}</span>
+                    <span class="item-card__meta">NPK: {{ formatNpk(item) }}</span>
+                  </a>
+                  <div class="item-card__actions">
+                    <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary">Edit</a>
+                    <button type="button" class="btn-danger" (click)="deleteFertilize(item.id)" aria-label="Delete">Delete</button>
+                  </div>
+                </article>
               </li>
             }
           </ul>
+          }
         }
       </section>
     </main>

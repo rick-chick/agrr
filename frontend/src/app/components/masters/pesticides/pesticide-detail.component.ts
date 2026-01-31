@@ -77,8 +77,8 @@ const initialControl: PesticideDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
+            <a [routerLink]="['/pesticides', control.pesticide.id, 'edit']" class="btn-primary">Edit</a>
             <a [routerLink]="['/pesticides']" class="btn-secondary">Back</a>
-            <a [routerLink]="['/pesticides', control.pesticide.id, 'edit']" class="btn-secondary">Edit</a>
             <button type="button" class="btn-danger" (click)="deletePesticide()">Delete</button>
           </div>
         </section>
