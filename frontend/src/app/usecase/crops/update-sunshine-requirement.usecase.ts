@@ -20,17 +20,17 @@ export class UpdateSunshineRequirementUseCase implements UpdateSunshineRequireme
           // Update existing requirement
           this.cropStageGateway.updateSunshineRequirement(dto.cropId, dto.stageId, dto.payload).subscribe({
             next: (requirement) => this.outputPort.present({ requirement }),
-            error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+            error: (err) => this.outputPort.onError({ message: err.message })
           });
         } else {
           // Create new requirement
           this.cropStageGateway.createSunshineRequirement(dto.cropId, dto.stageId, dto.payload).subscribe({
             next: (requirement) => this.outputPort.present({ requirement }),
-            error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+            error: (err) => this.outputPort.onError({ message: err.message })
           });
         }
       },
-      error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+      error: (err) => this.outputPort.onError({ message: err.message })
     });
   }
 }

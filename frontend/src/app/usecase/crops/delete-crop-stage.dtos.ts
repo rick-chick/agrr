@@ -5,4 +5,5 @@ export interface DeleteCropStageInputDto {
 
 export interface DeleteCropStageOutputDto {
   success: boolean;
+  stageId: number;
 }

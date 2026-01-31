@@ -20,17 +20,17 @@ export class UpdateThermalRequirementUseCase implements UpdateThermalRequirement
           // Update existing requirement
           this.cropStageGateway.updateThermalRequirement(dto.cropId, dto.stageId, dto.payload).subscribe({
             next: (requirement) => this.outputPort.present({ requirement }),
-            error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+            error: (err) => this.outputPort.onError({ message: err.message })
           });
         } else {
           // Create new requirement
           this.cropStageGateway.createThermalRequirement(dto.cropId, dto.stageId, dto.payload).subscribe({
             next: (requirement) => this.outputPort.present({ requirement }),
-            error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+            error: (err) => this.outputPort.onError({ message: err.message })
           });
         }
       },
-      error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+      error: (err) => this.outputPort.onError({ message: err.message })
     });
   }
 }

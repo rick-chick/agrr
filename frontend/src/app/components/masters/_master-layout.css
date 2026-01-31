@@ -446,6 +446,10 @@ article.item-card:hover {
   justify-content: center;
 }
 
+.btn-danger:hover {
+  background: var(--color-error-dark);
+}
+
 .btn-danger:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);

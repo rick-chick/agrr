@@ -15,7 +15,7 @@ export class UpdateCropStageUseCase implements UpdateCropStageInputPort {
   execute(dto: UpdateCropStageInputDto): void {
     this.cropStageGateway.updateCropStage(dto.cropId, dto.stageId, dto.payload).subscribe({
       next: (stage) => this.outputPort.present({ stage }),
-      error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+      error: (err) => this.outputPort.onError({ message: err.message })
     });
   }
 }

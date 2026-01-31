@@ -15,7 +15,7 @@ export class CreateCropStageUseCase implements CreateCropStageInputPort {
   execute(dto: CreateCropStageInputDto): void {
     this.cropStageGateway.createCropStage(dto.cropId, dto.payload).subscribe({
       next: (stage) => this.outputPort.present({ stage }),
-      error: (err) => this.outputPort.onError(new ErrorDto(err.message))
+      error: (err) => this.outputPort.onError({ message: err.message })
     });
   }
 }
