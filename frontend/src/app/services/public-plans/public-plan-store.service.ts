@@ -68,7 +68,12 @@ export class PublicPlanStore {
     try {
       const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Ensure farm.id is a number (JSON.parse converts it to string)
+        if (parsed.farm && typeof parsed.farm.id === 'string') {
+          parsed.farm.id = parseInt(parsed.farm.id, 10);
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn('Failed to load public plan state from session storage', e);
