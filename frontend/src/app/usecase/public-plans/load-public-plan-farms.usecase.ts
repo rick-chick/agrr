@@ -19,11 +19,11 @@ export class LoadPublicPlanFarmsUseCase implements LoadPublicPlanFarmsInputPort 
   execute(dto: LoadPublicPlanFarmsInputDto): void {
     console.log('🌱 [LoadPublicPlanFarmsUseCase] execute called with:', dto);
     forkJoin([
-      this.publicPlanGateway.getFarmSizes(),
-      this.publicPlanGateway.getFarms(dto.region)
+      this.publicPlanGateway.getFarms(dto.region),
+      this.publicPlanGateway.getFarmSizes()
     ]).subscribe({
-      next: ([farmSizes, farms]) => {
-        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin next - farmSizes:', farmSizes?.length, 'farms:', farms?.length);
+      next: ([farms, farmSizes]) => {
+        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin next - farms:', farms?.length, 'farmSizes:', farmSizes?.length);
         this.outputPort.present({
           farms,
           farmSizes
