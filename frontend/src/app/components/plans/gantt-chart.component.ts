@@ -320,8 +320,52 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     );
     this.calculateTimeAxis();
 
+    // SVG上でドラッグ中に直接変更された属性をクリアして
+    // Angularの再描画で正しい縦位置（グループ位置）が反映されるようにする
+    // （特にサーバー応答後に古い inline 属性が残ると縦位置が更新されないため）
+    this.sanitizeSvgBars();
+
     // データ更新後に画面更新を強制
     this.scheduleDetectChanges();
+  }
+
+  /**
+   * 直接DOM操作で書き換えられたバーの属性をリセットして
+   * テンプレートのバインディング値（config.barPadding 等）が反映されるようにする
+   */
+  private sanitizeSvgBars() {
+    const svg = this.svgElement?.nativeElement;
+    if (!svg) return;
+
+    try {
+      const rects = svg.querySelectorAll('rect.bar-bg');
+      rects.forEach((el: Element) => {
+        const r = el as SVGRectElement;
+        // Yはグループの transform と組み合わせて決まるため、
+        // 各rectは常に config.barPadding を使うようにリセットする
+        r.setAttribute('y', this.config.barPadding.toString());
+        // ドラッグ時に保存した data-original-y は不要なので削除
+        if (r.hasAttribute('data-original-y')) r.removeAttribute('data-original-y');
+      });
+
+      const labels = svg.querySelectorAll('text.bar-label');
+      labels.forEach((el: Element) => {
+        const t = el as SVGTextElement;
+        const parent = t.parentElement;
+        if (!parent) return;
+        const rect = parent.querySelector('rect.bar-bg') as SVGRectElement | null;
+        if (!rect) return;
+        const x = parseFloat(rect.getAttribute('x') || '0');
+        const width = parseFloat(rect.getAttribute('width') || '0');
+        const y = parseFloat(rect.getAttribute('y') || this.config.barPadding.toString());
+        const height = parseFloat(rect.getAttribute('height') || this.config.barHeight.toString());
+        t.setAttribute('x', (x + (width / 2)).toString());
+        t.setAttribute('y', (y + (height / 2) + 5).toString());
+      });
+    } catch (e) {
+      // 万が一SVG操作で例外が出ても描画は継続する
+      console.error('sanitizeSvgBars error', e);
+    }
   }
 
   private calculateTimeAxis() {
