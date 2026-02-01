@@ -1854,6 +1854,7 @@
       "completed": "✓"
     },
     "gantt": {
+      "optimizing": "最適化中...",
       "controls": {
         "zoom_in": "ズームイン",
         "zoom_out": "ズームアウト",

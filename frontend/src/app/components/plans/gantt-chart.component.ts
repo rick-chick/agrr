@@ -37,6 +37,14 @@ interface TimeScale {
   standalone: true,
   imports: [CommonModule, TranslateModule],
   template: `
+    @if (showOptimizationLock) {
+      <div class="screen-lock-overlay" aria-live="polite">
+        <div class="screen-lock-content">
+          <div class="spinner"></div>
+          <p>{{ 'plans.gantt.optimizing' | translate }}</p>
+        </div>
+      </div>
+    }
     <div class="gantt-container" #container>
       @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
         <div class="no-data-message">
@@ -172,6 +180,10 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private globalMouseMoveHandler: any;
   private globalMouseUpHandler: any;
   private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
+  private isDestroyed = false;
+  private pendingDetectChanges = false;
+  /** ドロップ後の最適化API完了までオーバーレイを表示する */
+  showOptimizationLock = false;
   private planService = inject(PlanService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -204,7 +216,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.updateChart();
         this.needsUpdate = false;
         // データ変更後に画面更新を強制
-        this.cdr.detectChanges();
+        this.scheduleDetectChanges();
       } else {
         this.needsUpdate = true;
       }
@@ -220,7 +232,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.needsUpdate = false;
       }
       // 初期描画後にChangeDetectionを実行して画面を更新
-      this.cdr.detectChanges();
+      this.scheduleDetectChanges();
     }, 0);
     window.addEventListener('resize', this.onResize);
   }
@@ -228,11 +240,23 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.onResize);
     this.removeGlobalListeners();
+    this.isDestroyed = true;
   }
 
   private onResize = () => {
     this.updateDimensions();
   };
+
+  private scheduleDetectChanges() {
+    if (this.pendingDetectChanges || this.isDestroyed) return;
+    this.pendingDetectChanges = true;
+    Promise.resolve().then(() => {
+      this.pendingDetectChanges = false;
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   private updateDimensions() {
     if (this.container) {
@@ -297,7 +321,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.calculateTimeAxis();
 
     // データ更新後に画面更新を強制
-    this.cdr.detectChanges();
+    this.scheduleDetectChanges();
   }
 
   private calculateTimeAxis() {
@@ -739,6 +763,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           // 楽観的更新を先に実行
           this.applyMovesLocally(cultivationId, newFieldName, newFieldIndex, newStartDate);
 
+          // ドロップ後、最適化完了までスクリーンロックを表示
+          this.showOptimizationLock = true;
+          this.scheduleDetectChanges();
           // API呼び出し
           this.adjustCultivation(cultivationId, newFieldName, newFieldIndex, newStartDate);
         }
@@ -899,26 +926,26 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         if (response.success) {
           console.log('✅ 調整が完了しました:', response);
           // サーバーからの最新データで更新
+          const clearLockAndUpdate = () => {
+            this.showOptimizationLock = false;
+            this.scheduleDetectChanges();
+          };
           if (isPublicPlan) {
             this.planService.getPublicPlanData(planId).subscribe({
               next: (data) => {
                 if (data && data.data && data.data.fields) {
                   this.data = data;
                   this.updateChart();
-                  // 変更検知を強制的に実行して画面を更新
-                  this.cdr.detectChanges();
                 } else {
                   console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
-                  // データが取得できない場合は既存のデータを維持
                   this.updateChart();
-                  this.cdr.detectChanges();
                 }
+                clearLockAndUpdate();
               },
               error: (error) => {
                 console.error('❌ データ再取得APIエラー:', error);
-                // エラーの場合は既存のデータを維持
                 this.updateChart();
-                this.cdr.detectChanges();
+                clearLockAndUpdate();
               }
             });
           } else {
@@ -927,32 +954,30 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
                 if (data && data.data && data.data.fields) {
                   this.data = data;
                   this.updateChart();
-                  // 変更検知を強制的に実行して画面を更新
-                  this.cdr.detectChanges();
                 } else {
                   console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
-                  // データが取得できない場合は既存のデータを維持
                   this.updateChart();
-                  this.cdr.detectChanges();
                 }
+                clearLockAndUpdate();
               },
               error: (error) => {
                 console.error('❌ データ再取得APIエラー:', error);
-                // エラーの場合は既存のデータを維持
                 this.updateChart();
-                this.cdr.detectChanges();
+                clearLockAndUpdate();
               }
             });
           }
         } else {
           console.error('❌ 調整に失敗しました:', response.message);
-          // エラー時は楽観的更新をロールバック
+          this.showOptimizationLock = false;
+          this.scheduleDetectChanges();
           this.resetBarPosition();
         }
       },
       error: (error) => {
         console.error('❌ API呼び出しエラー:', error);
-        // エラー時は楽観的更新をロールバック
+        this.showOptimizationLock = false;
+        this.scheduleDetectChanges();
         this.resetBarPosition();
       }
     });
