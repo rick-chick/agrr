@@ -959,6 +959,7 @@
       "completed": "✓"
     },
     "gantt": {
+      "optimizing": "Optimizing...",
       "controls": {
         "zoom_in": "Zoom In",
         "zoom_out": "Zoom Out",
