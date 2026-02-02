@@ -8,9 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   template: `
-    <label class="form-card__field" [for]="id">
-      <span class="form-card__field-label">{{ 'crops.form.region_label' | translate }}</span>
+    <div class="form-card__field">
+      <label class="form-card__field-label" [for]="id">
+        {{ 'crops.form.region_label' | translate }}
+      </label>
       <select
+        class="form-card__select"
         [id]="id"
         [name]="name"
         [required]="required"
@@ -23,9 +26,9 @@ import { TranslateModule } from '@ngx-translate/core';
         <option value="us">{{ 'crops.form.region_us' | translate }}</option>
         <option value="in">{{ 'crops.form.region_in' | translate }}</option>
       </select>
-    </label>
+    </div>
   `,
-  styles: ['']
+  styleUrls: ['./region-select.component.css']
 })
 export class RegionSelectComponent {
   @Input() region: string | null | undefined = null;
