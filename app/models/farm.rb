@@ -38,10 +38,11 @@ class Farm < ApplicationRecord
   # Validations
   validates :name, presence: true, length: { maximum: 100 }
   validates :name, uniqueness: { scope: :user_id, case_sensitive: false }
-  validates :latitude, presence: true, 
+  validates :latitude, presence: true,
                        numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
-  validates :longitude, presence: true, 
+  validates :longitude, presence: true,
                         numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
+  validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validates :source_farm_id, uniqueness: { scope: :user_id }, allow_nil: true
   
   # ユーザー農場の件数制限（4件まで）

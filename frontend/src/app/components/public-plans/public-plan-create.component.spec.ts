@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { PublicPlanCreateComponent } from './public-plan-create.component';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
@@ -21,11 +22,13 @@ describe('PublicPlanCreateComponent', () => {
     publicPlanStore = { state: {}, setFarm: vi.fn() };
     cdr = { detectChanges: vi.fn() };
 
+    // Override component-level providers so the component uses our mocks
+    TestBed.overrideProvider(LoadPublicPlanFarmsUseCase, { useValue: useCase });
+    TestBed.overrideProvider(PublicPlanCreatePresenter, { useValue: presenter });
+
     await TestBed.configureTestingModule({
-      imports: [PublicPlanCreateComponent],
+      imports: [PublicPlanCreateComponent, TranslateModule.forRoot()],
       providers: [
-        { provide: LoadPublicPlanFarmsUseCase, useValue: useCase },
-        { provide: PublicPlanCreatePresenter, useValue: presenter },
         { provide: PublicPlanStore, useValue: publicPlanStore },
         { provide: ChangeDetectorRef, useValue: cdr },
         { provide: Router, useValue: { navigate: vi.fn() } }
@@ -43,10 +46,13 @@ describe('PublicPlanCreateComponent', () => {
       farmSizes: []
     };
 
+    // Spy on the actual component ChangeDetectorRef to ensure setter triggers change detection
+    const detectSpy = vi.spyOn((component as any).cdr, 'detectChanges');
+
     component.control = state;
 
     expect(component.control).toEqual(state);
-    expect(cdr.detectChanges).toHaveBeenCalledTimes(1);
+    expect(detectSpy).toHaveBeenCalledTimes(1);
   });
 
   it('ngOnInit sets view on presenter and restores selected farm', () => {
@@ -64,7 +70,7 @@ describe('PublicPlanCreateComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms: [{ id: 1, name: 'Farm', region: 'jp' }],
+      farms: [{ id: 1, name: 'Farm', region: 'jp', latitude: 0, longitude: 0 }],
       farmSizes: []
     };
 

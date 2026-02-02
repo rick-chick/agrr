@@ -19,12 +19,15 @@ module Api
         private
         
         def find_api_cultivation_plan
+          # eager load associated records to avoid N+1 when serializing in data/adjust
+          # Use preload to eager load associations in separate queries to avoid
+          # potentially heavy join queries when using includes with complex nested associations.
           PlanPolicy
             .private_scope(current_user)
-            .includes(
-              field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop],
-              cultivation_plan_fields: [],
-              cultivation_plan_crops: []
+            .preload(
+              :cultivation_plan_fields,
+              { cultivation_plan_crops: :crop },
+              { field_cultivations: [:cultivation_plan_field, { cultivation_plan_crop: :crop }] }
             )
             .find(params[:id])
         end

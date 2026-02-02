@@ -43,7 +43,7 @@ function isValidCoord(lat: number, lng: number): boolean {
       (leafletClick)="onMapClick($event)"
     ></div>
   `,
-  styleUrl: './farm-map.component.css'
+  styleUrls: ['./farm-map.component.css']
 })
 export class FarmMapComponent implements OnChanges {
   @Input() latitude: number = DEFAULT_LAT;

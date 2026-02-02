@@ -32,7 +32,7 @@ const initialControl: PlanOptimizingViewState = {
       <p>Progress: {{ control.progress }}%</p>
     </section>
   `,
-  styleUrl: './plan-optimizing.component.css'
+  styleUrls: ['./plan-optimizing.component.css']
 })
 export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);

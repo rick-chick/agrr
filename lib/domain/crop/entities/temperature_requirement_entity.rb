@@ -23,6 +23,22 @@ module Domain
           validate!
         end
 
+        # ActiveRecordモデルからの変換
+        def self.from_model(model)
+          new(
+            id: model.id,
+            crop_stage_id: model.crop_stage_id,
+            base_temperature: model.base_temperature,
+            optimal_min: model.optimal_min,
+            optimal_max: model.optimal_max,
+            low_stress_threshold: model.low_stress_threshold,
+            high_stress_threshold: model.high_stress_threshold,
+            frost_threshold: model.frost_threshold,
+            sterility_risk_threshold: model.sterility_risk_threshold,
+            max_temperature: model.max_temperature
+          )
+        end
+
         private
 
         def validate!

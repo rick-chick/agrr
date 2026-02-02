@@ -55,6 +55,7 @@ Rails.application.routes.draw do
         post :generate_task_schedule_blueprints
         post :toggle_task_template
       end
+      resources :crop_stages, only: [:index, :show, :create, :update, :destroy], controller: 'crops/crop_stages'
       resources :pests, controller: 'crops/pests'
       resources :agricultural_tasks, controller: 'crops/agricultural_tasks'
       resources :task_schedule_blueprints, only: [:destroy], controller: 'crops/task_schedule_blueprints' do

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { FertilizeEditView, FertilizeEditViewState, FertilizeEditFormData } from './fertilize-edit.view';
 import { LoadFertilizeForEditUseCase } from '../../../usecase/fertilizes/load-fertilize-for-edit.usecase';
@@ -54,10 +55,12 @@ const initialControl: FertilizeEditViewState = {
               <span class="form-card__field-label">Name</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <app-region-select
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
+            @if (auth.user()?.admin) {
+              <app-region-select
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
             <label for="n" class="form-card__field">
               <span class="form-card__field-label">N</span>
               <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
@@ -87,9 +90,10 @@ const initialControl: FertilizeEditViewState = {
       </section>
     </main>
   `,
-  styleUrl: './fertilize-edit.component.css'
+  styleUrls: ['./fertilize-edit.component.css']
 })
 export class FertilizeEditComponent implements FertilizeEditView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadFertilizeForEditUseCase);
@@ -122,10 +126,18 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
   updateFertilize(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
+    const region = this.resolveRegionForSubmit(this.control.formData.region);
     this.updateUseCase.execute({
       fertilizeId: this.fertilizeId,
       ...this.control.formData,
+      region,
       onSuccess: () => this.router.navigate(['/fertilizes'])
     });
+  }
+
+  private resolveRegionForSubmit(currentRegion: string | null): string | null {
+    if (this.auth.user()?.admin) return currentRegion;
+    const userRegion = (this.auth.user() as { region?: string | null } | null)?.region ?? null;
+    return userRegion ?? currentRegion;
   }
 }

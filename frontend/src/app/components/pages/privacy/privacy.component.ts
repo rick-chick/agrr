@@ -57,6 +57,6 @@ import { TranslateModule } from '@ngx-translate/core';
       </div>
     </div>
   `,
-  styleUrl: './privacy.component.css'
+  styleUrls: ['./privacy.component.css']
 })
 export class PrivacyComponent {}

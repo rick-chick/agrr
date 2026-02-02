@@ -40,6 +40,110 @@ OmniAuth.config.full_host = lambda do |env|
   "#{scheme}://#{host}"
 end
 
+# Configure mock authentication for development and test environments
+if Rails.env.development? || Rails.env.test?
+  OmniAuth.config.test_mode = true
+
+  # Mock authentication data for testing
+  OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
+    'provider' => 'google_oauth2',
+    'uid' => '123456789',
+    'info' => {
+      'name' => '開発者',
+      'email' => 'developer@agrr.dev',
+      'image' => '/assets/dev-avatar.svg',
+      'first_name' => '開発',
+      'last_name' => '者'
+    },
+    'credentials' => {
+      'token' => 'mock_token',
+      'expires_at' => Time.now.to_i + 3600,
+      'expires' => true
+    },
+    'extra' => {
+      'raw_info' => {
+        'sub' => '123456789',
+        'email_verified' => true,
+        'locale' => 'ja'
+      }
+    }
+  })
+
+  OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new({
+    'provider' => 'google_oauth2',
+    'uid' => 'dev_user_001',
+    'info' => {
+      'name' => '開発者',
+      'email' => 'developer@agrr.dev',
+      'image' => 'dev-avatar.svg',
+      'first_name' => '開発',
+      'last_name' => '者'
+    },
+    'credentials' => {
+      'token' => 'mock_token',
+      'expires_at' => Time.now.to_i + 3600,
+      'expires' => true
+    },
+    'extra' => {
+      'raw_info' => {
+        'sub' => 'dev_user_001',
+        'email_verified' => true,
+        'locale' => 'ja'
+      }
+    }
+  })
+
+  OmniAuth.config.mock_auth[:google_oauth2_farmer] = OmniAuth::AuthHash.new({
+    'provider' => 'google_oauth2',
+    'uid' => 'farmer_user_001',
+    'info' => {
+      'name' => '農家ユーザー',
+      'email' => 'farmer@agrr.dev',
+      'image' => '/assets/farmer-avatar.svg',
+      'first_name' => '農家',
+      'last_name' => 'ユーザー'
+    },
+    'credentials' => {
+      'token' => 'mock_token',
+      'expires_at' => Time.now.to_i + 3600,
+      'expires' => true
+    },
+    'extra' => {
+      'raw_info' => {
+        'sub' => 'farmer_user_001',
+        'email_verified' => true,
+        'locale' => 'ja'
+      }
+    }
+  })
+
+  OmniAuth.config.mock_auth[:google_oauth2_researcher] = OmniAuth::AuthHash.new({
+    'provider' => 'google_oauth2',
+    'uid' => 'researcher_user_001',
+    'info' => {
+      'name' => '研究者ユーザー',
+      'email' => 'researcher@agrr.dev',
+      'image' => '/assets/researcher-avatar.svg',
+      'first_name' => '研究者',
+      'last_name' => 'ユーザー'
+    },
+    'credentials' => {
+      'token' => 'mock_token',
+      'expires_at' => Time.now.to_i + 3600,
+      'expires' => true
+    },
+    'extra' => {
+      'raw_info' => {
+        'sub' => 'researcher_user_001',
+        'email_verified' => true,
+        'locale' => 'ja'
+      }
+    }
+  })
+
+  Rails.logger.info "🔧 OmniAuth: Mock authentication configured for development/test"
+end
+
 # Rails 8 specific configuration
 Rails.application.config.after_initialize do
   # Ensure OmniAuth middleware is properly configured
@@ -48,5 +152,9 @@ Rails.application.config.after_initialize do
     Rails.logger.info "   Provider: google_oauth2"
     Rails.logger.info "   OAuth URL: /auth/google_oauth2"
     Rails.logger.info "   Callback URL: /auth/google_oauth2/callback"
+  elsif Rails.env.development? || Rails.env.test?
+    Rails.logger.info "🔧 OmniAuth: Using mock authentication for development/test"
+  else
+    Rails.logger.warn "⚠️  OmniAuth: No authentication provider configured"
   end
 end

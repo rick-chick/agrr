@@ -49,7 +49,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
       }
     </div>
   `,
-  styleUrl: './task-schedule-timeline.component.css'
+  styleUrls: ['./task-schedule-timeline.component.css']
 })
 export class TaskScheduleTimelineComponent {
   @Input() fields: FieldSchedule[] = [];

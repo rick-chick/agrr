@@ -323,9 +323,35 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
   test "should handle complex required_tools data" do
     complex_tools = ["大型トラクター", "小型耕運機", "施肥機"]
     task = create(:agricultural_task, required_tools: complex_tools)
-    
+
     reloaded_task = AgriculturalTask.find(task.id)
     assert_equal complex_tools, reloaded_task.required_tools
+  end
+
+  # ========== region バリデーションのテスト ==========
+
+  test "should allow nil for region" do
+    task = build(:agricultural_task, region: nil)
+    assert task.valid?
+  end
+
+  test "should allow valid region values" do
+    %w[jp us in].each do |region|
+      task = build(:agricultural_task, region: region)
+      assert task.valid?, "Region '#{region}' should be valid"
+    end
+  end
+
+  test "should not allow invalid region values" do
+    task = build(:agricultural_task, region: "invalid")
+    task.valid?
+    assert_includes task.errors[:region], "は一覧にありません"
+  end
+
+  test "should validate region inclusion case sensitivity" do
+    task = build(:agricultural_task, region: "JP")
+    task.valid?
+    assert_includes task.errors[:region], "は一覧にありません"
   end
 end
 

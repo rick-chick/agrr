@@ -43,8 +43,8 @@ module Api
         test "should show crop" do
           crop = create(:crop, :user_owned, user: @user, name: "テスト作物")
 
-          get api_v1_masters_crop_path(crop), 
-              headers: { 
+          get api_v1_masters_crop_path(crop),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -53,6 +53,26 @@ module Api
           json_response = JSON.parse(response.body)
           assert_equal crop.id, json_response["id"]
           assert_equal "テスト作物", json_response["name"]
+        end
+
+        test "should show crop with crop_stages" do
+          crop = create(:crop, :user_owned, user: @user)
+          crop_stage = create(:crop_stage, crop: crop, name: "発芽期", order: 1)
+
+          get api_v1_masters_crop_path(crop),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :success
+          json_response = JSON.parse(response.body)
+          assert_equal crop.id, json_response["id"]
+          # RED: crop_stages should be included but currently missing
+          assert json_response["crop_stages"].present?, "crop_stages should be included in crop response"
+          assert_equal 1, json_response["crop_stages"].length
+          assert_equal crop_stage.id, json_response["crop_stages"][0]["id"]
+          assert_equal "発芽期", json_response["crop_stages"][0]["name"]
         end
 
         test "should not show other user's crop" do
@@ -178,7 +198,7 @@ module Api
           other_user = create(:user)
           other_crop = create(:crop, :user_owned, user: other_user)
 
-          assert_no_difference("Crop.count") do
+          assert_no_difference("::Crop.count") do
             delete api_v1_masters_crop_path(other_crop),
                    headers: {
                      "Accept" => "application/json",
@@ -194,7 +214,7 @@ module Api
           plan = create(:cultivation_plan, user: @user)
           create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
 
-          assert_no_difference("Crop.count") do
+          assert_no_difference("::Crop.count") do
             delete api_v1_masters_crop_path(crop),
                    headers: {
                      "Accept" => "application/json",

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import {
   AgriculturalTaskCreateView,
   AgriculturalTaskCreateViewState,
@@ -75,10 +76,12 @@ const initialControl: AgriculturalTaskCreateViewState = {
               <option value="advanced">Advanced</option>
             </select>
           </label>
-          <app-region-select
-            [region]="control.formData.region"
-            (regionChange)="control.formData.region = $event"
-          ></app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
+          }
           <label for="task_type" class="form-card__field">
             <span class="form-card__field-label">Task type</span>
             <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />
@@ -93,9 +96,10 @@ const initialControl: AgriculturalTaskCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './agricultural-task-create.component.css'
+  styleUrls: ['./agricultural-task-create.component.css']
 })
 export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskCreatePresenter);
@@ -106,23 +110,39 @@ export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateVi
     return this._control;
   }
   set control(value: AgriculturalTaskCreateViewState) {
-    this._control = value;
+    this._control = this.applyUserRegionIfNeeded(value);
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.control = this.applyUserRegionIfNeeded(this.control);
   }
 
   createAgriculturalTask(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
+    const region = this.auth.user()?.admin ? fd.region : this.userRegion ?? fd.region;
     this.useCase.execute({
       ...fd,
+      region,
       weather_dependency: fd.weather_dependency ?? undefined,
       skill_level: fd.skill_level ?? undefined,
       onSuccess: () => this.router.navigate(['/agricultural_tasks'])
     });
+  }
+
+  private get userRegion(): string | null {
+    return (this.auth.user() as { region?: string | null } | null)?.region ?? null;
+  }
+
+  private applyUserRegionIfNeeded(
+    control: AgriculturalTaskCreateViewState
+  ): AgriculturalTaskCreateViewState {
+    if (this.auth.user()?.admin) return control;
+    const region = this.userRegion;
+    if (!region || control.formData.region === region) return control;
+    return { ...control, formData: { ...control.formData, region } };
   }
 }

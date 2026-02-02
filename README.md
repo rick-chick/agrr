@@ -25,7 +25,11 @@ docker compose up
 docker compose up
 
 # テスト実行
-docker compose run --rm test
+./bin/test                              # ⭐ 推奨：便利スクリプト（警告なし）
+.cursor/skills/test-common/scripts/run-test-rails.sh  # 直接実行（警告なし）
+
+⚠️ **重要**: 絶対に直接 `rails test` や `bundle exec rails test` を実行しないでください！
+開発DBが壊れる可能性があります。必ず上記の専用スクリプトを使用してください。
 
 # メモリ監視レポート確認（必要時のみ有効化）
 # デフォルトでは無効（起動時間短縮のため）

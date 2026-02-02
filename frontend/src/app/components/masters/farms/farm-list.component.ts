@@ -63,7 +63,7 @@ const initialControl: FarmListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './farm-list.component.css'
+  styleUrls: ['./farm-list.component.css']
 })
 export class FarmListComponent implements FarmListView, OnInit {
   private readonly loadUseCase = inject(LoadFarmListUseCase);

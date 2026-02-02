@@ -115,7 +115,7 @@ const initialControl: CropDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './crop-detail.component.css'
+  styleUrls: ['./crop-detail.component.css']
 })
 export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

@@ -75,7 +75,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal 35.6895, entity.latitude
     assert_equal 139.6917, entity.longitude
     assert_equal user.id, entity.user_id
-    assert_false entity.is_reference
+    assert_not entity.is_reference
   end
 
   test "should update farm" do

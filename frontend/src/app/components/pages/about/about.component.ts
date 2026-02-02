@@ -77,6 +77,6 @@ import { RouterLink } from '@angular/router';
       </div>
     </div>
   `,
-  styleUrl: './about.component.css'
+  styleUrls: ['./about.component.css']
 })
 export class AboutComponent {}

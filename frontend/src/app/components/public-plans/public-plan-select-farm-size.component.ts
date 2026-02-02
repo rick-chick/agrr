@@ -85,7 +85,7 @@ import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
       </div>
     </main>
   `,
-  styleUrl: './public-plan.component.css'
+  styleUrls: ['./public-plan.component.css']
 })
 export class PublicPlanSelectFarmSizeComponent implements OnInit {
   private readonly router = inject(Router);

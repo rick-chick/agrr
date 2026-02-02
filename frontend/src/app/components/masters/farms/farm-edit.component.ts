@@ -13,6 +13,7 @@ import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
 import { FarmMapComponent } from './farm-map.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { AuthService } from '../../../services/auth.service';
 
 const initialFormData: FarmEditFormData = {
   name: '',
@@ -52,11 +53,13 @@ const initialControl: FarmEditViewState = {
               <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
-            <app-region-select
-              [region]="control.formData.region"
-              [required]="true"
-              (regionChange)="control.formData.region = $event || ''"
-            ></app-region-select>
+            @if (isAdmin) {
+              <app-region-select
+                [region]="control.formData.region"
+                [required]="true"
+                (regionChange)="control.formData.region = $event || ''"
+              ></app-region-select>
+            }
             <section class="section-card" aria-labelledby="location-heading">
               <h3 id="location-heading" class="section-title">{{ 'farms.new.form.location_label' | translate }}</h3>
               <app-farm-map
@@ -116,13 +119,14 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   private readonly presenter = inject(FarmEditPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
 
   private _control: FarmEditViewState = initialControl;
   get control(): FarmEditViewState {
     return this._control;
   }
   set control(value: FarmEditViewState) {
-    this._control = value;
+    this._control = this.applyUserRegionToControl(value);
     this.cdr.markForCheck();
   }
 
@@ -167,13 +171,37 @@ export class FarmEditComponent implements FarmEditView, OnInit {
       return;
     }
     this.control = { ...this.control, error: null };
+    const region = this.isAdmin ? this.control.formData.region : this.userRegion ?? this.control.formData.region;
     this.updateUseCase.execute({
       farmId: this.farmId,
       name: this.control.formData.name,
-      region: this.control.formData.region,
+      region,
       latitude: this.control.formData.latitude,
       longitude: this.control.formData.longitude,
       onSuccess: () => this.router.navigate(['/farms', this.farmId])
     });
+  }
+
+  get isAdmin(): boolean {
+    return this.auth.user()?.admin ?? false;
+  }
+
+  private get userRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
+  }
+
+  private applyUserRegionToControl(state: FarmEditViewState): FarmEditViewState {
+    if (this.isAdmin) return state;
+    const region = this.userRegion;
+    if (!region) return state;
+    if (state.formData.region === region) return state;
+    return {
+      ...state,
+      formData: {
+        ...state.formData,
+        region
+      }
+    };
   }
 }

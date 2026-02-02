@@ -11,6 +11,8 @@ import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
 import { FarmMapComponent } from './farm-map.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
+import { CurrentUser } from '../../../services/api.service';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -47,12 +49,14 @@ const initialControl: FarmCreateViewState = {
             <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
             <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <app-region-select
-            id="region"
-            [region]="control.formData.region"
-            [required]="true"
-            (regionChange)="control.formData.region = $event || ''"
-          ></app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              id="region"
+              [region]="control.formData.region"
+              [required]="true"
+              (regionChange)="control.formData.region = $event || ''"
+            ></app-region-select>
+          }
           <div class="form-group">
             <label class="form-label">{{ 'farms.new.form.location_label' | translate }}</label>
             <app-farm-map
@@ -101,9 +105,10 @@ const initialControl: FarmCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './farm-create.component.css'
+  styleUrls: ['./farm-create.component.css']
 })
 export class FarmCreateComponent implements FarmCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFarmUseCase);
   private readonly presenter = inject(FarmCreatePresenter);
@@ -121,6 +126,8 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.applyUserRegion(this.auth.user());
+    this.auth.loadCurrentUser().subscribe((user) => this.applyUserRegion(user));
   }
 
   onCoordinatesChange(event: { latitude: number; longitude: number }): void {
@@ -135,6 +142,7 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   }
 
   createFarm(): void {
+    const region = this.ensureRegionForSubmit(this.auth.user());
     const { latitude, longitude } = this.control.formData;
     if (
       Number.isNaN(latitude) ||
@@ -153,10 +161,58 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
     this.control = { ...this.control, error: null };
     this.useCase.execute({
       name: this.control.formData.name,
-      region: this.control.formData.region,
+      region,
       latitude: this.control.formData.latitude,
       longitude: this.control.formData.longitude,
       onSuccess: (farm) => this.router.navigate(['/farms', farm.id])
     });
+  }
+
+  private applyUserRegion(user: CurrentUser | null): void {
+    if (!user || user.admin) return;
+    const region = this.resolveUserRegion(user);
+    if (!region || this.control.formData.region === region) return;
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        region
+      }
+    };
+  }
+
+  private ensureRegionForSubmit(user: CurrentUser | null): string {
+    if (user?.admin) {
+      return this.control.formData.region;
+    }
+    const region = this.resolveUserRegion(user);
+    if (region && this.control.formData.region !== region) {
+      this.control = {
+        ...this.control,
+        formData: {
+          ...this.control.formData,
+          region
+        }
+      };
+    }
+    return region || this.control.formData.region;
+  }
+
+  private resolveUserRegion(user: CurrentUser | null): string {
+    return user?.region ?? this.regionFromLocale(this.translate.currentLang);
+  }
+
+  private regionFromLocale(locale: string | undefined | null): string {
+    switch (locale) {
+      case 'ja':
+        return 'jp';
+      case 'us':
+      case 'en':
+        return 'us';
+      case 'in':
+        return 'in';
+      default:
+        return 'jp';
+    }
   }
 }

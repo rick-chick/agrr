@@ -6,6 +6,8 @@ module Api
       setup do
         @user = create(:user)
         @farm = create(:farm, user: @user)
+        # テスト用の圃場を追加して total_area が 0 にならないようにする
+        @field = create(:field, farm: @farm, user: @user, area: 10.0, daily_fixed_cost: 10.0)
         @crop = create(:crop, :user_owned, user: @user)
         sign_in_as @user
       end

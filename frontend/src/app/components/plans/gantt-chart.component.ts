@@ -138,7 +138,7 @@ interface TimeScale {
       }
     </div>
   `,
-  styleUrl: './gantt-chart.component.css'
+  styleUrls: ['./gantt-chart.component.css']
 })
 export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   @Input() data: CultivationPlanData | null = null;

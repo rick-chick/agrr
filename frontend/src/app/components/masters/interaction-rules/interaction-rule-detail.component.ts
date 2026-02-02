@@ -79,7 +79,7 @@ const initialControl: InteractionRuleDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './interaction-rule-detail.component.css'
+  styleUrls: ['./interaction-rule-detail.component.css']
 })
 export class InteractionRuleDetailComponent implements InteractionRuleDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

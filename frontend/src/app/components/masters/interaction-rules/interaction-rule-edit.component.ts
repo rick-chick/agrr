@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleEditView, InteractionRuleEditViewState, InteractionRuleEditFormData } from './interaction-rule-edit.view';
 import { LoadInteractionRuleForEditUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-for-edit.usecase';
@@ -74,10 +75,12 @@ const initialControl: InteractionRuleEditViewState = {
               <span class="form-card__field-label">{{ 'interaction_rules.form.description_label' | translate }}</span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
-            <app-region-select
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
+            @if (auth.user()?.admin) {
+              <app-region-select
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
                 {{ 'interaction_rules.form.submit_update' | translate }}
@@ -89,9 +92,10 @@ const initialControl: InteractionRuleEditViewState = {
       </section>
     </main>
   `,
-  styleUrl: './interaction-rule-edit.component.css'
+  styleUrls: ['./interaction-rule-edit.component.css']
 })
 export class InteractionRuleEditComponent implements InteractionRuleEditView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadInteractionRuleForEditUseCase);
@@ -124,10 +128,20 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
   updateInteractionRule(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
+    const region = this.resolveRegionForSubmit();
     this.updateUseCase.execute({
       interactionRuleId: this.interactionRuleId,
       ...this.control.formData,
+      region,
       onSuccess: () => this.router.navigate(['/interaction_rules', this.interactionRuleId])
     });
+  }
+
+  private resolveRegionForSubmit(): string | null {
+    const user = this.auth.user();
+    if (user?.admin) {
+      return this.control.formData.region ?? null;
+    }
+    return (user as { region?: string | null } | null)?.region ?? null;
   }
 }

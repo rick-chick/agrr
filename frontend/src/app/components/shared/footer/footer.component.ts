@@ -16,6 +16,6 @@ import { RouterLink } from '@angular/router';
       <span>AGRR © 2026</span>
     </footer>
   `,
-  styleUrl: './footer.component.css'
+  styleUrls: ['./footer.component.css']
 })
 export class FooterComponent {}

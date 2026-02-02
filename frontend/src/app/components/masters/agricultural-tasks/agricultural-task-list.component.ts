@@ -72,7 +72,7 @@ const initialControl: AgriculturalTaskListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './agricultural-task-list.component.css'
+  styleUrls: ['./agricultural-task-list.component.css']
 })
 export class AgriculturalTaskListComponent implements AgriculturalTaskListView, OnInit {
   private readonly useCase = inject(LoadAgriculturalTaskListUseCase);

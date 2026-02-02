@@ -42,6 +42,7 @@ class AgriculturalTask < ApplicationRecord
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :time_per_sqm, numericality: { greater_than: 0, allow_nil: true }
+  validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validate :name_uniqueness_scope
   validates :source_agricultural_task_id, uniqueness: { scope: :user_id }, allow_nil: true
   

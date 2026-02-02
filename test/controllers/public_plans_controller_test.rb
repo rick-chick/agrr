@@ -517,6 +517,78 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_includes response_body['error'], "作成できるFarmは4件までです"
   end
 
+  test "GET /public_plans/results - public planの結果を表示" do
+    # Public計画を作成（FieldCultivationを含む）
+    public_plan = CultivationPlan.create!(
+      farm: @japan_farm,
+      user: nil,
+      session_id: 'test_session_public_results',
+      total_area: 30.0,
+      status: 'completed',
+      plan_type: 'public',
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year
+    )
+
+    # CultivationPlanCropを作成
+    crop = Crop.reference.where(region: 'jp').first || Crop.create!(
+      user: nil,
+      name: 'テスト作物',
+      variety: 'テスト品種',
+      is_reference: true,
+      area_per_unit: 1.0,
+      revenue_per_area: 1000.0,
+      region: 'jp'
+    )
+
+    plan_crop = CultivationPlanCrop.create!(
+      cultivation_plan: public_plan,
+      name: crop.name,
+      variety: crop.variety,
+      area_per_unit: crop.area_per_unit,
+      revenue_per_area: crop.revenue_per_area,
+      crop_id: crop.id
+    )
+
+    # CultivationPlanFieldを作成
+    plan_field = CultivationPlanField.create!(
+      cultivation_plan: public_plan,
+      name: 'テスト圃場',
+      area: 30.0
+    )
+
+    # FieldCultivationを作成（ガントチャートに必要なデータ）
+    field_cultivation = FieldCultivation.create!(
+      cultivation_plan: public_plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: plan_crop,
+      start_date: Date.current + 30.days,
+      completion_date: Date.current + 150.days,
+      cultivation_days: 121,
+      area: 30.0,
+      estimated_cost: 30000.0,
+      optimization_result: {
+        revenue: 30000.0,
+        profit: 0.0,
+        accumulated_gdd: 1500.0
+      }
+    )
+
+    # resultsページにアクセス
+    get "/public_plans/results?id=#{public_plan.id}"
+
+    # レスポンス確認
+    assert_response :success
+
+    # ガントチャートデータが含まれているか確認（HTMLにデータ属性が含まれている）
+    assert_match /data-cultivations/, @response.body
+    assert_match /data-fields/, @response.body
+    assert_match /data-plan-start-date/, @response.body
+    assert_match /data-plan-end-date/, @response.body
+    assert_match /data-cultivation-plan-id/, @response.body
+    assert_match /data-plan-type/, @response.body
+  end
+
   private
 
   def select_farm_size_public_plans_path(farm_id:)

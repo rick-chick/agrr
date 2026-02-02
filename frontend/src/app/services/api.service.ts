@@ -9,6 +9,7 @@ export interface CurrentUser {
   avatar_url: string | null;
   admin: boolean;
   api_key?: string | null;
+  region?: string | null;
 }
 
 export interface MeResponse {

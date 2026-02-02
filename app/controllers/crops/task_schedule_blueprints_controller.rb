@@ -54,28 +54,12 @@ module Crops
       unless can_edit_crop?
         return render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
       end
+      # Delegate deletion logic to a service to make the controller lightweight
+      service = Crops::TaskScheduleBlueprintDeletionService.new(crop: @crop, blueprint: @blueprint)
+      result = service.call
+      @blueprint_id = @blueprint.id
 
-      blueprint_id = @blueprint.id
-      agricultural_task_id = @blueprint.agricultural_task_id
-      
-      @blueprint.destroy!
-      @blueprint_id = blueprint_id
-
-      # blueprintを削除した後、対応するtemplateも削除する必要がある
-      # 同じagricultural_task_idに対応する他のblueprintが存在しない場合、templateも削除
-      if agricultural_task_id.present?
-        remaining_blueprints = @crop.crop_task_schedule_blueprints
-                                      .where(agricultural_task_id: agricultural_task_id)
-        
-        if remaining_blueprints.empty?
-          # 同じagricultural_task_idに対応するblueprintが存在しない場合、templateも削除
-          template = @crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task_id)
-          if template
-            Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deleting template: template_id=#{template.id}, agricultural_task_id=#{agricultural_task_id}")
-            template.destroy!
-          end
-        end
-      end
+      Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deletion result: #{result.inspect}")
 
       # @cropを再読み込みして、削除後の状態を反映
       @crop.reload
@@ -85,6 +69,7 @@ module Crops
       @selected_task_ids = selected_task_ids_for_crop(@crop)
 
       respond_to do |format|
+        format.html { head :no_content }
         format.turbo_stream
         format.json { render json: { message: I18n.t('crops.flash.blueprint_deleted') } }
       end

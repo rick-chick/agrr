@@ -11,12 +11,20 @@ class FieldsAllocator
   end
   
   def allocate
-    # total_areaが0または作物が空の場合は空配列を返す
-    return [] if total_area <= 0 || @crops.empty?
-    
+    # total_areaが0または作物が空の場合はデフォルトのフィールドを作成
+    if total_area <= 0 || @crops.empty?
+      Rails.logger.warn "⚠️ [FieldsAllocator] Invalid parameters detected (total_area: #{total_area}, crops: #{@crops.count}). Creating default field."
+      # デフォルト作物を作成（存在しない場合）
+      default_crop = @crops.first || OpenStruct.new(name: 'デフォルト作物', area_per_unit: 1.0)
+      return [{
+        crop: default_crop,
+        area: [total_area, 100.0].max # 最低100㎡のデフォルト面積
+      }]
+    end
+
     base_area = (total_area / field_count).floor
     remainder = (total_area - (base_area * field_count)).round
-    
+
     prioritized_crops.map.with_index do |crop, index|
       # 余りを優先順位順に1㎡ずつ分配
       # 最初の remainder 個の圃場に +1㎡
@@ -25,7 +33,7 @@ class FieldsAllocator
       else
         0.0
       end
-      
+
       {
         crop: crop,
         area: base_area + additional_area

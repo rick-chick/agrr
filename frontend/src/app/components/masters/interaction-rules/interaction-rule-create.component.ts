@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleCreateView, InteractionRuleCreateViewState, InteractionRuleCreateFormData } from './interaction-rule-create.view';
 import { CreateInteractionRuleUseCase } from '../../../usecase/interaction-rules/create-interaction-rule.usecase';
@@ -33,7 +34,6 @@ const initialControl: InteractionRuleCreateViewState = {
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     InteractionRuleCreatePresenter,
-    CreateInteractionRuleUseCase,
     { provide: CREATE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleCreatePresenter },
     { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
   ],
@@ -66,10 +66,12 @@ const initialControl: InteractionRuleCreateViewState = {
             <span class="form-card__field-label">{{ 'interaction_rules.form.description_label' | translate }}</span>
             <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
-          <app-region-select
-            [region]="control.formData.region"
-            (regionChange)="control.formData.region = $event">
-          </app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event">
+            </app-region-select>
+          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}
@@ -80,9 +82,10 @@ const initialControl: InteractionRuleCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './interaction-rule-create.component.css'
+  styleUrls: ['./interaction-rule-create.component.css']
 })
 export class InteractionRuleCreateComponent implements InteractionRuleCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleCreatePresenter);
@@ -104,9 +107,19 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
   createInteractionRule(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
+    const region = this.resolveRegionForSubmit();
     this.useCase.execute({
       ...this.control.formData,
+      region,
       onSuccess: () => this.router.navigate(['/interaction_rules'])
     });
+  }
+
+  private resolveRegionForSubmit(): string | null {
+    const user = this.auth.user();
+    if (user?.admin) {
+      return this.control.formData.region ?? null;
+    }
+    return (user as { region?: string | null } | null)?.region ?? null;
   }
 }

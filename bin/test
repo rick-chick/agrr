@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# AGRR: 便利テスト実行スクリプト
+# 使用方法: ./bin/test [テストファイル]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+if [ $# -eq 0 ]; then
+    echo "🧪 AGRR テスト実行スクリプト"
+    echo ""
+    echo "使用方法:"
+    echo "  ./bin/test                    # 全テスト実行"
+    echo "  ./bin/test test/models/user_test.rb    # 特定ファイル"
+    echo "  ./bin/test test/controllers    # 特定ディレクトリ"
+    echo ""
+    echo "💡 このスクリプトは開発DBを保護するため専用コンテナで実行します"
+    echo "💡 直接 'rails test' を実行するとDBが壊れる可能性があります"
+    echo ""
+fi
+
+echo "🚀 テストを実行します..."
+# AGRR専用スクリプトからの実行であることを示す環境変数を設定
+AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh" "$@"

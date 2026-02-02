@@ -47,6 +47,15 @@ class User < ApplicationRecord
     end
   end
 
+  # Avatar URL processing for OAuth
+  def self.process_avatar_url(url)
+    return url unless url.present?
+    return url unless url.start_with?('/assets/')
+
+    # Extract filename from /assets/filename.ext path
+    url.sub('/assets/', '')
+  end
+
   # Admin methods
   def admin?
     admin

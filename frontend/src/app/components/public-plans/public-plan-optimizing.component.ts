@@ -88,7 +88,7 @@ const initialControl: PublicPlanOptimizingViewState = {
       </div>
     </div>
   `,
-  styleUrl: './public-plan.component.css'
+  styleUrls: ['./public-plan.component.css']
 })
 export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);

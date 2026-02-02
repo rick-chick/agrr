@@ -60,9 +60,19 @@ module Domain
         end
         
         private
-        
+
         def validate!
           raise ArgumentError, "Name is required" if name.blank?
+          validate_region!
+        end
+
+        def validate_region!
+          return if region.nil?
+
+          allowed_regions = %w[jp us in]
+          unless allowed_regions.include?(region)
+            raise ArgumentError, "Region must be one of: #{allowed_regions.join(', ')}"
+          end
         end
       end
     end

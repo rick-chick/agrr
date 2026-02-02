@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
 import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edit.usecase';
 import { UpdatePestUseCase } from '../../../usecase/pests/update-pest.usecase';
@@ -74,10 +75,12 @@ const initialControl: PestEditViewState = {
               <span class="form-card__field-label">Occurrence Season</span>
               <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
             </label>
-            <app-region-select
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
+            @if (auth.user()?.admin) {
+              <app-region-select
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
                 {{ control.saving ? 'Updating...' : 'Update Pest' }}
@@ -89,9 +92,10 @@ const initialControl: PestEditViewState = {
       </section>
     </main>
   `,
-  styleUrl: './pest-edit.component.css'
+  styleUrls: ['./pest-edit.component.css']
 })
 export class PestEditComponent implements PestEditView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadPestForEditUseCase);
@@ -104,12 +108,13 @@ export class PestEditComponent implements PestEditView, OnInit {
     return this._control;
   }
   set control(value: PestEditViewState) {
-    this._control = value;
+    this._control = this.applyUserRegion(value);
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.applyUserRegionToForm();
     const pestId = Number(this.route.snapshot.paramMap.get('id'));
     if (!pestId) {
       this.control = { ...initialControl, loading: false, error: 'Invalid pest id.' };
@@ -130,7 +135,38 @@ export class PestEditComponent implements PestEditView, OnInit {
     this.updateUseCase.execute({
       pestId,
       ...this.control.formData,
+      region: this.resolveRegion(this.control.formData.region),
       onSuccess: (pest) => this.router.navigate(['/pests', pest.id])
     });
+  }
+
+  private applyUserRegionToForm(): void {
+    if (this.auth.user()?.admin) return;
+    const region = this.userRegion;
+    if (!region || this.control.formData.region === region) return;
+    this.control = {
+      ...this.control,
+      formData: { ...this.control.formData, region }
+    };
+  }
+
+  private resolveRegion(formRegion: string | null): string | null {
+    if (this.auth.user()?.admin) return formRegion;
+    return this.userRegion ?? formRegion;
+  }
+
+  private applyUserRegion(value: PestEditViewState): PestEditViewState {
+    if (this.auth.user()?.admin) return value;
+    const region = this.userRegion;
+    if (!region || value.formData.region === region) return value;
+    return {
+      ...value,
+      formData: { ...value.formData, region }
+    };
+  }
+
+  private get userRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
   }
 }

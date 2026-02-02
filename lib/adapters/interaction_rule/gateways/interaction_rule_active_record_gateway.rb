@@ -24,7 +24,8 @@ module Adapters
             impact_ratio: create_input_dto.impact_ratio,
             is_directional: create_input_dto.is_directional,
             description: create_input_dto.description,
-            region: create_input_dto.region
+            region: create_input_dto.region,
+            is_reference: create_input_dto.is_reference
           )
           raise StandardError, rule.errors.full_messages.join(', ') unless rule.save
 

@@ -67,9 +67,10 @@ class PlansDragDropTaskScheduleTest < ActionDispatch::IntegrationTest
       longitude: @farm.longitude || 139.0
     )
     
-    # 天気データを追加（過去20年分、adjust処理に必要）
-    start_date = 20.years.ago.to_date
+    # 天気データを追加（adjust処理に必要）
+    # NOTE: 過去20年分は重いためテストではサンプル化して短縮する
     end_date = Date.current
+    start_date = [end_date - 365.days, end_date - 20.years.to_i.days].max
     (start_date..end_date).each do |date|
       create(:weather_datum,
         weather_location: @weather_location,

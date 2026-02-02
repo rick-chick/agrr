@@ -46,11 +46,28 @@ class CropTest < ActiveSupport::TestCase
     20.times do |i|
       create(:crop, user: @user, name: "作物 #{i+1}", is_reference: false)
     end
-    
+
     # Update should work (自分自身を除く)
     first_crop = @user.crops.first
     first_crop.name = "更新された作物"
     assert first_crop.valid?
+  end
+
+  test "should validate region inclusion" do
+    # Valid regions
+    %w[jp us in].each do |region|
+      crop = Crop.new(user: @user, name: "作物", region: region)
+      assert crop.valid?, "Region '#{region}' should be valid"
+    end
+
+    # Invalid region
+    crop = Crop.new(user: @user, name: "作物", region: "invalid")
+    assert_not crop.valid?
+    assert_includes crop.errors[:region], "は一覧にありません"
+
+    # Nil region should be valid
+    crop = Crop.new(user: @user, name: "作物", region: nil)
+    assert crop.valid?, "Nil region should be valid"
   end
 
   test "should allow different users to have their own 20 crops" do

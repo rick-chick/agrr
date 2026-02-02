@@ -50,6 +50,7 @@ class Crop < ApplicationRecord
   validates :is_reference, inclusion: { in: [true, false] }
   validates :area_per_unit, numericality: { greater_than: 0, allow_nil: true }
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
+  validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validates :source_crop_id, uniqueness: { scope: :user_id }, allow_nil: true
   
   # ユーザー作物の件数制限（20件まで）と参照作物/userの組み合わせ制約

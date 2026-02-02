@@ -131,19 +131,42 @@ module AgrrMockHelper
   def mock_agrr_adjust_success
     Agrr::AdjustGateway.class_eval do
       define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:|
-        # 既存の割り当てをそのまま返す（簡易モック）
+        # 既存の割り当てを基にモック結果を作成
+        # moves が渡された場合は、該当する allocation の start_date を更新して返す（テストでの adjust 動作を簡易的に再現）
         field_schedules = current_allocation.dig(:optimization_result, :field_schedules) || []
-        
-        # もし新しい割り当てがあれば、それも含める
-        total_profit = field_schedules.sum { |fs| fs[:total_profit] || 0 }
-        total_revenue = field_schedules.sum { |fs| fs[:total_revenue] || 0 }
-        total_cost = field_schedules.sum { |fs| fs[:total_cost] || 0 }
-        
+
+        # 深いコピーを作成して元データを壊さない
+        copied = Marshal.load(Marshal.dump(field_schedules))
+
+        # moves が配列の場合、allocation_id に応じて start_date を更新する（to_start_date が指定されている場合）
+        Array(moves).each do |move|
+          next unless move.is_a?(Hash) || move.respond_to?(:to_h)
+          mv = move.to_h
+          alloc_id = mv[:allocation_id] || mv['allocation_id'] || mv[:cultivation_id] || mv['cultivation_id']
+          new_start = mv[:to_start_date] || mv['to_start_date']
+          if alloc_id && new_start
+            copied.each do |fs|
+              (fs[:allocations] || fs['allocations'] || []).each do |alloc|
+                # allocation_id は文字列/数値混在の可能性があるため文字列比較
+                if alloc['allocation_id'].to_s == alloc_id.to_s || alloc[:allocation_id].to_s == alloc_id.to_s
+                  # 更新（文字列キーで返すため string 化）
+                  alloc['start_date'] = new_start
+                end
+              end
+            end
+          end
+        end
+
+        # 集計値を再計算（簡易）
+        total_profit = copied.sum { |fs| (fs['total_profit'] || fs[:total_profit] || 0).to_f }
+        total_revenue = copied.sum { |fs| (fs['total_revenue'] || fs[:total_revenue] || 0).to_f }
+        total_cost = copied.sum { |fs| (fs['total_cost'] || fs[:total_cost] || 0).to_f }
+
         {
           total_profit: total_profit,
           total_revenue: total_revenue,
           total_cost: total_cost,
-          field_schedules: field_schedules.map { |fs| fs.deep_stringify_keys },
+          field_schedules: copied.map { |fs| fs.deep_stringify_keys },
           summary: { status: 'success' },
           optimization_time: 0.1,
           algorithm_used: 'mock',

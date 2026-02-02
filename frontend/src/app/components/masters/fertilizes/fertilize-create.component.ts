@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { FertilizeCreateView, FertilizeCreateViewState, FertilizeCreateFormData } from './fertilize-create.view';
 import { CreateFertilizeUseCase } from '../../../usecase/fertilizes/create-fertilize.usecase';
 import { FertilizeCreatePresenter } from '../../../adapters/fertilizes/fertilize-create.presenter';
@@ -46,7 +47,12 @@ const initialControl: FertilizeCreateViewState = {
             <span class="form-card__field-label">Name</span>
             <input id="name" name="name" [(ngModel)]="control.formData.name" required />
           </label>
-          <app-region-select [region]="control.formData.region" (regionChange)="control.formData.region = $event"></app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
+          }
           <label for="n" class="form-card__field">
             <span class="form-card__field-label">N</span>
             <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
@@ -75,9 +81,10 @@ const initialControl: FertilizeCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './fertilize-create.component.css'
+  styleUrls: ['./fertilize-create.component.css']
 })
 export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFertilizeUseCase);
   private readonly presenter = inject(FertilizeCreatePresenter);
@@ -99,8 +106,11 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   createFertilize(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
+    const userRegion = (this.auth.user() as { region?: string | null } | null)?.region ?? null;
+    const isAdmin = this.auth.user()?.admin ?? false;
     this.useCase.execute({
       ...this.control.formData,
+      region: isAdmin ? this.control.formData.region : userRegion,
       onSuccess: () => this.router.navigate(['/fertilizes'])
     });
   }

@@ -48,7 +48,7 @@ const initialControl: PlanDetailViewState = {
       }
     </section>
   `,
-  styleUrl: './plan-detail.component.css'
+  styleUrls: ['./plan-detail.component.css']
 })
 export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

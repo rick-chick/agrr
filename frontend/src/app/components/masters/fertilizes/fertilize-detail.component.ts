@@ -77,7 +77,7 @@ const initialControl: FertilizeDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './fertilize-detail.component.css'
+  styleUrls: ['./fertilize-detail.component.css']
 })
 export class FertilizeDetailComponent implements FertilizeDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

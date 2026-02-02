@@ -164,7 +164,7 @@ const initialControl: FarmDetailViewState = {
       </form>
     </dialog>
   `,
-  styleUrl: './farm-detail.component.css'
+  styleUrls: ['./farm-detail.component.css']
 })
 export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);

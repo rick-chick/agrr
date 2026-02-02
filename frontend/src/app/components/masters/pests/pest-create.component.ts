@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { PestCreateView, PestCreateViewState, PestCreateFormData } from './pest-create.view';
 import { CreatePestUseCase } from '../../../usecase/pests/create-pest.usecase';
 import { PestCreatePresenter } from '../../../adapters/pests/pest-create.presenter';
@@ -66,10 +67,12 @@ const initialControl: PestCreateViewState = {
             <span class="form-card__field-label">Occurrence Season</span>
             <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
           </label>
-          <app-region-select
-            [region]="control.formData.region"
-            (regionChange)="control.formData.region = $event"
-          ></app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
+          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
               {{ control.saving ? 'Creating...' : 'Create Pest' }}
@@ -80,9 +83,10 @@ const initialControl: PestCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './pest-create.component.css'
+  styleUrls: ['./pest-create.component.css']
 })
 export class PestCreateComponent implements PestCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePestUseCase);
   private readonly presenter = inject(PestCreatePresenter);
@@ -93,12 +97,13 @@ export class PestCreateComponent implements PestCreateView, OnInit {
     return this._control;
   }
   set control(value: PestCreateViewState) {
-    this._control = value;
+    this._control = this.applyUserRegion(value);
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.applyUserRegionToForm();
   }
 
   createPest(): void {
@@ -106,7 +111,38 @@ export class PestCreateComponent implements PestCreateView, OnInit {
     this.control = { ...this.control, saving: true };
     this.useCase.execute({
       ...this.control.formData,
+      region: this.resolveRegion(this.control.formData.region),
       onSuccess: (pest) => this.router.navigate(['/pests', pest.id])
     });
+  }
+
+  private applyUserRegionToForm(): void {
+    if (this.auth.user()?.admin) return;
+    const region = this.userRegion;
+    if (!region || this.control.formData.region === region) return;
+    this.control = {
+      ...this.control,
+      formData: { ...this.control.formData, region }
+    };
+  }
+
+  private resolveRegion(formRegion: string | null): string | null {
+    if (this.auth.user()?.admin) return formRegion;
+    return this.userRegion ?? formRegion;
+  }
+
+  private applyUserRegion(value: PestCreateViewState): PestCreateViewState {
+    if (this.auth.user()?.admin) return value;
+    const region = this.userRegion;
+    if (!region || value.formData.region === region) return value;
+    return {
+      ...value,
+      formData: { ...value.formData, region }
+    };
+  }
+
+  private get userRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
   }
 }

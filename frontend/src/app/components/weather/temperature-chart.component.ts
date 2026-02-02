@@ -12,7 +12,7 @@ import { ChartConfiguration } from 'chart.js';
       <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="'line'"></canvas>
     </div>
   `,
-  styleUrl: './temperature-chart.component.css'
+  styleUrls: ['./temperature-chart.component.css']
 })
 export class TemperatureChartComponent {
   chartData: ChartConfiguration<'line'>['data'] = {

@@ -12,6 +12,6 @@ import { TemperatureChartComponent } from './temperature-chart.component';
       <app-temperature-chart />
     </section>
   `,
-  styleUrl: './weather-page.component.css'
+  styleUrls: ['./weather-page.component.css']
 })
 export class WeatherPageComponent {}

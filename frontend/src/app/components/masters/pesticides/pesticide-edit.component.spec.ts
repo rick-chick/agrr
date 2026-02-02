@@ -9,6 +9,7 @@ import { PesticideEditViewState } from './pesticide-edit.view';
 import { PesticideEditPresenter } from '../../../adapters/pesticides/pesticide-edit.presenter';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
+import { AuthService } from '../../../services/auth.service';
 
 describe('PesticideEditComponent', () => {
   let component: PesticideEditComponent;
@@ -18,6 +19,7 @@ describe('PesticideEditComponent', () => {
   let mockUpdateUseCase: any;
   let mockCropGateway: any;
   let mockPestGateway: any;
+  let mockAuth: any;
 
   beforeEach(async () => {
     mockActivatedRoute = {
@@ -32,6 +34,7 @@ describe('PesticideEditComponent', () => {
     mockUpdateUseCase = { execute: vi.fn(() => of(undefined)) };
     mockCropGateway = { list: vi.fn(() => of([])) };
     mockPestGateway = { list: vi.fn(() => of([])) };
+    mockAuth = { user: vi.fn(() => ({ admin: false, region: 'us' })) };
 
     await TestBed.configureTestingModule({
       imports: [PesticideEditComponent],
@@ -40,6 +43,7 @@ describe('PesticideEditComponent', () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadPesticideForEditUseCase, useValue: mockLoadUseCase },
         { provide: UpdatePesticideUseCase, useValue: mockUpdateUseCase },
+        { provide: AuthService, useValue: mockAuth },
         { provide: CROP_GATEWAY, useValue: mockCropGateway },
         { provide: PEST_GATEWAY, useValue: mockPestGateway }
       ]
@@ -49,6 +53,7 @@ describe('PesticideEditComponent', () => {
         providers: [
           { provide: LoadPesticideForEditUseCase, useValue: mockLoadUseCase },
           { provide: UpdatePesticideUseCase, useValue: mockUpdateUseCase },
+          { provide: AuthService, useValue: mockAuth },
           { provide: CROP_GATEWAY, useValue: mockCropGateway },
           { provide: PEST_GATEWAY, useValue: mockPestGateway }
         ]
@@ -119,7 +124,7 @@ describe('PesticideEditComponent', () => {
       description: 'Test Description',
       crop_id: 1,
       pest_id: 1,
-      region: 'jp',
+      region: 'us',
       onSuccess: expect.any(Function)
     });
   });

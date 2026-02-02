@@ -349,12 +349,8 @@ class PublicPlansController < ApplicationController
 
   # テスト用のオーバーライド: URLパラメータでplan_idを受け取る
   def find_cultivation_plan
-    # テスト用: URLパラメータでplan_idを受け取る（開発・テスト環境のみ）
-    plan_id = if Rails.env.test? && params[:plan_id].present?
-      params[:plan_id]
-    else
-      params[:id] || session_data[:plan_id]
-    end
+    # URLパラメータ、クエリパラメータ、セッションデータの順でplan_idを取得
+    plan_id = params[:id] || params[:plan_id] || params[:planId] || session_data[:plan_id]
     
     unless plan_id
       redirect_to public_plans_path, alert: I18n.t('public_plans.errors.not_found')

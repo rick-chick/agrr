@@ -71,12 +71,14 @@ const initialControl: CropCreateViewState = {
               <span class="form-card__field-label">{{ 'crops.form.groups_label' | translate }}</span>
               <input id="crop-groups" name="groups" [(ngModel)]="control.formData.groupsDisplay" [placeholder]="'crops.form.groups_placeholder' | translate" />
             </label>
-            <app-region-select
-              id="crop-region"
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
-            @if (auth.user()?.admin) {
+            @if (isAdmin) {
+              <app-region-select
+                id="crop-region"
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
+            @if (isAdmin) {
               <label class="form-card__field form-card__field--checkbox">
                 <input type="checkbox" name="is_reference" [(ngModel)]="control.formData.is_reference" />
                 <span class="form-card__field-label">{{ 'crops.form.is_reference_label' | translate }}</span>
@@ -92,7 +94,7 @@ const initialControl: CropCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './crop-create.component.css'
+  styleUrls: ['./crop-create.component.css']
 })
 export class CropCreateComponent implements CropCreateView, OnInit {
   readonly auth = inject(AuthService);
@@ -110,23 +112,52 @@ export class CropCreateComponent implements CropCreateView, OnInit {
     this.cdr.markForCheck();
   }
 
+  get isAdmin(): boolean {
+    return this.auth.user()?.admin ?? false;
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.syncRegionWithCurrentUser();
   }
 
   createCrop(): void {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
+    const region = this.resolveRegionForSubmit();
     this.useCase.execute({
       name: fd.name,
       variety: fd.variety,
       area_per_unit: fd.area_per_unit,
       revenue_per_area: fd.revenue_per_area,
-      region: fd.region,
+      region,
       groups: parseGroups(fd.groupsDisplay),
       is_reference: fd.is_reference,
       onSuccess: () => this.router.navigate(['/crops'])
     });
+  }
+
+  private get currentUserRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
+  }
+
+  private resolveRegionForSubmit(): string | null {
+    if (this.isAdmin) return this.control.formData.region;
+    return this.currentUserRegion ?? this.control.formData.region;
+  }
+
+  private syncRegionWithCurrentUser(): void {
+    if (this.isAdmin) return;
+    const region = this.currentUserRegion;
+    if (!region || this.control.formData.region === region) return;
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        region
+      }
+    };
   }
 }

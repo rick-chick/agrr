@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CropEditComponent } from './crop-edit.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropStage } from '../../../domain/crops/crop';
+import { AuthService } from '../../../services/auth.service';
 
 // Import initialFormData from the component
 const initialFormData = {
@@ -44,7 +45,8 @@ describe('CropEditComponent', () => {
   let mockUpdateThermalRequirementUseCase: any;
   let mockUpdateSunshineRequirementUseCase: any;
   let mockUpdateNutrientRequirementUseCase: any;
-  let mockTranslateService: any;
+  let translateService: TranslateService;
+  let mockAuthService: any;
 
   beforeEach(async () => {
     mockActivatedRoute = {
@@ -64,32 +66,17 @@ describe('CropEditComponent', () => {
     mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
     mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
     mockUpdateNutrientRequirementUseCase = { execute: vi.fn() };
-    mockTranslateService = {
-      instant: vi.fn((key: string, params?: any) => {
-        if (key === 'crops.edit.stage_title' && params?.order) {
-          return `ステージ ${params.order}`;
-        }
-        // Add region translation keys
-        if (key === 'crops.form.region_label') return 'Region';
-        if (key === 'crops.form.region_blank') return '';
-        if (key === 'crops.form.region_jp') return 'Japan';
-        if (key === 'crops.form.region_us') return 'United States';
-        if (key === 'crops.form.region_in') return 'India';
-        return key; // fallback
-      }),
-      get: vi.fn((key: string, params?: any) => {
-        // Mock get method for TranslatePipe
-        const result = mockTranslateService.instant(key, params);
-        return of(result);
-      })
+    mockAuthService = {
+      user: vi.fn(() => ({ admin: true, region: 'us' }))
     };
+    // Use real TranslateService via TranslateModule.forRoot() and set translations in the test
 
     await TestBed.configureTestingModule({
       imports: [
         CropEditComponent,
         RegionSelectComponent,
         TranslateModule.forRoot({
-          defaultLanguage: 'en'
+          fallbackLang: 'en'
         })
       ],
       providers: [
@@ -104,12 +91,44 @@ describe('CropEditComponent', () => {
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
         { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase },
-        { provide: TranslateService, useValue: mockTranslateService }
+        TranslateModule,
+        { provide: AuthService, useValue: mockAuthService }
       ]
     }).compileComponents();
 
+    // Ensure component's internal provider for LoadCropForEditUseCase is replaced with our mock
+    TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
+    // Ensure component's internal provider for UpdateCropUseCase is replaced with our mock
+    TestBed.overrideProvider(UpdateCropUseCase, { useValue: mockUpdateUseCase });
+    // Ensure component's internal providers for stage and requirement usecases are replaced with our mocks
+    TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
+    TestBed.overrideProvider(UpdateCropStageUseCase, { useValue: mockUpdateCropStageUseCase });
+    TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
+    TestBed.overrideProvider(UpdateTemperatureRequirementUseCase, { useValue: mockUpdateTemperatureRequirementUseCase });
+    TestBed.overrideProvider(UpdateThermalRequirementUseCase, { useValue: mockUpdateThermalRequirementUseCase });
+    TestBed.overrideProvider(UpdateSunshineRequirementUseCase, { useValue: mockUpdateSunshineRequirementUseCase });
+    TestBed.overrideProvider(UpdateNutrientRequirementUseCase, { useValue: mockUpdateNutrientRequirementUseCase });
+    // Create fixture after overrides
     fixture = TestBed.createComponent(CropEditComponent);
     component = fixture.componentInstance;
+
+    // Configure TranslateService translations for tests
+    translateService = TestBed.inject(TranslateService);
+    translateService.setTranslation('ja', {
+      crops: {
+        edit: {
+          stage_title: 'ステージ {{order}}'
+        },
+        form: {
+          region_label: 'Region',
+          region_blank: '',
+          region_jp: 'Japan',
+          region_us: 'United States',
+          region_in: 'India'
+        }
+      }
+    }, true);
+    translateService.use('ja');
   });
 
   it('should create', () => {
@@ -194,6 +213,46 @@ describe('CropEditComponent', () => {
     });
   });
 
+  it('should use current user region for non-admin updates', () => {
+    mockAuthService.user.mockReturnValue({ admin: false, region: 'jp' });
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        ...initialFormData,
+        name: 'Crop',
+        region: 'us'
+      }
+    };
+
+    component.updateCrop();
+
+    expect(mockUpdateUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ region: 'jp' })
+    );
+  });
+
+  it('should keep selected region for admin updates', () => {
+    mockAuthService.user.mockReturnValue({ admin: true, region: 'jp' });
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        ...initialFormData,
+        name: 'Crop',
+        region: 'us'
+      }
+    };
+
+    component.updateCrop();
+
+    expect(mockUpdateUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ region: 'us' })
+    );
+  });
+
   it('should render crop stages without ngModel error after fix', () => {
     // Set up component with crop stages
     component.control = {
@@ -246,10 +305,10 @@ describe('CropEditComponent', () => {
 
     fixture.detectChanges();
 
-    // Check that translate service was called with correct parameters for stage title
-    // This test should fail (RED) because the component doesn't pass parameters to translate
+    // Check that translation parameters are applied for stage title
+    // The component should render the translated title with the order substituted
     const stageTitleElement = fixture.nativeElement.querySelector('.crop-stage-card__title');
     expect(stageTitleElement).toBeTruthy();
-    expect(stageTitleElement.textContent).toContain('ステージ %{order}'); // This should be RED - template not replaced
+    expect(stageTitleElement.textContent).toContain('ステージ 1');
   });
 });

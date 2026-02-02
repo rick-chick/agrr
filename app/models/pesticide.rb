@@ -33,6 +33,7 @@ class Pesticide < ApplicationRecord
   validates :crop, presence: true
   validates :pest, presence: true
   validates :source_pesticide_id, uniqueness: { scope: :user_id }, allow_nil: true
+  validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }

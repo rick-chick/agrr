@@ -26,8 +26,8 @@ const initialControl: PublicPlanCreateViewState = {
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, TranslateModule],
   providers: [
-    PublicPlanCreatePresenter,
     LoadPublicPlanFarmsUseCase,
+    PublicPlanCreatePresenter,
     { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway },
     ApiClientService
@@ -117,7 +117,8 @@ const initialControl: PublicPlanCreateViewState = {
       </div>
     </main>
   `,
-  styleUrl: './public-plan.component.css'
+  // Use shared public-plan stylesheet
+  styleUrls: ['./public-plan.component.css']
 })
 export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly router = inject(Router);

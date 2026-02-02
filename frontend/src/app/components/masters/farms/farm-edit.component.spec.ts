@@ -11,6 +11,7 @@ import { LOAD_FARM_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/farms/load-farm
 import { UPDATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/update-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmEditViewState } from './farm-edit.view';
+import { AuthService } from '../../../services/auth.service';
 
 describe('FarmEditComponent', () => {
   let component: FarmEditComponent;
@@ -19,12 +20,14 @@ describe('FarmEditComponent', () => {
   let updateUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let authService: { user: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
     updateUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    authService = { user: vi.fn(() => ({ admin: true })) };
 
     await TestBed.configureTestingModule({
       imports: [FarmEditComponent, TranslateModule.forRoot()],
@@ -41,7 +44,8 @@ describe('FarmEditComponent', () => {
             { provide: FarmEditPresenter, useValue: presenter },
             { provide: LOAD_FARM_FOR_EDIT_OUTPUT_PORT, useExisting: FarmEditPresenter },
             { provide: UPDATE_FARM_OUTPUT_PORT, useExisting: FarmEditPresenter },
-            { provide: FARM_GATEWAY, useValue: {} }
+            { provide: FARM_GATEWAY, useValue: {} },
+            { provide: AuthService, useValue: authService }
           ]
         }
       })
@@ -106,6 +110,47 @@ describe('FarmEditComponent', () => {
     });
   });
 
+  it('forces user region on control update for non-admin users', () => {
+    authService.user.mockReturnValue({ admin: false, region: 'jp' });
+    const state: FarmEditViewState = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        name: 'Test Farm',
+        region: 'Test Region',
+        latitude: 35.0,
+        longitude: 135.0
+      }
+    };
+    component.control = state;
+    expect(component.control.formData.region).toBe('jp');
+  });
+
+  it('uses user region on updateFarm for non-admin users', () => {
+    authService.user.mockReturnValue({ admin: false, region: 'us' });
+    component.control = {
+      ...component.control,
+      formData: {
+        name: 'User Farm',
+        region: 'ignored',
+        latitude: 10,
+        longitude: 20
+      }
+    };
+
+    component.updateFarm();
+
+    expect(updateUseCase.execute).toHaveBeenCalledWith({
+      farmId: 123,
+      name: 'User Farm',
+      region: 'us',
+      latitude: 10,
+      longitude: 20,
+      onSuccess: expect.any(Function)
+    });
+  });
+
   it('calls updateUseCase on updateFarm when form is valid', () => {
     component.control = {
       ...component.control,
@@ -146,7 +191,8 @@ describe('FarmEditComponent', () => {
             { provide: FarmEditPresenter, useValue: presenter },
             { provide: LOAD_FARM_FOR_EDIT_OUTPUT_PORT, useExisting: FarmEditPresenter },
             { provide: UPDATE_FARM_OUTPUT_PORT, useExisting: FarmEditPresenter },
-            { provide: FARM_GATEWAY, useValue: {} }
+            { provide: FARM_GATEWAY, useValue: {} },
+            { provide: AuthService, useValue: authService }
           ]
         }
       })

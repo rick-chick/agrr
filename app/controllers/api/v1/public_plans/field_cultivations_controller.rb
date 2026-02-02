@@ -44,8 +44,8 @@ module Api
           # crop_idから参照作物を取得
           plan_crop = @field_cultivation.cultivation_plan_crop
           
-          # crop_idで検索
-          crop = Crop.find_by(id: plan_crop.crop_id)
+          # crop_idで検索（トップレベルのモデルを明示）
+          crop = ::Crop.find_by(id: plan_crop.crop_id)
           
           Rails.logger.info "🔍 [Climate Data] plan_crop.crop_id: #{plan_crop&.crop_id}, found crop: #{crop&.id}"
           

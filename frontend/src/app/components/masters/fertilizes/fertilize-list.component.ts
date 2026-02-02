@@ -69,7 +69,7 @@ const initialControl: FertilizeListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './fertilize-list.component.css'
+  styleUrls: ['./fertilize-list.component.css']
 })
 export class FertilizeListComponent implements FertilizeListView, OnInit {
   private readonly loadUseCase = inject(LoadFertilizeListUseCase);

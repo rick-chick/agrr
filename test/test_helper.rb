@@ -12,9 +12,23 @@
 # 開発DBを壊さないため: RAILS_ENV=development 等でテスト実行された場合は即終了する
 if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
   $stderr.puts <<~MSG.strip
-    [AGRR] Rails tests must run with RAILS_ENV=test. Current RAILS_ENV=#{ENV['RAILS_ENV'].inspect} would use the development database and corrupt it.
-    Use: .cursor/skills/test-common/scripts/run-test-rails.sh
-    Or:  docker compose --profile test run --rm test bundle exec rails test
+    🚨🚨🚨 AGRR データベース保護ガード 🚨🚨🚨
+
+    危険！ RAILS_ENV=#{ENV['RAILS_ENV'].inspect} でテストを実行しようとしています！
+    これにより開発DB（#{ENV['DATABASE_URL'] || 'development.sqlite3'}）が壊れます！
+
+    ✅ 正しい実行方法:
+       .cursor/skills/test-common/scripts/run-test-rails.sh
+       docker compose --profile test run --rm test bundle exec rails test
+
+    💡 このガードをバイパスするには ALLOW_DIRECT_RAILS_TEST=1 を設定
+       （ただしDBが壊れるリスクを理解した上で使用してください）
+
+    🔄 前回DBが壊れた場合の復旧方法:
+       docker compose down
+       docker volume rm agrr_storage_dev_data
+       git checkout db/schema.rb
+       docker compose up -d web
   MSG
   exit 1
 end
