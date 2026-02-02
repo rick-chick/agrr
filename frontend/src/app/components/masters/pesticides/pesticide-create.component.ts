@@ -92,7 +92,7 @@ const initialControl: PesticideCreateViewState = {
       </section>
     </main>
   `,
-  styles: ['']
+  styleUrls: ['./pesticide-create.component.css']
 })
 export class PesticideCreateComponent implements PesticideCreateView, OnInit {
   readonly auth = inject(AuthService);
