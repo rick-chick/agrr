@@ -50,7 +50,7 @@ const CLOSE_DELAY_MS = 200;
       }
     </div>
   `,
-  styleUrl: './nav-dropdown.component.css',
+  styleUrls: ['./nav-dropdown.component.css'],
 })
 export class NavDropdownComponent implements OnChanges {
   @Input() triggerLabelKey = '';

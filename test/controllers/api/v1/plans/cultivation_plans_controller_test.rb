@@ -51,9 +51,12 @@ module Api
           )
           
           # 天気データを追加（adjust処理に必要）
-          start_date = 20.years.ago.to_date
-          end_date = Date.current
-          (start_date..end_date).each do |date|
+          # NOTE: 以前は20年分のデータを生成していたが、テストの検証にとって不要に多く重いため最小化する。
+          # 必要な期間はこのテストセットアップで作成した field_cultivation の期間の前後のみで十分と判断。
+          # バッファを持たせつつ最小限のDBレコードのみ作成する（パフォーマンス改善）。
+          wd_start = (@field_cultivation.start_date - 7.days).to_date
+          wd_end = [@field_cultivation.completion_date + 7.days, Date.current].min
+          (wd_start..wd_end).each do |date|
             create(:weather_datum,
               weather_location: @weather_location,
               date: date,
@@ -116,33 +119,37 @@ module Api
                },
                headers: { "Accept" => "application/json" }
 
-          # 気象データがない場合は500を返す
-          assert_response :internal_server_error, "Expected internal_server_error but got #{response.status}. Response: #{response.body}"
+          # 調整が成功すること（calculated_planning_start_date の includes による問題は修正済み）
+          assert_response :success, "Expected success but got #{response.status}. Response: #{response.body}"
 
           json = JSON.parse(response.body)
-          assert !json['success']
+          assert json['success']
         end
 
-        test "data endpoint returns 500 when completion_date is nil" do
-          # completion_dateがnilの場合にcalculated_planning_end_dateがエラーになる可能性をテスト
+        test "data endpoint handles nil completion_date" do
+          # completion_dateがnilの場合でもエンドポイントが正常に動作することをテスト
           @field_cultivation.update!(completion_date: nil)
 
           get "/api/v1/plans/cultivation_plans/#{@cultivation_plan.id}/data",
               headers: { "Accept" => "application/json" }
 
-          # エラーが発生することを確認（500または別のエラー）
-          json = JSON.parse(response.body) rescue nil
-          if json && json['success'] == false
-            Rails.logger.info "Data endpoint returned error: #{json['message']}"
-          end
+          assert_response :success, "Expected success but got #{response.status}. Response: #{response.body}"
 
-          # 少なくとも正常に完了しないことを確認
-          refute response.successful?, "Expected failure but got success. Response: #{response.body}"
+          json = JSON.parse(response.body)
+          assert json['success']
+          cultivations = json['data']['cultivations']
+          cultivation = cultivations.find { |c| c['id'] == @field_cultivation.id }
+          assert_not_nil cultivation, "Expected cultivation to be present in response"
+          assert_nil cultivation['completion_date'], "Expected completion_date to be nil in response"
         end
 
         test "adjust endpoint returns 400 when crop has no growth stages" do
           # 作物に成長段階がない場合をテスト
           # テストデータでは既にcrop_stagesがない状態なので、そのままテスト
+          # 明示的に成長段階がない作物を割り当てる（セットアップで :with_stages を使っているため、
+          # 直接削除すると外部キー制約が発生する可能性があるため、別の作物を割り当てる）
+          no_stage_crop = create(:crop, :user_owned, user: @user)
+          @plan_crop.update!(crop: no_stage_crop)
 
           post "/api/v1/plans/cultivation_plans/#{@cultivation_plan.id}/adjust",
                params: {

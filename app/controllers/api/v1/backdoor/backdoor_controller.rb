@@ -196,7 +196,7 @@ module Api
             anonymous_users: User.where(is_anonymous: true).count,
             farms: Farm.count,
             fields: Field.count,
-            crops: Crop.count,
+            crops: ::Crop.count,
             cultivation_plans: CultivationPlan.count,
             interaction_rules: InteractionRule.count,
             pesticides: Pesticide.count,
@@ -250,7 +250,7 @@ module Api
               users: User.where(is_anonymous: false).count,
               farms: Farm.count,
               fields: Field.count,
-              crops: Crop.count,
+              crops: ::Crop.count,
               cultivation_plans: CultivationPlan.count
             }
             
@@ -264,7 +264,7 @@ module Api
               Pesticide.delete_all
               InteractionRule.delete_all
               CultivationPlan.delete_all
-              Crop.delete_all
+              ::Crop.delete_all
               Field.delete_all
               Farm.delete_all
               User.where(is_anonymous: false).delete_all
@@ -274,7 +274,7 @@ module Api
               users: User.where(is_anonymous: false).count,
               farms: Farm.count,
               fields: Field.count,
-              crops: Crop.count,
+              crops: ::Crop.count,
               cultivation_plans: CultivationPlan.count
             }
             

@@ -73,6 +73,16 @@ module Domain
 
         def validate!
           raise ArgumentError, "Name is required" if name.blank?
+          validate_region!
+        end
+
+        def validate_region!
+          return if region.nil?
+
+          valid_regions = %w[jp us in]
+          unless valid_regions.include?(region)
+            raise ArgumentError, "Region must be one of: jp, us, in"
+          end
         end
       end
     end

@@ -25,7 +25,7 @@ import { TranslateModule } from '@ngx-translate/core';
       </select>
     </label>
   `,
-  styleUrl: './region-select.component.css'
+  styles: ['']
 })
 export class RegionSelectComponent {
   @Input() region: string | null | undefined = null;

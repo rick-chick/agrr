@@ -51,8 +51,9 @@ module AgrrOptimization
           crop_name: fc.crop_display_name,
           variety: fc.cultivation_plan_crop.variety,
           area_used: fc.area,
-          start_date: fc.start_date.to_s,
-          completion_date: fc.completion_date.to_s,
+          # Use safe navigation so nil dates remain nil (avoid empty string "")
+          start_date: fc.start_date&.to_s,
+          completion_date: fc.completion_date&.to_s,
           growth_days: fc.cultivation_days || (fc.completion_date - fc.start_date).to_i + 1,
           accumulated_gdd: fc.optimization_result&.dig('accumulated_gdd') || 0.0,
           total_cost: cost,
@@ -244,21 +245,26 @@ module AgrrOptimization
             raise I18n.t('controllers.agrr_optimization.errors.plan_crop_missing', crop_id: allocation['crop_id'])
           end
           
+          # allocation_id may come as string or integer and keys may be string/symbol
+          allocation_id_raw = allocation['allocation_id'] || allocation[:allocation_id] || allocation['id'] || allocation[:id]
+          allocation_id = allocation_id_raw.present? ? allocation_id_raw.to_i : nil
+
           begin
             start_date = Date.parse(allocation['start_date'])
           rescue ArgumentError => e
             Rails.logger.error "❌ [Save] Invalid start_date format: #{allocation['start_date'].inspect}"
-            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.start_date_invalid', value: allocation['start_date'].inspect, allocation_id: allocation['allocation_id'])
+            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.start_date_invalid', value: allocation['start_date'].inspect, allocation_id: allocation_id_raw)
           end
-          
+
           begin
             completion_date = Date.parse(allocation['completion_date'])
           rescue ArgumentError => e
             Rails.logger.error "❌ [Save] Invalid completion_date format: #{allocation['completion_date'].inspect}"
-            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.completion_date_invalid', value: allocation['completion_date'].inspect, allocation_id: allocation['allocation_id'])
+            raise ArgumentError, I18n.t('controllers.agrr_optimization.errors.completion_date_invalid', value: allocation['completion_date'].inspect, allocation_id: allocation_id_raw)
           end
+
           desired_records << {
-            allocation_id: allocation['allocation_id'],
+            allocation_id: allocation_id,
             attrs: {
               cultivation_plan_id: cultivation_plan.id,
               cultivation_plan_field_id: plan_field.id,
@@ -290,10 +296,16 @@ module AgrrOptimization
       
       Rails.logger.info "🛠️ [Save] to_update: #{to_update.size}, to_create: #{to_create.size}, to_delete: #{to_delete_ids.size}"
       
-      # 1) 更新（個別 update: 変更のあったもののみ）
-      to_update.each do |rec|
-        fc = existing_by_id[rec[:allocation_id]]
-        fc.update!(rec[:attrs].except(:created_at))
+      # 1) 更新（バルク upsert に置換してコールバックを抑制）
+      if to_update.any?
+        upsert_rows = to_update.map do |rec|
+          # upsert_all requires the primary key to be present for conflict resolution.
+          # Merge id (allocation_id) and exclude created_at to avoid overwriting original created_at.
+          rec[:attrs].except(:created_at).merge(id: rec[:allocation_id])
+        end
+        # Use upsert_all to perform a single query for updates (bypasses ActiveRecord callbacks).
+        # unique_by uses the primary key column to detect conflicts.
+        FieldCultivation.upsert_all(upsert_rows, unique_by: [:id])
       end
       
       # 2) 新規一括挿入
@@ -337,23 +349,23 @@ module AgrrOptimization
   end
   
   # Action Cable経由で最適化完了を通知
-  def broadcast_optimization_complete(cultivation_plan)
-    Rails.logger.info "📡 [Action Cable] Broadcasting optimization complete for plan_id=#{cultivation_plan.id}"
-    
+  def broadcast_optimization_complete(cultivation_plan, status: 'completed')
+    Rails.logger.info "📡 [Action Cable] Broadcasting optimization #{status} for plan_id=#{cultivation_plan.id}"
+
     # チャンネルクラスを決定（plan_typeに基づく）
     channel_class = if cultivation_plan.plan_type_public?
                       OptimizationChannel
                     else
                       PlansOptimizationChannel
                     end
-    
+
     Rails.logger.info "📡 [Action Cable] Using channel: #{channel_class.name}"
-    
+
     channel_class.broadcast_to(
       cultivation_plan,
       {
-        status: 'completed',
-        message: I18n.t('optimization.messages.completed'),
+        status: status,
+        message: I18n.t("optimization.messages.#{status}"),
         total_profit: cultivation_plan.total_profit,
         total_revenue: cultivation_plan.total_revenue,
         total_cost: cultivation_plan.total_cost,
@@ -586,8 +598,8 @@ module AgrrOptimization
         Rails.logger.info "⏱️ [PERF] - agrr adjust実行: #{((perf_after_adjust - perf_before_adjust) * 1000).round(2)}ms"
         Rails.logger.info "⏱️ [PERF] - DB保存: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
         
-        # Action Cable経由でクライアントに通知
-        broadcast_optimization_complete(cultivation_plan)
+        # Action Cable経由でクライアントに通知（adjustの場合はadjustedステータス）
+        broadcast_optimization_complete(cultivation_plan, status: 'adjusted')
         
         return {
           success: true,
@@ -702,4 +714,5 @@ module AgrrOptimization
     [effective_start, effective_end]
   end
 end
+
 

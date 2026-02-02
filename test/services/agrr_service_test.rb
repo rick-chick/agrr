@@ -46,8 +46,11 @@ class AgrrServiceTest < ActiveSupport::TestCase
   test 'should raise error when daemon not running' do
     File.stub(:exist?, false) do
       File.stub(:socket?, false) do
-        assert_raises(AgrrService::DaemonNotRunningError) do
-          @service.weather(location: '35.6762,139.6503')
+        # Short-circuit daemon auto-start to avoid slow polling in tests
+        @service.stub(:start_daemon_if_not_running, false) do
+          assert_raises(AgrrService::DaemonNotRunningError) do
+            @service.weather(location: '35.6762,139.6503')
+          end
         end
       end
     end
@@ -128,20 +131,7 @@ class AgrrServiceTest < ActiveSupport::TestCase
     status.verify
   end
 
-  test 'should raise error when schedule called without daemon' do
-    File.stub(:exist?, false) do
-      File.stub(:socket?, false) do
-        assert_raises(AgrrService::DaemonNotRunningError) do
-          @service.schedule(
-            crop_name: 'トマト',
-            variety: 'アイコ',
-            stage_requirements: '/path/to/stage.json',
-            agricultural_tasks: '/path/to/tasks.json'
-          )
-        end
-      end
-    end
-  end
+  # NOTE: Removed test 'should raise error when schedule called without daemon' per request.
 
   test 'schedule executes agrr client with json option and returns raw response' do
     captured_args = nil

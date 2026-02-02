@@ -110,7 +110,8 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
     service = WeatherPredictionService.new(weather_location: @weather_location, farm: @farm)
 
     # トレーニングデータをモックして十分なデータがあるようにする
-    fake_training_data = (1..6000).map { |i| create(:weather_datum, weather_location: @weather_location, date: Date.current - 20.years + i.days, temperature_max: 20.0) }
+    # テスト用トレーニングデータは本番同等の大量作成は重いため縮小して疑似データを使用
+    fake_training_data = (1..100).map { |i| build_stubbed(:weather_datum, weather_location: @weather_location, date: Date.current - 100 + i.days, temperature_max: 20.0) }
     service.stub(:get_training_data, fake_training_data) do
       # 予測データをモック
       fake_prediction = {

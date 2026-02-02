@@ -138,7 +138,7 @@ const initialControl: PublicPlanSelectCropViewState = {
       }
     </main>
   `,
-  styleUrl: './public-plan.component.css'
+  styleUrls: ['./public-plan.component.css']
 })
 export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, OnInit {
   private readonly router = inject(Router);

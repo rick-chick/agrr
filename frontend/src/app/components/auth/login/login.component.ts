@@ -13,7 +13,7 @@ import { getApiBaseUrl } from '../../../core/api-base-url';
       <a class="login-button" [href]="loginUrl">Google OAuth</a>
     </section>
   `,
-  styleUrl: './login.component.css'
+  styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
   protected readonly loginUrl = this.buildLoginUrl();

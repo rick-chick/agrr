@@ -70,7 +70,7 @@ const initialControl: CropListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './crop-list.component.css'
+  styleUrls: ['./crop-list.component.css']
 })
 export class CropListComponent implements CropListView, OnInit {
   readonly auth = inject(AuthService);

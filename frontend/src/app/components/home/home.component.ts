@@ -20,7 +20,7 @@ import { AuthService } from '../../services/auth.service';
       }
     </section>
   `,
-  styleUrl: './home.component.css'
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
   constructor(public readonly authService: AuthService) {}

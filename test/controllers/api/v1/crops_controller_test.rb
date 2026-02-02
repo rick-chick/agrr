@@ -28,7 +28,7 @@ module Api
           end
         end
 
-        assert_difference "Crop.count", +1 do
+        assert_difference "::Crop.count", +1 do
           post api_v1_crops_ai_create_path,
                params: { name: "ブロッコリー" },
                headers: { "Accept" => "application/json" }
@@ -38,7 +38,7 @@ module Api
         json = JSON.parse(response.body)
 
         assert json["success"]
-        crop = Crop.find(json["crop_id"])
+        crop = ::Crop.find(json["crop_id"])
         assert_equal @user.id, crop.user_id
         assert_not crop.is_reference
         assert_equal ["葉物"], crop.groups
@@ -66,7 +66,7 @@ module Api
           end
         end
 
-        assert_no_difference "Crop.count" do
+        assert_no_difference "::Crop.count" do
           post api_v1_crops_ai_create_path,
                params: { name: "トマト" },
                headers: { "Accept" => "application/json" }

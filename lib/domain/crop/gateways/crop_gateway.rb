@@ -33,6 +33,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement delete_crop_stage"
         end
 
+        def list_crop_stages_by_crop_id(crop_id)
+          raise NotImplementedError, "Subclasses must implement list_crop_stages_by_crop_id"
+        end
+
+        def find_crop_stage_by_id(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement find_crop_stage_by_id"
+        end
+
         # TemperatureRequirement methods
         def find_temperature_requirement(crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_temperature_requirement"

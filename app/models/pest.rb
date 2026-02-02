@@ -36,6 +36,7 @@ class Pest < ApplicationRecord
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :source_pest_id, uniqueness: { scope: :user_id }, allow_nil: true
+  validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }

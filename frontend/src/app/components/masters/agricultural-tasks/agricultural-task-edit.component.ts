@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import {
   AgriculturalTaskEditView,
   AgriculturalTaskEditViewState,
@@ -83,10 +84,12 @@ const initialControl: AgriculturalTaskEditViewState = {
                 <option value="advanced">Advanced</option>
               </select>
             </label>
-            <app-region-select
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
+            @if (auth.user()?.admin) {
+              <app-region-select
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
             <label for="task_type" class="form-card__field">
               <span class="form-card__field-label">Task type</span>
               <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />
@@ -102,9 +105,10 @@ const initialControl: AgriculturalTaskEditViewState = {
       </section>
     </main>
   `,
-  styleUrl: './agricultural-task-edit.component.css'
+  styleUrls: ['./agricultural-task-edit.component.css']
 })
 export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadAgriculturalTaskForEditUseCase);
@@ -117,7 +121,7 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
     return this._control;
   }
   set control(value: AgriculturalTaskEditViewState) {
-    this._control = value;
+    this._control = this.applyUserRegionIfNeeded(value);
     this.cdr.markForCheck();
   }
 
@@ -127,6 +131,7 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.control = this.applyUserRegionIfNeeded(this.control);
     if (!this.agriculturalTaskId) {
       this.control = { ...initialControl, loading: false, error: 'Invalid agricultural task id.' };
       return;
@@ -138,12 +143,27 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
+    const region = this.auth.user()?.admin ? fd.region : this.userRegion ?? fd.region;
     this.updateUseCase.execute({
       agriculturalTaskId: this.agriculturalTaskId,
       ...fd,
+      region,
       weather_dependency: fd.weather_dependency ?? undefined,
       skill_level: fd.skill_level ?? undefined,
       onSuccess: () => this.router.navigate(['/agricultural_tasks', this.agriculturalTaskId])
     });
+  }
+
+  private get userRegion(): string | null {
+    return (this.auth.user() as { region?: string | null } | null)?.region ?? null;
+  }
+
+  private applyUserRegionIfNeeded(
+    control: AgriculturalTaskEditViewState
+  ): AgriculturalTaskEditViewState {
+    if (this.auth.user()?.admin) return control;
+    const region = this.userRegion;
+    if (!region || control.formData.region === region) return control;
+    return { ...control, formData: { ...control.formData, region } };
   }
 }

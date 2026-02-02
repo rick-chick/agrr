@@ -73,7 +73,7 @@ const initialControl: InteractionRuleListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './interaction-rule-list.component.css'
+  styleUrls: ['./interaction-rule-list.component.css']
 })
 export class InteractionRuleListComponent implements InteractionRuleListView, OnInit {
   private readonly loadUseCase = inject(LoadInteractionRuleListUseCase);

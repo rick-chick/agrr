@@ -55,7 +55,7 @@ const initialControl: PlanNewViewState = {
       </section>
     </main>
   `,
-  styleUrl: './plan-new.component.css'
+  styleUrls: ['./plan-new.component.css']
 })
 export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly useCase = inject(LoadPrivatePlanFarmsUseCase);

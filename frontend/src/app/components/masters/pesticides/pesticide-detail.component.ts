@@ -85,7 +85,7 @@ const initialControl: PesticideDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './pesticide-detail.component.css'
+  styleUrls: ['./pesticide-detail.component.css']
 })
 export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

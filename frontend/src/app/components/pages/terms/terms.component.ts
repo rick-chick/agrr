@@ -64,6 +64,6 @@ import { TranslateModule } from '@ngx-translate/core';
       </div>
     </div>
   `,
-  styleUrl: './terms.component.css'
+  styleUrls: ['./terms.component.css']
 })
 export class TermsComponent {}

@@ -96,7 +96,7 @@ const initialControl: PlanSelectCropViewState = {
       </section>
     </main>
   `,
-  styleUrl: './plan-select-crop.component.css'
+  styleUrls: ['./plan-select-crop.component.css']
 })
 export class PlanSelectCropComponent implements PlanSelectCropView, OnInit {
   private readonly loadContextUseCase = inject(LoadPrivatePlanSelectCropContextUseCase);

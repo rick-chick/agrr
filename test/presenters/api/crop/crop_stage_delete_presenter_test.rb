@@ -3,20 +3,20 @@
 require 'test_helper'
 
 # Load the presenter class
-require_relative '../../../../app/presenters/api/crop/crop_stage_delete_presenter'
+require_relative '../../../../lib/presenters/api/crop/crop_stage_delete_presenter'
 
 class CropStageDeletePresenterTest < ActiveSupport::TestCase
-  test 'on_success calls view.render_response with no_content status and empty json' do
+  test 'on_success calls view.render_response with ok status and success json' do
     view_mock = mock
-    presenter = Api::Crop::CropStageDeletePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::CropStageDeletePresenter.new(view: view_mock)
 
     success_dto = Domain::Crop::Dtos::CropStageDeleteOutputDto.new(success: true)
 
-    expected_json = {}
+    expected_json = { success: true }
 
     view_mock.expects(:render_response).with(
       json: expected_json,
-      status: :no_content
+      status: :ok
     )
 
     presenter.on_success(success_dto)
@@ -24,7 +24,7 @@ class CropStageDeletePresenterTest < ActiveSupport::TestCase
 
   test 'on_failure calls view.render_response with unprocessable_entity status and error message' do
     view_mock = mock
-    presenter = Api::Crop::CropStageDeletePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::CropStageDeletePresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Dtos::ErrorDto.new('Crop stage deletion failed')
 
@@ -42,7 +42,7 @@ class CropStageDeletePresenterTest < ActiveSupport::TestCase
 
   test 'on_failure handles non-ErrorDto failure objects' do
     view_mock = mock
-    presenter = Api::Crop::CropStageDeletePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::CropStageDeletePresenter.new(view: view_mock)
 
     failure_dto = 'Some error string'
 

@@ -9,6 +9,7 @@ import { AgriculturalTaskEditPresenter } from '../../../adapters/agricultural-ta
 import { LoadAgriculturalTaskForEditUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-for-edit.usecase';
 import { UpdateAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/update-agricultural-task.usecase';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { AuthService } from '../../../services/auth.service';
 
 describe('AgriculturalTaskEditComponent', () => {
   let component: AgriculturalTaskEditComponent;
@@ -16,6 +17,7 @@ describe('AgriculturalTaskEditComponent', () => {
   let mockActivatedRoute: any;
   let mockLoadUseCase: any;
   let mockUpdateUseCase: any;
+  let mockAuthService: any;
 
   beforeEach(async () => {
     mockActivatedRoute = {
@@ -28,6 +30,7 @@ describe('AgriculturalTaskEditComponent', () => {
 
     mockLoadUseCase = { execute: vi.fn() };
     mockUpdateUseCase = { execute: vi.fn() };
+    mockAuthService = { user: vi.fn(() => ({ admin: true, region: 'jp' })) };
 
     await TestBed.configureTestingModule({
       imports: [AgriculturalTaskEditComponent, RegionSelectComponent, TranslateModule.forRoot()],
@@ -35,9 +38,20 @@ describe('AgriculturalTaskEditComponent', () => {
         AgriculturalTaskEditPresenter,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadAgriculturalTaskForEditUseCase, useValue: mockLoadUseCase },
-        { provide: UpdateAgriculturalTaskUseCase, useValue: mockUpdateUseCase }
+        { provide: UpdateAgriculturalTaskUseCase, useValue: mockUpdateUseCase },
+        { provide: AuthService, useValue: mockAuthService }
       ]
     }).compileComponents();
+
+    TestBed.overrideComponent(AgriculturalTaskEditComponent, {
+      set: {
+        providers: [
+          { provide: UpdateAgriculturalTaskUseCase, useValue: mockUpdateUseCase },
+          { provide: LoadAgriculturalTaskForEditUseCase, useValue: mockLoadUseCase },
+          { provide: AuthService, useValue: mockAuthService }
+        ]
+      }
+    });
 
     fixture = TestBed.createComponent(AgriculturalTaskEditComponent);
     component = fixture.componentInstance;
@@ -53,6 +67,7 @@ describe('AgriculturalTaskEditComponent', () => {
   });
 
   it('should call updateUseCase when updateAgriculturalTask is called', () => {
+    mockAuthService.user.mockReturnValue({ admin: true, region: 'jp' });
     // Set control first
     component.control = {
       loading: false,
@@ -101,5 +116,47 @@ describe('AgriculturalTaskEditComponent', () => {
       task_type: 'manual',
       onSuccess: expect.any(Function)
     });
+  });
+
+  it('defaults region to current user region for non-admin users', () => {
+    mockAuthService.user.mockReturnValue({ admin: false, region: 'us' });
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        name: 'Test Task',
+        description: 'Test Description',
+        time_per_sqm: 1.5,
+        weather_dependency: 'medium',
+        required_tools: [],
+        skill_level: 'intermediate',
+        region: null,
+        task_type: 'manual'
+      }
+    };
+    (component as any)._control = {
+      loading: false,
+      saving: false,
+      error: null,
+      formData: {
+        name: 'Test Task',
+        description: 'Test Description',
+        time_per_sqm: 1.5,
+        weather_dependency: 'medium',
+        required_tools: [],
+        skill_level: 'intermediate',
+        region: null,
+        task_type: 'manual'
+      }
+    };
+
+    component.updateAgriculturalTask();
+
+    expect(mockUpdateUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        region: 'us'
+      })
+    );
   });
 });

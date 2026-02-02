@@ -15,7 +15,7 @@ import { getApiBaseUrl } from './core/api-base-url';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, FooterComponent, FlashMessageComponent, UndoToastComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
 export class App implements OnInit {
   private readonly translate = inject(TranslateService);

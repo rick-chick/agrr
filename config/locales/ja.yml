@@ -212,7 +212,7 @@ ja:
         title: "作物編集"
         stages_title: "生育ステージ"
         add_stage: "ステージ追加"
-        stage_title: "ステージ"
+        stage_title: "ステージ %{order}"
         stage_name: "ステージ名"
         stage_order: "順序"
         requirements_title: "要件"

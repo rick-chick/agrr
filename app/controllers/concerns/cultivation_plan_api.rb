@@ -223,6 +223,7 @@ module CultivationPlanApi
     @cultivation_plan = find_api_cultivation_plan
     
     # 計画データを構築
+    # 計画データを構築
     fields_data = @cultivation_plan.cultivation_plan_fields.map do |field|
       {
         id: field.id,
@@ -232,7 +233,7 @@ module CultivationPlanApi
         daily_fixed_cost: field.daily_fixed_cost
       }
     end
-    
+
     crops_data = @cultivation_plan.cultivation_plan_crops.map do |crop|
       {
         id: crop.id,
@@ -241,7 +242,7 @@ module CultivationPlanApi
         revenue_per_area: crop.revenue_per_area
       }
     end
-    
+
     cultivations_data = @cultivation_plan.field_cultivations.map do |fc|
       {
         id: fc.id,
@@ -259,13 +260,14 @@ module CultivationPlanApi
         status: fc.status
       }
     end
-    
+
     render json: {
       success: true,
       data: {
         id: @cultivation_plan.id,
         plan_year: @cultivation_plan.plan_year,
         plan_name: @cultivation_plan.plan_name,
+        plan_type: @cultivation_plan.plan_type,
         status: @cultivation_plan.status,
         total_area: @cultivation_plan.total_area,
         planning_start_date: @cultivation_plan.calculated_planning_start_date,
@@ -278,6 +280,8 @@ module CultivationPlanApi
       total_revenue: @cultivation_plan.total_revenue,
       total_cost: @cultivation_plan.total_cost
     }
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: i18n_t('errors.not_found') }, status: :not_found
   rescue => e
     Rails.logger.error "❌ [Data] Error: #{e.message}"
     render json: { success: false, message: e.message }, status: :internal_server_error
@@ -357,6 +361,9 @@ module CultivationPlanApi
   def validate_crops_have_growth_stages(cultivation_plan)
     cultivation_plan.cultivation_plan_crops.each do |plan_crop|
       crop = plan_crop.crop
+      # ログを追加してテスト時に crop の状態を可視化する
+      Rails.logger.info "🔍 [Validate Growth Stages] plan_crop_id=#{plan_crop.id} crop_id=#{crop&.id} crop_stages_loaded=#{crop&.association(:crop_stages)&.loaded? rescue 'n/a'}"
+      Rails.logger.info "🔍 [Validate Growth Stages] crop_stages_count=#{crop&.crop_stages&.size rescue 'n/a'}"
       if crop.crop_stages.empty?
         render json: {
           success: false,

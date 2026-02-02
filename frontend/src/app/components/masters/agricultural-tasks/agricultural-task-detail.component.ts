@@ -90,7 +90,7 @@ const initialControl: AgriculturalTaskDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './agricultural-task-detail.component.css'
+  styleUrls: ['./agricultural-task-detail.component.css']
 })
 export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

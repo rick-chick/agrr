@@ -115,12 +115,14 @@ const initialControl: CropEditViewState = {
               <span class="form-card__field-label">{{ 'crops.form.groups_label' | translate }}</span>
               <input id="crop-groups" name="groups" [(ngModel)]="control.formData.groupsDisplay" [placeholder]="'crops.form.groups_placeholder' | translate" />
             </label>
-            <app-region-select
-              id="crop-region"
-              [region]="control.formData.region"
-              (regionChange)="control.formData.region = $event"
-            ></app-region-select>
-            @if (auth.user()?.admin) {
+            @if (isAdmin) {
+              <app-region-select
+                id="crop-region"
+                [region]="control.formData.region"
+                (regionChange)="control.formData.region = $event"
+              ></app-region-select>
+            }
+            @if (isAdmin) {
               <label class="form-card__field form-card__field--checkbox">
                 <input type="checkbox" name="is_reference" [(ngModel)]="control.formData.is_reference" />
                 <span class="form-card__field-label">{{ 'crops.form.is_reference_label' | translate }}</span>
@@ -145,7 +147,7 @@ const initialControl: CropEditViewState = {
               @for (stage of control.formData.crop_stages; track stage.id) {
                 <div class="crop-stage-card">
                   <div class="crop-stage-card__header">
-                    <h4 class="crop-stage-card__title">ステージ {{ stage.order }}</h4>
+                    <h4 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}</h4>
                     <button type="button" class="btn-danger" (click)="deleteCropStage(stage.id)">
                       {{ 'common.delete' | translate }}
                     </button>
@@ -277,7 +279,7 @@ const initialControl: CropEditViewState = {
       </section>
     </main>
   `,
-  styleUrl: './crop-edit.component.css'
+  styleUrls: ['./crop-edit.component.css']
 })
 export class CropEditComponent implements CropEditView, OnInit {
   readonly auth = inject(AuthService);
@@ -304,12 +306,17 @@ export class CropEditComponent implements CropEditView, OnInit {
     this.cdr.markForCheck();
   }
 
+  get isAdmin(): boolean {
+    return this.auth.user()?.admin ?? false;
+  }
+
   private get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.syncRegionWithCurrentUser();
     if (!this.cropId) {
       this.control = { ...initialControl, loading: false, error: 'Invalid crop id.' };
       return;
@@ -321,13 +328,14 @@ export class CropEditComponent implements CropEditView, OnInit {
     if (this.control.saving) return;
     this.control = { ...this.control, saving: true, error: null };
     const fd = this.control.formData;
+    const region = this.resolveRegionForSubmit();
     this.updateUseCase.execute({
       cropId: this.cropId,
       name: fd.name,
       variety: fd.variety,
       area_per_unit: fd.area_per_unit,
       revenue_per_area: fd.revenue_per_area,
-      region: fd.region,
+      region,
       groups: parseGroups(fd.groupsDisplay),
       is_reference: fd.is_reference,
       onSuccess: () => this.router.navigate(['/crops', this.cropId])
@@ -464,5 +472,28 @@ export class CropEditComponent implements CropEditView, OnInit {
     }
     (stage.nutrient_requirement as any)[field] = value;
     this.updateNutrientRequirement(stageId, { [field]: value } as any);
+  }
+
+  private get currentUserRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
+  }
+
+  private resolveRegionForSubmit(): string | null {
+    if (this.isAdmin) return this.control.formData.region;
+    return this.currentUserRegion ?? this.control.formData.region;
+  }
+
+  private syncRegionWithCurrentUser(): void {
+    if (this.isAdmin) return;
+    const region = this.currentUserRegion;
+    if (!region || this.control.formData.region === region) return;
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        region
+      }
+    };
   }
 }

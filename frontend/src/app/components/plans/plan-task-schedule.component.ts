@@ -38,7 +38,7 @@ const initialControl: PlanTaskScheduleViewState = {
       }
     </section>
   `,
-  styleUrl: './plan-task-schedule.component.css'
+  styleUrls: ['./plan-task-schedule.component.css']
 })
 export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);

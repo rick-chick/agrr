@@ -25,7 +25,20 @@ class CultivationPlanCreator
   
   def call
     Rails.logger.info "🚀 [CultivationPlanCreator] Starting plan creation with farm: #{@farm.name} (#{@farm.id}), crops: #{@crops.count}, total_area: #{@total_area}"
-    
+
+    # バリデーション: 面積と作物が正しいことを確認
+    if @total_area <= 0
+      error_msg = "総面積は0より大きい値である必要があります (total_area: #{@total_area})"
+      Rails.logger.error "❌ CultivationPlan creation failed: #{error_msg}"
+      return Result.new(cultivation_plan: nil, errors: [error_msg])
+    end
+
+    if @crops.empty?
+      error_msg = "少なくとも1つの作物が必要です (crops: #{@crops.count})"
+      Rails.logger.error "❌ CultivationPlan creation failed: #{error_msg}"
+      return Result.new(cultivation_plan: nil, errors: [error_msg])
+    end
+
     ActiveRecord::Base.transaction do
       create_cultivation_plan_and_relations
       Result.new(cultivation_plan: @cultivation_plan, errors: [])

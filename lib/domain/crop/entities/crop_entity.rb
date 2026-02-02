@@ -4,7 +4,7 @@ module Domain
   module Crop
     module Entities
       class CropEntity
-        attr_reader :id, :user_id, :name, :variety, :is_reference, :area_per_unit, :revenue_per_area, :region, :groups, :created_at, :updated_at
+        attr_reader :id, :user_id, :name, :variety, :is_reference, :area_per_unit, :revenue_per_area, :region, :groups, :crop_stages, :created_at, :updated_at
 
         def initialize(attributes)
           @id = attributes[:id]
@@ -16,6 +16,7 @@ module Domain
           @revenue_per_area = attributes[:revenue_per_area]
           @region = attributes[:region]
           @groups = attributes[:groups] || []
+          @crop_stages = attributes[:crop_stages] || []
           @created_at = attributes[:created_at]
           @updated_at = attributes[:updated_at]
 
@@ -36,6 +37,10 @@ module Domain
 
         # ActiveRecordモデルからの変換
         def self.from_model(crop_model)
+          crop_stages = crop_model.crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement).order(:order).map do |stage|
+            CropStageEntity.from_model(stage)
+          end
+
           new(
             id: crop_model.id,
             user_id: crop_model.user_id,
@@ -46,6 +51,7 @@ module Domain
             revenue_per_area: crop_model.revenue_per_area,
             region: crop_model.region,
             groups: crop_model.groups || [],
+            crop_stages: crop_stages,
             created_at: crop_model.created_at,
             updated_at: crop_model.updated_at
           )

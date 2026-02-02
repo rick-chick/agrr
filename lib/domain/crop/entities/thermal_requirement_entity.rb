@@ -14,6 +14,15 @@ module Domain
           validate!
         end
 
+        # ActiveRecordモデルからの変換
+        def self.from_model(model)
+          new(
+            id: model.id,
+            crop_stage_id: model.crop_stage_id,
+            required_gdd: model.required_gdd
+          )
+        end
+
         private
 
         def validate!

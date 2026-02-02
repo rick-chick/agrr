@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../services/auth.service';
 import { PesticideCreateView, PesticideCreateViewState, PesticideCreateFormData } from './pesticide-create.view';
 import { CreatePesticideUseCase } from '../../../usecase/pesticides/create-pesticide.usecase';
 import { PesticideCreatePresenter } from '../../../adapters/pesticides/pesticide-create.presenter';
@@ -75,10 +76,12 @@ const initialControl: PesticideCreateViewState = {
               <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
             </select>
           </label>
-          <app-region-select
-            [region]="control.formData.region"
-            (regionChange)="control.formData.region = $event"
-          ></app-region-select>
+          @if (auth.user()?.admin) {
+            <app-region-select
+              [region]="control.formData.region"
+              (regionChange)="control.formData.region = $event"
+            ></app-region-select>
+          }
           <div class="form-card__actions">
             <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
               {{ control.saving ? 'Creating...' : 'Create Pesticide' }}
@@ -89,9 +92,10 @@ const initialControl: PesticideCreateViewState = {
       </section>
     </main>
   `,
-  styleUrl: './pesticide-create.component.css'
+  styles: ['']
 })
 export class PesticideCreateComponent implements PesticideCreateView, OnInit {
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePesticideUseCase);
   private readonly presenter = inject(PesticideCreatePresenter);
@@ -111,9 +115,30 @@ export class PesticideCreateComponent implements PesticideCreateView, OnInit {
     this.cdr.markForCheck();
   }
 
+  private get isAdmin(): boolean {
+    return this.auth.user()?.admin ?? false;
+  }
+
+  private get currentUserRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
+  }
+
+  private applyUserRegionToForm(): void {
+    if (this.isAdmin) return;
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        region: this.currentUserRegion
+      }
+    };
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.loadCropsAndPests();
+    this.applyUserRegionToForm();
   }
 
   private loadCropsAndPests(): void {
@@ -123,9 +148,18 @@ export class PesticideCreateComponent implements PesticideCreateView, OnInit {
 
   createPesticide(): void {
     if (!this.control.formData.name.trim() || this.control.formData.crop_id === 0 || this.control.formData.pest_id === 0) return;
-    this.control = { ...this.control, saving: true };
+    const region = this.isAdmin ? this.control.formData.region : this.currentUserRegion;
+    this.control = {
+      ...this.control,
+      saving: true,
+      formData: {
+        ...this.control.formData,
+        region
+      }
+    };
     this.useCase.execute({
       ...this.control.formData,
+      region,
       onSuccess: (pesticide) => this.router.navigate(['/pesticides', pesticide.id])
     });
   }

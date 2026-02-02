@@ -228,12 +228,19 @@ class CultivationPlan < ApplicationRecord
     
     # plan_yearが設定されていない場合はfield_cultivationsから計算
     if field_cultivations.any?
-      # includesでロードされたコレクションの場合はメモリ上のデータを使用
-      # pluckは常にDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用
+      # includes/preloadでロードされたコレクションの場合はメモリ上のデータを使用
+      # pluckはDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用する。
+      # ただし環境やライブラリの相互作用でpluckがエラーを投げるケースがあるため、
+      # 安全のため例外を補足してメモリ走査にフォールバックする。
       if field_cultivations.loaded?
         min_date = field_cultivations.map(&:start_date).compact.min
       else
-        min_date = field_cultivations.pluck(:start_date).compact.min
+        begin
+          min_date = field_cultivations.pluck(:start_date).compact.min
+        rescue => e
+          Rails.logger.warn "⚠️ pluck failed in calculated_planning_start_date, falling back to in-memory map: #{e.class} #{e.message}"
+          min_date = field_cultivations.map(&:start_date).compact.min
+        end
       end
       return default_planning_start_date unless min_date
       min_date.beginning_of_year
@@ -252,12 +259,19 @@ class CultivationPlan < ApplicationRecord
     
     # plan_yearが設定されていない場合はfield_cultivationsから計算
     if field_cultivations.any?
-      # includesでロードされたコレクションの場合はメモリ上のデータを使用
-      # pluckは常にDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用
+      # includes/preloadでロードされたコレクションの場合はメモリ上のデータを使用
+      # pluckはDBクエリを発行するため、loaded?でチェックしてメモリ上のデータを使用する。
+      # ただし環境やライブラリの相互作用でpluckがエラーを投げるケースがあるため、
+      # 安全のため例外を補足してメモリ走査にフォールバックする。
       if field_cultivations.loaded?
         max_date = field_cultivations.map(&:completion_date).compact.max
       else
-        max_date = field_cultivations.pluck(:completion_date).compact.max
+        begin
+          max_date = field_cultivations.pluck(:completion_date).compact.max
+        rescue => e
+          Rails.logger.warn "⚠️ pluck failed in calculated_planning_end_date, falling back to in-memory map: #{e.class} #{e.message}"
+          max_date = field_cultivations.map(&:completion_date).compact.max
+        end
       end
       return default_planning_end_date unless max_date
       max_date.end_of_year

@@ -85,6 +85,18 @@ module Adapters
           raise StandardError, 'CropStage not found'
         end
 
+        def list_crop_stages_by_crop_id(crop_id)
+          crop_stages = ::CropStage.where(crop_id: crop_id).order(:order)
+          crop_stages.map { |record| crop_stage_entity_from_record(record) }
+        end
+
+        def find_crop_stage_by_id(crop_stage_id)
+          crop_stage = ::CropStage.find(crop_stage_id)
+          crop_stage_entity_from_record(crop_stage)
+        rescue ActiveRecord::RecordNotFound
+          raise StandardError, 'CropStage not found'
+        end
+
         # TemperatureRequirement methods
         def find_temperature_requirement(crop_stage_id)
           requirement = ::TemperatureRequirement.find_by(crop_stage_id: crop_stage_id)
@@ -221,7 +233,9 @@ module Adapters
             temperature_requirement: temperature_req,
             thermal_requirement: thermal_req,
             sunshine_requirement: sunshine_req,
-            nutrient_requirement: nutrient_req
+            nutrient_requirement: nutrient_req,
+            created_at: record.created_at,
+            updated_at: record.updated_at
           )
         end
 

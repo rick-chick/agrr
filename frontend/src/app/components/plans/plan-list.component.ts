@@ -55,7 +55,7 @@ const initialControl: PlanListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './plan-list.component.css'
+  styleUrls: ['./plan-list.component.css']
 })
 export class PlanListComponent implements PlanListView, OnInit {
   private readonly useCase = inject(LoadPlanListUseCase);

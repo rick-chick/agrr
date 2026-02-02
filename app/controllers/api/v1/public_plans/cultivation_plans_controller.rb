@@ -30,7 +30,7 @@ module Api
         end
         
         def get_crop_for_add_crop(crop_id)
-          Crop.find(crop_id)
+          ::Crop.find(crop_id)
         end
       end
     end

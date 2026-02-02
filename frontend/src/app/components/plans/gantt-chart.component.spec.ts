@@ -375,4 +375,36 @@ describe('GanttChartComponent', () => {
       expect(svgElement.getAttribute('height')).toBe('140');
     });
   });
+
+  describe('change detection scheduling', () => {
+    it('should defer detectChanges after updateChart', async () => {
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [{
+            id: 14,
+            field_id: 1,
+            field_name: 'Field 1',
+            start_date: '2026-01-01',
+            completion_date: '2026-01-31'
+          }]
+        }
+      } as any;
+
+      const mockContainer = document.createElement('div');
+      mockContainer.getBoundingClientRect = () => ({ width: 800 } as DOMRect);
+      component['container'] = { nativeElement: mockContainer } as any;
+
+      component['updateChart']();
+
+      expect(component['cdr'].detectChanges).not.toHaveBeenCalled();
+
+      await Promise.resolve();
+
+      expect(component['cdr'].detectChanges).toHaveBeenCalled();
+    });
+  });
 });

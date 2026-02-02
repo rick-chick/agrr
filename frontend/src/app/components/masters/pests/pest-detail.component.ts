@@ -87,7 +87,7 @@ const initialControl: PestDetailViewState = {
       }
     </main>
   `,
-  styleUrl: './pest-detail.component.css'
+  styleUrls: ['./pest-detail.component.css']
 })
 export class PestDetailComponent implements PestDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);

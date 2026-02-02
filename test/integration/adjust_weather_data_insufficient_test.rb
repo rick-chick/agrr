@@ -52,8 +52,8 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       }
     )
 
-    # 気象データを作成（過去20年分）
-    create_weather_data_for_training
+    # weather data creation is skipped because WeatherPredictionService is mocked in these tests
+    # (モックを使用するため、DBに大量のWeatherDatumを作成する必要はありません)
 
     @saver = Saver.new
     stub_all_agrr_commands
@@ -295,9 +295,9 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
 
   private
 
-  def create_weather_data_for_training
-    # 過去20年分の気象データを作成
-    start_date = Date.current - 20.years
+  def create_weather_data_for_training(years: 1)
+    # テスト実行時間短縮のため、デフォルトは過去1年分の気象データを作成
+    start_date = Date.current - years.years
     end_date = Date.current - 2.days
     
     (start_date..end_date).each do |date|

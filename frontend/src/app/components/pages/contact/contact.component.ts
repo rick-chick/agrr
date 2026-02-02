@@ -46,6 +46,6 @@ import { TranslateModule } from '@ngx-translate/core';
       </div>
     </div>
   `,
-  styleUrl: './contact.component.css'
+  styleUrls: ['./contact.component.css']
 })
 export class ContactComponent {}

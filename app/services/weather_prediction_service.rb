@@ -5,6 +5,8 @@
 class WeatherPredictionService
   class WeatherDataNotFoundError < StandardError; end
   
+  BENCHMARK_ENABLED = ENV.fetch("WEATHER_BENCHMARK", "false") != "false"
+  
   def initialize(weather_location:, farm: nil)
     raise ArgumentError, "weather_location is required" unless weather_location
     
@@ -34,8 +36,15 @@ class WeatherPredictionService
     
     weather_info = prepare_weather_data(target_end_date)
     payload = build_prediction_payload(weather_info, target_end_date)
-    
-    persist_prediction_payload(payload)
+
+    if BENCHMARK_ENABLED
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      persist_prediction_payload(payload)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+      Rails.logger.info "🕒 [WeatherPrediction][benchmark] persist_prediction_payload: #{elapsed.round(4)}s"
+    else
+      persist_prediction_payload(payload)
+    end
     
     cultivation_plan.update!(predicted_weather_data: payload)
     
@@ -114,13 +123,27 @@ class WeatherPredictionService
     training_formatted = format_weather_data_for_agrr(weather_location, training_data)
     
     # 予測データを取得（キャッシュまたは新規予測）
-    future = get_prediction_data(training_formatted, target_end_date)
+    if BENCHMARK_ENABLED
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      future = get_prediction_data(training_formatted, target_end_date)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+      Rails.logger.info "🕒 [WeatherPrediction][benchmark] get_prediction_data: #{elapsed.round(4)}s"
+    else
+      future = get_prediction_data(training_formatted, target_end_date)
+    end
     
     # 今年の実データをAGRR形式に変換
     current_year_formatted = format_weather_data_for_agrr(weather_location, current_year_data)
     
     # 実データと予測データをマージ
-    merged_data = merge_weather_data(current_year_formatted, future)
+    if BENCHMARK_ENABLED
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      merged_data = merge_weather_data(current_year_formatted, future)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+      Rails.logger.info "🕒 [WeatherPrediction][benchmark] merge_weather_data: #{elapsed.round(4)}s"
+    else
+      merged_data = merge_weather_data(current_year_formatted, future)
+    end
     
     # 予測開始日を計算
     training_end_date = Date.current - 2.days

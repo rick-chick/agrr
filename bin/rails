@@ -1,4 +1,28 @@
 #!/usr/bin/env ruby
+
+# AGRR: テスト実行の安全ガード
+# AGRR_TEST_SCRIPT=1 の場合は専用スクリプト経由なので許可
+if ARGV.include?("test") && !ENV["ALLOW_DIRECT_RAILS_TEST"] && !ENV["AGRR_TEST_SCRIPT"]
+  $stderr.puts <<~WARNING
+
+    🚨🚨🚨 AGRR テスト実行ガード 🚨🚨🚨
+
+    直接 'rails test' を実行しようとしています！
+    これにより開発DBが壊れる可能性があります。
+
+    ✅ 正しい実行方法:
+       .cursor/skills/test-common/scripts/run-test-rails.sh #{ARGV[1..-1].join(' ')}
+
+    ✅ または:
+       ./bin/test #{ARGV[1..-1].join(' ')}
+
+    💡 この警告を無視して実行するには:
+       ALLOW_DIRECT_RAILS_TEST=1 rails test
+
+  WARNING
+  exit 1
+end
+
 APP_PATH = File.expand_path("../config/application", __dir__)
 require_relative "../config/boot"
 require "rails/commands"

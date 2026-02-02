@@ -18,7 +18,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
       </div>
     </div>
   `,
-  styleUrl: './flash-message.component.css'
+  styleUrls: ['./flash-message.component.css']
 })
 export class FlashMessageComponent {
   constructor(public readonly flashService: FlashMessageService) {}

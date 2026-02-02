@@ -60,6 +60,26 @@ class PesticideTest < ActiveSupport::TestCase
     assert_includes pesticide.errors[:is_reference], "は一覧にありません"
   end
 
+  test "should validate region inclusion" do
+    crop = create(:crop, :reference)
+    pest = create(:pest, is_reference: true)
+
+    # 有効なregion値
+    %w[jp us in].each do |region|
+      pesticide = Pesticide.new(name: "テスト農薬", region: region, is_reference: true, crop: crop, pest: pest)
+      assert pesticide.valid?, "region '#{region}' should be valid"
+    end
+
+    # nilは許可される
+    pesticide_nil = Pesticide.new(name: "テスト農薬", region: nil, is_reference: true, crop: crop, pest: pest)
+    assert pesticide_nil.valid?, "nil region should be valid"
+
+    # 無効なregion値
+    invalid_region = Pesticide.new(name: "テスト農薬", region: "invalid", is_reference: true, crop: crop, pest: pest)
+    assert_not invalid_region.valid?
+    assert_includes invalid_region.errors[:region], "は一覧にありません"
+  end
+
   test "should validate user presence when is_reference is false" do
     crop = create(:crop, :reference)
     pest = create(:pest, is_reference: true)

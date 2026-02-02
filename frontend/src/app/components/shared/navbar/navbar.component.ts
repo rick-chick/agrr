@@ -54,7 +54,7 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
       </div>
     </nav>
   `,
-  styleUrl: './navbar.component.css',
+  styleUrls: ['./navbar.component.css'],
 })
 export class NavbarComponent {
   @Input() user: CurrentUser | null = null;

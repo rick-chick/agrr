@@ -15,6 +15,20 @@ module Api
         teardown do
           ENV.delete('AGRR_BACKDOOR_TOKEN')
         end
+      
+      # Helper to mock external commands and BackdoorConfig.token during requests
+      def with_backdoor_external_mocks
+        Kernel.stub(:`, ->(cmd) {
+          case cmd
+          when /agrr daemon status/ then "PID: 123\n"
+          when /ps -o rss= -p/ then "12345\n"
+          when /ps -o etime= -p/ then "00:10:00\n"
+          else ""
+          end
+        }) do
+          BackdoorConfig.stub(:token, @token) { yield }
+        end
+      end
         
         test "should require authentication token for status endpoint" do
           get "/api/v1/backdoor/status"
@@ -33,40 +47,44 @@ module Api
         end
         
         test "should accept valid token in header" do
-          get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
-          
-          assert_response :success
+          with_backdoor_external_mocks do
+            get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
+            assert_response :success
+          end
         end
         
         test "should accept valid token in params" do
-          get "/api/v1/backdoor/status", params: { token: @token }
-          
-          assert_response :success
+          with_backdoor_external_mocks do
+            get "/api/v1/backdoor/status", params: { token: @token }
+            assert_response :success
+          end
         end
         
         test "should return daemon status information" do
-          get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
-          
-          assert_response :success
-          json = JSON.parse(response.body)
-          
-          # Check response structure
-          assert json.key?('timestamp')
-          assert json.key?('daemon')
-          assert json.key?('binary')
-          assert json.key?('status_output')
-          assert json.key?('process')
-          assert json.key?('service_available')
-          
-          # Check daemon info
-          assert json['daemon'].key?('running')
-          assert json['daemon'].key?('socket_exists')
-          assert json['daemon'].key?('socket_path')
-          
-          # Check binary info
-          assert json['binary'].key?('exists')
-          assert json['binary'].key?('executable')
-          assert json['binary'].key?('path')
+          with_backdoor_external_mocks do
+            get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
+            
+            assert_response :success
+            json = JSON.parse(response.body)
+            
+            # Check response structure
+            assert json.key?('timestamp')
+            assert json.key?('daemon')
+            assert json.key?('binary')
+            assert json.key?('status_output')
+            assert json.key?('process')
+            assert json.key?('service_available')
+            
+            # Check daemon info
+            assert json['daemon'].key?('running')
+            assert json['daemon'].key?('socket_exists')
+            assert json['daemon'].key?('socket_path')
+            
+            # Check binary info
+            assert json['binary'].key?('exists')
+            assert json['binary'].key?('executable')
+            assert json['binary'].key?('path')
+          end
         end
         
         test "should return health check information" do

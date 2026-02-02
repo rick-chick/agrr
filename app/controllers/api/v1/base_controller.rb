@@ -27,12 +27,12 @@ module Api
       def authenticate_api_request
         # C案: エンドポイントごとに認証を分ける
         # CRUD操作は認証必須
-        # current_userがアノニマスユーザーの場合は401を返す
-        if current_user.anonymous?
+        # current_userが存在しない、またはアノニマスユーザーの場合は401を返す
+        if current_user.nil? || current_user.anonymous?
           render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
           return false
         end
-        
+
         true
       end
     end

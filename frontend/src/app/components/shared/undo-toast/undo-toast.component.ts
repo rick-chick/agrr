@@ -15,7 +15,7 @@ import { UndoToastService } from '../../../services/undo-toast.service';
       </div>
     </div>
   `,
-  styleUrl: './undo-toast.component.css'
+  styleUrls: ['./undo-toast.component.css']
 })
 export class UndoToastComponent {
   @Output() undo = new EventEmitter<void>();

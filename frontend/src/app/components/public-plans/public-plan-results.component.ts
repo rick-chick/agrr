@@ -81,7 +81,7 @@ const initialControl: PublicPlanResultsViewState = {
       </div>
     </main>
   `,
-  styleUrl: './public-plan.component.css'
+  styleUrls: ['./public-plan.component.css']
 })
 export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit {
   private readonly route = inject(ActivatedRoute);

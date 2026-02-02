@@ -63,7 +63,7 @@ const initialControl: PestListViewState = {
       </section>
     </main>
   `,
-  styleUrl: './pest-list.component.css'
+  styleUrls: ['./pest-list.component.css']
 })
 export class PestListComponent implements PestListView, OnInit {
   private readonly loadUseCase = inject(LoadPestListUseCase);
