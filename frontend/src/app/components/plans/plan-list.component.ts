@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
+import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
 import { PlanListPresenter } from '../../adapters/plans/plan-list.presenter';
 import { LOAD_PLAN_LIST_OUTPUT_PORT } from '../../usecase/plans/load-plan-list.output-port';
+import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-port';
 import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
 import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
 
@@ -21,7 +23,9 @@ const initialControl: PlanListViewState = {
   providers: [
     PlanListPresenter,
     LoadPlanListUseCase,
+    DeletePlanUseCase,
     { provide: LOAD_PLAN_LIST_OUTPUT_PORT, useExisting: PlanListPresenter },
+    { provide: DELETE_PLAN_OUTPUT_PORT, useExisting: PlanListPresenter },
     { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
   ],
   template: `
@@ -45,8 +49,17 @@ const initialControl: PlanListViewState = {
                 <article class="item-card">
                   <a [routerLink]="['/plans', plan.id]" class="item-card__body">
                     <span class="item-card__title">{{ plan.name }}</span>
-                    <span class="item-card__meta">Status: {{ plan.status ?? '-' }}</span>
                   </a>
+                  <div class="item-card__actions">
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deletePlan(plan.id)"
+                      aria-label="削除"
+                    >
+                      削除
+                    </button>
+                  </div>
                 </article>
               </li>
             }
@@ -54,11 +67,13 @@ const initialControl: PlanListViewState = {
         }
       </section>
     </main>
+
   `,
   styleUrls: ['./plan-list.component.css']
 })
 export class PlanListComponent implements PlanListView, OnInit {
-  private readonly useCase = inject(LoadPlanListUseCase);
+  private readonly loadUseCase = inject(LoadPlanListUseCase);
+  private readonly deleteUseCase = inject(DeletePlanUseCase);
   private readonly presenter = inject(PlanListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -78,6 +93,17 @@ export class PlanListComponent implements PlanListView, OnInit {
 
   load(): void {
     this.control = { ...this.control, loading: true };
-    this.useCase.execute();
+    this.loadUseCase.execute();
+  }
+
+  refreshAfterUndo(): void {
+    this.loadUseCase.execute();
+  }
+
+  deletePlan(planId: number): void {
+    this.deleteUseCase.execute({
+      planId,
+      onAfterUndo: () => this.refreshAfterUndo()
+    });
   }
 }
