@@ -165,9 +165,8 @@ class CultivationPlan < ApplicationRecord
         "#{name} (#{plan_year})"
       elsif has_attribute?(:planning_start_date) && read_attribute(:planning_start_date).present? &&
             has_attribute?(:planning_end_date) && read_attribute(:planning_end_date).present?
-        start_date = read_attribute(:planning_start_date)
-        end_date = read_attribute(:planning_end_date)
-        "#{name} (#{start_date.year}〜#{end_date.year})"
+        # 計画期間を表示名に付与していたが不要のため、期間は付けずに名称のみ返す
+        name
       elsif !has_attribute?(:planning_start_date) || !has_attribute?(:planning_end_date)
         # カラムが存在しない場合は計算メソッドを使用
         start_date = calculated_planning_start_date

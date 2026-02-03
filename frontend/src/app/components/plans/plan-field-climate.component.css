@@ -1,0 +1,178 @@
+.plan-field-climate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.plan-field-climate__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-field-climate__header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plan-field-climate__header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.plan-field-climate__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.plan-field-climate__subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  color: #475569;
+}
+
+.plan-field-climate__close {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.plan-field-climate__status,
+.plan-field-climate__error {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.plan-field-climate__error {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.plan-field-climate__retry {
+  margin-top: 8px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.plan-field-climate__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-field-climate__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.plan-field-climate__stats div {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 6px 8px;
+}
+
+.plan-field-climate__stats dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.plan-field-climate__stats dd {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.plan-field-climate__stage-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.plan-field-climate__stage {
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.plan-field-climate__stage-name {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.2;
+}
+
+.plan-field-climate__stage-value {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.plan-field-climate__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.plan-field-climate__chart-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-field-climate__chart-card header h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.plan-field-climate__chart-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+.plan-field-climate__chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

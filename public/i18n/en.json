@@ -1,11 +1,13 @@
 {
   "nav": {
-    "plans": "Plans",
+    "plans": "Plan",
+    "public_plans": "New Plan",
     "farms": "Farms",
     "weather": "Weather",
     "login": "Login",
     "logout": "Logout",
     "crops": "Crops",
+    "reports": "Reports",
     "apiKey": "API Key"
   },
   "status": {

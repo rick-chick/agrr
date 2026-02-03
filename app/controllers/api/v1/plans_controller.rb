@@ -6,6 +6,7 @@ module Api
       include CultivationPlanManageable
       include JobExecution
       include WeatherDataManagement
+      include Views::Api::CultivationPlan::CultivationPlanDeleteView
       def index
         plans = ::CultivationPlan.plan_type_private.by_user(current_user).order(created_at: :desc)
         render json: plans.map { |plan| serialize_plan(plan) }
@@ -43,7 +44,35 @@ module Api
         render json: { error: 'Internal server error' }, status: :internal_server_error
       end
 
+      # Delete per docs/contracts/plan-delete-no-confirm-contract.md:
+      # - calls the destroy interactor immediately (no confirmation dialog is necessary)
+      # - renders the DeletionUndoResponse through the presenter/view contract
+      def destroy
+        presenter = Presenters::Api::CultivationPlan::CultivationPlanDeletePresenter.new(view: self)
+        interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
+          output_port: presenter,
+          gateway: cultivation_plan_gateway,
+          user_id: current_user.id
+        )
+        interactor.call(params[:id])
+      end
+      def render_response(json:, status:)
+        render(json: json, status: status)
+      end
+
+      def undo_deletion_path(undo_token:)
+        Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
+      end
+
       private
+
+      def serialize_plan(plan)
+        {
+          id: plan.id,
+          name: plan.display_name,
+          status: plan.status
+        }
+      end
 
       def create_params
         params.require(:plan).permit(:farm_id, :plan_name, crop_ids: [])
@@ -59,7 +88,8 @@ module Api
         return [] if crop_ids.empty?
 
         # ユーザー所有かつ非参照の作物のみ取得
-        Domain::Shared::Policies::CropPolicy.user_owned_non_reference_scope(Crop, current_user).where(id: crop_ids)
+        # 明示的にトップレベルの Crop を参照して、名前空間由来の解決ミスを避ける
+        Domain::Shared::Policies::CropPolicy.user_owned_non_reference_scope(::Crop, current_user).where(id: crop_ids)
       end
 
       def find_existing_plan(farm)
@@ -167,12 +197,8 @@ module Api
         job_chain
       end
 
-      def serialize_plan(plan)
-        {
-          id: plan.id,
-          name: plan.display_name,
-          status: plan.status
-        }
+      def cultivation_plan_gateway
+        @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
       end
     end
   end

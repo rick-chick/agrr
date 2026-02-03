@@ -6,6 +6,7 @@ import { PlanSummary } from '../../domain/plans/plan-summary';
 import { PlanGateway } from './plan-gateway';
 import { LoadPlanDetailOutputPort } from './load-plan-detail.output-port';
 import { PlanDetailDataDto } from './load-plan-detail.dtos';
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 describe('LoadPlanDetailUseCase', () => {
   it('calls outputPort.present with plan and planData from gateway', () => {
@@ -34,7 +35,8 @@ describe('LoadPlanDetailUseCase', () => {
       fetchPlan: () => of(plan),
       fetchPlanData: () => of(planData),
       getPublicPlanData: () => of(planData),
-      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: {} } as TaskScheduleResponse)
+      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: {} } as TaskScheduleResponse),
+      deletePlan: () => of({} as DeletionUndoResponse)
     };
 
     let receivedDto: PlanDetailDataDto | null = null;

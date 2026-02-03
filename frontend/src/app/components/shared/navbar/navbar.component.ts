@@ -14,21 +14,21 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
     <nav class="app-nav" aria-label="メインナビゲーション">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
       <ul class="nav-links" role="list">
-        <li><a class="nav-link" routerLink="/plans" routerLinkActive="is-active">{{ 'nav.plans' | translate }}</a></li>
-        <li><a class="nav-link" routerLink="/public-plans/new" routerLinkActive="is-active">{{ 'nav.public_plans' | translate }}</a></li>
-        <li><a class="nav-link" routerLink="/weather" routerLinkActive="is-active">{{ 'nav.weather' | translate }}</a></li>
-        <li><a class="nav-link" routerLink="/api-keys" routerLinkActive="is-active">{{ 'nav.api_keys' | translate }}</a></li>
-
-        <li>
-          <app-nav-dropdown
-            triggerLabelKey="nav.menu_masters"
-            panelId="nav-masters-panel"
-            [items]="mastersItems"
-            [isOpen]="openDropdownId === 'masters'"
-            (opened)="openDropdownId = 'masters'"
-            (closed)="openDropdownId = null"
-          />
-        </li>
+        @if (user) {
+          <li><a class="nav-link" routerLink="/plans" routerLinkActive="is-active">{{ 'nav.plan' | translate }}</a></li>
+          <li>
+            <app-nav-dropdown
+              triggerLabelKey="nav.menu_masters"
+              panelId="nav-masters-panel"
+              [items]="mastersItems"
+              [isOpen]="openDropdownId === 'masters'"
+              (opened)="openDropdownId = 'masters'"
+              (closed)="openDropdownId = null"
+            />
+          </li>
+        }
+        <li><a class="nav-link" routerLink="/public-plans/new" routerLinkActive="is-active">{{ 'nav.new_plan' | translate }}</a></li>
+        <li><a class="nav-link" [href]="reportUrl">{{ 'nav.reports' | translate }}</a></li>
         <li>
           <app-nav-dropdown
             triggerLabelKey="nav.menu_more"
@@ -86,5 +86,11 @@ export class NavbarComponent {
     const base = this.apiBaseUrl || getApiBaseUrl() || window.location.origin;
     const returnTo = encodeURIComponent(window.location.href || window.location.origin + '/');
     return `${base}/auth/login?return_to=${returnTo}`;
+  }
+
+  get reportUrl(): string {
+    const base = this.apiBaseUrl || getApiBaseUrl() || window.location.origin;
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    return `${normalizedBase}/research/`;
   }
 }

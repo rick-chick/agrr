@@ -19,6 +19,10 @@ module Domain
         def find_crops(crop_ids, user)
           raise NotImplementedError, "Subclasses must implement find_crops"
         end
+
+        def destroy(plan_id, user)
+          raise NotImplementedError, "Subclasses must implement destroy"
+        end
       end
     end
   end

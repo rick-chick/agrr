@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <section class="welcome">
       @if (authService.user()) {
-        <h1>{{ 'home.welcome' | translate: { name: authService.user()!.name ?? 'ユーザー' } }}</h1>
+        <h1>{{ 'home.welcome' | translate: { name: authService.user()!.name ?? ('home.user_fallback' | translate) } }}</h1>
         <p>{{ 'home.welcomeMessage' | translate }}</p>
       } @else if (authService.loading()) {
         <h1>{{ 'status.checking' | translate }}</h1>

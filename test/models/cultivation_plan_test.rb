@@ -171,7 +171,8 @@ class CultivationPlanTest < ActiveSupport::TestCase
                   plan_name: 'テスト計画',
                   planning_start_date: Date.new(2025, 1, 1),
                   planning_end_date: Date.new(2026, 12, 31))
-    expected_name = "テスト計画 (2025〜2026)"
+    # 計画期間を表示名に付与しない仕様に変更したため、名称のみを期待する
+    expected_name = "テスト計画"
     assert_equal expected_name, plan.display_name
   end
 

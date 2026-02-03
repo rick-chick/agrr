@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { GanttChartComponent } from './gantt-chart.component';
+import { PlanFieldClimateComponent } from './plan-field-climate.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter } from '../../adapters/plans/plan-detail.presenter';
@@ -19,7 +21,7 @@ const initialControl: PlanDetailViewState = {
 @Component({
   selector: 'app-plan-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, GanttChartComponent],
+  imports: [CommonModule, RouterLink, GanttChartComponent, PlanFieldClimateComponent, TranslateModule],
   providers: [
     PlanDetailPresenter,
     LoadPlanDetailUseCase,
@@ -28,23 +30,42 @@ const initialControl: PlanDetailViewState = {
   ],
   template: `
     <section class="page">
-      <a [routerLink]="['/plans']">Back to plans</a>
+      <a [routerLink]="['/plans']">{{ 'plans.show.back_to_list' | translate }}</a>
       @if (control.loading) {
-        <p>Loading...</p>
+        <p>{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <p class="error">{{ control.error }}</p>
       } @else if (control.plan) {
         <h2>{{ control.plan.name }}</h2>
-        <p>Status: {{ control.plan.status ?? '-' }}</p>
-
         @if (control.planData) {
-          <app-gantt-chart [data]="control.planData" planType="private" />
-        }
+          <div class="plan-detail__layout">
+            <div class="plan-detail__pane plan-detail__gantt">
+              <app-gantt-chart
+                [data]="control.planData"
+                [planType]="planType"
+                (cultivationSelected)="handleCultivationSelection($event)"
+              />
+            </div>
 
-        <div class="actions">
-          <a [routerLink]="['/plans', control.plan.id, 'optimizing']">Optimizing</a>
-          <a [routerLink]="['/plans', control.plan.id, 'task_schedule']">Task Schedule</a>
-        </div>
+            <div
+              class="plan-detail__pane plan-detail__climate-panel"
+              [class.plan-detail__climate-panel--open]="selectedCultivationId !== null"
+            >
+              @if (selectedCultivationId) {
+                <app-plan-field-climate
+                  [fieldCultivationId]="selectedCultivationId"
+                  [planType]="selectedPlanType"
+                  (close)="closeClimatePanel()"
+                />
+              } @else {
+                <p class="plan-detail__climate-placeholder">
+                  {{ 'plans.detail.select_cultivation_hint' | translate }}
+                </p>
+              }
+            </div>
+          </div>
+
+        }
       }
     </section>
   `,
@@ -55,6 +76,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly useCase = inject(LoadPlanDetailUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -65,6 +87,10 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
     this.cdr.markForCheck();
   }
 
+  readonly planType: 'private' | 'public' = 'private';
+  selectedCultivationId: number | null = null;
+  selectedPlanType: 'private' | 'public' = this.planType;
+
   ngOnInit(): void {
     this.presenter.setView(this);
     const planId = Number(this.route.snapshot.paramMap.get('id'));
@@ -72,7 +98,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: 'Invalid plan id.'
+        error: this.translate.instant('plans.errors.invalid_id')
       };
       return;
     }
@@ -82,5 +108,24 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   load(planId: number): void {
     this.control = { ...this.control, loading: true };
     this.useCase.execute({ planId });
+  }
+
+  handleCultivationSelection(event: { cultivationId: number; planType: 'private' | 'public' }): void {
+    const alreadySelected =
+      this.selectedCultivationId === event.cultivationId &&
+      this.selectedPlanType === event.planType;
+
+    if (alreadySelected) {
+      this.closeClimatePanel();
+      return;
+    }
+
+    this.selectedCultivationId = event.cultivationId;
+    this.selectedPlanType = event.planType;
+  }
+
+  closeClimatePanel(): void {
+    this.selectedCultivationId = null;
+    this.selectedPlanType = this.planType;
   }
 }

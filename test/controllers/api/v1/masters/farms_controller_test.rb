@@ -94,10 +94,10 @@ module Api
             post api_v1_masters_farms_path,
                  params: {
                    farm: {
-                     name: "新規農場",
-                     region: "関東",
-                     latitude: 35.6812,
-                     longitude: 139.7671
+                    name: "新規農場",
+                    region: "jp",
+                    latitude: 35.6812,
+                    longitude: 139.7671
                    }
                  },
                  as: :json,

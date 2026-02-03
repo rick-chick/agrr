@@ -1,5 +1,7 @@
 /* 無料作付画面のページレイアウト（page-main 相当） */
 .public-plans-wrapper.page-main {
+  width: 100%;
+  box-sizing: border-box;
   padding: var(--space-4) var(--space-6);
   background: var(--color-background);
   min-height: 100vh;
@@ -29,7 +31,7 @@
 
 .free-plans-container {
   width: 100%;
-  max-width: 900px;
+  box-sizing: border-box;
   padding-bottom: var(--space-6);
 }
 
@@ -605,12 +607,20 @@
   border-left: var(--border-width-4) solid var(--color-success);
 }
 
-.action-buttons {
+.public-plan-results__header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-4);
-  margin-top: var(--space-6);
-  justify-content: center;
+  justify-content: flex-end;
+  margin-bottom: var(--space-6);
 }
+
+@media (max-width: 768px) {
+  .public-plan-results__header-actions {
+    justify-content: flex-start;
+  }
+}
+
 
 .optimizing-card {
   text-align: center;
@@ -706,7 +716,6 @@
 }
 
 .fixed-progress-container {
-  max-width: 900px;
   margin: 0 auto;
   padding: var(--space-5);
 }
@@ -720,15 +729,24 @@
 
 .fixed-progress-bar .progress-label-with-spinner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex: 1;
+  justify-content: center;
+  text-align: center;
 }
 
 .fixed-progress-bar .progress-info {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  align-items: center;
+  text-align: center;
+}
+
+.fixed-progress-bar .progress-label-with-spinner .spinner-sm {
+  display: block;
 }
 
 .fixed-progress-bar .progress-phase-message {
@@ -872,3 +890,23 @@
   margin-bottom: 0;
   white-space: nowrap;
 }
+
+.public-plan-results__inner {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.public-plan-results__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: flex-end;
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .public-plan-results__header-actions {
+    justify-content: flex-start;
+  }
+}
+

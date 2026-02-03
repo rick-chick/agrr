@@ -18,16 +18,25 @@ module Api
       
       # Helper to mock external commands and BackdoorConfig.token during requests
       def with_backdoor_external_mocks
-        Kernel.stub(:`, ->(cmd) {
-          case cmd
-          when /agrr daemon status/ then "PID: 123\n"
-          when /ps -o rss= -p/ then "12345\n"
-          when /ps -o etime= -p/ then "00:10:00\n"
-          else ""
+    # Stub external command output and file/socket checks to avoid real I/O
+    Kernel.stub(:`, ->(cmd) {
+      case cmd
+      when /agrr daemon status/ then "PID: 123\n"
+      when /ps -o rss= -p/ then "12345\n"
+      when /ps -o etime= -p/ then "00:10:00\n"
+      else ""
+      end
+    }) do
+      File.stub(:exist?, true) do
+        File.stub(:socket?, true) do
+          File.stub(:executable?, true) do
+            BackdoorConfig.stub(:enabled?, true) do
+              BackdoorConfig.stub(:token, @token) { yield }
+            end
           end
-        }) do
-          BackdoorConfig.stub(:token, @token) { yield }
         end
+      end
+    end
       end
         
         test "should require authentication token for status endpoint" do
@@ -47,9 +56,15 @@ module Api
         end
         
         test "should accept valid token in header" do
-          with_backdoor_external_mocks do
-            get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
-            assert_response :success
+          # ステータス本体の重い処理（ファイル/外部コマンド呼び出し）をスタブして
+          # 認証 before_action のみを通す形で高速化する
+          Api::V1::Backdoor::BackdoorController.any_instance.stub(:status, proc {
+            render json: { success: true }
+          }) do
+            with_backdoor_external_mocks do
+              get "/api/v1/backdoor/status", headers: { 'X-Backdoor-Token' => @token }
+              assert_response :success
+            end
           end
         end
         

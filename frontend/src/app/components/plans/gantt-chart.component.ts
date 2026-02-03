@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
@@ -51,11 +51,11 @@ interface TimeScale {
       @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
         <div class="no-data-message">
           @if (!data) {
-            <p>計画データが読み込まれていません。</p>
+            <p>{{ 'plans.gantt.no_plan_data' | translate }}</p>
           } @else if (!data.data.fields || data.data.fields.length === 0) {
-            <p>圃場データがありません。</p>
+            <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
           } @else {
-            <p>ガントチャートを表示するためのデータがありません。</p>
+            <p>{{ 'plans.gantt.no_data' | translate }}</p>
             <p>APIレスポンス: {{ debugData() }}</p>
           }
         </div>
@@ -92,7 +92,7 @@ interface TimeScale {
               }
               @if (month.showYear) {
                 <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="11" font-weight="bold" fill="#6B7280">
-                  {{ month.year }}年
+                  {{ month.year }}{{ 'plans.gantt.labels.year' | translate }}
                 </text>
               }
               <line [attr.x1]="month.x" y1="40" [attr.x2]="month.x" [attr.y2]="config.height" stroke="#E5E7EB" stroke-width="1" />
@@ -145,6 +145,10 @@ interface TimeScale {
 export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: 'public' | 'private' = 'private';
+  @Output() cultivationSelected = new EventEmitter<{
+    cultivationId: number;
+    planType: 'public' | 'private';
+  }>();
 
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
@@ -471,17 +475,22 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private getTimeLabel(start: Date, end: Date, unit: TimeUnit): string {
+    const dayLabel = this.translate.instant('plans.gantt.labels.day');
+    const monthLabel = this.translate.instant('plans.gantt.labels.month');
+    const weekLabel = this.translate.instant('plans.gantt.labels.week');
+    const quarterLabel = this.translate.instant('plans.gantt.labels.quarter');
+    
     switch (unit) {
       case TimeUnit.Day:
-        return `${start.getDate()}日`;
+        return `${start.getDate()}${dayLabel}`;
       case TimeUnit.Week:
         return `${start.getMonth() + 1}/${start.getDate()}`;
       case TimeUnit.Month:
-        return `${start.getMonth() + 1}月`;
+        return `${start.getMonth() + 1}${monthLabel}`;
       case TimeUnit.Quarter:
-        return `Q${Math.floor(start.getMonth() / 3) + 1}`;
+        return `${quarterLabel}${Math.floor(start.getMonth() / 3) + 1}`;
       default:
-        return `${start.getMonth() + 1}月`;
+        return `${start.getMonth() + 1}${monthLabel}`;
     }
   }
 
@@ -827,6 +836,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       this.resetBarPosition();
     }
 
+    if (!this.isDragging && this.draggedCultivation) {
+      this.cultivationSelected.emit({
+        cultivationId: this.draggedCultivation.id,
+        planType: this.planType
+      });
+    }
+
     // ドラッグ終了時のビジュアルリセット
     this.resetVisualState();
 
@@ -899,7 +915,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private handleAdjustmentFailure(message?: string) {
     this.flashMessageService.show({
       type: 'error',
-      text: message ?? '調整に失敗しました。後でもう一度お試しください。'
+      text: message ?? this.translate.instant('plans.gantt.adjust_failed')
     });
     this.showOptimizationLock = false;
     this.scheduleDetectChanges();

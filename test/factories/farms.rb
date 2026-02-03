@@ -20,6 +20,13 @@ FactoryBot.define do
       association :user
     end
 
+  trait :with_field do
+    after(:create) do |farm, evaluator|
+      # Create a default field associated with this farm and its user to ensure non-zero total area
+      create(:field, farm: farm, user: farm.user)
+    end
+  end
+
     trait :with_weather_data do
       weather_data_status { :completed }
       weather_data_fetched_years { 25 }

@@ -17,18 +17,18 @@ module Domain
           )
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
-          gateway.expect(:update_crop_stage, updated_crop_stage, [1, payload])
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+            crop_id: 1,
+            stage_id: 1,
+            payload: payload
+          )
+          gateway.expect(:update_crop_stage, updated_crop_stage, [1, input_dto])
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
           interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
-            crop_id: 1,
-            stage_id: 1,
-            payload: payload
-          )
           interactor.call(input_dto)
 
           assert_equal updated_crop_stage, received.stage
@@ -39,18 +39,22 @@ module Domain
         test "calls on_failure when gateway raises" do
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
-          gateway.expect(:update_crop_stage, nil) { raise StandardError, "update failed" }
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+            crop_id: 1,
+            stage_id: 1,
+            payload: payload
+          )
+          gateway.expect(:update_crop_stage, nil) do |id, dto|
+            assert_equal 1, id
+            assert_equal input_dto, dto
+            raise StandardError, "update failed"
+          end
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
           interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
-            crop_id: 1,
-            stage_id: 1,
-            payload: payload
-          )
           interactor.call(input_dto)
 
           assert_instance_of Domain::Shared::Dtos::ErrorDto, received

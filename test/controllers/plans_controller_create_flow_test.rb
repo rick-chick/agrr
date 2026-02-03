@@ -7,6 +7,8 @@ class PlansControllerCreateFlowTest < ActionDispatch::IntegrationTest
   setup do
     @user = create(:user)
     @farm = create(:farm, user: @user, latitude: 35.0, longitude: 135.0)
+    # Ensure the farm has at least one field so total_area is non-zero during plan creation
+    create(:field, farm: @farm, user: @user)
     @crop = create(:crop, user: @user, is_reference: false)
     sign_in_as @user
   end
