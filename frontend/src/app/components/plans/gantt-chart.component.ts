@@ -1,8 +1,10 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanService } from '../../services/plans/plan.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 interface GanttConfig {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -186,6 +188,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   showOptimizationLock = false;
   private planService = inject(PlanService);
   private cdr = inject(ChangeDetectorRef);
+  private flashMessageService = inject(FlashMessageService);
 
   constructor(private translate: TranslateService) {}
 
@@ -870,7 +873,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private resetBarPosition() {
-    if (!this.draggedCultivation || !this.data) return;
+    if (!this.data) return;
 
     // エラー時はサーバーから最新データを再取得してロールバック
     const planId = this.data.data.id;
@@ -891,6 +894,23 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         }
       });
     }
+  }
+
+  private handleAdjustmentFailure(message?: string) {
+    this.flashMessageService.show({
+      type: 'error',
+      text: message ?? '調整に失敗しました。後でもう一度お試しください。'
+    });
+    this.showOptimizationLock = false;
+    this.scheduleDetectChanges();
+    this.resetBarPosition();
+  }
+
+  private extractHttpErrorMessage(error: HttpErrorResponse): string | undefined {
+    if (error?.error?.message) {
+      return String(error.error.message);
+    }
+    return error.message;
   }
 
   private resetVisualState() {
@@ -1013,16 +1033,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           }
         } else {
           console.error('❌ 調整に失敗しました:', response.message);
-          this.showOptimizationLock = false;
-          this.scheduleDetectChanges();
-          this.resetBarPosition();
+          this.handleAdjustmentFailure(response.message);
         }
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('❌ API呼び出しエラー:', error);
-        this.showOptimizationLock = false;
-        this.scheduleDetectChanges();
-        this.resetBarPosition();
+        this.handleAdjustmentFailure(this.extractHttpErrorMessage(error));
       }
     });
   }
