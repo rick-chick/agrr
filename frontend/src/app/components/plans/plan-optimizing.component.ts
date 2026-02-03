@@ -28,11 +28,19 @@ const initialControl: PlanOptimizingViewState = {
     <section class="page">
       <a [routerLink]="['/plans', planId]">Back to plan</a>
       <h2>Optimizing</h2>
-      <p>Status: {{ control.status }}</p>
       <p>Progress: {{ control.progress }}%</p>
     </section>
   `,
-  styleUrls: ['./plan-optimizing.component.css']
+  styles: [
+    `
+      .page {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e3e5e8;
+      }
+    `
+  ]
 })
 export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
