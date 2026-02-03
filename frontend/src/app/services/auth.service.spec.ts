@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of, firstValueFrom, tap, map, catchError } from 'rxjs';
+import { detectBrowserRegion } from '../core/browser-region';
 
 // Logic from auth.service.ts
 class AuthServiceLogic {
@@ -18,6 +19,7 @@ class AuthServiceLogic {
         if (user.api_key) {
           this.apiKeyService.setApiKey(user.api_key);
         }
+        user.region = user.region ?? detectBrowserRegion();
         this.userSignal = user;
         this.loaded = true;
       }),

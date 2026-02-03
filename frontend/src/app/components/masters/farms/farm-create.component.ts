@@ -13,6 +13,7 @@ import { RegionSelectComponent } from '../../shared/region-select/region-select.
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
+import { detectBrowserRegion } from '../../../core/browser-region';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -199,20 +200,6 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   }
 
   private resolveUserRegion(user: CurrentUser | null): string {
-    return user?.region ?? this.regionFromLocale(this.translate.currentLang);
-  }
-
-  private regionFromLocale(locale: string | undefined | null): string {
-    switch (locale) {
-      case 'ja':
-        return 'jp';
-      case 'us':
-      case 'en':
-        return 'us';
-      case 'in':
-        return 'in';
-      default:
-        return 'jp';
-    }
+    return user?.region ?? detectBrowserRegion();
   }
 }

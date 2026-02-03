@@ -15,7 +15,10 @@ export class LoadPlanListUseCase implements LoadPlanListInputPort {
     this.planGateway.listPlans().subscribe({
       next: (plans) => this.outputPort.present({ plans }),
       error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+        this.outputPort.onError({
+          message: err?.message ?? 'Unknown error',
+          scope: 'load-plan-list'
+        })
     });
   }
 }

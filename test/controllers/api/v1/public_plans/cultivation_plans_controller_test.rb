@@ -150,24 +150,79 @@ module Api
           # 作物に成長段階がある場合、adjust APIが成功するはず
           # cultivation_id: 1, from_field: 'Test Field', to_field: 'Test Field', new_start_date: '2026-04-12', daysFromStart: 101
 
-          post "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/adjust",
-               params: {
-                 moves: [
-                   {
-                     allocation_id: @field_cultivation.id,
-                     action: 'move',
-                     to_field_id: @cultivation_plan_field.id,
-                     to_start_date: '2026-04-12'
-                   }
-                 ]
-               },
-               headers: { "Accept" => "application/json" }
+          # WeatherPredictionService をスタブして天気データ不足によるエラーを防ぐ
+          weather_double = Object.new
+          weather_double.define_singleton_method(:get_existing_prediction) do |**_|
+            { data: { 'data' => [{ 'time' => '2026-01-01', 'temperature_2m_mean' => 5.0 }] } }
+          end
+          weather_double.define_singleton_method(:predict_for_cultivation_plan) do |*|
+            { data: { 'data' => [{ 'time' => '2026-01-01', 'temperature_2m_mean' => 5.0 }] } }
+          end
 
-          # GREEN: 作物に成長段階があれば成功するはず
-          assert_response :success, "Expected success but got #{response.status}. Response: #{response.body}"
+          WeatherPredictionService.stub(:new, weather_double) do
+            # AGRR AdjustGateway をスタブして成功結果を返すようにする
+            adjust_double = Object.new
+            # Capture IDs into locals so the singleton method can close over them
+            field_id = @cultivation_plan_field.id
+            crop_id = @crop.id.to_s
+            crop_name = @crop.name
+            variety = @cultivation_plan_crop.variety
 
-          json = JSON.parse(response.body)
-          assert json['success'], "Response should be successful: #{json.inspect}"
+            allocation = {
+              'allocation_id' => nil,
+              'crop_id' => crop_id,
+              'crop_name' => crop_name,
+              'variety' => variety,
+              'area_used' => 10.0,
+              'start_date' => '2026-04-12',
+              'completion_date' => '2026-06-01',
+              'growth_days' => 51,
+              'accumulated_gdd' => 150.0,
+              'total_cost' => 100.0,
+              'expected_revenue' => 200.0,
+              'profit' => 100.0
+            }
+
+            # Define singleton method to return a realistic result (uses captured locals)
+            adjust_double.define_singleton_method(:adjust) do |**_|
+              {
+                field_schedules: [
+                  {
+                    'field_id' => field_id,
+                    'allocations' => [allocation]
+                  }
+                ],
+                total_profit: 100.0,
+                total_revenue: 200.0,
+                total_cost: 100.0,
+                summary: {},
+                optimization_time: 0.1,
+                algorithm_used: 'test',
+                is_optimal: true
+              }
+            end
+
+            Agrr::AdjustGateway.stub(:new, adjust_double) do
+              post "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/adjust",
+                   params: {
+                     moves: [
+                       {
+                         allocation_id: @field_cultivation.id,
+                         action: 'move',
+                         to_field_id: @cultivation_plan_field.id,
+                         to_start_date: '2026-04-12'
+                       }
+                     ]
+                   },
+                   headers: { "Accept" => "application/json" }
+
+              # GREEN: 作物に成長段階があれば成功するはず
+              assert_response :success, "Expected success but got #{response.status}. Response: #{response.body}"
+
+              json = JSON.parse(response.body)
+              assert json['success'], "Response should be successful: #{json.inspect}"
+            end
+          end
         end
 
       test "adjust should work" do

@@ -1,11 +1,13 @@
 {
   "nav": {
-    "plans": "作付け計画",
+    "plans": "計画",
+    "public_plans": "新規計画",
     "farms": "農場",
     "weather": "天気",
     "login": "ログイン",
     "logout": "ログアウト",
     "crops": "作物",
+    "reports": "レポート",
     "apiKey": "APIキー",
     "api_keys": {
       "title": "APIキー管理",

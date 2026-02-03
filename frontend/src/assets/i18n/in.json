@@ -90,6 +90,9 @@
     "edit": "संपादित करें",
     "delete": "हटाएं",
     "back": "वापस",
+    "next": "Next",
+    "creating": "Creating...",
+    "updating": "Updating...",
     "confirm": "पुष्टि करें",
     "search": "खोजें",
     "create": "बनाएं",
@@ -345,6 +348,7 @@
   },
   "plans": {
     "errors": {
+      "invalid_id": "Invalid plan id.",
       "field_not_found": "खेत नहीं मिला।",
       "cannot_remove_field_with_cultivations": "इस खेत में खेती का कार्यक्रम है। कृपया पहले फसलें हटाएं।",
       "cannot_remove_last_field": "अंतिम खेत नहीं हटाया जा सकता।",
@@ -388,6 +392,17 @@
     },
     "gantt": {
       "optimizing": "अनुकूलन हो रहा है...",
+      "no_plan_data": "Plan data has not been loaded.",
+      "no_field_data": "No field data available.",
+      "no_data": "No data available to display the Gantt chart.",
+      "adjust_failed": "Adjustment failed. Please try again later.",
+      "labels": {
+        "year": "Year",
+        "month": "Month",
+        "day": "Day",
+        "week": "Week",
+        "quarter": "Q"
+      },
       "controls": {
         "zoom_in": "ज़ूम इन",
         "zoom_out": "ज़ूम आउट",
@@ -409,8 +424,8 @@
       }
     },
     "index": {
-      "title": "खेती योजनाएँ",
-      "subtitle": "वार्षिक योजनाओं का प्रबंधन करें",
+      "title": "Plans",
+      "subtitle": "Manage your cultivation plans.",
       "create_new": "+ नई योजना बनाएं",
       "try_public_plans": "मुफ्त योजनाओं से शुरू करें",
       "no_plans": "अभी तक कोई योजना नहीं",
@@ -435,7 +450,11 @@
       }
     },
     "new": {
-      "title": "📅 वर्ष और खेत चुनें",
+      "title": "New Plan",
+      "description": "Select a farm to create a new plan.",
+      "select_farm_label": "Select Farm",
+      "select_farm_placeholder": "Please select a farm",
+      "title_alt": "📅 वर्ष और खेत चुनें",
       "subtitle": "अपनी खेती योजना के लिए वर्ष और खेत चुनें",
       "plan_year_label": "योजना वर्ष",
       "plan_year_hint": "योजना अवधि: %{start_year}/01 - %{end_year}/12 (2 वर्ष)",
@@ -451,6 +470,19 @@
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",
+      "description": "Creating a plan for %{farmName}.",
+      "farm_info_label": "Farm Information",
+      "farm_name_label": "Farm Name",
+      "total_area_label": "Total Area",
+      "plan_name_label": "Plan Name",
+      "plan_name_placeholder": "Enter plan name",
+      "select_crops_label": "Select Crops",
+      "create_plan_button": "Create Plan",
+      "errors": {
+        "farm_id_not_specified": "Farm ID is not specified.",
+        "no_crop_selected": "Please select at least one crop.",
+        "farm_id_unknown": "Farm ID is unknown."
+      },
       "subtitle": "एकाधिक फसलें चुनने के लिए कार्ड पर क्लिक करें",
       "summary": {
         "year": "वर्ष",
@@ -492,6 +524,9 @@
         "start_over": "सूची पर वापस जाएं",
         "connection_lost": "❌ Connection was lost. Please try again.",
         "unknown_error": "An unknown error occurred. Please try again later."
+      },
+      "detail": {
+        "select_cultivation_hint": "Select a cultivation bar to show climate insights."
       },
       "show": {
         "back_to_list": "← सूची पर वापस जाएं",
@@ -716,15 +751,14 @@
     "home": "मुखपृष्ठ",
     "farms": "खेत",
     "crops": "फसल",
-    "plans": "योजना",
-    "public_plans": "मुफ्त योजना",
-    "weather": "मौसम",
-    "api_keys": "API कुंजी",
+    "plan": "योजना",
+    "new_plan": "नई योजना",
     "fertilizes": "उर्वरक",
     "pests": "कीट",
     "pesticides": "कीटनाशक",
     "agricultural_tasks": "कार्य",
     "interaction_rules": "फसल चक्र",
+    "reports": "रिपोर्ट",
     "about": "AGRR के बारे में",
     "contact": "संपर्क",
     "privacy": "गोपनीयता",
@@ -1110,6 +1144,18 @@
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この作業を削除しますか？"
+    }
+  },
+  "crops": {
+    "edit": {
+      "title": "Edit Crop",
+      "errors": {
+        "invalid_id": "Invalid crop id."
+      }
+    },
+    "stage": {
+      "default_name": "Stage {{order}}",
+      "confirm_delete": "Are you sure you want to delete this crop stage?"
     }
   },
   "api_keys": {
@@ -1535,6 +1581,7 @@
     }
   },
   "home": {
+    "user_fallback": "User",
     "index": {
       "title": "AGRR - कृषि को और स्मार्ट बनाएं | कृषि योजना सहायता प्रणाली",
       "description": "AGRR एक कृषि फसल योजना सहायता प्रणाली है जो मौसम डेटा और AI का उपयोग करती है। मुफ्त फसल योजना बनाएं, खेत प्रबंधन से लेकर खेती योजना अनुकूलन तक, स्थायी कृषि का समर्थन करती है।",
@@ -1911,17 +1958,26 @@
     }
   },
   "pesticides": {
+    "create": {
+      "title": "Create Pesticide"
+    },
+    "edit": {
+      "title": "Edit Pesticide"
+    },
     "form": {
-      "crop_label": "फसल",
+      "name_label": "Name",
+      "active_ingredient_label": "Active Ingredient",
+      "description_label": "Description",
+      "crop_label": "Crop",
+      "select_crop": "Select crop",
+      "pest_label": "Pest",
+      "select_pest": "Select pest",
+      "submit_create": "Create Pesticide",
+      "submit_update": "Update Pesticide",
       "crop_help": "वह फसल चुनें जिस पर यह कीटनाशक लागू होता है (आवश्यक)",
-      "select_crop": "कृपया एक फसल चुनें",
-      "pest_label": "कीट",
       "pest_help": "वह कीट चुनें जिस पर यह कीटनाशक लक्षित है (आवश्यक)",
-      "select_pest": "कृपया एक कीट चुनें",
       "pesticide_id_label": "कीटनाशक ID",
       "pesticide_id_help": "कीटनाशक के लिए एक अद्वितीय पहचानकर्ता दर्ज करें (आवश्यक)",
-      "name_label": "नाम",
-      "active_ingredient_label": "सक्रिय तत्व",
       "active_ingredient_help": "सक्रिय तत्व का नाम दर्ज करें (वैकल्पिक)",
       "description_label": "विवरण",
       "description_help": "कीटनाशक का विवरण दर्ज करें (वैकल्पिक)",

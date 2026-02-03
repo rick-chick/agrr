@@ -57,6 +57,21 @@ require "rails/test_help"
 require "minitest/mock"
 require 'mocha/minitest'
 
+# Expose aliases for controllers tests to stub without loading the controller directly.
+module Api
+  module V1
+    module Plans
+      FieldCultivationClimateDataInteractor =
+        Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor
+    end
+
+    module PublicPlans
+      FieldCultivationClimateDataInteractor =
+        Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor
+    end
+  end
+end
+
 # Load test support files
 Dir[Rails.root.join('test', 'support', '**', '*.rb')].each { |f| require f }
 

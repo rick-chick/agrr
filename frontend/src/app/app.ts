@@ -40,7 +40,7 @@ export class App implements OnInit {
   }
 
   ngOnInit(): void {
-    this.translate.addLangs(['ja', 'en']);
+    this.translate.addLangs(['ja', 'en', 'in']);
     this.translate.setDefaultLang('ja');
     this.translate.use('ja');
     this.authService.loadCurrentUser().subscribe();

@@ -233,10 +233,10 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     get plans_path
     assert_response :success
     
-    # display_nameメソッドが計画期間を表示することを確認
+    # 仕様変更: display_name は計画期間を付与しないため、年表記が含まれないことを確認
     display_name = plan.display_name
-    assert_match /2025/, display_name
-    assert_match /2026/, display_name
+    assert_no_match /2025/, display_name
+    assert_no_match /2026/, display_name
   end
 
   test 'destroy_plan_with_complex_associations_succeeds' do

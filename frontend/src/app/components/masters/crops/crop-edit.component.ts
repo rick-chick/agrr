@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropEditView, CropEditViewState, CropEditFormData } from './crop-edit.view';
@@ -87,7 +87,7 @@ const initialControl: CropEditViewState = {
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
         @if (!control.loading) {
-          <h2 id="form-heading" class="form-card__title">{{ control.formData.name }}を編集</h2>
+          <h2 id="form-heading" class="form-card__title">{{ 'crops.edit.title' | translate:{ name: control.formData.name } }}</h2>
         } @else {
           <h2 id="form-heading" class="form-card__title">{{ 'common.loading' | translate }}</h2>
         }
@@ -296,6 +296,7 @@ export class CropEditComponent implements CropEditView, OnInit {
   private readonly updateNutrientRequirementUseCase = inject(UpdateNutrientRequirementUseCase);
   private readonly presenter = inject(CropEditPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: CropEditViewState = initialControl;
   get control(): CropEditViewState {
@@ -318,7 +319,7 @@ export class CropEditComponent implements CropEditView, OnInit {
     this.presenter.setView(this);
     this.syncRegionWithCurrentUser();
     if (!this.cropId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid crop id.' };
+      this.control = { ...initialControl, loading: false, error: this.translate.instant('crops.errors.invalid_id') };
       return;
     }
     this.loadUseCase.execute({ cropId: this.cropId });
@@ -344,10 +345,11 @@ export class CropEditComponent implements CropEditView, OnInit {
 
   addCropStage(): void {
     const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map(s => s.order)) + 1;
+    const defaultStageName = this.translate.instant('crops.stage.default_name', { order: nextOrder });
     this.createCropStageUseCase.execute({
       cropId: this.cropId,
       payload: {
-        name: `Stage ${nextOrder}`,
+        name: defaultStageName,
         order: nextOrder
       }
     });
@@ -362,7 +364,7 @@ export class CropEditComponent implements CropEditView, OnInit {
   }
 
   deleteCropStage(stageId: number): void {
-    if (confirm('Are you sure you want to delete this crop stage?')) {
+    if (confirm(this.translate.instant('crops.stage.confirm_delete'))) {
       this.deleteCropStageUseCase.execute({
         cropId: this.cropId,
         stageId

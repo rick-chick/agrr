@@ -1,19 +1,20 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslateModule],
   template: `
     <footer class="app-footer">
       <div class="footer-links">
-        <a routerLink="/about">AGRRについて</a>
-        <a routerLink="/terms">利用規約</a>
-        <a routerLink="/privacy">プライバシーポリシー</a>
-        <a routerLink="/contact">お問い合わせ</a>
+        <a routerLink="/about">{{ 'footer.about' | translate }}</a>
+        <a routerLink="/terms">{{ 'footer.terms' | translate }}</a>
+        <a routerLink="/privacy">{{ 'footer.privacy' | translate }}</a>
+        <a routerLink="/contact">{{ 'footer.contact' | translate }}</a>
       </div>
-      <span>AGRR © 2026</span>
+      <span>{{ 'footer.copyright' | translate }}</span>
     </footer>
   `,
   styleUrls: ['./footer.component.css']

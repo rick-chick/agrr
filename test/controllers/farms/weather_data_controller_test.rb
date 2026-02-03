@@ -13,23 +13,24 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
   end
 
   test '予測要求は過去2年分未満のデータなら422を返す' do
-    # 730日未満の履歴データ（現状の365閾値では通ってしまう）
-    500.times do |i|
-      create(:weather_datum,
-             weather_location: @weather_location,
-             date: Date.today - i.days,
-             temperature_max: 25.0,
-             temperature_min: 15.0,
-             temperature_mean: 20.0,
-             precipitation: 0.0)
+    # テストの高速化: 実際に大量レコードを DB に作成する代わりに
+    # association をスタブして過去データが不足している状況を模擬する
+    fake_rel = Object.new
+    def fake_rel.where(*); self; end
+    def fake_rel.order(*); self; end
+    # ActiveRecord の where.not チェーンに対応するためのメソッド
+    def fake_rel.not(*); self; end
+    # 十分に少ない件数を返す（過去2年分: 約730日を下回る想定）
+    def fake_rel.count; 500; end
+
+    @weather_location.stub(:weather_data, fake_rel) do
+      get farm_weather_data_path(@farm, predict: 'true'), headers: { 'Accept' => 'application/json' }
+
+      assert_response :unprocessable_entity
+      body = JSON.parse(response.body)
+      assert_equal false, body['success']
+      assert_equal I18n.t('farms.weather_data.insufficient_historical_data'), body['message']
     end
-
-    get farm_weather_data_path(@farm, predict: 'true'), headers: { 'Accept' => 'application/json' }
-
-    assert_response :unprocessable_entity
-    body = JSON.parse(response.body)
-    assert_equal false, body['success']
-    assert_equal I18n.t('farms.weather_data.insufficient_historical_data'), body['message']
   end
 end
 

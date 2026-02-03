@@ -9,14 +9,14 @@ module Api::V1::Masters::Crops
       @session = Session.create_for_user(@user)
       cookies[:session_id] = @session.session_id
       @crop = create(:crop, user: @user)
-      @crop_stage = create(:crop_stage, crop: @crop)
+      @crop_stage = create(:crop_stage, crop: @crop, order: 1)
     end
 
     test "create should return created with valid params" do
       valid_params = {
         crop_stage: {
           name: "発芽期",
-          order: 1
+          order: 2
         }
       }
 
@@ -28,7 +28,7 @@ module Api::V1::Masters::Crops
       json = response.parsed_body
       assert_equal "発芽期", json["name"]
       assert_equal @crop.id, json["crop_id"]
-      assert_equal 1, json["order"]
+      assert_equal 2, json["order"]
       assert json["id"].present?
     end
 

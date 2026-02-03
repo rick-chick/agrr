@@ -38,22 +38,28 @@ describe('PublicPlanResultsComponent', () => {
     };
     cdr = { markForCheck: vi.fn() };
 
+    TestBed.overrideComponent(PublicPlanResultsComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
+          { provide: SavePublicPlanUseCase, useValue: saveUseCase },
+          { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
+          { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useValue: mockPresenter },
+          { provide: SAVE_PUBLIC_PLAN_OUTPUT_PORT, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: cdr }
+        ]
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
       providers: [
         { provide: ActivatedRoute, useValue: activatedRoute },
-        { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
-        { provide: SavePublicPlanUseCase, useValue: saveUseCase },
-        { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
-        { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useValue: mockPresenter },
-        { provide: SAVE_PUBLIC_PLAN_OUTPUT_PORT, useValue: mockPresenter },
         { provide: AuthService, useValue: authService },
-        { provide: PublicPlanStore, useValue: publicPlanStore },
-        { provide: ChangeDetectorRef, useValue: cdr }
+        { provide: PublicPlanStore, useValue: publicPlanStore }
       ]
-    })
-      .overrideComponent(PublicPlanResultsComponent, { set: { providers: [] } })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(PublicPlanResultsComponent);
     component = fixture.componentInstance;
@@ -116,6 +122,35 @@ describe('PublicPlanResultsComponent', () => {
       component.savePlan();
 
       expect(saveUseCase.execute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('climate panel interactions', () => {
+    it('opens the climate panel for a new cultivation selection', () => {
+      component.handleCultivationSelection({ cultivationId: 5, planType: 'public' });
+
+      expect(component.selectedCultivationId).toBe(5);
+      expect(component.selectedPlanType).toBe('public');
+    });
+
+    it('closes the climate panel when the same cultivation is selected again', () => {
+      component.selectedCultivationId = 5;
+      component.selectedPlanType = 'public';
+
+      component.handleCultivationSelection({ cultivationId: 5, planType: 'public' });
+
+      expect(component.selectedCultivationId).toBeNull();
+      expect(component.selectedPlanType).toBe('public');
+    });
+
+    it('resets selection via closeClimatePanel', () => {
+      component.selectedCultivationId = 8;
+      component.selectedPlanType = 'private';
+
+      component.closeClimatePanel();
+
+      expect(component.selectedCultivationId).toBeNull();
+      expect(component.selectedPlanType).toBe('public');
     });
   });
 });

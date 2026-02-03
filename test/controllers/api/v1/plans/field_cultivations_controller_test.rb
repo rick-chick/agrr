@@ -89,7 +89,7 @@ module Api
           )
           
           # FieldCultivationを作成
-          @field_cultivation = FieldCultivation.create!(
+          @field_cultivation = ::FieldCultivation.create!(
             cultivation_plan: @cultivation_plan,
             cultivation_plan_field: @plan_field,
             cultivation_plan_crop: @plan_crop,
@@ -99,6 +99,30 @@ module Api
             cultivation_days: 60,
             status: 'completed'
           )
+        end
+        
+        test "climate_data delegates to interactor success response" do
+          success_dto = build_field_climate_success_dto
+          with_field_climate_interactor_stub(->(output_port, _) { output_port.present(success_dto) }) do
+            get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+            
+            assert_response :success
+            data = JSON.parse(response.body)
+            assert data['success']
+            assert_equal @field_cultivation.id, data['field_cultivation']['id']
+          end
+        end
+        
+        test "climate_data delegates to interactor error response" do
+          error_dto = Domain::Shared::Dtos::ErrorDto.new('gateway failure')
+          with_field_climate_interactor_stub(->(output_port, _) { output_port.on_error(error_dto) }) do
+            get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
+            
+            assert_response :internal_server_error
+            data = JSON.parse(response.body)
+            refute data['success']
+            assert_equal 'gateway failure', data['message']
+          end
         end
         
         test "気象データがある場合、正常にclimate_dataを返す" do
@@ -361,6 +385,54 @@ module Api
           
           # find_field_cultivationでRecordNotFoundが発生するため、500エラーまたは404エラーが返る
           assert_includes [404, 500], response.status
+        end
+        
+        private
+        
+        def with_field_climate_interactor_stub(handler)
+          stub_class = Class.new do
+            define_method(:initialize) do |output_port:, gateway:|
+              @output_port = output_port
+            end
+
+            define_method(:call) do |input_dto|
+              handler.call(@output_port, input_dto)
+            end
+          end
+
+          FieldCultivationClimateDataInteractor.stub :new, ->(**kwargs) { stub_class.new(**kwargs) } do
+            yield
+          end
+        end
+
+        def build_field_climate_success_dto
+          success_struct = Struct.new(
+            :field_cultivation, :farm, :crop_requirements,
+            :weather_data, :gdd_data, :stages,
+            :progress_result, :debug_info
+          )
+
+          success_struct.new(
+            {
+              id: @field_cultivation.id,
+              field_name: @field_cultivation.field_display_name,
+              crop_name: @field_cultivation.crop_display_name,
+              start_date: @field_cultivation.start_date,
+              completion_date: @field_cultivation.completion_date
+            },
+            {
+              id: @farm.id,
+              name: @farm.display_name,
+              latitude: @farm.latitude,
+              longitude: @farm.longitude
+            },
+            { base_temperature: 10.0 },
+            [],
+            [],
+            [],
+            {},
+            {}
+          )
         end
       end
     end

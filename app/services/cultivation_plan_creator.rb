@@ -33,11 +33,9 @@ class CultivationPlanCreator
       return Result.new(cultivation_plan: nil, errors: [error_msg])
     end
 
-    if @crops.empty?
-      error_msg = "少なくとも1つの作物が必要です (crops: #{@crops.count})"
-      Rails.logger.error "❌ CultivationPlan creation failed: #{error_msg}"
-      return Result.new(cultivation_plan: nil, errors: [error_msg])
-    end
+    # NOTE:
+    # Allow empty crops array — controllers and callers validate selection
+    # and the FieldsAllocator handles empty crops by creating a default field.
 
     ActiveRecord::Base.transaction do
       create_cultivation_plan_and_relations

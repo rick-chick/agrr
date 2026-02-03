@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
 import { PlanNewPresenter } from '../../adapters/plans/plan-new.presenter';
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
@@ -17,7 +18,7 @@ const initialControl: PlanNewViewState = {
 @Component({
   selector: 'app-plan-new',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PlanNewPresenter,
     LoadPrivatePlanFarmsUseCase,
@@ -27,28 +28,28 @@ const initialControl: PlanNewViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">新規計画</h1>
-        <p class="page-description">農場を選択して新しい計画を作成します。</p>
+        <h1 id="page-title" class="page-title">{{ 'plans.new.title' | translate }}</h1>
+        <p class="page-description">{{ 'plans.new.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-new-error">{{ control.error }}</p>
         } @else {
           <form class="form" (ngSubmit)="onFarmSelect($event)">
             <div class="form-group">
-              <label for="farm-select" class="form-label">農場を選択</label>
+              <label for="farm-select" class="form-label">{{ 'plans.new.select_farm_label' | translate }}</label>
               <select id="farm-select" name="farmId" class="form-control" required>
-                <option value="">農場を選択してください</option>
+                <option value="">{{ 'plans.new.select_farm_placeholder' | translate }}</option>
                 @for (farm of control.farms; track farm.id) {
                   <option [value]="farm.id">{{ farm.name }}</option>
                 }
               </select>
             </div>
             <div class="form-actions">
-              <a routerLink="/plans" class="btn-secondary">キャンセル</a>
-              <button type="submit" class="btn-primary">次へ</button>
+              <a routerLink="/plans" class="btn-secondary">{{ 'common.cancel' | translate }}</a>
+              <button type="submit" class="btn-primary">{{ 'common.next' | translate }}</button>
             </div>
           </form>
         }

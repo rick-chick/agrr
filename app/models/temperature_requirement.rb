@@ -13,6 +13,12 @@
 # - sterility_risk_threshold: 不稔リスク閾値
 class TemperatureRequirement < ApplicationRecord
   belongs_to :crop_stage
+
+  # 数値フィールドは数値であることを検証する
+  validates :base_temperature, :optimal_min, :optimal_max,
+            :low_stress_threshold, :high_stress_threshold,
+            :frost_threshold, :sterility_risk_threshold, :max_temperature,
+            numericality: true, allow_nil: true
 end
 
 

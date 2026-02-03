@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LoadPrivatePlanSelectCropContextUseCase } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.usecase';
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
 import { PlanSelectCropPresenter } from '../../adapters/plans/plan-select-crop.presenter';
@@ -24,7 +25,7 @@ const initialControl: PlanSelectCropViewState = {
 @Component({
   selector: 'app-plan-select-crop',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PlanSelectCropPresenter,
     LoadPrivatePlanSelectCropContextUseCase,
@@ -36,41 +37,41 @@ const initialControl: PlanSelectCropViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">作物選択</h1>
+        <h1 id="page-title" class="page-title">{{ 'plans.select_crop.title' | translate }}</h1>
         <p class="page-description">
           @if (control.farm) {
-            {{ control.farm.name }} の計画を作成します。栽培する作物を選択してください。
+            {{ 'plans.select_crop.description' | translate:{ farmName: control.farm.name } }}
           }
         </p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-select-crop-error">{{ control.error }}</p>
         } @else if (control.farm) {
           <form class="form" (ngSubmit)="onCreatePlan($event)">
             <div class="form-group">
-              <label class="form-label">農場情報</label>
+              <label class="form-label">{{ 'plans.select_crop.farm_info_label' | translate }}</label>
               <div class="farm-info">
-                <p><strong>農場名:</strong> {{ control.farm.name }}</p>
-                <p><strong>総面積:</strong> {{ control.totalArea }} ㎡</p>
+                <p><strong>{{ 'plans.select_crop.farm_name_label' | translate }}:</strong> {{ control.farm.name }}</p>
+                <p><strong>{{ 'plans.select_crop.total_area_label' | translate }}:</strong> {{ control.totalArea }} ㎡</p>
               </div>
             </div>
 
             <div class="form-group">
-              <label for="plan-name" class="form-label">計画名（任意）</label>
+              <label for="plan-name" class="form-label">{{ 'plans.select_crop.plan_name_label' | translate }}</label>
               <input
                 type="text"
                 id="plan-name"
                 name="planName"
                 class="form-control"
-                placeholder="農場名が使用されます"
+                [placeholder]="'plans.select_crop.plan_name_placeholder' | translate"
               />
             </div>
 
             <div class="form-group">
-              <label class="form-label">栽培作物を選択</label>
+              <label class="form-label">{{ 'plans.select_crop.select_crops_label' | translate }}</label>
               <div class="crop-checkboxes">
                 @for (crop of control.crops; track crop.id) {
                   <label class="checkbox-item">
@@ -82,12 +83,12 @@ const initialControl: PlanSelectCropViewState = {
             </div>
 
             <div class="form-actions">
-              <a routerLink="/plans/new" class="btn-secondary">戻る</a>
+              <a routerLink="/plans/new" class="btn-secondary">{{ 'common.back' | translate }}</a>
               <button type="submit" class="btn-primary" [disabled]="control.creating">
                 @if (control.creating) {
-                  作成中...
+                  {{ 'common.creating' | translate }}
                 } @else {
-                  計画を作成
+                  {{ 'plans.select_crop.create_plan_button' | translate }}
                 }
               </button>
             </div>
@@ -105,6 +106,7 @@ export class PlanSelectCropComponent implements PlanSelectCropView, OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: PlanSelectCropViewState = initialControl;
   get control(): PlanSelectCropViewState {
@@ -121,7 +123,7 @@ export class PlanSelectCropComponent implements PlanSelectCropView, OnInit {
     if (farmId) {
       this.load(Number(farmId));
     } else {
-      this.control = { ...this.control, loading: false, error: '農場IDが指定されていません' };
+      this.control = { ...this.control, loading: false, error: this.translate.instant('plans.select_crop.errors.farm_id_not_specified') };
     }
   }
 
@@ -141,13 +143,13 @@ export class PlanSelectCropComponent implements PlanSelectCropView, OnInit {
     const cropIds: number[] = Array.from(cropCheckboxes).map(cb => Number(cb.value));
 
     if (cropIds.length === 0) {
-      this.control = { ...this.control, error: '少なくとも1つの作物を選択してください' };
+      this.control = { ...this.control, error: this.translate.instant('plans.select_crop.errors.no_crop_selected') };
       return;
     }
 
     const farmId = Number(this.route.snapshot.queryParams['farmId']);
     if (!farmId) {
-      this.control = { ...this.control, error: '農場IDが不明です' };
+      this.control = { ...this.control, error: this.translate.instant('plans.select_crop.errors.farm_id_unknown') };
       return;
     }
 

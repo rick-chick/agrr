@@ -155,6 +155,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "back": "Back",
+    "next": "Next",
+    "creating": "Creating...",
+    "updating": "Updating...",
     "confirm": "Confirm",
     "search": "Search",
     "create": "Create",
@@ -180,7 +183,14 @@
       "title": "New Crop"
     },
     "edit": {
-      "title": "Edit Crop"
+      "title": "Edit Crop",
+      "errors": {
+        "invalid_id": "Invalid crop id."
+      }
+    },
+    "stage": {
+      "default_name": "Stage {{order}}",
+      "confirm_delete": "Are you sure you want to delete this crop stage?"
     },
     "form": {
       "name_label": "Name",
@@ -218,15 +228,14 @@
     "home": "Home",
     "farms": "Farms",
     "crops": "Crops",
-    "plans": "Plans",
-    "public_plans": "Free Plans",
-    "weather": "Weather",
-    "api_keys": "API Keys",
+    "plan": "Plan",
+    "new_plan": "New Plan",
     "fertilizes": "Fertilizers",
     "pests": "Pests",
     "pesticides": "Pesticides",
     "agricultural_tasks": "Tasks",
     "interaction_rules": "Rotation Rules",
+    "reports": "Reports",
     "about": "About",
     "contact": "Contact",
     "privacy": "Privacy",
@@ -917,6 +926,7 @@
   },
   "plans": {
     "errors": {
+      "invalid_id": "Invalid plan id.",
       "field_not_found": "Field not found.",
       "cannot_remove_field_with_cultivations": "This field contains cultivation schedules. Please delete the crops first.",
       "cannot_remove_last_field": "Cannot remove the last field.",
@@ -960,6 +970,17 @@
     },
     "gantt": {
       "optimizing": "Optimizing...",
+      "no_plan_data": "Plan data has not been loaded.",
+      "no_field_data": "No field data available.",
+      "no_data": "No data available to display the Gantt chart.",
+      "adjust_failed": "Adjustment failed. Please try again later.",
+      "labels": {
+        "year": "Year",
+        "month": "Month",
+        "day": "Day",
+        "week": "Week",
+        "quarter": "Q"
+      },
       "controls": {
         "zoom_in": "Zoom In",
         "zoom_out": "Zoom Out",
@@ -981,8 +1002,8 @@
       }
     },
     "index": {
-      "title": "Cultivation Plans",
-      "subtitle": "Manage your yearly cultivation plans",
+      "title": "Plans",
+      "subtitle": "Manage your cultivation plans.",
       "create_new": "+ Create New Plan",
       "try_public_plans": "Try Free Plans",
       "no_plans": "No plans yet",
@@ -1007,7 +1028,11 @@
       }
     },
     "new": {
-      "title": "📅 Select Year and Farm",
+      "title": "New Plan",
+      "description": "Select a farm to create a new plan.",
+      "select_farm_label": "Select Farm",
+      "select_farm_placeholder": "Please select a farm",
+      "title_alt": "📅 Select Year and Farm",
       "subtitle": "Choose the year and farm for your cultivation plan",
       "plan_year_label": "Plan Year",
       "plan_year_hint": "Plan period: %{start_year}/01 - %{end_year}/12 (2 years)",
@@ -1023,6 +1048,19 @@
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
+      "description": "Creating a plan for %{farmName}.",
+      "farm_info_label": "Farm Information",
+      "farm_name_label": "Farm Name",
+      "total_area_label": "Total Area",
+      "plan_name_label": "Plan Name",
+      "plan_name_placeholder": "Enter plan name",
+      "select_crops_label": "Select Crops",
+      "create_plan_button": "Create Plan",
+      "errors": {
+        "farm_id_not_specified": "Farm ID is not specified.",
+        "no_crop_selected": "Please select at least one crop.",
+        "farm_id_unknown": "Farm ID is unknown."
+      },
       "subtitle": "Click cards to select multiple crops",
       "summary": {
         "year": "Year",
@@ -1064,6 +1102,9 @@
         "start_over": "Back to List",
         "connection_lost": "❌ Connection was lost. Please try again.",
         "unknown_error": "An unknown error occurred. Please try again later."
+      },
+      "detail": {
+        "select_cultivation_hint": "Select a cultivation bar to show climate insights."
       },
       "show": {
         "back_to_list": "← Back to List",
@@ -1685,6 +1726,7 @@
     }
   },
   "home": {
+    "user_fallback": "User",
     "index": {
       "title": "AGRR - Make Agriculture Smarter | Agricultural Planning Support System",
       "description": "AGRR is an agricultural crop planning support system that leverages weather data and AI. Create free crop plans, from field management to cultivation planning optimization, supporting sustainable agriculture.",
@@ -2067,17 +2109,26 @@
     }
   },
   "pesticides": {
+    "create": {
+      "title": "Create Pesticide"
+    },
+    "edit": {
+      "title": "Edit Pesticide"
+    },
     "form": {
-      "crop_label": "Crop",
-      "crop_help": "Select the crop this pesticide applies to (required)",
-      "select_crop": "Please select a crop",
-      "pest_label": "Pest",
-      "pest_help": "Select the pest this pesticide targets (required)",
-      "select_pest": "Please select a pest",
-      "pesticide_id_label": "Pesticide ID",
-      "pesticide_id_help": "Enter a unique identifier for the pesticide (required)",
       "name_label": "Name",
       "active_ingredient_label": "Active Ingredient",
+      "description_label": "Description",
+      "crop_label": "Crop",
+      "select_crop": "Select crop",
+      "pest_label": "Pest",
+      "select_pest": "Select pest",
+      "submit_create": "Create Pesticide",
+      "submit_update": "Update Pesticide",
+      "crop_help": "Select the crop this pesticide applies to (required)",
+      "pest_help": "Select the pest this pesticide targets (required)",
+      "pesticide_id_label": "Pesticide ID",
+      "pesticide_id_help": "Enter a unique identifier for the pesticide (required)",
       "active_ingredient_help": "Enter the active ingredient name (optional)",
       "description_label": "Description",
       "description_help": "Enter a description of the pesticide (optional)",

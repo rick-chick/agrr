@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
 import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
@@ -19,7 +20,7 @@ const initialControl: PlanListViewState = {
 @Component({
   selector: 'app-plan-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PlanListPresenter,
     LoadPlanListUseCase,
@@ -31,15 +32,12 @@ const initialControl: PlanListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Plans</h1>
-        <p class="page-description">Manage your cultivation plans.</p>
+        <h1 id="page-title" class="page-title">{{ 'plans.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'plans.index.subtitle' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
-        <div class="section-card__header-actions">
-          <a routerLink="/plans/new" class="btn-primary">新規計画</a>
-        </div>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
           <p class="plan-list-error">{{ control.error }}</p>
         } @else {
@@ -55,9 +53,9 @@ const initialControl: PlanListViewState = {
                       type="button"
                       class="btn-danger"
                       (click)="deletePlan(plan.id)"
-                      aria-label="削除"
+                      [attr.aria-label]="'common.delete' | translate"
                     >
-                      削除
+                      {{ 'common.delete' | translate }}
                     </button>
                   </div>
                 </article>

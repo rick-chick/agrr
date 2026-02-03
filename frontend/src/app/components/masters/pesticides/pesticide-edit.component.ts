@@ -39,7 +39,7 @@ const initialControl: PesticideEditViewState = {
 @Component({
   selector: 'app-pesticide-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
   providers: [
     PesticideEditPresenter,
     LoadPesticideForEditUseCase,
@@ -53,34 +53,34 @@ const initialControl: PesticideEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Edit Pesticide</h2>
+        <h2 id="form-heading" class="form-card__title">{{ 'pesticides.edit.title' | translate }}</h2>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <form (ngSubmit)="updatePesticide()" #pesticideForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
-              <span class="form-card__field-label">Name</span>
+              <span class="form-card__field-label">{{ 'pesticides.form.name_label' | translate }}</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
             <label for="active_ingredient" class="form-card__field">
-              <span class="form-card__field-label">Active Ingredient</span>
+              <span class="form-card__field-label">{{ 'pesticides.form.active_ingredient_label' | translate }}</span>
               <input id="active_ingredient" name="active_ingredient" [(ngModel)]="control.formData.active_ingredient" />
             </label>
             <label for="description" class="form-card__field">
-              <span class="form-card__field-label">Description</span>
+              <span class="form-card__field-label">{{ 'pesticides.form.description_label' | translate }}</span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <label for="crop_id" class="form-card__field">
-              <span class="form-card__field-label">Crop</span>
+              <span class="form-card__field-label">{{ 'pesticides.form.crop_label' | translate }}</span>
               <select id="crop_id" name="crop_id" [(ngModel)]="control.formData.crop_id" required>
-                <option [value]="0">-- Select Crop --</option>
+                <option [value]="0">{{ 'pesticides.form.select_crop' | translate }}</option>
                 <option *ngFor="let crop of crops" [value]="crop.id">{{ crop.name }}</option>
               </select>
             </label>
             <label for="pest_id" class="form-card__field">
-              <span class="form-card__field-label">Pest</span>
+              <span class="form-card__field-label">{{ 'pesticides.form.pest_label' | translate }}</span>
               <select id="pest_id" name="pest_id" [(ngModel)]="control.formData.pest_id" required>
-                <option [value]="0">-- Select Pest --</option>
+                <option [value]="0">{{ 'pesticides.form.select_pest' | translate }}</option>
                 <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
               </select>
             </label>
@@ -89,16 +89,16 @@ const initialControl: PesticideEditViewState = {
             }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
-                {{ control.saving ? 'Updating...' : 'Update Pesticide' }}
+                {{ control.saving ? ('common.updating' | translate) : ('pesticides.form.submit_update' | translate) }}
               </button>
-              <a [routerLink]="['/pesticides']" class="btn-secondary">Back</a>
+              <a [routerLink]="['/pesticides']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
       </section>
     </main>
   `,
-  styles: ['']
+  styleUrls: ['./pesticide-edit.component.css']
 })
 export class PesticideEditComponent implements PesticideEditView, OnInit {
   readonly auth = inject(AuthService);

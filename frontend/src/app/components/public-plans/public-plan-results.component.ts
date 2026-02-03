@@ -14,6 +14,7 @@ import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gate
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { GanttChartComponent } from '../plans/gantt-chart.component';
+import { PlanFieldClimateComponent } from '../plans/plan-field-climate.component';
 import { AuthService } from '../../services/auth.service';
 import { getApiBaseUrl } from '../../core/api-base-url';
 
@@ -26,7 +27,7 @@ const initialControl: PublicPlanResultsViewState = {
 @Component({
   selector: 'app-public-plan-results',
   standalone: true,
-  imports: [CommonModule, GanttChartComponent, TranslateModule, RouterLink],
+  imports: [CommonModule, GanttChartComponent, PlanFieldClimateComponent, TranslateModule, RouterLink],
   providers: [
     PublicPlanResultsPresenter,
     LoadPublicPlanResultsUseCase,
@@ -47,22 +48,7 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.error) {
           <p class="error-message">{{ control.error }}</p>
         } @else if (control.data) {
-          <div class="gantt-results-header">
-            <div class="compact-summary-line">
-              <span class="compact-icon">🎉</span>
-              <span class="compact-text">{{ 'public_plans.results.header.title' | translate }}</span>
-              <span class="compact-separator">•</span>
-              <span class="compact-icon">🌍</span>
-              <span class="compact-value">{{ farm?.name }}</span>
-              <span class="compact-separator">•</span>
-              <span class="compact-icon">📏</span>
-              <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
-            </div>
-          </div>
-
-          <app-gantt-chart [data]="control.data" planType="public" />
-
-          <div class="action-buttons">
+          <div class="public-plan-results__header-actions">
             <button type="button" class="btn btn-primary" (click)="savePlan()">
               {{ 'public_plans.save.button' | translate }}
             </button>
@@ -77,11 +63,53 @@ const initialControl: PublicPlanResultsViewState = {
               {{ 'public_plans.results.create_new_plan' | translate }}
             </a>
           </div>
+
+          <div class="gantt-results-header">
+            <div class="compact-summary-line">
+              <span class="compact-icon">🎉</span>
+              <span class="compact-text">{{ 'public_plans.results.header.title' | translate }}</span>
+              <span class="compact-separator">•</span>
+              <span class="compact-icon">🌍</span>
+              <span class="compact-value">{{ farm?.name }}</span>
+              <span class="compact-separator">•</span>
+              <span class="compact-icon">📏</span>
+              <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
+            </div>
+          </div>
+
+          <section class="page">
+            <div class="plan-detail__layout">
+              <div class="plan-detail__pane plan-detail__gantt">
+                <app-gantt-chart
+                  [data]="control.data"
+                  [planType]="planType"
+                  (cultivationSelected)="handleCultivationSelection($event)"
+                />
+              </div>
+
+              <div
+                class="plan-detail__pane plan-detail__climate-panel"
+                [class.plan-detail__climate-panel--open]="selectedCultivationId !== null"
+              >
+                @if (selectedCultivationId) {
+                  <app-plan-field-climate
+                    [fieldCultivationId]="selectedCultivationId"
+                    [planType]="selectedPlanType"
+                    (close)="closeClimatePanel()"
+                  />
+                } @else {
+                  <p class="plan-detail__climate-placeholder">
+                    Select a cultivation bar to show climate insights.
+                  </p>
+                }
+              </div>
+            </div>
+          </section>
         }
       </div>
     </main>
   `,
-  styleUrls: ['./public-plan.component.css']
+  styleUrls: ['./public-plan-results.component.css', './public-plan.component.css']
 })
 export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -92,6 +120,10 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly auth = inject(AuthService);
+
+  readonly planType: 'private' | 'public' = 'public';
+  selectedCultivationId: number | null = null;
+  selectedPlanType: 'private' | 'public' = this.planType;
 
   get farm() {
     return this.publicPlanStore.state.farm;
@@ -135,5 +167,24 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     if (planId) {
       this.saveUseCase.execute({ planId });
     }
+  }
+
+  handleCultivationSelection(event: { cultivationId: number; planType: 'private' | 'public' }): void {
+    const alreadySelected =
+      this.selectedCultivationId === event.cultivationId &&
+      this.selectedPlanType === event.planType;
+
+    if (alreadySelected) {
+      this.closeClimatePanel();
+      return;
+    }
+
+    this.selectedCultivationId = event.cultivationId;
+    this.selectedPlanType = event.planType;
+  }
+
+  closeClimatePanel(): void {
+    this.selectedCultivationId = null;
+    this.selectedPlanType = this.planType;
   }
 }

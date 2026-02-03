@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { catchError, map, of, tap, switchMap, Observable } from 'rxjs';
 import { ApiService, CurrentUser } from './api.service';
 import { ApiKeyService } from './api-key.service';
+import { detectBrowserRegion } from '../core/browser-region';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -32,6 +33,7 @@ export class AuthService {
         if (user.api_key) {
           this.apiKeyService.setApiKey(user.api_key);
         }
+        user.region = user.region ?? detectBrowserRegion();
         this.userSignal.set(user);
         this.loaded = true;
         this.loadingSignal.set(false);
