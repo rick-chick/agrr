@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanSelectCropComponent } from './plan-select-crop.component';
@@ -23,7 +24,7 @@ describe('PlanSelectCropComponent', () => {
     mockRoute = { snapshot: { queryParams: { farmId: '1' } } };
 
     await TestBed.configureTestingModule({
-      imports: [PlanSelectCropComponent],
+      imports: [PlanSelectCropComponent, TranslateModule.forRoot()],
       providers: [
         { provide: LoadPrivatePlanSelectCropContextUseCase, useValue: mockLoadUseCase },
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
