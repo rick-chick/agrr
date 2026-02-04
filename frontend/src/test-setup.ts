@@ -31,6 +31,14 @@ try {
   getTestBed().configureTestingModule({
     providers: [{ provide: TranslateService, useValue: translate }]
   });
+  // Also set an override provider so that tests which create their own TestBed
+  // or standalone component injectors will still resolve TranslateService.
+  // overrideProvider affects future TestBed module/component creation.
+  try {
+    getTestBed().overrideProvider(TranslateService, { useValue: translate });
+  } catch (e) {
+    // Some environments may not support overrideProvider at this point; ignore.
+  }
 } catch (e) {
   // If injection fails here, some test environments may reconfigure TestBed later.
   // Tests that bootstrap their own TestBed will still be able to import TranslateModule.
