@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -37,7 +38,7 @@ describe('PesticideEditComponent', () => {
     mockAuth = { user: vi.fn(() => ({ admin: false, region: 'us' })) };
 
     await TestBed.configureTestingModule({
-      imports: [PesticideEditComponent],
+      imports: [PesticideEditComponent, TranslateModule.forRoot()],
       providers: [
         PesticideEditPresenter,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
@@ -18,7 +19,7 @@ describe('PlanNewComponent', () => {
     mockRouter = { navigate: vi.fn() };
 
     await TestBed.configureTestingModule({
-      imports: [PlanNewComponent],
+      imports: [PlanNewComponent, TranslateModule.forRoot()],
       providers: [
         { provide: LoadPrivatePlanFarmsUseCase, useValue: mockUseCase },
         { provide: PlanNewPresenter, useValue: mockPresenter },

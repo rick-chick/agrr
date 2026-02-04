@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { PlanListComponent } from './plan-list.component';
@@ -42,7 +43,7 @@ describe('PlanListComponent', () => {
     cdr = { markForCheck: vi.fn() };
 
     await TestBed.configureTestingModule({
-      imports: [PlanListComponent],
+      imports: [PlanListComponent, TranslateModule.forRoot()],
       providers: [provideRouter([])]
     })
       .overrideComponent(PlanListComponent, {
