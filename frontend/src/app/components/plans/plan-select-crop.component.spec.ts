@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanSelectCropComponent } from './plan-select-crop.component';
@@ -38,6 +38,19 @@ describe('PlanSelectCropComponent', () => {
 
     fixture = TestBed.createComponent(PlanSelectCropComponent);
     component = fixture.componentInstance;
+
+    // Ensure translations for error messages used in tests
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      plans: {
+        select_crop: {
+          errors: {
+            farm_id_not_specified: '農場IDが指定されていません'
+          }
+        }
+      }
+    }, true);
+    translate.use('ja');
   });
 
   it('should create', () => {
