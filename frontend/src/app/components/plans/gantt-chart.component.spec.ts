@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { of } from 'rxjs';
 
@@ -38,6 +38,18 @@ describe('GanttChartComponent', () => {
     fixture = TestBed.createComponent(GanttChartComponent);
     component = fixture.componentInstance;
     planService = TestBed.inject(PlanService);
+
+    // Configure simple translations required by these tests
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      plans: {
+        gantt: {
+          no_field_data: '圃場データがありません。',
+          no_plan_data: '計画データが読み込まれていません。'
+        }
+      }
+    }, true);
+    translate.use('ja');
 
     // ChangeDetectorRefをモックに置き換え
     component['cdr'] = cdrMock as any;

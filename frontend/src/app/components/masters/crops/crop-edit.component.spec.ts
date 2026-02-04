@@ -116,6 +116,9 @@ describe('CropEditComponent', () => {
     translateService = TestBed.inject(TranslateService);
     translateService.setTranslation('ja', {
       crops: {
+        stage: {
+          default_name: 'Stage 1'
+        },
         edit: {
           stage_title: 'ステージ {{order}}'
         },
