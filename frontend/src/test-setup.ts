@@ -26,6 +26,11 @@ try {
   translate.setDefaultLang('ja');
   translate.setTranslation('ja', jaTranslations);
   translate.use('ja');
+  // Register the same TranslateService instance as a global provider so that
+  // standalone components and tests that create their own TestBed can find it.
+  getTestBed().configureTestingModule({
+    providers: [{ provide: TranslateService, useValue: translate }]
+  });
 } catch (e) {
   // If injection fails here, some test environments may reconfigure TestBed later.
   // Tests that bootstrap their own TestBed will still be able to import TranslateModule.
