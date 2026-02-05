@@ -16,6 +16,7 @@ export class OptimizationService implements OnDestroy {
     if (!this.consumer) {
       const baseUrl = getApiBaseUrl() || window.location.origin;
       const wsUrl = `${baseUrl.replace(/^http/, 'ws')}/cable`;
+      console.debug('[OptimizationService] Creating consumer', wsUrl);
       // actioncable の createConsumer は IIFE の this に依存するため、Consumer を直接 new する
       this.consumer = new (ActionCable as any).Consumer(wsUrl);
     }
@@ -29,13 +30,28 @@ export class OptimizationService implements OnDestroy {
     rejected?: () => void;
   }): ActionCable.Channel {
     const consumer = this.getConsumer();
+    console.debug('[OptimizationService] Subscribing', { channel, params });
+    const subscriptionTag = `[OptimizationChannel][${channel}]`;
+    const { received, connected, disconnected, rejected } = callbacks;
     return consumer.subscriptions.create(
       { channel, ...params },
       {
-        received: callbacks.received,
-        connected: callbacks.connected,
-        disconnected: callbacks.disconnected,
-        rejected: callbacks.rejected
+        received: payload => {
+          console.debug(`${subscriptionTag} received`, payload);
+          received(payload);
+        },
+        connected: () => {
+          console.debug(`${subscriptionTag} connected`);
+          connected?.();
+        },
+        disconnected: () => {
+          console.warn(`${subscriptionTag} disconnected`);
+          disconnected?.();
+        },
+        rejected: () => {
+          console.error(`${subscriptionTag} rejected`);
+          rejected?.();
+        }
       }
     );
   }

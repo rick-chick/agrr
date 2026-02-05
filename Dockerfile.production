@@ -1,6 +1,12 @@
 # Multi-stage build for production
 FROM ruby:3.3.10-slim AS builder
 
+# Build-time args for injecting secrets during docker build (used by assets:precompile)
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET
+ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+ENV GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+
 # Install system dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
@@ -57,9 +63,11 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompi
 # Production stage
 FROM ruby:3.3.10-slim
 
-# Install runtime dependencies (including SQLite, Node.js, and Litestream)
+# Install runtime dependencies (including SQLite, Node.js, Litestream, sqlite3 CLI and lz4)
 RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
+    sqlite3 \
+    lz4 \
     libyaml-0-2 \
     curl \
     ca-certificates \

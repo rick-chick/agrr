@@ -111,7 +111,11 @@ build_image() {
     print_status "Building: $image_tag" >&2
     
     cd "$PROJECT_ROOT"
-    docker build --network=host -f Dockerfile.production -t "$image_tag" -t "$image_latest" . >&2
+    # Pass Google OAuth credentials as build-args so assets:precompile (build-time) can access them.
+    docker build --network=host -f Dockerfile.production \
+      --build-arg GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+      --build-arg GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+      -t "$image_tag" -t "$image_latest" . >&2
     
     print_status "Docker image built successfully ✓" >&2
     echo "$image_tag"
@@ -208,12 +212,19 @@ DEPLOY_TIMESTAMP: "$timestamp"
 SOLID_QUEUE_IN_PUMA: "false"
 USE_AGRR_DAEMON: "$USE_AGRR_DAEMON"
 AGRR_BACKDOOR_TOKEN: "$AGRR_BACKDOOR_TOKEN"
+SOLID_QUEUE_RESET_ON_DEPLOY: "$SOLID_QUEUE_RESET_ON_DEPLOY"
 EOF
     # Only add Google OAuth credentials if they are set
     if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
         cat >> "$env_file" <<EOF
 GOOGLE_CLIENT_ID: "$GOOGLE_CLIENT_ID"
 GOOGLE_CLIENT_SECRET: "$GOOGLE_CLIENT_SECRET"
+EOF
+    fi
+
+    if [ -n "$FRONTEND_URL" ]; then
+        cat >> "$env_file" <<EOF
+FRONTEND_URL: "$FRONTEND_URL"
 EOF
     fi
     

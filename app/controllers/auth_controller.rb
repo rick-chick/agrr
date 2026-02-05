@@ -150,11 +150,44 @@ class AuthController < ApplicationController
     uri = URI.parse(url)
     return false unless %w[http https].include?(uri.scheme)
     origin = build_origin(uri)
-    allowed = ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').map(&:strip).reject(&:empty?)
-    allowed_origins = allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
-    allowed_origins.include?(origin)
+
+    allowed_origins = frontend_allowed_origins
+    return true if allowed_origins.include?(origin)
+    return true if matches_request_origin?(origin)
+    return true if matches_allowed_host?(uri.host)
+
+    false
   rescue URI::InvalidURIError
     false
+  end
+
+  def frontend_allowed_origins
+    allowed = ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').map(&:strip).reject(&:empty?)
+    allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
+  end
+
+  def matches_request_origin?(origin)
+    request_base = URI.parse(request.base_url)
+    build_origin(request_base) == origin
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def matches_allowed_host?(host)
+    return false unless host.present?
+    allowed = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
+    allowed.any? { |allowed_host| host_match?(host, allowed_host) }
+  end
+
+  def host_match?(host, allowed_host)
+    return false unless host.present? && allowed_host.present?
+
+    normalized = allowed_host.strip
+    if normalized.start_with?('.')
+      host.end_with?(normalized.delete_prefix('.'))
+    else
+      host.casecmp?(normalized)
+    end
   end
 
   def build_origin(uri)

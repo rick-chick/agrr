@@ -41,6 +41,7 @@ print_header "Production Backdoor Status Check"
 # Get service URL
 print_status "Getting service URL..."
 SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)' 2>/dev/null || echo "")
+BACKDOOR_TOKEN_SERVICE=$(gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(spec.template.spec.containers[0].env[?(@.name=="AGRR_BACKDOOR_TOKEN")].value)' 2>/dev/null || echo "")
 
 if [ -z "$SERVICE_URL" ]; then
     print_error "Could not get service URL. Is the service deployed?"
@@ -51,23 +52,37 @@ print_status "Service URL: $SERVICE_URL"
 
 # Check current status
 print_header "Checking Current Status"
-print_status "Testing backdoor health endpoint without token..."
 
-HEALTH_RESPONSE=$(curl -s "$SERVICE_URL/api/v1/backdoor/health" 2>&1)
-
-if echo "$HEALTH_RESPONSE" | grep -q "Missing authentication token"; then
-    print_warning "Backdoor is DISABLED (no token configured)"
-    BACKDOOR_ENABLED=false
-elif echo "$HEALTH_RESPONSE" | grep -q "not enabled"; then
-    print_warning "Backdoor is DISABLED (env var not set)"
-    BACKDOOR_ENABLED=false
-elif echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
-    print_status "Backdoor is ENABLED (no auth required? this is a problem!)"
-    BACKDOOR_ENABLED=true
+if [ -n "$BACKDOOR_TOKEN_SERVICE" ]; then
+    print_status "Cloud Run has AGRR_BACKDOOR_TOKEN configured (masked in output)."
 else
-    print_error "Unexpected response:"
-    echo "$HEALTH_RESPONSE"
-    BACKDOOR_ENABLED=unknown
+    print_warning "Cloud Run is missing AGRR_BACKDOOR_TOKEN."
+fi
+
+BACKDOOR_TOKEN_TO_USE=${AGRR_BACKDOOR_TOKEN:-$BACKDOOR_TOKEN_SERVICE}
+
+if [ -z "$BACKDOOR_TOKEN_TO_USE" ]; then
+    print_warning "No backdoor token is available locally or on Cloud Run."
+    print_status "Enable the token and redeploy, then rerun this script."
+    BACKDOOR_ENABLED=false
+else
+    print_status "Testing backdoor status endpoint with token..."
+    STATUS_RESPONSE=$(curl -s -H "X-Backdoor-Token: $BACKDOOR_TOKEN_TO_USE" "$SERVICE_URL/api/v1/backdoor/status" 2>&1)
+
+    if echo "$STATUS_RESPONSE" | grep -q '"timestamp"'; then
+        print_status "Backdoor API is ENABLED and responding via status endpoint."
+        BACKDOOR_ENABLED=true
+    elif echo "$STATUS_RESPONSE" | grep -q "Backdoor is not enabled"; then
+        print_warning "Backdoor API is reporting it is not enabled yet."
+        BACKDOOR_ENABLED=false
+    elif echo "$STATUS_RESPONSE" | grep -q "Invalid authentication token"; then
+        print_error "Backdoor token mismatch (invalid token)."
+        BACKDOOR_ENABLED=invalid_token
+    else
+        print_error "Unexpected response when hitting /backdoor/status:"
+        echo "$STATUS_RESPONSE"
+        BACKDOOR_ENABLED=unknown
+    fi
 fi
 
 # Check if token is configured locally
