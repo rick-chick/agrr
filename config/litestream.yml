@@ -8,7 +8,8 @@ dbs:
       - type: gcs
         bucket: ${GCS_BUCKET}
         path: production/primary.sqlite3
-        sync-interval: 10s
+        # Primary DB replicated moderately frequently
+        sync-interval: 30s
   
   # Solid Queue database
   - path: /tmp/production_queue.sqlite3
@@ -16,7 +17,8 @@ dbs:
       - type: gcs
         bucket: ${GCS_BUCKET}
         path: production/queue.sqlite3
-        sync-interval: 10s
+        # Increase sync interval to reduce checkpoint contention and locking
+        sync-interval: 60s
   
   # Solid Cache database (optional backup - cache can be recreated)
   - path: /tmp/production_cache.sqlite3
@@ -24,7 +26,8 @@ dbs:
       - type: gcs
         bucket: ${GCS_BUCKET}
         path: production/cache.sqlite3
-        sync-interval: 30s
+        # Cache can be replicated less frequently
+        sync-interval: 300s
   
   # Solid Cable database (Action Cable messages)
   - path: /tmp/production_cable.sqlite3
@@ -32,5 +35,6 @@ dbs:
       - type: gcs
         bucket: ${GCS_BUCKET}
         path: production/cable.sqlite3
-        sync-interval: 30s
+        # Reduce checkpoint frequency for cable DB to lower locking pressure
+        sync-interval: 60s
 

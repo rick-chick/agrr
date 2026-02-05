@@ -11,11 +11,15 @@ end
 Rails.application.config.force_ssl = true if Rails.env.production?
 
 # Configure secure cookies
+# For SPA session cookie to be sent cross-site from a custom domain (e.g. agrr.net),
+# set SameSite=None and Secure. Use domain: :all so cookies are valid for subdomains.
 Rails.application.config.session_store :cookie_store,
   key: '_agrr_session',
   secure: Rails.env.production?,
   httponly: true,
-  same_site: :lax  # :strict だとWebSocket接続でCookieが送信されない
+  same_site: :none, # required for cross-site cookies (SPA served from different origin)
+  domain: :all,
+  tld_length: ENV.fetch("TLD_LENGTH", 2).to_i
 
 # Content Security Policy (production/test; development uses config/environments/development.rb)
 Rails.application.configure do

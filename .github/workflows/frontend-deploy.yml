@@ -1,0 +1,79 @@
+name: Frontend deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  # Default values; override via repository Secrets or per-job env
+  REGION: us-central1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: frontend-deploy-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        event: [ ${{ github.event_name }} ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (test or production)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npm run build
+          else
+            npm run build
+          fi
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
+
+      - name: Run deploy script
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ env.REGION }}
+          # For PRs use test buckets; for pushes use production buckets.
+          BUCKET_NAME: ${{ github.event_name == 'pull_request' && secrets.FRONTEND_TEST_BUCKET_NAME || secrets.FRONTEND_BUCKET_NAME }}
+          API_BASE_URL: ${{ github.event_name == 'pull_request' && secrets.FRONTEND_TEST_API_BASE_URL || secrets.FRONTEND_API_BASE_URL }}
+          URL_MAP_NAME: ${{ secrets.URL_MAP_NAME }}
+        run: |
+          chmod +x ./scripts/gcp-frontend-deploy.sh
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            ./scripts/gcp-frontend-deploy.sh deploy test
+          else
+            ./scripts/gcp-frontend-deploy.sh deploy production
+          fi
+

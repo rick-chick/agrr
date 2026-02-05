@@ -16,6 +16,10 @@ export class PublicPlanOptimizingPresenter
   present(dto: PublicPlanOptimizationMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
+    console.debug('[PublicPlanOptimizingPresenter] present', {
+      dto,
+      prevViewState: prev
+    });
     const nextStatus = dto.status ?? prev.status;
     this.view.control = {
       status: nextStatus,

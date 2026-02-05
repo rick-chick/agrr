@@ -109,11 +109,37 @@ background_init() {
     # キュー/キャッシュ/ケーブルデータベースの復元とマイグレーション
     echo "[Background] Step 1: Restoring queue, cache, and cable databases..."
     
-    # キューデータベースの復元
-    if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_queue.sqlite3; then
-        echo "[Background] ✓ Queue database restored from GCS"
+    # キューデータベースの復元 / 初期化
+    # If SOLID_QUEUE_RESET_ON_DEPLOY is set, create a fresh queue DB instead of restoring
+    QUEUE_RESTORE_LOG="/tmp/queue_restore.log"
+    if [ "${SOLID_QUEUE_RESET_ON_DEPLOY:-false}" = "true" ]; then
+        echo "[Background] SOLID_QUEUE_RESET_ON_DEPLOY=true -> creating fresh queue DB"
+        TIMESTAMP=$(date +%s)
+        if [ -f /tmp/production_queue.sqlite3 ]; then
+            mv /tmp/production_queue.sqlite3 /tmp/production_queue.sqlite3.bak."${TIMESTAMP}" || true
+            echo "[Background] Moved existing queue DB to /tmp/production_queue.sqlite3.bak.${TIMESTAMP}"
+        fi
+        # Initialize an empty queue DB via Rails migrations for queue DB
+        echo "[Background] Running queue migrations to create fresh DB..."
+        if bundle exec rails db:migrate:queue >"${QUEUE_RESTORE_LOG}" 2>&1; then
+            echo "[Background] ✓ Fresh queue DB initialized. Log: ${QUEUE_RESTORE_LOG}"
+        else
+            rc=$?
+            echo "[Background] ✗ Failed to initialize fresh queue DB (exit: ${rc}). See ${QUEUE_RESTORE_LOG}"
+            tail -n 200 "${QUEUE_RESTORE_LOG}" | sed 's/^/[Background][queue_restore_log] /' || true
+        fi
     else
-        echo "[Background] ⚠ No queue database replica found, starting fresh"
+        echo "[Background] Restoring queue database from GCS (logging to ${QUEUE_RESTORE_LOG})..."
+        # Run litestream and capture stdout/stderr
+        if litestream restore -if-replica-exists -config /etc/litestream.yml /tmp/production_queue.sqlite3 >"${QUEUE_RESTORE_LOG}" 2>&1; then
+            echo "[Background] ✓ Queue database restored from GCS (exit: 0). Log: ${QUEUE_RESTORE_LOG}"
+        else
+            rc=$?
+            echo "[Background] ⚠ Queue database restore failed (exit: ${rc}). See ${QUEUE_RESTORE_LOG} for details"
+            echo "[Background] --- /tmp/queue_restore.log (tail 200) ---"
+            tail -n 200 "${QUEUE_RESTORE_LOG}" | sed 's/^/[Background][queue_restore_log] /' || true
+            echo "[Background] --- end of /tmp/queue_restore.log ---"
+        fi
     fi
     
     # キャッシュデータベースの復元
@@ -134,10 +160,25 @@ background_init() {
     echo "[Background] Step 2: Running migrations for queue, cache, and cable databases..."
     if bundle exec rails db:migrate:queue && bundle exec rails db:migrate:cache && bundle exec rails db:migrate:cable; then
         echo "[Background] ✓ Queue, cache, and cable databases migrated successfully"
-        touch "$QUEUE_MIGRATION_READY_FILE"
+        echo "[Background] Creating migration-ready marker: ${QUEUE_MIGRATION_READY_FILE}"
+        if touch "$QUEUE_MIGRATION_READY_FILE"; then
+            echo "[Background] Created ${QUEUE_MIGRATION_READY_FILE}"
+        else
+            echo "[Background] ERROR: Failed to create ${QUEUE_MIGRATION_READY_FILE}"
+            echo "[Background] Showing last 200 lines of ${QUEUE_RESTORE_LOG}:"
+            tail -n 200 "${QUEUE_RESTORE_LOG}" | sed 's/^/[Background][queue_restore_log] /' || true
+            return 1
+        fi
     else
         echo "[Background] ✗ Queue, cache, or cable database migration failed"
-        touch "$QUEUE_MIGRATION_ERROR_FILE"
+        echo "[Background] Creating migration-error marker: ${QUEUE_MIGRATION_ERROR_FILE}"
+        if touch "$QUEUE_MIGRATION_ERROR_FILE"; then
+            echo "[Background] Created ${QUEUE_MIGRATION_ERROR_FILE}"
+        else
+            echo "[Background] ERROR: Failed to create ${QUEUE_MIGRATION_ERROR_FILE}"
+        fi
+        echo "[Background] Showing last 200 lines of ${QUEUE_RESTORE_LOG}:"
+        tail -n 200 "${QUEUE_RESTORE_LOG}" | sed 's/^/[Background][queue_restore_log] /' || true
         # マイグレーション失敗時は以降の処理（agrr daemon 起動など）を行わずに終了
         return 1
     fi
@@ -231,17 +272,82 @@ fi
 
 echo "✓ All database files verified"
 
+# Prepare SQLite PRAGMA settings to reduce locking/contention before Litestream starts
+initialize_sqlite_pragmas() {
+    echo "Step 3.2.5: Ensuring SQLite PRAGMA settings for DB files..."
+    for DB_FILE in "${DB_FILES[@]}"; do
+        if [ -f "$DB_FILE" ]; then
+            echo "[PRAGMA] Applying to $DB_FILE"
+            if command -v sqlite3 >/dev/null 2>&1; then
+                sqlite3 "$DB_FILE" <<'SQL'
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA wal_autocheckpoint = 1000;
+PRAGMA busy_timeout = 20000;
+SQL
+            else
+                echo "[PRAGMA] sqlite3 CLI not found, trying via Rails runner"
+                bundle exec rails runner "begin; ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: '$DB_FILE'); conn = ActiveRecord::Base.connection; conn.execute('PRAGMA journal_mode = WAL'); conn.execute('PRAGMA synchronous = NORMAL'); conn.execute('PRAGMA wal_autocheckpoint = 1000'); conn.execute('PRAGMA busy_timeout = 20000'); rescue => e; puts \"[PRAGMA] failed for $DB_FILE: \#{e.message}\"; end"
+            fi
+        else
+            echo "[PRAGMA] Skipping missing DB file: $DB_FILE"
+        fi
+    done
+    echo "Step 3.2.5: SQLite PRAGMA adjustments complete"
+}
+
+# Run PRAGMA initialization before starting Litestream
+initialize_sqlite_pragmas
+
 # Step 3.3: Litestream replication開始（すべてのデータベースが準備できた後に開始）
 echo "Step 3.3: Starting Litestream replication..."
 litestream replicate -config /etc/litestream.yml &
 LITESTREAM_PID=$!
 echo "✓ Litestream started (PID: $LITESTREAM_PID)"
 
-# Step 3.4: Solid Queue worker起動
-echo "Step 3.4: Starting Solid Queue worker..."
-bundle exec rails solid_queue:start &
-SOLID_QUEUE_PID=$!
-echo "✓ Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
+# Step 3.4: Solid Queue worker start (skip in single-instance/reset mode)
+echo "Step 3.4: Preparing Solid Queue worker step..."
+if [ "${SOLID_QUEUE_RESET_ON_DEPLOY:-false}" = "true" ]; then
+    echo "Step 3.4: Skipping Solid Queue worker start because SOLID_QUEUE_RESET_ON_DEPLOY=${SOLID_QUEUE_RESET_ON_DEPLOY}"
+    echo "Step 3.4: SolidQueue disabled for single-instance / reset-on-deploy operation"
+else
+    echo "Step 3.4: Preparing to start Solid Queue worker..."
+    QUEUE_DB="/tmp/production_queue.sqlite3"
+    QUEUE_DB_WAL="${QUEUE_DB}-wal"
+    FORCE_FLAG="${FORCE_START_SOLID_QUEUE_ON_RECOVERY_WARN:-false}"
+
+    # Check queue DB and WAL file existence
+    QUEUE_ISSUE=0
+    if [ ! -f "${QUEUE_DB}" ]; then
+        echo "ERROR: Queue DB missing: ${QUEUE_DB}"
+        QUEUE_ISSUE=1
+    fi
+    if [ ! -f "${QUEUE_DB_WAL}" ]; then
+        echo "WARNING: Queue WAL file missing: ${QUEUE_DB_WAL}"
+        # Treat missing WAL as an issue that normally blocks startup
+        QUEUE_ISSUE=1
+    fi
+
+    if [ "${QUEUE_ISSUE}" -ne 0 ]; then
+        if [ "${FORCE_FLAG}" = "true" ]; then
+            echo "WARNING: FORCE_START_SOLID_QUEUE_ON_RECOVERY_WARN=true -> proceeding to start Solid Queue worker despite recovery warnings"
+            echo "WARNING: It's recommended to inspect /tmp/queue_restore.log for details:"
+            if [ -f "/tmp/queue_restore.log" ]; then
+                tail -n 50 /tmp/queue_restore.log | sed 's/^/[Startup][queue_restore_log] /' || true
+            else
+                echo "No ${QUEUE_RESTORE_LOG} found"
+            fi
+        else
+            echo "ERROR: Solid Queue worker will NOT be started due to queue DB/WAL issues. To override and start anyway, set FORCE_START_SOLID_QUEUE_ON_RECOVERY_WARN=true"
+            exit 1
+        fi
+    fi
+
+    echo "Step 3.4: Starting Solid Queue worker..."
+    bundle exec rails solid_queue:start &
+    SOLID_QUEUE_PID=$!
+    echo "✓ Solid Queue worker started (PID: $SOLID_QUEUE_PID)"
+fi
 
 # Solid Queue worker の初期化待ち時間（任意設定、デフォルト3秒）
 SOLID_QUEUE_BOOT_DELAY=${SOLID_QUEUE_BOOT_DELAY:-3}

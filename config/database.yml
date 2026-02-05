@@ -4,7 +4,9 @@
 default: &default
   adapter: sqlite3
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  timeout: 5000
+  # Busy timeout for SQLite in milliseconds - increase in production to reduce
+  # "database is locked" errors when multiple processes access DB files.
+  timeout: <%= ENV.fetch("SQLITE_BUSY_TIMEOUT_MS", 20000) %>
 
 development:
   primary:
@@ -65,6 +67,8 @@ production:
     <<: *default
     database: /tmp/production_queue.sqlite3
     migrations_paths: db/queue_migrate
+    # Use WAL journal mode to reduce writer/reader contention
+    journal_mode: wal
   cache:
     <<: *default
     database: /tmp/production_cache.sqlite3
@@ -74,3 +78,5 @@ production:
     database: /tmp/production_cable.sqlite3
     migrations_paths: db/cable_migrate
     schema_dump: cable_schema.rb
+    # Use WAL for cable DB to reduce locking during concurrent access
+    journal_mode: wal

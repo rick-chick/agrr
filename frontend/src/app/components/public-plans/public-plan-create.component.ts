@@ -12,6 +12,7 @@ import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-ap
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { ApiClientService } from '../../services/api-client.service';
 import { Farm } from '../../domain/farms/farm';
+import { detectBrowserRegion } from '../../core/browser-region';
 
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
@@ -44,76 +45,47 @@ const initialControl: PublicPlanCreateViewState = {
           <div class="compact-progress">
             <div class="compact-step active">
               <div class="step-number">1</div>
-              <span class="step-label">{{ 'public_plans.steps.region' | translate }}</span>
-            </div>
-            <div class="compact-step-divider"></div>
-            <div class="compact-step">
-              <div class="step-number">2</div>
               <span class="step-label">{{ 'public_plans.steps.size' | translate }}</span>
             </div>
             <div class="compact-step-divider"></div>
             <div class="compact-step">
-              <div class="step-number">3</div>
+              <div class="step-number">2</div>
               <span class="step-label">{{ 'public_plans.steps.crop' | translate }}</span>
             </div>
           </div>
         </div>
 
-        @if (!selectedRegion) {
-          <section class="content-card" aria-labelledby="region-heading">
-            <h2 id="region-heading">{{ 'public_plans.region_selection.title' | translate }}</h2>
-            <p class="mb-4">{{ 'public_plans.region_selection.subtitle' | translate }}</p>
-            <div class="enhanced-grid">
-              @for (region of availableRegions; track region.id) {
-                <div
-                  class="enhanced-selection-card"
-                  [class.active]="selectedRegionId === region.id"
-                  (click)="selectRegion(region)"
-                  (keydown.enter)="selectRegion(region)"
-                  (keydown.space)="selectRegion(region); $event.preventDefault()"
-                  tabindex="0"
-                  role="button"
-                >
-                  <div class="enhanced-card-icon">{{ region.icon }}</div>
-                  <div class="enhanced-card-title">{{ region.name | translate }}</div>
-                  <div class="enhanced-card-subtitle">{{ region.description | translate }}</div>
-                </div>
-              }
+        <section class="content-card" aria-labelledby="create-heading">
+          <h2 id="create-heading" class="visually-hidden">{{ 'public_plans.select_farm.available_farms' | translate }}</h2>
+          @if (control.loading) {
+            <div class="loading-state">
+              <p>{{ 'common.loading' | translate }}</p>
             </div>
-          </section>
-        } @else {
-          <section class="content-card" aria-labelledby="create-heading">
-            <h2 id="create-heading" class="visually-hidden">{{ 'public_plans.select_farm.available_farms' | translate }}</h2>
-            @if (control.loading) {
-              <div class="loading-state">
-                <p>{{ 'common.loading' | translate }}</p>
+          } @else if (control.error) {
+            <p class="error-message">{{ control.error }}</p>
+          } @else {
+            <section class="selection-section mt-6" aria-labelledby="farm-heading">
+              <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
+              <div class="enhanced-grid">
+                @for (farm of control.farms; track farm.id) {
+                  <div
+                    class="enhanced-selection-card"
+                    [class.active]="selectedFarmId === farm.id"
+                    (click)="selectFarm(farm)"
+                    (keydown.enter)="selectFarm(farm)"
+                    (keydown.space)="selectFarm(farm); $event.preventDefault()"
+                    tabindex="0"
+                    role="button"
+                  >
+                    <div class="enhanced-card-icon">🌏</div>
+                    <div class="enhanced-card-title">{{ farm.name }}</div>
+                    <!-- region subtitle intentionally removed: region is auto-detected and not shown to user -->
+                  </div>
+                }
               </div>
-            } @else if (control.error) {
-              <p class="error-message">{{ control.error }}</p>
-            } @else {
-              <section class="selection-section mt-6" aria-labelledby="farm-heading">
-                <h3 id="farm-heading">{{ 'public_plans.select_farm.available_farms' | translate }}</h3>
-                <div class="enhanced-grid">
-                  @for (farm of control.farms; track farm.id) {
-                    <div
-                      class="enhanced-selection-card"
-                      [class.active]="selectedFarmId === farm.id"
-                      (click)="selectFarm(farm)"
-                      (keydown.enter)="selectFarm(farm)"
-                      (keydown.space)="selectFarm(farm); $event.preventDefault()"
-                      tabindex="0"
-                      role="button"
-                    >
-                      <div class="enhanced-card-icon">🌏</div>
-                      <div class="enhanced-card-title">{{ farm.name }}</div>
-                      <div class="enhanced-card-subtitle">{{ farm.region }}</div>
-                    </div>
-                  }
-                </div>
-              </section>
-            }
-          </section>
-        }
+            </section>
+          }
+        </section>
       </div>
     </main>
   `,
@@ -129,17 +101,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   selectedFarmId: number | null = null;
   selectedFarm: Farm | null = null;
-  selectedRegionId: string | null = null;
-
-  get selectedRegion(): { id: string; name: string; description: string; icon: string } | null {
-    return this.selectedRegionId ? this.availableRegions.find(r => r.id === this.selectedRegionId) || null : null;
-  }
-
-  availableRegions = [
-    { id: 'jp', name: 'public_plans.regions.jp.name', description: 'public_plans.regions.jp.description', icon: '🇯🇵' },
-    { id: 'us', name: 'public_plans.regions.us.name', description: 'public_plans.regions.us.description', icon: '🇺🇸' },
-    { id: 'in', name: 'public_plans.regions.in.name', description: 'public_plans.regions.in.description', icon: '🇮🇳' }
-  ];
+  // Note: region selection UI removed. Region is auto-detected and not exposed to the user.
 
   private _control: PublicPlanCreateViewState = initialControl;
   get control(): PublicPlanCreateViewState {
@@ -156,19 +118,12 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     if (state.farm) {
       this.selectedFarmId = state.farm.id;
       this.selectedFarm = state.farm;
-      // If farm is already selected, find the corresponding region
-      this.selectedRegionId = state.farm.region;
       // Load farms to allow re-selection and avoid stuck loading
       this.loadFarms(state.farm.region);
     } else {
-      // Reset region selection if no farm is selected
-      this.selectedRegionId = null;
+      const browserRegion = detectBrowserRegion();
+      this.loadFarms(browserRegion);
     }
-  }
-
-  selectRegion(region: { id: string; name: string; description: string; icon: string }): void {
-    this.selectedRegionId = region.id;
-    this.loadFarms(region.id);
   }
 
   selectFarm(farm: Farm): void {

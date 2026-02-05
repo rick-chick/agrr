@@ -68,3 +68,56 @@ test環境は以下の特徴を持ちます：
 - 独自のLitestream設定でデータベースを管理
 - productionと同じ構成（Dockerfile、起動スクリプトなど）
 
+
+## Quick: deploy Angular to the test environment (new script)
+
+This project includes `scripts/gcp-frontend-deploy.sh` to build and deploy the Angular app to a GCS bucket and optionally invalidate Cloud CDN.
+
+Example: create a test bucket and grant the CI service account deploy rights.
+
+1. Create a bucket (replace placeholders):
+```bash
+PROJECT_ID=your-gcp-project
+REGION=us-central1
+TEST_BUCKET_NAME=your-project-frontend-test
+
+gcloud config set project "$PROJECT_ID"
+gsutil mb -l "$REGION" -p "$PROJECT_ID" gs://"$TEST_BUCKET_NAME"
+```
+
+2. Grant the CI service account minimal deploy permissions:
+```bash
+SA_EMAIL=ci-deployer@${PROJECT_ID}.iam.gserviceaccount.com
+
+# Allow uploading and setting metadata
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/storage.objectAdmin"
+
+# Allow CDN invalidation (URL map invalidation). Adjust role to match org policy.
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/compute.loadBalancerAdmin"
+```
+
+3. Create a `.env.gcp.frontend.test` with at least:
+```
+PROJECT_ID=your-gcp-project
+REGION=us-central1
+BUCKET_NAME=your-project-frontend-test
+API_BASE_URL=https://api-test.example.com
+URL_MAP_NAME=your-url-map-name    # optional, for CDN invalidation
+```
+
+4. Deploy (locally or from CI):
+```bash
+# Dry-run:
+DRY_RUN=1 ./scripts/gcp-frontend-deploy.sh deploy test
+
+# Real deploy:
+./scripts/gcp-frontend-deploy.sh deploy test
+```
+
+Notes:
+- The script will build the app, inject `window.API_BASE_URL` into `index.html`, sync files to the bucket, set Cache-Control metadata (no-cache for index.html, long TTL for hashed assets), and invalidate Cloud CDN if `URL_MAP_NAME` is set.
+- Ensure `gcloud` and `gsutil` are authenticated with a service account that has the roles granted above (CI uses a service account JSON configured in Secrets).
