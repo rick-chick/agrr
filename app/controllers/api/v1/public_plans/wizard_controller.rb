@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_dependency Rails.root.join('app/presenters/api/public_plan/public_plan_create_presenter.rb').to_s
+
 module Api
   module V1
     module PublicPlans
@@ -39,60 +41,30 @@ module Api
         def create
           Rails.logger.info "🌱 [WizardController#create] Called with farm_id: #{params[:farm_id]}, farm_size_id: #{params[:farm_size_id]}, crop_ids: #{params[:crop_ids]}"
 
-          farm = Farm.find(params[:farm_id])
-          Rails.logger.info "🌱 [WizardController#create] Found farm: #{farm.id}"
-
-          farm_size = find_farm_size(params[:farm_size_id])
-          unless farm_size
-            Rails.logger.warn "❌ [WizardController#create] Invalid farm_size_id: #{params[:farm_size_id]}"
-            return render json: { error: I18n.t('public_plans.errors.select_farm_size') }, status: :unprocessable_entity
-          end
-
-          total_area = farm_size[:area_sqm]
-          unless total_area.positive?
-            Rails.logger.warn "❌ [WizardController#create] Invalid total_area: #{total_area}"
-            return render json: { error: I18n.t('public_plans.errors.invalid_farm_size') }, status: :unprocessable_entity
-          end
-
-          crops = ::Crop.where(id: crop_ids)
-          Rails.logger.info "🌱 [WizardController#create] Found #{crops.count} crops for ids: #{crop_ids}"
-          if crops.empty?
-            Rails.logger.warn "❌ [WizardController#create] No crops found for ids: #{crop_ids}"
-            return render json: { error: I18n.t('public_plans.errors.select_crop') }, status: :unprocessable_entity
-          end
-
-          creator_params = {
-            farm: farm,
-            total_area: total_area,
-            crops: crops,
-            user: current_user,
+          # Input DTO を作成
+          input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
+            farm_id: params[:farm_id],
+            farm_size_id: params[:farm_size_id],
+            crop_ids: crop_ids,
             session_id: session.id.to_s,
-            plan_type: 'public',
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          }
+            user: current_user
+          )
 
-          Rails.logger.info "🌱 [WizardController#create] Creating cultivation plan with params: #{creator_params.except(:farm, :crops, :user)}"
-          result = CultivationPlanCreator.new(**creator_params).call
-          unless result.success?
-            Rails.logger.warn "❌ [WizardController#create] CultivationPlanCreator failed: #{result.errors.join(', ')}"
-            return render json: { error: result.errors.join(', ') }, status: :unprocessable_entity
-          end
+          # Presenter と Gateway を準備
+          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
+          gateway = Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new
 
-          cultivation_plan = result.cultivation_plan
-          Rails.logger.info "🌱 [WizardController#create] Created cultivation plan: #{cultivation_plan.id}"
+          # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
+          interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
+            output_port: presenter,
+            gateway: gateway
+          )
 
-          job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
-          execute_job_chain_async(job_instances)
+          interactor.call(input_dto)
+        end
 
-          render json: { plan_id: cultivation_plan.id }
-        rescue ActiveRecord::RecordNotFound => e
-          Rails.logger.warn "❌ [WizardController#create] Record not found: #{e.message}"
-          render json: { error: 'Record not found' }, status: :not_found
-        rescue => e
-          Rails.logger.error "❌ [WizardController#create] Unexpected error: #{e.class} - #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          render json: { error: 'Internal server error' }, status: :internal_server_error
+        def render_response(json:, status:)
+          render json: json, status: status
         end
 
         private

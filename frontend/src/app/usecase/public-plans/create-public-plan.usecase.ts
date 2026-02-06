@@ -6,13 +6,15 @@ import {
   CREATE_PUBLIC_PLAN_OUTPUT_PORT
 } from './create-public-plan.output-port';
 import { PUBLIC_PLAN_GATEWAY, PublicPlanGateway } from './public-plan-gateway';
+import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 @Injectable()
 export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
   constructor(
     @Inject(CREATE_PUBLIC_PLAN_OUTPUT_PORT)
     private readonly outputPort: CreatePublicPlanOutputPort,
-    @Inject(PUBLIC_PLAN_GATEWAY) private readonly publicPlanGateway: PublicPlanGateway
+    @Inject(PUBLIC_PLAN_GATEWAY) private readonly publicPlanGateway: PublicPlanGateway,
+    private readonly publicPlanStore: PublicPlanStore
   ) {}
 
   execute(dto: CreatePublicPlanInputDto): void {
@@ -20,6 +22,10 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
       .createPlan(dto.farmId, dto.farmSizeId, dto.cropIds)
       .subscribe({
         next: (response) => {
+          // Update store with the new planId before calling onSuccess
+          // This ensures the store is updated before navigation
+          this.publicPlanStore.setPlanId(response.plan_id);
+          console.log('💾 [CreatePublicPlanUseCase] Updated PublicPlanStore.planId:', response.plan_id);
           this.outputPort.onSuccess(response);
           dto.onSuccess?.(response);
         },

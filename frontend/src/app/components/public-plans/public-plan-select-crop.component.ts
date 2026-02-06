@@ -5,9 +5,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PublicPlanSelectCropView, PublicPlanSelectCropViewState } from './public-plan-select-crop.view';
 import { LoadPublicPlanCropsUseCase } from '../../usecase/public-plans/load-public-plan-crops.usecase';
 import { CreatePublicPlanUseCase } from '../../usecase/public-plans/create-public-plan.usecase';
+import { ResetPublicPlanCreationStateUseCase } from '../../usecase/public-plans/reset-public-plan-creation-state.usecase';
 import { PublicPlanSelectCropPresenter } from '../../adapters/public-plans/public-plan-select-crop.presenter';
 import { LOAD_PUBLIC_PLAN_CROPS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-crops.output-port';
 import { CREATE_PUBLIC_PLAN_OUTPUT_PORT } from '../../usecase/public-plans/create-public-plan.output-port';
+import { RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT } from '../../usecase/public-plans/reset-public-plan-creation-state.output-port';
 import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
@@ -28,8 +30,10 @@ const initialControl: PublicPlanSelectCropViewState = {
     PublicPlanSelectCropPresenter,
     LoadPublicPlanCropsUseCase,
     CreatePublicPlanUseCase,
+    ResetPublicPlanCreationStateUseCase,
     { provide: LOAD_PUBLIC_PLAN_CROPS_OUTPUT_PORT, useExisting: PublicPlanSelectCropPresenter },
     { provide: CREATE_PUBLIC_PLAN_OUTPUT_PORT, useExisting: PublicPlanSelectCropPresenter },
+    { provide: RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT, useValue: {} },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
   ],
   template: `
@@ -144,6 +148,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   private readonly router = inject(Router);
   private readonly loadCropsUseCase = inject(LoadPublicPlanCropsUseCase);
   private readonly createPlanUseCase = inject(CreatePublicPlanUseCase);
+  private readonly resetStateUseCase = inject(ResetPublicPlanCreationStateUseCase);
   private readonly presenter = inject(PublicPlanSelectCropPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -173,17 +178,23 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
 
   ngOnInit(): void {
     console.log('🌱 [PublicPlanSelectCrop] ngOnInit called');
-    console.log('🌱 [PublicPlanSelectCrop] farm:', this.farm);
-    console.log('🌱 [PublicPlanSelectCrop] farmSize:', this.farmSize);
-    if (!this.farm || !this.farmSize) {
+    const farm = this.farm;
+    const farmSize = this.farmSize;
+    console.log('🌱 [PublicPlanSelectCrop] farm:', farm);
+    console.log('🌱 [PublicPlanSelectCrop] farmSize:', farmSize);
+    if (!farm || !farmSize) {
       this.router.navigate(['/public-plans/new']);
       return;
     }
+    // Reset state to ensure clean state before creating plan
+    this.resetStateUseCase.execute({});
+    this.publicPlanStore.setFarm(farm);
+    this.publicPlanStore.setFarmSize(farmSize);
     this.presenter.setView(this);
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
     this.selectedCropIds = new Set(this.selectedCrops.map((c) => c.id));
-    console.log('🌱 [PublicPlanSelectCrop] executing loadCropsUseCase with farmId:', this.farm.id);
-    this.loadCropsUseCase.execute({ farmId: this.farm.id });
+    console.log('🌱 [PublicPlanSelectCrop] executing loadCropsUseCase with farmId:', farm.id);
+    this.loadCropsUseCase.execute({ farmId: farm.id });
   }
 
   toggleCrop(crop: Crop): void {

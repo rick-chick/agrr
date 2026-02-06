@@ -28,6 +28,8 @@ export class PublicPlanSelectCropPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    console.error('❌ [PublicPlanSelectCropPresenter] Plan creation failed:', dto.message);
+    // Pass error message to component via view.control
     this.view.control = {
       ...this.view.control,
       loading: false,
@@ -37,7 +39,16 @@ export class PublicPlanSelectCropPresenter
     };
   }
 
-  onSuccess(_dto: CreatePublicPlanResponse): void {
+  onSuccess(dto: CreatePublicPlanResponse): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    console.log('✅ [PublicPlanSelectCropPresenter] Plan created successfully. plan_id:', dto.plan_id);
+    // Update view state: reset saving flag and clear any previous errors
+    // The plan_id is already stored in PublicPlanStore by CreatePublicPlanUseCase
     // Navigation is handled by Component's onSuccess callback in CreatePublicPlanInputDto
+    this.view.control = {
+      ...this.view.control,
+      saving: false,
+      error: null
+    };
   }
 }

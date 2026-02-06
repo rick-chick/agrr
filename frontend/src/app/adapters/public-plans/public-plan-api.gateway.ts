@@ -49,10 +49,29 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
     farmSizeId: string,
     cropIds: number[]
   ): Observable<CreatePublicPlanResponse> {
-    return this.apiClient.post<CreatePublicPlanResponse>(
+    const requestBody = { farm_id: farmId, farm_size_id: farmSizeId, crop_ids: cropIds };
+    console.log('🌱 [PublicPlanApiGateway] createPlan called with:', {
+      farmId,
+      farmSizeId,
+      cropIds,
+      requestBody
+    });
+    const result = this.apiClient.post<CreatePublicPlanResponse>(
       '/api/v1/public_plans/plans',
-      { farm_id: farmId, farm_size_id: farmSizeId, crop_ids: cropIds }
+      requestBody
     );
+    result.subscribe({
+      next: (response) => {
+        console.log('🌱 [PublicPlanApiGateway] createPlan response:', {
+          plan_id: response.plan_id,
+          status: 'success'
+        });
+      },
+      error: (err) => {
+        console.log('🌱 [PublicPlanApiGateway] createPlan error:', err);
+      }
+    });
+    return result;
   }
 
   savePlan(planId: number): Observable<SavePublicPlanResponse> {

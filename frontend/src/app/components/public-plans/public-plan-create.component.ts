@@ -5,8 +5,10 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
+import { ResetPublicPlanCreationStateUseCase } from '../../usecase/public-plans/reset-public-plan-creation-state.usecase';
 import { PublicPlanCreatePresenter } from '../../adapters/public-plans/public-plan-create.presenter';
 import { LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-farms.output-port';
+import { RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT } from '../../usecase/public-plans/reset-public-plan-creation-state.output-port';
 import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
@@ -28,8 +30,10 @@ const initialControl: PublicPlanCreateViewState = {
   imports: [CommonModule, FormsModule, TranslateModule],
   providers: [
     LoadPublicPlanFarmsUseCase,
+    ResetPublicPlanCreationStateUseCase,
     PublicPlanCreatePresenter,
     { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
+    { provide: RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT, useValue: {} },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway },
     ApiClientService
   ],
@@ -95,6 +99,7 @@ const initialControl: PublicPlanCreateViewState = {
 export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPublicPlanFarmsUseCase);
+  private readonly resetStateUseCase = inject(ResetPublicPlanCreationStateUseCase);
   private readonly presenter = inject(PublicPlanCreatePresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -113,6 +118,8 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   }
 
   ngOnInit(): void {
+    // Reset state to ensure clean state for new plan creation
+    this.resetStateUseCase.execute({});
     this.presenter.setView(this);
     const state = this.publicPlanStore.state;
     if (state.farm) {
