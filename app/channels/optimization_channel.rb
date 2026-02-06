@@ -14,16 +14,11 @@ class OptimizationChannel < ApplicationCable::Channel
     Rails.logger.info "🔍 [OptimizationChannel#subscribed] connection.session_id='#{connection.session_id}'"
     Rails.logger.info "🔍 [OptimizationChannel#subscribed] connection.current_user=#{current_user&.id}"
     
-    # セッションIDで認可チェック（開発環境では警告のみ）
-    if !authorized?(cultivation_plan)
-      if Rails.env.production?
-        Rails.logger.warn "🚫 [OptimizationChannel#subscribed] Unauthorized: plan.session_id='#{cultivation_plan.session_id}' != connection.session_id='#{connection.session_id}'"
-        reject
-        return
-      else
-        # 開発環境では警告のみ（接続は許可）
-        Rails.logger.warn "⚠️ [OptimizationChannel#subscribed] Session mismatch (allowed in dev): plan_id=#{params[:cultivation_plan_id]}"
-      end
+    # セッションIDまたはログインユーザーで認可チェック（未認可は常に拒否）
+    unless authorized?(cultivation_plan)
+      Rails.logger.warn "🚫 [OptimizationChannel#subscribed] Unauthorized: plan.session_id='#{cultivation_plan.session_id}' != connection.session_id='#{connection.session_id}'"
+      reject
+      return
     end
     
     stream_for cultivation_plan
@@ -46,15 +41,20 @@ class OptimizationChannel < ApplicationCable::Channel
   private
   
   def authorized?(cultivation_plan)
-    # public計画: session_idで認可（匿名ユーザー）
-    # private計画: user_idで認可（ログインユーザー）またはsession_idでも可（同一セッション内）
+    # Public計画: plan_type が public であれば認可（匿名ユーザー向け専用チャンネル）
+    if cultivation_plan.plan_type_public?
+      Rails.logger.info "🔍 [OptimizationChannel#authorized?] public plan → authorized"
+      return true
+    end
+
+    # Private計画が来た場合（通常はPlansOptimizationChannelを使うべき）: session/userで認可
     session_authorized = cultivation_plan.session_id.present? && cultivation_plan.session_id == connection.session_id
     user_authorized = cultivation_plan.user_id.present? && cultivation_plan.user_id == current_user&.id
-    
+
     authorized = session_authorized || user_authorized
-    
+
     Rails.logger.info "🔍 [OptimizationChannel#authorized?] session_authorized=#{session_authorized}, user_authorized=#{user_authorized}, result=#{authorized}"
-    
+
     authorized
   end
   

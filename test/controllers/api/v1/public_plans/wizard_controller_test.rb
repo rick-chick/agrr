@@ -3,6 +3,35 @@ require 'test_helper'
 module Api
   module V1
     module PublicPlans
+      class WizardControllerSessionTest < ActionController::TestCase
+        tests WizardController
+
+        setup do
+          @farm = create(:farm, :reference, region: 'jp')
+          @crop = create(:crop, :reference, region: 'jp')
+        end
+
+        test 'creates public plan with matching session_id for OptimizationChannel' do
+          post :create, params: {
+            farm_id: @farm.id,
+            farm_size_id: 'home_garden',
+            crop_ids: [@crop.id]
+          }
+
+          assert_response :success
+          plan = ::CultivationPlan.last
+          assert plan.session_id.present?, 'session_id should be written to the plan'
+          assert_equal session.id.to_s, plan.session_id
+        end
+      end
+    end
+  end
+end
+require 'test_helper'
+
+module Api
+  module V1
+    module PublicPlans
       class WizardControllerTest < ActionDispatch::IntegrationTest
         test "farms endpoint returns farms for region" do
           get api_v1_public_plans_farms_path, params: { region: 'jp' }
@@ -68,6 +97,7 @@ module Api
           plan = ::CultivationPlan.find(json['plan_id'])
           assert_equal farm.id, plan.farm_id
           assert_equal 'public', plan.plan_type
+          assert_nil plan.user_id, 'public plan should not have user_id'
 
           # ジョブチェーンの実行は Presenter のテストでカバーされているため、
           # ここでは plan_id が返されることと、適切なステータスコードが返されることを確認する
