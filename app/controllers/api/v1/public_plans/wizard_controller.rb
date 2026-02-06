@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
-require_dependency Rails.root.join('app/presenters/api/public_plan/public_plan_create_presenter.rb').to_s
-
 module Api
   module V1
     module PublicPlans
       class WizardController < ApplicationController
         include JobExecution
         include WeatherDataManagement
+        SESSION_MARKER_KEY = :public_plan_wizard_session_marker
 
         skip_before_action :authenticate_user!
         skip_before_action :verify_authenticity_token
@@ -46,8 +45,8 @@ module Api
             farm_id: params[:farm_id],
             farm_size_id: params[:farm_size_id],
             crop_ids: crop_ids,
-            session_id: session.id.to_s,
-            user: current_user
+            session_id: ensure_session_id_for_public_plan,
+            user: nil
           )
 
           # Presenter と Gateway を準備
@@ -68,6 +67,20 @@ module Api
         end
 
         private
+
+        def ensure_session_id_for_public_plan
+          return session.id.to_s if session.id.present?
+
+          session[SESSION_MARKER_KEY] = true
+          session_id = session.id
+          session.delete(SESSION_MARKER_KEY)
+
+          raise "Unable to initialize session_id for public plan" if session_id.blank?
+
+          session_id.to_s
+        ensure
+          session.delete(SESSION_MARKER_KEY)
+        end
 
         def farm_sizes_with_i18n
           base_farm_sizes.map do |size|
