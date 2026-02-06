@@ -36,8 +36,12 @@ fi
 
 ENV="$2"
 ROOT_DIR="$(pwd)"
-DIST_DIR="$ROOT_DIR/dist"
-BUILD_CMD="npm run build -- --prod"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+DIST_DIR="$FRONTEND_DIR/dist"
+
+if [ ! -d "$FRONTEND_DIR" ]; then
+  die "Frontend directory not found at '$FRONTEND_DIR'."
+fi
 
 # Load environment file
 ENV_FILE=".env.gcp.frontend"
@@ -60,6 +64,8 @@ set +a
 : "${PROJECT_ID:?PROJECT_ID must be set (from env file)}"
 : "${BUCKET_NAME:?BUCKET_NAME must be set (from env file)}"
 : "${API_BASE_URL:?API_BASE_URL must be set (from env file)}"
+# Static path prefix for assets (used in deploy-url)
+STATIC_PATH_PREFIX="${STATIC_PATH_PREFIX:-static}"
 # URL_MAP_NAME is optional, used for CDN invalidation
 # CDN_BACKEND_SERVICE optional (not used by default)
 
@@ -70,7 +76,7 @@ run() {
     echo "[DRY-RUN] $*"
   else
     echo "[RUN] $*"
-    eval "$@"
+    "$@"
   fi
 }
 
@@ -83,13 +89,28 @@ esac
 
 info "Building frontend for '$ENV'..."
 cd "$ROOT_DIR"
+# Determine Angular configuration for each env
+case "$ENV" in
+  production)
+    BUILD_CONFIGURATION="production"
+    ;;
+  test)
+    BUILD_CONFIGURATION="development"
+    ;;
+  *)
+    BUILD_CONFIGURATION="$ENV"
+    ;;
+esac
+
 # install deps and build
 if [ "${DRY_RUN}" = "1" ]; then
   info "Skipping npm install/build in dry-run"
 else
-  npm ci
-  npm run build -- --configuration="$ENV" || npm run build || true
-  # Some repos use plain 'npm run build' and not configuration flags; fall back to simple build
+  (
+    cd "$FRONTEND_DIR"
+  run npm ci
+  run npm run build -- --configuration="$BUILD_CONFIGURATION" --deploy-url="/$STATIC_PATH_PREFIX/"
+  )
 fi
 
 # locate built dist directory
@@ -106,7 +127,31 @@ else
   fi
 fi
 
-info "Build output directory: $BUILD_OUTPUT_DIR"
+# Some build systems create an extra directory (e.g. dist/frontend). Prefer one that contains index.html.
+if [ ! -f "$BUILD_OUTPUT_DIR/index.html" ]; then
+  INDEX_FILE="$(find "$DIST_DIR" -name index.html -print -quit 2>/dev/null || true)"
+  if [ -n "$INDEX_FILE" ]; then
+    BUILD_OUTPUT_DIR="$(dirname "$INDEX_FILE")"
+  fi
+fi
+
+# After build we want static assets behind $STATIC_PATH_PREFIX/
+STATIC_OUTPUT_DIR="$BUILD_OUTPUT_DIR/$STATIC_PATH_PREFIX"
+info "Build output directory: $BUILD_OUTPUT_DIR (static assets under /$STATIC_PATH_PREFIX/)"
+
+# Move everything except index.html, favicon.ico, and the static directory itself
+shopt -s dotglob nullglob
+mkdir -p "$STATIC_OUTPUT_DIR"
+for entry in "$BUILD_OUTPUT_DIR"/?* "$BUILD_OUTPUT_DIR"/.[!.]* "$BUILD_OUTPUT_DIR"/..?*; do
+  [ -e "$entry" ] || continue
+  name="$(basename "$entry")"
+  if [ "$name" = "index.html" ] || [ "$name" = "favicon.ico" ] || [ "$name" = "$STATIC_PATH_PREFIX" ]; then
+    continue
+  fi
+  run mv "$entry" "$STATIC_OUTPUT_DIR/"
+done
+shopt -u dotglob nullglob
+
 
 # Inject API_BASE_URL at runtime into index.html
 INDEX_HTML="$BUILD_OUTPUT_DIR/index.html"
@@ -116,7 +161,7 @@ fi
 
 # Prepare injection snippet (safe JSON string)
 json_escape() {
-  python3 - <<PY - "${1:-}"
+  python3 - "$1" <<'PY'
 import json,sys
 print(json.dumps(sys.argv[1]))
 PY
@@ -125,13 +170,16 @@ PY
 # Fallback if python3 not available
 if command -v python3 >/dev/null 2>&1; then
   API_JSON=$(json_escape "$API_BASE_URL")
+  STATIC_JSON=$(json_escape "$STATIC_PATH_PREFIX")
 else
   # minimal escaping: wrap in double quotes and escape existing double quotes and backslashes
-  esc=$(printf '%s' "$API_BASE_URL" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
-  API_JSON="\"$esc\""
+  esc_api=$(printf '%s' "$API_BASE_URL" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  API_JSON="\"$esc_api\""
+  esc_static=$(printf '%s' "$STATIC_PATH_PREFIX" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  STATIC_JSON="\"$esc_static\""
 fi
 
-INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON;</script>"
+INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON; window.STATIC_PATH_PREFIX = $STATIC_JSON;</script>"
 
 # Insert snippet before first </head> or before first </body> if head not present
 TMP_INDEX="$(mktemp)"
@@ -182,7 +230,11 @@ fi
 # CDN invalidation
 if [ -n "${URL_MAP_NAME:-}" ]; then
   info "Invalidating CDN cache via URL map: $URL_MAP_NAME"
-  run gcloud compute url-maps invalidate-cdn-cache "$URL_MAP_NAME" --path "/*" --project "$PROJECT_ID"
+  if gcloud compute url-maps describe "$URL_MAP_NAME" --global --project "$PROJECT_ID" >/dev/null 2>&1; then
+    run gcloud compute url-maps invalidate-cdn-cache "$URL_MAP_NAME" --path "/*" --project "$PROJECT_ID"
+  else
+    info "URL map '$URL_MAP_NAME' not found; skipping CDN invalidation."
+  fi
 else
   info "No URL_MAP_NAME provided; skipping CDN invalidation. If you use Cloud CDN, consider setting URL_MAP_NAME to run invalidate-cdn-cache."
 fi

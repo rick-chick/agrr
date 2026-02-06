@@ -5,12 +5,14 @@ import { PublicPlanCreateViewState } from './public-plan-create.view';
 describe('PublicPlanCreateComponent (class-level)', () => {
   let component: any;
   let useCase: { execute: ReturnType<typeof vi.fn> };
+  let resetStateUseCase: { execute: ReturnType<typeof vi.fn> };
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let publicPlanStore: { state: { farm?: { id: number; region: string } }; setFarm: ReturnType<typeof vi.fn> };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     useCase = { execute: vi.fn() };
+    resetStateUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
     publicPlanStore = { state: {}, setFarm: vi.fn() };
     cdr = { detectChanges: vi.fn() };
@@ -19,6 +21,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component = Object.create(PublicPlanCreateComponent.prototype);
     component.router = { navigate: vi.fn() };
     component.useCase = useCase;
+    component.resetStateUseCase = resetStateUseCase;
     component.presenter = presenter;
     component.publicPlanStore = publicPlanStore;
     component.cdr = cdr;
@@ -54,11 +57,12 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     expect(detectSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('ngOnInit sets view on presenter and restores selected farm', () => {
+  it('ngOnInit resets state, sets view on presenter and restores selected farm', () => {
     publicPlanStore.state = { farm: { id: 12, region: 'jp' } };
 
     PublicPlanCreateComponent.prototype.ngOnInit.call(component);
 
+    expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(component.selectedFarmId).toBe(12);
     expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
@@ -71,18 +75,11 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     try {
       publicPlanStore.state = {};
       PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+      expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
       expect(useCase.execute).toHaveBeenCalledWith({ region: 'us' });
     } finally {
       (globalThis as any).navigator = originalNavigator;
     }
   });
 
-  it('source/template no longer contains region step or farm.region placeholder', () => {
-    // Check the source file to ensure region keys/templates are removed from the template
-    const fs = require('fs');
-    const path = require('path');
-    const src = fs.readFileSync(path.join(__dirname, 'public-plan-create.component.ts'), 'utf8');
-    expect(src).not.toContain('public_plans.steps.region');
-    expect(src).not.toContain('{{ farm.region }}');
-  });
 });

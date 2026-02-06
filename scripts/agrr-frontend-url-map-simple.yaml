@@ -1,0 +1,47 @@
+creationTimestamp: '2026-02-04T02:31:36.040-08:00'
+defaultService: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
+fingerprint: FseWk50PDU0=
+hostRules:
+- hosts:
+  - agrr.net
+  pathMatcher: frontend-matcher
+id: 5841225357506551528
+kind: compute#urlMap
+name: agrr-frontend-url-map-simple
+pathMatchers:
+- defaultService: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
+  name: frontend-matcher
+  pathRules:
+  - paths:
+    - /api/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /cable
+    - /cable/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /auth
+    - /auth/*
+    - /auth/google_oauth2
+    - /research
+    - /research/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /assets/i18n
+    - /assets/i18n/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
+  - paths:
+    - /assets
+    - /assets/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /static
+    - /static/*
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
+  - paths:
+    - /*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /index.html
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
+selfLink: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/urlMaps/agrr-frontend-url-map-simple
