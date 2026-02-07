@@ -6,7 +6,8 @@ module ApplicationCable
     
     def connect
       # セッションIDで識別（必須：public計画の認証に使用）
-      self.session_id = request.session.id.to_s
+      # request.session may be nil in some environments; guard and ensure string
+      self.session_id = request.session&.id.to_s
       
       # ログインユーザーを取得（optional：private計画の認証に使用）
       self.current_user = find_verified_user
