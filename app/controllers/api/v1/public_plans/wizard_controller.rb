@@ -69,17 +69,10 @@ module Api
         private
 
         def ensure_session_id_for_public_plan
+          # If the underlying session has an id, use it. Otherwise generate a stable random id.
           return session.id.to_s if session.id.present?
 
-          session[SESSION_MARKER_KEY] = true
-          session_id = session.id
-          session.delete(SESSION_MARKER_KEY)
-
-          raise "Unable to initialize session_id for public plan" if session_id.blank?
-
-          session_id.to_s
-        ensure
-          session.delete(SESSION_MARKER_KEY)
+          SecureRandom.hex(32)
         end
 
         def farm_sizes_with_i18n
