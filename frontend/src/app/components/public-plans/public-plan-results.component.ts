@@ -75,6 +75,15 @@ const initialControl: PublicPlanResultsViewState = {
               <span class="compact-icon">📏</span>
               <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
             </div>
+            <div *ngIf="rangeLabelText" class="gantt-visible-range">
+              <span class="gantt-visible-range__label">
+                {{ 'public_plans.results.header.visible_range_label' | translate }}
+              </span>
+              <span class="gantt-visible-range__value">{{ rangeLabelText }}</span>
+              <span class="gantt-visible-range__hint">
+                ({{ 'public_plans.results.header.visible_range_hint' | translate }})
+              </span>
+            </div>
           </div>
 
           <section class="page">
@@ -84,6 +93,7 @@ const initialControl: PublicPlanResultsViewState = {
                   [data]="control.data"
                   [planType]="planType"
                   (cultivationSelected)="handleCultivationSelection($event)"
+                (visibleRangeChange)="handleVisibleRangeUpdate($event)"
                 />
               </div>
 
@@ -124,6 +134,12 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   readonly planType: 'private' | 'public' = 'public';
   selectedCultivationId: number | null = null;
   selectedPlanType: 'private' | 'public' = this.planType;
+  visibleRangeLabel = '';
+  defaultVisibleRangeLabel = '';
+
+  get rangeLabelText(): string {
+    return this.visibleRangeLabel || this.defaultVisibleRangeLabel;
+  }
 
   get farm() {
     return this.publicPlanStore.state.farm;
@@ -136,6 +152,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   set control(value: PublicPlanResultsViewState) {
     this._control = value;
     this.cdr.markForCheck();
+    this.updateDefaultVisibleRangeLabel();
   }
 
   ngOnInit(): void {
@@ -186,5 +203,36 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   closeClimatePanel(): void {
     this.selectedCultivationId = null;
     this.selectedPlanType = this.planType;
+  }
+
+  handleVisibleRangeUpdate(range: { startDate: Date; endDate: Date; label: string }): void {
+    this.visibleRangeLabel = range.label;
+  }
+
+  private updateDefaultVisibleRangeLabel(): void {
+    this.visibleRangeLabel = '';
+    if (!this.control.data?.data) {
+      this.defaultVisibleRangeLabel = '';
+      return;
+    }
+
+    const start = this.control.data.data.planning_start_date;
+    const end = this.control.data.data.planning_end_date;
+    if (!start || !end) {
+      this.defaultVisibleRangeLabel = '';
+      return;
+    }
+
+    this.defaultVisibleRangeLabel = this.formatRangeLabel(start, end);
+  }
+
+  private formatRangeLabel(startIso: string, endIso: string): string {
+    const format = (value: string) => {
+      const date = new Date(value);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${year}/${month}`;
+    };
+    return `${format(startIso)}～${format(endIso)}`;
   }
 }

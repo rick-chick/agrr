@@ -1758,7 +1758,9 @@
         "total_cost": "総コスト",
         "total_revenue": "総収益",
         "total_profit": "総利益",
-        "subtitle": "%{count}圃場の最適な栽培期間が決定しました"
+        "subtitle": "%{count}圃場の最適な栽培期間が決定しました",
+        "visible_range_label": "表示期間",
+        "visible_range_hint": "最大24か月"
       },
       "gantt": {
         "title": "栽培スケジュール",
@@ -1904,6 +1906,12 @@
       },
       "fallback": {
         "message": "画面幅が狭いため簡易表示に切り替えています。デバイスを回転するか拡大して詳細をご確認ください。"
+      },
+      "range": {
+        "label": "表示範囲",
+        "prev_month": "← 1ヶ月",
+        "next_month": "1ヶ月 →",
+        "max_hint": "最大24か月"
       }
     },
     "undo": {

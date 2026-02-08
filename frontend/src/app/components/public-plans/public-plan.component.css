@@ -817,6 +817,31 @@
   box-shadow: var(--shadow-card);
 }
 
+.gantt-visible-range {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text, #1e293b);
+}
+
+.gantt-visible-range__label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.gantt-visible-range__value {
+  font-weight: var(--font-weight-bold);
+}
+
+.gantt-visible-range__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary, #6b7280);
+  white-space: nowrap;
+}
+
 .compact-summary-line {
   display: flex;
   align-items: center;
