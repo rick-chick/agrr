@@ -70,7 +70,7 @@ module AgrrOptimization
       field_utilization_rate = field_area_used / field.area.to_f
       
       field_schedules << {
-        field_id: field.id,
+        field_id: field.id.to_s,
         field_name: field.name,
         total_cost: field_total_cost,
         total_revenue: field_total_revenue,
@@ -100,10 +100,10 @@ module AgrrOptimization
   def build_fields_config(cultivation_plan)
     cultivation_plan.cultivation_plan_fields.map do |field|
       {
-        field_id: field.id,
+        field_id: field.id.to_s,
         name: field.name,
         area: field.area,
-        daily_fixed_cost: field.daily_fixed_cost
+        daily_fixed_cost: field.daily_fixed_cost || 0.0
       }
     end
   end
@@ -219,7 +219,8 @@ module AgrrOptimization
       result[:field_schedules].each do |field_schedule|
         field_id = field_schedule['field_id']
         next unless field_id
-        plan_field = plan_fields_by_id[field_id]
+        # AGRR が field_id を文字列で返す場合があるため、整数に変換して検索
+        plan_field = plan_fields_by_id[field_id.to_i]
         unless plan_field
           Rails.logger.error "❌ [Save] CRITICAL: plan_field not found for field_id: #{field_id}"
           Rails.logger.error "❌ [Save] Available field_ids: #{cultivation_plan.cultivation_plan_fields.map(&:id)}"
@@ -561,6 +562,17 @@ module AgrrOptimization
       }
     end
     
+    # 計画期間を天気データの範囲内にクランプ
+    # 天気データが計画開始日をカバーしていない場合、AGRRが空の結果を返す
+    weather_dates = weather_data['data']
+    if weather_dates.is_a?(Array) && weather_dates.any?
+      weather_start_date = Date.parse(weather_dates.first['time'].to_s) rescue nil
+      if weather_start_date && effective_planning_start < weather_start_date
+        Rails.logger.info "📅 [Adjust] Clamping planning_start from #{effective_planning_start} to #{weather_start_date} (weather data boundary)"
+        effective_planning_start = weather_start_date
+      end
+    end
+
     # agrr optimize adjust を実行
     begin
       perf_before_adjust = Time.current

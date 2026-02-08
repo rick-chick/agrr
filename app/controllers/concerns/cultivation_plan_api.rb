@@ -18,10 +18,10 @@ module CultivationPlanApi
   
   
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_crop
-  # 作物追加と手修正による調整
+  # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
   def add_crop
     Rails.logger.info "🌱 [Add Crop] ========== START =========="
-    Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}"
+    Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}, field_id: #{params[:field_id]}"
     
     @cultivation_plan = find_api_cultivation_plan
     
@@ -35,29 +35,40 @@ module CultivationPlanApi
     end
     
     # cultivation_plan_crops に追加（スナップショット）
-    # 作付け計画専用の作物を作成（スナップショット）
     plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
-      crop: crop,  # 元のCropへの参照
+      crop: crop,
       name: crop.name,
       variety: crop.variety,
       area_per_unit: crop.area_per_unit,
       revenue_per_area: crop.revenue_per_area
     )
     
-    # 調整を実行
+    # candidatesで最適な開始日を取得
+    best_candidate = find_best_candidate_for_crop(crop, params[:field_id])
+    
+    unless best_candidate
+      plan_crop.destroy!
+      return render json: {
+        success: false,
+        message: i18n_t('errors.no_candidates_found')
+      }, status: :unprocessable_entity
+    end
+    
+    Rails.logger.info "🌱 [Add Crop] Best candidate: field=#{best_candidate[:field_id]}, start=#{best_candidate[:start_date]}"
+    
+    # candidatesの結果を使って調整を実行
     moves = [
       {
         allocation_id: nil,
         action: 'add',
-        crop_id: crop.id.to_s,  # Rails側のcrop.idを使用
-        to_field_id: params[:field_id],
-        to_start_date: params[:start_date],
+        crop_id: crop.id.to_s,
+        to_field_id: best_candidate[:field_id] || params[:field_id],
+        to_start_date: best_candidate[:start_date],
         to_area: crop.area_per_unit,
         variety: crop.variety
       }
     ]
     
-    # DBに保存された天気データを使って調整を実行
     result = adjust_with_db_weather(@cultivation_plan, moves)
     
     if result[:success]
@@ -346,9 +357,9 @@ module CultivationPlanApi
         move[:allocation_id] = move[:allocation_id].to_i
       end
       
-      # to_field_idを数値に変換
+      # to_field_idを文字列に変換（Python optimizer expects strings）
       if move[:to_field_id].present?
-        move[:to_field_id] = move[:to_field_id].to_i
+        move[:to_field_id] = move[:to_field_id].to_s
       end
       
       move
@@ -391,6 +402,167 @@ module CultivationPlanApi
     I18n.t("#{scope}.#{key}")
   end
   
+  # candidatesを使って最適な作付候補を取得する
+  # 候補が見つからない場合は天気予測を12ヶ月延長してリトライする
+  # @param crop [Crop] 追加する作物
+  # @param field_id [String, Integer] 指定されたほ場ID
+  # @return [Hash, nil] 最適な候補（field_id, start_date 等）、見つからない場合はnil
+  def find_best_candidate_for_crop(crop, field_id)
+    # preloaded planを取得
+    cultivation_plan = CultivationPlan.includes(
+      :cultivation_plan_fields,
+      { cultivation_plan_crops: :crop },
+      { field_cultivations: [:cultivation_plan_field, { cultivation_plan_crop: :crop }] }
+    ).find(@cultivation_plan.id)
+
+    # 現在の割り当てを構築
+    current_allocation = build_current_allocation(cultivation_plan)
+    fields = build_fields_config(cultivation_plan)
+    crops = build_crops_config(cultivation_plan)
+    interaction_rules = build_interaction_rules(cultivation_plan)
+
+    # candidatesの計画期間: 今日から開始（過去日付を提案させない）
+    # effective_planning_periodは既存作付が過去を含むため、candidatesには使わない
+    candidates_start = Date.current
+    candidates_end = cultivation_plan.calculated_planning_end_date || (candidates_start + 2.years).end_of_year
+
+    # 天気データを取得
+    farm = cultivation_plan.farm
+    weather_location = farm&.weather_location
+    unless weather_location
+      Rails.logger.error "❌ [Candidates] No weather location found"
+      return nil
+    end
+
+    weather_prediction_service = WeatherPredictionService.new(
+      weather_location: weather_location,
+      farm: farm
+    )
+
+    weather_data = get_or_predict_weather(weather_prediction_service, cultivation_plan, candidates_end)
+    return nil unless weather_data
+
+    Rails.logger.info "📅 [Candidates] Planning period: #{candidates_start} ~ #{candidates_end}"
+
+    # 1回目: candidatesを実行
+    candidates = run_candidates(
+      current_allocation, fields, crops, crop, weather_data,
+      candidates_start, candidates_end, interaction_rules, field_id
+    )
+
+    if candidates.present?
+      return select_best_candidate(candidates, field_id)
+    end
+
+    # 候補なし → 天気予測を12ヶ月延長してリトライ
+    Rails.logger.info "🔮 [Candidates] No candidates found, extending weather prediction by 12 months"
+    extended_end = candidates_end + 12.months
+
+    weather_info = weather_prediction_service.predict_for_cultivation_plan(
+      cultivation_plan,
+      target_end_date: extended_end
+    )
+    extended_weather_data = weather_info[:data]
+    
+    # 古い保存形式（ネスト構造）の場合は修正
+    if extended_weather_data['data'].is_a?(Hash) && extended_weather_data['data']['data'].is_a?(Array)
+      extended_weather_data = extended_weather_data['data']
+    end
+
+    # 2回目: 拡張した天気データでcandidatesを実行
+    candidates = run_candidates(
+      current_allocation, fields, crops, crop, extended_weather_data,
+      candidates_start, extended_end, interaction_rules, field_id
+    )
+
+    if candidates.present?
+      return select_best_candidate(candidates, field_id)
+    end
+
+    Rails.logger.warn "⚠️ [Candidates] No candidates found even after extending weather prediction"
+    nil
+  end
+
+  # 天気データを取得（既存予測 or 新規予測）
+  def get_or_predict_weather(weather_prediction_service, cultivation_plan, target_end_date)
+    existing = weather_prediction_service.get_existing_prediction(
+      target_end_date: target_end_date,
+      cultivation_plan: cultivation_plan
+    )
+    if existing
+      weather_data = existing[:data]
+    else
+      weather_info = weather_prediction_service.predict_for_cultivation_plan(
+        cultivation_plan,
+        target_end_date: target_end_date
+      )
+      weather_data = weather_info[:data]
+    end
+
+    # 古い保存形式（ネスト構造）の場合は修正
+    if weather_data['data'].is_a?(Hash) && weather_data['data']['data'].is_a?(Array)
+      weather_data = weather_data['data']
+    end
+
+    weather_data
+  rescue => e
+    Rails.logger.error "❌ [Candidates] Failed to get weather data: #{e.message}"
+    nil
+  end
+
+  # candidates コマンドを実行
+  def run_candidates(current_allocation, fields, crops, crop, weather_data, planning_start, planning_end, interaction_rules, field_id)
+    gateway = Agrr::CandidatesGateway.new
+    gateway.candidates(
+      current_allocation: current_allocation,
+      fields: fields,
+      crops: crops,
+      target_crop: crop.id.to_s,
+      weather_data: weather_data,
+      planning_start: planning_start,
+      planning_end: planning_end,
+      interaction_rules: interaction_rules.empty? ? nil : interaction_rules
+    )
+  rescue Agrr::BaseGatewayV2::NoAllocationCandidatesError => e
+    Rails.logger.info "ℹ️ [Candidates] No allocation candidates: #{e.message}"
+    []
+  rescue => e
+    Rails.logger.error "❌ [Candidates] Failed to run candidates: #{e.message}"
+    []
+  end
+
+  # 最適な候補を選択（指定ほ場を優先、利益最大化）
+  def select_best_candidate(candidates, preferred_field_id)
+    preferred_field_id = preferred_field_id.to_i if preferred_field_id.present?
+
+    # 過去の日付の候補を除外（天気データがカバーできないため）
+    today = Date.current
+    future_candidates = candidates.select do |c|
+      begin
+        candidate_date = Date.parse(c[:start_date].to_s)
+        candidate_date >= today
+      rescue ArgumentError
+        false
+      end
+    end
+
+    Rails.logger.info "🔍 [Candidates] Total: #{candidates.length}, Future: #{future_candidates.length} (filtered past dates before #{today})"
+
+    return nil if future_candidates.empty?
+
+    # 指定ほ場の候補を優先
+    field_candidates = if preferred_field_id
+                         future_candidates.select { |c| c[:field_id].to_i == preferred_field_id }
+                       else
+                         []
+                       end
+
+    pool = field_candidates.present? ? field_candidates : future_candidates
+
+    # 利益が最大の候補を選択
+    pool.max_by { |c| c[:profit].to_f }
+  end
+
   # サブクラスで実装すべきメソッド
   
   # 計画を検索する
