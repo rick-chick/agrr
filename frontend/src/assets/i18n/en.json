@@ -885,9 +885,7 @@
         "total_cost": "Total Cost",
         "total_revenue": "Total Revenue",
         "total_profit": "Total Profit",
-        "subtitle": "Optimal cultivation periods for %{count} fields have been determined",
-        "visible_range_label": "Visible range",
-        "visible_range_hint": "Max 24 months"
+        "subtitle": "Optimal cultivation periods for %{count} fields have been determined"
       },
       "gantt": {
         "title": "Cultivation Schedule",
@@ -1008,10 +1006,8 @@
         "message": "The screen is too narrow for the full chart. Rotate or enlarge your device to view more details."
       },
       "range": {
-        "label": "Visible range",
         "prev_month": "← 1 month",
-        "next_month": "1 month →",
-        "max_hint": "Max 24 months"
+        "next_month": "1 month →"
       }
     },
     "undo": {
