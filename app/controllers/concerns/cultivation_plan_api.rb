@@ -243,6 +243,15 @@ module CultivationPlanApi
       }
     end
 
+    available_crops_data = get_available_crops.map do |crop|
+      {
+        id: crop.id,
+        name: crop.name,
+        variety: crop.variety,
+        area_per_unit: crop.area_per_unit
+      }
+    end
+
     cultivations_data = @cultivation_plan.field_cultivations.map do |fc|
       {
         id: fc.id,
@@ -274,6 +283,7 @@ module CultivationPlanApi
         planning_end_date: @cultivation_plan.calculated_planning_end_date,
         fields: fields_data,
         crops: crops_data,
+        available_crops: available_crops_data,
         cultivations: cultivations_data
       },
       total_profit: @cultivation_plan.total_profit,
@@ -393,6 +403,12 @@ module CultivationPlanApi
   # @return [Crop, nil] 作物オブジェクト
   def get_crop_for_add_crop(crop_id)
     raise NotImplementedError, "#{self.class}#get_crop_for_add_crop must be implemented"
+  end
+
+  # dataアクションで利用可能な作物一覧を取得する
+  # @return [ActiveRecord::Relation<Crop>]
+  def get_available_crops
+    raise NotImplementedError, "#{self.class}#get_available_crops must be implemented"
   end
 end
 

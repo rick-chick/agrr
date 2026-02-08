@@ -13,6 +13,13 @@ export interface CropData {
   revenue_per_area: number;
 }
 
+export interface AvailableCropData {
+  id: number;
+  name: string;
+  variety: string;
+  area_per_unit: number;
+}
+
 export interface CultivationData {
   id: number;
   field_id: number;
@@ -41,6 +48,7 @@ export interface CultivationPlanData {
     planning_end_date: string;
     fields: FieldData[];
     crops: CropData[];
+    available_crops?: AvailableCropData[];
     cultivations: CultivationData[];
   };
   total_profit: number;

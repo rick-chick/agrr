@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
+import { FormsModule } from '@angular/forms';
+import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanService } from '../../services/plans/plan.service';
 import { FlashMessageService } from '../../services/flash-message.service';
@@ -37,7 +38,7 @@ interface TimeScale {
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, FormsModule],
   template: `
     @if (showOptimizationLock) {
       <div class="screen-lock-overlay" aria-live="polite">
@@ -47,97 +48,243 @@ interface TimeScale {
         </div>
       </div>
     }
-    <div class="gantt-container" #container>
-      @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
-        <div class="no-data-message">
-          @if (!data) {
-            <p>{{ 'plans.gantt.no_plan_data' | translate }}</p>
-          } @else if (!data.data.fields || data.data.fields.length === 0) {
-            <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
+    <div class="gantt-page">
+      <div class="gantt-action-bar">
+        <button
+          class="action-button"
+          type="button"
+          (click)="toggleCropPalette()"
+          [class.active]="isCropPaletteOpen">
+          @if (!isCropPaletteOpen) {
+            <span>{{ 'js.gantt.add_crop_button' | translate }}</span>
           } @else {
-            <p>{{ 'plans.gantt.no_data' | translate }}</p>
-            <p>APIレスポンス: {{ debugData() }}</p>
+            <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
           }
-        </div>
-      } @else {
-        <div class="gantt-scroll-area">
-          <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
-          <defs>
-            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#f9fafb;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          
-          <!-- Background -->
-          <rect [attr.width]="config.width" [attr.height]="config.height" fill="url(#bgGradient)" class="gantt-background" />
-          
-          <!-- Field Row Highlight (for drag feedback) -->
-          <rect #highlightRect class="field-row-highlight" 
-                [attr.width]="config.width" 
-                fill="#FFEB3B" 
-                opacity="0" 
-                style="pointer-events: none;" />
+        </button>
+        <button
+          class="action-button"
+          type="button"
+          (click)="toggleFieldForm()"
+          [class.active]="fieldFormVisible">
+          @if (!fieldFormVisible) {
+            <span>{{ 'js.gantt.add_field_button' | translate }}</span>
+          } @else {
+            <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
+          }
+        </button>
+      </div>
 
-          <!-- Timeline Header -->
-          <g class="timeline-header">
-            <text x="20" y="30" class="header-label" font-size="14" font-weight="bold" fill="#374151">
-              {{ 'shared.navbar.farms' | translate }}
-            </text>
-            @for (month of months; track month.date.getTime()) {
-              @if (month.showLabel) {
-                <text [attr.x]="month.x + (month.width / 2)" y="30" class="month-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937">
-                  {{ month.label }}
-                </text>
+      @if (isCropPaletteOpen) {
+        <div class="crop-palette">
+          <p class="section-title">{{ 'js.gantt.crop_palette_title' | translate }}</p>
+          @if (data?.data?.available_crops && data!.data.available_crops!.length > 0) {
+            <div class="crop-list">
+              @for (crop of data!.data.available_crops!; track crop.id) {
+                <button
+                  class="crop-card"
+                  type="button"
+                  [class.selected]="selectedCrop?.id === crop.id"
+                  (click)="selectCrop(crop)">
+                  <span class="crop-name">{{ crop.name }}</span>
+                  <span class="crop-variety">{{ crop.variety }}</span>
+                </button>
               }
-              @if (month.showYear) {
-                <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="11" font-weight="bold" fill="#6B7280">
-                  {{ month.year }}{{ 'plans.gantt.labels.year' | translate }}
-                </text>
-              }
-              <line [attr.x1]="month.x" y1="40" [attr.x2]="month.x" [attr.y2]="config.height" stroke="#E5E7EB" stroke-width="1" />
-            }
-          </g>
+            </div>
+          } @else {
+            <p class="empty-state">{{ 'js.gantt.crop_palette_no_crops' | translate }}</p>
+          }
 
-          <!-- Field Rows -->
-          @for (group of fieldGroups; track group.fieldId; let i = $index) {
-            <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
-              <text x="30" [attr.y]="config.rowHeight / 2 + 5" class="field-label" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">
-                {{ group.fieldName }}
-              </text>
-              <line [attr.x1]="config.margin.left - 10" y1="0" [attr.x2]="config.margin.left - 10" [attr.y2]="config.rowHeight" stroke="#D1D5DB" stroke-width="2" />
-              
-              <!-- Cultivation Bars -->
-              @for (cultivation of group.cultivations; track cultivation.id) {
-                @if (getBarParams(cultivation); as params) {
-                  <g class="cultivation-bar" 
-                     (mousedown)="onMouseDown($event, cultivation)"
-                     [class.dragging]="draggedCultivation?.id === cultivation.id"
-                     [attr.data-id]="cultivation.id"
-                     [attr.data-field]="cultivation.field_name">
-                    <rect [attr.x]="params.x" 
-                          [attr.y]="config.barPadding" 
-                          [attr.width]="params.width" 
-                          [attr.height]="config.barHeight" 
-                          rx="6" ry="6"
-                          [attr.fill]="getCropColor(cultivation.crop_name)"
-                          [attr.stroke]="getCropStrokeColor(cultivation.crop_name)"
-                          stroke-width="2.5"
-                          class="bar-bg"
-                          style="cursor: grab;" />
-                    <text [attr.x]="params.x + params.width / 2" 
-                          [attr.y]="config.barPadding + config.barHeight / 2 + 5" 
-                          class="bar-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937" style="pointer-events: none;">
-                      {{ cultivation.crop_name }}
-                    </text>
-                  </g>
+          @if (selectedCrop) {
+            <div class="crop-form">
+              <div class="crop-form-row">
+                <label>{{ 'js.gantt.crop_palette_select_field' | translate }}</label>
+                <select [(ngModel)]="selectedFieldId" name="selectedFieldId">
+                  @if (data?.data?.fields && data!.data.fields.length > 0) {
+                    @for (field of data!.data.fields; track field.id) {
+                      <option [ngValue]="field.id">{{ field.name }}</option>
+                    }
+                  }
+                </select>
+              </div>
+              <div class="crop-form-row">
+                <label>{{ 'js.gantt.crop_palette_select_date' | translate }}</label>
+                <input
+                  type="date"
+                  [(ngModel)]="cropStartDate"
+                  name="cropStartDate" />
+              </div>
+              <button
+                class="action-button"
+                type="button"
+                (click)="confirmAddCrop()"
+                [disabled]="isAddCropLoading || !selectedFieldId || !cropStartDate">
+                @if (!isAddCropLoading) {
+                  <span>{{ 'js.gantt.crop_palette_submit' | translate }}</span>
+                } @else {
+                  <span>{{ 'js.gantt.crop_palette_adding' | translate }}</span>
                 }
-              }
-            </g>
+              </button>
+            </div>
           }
-          </svg>
         </div>
       }
+
+      @if (fieldFormVisible) {
+        <div class="field-form">
+          <div class="field-form-row">
+            <label>{{ 'js.gantt.field_form_name_label' | translate }}</label>
+            <input
+              type="text"
+              [(ngModel)]="newFieldName"
+              name="newFieldName"
+              [placeholder]="'js.gantt.field_form_name_placeholder' | translate" />
+          </div>
+          <div class="field-form-row">
+            <label>{{ 'js.gantt.field_form_area_label' | translate }}</label>
+            <input
+              type="number"
+              [(ngModel)]="newFieldArea"
+              name="newFieldArea"
+              min="0"
+              step="1"
+              [placeholder]="'js.gantt.field_form_area_placeholder' | translate" />
+          </div>
+          <button
+            class="action-button"
+            type="button"
+            (click)="confirmAddField()"
+            [disabled]="isFieldFormLoading || !newFieldName || !newFieldArea">
+            @if (!isFieldFormLoading) {
+              <span>{{ 'js.gantt.field_form_submit' | translate }}</span>
+            } @else {
+              <span>{{ 'js.gantt.adding_field_loading' | translate }}</span>
+            }
+          </button>
+        </div>
+      }
+
+      <div class="gantt-container" #container>
+        @if (!data || !data.data || !data.data.fields || data.data.fields.length === 0 || !data.data.cultivations) {
+          <div class="no-data-message">
+            @if (!data) {
+              <p>{{ 'plans.gantt.no_plan_data' | translate }}</p>
+            } @else if (!data.data.fields || data.data.fields.length === 0) {
+              <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
+            } @else {
+              <p>{{ 'plans.gantt.no_data' | translate }}</p>
+              <p>APIレスポンス: {{ debugData() }}</p>
+            }
+          </div>
+        } @else {
+          <div class="gantt-scroll-area">
+            <svg #svg class="custom-gantt-chart" [attr.width]="config.width" [attr.height]="config.height">
+            <defs>
+              <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f9fafb;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            
+            <!-- Background -->
+            <rect [attr.width]="config.width" [attr.height]="config.height" fill="url(#bgGradient)" class="gantt-background" />
+            
+            <!-- Field Row Highlight (for drag feedback) -->
+            <rect #highlightRect class="field-row-highlight" 
+                  [attr.width]="config.width" 
+                  fill="#FFEB3B" 
+                  opacity="0" 
+                  style="pointer-events: none;" />
+
+            <!-- Timeline Header -->
+            <g class="timeline-header">
+              <text x="20" y="30" class="header-label" font-size="14" font-weight="bold" fill="#374151">
+                {{ 'shared.navbar.farms' | translate }}
+              </text>
+              @for (month of months; track month.date.getTime()) {
+                @if (month.showLabel) {
+                  <text [attr.x]="month.x + (month.width / 2)" y="30" class="month-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937">
+                    {{ month.label }}
+                  </text>
+                }
+                @if (month.showYear) {
+                  <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="11" font-weight="bold" fill="#6B7280">
+                    {{ month.year }}{{ 'plans.gantt.labels.year' | translate }}
+                  </text>
+                }
+                <line [attr.x1]="month.x" y1="40" [attr.x2]="month.x" [attr.y2]="config.height" stroke="#E5E7EB" stroke-width="1" />
+              }
+            </g>
+
+            <!-- Field Rows -->
+            @for (group of fieldGroups; track group.fieldId; let i = $index) {
+              <g class="field-row" [attr.transform]="'translate(0, ' + (config.margin.top + i * config.rowHeight) + ')'">
+                <text x="30" [attr.y]="config.rowHeight / 2 + 5" class="field-label" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">
+                  {{ group.fieldName }}
+                </text>
+                <line [attr.x1]="config.margin.left - 10" y1="0" [attr.x2]="config.margin.left - 10" [attr.y2]="config.rowHeight" stroke="#D1D5DB" stroke-width="2" />
+                @if (group.cultivations.length === 0) {
+                  <text
+                    class="field-delete-icon"
+                    [attr.x]="config.margin.left - 40"
+                    [attr.y]="config.rowHeight / 2 + 5"
+                    font-size="14"
+                    fill="#ef4444"
+                    (click)="confirmRemoveField(group); $event.stopPropagation()">
+                    ×
+                  </text>
+                }
+                
+                <!-- Cultivation Bars -->
+                @for (cultivation of group.cultivations; track cultivation.id) {
+                  @if (getBarParams(cultivation); as params) {
+                    <g class="cultivation-bar" 
+                       (mousedown)="onMouseDown($event, cultivation)"
+                       [class.dragging]="draggedCultivation?.id === cultivation.id"
+                       [attr.data-id]="cultivation.id"
+                       [attr.data-field]="cultivation.field_name">
+                      <rect [attr.x]="params.x" 
+                            [attr.y]="config.barPadding" 
+                            [attr.width]="params.width" 
+                            [attr.height]="config.barHeight" 
+                            rx="6" ry="6"
+                            [attr.fill]="getCropColor(cultivation.crop_name)"
+                            [attr.stroke]="getCropStrokeColor(cultivation.crop_name)"
+                            stroke-width="2.5"
+                            class="bar-bg"
+                            style="cursor: grab;" />
+                      <text [attr.x]="params.x + params.width / 2" 
+                            [attr.y]="config.barPadding + config.barHeight / 2 + 5" 
+                            class="bar-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937" style="pointer-events: none;">
+                        {{ cultivation.crop_name }}
+                      </text>
+                      <g
+                        class="cultivation-delete-control"
+                        (click)="confirmRemoveCultivation(cultivation); $event.stopPropagation()">
+                        <circle
+                          [attr.cx]="params.x + params.width - 12"
+                          [attr.cy]="config.barPadding + config.barHeight / 2"
+                          r="8"
+                          fill="white"
+                          stroke="#ef4444"
+                          stroke-width="2" />
+                        <text
+                          [attr.x]="params.x + params.width - 12"
+                          [attr.y]="config.barPadding + config.barHeight / 2 + 4"
+                          font-size="12"
+                          text-anchor="middle"
+                          fill="#ef4444">
+                          ×
+                        </text>
+                      </g>
+                    </g>
+                  }
+                }
+              </g>
+            }
+            </svg>
+          </div>
+        }
+      </div>
     </div>
   `,
   styleUrls: ['./gantt-chart.component.css']
@@ -166,6 +313,16 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   fieldGroups: FieldGroup[] = [];
   months: any[] = [];
   timeScale: TimeScale = { unit: TimeUnit.Month, label: '月', interval: 1 };
+  isCropPaletteOpen = false;
+  selectedCrop: AvailableCropData | null = null;
+  selectedFieldId: number | null = null;
+  cropStartDate: string | null = null;
+  isAddCropLoading = false;
+
+  fieldFormVisible = false;
+  newFieldName = '';
+  newFieldArea: number | null = null;
+  isFieldFormLoading = false;
   
   private isDragging = false;
   draggedCultivation: CultivationData | null = null;
@@ -1057,5 +1214,196 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.handleAdjustmentFailure(this.extractHttpErrorMessage(error));
       }
     });
+  }
+
+  toggleCropPalette() {
+    this.isCropPaletteOpen = !this.isCropPaletteOpen;
+    if (this.isCropPaletteOpen) {
+      this.cropStartDate = this.data?.data?.planning_start_date ?? this.cropStartDate;
+      this.selectedFieldId = this.data?.data?.fields?.[0]?.id ?? this.selectedFieldId;
+      this.selectedCrop = null;
+    } else {
+      this.selectedCrop = null;
+      this.cropStartDate = null;
+      this.selectedFieldId = null;
+    }
+  }
+
+  selectCrop(crop: AvailableCropData) {
+    this.selectedCrop = crop;
+    if (!this.selectedFieldId) {
+      this.selectedFieldId = this.data?.data?.fields?.[0]?.id ?? null;
+    }
+    if (!this.cropStartDate) {
+      this.cropStartDate = this.data?.data?.planning_start_date ?? '';
+    }
+  }
+
+  confirmAddCrop() {
+    if (!this.data || !this.selectedCrop || !this.selectedFieldId || !this.cropStartDate) return;
+    const endpoint = this.buildEndpoint('add_crop');
+    if (!endpoint) return;
+    const planId = this.data.data.id;
+    this.isAddCropLoading = true;
+    this.showOptimizationLock = true;
+    const payload = {
+      crop_id: this.selectedCrop.id,
+      field_id: this.selectedFieldId,
+      start_date: this.cropStartDate
+    };
+
+    this.planService.addCrop(endpoint, payload).subscribe({
+      next: (response) => {
+        this.isAddCropLoading = false;
+        if (response.success) {
+          this.isCropPaletteOpen = false;
+          this.selectedCrop = null;
+          this.selectedFieldId = null;
+          this.cropStartDate = null;
+          this.refreshPlanData(planId);
+        } else {
+          this.handleOperationError(response.message);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isAddCropLoading = false;
+        this.handleOperationError(this.extractHttpErrorMessage(error));
+      }
+    });
+  }
+
+  confirmRemoveCultivation(cultivation: CultivationData) {
+    if (!this.data) return;
+    const endpoint = this.buildEndpoint('adjust');
+    if (!endpoint) return;
+    const planId = this.data.data.id;
+    this.showOptimizationLock = true;
+
+    this.planService.removeCultivation(endpoint, {
+      moves: [{ allocation_id: cultivation.id, action: 'remove' }]
+    }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.refreshPlanData(planId);
+        } else {
+          this.handleOperationError(response.message);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.handleOperationError(this.extractHttpErrorMessage(error));
+      }
+    });
+  }
+
+  toggleFieldForm() {
+    this.fieldFormVisible = !this.fieldFormVisible;
+    if (!this.fieldFormVisible) {
+      this.newFieldName = '';
+      this.newFieldArea = null;
+    }
+  }
+
+  confirmAddField() {
+    if (!this.data || !this.newFieldName || !this.newFieldArea) return;
+    const endpoint = this.buildEndpoint('add_field');
+    if (!endpoint) return;
+    const planId = this.data.data.id;
+    this.isFieldFormLoading = true;
+    this.showOptimizationLock = true;
+    const payload = {
+      field_name: this.newFieldName,
+      field_area: Number(this.newFieldArea)
+    };
+
+    this.planService.addField(endpoint, payload).subscribe({
+      next: (response) => {
+        this.isFieldFormLoading = false;
+        if (response.success) {
+          this.fieldFormVisible = false;
+          this.newFieldName = '';
+          this.newFieldArea = null;
+          this.refreshPlanData(planId);
+        } else {
+          this.handleOperationError(response.message);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isFieldFormLoading = false;
+        this.handleOperationError(this.extractHttpErrorMessage(error));
+      }
+    });
+  }
+
+  confirmRemoveField(group: FieldGroup) {
+    if (!this.data || group.cultivations.length > 0) return;
+    const endpoint = this.buildEndpoint('remove_field', group.fieldId);
+    if (!endpoint) return;
+    const planId = this.data.data.id;
+    this.showOptimizationLock = true;
+
+    this.planService.removeField(endpoint).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.refreshPlanData(planId);
+        } else {
+          this.handleOperationError(response.message);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.handleOperationError(this.extractHttpErrorMessage(error));
+      }
+    });
+  }
+
+  private refreshPlanData(planId?: number) {
+    const targetPlanId = planId ?? this.data?.data?.id;
+    if (!targetPlanId) {
+      this.showOptimizationLock = false;
+      return;
+    }
+
+    const request$ = this.planType === 'public'
+      ? this.planService.getPublicPlanData(targetPlanId)
+      : this.planService.getPlanData(targetPlanId);
+
+    request$.subscribe({
+      next: (planData) => {
+        if (planData) {
+          this.data = planData;
+          this.updateChart();
+        }
+        this.showOptimizationLock = false;
+        this.scheduleDetectChanges();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.handleOperationError(this.extractHttpErrorMessage(error));
+      }
+    });
+  }
+
+  private buildEndpoint(action: 'adjust' | 'add_crop' | 'add_field' | 'remove_field', fieldId?: number): string | null {
+    const planId = this.data?.data?.id;
+    if (!planId) return null;
+    const prefix = this.planType === 'public'
+      ? '/api/v1/public_plans/cultivation_plans'
+      : '/api/v1/plans/cultivation_plans';
+
+    if (action === 'remove_field') {
+      if (!fieldId) return null;
+      return `${prefix}/${planId}/remove_field/${fieldId}`;
+    }
+
+    return `${prefix}/${planId}/${action}`;
+  }
+
+  private handleOperationError(message?: string) {
+    this.flashMessageService.show({
+      type: 'error',
+      text: message ?? this.translate.instant('plans.gantt.adjust_failed')
+    });
+    this.isAddCropLoading = false;
+    this.isFieldFormLoading = false;
+    this.showOptimizationLock = false;
+    this.scheduleDetectChanges();
   }
 }

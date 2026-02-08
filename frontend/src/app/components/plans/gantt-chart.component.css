@@ -132,3 +132,132 @@
   font-weight: 500;
   margin: 0;
 }
+
+.gantt-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gantt-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.action-button {
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  background: var(--color-primary, #2563eb);
+  color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-button.active {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+}
+
+.crop-palette {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.crop-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.crop-card {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  min-width: 160px;
+  flex: 1 1 160px;
+  text-align: left;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.crop-card.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: translateY(-2px);
+}
+
+.crop-card .crop-name {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.crop-card .crop-variety {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.crop-form,
+.field-form {
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  padding-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.crop-form-row,
+.field-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.crop-form-row label,
+.field-form-row label {
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.crop-form-row select,
+.crop-form-row input,
+.field-form-row input {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  font-size: 14px;
+}
+
+.empty-state {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.field-delete-icon {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cultivation-delete-control {
+  cursor: pointer;
+}

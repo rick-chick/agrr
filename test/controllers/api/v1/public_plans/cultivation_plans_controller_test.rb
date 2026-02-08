@@ -137,6 +137,25 @@ module Api
           assert data['data']['cultivations'].is_a?(Array)
         end
 
+        test "data action exposes reference crops scoped to farm region" do
+          reference_crop = create(:crop, :reference, region: 'jp', name: 'Reference Crop', variety: 'Region Var', area_per_unit: 1.2)
+          create(:crop, :reference, region: 'us')
+
+          get "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/data"
+
+          assert_response :success
+
+          json = JSON.parse(response.body)
+          available_crops = json['data']['available_crops']
+          assert available_crops.is_a?(Array)
+          assert_equal 1, available_crops.size
+          crop_json = available_crops.first
+          assert_equal reference_crop.id, crop_json['id']
+          assert_equal reference_crop.name, crop_json['name']
+          assert_equal reference_crop.variety, crop_json['variety']
+          assert_equal reference_crop.area_per_unit, crop_json['area_per_unit']
+        end
+
         test "data アクションで存在しないIDの場合は404を返す" do
           get "/api/v1/public_plans/cultivation_plans/99999/data"
 

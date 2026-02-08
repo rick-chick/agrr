@@ -102,6 +102,26 @@ module Api
           assert json['data'].present?
           assert json['data']['id'].present?
         end
+
+        test "data action exposes available crops for current user" do
+          available_crop = create(:crop, :user_owned, user: @user, name: 'Available Crop', variety: 'Trace Var', area_per_unit: 0.75)
+          reference_crop = create(:crop, :reference, region: 'jp')
+          create(:crop, :user_owned, user: create(:user))
+
+          get "/api/v1/plans/cultivation_plans/#{@cultivation_plan.id}/data",
+              headers: { "Accept" => "application/json" }
+
+          assert_response :success
+
+          json = JSON.parse(response.body)
+          available_crops = json['data']['available_crops']
+          assert available_crops.is_a?(Array)
+          available_ids = available_crops.map { |c| c['id'] }
+          assert_equal 2, available_ids.uniq.size
+          assert_includes available_ids, @crop.id
+          assert_includes available_ids, available_crop.id
+          assert_not_includes available_ids, reference_crop.id
+        end
         
         test "adjust endpoint returns 500 when calculated_planning_start_date fails with includes" do
           # includesでロードされたコレクションに対してpluckを呼び出すとエラーが発生する可能性がある
