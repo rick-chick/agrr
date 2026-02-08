@@ -190,25 +190,56 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
           const args = Array.from(arguments);
           const request = args[0];
           const url = typeof request === "string" ? request : (request && request.url);
+          const requestInit = args[1] || {};
           return originalFetch.apply(this, args).then(function(response) {
             if (url && url.includes("/add_crop")) {
               const record = { url: url, status: response.status };
+              const requestBodyPromise = parseRequestBody(request, requestInit);
+              const pushWithRequestBody = function() {
+                requestBodyPromise.then(function(bodyText) {
+                  record.request_body = parseJson(bodyText);
+                  window.__addCropCalls.push(record);
+                });
+              };
               try {
                 response.clone().json().then(function(data) {
                   record.data = data;
-                  window.__addCropCalls.push(record);
+                  pushWithRequestBody();
                 }).catch(function(parseError) {
                   record.data = { parse_error: parseError && parseError.message };
-                  window.__addCropCalls.push(record);
+                  pushWithRequestBody();
                 });
               } catch (cloneError) {
                 record.data = { clone_error: cloneError && cloneError.message };
-                window.__addCropCalls.push(record);
+                pushWithRequestBody();
               }
             }
             return response;
           });
         };
+
+        function parseRequestBody(request, init) {
+          if (typeof request === "string") {
+            return Promise.resolve(init && init.body);
+          }
+          if (request && typeof request.clone === "function") {
+            return request.clone().text().catch(function() {
+              return null;
+            });
+          }
+          return Promise.resolve(null);
+        }
+
+        function parseJson(text) {
+          if (!text) {
+            return null;
+          }
+          try {
+            return JSON.parse(text);
+          } catch (error) {
+            return { parse_error: error && error.message, raw: text };
+          }
+        }
       })();
     JS
   end

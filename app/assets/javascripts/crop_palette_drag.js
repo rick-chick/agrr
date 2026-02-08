@@ -457,6 +457,19 @@ function daysBetween(date1, date2) {
   return Math.max(result, 1);
 }
 
+// 日付を ISO 形式 (YYYY-MM-DD) 文字列にフォーマット
+function formatAsIsoDate(value) {
+  if (!value) {
+    return null;
+  }
+  const targetDate = typeof value === 'string' ? new Date(value) : value;
+  if (!targetDate || isNaN(targetDate.getTime())) {
+    console.warn('⚠️ formatAsIsoDate に無効な日付が渡されました:', value);
+    return null;
+  }
+  return targetDate.toISOString().split('T')[0];
+}
+
 // 作物種類の上限
 if (typeof window.MAX_CROP_TYPES === 'undefined') {
   window.MAX_CROP_TYPES = 5;
@@ -540,11 +553,24 @@ function addCropToSchedule(cropData, dropInfo) {
   
   const url = baseUrl;
 
+  const displayStartDateValue = ganttState.displayStartDate || ganttState.planStartDate;
+  const displayEndDateValue = ganttState.displayEndDate || ganttState.planEndDate;
+  const displayStartDateStr = formatAsIsoDate(displayStartDateValue);
+  const displayEndDateStr = formatAsIsoDate(displayEndDateValue);
+
   const requestData = {
     crop_id: cropData.crop_id,
     field_id: dropInfo.field_id,
     start_date: dropInfo.start_date
   };
+
+  if (displayStartDateStr) {
+    requestData.display_start_date = displayStartDateStr;
+  }
+
+  if (displayEndDateStr) {
+    requestData.display_end_date = displayEndDateStr;
+  }
   
   const requestTimestamp = new Date().toISOString();
   console.log('📤 [REQUEST] 作物追加リクエスト送信:', requestTimestamp);

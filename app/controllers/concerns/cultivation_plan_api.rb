@@ -44,7 +44,11 @@ module CultivationPlanApi
     )
     
     # candidatesで最適な開始日を取得
-    best_candidate = find_best_candidate_for_crop(crop, params[:field_id])
+    display_range = display_range_from_params
+    unless display_range.empty?
+      Rails.logger.info "📅 [Add Crop] Display range from UI: start=#{display_range[:start_date]} end=#{display_range[:end_date]}"
+    end
+    best_candidate = find_best_candidate_for_crop(crop, params[:field_id], display_range: display_range)
     
     unless best_candidate
       plan_crop.destroy!
@@ -407,7 +411,7 @@ module CultivationPlanApi
   # @param crop [Crop] 追加する作物
   # @param field_id [String, Integer] 指定されたほ場ID
   # @return [Hash, nil] 最適な候補（field_id, start_date 等）、見つからない場合はnil
-  def find_best_candidate_for_crop(crop, field_id)
+  def find_best_candidate_for_crop(crop, field_id, display_range: {})
     # preloaded planを取得
     cultivation_plan = CultivationPlan.includes(
       :cultivation_plan_fields,
@@ -424,7 +428,14 @@ module CultivationPlanApi
     # candidatesの計画期間: 今日から開始（過去日付を提案させない）
     # effective_planning_periodは既存作付が過去を含むため、candidatesには使わない
     candidates_start = Date.current
-    candidates_end = cultivation_plan.calculated_planning_end_date || (candidates_start + 2.years).end_of_year
+    base_candidates_end = cultivation_plan.calculated_planning_end_date || (candidates_start + 2.years).end_of_year
+    display_start_date = display_range[:start_date]
+    display_end_date = display_range[:end_date]
+    candidates_end = [base_candidates_end, display_end_date].compact.max
+
+    if display_start_date || display_end_date
+      Rails.logger.info "📅 [Candidates] UI表示範囲: start=#{display_start_date || 'N/A'} end=#{display_end_date || 'N/A'}"
+    end
 
     # 天気データを取得
     farm = cultivation_plan.farm
@@ -439,10 +450,11 @@ module CultivationPlanApi
       farm: farm
     )
 
-    weather_data = get_or_predict_weather(weather_prediction_service, cultivation_plan, candidates_end)
+    target_end_date = display_end_date || candidates_end
+    weather_data = get_or_predict_weather(weather_prediction_service, cultivation_plan, target_end_date)
     return nil unless weather_data
 
-    Rails.logger.info "📅 [Candidates] Planning period: #{candidates_start} ~ #{candidates_end}"
+    Rails.logger.info "📅 [Candidates] Planning period: #{candidates_start} ~ #{candidates_end} (weather_target_end=#{target_end_date})"
 
     # 1回目: candidatesを実行
     candidates = run_candidates(
@@ -454,37 +466,13 @@ module CultivationPlanApi
       return select_best_candidate(candidates, field_id)
     end
 
-    # 候補なし → 天気予測を12ヶ月延長してリトライ
-    Rails.logger.info "🔮 [Candidates] No candidates found, extending weather prediction by 12 months"
-    extended_end = candidates_end + 12.months
-
-    weather_info = weather_prediction_service.predict_for_cultivation_plan(
-      cultivation_plan,
-      target_end_date: extended_end
-    )
-    extended_weather_data = weather_info[:data]
-    
-    # 古い保存形式（ネスト構造）の場合は修正
-    if extended_weather_data['data'].is_a?(Hash) && extended_weather_data['data']['data'].is_a?(Array)
-      extended_weather_data = extended_weather_data['data']
-    end
-
-    # 2回目: 拡張した天気データでcandidatesを実行
-    candidates = run_candidates(
-      current_allocation, fields, crops, crop, extended_weather_data,
-      candidates_start, extended_end, interaction_rules, field_id
-    )
-
-    if candidates.present?
-      return select_best_candidate(candidates, field_id)
-    end
-
-    Rails.logger.warn "⚠️ [Candidates] No candidates found even after extending weather prediction"
+    Rails.logger.warn "⚠️ [Candidates] No candidates found for target_end_date=#{target_end_date}"
     nil
   end
 
   # 天気データを取得（既存予測 or 新規予測）
   def get_or_predict_weather(weather_prediction_service, cultivation_plan, target_end_date)
+    Rails.logger.info "🔍 [Candidates] Weather target end date: #{target_end_date || 'N/A'}"
     existing = weather_prediction_service.get_existing_prediction(
       target_end_date: target_end_date,
       cultivation_plan: cultivation_plan
@@ -561,6 +549,26 @@ module CultivationPlanApi
 
     # 利益が最大の候補を選択
     pool.max_by { |c| c[:profit].to_f }
+  end
+
+  def display_range_from_params
+    range = {}
+    if (start_date = parse_display_date(params[:display_start_date]))
+      range[:start_date] = start_date
+    end
+    if (end_date = parse_display_date(params[:display_end_date]))
+      range[:end_date] = end_date
+    end
+    range
+  end
+
+  def parse_display_date(value)
+    return nil unless value.present?
+
+    Date.iso8601(value)
+  rescue ArgumentError => e
+    Rails.logger.warn "⚠️ [Add Crop] 無効な表示範囲日付: #{value.inspect} (#{e.class})"
+    nil
   end
 
   # サブクラスで実装すべきメソッド
