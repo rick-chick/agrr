@@ -5,7 +5,7 @@ require 'test_helper'
 class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
   test 'on_success calls view.render_response with ok status and plan_id' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 123)
 
@@ -27,7 +27,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
 
   test 'on_success logs plan_id' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 456)
 
@@ -42,7 +42,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
 
   test 'on_success executes job chain when view supports it' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 789)
 
@@ -64,7 +64,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
 
   test 'on_failure calls view.render_response with not_found status when Farm not found' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Dtos::ErrorDto.new('Farm not found')
 
@@ -82,7 +82,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
 
   test 'on_failure calls view.render_response with unprocessable_entity status for validation errors' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Dtos::ErrorDto.new('No crops selected')
 
@@ -100,7 +100,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
 
   test 'on_failure calls view.render_response with internal_server_error status for unexpected errors' do
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     failure_dto = 'Some error string'
 

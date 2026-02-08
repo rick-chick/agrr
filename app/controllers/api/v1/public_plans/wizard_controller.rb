@@ -50,7 +50,7 @@ module Api
           )
 
           # Presenter と Gateway を準備
-          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
+          presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
           gateway = Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new
 
           # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
