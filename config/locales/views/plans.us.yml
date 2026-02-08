@@ -30,6 +30,8 @@ us:
       cannot_remove_last_field: "Cannot remove the last field."
       cannot_remove_field_with_cultivations: "This field contains cultivation schedules. Please delete the crops first."
       field_not_found: "Field not found."
+      no_candidates_found: "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found."
+      prediction_data_incomplete: "Weather prediction data is incomplete. Please try again later."
 
     gantt:
       controls:

@@ -30,6 +30,8 @@ in:
       cannot_remove_last_field: "अंतिम खेत नहीं हटाया जा सकता।"
       cannot_remove_field_with_cultivations: "इस खेत में खेती का कार्यक्रम है। कृपया पहले फसलें हटाएं।"
       field_not_found: "खेत नहीं मिला।"
+      no_candidates_found: "इस फसल के लिए कोई इष्टतम रोपण कार्यक्रम नहीं मिला। मौसम डेटा सीमा बढ़ाई गई लेकिन कोई उम्मीदवार नहीं मिले।"
+      prediction_data_incomplete: "मौसम पूर्वानुमान डेटा अधूरा है। कृपया कुछ समय बाद पुनः प्रयास करें।"
 
     gantt:
       controls:

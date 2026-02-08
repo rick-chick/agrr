@@ -31,6 +31,9 @@ us:
       create_failed: "Failed to create plan: %{errors}"
       not_found: "Crop plan not found."
       schedule_generation_failed: "Failed to register work schedule"
+      crop_not_found: "Crop not found."
+      no_candidates_found: "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found."
+      prediction_data_incomplete: "Weather prediction data is incomplete. Please try again later."
     
     save:
       button: "Save to My Plans"
