@@ -11,8 +11,17 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent],
   template: `
-    <nav class="app-nav" aria-label="メインナビゲーション">
+    <nav class="app-nav" aria-label="メインナビゲーション" [attr.data-menu-open]="isMenuOpen">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
+      <button
+        class="menu-toggle"
+        type="button"
+        [attr.aria-expanded]="isMenuOpen"
+        [attr.aria-label]="isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'"
+        (click)="toggleMenu()"
+      >
+        <span class="menu-toggle-icon" aria-hidden="true"></span>
+      </button>
       <ul class="nav-links" role="list">
         @if (user) {
           <li><a class="nav-link" routerLink="/plans" routerLinkActive="is-active">{{ 'nav.plan' | translate }}</a></li>
@@ -64,6 +73,13 @@ export class NavbarComponent {
 
   /** 画面完結: どれか一つだけ開く（interactor 不要） */
   openDropdownId: 'masters' | 'more' | null = null;
+
+  /** モバイルメニューの開閉状態 */
+  isMenuOpen = false;
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
 
   readonly mastersItems: { link: string; labelKey: string }[] = [
     { link: '/farms', labelKey: 'nav.farms' },
