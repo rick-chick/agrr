@@ -130,6 +130,19 @@ class AgrrService
     execute_command(args)
   end
 
+  # Generate candidate suggestions
+  def optimize_candidates(allocation:, fields_file:, crops_file:, target_crop:, planning_start:, planning_end:, weather_file:, output:, format: 'json', interaction_rules_file: nil)
+    ensure_daemon_running!
+
+    args = ['optimize', 'candidates', '--allocation', allocation, '--fields-file', fields_file,
+            '--crops-file', crops_file, '--target-crop', target_crop,
+            '--planning-start', planning_start, '--planning-end', planning_end,
+            '--weather-file', weather_file, '--output', output, '--format', format]
+    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
+
+    execute_command(args)
+  end
+
   # Adjust allocation
   def optimize_adjust(current_allocation:, moves:, weather_file:, fields_file:, crops_file:, planning_start:, planning_end:, format: 'json', interaction_rules_file: nil)
     ensure_daemon_running!

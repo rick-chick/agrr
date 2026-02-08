@@ -440,12 +440,11 @@ module CultivationPlanApi
     crops = build_crops_config(cultivation_plan)
     interaction_rules = build_interaction_rules(cultivation_plan)
 
-    # candidatesの計画期間: 今日から開始（過去日付を提案させない）
-    # effective_planning_periodは既存作付が過去を含むため、candidatesには使わない
-    candidates_start = Date.current
-    base_candidates_end = cultivation_plan.calculated_planning_end_date || (candidates_start + 2.years).end_of_year
     display_start_date = display_range[:start_date]
     display_end_date = display_range[:end_date]
+    fallback_candidates_start = cultivation_plan.calculated_planning_start_date || Date.current
+    candidates_start = display_start_date || fallback_candidates_start
+    base_candidates_end = cultivation_plan.calculated_planning_end_date || (candidates_start + 2.years).end_of_year
     candidates_end = [base_candidates_end, display_end_date].compact.max
     target_end_date = display_end_date || candidates_end
 
@@ -456,7 +455,7 @@ module CultivationPlanApi
       Rails.logger.info "📅 [Candidates] UI表示範囲: not provided"
     end
     Rails.logger.info "📋 [Candidates] UI filters: #{ui_filters.present? ? ui_filters : 'none'}"
-    Rails.logger.info "📅 [Candidates] Candidate window: start=#{candidates_start} end=#{candidates_end} target_end_date=#{target_end_date}"
+    Rails.logger.info "📅 [Candidates] Candidate window: start=#{candidates_start} (UI start=#{display_start_date || 'N/A'}) end=#{candidates_end} target_end_date=#{target_end_date}"
 
     # 天気データを取得
     farm = cultivation_plan.farm

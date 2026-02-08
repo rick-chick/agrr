@@ -2,9 +2,6 @@
 
 require 'test_helper'
 
-# Load the presenter class
-require_relative '../../../../app/presenters/api/public_plan/public_plan_create_presenter'
-
 class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
   test 'on_success calls view.render_response with ok status and plan_id' do
     view_mock = mock
