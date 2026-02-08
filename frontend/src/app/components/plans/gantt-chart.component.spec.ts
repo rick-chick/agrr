@@ -453,8 +453,6 @@ describe('GanttChartComponent', () => {
         area_per_unit: 5
       };
       component.selectedCrop = crop;
-      component.selectedFieldId = 1;
-      component.cropStartDate = '2026-02-01';
 
       planService.addCrop = vi.fn().mockReturnValue(of({ success: true }));
       const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
@@ -463,7 +461,7 @@ describe('GanttChartComponent', () => {
 
       expect(planService.addCrop).toHaveBeenCalledWith(
         '/api/v1/plans/cultivation_plans/7/add_crop',
-        { crop_id: 99, field_id: 1, start_date: '2026-02-01' }
+        { crop_id: 99 }
       );
       expect(refreshSpy).toHaveBeenCalledWith(7);
       refreshSpy.mockRestore();

@@ -94,38 +94,7 @@ interface TimeScale {
             <p class="empty-state">{{ 'js.gantt.crop_palette_no_crops' | translate }}</p>
           }
 
-          @if (selectedCrop) {
-            <div class="crop-form">
-              <div class="crop-form-row">
-                <label>{{ 'js.gantt.crop_palette_select_field' | translate }}</label>
-                <select [(ngModel)]="selectedFieldId" name="selectedFieldId">
-                  @if (data?.data?.fields && data!.data.fields.length > 0) {
-                    @for (field of data!.data.fields; track field.id) {
-                      <option [ngValue]="field.id">{{ field.name }}</option>
-                    }
-                  }
-                </select>
-              </div>
-              <div class="crop-form-row">
-                <label>{{ 'js.gantt.crop_palette_select_date' | translate }}</label>
-                <input
-                  type="date"
-                  [(ngModel)]="cropStartDate"
-                  name="cropStartDate" />
-              </div>
-              <button
-                class="action-button"
-                type="button"
-                (click)="confirmAddCrop()"
-                [disabled]="isAddCropLoading || !selectedFieldId || !cropStartDate">
-                @if (!isAddCropLoading) {
-                  <span>{{ 'js.gantt.crop_palette_submit' | translate }}</span>
-                } @else {
-                  <span>{{ 'js.gantt.crop_palette_adding' | translate }}</span>
-                }
-              </button>
-            </div>
-          }
+
         </div>
       }
 
@@ -315,7 +284,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   timeScale: TimeScale = { unit: TimeUnit.Month, label: '月', interval: 1 };
   isCropPaletteOpen = false;
   selectedCrop: AvailableCropData | null = null;
-  selectedFieldId: number | null = null;
   cropStartDate: string | null = null;
   isAddCropLoading = false;
 
@@ -1220,36 +1188,27 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.isCropPaletteOpen = !this.isCropPaletteOpen;
     if (this.isCropPaletteOpen) {
       this.cropStartDate = this.data?.data?.planning_start_date ?? this.cropStartDate;
-      this.selectedFieldId = this.data?.data?.fields?.[0]?.id ?? this.selectedFieldId;
       this.selectedCrop = null;
     } else {
       this.selectedCrop = null;
       this.cropStartDate = null;
-      this.selectedFieldId = null;
     }
   }
 
   selectCrop(crop: AvailableCropData) {
     this.selectedCrop = crop;
-    if (!this.selectedFieldId) {
-      this.selectedFieldId = this.data?.data?.fields?.[0]?.id ?? null;
-    }
-    if (!this.cropStartDate) {
-      this.cropStartDate = this.data?.data?.planning_start_date ?? '';
-    }
+    this.confirmAddCrop();
   }
 
   confirmAddCrop() {
-    if (!this.data || !this.selectedCrop || !this.selectedFieldId || !this.cropStartDate) return;
+    if (!this.data || !this.selectedCrop) return;
     const endpoint = this.buildEndpoint('add_crop');
     if (!endpoint) return;
     const planId = this.data.data.id;
     this.isAddCropLoading = true;
     this.showOptimizationLock = true;
     const payload = {
-      crop_id: this.selectedCrop.id,
-      field_id: this.selectedFieldId,
-      start_date: this.cropStartDate
+      crop_id: this.selectedCrop.id
     };
 
     this.planService.addCrop(endpoint, payload).subscribe({
@@ -1258,7 +1217,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         if (response.success) {
           this.isCropPaletteOpen = false;
           this.selectedCrop = null;
-          this.selectedFieldId = null;
           this.cropStartDate = null;
           this.refreshPlanData(planId);
         } else {
