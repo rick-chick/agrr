@@ -45,10 +45,25 @@ module CultivationPlanApi
     
     # candidatesで最適な開始日を取得
     display_range = display_range_from_params
-    unless display_range.empty?
-      Rails.logger.info "📅 [Add Crop] Display range from UI: start=#{display_range[:start_date]} end=#{display_range[:end_date]}"
+    display_start_date = display_range[:start_date]
+    display_end_date = display_range[:end_date]
+    if display_start_date || display_end_date
+      Rails.logger.info "📅 [Add Crop] Display range from UI: start=#{display_start_date} end=#{display_end_date}"
+    else
+      Rails.logger.info "📅 [Add Crop] Display range from UI: not provided"
     end
-    best_candidate = find_best_candidate_for_crop(crop, params[:field_id], display_range: display_range)
+
+    begin
+      best_candidate = find_best_candidate_for_crop(crop, params[:field_id], display_range: display_range)
+    rescue WeatherPredictionService::WeatherDataNotFoundError, WeatherPredictionService::InsufficientPredictionDataError => e
+      plan_crop.destroy! if plan_crop.persisted?
+      Rails.logger.warn "⚠️ [Add Crop] Prediction data incomplete: #{e.message}"
+      return render json: {
+        success: false,
+        message: i18n_t('errors.prediction_data_incomplete'),
+        technical_details: e.message
+      }, status: :service_unavailable
+    end
     
     unless best_candidate
       plan_crop.destroy!
@@ -432,10 +447,16 @@ module CultivationPlanApi
     display_start_date = display_range[:start_date]
     display_end_date = display_range[:end_date]
     candidates_end = [base_candidates_end, display_end_date].compact.max
+    target_end_date = display_end_date || candidates_end
 
+    ui_filters = ui_filter_context
     if display_start_date || display_end_date
       Rails.logger.info "📅 [Candidates] UI表示範囲: start=#{display_start_date || 'N/A'} end=#{display_end_date || 'N/A'}"
+    else
+      Rails.logger.info "📅 [Candidates] UI表示範囲: not provided"
     end
+    Rails.logger.info "📋 [Candidates] UI filters: #{ui_filters.present? ? ui_filters : 'none'}"
+    Rails.logger.info "📅 [Candidates] Candidate window: start=#{candidates_start} end=#{candidates_end} target_end_date=#{target_end_date}"
 
     # 天気データを取得
     farm = cultivation_plan.farm
@@ -450,7 +471,6 @@ module CultivationPlanApi
       farm: farm
     )
 
-    target_end_date = display_end_date || candidates_end
     weather_data = get_or_predict_weather(weather_prediction_service, cultivation_plan, target_end_date)
     return nil unless weather_data
 
@@ -477,9 +497,17 @@ module CultivationPlanApi
       target_end_date: target_end_date,
       cultivation_plan: cultivation_plan
     )
+
+    weather_prediction_status = nil
+    weather_data = nil
+
     if existing
+      weather_prediction_status = 'cache_hit'
+      Rails.logger.info "📡 [Candidates] WeatherPredictionService cache hit (target_end_date=#{target_end_date || 'N/A'})"
       weather_data = existing[:data]
     else
+      weather_prediction_status = 'requesting_prediction'
+      Rails.logger.info "📡 [Candidates] WeatherPredictionService cache miss - invoking prediction (target_end_date=#{target_end_date || 'N/A'})"
       weather_info = weather_prediction_service.predict_for_cultivation_plan(
         cultivation_plan,
         target_end_date: target_end_date
@@ -488,11 +516,17 @@ module CultivationPlanApi
     end
 
     # 古い保存形式（ネスト構造）の場合は修正
-    if weather_data['data'].is_a?(Hash) && weather_data['data']['data'].is_a?(Array)
+    if weather_data.is_a?(Hash) && weather_data['data'].is_a?(Hash) && weather_data['data']['data'].is_a?(Array)
       weather_data = weather_data['data']
     end
 
+    data_days = weather_data.is_a?(Hash) ? Array(weather_data['data']).count : 0
+    Rails.logger.info "📡 [Candidates] WeatherPredictionService result: status=#{weather_prediction_status} days=#{data_days}"
+
     weather_data
+  rescue WeatherPredictionService::WeatherDataNotFoundError, WeatherPredictionService::InsufficientPredictionDataError => e
+    Rails.logger.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
+    raise
   rescue => e
     Rails.logger.error "❌ [Candidates] Failed to get weather data: #{e.message}"
     nil
@@ -549,6 +583,13 @@ module CultivationPlanApi
 
     # 利益が最大の候補を選択
     pool.max_by { |c| c[:profit].to_f }
+  end
+
+  def ui_filter_context
+    filter_keys = %i[display_start_date display_end_date filters ui_filters field_id crop_id]
+    filter_keys.each_with_object({}) do |key, context|
+      context[key] = params[key] if params.key?(key)
+    end
   end
 
   def display_range_from_params

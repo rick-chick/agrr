@@ -32,6 +32,9 @@ ja:
       create_failed: "計画作成に失敗しました: %{errors}"
       not_found: "作付け計画が見つかりません。"
       schedule_generation_failed: "作業予定の登録に失敗しました"
+      crop_not_found: "作物が見つかりません。"
+      no_candidates_found: "この作物の最適な作付け日程が見つかりませんでした。天気データの範囲を拡張しましたが、候補が得られませんでした。"
+      prediction_data_incomplete: "天気予測データが不足しているため処理を完了できません。しばらくしてから再度お試しください。"
     
     save:
       button: "マイプランに保存"

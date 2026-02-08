@@ -4,6 +4,7 @@
 # CultivationPlanやFarmから独立して天気予測を実行する
 class WeatherPredictionService
   class WeatherDataNotFoundError < StandardError; end
+  class InsufficientPredictionDataError < StandardError; end
   
   BENCHMARK_ENABLED = ENV.fetch("WEATHER_BENCHMARK", "false") != "false"
   
@@ -150,6 +151,7 @@ class WeatherPredictionService
     prediction_start_date = (training_end_date + 1.day > Date.today) ? training_end_date + 1.day : Date.today
     
     Rails.logger.info "✅ [WeatherPrediction] Weather data prepared successfully"
+    Rails.logger.info "🧮 [WeatherPrediction] Prediction range prepared: start=#{prediction_start_date} end=#{target_end_date}"
     
     {
       data: merged_data,
@@ -208,9 +210,10 @@ class WeatherPredictionService
     # 新規予測を実行
     Rails.logger.info "🔮 [WeatherPrediction] Generating new prediction"
     training_end_date = Date.current - 2.days
+    prediction_start_date = training_end_date + 1.day
     prediction_days = (target_end_date - training_end_date).to_i
     
-    Rails.logger.info "🔮 [WeatherPrediction] Predicting weather from #{training_end_date + 1.day} until #{target_end_date} (#{prediction_days} days)"
+    Rails.logger.info "🔮 [WeatherPrediction] Predicting weather from #{prediction_start_date} until #{target_end_date} (#{prediction_days} days)"
     
     future = @prediction_gateway.predict(
       historical_data: training_formatted,
@@ -218,6 +221,16 @@ class WeatherPredictionService
       model: 'lightgbm'
     )
     
+    future_data = Array(future['data'])
+    actual_prediction_days = future_data.count
+    Rails.logger.info "🧮 [WeatherPrediction] Prediction days: expected=#{prediction_days} returned=#{actual_prediction_days}"
+
+    if actual_prediction_days < prediction_days
+      message = "Expected #{prediction_days} days from #{prediction_start_date} to #{target_end_date}, but received #{actual_prediction_days} days."
+      Rails.logger.warn "⚠️ [WeatherPrediction] #{message}"
+      raise InsufficientPredictionDataError, message
+    end
+
     Rails.logger.info "✅ [WeatherPrediction] Prediction completed for next #{prediction_days} days"
     future
   end
@@ -306,12 +319,13 @@ class WeatherPredictionService
       return nil
     end
 
-    Rails.logger.info "✅ [WeatherPrediction] Using cached prediction data (prediction_end: #{prediction_end}, target_end_date: #{target_end_date})"
+    cached_prediction_days = compute_prediction_days(prediction_start, prediction_end || target_end_date)
+    Rails.logger.info "✅ [WeatherPrediction] Using cached prediction data (#{cached_prediction_days} days, prediction_end: #{prediction_end}, target_end_date: #{target_end_date})"
     {
       data: payload,
       target_end_date: target_end_date || prediction_end,
       prediction_start_date: payload['prediction_start_date'],
-      prediction_days: compute_prediction_days(prediction_start, prediction_end || target_end_date)
+      prediction_days: cached_prediction_days
     }
   end
 
@@ -339,7 +353,7 @@ class WeatherPredictionService
 
     return nil if filtered.empty?
 
-    Rails.logger.info "✅ [WeatherPrediction] Reusing cached prediction data (#{filtered.count} days)"
+    Rails.logger.info "✅ [WeatherPrediction] Reusing cached prediction data (#{filtered.count} days) for target_end_date=#{target_end_date || 'N/A'}"
     { 'data' => filtered }
   end
 

@@ -33,6 +33,8 @@ ja:
       cannot_remove_last_field: "最後の圃場は削除できません。"
       cannot_remove_field_with_cultivations: "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。"
       field_not_found: "圃場が見つかりません。"
+      no_candidates_found: "この作物の最適な作付け日程が見つかりませんでした。天気データの範囲を拡張しましたが、候補が得られませんでした。"
+      prediction_data_incomplete: "天気予測データが不足しているため処理を完了できません。しばらくしてから再度お試しください。"
 
     gantt:
       controls:
