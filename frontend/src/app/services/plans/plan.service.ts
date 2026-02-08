@@ -50,9 +50,11 @@ export class PlanService {
   }
 }
 
-type AddCropRequest = {
+export type AddCropRequest = {
   crop_id: number;
   field_id?: number;
+  display_start_date?: string;
+  display_end_date?: string;
 };
 
 type AddCropResponse = {

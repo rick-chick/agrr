@@ -203,6 +203,8 @@ module Agrr
         execute_optimize_allocate(args[1..-1])
       when 'adjust'
         execute_optimize_adjust(args[1..-1])
+      when 'candidates'
+        execute_optimize_candidates(args[1..-1])
       else
         raise ExecutionError, "Unsupported optimize subcommand: #{subcommand}"
       end
@@ -366,6 +368,72 @@ module Agrr
       )
     end
     
+    def execute_optimize_candidates(args)
+      allocation = nil
+      fields_file = nil
+      crops_file = nil
+      target_crop = nil
+      planning_start = nil
+      planning_end = nil
+      weather_file = nil
+      output = nil
+      format = 'json'
+      interaction_rules_file = nil
+
+      i = 0
+      while i < args.length
+        case args[i]
+        when '--allocation'
+          allocation = args[i + 1]
+          i += 2
+        when '--fields-file'
+          fields_file = args[i + 1]
+          i += 2
+        when '--crops-file'
+          crops_file = args[i + 1]
+          i += 2
+        when '--target-crop'
+          target_crop = args[i + 1]
+          i += 2
+        when '--planning-start'
+          planning_start = args[i + 1]
+          i += 2
+        when '--planning-end'
+          planning_end = args[i + 1]
+          i += 2
+        when '--weather-file'
+          weather_file = args[i + 1]
+          i += 2
+        when '--output'
+          output = args[i + 1]
+          i += 2
+        when '--format'
+          format = args[i + 1]
+          i += 2
+        when '--interaction-rules-file'
+          interaction_rules_file = args[i + 1]
+          i += 2
+        else
+          i += 1
+        end
+      end
+
+      raise ArgumentError, "Required parameters missing" unless allocation && fields_file && crops_file && target_crop && planning_start && planning_end && weather_file && output
+
+      @agrr_service.optimize_candidates(
+        allocation: allocation,
+        fields_file: fields_file,
+        crops_file: crops_file,
+        target_crop: target_crop,
+        planning_start: planning_start,
+        planning_end: planning_end,
+        weather_file: weather_file,
+        output: output,
+        format: format,
+        interaction_rules_file: interaction_rules_file
+      )
+    end
+
     def execute_predict_command(args)
       input = nil
       output = nil
