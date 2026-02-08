@@ -98,6 +98,11 @@ Rails.application.configure do
   allowed_hosts = ENV.fetch("ALLOWED_HOSTS", "").split(",").reject(&:empty?)
   config.hosts.concat(allowed_hosts) unless allowed_hosts.empty?
 
+  # Exclude health check path from HostAuthorization
+  # Cloud Run startup probes use the container's internal IP as the Host header,
+  # which doesn't match any allowed hosts. /up must always be accessible.
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
   # Use Solid Cable for Action Cable (SQLite-based)
   # Note: Action Cable adapter should be configured in config/cable.yml instead
   # config.action_cable.adapter = :solid_cable
