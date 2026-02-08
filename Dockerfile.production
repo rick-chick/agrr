@@ -35,12 +35,6 @@ RUN bundle config set --local deployment 'true' && \
 COPY package.json ./
 RUN npm install
 
-# Build Angular frontend
-COPY frontend/package.json frontend/package-lock.json* ./frontend/
-RUN cd frontend && npm install
-COPY frontend/ ./frontend/
-RUN cd frontend && npm run build -- --output-path=/app/public
-
 # Copy the rest of the application
 COPY . .
 
