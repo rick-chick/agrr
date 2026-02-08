@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanService } from '../../services/plans/plan.service';
@@ -446,6 +447,8 @@ describe('GanttChartComponent', () => {
     });
 
     it('should add a crop via planService and refresh data', () => {
+      component.visibleStartDate = new Date('2026-02-01');
+      component.visibleEndDate = new Date('2026-08-31');
       const crop: AvailableCropData = {
         id: 99,
         name: 'Sweet Corn',
@@ -461,7 +464,11 @@ describe('GanttChartComponent', () => {
 
       expect(planService.addCrop).toHaveBeenCalledWith(
         '/api/v1/plans/cultivation_plans/7/add_crop',
-        { crop_id: 99 }
+        {
+          crop_id: 99,
+          display_start_date: '2026-02-01',
+          display_end_date: '2026-08-31'
+        }
       );
       expect(refreshSpy).toHaveBeenCalledWith(7);
       refreshSpy.mockRestore();
@@ -518,6 +525,159 @@ describe('GanttChartComponent', () => {
       );
       expect(refreshSpy).toHaveBeenCalledWith(7);
       refreshSpy.mockRestore();
+    });
+  });
+
+  describe('visible range navigation', () => {
+    beforeEach(() => {
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: []
+        }
+      } as any;
+    });
+
+    it('allows month shifts before and after the stored plan bounds', () => {
+      const planStart = new Date('2026-01-01');
+      const planEnd = new Date('2026-12-31');
+      component['initializeVisibleRange'](planStart, planEnd);
+
+      expect(component.visibleStartDate?.getTime()).toBe(planStart.getTime());
+      expect(component.canShiftRangeBackward).toBe(true);
+      expect(component.canShiftRangeForward).toBe(true);
+
+      component.shiftVisibleRange(-1);
+      const shiftedBack = component.visibleStartDate!;
+      expect(shiftedBack.getFullYear()).toBe(2025);
+      expect(shiftedBack.getMonth()).toBe(11);
+      expect(component.canShiftRangeBackward).toBe(true);
+      expect(component.canShiftRangeForward).toBe(true);
+
+      component.shiftVisibleRange(36);
+      const shiftedForward = component.visibleStartDate!;
+      expect(shiftedForward.getTime()).toBeGreaterThan(planEnd.getTime());
+      expect(component.canShiftRangeForward).toBe(true);
+    });
+  });
+
+  describe('visible range persistence', () => {
+    it('keeps the user visible range when the plan end extends', () => {
+      const previousStart = new Date('2026-02-01');
+      const previousEnd = new Date('2026-08-31');
+      component.visibleStartDate = previousStart;
+      component.visibleEndDate = previousEnd;
+      component['lastPlanStartTime'] = new Date('2026-01-01').getTime();
+      component['lastPlanEndTime'] = new Date('2026-12-31').getTime();
+
+      const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+      component['ensureVisibleRange'](new Date('2026-01-01'), new Date('2027-12-31'));
+
+      expect(initializeSpy).not.toHaveBeenCalled();
+      expect(component.visibleStartDate?.getTime()).toBe(previousStart.getTime());
+      expect(component.visibleEndDate?.getTime()).toBe(previousEnd.getTime());
+      expect(component['lastPlanEndTime']).toBe(new Date('2027-12-31').getTime());
+      initializeSpy.mockRestore();
+    });
+
+    it('resets the visible range when it falls outside new plan bounds', () => {
+      const previousStart = new Date('2026-02-01');
+      const previousEnd = new Date('2026-08-31');
+      component.visibleStartDate = previousStart;
+      component.visibleEndDate = previousEnd;
+      component['lastPlanStartTime'] = new Date('2026-01-01').getTime();
+      component['lastPlanEndTime'] = new Date('2026-12-31').getTime();
+
+      const newPlanStart = new Date('2027-01-01');
+      const newPlanEnd = new Date('2027-12-31');
+      const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+
+      component['ensureVisibleRange'](newPlanStart, newPlanEnd);
+
+      expect(initializeSpy).toHaveBeenCalledTimes(1);
+      expect(component.visibleStartDate?.getTime()).toBe(newPlanStart.getTime());
+      expect(component['lastPlanStartTime']).toBe(newPlanStart.getTime());
+      initializeSpy.mockRestore();
+    });
+  });
+
+  describe('adjust operations and visible range', () => {
+    const buildPlanData = (startDate: string, endDate: string) => ({
+      data: {
+        id: 7,
+        planning_start_date: startDate,
+        planning_end_date: endDate,
+        fields: [{ id: 1, name: 'Field 1' }],
+        cultivations: [{
+          id: 14,
+          field_id: 1,
+          field_name: 'Field 1',
+          start_date: '2026-01-01',
+          completion_date: '2026-01-31'
+        }]
+      }
+    } as any);
+
+    beforeEach(() => {
+      component.planType = 'private';
+      component.data = buildPlanData('2026-01-01', '2026-12-31');
+      component.fieldGroups = [{
+        fieldName: 'Field 1',
+        fieldId: 1,
+        cultivations: []
+      }];
+      const mockContainer = document.createElement('div');
+      mockContainer.getBoundingClientRect = () => ({ width: 800 } as DOMRect);
+      component['container'] = { nativeElement: mockContainer } as any;
+      component.visibleStartDate = new Date('2026-02-01');
+      component.visibleEndDate = new Date('2026-08-31');
+      component['lastPlanStartTime'] = new Date('2026-01-01').getTime();
+      component['lastPlanEndTime'] = new Date('2026-12-31').getTime();
+    });
+
+    it('retains the visible range when adjust extends the plan boundary', () => {
+      planService.adjustPlan = vi.fn().mockReturnValue(of({ success: true }));
+      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2026-01-01', '2027-12-31')));
+      const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+
+      component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
+
+      expect(initializeSpy).not.toHaveBeenCalled();
+      expect(component.visibleStartDate?.getTime()).toBe(new Date('2026-02-01').getTime());
+      expect(component.visibleEndDate?.getTime()).toBe(new Date('2026-08-31').getTime());
+      expect(component['lastPlanEndTime']).toBe(new Date('2027-12-31').getTime());
+      initializeSpy.mockRestore();
+    });
+
+    it('resets the visible range when adjust moves plan outside the current window', () => {
+      planService.adjustPlan = vi.fn().mockReturnValue(of({ success: true }));
+      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2028-01-01', '2028-12-31')));
+      const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+
+      component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
+
+      expect(initializeSpy).toHaveBeenCalledTimes(1);
+      expect(component.visibleStartDate?.getTime()).toBe(new Date('2028-01-01').getTime());
+      expect(component['lastPlanStartTime']).toBe(new Date('2028-01-01').getTime());
+      initializeSpy.mockRestore();
+    });
+
+    it('keeps the visible range when adjust fails and plan data refresh errors out', () => {
+      planService.adjustPlan = vi.fn().mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' }))
+      );
+      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2026-01-01', '2026-12-31')));
+      const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+
+      component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
+
+      expect(initializeSpy).not.toHaveBeenCalled();
+      expect(component.visibleStartDate?.getTime()).toBe(new Date('2026-02-01').getTime());
+      expect(planService.getPlanData).toHaveBeenCalled();
+      initializeSpy.mockRestore();
     });
   });
 });

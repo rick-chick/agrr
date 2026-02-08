@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { PlanService } from '../../services/plans/plan.service';
+import { PlanService, AddCropRequest } from '../../services/plans/plan.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 
 interface GanttConfig {
@@ -79,23 +79,21 @@ interface VisibleRange {
           }
         </button>
         <div class="gantt-range-controls">
-          <button
-            class="range-button"
-            type="button"
-            (click)="shiftVisibleRange(-1)"
-            [disabled]="!canShiftRangeBackward">
+        <button
+          class="range-button"
+          type="button"
+          (click)="shiftVisibleRange(-1)">
             {{ 'plans.gantt.range.prev_month' | translate }}
-          </button>
+        </button>
           <div class="gantt-range-label">
             <strong class="gantt-range-label__value">{{ visibleRangeLabel || '—' }}</strong>
           </div>
-          <button
-            class="range-button"
-            type="button"
-            (click)="shiftVisibleRange(1)"
-            [disabled]="!canShiftRangeForward">
+        <button
+          class="range-button"
+          type="button"
+          (click)="shiftVisibleRange(1)">
             {{ 'plans.gantt.range.next_month' | translate }}
-          </button>
+        </button>
         </div>
       </div>
 
@@ -590,15 +588,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   shiftVisibleRange(months: number) {
     if (!this.data || !this.visibleStartDate || !this.visibleEndDate) return;
-    if (months < 0 && !this.canShiftRangeBackward) return;
-    if (months > 0 && !this.canShiftRangeForward) return;
-
-    const planStartRaw = new Date(this.data.data.planning_start_date);
-    const planEndRaw = new Date(this.data.data.planning_end_date);
-    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
 
     const nextStart = this.addMonths(this.visibleStartDate, months);
-    this.setVisibleRangeFromStart(nextStart, planStart, planEnd);
+    this.setVisibleRangeFromStart(nextStart);
     this.recalculateAxis();
     this.scheduleDetectChanges();
   }
@@ -617,39 +609,55 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       return;
     }
 
-    const planChanged =
-      this.lastPlanStartTime !== planStart.getTime() || this.lastPlanEndTime !== planEnd.getTime();
-    if (planChanged) {
-      this.initializeVisibleRange(planStart, planEnd);
+    const planStartTime = planStart.getTime();
+    const planEndTime = planEnd.getTime();
+    const planChanged = this.lastPlanStartTime !== planStartTime || this.lastPlanEndTime !== planEndTime;
+    if (!planChanged) {
+      return;
     }
+
+    if (!this.isVisibleRangeWithinPlan(planStartTime, planEndTime)) {
+      this.initializeVisibleRange(planStart, planEnd);
+      return;
+    }
+
+    this.lastPlanStartTime = planStartTime;
+    this.lastPlanEndTime = planEndTime;
   }
 
   private initializeVisibleRange(planStart: Date, planEnd: Date) {
     this.lastPlanStartTime = planStart.getTime();
     this.lastPlanEndTime = planEnd.getTime();
-    this.setVisibleRangeFromStart(planStart, planStart, planEnd);
+    this.setVisibleRangeFromStart(planStart);
   }
 
-  private setVisibleRangeFromStart(candidateStart: Date, planStart: Date, planEnd: Date) {
-    const safePlanStart = new Date(planStart);
-    const safePlanEnd = new Date(planEnd);
-    const latestStart = this.getLatestVisibleStartDate(safePlanStart, safePlanEnd);
-
-    const clampedStartTime = Math.min(
-      Math.max(candidateStart.getTime(), safePlanStart.getTime()),
-      latestStart.getTime()
-    );
-    const start = new Date(clampedStartTime);
+  private setVisibleRangeFromStart(candidateStart: Date) {
+    const start = new Date(candidateStart);
+    if (isNaN(start.getTime())) {
+      console.warn('🚧 Invalid visible range start', candidateStart);
+      return;
+    }
     let end = this.addMonths(start, this.MAX_VISIBLE_RANGE_MONTHS);
-    if (end.getTime() > safePlanEnd.getTime()) {
-      end = new Date(safePlanEnd);
+    if (end.getTime() <= start.getTime()) {
+      end = new Date(start);
     }
 
     this.visibleStartDate = start;
     this.visibleEndDate = end;
     this.updateRangeLabel();
-    this.updateNavigationStates(safePlanStart, safePlanEnd);
+    this.updateNavigationStates();
     this.emitVisibleRange();
+  }
+
+  private isVisibleRangeWithinPlan(planStartTime: number, planEndTime: number): boolean {
+    if (!this.visibleStartDate || !this.visibleEndDate) {
+      return false;
+    }
+
+    const visibleStartTime = this.visibleStartDate.getTime();
+    const visibleEndTime = this.visibleEndDate.getTime();
+
+    return visibleStartTime >= planStartTime && visibleEndTime <= planEndTime;
   }
 
   private updateRangeLabel() {
@@ -671,25 +679,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     });
   }
 
-  private updateNavigationStates(planStart: Date, planEnd: Date) {
-    if (!this.visibleStartDate) {
-      this.canShiftRangeBackward = false;
-      this.canShiftRangeForward = false;
-      return;
-    }
-
-    const latestStart = this.getLatestVisibleStartDate(planStart, planEnd);
-    this.canShiftRangeBackward = this.visibleStartDate.getTime() > planStart.getTime();
-    this.canShiftRangeForward = this.visibleStartDate.getTime() < latestStart.getTime();
+  private updateNavigationStates() {
+    const hasRange = !!this.visibleStartDate && !!this.visibleEndDate;
+    this.canShiftRangeBackward = hasRange;
+    this.canShiftRangeForward = hasRange;
   }
 
-  private getLatestVisibleStartDate(planStart: Date, planEnd: Date): Date {
-    const candidate = this.addMonths(planEnd, -this.MAX_VISIBLE_RANGE_MONTHS);
-    if (candidate.getTime() < planStart.getTime()) {
-      return planStart;
-    }
-    return candidate;
-  }
 
   private addMonths(date: Date, months: number): Date {
     const result = new Date(date.getTime());
@@ -1393,8 +1388,11 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const planId = this.data.data.id;
     this.isAddCropLoading = true;
     this.showOptimizationLock = true;
-    const payload = {
-      crop_id: this.selectedCrop.id
+    const displayRange = this.buildAddCropDisplayRange();
+    const payload: AddCropRequest = {
+      crop_id: this.selectedCrop.id,
+      ...(displayRange.start && { display_start_date: displayRange.start }),
+      ...(displayRange.end && { display_end_date: displayRange.end })
     };
 
     this.planService.addCrop(endpoint, payload).subscribe({
@@ -1414,6 +1412,35 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.handleOperationError(this.extractHttpErrorMessage(error));
       }
     });
+  }
+
+  private buildAddCropDisplayRange(): { start?: string; end?: string } {
+    const { start: planStart, end: planEnd } = this.getPlanBoundsFromData();
+    const effectiveStart = this.visibleStartDate ?? planStart;
+    const effectiveEnd = this.visibleEndDate ?? planEnd;
+    return {
+      start: this.formatDisplayRangeDate(effectiveStart),
+      end: this.formatDisplayRangeDate(effectiveEnd)
+    };
+  }
+
+  private getPlanBoundsFromData(): { start: Date | null; end: Date | null } {
+    if (!this.data) return { start: null, end: null };
+    const planStartRaw = new Date(this.data.data.planning_start_date);
+    const planEndRaw = new Date(this.data.data.planning_end_date);
+
+    if (isNaN(planStartRaw.getTime()) || isNaN(planEndRaw.getTime())) {
+      return { start: null, end: null };
+    }
+
+    const { start, end } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    return { start, end };
+  }
+
+  private formatDisplayRangeDate(date?: Date | null): string | undefined {
+    if (!date) return undefined;
+    if (isNaN(date.getTime())) return undefined;
+    return date.toISOString().split('T')[0];
   }
 
   confirmRemoveCultivation(cultivation: CultivationData) {
