@@ -76,13 +76,7 @@ const initialControl: PublicPlanResultsViewState = {
               <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
             </div>
             <div *ngIf="rangeLabelText" class="gantt-visible-range">
-              <span class="gantt-visible-range__label">
-                {{ 'public_plans.results.header.visible_range_label' | translate }}
-              </span>
               <span class="gantt-visible-range__value">{{ rangeLabelText }}</span>
-              <span class="gantt-visible-range__hint">
-                ({{ 'public_plans.results.header.visible_range_hint' | translate }})
-              </span>
             </div>
           </div>
 

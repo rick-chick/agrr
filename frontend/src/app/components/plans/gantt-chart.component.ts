@@ -87,9 +87,7 @@ interface VisibleRange {
             {{ 'plans.gantt.range.prev_month' | translate }}
           </button>
           <div class="gantt-range-label">
-            <span class="gantt-range-label__prefix">{{ 'plans.gantt.range.label' | translate }}</span>
             <strong class="gantt-range-label__value">{{ visibleRangeLabel || '—' }}</strong>
-            <span class="gantt-range-label__hint">{{ 'plans.gantt.range.max_hint' | translate }}</span>
           </div>
           <button
             class="range-button"
@@ -814,20 +812,25 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const visibleEnd = this.visibleEndDate ?? planEnd;
     const start = new Date(cultivation.start_date);
     const end = new Date(cultivation.completion_date);
-    
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+    if (end < visibleStart || start > visibleEnd) return null;
+
     const totalDays = Math.max(this.daysBetween(visibleStart, visibleEnd), 1);
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
-    const daysFromStart = this.daysBetween(visibleStart, start);
-    const duration = Math.max(this.daysBetween(start, end) + 1, 1);
-    const clampedStart = Math.max(daysFromStart, 0);
-    const clampedEnd = Math.min(clampedStart + duration, totalDays);
-    const widthDays = Math.max(clampedEnd - clampedStart, 0);
+    const clampedStartDate = start < visibleStart ? visibleStart : start;
+    const clampedEndDate = end > visibleEnd ? visibleEnd : end;
+    if (clampedEndDate < clampedStartDate) return null;
 
-    if (widthDays <= 0) return null;
+    const startOffsetDays = Math.max(this.daysBetween(visibleStart, clampedStartDate), 0);
+    const visibleDays = Math.max(this.daysBetween(clampedStartDate, clampedEndDate) + 1, 1);
 
-    const x = this.config.margin.left + (clampedStart / totalDays) * chartWidth;
-    const width = (widthDays / totalDays) * chartWidth;
+    if (visibleDays <= 0) return null;
+
+    const x = this.config.margin.left + (startOffsetDays / totalDays) * chartWidth;
+    const width = (visibleDays / totalDays) * chartWidth;
 
     return { x, width };
   }
