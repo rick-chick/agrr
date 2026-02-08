@@ -23,7 +23,10 @@ module Api
           plan = PlanPolicy.find_public!(params[:id])
           
           ::CultivationPlan
-            .includes(field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop])
+            .includes(
+              :farm,
+              field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop]
+            )
             .find(plan.id)
         rescue PolicyPermissionDenied
           raise ActiveRecord::RecordNotFound
@@ -31,6 +34,13 @@ module Api
         
         def get_crop_for_add_crop(crop_id)
           ::Crop.find(crop_id)
+        end
+
+        def get_available_crops
+          region = @cultivation_plan.farm&.region
+          Domain::Shared::Policies::CropPolicy
+            .reference_scope(::Crop, region: region)
+            .order(:name)
         end
       end
     end

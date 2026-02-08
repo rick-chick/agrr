@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanService } from '../../services/plans/plan.service';
+import { AvailableCropData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
@@ -16,7 +17,11 @@ describe('GanttChartComponent', () => {
     const planServiceMock = {
       adjustPlan: vi.fn(),
       getPlanData: vi.fn(),
-      getPublicPlanData: vi.fn()
+      getPublicPlanData: vi.fn(),
+      addCrop: vi.fn(),
+      removeCultivation: vi.fn(),
+      addField: vi.fn(),
+      removeField: vi.fn()
     };
 
     const cdrMock = {
@@ -417,6 +422,104 @@ describe('GanttChartComponent', () => {
       await Promise.resolve();
 
       expect(component['cdr'].detectChanges).toHaveBeenCalled();
+    });
+  });
+
+  describe('crop and field actions', () => {
+    beforeEach(() => {
+      component.planType = 'private';
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [],
+          available_crops: [{
+            id: 99,
+            name: 'Sweet Corn',
+            variety: 'Hybrid',
+            area_per_unit: 5
+          }]
+        }
+      } as any;
+    });
+
+    it('should add a crop via planService and refresh data', () => {
+      const crop: AvailableCropData = {
+        id: 99,
+        name: 'Sweet Corn',
+        variety: 'Hybrid',
+        area_per_unit: 5
+      };
+      component.selectedCrop = crop;
+      component.selectedFieldId = 1;
+      component.cropStartDate = '2026-02-01';
+
+      planService.addCrop = vi.fn().mockReturnValue(of({ success: true }));
+      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+
+      component.confirmAddCrop();
+
+      expect(planService.addCrop).toHaveBeenCalledWith(
+        '/api/v1/plans/cultivation_plans/7/add_crop',
+        { crop_id: 99, field_id: 1, start_date: '2026-02-01' }
+      );
+      expect(refreshSpy).toHaveBeenCalledWith(7);
+      refreshSpy.mockRestore();
+    });
+
+    it('should remove a cultivation using removeCultivation', () => {
+      const cultivation = {
+        id: 33,
+        field_id: 1,
+        field_name: 'Field 1',
+        crop_name: 'Rice',
+        start_date: '2026-01-01',
+        completion_date: '2026-01-10'
+      } as CultivationData;
+
+      planService.removeCultivation = vi.fn().mockReturnValue(of({ success: true }));
+      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+
+      component.confirmRemoveCultivation(cultivation);
+
+      expect(planService.removeCultivation).toHaveBeenCalledWith(
+        '/api/v1/plans/cultivation_plans/7/adjust',
+        { moves: [{ allocation_id: 33, action: 'remove' }] }
+      );
+      expect(refreshSpy).toHaveBeenCalledWith(7);
+      refreshSpy.mockRestore();
+    });
+
+    it('should add a new field via planService', () => {
+      component.newFieldName = 'New Patch';
+      component.newFieldArea = 1.2;
+      planService.addField = vi.fn().mockReturnValue(of({ success: true }));
+      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+
+      component.confirmAddField();
+
+      expect(planService.addField).toHaveBeenCalledWith(
+        '/api/v1/plans/cultivation_plans/7/add_field',
+        { field_name: 'New Patch', field_area: 1.2 }
+      );
+      expect(refreshSpy).toHaveBeenCalledWith(7);
+      refreshSpy.mockRestore();
+    });
+
+    it('should remove an empty field', () => {
+      const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
+      planService.removeField = vi.fn().mockReturnValue(of({ success: true }));
+      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+
+      component.confirmRemoveField(group);
+
+      expect(planService.removeField).toHaveBeenCalledWith(
+        '/api/v1/plans/cultivation_plans/7/remove_field/88'
+      );
+      expect(refreshSpy).toHaveBeenCalledWith(7);
+      refreshSpy.mockRestore();
     });
   });
 });
