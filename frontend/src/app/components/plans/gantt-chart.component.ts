@@ -35,6 +35,12 @@ interface TimeScale {
   interval: number; // 何単位ごとにラベルを表示するか
 }
 
+interface VisibleRange {
+  startDate: Date;
+  endDate: Date;
+  label: string;
+}
+
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
@@ -72,6 +78,27 @@ interface TimeScale {
             <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
           }
         </button>
+        <div class="gantt-range-controls">
+          <button
+            class="range-button"
+            type="button"
+            (click)="shiftVisibleRange(-1)"
+            [disabled]="!canShiftRangeBackward">
+            {{ 'plans.gantt.range.prev_month' | translate }}
+          </button>
+          <div class="gantt-range-label">
+            <span class="gantt-range-label__prefix">{{ 'plans.gantt.range.label' | translate }}</span>
+            <strong class="gantt-range-label__value">{{ visibleRangeLabel || '—' }}</strong>
+            <span class="gantt-range-label__hint">{{ 'plans.gantt.range.max_hint' | translate }}</span>
+          </div>
+          <button
+            class="range-button"
+            type="button"
+            (click)="shiftVisibleRange(1)"
+            [disabled]="!canShiftRangeForward">
+            {{ 'plans.gantt.range.next_month' | translate }}
+          </button>
+        </div>
       </div>
 
       @if (isCropPaletteOpen) {
@@ -265,6 +292,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     cultivationId: number;
     planType: 'public' | 'private';
   }>();
+  @Output() visibleRangeChange = new EventEmitter<VisibleRange>();
 
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
@@ -291,6 +319,16 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   newFieldName = '';
   newFieldArea: number | null = null;
   isFieldFormLoading = false;
+
+  visibleStartDate: Date | null = null;
+  visibleEndDate: Date | null = null;
+  visibleRangeLabel = '';
+  canShiftRangeBackward = false;
+  canShiftRangeForward = false;
+
+  private readonly MAX_VISIBLE_RANGE_MONTHS = 24;
+  private lastPlanStartTime = 0;
+  private lastPlanEndTime = 0;
   
   private isDragging = false;
   draggedCultivation: CultivationData | null = null;
@@ -443,14 +481,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     this.config.height = this.config.margin.top + (this.fieldGroups.length * this.config.rowHeight) + this.config.margin.bottom;
 
+    const planStartRaw = new Date(this.data.data.planning_start_date);
+    const planEndRaw = new Date(this.data.data.planning_end_date);
+    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+
     // chartWidthを計算してからdetermineTimeScaleに渡す
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
-    this.timeScale = this.determineTimeScale(
-      new Date(this.data.data.planning_start_date),
-      new Date(this.data.data.planning_end_date),
-      chartWidth
-    );
-    this.calculateTimeAxis();
+    this.ensureVisibleRange(planStart, planEnd);
+    this.recalculateAxis(chartWidth);
 
     // SVG上でドラッグ中に直接変更された属性をクリアして
     // Angularの再描画で正しい縦位置（グループ位置）が反映されるようにする
@@ -502,9 +540,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   private calculateTimeAxis() {
     if (!this.data) return;
-    const start = new Date(this.data.data.planning_start_date);
-    const end = new Date(this.data.data.planning_end_date);
-    const totalDays = this.daysBetween(start, end);
+    const planStartRaw = new Date(this.data.data.planning_start_date);
+    const planEndRaw = new Date(this.data.data.planning_end_date);
+    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const start = this.visibleStartDate ?? planStart;
+    const end = this.visibleEndDate ?? planEnd;
+    const totalDays = Math.max(this.daysBetween(start, end), 1);
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
     this.months = [];
@@ -547,6 +588,128 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       current = segment.end;
       unitIndex++;
     }
+  }
+
+  shiftVisibleRange(months: number) {
+    if (!this.data || !this.visibleStartDate || !this.visibleEndDate) return;
+    if (months < 0 && !this.canShiftRangeBackward) return;
+    if (months > 0 && !this.canShiftRangeForward) return;
+
+    const planStartRaw = new Date(this.data.data.planning_start_date);
+    const planEndRaw = new Date(this.data.data.planning_end_date);
+    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+
+    const nextStart = this.addMonths(this.visibleStartDate, months);
+    this.setVisibleRangeFromStart(nextStart, planStart, planEnd);
+    this.recalculateAxis();
+    this.scheduleDetectChanges();
+  }
+
+  private recalculateAxis(chartWidth?: number) {
+    if (!this.visibleStartDate || !this.visibleEndDate) return;
+    const width =
+      chartWidth ?? this.config.width - this.config.margin.left - this.config.margin.right;
+    this.timeScale = this.determineTimeScale(this.visibleStartDate, this.visibleEndDate, width);
+    this.calculateTimeAxis();
+  }
+
+  private ensureVisibleRange(planStart: Date, planEnd: Date) {
+    if (!this.visibleStartDate || !this.visibleEndDate) {
+      this.initializeVisibleRange(planStart, planEnd);
+      return;
+    }
+
+    const planChanged =
+      this.lastPlanStartTime !== planStart.getTime() || this.lastPlanEndTime !== planEnd.getTime();
+    if (planChanged) {
+      this.initializeVisibleRange(planStart, planEnd);
+    }
+  }
+
+  private initializeVisibleRange(planStart: Date, planEnd: Date) {
+    this.lastPlanStartTime = planStart.getTime();
+    this.lastPlanEndTime = planEnd.getTime();
+    this.setVisibleRangeFromStart(planStart, planStart, planEnd);
+  }
+
+  private setVisibleRangeFromStart(candidateStart: Date, planStart: Date, planEnd: Date) {
+    const safePlanStart = new Date(planStart);
+    const safePlanEnd = new Date(planEnd);
+    const latestStart = this.getLatestVisibleStartDate(safePlanStart, safePlanEnd);
+
+    const clampedStartTime = Math.min(
+      Math.max(candidateStart.getTime(), safePlanStart.getTime()),
+      latestStart.getTime()
+    );
+    const start = new Date(clampedStartTime);
+    let end = this.addMonths(start, this.MAX_VISIBLE_RANGE_MONTHS);
+    if (end.getTime() > safePlanEnd.getTime()) {
+      end = new Date(safePlanEnd);
+    }
+
+    this.visibleStartDate = start;
+    this.visibleEndDate = end;
+    this.updateRangeLabel();
+    this.updateNavigationStates(safePlanStart, safePlanEnd);
+    this.emitVisibleRange();
+  }
+
+  private updateRangeLabel() {
+    if (!this.visibleStartDate || !this.visibleEndDate) {
+      this.visibleRangeLabel = '';
+      return;
+    }
+    this.visibleRangeLabel = `${this.formatYearMonth(this.visibleStartDate)}～${this.formatYearMonth(
+      this.visibleEndDate
+    )}`;
+  }
+
+  private emitVisibleRange() {
+    if (!this.visibleStartDate || !this.visibleEndDate) return;
+    this.visibleRangeChange.emit({
+      startDate: new Date(this.visibleStartDate),
+      endDate: new Date(this.visibleEndDate),
+      label: this.visibleRangeLabel
+    });
+  }
+
+  private updateNavigationStates(planStart: Date, planEnd: Date) {
+    if (!this.visibleStartDate) {
+      this.canShiftRangeBackward = false;
+      this.canShiftRangeForward = false;
+      return;
+    }
+
+    const latestStart = this.getLatestVisibleStartDate(planStart, planEnd);
+    this.canShiftRangeBackward = this.visibleStartDate.getTime() > planStart.getTime();
+    this.canShiftRangeForward = this.visibleStartDate.getTime() < latestStart.getTime();
+  }
+
+  private getLatestVisibleStartDate(planStart: Date, planEnd: Date): Date {
+    const candidate = this.addMonths(planEnd, -this.MAX_VISIBLE_RANGE_MONTHS);
+    if (candidate.getTime() < planStart.getTime()) {
+      return planStart;
+    }
+    return candidate;
+  }
+
+  private addMonths(date: Date, months: number): Date {
+    const result = new Date(date.getTime());
+    result.setMonth(result.getMonth() + months);
+    return result;
+  }
+
+  private normalizePlanBounds(planStart: Date, planEnd: Date): { start: Date; end: Date } {
+    if (planStart.getTime() <= planEnd.getTime()) {
+      return { start: new Date(planStart), end: new Date(planEnd) };
+    }
+    return { start: new Date(planEnd), end: new Date(planStart) };
+  }
+
+  private formatYearMonth(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}/${month}`;
   }
 
   private getTotalUnits(start: Date, end: Date, unit: TimeUnit): number {
@@ -644,19 +807,27 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   getBarParams(cultivation: CultivationData) {
     if (!this.data) return null;
-    const planStart = new Date(this.data.data.planning_start_date);
-    const planEnd = new Date(this.data.data.planning_end_date);
+    const planStartRaw = new Date(this.data.data.planning_start_date);
+    const planEndRaw = new Date(this.data.data.planning_end_date);
+    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const visibleStart = this.visibleStartDate ?? planStart;
+    const visibleEnd = this.visibleEndDate ?? planEnd;
     const start = new Date(cultivation.start_date);
     const end = new Date(cultivation.completion_date);
     
-    const totalDays = this.daysBetween(planStart, planEnd);
+    const totalDays = Math.max(this.daysBetween(visibleStart, visibleEnd), 1);
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
-    const daysFromStart = this.daysBetween(planStart, start);
-    const duration = this.daysBetween(start, end) + 1;
+    const daysFromStart = this.daysBetween(visibleStart, start);
+    const duration = Math.max(this.daysBetween(start, end) + 1, 1);
+    const clampedStart = Math.max(daysFromStart, 0);
+    const clampedEnd = Math.min(clampedStart + duration, totalDays);
+    const widthDays = Math.max(clampedEnd - clampedStart, 0);
 
-    const x = this.config.margin.left + (daysFromStart / totalDays) * chartWidth;
-    const width = (duration / totalDays) * chartWidth;
+    if (widthDays <= 0) return null;
+
+    const x = this.config.margin.left + (clampedStart / totalDays) * chartWidth;
+    const width = (widthDays / totalDays) * chartWidth;
 
     return { x, width };
   }
@@ -746,8 +917,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // ドラッグ開始時の表示範囲を保存（ドラッグ中の再描画対策）
     if (this.data) {
-      this.dragStartDisplayStartDate = new Date(this.data.data.planning_start_date);
-      this.dragStartDisplayEndDate = new Date(this.data.data.planning_end_date);
+      const { start: planStart, end: planEnd } = this.normalizePlanBounds(
+        new Date(this.data.data.planning_start_date),
+        new Date(this.data.data.planning_end_date)
+      );
+      this.dragStartDisplayStartDate = this.visibleStartDate ?? planStart;
+      this.dragStartDisplayEndDate = this.visibleEndDate ?? planEnd;
     }
 
     // 現在のフィールドインデックスを保存
@@ -884,9 +1059,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       const currentY = parseFloat(this.cachedBarBg.getAttribute('y') || '0');
 
       // 日付計算（ドラッグ開始時に保存された表示範囲を使用）
-      const effectiveDisplayStartDate = this.dragStartDisplayStartDate || 
+      const effectiveDisplayStartDate =
+        this.dragStartDisplayStartDate ??
+        this.visibleStartDate ??
         (this.data ? new Date(this.data.data.planning_start_date) : new Date());
-      const effectiveDisplayEndDate = this.dragStartDisplayEndDate || 
+      const effectiveDisplayEndDate =
+        this.dragStartDisplayEndDate ??
+        this.visibleEndDate ??
         (this.data ? new Date(this.data.data.planning_end_date) : new Date());
       const totalDays = this.daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
       const chartWidth = this.config.width - MARGIN_LEFT - this.config.margin.right;
@@ -915,9 +1094,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       newX = this.originalBarX;
       newFieldIndex = this.originalFieldIndex;
       newFieldName = originalFieldName;
-      const effectiveDisplayStartDate = this.dragStartDisplayStartDate || 
+      const effectiveDisplayStartDate =
+        this.dragStartDisplayStartDate ??
+        this.visibleStartDate ??
         (this.data ? new Date(this.data.data.planning_start_date) : new Date());
-      const effectiveDisplayEndDate = this.dragStartDisplayEndDate || 
+      const effectiveDisplayEndDate =
+        this.dragStartDisplayEndDate ??
+        this.visibleEndDate ??
         (this.data ? new Date(this.data.data.planning_end_date) : new Date());
       const totalDays = this.daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
       const chartWidth = this.config.width - MARGIN_LEFT - this.config.margin.right;
