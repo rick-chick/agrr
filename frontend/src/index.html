@@ -5,7 +5,30 @@
   <title>Frontend</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Consent mode defaults to denied to match Rails -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'granted',
+      security_storage: 'granted',
+      wait_for_update: 500
+    });
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WNLSL6W4ZT"></script>
+  <script>
+    gtag('js', new Date());
+    gtag('config', 'G-WNLSL6W4ZT', {
+      anonymize_ip: true,
+      cookie_flags: 'SameSite=None;Secure'
+    });
+  </script>
 </head>
 <body>
   <app-root></app-root>
