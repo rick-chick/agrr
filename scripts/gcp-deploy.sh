@@ -36,6 +36,9 @@ REGION=${REGION:-asia-northeast1}
 SERVICE_NAME=${SERVICE_NAME:-agrr-production}
 IMAGE_NAME=${IMAGE_NAME:-agrr}
 USE_AGRR_DAEMON=${USE_AGRR_DAEMON:-false}
+HEALTH_INITIAL_DELAY=${HEALTH_INITIAL_DELAY:-240}
+HEALTH_PERIOD=${HEALTH_PERIOD:-10}
+HEALTH_TIMEOUT=${HEALTH_TIMEOUT:-10}
 
 # Get project from gcloud if not set
 if [ -z "$PROJECT_ID" ]; then
@@ -229,44 +232,87 @@ EOF
     fi
     
     print_status "Deploying $SERVICE_NAME..."
-    
+    local startup_probe="initialDelaySeconds=$HEALTH_INITIAL_DELAY,periodSeconds=$HEALTH_PERIOD,timeoutSeconds=$HEALTH_TIMEOUT,httpGet.path=/up,httpGet.port=3000"
+
     # Set min-instances based on daemon mode
     local min_instances=0
     if [ "$USE_AGRR_DAEMON" = "true" ]; then
         min_instances=1
         print_status "Daemon mode enabled - setting min-instances=1 for better performance"
     fi
-    
+
+    # Optional: allow controlling ingress behavior via .env.gcp
+    # Set USE_LB_INGRESS=true to deploy with --ingress internal-and-cloud-load-balancing
+    USE_LB_INGRESS=${USE_LB_INGRESS:-false}
+    ingress_flag=""
+    if [ "$USE_LB_INGRESS" = "true" ]; then
+        ingress_flag="--ingress internal-and-cloud-load-balancing"
+        print_status "Will deploy with ingress=internal-and-cloud-load-balancing (LB-only)"
+    fi
+
     gcloud run deploy $SERVICE_NAME \
         --image "$image_tag" \
         --platform managed \
         --region $REGION \
         --allow-unauthenticated \
+        ${ingress_flag} \
         --port 3000 \
         --memory 2Gi \
         --cpu 2 \
         --min-instances $min_instances \
         --max-instances 1 \
         --timeout 600 \
+        --startup-probe="$startup_probe" \
         --service-account cloud-run-agrr@agrr-475323.iam.gserviceaccount.com \
         --env-vars-file="$env_file" \
         --project $PROJECT_ID
-    
+
     rm -f "$env_file"
-    
+
     print_status "Deployment initiated ✓"
-    
+
     # Get service URL
     local service_url=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format 'value(status.url)')
     print_status "Service URL: $service_url"
-    
+
     # Test health
     print_status "Testing health endpoint..."
     sleep 5
-    if [ -n "$service_url" ] && curl -s "$service_url/up" > /dev/null; then
+
+    # If deploying with LB-only ingress, prefer hitting the LB domain for health checks.
+    # FRONTEND_URL can be set in .env.gcp (e.g. https://agrr.net). If set and USE_LB_INGRESS=true, use it.
+    health_ok=false
+    if [ "$USE_LB_INGRESS" = "true" ]; then
+        if [ -n "$FRONTEND_URL" ]; then
+            # extract host from FRONTEND_URL
+            lb_host=$(echo "$FRONTEND_URL" | sed -E 's~https?://~~' | sed -E 's#/.*$~~')
+            lb_health_url="https://${lb_host}/up"
+            print_status "Using LB health URL: $lb_health_url"
+            # retry a few times
+            retries=6
+            for i in $(seq 1 $retries); do
+                if curl -sSf "$lb_health_url" > /dev/null 2>&1; then
+                    health_ok=true
+                    break
+                fi
+                sleep 2
+            done
+        else
+            print_warning "USE_LB_INGRESS=true but FRONTEND_URL not set; falling back to service URL health check"
+        fi
+    fi
+
+    if [ "$health_ok" != "true" ]; then
+        # Fallback: try direct service URL (works if ingress still allows it)
+        if [ -n "$service_url" ] && curl -sSf "$service_url/up" > /dev/null 2>&1; then
+            health_ok=true
+        fi
+    fi
+
+    if [ "$health_ok" = "true" ]; then
         print_status "Health check passed ✓"
     else
-        print_warning "Health check failed (service may still be starting)"
+        print_warning "Health check failed (service may still be starting or ingress blocks direct access)"
     fi
 }
 
