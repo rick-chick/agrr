@@ -696,7 +696,17 @@
       "prompt_field_area": "Enter the field area (㎡).",
       "adding_field": "Adding field...",
       "deleting_field": "Deleting field...",
-      "error_occurred": "An error occurred. Please try again later."
+      "error_occurred": "An error occurred. Please try again later.",
+      "logs": {
+        "drag_complete": "📍 Drag completed (optimization running):",
+        "drag_small_skip": "ℹ️ Dragged but movement was too small, skipping optimization",
+        "click_skip": "ℹ️ Click detected, skipping optimization",
+        "adjustment_success": "✅ Adjustment completed:",
+        "data_refetch_failed": "❌ Failed to refetch data: field data is missing",
+        "data_refetch_api_error": "❌ Failed to refetch data (API error):",
+        "adjustment_failed": "❌ Adjustment failed:",
+        "api_call_error": "❌ API call error:"
+      }
     },
     "crop_form": {
       "stage_name_placeholder": "उदा., अंकुरण, पोषण वृद्धि",
