@@ -23,9 +23,25 @@ const MONITORED_TRANSLATION_CLASSES = [
 ];
 const JAPANESE_REGEX = /[ぁ-んァ-ヶ一-龥々ー]/;
 const ENGLISH_ALPHA_REGEX = /[A-Za-z]/;
-// Angular 制御構文 (@if, @else, @for, @switch, @case, @empty, @defer, } のみ) を
-// parse5 がテキストノードとして解析してしまうため、除外する正規表現
-const ANGULAR_CONTROL_FLOW_REGEX = /^[\s\n}]*(@if|@else|@for|@switch|@case|@empty|@defer|@let)\b/;
+
+const ANGULAR_CONTROL_FLOW_KEYWORDS = [
+  '@if',
+  '@else',
+  '@for',
+  '@switch',
+  '@case',
+  '@empty',
+  '@defer',
+  '@let'
+];
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const ANGULAR_CONTROL_FLOW_REGEX = new RegExp(
+  `^[\\s\\n}]*(${ANGULAR_CONTROL_FLOW_KEYWORDS.map(escapeRegExp).join('|')})\\b`
+);
 const CLOSING_BRACE_ONLY_REGEX = /^[\s\n}]+$/;
 const findings = [];
 
