@@ -172,11 +172,15 @@
       <% file_path = Rails.root.join('public', research_page.delete_prefix('/')) %>
       <% raise Errno::ENOENT, "Research sitemap file not found: #{file_path}" unless File.exist?(file_path) %>
       <% lastmod = File.mtime(file_path).to_date.to_s %>
+      <% alternates = research_alternate_urls(research_page, @base_url) %>
       <url>
         <loc><%= ERB::Util.h("#{@base_url}#{normalized_path}") %></loc>
         <lastmod><%= lastmod %></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
+        <% alternates.each do |alt| %>
+        <xhtml:link rel="alternate" hreflang="<%= alt[:hreflang] %>" href="<%= ERB::Util.h(alt[:href]) %>" />
+        <% end %>
       </url>
     <% end %>
   <% end %>
