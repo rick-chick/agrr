@@ -1565,7 +1565,17 @@
       "prompt_field_area": "圃場の面積 (㎡) を入力してください。",
       "adding_field": "圃場を追加しています...",
       "deleting_field": "圃場を削除しています...",
-      "error_occurred": "エラーが発生しました。時間をおいて再度お試しください。"
+      "error_occurred": "エラーが発生しました。時間をおいて再度お試しください。",
+      "logs": {
+        "drag_complete": "📍 ドラッグ完了（最適化実行）:",
+        "drag_small_skip": "ℹ️ ドラッグされたが移動量が小さいため最適化スキップ",
+        "click_skip": "ℹ️ クリック操作のため最適化スキップ",
+        "adjustment_success": "✅ 調整が完了しました:",
+        "data_refetch_failed": "❌ データ再取得に失敗しました: フィールドデータがありません",
+        "data_refetch_api_error": "❌ データ再取得APIエラー:",
+        "adjustment_failed": "❌ 調整に失敗しました:",
+        "api_call_error": "❌ API呼び出しエラー:"
+      }
     },
     "crop_form": {
       "stage_name_placeholder": "例：発芽期、栄養成長期",

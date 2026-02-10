@@ -305,7 +305,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   fieldGroups: FieldGroup[] = [];
   months: any[] = [];
-  timeScale: TimeScale = { unit: TimeUnit.Month, label: '月', interval: 1 };
+  timeScale: TimeScale = { unit: TimeUnit.Month, label: '', interval: 1 };
   isCropPaletteOpen = false;
   selectedCrop: AvailableCropData | null = null;
   cropStartDate: string | null = null;
@@ -353,7 +353,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private cdr = inject(ChangeDetectorRef);
   private flashMessageService = inject(FlashMessageService);
 
-  constructor(private translate: TranslateService) {}
+  constructor(private translate: TranslateService) {
+    // Initialize timeScale with translated default month label
+    this.timeScale = {
+      unit: TimeUnit.Month,
+      label: this.translate.instant('plans.gantt.labels.month'),
+      interval: 1
+    };
+  }
 
   ngOnInit(): void {
     console.log('🚀 GanttChartComponent: ngOnInit called', {
@@ -850,7 +857,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (totalDays * minPixelsPerDay <= chartWidth) {
       const minLabelWidth = 50;
       const interval = Math.max(1, Math.ceil((totalDays * minLabelWidth) / chartWidth));
-      return { unit: TimeUnit.Day, label: '日', interval };
+      return { unit: TimeUnit.Day, label: this.translate.instant('plans.gantt.labels.day'), interval };
     }
     
     // 週単位: 1週間あたり14px以上、かつ総週数×14pxが利用可能幅以下
@@ -859,7 +866,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (totalWeeks * minPixelsPerWeek <= chartWidth) {
       const minLabelWidth = 50;
       const interval = Math.max(1, Math.ceil((totalWeeks * minLabelWidth) / chartWidth));
-      return { unit: TimeUnit.Week, label: '週', interval };
+      return { unit: TimeUnit.Week, label: this.translate.instant('plans.gantt.labels.week'), interval };
     }
     
     // 月単位: 1ヶ月あたり30px以上、かつ総月数×30pxが利用可能幅以下
@@ -868,14 +875,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (totalMonths * minPixelsPerMonth <= chartWidth) {
       const minLabelWidth = 60;
       const interval = Math.max(1, Math.ceil((totalMonths * minLabelWidth) / chartWidth));
-      return { unit: TimeUnit.Month, label: '月', interval };
+      return { unit: TimeUnit.Month, label: this.translate.instant('plans.gantt.labels.month'), interval };
     }
     
     // 四半期単位: フォールバック
     const totalQuarters = Math.ceil(totalMonths / 3);
     const minLabelWidth = 80;
     const interval = Math.max(1, Math.ceil((totalQuarters * minLabelWidth) / chartWidth));
-    return { unit: TimeUnit.Quarter, label: 'Q', interval };
+    return { unit: TimeUnit.Quarter, label: this.translate.instant('plans.gantt.labels.quarter'), interval };
   }
 
   getCropColor(name: string): string {
@@ -1113,7 +1120,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       // - 圃場が変わった、または
       // - 2日以上の日付移動があった
       if (originalFieldName !== newFieldName || Math.abs(daysFromStart) > 2) {
-        console.log('📍 ドラッグ完了（最適化実行）:', {
+        this.logWithKey('js.gantt.logs.drag_complete', {
           cultivation_id: cultivationId,
           from_field: originalFieldName,
           to_field: newFieldName,
@@ -1132,12 +1139,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           this.adjustCultivation(cultivationId, newFieldName, newFieldIndex, newStartDate);
         }
       } else {
-        console.log('ℹ️ ドラッグされたが移動量が小さいため最適化スキップ');
+        this.logWithKey('js.gantt.logs.drag_small_skip');
         // 位置をリセット
         this.resetBarPosition();
       }
     } else {
-      console.log('ℹ️ クリック操作のため最適化スキップ');
+      this.logWithKey('js.gantt.logs.click_skip');
       // 位置をリセット
       this.resetBarPosition();
     }
@@ -1287,6 +1294,24 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     return `fields: ${this.data.data.fields?.length || 0}, cultivations: ${this.data.data.cultivations?.length || 0}`;
   }
 
+  private logWithKey(key: string, payload?: unknown) {
+    const message = this.translate.instant(key);
+    if (payload !== undefined) {
+      console.log(message, payload);
+    } else {
+      console.log(message);
+    }
+  }
+
+  private errorWithKey(key: string, payload?: unknown) {
+    const message = this.translate.instant(key);
+    if (payload !== undefined) {
+      console.error(message, payload);
+    } else {
+      console.error(message);
+    }
+  }
+
   private adjustCultivation(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {
     if (!this.data) return;
 
@@ -1310,7 +1335,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.planService.adjustPlan(endpoint, { moves }).subscribe({
       next: (response) => {
         if (response.success) {
-          console.log('✅ 調整が完了しました:', response);
+          this.logWithKey('js.gantt.logs.adjustment_success', response);
           // サーバーからの最新データで更新
           const clearLockAndUpdate = () => {
             this.showOptimizationLock = false;
@@ -1323,13 +1348,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
                   this.data = data;
                   this.updateChart();
                 } else {
-                  console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
+                  this.errorWithKey('js.gantt.logs.data_refetch_failed', data);
                   this.updateChart();
                 }
                 clearLockAndUpdate();
               },
               error: (error) => {
-                console.error('❌ データ再取得APIエラー:', error);
+                this.errorWithKey('js.gantt.logs.data_refetch_api_error', error);
                 this.updateChart();
                 clearLockAndUpdate();
               }
@@ -1341,25 +1366,25 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
                   this.data = data;
                   this.updateChart();
                 } else {
-                  console.error('❌ データ再取得に失敗しました: フィールドデータがありません', data);
+                  this.errorWithKey('js.gantt.logs.data_refetch_failed', data);
                   this.updateChart();
                 }
                 clearLockAndUpdate();
               },
               error: (error) => {
-                console.error('❌ データ再取得APIエラー:', error);
+                this.errorWithKey('js.gantt.logs.data_refetch_api_error', error);
                 this.updateChart();
                 clearLockAndUpdate();
               }
             });
           }
         } else {
-          console.error('❌ 調整に失敗しました:', response.message);
+          this.errorWithKey('js.gantt.logs.adjustment_failed', response.message);
           this.handleAdjustmentFailure(response.message);
         }
       },
       error: (error: HttpErrorResponse) => {
-        console.error('❌ API呼び出しエラー:', error);
+        this.errorWithKey('js.gantt.logs.api_call_error', error);
         this.handleAdjustmentFailure(this.extractHttpErrorMessage(error));
       }
     });
