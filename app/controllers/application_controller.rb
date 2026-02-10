@@ -14,13 +14,13 @@ class ApplicationController < ActionController::Base
   
   def switch_locale(&action)
     # 優先順位:
-    # 1. URLの:localeパラメータ（明示的な選択）
-    # 2. Cookieのlocale（前回の選択）
-    # 3. Accept-Languageヘッダー（ブラウザ設定）
+    # 1. URLパスに明示的な locale セグメント
+    # 2. Cookie の locale（前回の選択）
+    # 3. Accept-Language ヘッダー（ブラウザ設定）
     # 4. デフォルト（ja）
-    locale = params[:locale] || 
-             cookies[:locale] || 
-             extract_locale_from_accept_language_header || 
+    locale = explicit_locale_from_path ||
+             cookies[:locale] ||
+             extract_locale_from_accept_language_header ||
              I18n.default_locale
     
     # Validate locale
@@ -35,6 +35,14 @@ class ApplicationController < ActionController::Base
     cookies[:locale] = { value: locale.to_s, expires: 1.year.from_now }
     
     I18n.with_locale(locale, &action)
+  end
+
+  def explicit_locale_from_path
+    path = request.path
+    return unless path.present?
+
+    match = path.match(%r{\A/(ja|us|in)(?:/|\z)})
+    match&.[](1)
   end
   
   # Accept-Languageヘッダーから言語を抽出
