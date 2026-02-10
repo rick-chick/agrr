@@ -17,7 +17,8 @@ class CompletionNotificationJob < ApplicationJob
         status: 'completed',
         progress: 100,
         phase: 'completed',
-        phase_message: '処理が完了しました'
+        phase_message: '処理が完了しました',
+        message_key: 'models.cultivation_plan.phases.completed'
       })
       
       Rails.logger.info "✅ [CompletionNotificationJob] Completion notification sent for plan ##{cultivation_plan_id}"

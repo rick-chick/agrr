@@ -218,6 +218,9 @@
         "invalid_id": "Invalid crop id."
       }
     },
+    "errors": {
+      "invalid_id": "Invalid crop id."
+    },
     "stage": {
       "default_name": "Stage {{order}}",
       "confirm_delete": "Are you sure you want to delete this crop stage?"
@@ -248,7 +251,9 @@
       "updated_at": "Updated",
       "stages_title": "Growth stages",
       "required_gdd": "Required GDD",
-      "optimal_temperature": "Optimal temperature"
+      "optimal_temperature": "Optimal temperature",
+      "gdd_unit": "GDD",
+      "celsius_unit": "°C"
     }
   },
   "status": {
@@ -711,6 +716,9 @@
         "invalid_format": "Invalid input data format. Please contact the system administrator.",
         "optimization_failed": "Optimization process failed: %{message}"
       }
+    },
+    "prediction": {
+      "completed": "Prediction completed"
     }
   },
   "models": {
@@ -726,6 +734,7 @@
     "cultivation_plan": {
       "phases": {
         "fetching_weather": "Fetching weather data...",
+        "weather_data_fetched": "Weather data fetching completed",
         "predicting_weather": "Predicting weather data...",
         "weather_prediction_completed": "Weather prediction completed",
         "optimization_completed": "Optimization finished. Generating task schedules...",
@@ -1258,12 +1267,17 @@
       "no_permission": "You do not have permission.",
       "not_found": "Task not found."
     },
+    "errors": {
+      "invalid_id": "Invalid agricultural task id."
+    },
     "index": {
       "title": "Tasks",
+      "description": "Manage agricultural tasks.",
       "new_agricultural_task": "Add Task",
       "time_per_sqm": "Time per ㎡",
       "reference_task": "Reference Task",
       "user_task_tag": "My Task",
+      "skill_label": "Skill",
       "actions": {
         "search": "Search",
         "show": "Show",
@@ -1289,9 +1303,16 @@
       "title": "Add Task"
     },
     "edit": {
-      "title": "Edit %{name}"
+      "title": "Edit %{name}",
+      "title_default": "Task"
     },
     "form": {
+      "name_label": "Name",
+      "description_label": "Description",
+      "time_per_sqm_label": "Time per ㎡ (hours)",
+      "weather_dependency_label": "Weather Dependency",
+      "skill_level_label": "Skill Level",
+      "task_type_label": "Task Type",
       "submit_create": "Create Task",
       "submit_update": "Update Task",
       "required_tools_hint": "Use new lines for multiple items",
@@ -1315,6 +1336,7 @@
       "name": "Task Name",
       "description": "Description",
       "time_per_sqm": "Time per ㎡",
+      "hours_suffix": "hours",
       "weather_dependency": "Weather Dependency",
       "weather_dependency_low": "Low",
       "weather_dependency_medium": "Medium",
@@ -1324,6 +1346,8 @@
       "skill_level_beginner": "Beginner",
       "skill_level_intermediate": "Intermediate",
       "skill_level_advanced": "Advanced",
+      "region": "Region",
+      "task_type": "Task Type",
       "created_at": "Created At",
       "updated_at": "Updated At",
       "associated_crops": "Associated Crops",
@@ -1469,9 +1493,11 @@
     },
     "index": {
       "title": "Farms",
+      "description": "Manage your farms.",
       "new_farm": "Add New Farm",
       "reference_farms": "Reference Farms (Growing Regions)",
       "my_farms": "My Farms",
+      "reference_badge": "Reference",
       "count": "%{count} items",
       "empty": {
         "icon": "🚜",
@@ -1556,6 +1582,9 @@
         "submit_create": "Create Field",
         "submit_update": "Update Field"
       }
+    },
+    "map": {
+      "default_name": "Farm"
     },
     "card": {
       "latitude": "Latitude",
@@ -1652,6 +1681,7 @@
     },
     "index": {
       "title": "Fertilizers",
+      "description": "Manage fertilizers.",
       "new_fertilize": "Add New Fertilizer",
       "reference_fertilizes": "Reference Fertilizers (Common Data)",
       "actions": {
@@ -1840,6 +1870,9 @@
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
       "not_found": "Rule not found."
+    },
+    "errors": {
+      "invalid_id": "Invalid interaction rule id."
     },
     "index": {
       "title": "Crop Rotation Rules",
@@ -2231,8 +2264,16 @@
       "no_permission": "Permission denied.",
       "not_found": "Pesticide not found."
     },
+    "errors": {
+      "invalid_id": "Invalid pesticide id."
+    },
+    "fallback": {
+      "crop": "Crop %{id}",
+      "pest": "Pest %{id}"
+    },
     "index": {
       "title": "Pesticides",
+      "description": "Manage pesticides.",
       "new_pesticide": "Add New Pesticide",
       "reference_pesticides": "Reference Pesticides (Common Data)",
       "active_ingredient": "Active Ingredient",
@@ -2351,6 +2392,7 @@
     },
     "index": {
       "title": "Pests",
+      "description": "Manage pests.",
       "new_pest": "Add New Pest",
       "reference_pests": "Reference Pests (Common Data)",
       "scientific_name": "Scientific Name",
@@ -2383,6 +2425,7 @@
       "order": "Order",
       "description": "Description",
       "occurrence_season": "Occurrence Season",
+      "region": "Region",
       "temperature_profile": "Temperature Profile",
       "base_temperature": "Base Temperature",
       "max_temperature": "Maximum Temperature",

@@ -11,6 +11,8 @@ ja:
       disabled_in_production: "本番環境では認証が無効になっています。"
       authentication_failed: "認証に失敗しました。もう一度お試しください。"
       disabled_in_production_json: "本番環境では認証が無効になっています。"
+      oauth_not_configured: "Google OAuth認証が設定されていません。管理者にお問い合わせください。"
+      oauth_config_error: "OAuth認証の設定に問題があります。"
     
     messages:
       login_required: "このリソースにアクセスするにはログインしてください。"

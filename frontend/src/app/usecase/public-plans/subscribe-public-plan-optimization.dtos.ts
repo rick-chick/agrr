@@ -9,4 +9,5 @@ export interface PublicPlanOptimizationMessageDto {
   status?: string;
   progress?: number;
   phase_message?: string;
+  message_key?: string;
 }

@@ -11,6 +11,8 @@ us:
       disabled_in_production: "Authentication is disabled in production environment."
       authentication_failed: "Authentication failed. Please try again."
       disabled_in_production_json: "Authentication is disabled in production environment."
+      oauth_not_configured: "Google OAuth is not configured. Please contact the administrator."
+      oauth_config_error: "There is a problem with the OAuth configuration."
     
     messages:
       login_required: "Please log in to access this resource."

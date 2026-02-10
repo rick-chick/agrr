@@ -356,7 +356,8 @@ class CultivationPlan < ApplicationRecord
       progress: optimization_progress,
       phase: optimization_phase,
       phase_message: optimization_phase_message,
-      message: optimization_phase_message
+      message: optimization_phase_message,
+      message_key: "models.cultivation_plan.phases.#{optimization_phase}"
     }
 
     Rails.logger.info "📡 [CultivationPlan##{id}] Attempting to broadcast phase update: #{optimization_phase}"
