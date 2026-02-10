@@ -6,4 +6,7 @@ module ContactMessages
       end
     end
   end
+  # Backwards-compatibility: some places reference ContactMessages::DestinationEmailNotConfiguredError
+  # so alias the constant at the ContactMessages namespace level.
+  DestinationEmailNotConfiguredError = Errors::DestinationEmailNotConfiguredError
 end
