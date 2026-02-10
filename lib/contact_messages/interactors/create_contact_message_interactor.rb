@@ -3,6 +3,7 @@
 require_relative '../dtos/create_contact_message_input'
 require_relative '../dtos/create_contact_message_success'
 require_relative '../dtos/create_contact_message_failure'
+require_relative '../errors/destination_email_not_configured_error'
 
 module ContactMessages
   module Interactors
@@ -24,7 +25,9 @@ module ContactMessages
       # input: ContactMessages::Dtos::CreateContactMessageInput
       # returns: Result with success flag, entity, and optional errors
       def call(input, output_port: nil)
-        raise ArgumentError, 'destination email not configured' if @destination_email.to_s.strip.empty?
+        if @destination_email.to_s.strip.empty?
+          raise ContactMessages::DestinationEmailNotConfiguredError
+        end
 
         entity = gateway_with_defaults.create(input)
 
@@ -38,6 +41,7 @@ module ContactMessages
 
         Result.new(success: false, errors: e.record.errors)
       rescue StandardError => e
+        raise if e.is_a?(::ContactMessages::DestinationEmailNotConfiguredError)
         failure_dto = Domain::Shared::Dtos::ErrorDto.new(e.message)
         output_port&.on_failure(failure_dto)
         raise

@@ -23,6 +23,10 @@ const MONITORED_TRANSLATION_CLASSES = [
 ];
 const JAPANESE_REGEX = /[ぁ-んァ-ヶ一-龥々ー]/;
 const ENGLISH_ALPHA_REGEX = /[A-Za-z]/;
+// Angular 制御構文 (@if, @else, @for, @switch, @case, @empty, @defer, } のみ) を
+// parse5 がテキストノードとして解析してしまうため、除外する正規表現
+const ANGULAR_CONTROL_FLOW_REGEX = /^[\s\n}]*(@if|@else|@for|@switch|@case|@empty|@defer|@let)\b/;
+const CLOSING_BRACE_ONLY_REGEX = /^[\s\n}]+$/;
 const findings = [];
 
 function ensureOutputDir() {
@@ -162,6 +166,15 @@ function hasEnglish(text) {
   return ENGLISH_ALPHA_REGEX.test(text);
 }
 
+/**
+ * Angular 制御構文のテキストノードかどうかを判定する。
+ * parse5 は @if/@else/@for 等を HTML テキストとして扱うため、
+ * これらを「ハードコード英語」として誤検出しないようフィルタする。
+ */
+function isAngularControlFlow(text) {
+  return ANGULAR_CONTROL_FLOW_REGEX.test(text) || CLOSING_BRACE_ONLY_REGEX.test(text);
+}
+
 function isMasterComponent(filePath) {
   return filePath.includes(`${path.sep}components${path.sep}masters${path.sep}`);
 }
@@ -217,8 +230,9 @@ function scanTemplateContent(content, filePath, translationValues, lineOffset = 
               });
             }
           }
-        } else if (hasEnglish(text) && isMasterComponent(filePath)) {
+        } else if (hasEnglish(text) && isMasterComponent(filePath) && !isAngularControlFlow(text)) {
           // マスタ一覧系で英語ラベルを直接書いている箇所を検出
+          // Angular 制御構文 (@if, @else, @for 等) は除外
           const loc = node.sourceCodeLocation;
           if (loc && loc.startLine) {
             const line = loc.startLine + lineOffset;
@@ -235,7 +249,7 @@ function scanTemplateContent(content, filePath, translationValues, lineOffset = 
         }
       }
 
-      if (text && !text.includes('{{') && !text.includes('| translate')) {
+      if (text && !text.includes('{{') && !text.includes('| translate') && !isAngularControlFlow(text)) {
         const parentElement = node.parentNode;
         if (parentElement && parentElement.tagName && !hasJapanese(text)) {
           const loc = node.sourceCodeLocation;
