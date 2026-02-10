@@ -2246,6 +2246,29 @@
       "farm_not_found": "Farm not found"
     }
   },
+  "contact_form": {
+    "name": "Nama",
+    "email": "Email",
+    "subject": "Subjek",
+    "message": "Pesan",
+    "submit": "Kirim",
+    "success": {
+      "message": "Pesan Anda telah dikirim.",
+      "toast": "Terima kasih telah menghubungi kami!"
+    },
+    "errors": {
+      "validation_failed": "Harap perbaiki kesalahan yang muncul.",
+      "send_failed": "Gagal mengirim pesan. Silakan coba lagi nanti.",
+      "validation": {
+        "message_required": "Pesan wajib diisi.",
+        "email_required": "Email wajib diisi.",
+        "email_invalid": "Masukkan alamat email yang valid.",
+        "message_too_long": "Pesan tidak boleh lebih dari 5000 karakter.",
+        "name_too_long": "Nama tidak boleh lebih dari 255 karakter.",
+        "subject_too_long": "Subjek tidak boleh lebih dari 255 karakter."
+      }
+    }
+  },
   "shared": {
     "navbar": {
       "brand": "AGRR",

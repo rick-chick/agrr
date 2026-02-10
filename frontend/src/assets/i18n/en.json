@@ -2443,6 +2443,29 @@
       }
     }
   },
+  "contact_form": {
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "submit": "Send",
+    "success": {
+      "message": "Your message was sent.",
+      "toast": "Thanks for contacting us!"
+    },
+    "errors": {
+      "validation_failed": "Please fix the highlighted errors.",
+      "send_failed": "Failed to send your message. Please try again later.",
+      "validation": {
+        "message_required": "Message is required.",
+        "email_required": "Email address is required.",
+        "email_invalid": "Enter a valid email address.",
+        "message_too_long": "Message must be 5000 characters or fewer.",
+        "name_too_long": "Name must be 255 characters or fewer.",
+        "subject_too_long": "Subject must be 255 characters or fewer."
+      }
+    }
+  },
   "shared": {
     "navbar": {
       "brand": "AGRR",

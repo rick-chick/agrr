@@ -1,0 +1,18 @@
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-actions {
+  margin-top: 8px;
+}
+.loading {
+  color: #666;
+}
+.error {
+  color: #b00020;
+}
+.success {
+  color: #0a0;
+}
+
