@@ -103,6 +103,33 @@ module ApplicationHelper
     }
   end
 
+  # Rails locale を research 用パスに変換する
+  # 日本語コンテンツは /research/ 直下にあるため、us のみ /research/en/ を返す
+  # 'us' -> '/research/en/', それ以外 -> '/research/'
+  def research_path_for(locale)
+    locale.to_s == 'us' ? '/research/en/' : '/research/'
+  end
+
+  # サイトマップ用: research ページの xhtml:link rel="alternate" 候補を返す
+  # 各言語のファイルが存在する場合のみ含める。hreflang は ja/us/in (Rails locale)
+  # ja/in は /research/ 直下、en は /research/en/ 配下
+  def research_alternate_urls(research_page_path, base_url)
+    path = research_page_path.to_s.delete_prefix('research/').delete_prefix('/')
+    content_path = path.sub(/\A(ja|en|in)\//, '') # 既に lang 付きパスなら除去
+
+    alternates = []
+    # ja, in: /research/ 直下のファイルを参照
+    %w[ja in].each do |hreflang|
+      candidate = "research/#{content_path}"
+      alternates << { hreflang: hreflang, href: "#{base_url}/#{candidate}" } if File.exist?(Rails.root.join('public', candidate))
+    end
+    # us(en): /research/en/ 配下のファイルを参照
+    en_candidate = "research/en/#{content_path}"
+    alternates << { hreflang: 'us', href: "#{base_url}/#{en_candidate}" } if File.exist?(Rails.root.join('public', en_candidate))
+
+    alternates
+  end
+
   # 現在のページが指定されたパスと一致するか判定
   def current_page?(path)
     request.path == path || request.path.start_with?("#{path}/")

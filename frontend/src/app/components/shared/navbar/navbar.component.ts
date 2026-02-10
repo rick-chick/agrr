@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CurrentUser } from '../../../services/api.service';
 import { getApiBaseUrl } from '../../../core/api-base-url';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
@@ -66,6 +66,8 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
   styleUrls: ['./navbar.component.css'],
 })
 export class NavbarComponent {
+  private readonly translate = inject(TranslateService);
+
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
   @Input() apiBaseUrl = '';
@@ -107,6 +109,8 @@ export class NavbarComponent {
   get reportUrl(): string {
     const base = this.apiBaseUrl || getApiBaseUrl() || window.location.origin;
     const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    return `${normalizedBase}/research/`;
+    const rawLang = this.translate.currentLang || this.translate.defaultLang || 'en';
+    const suffix = rawLang === 'en' ? '/research/en/' : '/research/';
+    return normalizedBase + suffix;
   }
 }
