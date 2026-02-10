@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-10T02:27:18.060Z",
+  "generatedAt": "2026-02-10T03:47:55.655Z",
   "entries": [
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navabout",
@@ -93,7 +93,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationemail_in",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 54,
+      "line": 69,
       "text": "contact_form.validation.email_invalid",
       "snippet": "  }\n  if (!validateEmail(email)) {\n    return { valid: false, message: 'contact_form.validation.email_invalid' };\n  }\n  return { valid: true };"
     },
@@ -101,7 +101,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationemail_re",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 51,
+      "line": 66,
       "text": "contact_form.validation.email_required",
       "snippet": "  const email = payload.email?.trim();\n  if (!email || email.length === 0) {\n    return { valid: false, message: 'contact_form.validation.email_required' };\n  }\n  if (!validateEmail(email)) {"
     },
@@ -109,7 +109,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationmessage_",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 38,
+      "line": 53,
       "text": "contact_form.validation.message_required",
       "snippet": "export function validatePayload(payload: ContactMessagePayload): ContactMessageValidationResult {\n  if (!payload.message || payload.message.trim().length === 0) {\n    return { valid: false, message: 'contact_form.validation.message_required' };\n  }\n  if (payload.message.length > 5000) {"
     },
@@ -117,7 +117,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationmessage__1",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 41,
+      "line": 56,
       "text": "contact_form.validation.message_too_long",
       "snippet": "  }\n  if (payload.message.length > 5000) {\n    return { valid: false, message: 'contact_form.validation.message_too_long' };\n  }\n  if (payload.name && payload.name.length > 255) {"
     },
@@ -125,7 +125,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationname_too",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 44,
+      "line": 59,
       "text": "contact_form.validation.name_too_long",
       "snippet": "  }\n  if (payload.name && payload.name.length > 255) {\n    return { valid: false, message: 'contact_form.validation.name_too_long' };\n  }\n  if (payload.subject && payload.subject.length > 255) {"
     },
@@ -133,7 +133,7 @@
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationsubject_",
       "type": "ts_prop_message",
       "file": "src/app/domain/contact/contact-message.model.ts",
-      "line": 47,
+      "line": 62,
       "text": "contact_form.validation.subject_too_long",
       "snippet": "  }\n  if (payload.subject && payload.subject.length > 255) {\n    return { valid: false, message: 'contact_form.validation.subject_too_long' };\n  }\n  const email = payload.email?.trim();"
     },

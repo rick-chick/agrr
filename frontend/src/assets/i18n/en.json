@@ -20,6 +20,13 @@
       }
     }
   },
+  "adapters": {
+    "privatePlanCreate": {
+      "flash": {
+        "success": "Plan created successfully."
+      }
+    }
+  },
   "js": {
     "gantt": {
       "optimization_failed": "Optimization failed",

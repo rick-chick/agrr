@@ -5,23 +5,27 @@ import { CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CreatePrivatePlanPresenter', () => {
   let presenter: CreatePrivatePlanPresenter;
   let view: CreatePrivatePlanView;
   let lastControl: any;
   let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
+  let mockTranslateService: TranslateService & { instant: ReturnType<typeof vi.fn> };
   let mockRouter: Router & { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
+    mockTranslateService = { instant: vi.fn(() => 'translated success') } as TranslateService & { instant: ReturnType<typeof vi.fn> };
     mockRouter = { navigate: vi.fn() } as Router & { navigate: ReturnType<typeof vi.fn> };
 
     TestBed.configureTestingModule({
       providers: [
         CreatePrivatePlanPresenter,
         { provide: FlashMessageService, useValue: mockFlashMessageService },
-        { provide: Router, useValue: mockRouter }
+        { provide: Router, useValue: mockRouter },
+        { provide: TranslateService, useValue: mockTranslateService }
       ]
     });
     presenter = TestBed.inject(CreatePrivatePlanPresenter);
@@ -49,7 +53,11 @@ describe('CreatePrivatePlanPresenter', () => {
       presenter.present(dto);
 
       expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: '計画を作成しました' });
+      expect(mockTranslateService.instant).toHaveBeenCalledWith('adapters.privatePlanCreate.flash.success');
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({
+        type: 'success',
+        text: 'translated success'
+      });
       expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 123, 'optimizing']);
       expect(lastControl).not.toBeNull();
