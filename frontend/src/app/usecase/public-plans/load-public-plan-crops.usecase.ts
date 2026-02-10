@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { LoadPublicPlanCropsInputDto } from './load-public-plan-crops.dtos';
 import { LoadPublicPlanCropsInputPort } from './load-public-plan-crops.input-port';
 import {
@@ -12,14 +13,15 @@ export class LoadPublicPlanCropsUseCase implements LoadPublicPlanCropsInputPort 
   constructor(
     @Inject(LOAD_PUBLIC_PLAN_CROPS_OUTPUT_PORT)
     private readonly outputPort: LoadPublicPlanCropsOutputPort,
-    @Inject(PUBLIC_PLAN_GATEWAY) private readonly publicPlanGateway: PublicPlanGateway
+    @Inject(PUBLIC_PLAN_GATEWAY) private readonly publicPlanGateway: PublicPlanGateway,
+    private readonly translate: TranslateService
   ) {}
 
   execute(dto: LoadPublicPlanCropsInputDto): void {
     console.log('🌱 [LoadPublicPlanCropsUseCase] execute called with farmId:', dto.farmId);
     if (!dto.farmId || dto.farmId <= 0) {
       console.error('🌱 [LoadPublicPlanCropsUseCase] invalid farmId:', dto.farmId);
-      this.outputPort.onError({ message: 'Invalid farm ID' });
+      this.outputPort.onError({ message: this.translate.instant('public_plans.invalid_farm_id') });
       return;
     }
     this.publicPlanGateway.getCrops(dto.farmId).subscribe({

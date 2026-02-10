@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { InteractionRuleDetailView, InteractionRuleDetailViewState } from './interaction-rule-detail.view';
 import { LoadInteractionRuleDetailUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-detail.usecase';
 import { DeleteInteractionRuleUseCase } from '../../../usecase/interaction-rules/delete-interaction-rule.usecase';
@@ -55,7 +55,9 @@ const initialControl: InteractionRuleDetailViewState = {
             </div>
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'interaction_rules.show.is_directional' | translate }}</dt>
-              <dd class="detail-row__value">{{ control.rule.is_directional ? 'Yes' : 'No' }}</dd>
+              <dd class="detail-row__value">
+                {{ control.rule.is_directional ? ('common.true' | translate) : ('common.false' | translate) }}
+              </dd>
             </div>
             @if (control.rule.description) {
               <div class="detail-row">
@@ -84,6 +86,7 @@ const initialControl: InteractionRuleDetailViewState = {
 export class InteractionRuleDetailComponent implements InteractionRuleDetailView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly useCase = inject(LoadInteractionRuleDetailUseCase);
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleDetailPresenter);
@@ -102,7 +105,11 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
     this.presenter.setView(this);
     const interactionRuleId = Number(this.route.snapshot.paramMap.get('id'));
     if (!interactionRuleId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid interaction rule id.' };
+      this.control = {
+        ...initialControl,
+        loading: false,
+        error: this.translate.instant('interaction_rules.errors.invalid_id')
+      };
       return;
     }
     this.load(interactionRuleId);

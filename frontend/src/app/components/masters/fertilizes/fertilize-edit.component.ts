@@ -46,13 +46,15 @@ const initialControl: FertilizeEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Edit Fertilize</h2>
+        <h2 id="form-heading" class="form-card__title">
+          {{ 'fertilizes.edit.title' | translate:{ name: control.formData.name } }}
+        </h2>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <form (ngSubmit)="updateFertilize()" #fertilizeForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
-              <span class="form-card__field-label">Name</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.name_label' | translate }}</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
             @if (auth.user()?.admin) {
@@ -62,28 +64,30 @@ const initialControl: FertilizeEditViewState = {
               ></app-region-select>
             }
             <label for="n" class="form-card__field">
-              <span class="form-card__field-label">N</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.n_label' | translate }}</span>
               <input id="n" name="n" type="number" step="0.01" [(ngModel)]="control.formData.n" />
             </label>
             <label for="p" class="form-card__field">
-              <span class="form-card__field-label">P</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.p_label' | translate }}</span>
               <input id="p" name="p" type="number" step="0.01" [(ngModel)]="control.formData.p" />
             </label>
             <label for="k" class="form-card__field">
-              <span class="form-card__field-label">K</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.k_label' | translate }}</span>
               <input id="k" name="k" type="number" step="0.01" [(ngModel)]="control.formData.k" />
             </label>
             <label for="package_size" class="form-card__field">
-              <span class="form-card__field-label">Package Size (kg)</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.package_size_label' | translate }}</span>
               <input id="package_size" name="package_size" type="number" step="0.01" [(ngModel)]="control.formData.package_size" />
             </label>
             <label for="description" class="form-card__field">
-              <span class="form-card__field-label">Description</span>
+              <span class="form-card__field-label">{{ 'fertilizes.form.description_label' | translate }}</span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">Save</button>
-              <a routerLink="/fertilizes" class="btn-secondary">Back to fertilizes</a>
+              <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
+                {{ 'fertilizes.form.submit_update' | translate }}
+              </button>
+              <a routerLink="/fertilizes" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }

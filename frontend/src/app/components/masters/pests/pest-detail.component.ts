@@ -32,56 +32,60 @@ const initialControl: PestDetailViewState = {
   template: `
     <main class="page-main">
       @if (control.loading) {
-        <p class="master-loading">Loading...</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.pest) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.pest.name }}</h1>
           <dl class="detail-card__list">
             <div class="detail-row">
-              <dt class="detail-row__term">Name</dt>
+              <dt class="detail-row__term">{{ 'pests.show.name' | translate }}</dt>
               <dd class="detail-row__value">{{ control.pest.name }}</dd>
             </div>
             @if (control.pest.name_scientific) {
               <div class="detail-row">
-                <dt class="detail-row__term">Scientific Name</dt>
+                <dt class="detail-row__term">{{ 'pests.show.name_scientific' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.name_scientific }}</dd>
               </div>
             }
             @if (control.pest.family) {
               <div class="detail-row">
-                <dt class="detail-row__term">Family</dt>
+                <dt class="detail-row__term">{{ 'pests.show.family' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.family }}</dd>
               </div>
             }
             @if (control.pest.order) {
               <div class="detail-row">
-                <dt class="detail-row__term">Order</dt>
+                <dt class="detail-row__term">{{ 'pests.show.order' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.order }}</dd>
               </div>
             }
             @if (control.pest.description) {
               <div class="detail-row">
-                <dt class="detail-row__term">Description</dt>
+                <dt class="detail-row__term">{{ 'pests.show.description' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.description }}</dd>
               </div>
             }
             @if (control.pest.occurrence_season) {
               <div class="detail-row">
-                <dt class="detail-row__term">Occurrence Season</dt>
+                <dt class="detail-row__term">{{ 'pests.show.occurrence_season' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.occurrence_season }}</dd>
               </div>
             }
             @if (control.pest.region) {
               <div class="detail-row">
-                <dt class="detail-row__term">Region</dt>
+                <dt class="detail-row__term">{{ 'pests.show.region' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.pest.region }}</dd>
               </div>
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn-primary">Edit</a>
-            <a [routerLink]="['/pests']" class="btn-secondary">Back</a>
-            <button type="button" class="btn-danger" (click)="deletePest()">Delete</button>
+            <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn-primary">
+              {{ 'pests.show.edit' | translate }}
+            </a>
+            <a [routerLink]="['/pests']" class="btn-secondary">{{ 'pests.show.back_to_list' | translate }}</a>
+            <button type="button" class="btn-danger" (click)="deletePest()">
+              {{ 'pests.show.delete' | translate }}
+            </button>
           </div>
         </section>
       }

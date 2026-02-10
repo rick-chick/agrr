@@ -1,5 +1,6 @@
 import { SimpleChange, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
 
 import type { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
@@ -21,6 +22,7 @@ describe('PlanFieldClimateComponent', () => {
   let mockPresenter: PlanFieldClimatePresenter;
   let mockUseCase: LoadFieldClimateUseCase;
   let mockCdr: ChangeDetectorRef;
+  let mockTranslate: TranslateService;
   let capturedView: PlanFieldClimateView | null;
 
   beforeEach(() => {
@@ -43,8 +45,9 @@ describe('PlanFieldClimateComponent', () => {
 
     mockUseCase = { execute: vi.fn() } as unknown as LoadFieldClimateUseCase;
     mockCdr = { markForCheck: vi.fn() } as unknown as ChangeDetectorRef;
+    mockTranslate = { instant: vi.fn((key: string) => key) } as unknown as TranslateService;
 
-    component = new PlanFieldClimateComponent(mockPresenter, mockUseCase, mockCdr);
+    component = new PlanFieldClimateComponent(mockPresenter, mockUseCase, mockCdr, mockTranslate);
     component.ngOnInit();
   });
 

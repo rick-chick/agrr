@@ -17,6 +17,7 @@ import { CommonModule } from '@angular/common';
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration, ChartDataset, Plugin } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { TranslateService } from '@ngx-translate/core';
 import {
   ClimateGddPoint,
   ClimateTemperaturePoint,
@@ -171,7 +172,8 @@ export class PlanFieldClimateComponent
   constructor(
     private readonly presenter: PlanFieldClimatePresenter,
     private readonly useCase: LoadFieldClimateUseCase,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -290,7 +292,7 @@ export class PlanFieldClimateComponent
       this.temperatureChart = new Chart(this.temperatureCanvas.nativeElement, {
         type: 'line',
         data: { labels: [], datasets: [] },
-        options: this.buildChartOptions('Temperature (℃)'),
+        options: this.buildChartOptions(this.translate.instant('plans.field_climate.chart.temperature')),
         plugins: [this.getStageBandPlugin()]
       });
     }
@@ -299,7 +301,7 @@ export class PlanFieldClimateComponent
       this.gddChart = new Chart(this.gddCanvas.nativeElement, {
         type: 'line',
         data: { labels: [], datasets: [] },
-        options: this.buildGddChartOptions('Cumulative GDD')
+        options: this.buildGddChartOptions(this.translate.instant('plans.field_climate.chart.cumulative_gdd'))
       });
     }
   }
@@ -334,9 +336,9 @@ export class PlanFieldClimateComponent
 
     const labels = weather.map(entry => entry.date);
     const datasets: ChartDataset<'line'>[] = [
-      this.buildTemperatureDataset('Min temp', weather, 'temperature_min', '#0ea5e9'),
-      this.buildTemperatureDataset('Mean temp', weather, 'temperature_mean', '#2563eb'),
-      this.buildTemperatureDataset('Max temp', weather, 'temperature_max', '#16a34a')
+      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.min_temp'), weather, 'temperature_min', '#0ea5e9'),
+      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.mean_temp'), weather, 'temperature_mean', '#2563eb'),
+      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.max_temp'), weather, 'temperature_max', '#16a34a')
     ];
 
     this.temperatureChart.data.labels = labels;
@@ -362,14 +364,14 @@ export class PlanFieldClimateComponent
 
     const datasets: ChartDataset<'line'>[] = [
       this.buildGddDataset(
-        'Daily GDD',
+        this.translate.instant('plans.field_climate.chart.daily_gdd'),
         gddData,
         entry => entry.gdd,
         '#f97316',
         'y2'
       ),
       this.buildGddDataset(
-        'Cumulative GDD',
+        this.translate.instant('plans.field_climate.chart.cumulative_gdd'),
         gddData,
         entry => entry.cumulative_gdd,
         '#10b981',
@@ -478,7 +480,7 @@ export class PlanFieldClimateComponent
           type: 'time',
           time: {
             unit: 'day',
-            tooltipFormat: 'yyyy-MM-dd',
+            tooltipFormat: this.translate.instant('plans.field_climate.chart.tooltip_format'),
             displayFormats: {
               day: 'MM/dd'
             }
@@ -528,7 +530,7 @@ export class PlanFieldClimateComponent
           type: 'time',
           time: {
             unit: 'day',
-            tooltipFormat: 'yyyy-MM-dd',
+            tooltipFormat: this.translate.instant('plans.field_climate.chart.tooltip_format'),
             displayFormats: {
               day: 'MM/dd'
             }
@@ -567,7 +569,7 @@ export class PlanFieldClimateComponent
           min: 0,
           title: {
             display: true,
-            text: 'Daily GDD',
+            text: this.translate.instant('plans.field_climate.chart.daily_gdd'),
             color: '#f97316'
           },
           ticks: {
@@ -754,7 +756,7 @@ export class PlanFieldClimateComponent
     });
 
     return {
-      label: 'Required cumulative GDD',
+      label: this.translate.instant('plans.field_climate.chart.required_cumulative_gdd'),
       data,
       stepped: 'before',
       borderColor: '#ef4444',

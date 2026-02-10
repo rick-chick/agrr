@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { FarmListView, FarmListViewState } from './farm-list.view';
 import { LoadFarmListUseCase } from '../../../usecase/farms/load-farm-list.usecase';
 import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
@@ -19,7 +20,7 @@ const initialControl: FarmListViewState = {
 @Component({
   selector: 'app-farm-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     FarmListPresenter,
     LoadFarmListUseCase,
@@ -31,29 +32,43 @@ const initialControl: FarmListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Farms</h1>
-        <p class="page-description">Manage your farms.</p>
+        <h1 id="page-title" class="page-title">{{ 'farms.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'farms.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a routerLink="/farms/new" class="btn-primary">Create Farm</a>
+            <a routerLink="/farms/new" class="btn-primary">{{ 'farms.index.new_farm' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (farm of control.farms; track farm.id) {
               <li class="card-list__item">
                 <article class="item-card">
                   <a [routerLink]="['/farms', farm.id]" class="item-card__body">
-                    <span class="item-card__title">{{ farm.name }}{{ farm.is_reference ? ' (参照)' : '' }}</span>
+                    <span class="item-card__title">
+                      {{ farm.name }}
+                      @if (farm.is_reference) {
+                        <span>({{ 'farms.index.reference_badge' | translate }})</span>
+                      }
+                    </span>
                     @if (farm.region) {
                       <span class="item-card__meta">{{ farm.region }}</span>
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary">Edit</a>
-                    <button type="button" class="btn-danger" (click)="deleteFarm(farm.id)" aria-label="Delete">Delete</button>
+                    <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary">
+                      {{ 'common.edit' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deleteFarm(farm.id)"
+                      [attr.aria-label]="'common.delete' | translate"
+                    >
+                      {{ 'common.delete' | translate }}
+                    </button>
                   </div>
                 </article>
               </li>

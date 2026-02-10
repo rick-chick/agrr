@@ -6,7 +6,7 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import 'chartjs-adapter-date-fns';
 
 import { routes } from './app.routes';
-import { SimpleTranslateLoader } from './services/simple-translate-loader';
+import { createTranslateLoader } from './core/i18n/translate-loader';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
       TranslateModule.forRoot({
         loader: {
           provide: TranslateLoader,
-          useFactory: (http: HttpClient) => new SimpleTranslateLoader(http),
+          useFactory: createTranslateLoader,
           deps: [HttpClient]
         }
       })

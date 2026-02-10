@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideEditView, PesticideEditViewState, PesticideEditFormData } from './pesticide-edit.view';
 import { LoadPesticideForEditUseCase } from '../../../usecase/pesticides/load-pesticide-for-edit.usecase';
@@ -104,6 +104,7 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly loadUseCase = inject(LoadPesticideForEditUseCase);
   private readonly updateUseCase = inject(UpdatePesticideUseCase);
   private readonly presenter = inject(PesticideEditPresenter);
@@ -149,7 +150,11 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
     this.applyUserRegionToForm();
     const pesticideId = Number(this.route.snapshot.paramMap.get('id'));
     if (!pesticideId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid pesticide id.' };
+      this.control = {
+        ...initialControl,
+        loading: false,
+        error: this.translate.instant('pesticides.errors.invalid_id')
+      };
       return;
     }
     this.load(pesticideId);

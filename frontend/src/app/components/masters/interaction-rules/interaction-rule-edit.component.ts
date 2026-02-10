@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleEditView, InteractionRuleEditViewState, InteractionRuleEditFormData } from './interaction-rule-edit.view';
@@ -98,6 +98,7 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly loadUseCase = inject(LoadInteractionRuleForEditUseCase);
   private readonly updateUseCase = inject(UpdateInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleEditPresenter);
@@ -119,7 +120,11 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
   ngOnInit(): void {
     this.presenter.setView(this);
     if (!this.interactionRuleId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid interaction rule id.' };
+      this.control = {
+        ...initialControl,
+        loading: false,
+        error: this.translate.instant('interaction_rules.errors.invalid_id')
+      };
       return;
     }
     this.loadUseCase.execute({ interactionRuleId: this.interactionRuleId });

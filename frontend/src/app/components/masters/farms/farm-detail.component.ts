@@ -84,7 +84,9 @@ const initialControl: FarmDetailViewState = {
         @if (control.farm.weather_data_status && control.farm.weather_data_status !== 'completed') {
           <section class="section-card" aria-labelledby="weather-heading">
             <h2 id="weather-heading" class="section-title">{{ 'farms.show.weather_status' | translate }}</h2>
-            <p>{{ control.farm.weather_data_status }}</p>
+            <p>
+              {{ ('models.farm.weather_status.' + control.farm.weather_data_status) | translate: { progress: control.farm.weather_data_progress ?? 0 } }}
+            </p>
             @if (control.farm.weather_data_status === 'fetching') {
               <p>{{ 'farms.show.weather_progress' | translate }}: {{ control.farm.weather_data_progress ?? 0 }}%</p>
               <progress class="progress-bar" [value]="control.farm.weather_data_progress ?? 0" max="100"></progress>

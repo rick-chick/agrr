@@ -175,6 +175,8 @@ Rails.application.routes.draw do
           end
         end
         
+        # Contact messages (public)
+        resources :contact_messages, only: [:create, :index]
         # Weather API endpoints
         namespace :weather do
           get 'historical', to: 'weather#historical'

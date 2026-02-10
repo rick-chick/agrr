@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CropDetailView, CropDetailViewState } from './crop-detail.view';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
@@ -100,11 +100,13 @@ const initialControl: CropDetailViewState = {
                   <h3 class="stage-card__title">{{ stage.name }}</h3>
                   <div class="stage-details">
                     @if (stage.thermal_requirement) {
-                      <p><strong>{{ 'crops.show.required_gdd' | translate }}:</strong> {{ stage.thermal_requirement.required_gdd }} GDD</p>
+                      <p><strong>{{ 'crops.show.required_gdd' | translate }}:</strong>
+                        {{ stage.thermal_requirement.required_gdd }} {{ 'crops.show.gdd_unit' | translate }}</p>
                     }
                     @if (stage.temperature_requirement) {
                       <p><strong>{{ 'crops.show.optimal_temperature' | translate }}:</strong>
-                        {{ stage.temperature_requirement.optimal_min }}°C - {{ stage.temperature_requirement.optimal_max }}°C</p>
+                        {{ stage.temperature_requirement.optimal_min }}{{ 'crops.show.celsius_unit' | translate }}
+                        - {{ stage.temperature_requirement.optimal_max }}{{ 'crops.show.celsius_unit' | translate }}</p>
                     }
                   </div>
                 </div>
@@ -124,6 +126,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: CropDetailViewState = initialControl;
   get control(): CropDetailViewState {
@@ -138,7 +141,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     this.presenter.setView(this);
     const cropId = Number(this.route.snapshot.paramMap.get('id'));
     if (!cropId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid crop id.' };
+      this.control = { ...initialControl, loading: false, error: this.translate.instant('crops.errors.invalid_id') };
       return;
     }
     this.load(cropId);

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { PestListView, PestListViewState } from './pest-list.view';
 import { LoadPestListUseCase } from '../../../usecase/pests/load-pest-list.usecase';
 import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';
@@ -19,7 +20,7 @@ const initialControl: PestListViewState = {
 @Component({
   selector: 'app-pest-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PestListPresenter,
     LoadPestListUseCase,
@@ -31,15 +32,15 @@ const initialControl: PestListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Pests</h1>
-        <p class="page-description">Manage pests.</p>
+        <h1 id="page-title" class="page-title">{{ 'pests.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'pests.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/pests', 'new']" class="btn-primary">Create Pest</a>
+            <a [routerLink]="['/pests', 'new']" class="btn-primary">{{ 'pests.index.new_pest' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (pest of control.pests; track pest.id) {
@@ -52,8 +53,17 @@ const initialControl: PestListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/pests', pest.id, 'edit']" class="btn-secondary">Edit</a>
-                    <button type="button" class="btn-danger" (click)="deletePest(pest.id)" aria-label="Delete">Delete</button>
+                    <a [routerLink]="['/pests', pest.id, 'edit']" class="btn-secondary">
+                      {{ 'pests.index.actions.edit' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deletePest(pest.id)"
+                      [attr.aria-label]="'pests.index.actions.delete' | translate"
+                    >
+                      {{ 'pests.index.actions.delete' | translate }}
+                    </button>
                   </div>
                 </article>
               </li>
