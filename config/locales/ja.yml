@@ -55,6 +55,11 @@ ja:
   # API用エラーメッセージ
   api:
     errors:
+      backdoor:
+        not_enabled: "Backdoor 機能が有効化されていません。設定を確認してください。"
+        missing_token: "認証トークンが指定されていません"
+        invalid_token: "認証トークンが無効です"
+      internal_server_error: "サーバーエラーが発生しました"
       common:
         location_required: "位置情報を入力してください"
         weather_service_unavailable: "天気サービスは一時的に利用できません"

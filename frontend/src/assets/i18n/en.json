@@ -258,7 +258,10 @@
     "admin": "Admin",
     "language": "Language",
     "menu_masters": "Masters",
-    "menu_more": "More"
+    "menu_more": "More",
+    "main": "Main navigation",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu"
   },
   "footer": {
     "about": "About AGRR",
@@ -963,6 +966,9 @@
       "already_optimized": "This plan is already optimized.",
       "invalid_field_params": "Invalid field information."
     },
+    "invalid_farm_id": "Invalid farm ID.",
+    "plan_saved_successfully": "Plan saved successfully.",
+    "failed_to_save_plan": "Failed to save plan.",
     "messages": {
       "field_removed": "Field removed.",
       "plan_created": "Plan created successfully.",
@@ -972,6 +978,18 @@
       "field_added": "Field added.",
       "optimization_started": "Optimization started.",
       "reoptimization_started": "Re-optimization started."
+    },
+    "field_climate": {
+      "chart": {
+        "temperature": "Temperature (°C)",
+        "cumulative_gdd": "Cumulative GDD",
+        "daily_gdd": "Daily GDD",
+        "min_temp": "Min temp",
+        "mean_temp": "Mean temp",
+        "max_temp": "Max temp",
+        "required_cumulative_gdd": "Required cumulative GDD",
+        "tooltip_format": "yyyy-MM-dd"
+      }
     },
     "title": "Cultivation Plans",
     "default_plan_name": "Main Plan",
@@ -2415,6 +2433,14 @@
     "errors": {
       "select_fields": "Please select at least one field",
       "farm_not_found": "Farm not found"
+    }
+  },
+  "weather": {
+    "temperature": {
+      "chart": {
+        "title": "Temperature Chart",
+        "dataset_label": "Temp (°C)"
+      }
     }
   },
   "shared": {

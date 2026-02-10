@@ -1621,6 +1621,9 @@
       "not_found": "作付け計画が見つかりません。",
       "schedule_generation_failed": "作業予定の登録に失敗しました"
     },
+    "invalid_farm_id": "農場IDが無効です。",
+    "plan_saved_successfully": "計画が保存されました。",
+    "failed_to_save_plan": "計画の保存に失敗しました。",
     "messages": {
       "field_removed": "圃場を削除しました。"
     },
@@ -1872,6 +1875,18 @@
       "load_failed": "データの読み込みに失敗しました",
       "chart_create_failed": "チャートの作成に失敗しました",
       "gdd_chart_create_failed": "GDDチャートの作成に失敗しました"
+    },
+    "field_climate": {
+      "chart": {
+        "temperature": "温度（℃）",
+        "cumulative_gdd": "積算GDD",
+        "daily_gdd": "日別GDD",
+        "min_temp": "最低温度",
+        "mean_temp": "平均温度",
+        "max_temp": "最高温度",
+        "required_cumulative_gdd": "必要積算GDD",
+        "tooltip_format": "yyyy-MM-dd"
+      }
     },
     "title": "個人計画",
     "default_plan_name": "メイン計画",
@@ -2173,7 +2188,10 @@
     "admin": "管理画面",
     "language": "言語",
     "menu_masters": "マスタ",
-    "menu_more": "その他"
+    "menu_more": "その他",
+    "main": "メインナビゲーション",
+    "open_menu": "メニューを開く",
+    "close_menu": "メニューを閉じる"
   },
   "footer": {
     "about": "AGRRについて",
@@ -2882,6 +2900,14 @@
     "errors": {
       "select_fields": "ほ場を選択してください",
       "farm_not_found": "農場が見つかりません"
+    }
+  },
+  "weather": {
+    "temperature": {
+      "chart": {
+        "title": "気温チャート",
+        "dataset_label": "気温 (°C)"
+      }
     }
   },
   "shared": {
