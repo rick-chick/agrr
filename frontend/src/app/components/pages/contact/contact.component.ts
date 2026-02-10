@@ -16,10 +16,10 @@ import { ContactFormComponent } from '../../contact-form/contact-form.component'
         <div class="info-box">
           <h2 class="info-box-title">{{ 'pages.contact.email_section_title' | translate }}</h2>
           <p class="info-box-content">{{ 'pages.contact.email_intro' | translate }}</p>
-          <p class="page-section-content">
+          <div class="info-box-form">
             <app-contact-form></app-contact-form>
-          </p>
-          <p class="text-sm text-secondary">{{ 'pages.contact.email_note' | translate }}</p>
+          </div>
+          <p class="info-box-note">{{ 'pages.contact.email_note' | translate }}</p>
         </div>
 
         <div class="info-box">
@@ -41,9 +41,7 @@ import { ContactFormComponent } from '../../contact-form/contact-form.component'
           </ul>
         </div>
 
-        <div class="text-center mt-10">
-          <p class="text-secondary">{{ 'pages.contact.footer_message' | translate }}</p>
-        </div>
+        <p class="page-footer-text">{{ 'pages.contact.footer_message' | translate }}</p>
       </div>
     </div>
   `,

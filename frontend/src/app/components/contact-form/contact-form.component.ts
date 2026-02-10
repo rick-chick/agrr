@@ -48,8 +48,10 @@ const initialControl: ContactFormViewState = {
   template: `
     <form class="form-card" (ngSubmit)="submit()" novalidate>
       <div class="form-card__form">
-        <div class="form-card__field">
-          <label for="name">{{ 'contact_form.name' | translate }}</label>
+        <label class="form-card__field" for="name">
+          <span class="form-card__field-label">
+            {{ 'contact_form.name' | translate }}
+          </span>
           <input
             id="name"
             name="name"
@@ -57,10 +59,12 @@ const initialControl: ContactFormViewState = {
             [(ngModel)]="name"
             maxlength="255"
           />
-        </div>
+        </label>
 
-        <div class="form-card__field">
-          <label for="email">{{ 'contact_form.email' | translate }}</label>
+        <label class="form-card__field" for="email">
+          <span class="form-card__field-label">
+            {{ 'contact_form.email' | translate }}
+          </span>
           <input
             id="email"
             name="email"
@@ -69,10 +73,12 @@ const initialControl: ContactFormViewState = {
             type="email"
             required
           />
-        </div>
+        </label>
 
-        <div class="form-card__field">
-          <label for="subject">{{ 'contact_form.subject' | translate }}</label>
+        <label class="form-card__field" for="subject">
+          <span class="form-card__field-label">
+            {{ 'contact_form.subject' | translate }}
+          </span>
           <input
             id="subject"
             name="subject"
@@ -80,10 +86,12 @@ const initialControl: ContactFormViewState = {
             [(ngModel)]="subject"
             maxlength="255"
           />
-        </div>
+        </label>
 
-        <div class="form-card__field">
-          <label for="message">{{ 'contact_form.message' | translate }}</label>
+        <label class="form-card__field" for="message">
+          <span class="form-card__field-label">
+            {{ 'contact_form.message' | translate }}
+          </span>
           <textarea
             id="message"
             name="message"
@@ -93,7 +101,7 @@ const initialControl: ContactFormViewState = {
             required
             maxlength="5000"
           ></textarea>
-        </div>
+        </label>
       </div>
 
       <div class="form-card__actions">
@@ -129,7 +137,7 @@ const initialControl: ContactFormViewState = {
       </div>
     </form>
   `,
-  styleUrls: ['./contact-form.component.css']
+  styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
 export class ContactFormComponent implements ContactFormView, SendContactMessageOutputPort {
   private readonly cdr = inject(ChangeDetectorRef);
