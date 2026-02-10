@@ -19,6 +19,8 @@
   --color-primary-hover: #1d4ed8;
   --color-accent: #64748b;
   --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
   --color-error: #dc2626;
   --color-error-dark: #b91c1c;
   --color-error-bg: #fef2f2;
@@ -39,6 +41,7 @@
   /* 角丸 */
   --radius-sm: 4px;
   --radius-md: 6px;
+  --radius-base: var(--radius-md);
   --radius-lg: 8px;
   --radius-xl: 12px;
 

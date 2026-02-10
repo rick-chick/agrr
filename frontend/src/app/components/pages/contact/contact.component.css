@@ -54,6 +54,21 @@
   margin-bottom: var(--space-4);
 }
 
+.info-box-form {
+  margin-top: var(--space-5);
+}
+
+.info-box-note {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background-color: var(--color-surface-selected);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
 .info-box-link {
   color: var(--color-success-dark);
   text-decoration: underline;
