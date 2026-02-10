@@ -10,10 +10,17 @@ module Api
           # Set a test token for all tests
           @token = 'test_backdoor_token_12345'
           ENV['AGRR_BACKDOOR_TOKEN'] = @token
+          # Ensure controller messages render in English for tests that assert English text
+          # AGRR maps English to 'us' locale code in application (available_locales include 'us')
+          I18n.locale = :'us'
+          # Ensure application controller picks up English via cookie-based locale resolution
+          cookies[:locale] = 'us'
         end
         
         teardown do
           ENV.delete('AGRR_BACKDOOR_TOKEN')
+          I18n.locale = I18n.default_locale
+          cookies.delete(:locale)
         end
       
       # Helper to mock external commands and BackdoorConfig.token during requests
@@ -44,7 +51,9 @@ module Api
           
           assert_response :unauthorized
           json = JSON.parse(response.body)
-          assert_equal 'Missing authentication token', json['error']
+          expected_en = I18n.t('api.errors.backdoor.missing_token', locale: :'us')
+          expected_ja = I18n.t('api.errors.backdoor.missing_token', locale: :ja)
+          assert_includes [expected_en, expected_ja], json['error']
         end
         
         test "should reject invalid token" do
@@ -52,7 +61,9 @@ module Api
           
           assert_response :forbidden
           json = JSON.parse(response.body)
-          assert_equal 'Invalid authentication token', json['error']
+          expected_en = I18n.t('api.errors.backdoor.invalid_token', locale: :'us')
+          expected_ja = I18n.t('api.errors.backdoor.invalid_token', locale: :ja)
+          assert_includes [expected_en, expected_ja], json['error']
         end
         
         test "should accept valid token in header" do
@@ -127,7 +138,9 @@ module Api
           
           assert_response :service_unavailable
           json = JSON.parse(response.body)
-          assert_includes json['error'], 'not enabled'
+          expected_en = I18n.t('api.errors.backdoor.not_enabled', locale: :'us')
+          expected_ja = I18n.t('api.errors.backdoor.not_enabled', locale: :ja)
+          assert_includes [expected_en, expected_ja], json['error']
         end
         
         # User creation tests

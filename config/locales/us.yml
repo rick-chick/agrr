@@ -1,4 +1,11 @@
 us:
+  api:
+    errors:
+      backdoor:
+        not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
+        missing_token: "Missing authentication token"
+        invalid_token: "Invalid authentication token"
+us:
   controllers:
     plans:
       task_schedule_items:

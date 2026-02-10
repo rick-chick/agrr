@@ -267,6 +267,19 @@ en:
   # API translations
   api:
     errors:
+      backdoor:
+        not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
+        missing_token: "Missing authentication token"
+        invalid_token: "Invalid authentication token"
+      pests:
+        name_required: "Please enter a pest name"
+        invalid_payload: "Invalid pest payload format"
+        fetch_failed: "Failed to retrieve pest information"
+        fetch_failed_with_reason: "Failed to retrieve pest information: %{message}"
+        not_found: "Pest not found"
+        invalid_affected_crops: "AGRR response contains invalid affected_crops"
+        daemon_not_running: "AGRR service is not running"
+      internal_server_error: "Internal server error"
       common:
         location_required: "Location is required"
         weather_service_unavailable: "Weather service is temporarily unavailable"

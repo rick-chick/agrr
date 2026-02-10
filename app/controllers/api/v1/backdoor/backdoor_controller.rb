@@ -304,7 +304,10 @@ module Api
         
         def check_backdoor_enabled
           unless ::BackdoorConfig.enabled?
-            render json: { error: 'Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable.' }, status: :service_unavailable
+            render json: {
+              error: I18n.t('api.errors.backdoor.not_enabled'),
+              error_key: 'api.errors.backdoor.not_enabled'
+            }, status: :service_unavailable
             return
           end
         end
@@ -313,12 +316,18 @@ module Api
           provided_token = request.headers['X-Backdoor-Token'] || params[:token]
           
           unless provided_token.present?
-            render json: { error: 'Missing authentication token' }, status: :unauthorized
+            render json: {
+              error: I18n.t('api.errors.backdoor.missing_token'),
+              error_key: 'api.errors.backdoor.missing_token'
+            }, status: :unauthorized
             return
           end
           
           unless provided_token == ::BackdoorConfig.token
-            render json: { error: 'Invalid authentication token' }, status: :forbidden
+            render json: {
+              error: I18n.t('api.errors.backdoor.invalid_token'),
+              error_key: 'api.errors.backdoor.invalid_token'
+            }, status: :forbidden
             return
           end
         end

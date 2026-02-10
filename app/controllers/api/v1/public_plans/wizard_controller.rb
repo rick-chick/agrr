@@ -30,11 +30,11 @@ module Api
           render json: crops
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]} - #{e.message}"
-          render json: { error: 'Farm not found' }, status: :not_found
+          render json: { error: I18n.t('api.errors.common.farm_not_found'), error_key: 'api.errors.common.farm_not_found' }, status: :not_found
         rescue => e
           Rails.logger.error "❌ [WizardController#crops] Unexpected error: #{e.class} - #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
-          render json: { error: 'Internal server error' }, status: :internal_server_error
+          render json: { error: I18n.t('api.errors.internal_server_error'), error_key: 'api.errors.internal_server_error' }, status: :internal_server_error
         end
 
         def create

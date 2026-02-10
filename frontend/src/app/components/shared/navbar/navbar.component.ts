@@ -11,13 +11,13 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslateModule, NavDropdownComponent],
   template: `
-    <nav class="app-nav" aria-label="メインナビゲーション" [attr.data-menu-open]="isMenuOpen">
+    <nav class="app-nav" [attr.aria-label]="'nav.main' | translate" [attr.data-menu-open]="isMenuOpen">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
       <button
         class="menu-toggle"
         type="button"
         [attr.aria-expanded]="isMenuOpen"
-        [attr.aria-label]="isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'"
+        [attr.aria-label]="isMenuOpen ? ('nav.close_menu' | translate) : ('nav.open_menu' | translate)"
         (click)="toggleMenu()"
       >
         <span class="menu-toggle-icon" aria-hidden="true"></span>
