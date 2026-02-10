@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
+import { ContactFormComponent } from '../../contact-form/contact-form.component';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [TranslateModule],
+  imports: [TranslateModule, ContactFormComponent],
   template: `
     <div class="page-content-container">
       <h1 class="page-header">{{ 'pages.contact.heading' | translate }}</h1>
@@ -15,8 +16,8 @@ import { TranslateModule } from '@ngx-translate/core';
         <div class="info-box">
           <h2 class="info-box-title">{{ 'pages.contact.email_section_title' | translate }}</h2>
           <p class="info-box-content">{{ 'pages.contact.email_intro' | translate }}</p>
-          <p class="info-box-content text-xl">
-            <a href="mailto:support@agrr.net" class="info-box-link">support@agrr.net</a>
+          <p class="page-section-content">
+            <app-contact-form></app-contact-form>
           </p>
           <p class="text-sm text-secondary">{{ 'pages.contact.email_note' | translate }}</p>
         </div>
