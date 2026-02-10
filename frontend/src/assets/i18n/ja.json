@@ -24,6 +24,13 @@
       }
     }
   },
+  "adapters": {
+    "privatePlanCreate": {
+      "flash": {
+        "success": "計画を作成しました"
+      }
+    }
+  },
   "deletion_undo": {
     "toast_message": "%{resource} を削除しました。元に戻すことができます。",
     "redirect_notice": "%{resource} を削除しました。",

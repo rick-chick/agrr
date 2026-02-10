@@ -20,6 +20,13 @@
       }
     }
   },
+  "adapters": {
+    "privatePlanCreate": {
+      "flash": {
+        "success": "Rencana berhasil dibuat."
+      }
+    }
+  },
   "time": {
     "formats": {
       "default": "%d %B %Y %H:%M",

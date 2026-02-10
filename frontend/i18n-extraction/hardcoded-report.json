@@ -1,22 +1,12 @@
 {
-  "generatedAt": "2026-02-10T02:28:25.515Z",
+  "generatedAt": "2026-02-10T03:47:58.272Z",
   "summary": {
-    "totalFindings": 11,
+    "totalFindings": 10,
     "bySeverity": {
-      "high": 1,
       "low": 10
     }
   },
   "findings": [
-    {
-      "file": "src/app/adapters/private-plan-create/create-private-plan.presenter.ts",
-      "line": 28,
-      "text": "計画を作成しました",
-      "context": "    if (!this.view) throw new Error('Presenter: view not set');\n    this.flashMessage.show({ type: 'success', text: '計画を作成しました' });\n    this.view.control = {",
-      "severity": "high",
-      "type": "ts_property_text",
-      "suggestion": "翻訳キーを追加 (例: auto.app.adapters.private-plan-create.create-private-plan.presenter.ts_string_text)"
-    },
     {
       "file": "src/app/components/plans/gantt-chart.component.ts",
       "line": 1123,

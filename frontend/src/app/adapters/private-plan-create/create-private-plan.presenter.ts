@@ -3,6 +3,7 @@ import { CreatePrivatePlanOutputPort } from '../../usecase/private-plan-create/c
 import { CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 
@@ -16,6 +17,7 @@ export interface CreatePrivatePlanView {
 @Injectable()
 export class CreatePrivatePlanPresenter implements CreatePrivatePlanOutputPort {
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private view: CreatePrivatePlanView | null = null;
 
@@ -25,7 +27,10 @@ export class CreatePrivatePlanPresenter implements CreatePrivatePlanOutputPort {
 
   present(dto: CreatePrivatePlanResponseDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'success', text: '計画を作成しました' });
+    this.flashMessage.show({
+      type: 'success',
+      text: this.translate.instant('adapters.privatePlanCreate.flash.success')
+    });
     this.view.control = {
       loading: false,
       error: null
