@@ -2910,6 +2910,29 @@
       }
     }
   },
+  "contact_form": {
+    "name": "名前",
+    "email": "メールアドレス",
+    "subject": "件名",
+    "message": "メッセージ",
+    "submit": "送信",
+    "success": {
+      "message": "メッセージを送信しました。",
+      "toast": "お問い合わせありがとうございます。"
+    },
+    "errors": {
+      "validation_failed": "入力に不備があります。ご確認ください。",
+      "send_failed": "送信に失敗しました。時間をおいて再度お試しください。",
+      "validation": {
+        "message_required": "メッセージは必須です。",
+        "email_required": "メールアドレスは必須です。",
+        "email_invalid": "有効なメールアドレスを入力してください。",
+        "message_too_long": "メッセージは5000文字以内で入力してください。",
+        "name_too_long": "名前は255文字以内で入力してください。",
+        "subject_too_long": "件名は255文字以内で入力してください。"
+      }
+    }
+  },
   "shared": {
     "navbar": {
       "brand": "AGRR",
