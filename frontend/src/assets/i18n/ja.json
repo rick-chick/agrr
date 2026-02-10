@@ -109,8 +109,16 @@
       "no_permission": "権限がありません。",
       "not_found": "指定された農薬が見つかりません。"
     },
+    "errors": {
+      "invalid_id": "農薬IDが無効です。"
+    },
+    "fallback": {
+      "crop": "作物 %{id}",
+      "pest": "害虫 %{id}"
+    },
     "index": {
       "title": "農薬一覧",
+      "description": "農薬を管理します。",
       "new_pesticide": "新しい農薬を追加",
       "reference_pesticides": "参照農薬（共通データ）",
       "active_ingredient": "有効成分",
@@ -179,12 +187,17 @@
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
     },
+    "errors": {
+      "invalid_id": "作業IDが不正です。"
+    },
     "index": {
       "title": "作業一覧",
+      "description": "作業を管理します。",
       "new_agricultural_task": "新しい作業を追加",
       "time_per_sqm": "作業時間",
       "reference_task": "参照作業",
       "user_task_tag": "自分の作業",
+      "skill_label": "スキル",
       "actions": {
         "search": "検索",
         "show": "詳細",
@@ -210,9 +223,16 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "%{name}を編集",
+      "title_default": "作業"
     },
     "form": {
+      "name_label": "作業名",
+      "description_label": "説明",
+      "time_per_sqm_label": "作業時間（時間）",
+      "weather_dependency_label": "天候依存度",
+      "skill_level_label": "スキルレベル",
+      "task_type_label": "作業種別",
       "submit_create": "作業を作成",
       "submit_update": "作業を更新",
       "required_tools_hint": "改行で複数入力できます",
@@ -236,6 +256,7 @@
       "name": "作業名",
       "description": "説明",
       "time_per_sqm": "作業時間",
+      "hours_suffix": "時間",
       "weather_dependency": "天候依存度",
       "weather_dependency_low": "低",
       "weather_dependency_medium": "中",
@@ -245,6 +266,8 @@
       "skill_level_beginner": "初心者",
       "skill_level_intermediate": "中級者",
       "skill_level_advanced": "上級者",
+      "region": "地域",
+      "task_type": "作業種別",
       "created_at": "作成日",
       "updated_at": "更新日",
       "associated_crops": "関連する作物",
@@ -436,6 +459,9 @@
         "title": "%{count}件のエラーがあります："
       }
     },
+    "errors": {
+      "invalid_id": "作物IDが無効です。"
+    },
     "show": {
       "reference_crop": "参照作物",
       "name": "名前",
@@ -471,6 +497,8 @@
       "nutrient_requirement": "栄養素要件",
       "base_temperature": "最低限界温度",
       "optimal_temperature": "最適温度",
+      "gdd_unit": "GDD",
+      "celsius_unit": "°C",
       "low_stress_threshold": "低ストレス閾値",
       "high_stress_threshold": "高ストレス閾値",
       "frost_threshold": "霜閾値",
@@ -745,6 +773,7 @@
     },
     "index": {
       "title": "害虫一覧",
+      "description": "害虫を管理します。",
       "new_pest": "新しい害虫を追加",
       "reference_pests": "参照害虫（共通データ）",
       "scientific_name": "学名",
@@ -777,6 +806,7 @@
       "order": "目",
       "description": "説明",
       "occurrence_season": "発生季節",
+      "region": "地域",
       "temperature_profile": "温度プロファイル",
       "base_temperature": "基準温度",
       "max_temperature": "最高温度",
@@ -851,6 +881,7 @@
     },
     "index": {
       "title": "肥料一覧",
+      "description": "肥料を管理します。",
       "new_fertilize": "新しい肥料を追加",
       "reference_fertilizes": "参照肥料（共通データ）",
       "actions": {
@@ -908,9 +939,11 @@
     },
     "index": {
       "title": "農場一覧",
+      "description": "農場を管理します。",
       "new_farm": "新しい農場を追加",
       "reference_farms": "参照農場（栽培地域）",
       "my_farms": "自分の農場",
+      "reference_badge": "参照",
       "count": "%{count}件",
       "empty": {
         "icon": "🚜",
@@ -995,6 +1028,9 @@
         "submit_create": "圃場を作成",
         "submit_update": "圃場を更新"
       }
+    },
+    "map": {
+      "default_name": "農場"
     },
     "card": {
       "latitude": "緯度",
@@ -1167,6 +1203,9 @@
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
       "not_found": "指定されたルールが見つかりません。"
+    },
+    "errors": {
+      "invalid_id": "ルールIDが不正です。"
     },
     "index": {
       "title": "連作ルール一覧",
@@ -2512,6 +2551,23 @@
         "file_error": "ファイルの読み込みに失敗しました。システム管理者にお問い合わせください。",
         "invalid_format": "入力データの形式が不正です。システム管理者にお問い合わせください。",
         "optimization_failed": "最適化処理に失敗しました: %{message}"
+      }
+    },
+    "prediction": {
+      "completed": "予測が完了しました"
+    }
+  },
+  "models": {
+    "cultivation_plan": {
+      "phases": {
+        "fetching_weather": "気象データを取得しています...",
+        "weather_data_fetched": "気象データの取得が完了しました",
+        "predicting_weather": "気象データを予測しています...",
+        "weather_prediction_completed": "気象データの予測が完了しました",
+        "optimization_completed": "最適化が完了しました。作業予定を生成しています...",
+        "optimizing": "最適化処理中...",
+        "task_schedule_generating": "作業予定を生成しています...",
+        "completed": "最適化が完了しました"
       }
     }
   },

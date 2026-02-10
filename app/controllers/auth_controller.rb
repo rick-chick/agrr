@@ -25,7 +25,7 @@ class AuthController < ApplicationController
       Rails.logger.error "   GOOGLE_CLIENT_ID: #{ENV['GOOGLE_CLIENT_ID'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
       Rails.logger.error "   GOOGLE_CLIENT_SECRET: #{ENV['GOOGLE_CLIENT_SECRET'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
       Rails.logger.error "   Environment: #{Rails.env}"
-      flash[:alert] = I18n.t('auth.flash.oauth_not_configured', default: 'Google OAuth認証が設定されていません。管理者にお問い合わせください。')
+      flash[:alert] = I18n.t('auth.flash.oauth_not_configured')
     end
     # Display login page with Google OAuth button
   end
@@ -35,7 +35,7 @@ class AuthController < ApplicationController
     # This should not be reached as OmniAuth middleware handles /auth/google_oauth2
     # If reached, there's a configuration issue
     Rails.logger.error "🚨 OAuth: google_oauth2 action reached - OmniAuth middleware not working"
-    redirect_to auth_login_path, alert: 'OAuth認証の設定に問題があります。'
+    redirect_to auth_login_path, alert: I18n.t('auth.flash.oauth_config_error')
   end
 
   def google_oauth2_callback

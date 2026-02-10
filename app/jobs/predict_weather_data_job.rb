@@ -232,7 +232,8 @@ class PredictWeatherDataJob < ApplicationJob
         data_count: prediction_count,
         prediction_start_date: farm.predicted_weather_data['prediction_start_date'],
         prediction_end_date: farm.predicted_weather_data['prediction_end_date'],
-        message: '予測が完了しました'
+        message: '予測が完了しました',
+        message_key: 'jobs.prediction.completed'
       }
     )
     
