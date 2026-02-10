@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiKeyView, ApiKeyViewState } from './api-key.view';
 import { LoadApiKeyUseCase } from '../../../usecase/api-keys/load-api-key.usecase';
 import { GenerateApiKeyUseCase } from '../../../usecase/api-keys/generate-api-key.usecase';
@@ -17,7 +17,7 @@ const initialControl: ApiKeyViewState = {
   loading: true,
   error: null,
   apiKey: '',
-  copyButtonLabel: 'コピー',
+  copyButtonLabel: '',
   generating: false
 };
 
@@ -136,6 +136,7 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
   private readonly regenerateUseCase = inject(RegenerateApiKeyUseCase);
   private readonly presenter = inject(ApiKeyPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   private _control: ApiKeyViewState = initialControl;
   get control(): ApiKeyViewState {
@@ -148,6 +149,10 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.control = {
+      ...this.control,
+      copyButtonLabel: this.translate.instant('api_keys.copy.button')
+    };
     this.loadUseCase.execute({});
   }
 
@@ -159,7 +164,7 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
 
   regenerate(): void {
     if (this.control.generating) return;
-    if (!confirm('現在のAPIキーは無効になります。本当によろしいですか？')) return;
+    if (!confirm(this.translate.instant('api_keys.actions.regenerate_confirm'))) return;
     this.control = { ...this.control, generating: true, error: null };
     this.regenerateUseCase.execute({});
   }
@@ -168,10 +173,10 @@ export class ApiKeyComponent implements ApiKeyView, OnInit {
     navigator.clipboard.writeText(this.control.apiKey).then(() => {
       this.control = {
         ...this.control,
-        copyButtonLabel: 'コピーしました！'
+        copyButtonLabel: this.translate.instant('api_keys.copy.success')
       };
       setTimeout(() => {
-        this.control = { ...this.control, copyButtonLabel: 'コピー' };
+        this.control = { ...this.control, copyButtonLabel: this.translate.instant('api_keys.copy.button') };
       }, 2000);
     });
   }

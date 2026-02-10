@@ -44,9 +44,9 @@ const initialControl: FarmEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Edit Farm</h2>
+        <h2 id="form-heading" class="form-card__title">{{ 'farms.edit.title' | translate }}</h2>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <form (ngSubmit)="updateFarm()" #farmForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="name">
@@ -66,7 +66,7 @@ const initialControl: FarmEditViewState = {
                 [editable]="true"
                 [latitude]="control.formData.latitude"
                 [longitude]="control.formData.longitude"
-                [name]="control.formData.name || 'Farm'"
+                [name]="control.formData.name || ('farms.map.default_name' | translate)"
                 (coordinatesChange)="onCoordinatesChange($event)"
               />
               <div class="coordinates-input">
@@ -101,8 +101,10 @@ const initialControl: FarmEditViewState = {
               </div>
             </section>
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Save</button>
-              <a routerLink="/farms" class="btn-secondary">Back to farms</a>
+              <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
+                {{ 'farms.edit.form.submit' | translate }}
+              </button>
+              <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }

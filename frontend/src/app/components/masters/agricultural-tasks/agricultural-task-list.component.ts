@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   AgriculturalTaskListView,
   AgriculturalTaskListViewState
@@ -22,7 +23,7 @@ const initialControl: AgriculturalTaskListViewState = {
 @Component({
   selector: 'app-agricultural-task-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     AgriculturalTaskListPresenter,
     LoadAgriculturalTaskListUseCase,
@@ -40,15 +41,17 @@ const initialControl: AgriculturalTaskListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Agricultural Tasks</h1>
-        <p class="page-description">Manage agricultural tasks.</p>
+        <h1 id="page-title" class="page-title">{{ 'agricultural_tasks.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'agricultural_tasks.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/agricultural_tasks', 'new']" class="btn-primary">New Agricultural Task</a>
+            <a [routerLink]="['/agricultural_tasks', 'new']" class="btn-primary">
+              {{ 'agricultural_tasks.index.new_agricultural_task' | translate }}
+            </a>
           </div>
           <ul class="card-list" role="list">
             @for (task of control.tasks; track task.id) {
@@ -57,12 +60,23 @@ const initialControl: AgriculturalTaskListViewState = {
                   <a [routerLink]="['/agricultural_tasks', task.id]" class="item-card__body">
                     <span class="item-card__title">{{ task.name }}</span>
                     @if (task.skill_level) {
-                      <span class="item-card__meta">Skill: {{ task.skill_level }}</span>
+                      <span class="item-card__meta">
+                        {{ 'agricultural_tasks.index.skill_label' | translate }}: {{ task.skill_level }}
+                      </span>
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn-secondary">Edit</a>
-                    <button type="button" class="btn-danger" (click)="deleteTask(task.id)" aria-label="Delete">Delete</button>
+                    <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn-secondary">
+                      {{ 'common.edit' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deleteTask(task.id)"
+                      [attr.aria-label]="'common.delete' | translate"
+                    >
+                      {{ 'common.delete' | translate }}
+                    </button>
                   </div>
                 </article>
               </li>

@@ -91,7 +91,8 @@ describe('InteractionRuleEditComponent', () => {
       'interaction_rules.form.is_directional_label': 'Is Directional',
       'interaction_rules.form.description_label': 'Description',
       'interaction_rules.form.submit_update': 'Update',
-      'common.back': 'Back'
+      'common.back': 'Back',
+      'interaction_rules.errors.invalid_id': 'Invalid interaction rule id.'
     });
     translate.use('en');
   });
@@ -103,9 +104,10 @@ describe('InteractionRuleEditComponent', () => {
   });
 
   it('sets error when interaction rule id is missing', () => {
+    const translate = TestBed.inject(TranslateService);
     mockActivatedRoute.snapshot.paramMap.get = () => null;
     component.ngOnInit();
-    expect(component.control.error).toBe('Invalid interaction rule id.');
+    expect(component.control.error).toBe(translate.instant('interaction_rules.errors.invalid_id'));
   });
 
   it('uses form region for admin submit', () => {

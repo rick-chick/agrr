@@ -46,33 +46,35 @@ const initialControl: PestEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Edit Pest</h2>
+        <h2 id="form-heading" class="form-card__title">
+          {{ 'pests.edit.title' | translate:{ name: control.formData.name } }}
+        </h2>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <form (ngSubmit)="updatePest()" #pestForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="name">
-              <span class="form-card__field-label">Name</span>
+              <span class="form-card__field-label">{{ 'pests.form.name_label' | translate }}</span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
             <label class="form-card__field" for="name_scientific">
-              <span class="form-card__field-label">Scientific Name</span>
+              <span class="form-card__field-label">{{ 'pests.form.name_scientific_label' | translate }}</span>
               <input id="name_scientific" name="name_scientific" [(ngModel)]="control.formData.name_scientific" />
             </label>
             <label class="form-card__field" for="family">
-              <span class="form-card__field-label">Family</span>
+              <span class="form-card__field-label">{{ 'pests.form.family_label' | translate }}</span>
               <input id="family" name="family" [(ngModel)]="control.formData.family" />
             </label>
             <label class="form-card__field" for="order">
-              <span class="form-card__field-label">Order</span>
+              <span class="form-card__field-label">{{ 'pests.form.order_label' | translate }}</span>
               <input id="order" name="order" [(ngModel)]="control.formData.order" />
             </label>
             <label class="form-card__field" for="description">
-              <span class="form-card__field-label">Description</span>
+              <span class="form-card__field-label">{{ 'pests.form.description_label' | translate }}</span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <label class="form-card__field" for="occurrence_season">
-              <span class="form-card__field-label">Occurrence Season</span>
+              <span class="form-card__field-label">{{ 'pests.form.occurrence_season_label' | translate }}</span>
               <input id="occurrence_season" name="occurrence_season" [(ngModel)]="control.formData.occurrence_season" />
             </label>
             @if (auth.user()?.admin) {
@@ -83,9 +85,9 @@ const initialControl: PestEditViewState = {
             }
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
-                {{ control.saving ? 'Updating...' : 'Update Pest' }}
+                {{ control.saving ? ('common.updating' | translate) : ('pests.form.submit_update' | translate) }}
               </button>
-              <a [routerLink]="['/pests']" class="btn-secondary">Back</a>
+              <a [routerLink]="['/pests']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }

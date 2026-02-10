@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
+import { environment } from '../../environments/environment';
 import { GoogleAnalyticsService } from './google-analytics.service';
 
 describe('GoogleAnalyticsService', () => {
@@ -19,6 +20,8 @@ describe('GoogleAnalyticsService', () => {
         storage = {};
       })
     });
+    environment.enableGoogleAnalytics = true;
+    environment.googleAnalyticsMeasurementId = 'G-WNLSL6W4ZT';
     service = new GoogleAnalyticsService();
   });
 
@@ -27,6 +30,7 @@ describe('GoogleAnalyticsService', () => {
     delete window.gtag;
     delete window.loadAdSense;
     delete window.dataLayer;
+    environment.enableGoogleAnalytics = false;
   });
 
   it('applies stored consent when available', () => {
@@ -90,5 +94,15 @@ describe('GoogleAnalyticsService', () => {
       'G-WNLSL6W4ZT',
       expect.objectContaining({ page_path: '/bar' })
     ]);
+  });
+
+  it('does nothing when the environment disables analytics', () => {
+    environment.enableGoogleAnalytics = false;
+    service = new GoogleAnalyticsService();
+    window.gtag = vi.fn();
+
+    service.trackPageView('/disabled');
+
+    expect(window.gtag).not.toHaveBeenCalled();
   });
 });

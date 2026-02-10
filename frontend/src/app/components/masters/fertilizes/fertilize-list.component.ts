@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { FertilizeListView, FertilizeListViewState } from './fertilize-list.view';
 import { Fertilize } from '../../../domain/fertilizes/fertilize';
 import { LoadFertilizeListUseCase } from '../../../usecase/fertilizes/load-fertilize-list.usecase';
@@ -20,7 +21,7 @@ const initialControl: FertilizeListViewState = {
 @Component({
   selector: 'app-fertilize-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     FertilizeListPresenter,
     LoadFertilizeListUseCase,
@@ -32,20 +33,20 @@ const initialControl: FertilizeListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Fertilizes</h1>
-        <p class="page-description">Manage fertilizes.</p>
+        <h1 id="page-title" class="page-title">{{ 'fertilizes.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'fertilizes.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a routerLink="/fertilizes/new" class="btn-primary">Create Fertilize</a>
+            <a routerLink="/fertilizes/new" class="btn-primary">{{ 'fertilizes.index.new_fertilize' | translate }}</a>
           </div>
           @if (control.fertilizes.length === 0) {
             <div class="empty-state">
-              <p class="empty-state__message">No fertilizes found.</p>
-              <p class="empty-state__description">Create your first fertilize to get started.</p>
+              <p class="empty-state__message">{{ 'fertilizes.index.empty.title' | translate }}</p>
+              <p class="empty-state__description">{{ 'fertilizes.index.empty.description' | translate }}</p>
             </div>
           } @else {
             <ul class="card-list" role="list">
@@ -54,11 +55,20 @@ const initialControl: FertilizeListViewState = {
                 <article class="item-card">
                   <a [routerLink]="['/fertilizes', item.id]" class="item-card__body">
                     <span class="item-card__title">{{ item.name }}</span>
-                    <span class="item-card__meta">NPK: {{ formatNpk(item) }}</span>
+                    <span class="item-card__meta">{{ 'fertilizes.show.npk_summary' | translate }}: {{ formatNpk(item) }}</span>
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary">Edit</a>
-                    <button type="button" class="btn-danger" (click)="deleteFertilize(item.id)" aria-label="Delete">Delete</button>
+                    <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary">
+                      {{ 'common.edit' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deleteFertilize(item.id)"
+                      [attr.aria-label]="'common.delete' | translate"
+                    >
+                      {{ 'common.delete' | translate }}
+                    </button>
                   </div>
                 </article>
               </li>

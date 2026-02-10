@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { PesticideListView, PesticideListViewState } from './pesticide-list.view';
 import { LoadPesticideListUseCase } from '../../../usecase/pesticides/load-pesticide-list.usecase';
 import { DeletePesticideUseCase } from '../../../usecase/pesticides/delete-pesticide.usecase';
@@ -19,7 +20,7 @@ const initialControl: PesticideListViewState = {
 @Component({
   selector: 'app-pesticide-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PesticideListPresenter,
     LoadPesticideListUseCase,
@@ -31,15 +32,15 @@ const initialControl: PesticideListViewState = {
   template: `
     <main class="page-main">
       <header class="page-header">
-        <h1 id="page-title" class="page-title">Pesticides</h1>
-        <p class="page-description">Manage pesticides.</p>
+        <h1 id="page-title" class="page-title">{{ 'pesticides.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'pesticides.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/pesticides', 'new']" class="btn-primary">Create Pesticide</a>
+            <a [routerLink]="['/pesticides', 'new']" class="btn-primary">{{ 'pesticides.form.submit_create' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (pesticide of control.pesticides; track pesticide.id) {
@@ -52,8 +53,15 @@ const initialControl: PesticideListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn-secondary">Edit</a>
-                    <button type="button" class="btn-danger" (click)="deletePesticide(pesticide.id)" aria-label="Delete">Delete</button>
+                    <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn-secondary">{{ 'pesticides.index.actions.edit' | translate }}</a>
+                    <button
+                      type="button"
+                      class="btn-danger"
+                      (click)="deletePesticide(pesticide.id)"
+                      [attr.aria-label]="'pesticides.index.actions.delete' | translate"
+                    >
+                      {{ 'pesticides.index.actions.delete' | translate }}
+                    </button>
                   </div>
                 </article>
               </li>

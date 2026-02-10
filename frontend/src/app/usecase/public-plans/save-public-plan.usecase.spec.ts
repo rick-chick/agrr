@@ -1,11 +1,23 @@
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
 import { SavePublicPlanUseCase } from './save-public-plan.usecase';
 import { PublicPlanGateway, SavePublicPlanResponse } from './public-plan-gateway';
 import { SavePublicPlanOutputPort } from './save-public-plan.output-port';
 import { SavePublicPlanInputDto } from './save-public-plan.dtos';
 
 describe('SavePublicPlanUseCase', () => {
+  const mockTranslate: TranslateService = {
+    instant: vi.fn((key: string) => {
+      if (key === 'public_plans.plan_saved_successfully') {
+        return 'Plan saved successfully';
+      }
+      if (key === 'public_plans.failed_to_save_plan') {
+        return 'Failed to save plan';
+      }
+      return key;
+    })
+  } as unknown as TranslateService;
   it('calls outputPort.present with success message when gateway returns success', () => {
     const response: SavePublicPlanResponse = { success: true };
 
@@ -23,7 +35,7 @@ describe('SavePublicPlanUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new SavePublicPlanUseCase(outputPort, gateway);
+    const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
     expect(receivedDto).not.toBeNull();
@@ -48,7 +60,7 @@ describe('SavePublicPlanUseCase', () => {
       onError: (dto) => { receivedError = dto; }
     };
 
-    const useCase = new SavePublicPlanUseCase(outputPort, gateway);
+    const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
     expect(receivedError).not.toBeNull();
@@ -73,7 +85,7 @@ describe('SavePublicPlanUseCase', () => {
       onError: (dto) => { receivedError = dto; }
     };
 
-    const useCase = new SavePublicPlanUseCase(outputPort, gateway);
+    const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
     expect(receivedError).not.toBeNull();
@@ -96,7 +108,7 @@ describe('SavePublicPlanUseCase', () => {
       onError: (dto) => { receivedError = dto; }
     };
 
-    const useCase = new SavePublicPlanUseCase(outputPort, gateway);
+    const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
     expect(receivedError).not.toBeNull();
@@ -119,7 +131,7 @@ describe('SavePublicPlanUseCase', () => {
       onError: (dto) => { receivedError = dto; }
     };
 
-    const useCase = new SavePublicPlanUseCase(outputPort, gateway);
+    const useCase = new SavePublicPlanUseCase(outputPort, gateway, mockTranslate);
     useCase.execute({ planId: 123 });
 
     expect(receivedError).not.toBeNull();

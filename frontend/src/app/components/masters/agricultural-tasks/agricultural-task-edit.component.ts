@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
   AgriculturalTaskEditView,
@@ -51,37 +51,52 @@ const initialControl: AgriculturalTaskEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Edit Agricultural Task</h2>
+        <h2 id="form-heading" class="form-card__title">
+          {{
+            'agricultural_tasks.edit.title'
+              | translate: { name: control.formData.name || ('agricultural_tasks.edit.title_default' | translate) }
+          }}
+        </h2>
         @if (control.loading) {
-          <p class="master-loading">Loading...</p>
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <form (ngSubmit)="updateAgriculturalTask()" #taskForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
-              <span class="form-card__field-label">Name</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.name_label' | translate }}
+              </span>
               <input id="name" name="name" [(ngModel)]="control.formData.name" required />
             </label>
             <label for="description" class="form-card__field">
-              <span class="form-card__field-label">Description</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.description_label' | translate }}
+              </span>
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <label for="time_per_sqm" class="form-card__field">
-              <span class="form-card__field-label">Time per sqm (hours)</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.time_per_sqm_label' | translate }}
+              </span>
               <input id="time_per_sqm" name="time_per_sqm" type="number" step="0.01" [(ngModel)]="control.formData.time_per_sqm" />
             </label>
             <label for="weather_dependency" class="form-card__field">
-              <span class="form-card__field-label">Weather dependency</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.weather_dependency_label' | translate }}
+              </span>
               <select id="weather_dependency" name="weather_dependency" [(ngModel)]="control.formData.weather_dependency">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <option value="low">{{ 'agricultural_tasks.show.weather_dependency_low' | translate }}</option>
+                <option value="medium">{{ 'agricultural_tasks.show.weather_dependency_medium' | translate }}</option>
+                <option value="high">{{ 'agricultural_tasks.show.weather_dependency_high' | translate }}</option>
               </select>
             </label>
             <label for="skill_level" class="form-card__field">
-              <span class="form-card__field-label">Skill level</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.skill_level_label' | translate }}
+              </span>
               <select id="skill_level" name="skill_level" [(ngModel)]="control.formData.skill_level">
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
+                <option value="beginner">{{ 'agricultural_tasks.show.skill_level_beginner' | translate }}</option>
+                <option value="intermediate">{{ 'agricultural_tasks.show.skill_level_intermediate' | translate }}</option>
+                <option value="advanced">{{ 'agricultural_tasks.show.skill_level_advanced' | translate }}</option>
               </select>
             </label>
             @if (auth.user()?.admin) {
@@ -91,14 +106,16 @@ const initialControl: AgriculturalTaskEditViewState = {
               ></app-region-select>
             }
             <label for="task_type" class="form-card__field">
-              <span class="form-card__field-label">Task type</span>
+              <span class="form-card__field-label">
+                {{ 'agricultural_tasks.form.task_type_label' | translate }}
+              </span>
               <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />
             </label>
             <div class="form-card__actions">
               <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
-                Update Agricultural Task
+                {{ 'agricultural_tasks.form.submit_update' | translate }}
               </button>
-              <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">Back</a>
+              <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -111,6 +128,7 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly loadUseCase = inject(LoadAgriculturalTaskForEditUseCase);
   private readonly updateUseCase = inject(UpdateAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskEditPresenter);
@@ -133,7 +151,11 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
     this.presenter.setView(this);
     this.control = this.applyUserRegionIfNeeded(this.control);
     if (!this.agriculturalTaskId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid agricultural task id.' };
+      this.control = {
+        ...initialControl,
+        loading: false,
+        error: this.translate.instant('agricultural_tasks.errors.invalid_id')
+      };
       return;
     }
     this.loadUseCase.execute({ agriculturalTaskId: this.agriculturalTaskId });

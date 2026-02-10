@@ -44,7 +44,7 @@ const initialControl: FarmCreateViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">Create Farm</h2>
+        <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
         <form (ngSubmit)="createFarm()" #farmForm="ngForm" class="form-card__form">
           <label class="form-card__field" for="name">
             <span class="form-card__field-label">{{ 'farms.new.form.name_label' | translate }}</span>
@@ -64,7 +64,7 @@ const initialControl: FarmCreateViewState = {
               [editable]="true"
               [latitude]="control.formData.latitude"
               [longitude]="control.formData.longitude"
-              [name]="control.formData.name || 'Farm'"
+              [name]="control.formData.name || ('farms.map.default_name' | translate)"
               (coordinatesChange)="onCoordinatesChange($event)"
             />
             <div class="coordinates-input">
@@ -99,8 +99,10 @@ const initialControl: FarmCreateViewState = {
             </div>
           </div>
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">Create</button>
-            <a routerLink="/farms" class="btn-secondary">Back to farms</a>
+            <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
+              {{ 'farms.new.form.submit' | translate }}
+            </button>
+            <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
           </div>
         </form>
       </section>

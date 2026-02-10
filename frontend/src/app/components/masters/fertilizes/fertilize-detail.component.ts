@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { FertilizeDetailView, FertilizeDetailViewState } from './fertilize-detail.view';
 import { LoadFertilizeDetailUseCase } from '../../../usecase/fertilizes/load-fertilize-detail.usecase';
 import { FertilizeDetailPresenter } from '../../../adapters/fertilizes/fertilize-detail.presenter';
@@ -17,7 +18,7 @@ const initialControl: FertilizeDetailViewState = {
 @Component({
   selector: 'app-fertilize-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     FertilizeDetailPresenter,
     LoadFertilizeDetailUseCase,
@@ -27,51 +28,53 @@ const initialControl: FertilizeDetailViewState = {
   template: `
     <main class="page-main">
       @if (control.loading) {
-        <p class="master-loading">Loading...</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.fertilize) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.fertilize.name }}</h1>
           <dl class="detail-card__list">
             @if (control.fertilize.n !== null && control.fertilize.n !== undefined) {
               <div class="detail-row">
-                <dt class="detail-row__term">N</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.show.n' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.n }}</dd>
               </div>
             }
             @if (control.fertilize.p !== null && control.fertilize.p !== undefined) {
               <div class="detail-row">
-                <dt class="detail-row__term">P</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.show.p' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.p }}</dd>
               </div>
             }
             @if (control.fertilize.k !== null && control.fertilize.k !== undefined) {
               <div class="detail-row">
-                <dt class="detail-row__term">K</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.show.k' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.k }}</dd>
               </div>
             }
             @if (control.fertilize.description) {
               <div class="detail-row">
-                <dt class="detail-row__term">Description</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.show.description' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.description }}</dd>
               </div>
             }
             @if (control.fertilize.package_size !== null && control.fertilize.package_size !== undefined) {
               <div class="detail-row">
-                <dt class="detail-row__term">Package Size</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.show.package_size' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.package_size }}</dd>
               </div>
             }
             @if (control.fertilize.region) {
               <div class="detail-row">
-                <dt class="detail-row__term">Region</dt>
+                <dt class="detail-row__term">{{ 'fertilizes.form.region_label' | translate }}</dt>
                 <dd class="detail-row__value">{{ control.fertilize.region }}</dd>
               </div>
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-primary">Edit</a>
-            <a [routerLink]="['/fertilizes']" class="btn-secondary">Back to fertilizes</a>
+            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-primary">
+              {{ 'fertilizes.show.edit' | translate }}
+            </a>
+            <a [routerLink]="['/fertilizes']" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
           </div>
         </section>
       }

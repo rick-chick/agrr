@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { FarmListComponent } from './farm-list.component';
 import { LoadFarmListUseCase } from '../../../usecase/farms/load-farm-list.usecase';
@@ -45,6 +45,15 @@ describe('FarmListComponent', () => {
 
     fixture = TestBed.createComponent(FarmListComponent);
     component = fixture.componentInstance;
+    const translateService = TestBed.inject(TranslateService);
+    translateService.setTranslation('en', {
+      farms: {
+        index: {
+          reference_badge: 'Reference'
+        }
+      }
+    });
+    translateService.use('en');
 
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
@@ -106,7 +115,8 @@ describe('FarmListComponent', () => {
 
     const farmTitles = fixture.nativeElement.querySelectorAll('.item-card__title');
     expect(farmTitles).toHaveLength(2);
-    expect(farmTitles[0].textContent).toBe('User Farm');
-    expect(farmTitles[1].textContent).toBe('Reference Farm (参照)');
+    const normalizeText = (value: string | null) => value?.replace(/\s+/g, ' ').trim() ?? '';
+    expect(normalizeText(farmTitles[0].textContent)).toBe('User Farm');
+    expect(normalizeText(farmTitles[1].textContent)).toBe('Reference Farm (Reference)');
   });
 });
