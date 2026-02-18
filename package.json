@@ -1,25 +1,3 @@
-{
-  "name": "app",
-  "private": true,
-  "scripts": {
-    "build": "node_modules/.bin/esbuild app/javascript/application.js --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --external:*.png --external:*.jpg --external:*.jpeg --external:*.gif --external:*.svg",
-    "test": "jest --env=jsdom"
-  },
-  "dependencies": {
-    "@hotwired/stimulus": "^3.2.2",
-    "@hotwired/turbo-rails": "^8.0.18",
-    "@rails/actioncable": "^8.0.300",
-    "chart.js": "^4.5.0",
-    "chartjs-plugin-annotation": "^3.1.0",
-    "leaflet": "^1.9.4"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.26.0",
-    "@babel/preset-env": "^7.26.0",
-    "babel-jest": "^29.7.0",
-    "esbuild": "^0.25.11",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "selenium-webdriver": "^4.38.0"
-  }
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:0f455e8014974abb04127b79b3c5c04bb5dc0af2f0944df01600f84957723f98
+size 813
