@@ -1,9 +1,11 @@
 # ロケールファイルは自動マージしない（手動マージ必須）
 config/locales/views/farms.*.yml merge=ours
-
 # その他のロケールファイルも保護
 config/locales/*.yml merge=ours
 # スクリプトファイルの実行権限を保持
 scripts/*.sh text eol=lf
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.json filter=lfs diff=lfs merge=lfs -text
+lib/core filter=lfs diff=lfs merge=lfs -text
 db/fixtures/*.json filter=lfs diff=lfs merge=lfs -text
 *.bak filter=lfs diff=lfs merge=lfs -text
