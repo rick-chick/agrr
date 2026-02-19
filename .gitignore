@@ -119,6 +119,17 @@ db/cache_schema.rb.tmp
 /tmp/screenshots/*
 !/tmp/screenshots/.keep
 
+# Ignore fixture environment files
+/db/fixtures/*.env*
+/db/fixtures/*.ya?ml
+
+# Ignore reference data that may contain sensitive information
+/db/fixtures/**/*.json
+
+# Track example files while ignoring actual fixtures
+!/db/fixtures/*.example
+
+
 
 tmp/
 .cursor/
