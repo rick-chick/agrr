@@ -2,12 +2,12 @@ us:
   home:
     index:
       title: "AGRR - Make Agriculture Smarter | Agricultural Planning Support System"
-      description: "AGRR is an agricultural crop planning support system that leverages weather data and AI. Create free crop plans, from field management to cultivation planning optimization, supporting sustainable agriculture."
+      description: "AGRR is an agricultural crop planning support system using weather data and AI. GDD-based growth prediction suggests optimal planting times suited to local temperatures."
       
       hero:
         title: "🌱 Make Agriculture Smarter"
         subtitle_html: "Take your farming to the next level with<br>optimal crop planning using weather data and AI"
-        cta_button: "Create Free Crop Plan"
+        cta_button: "New Crop Plan"
       
       features:
         title: "AGRR Features"
@@ -43,9 +43,4 @@ us:
           title: "Cloud Management"
           description: "Data is securely managed in the cloud. Access from anywhere."
       
-      cta:
-        title: "Get Started Now"
-        description_html: "Try creating a crop plan without login.<br>For more advanced features, please register an account."
-        button_primary: "Create Crop Plan"
-        button_secondary: "Learn More About AGRR"
 

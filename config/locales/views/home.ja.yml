@@ -2,12 +2,12 @@ ja:
   home:
     index:
       title: "AGRR - 農業をもっとスマートに | 農業計画支援システム"
-      description: "AGRRは気象データとAIを活用した農業作付け計画支援システムです。無料で作付け計画を作成でき、圃場管理から栽培計画の最適化まで、持続可能な農業をサポートします。"
+      description: "AGRRは気象データとAIを活用した農業作付け計画支援システムです。GDDベースの成長予測で地域気温に合った最適作付け時期を提案します。"
       
       hero:
         title: "🌱 農業をもっとスマートに"
         subtitle_html: "気象データとAIを活用した最適な作付け計画で、<br>あなたの農業を次のレベルへ"
-        cta_button: "無料で作付け計画を作成"
+        cta_button: "新規作付"
       
       features:
         title: "AGRRの特徴"
@@ -43,9 +43,4 @@ ja:
           title: "クラウド管理"
           description: "データはクラウドで安全に管理。どこからでもアクセス可能です。"
       
-      cta:
-        title: "今すぐ始めましょう"
-        description_html: "ログイン不要で作付け計画を試せます。<br>より高度な機能をご利用の場合は、アカウント登録をお願いします。"
-        button_primary: "作付け計画を作成"
-        button_secondary: "AGRRについて詳しく"
 
