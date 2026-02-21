@@ -23,9 +23,19 @@ pathMatchers:
     - /auth
     - /auth/*
     - /auth/google_oauth2
-    - /research
-    - /research/*
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /research
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /index.html
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-research-backend
+  - paths:
+    - /research/*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-research-backend
   - paths:
     - /assets/i18n
     - /assets/i18n/*
