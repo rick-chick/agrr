@@ -22,5 +22,18 @@ class WeatherDatum < ApplicationRecord
   def has_precipitation?
     precipitation.present? && precipitation > 0
   end
+
+  def to_dto
+    Domain::WeatherData::Dtos::WeatherDataDto.new(
+      date: date,
+      temperature_max: temperature_max,
+      temperature_min: temperature_min,
+      temperature_mean: temperature_mean,
+      precipitation: precipitation || 0.0,
+      sunshine_hours: sunshine_hours || 0.0,
+      wind_speed: wind_speed || 0.0,
+      weather_code: weather_code || 0
+    )
+  end
 end
 
