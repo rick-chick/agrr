@@ -37,12 +37,12 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "research_alternate_urls returns ja and in for file existing only in /research/" do
     base_url = "https://example.com"
-    # research/research_reports/broccoli/... exists in /research/ but not in /research/en/
+    # research/research_reports/broccoli/... exists in both /research/ and /research/en/
     alts = research_alternate_urls("research/research_reports/broccoli/01_environmental_requirements/gdd_requirements.html", base_url)
     hreflangs = alts.map { |a| a[:hreflang] }
     assert_includes hreflangs, "ja"
     assert_includes hreflangs, "in"
-    refute_includes hreflangs, "us"
+    assert_includes hreflangs, "us" # public/research/en/... exists
     # ja/in point to /research/ directly (no lang subdir)
     alts.select { |a| %w[ja in].include?(a[:hreflang]) }.each do |alt|
       assert_equal "#{base_url}/research/research_reports/broccoli/01_environmental_requirements/gdd_requirements.html", alt[:href]

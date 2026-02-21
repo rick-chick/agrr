@@ -1,6 +1,6 @@
 creationTimestamp: '2026-02-04T02:31:36.040-08:00'
 defaultService: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
-fingerprint: FseWk50PDU0=
+fingerprint: jBVyFlSQMDg=
 hostRules:
 - hosts:
   - agrr.net
@@ -47,6 +47,9 @@ pathMatchers:
   - paths:
     - /up
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/agrr-rails-backend
+  - paths:
+    - /favicon.ico
+    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
   - paths:
     - /static
     - /static/*
