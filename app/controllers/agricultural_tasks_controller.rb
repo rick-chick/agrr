@@ -109,7 +109,8 @@ class AgriculturalTasksController < ApplicationController
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(
       output_port: presenter,
       gateway: agricultural_task_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
 
     interactor.call(@input_dto)
@@ -402,6 +403,10 @@ class AgriculturalTasksController < ApplicationController
 
   def agricultural_task_gateway
     @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
 
