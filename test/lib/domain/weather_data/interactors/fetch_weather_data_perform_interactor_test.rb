@@ -31,7 +31,8 @@ module Domain
             farm_gateway: @farm_gateway,
             cultivation_plan_gateway: @cultivation_plan_gateway,
             agrr_weather_gateway: @agrr_weather_gateway,
-            presenter: @presenter
+            presenter: @presenter,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
         end
 

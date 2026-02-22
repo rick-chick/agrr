@@ -15,13 +15,15 @@ module Domain
           farm_gateway:,
           cultivation_plan_gateway:,
           agrr_weather_gateway:,
-          presenter:
+          presenter:,
+          logger:
         )
           @weather_data_gateway = weather_data_gateway
           @farm_gateway = farm_gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
           @agrr_weather_gateway = agrr_weather_gateway
           @presenter = presenter
+          @logger = logger
         end
 
         def execute(input_dto:)
