@@ -6,9 +6,10 @@ module Domain
       class FetchWeatherDataDiscardOnInteractor
         include InputPorts::FetchWeatherDataDiscardOnInputPort
 
-        def initialize(farm_gateway:, presenter:, translator:)
+        def initialize(farm_gateway:, presenter:, logger:, translator:)
           @farm_gateway = farm_gateway
           @presenter = presenter
+          @logger = logger
           @translator = translator
         end
 

@@ -4,11 +4,12 @@ module Domain
   module Farm
     module Interactors
       class FarmListInteractor < Domain::Farm::Ports::FarmListInputPort
-        def initialize(output_port:, gateway:, user_id:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @gateway.user_id = user_id if @gateway.respond_to?(:user_id=)
           @user_id = user_id
+          @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 

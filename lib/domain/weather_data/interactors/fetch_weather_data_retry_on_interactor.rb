@@ -6,10 +6,11 @@ module Domain
       class FetchWeatherDataRetryOnInteractor
         include InputPorts::FetchWeatherDataRetryOnInputPort
 
-        def initialize(farm_gateway:, presenter:, cultivation_plan_gateway:, translator:)
+        def initialize(farm_gateway:, presenter:, cultivation_plan_gateway:, logger:, translator:)
           @farm_gateway = farm_gateway
           @presenter = presenter
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @logger = logger
           @translator = translator
         end
 

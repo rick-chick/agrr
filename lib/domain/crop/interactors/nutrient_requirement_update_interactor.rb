@@ -4,9 +4,10 @@ module Domain
   module Crop
     module Interactors
       class NutrientRequirementUpdateInteractor < Domain::Crop::Ports::NutrientRequirementUpdateInputPort
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, logger:)
           @output_port = output_port
           @gateway = gateway
+          @logger = logger
         end
 
         def call(input_dto)

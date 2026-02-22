@@ -4,10 +4,11 @@ module Domain
   module AgriculturalTask
     module Interactors
       class AgriculturalTaskCreateInteractor < Domain::AgriculturalTask::Ports::AgriculturalTaskCreateInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, logger:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @logger = logger
         end
 
         def call(create_input_dto)
