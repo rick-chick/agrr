@@ -84,7 +84,8 @@ class PesticidesController < ApplicationController
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
       output_port: presenter,
       gateway: pesticide_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
@@ -176,6 +177,10 @@ class PesticidesController < ApplicationController
 
   def pesticide_gateway
     @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
 

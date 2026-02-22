@@ -61,7 +61,8 @@ module Api
           interactor = Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
             output_port: presenter,
             gateway: pesticide_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call(input_dto)
         end
@@ -106,6 +107,10 @@ module Api
 
         def valid_pesticide_params?(input_dto)
           input_dto.name.present? && input_dto.crop_id.present? && input_dto.pest_id.present?
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end
