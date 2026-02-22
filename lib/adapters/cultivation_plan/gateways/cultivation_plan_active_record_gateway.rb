@@ -37,9 +37,8 @@ module Adapters
           ::Crop.where(id: crop_ids, user: user, is_reference: false).to_a
         end
 
-        def find_by_id(plan_id, user)
-          plan = ::CultivationPlan.find(plan_id)
-          plan
+        def find_by_id(plan_id)
+          ::CultivationPlan.find(plan_id)
         end
 
         # 栽培計画を削除し、DeletionUndo::Manager を使用して Undo トークンを返す
@@ -64,6 +63,12 @@ module Adapters
           raise StandardError, I18n.t('plans.errors.delete_failed')
         rescue DeletionUndo::Error => e
           raise StandardError, I18n.t('plans.errors.delete_error', message: e.message)
+        end
+
+        # phase 更新
+        def update_phase(plan_id, phase_name, *args)
+          plan = ::CultivationPlan.find(plan_id)
+          plan.public_send("#{phase_name}!", *args)
         end
       end
     end

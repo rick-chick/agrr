@@ -108,6 +108,22 @@ module Adapters
         def latest_date(weather_location_id:)
           WeatherDatum.where(weather_location_id: weather_location_id).maximum(:date)
         end
+
+        # WeatherLocation 検索
+        def find_weather_location_by_coordinates(latitude:, longitude:)
+          ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+        end
+
+        # WeatherLocation 検索/作成
+        def find_or_create_weather_location(latitude:, longitude:, elevation: nil, timezone: nil)
+          ::WeatherLocation.find_or_create_by(
+            latitude: latitude,
+            longitude: longitude
+          ) do |location|
+            location.elevation = elevation
+            location.timezone = timezone
+          end
+        end
       end
     end
   end

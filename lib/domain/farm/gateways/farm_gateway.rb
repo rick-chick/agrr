@@ -23,6 +23,30 @@ module Domain
         def destroy(farm_id)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
+
+        def mark_weather_data_failed(farm_id, error_msg)
+          raise NotImplementedError
+        end
+
+        def increment_weather_data_progress(farm_id)
+          raise NotImplementedError
+        end
+
+        def get_weather_data_progress(farm_id)
+          raise NotImplementedError
+        end
+
+        def get_weather_data_fetched_years(farm_id)
+          raise NotImplementedError
+        end
+
+        def get_weather_data_total_years(farm_id)
+          raise NotImplementedError
+        end
+
+        def update_weather_location_id(farm_id, weather_location_id)
+          raise NotImplementedError
+        end
       end
     end
   end

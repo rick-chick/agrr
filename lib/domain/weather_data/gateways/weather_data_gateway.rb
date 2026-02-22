@@ -40,6 +40,16 @@ module Domain
         def upsert_weather_data!(weather_data_dtos:, weather_location_id:)
           raise NotImplementedError
         end
+
+        # 新規追加: WeatherLocation 検索
+        def find_weather_location_by_coordinates(latitude:, longitude:)
+          raise NotImplementedError, "Subclasses must implement find_weather_location_by_coordinates"
+        end
+
+        # 新規追加: WeatherLocation 検索/作成
+        def find_or_create_weather_location(latitude:, longitude:, elevation: nil, timezone: nil)
+          raise NotImplementedError, "Subclasses must implement find_or_create_weather_location"
+        end
       end
     end
   end

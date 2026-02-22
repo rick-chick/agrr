@@ -15,10 +15,10 @@ module Adapters
           end
         end
 
-        def find_by_id(farm_id)
-          farm = ::Farm.find(farm_id)
-          Domain::Farm::Entities::FarmEntity.from_model(farm)
-        end
+  def find_by_id(farm_id)
+    farm = ::Farm.find(farm_id)
+    Domain::Farm::Entities::FarmEntity.from_model(farm)
+  end
 
         def create(create_input_dto)
           farm = ::Farm.new(
@@ -57,6 +57,36 @@ module Adapters
           raise StandardError, I18n.t('farms.flash.cannot_delete_in_use')
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
+        end
+
+        def mark_weather_data_failed(farm_id, error_msg)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.mark_weather_data_failed!(error_msg)
+        end
+
+        def increment_weather_data_progress(farm_id)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.increment_weather_data_progress!
+        end
+
+        def get_weather_data_progress(farm_id)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.weather_data_progress
+        end
+
+        def get_weather_data_fetched_years(farm_id)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.weather_data_fetched_years
+        end
+
+        def get_weather_data_total_years(farm_id)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.weather_data_total_years
+        end
+
+        def update_weather_location_id(farm_id, weather_location_id)
+          farm = ::Farm.find_by(id: farm_id)
+          farm&.update_column(:weather_location_id, weather_location_id)
         end
       end
     end

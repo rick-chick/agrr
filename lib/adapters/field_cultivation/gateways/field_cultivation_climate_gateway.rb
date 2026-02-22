@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_dependency 'field_cultivation_climate/mock_progress_records'\nrequire_dependency 'agrr/prediction_gateway'
+require_dependency 'field_cultivation_climate/mock_progress_records'
+require_dependency 'agrr/prediction_gateway'
 
 module Adapters
   module FieldCultivation
@@ -66,9 +67,8 @@ module Adapters
         end
 
 
-        def build_success_dto(field_cultivation:, farm:, weather_data_records:, temp_req:,
-                              optimal_temperature_range:, daily_gdd:, progress_result:, stages:,
-                              baseline_gdd:, filtered_records:, progress_records:)
+        def build_success_dto(field_cultivation:, farm:, temp_req: nil, weather_data_records: nil, optimal_temperature_range:, daily_gdd:, progress_result:, stages:, baseline_gdd:, filtered_records:, progress_records:)
+    weather_data_records ||= []
           Domain::FieldCultivation::Dtos::FieldCultivationClimateDataSuccessDto.new(
             field_cultivation: {
               id: field_cultivation.id,
@@ -87,12 +87,12 @@ module Adapters
               base_temperature: temp_req&.base_temperature || 10.0,
               optimal_temperature_range: optimal_temperature_range
             },
-            weather_data: weather_data_records.map do |datum|
+            weather_data: Array(weather_data_records || []).map do |datum|
               {
-                date: datum[:date],
-                temperature_max: datum[:temperature_max],
-                temperature_min: datum[:temperature_min],
-                temperature_mean: datum[:temperature_mean]
+                'date' => datum['date'],
+                'temperature_max' => datum['temperature_max'],
+                'temperature_min' => datum['temperature_min'],
+                'temperature_mean' => datum['temperature_mean']
               }
             end,
             gdd_data: daily_gdd,
@@ -196,6 +196,8 @@ module Adapters
         end
 
         def build_daily_gdd(progress_result, weather_data_records, field_cultivation, base_temp)
+          weather_data_records ||= []
+          weather_data_records = Array(weather_data_records)
           progress_records = progress_result['progress_records'] || []
           baseline_gdd = 0.0
           filtered_records = []
@@ -239,10 +241,10 @@ module Adapters
           cumulative_gdd = 0.0
 
           weather_data_records.each do |datum|
-            avg_temp = if datum[:temperature_mean]
-              datum[:temperature_mean]
-            elsif datum[:temperature_max] && datum[:temperature_min]
-              (datum[:temperature_max] + datum[:temperature_min]) / 2.0
+            avg_temp = if datum['temperature_mean']
+              datum['temperature_mean']
+            elsif datum['temperature_max'] && datum['temperature_min']
+              (datum['temperature_max'] + datum['temperature_min']) / 2.0
             end
             next unless avg_temp
 
@@ -250,7 +252,7 @@ module Adapters
             cumulative_gdd += gdd_value
 
             daily_gdd << {
-              date: datum[:date],
+              date: datum['date'],
               gdd: gdd_value.round(2),
               cumulative_gdd: cumulative_gdd.round(2),
               temperature: avg_temp.round(2),
@@ -301,12 +303,14 @@ module Adapters
             end
 
             {
-              date: datum['time'],
-              temperature_max: datum['temperature_2m_max'],
-              temperature_min: datum['temperature_2m_min'],
-              temperature_mean: temp_mean
+              'date' => datum['time'],
+              'temperature_max' => datum.fetch('temperature_2m_max', datum[:temperature_2m_max] || nil),
+              'temperature_min' => datum.fetch('temperature_2m_min', datum[:temperature_2m_min] || nil),
+              'temperature_mean' => temp_mean
             }
           end
+        end
+
         def fallback_weather_payload_builder(field_cultivation:, weather_location:, latitude:, longitude:, start_date:, end_date:)
           farm = field_cultivation.cultivation_plan.farm
           wl = @weather_data_gateway.find_or_create_weather_location(latitude: latitude, longitude: longitude, elevation: weather_location.elevation, timezone: weather_location.timezone)
@@ -316,8 +320,6 @@ module Adapters
           days = (end_date - start_date).to_i + 1
           prediction_gateway = Agrr::PredictionGateway.new
           prediction_gateway.predict(historical_data: historical_payload, days: days, model: 'lightgbm')
-        end
-
         end
       end
     end

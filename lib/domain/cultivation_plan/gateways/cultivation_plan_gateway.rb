@@ -23,6 +23,16 @@ module Domain
         def destroy(plan_id, user)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
+
+        # ID で検索 (Entity または Model を返す)
+        def find_by_id(plan_id)
+          raise NotImplementedError, "Subclasses must implement find_by_id"
+        end
+
+        # phase 更新 proxy (phase_fetching_weather! など)
+        def update_phase(plan_id, phase_name, *args)
+          raise NotImplementedError, "Subclasses must implement update_phase"
+        end
       end
     end
   end
