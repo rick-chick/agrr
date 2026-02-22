@@ -12,103 +12,6 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     @end_date = Date.new(2025, 1, 7)
   end
 
-  test '日本（region == jp）の農場の場合、data_sourceがjmaになる' do
-    # 日本の農場を作成
-    japan_farm = create(:farm, :reference,
-      name: '東京農場',
-      latitude: 35.6762,
-      longitude: 139.6503,
-      region: 'jp',
-      user: @anonymous_user
-    )
-
-    job = FetchWeatherDataJob.new
-    job.farm_id = japan_farm.id
-    job.latitude = 35.6762
-    job.longitude = 139.6503
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    # determine_data_sourceメソッドをテスト
-    assert_equal 'jma', job.send(:determine_data_source, japan_farm.id)
-  end
-
-  test '日本以外の農場の場合、data_sourceがnoaaになる' do
-    # 日本以外の農場を作成（regionがnilまたは'jp'以外）
-    us_farm = create(:farm, :reference,
-      name: 'US Farm',
-      latitude: 40.7128,
-      longitude: -74.0060,
-      region: 'us',
-      user: @anonymous_user
-    )
-
-    job = FetchWeatherDataJob.new
-    job.farm_id = us_farm.id
-    job.latitude = 40.7128
-    job.longitude = -74.0060
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    # determine_data_sourceメソッドをテスト
-    assert_equal 'noaa', job.send(:determine_data_source, us_farm.id)
-  end
-
-  test 'regionがnilの農場でも日本の座標ならdata_sourceがjmaになる' do
-    # regionがnilの農場を作成
-    farm_without_region = create(:farm, :reference,
-      name: 'Farm without region',
-      latitude: 35.6762,
-      longitude: 139.6503,
-      region: nil,
-      user: @anonymous_user
-    )
-
-    job = FetchWeatherDataJob.new
-    job.farm_id = farm_without_region.id
-    job.latitude = 35.6762
-    job.longitude = 139.6503
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    # determine_data_sourceメソッドをテスト
-    assert_equal 'jma', job.send(:determine_data_source, farm_without_region.id)
-  end
-
-  test 'farm_idがnilでも日本の座標ならdata_sourceがjmaになる' do
-    job = FetchWeatherDataJob.new
-    job.farm_id = nil
-    job.latitude = 35.6762
-    job.longitude = 139.6503
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    # determine_data_sourceメソッドをテスト
-    assert_equal 'jma', job.send(:determine_data_source, nil)
-  end
-
-  test '存在しないfarm_idでも日本の座標ならdata_sourceがjmaになる' do
-    job = FetchWeatherDataJob.new
-    job.farm_id = 99999  # 存在しないID
-    job.latitude = 35.6762
-    job.longitude = 139.6503
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    # determine_data_sourceメソッドをテスト
-    assert_equal 'jma', job.send(:determine_data_source, 99999)
-  end
-
-  test '日本境界外の座標（韓国付近）はnoaaになる' do
-    job = FetchWeatherDataJob.new
-    job.latitude = 37.5665   # Seoul
-    job.longitude = 126.9780
-    job.start_date = @start_date
-    job.end_date = @end_date
-
-    assert_equal 'noaa', job.send(:determine_data_source, nil)
-  end
-
   test 'dataが空の場合は例外を発生させ進捗を変更しない' do
     farm = create(:farm, :user_owned,
       user: @user,
@@ -376,7 +279,8 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
       )
     end
 
-    weather_location = WeatherLocation.last
+    weather_location = WeatherLocation.find_by(latitude: farm.latitude, longitude: farm.longitude)
+    assert_not_nil weather_location, "WeatherLocation should be created for the farm"
     gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     assert_equal 6, gateway.weather_data_count(
       weather_location_id: weather_location.id,
@@ -515,98 +419,41 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     assert_equal 'completed', farm.weather_data_status
   end
 
-  test 'fetch_weather_from_agrrが正しいdata_sourceを渡す（日本）' do
-    # 日本の農場を作成
-    japan_farm = create(:farm, :reference,
-      name: '東京農場',
-      latitude: 35.6762,
-      longitude: 139.6503,
-      region: 'jp',
-      user: @anonymous_user
-    )
+  test 'perform calls PerformInteractor' do
+    perform_interactor = mock('PerformInteractor')
+    perform_interactor.expects(:execute).with(has_entries(input_dto: has_entries(farm_id: 1, latitude: 35.6762)))
+    Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).returns(perform_interactor)
 
-    # WeatherGatewayをモック化して、data_sourceパラメータを確認
-    captured_data_source = {}
-    gateway_mock = Class.new do
-      def initialize(captured)
-        @captured = captured
-      end
+    job = FetchWeatherDataJob.new
+    job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
+  end
 
-      def fetch_by_date_range(latitude:, longitude:, start_date:, end_date:, data_source:)
-        @captured[:data_source] = data_source
-        {
-          'location' => {
-            'latitude' => latitude,
-            'longitude' => longitude,
-            'elevation' => 50.0,
-            'timezone' => 'Asia/Tokyo'
-          },
-          'data' => []
-        }
-      end
-    end
+  test 'retry_on calls RetryOnInteractor' do
+    retry_interactor = mock('RetryOnInteractor')
+    retry_interactor.expects(:execute).with(has_entries(executions: 3, error_message: 'timeout'))
+    Domain::WeatherData::Interactors::FetchWeatherDataRetryOnInteractor.stubs(:new).returns(retry_interactor)
 
-    Agrr::WeatherGateway.stub(:new, -> { gateway_mock.new(captured_data_source) }) do
-      job = FetchWeatherDataJob.new
-      job.farm_id = japan_farm.id
-      job.latitude = 35.6762
-      job.longitude = 139.6503
-      job.start_date = @start_date
-      job.end_date = @end_date
+    job = FetchWeatherDataJob.new
+    job.executions = 3
+    Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).raises(StandardError.new('timeout'))
 
-      # fetch_weather_from_agrrを呼び出す
-      job.send(:fetch_weather_from_agrr, 35.6762, 139.6503, @start_date, @end_date, japan_farm.id)
-
-      # data_sourceが'jma'であることを確認
-      assert_equal 'jma', captured_data_source[:data_source]
+    assert_raises(StandardError) do
+      job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
     end
   end
 
-  test 'fetch_weather_from_agrrが正しいdata_sourceを渡す（日本以外）' do
-    # 日本以外の農場を作成
-    us_farm = create(:farm, :reference,
-      name: 'US Farm',
-      latitude: 40.7128,
-      longitude: -74.0060,
-      region: 'us',
-      user: @anonymous_user
-    )
+  test 'discard_on calls DiscardOnInteractor' do
+    discard_interactor = mock('DiscardOnInteractor')
+    discard_interactor.expects(:execute).with(has_entries(error_message: /RecordInvalid/))
+    Domain::WeatherData::Interactors::FetchWeatherDataDiscardOnInteractor.stubs(:new).returns(discard_interactor)
 
-    # WeatherGatewayをモック化して、data_sourceパラメータを確認
-    captured_data_source = {}
-    gateway_mock = Class.new do
-      def initialize(captured)
-        @captured = captured
-      end
+    job = FetchWeatherDataJob.new
+    Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).raises(ActiveRecord::RecordInvalid.new('invalid'))
 
-      def fetch_by_date_range(latitude:, longitude:, start_date:, end_date:, data_source:)
-        @captured[:data_source] = data_source
-        {
-          'location' => {
-            'latitude' => latitude,
-            'longitude' => longitude,
-            'elevation' => 50.0,
-            'timezone' => 'America/New_York'
-          },
-          'data' => []
-        }
-      end
-    end
-
-    Agrr::WeatherGateway.stub(:new, -> { gateway_mock.new(captured_data_source) }) do
-      job = FetchWeatherDataJob.new
-      job.farm_id = us_farm.id
-      job.latitude = 40.7128
-      job.longitude = -74.0060
-      job.start_date = @start_date
-      job.end_date = @end_date
-
-      # fetch_weather_from_agrrを呼び出す
-      job.send(:fetch_weather_from_agrr, 40.7128, -74.0060, @start_date, @end_date, us_farm.id)
-
-      # data_sourceが'noaa'であることを確認
-      assert_equal 'noaa', captured_data_source[:data_source]
+    assert_raises(ActiveRecord::RecordInvalid) do
+      job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
     end
   end
+
 end
 

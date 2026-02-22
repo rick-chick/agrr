@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_dependency 'field_cultivation_climate/mock_progress_records'
+require_dependency 'field_cultivation_climate/mock_progress_records'\nrequire_dependency 'agrr/prediction_gateway'
 
 module Adapters
   module FieldCultivation
@@ -9,7 +9,7 @@ module Adapters
         include ::FieldCultivationClimate::MockProgressRecords
         def initialize(current_user:, use_mock_progress: nil,
                        progress_gateway_factory: nil,
-                       weather_prediction_service_factory: nil)
+                       weather_prediction_service_factory: nil, weather_data_gateway: nil)
           @current_user = current_user
           @use_mock_progress = use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
@@ -64,7 +64,6 @@ module Adapters
           raise ActiveRecord::RecordNotFound
         end
 
-        private
 
         def build_success_dto(field_cultivation:, farm:, weather_data_records:, temp_req:,
                               optimal_temperature_range:, daily_gdd:, progress_result:, stages:,
