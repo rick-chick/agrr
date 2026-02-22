@@ -134,6 +134,11 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
       name: '更新後の名前',
       description: '更新された説明'
     } }
+
+    if response.status == 422
+      puts "Response body: #{response.body}"
+    end
+
     assert_redirected_to pest_path(pest)
     pest.reload
     assert_equal '更新後の名前', pest.name

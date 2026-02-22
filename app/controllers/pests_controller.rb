@@ -11,6 +11,7 @@ class PestsController < ApplicationController
       output_port: presenter,
       gateway: pest_gateway,
       user_id: current_user.id,
+      logger: logger_gateway,
       translator: translator
     ).call
   end
@@ -22,6 +23,7 @@ class PestsController < ApplicationController
       output_port: presenter,
       gateway: pest_gateway,
       user_id: current_user.id,
+      logger: logger_gateway,
       translator: translator
     ).call(params[:id])
   end
@@ -51,6 +53,7 @@ class PestsController < ApplicationController
       output_port: presenter,
       gateway: pest_gateway,
       user_id: current_user.id,
+      logger: logger_gateway,
       translator: translator
     ).call(input_dto)
   rescue StandardError => e
@@ -84,6 +87,7 @@ class PestsController < ApplicationController
       output_port: presenter,
       gateway: pest_gateway,
       user_id: current_user.id,
+      logger: logger_gateway,
       translator: translator
     ).call(input_dto)
   rescue StandardError => e
@@ -215,6 +219,10 @@ class PestsController < ApplicationController
   end
 
   private
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
+  end
 end
 
 
