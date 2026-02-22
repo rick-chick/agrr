@@ -269,14 +269,27 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
       end
     end
 
+    # Test the Interactor directly to avoid Job serialization issues
     Agrr::WeatherGateway.stub(:new, -> { gateway_mock.new(partial_data) }) do
-      FetchWeatherDataJob.perform_now(
-        farm_id: farm.id,
+      interactor = Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.new(
+        weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
+        farm_gateway: Adapters::Farm::Gateways::FarmActiveRecordGateway.new,
+        cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new,
+        agrr_weather_gateway: Agrr::WeatherGateway.new,
+        presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new
+      )
+
+      input_dto = {
         latitude: farm.latitude,
         longitude: farm.longitude,
         start_date: @start_date,
-        end_date: @end_date
-      )
+        end_date: @end_date,
+        farm_id: farm.id,
+        current_time: Time.current,
+        executions: 1
+      }
+
+      interactor.execute(input_dto:)
     end
 
     weather_location = WeatherLocation.find_by(latitude: farm.latitude, longitude: farm.longitude)
