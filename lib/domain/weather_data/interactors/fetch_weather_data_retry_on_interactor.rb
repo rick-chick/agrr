@@ -6,10 +6,11 @@ module Domain
       class FetchWeatherDataRetryOnInteractor
         include InputPorts::FetchWeatherDataRetryOnInputPort
 
-        def initialize(farm_gateway:, presenter:, cultivation_plan_gateway:)
+        def initialize(farm_gateway:, presenter:, cultivation_plan_gateway:, translator:)
           @farm_gateway = farm_gateway
           @presenter = presenter
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @translator = translator
         end
 
         def execute(input_dto:)
@@ -23,7 +24,7 @@ module Domain
           @presenter.error "❌ [Farm##{farm_id}] Failed to fetch weather data for #{period_str} after #{executions} attempts"
           @presenter.error "   Final error: #{error_message}"
 
-          error_msg = I18n.t('jobs.fetch_weather_data.retry_limit_exceeded', error: error_message)
+          error_msg = @translator.t('jobs.fetch_weather_data.retry_limit_exceeded', error: error_message)
           @farm_gateway.mark_weather_data_failed(farm_id, error_msg) if farm_id
 
           if input_dto[:cultivation_plan_id] && input_dto[:channel_class]

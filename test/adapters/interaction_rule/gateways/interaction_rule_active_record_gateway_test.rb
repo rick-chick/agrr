@@ -7,7 +7,8 @@ module Adapters
     module Gateways
       class InteractionRuleActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = InteractionRuleActiveRecordGateway.new
+          @gateway = Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
+          ::InteractionRule.delete_all # テスト前にデータをクリーンアップ
         end
 
         test "should find by id and return entity" do

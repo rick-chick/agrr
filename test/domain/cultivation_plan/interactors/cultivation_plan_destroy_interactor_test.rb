@@ -12,10 +12,12 @@ module Domain
           @user_id = @user.id
           @mock_gateway = mock
           @mock_output_port = mock
+          @mock_translator = Adapters::Translators::RailsTranslator.new
           @interactor = CultivationPlanDestroyInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: @user_id
+            user_id: @user_id,
+            translator: @mock_translator
           )
         end
 

@@ -4,10 +4,11 @@ module Domain
   module Pest
     module Interactors
       class PestDetailInteractor < Domain::Pest::Ports::PestDetailInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator
         end
 
         def call(pest_id)
@@ -17,9 +18,9 @@ module Domain
           dto = Domain::Pest::Dtos::PestDetailOutputDto.new(pest: pest_entity, pest_model: pest_model)
           @output_port.on_success(dto)
         rescue ActiveRecord::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(I18n.t('pests.flash.not_found')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.not_found')))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(I18n.t('pests.flash.no_permission')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.no_permission')))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

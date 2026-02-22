@@ -3,15 +3,21 @@
 require_relative 'concerns/job_arguments_provider'
 
 class FetchWeatherDataJob < ApplicationJob
+
   include JobArgumentsProvider
-  
+
+  def initialize(*args)
+    super
+    @translator ||= Adapters::Translators::RailsTranslator.new
+  end
+
   queue_as :weather_data_sequential
   
   MAX_RETRY_ATTEMPTS = 5
   ALLOWED_MISSING_RATIO = 0.05
   
   # インスタンス変数の定義
-  attr_accessor :latitude, :longitude, :start_date, :end_date, :farm_id, :cultivation_plan_id, :channel_class
+  attr_accessor :latitude, :longitude, :start_date, :end_date, :farm_id, :cultivation_plan_id, :channel_class, :translator
   
   # インスタンス変数をハッシュとして返す
   def job_arguments
@@ -37,7 +43,8 @@ class FetchWeatherDataJob < ApplicationJob
   retry_interactor = Domain::WeatherData::Interactors::FetchWeatherDataRetryOnInteractor.new(
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
-    cultivation_plan_gateway: job.cultivation_plan_gateway
+    cultivation_plan_gateway: job.cultivation_plan_gateway,
+    translator: job.translator
   )
   retry_interactor.execute(
     input_dto: {
@@ -58,7 +65,7 @@ class FetchWeatherDataJob < ApplicationJob
   discard_interactor = Domain::WeatherData::Interactors::FetchWeatherDataDiscardOnInteractor.new(
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
-    cultivation_plan_gateway: job.cultivation_plan_gateway
+    translator: job.translator
   )
   discard_interactor.execute(
     input_dto: {

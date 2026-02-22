@@ -29,9 +29,10 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
       "model" => "lightgbm"
     }
     @weather_location.update!(predicted_weather_data: prediction_payload)
+    @weather_location.reload
 
     service = WeatherPredictionService.new(weather_location: @weather_location)
-    result = service.get_existing_prediction(target_end_date: Date.new(2025, 12, 31))
+    result = service.get_existing_prediction(target_end_date: Date.new(2025, 1, 1))
 
     assert_not_nil result
     assert_equal prediction_payload, result[:data]
@@ -112,7 +113,8 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
     # トレーニングデータをモックして十分なデータがあるようにする
     # テスト用トレーニングデータは本番同等の大量作成は重いため縮小して疑似データを使用
     fake_training_data = (1..100).map { |i| build_stubbed(:weather_datum, weather_location: @weather_location, date: Date.current - 100 + i.days, temperature_max: 20.0) }
-    service.stub(:get_training_data, fake_training_data) do
+    fake_training_result = { data: fake_training_data, end_date: fake_training_data.last.date }
+    service.stub(:get_training_data, fake_training_result) do |_, _|
       # 予測データをモック
       fake_prediction = {
         'latitude' => @weather_location.latitude.to_f,

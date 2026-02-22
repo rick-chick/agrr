@@ -9,6 +9,7 @@ module Adapters
 
         def initialize(logger: Rails.logger)
           @logger = logger
+          @translator = translator
         end
 
         def fetch_for_create(name:, max_retries: DEFAULT_MAX_RETRIES)
@@ -45,7 +46,7 @@ module Adapters
                   @logger.error "❌ [AGRR Fertilize Query] Daemon not running: #{error_msg}"
                   return {
                     'success' => false,
-                    'error' => I18n.t('api.errors.fertilizes.daemon_not_running', default: 'AGRRサービスが起動していません。サービスを起動してから再度お試しください。'),
+                    'error' => @translator.t('api.errors.fertilizes.daemon_not_running', default: 'AGRRサービスが起動していません。サービスを起動してから再度お試しください。'),
                     'code' => 'daemon_not_running'
                   }
                 end

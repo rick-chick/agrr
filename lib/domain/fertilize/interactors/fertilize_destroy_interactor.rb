@@ -4,10 +4,11 @@ module Domain
   module Fertilize
     module Interactors
       class FertilizeDestroyInteractor < Domain::Fertilize::Ports::FertilizeDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator
         end
 
         def call(fertilize_id)
@@ -16,7 +17,7 @@ module Domain
           undo_response = DeletionUndo::Manager.schedule(
             record: fertilize_model,
             actor: user,
-            toast_message: I18n.t('fertilizes.undo.toast', name: fertilize_model.name)
+            toast_message: @translator.t('fertilizes.undo.toast', name: fertilize_model.name)
           )
           dto = Domain::Fertilize::Dtos::FertilizeDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(dto)

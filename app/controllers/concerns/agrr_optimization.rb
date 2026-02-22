@@ -499,14 +499,15 @@ module AgrrOptimization
         weather_location: weather_location,
         farm: farm
       )
-      
+
       # effective_planning_endをtarget_end_dateとして使用して既存の予測データを確認
       existing_prediction = weather_prediction_service.get_existing_prediction(
         target_end_date: effective_planning_end,
         cultivation_plan: cultivation_plan
       )
+
       if existing_prediction
-        weather_data = existing_prediction[:data]
+        prediction_data = existing_prediction[:data]
         Rails.logger.info "♻️ [Adjust] Using existing prediction data (target_end_date: #{effective_planning_end})"
       else
         # 既存の予測データが不足している場合は、effective_planning_endまで新規予測を実行
@@ -515,8 +516,93 @@ module AgrrOptimization
           cultivation_plan,
           target_end_date: effective_planning_end
         )
-        weather_data = weather_info[:data]
+        prediction_data = weather_info[:data]
       end
+
+      # 実測データを取得して予測データとマージ
+      # adjustではstart_date（入力）から未来方向の実績データを使用
+      # 過去の実績データはcompletion_date決定に不要
+      historical_data_start = effective_planning_start # 最も早いstart_dateから
+      historical_data_end = Date.current - 1.day # 前日まで（現在の実績データ）
+      historical_weather_data = weather_location.weather_data_for_period(historical_data_start, historical_data_end)
+
+      if historical_weather_data.empty?
+        Rails.logger.warn "⚠️ [Adjust] No historical weather data found. Proceeding with prediction data only."
+        weather_data = prediction_data
+      else
+        Rails.logger.info "✅ [Adjust] Historical weather data loaded: #{historical_weather_data.count} records (#{historical_data_start} to #{historical_data_end})"
+
+        # 実測データをAGRR形式に変換
+        current_year_formatted = {
+          'latitude' => weather_location.latitude.to_f,
+          'longitude' => weather_location.longitude.to_f,
+          'elevation' => (weather_location.elevation || 0.0).to_f,
+          'timezone' => weather_location.timezone,
+          'data' => historical_weather_data.filter_map do |datum|
+            # Skip records with missing temperature data
+            next if datum.temperature_max.nil? || datum.temperature_min.nil?
+
+            # Calculate mean from max/min if missing
+            temp_mean = datum.temperature_mean
+            if temp_mean.nil?
+              temp_mean = (datum.temperature_max.to_f + datum.temperature_min.to_f) / 2.0
+            else
+              temp_mean = temp_mean.to_f
+            end
+
+            {
+              'time' => datum.date.to_s,
+              'temperature_2m_max' => datum.temperature_max.to_f,
+              'temperature_2m_min' => datum.temperature_min.to_f,
+              'temperature_2m_mean' => temp_mean,
+              'precipitation_sum' => (datum.precipitation || 0.0).to_f,
+              'sunshine_duration' => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0, # 時間→秒
+              'wind_speed_10m_max' => (datum.wind_speed || 0.0).to_f,
+              'weather_code' => datum.weather_code || 0
+            }
+          end
+        }
+
+        # 実測データと予測データをマージ
+        weather_data = {
+          'latitude' => current_year_formatted['latitude'],
+          'longitude' => current_year_formatted['longitude'],
+          'elevation' => current_year_formatted['elevation'],
+          'timezone' => current_year_formatted['timezone'],
+          'data' => current_year_formatted['data'] + prediction_data['data']
+        }
+        Rails.logger.info "✅ [Adjust] Merged weather data: historical=#{historical_weather_data.count} records, prediction=#{prediction_data['data'].count} records"
+      end
+
+      # マージ後のデータがeffective_planning_endまでカバーしているかチェック
+      merged_dates = Array(weather_data['data']).map { |d| Date.parse(d['time']) rescue nil }.compact
+      merged_end_date = merged_dates.max
+      if merged_end_date.nil? || merged_end_date < effective_planning_end
+        Rails.logger.warn "⚠️ [Adjust] Merged weather data ends at #{merged_end_date}, but effective_planning_end is #{effective_planning_end}. Extending prediction..."
+
+        # 予測データを拡張
+        extended_weather_info = weather_prediction_service.predict_for_cultivation_plan(
+          cultivation_plan,
+          target_end_date: effective_planning_end
+        )
+        extended_prediction_data = extended_weather_info[:data]
+
+        # 拡張された予測データで再度マージ
+        if historical_weather_data.empty?
+          weather_data = extended_prediction_data
+        else
+          weather_data = {
+            'latitude' => current_year_formatted['latitude'],
+            'longitude' => current_year_formatted['longitude'],
+            'elevation' => current_year_formatted['elevation'],
+            'timezone' => current_year_formatted['timezone'],
+            'data' => current_year_formatted['data'] + extended_prediction_data['data']
+          }
+        end
+
+        Rails.logger.info "✅ [Adjust] Extended prediction data to cover until #{effective_planning_end}"
+      end
+
     rescue => e
       Rails.logger.error "❌ [Adjust] Failed to get weather data: #{e.message}"
       return {

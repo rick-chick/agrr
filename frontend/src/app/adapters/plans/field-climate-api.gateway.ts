@@ -17,6 +17,16 @@ export class FieldClimateApiGateway implements FieldClimateGateway {
 
     const url = `${basePath}/field_cultivations/${dto.fieldCultivationId}/climate_data`;
 
-    return this.apiClient.get<FieldCultivationClimateData>(url);
+    const params: { [key: string]: string } = {};
+    if (dto.displayStartDate) {
+      params['display_start_date'] = dto.displayStartDate;
+    }
+    if (dto.displayEndDate) {
+      params['display_end_date'] = dto.displayEndDate;
+    }
+
+    return this.apiClient.get<FieldCultivationClimateData>(url, {
+      params: Object.keys(params).length > 0 ? params : undefined
+    });
   }
 }

@@ -11,10 +11,12 @@ module Domain
           @user_id = @user.id
           @mock_gateway = mock
           @mock_output_port = mock
+          @mock_translator = mock
           @interactor = FertilizeUpdateInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: @user_id
+            user_id: @user_id,
+            translator: @mock_translator
           )
         end
 
@@ -49,6 +51,7 @@ module Domain
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).with(::Fertilize, @user, 1).returns(fertilize_model)
+          @mock_translator.expects(:t).with('fertilizes.flash.reference_flag_admin_only').returns('admin only')
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)

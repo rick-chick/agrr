@@ -69,7 +69,8 @@ module Api
           interactor = Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
             output_port: presenter,
             gateway: interaction_rule_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            translator: translator
           )
           interactor.call(params[:id])
         end

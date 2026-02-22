@@ -143,7 +143,8 @@ class AgriculturalTasksController < ApplicationController
         interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
           output_port: presenter,
           gateway: agricultural_task_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(params[:id])

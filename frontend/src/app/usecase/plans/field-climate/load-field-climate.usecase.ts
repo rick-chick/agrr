@@ -23,7 +23,9 @@ export class LoadFieldClimateUseCase implements LoadFieldClimateInputPort {
   execute(dto: LoadFieldClimateInputDto): void {
     const request: FetchFieldClimateDataRequestDto = {
       fieldCultivationId: dto.fieldCultivationId,
-      planType: dto.planType
+      planType: dto.planType,
+      displayStartDate: dto.displayStartDate,
+      displayEndDate: dto.displayEndDate
     };
 
     this.fieldClimateGateway.fetchFieldClimateData(request).subscribe({

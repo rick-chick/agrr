@@ -56,7 +56,8 @@ describe('FieldClimateApiGateway', () => {
 
     expect(result).toEqual(climateData);
     expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/v1/plans/field_cultivations/123/climate_data'
+      '/api/v1/plans/field_cultivations/123/climate_data',
+      { params: undefined }
     );
   });
 
@@ -72,7 +73,8 @@ describe('FieldClimateApiGateway', () => {
 
     expect(result).toEqual(climateData);
     expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/v1/public_plans/field_cultivations/456/climate_data'
+      '/api/v1/public_plans/field_cultivations/456/climate_data',
+      { params: undefined }
     );
   });
 });

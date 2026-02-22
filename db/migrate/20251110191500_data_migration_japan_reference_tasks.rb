@@ -187,6 +187,10 @@ class DataMigrationJapanReferenceTasks < ActiveRecord::Migration[8.0]
   }.freeze
 
   def up
+    # agricultural_task_cropsテーブルが既に削除されているため、このマイグレーションをスキップ
+    say "⏭️ agricultural_task_cropsテーブルが既に削除されているため、このマイグレーションをスキップします"
+    return
+
     say "🌱 日本（jp）の参照タスクを投入しています..."
 
     legacy_ids = TempAgriculturalTask.where(name: LEGACY_ENGLISH_NAMES, region: 'jp', is_reference: true).pluck(:id)

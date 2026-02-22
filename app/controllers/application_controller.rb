@@ -11,7 +11,11 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   
   private
-  
+
+  def translator
+    @translator ||= Adapters::Translators::RailsTranslator.new
+  end
+
   def switch_locale(&action)
     # 優先順位:
     # 1. URLパスに明示的な locale セグメント

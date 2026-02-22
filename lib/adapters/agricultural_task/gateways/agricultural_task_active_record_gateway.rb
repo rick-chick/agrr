@@ -4,6 +4,7 @@ module Adapters
   module AgriculturalTask
     module Gateways
       class AgriculturalTaskActiveRecordGateway < Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway
+        attr_accessor :translator
         def list
           ::AgriculturalTask.all.map { |record| Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(record) }
         end
@@ -56,12 +57,12 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: task,
             actor: User.find(task.user_id),
-            toast_message: I18n.t('agricultural_tasks.undo.toast', name: task.name)
+            toast_message: @translator.t('agricultural_tasks.undo.toast', name: task.name)
           )
         rescue ActiveRecord::RecordNotFound
           raise StandardError, 'AgriculturalTask not found'
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('agricultural_tasks.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('agricultural_tasks.flash.cannot_delete_in_use')
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

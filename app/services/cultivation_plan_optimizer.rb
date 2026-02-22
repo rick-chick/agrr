@@ -22,11 +22,16 @@ class CultivationPlanOptimizer
         raise WeatherDataNotFoundError, error_message
       end
 
+      # 計画の終了日をtarget_end_dateとして使用
+      _, planning_end_date = calculate_planning_period
       weather_prediction_service = WeatherPredictionService.new(
         weather_location: weather_location,
         farm: @cultivation_plan.farm
       )
-      existing_prediction = weather_prediction_service.get_existing_prediction(cultivation_plan: @cultivation_plan)
+      existing_prediction = weather_prediction_service.get_existing_prediction(
+        target_end_date: planning_end_date,
+        cultivation_plan: @cultivation_plan
+      )
       
       unless existing_prediction
         error_message = "天気予測データが存在しません。計画作成時に天気予測が実行されていません。"

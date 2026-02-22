@@ -147,6 +147,8 @@ export class PlanFieldClimateComponent
 {
   @Input() fieldCultivationId: number | null = null;
   @Input() planType: 'private' | 'public' = 'private';
+  @Input() displayStartDate: string | null = null;
+  @Input() displayEndDate: string | null = null;
   @Output() close = new EventEmitter<void>();
 
   @ViewChild('temperatureCanvas') temperatureCanvas?: ElementRef<HTMLCanvasElement>;
@@ -181,7 +183,12 @@ export class PlanFieldClimateComponent
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['fieldCultivationId'] || changes['planType']) {
+    if (
+      changes['fieldCultivationId'] ||
+      changes['planType'] ||
+      changes['displayStartDate'] ||
+      changes['displayEndDate']
+    ) {
       this.loadClimateIfNeeded();
     }
   }
@@ -270,13 +277,17 @@ export class PlanFieldClimateComponent
 
     const payload: LoadFieldClimateInputDto = {
       fieldCultivationId: this.fieldCultivationId,
-      planType: this.planType
+      planType: this.planType,
+      displayStartDate: this.displayStartDate,
+      displayEndDate: this.displayEndDate
     };
 
     const shouldFetch =
       !this.currentRequest ||
       this.currentRequest.fieldCultivationId !== payload.fieldCultivationId ||
-      this.currentRequest.planType !== payload.planType;
+      this.currentRequest.planType !== payload.planType ||
+      this.currentRequest.displayStartDate !== payload.displayStartDate ||
+      this.currentRequest.displayEndDate !== payload.displayEndDate;
 
     if (!shouldFetch) return;
 

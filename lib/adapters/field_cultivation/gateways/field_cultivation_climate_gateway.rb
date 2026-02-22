@@ -8,10 +8,11 @@ module Adapters
     module Gateways
       class FieldCultivationClimateGateway < Domain::FieldCultivation::Gateways::FieldCultivationGateway
         include ::FieldCultivationClimate::MockProgressRecords
-        def initialize(current_user:, use_mock_progress: nil,
+        def initialize(current_user:, translator: nil, use_mock_progress: nil,
                        progress_gateway_factory: nil,
                        weather_prediction_service_factory: nil, weather_data_gateway: nil)
           @current_user = current_user
+          @translator = translator || Adapters::Translators::RailsTranslator.new
           @use_mock_progress = use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
           @weather_prediction_service_factory = weather_prediction_service_factory ||
@@ -19,7 +20,7 @@ module Adapters
           @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
         end
 
-        def fetch_field_cultivation_climate_data(field_cultivation_id:)
+        def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
           field_cultivation = find_authorized_field_cultivation(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
@@ -28,9 +29,9 @@ module Adapters
           ensure_cultivation_period!(field_cultivation)
 
           crop = fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
-          raise ActiveRecord::RecordNotFound, I18n.t('api.errors.crop_not_found') unless crop
+          raise ActiveRecord::RecordNotFound, @translator.t('api.errors.crop_not_found') unless crop
 
-          weather_payload = fetch_weather_payload(plan, farm)
+          weather_payload = fetch_weather_payload(plan, farm, display_start_date: display_start_date, display_end_date: display_end_date, cultivation_period: field_cultivation)
           ensure_weather_payload!(plan, weather_payload)
 
           weather_data_records = extract_actual_weather_data(
@@ -122,13 +123,13 @@ module Adapters
         def ensure_weather_location!(farm)
           return if farm&.weather_location
 
-          raise StandardError, I18n.t('api.errors.no_weather_data')
+          raise StandardError, @translator.t('api.errors.no_weather_data')
         end
 
         def ensure_cultivation_period!(field_cultivation)
           return if field_cultivation.start_date && field_cultivation.completion_date
 
-          raise StandardError, I18n.t('api.errors.no_cultivation_period')
+          raise StandardError, @translator.t('api.errors.no_cultivation_period')
         end
 
         def fetch_crop(field_cultivation, plan_type_public:)
@@ -143,10 +144,10 @@ module Adapters
           end
         end
 
-        def fetch_weather_payload(plan, farm)
+        def fetch_weather_payload(plan, farm, display_start_date: nil, display_end_date: nil, cultivation_period: nil)
           if plan.predicted_weather_data.present?
-            Rails.logger.info "✅ [FieldCultivationClimateGateway] Using saved prediction for CultivationPlan##{plan.id}"
-            AgrrService.normalize_weather_data(plan.predicted_weather_data)
+            Rails.logger.info "✅ [FieldCultivationClimateGateway] Using saved prediction for CultivationPlan##{plan.id}, merging with observed data"
+            merge_with_observed_data(plan.predicted_weather_data, farm.weather_location, display_start_date, display_end_date, cultivation_period)
           else
             Rails.logger.warn "⚠️ [FieldCultivationClimateGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
             service = @weather_prediction_service_factory.call(farm.weather_location, farm)
@@ -159,7 +160,81 @@ module Adapters
           return if weather_payload && weather_payload['data']
 
           Rails.logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
-          raise StandardError, I18n.t('controllers.field_cultivations.errors.weather_format_invalid')
+          raise StandardError, @translator.t('controllers.field_cultivations.errors.weather_format_invalid')
+        end
+
+        def merge_with_observed_data(cached_weather_payload, weather_location, display_start_date, display_end_date, cultivation_period = nil)
+          # GDD/気温チャート表示期間の実測データを取得
+          # 表示期間が指定されている場合はそれを使用、未指定の場合は栽培期間に基づく
+          if display_start_date && display_end_date
+            observed_start = display_start_date
+            observed_end = display_end_date
+          elsif cultivation_period && cultivation_period.start_date && cultivation_period.completion_date
+            # 栽培期間に基づいて実測データを取得（GDD計算のため）
+            observed_start = cultivation_period.start_date
+            observed_end = cultivation_period.completion_date
+          else
+            # デフォルト：今年の実測データ
+            observed_start = Date.new(Date.current.year, 1, 1)
+            observed_end = Date.current - 1.day
+          end
+
+          # 未来データは存在しないので昨日まで
+          actual_end = [observed_end, Date.current - 1.day].min
+
+          if observed_start > actual_end
+            Rails.logger.info "🔄 [FieldCultivationClimateGateway] No observed data needed for period #{observed_start} to #{observed_end}"
+            return cached_weather_payload
+          end
+
+          # 表示期間の実測データを取得
+          observed_weather_data = @weather_data_gateway.weather_data_for_period(
+            weather_location_id: weather_location.id,
+            start_date: observed_start,
+            end_date: actual_end
+          )
+
+          return cached_weather_payload if observed_weather_data.empty?
+
+          # 実測データをAGRR形式に変換
+          observed_formatted = {
+            'latitude' => weather_location.latitude,
+            'longitude' => weather_location.longitude,
+            'elevation' => weather_location.elevation,
+            'timezone' => weather_location.timezone,
+            'data' => observed_weather_data.filter_map do |datum|
+              next if datum.temperature_max.nil? || datum.temperature_min.nil?
+
+              temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
+
+              {
+                'time' => datum.date.to_s,
+                'temperature_2m_max' => datum.temperature_max.to_f,
+                'temperature_2m_min' => datum.temperature_min.to_f,
+                'temperature_2m_mean' => temp_mean.to_f,
+                'precipitation_sum' => (datum.precipitation || 0.0).to_f,
+                'sunshine_duration' => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0,
+                'wind_speed_10m_max' => (datum.wind_speed || 0.0).to_f,
+                'weather_code' => datum.weather_code || 0
+              }
+            end
+          }
+
+          # キャッシュされた予測データと実測データをマージ
+          cached_data = Array(cached_weather_payload['data'])
+          observed_data = observed_formatted['data']
+
+          # 日付でマージ（実測データが優先）
+          merged_data = {}
+          cached_data.each { |datum| merged_data[datum['time']] = datum }
+          observed_data.each { |datum| merged_data[datum['time']] = datum }
+
+          # 時系列順にソート
+          sorted_data = merged_data.values.sort_by { |datum| Date.parse(datum['time']) }
+
+          Rails.logger.info "🔄 [FieldCultivationClimateGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
+
+          cached_weather_payload.merge('data' => sorted_data)
         end
 
         def build_progress_result(crop, field_cultivation, weather_payload)
@@ -292,8 +367,10 @@ module Adapters
           return [] unless weather_payload && weather_payload['data']
 
           weather_payload['data'].filter_map do |datum|
-            next unless datum && datum['time']
-            datum_date = Date.parse(datum['time']) rescue nil
+            next unless datum
+            time_value = datum['time'] || datum['date']
+            next unless time_value
+            datum_date = Date.parse(time_value) rescue nil
             next unless datum_date
             next unless datum_date.between?(start_date, end_date)
 
@@ -303,7 +380,7 @@ module Adapters
             end
 
             {
-              'date' => datum['time'],
+              'date' => time_value,
               'temperature_max' => datum.fetch('temperature_2m_max', datum[:temperature_2m_max] || nil),
               'temperature_min' => datum.fetch('temperature_2m_min', datum[:temperature_2m_min] || nil),
               'temperature_mean' => temp_mean

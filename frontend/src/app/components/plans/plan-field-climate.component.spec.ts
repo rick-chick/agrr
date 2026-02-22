@@ -68,7 +68,9 @@ describe('PlanFieldClimateComponent', () => {
 
     const expectedPayload: LoadFieldClimateInputDto = {
       fieldCultivationId: 42,
-      planType: 'public'
+      planType: 'public',
+      displayStartDate: null,
+      displayEndDate: null
     };
 
     expect(mockUseCase.execute).toHaveBeenCalledWith(expectedPayload);

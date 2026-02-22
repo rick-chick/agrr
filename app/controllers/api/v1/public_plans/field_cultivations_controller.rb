@@ -39,7 +39,9 @@ module Api
         def climate_data
           field_cultivation_climate_data_interactor.call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
-              field_cultivation_id: field_cultivation_id_param
+              field_cultivation_id: field_cultivation_id_param,
+              display_start_date: params[:display_start_date],
+              display_end_date: params[:display_end_date]
             )
           )
         end
@@ -91,13 +93,15 @@ module Api
             gateway: climate_gateway,
             weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
             prediction_factory: ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) },
-            progress_factory: -> { Agrr::ProgressGateway.new }
+            progress_factory: -> { Agrr::ProgressGateway.new },
+            translator: translator
           )
         end
 
         def climate_gateway
           Adapters::FieldCultivation::Gateways::FieldCultivationClimateGateway.new(
-            current_user: current_user
+            current_user: current_user,
+            translator: translator
           )
         end
 
@@ -108,6 +112,7 @@ module Api
         def field_cultivation_id_param
           params.require(:id)
         end
+
       end
     end
   end

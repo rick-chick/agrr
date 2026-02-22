@@ -4,7 +4,12 @@ module Adapters
   module Farm
     module Gateways
       class FarmActiveRecordGateway < Domain::Farm::Gateways::FarmGateway
+        attr_accessor :translator
         attr_accessor :user_id
+
+        def initialize
+          @translator = Adapters::Translators::RailsTranslator.new
+        end
         def list(input_dto)
           if input_dto.is_admin
             # 管理者の場合は自分の農場と参照農場の両方を取得
@@ -51,10 +56,10 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: farm,
             actor: farm.user,
-            toast_message: I18n.t('farms.undo.toast', name: farm.display_name)
+            toast_message: @translator.t('farms.undo.toast', name: farm.display_name)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('farms.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('farms.flash.cannot_delete_in_use')
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

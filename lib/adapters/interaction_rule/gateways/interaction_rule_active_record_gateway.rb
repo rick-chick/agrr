@@ -4,6 +4,7 @@ module Adapters
   module InteractionRule
     module Gateways
       class InteractionRuleActiveRecordGateway < Domain::InteractionRule::Gateways::InteractionRuleGateway
+        attr_accessor :translator
         def list(scope = nil)
           query = scope || ::InteractionRule.all
           query.map { |record| Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(record) }
@@ -57,7 +58,7 @@ module Adapters
         rescue ActiveRecord::RecordNotFound
           raise StandardError, 'InteractionRule not found'
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('interaction_rules.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('interaction_rules.flash.cannot_delete_in_use')
         end
       end
     end

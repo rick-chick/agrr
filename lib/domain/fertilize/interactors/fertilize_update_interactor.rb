@@ -4,10 +4,11 @@ module Domain
   module Fertilize
     module Interactors
       class FertilizeUpdateInteractor < Domain::Fertilize::Ports::FertilizeUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 
         def call(input_dto)
@@ -20,7 +21,7 @@ module Domain
           if input_dto.is_reference.present?
             is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
             if is_reference != fertilize_model.is_reference && !user.admin?
-              raise StandardError, I18n.t('fertilizes.flash.reference_flag_admin_only')
+              raise StandardError, @translator.t('fertilizes.flash.reference_flag_admin_only')
             end
             attrs[:is_reference] = is_reference
           end

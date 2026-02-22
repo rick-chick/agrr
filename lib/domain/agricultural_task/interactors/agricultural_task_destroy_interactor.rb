@@ -4,10 +4,11 @@ module Domain
   module AgriculturalTask
     module Interactors
       class AgriculturalTaskDestroyInteractor < Domain::AgriculturalTask::Ports::AgriculturalTaskDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 
         def call(task_id)
@@ -16,7 +17,7 @@ module Domain
           undo_response = DeletionUndo::Manager.schedule(
             record: task_model,
             actor: user,
-            toast_message: I18n.t('agricultural_tasks.undo.toast', name: task_model.name)
+            toast_message: @translator.t('agricultural_tasks.undo.toast', name: task_model.name)
           )
           destroy_output_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)

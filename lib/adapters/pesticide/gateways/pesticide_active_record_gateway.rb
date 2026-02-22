@@ -4,6 +4,7 @@ module Adapters
   module Pesticide
     module Gateways
       class PesticideActiveRecordGateway < Domain::Pesticide::Gateways::PesticideGateway
+        attr_accessor :translator
         def list
           ::Pesticide.all.map { |record| Domain::Pesticide::Entities::PesticideEntity.from_model(record) }
         end
@@ -54,7 +55,7 @@ module Adapters
         rescue ActiveRecord::RecordNotFound
           raise StandardError, 'Pesticide not found'
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('pesticides.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('pesticides.flash.cannot_delete_in_use')
         end
       end
     end

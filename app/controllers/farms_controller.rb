@@ -14,7 +14,8 @@ class FarmsController < ApplicationController
         interactor = Domain::Farm::Interactors::FarmListInteractor.new(
           output_port: presenter,
           gateway: farm_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(input_dto)
@@ -46,7 +47,8 @@ class FarmsController < ApplicationController
         interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(
           output_port: presenter,
           gateway: farm_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(params[:id])
@@ -82,7 +84,8 @@ class FarmsController < ApplicationController
         interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(
           output_port: presenter,
           gateway: farm_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(@input_dto)
@@ -122,7 +125,8 @@ class FarmsController < ApplicationController
         interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(
           output_port: presenter,
           gateway: farm_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(@input_dto)
@@ -158,7 +162,8 @@ class FarmsController < ApplicationController
         interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(
           output_port: presenter,
           gateway: farm_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          translator: translator
         )
 
         interactor.call(params[:id])

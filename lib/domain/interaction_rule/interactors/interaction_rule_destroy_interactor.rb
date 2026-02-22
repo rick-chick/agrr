@@ -4,10 +4,11 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleDestroyInteractor < Domain::InteractionRule::Ports::InteractionRuleDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator
         end
 
         def call(rule_id)
@@ -16,7 +17,7 @@ module Domain
           undo_response = DeletionUndo::Manager.schedule(
             record: rule_model,
             actor: user,
-            toast_message: I18n.t('interaction_rules.undo.toast', source: rule_model.source_group, target: rule_model.target_group)
+            toast_message: @translator.t('interaction_rules.undo.toast', source: rule_model.source_group, target: rule_model.target_group)
           )
           destroy_output_dto = Domain::InteractionRule::Dtos::InteractionRuleDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)

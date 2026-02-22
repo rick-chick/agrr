@@ -10,7 +10,8 @@ class PestsController < ApplicationController
     Domain::Pest::Interactors::PestListInteractor.new(
       output_port: presenter,
       gateway: pest_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      translator: translator
     ).call
   end
 
@@ -20,7 +21,8 @@ class PestsController < ApplicationController
     Domain::Pest::Interactors::PestDetailInteractor.new(
       output_port: presenter,
       gateway: pest_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      translator: translator
     ).call(params[:id])
   end
 
@@ -48,7 +50,8 @@ class PestsController < ApplicationController
     Domain::Pest::Interactors::PestCreateInteractor.new(
       output_port: presenter,
       gateway: pest_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      translator: translator
     ).call(input_dto)
   rescue StandardError => e
     if e.message == I18n.t('pests.flash.reference_only_admin')
@@ -80,7 +83,8 @@ class PestsController < ApplicationController
     Domain::Pest::Interactors::PestUpdateInteractor.new(
       output_port: presenter,
       gateway: pest_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      translator: translator
     ).call(input_dto)
   rescue StandardError => e
     Rails.logger.error "PestsController#update error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
@@ -119,6 +123,10 @@ class PestsController < ApplicationController
   end
 
   private
+
+  def translator
+    @translator ||= Adapters::Translators::RailsTranslator.new
+  end
 
   def set_pest
     @pest = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, current_user, params[:id])

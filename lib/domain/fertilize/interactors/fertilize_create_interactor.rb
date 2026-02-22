@@ -4,10 +4,11 @@ module Domain
   module Fertilize
     module Interactors
       class FertilizeCreateInteractor < Domain::Fertilize::Ports::FertilizeCreateInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 
         def call(input_dto)
@@ -16,7 +17,7 @@ module Domain
           # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
           is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, I18n.t('fertilizes.flash.reference_only_admin')
+            raise StandardError, @translator.t('fertilizes.flash.reference_only_admin')
           end
 
           fertilize_model = Domain::Shared::Policies::FertilizePolicy.build_for_create(::Fertilize, user, {

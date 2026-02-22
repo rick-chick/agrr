@@ -28,7 +28,8 @@ module Api
           interactor = Domain::Pest::Interactors::PestDetailInteractor.new(
             output_port: presenter,
             gateway: pest_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            translator: translator
           )
           interactor.call(params[:id])
         end
@@ -44,7 +45,8 @@ module Api
           interactor = Domain::Pest::Interactors::PestCreateInteractor.new(
             output_port: presenter,
             gateway: pest_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            translator: translator
           )
           interactor.call(input_dto)
         end
@@ -56,7 +58,8 @@ module Api
           interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(
             output_port: presenter,
             gateway: pest_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            translator: translator
           )
           interactor.call(input_dto)
         end
@@ -68,7 +71,8 @@ module Api
           interactor = Domain::Pest::Interactors::PestDestroyInteractor.new(
             output_port: presenter,
             gateway: pest_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            translator: translator
           )
           interactor.call(params[:id])
         end

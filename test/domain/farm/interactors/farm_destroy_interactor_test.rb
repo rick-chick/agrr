@@ -11,10 +11,12 @@ module Domain
           @user_id = @user.id
           @mock_gateway = mock
           @mock_output_port = mock
+          @mock_translator = mock
           @interactor = FarmDestroyInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: @user_id
+            user_id: @user_id,
+            translator: @mock_translator
           )
         end
 
@@ -30,10 +32,11 @@ module Domain
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
           farm_model.expects(:free_crop_plans).returns(free_crop_plans_mock)
           farm_model.stubs(:display_name).returns("Test Farm")
+          @mock_translator.expects(:t).with('farms.undo.toast', name: "Test Farm").returns('Farm Test Farm deleted')
           DeletionUndo::Manager.expects(:schedule).with(
             record: farm_model,
             actor: @user,
-            toast_message: instance_of(String)
+            toast_message: 'Farm Test Farm deleted'
           ).returns(undo_response)
           Domain::Farm::Dtos::FarmDestroyOutputDto.expects(:new).with(undo: undo_response).returns(destroy_output_dto)
           @mock_output_port.expects(:on_success).with(destroy_output_dto)
@@ -51,6 +54,7 @@ module Domain
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
           farm_model.stubs(:free_crop_plans).returns(free_crop_plans_mock)
+          @mock_translator.expects(:t).with('farms.flash.cannot_delete', count: 2).returns('Cannot delete farm with 2 crop plans')
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(farm_id)

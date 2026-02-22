@@ -4,10 +4,11 @@ module Domain
   module CultivationPlan
     module Interactors
       class CultivationPlanDestroyInteractor < Domain::CultivationPlan::Ports::CultivationPlanDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator
         end
 
         def call(plan_id)
@@ -16,13 +17,13 @@ module Domain
           destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)
         rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          handle_failure(I18n.t('plans.errors.not_found'))
+          handle_failure(@translator.t('plans.errors.not_found'))
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          handle_failure(I18n.t('plans.errors.delete_failed'))
+          handle_failure(@translator.t('plans.errors.delete_failed'))
         rescue DeletionUndo::Error => e
-          handle_failure(I18n.t('plans.errors.delete_error', message: e.message))
+          handle_failure(@translator.t('plans.errors.delete_error', message: e.message))
         rescue StandardError => e
-          handle_failure(e.message.presence || I18n.t('plans.errors.delete_failed'))
+          handle_failure(e.message.presence || @translator.t('plans.errors.delete_failed'))
         end
 
         private

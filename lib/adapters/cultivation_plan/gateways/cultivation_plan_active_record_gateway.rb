@@ -4,6 +4,11 @@ module Adapters
   module CultivationPlan
     module Gateways
       class CultivationPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::CultivationPlanGateway
+        attr_accessor :translator
+
+        def initialize
+          @translator = Adapters::Translators::RailsTranslator.new
+        end
         def create(create_dto)
           # CultivationPlanCreatorを使って計画を作成
           creator = CultivationPlanCreator.new(
@@ -53,16 +58,16 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: plan_model,
             actor: user,
-            toast_message: I18n.t('plans.undo.toast', name: plan_model.display_name)
+            toast_message: @translator.t('plans.undo.toast', name: plan_model.display_name)
           )
         rescue PolicyPermissionDenied
-          raise StandardError, I18n.t('plans.errors.not_found')
+          raise StandardError, @translator.t('plans.errors.not_found')
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, I18n.t('plans.errors.not_found')
+          raise StandardError, @translator.t('plans.errors.not_found')
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('plans.errors.delete_failed')
+          raise StandardError, @translator.t('plans.errors.delete_failed')
         rescue DeletionUndo::Error => e
-          raise StandardError, I18n.t('plans.errors.delete_error', message: e.message)
+          raise StandardError, @translator.t('plans.errors.delete_error', message: e.message)
         end
 
         # phase 更新

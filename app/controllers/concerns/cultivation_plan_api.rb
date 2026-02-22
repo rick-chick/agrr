@@ -310,7 +310,7 @@ module CultivationPlanApi
         status: @cultivation_plan.status,
         total_area: @cultivation_plan.total_area,
         planning_start_date: @cultivation_plan.calculated_planning_start_date,
-        planning_end_date: @cultivation_plan.calculated_planning_end_date,
+        planning_end_date: @cultivation_plan.prediction_target_end_date,
         fields: fields_data,
         crops: crops_data,
         available_crops: available_crops_data,

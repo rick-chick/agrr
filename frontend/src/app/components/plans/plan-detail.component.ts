@@ -44,6 +44,7 @@ const initialControl: PlanDetailViewState = {
                 [data]="control.planData"
                 [planType]="planType"
                 (cultivationSelected)="handleCultivationSelection($event)"
+                (visibleRangeChange)="handleVisibleRangeUpdate($event)"
               />
             </div>
 
@@ -55,6 +56,8 @@ const initialControl: PlanDetailViewState = {
                 <app-plan-field-climate
                   [fieldCultivationId]="selectedCultivationId"
                   [planType]="selectedPlanType"
+                  [displayStartDate]="visibleRangeStartDate"
+                  [displayEndDate]="visibleRangeEndDate"
                   (close)="closeClimatePanel()"
                 />
               } @else {
@@ -90,6 +93,8 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   readonly planType: 'private' | 'public' = 'private';
   selectedCultivationId: number | null = null;
   selectedPlanType: 'private' | 'public' = this.planType;
+  visibleRangeStartDate: string | null = null;
+  visibleRangeEndDate: string | null = null;
 
   ngOnInit(): void {
     this.presenter.setView(this);
@@ -127,5 +132,17 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   closeClimatePanel(): void {
     this.selectedCultivationId = null;
     this.selectedPlanType = this.planType;
+  }
+
+  handleVisibleRangeUpdate(range: { startDate: Date; endDate: Date; label: string }): void {
+    this.visibleRangeStartDate = this.toIsoDate(range.startDate);
+    this.visibleRangeEndDate = this.toIsoDate(range.endDate);
+  }
+
+  private toIsoDate(value: Date): string {
+    const year = value.getFullYear();
+    const month = (value.getMonth() + 1).toString().padStart(2, '0');
+    const day = value.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

@@ -4,6 +4,7 @@ module Adapters
   module Field
     module Gateways
       class FieldActiveRecordGateway < Domain::Field::Gateways::FieldGateway
+        attr_accessor :translator
         def list_by_farm(farm_id, user_id)
           user = find_user!(user_id)
           farm = Domain::Shared::Policies::FarmPolicy.find_owned!(::Farm, user, farm_id)
@@ -59,7 +60,7 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: field,
             actor: user,
-            toast_message: I18n.t('fields.undo.toast', name: field.display_name),
+            toast_message: @translator.t('fields.undo.toast', name: field.display_name),
             metadata: {
               farm_id: field.farm_id
             }
@@ -67,7 +68,7 @@ module Adapters
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise StandardError, 'Field not found'
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('fields.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('fields.flash.cannot_delete_in_use')
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

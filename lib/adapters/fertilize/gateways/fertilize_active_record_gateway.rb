@@ -4,6 +4,7 @@ module Adapters
   module Fertilize
     module Gateways
       class FertilizeActiveRecordGateway < Domain::Fertilize::Gateways::FertilizeGateway
+        attr_accessor :translator
         def list
           ::Fertilize.all.map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
         end
@@ -50,10 +51,10 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: fertilize,
             actor: fertilize.user,
-            toast_message: I18n.t('fertilizes.undo.toast', name: fertilize.name)
+            toast_message: @translator.t('fertilizes.undo.toast', name: fertilize.name)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, I18n.t('fertilizes.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t('fertilizes.flash.cannot_delete_in_use')
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

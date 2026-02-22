@@ -14,7 +14,8 @@ module Api
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
           farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region)
-          render json: farms
+          # 関連データを除外してJSONサイズを削減
+          render json: farms.as_json(only: [:id, :name, :latitude, :longitude, :region])
         end
 
         def farm_sizes

@@ -4,10 +4,11 @@ module Domain
   module Pest
     module Interactors
       class PestCreateInteractor < Domain::Pest::Ports::PestCreateInputPort
-        def initialize(output_port:, gateway:, user_id:)
+        def initialize(output_port:, gateway:, user_id:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 
         def call(input_dto)
@@ -16,7 +17,7 @@ module Domain
           # is_referenceをbooleanに変換
           is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, I18n.t('pests.flash.reference_only_admin')
+            raise StandardError, @translator.t('pests.flash.reference_only_admin')
           end
 
           attrs = {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_30_000004) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_22_191716) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -62,6 +62,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_000004) do
     t.index ["user_id", "name"], name: "index_agricultural_tasks_on_user_id_and_name", unique: true, where: "is_reference = false"
     t.index ["user_id", "source_agricultural_task_id"], name: "idx_on_user_id_source_agricultural_task_id_87cb4ef7da", unique: true, where: "source_agricultural_task_id IS NOT NULL"
     t.index ["user_id"], name: "index_agricultural_tasks_on_user_id"
+  end
+
+  create_table "contact_messages", force: :cascade do |t|
+    t.string "name"
+    t.string "email", null: false
+    t.string "subject"
+    t.string "source"
+    t.text "message", null: false
+    t.string "status", default: "queued", null: false
+    t.datetime "sent_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_contact_messages_on_email"
+    t.index ["status"], name: "index_contact_messages_on_status"
   end
 
   create_table "crop_pests", force: :cascade do |t|
@@ -596,6 +610,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_000004) do
     t.integer "weather_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_predicted"
     t.index ["weather_location_id", "date"], name: "index_weather_data_on_location_and_date", unique: true
     t.index ["weather_location_id"], name: "index_weather_data_on_weather_location_id"
   end

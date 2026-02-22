@@ -75,6 +75,11 @@ Rails.application.configure do
   # Propshaft configuration for test environment
   # Allow missing assets (application.js might not be built)
   config.assets.check_precompiled_asset = false
+
+  # Skip JavaScript build if SKIP_ASSET_BUILD is set
+  if ENV['SKIP_ASSET_BUILD']
+    config.assets.compile = false
+  end
   
   # Google OAuth and frontend URL for test
   config.after_initialize do

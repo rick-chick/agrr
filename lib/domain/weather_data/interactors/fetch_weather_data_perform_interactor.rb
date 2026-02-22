@@ -217,6 +217,7 @@ module Domain
           return false if latitude.nil? || longitude.nil?
           latitude.between?(24.0, 46.0) && longitude.between?(130.0, 146.0)
         end
+
       end
     end
   end

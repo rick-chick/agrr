@@ -114,6 +114,8 @@ class FieldsController < ApplicationController
   end
 
   def field_gateway
-    Adapters::Field::Gateways::FieldActiveRecordGateway.new
+    gateway = Adapters::Field::Gateways::FieldActiveRecordGateway.new
+    gateway.translator = translator
+    gateway
   end
 end

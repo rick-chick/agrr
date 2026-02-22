@@ -87,7 +87,11 @@ module Api
         private
 
         def field_gateway
-          @field_gateway ||= Adapters::Field::Gateways::FieldActiveRecordGateway.new
+          @field_gateway ||= begin
+            gateway = Adapters::Field::Gateways::FieldActiveRecordGateway.new
+            gateway.translator = translator
+            gateway
+          end
         end
 
         def input_valid?(action)
