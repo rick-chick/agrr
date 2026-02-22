@@ -65,7 +65,9 @@ module Api
           interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(
             output_port: presenter,
             gateway: farm_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway,
+            translator: translator
           )
           interactor.call(input_dto)
         end
@@ -97,6 +99,10 @@ module Api
 
         def farm_gateway
           @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
 
         def input_valid?(action)
