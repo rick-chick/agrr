@@ -4,9 +4,10 @@ module Domain
   module PublicPlan
     module Interactors
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, logger:)
           @output_port = output_port
           @gateway = gateway
+          @logger = logger
         end
 
         def call(input_dto)
@@ -60,14 +61,14 @@ module Domain
           plan_id = cultivation_plan.id
 
           # 契約に従い plan_id をログ出力
-          Rails.logger.info "🌱 [PublicPlanCreateInteractor] Created new CultivationPlan with plan_id: #{plan_id}"
+          @logger.info "🌱 [PublicPlanCreateInteractor] Created new CultivationPlan with plan_id: #{plan_id}"
 
           # 成功レスポンスを返す
           success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: plan_id)
           @output_port.on_success(success_dto)
         rescue StandardError => e
-          Rails.logger.error "❌ [PublicPlanCreateInteractor] Unexpected error: #{e.class} - #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
+          @logger.error "❌ [PublicPlanCreateInteractor] Unexpected error: #{e.class} - #{e.message}"
+          @logger.error e.backtrace.join("\n")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

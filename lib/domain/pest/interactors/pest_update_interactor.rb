@@ -4,10 +4,11 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
         end
 
@@ -44,7 +45,7 @@ module Domain
             # 関連モデルのエラーもチェック
             pest_model.pest_thermal_requirement&.errors&.full_messages&.each { |msg| error_messages << "PestThermalRequirement: #{msg}" }
             pest_model.pest_control_methods&.each { |method| method.errors.full_messages.each { |msg| error_messages << "PestControlMethod: #{msg}" } }
-            Rails.logger.error "PestUpdateInteractor errors: #{error_messages.flatten.join(', ')}"
+            @logger.error "PestUpdateInteractor errors: #{error_messages.flatten.join(', ')}"
             raise StandardError, error_messages.flatten.join(', ')
           end
 
@@ -53,7 +54,7 @@ module Domain
           end
 
           pest_entity = Domain::Pest::Entities::PestEntity.from_model(pest_model)
-          Rails.logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"
+          @logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"
           @output_port.on_success(pest_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

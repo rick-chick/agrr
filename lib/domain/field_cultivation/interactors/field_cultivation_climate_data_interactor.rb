@@ -4,7 +4,7 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
-        def initialize(output_port:, gateway:, weather_data_gateway:, prediction_factory:, progress_factory:, translator: nil, logger: Rails.logger)
+        def initialize(output_port:, gateway:, weather_data_gateway:, prediction_factory:, progress_factory:, logger:, translator: nil)
           @output_port = output_port
           @gateway = gateway
           @weather_data_gateway = weather_data_gateway

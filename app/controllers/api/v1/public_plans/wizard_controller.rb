@@ -52,12 +52,13 @@ module Api
 
           # Presenter と Gateway を準備
           presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
-          gateway = Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new
+          gateway = Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new(logger: logger_gateway)
 
           # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
           interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
             output_port: presenter,
-            gateway: gateway
+            gateway: gateway,
+            logger: logger_gateway
           )
 
           interactor.call(input_dto)
@@ -156,6 +157,12 @@ module Api
           job_instances << task_schedule_job
 
           job_instances
+        end
+
+        private
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

@@ -8,10 +8,11 @@ module Adapters
     module Gateways
       class FieldCultivationClimateGateway < Domain::FieldCultivation::Gateways::FieldCultivationGateway
         include ::FieldCultivationClimate::MockProgressRecords
-        def initialize(current_user:, translator: nil, use_mock_progress: nil,
+        def initialize(current_user:, logger:, translator: nil, use_mock_progress: nil,
                        progress_gateway_factory: nil,
                        weather_prediction_service_factory: nil, weather_data_gateway: nil)
           @current_user = current_user
+          @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
           @use_mock_progress = use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
@@ -134,7 +135,7 @@ module Adapters
 
         def fetch_crop(field_cultivation, plan_type_public:)
           plan_crop = field_cultivation.cultivation_plan_crop
-          Rails.logger.debug("[FieldCultivationClimateGateway] plan_crop.crop_id=#{plan_crop&.crop_id}, plan_type_public=#{plan_type_public}, current_user_id=#{@current_user&.id}")
+          @logger.debug("[FieldCultivationClimateGateway] plan_crop.crop_id=#{plan_crop&.crop_id}, plan_type_public=#{plan_type_public}, current_user_id=#{@current_user&.id}")
           if plan_type_public
             ::Crop.find_by(id: plan_crop.crop_id)
           else
@@ -146,10 +147,10 @@ module Adapters
 
         def fetch_weather_payload(plan, farm, display_start_date: nil, display_end_date: nil, cultivation_period: nil)
           if plan.predicted_weather_data.present?
-            Rails.logger.info "✅ [FieldCultivationClimateGateway] Using saved prediction for CultivationPlan##{plan.id}, merging with observed data"
+            @logger.info "✅ [FieldCultivationClimateGateway] Using saved prediction for CultivationPlan##{plan.id}, merging with observed data"
             merge_with_observed_data(plan.predicted_weather_data, farm.weather_location, display_start_date, display_end_date, cultivation_period)
           else
-            Rails.logger.warn "⚠️ [FieldCultivationClimateGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
+            @logger.warn "⚠️ [FieldCultivationClimateGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
             service = @weather_prediction_service_factory.call(farm.weather_location, farm)
             prediction_info = service.predict_for_cultivation_plan(plan)
             prediction_info[:data]
@@ -159,7 +160,7 @@ module Adapters
         def ensure_weather_payload!(plan, weather_payload)
           return if weather_payload && weather_payload['data']
 
-          Rails.logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
+          @logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
           raise StandardError, @translator.t('controllers.field_cultivations.errors.weather_format_invalid')
         end
 
@@ -183,7 +184,7 @@ module Adapters
           actual_end = [observed_end, Date.current - 1.day].min
 
           if observed_start > actual_end
-            Rails.logger.info "🔄 [FieldCultivationClimateGateway] No observed data needed for period #{observed_start} to #{observed_end}"
+            @logger.info "🔄 [FieldCultivationClimateGateway] No observed data needed for period #{observed_start} to #{observed_end}"
             return cached_weather_payload
           end
 
@@ -232,7 +233,7 @@ module Adapters
           # 時系列順にソート
           sorted_data = merged_data.values.sort_by { |datum| Date.parse(datum['time']) }
 
-          Rails.logger.info "🔄 [FieldCultivationClimateGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
+          @logger.info "🔄 [FieldCultivationClimateGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
 
           cached_weather_payload.merge('data' => sorted_data)
         end
@@ -249,11 +250,12 @@ module Adapters
         end
 
         def mock_progress_result(field_cultivation)
-          Rails.logger.info "🧪 [FieldCultivationClimateGateway] Using mock progress for field_cultivation_id=#{field_cultivation.id}"
+          @logger.info "🧪 [FieldCultivationClimateGateway] Using mock progress for field_cultivation_id=#{field_cultivation.id}"
           {
             'progress_records' => generate_mock_progress_records(
               field_cultivation.start_date,
-              field_cultivation.completion_date
+              field_cultivation.completion_date,
+              logger: @logger
             ),
             'total_gdd' => 875.0
           }

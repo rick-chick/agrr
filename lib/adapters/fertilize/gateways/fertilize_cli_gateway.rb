@@ -7,7 +7,7 @@ module Adapters
       class FertilizeCliGateway
         DEFAULT_MAX_RETRIES = 3
 
-        def initialize(logger: Rails.logger)
+        def initialize(logger:)
           @logger = logger
           @translator = translator
         end

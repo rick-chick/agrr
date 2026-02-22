@@ -61,6 +61,7 @@ module Adapters
 
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service }
@@ -113,6 +114,7 @@ module Adapters
 
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service }

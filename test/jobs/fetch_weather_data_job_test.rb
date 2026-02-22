@@ -276,7 +276,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
         farm_gateway: Adapters::Farm::Gateways::FarmActiveRecordGateway.new,
         cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new,
         agrr_weather_gateway: Agrr::WeatherGateway.new,
-        presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new
+        presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
       )
 
       input_dto = {

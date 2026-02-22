@@ -59,6 +59,7 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(input_dto)
@@ -89,6 +90,10 @@ module Api
 
         def pest_gateway
           @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
 
         def input_valid?(action)

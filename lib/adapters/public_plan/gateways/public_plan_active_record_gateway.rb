@@ -4,6 +4,10 @@ module Adapters
   module PublicPlan
     module Gateways
       class PublicPlanActiveRecordGateway < Domain::PublicPlan::Gateways::PublicPlanGateway
+        def initialize(logger:)
+          @logger = logger
+        end
+
         def find_farm(farm_id)
           ::Farm.find_by(id: farm_id)
         end
@@ -42,19 +46,19 @@ module Adapters
           # 成功時に plan_id をログ出力
           if result.success? && result.cultivation_plan
             plan_id = result.cultivation_plan.id
-            Rails.logger.info "🌱 [PublicPlanActiveRecordGateway] Created new CultivationPlan with plan_id: #{plan_id}"
+            @logger.info "🌱 [PublicPlanActiveRecordGateway] Created new CultivationPlan with plan_id: #{plan_id}"
           else
             # 失敗時のエラーログ出力
             error_message = result.errors&.join(', ') || "Failed to create cultivation plan"
-            Rails.logger.error "❌ [PublicPlanActiveRecordGateway] CultivationPlan creation failed: #{error_message}"
+            @logger.error "❌ [PublicPlanActiveRecordGateway] CultivationPlan creation failed: #{error_message}"
             raise StandardError, error_message
           end
 
           result
         rescue StandardError => e
           # 例外を適切に処理し、再発生させる
-          Rails.logger.error "❌ [PublicPlanActiveRecordGateway] Unexpected error during plan creation: #{e.class} - #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
+          @logger.error "❌ [PublicPlanActiveRecordGateway] Unexpected error during plan creation: #{e.class} - #{e.message}"
+          @logger.error e.backtrace.join("\n")
           raise
         end
       end

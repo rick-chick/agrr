@@ -1,6 +1,6 @@
 module FieldCultivationClimate
   module MockProgressRecords
-    def generate_mock_progress_records(start_date, end_date)
+    def generate_mock_progress_records(start_date, end_date, logger:)
       records = []
       current_date = start_date
       cumulative_gdd = 0.0
@@ -28,8 +28,8 @@ module FieldCultivationClimate
         current_date += 1.day
       end
 
-      Rails.logger.info "🧪 [FieldCultivationClimate::MockProgressRecords] Generated #{records.length} records, GDD range: 0-#{records.last['cumulative_gdd']}"
-      Rails.logger.info "🧪 [FieldCultivationClimate::MockProgressRecords] Stage distribution: #{records.group_by { |r| r['stage_name'] }.transform_values(&:count)}"
+      logger.info "🧪 [FieldCultivationClimate::MockProgressRecords] Generated #{records.length} records, GDD range: 0-#{records.last['cumulative_gdd']}"
+      logger.info "🧪 [FieldCultivationClimate::MockProgressRecords] Stage distribution: #{records.group_by { |r| r['stage_name'] }.transform_values(&:count)}"
 
       records
     end

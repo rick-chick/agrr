@@ -123,7 +123,11 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def presenter
-    @presenter ||= Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new
+    @presenter ||= Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new(logger: logger_gateway)
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 
   private

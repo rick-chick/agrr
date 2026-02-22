@@ -9,7 +9,7 @@ module Adapters
     module Gateways
       class PublicPlanActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = PublicPlanActiveRecordGateway.new
+          @gateway = PublicPlanActiveRecordGateway.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
           @farm = create(:farm, :reference)
           @crops = [create(:crop, :reference), create(:crop, :reference)]
         end
