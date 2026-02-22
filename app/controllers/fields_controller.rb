@@ -55,7 +55,8 @@ class FieldsController < ApplicationController
     interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(
       output_port: presenter,
       gateway: field_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
     interactor.call(input_dto)
   end
@@ -117,5 +118,9 @@ class FieldsController < ApplicationController
     gateway = Adapters::Field::Gateways::FieldActiveRecordGateway.new
     gateway.translator = translator
     gateway
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
