@@ -4,9 +4,10 @@ module Domain
   module CultivationPlan
     module Interactors
       class CultivationPlanCreateInteractor < Domain::CultivationPlan::Ports::CultivationPlanCreateInputPort
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, logger:)
           @output_port = output_port
           @gateway = gateway
+          @logger = logger
         end
 
         def call(input_dto)

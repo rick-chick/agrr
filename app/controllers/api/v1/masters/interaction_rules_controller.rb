@@ -57,7 +57,8 @@ module Api
           interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
             output_port: presenter,
             gateway: interaction_rule_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call(input_dto)
         end
@@ -102,6 +103,10 @@ module Api
 
         def valid_create_params?(input_dto)
           input_dto.rule_type.present? && input_dto.source_group.present? && input_dto.target_group.present? && !input_dto.impact_ratio.nil?
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

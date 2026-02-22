@@ -81,7 +81,8 @@ class InteractionRulesController < ApplicationController
     interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
       output_port: presenter,
       gateway: interaction_rule_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
 
     input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.from_hash(
@@ -119,6 +120,10 @@ class InteractionRulesController < ApplicationController
 
   def interaction_rule_gateway
     @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 
   def set_interaction_rule
