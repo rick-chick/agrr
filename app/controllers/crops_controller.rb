@@ -13,7 +13,8 @@ class CropsController < ApplicationController
     interactor = Domain::Crop::Interactors::CropListInteractor.new(
       output_port: presenter,
       gateway: crop_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
 
     interactor.call
@@ -27,7 +28,8 @@ class CropsController < ApplicationController
     interactor = Domain::Crop::Interactors::CropDetailInteractor.new(
       output_port: presenter,
       gateway: crop_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
     interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -107,6 +109,7 @@ class CropsController < ApplicationController
           output_port: presenter,
           gateway: crop_gateway,
           user_id: current_user.id,
+          logger: logger_gateway,
           translator: translator
         )
         interactor.call(params[:id])
