@@ -59,8 +59,7 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
-            logger: logger_gateway,
-            translator: translator
+            logger: logger_gateway
           )
           interactor.call(input_dto)
         end

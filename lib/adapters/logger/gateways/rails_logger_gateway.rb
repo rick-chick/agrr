@@ -5,27 +5,27 @@ module Adapters
     module Gateways
       class RailsLoggerGateway < Domain::Logger::Gateways::LoggerGateway
         def debug(message, progname = nil)
-          Rails.logger.debug(message, progname)
+          Rails.logger.debug(message)
         end
 
         def info(message, progname = nil)
-          Rails.logger.info(message, progname)
+          Rails.logger.info(message)
         end
 
         def warn(message, progname = nil)
-          Rails.logger.warn(message, progname)
+          Rails.logger.warn(message)
         end
 
         def error(message, progname = nil)
-          Rails.logger.error(message, progname)
+          Rails.logger.error(message)
         end
 
         def fatal(message, progname = nil)
-          Rails.logger.fatal(message, progname)
+          Rails.logger.fatal(message)
         end
 
         def unknown(message, progname = nil)
-          Rails.logger.unknown(message, progname)
+          Rails.logger.unknown(message)
         end
       end
     end

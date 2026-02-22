@@ -69,7 +69,8 @@ module Api
 
         def climate_gateway
           Adapters::FieldCultivation::Gateways::FieldCultivationClimateGateway.new(
-            current_user: current_user
+            current_user: current_user,
+            logger: logger_gateway
           )
         end
 
@@ -80,6 +81,7 @@ module Api
             weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
             prediction_factory: ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) },
             progress_factory: -> { Agrr::ProgressGateway.new },
+            logger: logger_gateway,
             translator: translator
           )
         end
@@ -102,6 +104,10 @@ module Api
 
         def field_cultivation_params
           params.require(:field_cultivation).permit(:start_date, :completion_date)
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

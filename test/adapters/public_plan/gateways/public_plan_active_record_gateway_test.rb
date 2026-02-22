@@ -159,7 +159,7 @@ module Adapters
         def capture_log_output
           log_output = StringIO.new
           original_logger = Rails.logger
-          Rails.logger = Logger.new(log_output)
+          Rails.logger = ::Logger.new(log_output)
           yield
           log_output.string
         ensure

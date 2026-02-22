@@ -130,7 +130,7 @@ module Adapters
         end
 
         test "raises record not found when field cultivation missing" do
-          gateway = FieldCultivationClimateGateway.new(current_user: @user)
+          gateway = FieldCultivationClimateGateway.new(current_user: @user, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
 
           assert_raises(ActiveRecord::RecordNotFound) do
             gateway.fetch_field_cultivation_climate_data(field_cultivation_id: 999_999)
