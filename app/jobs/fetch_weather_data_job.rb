@@ -100,12 +100,14 @@ class FetchWeatherDataJob < ApplicationJob
     
     # 既にデータが存在するかチェック
     weather_location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     if weather_location
       expected_days = (start_date..end_date).count
-      existing_count = WeatherDatum.where(
-        weather_location: weather_location,
-        date: start_date..end_date
-      ).count
+      existing_count = gateway.weather_data_count(
+        weather_location_id: weather_location.id,
+        start_date: start_date,
+        end_date: end_date
+      )
       
       # 8割以上のデータがあれば十分とみなす（データ欠損を考慮）
       threshold_ratio = 0.8
@@ -208,10 +210,10 @@ class FetchWeatherDataJob < ApplicationJob
     end
     
     if all_records.any?
-      WeatherDatum.upsert_all(
-        all_records,
-        unique_by: [:weather_location_id, :date],
-        update_only: [:temperature_max, :temperature_min, :temperature_mean, :precipitation, :sunshine_hours, :wind_speed, :weather_code, :updated_at]
+      dtos = all_records.map { |attrs| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(attrs) }
+      gateway.upsert_weather_data!(
+        weather_data_dtos: dtos,
+        weather_location_id: weather_location.id
       )
     end
 

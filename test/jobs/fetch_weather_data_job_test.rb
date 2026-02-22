@@ -377,7 +377,12 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     end
 
     weather_location = WeatherLocation.last
-    assert_equal 6, WeatherDatum.where(weather_location: weather_location).count
+    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    assert_equal 6, gateway.weather_data_count(
+      weather_location_id: weather_location.id,
+      start_date: @start_date,
+      end_date: @start_date + 5.days
+    )
     farm.reload
     assert_equal 1, farm.weather_data_fetched_years
     assert_equal 100, farm.weather_data_progress

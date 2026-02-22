@@ -96,7 +96,8 @@ namespace :weather do
     # 結果を表示
     location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
     if location
-      weather_data = location.weather_data_for_period(start_date, end_date)
+      gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+      weather_data = gateway.weather_data_for_period(weather_location_id: location.id, start_date: start_date, end_date: end_date)
       puts "\nFetched #{weather_data.count} records:"
       weather_data.each do |data|
         puts "  #{data.date}: #{data.temperature_min}°C - #{data.temperature_max}°C"
@@ -106,10 +107,11 @@ namespace :weather do
 
   desc "Show weather data statistics"
   task stats: :environment do
+    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     puts "Weather Data Statistics"
     puts "=" * 80
     puts "Weather Locations: #{WeatherLocation.count}"
-    puts "Weather Data Records: #{WeatherDatum.count}"
+    puts "Weather Data Records: #{gateway.total_weather_data_count}"
     
     if WeatherLocation.any?
       puts "\nLocations:"

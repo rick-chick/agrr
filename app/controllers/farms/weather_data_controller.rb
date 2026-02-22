@@ -33,26 +33,38 @@ module Farms
 
       Rails.logger.info "✅ Using WeatherLocation##{weather_location.id} for Farm##{@farm.id}"
 
-      # 指定期間の天気データを取得（countの前にselectしない）
-      weather_data_relation = weather_location.weather_data
-        .where(date: start_date..end_date)
-        .order(:date)
-      
-      data_count = weather_data_relation.count
+      data_count = weather_data_gateway.weather_data_count(
+        weather_location_id: weather_location.id,
+        start_date: start_date,
+        end_date: end_date
+      )
       Rails.logger.info "   Found #{data_count} weather records"
       
       if data_count.zero?
         Rails.logger.warn "⚠️  No weather data in the requested period"
-        total_data = weather_location.weather_data.count
+        total_data = weather_data_gateway.weather_data_count(weather_location_id: weather_location.id)
         if total_data > 0
-          earliest = weather_location.weather_data.order(:date).first
-          latest = weather_location.weather_data.order(:date).last
-          Rails.logger.info "   Available data period: #{earliest.date} to #{latest.date}"
+          earliest_date = weather_data_gateway.earliest_date(weather_location_id: weather_location.id)
+          latest_date = weather_data_gateway.latest_date(weather_location_id: weather_location.id)
+          Rails.logger.info "   Available data period: #{earliest_date} to #{latest_date}"
         end
       end
       
       # データ取得時にselectを適用
-      weather_data = weather_data_relation.select(:date, :temperature_max, :temperature_min, :temperature_mean, :precipitation)
+      weather_data_dtos = weather_data_gateway.weather_data_for_period(
+        weather_location_id: weather_location.id,
+        start_date: start_date,
+        end_date: end_date
+      )
+      weather_data = weather_data_dtos.map do |dto|
+        {
+          date: dto.date,
+          temperature_max: dto.temperature_max,
+          temperature_min: dto.temperature_min,
+          temperature_mean: dto.temperature_mean,
+          precipitation: dto.precipitation
+        }
+      end
 
       # JSON形式で返す（null値を持つレコードはフィルタリング）
       render json: {
@@ -164,10 +176,7 @@ module Farms
       end_date = Date.today
       start_date = end_date - 2.years
       
-      historical_data_count = weather_location.weather_data
-        .where(date: start_date..end_date)
-        .where.not(temperature_max: nil, temperature_min: nil)
-        .count
+      historical_data_count = weather_data_gateway.historical_data_count(weather_location_id: weather_location.id, start_date: start_date, end_date: end_date)
       
       required_days = (start_date.to_date..end_date.to_date).count
       if historical_data_count < required_days
@@ -212,6 +221,10 @@ module Farms
           message: t('farms.weather_data.job_queue_failed', error: e.message)
         }, status: :internal_server_error
       end
+    end
+
+    def weather_data_gateway
+      @weather_data_gateway ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     end
 
     def set_farm

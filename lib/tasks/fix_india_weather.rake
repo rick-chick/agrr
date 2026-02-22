@@ -74,9 +74,11 @@ namespace :agrr do
             }
           end
           
-          WeatherDatum.upsert_all(
-            weather_records,
-            unique_by: [:weather_location_id, :date]
+          gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+          dtos = weather_records.map { |attrs| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(attrs) }
+          gateway.upsert_weather_data!(
+            weather_data_dtos: dtos,
+            weather_location_id: weather_location.id
           )
           
           created_weather_records += weather_records.size

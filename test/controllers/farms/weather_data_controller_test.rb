@@ -23,7 +23,9 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
     # 十分に少ない件数を返す（過去2年分: 約730日を下回る想定）
     def fake_rel.count; 500; end
 
-    @weather_location.stub(:weather_data, fake_rel) do
+    gateway_mock = mock
+      def gateway_mock.historical_data_count(weather_location_id:, start_date:, end_date:); 500; end
+      Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.stub(:new, gateway_mock) do
       get farm_weather_data_path(@farm, predict: 'true'), headers: { 'Accept' => 'application/json' }
 
       assert_response :unprocessable_entity
