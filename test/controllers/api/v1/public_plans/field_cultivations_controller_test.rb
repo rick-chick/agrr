@@ -250,7 +250,7 @@ module Api
 
         def with_field_climate_interactor_stub(handler)
           stub_class = Class.new do
-            define_method(:initialize) do |output_port:, gateway:|
+            define_method(:initialize) do |output_port:, gateway:, **kwargs|
               @output_port = output_port
             end
 

@@ -430,7 +430,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
 
   test 'retry_on calls RetryOnInteractor' do
     retry_interactor = mock('RetryOnInteractor')
-    retry_interactor.expects(:execute).with(has_entries(executions: 3, error_message: 'timeout'))
+    retry_interactor.expects(:execute).with(has_entries(input_dto: has_entries(executions: 3, error_message: 'timeout')))
     Domain::WeatherData::Interactors::FetchWeatherDataRetryOnInteractor.stubs(:new).returns(retry_interactor)
 
     job = FetchWeatherDataJob.new
@@ -444,11 +444,13 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
 
   test 'discard_on calls DiscardOnInteractor' do
     discard_interactor = mock('DiscardOnInteractor')
-    discard_interactor.expects(:execute).with(has_entries(error_message: /RecordInvalid/))
+    discard_interactor.expects(:execute).with(has_entries(input_dto: has_entries(error_message: /RecordInvalid/)))
     Domain::WeatherData::Interactors::FetchWeatherDataDiscardOnInteractor.stubs(:new).returns(discard_interactor)
 
     job = FetchWeatherDataJob.new
-    Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).raises(ActiveRecord::RecordInvalid.new('invalid'))
+    record = double('record')
+    record.singleton_class.send(:define_method, :errors) { ActiveRecord::Errors.new([]) }
+    Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).raises(ActiveRecord::RecordInvalid.new(record, 'invalid'))
 
     assert_raises(ActiveRecord::RecordInvalid) do
       job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)

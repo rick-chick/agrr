@@ -88,7 +88,10 @@ module Api
         def field_cultivation_climate_data_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
             output_port: Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: self),
-            gateway: climate_gateway
+            gateway: climate_gateway,
+            weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
+            prediction_factory: ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) },
+            progress_factory: -> { Agrr::ProgressGateway.new }
           )
         end
 

@@ -59,6 +59,7 @@ module Domain
           field_cultivation = @gateway.find_authorized_field_cultivation(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
+          weather_location = farm.weather_location
 
           @gateway.ensure_weather_location!(farm)
           @gateway.ensure_cultivation_period!(field_cultivation)
@@ -66,9 +67,7 @@ module Domain
           crop = @gateway.fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
           raise ActiveRecord::RecordNotFound, I18n.t('api.errors.crop_not_found') unless crop
 
-          service = @prediction_factory.call(farm.weather_location, farm)
-          prediction_info = service.predict_for_cultivation_plan(plan)
-          weather_payload = prediction_info[:data]
+          weather_payload = fallback_get_weather_data_for_period(weather_location, field_cultivation.start_date, field_cultivation.completion_date, farm.latitude, farm.longitude)
 
           weather_data_records = @gateway.extract_actual_weather_data(weather_payload, field_cultivation.start_date, field_cultivation.completion_date)
 
@@ -100,6 +99,84 @@ module Domain
             filtered_records: filtered_records,
             progress_records: progress_records
           )
+        end
+
+        # 過去Controller get_weather_data_for_period完全移植
+        def fallback_get_weather_data_for_period(weather_location, start_date, end_date, latitude, longitude)
+          training_start_date = Date.current - 20.years
+          training_end_date = Date.current - 2.days
+          training_data = @weather_data_gateway.weather_data_for_period(
+            weather_location_id: weather_location.id,
+            start_date: training_start_date,
+            end_date: training_end_date
+          )
+
+          training_formatted = {
+            'latitude' => latitude,
+            'longitude' => longitude,
+            'timezone' => weather_location.timezone || 'Asia/Tokyo',
+            'data' => training_data.filter_map do |datum|
+              next if datum.temperature_max.nil? || datum.temperature_min.nil?
+              temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
+              {
+                'time' => datum.date.to_s,
+                'temperature_2m_max' => datum.temperature_max.to_f,
+                'temperature_2m_min' => datum.temperature_min.to_f,
+                'temperature_2m_mean' => temp_mean.to_f,
+                'precipitation_sum' => (datum.precipitation || 0.0).to_f
+              }
+            end
+          }
+
+          prediction_days = (end_date - training_end_date).to_i
+
+          if prediction_days > 0
+            prediction_gateway = Agrr::PredictionGateway.new
+            future = prediction_gateway.predict(
+              historical_data: training_formatted,
+              days: prediction_days,
+              model: 'lightgbm'
+            )
+
+            current_year_start = Date.new(Date.current.year, 1, 1)
+            current_year_end = training_end_date
+            current_year_data = @weather_data_gateway.weather_data_for_period(
+              weather_location_id: weather_location.id,
+              start_date: current_year_start,
+              end_date: current_year_end
+            )
+
+            current_year_formatted = {
+              'latitude' => latitude,
+              'longitude' => longitude,
+              'timezone' => weather_location.timezone || 'Asia/Tokyo',
+              'data' => current_year_data.filter_map do |datum|
+                next if datum.temperature_max.nil? || datum.temperature_min.nil?
+                temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
+                {
+                  'time' => datum.date.to_s,
+                  'temperature_2m_max' => datum.temperature_max,
+                  'temperature_2m_min' => datum.temperature_min,
+                  'temperature_2m_mean' => temp_mean,
+                  'precipitation_sum' => datum.precipitation || 0.0
+                }
+              end
+            }
+
+            merged_data = current_year_formatted['data'] + Array(future['data'])
+
+            {
+              'latitude' => latitude,
+              'longitude' => longitude,
+              'timezone' => weather_location.timezone || 'Asia/Tokyo',
+              'data' => merged_data
+            }
+          else
+            @weather_data_gateway.format_for_agrr(
+              weather_data_dtos: @weather_data_gateway.weather_data_for_period(weather_location_id: weather_location.id, start_date:, end_date:),
+              weather_location: weather_location
+            )
+          end
         end
       end
     end

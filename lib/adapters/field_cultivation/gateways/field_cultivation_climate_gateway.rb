@@ -15,6 +15,7 @@ module Adapters
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
           @weather_prediction_service_factory = weather_prediction_service_factory ||
             ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) }
+          @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
         end
 
         def fetch_field_cultivation_climate_data(field_cultivation_id:)
@@ -306,6 +307,17 @@ module Adapters
               temperature_mean: temp_mean
             }
           end
+        def fallback_weather_payload_builder(field_cultivation:, weather_location:, latitude:, longitude:, start_date:, end_date:)
+          farm = field_cultivation.cultivation_plan.farm
+          wl = @weather_data_gateway.find_or_create_weather_location(latitude: latitude, longitude: longitude, elevation: weather_location.elevation, timezone: weather_location.timezone)
+          historical_start = start_date - 20.years
+          historical_data_dtos = @weather_data_gateway.weather_data_for_period(weather_location_id: wl.id, start_date: historical_start, end_date: end_date)
+          historical_payload = @weather_data_gateway.format_for_agrr(weather_data_dtos: historical_data_dtos, weather_location: wl)
+          days = (end_date - start_date).to_i + 1
+          prediction_gateway = Agrr::PredictionGateway.new
+          prediction_gateway.predict(historical_data: historical_payload, days: days, model: 'lightgbm')
+        end
+
         end
       end
     end
