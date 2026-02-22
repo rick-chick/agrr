@@ -75,7 +75,8 @@ class FertilizesController < ApplicationController
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(
       output_port: presenter,
       gateway: fertilize_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
@@ -125,6 +126,10 @@ class FertilizesController < ApplicationController
 
   def fertilize_gateway
     Adapters::Fertilize::Gateways::FertilizeActiveRecordGateway.new
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 
   def fertilize_params

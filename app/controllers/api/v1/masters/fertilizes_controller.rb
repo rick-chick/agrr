@@ -58,6 +58,7 @@ module Api
             output_port: presenter,
             gateway: fertilize_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(input_dto)
@@ -103,6 +104,10 @@ module Api
 
         def valid_fertilize_params?(input_dto)
           input_dto.name.present?
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end
