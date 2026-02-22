@@ -92,7 +92,8 @@ module Api
           interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(
             output_port: presenter,
             gateway: crop_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call(input_dto)
         end
@@ -139,6 +140,10 @@ module Api
 
         def valid_crop_params?(input_dto)
           input_dto.name.present?
+        end
+
+        def logger_gateway
+          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

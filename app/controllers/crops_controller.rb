@@ -86,7 +86,8 @@ class CropsController < ApplicationController
     interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(
       output_port: presenter,
       gateway: crop_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
 
     interactor.call(@input_dto)
@@ -360,6 +361,10 @@ class CropsController < ApplicationController
 
   def crop_gateway
     @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
+  end
+
+  def logger_gateway
+    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
 
