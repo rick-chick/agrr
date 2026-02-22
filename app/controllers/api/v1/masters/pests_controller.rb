@@ -16,7 +16,8 @@ module Api
           interactor = Domain::Pest::Interactors::PestListInteractor.new(
             output_port: presenter,
             gateway: pest_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call
         end
@@ -29,6 +30,7 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(params[:id])
@@ -46,6 +48,7 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(input_dto)
@@ -59,7 +62,8 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
+            logger: logger_gateway,
+            translator: translator
           )
           interactor.call(input_dto)
         end
@@ -72,6 +76,7 @@ module Api
             output_port: presenter,
             gateway: pest_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(params[:id])
