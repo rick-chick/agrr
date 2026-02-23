@@ -21,7 +21,8 @@ module Api::V1::Masters::Crops
 
       interactor = Domain::Crop::Interactors::CropStageListInteractor.new(
         output_port: list_presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
       interactor.call(input_dto)
     end
@@ -31,7 +32,8 @@ module Api::V1::Masters::Crops
 
       interactor = Domain::Crop::Interactors::CropStageDetailInteractor.new(
         output_port: detail_presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
       interactor.call(input_dto)
     end
@@ -48,7 +50,8 @@ module Api::V1::Masters::Crops
 
       interactor = Domain::Crop::Interactors::CropStageCreateInteractor.new(
         output_port: create_presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
       interactor.call(input_dto)
     end
@@ -66,7 +69,8 @@ module Api::V1::Masters::Crops
 
       interactor = Domain::Crop::Interactors::CropStageUpdateInteractor.new(
         output_port: update_presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
       interactor.call(input_dto)
     end
@@ -79,7 +83,8 @@ module Api::V1::Masters::Crops
 
       interactor = Domain::Crop::Interactors::CropStageDeleteInteractor.new(
         output_port: delete_presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
       interactor.call(input_dto)
     end
