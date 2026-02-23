@@ -26,7 +26,7 @@ module Domain
 
         def self.from_hash(hash, pest_id)
           pp = hash[:pest] || hash
-          crop_ids = hash.key?(:crop_ids) ? Array(hash[:crop_ids]).map(&:to_s).reject(&:blank?) : nil
+          crop_ids = hash.key?(:crop_ids) ? Domain::Shared::ValidationHelpers.to_array(hash[:crop_ids]).map(&:to_s).reject { |id| Domain::Shared::ValidationHelpers.blank?(id) } : nil
           new(
             pest_id: pest_id,
             name: pp[:name],

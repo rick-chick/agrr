@@ -21,7 +21,7 @@ module Domain
           attrs[:region] = input_dto.region if !input_dto.region.nil?
           attrs[:groups] = input_dto.groups if !input_dto.groups.nil?
           attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
-          attrs[:crop_stages_attributes] = input_dto.crop_stages_attributes if input_dto.crop_stages_attributes.present?
+          attrs[:crop_stages_attributes] = input_dto.crop_stages_attributes if Domain::Shared::ValidationHelpers.present?(input_dto.crop_stages_attributes)
 
           crop_model = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, user, input_dto.crop_id)
           Domain::Shared::Policies::CropPolicy.apply_update!(user, crop_model, attrs)

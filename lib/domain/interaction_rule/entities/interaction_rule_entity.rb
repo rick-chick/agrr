@@ -65,8 +65,8 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "rule_type, source_group, target_group, impact_ratio are required" if rule_type.blank? || source_group.blank? || target_group.blank? || impact_ratio.nil?
-          raise ArgumentError, "region must be one of jp, us, in" if region.present? && !%w[jp us in].include?(region)
+          raise ArgumentError, "rule_type, source_group, target_group, impact_ratio are required" if Domain::Shared::ValidationHelpers.blank?(rule_type) || Domain::Shared::ValidationHelpers.blank?(source_group) || Domain::Shared::ValidationHelpers.blank?(target_group) || impact_ratio.nil?
+          raise ArgumentError, "region must be one of jp, us, in" if Domain::Shared::ValidationHelpers.present?(region) && !%w[jp us in].include?(region)
         end
       end
     end

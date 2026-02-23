@@ -23,7 +23,7 @@ module Domain
                     Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(::AgriculturalTask, user)
                   end
 
-          scope = apply_search(scope, input_dto.query) if input_dto.query.present?
+          scope = apply_search(scope, input_dto.query) if Domain::Shared::ValidationHelpers.present?(input_dto.query)
           scope = scope.recent
 
           tasks = @gateway.list
@@ -51,7 +51,7 @@ module Domain
         end
 
         def apply_search(scope, term)
-          return scope if term.blank?
+          return scope if Domain::Shared::ValidationHelpers.blank?(term)
 
           sanitized = ActiveRecord::Base.sanitize_sql_like(term)
           query = "%#{sanitized}%"

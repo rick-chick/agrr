@@ -19,7 +19,7 @@ module Domain
           # 一般ユーザーの場合はregionパラメータを除外
           attributes.delete(:region) unless user.admin?
 
-          is_reference = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference]) || false
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false
 
           rule = model_class.new(attributes)
 
@@ -68,7 +68,7 @@ module Domain
           update_params.delete(:region) unless user.admin?
 
           if update_params.key?(:is_reference)
-            requested_reference = ActiveModel::Type::Boolean.new.cast(update_params[:is_reference]) || false
+            requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(update_params[:is_reference]) || false
             reference_changed = requested_reference != rule.is_reference
 
             if reference_changed

@@ -22,9 +22,9 @@ module Domain
           groups = crop_params[:groups]
           # groupsをカンマ区切りテキストから配列に変換
           if groups.is_a?(String)
-            groups = groups.split(',').map(&:strip).reject(&:blank?)
+            groups = groups.split(',').map(&:strip).reject { |group| Domain::Shared::ValidationHelpers.blank?(group) }
           end
-          is_reference = ActiveModel::Type::Boolean.new.cast(crop_params[:is_reference]) || false
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(crop_params[:is_reference]) || false
           new(
             name: crop_params[:name],
             variety: crop_params[:variety],

@@ -20,7 +20,7 @@ module Domain
 
           # 作物を取得
           crops = @gateway.find_crops(input_dto.crop_ids, input_dto.user)
-          if crops.empty? && input_dto.crop_ids.present?
+          if crops.empty? && Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("No valid crops found"))
             return
           end

@@ -65,7 +65,7 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "Name is required" if name.blank?
+          raise ArgumentError, "Name is required" if Domain::Shared::ValidationHelpers.blank?(name)
         end
       end
     end

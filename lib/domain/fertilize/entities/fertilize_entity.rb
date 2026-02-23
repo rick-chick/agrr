@@ -51,11 +51,11 @@ module Domain
         def has_nutrient?(nutrient)
           case nutrient.to_sym
           when :n
-            n.present? && n > 0
+            Domain::Shared::ValidationHelpers.present?(n) && n > 0
           when :p
-            p.present? && p > 0
+            Domain::Shared::ValidationHelpers.present?(p) && p > 0
           when :k
-            k.present? && k > 0
+            Domain::Shared::ValidationHelpers.present?(k) && k > 0
           else
             false
           end
@@ -68,7 +68,7 @@ module Domain
         private
         
         def validate!
-          raise ArgumentError, "Name is required" if name.blank?
+          raise ArgumentError, "Name is required" if Domain::Shared::ValidationHelpers.blank?(name)
         end
       end
     end

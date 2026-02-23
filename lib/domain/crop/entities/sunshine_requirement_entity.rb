@@ -28,7 +28,7 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "Crop stage ID is required" if crop_stage_id.blank?
+          raise ArgumentError, "Crop stage ID is required" if Domain::Shared::ValidationHelpers.blank?(crop_stage_id)
         end
       end
     end

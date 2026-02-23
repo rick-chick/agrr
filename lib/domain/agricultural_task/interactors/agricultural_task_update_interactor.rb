@@ -14,7 +14,7 @@ module Domain
         def call(update_input_dto)
           user = User.find(@user_id)
           attrs = {}
-          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
+          attrs[:name] = update_input_dto.name if Domain::Shared::ValidationHelpers.present?(update_input_dto.name)
           attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
           attrs[:time_per_sqm] = update_input_dto.time_per_sqm if !update_input_dto.time_per_sqm.nil?
           attrs[:weather_dependency] = update_input_dto.weather_dependency if !update_input_dto.weather_dependency.nil?
@@ -23,7 +23,7 @@ module Domain
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
           attrs[:task_type] = update_input_dto.task_type if !update_input_dto.task_type.nil?
           if !update_input_dto.is_reference.nil?
-            attrs[:is_reference] = ActiveModel::Type::Boolean.new.cast(update_input_dto.is_reference)
+            attrs[:is_reference] = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
             attrs[:is_reference] = false if attrs[:is_reference].nil?
           end
 

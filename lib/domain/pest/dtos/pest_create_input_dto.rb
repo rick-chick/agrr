@@ -26,7 +26,7 @@ module Domain
         def self.from_hash(hash)
           pp = hash[:pest] || hash
           crop_ids = hash[:crop_ids]
-          crop_ids = Array(crop_ids).map(&:to_s).reject(&:blank?) if crop_ids
+          crop_ids = Domain::Shared::ValidationHelpers.to_array(crop_ids).map(&:to_s).reject { |id| Domain::Shared::ValidationHelpers.blank?(id) } if crop_ids
           new(
             name: pp[:name],
             name_scientific: pp[:name_scientific],

@@ -15,7 +15,7 @@ module Domain
         # - 一般ユーザー: controller 側で参照肥料作成は弾かれる前提で、常に user_id=current_user.id, is_reference=false
         def self.build_for_create(model_class, user, attrs)
           attributes = attrs.to_h.symbolize_keys
-          is_reference = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference]) || false
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false
 
           if user.admin?
             if is_reference
@@ -68,7 +68,7 @@ module Domain
           attributes = attrs.to_h.symbolize_keys
 
           if attributes.key?(:is_reference)
-            requested_reference = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
+            requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference])
             requested_reference = false if requested_reference.nil?
 
             reference_changed = requested_reference != fertilize.is_reference

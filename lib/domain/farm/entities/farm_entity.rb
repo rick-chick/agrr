@@ -25,7 +25,7 @@ module Domain
         end
 
         def has_coordinates?
-          latitude.present? && longitude.present?
+          Domain::Shared::ValidationHelpers.present?(latitude) && Domain::Shared::ValidationHelpers.present?(longitude)
         end
 
         def display_name

@@ -24,7 +24,7 @@ module Domain
         # - 一般ユーザー: is_reference は controller 側で false に強制・user_id=current_user.id に強制
         def self.build_for_create(model_class, user, attrs, admin_forced: false)
           attributes = attrs.to_h.symbolize_keys
-          is_reference = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference]) || false
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false
 
           if user.admin? || admin_forced
             # 管理者作成時のルール
@@ -84,7 +84,7 @@ module Domain
           attributes = attrs.to_h.symbolize_keys
 
           if attributes.key?(:is_reference)
-            requested_reference = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference]) || false
+            requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false
             reference_changed = requested_reference != pest.is_reference
 
             if reference_changed

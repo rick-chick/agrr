@@ -4,9 +4,25 @@ module Adapters
   module Pest
     module Gateways
       class PestMemoryGateway < Domain::Pest::Gateways::PestGateway
-        def list(scope = nil)
-          query = scope || ::Pest.all
-          query.map { |record| Domain::Pest::Entities::PestEntity.from_model(record) }
+        def list(query = nil)
+          # 後方互換性のため、ActiveRecord::Relationやnilも受け付ける
+          if query.is_a?(Domain::Shared::Dtos::QueryDto)
+            scope = build_scope_from_query(query)
+          else
+            # 後方互換: scopeが直接渡された場合
+            scope = query || ::Pest.all
+          end
+          scope.map { |record| Domain::Pest::Entities::PestEntity.from_model(record) }
+        end
+
+        private
+
+        def build_scope_from_query(query)
+          return ::Pest.all unless query.present?
+
+          scope = ::Pest.all
+          # QueryDtoに基づいてscopeを構築（必要に応じて拡張）
+          scope
         end
 
         def find_by_id(pest_id)

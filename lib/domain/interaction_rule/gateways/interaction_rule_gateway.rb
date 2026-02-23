@@ -4,8 +4,8 @@ module Domain
   module InteractionRule
     module Gateways
       class InteractionRuleGateway
-        # @param scope [ActiveRecord::Relation, nil] 表示対象スコープ。nil の場合は全件
-        def list(scope = nil)
+        # @param query [Domain::Shared::Dtos::QueryDto, nil] クエリ条件。nil の場合は全件
+        def list(query = nil)
           raise NotImplementedError, "Subclasses must implement list"
         end
 

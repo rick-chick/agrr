@@ -19,15 +19,15 @@ module Domain
           attrs = {}
 
           # is_referenceをbooleanに変換してチェック
-          if input_dto.is_reference.present?
-            is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
+          if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
+            is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != fertilize_model.is_reference && !user.admin?
               raise StandardError, @translator.t('fertilizes.flash.reference_flag_admin_only')
             end
             attrs[:is_reference] = is_reference
           end
 
-          attrs[:name] = input_dto.name if input_dto.name.present?
+          attrs[:name] = input_dto.name if Domain::Shared::ValidationHelpers.present?(input_dto.name)
           attrs[:n] = input_dto.n if !input_dto.n.nil?
           attrs[:p] = input_dto.p if !input_dto.p.nil?
           attrs[:k] = input_dto.k if !input_dto.k.nil?

@@ -40,8 +40,8 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "Name is required" if name.blank?
-          raise ArgumentError, "Crop ID is required" if crop_id.blank?
+          raise ArgumentError, "Name is required" if Domain::Shared::ValidationHelpers.blank?(name)
+          raise ArgumentError, "Crop ID is required" if Domain::Shared::ValidationHelpers.blank?(crop_id)
           raise ArgumentError, "Order is required" if order.nil?
         end
       end

@@ -29,8 +29,8 @@ module Domain
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
           # is_referenceのチェック
-          if input_dto.is_reference.present?
-            is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
+          if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
+            is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != Pest.find(input_dto.pest_id).is_reference && !user.admin?
               raise StandardError, @translator.t('pests.flash.reference_flag_admin_only')
             end

@@ -74,7 +74,7 @@ module Domain
           weather_payload = fallback_get_weather_data_for_period(weather_location, field_cultivation.start_date, field_cultivation.completion_date, farm.latitude, farm.longitude, display_start_date, display_end_date)
 
           # 予測データをCultivationPlanに保存（次回以降のキャッシュとして使用）
-          unless plan.predicted_weather_data.present?
+          unless Domain::Shared::ValidationHelpers.present?(plan.predicted_weather_data)
             plan.update!(predicted_weather_data: weather_payload)
             @logger.info "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan##{plan.id}"
           end
@@ -176,7 +176,7 @@ module Domain
               end
             }
 
-            merged_data = current_year_formatted['data'] + Array(future['data'])
+            merged_data = current_year_formatted['data'] + Domain::Shared::ValidationHelpers.to_array(future['data'])
 
             {
               'latitude' => latitude,
@@ -258,7 +258,7 @@ module Domain
         end
 
         def filter_weather_data(weather_data, range_start, range_end)
-          Array(weather_data).select do |datum|
+          Domain::Shared::ValidationHelpers.to_array(weather_data).select do |datum|
             date_value = parse_date(datum['date'] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end
@@ -266,7 +266,7 @@ module Domain
         end
 
         def filter_gdd_data(gdd_data, range_start, range_end)
-          Array(gdd_data).select do |datum|
+          Domain::Shared::ValidationHelpers.to_array(gdd_data).select do |datum|
             date_value = parse_date(datum['date'] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end

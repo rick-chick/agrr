@@ -16,7 +16,7 @@ module Domain
           user = User.find(@user_id)
 
           # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
-          is_reference = ActiveModel::Type::Boolean.new.cast(input_dto.is_reference) || false
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
             raise StandardError, @translator.t('fertilizes.flash.reference_only_admin')
           end
