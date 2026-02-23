@@ -17,7 +17,8 @@ module Adapters
         interactor = Domain::Pest::Interactors::PestCreateInteractor.new(
           output_port: output_port,
           gateway: @gateway,
-          user_id: @user_id
+          user_id: @user_id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
         )
         input_dto = build_input_dto(attrs)
         interactor.call(input_dto)

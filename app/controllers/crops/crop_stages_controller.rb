@@ -10,12 +10,12 @@ module Crops
 
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
-      interactor.call(input_dto)
+      list_interactor.call(input_dto)
     end
 
     def show
       input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
-      interactor.call(input_dto)
+      detail_interactor.call(input_dto)
     end
 
     def create
@@ -41,7 +41,7 @@ module Crops
         payload: crop_stage_params
       )
 
-      interactor.call(input_dto)
+      update_interactor.call(input_dto)
     end
 
     def destroy
@@ -49,7 +49,7 @@ module Crops
         crop_stage_id: @crop_stage.id
       )
 
-      interactor.call(input_dto)
+      destroy_interactor.call(input_dto)
     end
 
     def render_response(json:, status:)
@@ -85,7 +85,40 @@ module Crops
     def interactor
       @interactor ||= Domain::Crop::Interactors::CropStageCreateInteractor.new(
         output_port: presenter,
-        gateway: gateway
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      )
+    end
+
+    def list_interactor
+      @list_interactor ||= Domain::Crop::Interactors::CropStageListInteractor.new(
+        output_port: presenter,
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      )
+    end
+
+    def detail_interactor
+      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(
+        output_port: presenter,
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      )
+    end
+
+    def update_interactor
+      @update_interactor ||= Domain::Crop::Interactors::CropStageUpdateInteractor.new(
+        output_port: presenter,
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      )
+    end
+
+    def destroy_interactor
+      @destroy_interactor ||= Domain::Crop::Interactors::CropStageDeleteInteractor.new(
+        output_port: presenter,
+        gateway: gateway,
+        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
       )
     end
 

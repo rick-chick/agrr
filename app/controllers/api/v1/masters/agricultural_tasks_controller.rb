@@ -16,7 +16,8 @@ module Api
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
             output_port: presenter,
             gateway: agricultural_task_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call
         end
@@ -28,7 +29,8 @@ module Api
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
             output_port: presenter,
             gateway: agricultural_task_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(params[:id])
         end
@@ -44,7 +46,8 @@ module Api
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
             output_port: presenter,
             gateway: agricultural_task_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(input_dto)
         end
@@ -71,6 +74,7 @@ module Api
             output_port: presenter,
             gateway: agricultural_task_gateway,
             user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: translator
           )
           interactor.call(params[:id])

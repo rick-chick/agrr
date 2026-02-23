@@ -11,7 +11,8 @@ class PesticidesController < ApplicationController
     Domain::Pesticide::Interactors::PesticideListInteractor.new(
       output_port: presenter,
       gateway: pesticide_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call
   end
 
@@ -21,7 +22,8 @@ class PesticidesController < ApplicationController
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
       output_port: presenter,
       gateway: pesticide_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
@@ -59,7 +61,8 @@ class PesticidesController < ApplicationController
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(
       output_port: presenter,
       gateway: pesticide_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
@@ -99,7 +102,9 @@ class PesticidesController < ApplicationController
         Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
           output_port: presenter,
           gateway: pesticide_gateway,
-          user_id: current_user.id, translator: translator).call(params[:id])
+          user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+          translator: translator).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
         redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
       end

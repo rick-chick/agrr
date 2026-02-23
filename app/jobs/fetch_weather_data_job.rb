@@ -35,7 +35,7 @@ class FetchWeatherDataJob < ApplicationJob
   # APIエラーやネットワークエラーに対してリトライする
   # 指数バックオフ + ジッター（ランダム性）で最大5回までリトライ
   # 基本待機時間: 3秒、9秒、27秒、81秒、243秒 + ランダム(0-50%)
-  retry_on StandardError, wait: ->(executions) { 
+  retry_on StandardError, wait: ->(executions) {
     base_delay = 3 * (3 ** executions)
     jitter = rand(0.0..0.5) * base_delay
     (base_delay + jitter).to_i
@@ -44,7 +44,8 @@ class FetchWeatherDataJob < ApplicationJob
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
     cultivation_plan_gateway: job.cultivation_plan_gateway,
-    translator: job.translator
+    translator: job.translator,
+    logger: job.logger_gateway
   )
   retry_interactor.execute(
     input_dto: {
@@ -65,7 +66,8 @@ class FetchWeatherDataJob < ApplicationJob
   discard_interactor = Domain::WeatherData::Interactors::FetchWeatherDataDiscardOnInteractor.new(
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
-    translator: job.translator
+    translator: job.translator,
+    logger: job.logger_gateway
   )
   discard_interactor.execute(
     input_dto: {
@@ -99,7 +101,8 @@ class FetchWeatherDataJob < ApplicationJob
       farm_gateway:,
       cultivation_plan_gateway:,
       agrr_weather_gateway:,
-      presenter:
+      presenter:,
+      logger: logger_gateway
     )
 
         interactor.execute(input_dto:)

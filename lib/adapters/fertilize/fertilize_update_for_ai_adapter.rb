@@ -17,7 +17,8 @@ module Adapters
         interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(
           output_port: output_port,
           gateway: @gateway,
-          user_id: @user_id
+          user_id: @user_id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
         )
         input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(attrs, fertilize_id)
         interactor.call(input_dto)

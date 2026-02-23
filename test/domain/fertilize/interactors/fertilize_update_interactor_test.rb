@@ -64,7 +64,8 @@ module Domain
           admin_interactor = FertilizeUpdateInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: admin_user_id
+            user_id: admin_user_id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
 
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(

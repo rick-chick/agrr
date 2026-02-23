@@ -44,7 +44,8 @@ module Api
           interactor = Domain::Crop::Interactors::CropListInteractor.new(
             output_port: presenter,
             gateway: crop_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call
         end

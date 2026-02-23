@@ -17,7 +17,8 @@ module Api
           interactor = Domain::Field::Interactors::FieldListInteractor.new(
             output_port: presenter,
             gateway: field_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(params[:farm_id])
         end
@@ -29,7 +30,8 @@ module Api
           interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
             output_port: presenter,
             gateway: field_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(params[:id])
         end
@@ -46,7 +48,8 @@ module Api
           interactor = Domain::Field::Interactors::FieldCreateInteractor.new(
             output_port: presenter,
             gateway: field_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(input_dto, params[:farm_id])
         end
@@ -60,7 +63,7 @@ module Api
             output_port: presenter,
             gateway: field_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(input_dto)
         end
@@ -72,7 +75,8 @@ module Api
           interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
             output_port: presenter,
             gateway: field_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
           interactor.call(params[:id])
         end

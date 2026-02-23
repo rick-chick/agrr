@@ -10,7 +10,8 @@ class FieldsController < ApplicationController
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: presenter,
       gateway: field_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(@farm.id)
   end
@@ -21,7 +22,8 @@ class FieldsController < ApplicationController
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
       output_port: presenter,
       gateway: field_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(params[:id])
   end
@@ -43,7 +45,8 @@ class FieldsController < ApplicationController
     interactor = Domain::Field::Interactors::FieldCreateInteractor.new(
       output_port: presenter,
       gateway: field_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(input_dto, @farm.id)
   end
@@ -56,7 +59,7 @@ class FieldsController < ApplicationController
       output_port: presenter,
       gateway: field_gateway,
       user_id: current_user.id,
-      logger: logger_gateway
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(input_dto)
   end
@@ -69,7 +72,8 @@ class FieldsController < ApplicationController
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
           output_port: presenter,
           gateway: field_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
         )
         interactor.call(params[:id])
       end
@@ -78,7 +82,8 @@ class FieldsController < ApplicationController
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
           output_port: presenter,
           gateway: field_gateway,
-          user_id: current_user.id
+          user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
         )
         interactor.call(params[:id])
       end

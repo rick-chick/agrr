@@ -15,6 +15,7 @@ class FarmsController < ApplicationController
           output_port: presenter,
           gateway: farm_gateway,
           user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator
         )
 
@@ -48,6 +49,7 @@ class FarmsController < ApplicationController
           output_port: presenter,
           gateway: farm_gateway,
           user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator
         )
 
@@ -85,6 +87,7 @@ class FarmsController < ApplicationController
           output_port: presenter,
           gateway: farm_gateway,
           user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator
         )
 

@@ -11,7 +11,8 @@ class FertilizesController < ApplicationController
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
       output_port: presenter,
       gateway: fertilize_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call
   end
@@ -22,7 +23,8 @@ class FertilizesController < ApplicationController
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(
       output_port: presenter,
       gateway: fertilize_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(@fertilize.id)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -53,7 +55,8 @@ class FertilizesController < ApplicationController
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(
       output_port: presenter,
       gateway: fertilize_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
@@ -76,7 +79,7 @@ class FertilizesController < ApplicationController
       output_port: presenter,
       gateway: fertilize_gateway,
       user_id: current_user.id,
-      logger: logger_gateway
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
@@ -95,7 +98,9 @@ class FertilizesController < ApplicationController
         Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(
           output_port: presenter,
           gateway: fertilize_gateway,
-          user_id: current_user.id, translator: translator).call(params[:id])
+          user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+          translator: translator).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
         redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
       end

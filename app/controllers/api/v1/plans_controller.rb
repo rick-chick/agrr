@@ -52,7 +52,9 @@ module Api
         interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
           output_port: presenter,
           gateway: cultivation_plan_gateway,
-          user_id: current_user.id, translator: translator
+          user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+          translator: translator
         )
         interactor.call(params[:id])
       end

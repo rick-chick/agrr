@@ -21,7 +21,8 @@ class AgriculturalTasksController < ApplicationController
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
       output_port: presenter,
       gateway: agricultural_task_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
 
     interactor.call(input_dto)
@@ -38,7 +39,8 @@ class AgriculturalTasksController < ApplicationController
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
       output_port: presenter,
       gateway: agricultural_task_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
 
     interactor.call(params[:id])
@@ -72,7 +74,8 @@ class AgriculturalTasksController < ApplicationController
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
       output_port: presenter,
       gateway: agricultural_task_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
 
     interactor.call(@input_dto)
@@ -145,6 +148,7 @@ class AgriculturalTasksController < ApplicationController
           output_port: presenter,
           gateway: agricultural_task_gateway,
           user_id: current_user.id,
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator
         )
 
