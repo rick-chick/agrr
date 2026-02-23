@@ -14,7 +14,8 @@ module Domain
           @interactor = FarmListInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: @user_id
+            user_id: @user_id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
         end
 

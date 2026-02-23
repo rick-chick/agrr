@@ -11,7 +11,8 @@ module Domain
           @mock_output_port = mock
           @interactor = TemperatureRequirementUpdateInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway
+            gateway: @mock_gateway,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
         end
 

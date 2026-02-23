@@ -28,7 +28,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
+          interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
           interactor.call(input_dto)
 
           assert_equal updated_crop_stage, received.stage
@@ -54,7 +54,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
+          interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
           interactor.call(input_dto)
 
           assert_instance_of Domain::Shared::Dtos::ErrorDto, received
