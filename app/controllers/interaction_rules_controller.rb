@@ -10,7 +10,8 @@ class InteractionRulesController < ApplicationController
     interactor = Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
       output_port: presenter,
       gateway: interaction_rule_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
     interactor.call
   end
@@ -20,7 +21,8 @@ class InteractionRulesController < ApplicationController
     presenter = Presenters::Html::InteractionRule::InteractionRuleDetailHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
       output_port: presenter,
-      gateway: interaction_rule_gateway
+      gateway: interaction_rule_gateway,
+      logger: logger_gateway
     )
     interactor.call(Domain::InteractionRule::Dtos::InteractionRuleDetailInputDto.new(
       rule_id: params[:id],
@@ -54,7 +56,8 @@ class InteractionRulesController < ApplicationController
     interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
       output_port: presenter,
       gateway: interaction_rule_gateway,
-      user_id: current_user.id
+      user_id: current_user.id,
+      logger: logger_gateway
     )
 
     input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.from_hash(

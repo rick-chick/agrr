@@ -164,6 +164,7 @@ class FarmsController < ApplicationController
           output_port: presenter,
           gateway: farm_gateway,
           user_id: current_user.id,
+          logger: logger_gateway,
           translator: translator
         )
 

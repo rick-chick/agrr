@@ -21,7 +21,8 @@ module Api
           interactor = Domain::Pesticide::Interactors::PesticideListInteractor.new(
             output_port: presenter,
             gateway: pesticide_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call
         end
@@ -33,7 +34,8 @@ module Api
           interactor = Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
             output_port: presenter,
             gateway: pesticide_gateway,
-            user_id: current_user.id
+            user_id: current_user.id,
+            logger: logger_gateway
           )
           interactor.call(params[:id])
         end
@@ -75,6 +77,7 @@ module Api
             output_port: presenter,
             gateway: pesticide_gateway,
             user_id: current_user.id,
+            logger: logger_gateway,
             translator: translator
           )
           interactor.call(params[:id])
