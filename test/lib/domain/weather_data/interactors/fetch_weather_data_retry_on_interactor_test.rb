@@ -21,6 +21,7 @@ module Domain
             farm_gateway: @farm_gateway,
             presenter: @presenter,
             cultivation_plan_gateway: mock('cultivation_plan_gateway'),
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: @translator
           )
         end

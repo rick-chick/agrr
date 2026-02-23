@@ -19,6 +19,7 @@ module Domain
           @interactor = FetchWeatherDataDiscardOnInteractor.new(
             farm_gateway: @farm_gateway,
             presenter: @presenter,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: @translator
           )
         end
