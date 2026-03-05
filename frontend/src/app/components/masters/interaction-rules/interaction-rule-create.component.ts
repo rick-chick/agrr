@@ -34,6 +34,7 @@ const initialControl: InteractionRuleCreateViewState = {
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
   providers: [
     InteractionRuleCreatePresenter,
+    CreateInteractionRuleUseCase,
     { provide: CREATE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleCreatePresenter },
     { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
   ],

@@ -9,6 +9,7 @@ import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-por
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { FarmListRefreshService } from '../../services/farm-list-refresh.service';
 
 @Injectable()
 export class FarmDetailPresenter
@@ -16,6 +17,7 @@ export class FarmDetailPresenter
 {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly farmListRefresh = inject(FarmListRefreshService);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -67,11 +69,12 @@ export class FarmDetailPresenter
 
   onSuccess(dto: DeleteFarmSuccessDto): void {
     if (dto.undo) {
+      // 農場削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
       this.undoToast.showWithUndo(
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.view?.reload()
+        () => this.farmListRefresh.refresh()
       );
     }
   }

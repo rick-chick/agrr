@@ -2,10 +2,6 @@ require "action_view/record_identifier"
 # frozen_string_literal: true
 
 module DeletionUndo
-  class Error < StandardError; end
-  class ExpiredTokenError < Error; end
-  class RestoreConflictError < Error; end
-
   class Manager
     DEFAULT_TTL = 5.minutes
 
@@ -40,7 +36,7 @@ module DeletionUndo
           event = DeletionUndoEvent.find(undo_token)
           event.expire_if_needed!
 
-          raise ExpiredTokenError, 'Undo token has expired' if event.expired? || !event.scheduled?
+          raise Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError, 'Undo token has expired' if event.expired? || !event.scheduled?
 
           ActiveRecord::Base.transaction do
             SnapshotRestorer.new(event.snapshot).restore!
@@ -48,12 +44,12 @@ module DeletionUndo
           end
 
           event
-        rescue ExpiredTokenError
+        rescue Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError
           event&.mark_failed!(error_message: 'Token expired') unless event&.expired?
           raise
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved, ActiveRecord::RecordNotUnique => e
           event&.mark_failed!(error_message: e.message)
-          raise RestoreConflictError, e.message
+          raise Domain::DeletionUndo::Exceptions::DeletionUndoRestoreConflictError, e.message
         end
 
       def finalize_expired!(now: Time.current)

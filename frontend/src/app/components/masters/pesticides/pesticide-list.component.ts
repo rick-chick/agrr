@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { LOAD_PESTICIDE_LIST_OUTPUT_PORT } from '../../../usecase/pesticides/loa
 import { DELETE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/delete-pesticide.output-port';
 import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
 import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import { PesticideListRefreshService } from '../../../services/pesticide-list-refresh.service';
 
 const initialControl: PesticideListViewState = {
   loading: true,
@@ -73,11 +74,13 @@ const initialControl: PesticideListViewState = {
   `,
   styleUrls: ['./pesticide-list.component.css']
 })
-export class PesticideListComponent implements PesticideListView, OnInit {
+export class PesticideListComponent implements PesticideListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadPesticideListUseCase);
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly pesticideListRefresh = inject(PesticideListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: PesticideListViewState = initialControl;
   get control(): PesticideListViewState {
@@ -91,6 +94,11 @@ export class PesticideListComponent implements PesticideListView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.pesticideListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

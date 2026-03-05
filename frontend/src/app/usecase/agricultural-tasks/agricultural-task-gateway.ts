@@ -14,12 +14,16 @@ export interface AgriculturalTaskCreatePayload {
   task_type?: string | null;
 }
 
+export interface AgriculturalTaskDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface AgriculturalTaskGateway {
   list(): Observable<AgriculturalTask[]>;
   show(agriculturalTaskId: number): Observable<AgriculturalTask>;
   create(payload: AgriculturalTaskCreatePayload): Observable<AgriculturalTask>;
   update(agriculturalTaskId: number, payload: AgriculturalTaskCreatePayload): Observable<AgriculturalTask>;
-  destroy(agriculturalTaskId: number): Observable<DeletionUndoResponse>;
+  destroy(agriculturalTaskId: number): Observable<AgriculturalTaskDeleteResponse>;
 }
 
 export const AGRICULTURAL_TASK_GATEWAY = new InjectionToken<AgriculturalTaskGateway>(

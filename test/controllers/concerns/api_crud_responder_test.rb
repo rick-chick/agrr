@@ -100,7 +100,9 @@ class ApiCrudResponderTest < ActionDispatch::IntegrationTest
     # 現状の API は削除時に undo トークン付き JSON (200) を返す
     assert_response :success
     json_response = JSON.parse(response.body)
-    assert json_response.key?("undo_token")
-    assert json_response.key?("undo_path")
+    assert json_response.key?("undo"), "Response should have undo key: #{json_response.inspect}"
+    undo = json_response["undo"]
+    assert undo.key?("undo_token"), "undo should have undo_token: #{undo.inspect}"
+    assert undo.key?("undo_path"), "undo should have undo_path: #{undo.inspect}"
   end
 end

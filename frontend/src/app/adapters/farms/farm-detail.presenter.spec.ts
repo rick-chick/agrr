@@ -8,6 +8,7 @@ import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { FarmListRefreshService } from '../../services/farm-list-refresh.service';
 
 describe('FarmDetailPresenter', () => {
   let presenter: FarmDetailPresenter;
@@ -21,7 +22,8 @@ describe('FarmDetailPresenter', () => {
       providers: [
         FarmDetailPresenter,
         { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } },
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
+        { provide: FlashMessageService, useValue: mockFlashMessageService },
+        { provide: FarmListRefreshService, useValue: { refresh: vi.fn() } }
       ]
     });
     presenter = TestBed.inject(FarmDetailPresenter);

@@ -111,7 +111,8 @@ class CropsController < ApplicationController
           gateway: crop_gateway,
           user_id: current_user.id,
           logger: logger_gateway,
-          translator: translator
+          translator: translator,
+          deletion_undo_gateway: deletion_undo_gateway
         )
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -365,6 +366,10 @@ class CropsController < ApplicationController
 
   def crop_gateway
     @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
+  end
+
+  def deletion_undo_gateway
+    @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
   end
 
   def logger_gateway

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT } from '../../../usecase/agricu
 import { DELETE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/delete-agricultural-task.output-port';
 import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
 import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
+import { AgriculturalTaskListRefreshService } from '../../../services/agricultural-task-list-refresh.service';
 
 const initialControl: AgriculturalTaskListViewState = {
   loading: true,
@@ -88,11 +89,13 @@ const initialControl: AgriculturalTaskListViewState = {
   `,
   styleUrls: ['./agricultural-task-list.component.css']
 })
-export class AgriculturalTaskListComponent implements AgriculturalTaskListView, OnInit {
+export class AgriculturalTaskListComponent implements AgriculturalTaskListView, OnInit, OnDestroy {
   private readonly useCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly agriculturalTaskListRefresh = inject(AgriculturalTaskListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: AgriculturalTaskListViewState = initialControl;
   get control(): AgriculturalTaskListViewState {
@@ -106,6 +109,11 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.agriculturalTaskListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

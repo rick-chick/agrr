@@ -11,17 +11,14 @@ module Presenters
         def on_success(destroy_output_dto)
           event = destroy_output_dto.undo
           undo_path = @view.undo_deletion_path(undo_token: event.undo_token)
-          json = {
+          undo_json = {
             undo_token: event.undo_token,
-            undo_deadline: event.metadata['undo_deadline'],
-            toast_message: event.toast_message,
             undo_path: undo_path,
-            auto_hide_after: event.auto_hide_after,
-            resource: event.metadata['resource_label'],
-            redirect_path: '/',
-            resource_dom_id: resource_dom_id_for(event)
+            toast_message: event.toast_message,
+            undo_deadline: event.expires_at.iso8601,
+            auto_hide_after: event.auto_hide_after
           }
-          @view.render_response(json: json, status: :ok)
+          @view.render_response(json: { undo: undo_json }, status: :ok)
         end
 
         def on_failure(error_dto)
@@ -31,13 +28,6 @@ module Presenters
         end
 
         private
-
-        def resource_dom_id_for(event)
-          stored = event.metadata['resource_dom_id']
-          return stored if stored.present?
-
-          [event.resource_type.demodulize.underscore, event.resource_id].join('_')
-        end
       end
     end
   end

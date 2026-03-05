@@ -8,6 +8,8 @@ import { of } from 'rxjs';
 import { InteractionRuleCreateComponent } from './interaction-rule-create.component';
 import { InteractionRuleCreatePresenter } from '../../../adapters/interaction-rules/interaction-rule-create.presenter';
 import { CreateInteractionRuleUseCase } from '../../../usecase/interaction-rules/create-interaction-rule.usecase';
+import { CREATE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/create-interaction-rule.output-port';
+import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
 import { AuthService } from '../../../services/auth.service';
 
 describe('InteractionRuleCreateComponent', () => {
@@ -47,17 +49,25 @@ describe('InteractionRuleCreateComponent', () => {
       queryParams: of({})
     };
 
-    TestBed.overrideProvider(InteractionRuleCreatePresenter, { useValue: mockPresenter });
     await TestBed.configureTestingModule({
       imports: [InteractionRuleCreateComponent, TranslateModule.forRoot(), RouterTestingModule],
       providers: [
-        { provide: InteractionRuleCreatePresenter, useValue: mockPresenter },
-        { provide: CreateInteractionRuleUseCase, useValue: mockCreateUseCase },
         { provide: AuthService, useValue: mockAuthService },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(InteractionRuleCreateComponent, {
+        set: {
+          providers: [
+            { provide: InteractionRuleCreatePresenter, useValue: mockPresenter },
+            { provide: CreateInteractionRuleUseCase, useValue: mockCreateUseCase },
+            { provide: CREATE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleCreatePresenter },
+            { provide: INTERACTION_RULE_GATEWAY, useValue: {} }
+          ]
+        }
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(InteractionRuleCreateComponent);
     component = fixture.componentInstance;

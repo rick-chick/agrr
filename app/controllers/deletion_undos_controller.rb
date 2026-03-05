@@ -7,38 +7,39 @@ class DeletionUndosController < ApplicationController
   skip_before_action :verify_authenticity_token, if: -> { request.format.json? }
 
   def create
-    undo_token = params.require(:undo_token)
-    event = DeletionUndo::Manager.restore!(undo_token: undo_token)
+    input_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreInputDto.new(
+      undo_token: params.require(:undo_token)
+    )
 
     respond_to do |format|
       format.json do
-        render json: {
-          status: 'restored',
-          undo_token: event.undo_token
-        }, status: :ok
+        execute_restore_use_case(input_dto, Presenters::Api::DeletionUndo::DeletionUndoRestorePresenter)
       end
 
       format.html do
-        redirect_back fallback_location: root_path,
-                      notice: I18n.t('deletion_undo.restored')
+        execute_restore_use_case(input_dto, Presenters::Html::DeletionUndo::DeletionUndoRestoreHtmlPresenter)
       end
     end
-  rescue DeletionUndo::ExpiredTokenError
-    render_undo_error('deletion_undo.expired')
-  rescue DeletionUndo::RestoreConflictError => e
-    render_undo_error('deletion_undo.restore_failed', error: e.message)
-  rescue ActiveRecord::RecordNotFound
-    render_undo_error('deletion_undo.not_found')
+  end
+
+  # DeletionUndoRestorePresenter (format.json) が参照する View インターフェース
+  def render_response(json:, status:)
+    render json: json, status: status
   end
 
   private
 
-  def render_undo_error(key, error: nil)
-    message = I18n.t(key, default: 'Undo failed')
-    respond_to do |format|
-      format.json { render json: { status: 'error', error: message }, status: :unprocessable_entity }
-      format.html { redirect_back fallback_location: root_path, alert: message }
-    end
+  def execute_restore_use_case(input_dto, presenter_class)
+    presenter = presenter_class.new(view: self)
+    interactor = Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor.new(
+      output_port: presenter,
+      gateway: deletion_undo_gateway
+    )
+    interactor.call(input_dto)
+  end
+
+  def deletion_undo_gateway
+    @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
   end
 end
 

@@ -16,7 +16,7 @@ export class DeleteInteractionRuleUseCase implements DeleteInteractionRuleInputP
       next: (response) => {
         this.outputPort.onSuccess({
           deletedInteractionRuleId: dto.interactionRuleId,
-          undo: response,
+          undo: response.undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

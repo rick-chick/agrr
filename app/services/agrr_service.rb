@@ -361,10 +361,14 @@ class AgrrService
 
   def find_agrr_binary
     agrr_bin = ENV['AGRR_BIN_PATH']
-    return agrr_bin if agrr_bin && File.executable?(agrr_bin)
+    return agrr_bin if agrr_bin.present? && File.executable?(agrr_bin)
 
     default_path = '/usr/local/bin/agrr'
     return default_path if File.executable?(default_path)
+
+    # 開発環境: プロジェクト内 lib/core/agrr（Docker と同じパス）
+    project_path = Rails.root.join('lib/core/agrr').to_s
+    return project_path if File.executable?(project_path)
 
     nil
   end

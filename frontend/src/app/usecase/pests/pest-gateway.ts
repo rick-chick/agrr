@@ -13,12 +13,16 @@ export interface PestCreatePayload {
   region: string | null;
 }
 
+export interface PestDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface PestGateway {
   list(): Observable<Pest[]>;
   show(pestId: number): Observable<Pest>;
   create(payload: PestCreatePayload): Observable<Pest>;
   update(pestId: number, payload: PestCreatePayload): Observable<Pest>;
-  destroy(pestId: number): Observable<DeletionUndoResponse>;
+  destroy(pestId: number): Observable<PestDeleteResponse>;
 }
 
 export const PEST_GATEWAY = new InjectionToken<PestGateway>('PEST_GATEWAY');

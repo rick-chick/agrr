@@ -177,6 +177,24 @@ module Api
           assert json_response.key?('undo_path')
         end
 
+        test "should not destroy pest when pesticides exist" do
+          pest = create(:pest, :user_owned, user: @user)
+          crop = create(:crop, :user_owned, user: @user)
+          create(:pesticide, :user_owned, user: @user, crop: crop, pest: pest)
+
+          assert_no_difference("Pest.count") do
+            delete api_v1_masters_pest_path(pest),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("pests.flash.cannot_delete_in_use"), json_response["error"]
+        end
+
         test "should not destroy other user's pest" do
           other_user = create(:user)
           other_pest = create(:pest, :user_owned, user: other_user)

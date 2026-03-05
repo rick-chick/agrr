@@ -22,43 +22,25 @@ module Domain
         end
 
         test "should destroy farm successfully when no crop plans exist" do
-          farm_id = 1
-          farm_model = mock
-          free_crop_plans_mock = mock
-          free_crop_plans_mock.expects(:any?).returns(false)
-          undo_response = mock
-          destroy_output_dto = mock
+          farm = create(:farm, user: @user, name: "Test Farm")
+          farm_id = farm.id
 
           User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
-          farm_model.expects(:free_crop_plans).returns(free_crop_plans_mock)
-          farm_model.stubs(:display_name).returns("Test Farm")
-          @mock_translator.expects(:t).with('farms.undo.toast', name: "Test Farm").returns('Farm Test Farm deleted')
-          DeletionUndo::Manager.expects(:schedule).with(
-            record: farm_model,
-            actor: @user,
-            toast_message: 'Farm Test Farm deleted'
-          ).returns(undo_response)
-          Domain::Farm::Dtos::FarmDestroyOutputDto.expects(:new).with(undo: undo_response).returns(destroy_output_dto)
-          @mock_output_port.expects(:on_success).with(destroy_output_dto)
+          Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id.to_s).returns(farm)
+          @mock_translator.expects(:t).with('flash.farms.deleted', name: "Test Farm").returns("Test Farm deleted")
+          @mock_output_port.expects(:on_success).with(instance_of(Domain::Farm::Dtos::FarmDestroyOutputDto))
 
-          @interactor.call(farm_id)
-        end
+          gateway = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          interactor = FarmDestroyInteractor.new(
+            output_port: @mock_output_port,
+            gateway: @mock_gateway,
+            user_id: @user_id,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: @mock_translator,
+            deletion_undo_gateway: gateway
+          )
 
-        test "should raise error when farm has crop plans" do
-          farm_id = 1
-          farm_model = mock
-          free_crop_plans_mock = mock
-          free_crop_plans_mock.expects(:any?).returns(true)
-          free_crop_plans_mock.expects(:count).returns(2)
-
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id).returns(farm_model)
-          farm_model.stubs(:free_crop_plans).returns(free_crop_plans_mock)
-          @mock_translator.expects(:t).with('farms.flash.cannot_delete', count: 2).returns('Cannot delete farm with 2 crop plans')
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
-
-          @interactor.call(farm_id)
+          interactor.call(farm_id.to_s)
         end
 
         test "should re-raise policy permission denied" do

@@ -65,6 +65,13 @@ export class UndoToastService {
       return;
     }
     this.hide();
+
+    // undoPath が undefined の場合はエラーをログに出力して処理を中止
+    if (!pending.undoPath) {
+      console.error('UndoToastService: undoPath is undefined', pending);
+      return;
+    }
+
     const pathWithoutQuery = pending.undoPath.replace(/\?.*$/, '');
     const body = { undo_token: pending.undoToken };
     this.apiClient.post<{ status: string }>(pathWithoutQuery, body).subscribe({

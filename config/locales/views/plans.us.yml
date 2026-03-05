@@ -10,7 +10,6 @@ us:
       completed: "✓"
     
     errors:
-      select_year_and_farm: "Please select a year and farm." # Kept for backward compatibility
       select_farm: "Please select a farm."
       select_crop: "Please select at least one crop."
       restart: "Please start over."
@@ -86,8 +85,6 @@ us:
     new:
       title: "📅 Select Year and Farm"
       subtitle: "Choose the year and farm for your cultivation plan"
-      plan_year_label: "Plan Year"
-      plan_year_hint: "Plan period: %{start_year}/01 - %{end_year}/12 (2 years)"
       plan_name_label: "Plan Name"
       plan_name_placeholder: "e.g. Main Plan"
       farm_label: "Farm"

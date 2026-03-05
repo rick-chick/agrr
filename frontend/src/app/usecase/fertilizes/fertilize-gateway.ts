@@ -13,12 +13,16 @@ export interface FertilizeCreatePayload {
   region: string | null;
 }
 
+export interface FertilizeDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface FertilizeGateway {
   list(): Observable<Fertilize[]>;
   show(fertilizeId: number): Observable<Fertilize>;
   create(payload: FertilizeCreatePayload): Observable<Fertilize>;
   update(fertilizeId: number, payload: FertilizeCreatePayload): Observable<Fertilize>;
-  destroy(fertilizeId: number): Observable<DeletionUndoResponse>;
+  destroy(fertilizeId: number): Observable<FertilizeDeleteResponse>;
 }
 
 export const FERTILIZE_GATEWAY = new InjectionToken<FertilizeGateway>('FERTILIZE_GATEWAY');

@@ -19,7 +19,7 @@ export class DeleteCropUseCase implements DeleteCropInputPort {
       next: (response) => {
         this.outputPort.onSuccess({
           deletedCropId: dto.cropId,
-          undo: response,
+          undo: response.undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

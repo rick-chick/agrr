@@ -7,11 +7,13 @@ import { DeleteAgriculturalTaskOutputPort } from '../../usecase/agricultural-tas
 import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/delete-agricultural-task.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { AgriculturalTaskListRefreshService } from '../../services/agricultural-task-list-refresh.service';
 
 @Injectable()
 export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDetailOutputPort, DeleteAgriculturalTaskOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly agriculturalTaskListRefresh = inject(AgriculturalTaskListRefreshService);
   private view: AgriculturalTaskDetailView | null = null;
 
   setView(view: AgriculturalTaskDetailView): void {
@@ -39,11 +41,12 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
 
   onSuccess(dto: DeleteAgriculturalTaskSuccessDto): void {
     if (dto.undo) {
+      // 農業作業削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
       this.undoToast.showWithUndo(
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.view?.reload()
+        () => this.agriculturalTaskListRefresh.refresh()
       );
     }
   }

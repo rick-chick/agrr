@@ -4,24 +4,71 @@ module Domain
   module Pest
     module Interactors
       class PestDestroyInteractor < Domain::Pest::Ports::PestDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator:)
+        # DeletionUndo の結果を扱う内部プレゼンター
+        class DeletionUndoPresenter < Domain::DeletionUndo::Ports::DeletionUndoScheduleOutputPort
+          attr_reader :undo_entity, :error
+
+          def initialize
+            @success = false
+            @undo_entity = nil
+            @error = nil
+          end
+
+          def success?
+            @success
+          end
+
+          def on_success(undo_entity)
+            @success = true
+            @undo_entity = undo_entity
+          end
+
+          def on_failure(error_dto)
+            @success = false
+            @error = error_dto
+          end
+        end
+
+        def initialize(output_port:, gateway:, user_id:, logger:, translator:, deletion_undo_gateway: nil)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator
+          @deletion_undo_gateway = deletion_undo_gateway || Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
         end
 
         def call(pest_id)
           user = User.find(@user_id)
           pest_model = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, user, pest_id)
-          undo_response = DeletionUndo::Manager.schedule(
+
+          if pest_model.pesticides.any?
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.cannot_delete_in_use')))
+            return
+          end
+
+          undo_presenter = DeletionUndoPresenter.new
+          deletion_undo_interactor = Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
+            output_port: undo_presenter,
+            gateway: @deletion_undo_gateway
+          )
+
+          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: pest_model,
             actor: user,
-            toast_message: @translator.t('pests.undo.toast', name: pest_model.name)
+            toast_message: @translator.t('pests.undo.toast', name: pest_model.name),
+            auto_hide_after: 5000,
+            metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(pest_model) }
           )
-          dto = Domain::Pest::Dtos::PestDestroyOutputDto.new(undo: undo_response)
-          @output_port.on_success(dto)
+
+          deletion_undo_interactor.call(input_dto)
+
+          if undo_presenter.success?
+            dto = Domain::Pest::Dtos::PestDestroyOutputDto.new(undo: undo_presenter.undo_entity)
+            @output_port.on_success(dto)
+          else
+            @output_port.on_failure(undo_presenter.error)
+          end
         rescue ActiveRecord::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new('Pest not found'))
         rescue Domain::Shared::Policies::PolicyPermissionDenied

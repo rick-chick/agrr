@@ -18,16 +18,24 @@ export interface FieldCreatePayload {
   region: string | null;
 }
 
+export interface FarmDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
+export interface FieldDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface FarmGateway {
   list(): Observable<Farm[]>;
   show(farmId: number): Observable<Farm>;
   listFieldsByFarm(farmId: number): Observable<Field[]>;
   create(payload: FarmCreatePayload): Observable<Farm>;
   update(farmId: number, payload: FarmCreatePayload): Observable<Farm>;
-  destroy(farmId: number): Observable<DeletionUndoResponse>;
+  destroy(farmId: number): Observable<FarmDeleteResponse>;
   createField(farmId: number, payload: FieldCreatePayload): Observable<Field>;
   updateField(fieldId: number, payload: FieldCreatePayload): Observable<Field>;
-  destroyField(fieldId: number): Observable<DeletionUndoResponse>;
+  destroyField(fieldId: number): Observable<FieldDeleteResponse>;
 }
 
 export const FARM_GATEWAY = new InjectionToken<FarmGateway>('FARM_GATEWAY');

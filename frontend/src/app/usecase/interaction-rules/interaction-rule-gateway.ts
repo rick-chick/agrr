@@ -13,12 +13,16 @@ export interface InteractionRuleCreatePayload {
   region: string | null;
 }
 
+export interface InteractionRuleDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface InteractionRuleGateway {
   list(): Observable<InteractionRule[]>;
   show(interactionRuleId: number): Observable<InteractionRule>;
   create(payload: InteractionRuleCreatePayload): Observable<InteractionRule>;
   update(interactionRuleId: number, payload: InteractionRuleCreatePayload): Observable<InteractionRule>;
-  destroy(interactionRuleId: number): Observable<DeletionUndoResponse>;
+  destroy(interactionRuleId: number): Observable<InteractionRuleDeleteResponse>;
 }
 
 export const INTERACTION_RULE_GATEWAY = new InjectionToken<InteractionRuleGateway>(

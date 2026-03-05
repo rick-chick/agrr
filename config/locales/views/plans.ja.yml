@@ -11,8 +11,6 @@ ja:
       completed: "✓"
     
     errors:
-      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
-      select_year_and_farm: "年度と農場を選択してください。"
       select_farm: "農場を選択してください。"
       select_crop: "作物を1つ以上選択してください。"
       restart: "最初からやり直してください。"
@@ -93,9 +91,6 @@ ja:
     new:
       title: "📅 農場を選択してください"
       subtitle: "計画を作成する農場を選択してください"
-      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
-      plan_year_label: "計画年度"
-      plan_year_hint: "計画年度は%{start_year}年1月〜%{end_year}年12月の2年間です"
       plan_name_label: "計画名（将来的に複数計画を管理できます）"
       plan_name_placeholder: "例: メイン計画"
       farm_label: "農場"

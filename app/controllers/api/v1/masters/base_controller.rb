@@ -83,6 +83,12 @@ module Api
         def current_user
           @current_user
         end
+
+        private
+
+        def translator
+          @translator ||= Adapters::Translators::RailsTranslator.new
+        end
       end
     end
   end

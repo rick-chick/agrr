@@ -4,7 +4,7 @@ import { MastersClientService } from '../../services/masters/masters-client.serv
 import { Farm } from '../../domain/farms/farm';
 import { Field } from '../../domain/farms/field';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
-import { FarmGateway, FarmCreatePayload, FieldCreatePayload } from '../../usecase/farms/farm-gateway';
+import { FarmGateway, FarmCreatePayload, FieldCreatePayload, FarmDeleteResponse, FieldDeleteResponse } from '../../usecase/farms/farm-gateway';
 
 @Injectable()
 export class FarmApiGateway implements FarmGateway {
@@ -30,8 +30,8 @@ export class FarmApiGateway implements FarmGateway {
     return this.client.patch<Farm>(`/farms/${farmId}`, { farm: payload });
   }
 
-  destroy(farmId: number): Observable<DeletionUndoResponse> {
-    return this.client.delete<DeletionUndoResponse>(`/farms/${farmId}`);
+  destroy(farmId: number): Observable<FarmDeleteResponse> {
+    return this.client.delete<FarmDeleteResponse>(`/farms/${farmId}`);
   }
 
   createField(farmId: number, payload: FieldCreatePayload): Observable<Field> {
@@ -42,7 +42,7 @@ export class FarmApiGateway implements FarmGateway {
     return this.client.patch<Field>(`/fields/${fieldId}`, { field: payload });
   }
 
-  destroyField(fieldId: number): Observable<DeletionUndoResponse> {
-    return this.client.delete<DeletionUndoResponse>(`/fields/${fieldId}`);
+  destroyField(fieldId: number): Observable<FieldDeleteResponse> {
+    return this.client.delete<FieldDeleteResponse>(`/fields/${fieldId}`);
   }
 }

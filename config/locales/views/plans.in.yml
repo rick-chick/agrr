@@ -10,7 +10,6 @@ in:
       completed: "✓"
     
     errors:
-      select_year_and_farm: "कृपया वर्ष और खेत चुनें।" # पिछड़े संगतता के लिए रखा गया
       select_farm: "कृपया एक खेत चुनें।"
       select_crop: "कृपया कम से कम एक फसल चुनें।"
       restart: "कृपया फिर से शुरू करें।"
@@ -86,8 +85,6 @@ in:
     new:
       title: "📅 वर्ष और खेत चुनें"
       subtitle: "अपनी खेती योजना के लिए वर्ष और खेत चुनें"
-      plan_year_label: "योजना वर्ष"
-      plan_year_hint: "योजना अवधि: %{start_year}/01 - %{end_year}/12 (2 वर्ष)"
       plan_name_label: "योजना नाम"
       plan_name_placeholder: "उदाहरण: मुख्य योजना"
       farm_label: "खेत"

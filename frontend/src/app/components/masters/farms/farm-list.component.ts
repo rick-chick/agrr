@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { LOAD_FARM_LIST_OUTPUT_PORT } from '../../../usecase/farms/load-farm-lis
 import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
+import { FarmListRefreshService } from '../../../services/farm-list-refresh.service';
 
 const initialControl: FarmListViewState = {
   loading: true,
@@ -80,11 +81,13 @@ const initialControl: FarmListViewState = {
   `,
   styleUrls: ['./farm-list.component.css']
 })
-export class FarmListComponent implements FarmListView, OnInit {
+export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadFarmListUseCase);
   private readonly deleteUseCase = inject(DeleteFarmUseCase);
   private readonly presenter = inject(FarmListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly farmListRefresh = inject(FarmListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: FarmListViewState = initialControl;
   get control(): FarmListViewState {
@@ -98,6 +101,11 @@ export class FarmListComponent implements FarmListView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.farmListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

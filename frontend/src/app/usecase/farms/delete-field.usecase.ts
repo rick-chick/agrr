@@ -13,7 +13,7 @@ export class DeleteFieldUseCase implements DeleteFieldInputPort {
 
   execute(dto: DeleteFieldInputDto): void {
     this.farmGateway.destroyField(dto.fieldId).subscribe({
-      next: (undo) => this.outputPort.present({ undo, farmId: dto.farmId }),
+      next: (response) => this.outputPort.present({ undo: response.undo, farmId: dto.farmId }),
       error: (err) => this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
     });
   }

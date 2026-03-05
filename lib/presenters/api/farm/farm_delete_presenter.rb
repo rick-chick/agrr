@@ -9,25 +9,13 @@ module Presenters
         end
 
         def on_success(destroy_output_dto)
-          event = destroy_output_dto.undo
-          undo_path = @view.undo_deletion_path(undo_token: event.undo_token)
-          json = {
-            undo_token: event.undo_token,
-            undo_deadline: event.metadata['undo_deadline'],
-            toast_message: event.toast_message,
-            undo_path: undo_path,
-            auto_hide_after: event.auto_hide_after,
-            resource: event.metadata['resource_label'],
-            redirect_path: '/',
-            resource_dom_id: resource_dom_id_for(event)
-          }
-          @view.render_response(json: json, status: :ok)
+          # 成功データをコントローラーに渡す
+          @view.instance_variable_set('@farm_delete_data', destroy_output_dto)
         end
 
         def on_failure(error_dto)
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == 'Farm not found') ? :not_found : :unprocessable_entity
-          @view.render_response(json: { error: msg }, status: status)
+          # エラーデータをコントローラーに渡す
+          @view.instance_variable_set('@farm_delete_error', error_dto)
         end
 
         private

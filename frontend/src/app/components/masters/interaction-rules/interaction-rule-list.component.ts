@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { LOAD_INTERACTION_RULE_LIST_OUTPUT_PORT } from '../../../usecase/interac
 import { DELETE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/delete-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
 import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
+import { InteractionRuleListRefreshService } from '../../../services/interaction-rule-list-refresh.service';
 
 const initialControl: InteractionRuleListViewState = {
   loading: true,
@@ -75,11 +76,13 @@ const initialControl: InteractionRuleListViewState = {
   `,
   styleUrls: ['./interaction-rule-list.component.css']
 })
-export class InteractionRuleListComponent implements InteractionRuleListView, OnInit {
+export class InteractionRuleListComponent implements InteractionRuleListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadInteractionRuleListUseCase);
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly interactionRuleListRefresh = inject(InteractionRuleListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: InteractionRuleListViewState = initialControl;
   get control(): InteractionRuleListViewState {
@@ -93,6 +96,11 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.interactionRuleListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

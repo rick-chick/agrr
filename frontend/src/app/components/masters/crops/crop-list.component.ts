@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import { LOAD_CROP_LIST_OUTPUT_PORT } from '../../../usecase/crops/load-crop-lis
 import { DELETE_CROP_OUTPUT_PORT } from '../../../usecase/crops/delete-crop.output-port';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
+import { CropListRefreshService } from '../../../services/crop-list-refresh.service';
 
 const initialControl: CropListViewState = {
   loading: true,
@@ -72,12 +73,14 @@ const initialControl: CropListViewState = {
   `,
   styleUrls: ['./crop-list.component.css']
 })
-export class CropListComponent implements CropListView, OnInit {
+export class CropListComponent implements CropListView, OnInit, OnDestroy {
   readonly auth = inject(AuthService);
   private readonly loadUseCase = inject(LoadCropListUseCase);
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly cropListRefresh = inject(CropListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: CropListViewState = initialControl;
   get control(): CropListViewState {
@@ -91,6 +94,11 @@ export class CropListComponent implements CropListView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.cropListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

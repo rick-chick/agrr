@@ -12,12 +12,16 @@ export interface PesticideCreatePayload {
   region: string | null;
 }
 
+export interface PesticideDeleteResponse {
+  undo: DeletionUndoResponse;
+}
+
 export interface PesticideGateway {
   list(): Observable<Pesticide[]>;
   show(pesticideId: number): Observable<Pesticide>;
   create(payload: PesticideCreatePayload): Observable<Pesticide>;
   update(pesticideId: number, payload: PesticideCreatePayload): Observable<Pesticide>;
-  destroy(pesticideId: number): Observable<DeletionUndoResponse>;
+  destroy(pesticideId: number): Observable<PesticideDeleteResponse>;
 }
 
 export const PESTICIDE_GATEWAY = new InjectionToken<PesticideGateway>('PESTICIDE_GATEWAY');

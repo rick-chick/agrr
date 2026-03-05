@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { Crop } from '../../domain/crops/crop';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
-import { CropGateway, CropCreatePayload } from '../../usecase/crops/crop-gateway';
+import { CropGateway, CropCreatePayload, CropDeleteResponse } from '../../usecase/crops/crop-gateway';
 
 @Injectable()
 export class CropApiGateway implements CropGateway {
@@ -25,7 +25,7 @@ export class CropApiGateway implements CropGateway {
     return this.client.patch<Crop>(`/crops/${cropId}`, { crop: payload });
   }
 
-  destroy(cropId: number): Observable<DeletionUndoResponse> {
-    return this.client.delete<DeletionUndoResponse>(`/crops/${cropId}`);
+  destroy(cropId: number): Observable<CropDeleteResponse> {
+    return this.client.delete<CropDeleteResponse>(`/crops/${cropId}`);
   }
 }

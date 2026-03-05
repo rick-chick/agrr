@@ -16,10 +16,10 @@ export class DeletePesticideUseCase implements DeletePesticideInputPort {
 
   execute(dto: DeletePesticideInputDto): void {
     this.pesticideGateway.destroy(dto.pesticideId).subscribe({
-      next: (undo) => {
+      next: (response) => {
         this.outputPort.onSuccess({
           deletedPesticideId: dto.pesticideId,
-          undo,
+          undo: response.undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

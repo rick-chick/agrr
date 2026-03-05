@@ -9,29 +9,13 @@ module Presenters
         end
 
         def on_success(farms)
-          json = farms.is_a?(Array) ? farms.map { |e| entity_to_json(e) } : []
-          @view.render_response(json: json, status: :ok)
+          # 成功データをコントローラーに渡す
+          @view.instance_variable_set('@farm_list_data', farms)
         end
 
         def on_failure(error_dto)
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          @view.render_response(json: { error: msg }, status: :unprocessable_entity)
-        end
-
-        private
-
-        def entity_to_json(entity)
-          {
-            id: entity.id,
-            name: entity.name,
-            latitude: entity.latitude,
-            longitude: entity.longitude,
-            region: entity.region,
-            user_id: entity.user_id,
-            created_at: entity.created_at,
-            updated_at: entity.updated_at,
-            is_reference: entity.is_reference
-          }
+          # エラーデータをコントローラーに渡す
+          @view.instance_variable_set('@farm_list_error', error_dto)
         end
       end
     end

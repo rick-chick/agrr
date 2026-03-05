@@ -19,7 +19,7 @@ export class DeleteFertilizeUseCase implements DeleteFertilizeInputPort {
       next: (response) =>
         this.outputPort.onSuccess({
           deletedFertilizeId: dto.fertilizeId,
-          undo: response,
+          undo: response.undo,
           refresh: dto.onAfterUndo
         }),
       error: (err: Error) =>

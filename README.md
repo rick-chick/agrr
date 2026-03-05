@@ -41,6 +41,16 @@ docker compose up
 
 > 💡 **メモリ監視はデフォルトで無効**（起動時間短縮のため）。必要時は `ENABLE_MEMORY_MONITOR=true docker compose up` で有効化。詳細は [メモリ監視クイックスタート](docs/MEMORY_MONITORING_QUICKSTART.md) を参照。
 
+#### 新規計画作成で AGRR を使う場合
+
+新規計画作成（栽培計画の最適化）には AGRR デーモンが必要です。
+
+- **Docker 利用時**: `USE_AGRR_DAEMON=true docker compose up` でデーモンを起動。バイナリは `lib/core/agrr` に配置するか、`AGRR_BIN_PATH` で指定。
+- **ローカルで `rails s` を直接起動する場合**:
+  1. バイナリをビルド: `cd lib/core/agrr_core && ./build_standalone.sh --onefile && cp dist/agrr ../agrr`
+  2. `lib/core/agrr` に配置されていれば、最適化実行時にデーモン自動起動を試行します。
+  3. または手動起動: `./lib/core/agrr daemon start`（別ターミナルで実行）
+
 ### デプロイ
 
 ```bash

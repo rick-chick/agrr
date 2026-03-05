@@ -329,6 +329,8 @@ ja:
         notice: "%{resource_name}を更新しました"
       destroy:
         notice: "%{resource_name}を削除しました"
+    farms:
+      deleted: "%{name}を削除しました"
 
   # 日付・時刻フォーマット
   date:

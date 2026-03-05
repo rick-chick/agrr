@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { LOAD_PEST_LIST_OUTPUT_PORT } from '../../../usecase/pests/load-pest-lis
 import { DELETE_PEST_OUTPUT_PORT } from '../../../usecase/pests/delete-pest.output-port';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { PestListRefreshService } from '../../../services/pest-list-refresh.service';
 
 const initialControl: PestListViewState = {
   loading: true,
@@ -75,11 +76,13 @@ const initialControl: PestListViewState = {
   `,
   styleUrls: ['./pest-list.component.css']
 })
-export class PestListComponent implements PestListView, OnInit {
+export class PestListComponent implements PestListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadPestListUseCase);
   private readonly deleteUseCase = inject(DeletePestUseCase);
   private readonly presenter = inject(PestListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly pestListRefresh = inject(PestListRefreshService);
+  private unsubRefresh: (() => void) | null = null;
 
   private _control: PestListViewState = initialControl;
   get control(): PestListViewState {
@@ -93,6 +96,11 @@ export class PestListComponent implements PestListView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
+    this.unsubRefresh = this.pestListRefresh.onRefresh(() => this.refreshAfterUndo());
+  }
+
+  ngOnDestroy(): void {
+    this.unsubRefresh?.();
   }
 
   load(): void {

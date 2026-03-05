@@ -7,11 +7,13 @@ import { DeleteCropOutputPort } from '../../usecase/crops/delete-crop.output-por
 import { DeleteCropSuccessDto } from '../../usecase/crops/delete-crop.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { CropListRefreshService } from '../../services/crop-list-refresh.service';
 
 @Injectable()
 export class CropDetailPresenter implements LoadCropDetailOutputPort, DeleteCropOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly cropListRefresh = inject(CropListRefreshService);
   private view: CropDetailView | null = null;
 
   setView(view: CropDetailView): void {
@@ -39,11 +41,12 @@ export class CropDetailPresenter implements LoadCropDetailOutputPort, DeleteCrop
 
   onSuccess(dto: DeleteCropSuccessDto): void {
     if (dto.undo) {
+      // 作物削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
       this.undoToast.showWithUndo(
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.view?.reload()
+        () => this.cropListRefresh.refresh()
       );
     }
   }

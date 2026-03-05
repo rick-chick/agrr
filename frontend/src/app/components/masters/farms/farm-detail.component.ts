@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef, ViewChild, Ele
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { FarmMapComponent } from './farm-map.component';
 import { FarmDetailView, FarmDetailViewState } from './farm-detail.view';
@@ -77,7 +77,7 @@ const initialControl: FarmDetailViewState = {
           <div class="detail-card__actions">
             <a [routerLink]="['/farms', control.farm.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
             <a [routerLink]="['/farms']" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
-            <button type="button" class="btn-danger" (click)="confirmDeleteFarm()">{{ 'common.delete' | translate }}</button>
+            <button type="button" class="btn-danger" (click)="deleteFarm()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
 
@@ -121,7 +121,7 @@ const initialControl: FarmDetailViewState = {
                     </div>
                     <div class="item-card__actions">
                       <button type="button" class="btn-secondary" (click)="openFieldForm(field)">{{ 'common.edit' | translate }}</button>
-                      <button type="button" class="btn-danger" (click)="confirmDeleteField(field)">{{ 'common.delete' | translate }}</button>
+                      <button type="button" class="btn-danger" (click)="deleteField(field)">{{ 'common.delete' | translate }}</button>
                     </div>
                   </article>
                 </li>
@@ -131,14 +131,6 @@ const initialControl: FarmDetailViewState = {
         </section>
       }
     </main>
-
-    <dialog #confirmDialog class="confirm-dialog" (cancel)="closeConfirmDialog()" (close)="closeConfirmDialog()">
-      <p class="confirm-dialog__message">{{ confirmMessage }}</p>
-      <div class="confirm-dialog__actions">
-        <button type="button" class="btn-secondary" (click)="closeConfirmDialog()">{{ 'common.cancel' | translate }}</button>
-        <button type="button" class="btn-danger" (click)="executeConfirmedDelete()">{{ 'common.delete' | translate }}</button>
-      </div>
-    </dialog>
 
     <dialog #fieldFormDialog class="form-dialog" (cancel)="closeFieldForm()" (close)="closeFieldForm()">
       <h3 class="form-dialog__title">{{ (editingField ? 'farms.show.field_form.edit_title' : 'farms.show.field_form.add_title') | translate }}</h3>
@@ -182,16 +174,10 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly updateFieldPresenter = inject(UpdateFieldPresenter);
   private readonly deleteFieldPresenter = inject(DeleteFieldPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
 
   private channel: Channel | null = null;
 
-  @ViewChild('confirmDialog') confirmDialogRef!: ElementRef<HTMLDialogElement>;
   @ViewChild('fieldFormDialog') fieldFormDialogRef!: ElementRef<HTMLDialogElement>;
-
-  confirmMessage = '';
-  pendingDeleteFarm = false;
-  pendingDeleteField: Field | null = null;
 
   editingField: Field | null = null;
   fieldFormModel = {
@@ -242,41 +228,20 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     if (farmId) this.load(farmId);
   }
 
-  confirmDeleteFarm(): void {
-    this.confirmMessage = this.translate.instant('farms.show.delete_confirm');
-    this.pendingDeleteFarm = true;
-    this.pendingDeleteField = null;
-    this.confirmDialogRef?.nativeElement?.showModal();
+  deleteFarm(): void {
+    if (!this.control.farm) return;
+    this.deleteUseCase.execute({
+      farmId: this.control.farm.id,
+      onSuccess: () => this.router.navigate(['/farms'])
+    });
   }
 
-  confirmDeleteField(field: Field): void {
-    this.confirmMessage = this.translate.instant('farms.show.confirm_delete_field');
-    this.pendingDeleteFarm = false;
-    this.pendingDeleteField = field;
-    this.confirmDialogRef?.nativeElement?.showModal();
-  }
-
-  closeConfirmDialog(): void {
-    this.pendingDeleteFarm = false;
-    this.pendingDeleteField = null;
-    this.confirmDialogRef?.nativeElement?.close();
-  }
-
-  executeConfirmedDelete(): void {
-    if (this.pendingDeleteFarm && this.control.farm) {
-      this.closeConfirmDialog();
-      this.deleteUseCase.execute({
-        farmId: this.control.farm.id,
-        onSuccess: () => this.router.navigate(['/farms'])
-      });
-    } else if (this.pendingDeleteField && this.control.farm) {
-      const field = this.pendingDeleteField;
-      this.closeConfirmDialog();
-      this.deleteFieldUseCase.execute({
-        fieldId: field.id,
-        farmId: this.control.farm.id
-      });
-    }
+  deleteField(field: Field): void {
+    if (!this.control.farm) return;
+    this.deleteFieldUseCase.execute({
+      fieldId: field.id,
+      farmId: this.control.farm.id
+    });
   }
 
   openFieldForm(field?: Field): void {

@@ -125,13 +125,11 @@ describe('FarmDetailComponent', () => {
     });
   });
 
-  it('calls deleteUseCase.execute on executeConfirmedDelete when pendingDeleteFarm', () => {
+  it('calls deleteUseCase.execute on deleteFarm when farm exists', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     component.control = { ...component.control, farm };
-    component.pendingDeleteFarm = true;
-    component.pendingDeleteField = null;
 
-    component.executeConfirmedDelete();
+    component.deleteFarm();
     expect(deleteUseCase.execute).toHaveBeenCalledWith({
       farmId: 123,
       onSuccess: expect.any(Function)
@@ -196,7 +194,7 @@ describe('FarmDetailComponent', () => {
     });
   });
 
-  it('calls deleteFieldUseCase.execute on executeConfirmedDelete when pendingDeleteField', () => {
+  it('calls deleteFieldUseCase.execute on deleteField', () => {
     const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
     const field: Field = {
       id: 456,
@@ -211,10 +209,8 @@ describe('FarmDetailComponent', () => {
       updated_at: '2023-01-01'
     };
     component.control = { ...component.control, farm };
-    component.pendingDeleteFarm = false;
-    component.pendingDeleteField = field;
 
-    component.executeConfirmedDelete();
+    component.deleteField(field);
     expect(deleteFieldUseCase.execute).toHaveBeenCalledWith({
       fieldId: 456,
       farmId: 123

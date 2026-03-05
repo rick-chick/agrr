@@ -5,33 +5,21 @@
 
 ---
 
-## 1. 確実にデッドコード（削除推奨）
+## 1. 既に削除済み（対応完了）
 
 ### 1.1 AgriculturalTaskCrop モデル
 
 | 項目 | 内容 |
 |------|------|
-| **ファイル** | `app/models/agricultural_task_crop.rb` |
-| **理由** | `agricultural_task_crops` テーブルはマイグレーション `20251111120000_drop_agricultural_task_crops.rb` で削除済み。schema.rb にテーブルなし。 |
-| **参照状況** | アプリケーションコードで `AgriculturalTaskCrop` クラスを参照している箇所は**なし**（マイグレーション内の `TempAgriculturalTaskCrop` は別クラス）。`PlanSaveService#copy_agricultural_task_crop_relationships` はメソッド名のみ「agricultural_task_crop」で、実装は `CropTaskTemplate` を使用。 |
-| **リスク** | モデルが残っていると、誰かが誤って `AgriculturalTaskCrop` を参照した際に `ActiveRecord::StatementInvalid` が発生する。 |
-| **推奨** | **モデルファイルを削除**する。 |
-
----
+| **状況** | **削除済み**。`app/models/agricultural_task_crop.rb` は存在しない。 |
+| **経緯** | `agricultural_task_crops` テーブルはマイグレーション `20251111120000_drop_agricultural_task_crops.rb` で削除済み。 |
 
 ### 1.2 GenerateFreeCropPlanJob
 
 | 項目 | 内容 |
 |------|------|
-| **ファイル** | `app/jobs/generate_free_crop_plan_job.rb` |
-| **理由** | 本 Job を enqueue するコードが**存在しない**（`GenerateFreeCropPlanJob.perform_later` や `perform` の呼び出しを検索してもヒットなし）。 |
-| **補足** | `FreeCropPlan` モデル・テーブルは以下でまだ参照されているため、モデル削除は別扱い。 |
-|  | • `Farm` / `Crop` の `has_many :free_crop_plans` |
-|  | • `FarmsController#destroy` の削除可否チェック（`@farm.free_crop_plans.any?`） |
-|  | • `DeletionUndo::FarmPreparationService` の `farm.free_crop_plans.destroy_all` |
-|  | • `test/services/deletion_undo/farm_preparation_service_test.rb` の FreeCropPlan 利用 |
-| **Job 内の不整合** | `generate_plan` 内で `free_crop_plan.region` を参照しているが、`free_crop_plans` テーブルに `region` カラムはない（schema 上は `farm_id`, `crop_id`, `session_id`, `area_sqm`, `status`, `plan_data` のみ）。実行されれば `NoMethodError` または nil 参照の可能性。 |
-| **推奨** | **Job クラスを削除**する。FreeCropPlan のレガシーデータ・関連は「非推奨だが互換のため保持」として、Job だけデッドコードとして整理する。 |
+| **状況** | **削除済み**。`app/jobs/generate_free_crop_plan_job.rb` は存在しない。 |
+| **経緯** | enqueue 呼び出しがなく、デッドコードとして削除済み。 |
 
 ---
 
@@ -85,15 +73,15 @@
 
 | 優先度 | アクション | 対象 |
 |--------|------------|------|
-| 高 | モデルファイル削除 | `app/models/agricultural_task_crop.rb` |
-| 高 | Job クラス削除 | `app/jobs/generate_free_crop_plan_job.rb` |
 | 中 | ドキュメント修正 | `ARCHITECTURE.md` の agricultural_task に関する「unused」記述を削除または修正 |
 | 低 | ドキュメント更新 | `docs/analysis/drop_agricultural_task_crops_*.md` 等で CropTaskTemplateBackfillService / Rake を「削除済み」と明記 |
+
+**削除済み**: AgriculturalTaskCrop モデル、GenerateFreeCropPlanJob
 
 ---
 
 ## 6. 呼び出し関係メモ（検証用）
 
-- **AgriculturalTaskCrop**: アプリコードでクラス参照なし。マイグレーションのみ `agricultural_task_crops` テーブル名を参照。
-- **GenerateFreeCropPlanJob**: `perform_later` / `perform` の呼び出しなし。
+- **AgriculturalTaskCrop**: モデル削除済み。テーブルはマイグレーションで削除済み。
+- **GenerateFreeCropPlanJob**: Job 削除済み。
 - **PlanSaveService**: `copy_agricultural_task_crop_relationships` は `reference_task.crop_task_templates` と `ensure_crop_task_template!` で **CropTaskTemplate** のみ使用。AgriculturalTaskCrop は未使用。

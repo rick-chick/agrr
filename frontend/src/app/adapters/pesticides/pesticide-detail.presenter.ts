@@ -7,11 +7,13 @@ import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesti
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PesticideListRefreshService } from '../../services/pesticide-list-refresh.service';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly pesticideListRefresh = inject(PesticideListRefreshService);
   private view: PesticideDetailView | null = null;
 
   setView(view: PesticideDetailView): void {
@@ -39,11 +41,12 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
 
   onSuccess(dto: DeletePesticideSuccessDto): void {
     if (dto.undo) {
+      // 農薬削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
       this.undoToast.showWithUndo(
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.view?.reload()
+        () => this.pesticideListRefresh.refresh()
       );
     }
   }

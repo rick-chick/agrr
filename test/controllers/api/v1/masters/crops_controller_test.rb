@@ -190,8 +190,9 @@ module Api
 
           assert_response :ok
           json = response.parsed_body
-          assert json["undo_token"].present?
-          assert json["undo_path"].present?
+          assert json["undo"].present?, "Expected response to include undo key"
+          assert json["undo"]["undo_token"].present?
+          assert json["undo"]["undo_path"].present?
         end
 
         test "should not destroy other user's crop" do
