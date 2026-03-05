@@ -30,8 +30,9 @@ module AgrrOptimization
       field_id = field.id
       cultivations = cultivations_by_field[field_id] || []
       
-      # exclude_idsに含まれる作物を除外
+      # exclude_idsに含まれるもの、生育ステージのない作物を除外（AGRR最適化に必要な要件）
       filtered_cultivations = cultivations.reject { |fc| exclude_ids.include?(fc.id) }
+        .select { |fc| fc.cultivation_plan_crop.crop.crop_stages.exists? }
       
       Rails.logger.info "🔍 [Build Allocation] Field #{field_id}: #{cultivations.count} -> #{filtered_cultivations.count} (excluded: #{cultivations.count - filtered_cultivations.count})" if exclude_ids.any?
       
@@ -109,19 +110,18 @@ module AgrrOptimization
   end
   
   # 作物設定を構築
+  # 生育ステージのない作物は最適化に使用できないためスキップする
   def build_crops_config(cultivation_plan)
-    cultivation_plan.cultivation_plan_crops.map do |plan_crop|
-      # 元のCropを直接参照
+    cultivation_plan.cultivation_plan_crops.filter_map do |plan_crop|
       crop = plan_crop.crop
-      
-      # AGRR形式に変換（stage_requirementsを含む完全な形式）
+      unless crop.crop_stages.exists?
+        Rails.logger.warn "⚠️ [AGRR] Skipping crop '#{crop.name}' (id=#{crop.id}): no growth stages"
+        next
+      end
       crop_data = crop.to_agrr_requirement
-      
-      # AGRR CLI側のcrop_idはRails側のcrop.idを使用
       crop_data['crop']['crop_id'] = crop.id.to_s
-      
       crop_data
-    end.compact
+    end
   end
   
   # 交互作用ルールを構築
