@@ -21,17 +21,6 @@ class MonitorMigrationStatusJob < ApplicationJob
       Rails.logger.error e.backtrace.join("\n")
     end
     
-    # キューデータベースのマイグレーション状態確認
-    begin
-      queue_status = check_migration_status(:queue)
-      results[:queue] = { status: 'ok', pending: queue_status[:pending] }
-      Rails.logger.info "[MonitorMigrationStatusJob] Queue database: #{queue_status[:pending]} pending migrations"
-    rescue => e
-      results[:queue] = { status: 'error', error: e.message }
-      Rails.logger.error "[MonitorMigrationStatusJob] Queue database check failed: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-    end
-    
     # キャッシュデータベースのマイグレーション状態確認
     begin
       cache_status = check_migration_status(:cache)
@@ -59,24 +48,14 @@ class MonitorMigrationStatusJob < ApplicationJob
     case database
     when :primary
       # メインデータベースの接続を使用
-      connection = ActiveRecord::Base.connection
-      pending = connection.migration_context.pending_migrations
+      pool = ActiveRecord::Base.connection_pool
+      pending = pool.migration_context.pending_migrations
       { pending: pending.size }
-    when :queue
-      # キューデータベースの接続を取得
-      # Rails 8の複数データベース対応を使用
-      ActiveRecord::Base.connected_to(role: :writing, shard: :queue) do
-        connection = ActiveRecord::Base.connection
-        pending = connection.migration_context.pending_migrations
-        { pending: pending.size }
-      end
     when :cache
-      # キャッシュデータベースの接続を取得
-      ActiveRecord::Base.connected_to(role: :writing, shard: :cache) do
-        connection = ActiveRecord::Base.connection
-        pending = connection.migration_context.pending_migrations
-        { pending: pending.size }
-      end
+      # キャッシュデータベース（SolidCache::Record が connects_to で接続）
+      pool = SolidCache::Record.connection_pool
+      pending = pool.migration_context.pending_migrations
+      { pending: pending.size }
     else
       raise "Unknown database: #{database}"
     end

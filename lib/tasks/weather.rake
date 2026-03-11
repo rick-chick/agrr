@@ -96,7 +96,7 @@ namespace :weather do
     # 結果を表示
     location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
     if location
-      gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+      gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
       weather_data = gateway.weather_data_for_period(weather_location_id: location.id, start_date: start_date, end_date: end_date)
       puts "\nFetched #{weather_data.count} records:"
       weather_data.each do |data|
@@ -105,9 +105,84 @@ namespace :weather do
     end
   end
 
+  desc "Migrate weather data from ActiveRecord to GCS"
+  task migrate_to_gcs: :environment do
+    dry_run = ENV["DRY_RUN"] == "1"
+    location_id = ENV["location_id"].presence&.to_i
+
+    puts "Weather Data: ActiveRecord → GCS Migration"
+    puts "=" * 80
+    puts "DRY_RUN=1 (no writes)" if dry_run
+    puts "location_id=#{location_id}" if location_id
+
+    # Prerequisite checks
+    if ENV["WEATHER_DATA_STORAGE"] != "active_record" && ENV["WEATHER_DATA_STORAGE"].present?
+      puts "❌ WEATHER_DATA_STORAGE must be active_record during migration (current: #{ENV['WEATHER_DATA_STORAGE']})"
+      exit 1
+    end
+
+    unless dry_run || ENV["GCS_WEATHER_DATA_BUCKET"].present? || ENV["GCS_BUCKET"].present?
+      puts "❌ GCS_WEATHER_DATA_BUCKET or GCS_BUCKET must be set"
+      exit 1
+    end
+
+    if WeatherDatum.count.zero?
+      puts "No WeatherDatum records to migrate."
+      exit 0
+    end
+
+    # Resolve location scope
+    scope = if location_id
+      loc = WeatherLocation.find_by(id: location_id)
+      if loc.nil?
+        puts "❌ WeatherLocation with id=#{location_id} not found"
+        exit 1
+      end
+      WeatherLocation.where(id: location_id)
+    else
+      WeatherLocation.joins(:weather_data).distinct
+    end
+
+    gcs_gateway = Adapters::WeatherData::Gateways::GcsWeatherDataGateway.new unless dry_run
+
+    total_records = 0
+    total_year_files = 0
+    location_count = 0
+
+    scope.find_each do |location|
+      records = WeatherDatum.where(weather_location_id: location.id).order(:date)
+      next if records.empty?
+
+      dtos = records.map(&:to_dto)
+      years = dtos.map { |d| d.date.year }.uniq
+
+      if dry_run
+        years.each do |year|
+          path = "weather_data/#{location.id}/#{year}.json"
+          count = dtos.count { |d| d.date.year == year }
+          puts "  [DRY RUN] #{path} (#{count} records)"
+        end
+      else
+        gcs_gateway.upsert_weather_data!(weather_data_dtos: dtos, weather_location_id: location.id)
+      end
+
+      total_records += records.count
+      total_year_files += years.size
+      location_count += 1
+      puts "  Location #{location.id} (#{location.coordinates_string}): #{records.count} records → #{years.size} year file(s)"
+    end
+
+    puts "=" * 80
+    if dry_run
+      puts "DRY RUN complete. Would migrate #{total_records} records from #{location_count} location(s) to #{total_year_files} GCS object(s)."
+    else
+      puts "✅ Migration complete: #{total_records} records from #{location_count} location(s) → #{total_year_files} GCS object(s)"
+    end
+  end
+
   desc "Show weather data statistics"
   task stats: :environment do
-    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
     puts "Weather Data Statistics"
     puts "=" * 80
     puts "Weather Locations: #{WeatherLocation.count}"

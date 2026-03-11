@@ -155,10 +155,6 @@ def generate_recommendations(data):
                 print(f"     2. Restart daemon: agrr daemon restart")
                 print(f"     3. Review Python code in lib/core/agrr_core/")
                 print(f"     4. Check for unclosed resources (files, connections)")
-            elif process_name == "solid_queue":
-                print(f"     1. Check for stuck jobs: rails solid_queue:status")
-                print(f"     2. Review job definitions in app/jobs/")
-                print(f"     3. Consider reducing JOB_CONCURRENCY")
             elif process_name == "puma":
                 print(f"     1. Review Rails logs in log/production.log")
                 print(f"     2. Check for memory-heavy requests")

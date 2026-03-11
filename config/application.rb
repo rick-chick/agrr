@@ -28,8 +28,8 @@ module Agrr
     # Use SQLite for caching
     config.cache_store = :solid_cache_store
 
-    # Use SQLite for background jobs
-    config.active_job.queue_adapter = :solid_queue
+    # Use SQLite for background jobs (async adapter; Solid Queue 廃止)
+    config.active_job.queue_adapter = :async
 
     # Action Cable configuration is now in config/cable.yml
 

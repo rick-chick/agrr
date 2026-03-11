@@ -25,9 +25,6 @@ gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
-# Use Solid Queue for background jobs [https://github.com/rails/solid_queue]
-gem "solid_queue"
-
 # Use Solid Cache for caching [https://github.com/rails/solid_cache]
 gem "solid_cache"
 
@@ -45,6 +42,9 @@ gem "bootsnap", require: false
 
 # AWS SDK for S3
 gem "aws-sdk-s3", require: false
+
+# Google Cloud Storage (for weather_data adapter)
+gem "google-cloud-storage", require: false
 
 # Environment variables
 gem "dotenv-rails"

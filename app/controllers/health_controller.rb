@@ -17,10 +17,15 @@ class HealthController < ApplicationController
       database: 'primary'
     }, status: :ok
   rescue => e
-    Rails.logger.error "Health check failed: #{e.message}"
-    render json: { 
-      status: 'error', 
-      error: e.message,
+    msg = e.message.to_s
+    if msg.include?('unable to open database file') || msg.include?('database is locked') || msg.include?('no such table')
+      Rails.logger.warn "Health check: DB bootstrap in progress or not ready (#{msg})"
+    else
+      Rails.logger.error "Health check failed: #{msg}"
+    end
+    render json: {
+      status: 'error',
+      error: msg,
       timestamp: Time.current.iso8601
     }, status: :service_unavailable
   end

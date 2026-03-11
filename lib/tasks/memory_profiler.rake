@@ -98,7 +98,6 @@ namespace :memory do
     # Find related processes
     processes = {
       "agrr daemon" => "agrr daemon",
-      "Solid Queue" => "solid_queue",
       "Litestream" => "litestream",
       "Puma workers" => "puma"
     }

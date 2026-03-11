@@ -77,7 +77,7 @@ Rails.application.configure do
   # Use local file storage for docker environment
   config.active_storage.service = :local
 
-  # Use async adapter for background jobs in docker (simpler than Solid Queue)
+  # Use async adapter for background jobs in docker (Solid Queue 廃止)
   config.active_job.queue_adapter = :async
 
   # Set log level to info to see background job logs

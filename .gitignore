@@ -94,7 +94,6 @@ db/seeds/**/*.backup
 
 # Schema backup during migration refactoring
 db/schema.rb.tmp
-db/queue_schema.rb.tmp
 db/cache_schema.rb.tmp
 
 # AWS CLI (if accidentally extracted)

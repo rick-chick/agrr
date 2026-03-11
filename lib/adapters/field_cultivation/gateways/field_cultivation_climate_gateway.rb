@@ -18,7 +18,7 @@ module Adapters
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
           @weather_prediction_service_factory = weather_prediction_service_factory ||
             ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) }
-          @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+          @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::WeatherDataGatewayFactory.resolve
         end
 
         def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)

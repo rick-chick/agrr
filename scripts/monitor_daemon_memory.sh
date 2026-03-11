@@ -143,7 +143,6 @@ echo ""
 for i in $(seq 1 $ITERATIONS); do
     # Monitor each daemon process
     get_process_memory "agrr daemon" "agrr_daemon"
-    get_process_memory "solid_queue" "solid_queue"
     get_process_memory "litestream" "litestream"
     get_process_memory "puma" "puma"
     
@@ -167,7 +166,6 @@ echo "" >> "${REPORT_FILE}"
 
 # Analyze each process
 detect_memory_leak "${OUTPUT_FILE}" "agrr_daemon"
-detect_memory_leak "${OUTPUT_FILE}" "solid_queue"
 detect_memory_leak "${OUTPUT_FILE}" "litestream"
 detect_memory_leak "${OUTPUT_FILE}" "puma"
 

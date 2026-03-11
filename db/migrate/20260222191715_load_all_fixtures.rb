@@ -472,7 +472,7 @@ class LoadAllFixtures < ActiveRecord::Migration[8.0]
       # 参照作物のgroupsから科を抽出
       unique_families = TempCrop.where(is_reference: true, region: 'jp')
                                .pluck(:groups)
-                               .map { |g| JSON.parse(g) }
+                               .map { |g| g.present? ? JSON.parse(g) : [] }
                                .flatten
                                .compact
                                .uniq
@@ -705,7 +705,7 @@ class LoadAllFixtures < ActiveRecord::Migration[8.0]
       # 参照作物のgroupsから科を抽出
       unique_families = TempCrop.where(is_reference: true, region: 'us')
                                .pluck(:groups)
-                               .map { |g| JSON.parse(g) }
+                               .map { |g| g.present? ? JSON.parse(g) : [] }
                                .flatten
                                .compact
                                .uniq

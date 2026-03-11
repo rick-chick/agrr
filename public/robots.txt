@@ -15,10 +15,8 @@ Disallow: /api/
 Disallow: /auth/
 
 # Allow important pages explicitly
-Allow: /
-Allow: /public_plans
+Allow: /research
 Allow: /about
 Allow: /contact
 Allow: /privacy
 Allow: /terms
-

@@ -330,7 +330,7 @@ class AgrrService
       return false
     end
 
-    Rails.logger.info "[AgrrService] AGRR daemon is not running, attempting to start..."
+    Rails.logger.info "[AgrrService] AGRR daemon is not running, starting (fire-and-forget)..."
 
     stdout, stderr, status = Open3.capture3(agrr_bin, 'daemon', 'start')
 
@@ -339,24 +339,8 @@ class AgrrService
       return false
     end
 
-    max_wait_time = 5.0
-    poll_interval = 0.5
-    elapsed = 0.0
-
-    while elapsed < max_wait_time
-      sleep(poll_interval)
-      elapsed += poll_interval
-
-      if daemon_running?
-        Rails.logger.info "[AgrrService] AGRR daemon started successfully (waited #{elapsed.round(1)}s)"
-        return true
-      end
-    end
-
-    # タイムアウト後は明示的にfalseを返す
-    # フォールバックチェック（daemon_running?）を使わず、エラーとして扱う
-    Rails.logger.error "[AgrrService] AGRR daemon did not start within #{max_wait_time}s timeout"
-    false
+    Rails.logger.info "[AgrrService] AGRR daemon start initiated (no wait for ready)"
+    true
   end
 
   def find_agrr_binary

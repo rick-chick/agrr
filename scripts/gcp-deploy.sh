@@ -212,10 +212,9 @@ SECRET_KEY_BASE: "$SECRET_KEY_BASE"
 GCS_BUCKET: "$GCS_BUCKET"
 ALLOWED_HOSTS: "$ALLOWED_HOSTS"
 DEPLOY_TIMESTAMP: "$timestamp"
-SOLID_QUEUE_IN_PUMA: "false"
 USE_AGRR_DAEMON: "$USE_AGRR_DAEMON"
 AGRR_BACKDOOR_TOKEN: "$AGRR_BACKDOOR_TOKEN"
-SOLID_QUEUE_RESET_ON_DEPLOY: "$SOLID_QUEUE_RESET_ON_DEPLOY"
+SQLITE_BUSY_TIMEOUT_MS: "${SQLITE_BUSY_TIMEOUT_MS:-20000}"
 EOF
     # Only add Google OAuth credentials if they are set
     if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
@@ -232,13 +231,19 @@ EOF
     fi
     
     print_status "Deploying $SERVICE_NAME..."
-    local startup_probe="initialDelaySeconds=$HEALTH_INITIAL_DELAY,periodSeconds=$HEALTH_PERIOD,timeoutSeconds=$HEALTH_TIMEOUT,httpGet.path=/up,httpGet.port=3000"
+    HEALTH_FAILURE_THRESHOLD=${HEALTH_FAILURE_THRESHOLD:-36}
+    local startup_probe="initialDelaySeconds=$HEALTH_INITIAL_DELAY,periodSeconds=$HEALTH_PERIOD,timeoutSeconds=$HEALTH_TIMEOUT,failureThreshold=$HEALTH_FAILURE_THRESHOLD,httpGet.path=/up,httpGet.port=3000"
 
-    # Set min-instances based on daemon mode
-    local min_instances=0
-    if [ "$USE_AGRR_DAEMON" = "true" ]; then
-        min_instances=1
-        print_status "Daemon mode enabled - setting min-instances=1 for better performance"
+    # Set min-instances: MIN_INSTANCES in .env.gcp overrides. Otherwise, 1 when daemon on, 0 when off.
+    local min_instances="${MIN_INSTANCES:-}"
+    if [ -n "$min_instances" ]; then
+        print_status "Using MIN_INSTANCES=$min_instances from .env.gcp"
+    else
+        min_instances=0
+        if [ "$USE_AGRR_DAEMON" = "true" ]; then
+            min_instances=1
+            print_status "Daemon mode enabled - setting min-instances=1 for better performance"
+        fi
     fi
 
     # Optional: allow controlling ingress behavior via .env.gcp
@@ -259,6 +264,7 @@ EOF
         --port 3000 \
         --memory 2Gi \
         --cpu 2 \
+        --cpu-boost \
         --min-instances $min_instances \
         --max-instances 1 \
         --timeout 600 \
@@ -285,7 +291,7 @@ EOF
     if [ "$USE_LB_INGRESS" = "true" ]; then
         if [ -n "$FRONTEND_URL" ]; then
             # extract host from FRONTEND_URL
-            lb_host=$(echo "$FRONTEND_URL" | sed -E 's~https?://~~' | sed -E 's#/.*$~~')
+            lb_host=$(echo "$FRONTEND_URL" | sed -E 's~https?://~~' | sed -E 's#/.*$##')
             lb_health_url="https://${lb_host}/up"
             print_status "Using LB health URL: $lb_health_url"
             # retry a few times

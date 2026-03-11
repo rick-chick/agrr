@@ -46,25 +46,25 @@ class WeatherLocation < ApplicationRecord
 
   # 指定期間の気象データを取得
   def weather_data_for_period(start_date, end_date)
-    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
     gateway.weather_data_for_period(weather_location_id: id, start_date: start_date, end_date: end_date)
   end
 
   # 指定期間に気象データが存在するか
   def has_weather_data_for_period?(start_date, end_date)
-    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
     gateway.weather_data_count(weather_location_id: id, start_date: start_date, end_date: end_date) == (end_date - start_date).to_i + 1
   end
 
   # 最新の天気データの日付を取得
   def latest_weather_date
-    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
     gateway.latest_date(weather_location_id: id)
   end
 
   # 最古の天気データの日付を取得
   def earliest_weather_date
-    gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
     gateway.earliest_date(weather_location_id: id)
   end
 end

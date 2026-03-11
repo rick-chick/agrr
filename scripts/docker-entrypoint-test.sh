@@ -33,13 +33,13 @@ APP_ROOT="/app"
 STORAGE_DIR="${APP_ROOT}/storage"
 CACHE_DIR="${APP_ROOT}/.docker/test_db_cache"
 FINGERPRINT_FILE="${CACHE_DIR}/migrations.sha256"
-DB_FILES=("test.sqlite3" "test_queue.sqlite3" "test_cache.sqlite3" "test_cable.sqlite3")
+DB_FILES=("test.sqlite3" "test_cache.sqlite3" "test_cable.sqlite3")
 
 mkdir -p "${CACHE_DIR}"
 
 calculate_fingerprint() {
   # マイグレーションと関連スクリプトの差分を指標化
-  find "${APP_ROOT}/db/migrate" "${APP_ROOT}/db/queue_migrate" "${APP_ROOT}/db/cache_migrate" -type f -name "*.rb" -print0 2>/dev/null \
+  find "${APP_ROOT}/db/migrate" "${APP_ROOT}/db/cache_migrate" -type f -name "*.rb" -print0 2>/dev/null \
     | LC_ALL=C sort -z \
     | xargs -0 sha256sum \
     | sha256sum \

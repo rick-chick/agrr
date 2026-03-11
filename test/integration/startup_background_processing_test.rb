@@ -15,13 +15,9 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
       ActiveRecord::Base.connection.execute("SELECT 1")
     end
     
-    # キューデータベースとキャッシュデータベースの接続は、
-    # MonitorMigrationStatusJobを通じて確認する（統合テスト）
-    # 実際の接続設定は、MonitorMigrationStatusJobTestで確認される
-    # このテストでは、MonitorMigrationStatusJobが正常に動作することを確認する
+    # キャッシュデータベースの接続は MonitorMigrationStatusJob を通じて確認（Solid Queue 廃止により queue は削除）
     results = MonitorMigrationStatusJob.perform_now
     assert results.is_a?(Hash)
-    assert results.key?(:queue)
     assert results.key?(:cache)
   end
 
@@ -34,7 +30,6 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
     
     assert results.is_a?(Hash)
     assert results.key?(:primary)
-    assert results.key?(:queue)
     assert results.key?(:cache)
     # 各データベースの状態が確認されていることを確認
     results.each do |_database, result|
@@ -58,7 +53,6 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
       
       assert results.is_a?(Hash)
       assert results.key?(:primary)
-      assert results.key?(:queue)
       assert results.key?(:cache)
     end
   end

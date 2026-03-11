@@ -28,6 +28,5 @@ pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
 
-# Use single-process mode to avoid Solid Queue plugin autoload issues
-# (Solid Queue runs as a separate process in production)
+# Single-process mode (Solid Queue 廃止)
 workers 0

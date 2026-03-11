@@ -12,10 +12,6 @@ development:
   primary:
     <<: *default
     database: storage/development.sqlite3
-  queue:
-    <<: *default
-    database: storage/development_queue.sqlite3
-    migrations_paths: db/queue_migrate
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
@@ -39,10 +35,6 @@ test:
     # システムテストでのデータベース共有のためWALモードを有効化
     # journal_mode: walを設定すると、複数の接続でデータを共有できる
     # prepared_statements: falseで、同一接続の再利用を防ぐ
-  queue:
-    <<: *default
-    database: storage/test_queue.sqlite3
-    migrations_paths: db/queue_migrate
   cache:
     <<: *default
     database: storage/test_cache.sqlite3
@@ -63,12 +55,6 @@ production:
   primary:
     <<: *default
     database: /tmp/production.sqlite3
-  queue:
-    <<: *default
-    database: /tmp/production_queue.sqlite3
-    migrations_paths: db/queue_migrate
-    # Use WAL journal mode to reduce writer/reader contention
-    journal_mode: wal
   cache:
     <<: *default
     database: /tmp/production_cache.sqlite3

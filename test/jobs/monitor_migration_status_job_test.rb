@@ -9,7 +9,6 @@ class MonitorMigrationStatusJobTest < ActiveJob::TestCase
     
     assert results.is_a?(Hash)
     assert results.key?(:primary)
-    assert results.key?(:queue)
     assert results.key?(:cache)
     
     # 各データベースの状態が確認されていることを確認

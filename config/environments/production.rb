@@ -67,7 +67,7 @@ Rails.application.configure do
   # Use Solid Cache for production caching (SQLite-based)
   config.cache_store = :solid_cache_store
 
-  # Use async adapter for background jobs in single-instance production
+  # Use async adapter for background jobs in single-instance production (Solid Queue 廃止)
   config.active_job.queue_adapter = :async
   config.active_job.queue_name_prefix = "agrr_production"
 

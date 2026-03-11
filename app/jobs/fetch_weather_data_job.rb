@@ -118,7 +118,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def weather_data_gateway
-    @weather_data_gateway ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    @weather_data_gateway ||= Adapters::WeatherData::WeatherDataGatewayFactory.resolve
   end
 
   def agrr_weather_gateway

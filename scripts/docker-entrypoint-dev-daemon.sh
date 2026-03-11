@@ -26,7 +26,7 @@ rm -f /app/tmp/pids/server.pid
 # db:migrateがschema.rbを見つけると、それを使ってDBを作成してしまい
 # schema_migrationsに全マイグレーション実行済みと記録されるため
 echo "Removing schema files for clean migration run..."
-rm -f /app/db/schema.rb /app/db/queue_schema.rb /app/db/cache_schema.rb /app/db/cable_schema.rb
+rm -f /app/db/schema.rb /app/db/cache_schema.rb /app/db/cable_schema.rb
 
 # Litestream復元（開発環境でも本番同様にlitestreamを使用）
 LITESTREAM_CONFIG="/app/config/litestream.development.yml"
@@ -40,13 +40,6 @@ if [ -f "$LITESTREAM_CONFIG" ] && [ -n "${GCS_BUCKET_DEV:-}" ]; then
         echo "✓ Main database restored from GCS"
     else
         echo "⚠ No main database replica found, starting fresh"
-    fi
-    
-    # キューデータベースの復元
-    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development_queue.sqlite3; then
-        echo "✓ Queue database restored from GCS"
-    else
-        echo "⚠ No queue database replica found, starting fresh"
     fi
     
     # キャッシュデータベースの復元
@@ -73,7 +66,7 @@ fi
 
 # すべてのDBをマイグレーション実行（primary, queue, cache, cable）
 echo "========================================="
-echo "Running migrations for all databases (primary, queue, cache, cable)..."
+echo "Running migrations for all databases (primary, cache, cable)..."
 echo "========================================="
 bundle exec rails db:migrate
 

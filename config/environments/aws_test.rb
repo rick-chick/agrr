@@ -72,8 +72,8 @@ Rails.application.configure do
   # Use Solid Cache for test environment caching (SQLite-based)
   config.cache_store = :solid_cache_store
 
-  # Use Solid Queue for background jobs (SQLite-based)
-  config.active_job.queue_adapter = :solid_queue
+  # Use async adapter for background jobs (Solid Queue 廃止)
+  config.active_job.queue_adapter = :async
   config.active_job.queue_name_prefix = "agrr_aws_test"
 
   config.action_mailer.perform_caching = false

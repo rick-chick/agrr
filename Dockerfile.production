@@ -26,10 +26,12 @@ WORKDIR /app
 # Copy Gemfile and Gemfile.lock
 COPY Gemfile Gemfile.lock ./
 
-# Install gems
+# Install gems and precompile Bootsnap cache for gems
+# NOTE: bootsnap precompile は Gemfile 変更時のみ再実行されるよう、このレイヤーにまとめる
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
-    bundle install
+    bundle install && \
+    bundle exec bootsnap precompile --gemfile || echo "bootsnap precompile skipped (optional optimization)"
 
 # Copy package.json and install Node.js dependencies
 COPY package.json ./
