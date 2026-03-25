@@ -34,6 +34,13 @@
 - ✅ 単体テスト: PlanSaveService (10テストケース)
   - ✅ すべてのテストが成功（10/10成功）
   - ✅ カバレッジ: 98.51%
+- ✅ リポジトリ内の自動「統合」相当（HTTP シミュレーション、ブラウザなし）
+  - ✅ `test/integration/public_plans_flow_test.rb` … 地域→農場サイズ→作物→計画作成→最適化画面までの一連リクエスト（`ActionDispatch::IntegrationTest`）
+  - ✅ `test/controllers/public_plans_controller_test.rb` … 同上の完全フローに加え、`POST /api/v1/public_plans/save_plan` の成否・`GET /public_plans/results` など
+  - ✅ 認証コントローラ … セッションに公開計画保存用データがある場合の `process_saved_plan` へのリダイレクト（`test/controllers/auth_controller_test.rb`、`test/controllers/auth_test_controller_test.rb`）
+  - ✅ 農場件数上限と保存処理の組み合わせ … `test/integration/farm_limit_integration_test.rb`（`PlanSaveService` を実呼び出し）
+- ⚠️ ブラウザ E2E（System テスト）… 公開計画の**結果画面・ガント表示**などに限定（例: `test/system/gantt_chart_display_test.rb`）。ウィザード全行程や保存ボタン操作の E2E は別カテゴリ
+- ⚠️ 手動フルフロー … 本番相当ブラウザでの最終確認（自動テストの代替ではない）
 
 ## 実装詳細の変更点
 
@@ -108,25 +115,26 @@
 
 ## 未実装項目
 
-### 1. 統合テスト
-- 完全なユーザーフローテスト
-- サインインフローテスト
-- パフォーマンステスト
+### 1. ブラウザ E2E（System テスト）※上記と役割が異なる
+- 公開計画ウィザードの画面操作から保存 API 呼び出しまでを **Capybara 等で端到端** に自動化したテスト（現状、リポジトリでは結果画面周りに限定）
+- 実 OAuth 完了後の `GET /public_plans/process_saved_plan` から `PlanSaveService` までを **スタブなしで** 一本の System/Integration で繋ぐテスト
 
-### 2. E2Eテスト
-- ブラウザベースのテスト
-- UI操作のテスト
+### 2. 手動フルフロー
+- 実ブラウザでのサインイン〜保存完了までの確認（リリース前の推奨作業）
 
-### 3. 追加機能
+### 3. パフォーマンステスト
+- 負荷・計測を目的とした自動テスト（単体・統合の成功とは別レイヤ）
+
+### 4. 追加機能
 - 計画の名前付け機能
 - 保存前の確認ダイアログ
 - 保存履歴の表示
 
 ## 次のステップ
 
-1. 統合テストの実装
-2. E2Eテストの実装
-3. パフォーマンス最適化
+1. 必要に応じたブラウザ E2E（保存ウィザード＋認証後処理）の拡充
+2. 手動フルフロー確認の手順化
+3. パフォーマンス最適化（継続）
 4. UI/UXの改善
 5. ドキュメント整備
 

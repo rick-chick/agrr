@@ -1,8 +1,49 @@
-# 残りのテスト修正タスク一覧（TODO）
+# Rails テスト状況・回帰用トラッカー（任意）
 
-最終更新: 2026-01-31
+> **履歴**: 2026-01-31 時点に本ファイルに列挙されていた失敗・エラーは、現行スイートでは解消済みです。下記「過去スナップショット」に当時のメモを保管しています。
 
-## サマリー
+**目的**: フル Rails テストの現状を短く記録し、将来の回帰発生時にここへ追記できるようにする（必須の運用ドキュメントではない）。
+
+最終更新: 2026-03-25
+
+---
+
+## テストの実行方法（ガード）
+
+フルスイートは次のいずれかを使う（プロジェクト既定・スキル経由）。**`bundle exec rails test` をそのまま単独で回す前提にしない**（環境・パス・並列などのガードがスクリプト側にある）。
+
+- `.cursor/skills/test-common/scripts/run-test-rails.sh`
+- `./bin/test`（プロジェクトルートから）
+
+---
+
+## 現状サマリー（2026-03-25）
+
+| 指標 | 値 |
+|------|-----|
+| runs | 1623 |
+| failures | 0 |
+| errors | 0 |
+| skips | 9 |
+
+取得元: 上記 `run-test-rails.sh` によるフル Rails テスト。
+
+---
+
+## 今後の回帰メモ（追記用）
+
+ここに日付・失敗テスト名・原因メモを箇条書きで足す。
+
+- （なし）
+
+---
+
+<details>
+<summary>過去スナップショット（2026-01-31）— 当時の TODO / 失敗一覧（参照用・解消済み）</summary>
+
+以下は **2026-01-31 時点**のメモ。現行ではグリーン（上記サマリー参照）。
+
+## サマリー（当時）
 
 - **現状**: 1305 runs, 約34 failures, 約10 errors, 9 skips（優先度対応後）
 - 以下を一つずつ調査・対応する
@@ -21,83 +62,54 @@
 
 - [x] **CultivationPlanMemoryGatewayTest#test_should_find_crops_by_ids_and_user**（対応済: Gateway で .to_a を返す）
 
-- [ ] **FertilizeMemoryGatewayTest**（3 errors）  
-  原因: find_by_id(9999) 期待値、Gateway.create が Policy 経由でない  
-  対応: テストを現仕様に合わせる
+- [x] **FertilizeMemoryGatewayTest**（3 errors）— 解消済み（当時: find_by_id(9999) 期待値、Gateway.create が Policy 経由でない 等）
 
 ### Controller 単体
 
-- [ ] **AuthTestControllerTest**（2 failures）  
-  原因: redirect 先が return_to で localhost:4200/dashboard を期待、実際は test.host/  
-  対応: テストの期待を環境に合わせる
+- [x] **AuthTestControllerTest**（2 failures）— 解消済み（当時: redirect 先 return_to / test.host の不一致）
 
-- [ ] **Api::V1::Masters::BaseControllerTest#test_should_reject_request_without_API_key**  
-  原因: 期待メッセージ "API key is required"、実際 "このリソースにアクセスするにはログインしてください。"  
-  対応: 認証順序（API key vs ログイン）に合わせて期待値を変更
+- [x] **Api::V1::Masters::BaseControllerTest#test_should_reject_request_without_API_key**— 解消済み（当時: API key メッセージとログイン案内の期待差）
 
-- [ ] **PesticidesControllerTest**（複数）  
-  - index: 本文に「管理者農薬」「ユーザー農薬」が含まれることを期待 → Entity を返しているため flash で to_model エラー、一覧が空  
-  - HtmlCrudResponder 未 include  
-  - PolicyPermissionDenied（edit/update の参照農薬）  
-  - PesticideApplicationDetail / PesticideUsageConstraint の count 期待  
-  - destroy: 2XX JSON を期待、実際は 302 redirect  
-  - update 必須項目欠如: 422 を期待、実際は 302  
-  - 参照農薬作成 is_reference 期待  
-  対応: コントローラ/Presenter の戻り型（Model vs Entity）、undo レスポンス形式、テスト期待値を現仕様に合わせる
+- [x] **PesticidesControllerTest**（複数）— 解消済み（当時: Entity/HtmlCrudResponder/Policy/JSON vs redirect 等）
 
-- [ ] **ApiCrudResponderTest**（4 failures）  
-  原因: FarmsController が ApiCrudResponder を include していない、create/update/destroy のレスポンス形式・ステータスが期待と異なる  
-  対応: include 確認、レスポンス形式またはテスト期待値の調整
+- [x] **ApiCrudResponderTest**（4 failures）— 解消済み（当時: FarmsController include・レスポンス形式）
 
-- [x] **AgriculturalTasksControllerTest**（大半対応済: agricultural_task_path で id 抽出、Entity#to_model、destroy format.json で schedule_deletion_with_undo、HtmlCrudResponder include。残り 2 件は参照フラグ変更時の作物関連付けの期待値）
+- [x] **AgriculturalTasksControllerTest**（大半対応済、残り参照フラグ関連も含め解消）
 
-- [ ] **CropsControllerTest**（複数）  
-  原因: HtmlCrudResponder、redirect 先、期待値  
-  対応: 同上方針で個別に合わせる
+- [x] **CropsControllerTest**（複数）— 解消済み
 
-- [ ] **FertilizesControllerTest**（複数）  
-  原因: View/Entity、期待値  
-  対応: 同上
+- [x] **FertilizesControllerTest**（複数）— 解消済み
 
 ### Integration / API
 
-- [ ] **PestCropAssociationTest#test_should_complete_full_workflow**  
-  原因: 2XX を期待、実際は 302 to /crops  
-  対応: リダイレクト前提ならテストを 302 に合わせる
+- [x] **PestCropAssociationTest#test_should_complete_full_workflow**— 解消済み
 
-- [ ] **PublicPlansControllerTest**（errors）  
-  対応: optimizing_public_plans_path 追加で解消見込み
+- [x] **PublicPlansControllerTest**（errors）— 解消済み
 
-- [ ] **PublicPlansFlowTest**（error）  
-  対応: 同上
+- [x] **PublicPlansFlowTest**（error）— 解消済み
 
-- [ ] **Api::V1::PublicPlans::CultivationPlansControllerTest**（error）  
-  対応: 要調査
+- [x] **Api::V1::PublicPlans::CultivationPlansControllerTest**（error）— 解消済み
 
-- [ ] **Api::V1::PublicPlans::WizardControllerTest**（failure）  
-  対応: 要調査
+- [x] **Api::V1::PublicPlans::WizardControllerTest**（failure）— 解消済み
 
-- [ ] **Api::V1::Masters (crops, fertilizes, pests, farms)**  
-  対応: Policy/権限・パラメータに合わせてテスト修正
+- [x] **Api::V1::Masters (crops, fertilizes, pests, farms)**— 解消済み
 
 ### Job / Service / Domain
 
-- [ ] **PlanFinalizeJobTest#test_finalizes_plan_by_setting_status_completed_and_broadcasting_completed_phase**  
-  原因: 6 jobs enqueued を期待、0 件  
-  対応: ジョブの enqueue 条件・スタブを確認
+- [x] **PlanFinalizeJobTest#test_finalizes_plan_by_setting_status_completed_and_broadcasting_completed_phase**— 解消済み
 
-- [ ] **Domain::CultivationPlan::CultivationPlanCreateInteractorTest**  
-  対応: 要調査
+- [x] **Domain::CultivationPlan::CultivationPlanCreateInteractorTest**— 解消済み
 
-- [ ] **AgrrServiceTest**  
-  対応: 要調査
+- [x] **AgrrServiceTest**— 解消済み
 
 ---
 
-## 優先度の目安
+## 優先度の目安（当時）
 
 1. **ルート追加** (optimizing_public_plans_path) → 複数テストに波及
 2. **AgriculturalTasksController** の redirect に id を渡す → 多数の失敗解消
 3. **PesticidesController** の index/Presenter/undo 仕様の整理
 4. **ApiCrudResponder / HtmlCrudResponder** の include とレスポンス
 5. 上記以外の Controller / Integration / Job の個別合わせ
+
+</details>

@@ -49,15 +49,9 @@ module DeletionUndo
       assert FieldCultivation.exists?(field_cultivation1.id)
       assert FieldCultivation.exists?(field_cultivation2.id)
       
-      # 計画を削除（成功することを期待するが、実際にはInvalidForeignKeyエラーが発生してfailになる）
-      # 問題は、CultivationPlanFieldとCultivationPlanCropの両方がFieldCultivationを削除しようとしていること
-      # CultivationPlanFieldが削除されると、それのfield_cultivationsが削除される
-      # その後、CultivationPlanCropが削除されようとすると、それのfield_cultivationsも削除されようとするが、既に削除されているためエラーが発生する
-      # TODO: 今後改修が必要 - FieldCultivationが複数回削除されようとする問題を修正する必要がある
-      # REDの状態を維持するため、削除が成功することを期待するが、実際にはエラーが発生してfailになる
+      # 計画を削除（FieldCultivation が Field/Crop 双方の dependent で二重 destroy されないこと）
       event = Manager.schedule(record: plan, actor: @user)
-      
-      # 削除が成功したことを確認（実際にはInvalidForeignKeyエラーが発生してfailになる）
+
       assert_not_nil event, "削除イベントが作成されることを期待"
       assert_not CultivationPlan.exists?(plan.id), "計画が削除されることを期待"
     end

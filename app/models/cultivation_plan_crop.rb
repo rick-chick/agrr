@@ -16,8 +16,12 @@ class CultivationPlanCrop < ApplicationRecord
   # == Associations ========================================================
   belongs_to :cultivation_plan
   belongs_to :crop
-  has_many :field_cultivations, dependent: :destroy
-  
+  # CultivationPlan 全体削除時は Plan 側が先に field_cultivations を削除するため dependent は付けない
+  has_many :field_cultivations, inverse_of: :cultivation_plan_crop
+
+  # == Callbacks =============================================================
+  before_destroy :destroy_field_cultivations_for_crop
+
   # == Validations =========================================================
   validates :name, presence: true, length: { maximum: 100 }
   validates :crop_id, presence: true
@@ -32,6 +36,12 @@ class CultivationPlanCrop < ApplicationRecord
     else
       name
     end
+  end
+
+  private
+
+  def destroy_field_cultivations_for_crop
+    field_cultivations.find_each(&:destroy!)
   end
 end
 

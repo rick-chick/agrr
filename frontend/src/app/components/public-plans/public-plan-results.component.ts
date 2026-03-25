@@ -48,6 +48,61 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.error) {
           <p class="error-message">{{ control.error }}</p>
         } @else if (control.data) {
+          <div class="gantt-results-header">
+            <div class="gantt-results-header-main">
+              <div class="gantt-results-header-icon" aria-hidden="true">🎉</div>
+              <h2 class="gantt-results-header-title">{{ 'public_plans.results.header.title' | translate }}</h2>
+              <div class="gantt-results-header-badge">{{ 'public_plans.results.header.badge' | translate }}</div>
+            </div>
+
+            <div class="gantt-results-header-summary">
+              <div class="gantt-summary-item">
+                <span class="gantt-summary-icon" aria-hidden="true">🌍</span>
+                <span class="gantt-summary-label">{{ 'public_plans.results.header.region' | translate }}</span>
+                <span class="gantt-summary-value">{{ farm?.name }}</span>
+              </div>
+              <div class="gantt-summary-item">
+                <span class="gantt-summary-icon" aria-hidden="true">📏</span>
+                <span class="gantt-summary-label">{{ 'public_plans.results.header.total_area' | translate }}</span>
+                <span class="gantt-summary-value">{{ control.data.data.total_area | number }}㎡</span>
+              </div>
+              <div class="gantt-summary-item">
+                <span class="gantt-summary-icon" aria-hidden="true">🏞️</span>
+                <span class="gantt-summary-label">{{ 'public_plans.results.header.field_count' | translate }}</span>
+                <span class="gantt-summary-value">{{
+                  'public_plans.results.header.field_count_value' | translate: { count: resultsFieldCount }
+                }}</span>
+              </div>
+              <div class="gantt-summary-item">
+                <span class="gantt-summary-icon" aria-hidden="true">💰</span>
+                <span class="gantt-summary-label">{{ 'public_plans.results.header.total_cost' | translate }}</span>
+                <span class="gantt-summary-value">¥{{ resultsTotalCost | number }}</span>
+              </div>
+              @if (resultsHasRevenue) {
+                <div class="gantt-summary-item">
+                  <span class="gantt-summary-icon" aria-hidden="true">📈</span>
+                  <span class="gantt-summary-label">{{ 'public_plans.results.header.total_revenue' | translate }}</span>
+                  <span class="gantt-summary-value">¥{{ resultsTotalRevenue | number }}</span>
+                </div>
+                <div class="gantt-summary-item">
+                  <span class="gantt-summary-icon" aria-hidden="true">💎</span>
+                  <span class="gantt-summary-label">{{ 'public_plans.results.header.total_profit' | translate }}</span>
+                  <span class="gantt-summary-value">¥{{ resultsTotalProfit | number }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="gantt-results-header-subtitle">
+              {{ 'public_plans.results.header.subtitle' | translate: { count: resultsSubtitleFieldCount } }}
+            </div>
+
+            @if (rangeLabelText) {
+              <div class="gantt-visible-range">
+                <span class="gantt-visible-range__value">{{ rangeLabelText }}</span>
+              </div>
+            }
+          </div>
+
           <div class="public-plan-results__header-actions">
             <button type="button" class="btn btn-primary" (click)="savePlan()">
               {{ 'public_plans.save.button' | translate }}
@@ -62,22 +117,6 @@ const initialControl: PublicPlanResultsViewState = {
             <a [routerLink]="['/public-plans/new']" class="btn btn-white">
               {{ 'public_plans.results.create_new_plan' | translate }}
             </a>
-          </div>
-
-          <div class="gantt-results-header">
-            <div class="compact-summary-line">
-              <span class="compact-icon">🎉</span>
-              <span class="compact-text">{{ 'public_plans.results.header.title' | translate }}</span>
-              <span class="compact-separator">•</span>
-              <span class="compact-icon">🌍</span>
-              <span class="compact-value">{{ farm?.name }}</span>
-              <span class="compact-separator">•</span>
-              <span class="compact-icon">📏</span>
-              <span class="compact-value">{{ control.data.data.total_area | number }}㎡</span>
-            </div>
-            <div *ngIf="rangeLabelText" class="gantt-visible-range">
-              <span class="gantt-visible-range__value">{{ rangeLabelText }}</span>
-            </div>
           </div>
 
           <section class="page">
@@ -137,6 +176,35 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
 
   get farm() {
     return this.publicPlanStore.state.farm;
+  }
+
+  /** Rails `field_cultivations.count` に相当（圃場数表示・サブタイトル用） */
+  get resultsFieldCount(): number {
+    const inner = this.control.data?.data;
+    if (!inner) {
+      return 0;
+    }
+    return inner.fields?.length ?? inner.cultivations?.length ?? 0;
+  }
+
+  get resultsSubtitleFieldCount(): number {
+    return this.resultsFieldCount;
+  }
+
+  get resultsHasRevenue(): boolean {
+    return this.control.data?.total_revenue != null;
+  }
+
+  get resultsTotalCost(): number {
+    return this.control.data?.total_cost ?? 0;
+  }
+
+  get resultsTotalRevenue(): number {
+    return this.control.data?.total_revenue ?? 0;
+  }
+
+  get resultsTotalProfit(): number {
+    return this.control.data?.total_profit ?? 0;
   }
 
   private _control: PublicPlanResultsViewState = initialControl;

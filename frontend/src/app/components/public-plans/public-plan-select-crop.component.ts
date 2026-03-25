@@ -120,23 +120,33 @@ const initialControl: PublicPlanSelectCropViewState = {
       </div>
 
       @if (!control.error) {
-        <div class="fixed-bottom-bar fixed-bottom-bar--create-plan">
+        <div class="fixed-bottom-bar">
           <div class="fixed-bottom-bar-container">
-            <div class="fixed-bottom-bar-content fixed-bottom-bar-content--submit-only">
+            <div class="fixed-bottom-bar-content">
+              <div class="fixed-bottom-bar-left">
+                <a routerLink="/public-plans/select-farm-size" class="btn btn-white back-button">
+                  {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
+                </a>
+                <div class="selection-counter-group">
+                  <span class="counter-label">{{ 'public_plans.select_crop.bottom_bar.selected_label' | translate }}</span>
+                  <div class="counter-badge" aria-live="polite">{{ selectedCropIds.size }}</div>
+                  <span class="counter-unit">{{ 'public_plans.select_crop.bottom_bar.selected_unit' | translate }}</span>
+                </div>
+              </div>
               <button
                 type="button"
-                class="submit-button btn"
+                class="btn-gradient submit-button"
                 (click)="createPlan()"
                 [disabled]="control.saving || selectedCropIds.size === 0"
               >
                 {{ 'public_plans.select_crop.bottom_bar.submit_button' | translate }}
               </button>
             </div>
-            @if (selectedCropIds.size === 0) {
-              <div class="hint-message">
+            <div class="hint-message">
+              @if (selectedCropIds.size === 0) {
                 {{ 'public_plans.select_crop.bottom_bar.hint' | translate }}
-              </div>
-            }
+              }
+            </div>
           </div>
         </div>
       }

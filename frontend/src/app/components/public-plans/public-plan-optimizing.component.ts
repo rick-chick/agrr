@@ -59,9 +59,13 @@ const initialControl: PublicPlanOptimizingViewState = {
             <span class="spinner spinner-sm" [class.hidden]="control.status === 'failed'"></span>
             <div class="progress-info">
               <div class="progress-phase-message" [class.error]="control.status === 'failed'">
-                {{ control.status === 'failed' ? ('public_plans.optimizing.error.title' | translate) : control.phaseMessage }}
+                @if (control.status !== 'failed') {
+                  {{ control.phaseMessage }}
+                }
               </div>
-              <div class="progress-duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</div>
+              @if (control.status !== 'failed') {
+                <div class="progress-duration-hint">{{ 'public_plans.optimizing.progress.duration_hint' | translate }}</div>
+              }
             </div>
           </div>
           <div class="progress-elapsed-time">
@@ -75,13 +79,20 @@ const initialControl: PublicPlanOptimizingViewState = {
 
         @if (control.status === 'failed') {
           <div class="error-message-container">
-            <div class="error-actions">
-              <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
-                {{ 'public_plans.optimizing.error.try_again' | translate }}
-              </a>
-              <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
-                {{ 'public_plans.optimizing.error.start_over' | translate }}
-              </a>
+            <div class="error-icon" aria-hidden="true">⚠️</div>
+            <div class="error-content">
+              <div class="error-title">{{ 'public_plans.optimizing.error.title' | translate }}</div>
+              @if (control.phaseMessage) {
+                <div class="error-detail">{{ control.phaseMessage }}</div>
+              }
+              <div class="error-actions">
+                <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">
+                  {{ 'public_plans.optimizing.error.try_again' | translate }}
+                </a>
+                <a [routerLink]="['/public-plans/new']" class="btn btn-secondary">
+                  {{ 'public_plans.optimizing.error.start_over' | translate }}
+                </a>
+              </div>
             </div>
           </div>
         }

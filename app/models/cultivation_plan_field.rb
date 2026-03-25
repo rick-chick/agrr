@@ -14,8 +14,12 @@
 class CultivationPlanField < ApplicationRecord
   # == Associations ========================================================
   belongs_to :cultivation_plan
-  has_many :field_cultivations, dependent: :destroy
-  
+  # CultivationPlan 全体削除時は Plan 側が先に field_cultivations を削除するため dependent は付けない
+  has_many :field_cultivations, inverse_of: :cultivation_plan_field
+
+  # == Callbacks =============================================================
+  before_destroy :destroy_field_cultivations_for_field
+
   # == Validations =========================================================
   validates :name, presence: true, length: { maximum: 100 }
   validates :area, presence: true, numericality: { greater_than: 0 }
@@ -25,6 +29,12 @@ class CultivationPlanField < ApplicationRecord
   
   def display_name
     name.presence || I18n.t('models.cultivation_plan_field.default_name', id: id)
+  end
+
+  private
+
+  def destroy_field_cultivations_for_field
+    field_cultivations.find_each(&:destroy!)
   end
 end
 
