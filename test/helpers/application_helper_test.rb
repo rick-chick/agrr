@@ -42,7 +42,7 @@ class ApplicationHelperTest < ActionView::TestCase
     hreflangs = alts.map { |a| a[:hreflang] }
     assert_includes hreflangs, "ja"
     assert_includes hreflangs, "in"
-    assert_includes hreflangs, "us" # public/research/en/... exists
+    assert_includes hreflangs, "en" # public/research/en/... exists
     # ja/in point to /research/ directly (no lang subdir)
     alts.select { |a| %w[ja in].include?(a[:hreflang]) }.each do |alt|
       assert_equal "#{base_url}/research/research_reports/broccoli/01_environmental_requirements/gdd_requirements.html", alt[:href]
@@ -57,13 +57,13 @@ class ApplicationHelperTest < ActionView::TestCase
     hreflangs = alts.map { |a| a[:hreflang] }
     assert_includes hreflangs, "ja"
     assert_includes hreflangs, "in"
-    assert_includes hreflangs, "us"
+    assert_includes hreflangs, "en"
     # ja/in href is /research/index.html
     alts.select { |a| %w[ja in].include?(a[:hreflang]) }.each do |alt|
       assert_equal "#{base_url}/research/index.html", alt[:href]
     end
-    # us href is /research/en/index.html
-    us_alt = alts.find { |a| a[:hreflang] == "us" }
-    assert_equal "#{base_url}/research/en/index.html", us_alt[:href]
+    # en href is /research/en/index.html
+    en_alt = alts.find { |a| a[:hreflang] == "en" }
+    assert_equal "#{base_url}/research/en/index.html", en_alt[:href]
   end
 end

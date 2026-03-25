@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-about',
@@ -79,4 +81,83 @@ import { RouterLink } from '@angular/router';
   `,
   styleUrls: ['./about.component.css']
 })
-export class AboutComponent {}
+export class AboutComponent implements OnInit, OnDestroy {
+  private readonly translate = inject(TranslateService);
+  private readonly renderer = inject(Renderer2);
+  private readonly document = inject(DOCUMENT);
+  private jsonLdScript: HTMLScriptElement | null = null;
+  private langSub?: Subscription;
+
+  ngOnInit(): void {
+    this.translate
+      .get([
+        'meta.default.title',
+        'meta.default.description',
+        'meta.default.og_description',
+      ])
+      .subscribe(() => {
+        this.attachJsonLd();
+      });
+    this.langSub = this.translate.onLangChange.subscribe(() => {
+      this.attachJsonLd();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.langSub?.unsubscribe();
+    this.detachJsonLd();
+  }
+
+  private detachJsonLd(): void {
+    if (this.jsonLdScript?.parentNode) {
+      this.renderer.removeChild(this.jsonLdScript.parentNode, this.jsonLdScript);
+    }
+    this.jsonLdScript = null;
+  }
+
+  private attachJsonLd(): void {
+    this.detachJsonLd();
+    // WebSite / product identity: site-wide meta (not the About page heading)
+    const siteName = this.translate.instant('meta.default.title');
+    let siteDescription = this.translate.instant('meta.default.description');
+    if (!siteDescription || siteDescription.startsWith('meta.default.')) {
+      siteDescription = this.translate.instant('meta.default.og_description');
+    }
+    if (
+      !siteName ||
+      siteName.startsWith('meta.default.') ||
+      !siteDescription ||
+      siteDescription.startsWith('meta.default.')
+    ) {
+      return;
+    }
+    const baseUrl =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://agrr.net';
+    const structured = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: siteName,
+          url: `${baseUrl}/`,
+          description: siteDescription,
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'AGRR',
+          applicationCategory: 'BusinessApplication',
+          operatingSystem: 'Web',
+          url: `${baseUrl}/`,
+          description: siteDescription,
+        },
+      ],
+    };
+    const script = this.renderer.createElement('script') as HTMLScriptElement;
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(structured);
+    this.renderer.appendChild(this.document.head, script);
+    this.jsonLdScript = script;
+  }
+}

@@ -111,8 +111,8 @@ module ApplicationHelper
   end
 
   # サイトマップ用: research ページの xhtml:link rel="alternate" 候補を返す
-  # 各言語のファイルが存在する場合のみ含める。hreflang は ja/us/in (Rails locale)
-  # ja/in は /research/ 直下、en は /research/en/ 配下
+  # 各言語のファイルが存在する場合のみ含める。hreflang は BCP 47（ja, en, in はヒンディー用の内部キー）
+  # ja/in は /research/ 直下、英語は /research/en/ 配下（URL パスは従来どおり）
   def research_alternate_urls(research_page_path, base_url)
     path = research_page_path.to_s.delete_prefix('research/').delete_prefix('/')
     content_path = path.sub(/\A(ja|en|in)\//, '') # 既に lang 付きパスなら除去
@@ -125,7 +125,7 @@ module ApplicationHelper
     end
     # us(en): /research/en/ 配下のファイルを参照
     en_candidate = "research/en/#{content_path}"
-    alternates << { hreflang: 'us', href: "#{base_url}/#{en_candidate}" } if File.exist?(Rails.root.join('public', en_candidate))
+    alternates << { hreflang: 'en', href: "#{base_url}/#{en_candidate}" } if File.exist?(Rails.root.join('public', en_candidate))
 
     alternates
   end

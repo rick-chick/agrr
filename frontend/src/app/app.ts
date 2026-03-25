@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { Title } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subscription } from 'rxjs';
 import { NavbarComponent } from './components/shared/navbar/navbar.component';
@@ -35,6 +35,18 @@ function toRailsLocale(angularLang: 'ja' | 'en' | 'in'): string {
   return angularLang === 'en' ? 'us' : angularLang;
 }
 
+/** BCP 47 language for <html lang> */
+function documentHtmlLang(angularLang: 'ja' | 'en' | 'in'): string {
+  return angularLang === 'in' ? 'hi' : angularLang;
+}
+
+/** Open Graph locale */
+function ogLocale(angularLang: 'ja' | 'en' | 'in'): string {
+  if (angularLang === 'ja') return 'ja_JP';
+  if (angularLang === 'en') return 'en_US';
+  return 'hi_IN';
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -52,6 +64,7 @@ function toRailsLocale(angularLang: 'ja' | 'en' | 'in'): string {
 export class App implements OnInit, OnDestroy {
   private readonly translate = inject(TranslateService);
   private readonly title = inject(Title);
+  private readonly meta = inject(Meta);
   protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly undoToastService = inject(UndoToastService);
@@ -85,21 +98,27 @@ export class App implements OnInit, OnDestroy {
       document.cookie = `locale=${toRailsLocale(initialLang)}; path=/; max-age=31536000`;
     }
 
-    // Set initial page title when translations are loaded
-    this.translate.get('meta.default.title').subscribe((title: string) => {
-      this.setPageTitle(title);
-    });
-    
-    // Update page title when language changes
+    this.translate
+      .get([
+        'meta.default.title',
+        'meta.default.description',
+        'meta.default.keywords',
+        'meta.default.og_description',
+      ])
+      .subscribe(() => {
+        this.refreshSeoMeta();
+      });
+
     this.langChangeSubscription = this.translate.onLangChange.subscribe(() => {
-      this.setPageTitle(this.translate.instant('meta.default.title'));
+      this.refreshSeoMeta();
     });
-    
+
     this.googleAnalytics.applyStoredConsent();
     this.routerSubscription = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.googleAnalytics.trackPageView(event.urlAfterRedirects);
+        this.refreshSeoMeta();
       });
     this.authService.loadCurrentUser().subscribe();
   }
@@ -109,9 +128,55 @@ export class App implements OnInit, OnDestroy {
     this.langChangeSubscription?.unsubscribe();
   }
 
-  private setPageTitle(title: string): void {
-    if (title) {
+  private refreshSeoMeta(): void {
+    const angularLang = (this.translate.currentLang || 'ja') as 'ja' | 'en' | 'in';
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = documentHtmlLang(angularLang);
+    }
+
+    const title = this.translate.instant('meta.default.title');
+    const description = this.translate.instant('meta.default.description');
+    const keywords = this.translate.instant('meta.default.keywords');
+    let ogDescription = this.translate.instant('meta.default.og_description');
+    if (!ogDescription || ogDescription.startsWith('meta.default.')) {
+      ogDescription = description;
+    }
+
+    if (title && !title.startsWith('meta.default.')) {
       this.title.setTitle(title);
     }
+    if (description && !description.startsWith('meta.default.')) {
+      this.meta.updateTag({ name: 'description', content: description });
+    }
+    if (keywords && !keywords.startsWith('meta.default.')) {
+      this.meta.updateTag({ name: 'keywords', content: keywords });
+    }
+
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const ogUrl = origin ? `${origin}${path.split('?')[0]}` : '';
+
+    // Do not set og:image / twitter:image to favicon.ico (16–32px): it breaks
+    // summary_large_image and degrades Facebook OG. Use twitter:card summary until
+    // a dedicated image (e.g. ≥300×157, ideally 1200×630) is shipped under /assets.
+    this.meta.removeTag('property="og:image"');
+    this.meta.removeTag('name="twitter:image"');
+    this.meta.removeTag('name="twitter:image:alt"');
+
+    if (title && !title.startsWith('meta.default.')) {
+      this.meta.updateTag({ property: 'og:title', content: title });
+      this.meta.updateTag({ name: 'twitter:title', content: title });
+    }
+    if (ogDescription && !ogDescription.startsWith('meta.default.')) {
+      this.meta.updateTag({ property: 'og:description', content: ogDescription });
+      this.meta.updateTag({ name: 'twitter:description', content: ogDescription });
+    }
+    if (ogUrl) {
+      this.meta.updateTag({ property: 'og:url', content: ogUrl });
+    }
+    this.meta.updateTag({ property: 'og:type', content: 'website' });
+    this.meta.updateTag({ property: 'og:locale', content: ogLocale(angularLang) });
+    this.meta.updateTag({ property: 'og:site_name', content: 'AGRR' });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
   }
 }

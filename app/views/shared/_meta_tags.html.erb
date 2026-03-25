@@ -27,7 +27,7 @@
   <link rel="alternate" hreflang="x-default" href="<%= url_for(locale: :ja, only_path: false) %>">
 <% else %>
   <link rel="alternate" hreflang="ja" href="<%= url_for(locale: :ja, only_path: false) %>">
-  <link rel="alternate" hreflang="us" href="<%= url_for(locale: :us, only_path: false) %>">
+  <link rel="alternate" hreflang="en" href="<%= url_for(locale: :us, only_path: false) %>">
   <link rel="alternate" hreflang="in" href="<%= url_for(locale: :in, only_path: false) %>">
   <link rel="alternate" hreflang="x-default" href="<%= url_for(locale: :ja, only_path: false) %>">
 <% end %>
@@ -50,7 +50,7 @@ else
 end %>">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : t('meta.default.title') %>">
 <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : t('meta.default.og_description') %>">
 
