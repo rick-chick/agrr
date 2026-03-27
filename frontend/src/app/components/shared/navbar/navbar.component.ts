@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CurrentUser } from '../../../services/api.service';
@@ -107,10 +107,9 @@ export class NavbarComponent {
   }
 
   get reportUrl(): string {
-    const base = this.apiBaseUrl || getApiBaseUrl() || window.location.origin;
-    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    const rawLang = this.translate.currentLang || this.translate.defaultLang || 'en';
-    const suffix = rawLang === 'en' ? '/research/en/' : '/research/';
-    return normalizedBase + suffix;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
+    const reportPath = lang === 'en' ? '/research/en/' : '/research/';
+    return `${origin}${reportPath}`;
   }
 }

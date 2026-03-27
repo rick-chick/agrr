@@ -6,7 +6,7 @@ import { NavbarComponent } from './navbar.component';
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
-  let translateService: TranslateService;
+  let translate: TranslateService;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
@@ -17,33 +17,21 @@ describe('NavbarComponent', () => {
 
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
-    translateService = TestBed.inject(TranslateService);
-    translateService.setDefaultLang('en');
+    translate = TestBed.inject(TranslateService);
     component.apiBaseUrl = 'https://api.example.com';
   });
 
-  it('returns /research/en/ when language is en', () => {
-    translateService.use('en');
+  it('uses /research/ for ja locale', () => {
+    translate.setDefaultLang('ja');
+    translate.use('ja');
     fixture.detectChanges();
-    expect(component.reportUrl).toBe('https://api.example.com/research/en/');
+    expect(component.reportUrl).toBe(`${window.location.origin}/research/`);
   });
 
-  it('returns /research/ when language is ja', () => {
-    translateService.use('ja');
+  it('uses /research/en/ for en locale', () => {
+    translate.setDefaultLang('ja');
+    translate.use('en');
     fixture.detectChanges();
-    expect(component.reportUrl).toBe('https://api.example.com/research/');
-  });
-
-  it('returns /research/ when language is in', () => {
-    translateService.use('in');
-    fixture.detectChanges();
-    expect(component.reportUrl).toBe('https://api.example.com/research/');
-  });
-
-  it('normalizes base URL by stripping trailing slash before appending path', () => {
-    component.apiBaseUrl = 'https://api.example.com/';
-    translateService.use('en');
-    fixture.detectChanges();
-    expect(component.reportUrl).toBe('https://api.example.com/research/en/');
+    expect(component.reportUrl).toBe(`${window.location.origin}/research/en/`);
   });
 });
