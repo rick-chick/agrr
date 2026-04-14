@@ -2,17 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { COOKIE_CONTROL_UI_DISABLED } from '../../../core/cookie-consent-policy';
 import { GoogleAnalyticsService } from '../../../services/google-analytics.service';
 
 type CookieControlWindow = Window & {
   __disableCookieControl?: boolean;
 };
 
-const COOKIE_CONTROL_DEFAULT_DISABLED = true;
-
 const isCookieControlHardDisabled = (): boolean => {
   if (typeof window === 'undefined') {
-    return COOKIE_CONTROL_DEFAULT_DISABLED;
+    return COOKIE_CONTROL_UI_DISABLED;
   }
 
   const windowWithOverride = window as CookieControlWindow;
@@ -21,7 +20,7 @@ const isCookieControlHardDisabled = (): boolean => {
     return override;
   }
 
-  return COOKIE_CONTROL_DEFAULT_DISABLED;
+  return COOKIE_CONTROL_UI_DISABLED;
 };
 
 @Component({

@@ -68,14 +68,14 @@ describe('GoogleAnalyticsService', () => {
     expect(window.loadAdSense).toHaveBeenCalled();
   });
 
-  it('tracks page views using gtag config', () => {
+  it('tracks page views using page_view event (not repeated config)', () => {
     window.gtag = vi.fn();
 
     service.trackPageView('/foo');
 
     expect(window.gtag).toHaveBeenCalledWith(
-      'config',
-      'G-WNLSL6W4ZT',
+      'event',
+      'page_view',
       expect.objectContaining({
         page_path: '/foo',
         anonymize_ip: true
@@ -89,9 +89,10 @@ describe('GoogleAnalyticsService', () => {
     service.trackPageView('/bar');
 
     expect(window.dataLayer?.length).toBeGreaterThan(0);
-    expect(window.dataLayer?.[0]).toEqual([
-      'config',
-      'G-WNLSL6W4ZT',
+    const first = window.dataLayer?.[0];
+    expect(Array.from(first as ArrayLike<unknown>)).toEqual([
+      'event',
+      'page_view',
       expect.objectContaining({ page_path: '/bar' })
     ]);
   });

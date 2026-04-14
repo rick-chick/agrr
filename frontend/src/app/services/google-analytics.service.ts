@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { COOKIE_CONTROL_UI_DISABLED } from '../core/cookie-consent-policy';
 import { environment } from '../../environments/environment';
 
 export type ConsentStatus = 'granted' | 'denied';
@@ -45,15 +46,18 @@ export class GoogleAnalyticsService {
     this.updateConsentPayload(granted);
   }
 
+  /**
+   * SPA 遷移では `gtag('config', …)` を繰り返すと `_ga_*` の expires が毎回上書きされ、
+   * ブラウザが警告する。GA4 では仮想ページビューに `page_view` イベントを使う。
+   */
   trackPageView(path: string): void {
     if (!this.isEnabled) {
       return;
     }
 
-    this.safeInvoke('config', this.measurementId, {
+    this.safeInvoke('event', 'page_view', {
       page_path: path,
-      anonymize_ip: true,
-      cookie_flags: 'SameSite=None;Secure'
+      anonymize_ip: true
     });
   }
 
@@ -82,10 +86,19 @@ export class GoogleAnalyticsService {
     this.ensureGtagFunction();
     this.insertScript();
     this.safeInvoke('js', new Date());
-    this.safeInvoke('consent', 'default', this.defaultConsent);
+    // When the UI auto-grants consent, default-deny analytics here races the first NavigationEnd
+    // and can suppress g/collect until a second navigation. Align defaults with cookie-consent-banner.
+    const consentDefault = COOKIE_CONTROL_UI_DISABLED
+      ? {
+          ...this.defaultConsent,
+          analytics_storage: 'granted' as const
+        }
+      : this.defaultConsent;
+    this.safeInvoke('consent', 'default', consentDefault);
     this.safeInvoke('config', this.measurementId, {
       anonymize_ip: true,
-      cookie_flags: 'SameSite=None;Secure'
+      cookie_flags: 'SameSite=None;Secure',
+      send_page_view: false
     });
   }
 
@@ -122,8 +135,8 @@ export class GoogleAnalyticsService {
     window.dataLayer = window.dataLayer || [];
 
     if (typeof window.gtag !== 'function') {
-      window.gtag = (...args: unknown[]) => {
-        window.dataLayer?.push(args);
+      window.gtag = function gtag() {
+        window.dataLayer!.push(arguments);
       };
     }
   }
