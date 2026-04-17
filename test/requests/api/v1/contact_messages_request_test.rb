@@ -3,8 +3,6 @@ require 'test_helper'
 class Api::V1::ContactMessagesRequestTest < ActionDispatch::IntegrationTest
   setup do
     @url = '/api/v1/contact_messages'
-    ENV['CONTACT_DESTINATION_EMAIL'] = 'admin@example.com'
-    ActionMailer::Base.deliveries.clear
     ActiveJob::Base.queue_adapter = :test
   end
 
@@ -19,7 +17,7 @@ class Api::V1::ContactMessagesRequestTest < ActionDispatch::IntegrationTest
     }
   end
 
-  test 'creates contact message and enqueues job (success path)' do
+  test 'creates contact message (success path, DB only)' do
     post @url, params: contact_message_payload, as: :json
 
     assert_response :created
@@ -27,8 +25,7 @@ class Api::V1::ContactMessagesRequestTest < ActionDispatch::IntegrationTest
     assert_equal 'queued', body['status']
     assert body['id'].is_a?(Integer)
 
-    # job should be enqueued
-    assert_enqueued_jobs 1
+    assert_enqueued_jobs 0
   end
 
   test 'returns 422 for invalid input' do
@@ -40,15 +37,5 @@ class Api::V1::ContactMessagesRequestTest < ActionDispatch::IntegrationTest
     assert body['field_errors'].present?
   end
 
-  test 'returns 503 if destination email is not configured' do
-    ENV['CONTACT_DESTINATION_EMAIL'] = ''
-
-    post @url, params: contact_message_payload, as: :json
-
-    assert_response :service_unavailable
-    body = JSON.parse(@response.body)
-    assert_includes body['error'], 'CONTACT_DESTINATION_EMAIL'
-    assert_enqueued_jobs 0
-  end
 end
 

@@ -5,11 +5,6 @@ module Adapters
   module ContactMessages
     module Gateways
       class ContactMessageActiveRecordGateway < ::ContactMessages::Gateways::ContactMessageGateway
-        def initialize(destination_email:, delivery_job: ContactMessageDeliveryJob)
-          @destination_email = destination_email
-          @delivery_job = delivery_job
-        end
-
         def find_by_id(id)
           record = ::ContactMessage.find_by(id: id)
           return nil unless record
@@ -30,8 +25,6 @@ module Adapters
           # save! will raise ActiveRecord::RecordInvalid on validation errors
           record.save!
 
-          enqueue_delivery_job(record)
-
           entity_from_record(record)
         end
 
@@ -50,12 +43,7 @@ module Adapters
             sent_at: record.sent_at
           )
         end
-
-        def enqueue_delivery_job(record)
-          @delivery_job.perform_later(record.id, @destination_email)
-        end
       end
     end
   end
 end
-

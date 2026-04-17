@@ -3,7 +3,6 @@
 require_relative '../dtos/create_contact_message_input'
 require_relative '../dtos/create_contact_message_success'
 require_relative '../dtos/create_contact_message_failure'
-require_relative '../errors/destination_email_not_configured_error'
 
 module ContactMessages
   module Interactors
@@ -14,21 +13,13 @@ module ContactMessages
         end
       end
 
-      def initialize(destination_email: ENV['CONTACT_DESTINATION_EMAIL'],
-                     gateway: nil,
-                     delivery_job: ContactMessageDeliveryJob)
-        @destination_email = destination_email
+      def initialize(gateway: nil)
         @gateway = gateway
-        @delivery_job = delivery_job
       end
 
       # input: ContactMessages::Dtos::CreateContactMessageInput
       # returns: Result with success flag, entity, and optional errors
       def call(input, output_port: nil)
-        if @destination_email.to_s.strip.empty?
-          raise ContactMessages::DestinationEmailNotConfiguredError
-        end
-
         entity = gateway_with_defaults.create(input)
 
         success_dto = Dtos::CreateContactMessageSuccess.new(contact_message: entity)
@@ -41,7 +32,6 @@ module ContactMessages
 
         Result.new(success: false, errors: e.record.errors)
       rescue StandardError => e
-        raise if e.is_a?(::ContactMessages::DestinationEmailNotConfiguredError)
         failure_dto = Domain::Shared::Dtos::ErrorDto.new(e.message)
         output_port&.on_failure(failure_dto)
         raise
@@ -50,10 +40,7 @@ module ContactMessages
       private
 
       def gateway_with_defaults
-        @gateway ||= Adapters::ContactMessages::Gateways::ContactMessageActiveRecordGateway.new(
-          destination_email: @destination_email,
-          delivery_job: @delivery_job
-        )
+        @gateway ||= Adapters::ContactMessages::Gateways::ContactMessageActiveRecordGateway.new
       end
     end
   end

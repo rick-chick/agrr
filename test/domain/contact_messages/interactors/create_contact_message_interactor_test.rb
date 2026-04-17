@@ -24,10 +24,7 @@ module ContactMessages
         output_port = Minitest::Mock.new
         output_port.expect(:on_success, nil) { |dto| received = dto }
 
-        interactor = CreateContactMessageInteractor.new(
-          gateway: gateway,
-          destination_email: 'admin@example.com'
-        )
+        interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
         result = interactor.call(input, output_port: output_port)
 
@@ -59,10 +56,7 @@ module ContactMessages
         output_port = Minitest::Mock.new
         output_port.expect(:on_failure, nil) { |dto| received = dto }
 
-        interactor = CreateContactMessageInteractor.new(
-          gateway: gateway,
-          destination_email: 'admin@example.com'
-        )
+        interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
         result = interactor.call(input, output_port: output_port)
 
@@ -92,10 +86,7 @@ module ContactMessages
           received = dto
         end
 
-        interactor = CreateContactMessageInteractor.new(
-          gateway: gateway,
-          destination_email: 'admin@example.com'
-        )
+        interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
         assert_raises(StandardError) do
           interactor.call(input, output_port: output_port)

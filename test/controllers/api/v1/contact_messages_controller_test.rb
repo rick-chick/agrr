@@ -5,7 +5,6 @@ module Api
   module V1
     class ContactMessagesControllerTest < ActionDispatch::IntegrationTest
       setup do
-        ENV['CONTACT_DESTINATION_EMAIL'] = 'admin@example.com'
         ActiveJob::Base.queue_adapter = :test
       end
 

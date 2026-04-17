@@ -19,8 +19,6 @@ module Api
         presenter = self.class::PRESENTER_CLASS.new(view: self)
         interactor = self.class::INTERACTOR_CLASS.new
         interactor.call(contact_message_input, output_port: presenter)
-      rescue ::ContactMessages::DestinationEmailNotConfiguredError => e
-        render_response(json: { error: e.message }, status: :service_unavailable)
       rescue StandardError => e
         log_unexpected_error(e)
         render_response(json: { error: 'Internal server error' }, status: :internal_server_error)
