@@ -34,8 +34,8 @@ class PlanningSchedulePresenterTest < ActiveSupport::TestCase
     cells = presenter.period_cells(arranged_cultivations: arranged, period_index: 0)
     assert_equal 1, cells.size
     cell = cells.first
-    assert_equal :cultivation, cell[ScheduleTableFieldArranger::CELL_TYPE_KEY]
-    assert_equal 2, cell[ScheduleTableFieldArranger::CELL_COLSPAN_KEY]
-    assert_equal true, cell[ScheduleTableFieldArranger::CELL_RENDER_KEY]
+    assert_equal :cultivation, cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_TYPE_KEY]
+    assert_equal 2, cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_COLSPAN_KEY]
+    assert_equal true, cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_RENDER_KEY]
   end
 end

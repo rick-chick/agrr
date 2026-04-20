@@ -17,7 +17,7 @@ class Presenters::Html::Plans::PlanningSchedulePresenter
   # @param period_index [Integer] 期間インデックス
   # @return [Array<Hash>] cells
   def period_cells(arranged_cultivations:, period_index:)
-    ScheduleTableFieldArranger.build_period_cells(
+    Presenters::Html::Plans::ScheduleTableFieldArranger.build_period_cells(
       arranged_cultivations: arranged_cultivations,
       periods: @periods,
       period_index: period_index

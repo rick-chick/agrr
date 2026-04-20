@@ -881,7 +881,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    arranged_cultivations = ScheduleTableFieldArranger.arrange(
+    arranged_cultivations = Presenters::Html::Plans::ScheduleTableFieldArranger.arrange(
       cultivations: cultivations,
       periods: periods
     )

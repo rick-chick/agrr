@@ -87,8 +87,8 @@
                 field_id = field[:id]
                 cultivations = @cultivations_by_field[field_id] || []
                 
-                # ScheduleTableFieldArrangerを使って作付を配置
-                arranged_cultivations = ScheduleTableFieldArranger.arrange(
+                # Presenters::Html::Plans::ScheduleTableFieldArrangerを使って作付を配置
+                arranged_cultivations = Presenters::Html::Plans::ScheduleTableFieldArranger.arrange(
                   cultivations: cultivations,
                   periods: @periods
                 )
@@ -106,7 +106,7 @@
                     field = field_data[:field]
                     arranged_cultivations = field_data[:arranged_cultivations]
                     
-                    period_layout = ScheduleTableFieldArranger.build_period_layout(
+                    period_layout = Presenters::Html::Plans::ScheduleTableFieldArranger.build_period_layout(
                       arranged_cultivations: arranged_cultivations,
                       periods: @periods,
                       period_index: period_index
