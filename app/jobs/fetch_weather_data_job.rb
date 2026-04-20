@@ -82,16 +82,35 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   # 指定された緯度経度と期間の気象データを取得してデータベースに保存
-  def perform(latitude: nil, longitude: nil, start_date: nil, end_date: nil, farm_id: nil, cultivation_plan_id: nil, channel_class: nil)
+  #
+  # ActiveJob は perform(*arguments) で呼ぶため、perform_later(farm_id: 1, ...) は
+  # [{ farm_id: 1, ... }] となり Ruby 3 ではキーワード引数に自動変換されない。
+  # そのため *args で受け取りハッシュに正規化する。
+  def perform(*args)
+    raw = args.first || {}
+    if defined?(ActionController::Parameters) && raw.is_a?(ActionController::Parameters)
+      raw = raw.to_unsafe_h
+    end
+    raw = {} unless raw.is_a?(Hash)
+    opts = raw.deep_symbolize_keys
+
+    latitude = opts[:latitude] || self.latitude
+    longitude = opts[:longitude] || self.longitude
+    start_date = opts[:start_date] || self.start_date
+    end_date = opts[:end_date] || self.end_date
+    farm_id = opts[:farm_id] || self.farm_id
+    cultivation_plan_id = opts[:cultivation_plan_id] || self.cultivation_plan_id
+    channel_class = opts[:channel_class] || self.channel_class
+
     # dictの中身を確認してバリデーション
     input_dto = {
-      latitude: latitude || self.latitude,
-      longitude: longitude || self.longitude,
-      start_date: start_date || self.start_date,
-      end_date: end_date || self.end_date,
-      farm_id: farm_id || self.farm_id,
-      cultivation_plan_id: cultivation_plan_id || self.cultivation_plan_id,
-      channel_class: channel_class || self.channel_class,
+      latitude: latitude,
+      longitude: longitude,
+      start_date: start_date,
+      end_date: end_date,
+      farm_id: farm_id,
+      cultivation_plan_id: cultivation_plan_id,
+      channel_class: channel_class,
       current_time: Time.current,
       executions: executions
     }.compact

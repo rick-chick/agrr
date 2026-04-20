@@ -47,6 +47,11 @@ module Domain
             raise ArgumentError, error_msg
           end
 
+          if start_date > end_date
+            @presenter.warn "⏭️  #{farm_info} Skip weather fetch: start_date (#{start_date}) > end_date (#{end_date}) — invalid range"
+            return
+          end
+
           period_str = start_date.year == end_date.year ? "#{start_date.year}" : "#{start_date.year}-#{end_date.year}"
 
           # フェーズ更新 (開始)

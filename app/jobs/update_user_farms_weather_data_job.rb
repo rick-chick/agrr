@@ -85,6 +85,11 @@ class UpdateUserFarmsWeatherDataJob < ApplicationJob
       end
       
       end_date = Time.zone.today
+
+      if start_date > end_date
+        Rails.logger.warn "⏭️  [UpdateUserFarmsWeatherDataJob] [Farm##{farm.id}] Skip: invalid range #{start_date}..#{end_date} (latest_weather_date may be inconsistent)"
+        next
+      end
       
       # API負荷軽減のため、設定した間隔でジョブを実行
       FetchWeatherDataJob.set(wait: index * API_INTERVAL_SECONDS.seconds).perform_later(
