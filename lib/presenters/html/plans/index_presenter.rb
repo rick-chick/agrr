@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Plans
+module Presenters::Html::Plans
   class IndexPresenter
     def initialize(current_user:)
       @current_user = current_user
@@ -11,7 +11,7 @@ module Plans
     end
 
     # @deprecated 年度によるグループ化は非推奨です。年度という概念は削除されました。
-    # 後方互換性のため残していますが、使用しないでください。
+    # @deprecated 後方互換性のため残していますが、使用しないでください。
     # 代わりに plans_by_farm を使用してください。
     def plans_by_year
       @plans_by_year ||= plans.group_by(&:plan_year)
@@ -60,5 +60,3 @@ module Plans
     end
   end
 end
-
-

@@ -1,6 +1,6 @@
 <%# 部分テンプレート: 1ほ場の期間セル群を描画する %>
 <%# locals: arranged_cultivations(Array<Hash>), periods(Array<Hash>), period_index(Integer) %>
-<% presenter ||= PlanningSchedulePresenter.new(periods: periods) %>
+<% presenter ||= Presenters::Html::Plans::PlanningSchedulePresenter.new(periods: periods) %>
 <% cells = presenter.period_cells(arranged_cultivations: arranged_cultivations, period_index: period_index) %>
 <% cells.each do |cell| %>
   <% if cell[ScheduleTableFieldArranger::CELL_TYPE_KEY] == :cultivation %>

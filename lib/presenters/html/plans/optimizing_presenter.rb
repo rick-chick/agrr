@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Plans
+module Presenters::Html::Plans
   class OptimizingPresenter
     def initialize(plan_id:)
       @plan_id = plan_id
@@ -19,5 +19,3 @@ module Plans
     end
   end
 end
-
-

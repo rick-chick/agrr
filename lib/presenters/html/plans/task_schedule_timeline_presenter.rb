@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-class TaskScheduleTimelinePresenter
+class Presenters::Html::Plans::TaskScheduleTimelinePresenter
   WEEK_LENGTH = 6
-  CATEGORY_GENERAL = 'general'
-  CATEGORY_FERTILIZER = 'fertilizer'
+  CATEGORY_GENERAL = "general"
+  CATEGORY_FERTILIZER = "fertilizer"
 
   def initialize(cultivation_plan, params = {})
     @cultivation_plan = cultivation_plan
@@ -74,52 +74,52 @@ class TaskScheduleTimelinePresenter
 
   def labels_payload
     {
-      empty_cell: I18n.t('plans.task_schedules.empty_cell'),
-      unscheduled_title: I18n.t('plans.task_schedules.unscheduled_title'),
-      general_label: I18n.t('plans.task_schedules.general_label'),
-      fertilizer_label: I18n.t('plans.task_schedules.fertilizer_label'),
-      generated_unknown: I18n.t('plans.task_schedules.timeline_generated_unknown'),
-      generated_label: I18n.t('plans.task_schedules.generated_label'),
-      add_task: I18n.t('plans.task_schedules.add_task'),
+      empty_cell: I18n.t("plans.task_schedules.empty_cell"),
+      unscheduled_title: I18n.t("plans.task_schedules.unscheduled_title"),
+      general_label: I18n.t("plans.task_schedules.general_label"),
+      fertilizer_label: I18n.t("plans.task_schedules.fertilizer_label"),
+      generated_unknown: I18n.t("plans.task_schedules.timeline_generated_unknown"),
+      generated_label: I18n.t("plans.task_schedules.generated_label"),
+      add_task: I18n.t("plans.task_schedules.add_task"),
       detail: {
-        title: I18n.t('plans.task_schedules.detail.title'),
-        empty: I18n.t('plans.task_schedules.detail.empty'),
-        scheduled_date: I18n.t('plans.task_schedules.detail.scheduled_date'),
-        stage: I18n.t('plans.task_schedules.detail.stage'),
-        time_per_sqm: I18n.t('plans.task_schedules.detail.time_per_sqm'),
-        amount: I18n.t('plans.task_schedules.detail.amount'),
-        amount_unit: I18n.t('plans.task_schedules.detail.amount_unit'),
-        not_applicable: I18n.t('plans.task_schedules.detail.not_applicable'),
+        title: I18n.t("plans.task_schedules.detail.title"),
+        empty: I18n.t("plans.task_schedules.detail.empty"),
+        scheduled_date: I18n.t("plans.task_schedules.detail.scheduled_date"),
+        stage: I18n.t("plans.task_schedules.detail.stage"),
+        time_per_sqm: I18n.t("plans.task_schedules.detail.time_per_sqm"),
+        amount: I18n.t("plans.task_schedules.detail.amount"),
+        amount_unit: I18n.t("plans.task_schedules.detail.amount_unit"),
+        not_applicable: I18n.t("plans.task_schedules.detail.not_applicable"),
         statuses: {
-          completed: I18n.t('plans.task_schedules.detail.statuses.completed'),
-          delayed: I18n.t('plans.task_schedules.detail.statuses.delayed'),
-          adjusted: I18n.t('plans.task_schedules.detail.statuses.adjusted')
+          completed: I18n.t("plans.task_schedules.detail.statuses.completed"),
+          delayed: I18n.t("plans.task_schedules.detail.statuses.delayed"),
+          adjusted: I18n.t("plans.task_schedules.detail.statuses.adjusted")
         },
         actions: {
-          reschedule: I18n.t('plans.task_schedules.detail.actions.reschedule'),
-          reschedule_label: I18n.t('plans.task_schedules.detail.actions.reschedule_label'),
-          updated: I18n.t('plans.task_schedules.detail.actions.updated'),
-          update_failed: I18n.t('plans.task_schedules.detail.actions.update_failed'),
-          date_required: I18n.t('plans.task_schedules.detail.actions.date_required'),
-          submit: I18n.t('plans.task_schedules.detail.actions.submit'),
-          cancel_form: I18n.t('plans.task_schedules.detail.actions.cancel_form'),
-          complete: I18n.t('plans.task_schedules.detail.actions.complete'),
-          completed: I18n.t('plans.task_schedules.detail.actions.completed'),
-          complete_failed: I18n.t('plans.task_schedules.detail.actions.complete_failed'),
-          actual_date: I18n.t('plans.task_schedules.detail.actions.actual_date'),
-          notes: I18n.t('plans.task_schedules.detail.actions.notes'),
-          notes_placeholder: I18n.t('plans.task_schedules.detail.actions.notes_placeholder'),
-          confirm_cancel: I18n.t('plans.task_schedules.detail.actions.confirm_cancel'),
-          cancel: I18n.t('plans.task_schedules.detail.actions.cancel'),
-          cancel_failed: I18n.t('plans.task_schedules.detail.actions.cancel_failed'),
-          task_name: I18n.t('plans.task_schedules.detail.actions.task_name'),
-          task_name_placeholder: I18n.t('plans.task_schedules.detail.actions.task_name_placeholder'),
-          crop: I18n.t('plans.task_schedules.detail.actions.crop'),
-          crop_required: I18n.t('plans.task_schedules.detail.actions.crop_required'),
-          scheduled_date: I18n.t('plans.task_schedules.detail.actions.scheduled_date'),
-          name_required: I18n.t('plans.task_schedules.detail.actions.name_required'),
-          created: I18n.t('plans.task_schedules.detail.actions.created'),
-          create_failed: I18n.t('plans.task_schedules.detail.actions.create_failed')
+          reschedule: I18n.t("plans.task_schedules.detail.actions.reschedule"),
+          reschedule_label: I18n.t("plans.task_schedules.detail.actions.reschedule_label"),
+          updated: I18n.t("plans.task_schedules.detail.actions.updated"),
+          update_failed: I18n.t("plans.task_schedules.detail.actions.update_failed"),
+          date_required: I18n.t("plans.task_schedules.detail.actions.date_required"),
+          submit: I18n.t("plans.task_schedules.detail.actions.submit"),
+          cancel_form: I18n.t("plans.task_schedules.detail.actions.cancel_form"),
+          complete: I18n.t("plans.task_schedules.detail.actions.complete"),
+          completed: I18n.t("plans.task_schedules.detail.actions.completed"),
+          complete_failed: I18n.t("plans.task_schedules.detail.actions.complete_failed"),
+          actual_date: I18n.t("plans.task_schedules.detail.actions.actual_date"),
+          notes: I18n.t("plans.task_schedules.detail.actions.notes"),
+          notes_placeholder: I18n.t("plans.task_schedules.detail.actions.notes_placeholder"),
+          confirm_cancel: I18n.t("plans.task_schedules.detail.actions.confirm_cancel"),
+          cancel: I18n.t("plans.task_schedules.detail.actions.cancel"),
+          cancel_failed: I18n.t("plans.task_schedules.detail.actions.cancel_failed"),
+          task_name: I18n.t("plans.task_schedules.detail.actions.task_name"),
+          task_name_placeholder: I18n.t("plans.task_schedules.detail.actions.task_name_placeholder"),
+          crop: I18n.t("plans.task_schedules.detail.actions.crop"),
+          crop_required: I18n.t("plans.task_schedules.detail.actions.crop_required"),
+          scheduled_date: I18n.t("plans.task_schedules.detail.actions.scheduled_date"),
+          name_required: I18n.t("plans.task_schedules.detail.actions.name_required"),
+          created: I18n.t("plans.task_schedules.detail.actions.created"),
+          create_failed: I18n.t("plans.task_schedules.detail.actions.create_failed")
         }
       }
     }
@@ -137,7 +137,7 @@ class TaskScheduleTimelinePresenter
           label: I18n.l(week_start_date, format: :short),
           task_count: count,
           density: minimap_density(count),
-          month_key: week_start_date.strftime('%Y-%m')
+          month_key: week_start_date.strftime("%Y-%m")
         }
       end
     }
@@ -156,7 +156,7 @@ class TaskScheduleTimelinePresenter
     categorized = {
       CATEGORY_GENERAL => [],
       CATEGORY_FERTILIZER => [],
-      'unscheduled' => []
+      "unscheduled" => []
     }
 
     schedules.each do |schedule|
@@ -165,7 +165,7 @@ class TaskScheduleTimelinePresenter
       schedule.task_schedule_items.each do |item|
         serialized_item = serialize_item(item, schedule.category)
         if item.scheduled_date.nil?
-          categorized['unscheduled'] << serialized_item
+          categorized["unscheduled"] << serialized_item
         elsif week_range.cover?(item.scheduled_date)
           bucket_key = schedule.category == CATEGORY_FERTILIZER ? CATEGORY_FERTILIZER : CATEGORY_GENERAL
           categorized[bucket_key] << serialized_item
@@ -181,15 +181,15 @@ class TaskScheduleTimelinePresenter
   end
 
   def sort_items!(categorized)
-    categorized[CATEGORY_GENERAL].sort_by! { |item| item['scheduled_date'] || '' }
-    categorized[CATEGORY_FERTILIZER].sort_by! { |item| item['scheduled_date'] || '' }
-    categorized['unscheduled'].sort_by! { |item| item['name'] }
+    categorized[CATEGORY_GENERAL].sort_by! { |item| item["scheduled_date"] || "" }
+    categorized[CATEGORY_FERTILIZER].sort_by! { |item| item["scheduled_date"] || "" }
+    categorized["unscheduled"].sort_by! { |item| item["name"] }
   end
 
   def field_information(field_cultivation)
     {
       id: field_cultivation&.id,
-      name: field_cultivation&.cultivation_plan_field&.name || I18n.t('plans.task_schedules.plan_level_field'),
+      name: field_cultivation&.cultivation_plan_field&.name || I18n.t("plans.task_schedules.plan_level_field"),
       crop_name: field_cultivation&.cultivation_plan_crop&.name || field_cultivation&.cultivation_plan_crop&.crop&.name,
       area_sqm: field_cultivation&.area,
       field_cultivation_id: field_cultivation&.id,
@@ -200,32 +200,32 @@ class TaskScheduleTimelinePresenter
 
   def serialize_item(item, category)
     payload = {
-      'item_id' => item.id,
-      'name' => item.name,
-      'task_type' => item.task_type,
-      'category' => category,
-      'scheduled_date' => item.scheduled_date&.iso8601,
-      'stage_name' => item.stage_name,
-      'stage_order' => item.stage_order,
-      'gdd_trigger' => item.gdd_trigger&.to_s,
-      'gdd_tolerance' => item.gdd_tolerance&.to_s,
-      'priority' => item.priority,
-      'source' => item.source,
-      'weather_dependency' => item.weather_dependency,
-      'time_per_sqm' => item.time_per_sqm&.to_s,
-      'amount' => item.amount&.to_s,
-      'amount_unit' => item.amount_unit,
-      'status' => derive_status(item),
-      'agricultural_task_id' => item.agricultural_task_id,
-      'field_cultivation_id' => item.task_schedule.field_cultivation_id
+      "item_id" => item.id,
+      "name" => item.name,
+      "task_type" => item.task_type,
+      "category" => category,
+      "scheduled_date" => item.scheduled_date&.iso8601,
+      "stage_name" => item.stage_name,
+      "stage_order" => item.stage_order,
+      "gdd_trigger" => item.gdd_trigger&.to_s,
+      "gdd_tolerance" => item.gdd_tolerance&.to_s,
+      "priority" => item.priority,
+      "source" => item.source,
+      "weather_dependency" => item.weather_dependency,
+      "time_per_sqm" => item.time_per_sqm&.to_s,
+      "amount" => item.amount&.to_s,
+      "amount_unit" => item.amount_unit,
+      "status" => derive_status(item),
+      "agricultural_task_id" => item.agricultural_task_id,
+      "field_cultivation_id" => item.task_schedule.field_cultivation_id
     }
-    payload['details'] = detail_payload(item)
-    payload['badge'] = badge_payload(item, category)
+    payload["details"] = detail_payload(item)
+    payload["badge"] = badge_payload(item, category)
     payload
   end
 
   def derive_status(item)
-    item.respond_to?(:status) && item.status.present? ? item.status : 'planned'
+    item.respond_to?(:status) && item.status.present? ? item.status : "planned"
   end
 
   def detail_payload(item)
@@ -281,15 +281,15 @@ class TaskScheduleTimelinePresenter
   end
 
   def priority_level(value)
-    return 'priority-none' if value.nil?
+    return "priority-none" if value.nil?
 
     case value
     when 0, 1
-      'priority-high'
+      "priority-high"
     when 2
-      'priority-medium'
+      "priority-medium"
     else
-      'priority-low'
+      "priority-low"
     end
   end
 
@@ -301,7 +301,7 @@ class TaskScheduleTimelinePresenter
     week_range.map do |date|
       {
         date: date.iso8601,
-        weekday: date.strftime('%a').downcase,
+        weekday: date.strftime("%a").downcase,
         is_today: date == Date.current
       }
     end
@@ -309,7 +309,7 @@ class TaskScheduleTimelinePresenter
 
   def week_label
     I18n.t(
-      'plans.task_schedules.week_label',
+      "plans.task_schedules.week_label",
       start: I18n.l(week_start, format: :short),
       end: I18n.l(week_end, format: :short)
     )
@@ -349,7 +349,7 @@ class TaskScheduleTimelinePresenter
   end
 
   def include_category?(category)
-    selected_category == 'all' || selected_category == category
+    selected_category == "all" || selected_category == category
   end
 
   def selected_category
@@ -359,7 +359,7 @@ class TaskScheduleTimelinePresenter
       when CATEGORY_GENERAL, CATEGORY_FERTILIZER
         value
       else
-        'all'
+        "all"
       end
     end
   end
@@ -416,20 +416,20 @@ class TaskScheduleTimelinePresenter
   def minimap_density(count)
     case count
     when 0
-      'none'
+      "none"
     when 1..2
-      'low'
+      "low"
     when 3..5
-      'medium'
+      "medium"
     else
-      'high'
+      "high"
     end
   end
 
   def minimap_range
     @minimap_range ||= begin
-      start_candidates = [cultivation_plan.planning_start_date, minimap_counts.keys.min, Date.current].compact
-      finish_candidates = [cultivation_plan.planning_end_date, minimap_counts.keys.max, Date.current].compact
+      start_candidates = [ cultivation_plan.planning_start_date, minimap_counts.keys.min, Date.current ].compact
+      finish_candidates = [ cultivation_plan.planning_end_date, minimap_counts.keys.max, Date.current ].compact
 
       start_date = start_candidates.min.beginning_of_week
       end_date = finish_candidates.max.end_of_week
@@ -450,5 +450,3 @@ class TaskScheduleTimelinePresenter
     weeks
   end
 end
-
-

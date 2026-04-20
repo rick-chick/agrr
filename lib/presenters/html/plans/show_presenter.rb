@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Plans
+module Presenters::Html::Plans
   class ShowPresenter
     def initialize(cultivation_plan:)
       @cultivation_plan = cultivation_plan
@@ -37,5 +37,3 @@ module Plans
     end
   end
 end
-
-

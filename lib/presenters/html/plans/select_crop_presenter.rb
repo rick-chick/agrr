@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Plans
+module Presenters::Html::Plans
   class SelectCropPresenter
     def initialize(current_user:, farm_id:)
       @current_user = current_user
@@ -28,5 +28,3 @@ module Plans
     end
   end
 end
-
-

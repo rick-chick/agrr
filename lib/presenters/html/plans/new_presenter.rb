@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Plans
+module Presenters::Html::Plans
   class NewPresenter
     def initialize(current_user:)
       @current_user = current_user
@@ -11,9 +11,7 @@ module Plans
     end
 
     def default_plan_name
-      I18n.t('plans.default_plan_name')
+      I18n.t("plans.default_plan_name")
     end
   end
 end
-
-

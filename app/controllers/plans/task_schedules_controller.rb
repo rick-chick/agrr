@@ -26,13 +26,11 @@ module Plans
     end
 
     def timeline_presenter
-      @timeline_presenter ||= TaskScheduleTimelinePresenter.new(@cultivation_plan, timeline_params)
+      @timeline_presenter ||= Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@cultivation_plan, timeline_params)
     end
 
     def timeline_params
-      params.to_unsafe_h.slice('week_start', 'field_cultivation_id', 'category').symbolize_keys
+      params.to_unsafe_h.slice("week_start", "field_cultivation_id", "category").symbolize_keys
     end
   end
 end
-
-
