@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { ErrorDto } from '../../domain/shared/error.dto';
 import { LoadPlanTaskScheduleInputDto } from './load-plan-task-schedule.dtos';
 import { LoadPlanTaskScheduleInputPort } from './load-plan-task-schedule.input-port';
 import {

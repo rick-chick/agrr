@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { PublicPlanResultsView } from '../../components/public-plans/public-plan-results.view';
 import { LoadPublicPlanResultsOutputPort } from '../../usecase/public-plans/load-public-plan-results.output-port';
-import { SavePublicPlanOutputPort, SAVE_PUBLIC_PLAN_OUTPUT_PORT } from '../../usecase/public-plans/save-public-plan.output-port';
+import { SavePublicPlanOutputPort } from '../../usecase/public-plans/save-public-plan.output-port';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FlashMessageService } from '../../services/flash-message.service';

@@ -3,7 +3,6 @@ import { UpdateThermalRequirementInputPort } from './update-thermal-requirement.
 import { UpdateThermalRequirementOutputPort, UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT } from './update-thermal-requirement.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { UpdateThermalRequirementInputDto } from './update-thermal-requirement.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class UpdateThermalRequirementUseCase implements UpdateThermalRequirementInputPort {

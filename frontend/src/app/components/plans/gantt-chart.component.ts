@@ -765,7 +765,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private getTimeLabel(start: Date, end: Date, unit: TimeUnit): string {
     const dayLabel = this.translate.instant('plans.gantt.labels.day');
     const monthLabel = this.translate.instant('plans.gantt.labels.month');
-    const weekLabel = this.translate.instant('plans.gantt.labels.week');
     const quarterLabel = this.translate.instant('plans.gantt.labels.quarter');
     
     switch (unit) {
@@ -1037,7 +1036,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }
   }
 
-  private onMouseUp(event: MouseEvent) {
+  private onMouseUp(_event: MouseEvent) {
     if (!this.draggedCultivation) return;
 
     // ハイライトを非表示

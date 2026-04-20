@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { Crop } from '../../domain/crops/crop';
-import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { CropGateway, CropCreatePayload, CropDeleteResponse } from '../../usecase/crops/crop-gateway';
 
 @Injectable()

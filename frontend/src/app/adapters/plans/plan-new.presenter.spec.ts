@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PlanNewPresenter } from './plan-new.presenter';
 import { PlanNewView } from '../../components/plans/plan-new.view';
 import { Farm } from '../../domain/farms/farm';

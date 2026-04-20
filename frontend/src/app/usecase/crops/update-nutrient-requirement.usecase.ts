@@ -3,7 +3,6 @@ import { UpdateNutrientRequirementInputPort } from './update-nutrient-requiremen
 import { UpdateNutrientRequirementOutputPort, UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT } from './update-nutrient-requirement.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { UpdateNutrientRequirementInputDto } from './update-nutrient-requirement.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class UpdateNutrientRequirementUseCase implements UpdateNutrientRequirementInputPort {

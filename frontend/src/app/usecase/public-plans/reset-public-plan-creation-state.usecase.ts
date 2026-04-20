@@ -15,7 +15,7 @@ export class ResetPublicPlanCreationStateUseCase implements ResetPublicPlanCreat
     private readonly publicPlanStore: PublicPlanStore
   ) {}
 
-  execute(dto: ResetPublicPlanCreationStateInputDto): void {
+  execute(_dto: ResetPublicPlanCreationStateInputDto): void {
     // Reset the store state including planId and clear session storage
     this.publicPlanStore.reset();
     console.log('🔄 [ResetPublicPlanCreationStateUseCase] PublicPlanStore state reset');

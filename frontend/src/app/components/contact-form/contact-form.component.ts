@@ -177,7 +177,7 @@ export class ContactFormComponent implements ContactFormView, SendContactMessage
   }
 
   // UseCase output port callbacks
-  onSuccess(dto: SendContactMessageSuccessDto): void {
+  onSuccess(_dto: SendContactMessageSuccessDto): void {
     this.control = {
       ...this.control,
       sending: false,

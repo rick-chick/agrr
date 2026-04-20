@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { ErrorDto } from '../../domain/shared/error.dto';
 import { LoadPlanDetailInputDto } from './load-plan-detail.dtos';
 import { LoadPlanDetailInputPort } from './load-plan-detail.input-port';
 import {

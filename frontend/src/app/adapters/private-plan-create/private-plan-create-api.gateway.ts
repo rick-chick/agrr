@@ -22,7 +22,7 @@ export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
     return this.apiClient.get<FarmWithFields>(`/api/v1/masters/farms/${farmId}`).pipe(
       map((farm) => {
         const totalArea = farm.fields?.reduce((sum, field) => sum + (field.area || 0), 0) || 0;
-        const { fields, ...farmWithoutFields } = farm;
+        const { fields: _fields, ...farmWithoutFields } = farm;
         return {
           farm: farmWithoutFields as Farm,
           totalArea

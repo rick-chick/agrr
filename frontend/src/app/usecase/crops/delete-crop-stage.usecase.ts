@@ -3,7 +3,6 @@ import { DeleteCropStageInputPort } from './delete-crop-stage.input-port';
 import { DeleteCropStageOutputPort, DELETE_CROP_STAGE_OUTPUT_PORT } from './delete-crop-stage.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { DeleteCropStageInputDto } from './delete-crop-stage.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class DeleteCropStageUseCase implements DeleteCropStageInputPort {

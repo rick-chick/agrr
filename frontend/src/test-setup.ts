@@ -36,10 +36,10 @@ try {
   // overrideProvider affects future TestBed module/component creation.
   try {
     getTestBed().overrideProvider(TranslateService, { useValue: translate });
-  } catch (e) {
+  } catch (_e) {
     // Some environments may not support overrideProvider at this point; ignore.
   }
-} catch (e) {
+} catch (_e) {
   // If injection fails here, some test environments may reconfigure TestBed later.
   // Tests that bootstrap their own TestBed will still be able to import TranslateModule.
   // Swallow the error to avoid breaking the global test setup.

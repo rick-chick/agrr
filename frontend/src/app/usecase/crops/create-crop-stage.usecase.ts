@@ -3,7 +3,6 @@ import { CreateCropStageInputPort } from './create-crop-stage.input-port';
 import { CreateCropStageOutputPort, CREATE_CROP_STAGE_OUTPUT_PORT } from './create-crop-stage.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { CreateCropStageInputDto } from './create-crop-stage.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class CreateCropStageUseCase implements CreateCropStageInputPort {

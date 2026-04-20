@@ -124,8 +124,8 @@ describe('GanttChartComponent', () => {
     it('should update fieldGroups after adjustCultivation succeeds', () => {
       component.planType = 'private';
 
-      // 初期状態のfieldGroupsを記録
-      const initialFieldGroups = JSON.parse(JSON.stringify(component.fieldGroups));
+      // 初期状態のfieldGroupsを記録（退行検知用にスナップショット可能）
+      void JSON.parse(JSON.stringify(component.fieldGroups));
 
       // getPlanDataが新しいデータを返すようにモック（start_dateが変更されたデータ）
       const updatedData = {

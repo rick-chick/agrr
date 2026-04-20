@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { CropEditComponent } from './crop-edit.component';

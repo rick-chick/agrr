@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import {
   CropStage,

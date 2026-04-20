@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { LoadPrivatePlanSelectCropContextOutputPort } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.output-port';
 import { CreatePrivatePlanOutputPort } from '../../usecase/private-plan-create/create-private-plan.output-port';
 import { PlanSelectCropView } from '../../components/plans/plan-select-crop.view';

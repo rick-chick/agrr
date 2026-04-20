@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { CreateFieldInputPort } from './create-field.input-port';
 import { CreateFieldOutputPort, CREATE_FIELD_OUTPUT_PORT } from './create-field.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';
-import { CreateFieldInputDto, CreateFieldOutputDto } from './create-field.dtos';
+import { CreateFieldInputDto } from './create-field.dtos';
 
 @Injectable()
 export class CreateFieldUseCase implements CreateFieldInputPort {

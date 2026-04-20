@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { DeletePlanInputPort } from './delete-plan.input-port';
-import { DeletePlanSuccessDto, DeletePlanInputDto } from './delete-plan.dtos';
+import { DeletePlanInputDto } from './delete-plan.dtos';
 import {
   DeletePlanOutputPort,
   DELETE_PLAN_OUTPUT_PORT

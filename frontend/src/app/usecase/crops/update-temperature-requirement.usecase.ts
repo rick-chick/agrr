@@ -3,7 +3,6 @@ import { UpdateTemperatureRequirementInputPort } from './update-temperature-requ
 import { UpdateTemperatureRequirementOutputPort, UPDATE_TEMPERATURE_REQUIREMENT_OUTPUT_PORT } from './update-temperature-requirement.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { UpdateTemperatureRequirementInputDto } from './update-temperature-requirement.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class UpdateTemperatureRequirementUseCase implements UpdateTemperatureRequirementInputPort {

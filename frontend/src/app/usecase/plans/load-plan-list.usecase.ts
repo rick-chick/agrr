@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { ErrorDto } from '../../domain/shared/error.dto';
 import { LoadPlanListInputPort } from './load-plan-list.input-port';
 import { LoadPlanListOutputPort, LOAD_PLAN_LIST_OUTPUT_PORT } from './load-plan-list.output-port';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';

@@ -3,7 +3,6 @@ import { UpdateSunshineRequirementInputPort } from './update-sunshine-requiremen
 import { UpdateSunshineRequirementOutputPort, UPDATE_SUNSHINE_REQUIREMENT_OUTPUT_PORT } from './update-sunshine-requirement.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
 import { UpdateSunshineRequirementInputDto } from './update-sunshine-requirement.dtos';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 @Injectable()
 export class UpdateSunshineRequirementUseCase implements UpdateSunshineRequirementInputPort {

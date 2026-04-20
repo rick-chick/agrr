@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { DeleteFieldInputPort } from './delete-field.input-port';
 import { DeleteFieldOutputPort, DELETE_FIELD_OUTPUT_PORT } from './delete-field.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';
-import { DeleteFieldInputDto, DeleteFieldOutputDto } from './delete-field.dtos';
+import { DeleteFieldInputDto } from './delete-field.dtos';
 
 @Injectable()
 export class DeleteFieldUseCase implements DeleteFieldInputPort {

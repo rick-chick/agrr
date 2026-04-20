@@ -88,7 +88,6 @@ describe('PublicPlanResultsComponent', () => {
       authService.user.mockReturnValue(null);
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
 
-      const originalLocation = window.location.href;
       component.savePlan();
 
       expect(window.location.href).toContain('/auth/login?return_to=');

@@ -3,11 +3,7 @@ import { Observable, map, tap } from 'rxjs';
 import { ApiClientService } from '../../services/api-client.service';
 import { AuthService } from '../../services/auth.service';
 import { ApiKeyService } from '../../services/api-key.service';
-import {
-  API_KEY_GATEWAY,
-  ApiKeyGateway,
-  ApiKeyResponse
-} from '../../usecase/api-keys/api-key-gateway';
+import { ApiKeyGateway, ApiKeyResponse } from '../../usecase/api-keys/api-key-gateway';
 
 @Injectable()
 export class ApiKeyApiGateway implements ApiKeyGateway {

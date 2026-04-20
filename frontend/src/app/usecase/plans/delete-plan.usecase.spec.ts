@@ -28,7 +28,7 @@ describe('DeletePlanUseCase', () => {
       redirect_path: '/plans',
       auto_hide_after: 60000
     };
-    const deletePlan = vi.fn((planId: number) => of(undoResponse));
+    const deletePlan = vi.fn((_planId: number) => of(undoResponse));
     const gateway: PlanGateway = createGateway(deletePlan);
 
     const onSuccessCallback = vi.fn();
@@ -58,7 +58,7 @@ describe('DeletePlanUseCase', () => {
   });
 
   it('calls outputPort.onError with err.message when gateway throws generic Error', () => {
-    const gateway: PlanGateway = createGateway((planId: number) => throwError(() => new Error('network error')));
+    const gateway: PlanGateway = createGateway((_planId: number) => throwError(() => new Error('network error')));
 
     let receivedError: { message: string; scope?: string } | null = null;
     const outputPort: DeletePlanOutputPort = {
@@ -78,7 +78,7 @@ describe('DeletePlanUseCase', () => {
 
   it('calls outputPort.onError with err.error.error when API returns 422 with body.error (server message)', () => {
     const serverMessage = 'このプランは削除できません。';
-    const gateway: PlanGateway = createGateway((planId: number) =>
+    const gateway: PlanGateway = createGateway((_planId: number) =>
       throwError(() => ({
         message: 'Http failure response for ...: 422 Unprocessable Content',
         error: { error: serverMessage }
@@ -103,7 +103,7 @@ describe('DeletePlanUseCase', () => {
 
   it('calls outputPort.onError with err.error.errors when API returns 422 with body.errors array', () => {
     const serverErrors = ['Error 1', 'Error 2'];
-    const gateway: PlanGateway = createGateway((planId: number) =>
+    const gateway: PlanGateway = createGateway((_planId: number) =>
       throwError(() => ({
         message: 'Http failure response for ...: 422 Unprocessable Content',
         error: { errors: serverErrors }

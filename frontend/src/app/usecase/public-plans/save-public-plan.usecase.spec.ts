@@ -4,8 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { SavePublicPlanUseCase } from './save-public-plan.usecase';
 import { PublicPlanGateway, SavePublicPlanResponse } from './public-plan-gateway';
 import { SavePublicPlanOutputPort } from './save-public-plan.output-port';
-import { SavePublicPlanInputDto } from './save-public-plan.dtos';
-
 describe('SavePublicPlanUseCase', () => {
   const mockTranslate: TranslateService = {
     instant: vi.fn((key: string) => {

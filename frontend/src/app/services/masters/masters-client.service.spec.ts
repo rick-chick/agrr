@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { of, firstValueFrom, tap, map, catchError } from 'rxjs';
+import { of, firstValueFrom } from 'rxjs';
 
 // Mock HttpHeaders
 class MockHttpHeaders {

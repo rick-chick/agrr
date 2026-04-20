@@ -29,7 +29,6 @@ describe('InteractionRuleEditComponent', () => {
   let mockUpdateUseCase: any;
   let mockPresenter: any;
   let mockAuthService: any;
-  let mockTranslateService: any;
 
   beforeEach(async () => {
     mockActivatedRoute = {

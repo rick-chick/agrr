@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { Farm } from '../../domain/farms/farm';
 import { Field } from '../../domain/farms/field';
-import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { FarmGateway, FarmCreatePayload, FieldCreatePayload, FarmDeleteResponse, FieldDeleteResponse } from '../../usecase/farms/farm-gateway';
 
 @Injectable()

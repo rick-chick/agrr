@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { LoadFarmListUseCase } from './load-farm-list.usecase';
-import { FarmGateway, FARM_GATEWAY } from './farm-gateway';
-import { LoadFarmListOutputPort, LOAD_FARM_LIST_OUTPUT_PORT } from './load-farm-list.output-port';
+import { FarmGateway } from './farm-gateway';
+import { LoadFarmListOutputPort } from './load-farm-list.output-port';
 import { FarmListDataDto } from './load-farm-list.dtos';
 import { Farm } from '../../domain/farms/farm';
 

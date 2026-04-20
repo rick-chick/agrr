@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { UpdateFieldInputPort } from './update-field.input-port';
 import { UpdateFieldOutputPort, UPDATE_FIELD_OUTPUT_PORT } from './update-field.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';
-import { UpdateFieldInputDto, UpdateFieldOutputDto } from './update-field.dtos';
+import { UpdateFieldInputDto } from './update-field.dtos';
 
 @Injectable()
 export class UpdateFieldUseCase implements UpdateFieldInputPort {
