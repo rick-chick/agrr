@@ -42,7 +42,7 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
     assert_equal plan.id, job_instances.last.cultivation_plan_id
   end
 
-  # RED: WeatherPredictionService requires current year data (Date.current.year, 1, 1) to (Date.current - 2.days).
+  # RED: Domain::WeatherData::Interactors::WeatherPredictionInteractor requires current year data (Date.current.year, 1, 1) to (Date.current - 2.days).
   # When latest_weather_date is in the past, calculate_weather_data_params must return end_date >= Date.current - 2.days
   # so that FetchWeatherDataJob fetches the current year and WeatherPredictionJob does not fail.
   test "calculate_weather_data_params returns end_date at least Date.current - 2.days when latest_weather_date is in the past" do
@@ -71,7 +71,7 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
 
     minimum_required = Date.current - 2.days
     assert params[:end_date] >= minimum_required,
-           "end_date (#{params[:end_date]}) must be >= #{minimum_required} for WeatherPredictionService current year data"
+           "end_date (#{params[:end_date]}) must be >= #{minimum_required} for Domain::WeatherData::Interactors::WeatherPredictionInteractor current year data"
   end
 end
 

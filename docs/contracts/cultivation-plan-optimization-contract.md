@@ -10,7 +10,7 @@
 | Role | Implementation |
 |------|----------------|
 | Multi-field allocation CLI | `lib/adapters/agrr/plan_allocation_gateway_adapter.rb` wrapping `Agrr::AllocationGateway#allocate` |
-| Weather (existing prediction) | `WeatherPredictionService#get_existing_prediction`（T-032 で domain へ移行予定） |
+| Weather (existing prediction) | `Domain::WeatherData::Interactors::WeatherPredictionInteractor#get_existing_prediction` |
 
 ## Errors
 

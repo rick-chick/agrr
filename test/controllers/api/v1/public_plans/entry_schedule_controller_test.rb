@@ -89,7 +89,7 @@ module Api
           weather_double.define_singleton_method(:predict_for_farm) do |**_|
             true
           end
-          WeatherPredictionService.stub(:new, weather_double) do
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_double) do
             yield
           end
         end

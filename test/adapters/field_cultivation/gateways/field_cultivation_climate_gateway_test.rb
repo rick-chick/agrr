@@ -43,7 +43,7 @@ module Adapters
             ]
           }
 
-          weather_service = mock("WeatherPredictionService")
+          weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
           weather_service
             .expects(:predict_for_cultivation_plan)
             .with(@plan)
@@ -96,7 +96,7 @@ module Adapters
             "progress_records" => []
           }
 
-          weather_service = mock("WeatherPredictionService")
+          weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
           weather_service
             .expects(:predict_for_cultivation_plan)
             .with(@plan)

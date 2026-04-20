@@ -52,7 +52,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       }
     )
 
-    # weather data creation is skipped because WeatherPredictionService is mocked in these tests
+    # weather data creation is skipped because Domain::WeatherData::Interactors::WeatherPredictionInteractor is mocked in these tests
     # (モックを使用するため、DBに大量のWeatherDatumを作成する必要はありません)
 
     @saver = Saver.new
@@ -77,7 +77,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       "model" => "lightgbm"
     })
 
-    # WeatherPredictionServiceをモック化
+    # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化
     weather_prediction_service = Minitest::Mock.new
 
     # get_existing_predictionはnilを返す（既存データが不足）
@@ -101,7 +101,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
     end
 
-    WeatherPredictionService.stub(:new, weather_prediction_service) do
+    Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
       result = @saver.adjust_with_db_weather(@plan, moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
@@ -128,7 +128,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     }
     @plan.update!(predicted_weather_data: existing_prediction_data)
 
-    # WeatherPredictionServiceをモック化
+    # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化
     weather_prediction_service = Minitest::Mock.new
 
     # get_existing_predictionは既存データを返す
@@ -144,7 +144,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
 
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
-    WeatherPredictionService.stub(:new, weather_prediction_service) do
+    Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
       result = @saver.adjust_with_db_weather(@plan, moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
@@ -170,7 +170,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       "model" => "lightgbm"
     })
 
-    # WeatherPredictionServiceをモック化
+    # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化
     weather_prediction_service = Minitest::Mock.new
 
     # get_existing_predictionはnilを返す（既存データが不足）
@@ -197,7 +197,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
     end
 
-    WeatherPredictionService.stub(:new, weather_prediction_service) do
+    Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
       result = @saver.adjust_with_db_weather(@plan, moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}, ステータス: #{result[:status]}"
@@ -232,7 +232,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       "model" => "lightgbm"
     })
 
-    # WeatherPredictionServiceをモック化（1回目）
+    # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化（1回目）
     weather_prediction_service1 = Minitest::Mock.new
     weather_prediction_service1.expect(:get_existing_prediction, nil) do |kwargs|
       kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
@@ -255,7 +255,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
     end
 
-    WeatherPredictionService.stub(:new, weather_prediction_service1) do
+    Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service1) do
       result1 = @saver.adjust_with_db_weather(@plan, moves1)
       assert result1[:success], "1回目の修正処理が成功する必要がある。エラー: #{result1[:message]}, ステータス: #{result1[:status]}"
       weather_prediction_service1.verify
@@ -269,7 +269,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       to_completion_date: Date.new(2025, 9, 30).to_s
     } ]
 
-    # WeatherPredictionServiceをモック化（2回目）
+    # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化（2回目）
     weather_prediction_service2 = Minitest::Mock.new
 
     # get_existing_predictionは既存データを返す（1回目で保存されたデータ）
@@ -285,7 +285,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
 
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
-    WeatherPredictionService.stub(:new, weather_prediction_service2) do
+    Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service2) do
       result2 = @saver.adjust_with_db_weather(@plan, moves2)
 
       assert result2[:success], "2回目の修正処理が成功する必要がある。エラー: #{result2[:message]}, ステータス: #{result2[:status]}"

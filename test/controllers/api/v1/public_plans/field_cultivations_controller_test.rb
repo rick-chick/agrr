@@ -142,7 +142,7 @@ module Api
         test "climate_data アクションで予測データがない場合、自動的に生成を試みる" do
           @cultivation_plan.update!(predicted_weather_data: nil)
 
-          # WeatherPredictionServiceをモック
+          # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック
           mock_service = Minitest::Mock.new
           mock_prediction = {
             data: {
@@ -162,7 +162,7 @@ module Api
           }
           mock_service.expect :predict_for_cultivation_plan, mock_prediction, [ @cultivation_plan ]
 
-          WeatherPredictionService.stub :new, mock_service do
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub :new, mock_service do
             get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 
             assert_response :success

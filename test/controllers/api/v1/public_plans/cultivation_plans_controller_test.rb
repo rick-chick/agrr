@@ -169,7 +169,7 @@ module Api
           # 作物に成長段階がある場合、adjust APIが成功するはず
           # cultivation_id: 1, from_field: 'Test Field', to_field: 'Test Field', new_start_date: '2026-04-12', daysFromStart: 101
 
-          # WeatherPredictionService をスタブして天気データ不足によるエラーを防ぐ
+          # Domain::WeatherData::Interactors::WeatherPredictionInteractor をスタブして天気データ不足によるエラーを防ぐ
           weather_double = Object.new
           weather_double.define_singleton_method(:get_existing_prediction) do |**_|
             { data: { "data" => [ { "time" => "2026-01-01", "temperature_2m_mean" => 5.0 } ] } }
@@ -178,7 +178,7 @@ module Api
             { data: { "data" => [ { "time" => "2026-01-01", "temperature_2m_mean" => 5.0 } ] } }
           end
 
-          WeatherPredictionService.stub(:new, weather_double) do
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_double) do
             # AGRR AdjustGateway をスタブして成功結果を返すようにする
             adjust_double = Object.new
             # Capture IDs into locals so the singleton method can close over them

@@ -27,7 +27,7 @@ module Domain
             end
 
             _, planning_end_date = calculate_planning_period
-            weather_prediction_service = ::WeatherPredictionService.new(
+            weather_prediction_service = ::Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
               weather_location: weather_location,
               farm: @cultivation_plan.farm
             )

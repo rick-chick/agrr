@@ -167,7 +167,7 @@ module Api
         test "予測データがない場合、自動生成を試みて正常にレスポンスを返す" do
           @cultivation_plan.update!(predicted_weather_data: nil)
 
-          # WeatherPredictionServiceをモック
+          # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック
           mock_service = Minitest::Mock.new
           mock_prediction = {
             data: {
@@ -187,7 +187,7 @@ module Api
           }
           mock_service.expect :predict_for_cultivation_plan, mock_prediction, [ @cultivation_plan ]
 
-          WeatherPredictionService.stub :new, mock_service do
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub :new, mock_service do
             get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 
             assert_response :success
@@ -200,7 +200,7 @@ module Api
         test "予測データが空の場合、自動生成を試みて正常にレスポンスを返す" do
           @cultivation_plan.update!(predicted_weather_data: {})
 
-          # WeatherPredictionServiceをモック
+          # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック
           mock_service = Minitest::Mock.new
           mock_prediction = {
             data: {
@@ -220,7 +220,7 @@ module Api
           }
           mock_service.expect :predict_for_cultivation_plan, mock_prediction, [ @cultivation_plan ]
 
-          WeatherPredictionService.stub :new, mock_service do
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub :new, mock_service do
             get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 
             assert_response :success

@@ -491,11 +491,11 @@ module AgrrOptimization
     begin
       weather_location = farm.weather_location
       unless weather_location
-        raise WeatherPredictionService::WeatherDataNotFoundError,
+        raise Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
               "気象データがありません。農場にWeatherLocationが設定されていません。"
       end
 
-      weather_prediction_service = WeatherPredictionService.new(
+      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
         weather_location: weather_location,
         farm: farm
       )

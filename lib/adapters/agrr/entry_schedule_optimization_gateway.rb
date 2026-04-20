@@ -19,7 +19,7 @@ module Adapters
         new(crop: crop, weather_payload: weather_payload, farm: farm).call
       end
 
-      # WeatherPredictionService の過去互換で、トップの `data` が Hash かつ内側に `data` 配列がある形を
+      # WeatherPredictionInteractor の過去互換で、トップの `data` が Hash かつ内側に `data` 配列がある形を
       # フラットな AGRR 気象JSONに正規化する（正規化しないと日次配列が取れず insufficient_weather になる）。
       # @return [Hash] stringify_keys 済み
       def self.normalize_entry_weather_payload(raw)

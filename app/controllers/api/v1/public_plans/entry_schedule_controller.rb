@@ -117,7 +117,7 @@ module Api
           raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError if farm.weather_location.blank?
 
           target_end = parse_prediction_end_date
-          service = WeatherPredictionService.new(weather_location: farm.weather_location, farm: farm)
+          service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: farm.weather_location, farm: farm)
 
           cached = service.get_existing_prediction(target_end_date: target_end)
           payload_hash = if cached && cached[:data].is_a?(Hash)
@@ -131,8 +131,8 @@ module Api
           raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
 
           payload_hash
-        rescue WeatherPredictionService::WeatherDataNotFoundError,
-               WeatherPredictionService::InsufficientPredictionDataError => e
+        rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
+               Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
           raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherPredictionFailedError, e.message
         end
 

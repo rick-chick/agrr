@@ -55,7 +55,7 @@ module CultivationPlanApi
 
     begin
       best_candidate = find_best_candidate_for_crop(crop, params[:field_id], display_range: display_range)
-    rescue WeatherPredictionService::WeatherDataNotFoundError, WeatherPredictionService::InsufficientPredictionDataError => e
+    rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError, Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
       plan_crop.destroy! if plan_crop.persisted?
       Rails.logger.warn "⚠️ [Add Crop] Prediction data incomplete: #{e.message}"
       return render json: {
@@ -465,7 +465,7 @@ module CultivationPlanApi
       return nil
     end
 
-    weather_prediction_service = WeatherPredictionService.new(
+    weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
       weather_location: weather_location,
       farm: farm
     )
@@ -502,11 +502,11 @@ module CultivationPlanApi
 
     if existing
       weather_prediction_status = "cache_hit"
-      Rails.logger.info "📡 [Candidates] WeatherPredictionService cache hit (target_end_date=#{target_end_date || 'N/A'})"
+      Rails.logger.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor cache hit (target_end_date=#{target_end_date || 'N/A'})"
       weather_data = existing[:data]
     else
       weather_prediction_status = "requesting_prediction"
-      Rails.logger.info "📡 [Candidates] WeatherPredictionService cache miss - invoking prediction (target_end_date=#{target_end_date || 'N/A'})"
+      Rails.logger.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor cache miss - invoking prediction (target_end_date=#{target_end_date || 'N/A'})"
       weather_info = weather_prediction_service.predict_for_cultivation_plan(
         cultivation_plan,
         target_end_date: target_end_date
@@ -520,10 +520,10 @@ module CultivationPlanApi
     end
 
     data_days = weather_data.is_a?(Hash) ? Array(weather_data["data"]).count : 0
-    Rails.logger.info "📡 [Candidates] WeatherPredictionService result: status=#{weather_prediction_status} days=#{data_days}"
+    Rails.logger.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor result: status=#{weather_prediction_status} days=#{data_days}"
 
     weather_data
-  rescue WeatherPredictionService::WeatherDataNotFoundError, WeatherPredictionService::InsufficientPredictionDataError => e
+  rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError, Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
     Rails.logger.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
     raise
   rescue => e

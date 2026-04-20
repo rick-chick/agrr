@@ -7,7 +7,7 @@
 
 ## 概要
 
-参照農場（`Farm`・`reference`）と参照作物（`Crop`・`is_reference`）、`WeatherPredictionService` の予測気象 JSON から、まき帯・植え帯（連続日区間）と説明文（`reason_summary`）、**4 フェーズ表示用セグメント**、**月次ざっくり時系列**、**一覧用の並びメタデータ**を返す公開読み取り API と、Angular の一覧・詳細 UI（`/entry-schedule`）。**マイ作物・ユーザー作物連携は本契約の対象外**（実装しない）。
+参照農場（`Farm`・`reference`）と参照作物（`Crop`・`is_reference`）、`Domain::WeatherData::Interactors::WeatherPredictionInteractor` の予測気象 JSON から、まき帯・植え帯（連続日区間）と説明文（`reason_summary`）、**4 フェーズ表示用セグメント**、**月次ざっくり時系列**、**一覧用の並びメタデータ**を返す公開読み取り API と、Angular の一覧・詳細 UI（`/entry-schedule`）。**マイ作物・ユーザー作物連携は本契約の対象外**（実装しない）。
 
 ## 認証（公開エントリ）
 

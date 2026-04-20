@@ -17,7 +17,7 @@ module Adapters
           @use_mock_progress = use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
           @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
           @weather_prediction_service_factory = weather_prediction_service_factory ||
-            ->(weather_location, farm) { WeatherPredictionService.new(weather_location: weather_location, farm: farm) }
+            ->(weather_location, farm) { Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location, farm: farm) }
           @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::WeatherDataGatewayFactory.resolve
         end
 
