@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PlanSaveServiceTest < ActiveSupport::TestCase
+class Domain::CultivationPlan::Interactors::PlanSaveSessionTest < ActiveSupport::TestCase
   def setup
     # 各テストで独立したユーザーを作成（テスト間でデータが累積しないようにする）
     @user = User.create!(
