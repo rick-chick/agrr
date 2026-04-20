@@ -3,7 +3,7 @@
 class DataMigrationIndiaReferencePests < ActiveRecord::Migration[8.0]
   # 一時モデル定義（マイグレーション内でのみ使用）
   # モデルクラスへの依存を避け、スキーマ変更に強い設計
-  
+
   class TempPest < ActiveRecord::Base
     self.table_name = 'pests'
     has_one :pest_temperature_profile, class_name: 'DataMigrationIndiaReferencePests::TempPestTemperatureProfile', foreign_key: 'pest_id'
@@ -11,58 +11,58 @@ class DataMigrationIndiaReferencePests < ActiveRecord::Migration[8.0]
     has_many :pest_control_methods, class_name: 'DataMigrationIndiaReferencePests::TempPestControlMethod', foreign_key: 'pest_id'
     has_many :crop_pests, class_name: 'DataMigrationIndiaReferencePests::TempCropPest', foreign_key: 'pest_id'
   end
-  
+
   class TempPestTemperatureProfile < ActiveRecord::Base
     self.table_name = 'pest_temperature_profiles'
     belongs_to :pest, class_name: 'DataMigrationIndiaReferencePests::TempPest', foreign_key: 'pest_id'
   end
-  
+
   class TempPestThermalRequirement < ActiveRecord::Base
     self.table_name = 'pest_thermal_requirements'
     belongs_to :pest, class_name: 'DataMigrationIndiaReferencePests::TempPest', foreign_key: 'pest_id'
   end
-  
+
   class TempPestControlMethod < ActiveRecord::Base
     self.table_name = 'pest_control_methods'
     belongs_to :pest, class_name: 'DataMigrationIndiaReferencePests::TempPest', foreign_key: 'pest_id'
   end
-  
+
   class TempCropPest < ActiveRecord::Base
     self.table_name = 'crop_pests'
     belongs_to :pest, class_name: 'DataMigrationIndiaReferencePests::TempPest', foreign_key: 'pest_id'
     belongs_to :crop, class_name: 'DataMigrationIndiaReferencePests::TempCrop', foreign_key: 'crop_id'
   end
-  
+
   class TempCrop < ActiveRecord::Base
     self.table_name = 'crops'
   end
-  
+
   def up
     say "🌱 Seeding India (in) reference pests..."
-    
+
     seed_reference_pests
-    
+
     say "✅ India reference pests seeding completed!"
   end
-  
+
   def down
     say "🗑️  Removing India (in) reference pests..."
-    
+
     # Find pests by region
     pest_ids = TempPest.where(region: 'in', is_reference: true).pluck(:id)
-    
+
     # Delete related records
     TempCropPest.where(pest_id: pest_ids).delete_all
     TempPestControlMethod.where(pest_id: pest_ids).delete_all
     TempPestThermalRequirement.where(pest_id: pest_ids).delete_all
     TempPestTemperatureProfile.where(pest_id: pest_ids).delete_all
     TempPest.where(region: 'in', is_reference: true).delete_all
-    
+
     say "✅ India reference pests removed"
   end
-  
+
   private
-  
+
   def seed_reference_pests
       # टिड्डी
       pest = TempPest.find_or_initialize_by(name: "टिड्डी", is_reference: true, region: 'in')
@@ -1785,6 +1785,5 @@ class DataMigrationIndiaReferencePests < ActiveRecord::Migration[8.0]
       if crop && !TempCropPest.exists?(crop_id: crop.id, pest_id: pest.id)
         TempCropPest.create!(crop_id: crop.id, pest_id: pest.id)
       end
-
   end
 end

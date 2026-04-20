@@ -2,7 +2,7 @@ class AddAgriculturalTaskToCropTaskTemplates < ActiveRecord::Migration[7.1]
   def up
     add_reference :crop_task_templates, :agricultural_task, foreign_key: true
     add_index :crop_task_templates,
-              [:crop_id, :agricultural_task_id],
+              [ :crop_id, :agricultural_task_id ],
               unique: true,
               name: "idx_crop_task_templates_on_crop_and_agricultural_task"
 
@@ -16,11 +16,10 @@ class AddAgriculturalTaskToCropTaskTemplates < ActiveRecord::Migration[7.1]
   end
 
   def down
-    if index_exists?(:crop_task_templates, [:crop_id, :agricultural_task_id], name: "idx_crop_task_templates_on_crop_and_agricultural_task")
+    if index_exists?(:crop_task_templates, [ :crop_id, :agricultural_task_id ], name: "idx_crop_task_templates_on_crop_and_agricultural_task")
       remove_index :crop_task_templates, name: "idx_crop_task_templates_on_crop_and_agricultural_task"
     end
 
     remove_reference :crop_task_templates, :agricultural_task, foreign_key: true if column_exists?(:crop_task_templates, :agricultural_task_id)
   end
 end
-

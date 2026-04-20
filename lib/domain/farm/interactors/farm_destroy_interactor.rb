@@ -4,7 +4,6 @@ module Domain
   module Farm
     module Interactors
       class FarmDestroyInteractor < Domain::Farm::Ports::FarmDestroyInputPort
-
         # DeletionUndo の結果を扱う内部プレゼンター
         class DeletionUndoPresenter < Domain::DeletionUndo::Ports::DeletionUndoScheduleOutputPort
           attr_reader :undo_entity, :error
@@ -54,7 +53,7 @@ module Domain
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: farm_model,
             actor: user,
-            toast_message: @translator.t('flash.farms.deleted', name: farm_model.name),
+            toast_message: @translator.t("flash.farms.deleted", name: farm_model.name),
             auto_hide_after: 5000,
             metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(farm_model) }
           )

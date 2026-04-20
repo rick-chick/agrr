@@ -5,16 +5,16 @@ module ContactMessages
     class ContactMessageRateLimiter
       class RateLimitExceeded < StandardError; end
 
-      DEFAULT_CONFIG = '10/min'.freeze
+      DEFAULT_CONFIG = "10/min".freeze
       DEFAULT_PERIOD_IN_SECONDS = 60
       PERIOD_MAP = {
-        'second' => 1,
-        'minute' => 60,
-        'hour' => 3_600,
-        'day' => 86_400
+        "second" => 1,
+        "minute" => 60,
+        "hour" => 3_600,
+        "day" => 86_400
       }.freeze
 
-      def initialize(request:, limit_config: ENV['CONTACT_RATE_LIMIT'])
+      def initialize(request:, limit_config: ENV["CONTACT_RATE_LIMIT"])
         @request = request
         @limit_config = (limit_config.presence || DEFAULT_CONFIG).to_s
       end
@@ -34,7 +34,7 @@ module ContactMessages
       attr_reader :request
 
       def cache_key
-        ip = request.remote_ip.presence || request.ip.presence || 'unknown'
+        ip = request.remote_ip.presence || request.ip.presence || "unknown"
         "contact_message_rate:#{ip}"
       end
 
@@ -62,9 +62,8 @@ module ContactMessages
           period = DEFAULT_PERIOD_IN_SECONDS
         end
 
-        [limit, period]
+        [ limit, period ]
       end
     end
   end
 end
-

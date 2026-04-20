@@ -48,5 +48,3 @@ module Domain
     end
   end
 end
-
-

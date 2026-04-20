@@ -22,7 +22,7 @@ Rails.application.configure do
 
   # Disable serving static files from `public/`, relying on NGINX/Apache to do so instead.
   config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
-  
+
   # Set cache headers for static assets (1 year cache for assets with hash in filename)
   config.public_file_server.headers = {
     "Cache-Control" => "public, max-age=#{1.year.to_i}"
@@ -100,4 +100,3 @@ Rails.application.configure do
   # Note: Action Cable adapter should be configured in config/cable.yml instead
   # config.action_cable.adapter = :solid_cable
 end
-

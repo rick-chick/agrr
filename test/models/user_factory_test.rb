@@ -27,7 +27,7 @@ class UserFactoryTest < ActiveSupport::TestCase
     user1 = create(:user)
     user2 = create(:user)
     user3 = create(:user)
-    
+
     assert_not_equal user1.email, user2.email
     assert_not_equal user2.email, user3.email
     assert_not_equal user1.email, user3.email
@@ -44,10 +44,9 @@ class UserFactoryTest < ActiveSupport::TestCase
     user = create(:user)
     farm = create(:farm, user: user)
     field = create(:field, farm: farm, user: user)
-    
+
     assert_equal user, farm.user
     assert_equal user, field.user
     assert_equal farm, field.farm
   end
 end
-

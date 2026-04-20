@@ -5,4 +5,3 @@ class AddGroupsToCrops < ActiveRecord::Migration[8.0]
     add_column :crops, :groups, :text
   end
 end
-

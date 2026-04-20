@@ -43,7 +43,7 @@ module Domain
           pest_model = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, user, pest_id)
 
           if pest_model.pesticides.any?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.cannot_delete_in_use')))
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.cannot_delete_in_use")))
             return
           end
 
@@ -56,7 +56,7 @@ module Domain
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: pest_model,
             actor: user,
-            toast_message: @translator.t('pests.undo.toast', name: pest_model.name),
+            toast_message: @translator.t("pests.undo.toast", name: pest_model.name),
             auto_hide_after: 5000,
             metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(pest_model) }
           )
@@ -70,11 +70,11 @@ module Domain
             @output_port.on_failure(undo_presenter.error)
           end
         rescue ActiveRecord::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new('Pest not found'))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Pest not found"))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.no_permission')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))
         rescue ActiveRecord::DeleteRestrictionError, ActiveRecord::InvalidForeignKey
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.cannot_delete_in_use')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.cannot_delete_in_use")))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

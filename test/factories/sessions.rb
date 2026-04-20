@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :session do
     session_id { Session.generate_session_id }
     expires_at { 2.weeks.from_now }
-    
+
     association :user
 
     trait :expired do
@@ -18,4 +18,3 @@ FactoryBot.define do
     end
   end
 end
-

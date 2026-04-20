@@ -1,4 +1,4 @@
-require_relative 'concerns/job_arguments_provider'
+require_relative "concerns/job_arguments_provider"
 
 class TaskScheduleGenerationJob < ApplicationJob
   include JobArgumentsProvider
@@ -23,7 +23,7 @@ class TaskScheduleGenerationJob < ApplicationJob
     cultivation_plan = nil
 
     unless cultivation_plan_id
-      Rails.logger.warn '⚠️ [TaskScheduleGenerationJob] cultivation_plan_id が指定されていません'
+      Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] cultivation_plan_id が指定されていません"
       return
     end
 
@@ -63,14 +63,14 @@ class TaskScheduleGenerationJob < ApplicationJob
     return unless cultivation_plan
 
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Handling failure for CultivationPlan##{cultivation_plan.id}: #{error.message}"
-    cultivation_plan.phase_failed!('task_schedule_generation', channel_class)
+    cultivation_plan.phase_failed!("task_schedule_generation", channel_class)
   end
 
   def handle_template_missing(cultivation_plan, channel_class, error)
     return unless cultivation_plan
 
     Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Handling template missing for CultivationPlan##{cultivation_plan.id}: #{error.message}"
-    
+
     # 計画を完了状態にする（テンプレートがない場合でも計画は完成させる）
     # トーストはresults画面で表示されるため、ここでは通常の完了通知のみ送信
     cultivation_plan.complete!

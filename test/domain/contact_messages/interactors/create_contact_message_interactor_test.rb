@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 module ContactMessages
   module Interactors
     class CreateContactMessageInteractorTest < ActiveSupport::TestCase
-      test 'on success notifies output port and returns entity' do
+      test "on success notifies output port and returns entity" do
         entity = ContactMessages::Entities::ContactMessage.new(
           id: 1,
-          status: 'queued'
+          status: "queued"
         )
         input = ContactMessages::Dtos::CreateContactMessageInput.new(
-          name: 'Taro',
-          email: 'taro@example.com',
-          subject: 'Hello',
-          message: 'Hi'
+          name: "Taro",
+          email: "taro@example.com",
+          subject: "Hello",
+          message: "Hi"
         )
 
         gateway = Minitest::Mock.new
-        gateway.expect(:create, entity, [input])
+        gateway.expect(:create, entity, [ input ])
 
         received = nil
         output_port = Minitest::Mock.new
@@ -37,15 +37,15 @@ module ContactMessages
         output_port.verify
       end
 
-      test 'calls on_failure when validation fails' do
+      test "calls on_failure when validation fails" do
         input = ContactMessages::Dtos::CreateContactMessageInput.new(
-          name: 'Taro',
-          email: 'invalid',
-          subject: 'Hello',
-          message: ''
+          name: "Taro",
+          email: "invalid",
+          subject: "Hello",
+          message: ""
         )
 
-        record = ::ContactMessage.new(email: 'invalid', message: '')
+        record = ::ContactMessage.new(email: "invalid", message: "")
         record.valid?
         invalid_exception = ActiveRecord::RecordInvalid.new(record)
 
@@ -69,16 +69,16 @@ module ContactMessages
         output_port.verify
       end
 
-      test 'notifies output port on unexpected errors and re-raises' do
+      test "notifies output port on unexpected errors and re-raises" do
         input = ContactMessages::Dtos::CreateContactMessageInput.new(
-          name: 'Taro',
-          email: 'taro@example.com',
-          subject: 'Hello',
-          message: 'Hi'
+          name: "Taro",
+          email: "taro@example.com",
+          subject: "Hello",
+          message: "Hi"
         )
 
         gateway = Minitest::Mock.new
-        gateway.expect(:create, nil) { raise StandardError, 'boom' }
+        gateway.expect(:create, nil) { raise StandardError, "boom" }
 
         received = nil
         output_port = Minitest::Mock.new
@@ -93,7 +93,7 @@ module ContactMessages
         end
 
         assert_instance_of Domain::Shared::Dtos::ErrorDto, received
-        assert_includes received.message, 'boom'
+        assert_includes received.message, "boom"
 
         gateway.verify
         output_port.verify

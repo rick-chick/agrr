@@ -6,4 +6,3 @@ class AddRegionToFarms < ActiveRecord::Migration[8.0]
     add_index :farms, :region
   end
 end
-

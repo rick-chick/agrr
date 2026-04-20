@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_dependency 'field_cultivation_climate/mock_progress_records'
-require_dependency 'agrr/prediction_gateway'
+require_dependency "field_cultivation_climate/mock_progress_records"
+require_dependency "agrr/prediction_gateway"
 
 module Adapters
   module FieldCultivation
@@ -30,7 +30,7 @@ module Adapters
           ensure_cultivation_period!(field_cultivation)
 
           crop = fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
-          raise ActiveRecord::RecordNotFound, @translator.t('api.errors.crop_not_found') unless crop
+          raise ActiveRecord::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
 
           weather_payload = fetch_weather_payload(plan, farm, display_start_date: display_start_date, display_end_date: display_end_date, cultivation_period: field_cultivation)
           ensure_weather_payload!(plan, weather_payload)
@@ -91,10 +91,10 @@ module Adapters
             },
             weather_data: Array(weather_data_records || []).map do |datum|
               {
-                'date' => datum['date'],
-                'temperature_max' => datum['temperature_max'],
-                'temperature_min' => datum['temperature_min'],
-                'temperature_mean' => datum['temperature_mean']
+                "date" => datum["date"],
+                "temperature_max" => datum["temperature_max"],
+                "temperature_min" => datum["temperature_min"],
+                "temperature_mean" => datum["temperature_mean"]
               }
             end,
             gdd_data: daily_gdd,
@@ -124,13 +124,13 @@ module Adapters
         def ensure_weather_location!(farm)
           return if farm&.weather_location
 
-          raise StandardError, @translator.t('api.errors.no_weather_data')
+          raise StandardError, @translator.t("api.errors.no_weather_data")
         end
 
         def ensure_cultivation_period!(field_cultivation)
           return if field_cultivation.start_date && field_cultivation.completion_date
 
-          raise StandardError, @translator.t('api.errors.no_cultivation_period')
+          raise StandardError, @translator.t("api.errors.no_cultivation_period")
         end
 
         def fetch_crop(field_cultivation, plan_type_public:)
@@ -158,10 +158,10 @@ module Adapters
         end
 
         def ensure_weather_payload!(plan, weather_payload)
-          return if weather_payload && weather_payload['data']
+          return if weather_payload && weather_payload["data"]
 
           @logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
-          raise StandardError, @translator.t('controllers.field_cultivations.errors.weather_format_invalid')
+          raise StandardError, @translator.t("controllers.field_cultivations.errors.weather_format_invalid")
         end
 
         def merge_with_observed_data(cached_weather_payload, weather_location, display_start_date, display_end_date, cultivation_period = nil)
@@ -181,7 +181,7 @@ module Adapters
           end
 
           # 未来データは存在しないので昨日まで
-          actual_end = [observed_end, Date.current - 1.day].min
+          actual_end = [ observed_end, Date.current - 1.day ].min
 
           if observed_start > actual_end
             @logger.info "🔄 [FieldCultivationClimateGateway] No observed data needed for period #{observed_start} to #{observed_end}"
@@ -199,43 +199,43 @@ module Adapters
 
           # 実測データをAGRR形式に変換
           observed_formatted = {
-            'latitude' => weather_location.latitude,
-            'longitude' => weather_location.longitude,
-            'elevation' => weather_location.elevation,
-            'timezone' => weather_location.timezone,
-            'data' => observed_weather_data.filter_map do |datum|
+            "latitude" => weather_location.latitude,
+            "longitude" => weather_location.longitude,
+            "elevation" => weather_location.elevation,
+            "timezone" => weather_location.timezone,
+            "data" => observed_weather_data.filter_map do |datum|
               next if datum.temperature_max.nil? || datum.temperature_min.nil?
 
               temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
 
               {
-                'time' => datum.date.to_s,
-                'temperature_2m_max' => datum.temperature_max.to_f,
-                'temperature_2m_min' => datum.temperature_min.to_f,
-                'temperature_2m_mean' => temp_mean.to_f,
-                'precipitation_sum' => (datum.precipitation || 0.0).to_f,
-                'sunshine_duration' => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0,
-                'wind_speed_10m_max' => (datum.wind_speed || 0.0).to_f,
-                'weather_code' => datum.weather_code || 0
+                "time" => datum.date.to_s,
+                "temperature_2m_max" => datum.temperature_max.to_f,
+                "temperature_2m_min" => datum.temperature_min.to_f,
+                "temperature_2m_mean" => temp_mean.to_f,
+                "precipitation_sum" => (datum.precipitation || 0.0).to_f,
+                "sunshine_duration" => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0,
+                "wind_speed_10m_max" => (datum.wind_speed || 0.0).to_f,
+                "weather_code" => datum.weather_code || 0
               }
             end
           }
 
           # キャッシュされた予測データと実測データをマージ
-          cached_data = Array(cached_weather_payload['data'])
-          observed_data = observed_formatted['data']
+          cached_data = Array(cached_weather_payload["data"])
+          observed_data = observed_formatted["data"]
 
           # 日付でマージ（実測データが優先）
           merged_data = {}
-          cached_data.each { |datum| merged_data[datum['time']] = datum }
-          observed_data.each { |datum| merged_data[datum['time']] = datum }
+          cached_data.each { |datum| merged_data[datum["time"]] = datum }
+          observed_data.each { |datum| merged_data[datum["time"]] = datum }
 
           # 時系列順にソート
-          sorted_data = merged_data.values.sort_by { |datum| Date.parse(datum['time']) }
+          sorted_data = merged_data.values.sort_by { |datum| Date.parse(datum["time"]) }
 
           @logger.info "🔄 [FieldCultivationClimateGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
 
-          cached_weather_payload.merge('data' => sorted_data)
+          cached_weather_payload.merge("data" => sorted_data)
         end
 
         def build_progress_result(crop, field_cultivation, weather_payload)
@@ -252,12 +252,12 @@ module Adapters
         def mock_progress_result(field_cultivation)
           @logger.info "🧪 [FieldCultivationClimateGateway] Using mock progress for field_cultivation_id=#{field_cultivation.id}"
           {
-            'progress_records' => generate_mock_progress_records(
+            "progress_records" => generate_mock_progress_records(
               field_cultivation.start_date,
               field_cultivation.completion_date,
               logger: @logger
             ),
-            'total_gdd' => 875.0
+            "total_gdd" => 875.0
           }
         end
 
@@ -275,7 +275,7 @@ module Adapters
         def build_daily_gdd(progress_result, weather_data_records, field_cultivation, base_temp)
           weather_data_records ||= []
           weather_data_records = Array(weather_data_records)
-          progress_records = progress_result['progress_records'] || []
+          progress_records = progress_result["progress_records"] || []
           baseline_gdd = 0.0
           filtered_records = []
           daily_gdd = []
@@ -284,33 +284,33 @@ module Adapters
             daily_gdd = calculate_gdd_manually(weather_data_records, base_temp)
           else
             filtered_records = progress_records.select do |record|
-              record_date = Date.parse(record['date']) rescue nil
+              record_date = Date.parse(record["date"]) rescue nil
               next false unless record_date
               (field_cultivation.start_date..field_cultivation.completion_date).cover?(record_date)
             end
 
             start_index = progress_records.index do |record|
-              Date.parse(record['date']) == field_cultivation.start_date rescue false
+              Date.parse(record["date"]) == field_cultivation.start_date rescue false
             end
-            baseline_gdd = start_index && start_index.positive? ? (progress_records[start_index - 1]['cumulative_gdd'] || 0.0) : 0.0
+            baseline_gdd = start_index && start_index.positive? ? (progress_records[start_index - 1]["cumulative_gdd"] || 0.0) : 0.0
 
             filtered_records.each_with_index do |day, index|
-              current_cumulative_raw = day['cumulative_gdd'] || 0.0
+              current_cumulative_raw = day["cumulative_gdd"] || 0.0
               current_cumulative = current_cumulative_raw - baseline_gdd
-              prev_cumulative = index.positive? ? (filtered_records[index - 1]['cumulative_gdd'] - baseline_gdd) : 0.0
+              prev_cumulative = index.positive? ? (filtered_records[index - 1]["cumulative_gdd"] - baseline_gdd) : 0.0
               daily_gdd_value = current_cumulative - prev_cumulative
 
               daily_gdd << {
-                date: day['date'],
+                date: day["date"],
                 gdd: daily_gdd_value.round(2),
                 cumulative_gdd: current_cumulative.round(2),
                 temperature: nil,
-                current_stage: day['stage_name']
+                current_stage: day["stage_name"]
               }
             end
           end
 
-          [daily_gdd, baseline_gdd, filtered_records, progress_records]
+          [ daily_gdd, baseline_gdd, filtered_records, progress_records ]
         end
 
         def calculate_gdd_manually(weather_data_records, base_temp)
@@ -318,18 +318,18 @@ module Adapters
           cumulative_gdd = 0.0
 
           weather_data_records.each do |datum|
-            avg_temp = if datum['temperature_mean']
-              datum['temperature_mean']
-            elsif datum['temperature_max'] && datum['temperature_min']
-              (datum['temperature_max'] + datum['temperature_min']) / 2.0
+            avg_temp = if datum["temperature_mean"]
+              datum["temperature_mean"]
+            elsif datum["temperature_max"] && datum["temperature_min"]
+              (datum["temperature_max"] + datum["temperature_min"]) / 2.0
             end
             next unless avg_temp
 
-            gdd_value = [avg_temp - base_temp, 0].max
+            gdd_value = [ avg_temp - base_temp, 0 ].max
             cumulative_gdd += gdd_value
 
             daily_gdd << {
-              date: datum['date'],
+              date: datum["date"],
               gdd: gdd_value.round(2),
               cumulative_gdd: cumulative_gdd.round(2),
               temperature: avg_temp.round(2),
@@ -366,26 +366,26 @@ module Adapters
         end
 
         def extract_actual_weather_data(weather_payload, start_date, end_date)
-          return [] unless weather_payload && weather_payload['data']
+          return [] unless weather_payload && weather_payload["data"]
 
-          weather_payload['data'].filter_map do |datum|
+          weather_payload["data"].filter_map do |datum|
             next unless datum
-            time_value = datum['time'] || datum['date']
+            time_value = datum["time"] || datum["date"]
             next unless time_value
             datum_date = Date.parse(time_value) rescue nil
             next unless datum_date
             next unless datum_date.between?(start_date, end_date)
 
-            temp_mean = datum['temperature_2m_mean']
-            if temp_mean.nil? && datum['temperature_2m_max'] && datum['temperature_2m_min']
-              temp_mean = (datum['temperature_2m_max'] + datum['temperature_2m_min']) / 2.0
+            temp_mean = datum["temperature_2m_mean"]
+            if temp_mean.nil? && datum["temperature_2m_max"] && datum["temperature_2m_min"]
+              temp_mean = (datum["temperature_2m_max"] + datum["temperature_2m_min"]) / 2.0
             end
 
             {
-              'date' => time_value,
-              'temperature_max' => datum.fetch('temperature_2m_max', datum[:temperature_2m_max] || nil),
-              'temperature_min' => datum.fetch('temperature_2m_min', datum[:temperature_2m_min] || nil),
-              'temperature_mean' => temp_mean
+              "date" => time_value,
+              "temperature_max" => datum.fetch("temperature_2m_max", datum[:temperature_2m_max] || nil),
+              "temperature_min" => datum.fetch("temperature_2m_min", datum[:temperature_2m_min] || nil),
+              "temperature_mean" => temp_mean
             }
           end
         end
@@ -398,7 +398,7 @@ module Adapters
           historical_payload = @weather_data_gateway.format_for_agrr(weather_data_dtos: historical_data_dtos, weather_location: wl)
           days = (end_date - start_date).to_i + 1
           prediction_gateway = Agrr::PredictionGateway.new
-          prediction_gateway.predict(historical_data: historical_payload, days: days, model: 'lightgbm')
+          prediction_gateway.predict(historical_data: historical_payload, days: days, model: "lightgbm")
         end
       end
     end

@@ -34,20 +34,20 @@ if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
 end
 ENV["RAILS_ENV"] ||= "test"
 if ENV.fetch("COVERAGE", "true") != "false"
-  require 'simplecov'
-  SimpleCov.start 'rails' do
-    add_filter '/test/'
-    add_filter '/config/'
-    add_filter '/vendor/'
-    add_filter '/tmp/'
-    
-    add_group 'Controllers', 'app/controllers'
-    add_group 'Models', 'app/models'
-    add_group 'Views', 'app/views'
-    add_group 'Helpers', 'app/helpers'
-    add_group 'Jobs', 'app/jobs'
-    add_group 'Mailers', 'app/mailers'
-    
+  require "simplecov"
+  SimpleCov.start "rails" do
+    add_filter "/test/"
+    add_filter "/config/"
+    add_filter "/vendor/"
+    add_filter "/tmp/"
+
+    add_group "Controllers", "app/controllers"
+    add_group "Models", "app/models"
+    add_group "Views", "app/views"
+    add_group "Helpers", "app/helpers"
+    add_group "Jobs", "app/jobs"
+    add_group "Mailers", "app/mailers"
+
     minimum_coverage 10
   end
 end
@@ -55,7 +55,7 @@ end
 require_relative "../config/environment"
 require "rails/test_help"
 require "minitest/mock"
-require 'mocha/minitest'
+require "mocha/minitest"
 
 # Expose aliases for controllers tests to stub without loading the controller directly.
 module Api
@@ -73,16 +73,16 @@ module Api
 end
 
 # Load test support files
-Dir[Rails.root.join('test', 'support', '**', '*.rb')].each { |f| require f }
+Dir[Rails.root.join("test", "support", "**", "*.rb")].each { |f| require f }
 
 module ActiveSupport
   class TestCase
     # Include AGRR mock helper
     include AgrrMockHelper
-    
+
     # Include FactoryBot syntax methods
     include FactoryBot::Syntax::Methods
-    
+
     # Run tests in parallel with specified workers
     # 並列テストはPARALLEL_TESTS環境変数で制御
     # デフォルトでは無効（SimpleCovのため）
@@ -98,7 +98,7 @@ module ActiveSupport
     setup do
       # application.jsがビルドされているか確認し、なければダミーファイルを作成
       ensure_application_js_built
-      
+
       User.instance_variable_set(:@anonymous_user, nil)
       User.anonymous_user
       # Set default locale for URL helpers
@@ -106,18 +106,18 @@ module ActiveSupport
       # Set default URL options for route helpers
       Rails.application.routes.default_url_options[:locale] = :ja
     end
-    
+
     # application.jsがビルドされているか確認し、なければダミーファイルを作成
     def ensure_application_js_built
-      app_js_path = Rails.root.join('app', 'assets', 'builds', 'application.js')
+      app_js_path = Rails.root.join("app", "assets", "builds", "application.js")
       unless File.exist?(app_js_path)
         Rails.logger.warn "[Test] ⚠️ application.js not found at #{app_js_path}"
         Rails.logger.warn "[Test] Creating dummy application.js for test environment (Propshaft requires this)"
-        
+
         # Propshaftが存在しないアセットに対してエラーを発生させるため、ダミーファイルを作成
         FileUtils.mkdir_p(app_js_path.dirname)
         File.write(app_js_path, "// Dummy application.js for test environment\n// This file is auto-generated when application.js is not built\n")
-        
+
         Rails.logger.info "[Test] ✓ Created dummy application.js"
       end
     end
@@ -128,7 +128,7 @@ module ActiveSupport
     end
 
     # Add more helper methods to be used by all tests here...
-    
+
     # OAuth test helpers
     def setup_omniauth_mock(provider, auth_hash)
       OmniAuth.config.test_mode = true
@@ -151,15 +151,15 @@ module ActiveSupport
       session = create(:session, user: user)
       cookies[:session_id] = session.session_id
     end
-    
+
     # IntegrationTest用のヘルパーメソッド
     def create_session_for(user)
       session = create(:session, user: user)
       session.session_id
     end
-    
+
     def session_cookie_header(session_id)
-      { 'Cookie' => "session_id=#{session_id}" }
+      { "Cookie" => "session_id=#{session_id}" }
     end
   end
 end
@@ -172,6 +172,3 @@ module ActionDispatch
     end
   end
 end
-
-
-

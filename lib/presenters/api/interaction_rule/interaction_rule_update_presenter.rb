@@ -15,15 +15,15 @@ module Presenters
 
         def on_failure(error_dto)
           if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
-            msg = I18n.t('interaction_rules.flash.no_permission')
+            msg = I18n.t("interaction_rules.flash.no_permission")
             status = :forbidden
           else
             msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-            status = if msg == 'InteractionRule not found'
+            status = if msg == "InteractionRule not found"
                        :not_found
-                     else
+            else
                        :unprocessable_entity
-                     end
+            end
           end
           @view.render_response(json: { error: msg }, status: status)
         end

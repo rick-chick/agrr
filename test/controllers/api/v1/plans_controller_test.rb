@@ -20,7 +20,7 @@ module Api
                  plan: {
                    farm_id: @farm.id,
                    plan_name: "テスト計画",
-                   crop_ids: [@crop.id]
+                   crop_ids: [ @crop.id ]
                  }
                },
                headers: { "Accept" => "application/json" }
@@ -43,7 +43,7 @@ module Api
                params: {
                  plan: {
                    farm_id: @farm.id,
-                   crop_ids: [@crop.id]
+                   crop_ids: [ @crop.id ]
                  }
                },
                headers: { "Accept" => "application/json" }
@@ -81,7 +81,7 @@ module Api
                params: {
                  plan: {
                    farm_id: @farm.id,
-                   crop_ids: [@crop.id]
+                   crop_ids: [ @crop.id ]
                  }
                },
                headers: { "Accept" => "application/json" }
@@ -98,7 +98,7 @@ module Api
                params: {
                  plan: {
                    farm_id: 99999,
-                   crop_ids: [@crop.id]
+                   crop_ids: [ @crop.id ]
                  }
                },
                headers: { "Accept" => "application/json" }
@@ -111,14 +111,14 @@ module Api
 
       test "create fails when not authenticated" do
         # Clear session to make user anonymous
-        cookies.delete('session_id')
+        cookies.delete("session_id")
 
         assert_no_difference -> { ::CultivationPlan.count } do
           post api_v1_plans_path,
                params: {
                  plan: {
                    farm_id: @farm.id,
-                   crop_ids: [@crop.id]
+                   crop_ids: [ @crop.id ]
                  }
                },
                headers: { "Accept" => "application/json" }
@@ -170,13 +170,13 @@ module Api
         # Contract: DeletionUndoResponse fields
         assert json["undo_token"].present?, "undo_token should be present"
         event = DeletionUndoEvent.find_by!(id: json["undo_token"])
-        assert_equal I18n.t('plans.undo.toast', name: plan.display_name), json["toast_message"]
+        assert_equal I18n.t("plans.undo.toast", name: plan.display_name), json["toast_message"]
         assert_equal dom_id(plan), json["resource_dom_id"]
         assert_equal plan.display_name, json["resource"]
         assert_equal "/plans", json["redirect_path"]
         assert_equal undo_deletion_path(undo_token: json["undo_token"]), json["undo_path"]
         assert_equal event.auto_hide_after, json["auto_hide_after"]
-        assert_equal event.metadata['undo_deadline'], json["undo_deadline"]
+        assert_equal event.metadata["undo_deadline"], json["undo_deadline"]
         assert json["undo_deadline"].present?
         assert json["auto_hide_after"].present?
       end
@@ -186,7 +186,7 @@ module Api
 
         assert_response :not_found
         json = JSON.parse(response.body)
-        assert_equal I18n.t('plans.errors.not_found'), json["error"]
+        assert_equal I18n.t("plans.errors.not_found"), json["error"]
       end
 
       test "destroy returns 404 when plan belongs to another user" do
@@ -200,12 +200,12 @@ module Api
 
         assert_response :not_found
         json = JSON.parse(response.body)
-        assert_equal I18n.t('plans.errors.not_found'), json["error"]
+        assert_equal I18n.t("plans.errors.not_found"), json["error"]
       end
 
       test "destroy returns 422 when deletion fails" do
         plan = create(:cultivation_plan, :annual_planning, farm: @farm, user: @user, plan_type: :private)
-        
+
         # Mock DeletionUndo::Manager to raise an error that results in 422
         DeletionUndo::Manager.stub(:schedule, ->(*) { raise ActiveRecord::DeleteRestrictionError }) do
           assert_no_difference "::CultivationPlan.count" do
@@ -215,7 +215,7 @@ module Api
 
         assert_response :unprocessable_entity
         json = JSON.parse(response.body)
-        assert_equal I18n.t('plans.errors.delete_failed'), json["error"]
+        assert_equal I18n.t("plans.errors.delete_failed"), json["error"]
       end
 
       test "destroy returns unauthorized when not authenticated" do

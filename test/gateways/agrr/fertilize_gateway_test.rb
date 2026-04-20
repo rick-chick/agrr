@@ -1,4 +1,4 @@
-require 'test_helper'
+require "test_helper"
 
 class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
   class StubAgrrService
@@ -7,8 +7,8 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
 
     def initialize
       @response = {
-        'schedule' => [
-          { 'task_id' => '1', 'stage_order' => 0, 'stage_name' => '何か', 'gdd_trigger' => 0 }
+        "schedule" => [
+          { "task_id" => "1", "stage_order" => 0, "stage_name" => "何か", "gdd_trigger" => 0 }
         ]
       }.to_json
     end
@@ -29,10 +29,10 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
 
-    @crop = create(:crop, :with_stages, name: 'トマト', variety: '一般')
+    @crop = create(:crop, :with_stages, name: "トマト", variety: "一般")
   end
 
-  test 'plan delegates to agrr service with default max_applications 2' do
+  test "plan delegates to agrr service with default max_applications 2" do
     result = @gateway.plan(crop: @crop)
 
     assert_not_nil result
@@ -41,12 +41,10 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
     assert @stub_service.received_args[:json]
   end
 
-  test 'plan allows overriding max_applications' do
+  test "plan allows overriding max_applications" do
     result = @gateway.plan(crop: @crop, max_applications: 1)
 
     assert_not_nil result
     assert_equal 1, @stub_service.received_args[:max_applications]
   end
 end
-
-

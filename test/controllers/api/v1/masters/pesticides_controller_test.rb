@@ -160,9 +160,9 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert json_response.key?('undo_token')
-          assert json_response.key?('toast_message')
-          assert json_response.key?('undo_path')
+          assert json_response.key?("undo_token")
+          assert json_response.key?("toast_message")
+          assert json_response.key?("undo_path")
         end
 
         test "should not destroy other user's pesticide" do

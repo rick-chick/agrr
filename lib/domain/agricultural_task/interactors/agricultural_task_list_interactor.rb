@@ -19,9 +19,9 @@ module Domain
           # コントローラの既存ロジックを移行
           scope = if input_dto.is_admin
                     agricultural_tasks_for_admin(input_dto.filter, ::AgriculturalTask.all)
-                  else
+          else
                     Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(::AgriculturalTask, user)
-                  end
+          end
 
           scope = apply_search(scope, input_dto.query) if Domain::Shared::ValidationHelpers.present?(input_dto.query)
           scope = scope.recent
@@ -41,9 +41,9 @@ module Domain
         def agricultural_tasks_for_admin(filter, base_scope = nil)
           base_scope ||= ::AgriculturalTask.all
           case filter
-          when 'reference'
+          when "reference"
             base_scope.where(is_reference: true)
-          when 'all'
+          when "all"
             base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(::AgriculturalTask, User.find(@user_id)).pluck(:id))
           else
             base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.user_owned_non_reference_scope(::AgriculturalTask, User.find(@user_id)).pluck(:id))

@@ -17,4 +17,3 @@ class CreateFreeCropPlans < ActiveRecord::Migration[8.0]
     add_index :free_crop_plans, :status
   end
 end
-

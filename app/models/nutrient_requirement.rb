@@ -14,10 +14,3 @@ class NutrientRequirement < ApplicationRecord
   validates :daily_uptake_p, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :daily_uptake_k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
 end
-
-
-
-
-
-
-

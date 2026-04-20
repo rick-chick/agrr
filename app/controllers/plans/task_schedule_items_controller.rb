@@ -4,27 +4,27 @@ module Plans
   class TaskScheduleItemsController < ApplicationController
     before_action :authenticate_user!
     before_action :set_cultivation_plan
-    before_action :set_task_schedule_item, only: [:update, :destroy, :complete]
+    before_action :set_task_schedule_item, only: [ :update, :destroy, :complete ]
     rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
     rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
     rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
 
     AMOUNT_NUMERATOR_UNITS = {
-      'ml' => { base: :liter, factor: BigDecimal('0.001') },
-      'l' => { base: :liter, factor: BigDecimal('1') },
-      'g' => { base: :gram, factor: BigDecimal('1') },
-      'kg' => { base: :gram, factor: BigDecimal('1000') }
+      "ml" => { base: :liter, factor: BigDecimal("0.001") },
+      "l" => { base: :liter, factor: BigDecimal("1") },
+      "g" => { base: :gram, factor: BigDecimal("1") },
+      "kg" => { base: :gram, factor: BigDecimal("1000") }
     }.freeze
 
     AREA_UNITS = {
-      'm2' => BigDecimal('1'),
-      '㎡' => BigDecimal('1'),
-      'a' => BigDecimal('100'),
-      '10a' => BigDecimal('1000'),
-      'ha' => BigDecimal('10000')
+      "m2" => BigDecimal("1"),
+      "㎡" => BigDecimal("1"),
+      "a" => BigDecimal("100"),
+      "10a" => BigDecimal("1000"),
+      "ha" => BigDecimal("10000")
     }.freeze
 
-    CONVERSION_TOLERANCE = BigDecimal('0.0001')
+    CONVERSION_TOLERANCE = BigDecimal("0.0001")
     private_constant :AMOUNT_NUMERATOR_UNITS, :AREA_UNITS, :CONVERSION_TOLERANCE
     class UnitConversionError < StandardError; end
 
@@ -33,7 +33,7 @@ module Plans
         raw_params = create_params
         attrs = raw_params.to_h.symbolize_keys
         field_cultivation = @cultivation_plan.field_cultivations.find(attrs[:field_cultivation_id])
-        category = 'general'
+        category = "general"
         validate_crop_selection!(field_cultivation, attrs[:cultivation_plan_crop_id])
         template = find_task_template(attrs[:crop_task_template_id])
         validate_template!(field_cultivation, template)
@@ -43,7 +43,7 @@ module Plans
           cultivation_plan: @cultivation_plan
         ) do |record|
           record.status = TaskSchedule::STATUSES[:active]
-          record.source = 'manual_entry'
+          record.source = "manual_entry"
           record.generated_at = Time.zone.now
         end
 
@@ -72,7 +72,7 @@ module Plans
         record: @task_schedule_item,
         actor: current_user,
         toast_message: I18n.t(
-          'plans.task_schedule_items.undo.toast',
+          "plans.task_schedule_items.undo.toast",
           name: @task_schedule_item.name
         )
       )
@@ -84,14 +84,14 @@ module Plans
     rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
       Rails.logger.warn("[Plans::TaskScheduleItemsController] destroy failed: #{e.class} #{e.message}")
       render_deletion_failure(
-        message: I18n.t('controllers.plans.task_schedule_items.errors.cancel_failed'),
+        message: I18n.t("controllers.plans.task_schedule_items.errors.cancel_failed"),
         fallback_location: fallback_location
       )
     rescue DeletionUndo::Error => e
       Rails.logger.error("[Plans::TaskScheduleItemsController] undo scheduling error: #{e.class} #{e.message}")
       render_deletion_failure(
         message: I18n.t(
-          'controllers.plans.task_schedule_items.errors.undo_failed',
+          "controllers.plans.task_schedule_items.errors.undo_failed",
           message: e.message
         ),
         fallback_location: fallback_location
@@ -99,7 +99,7 @@ module Plans
     rescue StandardError => e
       Rails.logger.error("[Plans::TaskScheduleItemsController] unexpected destroy error: #{e.class} #{e.message}")
       render_deletion_failure(
-        message: I18n.t('controllers.plans.task_schedule_items.errors.cancel_failed'),
+        message: I18n.t("controllers.plans.task_schedule_items.errors.cancel_failed"),
         fallback_location: fallback_location
       )
     end
@@ -184,9 +184,9 @@ module Plans
 
       task_type = if template
                     template.task_type || TaskScheduleItem::FIELD_WORK_TYPE
-                  else
+      else
                     params[:task_type].presence || TaskScheduleItem::FIELD_WORK_TYPE
-                  end
+      end
 
       {
         task_type: task_type,
@@ -196,7 +196,7 @@ module Plans
         stage_name: params[:stage_name],
         stage_order: params[:stage_order],
         priority: params[:priority],
-        source: template ? 'template_entry' : 'manual_entry',
+        source: template ? "template_entry" : "manual_entry",
         weather_dependency: params[:weather_dependency].presence || template&.weather_dependency,
         time_per_sqm: params[:time_per_sqm].presence || template&.time_per_sqm,
         amount: params[:amount],
@@ -214,7 +214,7 @@ module Plans
       end
 
       record = TaskScheduleItem.new
-      record.errors.add(:base, I18n.t('plans.task_schedules.detail.actions.crop_required'))
+      record.errors.add(:base, I18n.t("plans.task_schedules.detail.actions.crop_required"))
       raise ActiveRecord::RecordInvalid, record
     end
 
@@ -225,8 +225,8 @@ module Plans
       if crop_id.blank? || template.crop_id != crop_id
         record = TaskScheduleItem.new
         message = I18n.t(
-          'controllers.plans.task_schedule_items.errors.invalid_template',
-          default: '選択した作業テンプレートは利用できません'
+          "controllers.plans.task_schedule_items.errors.invalid_template",
+          default: "選択した作業テンプレートは利用できません"
         )
         record.errors.add(:base, message)
         raise ActiveRecord::RecordInvalid, record
@@ -235,7 +235,7 @@ module Plans
 
     def build_update_attributes(raw_params)
       attributes = raw_params.to_h
-      if attributes.key?('scheduled_date') && raw_params[:scheduled_date].present?
+      if attributes.key?("scheduled_date") && raw_params[:scheduled_date].present?
         new_date =
           begin
             Date.iso8601(raw_params[:scheduled_date].to_s)
@@ -244,18 +244,18 @@ module Plans
             record.errors.add(
               :scheduled_date,
               I18n.t(
-                'controllers.plans.task_schedule_items.errors.invalid_scheduled_date',
-                default: '無効な日付が指定されました'
+                "controllers.plans.task_schedule_items.errors.invalid_scheduled_date",
+                default: "無効な日付が指定されました"
               )
             )
             raise ActiveRecord::RecordInvalid, record
           end
 
-        attributes['scheduled_date'] = new_date
+        attributes["scheduled_date"] = new_date
 
         if @task_schedule_item.scheduled_date != new_date
-          attributes['rescheduled_at'] = Time.current
-          attributes['status'] = TaskScheduleItem::STATUSES[:rescheduled]
+          attributes["rescheduled_at"] = Time.current
+          attributes["status"] = TaskScheduleItem::STATUSES[:rescheduled]
         end
       end
       apply_amount_unit_conversion(attributes)
@@ -288,17 +288,17 @@ module Plans
 
     def render_error_response(message_key, status)
       message = I18n.t("controllers.plans.task_schedule_items.errors.#{message_key}")
-      render json: { error: message, errors: { 'base' => [message] } }, status: status
+      render json: { error: message, errors: { "base" => [ message ] } }, status: status
     end
 
     def build_error_hash(record, fallback_message)
-      return { 'base' => [fallback_message] } unless record&.respond_to?(:errors)
+      return { "base" => [ fallback_message ] } unless record&.respond_to?(:errors)
 
       errors = record.errors.to_hash(true).transform_keys(&:to_s)
       errors.transform_values! { |messages| Array(messages).compact }
-      errors['base'] = Array(errors['base']).presence || [fallback_message]
+      errors["base"] = Array(errors["base"]).presence || [ fallback_message ]
       errors.delete_if { |_attribute, messages| messages.empty? }
-      errors.presence || { 'base' => [fallback_message] }
+      errors.presence || { "base" => [ fallback_message ] }
     end
 
     def find_task_template(template_id)
@@ -312,31 +312,31 @@ module Plans
 
       record = TaskScheduleItem.new
       message = I18n.t(
-        'plans.task_schedules.detail.actions.name_required',
-        default: '作業名を入力してください'
+        "plans.task_schedules.detail.actions.name_required",
+        default: "作業名を入力してください"
       )
       record.errors.add(:name, message)
       raise ActiveRecord::RecordInvalid, record
     end
 
     def apply_amount_unit_conversion(attributes)
-      return attributes unless attributes.key?('amount_unit')
+      return attributes unless attributes.key?("amount_unit")
 
-      new_unit = attributes['amount_unit']
+      new_unit = attributes["amount_unit"]
       current_unit = @task_schedule_item.amount_unit
       return attributes if new_unit.blank? || current_unit.blank? || new_unit == current_unit
 
       current_amount = @task_schedule_item.amount
       return attributes if current_amount.nil?
 
-      amount_param = attributes['amount']
+      amount_param = attributes["amount"]
       if amount_param.present?
         param_amount = decimal_from(amount_param)
         return attributes if param_amount.nil?
         return attributes unless approx_equal?(param_amount, decimal_from(current_amount))
       end
 
-      attributes['amount'] = convert_per_area_amount(
+      attributes["amount"] = convert_per_area_amount(
         decimal_from(current_amount),
         from: current_unit,
         to: new_unit
@@ -349,7 +349,7 @@ module Plans
 
     def convert_per_area_amount(amount, from:, to:)
       amount = decimal_from(amount)
-      raise UnitConversionError, 'amount is required for conversion' if amount.nil?
+      raise UnitConversionError, "amount is required for conversion" if amount.nil?
 
       from_numerator, from_area = parse_per_area_unit(from)
       to_numerator, to_area = parse_per_area_unit(to)
@@ -373,10 +373,10 @@ module Plans
     end
 
     def parse_per_area_unit(unit)
-      parts = unit.to_s.split('/')
+      parts = unit.to_s.split("/")
       raise UnitConversionError, "invalid amount_unit format: #{unit}" if parts.size != 2
 
-      [normalize_amount_unit(parts[0]), normalize_area_unit(parts[1])]
+      [ normalize_amount_unit(parts[0]), normalize_area_unit(parts[1]) ]
     end
 
     def normalize_amount_unit(unit)
@@ -385,7 +385,7 @@ module Plans
 
     def normalize_area_unit(unit)
       value = unit.to_s.strip.downcase
-      return 'm2' if value == '㎡'
+      return "m2" if value == "㎡"
 
       value
     end

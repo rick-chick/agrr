@@ -13,7 +13,7 @@ module Presenters
           undo_event = destroy_output_dto.undo
           @view.redirect_back(
             fallback_location: @view.interaction_rules_path,
-            notice: I18n.t('deletion_undo.redirect_notice', resource: undo_event.metadata['resource_label'])
+            notice: I18n.t("deletion_undo.redirect_notice", resource: undo_event.metadata["resource_label"])
           )
         end
 

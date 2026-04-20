@@ -55,7 +55,7 @@ begin
   # Check if OmniAuth middleware is loaded
   middleware_stack = Rails.application.middleware
   omniauth_middleware = middleware_stack.detect { |m| m.first.include?('OmniAuth') }
-  
+
   if omniauth_middleware
     puts "  ✅ OmniAuth middleware is loaded"
     puts "  Provider: #{omniauth_middleware.first}"

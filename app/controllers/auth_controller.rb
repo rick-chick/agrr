@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
-  layout 'auth', only: [:login]
-  
+  layout "auth", only: [ :login ]
+
   # Skip CSRF protection for OAuth endpoints
-  skip_before_action :verify_authenticity_token, only: [:google_oauth2_callback, :failure]
-  
+  skip_before_action :verify_authenticity_token, only: [ :google_oauth2_callback, :failure ]
+
   # Public endpoints
-  skip_before_action :authenticate_user!, only: [:login, :google_oauth2_callback, :failure]
-  
+  skip_before_action :authenticate_user!, only: [ :login, :google_oauth2_callback, :failure ]
+
   # Production環境での認証機能制限を解除
   # before_action :check_production_environment
 
@@ -20,12 +20,12 @@ class AuthController < ApplicationController
     end
 
     # Check if Google OAuth is properly configured
-    unless ENV['GOOGLE_CLIENT_ID'].present? && ENV['GOOGLE_CLIENT_SECRET'].present?
+    unless ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
       Rails.logger.error "🚨 Google OAuth not configured for login attempt"
       Rails.logger.error "   GOOGLE_CLIENT_ID: #{ENV['GOOGLE_CLIENT_ID'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
       Rails.logger.error "   GOOGLE_CLIENT_SECRET: #{ENV['GOOGLE_CLIENT_SECRET'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
       Rails.logger.error "   Environment: #{Rails.env}"
-      flash[:alert] = I18n.t('auth.flash.oauth_not_configured')
+      flash[:alert] = I18n.t("auth.flash.oauth_not_configured")
     end
     # Display login page with Google OAuth button
   end
@@ -35,22 +35,22 @@ class AuthController < ApplicationController
     # This should not be reached as OmniAuth middleware handles /auth/google_oauth2
     # If reached, there's a configuration issue
     Rails.logger.error "🚨 OAuth: google_oauth2 action reached - OmniAuth middleware not working"
-    redirect_to auth_login_path, alert: I18n.t('auth.flash.oauth_config_error')
+    redirect_to auth_login_path, alert: I18n.t("auth.flash.oauth_config_error")
   end
 
   def google_oauth2_callback
     begin
       # Get auth hash from OmniAuth
-      auth_hash = request.env['omniauth.auth']
-      
+      auth_hash = request.env["omniauth.auth"]
+
       if auth_hash.nil?
-        redirect_to auth_failure_path, alert: I18n.t('auth.flash.no_data')
+        redirect_to auth_failure_path, alert: I18n.t("auth.flash.no_data")
         return
       end
 
       # Find or create user
       user = User.from_omniauth(auth_hash)
-      
+
       if user.persisted?
         # Create session (avoid shadowing Rails session hash)
         user_session = Session.create_for_user(user)
@@ -70,24 +70,24 @@ class AuthController < ApplicationController
         # Redirect back to frontend (e.g. Angular 4200) if return_to was set
         if session[:return_to].present?
           return_to = session.delete(:return_to)
-          redirect_to return_to, allow_other_host: true, notice: I18n.t('auth.flash.login_success')
+          redirect_to return_to, allow_other_host: true, notice: I18n.t("auth.flash.login_success")
         else
-          redirect_to root_path, notice: I18n.t('auth.flash.login_success')
+          redirect_to root_path, notice: I18n.t("auth.flash.login_success")
         end
       else
-        redirect_to auth_failure_path, alert: I18n.t('auth.flash.create_user_failed')
+        redirect_to auth_failure_path, alert: I18n.t("auth.flash.create_user_failed")
       end
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error "OAuth callback error: #{e.message}"
-      redirect_to auth_failure_path, alert: I18n.t('auth.flash.invalid_data')
+      redirect_to auth_failure_path, alert: I18n.t("auth.flash.invalid_data")
     rescue StandardError => e
       Rails.logger.error "OAuth callback error: #{e.message}"
-      redirect_to auth_failure_path, alert: I18n.t('auth.flash.unexpected_error')
+      redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")
     end
   end
 
   def failure
-    error_message = params[:message] || I18n.t('auth.flash.authentication_failed')
+    error_message = params[:message] || I18n.t("auth.flash.authentication_failed")
     redirect_to auth_login_path, alert: error_message
   end
 
@@ -95,54 +95,54 @@ class AuthController < ApplicationController
     if current_user
       # Destroy all sessions for the user
       current_user.sessions.destroy_all
-      
+
       # Clear session cookie (ensure deletion in production as well)
       clear_session_cookie
-      
-      redirect_to auth_login_path, notice: I18n.t('auth.flash.logout_success')
+
+      redirect_to auth_login_path, notice: I18n.t("auth.flash.logout_success")
     else
-      redirect_to auth_login_path, alert: I18n.t('auth.flash.not_logged_in')
+      redirect_to auth_login_path, alert: I18n.t("auth.flash.not_logged_in")
     end
   end
 
   private
-  
+
   # Delete session cookie robustly across environments and domains
   def clear_session_cookie
     # Default deletion (matches cookies set without domain/path)
     cookies.delete(:session_id)
-    
+
     # Ensure deletion when a domain/path is involved (some proxies/CDNs alter host)
     begin
       cookie_domain = request.cookie_domain.presence
     rescue NoMethodError
       cookie_domain = nil
     end
-    
+
     # Try explicit path root
-    cookies.delete(:session_id, path: '/')
-    
+    cookies.delete(:session_id, path: "/")
+
     # Try with current host domain if available
     if cookie_domain
-      cookies.delete(:session_id, domain: cookie_domain, path: '/')
+      cookies.delete(:session_id, domain: cookie_domain, path: "/")
     end
-    
+
     # Also try wildcard domain deletion for subdomain cookies
-    cookies.delete(:session_id, domain: :all, path: '/')
+    cookies.delete(:session_id, domain: :all, path: "/")
   end
-  
+
   def check_production_environment
     if Rails.env.production?
       if request.format.json?
-        render json: { error: I18n.t('auth.flash.disabled_in_production_json') }, status: :forbidden
+        render json: { error: I18n.t("auth.flash.disabled_in_production_json") }, status: :forbidden
       else
-        redirect_to root_path, alert: I18n.t('auth.flash.disabled_in_production')
+        redirect_to root_path, alert: I18n.t("auth.flash.disabled_in_production")
       end
     end
   end
 
   def auth_failure_path
-    '/auth/failure'
+    "/auth/failure"
   end
 
   def allowed_return_to?(url)
@@ -162,7 +162,7 @@ class AuthController < ApplicationController
   end
 
   def frontend_allowed_origins
-    allowed = ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').map(&:strip).reject(&:empty?)
+    allowed = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?)
     allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
   end
 
@@ -175,7 +175,7 @@ class AuthController < ApplicationController
 
   def matches_allowed_host?(host)
     return false unless host.present?
-    allowed = ENV.fetch('ALLOWED_HOSTS', '').split(',').map(&:strip).reject(&:empty?)
+    allowed = ENV.fetch("ALLOWED_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
     allowed.any? { |allowed_host| host_match?(host, allowed_host) }
   end
 
@@ -183,8 +183,8 @@ class AuthController < ApplicationController
     return false unless host.present? && allowed_host.present?
 
     normalized = allowed_host.strip
-    if normalized.start_with?('.')
-      host.end_with?(normalized.delete_prefix('.'))
+    if normalized.start_with?(".")
+      host.end_with?(normalized.delete_prefix("."))
     else
       host.casecmp?(normalized)
     end
@@ -194,4 +194,3 @@ class AuthController < ApplicationController
     "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
   end
 end
-

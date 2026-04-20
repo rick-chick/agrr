@@ -24,13 +24,13 @@ module Api
 
         # 作物未選択のチェック
         if crops.empty?
-          return render json: { error: I18n.t('plans.errors.select_crop') }, status: :unprocessable_entity
+          return render json: { error: I18n.t("plans.errors.select_crop") }, status: :unprocessable_entity
         end
 
         # 既存計画のチェック
         existing_plan = find_existing_plan(farm)
         if existing_plan
-          return render json: { error: I18n.t('plans.errors.plan_already_exists_annual') }, status: :unprocessable_entity
+          return render json: { error: I18n.t("plans.errors.plan_already_exists_annual") }, status: :unprocessable_entity
         end
 
         # 計画作成とジョブ実行
@@ -38,10 +38,10 @@ module Api
         render json: { id: result.cultivation_plan.id }, status: :created
       rescue ActiveRecord::RecordNotFound => e
         Rails.logger.warn "⚠️ [Api::V1::PlansController#create] Record not found: #{e.message}"
-        render json: { error: I18n.t('plans.errors.not_found') }, status: :not_found
+        render json: { error: I18n.t("plans.errors.not_found") }, status: :not_found
       rescue StandardError => e
         Rails.logger.error "❌ [Api::V1::PlansController#create] Unexpected error: #{e.message}"
-        render json: { error: 'Internal server error' }, status: :internal_server_error
+        render json: { error: "Internal server error" }, status: :internal_server_error
       end
 
       # Delete per docs/contracts/plan-delete-no-confirm-contract.md:
@@ -134,7 +134,7 @@ module Api
           crops: crops,
           user: current_user,
           session_id: session_id,
-          plan_type: 'private',
+          plan_type: "private",
           plan_year: nil, # 通年計画
           plan_name: plan_name,
           planning_start_date: planning_start_date,
@@ -172,7 +172,7 @@ module Api
         optimization_job.channel_class = PlansOptimizationChannel
 
         # private plan の場合、blueprint が全作物に存在するときのみ作業予定生成ジョブを追加
-        job_chain = [weather_job, prediction_job, optimization_job]
+        job_chain = [ weather_job, prediction_job, optimization_job ]
 
         crops = cultivation_plan.cultivation_plan_crops.includes(:crop).map(&:crop)
         all_crops_have_blueprints = crops.present? && crops.all? { |crop| crop.crop_task_schedule_blueprints.exists? }

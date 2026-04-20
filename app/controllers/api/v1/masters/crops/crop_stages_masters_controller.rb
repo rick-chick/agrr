@@ -28,7 +28,7 @@ module Api
         # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
         class CropStagesMastersController < BaseController
           before_action :set_crop
-          before_action :set_crop_stage, only: [:show, :update, :destroy]
+          before_action :set_crop_stage, only: [ :show, :update, :destroy ]
 
           # 作物に紐づく生育ステージ一覧を取得
           #
@@ -115,13 +115,13 @@ module Api
             @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
             Rails.logger.info("Crop not found: crop_id=#{params[:crop_id]}, user_id=#{current_user.id}, user_admin?=#{current_user.admin?}")
-            render json: { error: 'Crop not found' }, status: :not_found
+            render json: { error: "Crop not found" }, status: :not_found
           end
 
           def set_crop_stage
             @crop_stage = @crop.crop_stages.find(params[:id])
           rescue ActiveRecord::RecordNotFound
-            render json: { error: 'CropStage not found' }, status: :not_found
+            render json: { error: "CropStage not found" }, status: :not_found
           end
 
           def crop_stage_params

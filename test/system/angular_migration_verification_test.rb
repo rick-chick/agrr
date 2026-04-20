@@ -16,18 +16,18 @@ class AngularMigrationVerificationTest < ApplicationSystemTestCase
 
   test "can visit farms list and detail in Angular" do
     login_as_system_user(@user)
-    
+
     visit "/farms"
-    
+
     # Angularがレンダリングされるのを待つ
     assert_selector "app-navbar", wait: 15
-    
+
     # APIリクエストが完了するのを待つ
     sleep 10
-    
+
     # 直接URL遷移で詳細画面へ
     visit "/farms/#{@farm.id}"
-    
+
     # 詳細画面の表示確認
     # assert_selector "h2", wait: 15
   end

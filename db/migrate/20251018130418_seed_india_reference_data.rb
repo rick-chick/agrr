@@ -2,108 +2,108 @@
 
 class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
   # 一時モデル定義（マイグレーション内でのみ使用）
-  
+
   class TempUser < ActiveRecord::Base
     self.table_name = 'users'
   end
-  
+
   class TempFarm < ActiveRecord::Base
     self.table_name = 'farms'
   end
-  
+
   class TempWeatherLocation < ActiveRecord::Base
     self.table_name = 'weather_locations'
   end
-  
+
   class TempWeatherDatum < ActiveRecord::Base
     self.table_name = 'weather_data'
   end
-  
+
   class TempCrop < ActiveRecord::Base
     self.table_name = 'crops'
     has_many :crop_stages, class_name: 'SeedIndiaReferenceData::TempCropStage', foreign_key: 'crop_id'
   end
-  
+
   class TempCropStage < ActiveRecord::Base
     self.table_name = 'crop_stages'
     belongs_to :crop, class_name: 'SeedIndiaReferenceData::TempCrop', foreign_key: 'crop_id'
   end
-  
+
   class TempTemperatureRequirement < ActiveRecord::Base
     self.table_name = 'temperature_requirements'
   end
-  
+
   class TempThermalRequirement < ActiveRecord::Base
     self.table_name = 'thermal_requirements'
   end
-  
+
   class TempSunshineRequirement < ActiveRecord::Base
     self.table_name = 'sunshine_requirements'
   end
-  
+
   class TempInteractionRule < ActiveRecord::Base
     self.table_name = 'interaction_rules'
   end
-  
+
   def up
     say "🌱 Seeding India (in) reference data..."
-    
+
     # 1. Reference Farms + Weather Data
     seed_reference_farms_and_weather
-    
+
     # 2. Reference Crops
     seed_reference_crops
-    
+
     # 3. Interaction Rules
     seed_interaction_rules
-    
+
     say "✅ India reference data seeding completed!"
   end
-  
+
   def down
     say "🗑️  Removing India (in) reference data..."
-    
+
     # 逆順で削除
     TempInteractionRule.where(region: 'in').delete_all
-    
+
     # Crops関連
     in_crop_ids = TempCrop.where(region: 'in', is_reference: true).pluck(:id)
     in_crop_stage_ids = TempCropStage.where(crop_id: in_crop_ids).pluck(:id)
-    
+
     TempSunshineRequirement.where(crop_stage_id: in_crop_stage_ids).delete_all
     TempThermalRequirement.where(crop_stage_id: in_crop_stage_ids).delete_all
     TempTemperatureRequirement.where(crop_stage_id: in_crop_stage_ids).delete_all
     TempCropStage.where(crop_id: in_crop_ids).delete_all
     TempCrop.where(region: 'in', is_reference: true).delete_all
-    
+
     # Farms関連
     in_farm_ids = TempFarm.where(region: 'in', is_reference: true).pluck(:id)
     in_weather_location_ids = TempFarm.where(id: in_farm_ids).pluck(:weather_location_id).compact.uniq
-    
+
     TempWeatherDatum.where(weather_location_id: in_weather_location_ids).delete_all
     TempWeatherLocation.where(id: in_weather_location_ids).delete_all
     TempFarm.where(region: 'in', is_reference: true).delete_all
-    
+
     say "✅ India reference data removed"
   end
-  
+
   private
-  
+
   def seed_reference_farms_and_weather
     fixture_path = Rails.root.join('db/fixtures/india_reference_weather.json')
-    
+
     unless File.exist?(fixture_path)
       say "⚠️  India fixture not found: #{fixture_path}", true
       return create_basic_farms_without_weather
     end
-    
+
     say_with_time "Loading India reference farms with weather data from fixture..." do
       weather_fixture = JSON.parse(File.read(fixture_path))
       count = 0
-      
+
       weather_fixture.each do |farm_name, farm_data|
         anonymous_user = TempUser.find_by(is_anonymous: true)
-        
+
         # Farm作成
         farm = TempFarm.find_or_initialize_by(name: farm_name, is_reference: true, region: 'in')
         farm.assign_attributes(
@@ -112,7 +112,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
           longitude: farm_data['longitude']
         )
         farm.save!
-        
+
         # WeatherLocation作成
         if farm_data['weather_location']
           wl_data = farm_data['weather_location']
@@ -123,9 +123,9 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
             wl.elevation = wl_data['elevation']
             wl.timezone = wl_data['timezone'] || 'Asia/Kolkata'
           end
-          
+
           farm.update_column(:weather_location_id, weather_location.id) unless farm.weather_location_id == weather_location.id
-          
+
           # WeatherData一括投入
           if farm_data['weather_data']&.any?
             weather_records = farm_data['weather_data'].map do |wd|
@@ -143,21 +143,21 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
                 updated_at: Time.current
               }
             end
-            
+
             TempWeatherDatum.upsert_all(
               weather_records,
-              unique_by: [:weather_location_id, :date]
+              unique_by: [ :weather_location_id, :date ]
             ) if weather_records.any?
           end
         end
-        
+
         count += 1
       end
-      
+
       count
     end
   end
-  
+
   def create_basic_farms_without_weather
     say_with_time "Creating basic India farms without weather data..." do
       reference_farms = [
@@ -173,7 +173,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         { name: 'कानपुर, उत्तर प्रदेश', latitude: 26.4499, longitude: 80.3319 },         # Kanpur, Uttar Pradesh
         { name: 'गोरखपुर, उत्तर प्रदेश', latitude: 26.7606, longitude: 83.3732 },        # Gorakhpur, Uttar Pradesh
         { name: 'वाराणसी, उत्तर प्रदेश', latitude: 25.3176, longitude: 82.9739 },        # Varanasi, Uttar Pradesh
-        
+
         # East India (Rice-Jute) - पूर्व भारत (चावल-जूट)
         { name: 'पटना, बिहार', latitude: 25.5941, longitude: 85.1376 },                 # Patna, Bihar
         { name: 'मुजफ्फरपुर, बिहार', latitude: 26.1225, longitude: 85.3906 },           # Muzaffarpur, Bihar
@@ -183,7 +183,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         { name: 'कटक, ओडिशा', latitude: 20.4625, longitude: 85.8830 },                 # Cuttack, Odisha
         { name: 'गुवाहाटी, असम', latitude: 26.1445, longitude: 91.7362 },               # Guwahati, Assam
         { name: 'रायपुर, छत्तीसगढ़', latitude: 21.2514, longitude: 81.6296 },           # Raipur, Chhattisgarh
-        
+
         # West India (Cotton-Groundnut) - पश्चिम भारत (कपास-मूंगफली)
         { name: 'नागपुर, महाराष्ट्र', latitude: 21.1458, longitude: 79.0882 },          # Nagpur, Maharashtra
         { name: 'नासिक, महाराष्ट्र', latitude: 19.9975, longitude: 73.7898 },           # Nashik, Maharashtra
@@ -196,13 +196,13 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         { name: 'जयपुर, राजस्थान', latitude: 26.9124, longitude: 75.7873 },             # Jaipur, Rajasthan
         { name: 'जोधपुर, राजस्थान', latitude: 26.2389, longitude: 73.0243 },            # Jodhpur, Rajasthan
         { name: 'कोटा, राजस्थान', latitude: 25.2138, longitude: 75.8648 },              # Kota, Rajasthan
-        
+
         # Central India (Soybean-Wheat) - मध्य भारत (सोयाबीन-गेहूं)
         { name: 'इंदौर, मध्य प्रदेश', latitude: 22.7196, longitude: 75.8577 },          # Indore, Madhya Pradesh
         { name: 'भोपाल, मध्य प्रदेश', latitude: 23.2599, longitude: 77.4126 },          # Bhopal, Madhya Pradesh
         { name: 'जबलपुर, मध्य प्रदेश', latitude: 23.1815, longitude: 79.9864 },         # Jabalpur, Madhya Pradesh
         { name: 'ग्वालियर, मध्य प्रदेश', latitude: 26.2183, longitude: 78.1828 },       # Gwalior, Madhya Pradesh
-        
+
         # South India (Rice-Spices) - दक्षिण भारत (चावल-मसाले)
         { name: 'हैदराबाद, तेलंगाना', latitude: 17.3850, longitude: 78.4867 },          # Hyderabad, Telangana
         { name: 'वारंगल, तेलंगाना', latitude: 17.9784, longitude: 79.6005 },            # Warangal, Telangana
@@ -221,9 +221,9 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         { name: 'कोच्चि, केरल', latitude: 9.9312, longitude: 76.2673 },                 # Kochi, Kerala
         { name: 'तिरुवनंतपुरम, केरल', latitude: 8.5241, longitude: 76.9366 }            # Trivandrum, Kerala
       ]
-      
+
       anonymous_user = TempUser.find_by(is_anonymous: true)
-      
+
       reference_farms.each do |farm_data|
         TempFarm.find_or_create_by!(name: farm_data[:name], is_reference: true, region: 'in') do |f|
           f.user_id = anonymous_user.id
@@ -231,23 +231,23 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
           f.longitude = farm_data[:longitude]
         end
       end
-      
+
       reference_farms.size
     end
   end
-  
+
   def seed_reference_crops
     fixture_path = Rails.root.join('db/fixtures/india_reference_crops.json')
-    
+
     unless File.exist?(fixture_path)
       say "⚠️  India crop fixture not found: #{fixture_path}", true
       return create_basic_crops_without_ai_data
     end
-    
+
     say_with_time "Loading India reference crops from fixture..." do
       crop_fixture = JSON.parse(File.read(fixture_path))
       count = 0
-      
+
       crop_fixture.each do |crop_name, crop_data|
         crop = TempCrop.find_or_initialize_by(name: crop_name, variety: crop_data['variety'], is_reference: true, region: 'in')
         crop.assign_attributes(
@@ -257,13 +257,13 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
           revenue_per_area: crop_data['revenue_per_area']
         )
         crop.save!
-        
+
         # CropStages作成
         crop_data['crop_stages']&.each do |stage_data|
           stage = TempCropStage.find_or_initialize_by(crop_id: crop.id, order: stage_data['order'])
           stage.name = stage_data['name']
           stage.save!
-          
+
           # Temperature Requirement
           if stage_data['temperature_requirement']
             temp_req = stage_data['temperature_requirement']
@@ -281,7 +281,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
               tr.save!
             end
           end
-          
+
           # Sunshine Requirement
           if stage_data['sunshine_requirement']
             sun_req = stage_data['sunshine_requirement']
@@ -293,7 +293,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
               sr.save!
             end
           end
-          
+
           # Thermal Requirement
           if stage_data['thermal_requirement']
             thermal_req = stage_data['thermal_requirement']
@@ -305,49 +305,49 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
             end
           end
         end
-        
+
         count += 1
       end
-      
+
       count
     end
   end
-  
+
   def create_basic_crops_without_ai_data
     say_with_time "Creating basic India crops without AI data..." do
       reference_crops = [
-        { name: 'चावल', variety: 'बासमती', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Rice - Basmati
-        { name: 'चावल', variety: 'IR64', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 7000.0 },          # Rice - IR64
-        { name: 'गेहूं', variety: 'HD2967', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 6000.0 },       # Wheat
-        { name: 'कपास', variety: 'बीटी कपास', groups: ['Malvaceae'], area_per_unit: 0.25, revenue_per_area: 12000.0 },  # Cotton - Bt Cotton
-        { name: 'गन्ना', variety: 'CoC671', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 15000.0 },      # Sugarcane
-        { name: 'सोयाबीन', variety: 'JS335', groups: ['Fabaceae'], area_per_unit: 0.25, revenue_per_area: 7000.0 },     # Soybeans
-        { name: 'मूंगफली', variety: 'TMV2', groups: ['Fabaceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Groundnut
-        { name: 'चना', variety: 'देसी', groups: ['Fabaceae'], area_per_unit: 0.25, revenue_per_area: 9000.0 },          # Chickpeas
-        { name: 'मसूर', variety: 'मसूर दाल', groups: ['Fabaceae'], area_per_unit: 0.25, revenue_per_area: 8500.0 },     # Lentils
-        { name: 'अरहर', variety: 'तूर दाल', groups: ['Fabaceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Pigeon Peas
-        { name: 'मक्का', variety: 'संकर', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 7000.0 },        # Maize - Hybrid
-        { name: 'बाजरा', variety: 'मोती बाजरा', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 5000.0 },   # Pearl Millet
-        { name: 'ज्वार', variety: 'ज्वार अनाज', groups: ['Poaceae'], area_per_unit: 0.25, revenue_per_area: 5000.0 },  # Sorghum
-        { name: 'सरसों', variety: 'पूसा बोल्ड', groups: ['Brassicaceae'], area_per_unit: 0.25, revenue_per_area: 7000.0 }, # Mustard
-        { name: 'सूरजमुखी', variety: 'KBSH44', groups: ['Asteraceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 }, # Sunflower
-        { name: 'जूट', variety: 'JRO524', groups: ['Malvaceae'], area_per_unit: 0.25, revenue_per_area: 6000.0 },       # Jute
-        { name: 'मिर्च', variety: 'गुंटूर', groups: ['Solanaceae'], area_per_unit: 0.25, revenue_per_area: 15000.0 },   # Chili Peppers
-        { name: 'टमाटर', variety: 'पूसा रूबी', groups: ['Solanaceae'], area_per_unit: 0.25, revenue_per_area: 12000.0 }, # Tomatoes
-        { name: 'आलू', variety: 'कुफरी', groups: ['Solanaceae'], area_per_unit: 0.25, revenue_per_area: 10000.0 },      # Potatoes
-        { name: 'प्याज', variety: 'नासिक लाल', groups: ['Amaryllidaceae'], area_per_unit: 0.25, revenue_per_area: 9000.0 }, # Onions
-        { name: 'बैंगन', variety: 'बैंगन', groups: ['Solanaceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 },     # Eggplant
-        { name: 'पत्ता गोभी', variety: 'गोल्डन एकर', groups: ['Brassicaceae'], area_per_unit: 0.25, revenue_per_area: 7000.0 }, # Cabbage
-        { name: 'फूल गोभी', variety: 'स्नोबॉल', groups: ['Brassicaceae'], area_per_unit: 0.25, revenue_per_area: 8000.0 }, # Cauliflower
-        { name: 'चाय', variety: 'असम', groups: ['Theaceae'], area_per_unit: 0.25, revenue_per_area: 20000.0 },         # Tea
-        { name: 'कॉफी', variety: 'अरेबिका', groups: ['Rubiaceae'], area_per_unit: 0.25, revenue_per_area: 25000.0 },   # Coffee
-        { name: 'हल्दी', variety: 'अल्लेप्पी', groups: ['Zingiberaceae'], area_per_unit: 0.25, revenue_per_area: 18000.0 }, # Turmeric
-        { name: 'अदरक', variety: 'रियो', groups: ['Zingiberaceae'], area_per_unit: 0.25, revenue_per_area: 16000.0 },  # Ginger
-        { name: 'इलायची', variety: 'मालाबार', groups: ['Zingiberaceae'], area_per_unit: 0.25, revenue_per_area: 30000.0 }, # Cardamom
-        { name: 'नारियल', variety: 'लंबा', groups: ['Arecaceae'], area_per_unit: 0.25, revenue_per_area: 12000.0 },    # Coconut
-        { name: 'आम', variety: 'अल्फांसो', groups: ['Anacardiaceae'], area_per_unit: 0.25, revenue_per_area: 20000.0 }  # Mangoes
+        { name: 'चावल', variety: 'बासमती', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Rice - Basmati
+        { name: 'चावल', variety: 'IR64', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 7000.0 },          # Rice - IR64
+        { name: 'गेहूं', variety: 'HD2967', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 6000.0 },       # Wheat
+        { name: 'कपास', variety: 'बीटी कपास', groups: [ 'Malvaceae' ], area_per_unit: 0.25, revenue_per_area: 12000.0 },  # Cotton - Bt Cotton
+        { name: 'गन्ना', variety: 'CoC671', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 15000.0 },      # Sugarcane
+        { name: 'सोयाबीन', variety: 'JS335', groups: [ 'Fabaceae' ], area_per_unit: 0.25, revenue_per_area: 7000.0 },     # Soybeans
+        { name: 'मूंगफली', variety: 'TMV2', groups: [ 'Fabaceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Groundnut
+        { name: 'चना', variety: 'देसी', groups: [ 'Fabaceae' ], area_per_unit: 0.25, revenue_per_area: 9000.0 },          # Chickpeas
+        { name: 'मसूर', variety: 'मसूर दाल', groups: [ 'Fabaceae' ], area_per_unit: 0.25, revenue_per_area: 8500.0 },     # Lentils
+        { name: 'अरहर', variety: 'तूर दाल', groups: [ 'Fabaceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 },      # Pigeon Peas
+        { name: 'मक्का', variety: 'संकर', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 7000.0 },        # Maize - Hybrid
+        { name: 'बाजरा', variety: 'मोती बाजरा', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 5000.0 },   # Pearl Millet
+        { name: 'ज्वार', variety: 'ज्वार अनाज', groups: [ 'Poaceae' ], area_per_unit: 0.25, revenue_per_area: 5000.0 },  # Sorghum
+        { name: 'सरसों', variety: 'पूसा बोल्ड', groups: [ 'Brassicaceae' ], area_per_unit: 0.25, revenue_per_area: 7000.0 }, # Mustard
+        { name: 'सूरजमुखी', variety: 'KBSH44', groups: [ 'Asteraceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 }, # Sunflower
+        { name: 'जूट', variety: 'JRO524', groups: [ 'Malvaceae' ], area_per_unit: 0.25, revenue_per_area: 6000.0 },       # Jute
+        { name: 'मिर्च', variety: 'गुंटूर', groups: [ 'Solanaceae' ], area_per_unit: 0.25, revenue_per_area: 15000.0 },   # Chili Peppers
+        { name: 'टमाटर', variety: 'पूसा रूबी', groups: [ 'Solanaceae' ], area_per_unit: 0.25, revenue_per_area: 12000.0 }, # Tomatoes
+        { name: 'आलू', variety: 'कुफरी', groups: [ 'Solanaceae' ], area_per_unit: 0.25, revenue_per_area: 10000.0 },      # Potatoes
+        { name: 'प्याज', variety: 'नासिक लाल', groups: [ 'Amaryllidaceae' ], area_per_unit: 0.25, revenue_per_area: 9000.0 }, # Onions
+        { name: 'बैंगन', variety: 'बैंगन', groups: [ 'Solanaceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 },     # Eggplant
+        { name: 'पत्ता गोभी', variety: 'गोल्डन एकर', groups: [ 'Brassicaceae' ], area_per_unit: 0.25, revenue_per_area: 7000.0 }, # Cabbage
+        { name: 'फूल गोभी', variety: 'स्नोबॉल', groups: [ 'Brassicaceae' ], area_per_unit: 0.25, revenue_per_area: 8000.0 }, # Cauliflower
+        { name: 'चाय', variety: 'असम', groups: [ 'Theaceae' ], area_per_unit: 0.25, revenue_per_area: 20000.0 },         # Tea
+        { name: 'कॉफी', variety: 'अरेबिका', groups: [ 'Rubiaceae' ], area_per_unit: 0.25, revenue_per_area: 25000.0 },   # Coffee
+        { name: 'हल्दी', variety: 'अल्लेप्पी', groups: [ 'Zingiberaceae' ], area_per_unit: 0.25, revenue_per_area: 18000.0 }, # Turmeric
+        { name: 'अदरक', variety: 'रियो', groups: [ 'Zingiberaceae' ], area_per_unit: 0.25, revenue_per_area: 16000.0 },  # Ginger
+        { name: 'इलायची', variety: 'मालाबार', groups: [ 'Zingiberaceae' ], area_per_unit: 0.25, revenue_per_area: 30000.0 }, # Cardamom
+        { name: 'नारियल', variety: 'लंबा', groups: [ 'Arecaceae' ], area_per_unit: 0.25, revenue_per_area: 12000.0 },    # Coconut
+        { name: 'आम', variety: 'अल्फांसो', groups: [ 'Anacardiaceae' ], area_per_unit: 0.25, revenue_per_area: 20000.0 }  # Mangoes
       ]
-      
+
       reference_crops.each do |crop_data|
         TempCrop.find_or_create_by!(
           name: crop_data[:name],
@@ -361,11 +361,11 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
           c.revenue_per_area = crop_data[:revenue_per_area]
         end
       end
-      
+
       reference_crops.size
     end
   end
-  
+
   def seed_interaction_rules
     say_with_time "Creating interaction rules for India..." do
       # 参照作物のgroupsから科を抽出
@@ -376,7 +376,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
                                .compact
                                .uniq
                                .sort
-      
+
       # 連作の影響度（英語名で定義）
       continuous_cultivation_impacts = {
         "Solanaceae" => { impact_ratio: 0.6, description: "Solanaceae continuous cultivation (Very Strong, 40% revenue decrease)" },
@@ -392,14 +392,14 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         "Arecaceae" => { impact_ratio: 0.9, description: "Arecaceae continuous cultivation (Light, 10% revenue decrease)" },
         "Anacardiaceae" => { impact_ratio: 0.85, description: "Anacardiaceae continuous cultivation (Light, 15% revenue decrease)" }
       }
-      
+
       count = 0
       unique_families.each do |family|
         impact = continuous_cultivation_impacts[family] || {
           impact_ratio: 0.8,
           description: "#{family} continuous cultivation (Moderate, 20% revenue decrease)"
         }
-        
+
         rule = TempInteractionRule.find_or_initialize_by(
           rule_type: 'continuous_cultivation',
           source_group: family,
@@ -416,7 +416,7 @@ class SeedIndiaReferenceData < ActiveRecord::Migration[8.0]
         rule.save!
         count += 1
       end
-      
+
       count
     end
   end

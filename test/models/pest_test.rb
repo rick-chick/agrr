@@ -85,11 +85,11 @@ class PestTest < ActiveSupport::TestCase
   test "should require user_id when is_reference changes from true to false" do
     user = create(:user)
     pest = create(:pest, is_reference: true, user_id: nil)
-    
+
     pest.is_reference = false
     assert_not pest.valid?
     assert_includes pest.errors[:user], "を入力してください"
-    
+
     pest.user_id = user.id
     assert pest.valid?
   end
@@ -131,10 +131,10 @@ class PestTest < ActiveSupport::TestCase
     pest = create(:pest)
     crop1 = create(:crop)
     crop2 = create(:crop)
-    
+
     create(:crop_pest, crop: crop1, pest: pest)
     create(:crop_pest, crop: crop2, pest: pest)
-    
+
     assert_equal 2, pest.crop_pests.count
     assert_equal 2, pest.crops.count
   end
@@ -144,9 +144,9 @@ class PestTest < ActiveSupport::TestCase
     temp_profile_id = pest.pest_temperature_profile.id
     thermal_req_id = pest.pest_thermal_requirement.id
     control_method_ids = pest.pest_control_methods.pluck(:id)
-    
+
     pest.destroy
-    
+
     assert_not PestTemperatureProfile.exists?(temp_profile_id)
     assert_not PestThermalRequirement.exists?(thermal_req_id)
     control_method_ids.each do |id|
@@ -157,7 +157,7 @@ class PestTest < ActiveSupport::TestCase
   # from_agrr_output テスト（agrr CLI出力形式から作成）
   test "should create pest from agrr output" do
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     assert pest.persisted?
     assert_equal "アブラムシ", pest.name
     assert_equal "Aphidoidea", pest.name_scientific
@@ -169,7 +169,7 @@ class PestTest < ActiveSupport::TestCase
 
   test "from_agrr_output should create temperature_profile" do
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     assert_not_nil pest.pest_temperature_profile
     assert_equal 5, pest.pest_temperature_profile.base_temperature
     assert_equal 30, pest.pest_temperature_profile.max_temperature
@@ -177,7 +177,7 @@ class PestTest < ActiveSupport::TestCase
 
   test "from_agrr_output should create thermal_requirement" do
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     assert_not_nil pest.pest_thermal_requirement
     assert_equal 300, pest.pest_thermal_requirement.required_gdd
     assert_equal 100, pest.pest_thermal_requirement.first_generation_gdd
@@ -186,25 +186,25 @@ class PestTest < ActiveSupport::TestCase
   test "from_agrr_output should handle null first_generation_gdd" do
     pest_data_with_null = @pest_data.dup
     pest_data_with_null["thermal_requirement"]["first_generation_gdd"] = nil
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_with_null, is_reference: true)
-    
+
     assert_not_nil pest.pest_thermal_requirement
     assert_nil pest.pest_thermal_requirement.first_generation_gdd
   end
 
   test "from_agrr_output should create control_methods" do
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     assert_equal 3, pest.pest_control_methods.count
-    
+
     chemical = pest.pest_control_methods.find_by(method_type: "chemical")
     assert_equal "殺虫剤", chemical.method_name
     assert_equal "発生初期に散布", chemical.timing_hint
-    
+
     biological = pest.pest_control_methods.find_by(method_type: "biological")
     assert_equal "天敵の放飼", biological.method_name
-    
+
     cultural = pest.pest_control_methods.find_by(method_type: "cultural")
     assert_equal "作物の輪作", cultural.method_name
   end
@@ -212,17 +212,17 @@ class PestTest < ActiveSupport::TestCase
   test "from_agrr_output should handle empty control_methods" do
     pest_data_empty = @pest_data.dup
     pest_data_empty["control_methods"] = []
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_empty, is_reference: true)
-    
+
     assert_equal 0, pest.pest_control_methods.count
   end
 
   test "from_agrr_output should update existing pest" do
     existing_pest = create(:pest, name: "アブラムシ", is_reference: true)
-    
+
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     # nameで一致するpestが更新されるか、新しいpestが作成される
     assert_equal "アブラムシ", pest.name
   end
@@ -230,37 +230,37 @@ class PestTest < ActiveSupport::TestCase
   test "from_agrr_output should replace existing control_methods" do
     existing_pest = create(:pest, :with_control_methods, name: "アブラムシ", is_reference: true)
     assert_equal 3, existing_pest.pest_control_methods.count
-    
+
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
-    
+
     assert_equal 3, pest.pest_control_methods.count
     # 既存のものは削除され、新しいものが作成されている
-    assert_equal "アブラムシに対して効果的な殺虫剤を使用します。", 
+    assert_equal "アブラムシに対して効果的な殺虫剤を使用します。",
                  pest.pest_control_methods.find_by(method_type: "chemical").description
   end
 
   # to_agrr_output テスト（agrr CLI出力形式に変換）
   test "should convert to agrr output format" do
     pest = create(:pest, :aphid, :complete)
-    
+
     # completeトレイトで既に3つのcontrol_methodsが作成されている
     output = pest.to_agrr_output
-    
+
     assert_equal pest.id.to_s, output["pest_id"]
     assert_equal "アブラムシ", output["name"]
     assert_equal "Aphidoidea", output["name_scientific"]
     assert_equal "アブラムシ科", output["family"]
     assert_equal "半翅目", output["order"]
     assert_equal "春〜秋", output["occurrence_season"]
-    
+
     assert_not_nil output["temperature_profile"]
     assert_equal 10.0, output["temperature_profile"]["base_temperature"]
     assert_equal 30.0, output["temperature_profile"]["max_temperature"]
-    
+
     assert_not_nil output["thermal_requirement"]
     assert_equal 300.0, output["thermal_requirement"]["required_gdd"]
     assert_equal 100.0, output["thermal_requirement"]["first_generation_gdd"]
-    
+
     assert_equal 3, output["control_methods"].count
     chemical_output = output["control_methods"].find { |m| m["method_type"] == "chemical" }
     assert_equal "殺虫剤", chemical_output["method_name"]
@@ -269,34 +269,34 @@ class PestTest < ActiveSupport::TestCase
 
   test "to_agrr_output should handle nil temperature_profile" do
     pest = create(:pest, :aphid)
-    
+
     output = pest.to_agrr_output
-    
+
     assert_nil output["temperature_profile"]
   end
 
   test "to_agrr_output should handle nil thermal_requirement" do
     pest = create(:pest, :aphid, :with_temperature_profile)
-    
+
     output = pest.to_agrr_output
-    
+
     assert_nil output["thermal_requirement"]
   end
 
   test "to_agrr_output should handle empty control_methods" do
     pest = create(:pest, :aphid, :with_temperature_profile, :with_thermal_requirement)
-    
+
     output = pest.to_agrr_output
-    
+
     assert_equal [], output["control_methods"]
   end
 
   test "to_agrr_output should handle nil first_generation_gdd" do
     pest = create(:pest, :aphid)
     create(:pest_thermal_requirement, pest: pest, first_generation_gdd: nil)
-    
+
     output = pest.to_agrr_output
-    
+
     assert_nil output["thermal_requirement"]["first_generation_gdd"]
   end
 
@@ -327,12 +327,12 @@ class PestTest < ActiveSupport::TestCase
       ],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_numeric, is_reference: true)
-    
+
     assert pest.persisted?
     assert_equal "ハダニ", pest.name
-    
+
     # nameで検索できること
     found_pest = Pest.find_by(name: "ハダニ", is_reference: true)
     assert_equal pest.id, found_pest.id
@@ -364,12 +364,12 @@ class PestTest < ActiveSupport::TestCase
       ],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_underscore, is_reference: true)
-    
+
     assert pest.persisted?
     assert_equal "ホーンワーム", pest.name
-    
+
     # nameで検索できること
     found_pest = Pest.find_by(name: "ホーンワーム", is_reference: true)
     assert_equal pest.id, found_pest.id
@@ -420,17 +420,17 @@ class PestTest < ActiveSupport::TestCase
       ],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_4methods, is_reference: true)
-    
+
     assert_equal 4, pest.pest_control_methods.count
-    
+
     # すべてのタイプが作成されていること
     assert_not_nil pest.pest_control_methods.find_by(method_type: "chemical")
     assert_not_nil pest.pest_control_methods.find_by(method_type: "biological")
     assert_not_nil pest.pest_control_methods.find_by(method_type: "physical")
     assert_not_nil pest.pest_control_methods.find_by(method_type: "cultural")
-    
+
     # physicalタイプが正しく作成されていること
     physical = pest.pest_control_methods.find_by(method_type: "physical")
     assert_equal "水で洗い流す", physical.method_name
@@ -475,9 +475,9 @@ class PestTest < ActiveSupport::TestCase
       ],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_3methods, is_reference: true)
-    
+
     assert_equal 3, pest.pest_control_methods.count
     assert_equal 3, pest.pest_control_methods.distinct.pluck(:method_type).count
   end
@@ -488,11 +488,11 @@ class PestTest < ActiveSupport::TestCase
     create(:pest_control_method, :biological, pest: pest)
     create(:pest_control_method, :physical, pest: pest)
     create(:pest_control_method, :cultural, pest: pest)
-    
+
     output = pest.to_agrr_output
-    
+
     assert_equal 4, output["control_methods"].count
-    
+
     method_types = output["control_methods"].map { |m| m["method_type"] }
     assert_includes method_types, "chemical"
     assert_includes method_types, "biological"
@@ -571,33 +571,33 @@ class PestTest < ActiveSupport::TestCase
         }
       ]
     }
-    
+
     crop = create(:crop)
     associated_pests = crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     assert_equal 4, associated_pests.count
     assert_equal 4, crop.pests.count
-    
+
     # 異なるpest_id形式が正しく処理されていること（nameで検索）
     aphid = crop.pests.find_by(name: "アブラムシ")
     numeric_pest = crop.pests.find_by(name: "ハダニ")
     underscore_pest = crop.pests.find_by(name: "ホーンワーム")
     leafminer_pest = crop.pests.find_by(name: "リーフマイナー")
-    
+
     assert_not_nil aphid
     assert_not_nil numeric_pest
     assert_not_nil underscore_pest
     assert_not_nil leafminer_pest
-    
+
     # control_methodsの数が異なること
     assert_equal 4, aphid.pest_control_methods.count
     assert_equal 3, numeric_pest.pest_control_methods.count
     assert_equal 3, underscore_pest.pest_control_methods.count
     assert_equal 3, leafminer_pest.pest_control_methods.count
-    
+
     # aphidにはphysicalタイプがあること
     assert_not_nil aphid.pest_control_methods.find_by(method_type: "physical")
-    
+
     # leafminerのfirst_generation_gddがnullであること
     assert_nil leafminer_pest.pest_thermal_requirement.first_generation_gdd
   end
@@ -650,32 +650,32 @@ class PestTest < ActiveSupport::TestCase
         ], "occurrence_season" => "春〜秋" }
       ]
     }
-    
+
     crop = create(:crop)
     associated_pests = crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     assert_equal 8, associated_pests.count
     assert_equal 8, crop.pests.count
-    
+
     # 異なるpest_id形式がすべて処理されていること（nameで検索）
     assert_not_nil crop.pests.find_by(name: "アブラムシ") # 英単語
     assert_not_nil crop.pests.find_by(name: "ハダニ") # 数字のみ
     assert_not_nil crop.pests.find_by(name: "ホーンワーム") # アンダースコア
-    
+
     # control_methodsの数の違いが正しく処理されていること
     aphid = crop.pests.find_by(name: "アブラムシ")
     thrips = crop.pests.find_by(name: "スリップス")
     assert_equal 4, aphid.pest_control_methods.count
     assert_equal 4, thrips.pest_control_methods.count
-    
+
     numeric_pest = crop.pests.find_by(name: "ハダニ")
     assert_equal 3, numeric_pest.pest_control_methods.count
-    
+
     # first_generation_gddがnullの害虫が正しく処理されていること
     leafminer = crop.pests.find_by(name: "リーフマイナー")
     cutworm = crop.pests.find_by(name: "カットワーム")
     white_grub = crop.pests.find_by(name: "シロアリ")
-    
+
     assert_nil leafminer.pest_thermal_requirement.first_generation_gdd
     assert_nil cutworm.pest_thermal_requirement.first_generation_gdd
     assert_nil white_grub.pest_thermal_requirement.first_generation_gdd
@@ -708,13 +708,13 @@ class PestTest < ActiveSupport::TestCase
       ],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest = Pest.from_agrr_output(pest_data: pest_data_with_null, is_reference: true)
-    
+
     assert_not_nil pest.pest_thermal_requirement
     assert_equal 300, pest.pest_thermal_requirement.required_gdd
     assert_nil pest.pest_thermal_requirement.first_generation_gdd
-    
+
     # to_agrr_outputでもnullが正しく扱われること
     output = pest.to_agrr_output
     assert_nil output["thermal_requirement"]["first_generation_gdd"]
@@ -733,7 +733,7 @@ class PestTest < ActiveSupport::TestCase
       "control_methods" => [],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest_data_with_null2 = {
       "pest_id" => "white_grub",
       "name" => "シロアリ",
@@ -746,10 +746,10 @@ class PestTest < ActiveSupport::TestCase
       "control_methods" => [],
       "occurrence_season" => "春〜秋"
     }
-    
+
     pest1 = Pest.from_agrr_output(pest_data: pest_data_with_null1, is_reference: true)
     pest2 = Pest.from_agrr_output(pest_data: pest_data_with_null2, is_reference: true)
-    
+
     assert_nil pest1.pest_thermal_requirement.first_generation_gdd
     assert_nil pest2.pest_thermal_requirement.first_generation_gdd
     assert_equal 300, pest1.pest_thermal_requirement.required_gdd
@@ -761,9 +761,9 @@ class PestTest < ActiveSupport::TestCase
     reference_pest = create(:pest, is_reference: true, user_id: nil)
     user = create(:user)
     user_pest = create(:pest, :user_owned, user: user)
-    
+
     reference_pests = Pest.reference
-    
+
     assert_includes reference_pests, reference_pest
     assert_not_includes reference_pests, user_pest
   end
@@ -772,9 +772,9 @@ class PestTest < ActiveSupport::TestCase
     user = create(:user)
     reference_pest = create(:pest, is_reference: true, user_id: nil)
     user_pest = create(:pest, :user_owned, user: user)
-    
+
     user_owned_pests = Pest.user_owned
-    
+
     assert_includes user_owned_pests, user_pest
     assert_not_includes user_owned_pests, reference_pest
   end
@@ -782,14 +782,14 @@ class PestTest < ActiveSupport::TestCase
   test "should filter pests by is_reference and user_id combination" do
     user1 = create(:user)
     user2 = create(:user)
-    
+
     ref_pest = create(:pest, is_reference: true, user_id: nil)
     user1_pest = create(:pest, :user_owned, user: user1)
     user2_pest = create(:pest, :user_owned, user: user2)
-    
+
     # 一般ユーザーの視点
     visible_pests = Pest.where("is_reference = ? OR user_id = ?", true, user1.id)
-    
+
     assert_includes visible_pests, ref_pest
     assert_includes visible_pests, user1_pest
     assert_not_includes visible_pests, user2_pest
@@ -799,12 +799,11 @@ class PestTest < ActiveSupport::TestCase
     pest1 = create(:pest, created_at: 2.days.ago)
     pest2 = create(:pest, created_at: 1.day.ago)
     pest3 = create(:pest, created_at: Time.current)
-    
+
     recent = Pest.recent.limit(3)
-    
+
     assert_equal pest3.id, recent.first.id
     assert_equal pest2.id, recent.second.id
     assert_equal pest1.id, recent.third.id
   end
 end
-

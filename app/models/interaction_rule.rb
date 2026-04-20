@@ -34,12 +34,12 @@
 #   - as_json メソッドでJSON出力をカスタマイズ
 class InteractionRule < ApplicationRecord
   belongs_to :user, optional: true
-  
+
   validates :rule_type, presence: true
   validates :source_group, presence: true
   validates :target_group, presence: true
   validates :impact_ratio, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :is_reference, inclusion: { in: [true, false] }
+  validates :is_reference, inclusion: { in: [ true, false ] }
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :source_interaction_rule_id, uniqueness: { scope: :user_id }, allow_nil: true
@@ -60,24 +60,24 @@ class InteractionRule < ApplicationRecord
   # @return [Hash] agrr CLI が期待する相互作用ルールのハッシュ
   def to_agrr_format
     {
-      'rule_id' => "rule_#{id}",
-      'rule_type' => rule_type,
-      'source_group' => source_group,
-      'target_group' => target_group,
-      'impact_ratio' => impact_ratio.to_f,
-      'is_directional' => is_directional,
-      'description' => description
+      "rule_id" => "rule_#{id}",
+      "rule_type" => rule_type,
+      "source_group" => source_group,
+      "target_group" => target_group,
+      "impact_ratio" => impact_ratio.to_f,
+      "is_directional" => is_directional,
+      "description" => description
     }.compact
   end
 
   # JSON出力をカスタマイズ
   def as_json(options = {})
     result = super(options.merge(
-      only: [:id, :rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description, :user_id, :is_reference],
+      only: [ :id, :rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description, :user_id, :is_reference ],
       methods: []
     ))
     # impact_ratioをFloatに変換（DBから取得すると文字列になる場合がある）
-    result['impact_ratio'] = result['impact_ratio'].to_f if result['impact_ratio']
+    result["impact_ratio"] = result["impact_ratio"].to_f if result["impact_ratio"]
     result
   end
 
@@ -95,4 +95,3 @@ class InteractionRule < ApplicationRecord
     errors.add(:user, "は参照データには設定できません")
   end
 end
-

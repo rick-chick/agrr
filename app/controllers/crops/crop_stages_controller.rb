@@ -6,7 +6,7 @@ module Crops
 
     before_action :authenticate_user!
     before_action :find_crop
-    before_action :find_crop_stage, only: [:show, :update, :destroy]
+    before_action :find_crop_stage, only: [ :show, :update, :destroy ]
 
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
@@ -20,7 +20,7 @@ module Crops
 
     def create
       unless valid_create_params?
-        return render(json: { error: 'Invalid parameters' }, status: :bad_request)
+        return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
       input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
@@ -33,7 +33,7 @@ module Crops
 
     def update
       unless valid_update_params?
-        return render(json: { error: 'Invalid parameters' }, status: :bad_request)
+        return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
       input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
@@ -73,13 +73,13 @@ module Crops
     def find_crop
       @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
     rescue ActiveRecord::RecordNotFound
-      render(json: { error: 'Crop not found' }, status: :not_found)
+      render(json: { error: "Crop not found" }, status: :not_found)
     end
 
     def find_crop_stage
       @crop_stage = @crop.crop_stages.find(params[:id])
     rescue ActiveRecord::RecordNotFound
-      render(json: { error: 'CropStage not found' }, status: :not_found)
+      render(json: { error: "CropStage not found" }, status: :not_found)
     end
 
     def interactor

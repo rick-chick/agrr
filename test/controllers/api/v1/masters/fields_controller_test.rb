@@ -28,8 +28,8 @@ module Api
           other_farm = create(:farm, :user_owned, user: @user)
           other_field = create(:field, farm: other_farm, user: @user)
 
-          get api_v1_masters_farm_fields_path(@farm), 
-              headers: { 
+          get api_v1_masters_farm_fields_path(@farm),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -46,8 +46,8 @@ module Api
         test "should show field" do
           field = create(:field, farm: @farm, user: @user, name: "テスト圃場")
 
-          get api_v1_masters_field_path(field), 
-              headers: { 
+          get api_v1_masters_field_path(field),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -60,15 +60,15 @@ module Api
 
         test "should create field" do
           assert_difference("@farm.fields.count", 1) do
-            post api_v1_masters_farm_fields_path(@farm), 
-                 params: { 
+            post api_v1_masters_farm_fields_path(@farm),
+                 params: {
                    field: {
                      name: "新規圃場",
                      area: 100.0,
                      daily_fixed_cost: 500.0
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -83,13 +83,13 @@ module Api
         test "should update field" do
           field = create(:field, farm: @farm, user: @user, name: "元の名前")
 
-          patch api_v1_masters_field_path(field), 
-                params: { 
+          patch api_v1_masters_field_path(field),
+                params: {
                   field: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -103,8 +103,8 @@ module Api
           field = create(:field, farm: @farm, user: @user)
 
           assert_difference("@farm.fields.count", -1) do
-            delete api_v1_masters_field_path(field), 
-                   headers: { 
+            delete api_v1_masters_field_path(field),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }
@@ -112,9 +112,9 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert json_response.key?('undo_token')
-          assert json_response.key?('toast_message')
-          assert json_response.key?('undo_path')
+          assert json_response.key?("undo_token")
+          assert json_response.key?("toast_message")
+          assert json_response.key?("undo_path")
         end
 
         test "cannot access field that belongs to other user's farm" do

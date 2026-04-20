@@ -10,16 +10,8 @@ class CreatePesticideUsageConstraints < ActiveRecord::Migration[8.0]
       t.integer :max_application_count
       t.integer :harvest_interval_days
       t.text :other_constraints
-      
+
       t.timestamps
     end
   end
 end
-
-
-
-
-
-
-
-

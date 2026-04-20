@@ -13,7 +13,7 @@ module Adapters
           task = ::AgriculturalTask.find(task_id)
           Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'AgriculturalTask not found'
+          raise StandardError, "AgriculturalTask not found"
         end
 
         def create(create_input_dto)
@@ -27,7 +27,7 @@ module Adapters
             region: create_input_dto.region,
             task_type: create_input_dto.task_type
           )
-          raise StandardError, task.errors.full_messages.join(', ') unless task.save
+          raise StandardError, task.errors.full_messages.join(", ") unless task.save
 
           Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task)
         end
@@ -45,11 +45,11 @@ module Adapters
           attrs[:task_type] = update_input_dto.task_type if !update_input_dto.task_type.nil?
 
           task.update(attrs)
-          raise StandardError, task.errors.full_messages.join(', ') if task.errors.any?
+          raise StandardError, task.errors.full_messages.join(", ") if task.errors.any?
 
           Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'AgriculturalTask not found'
+          raise StandardError, "AgriculturalTask not found"
         end
 
         def destroy(task_id)
@@ -57,12 +57,12 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: task,
             actor: User.find(task.user_id),
-            toast_message: @translator.t('agricultural_tasks.undo.toast', name: task.name)
+            toast_message: @translator.t("agricultural_tasks.undo.toast", name: task.name)
           )
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'AgriculturalTask not found'
+          raise StandardError, "AgriculturalTask not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('agricultural_tasks.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("agricultural_tasks.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

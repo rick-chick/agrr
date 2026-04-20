@@ -4,14 +4,14 @@
 class FarmChannel < ApplicationCable::Channel
   def subscribed
     farm = Farm.find(params[:farm_id])
-    
+
     # ユーザー認証チェック（管理者は全アクセス可能、一般ユーザーは自分の農場のみ）
     unless authorized?(farm)
       Rails.logger.warn "🚫 [FarmChannel#subscribed] Unauthorized: farm.user_id=#{farm.user_id} != current_user=#{current_user&.id}"
       reject
       return
     end
-    
+
     stream_for farm
     Rails.logger.info "✅ [FarmChannel#subscribed] Authorized! Streaming for farm_id=#{params[:farm_id]}"
   rescue ActiveRecord::RecordNotFound

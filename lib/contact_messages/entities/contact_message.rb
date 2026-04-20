@@ -14,15 +14,15 @@ module ContactMessages
       validates :name, :subject, length: { maximum: 255 }, allow_blank: true
 
       def sent?
-        status == 'sent'
+        status == "sent"
       end
 
       def failed?
-        status == 'failed'
+        status == "failed"
       end
 
       def queued?
-        status == 'queued'
+        status == "queued"
       end
     end
   end

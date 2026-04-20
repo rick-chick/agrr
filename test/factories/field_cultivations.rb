@@ -7,7 +7,6 @@ FactoryBot.define do
     area { 120.0 }
     start_date { Date.current }
     completion_date { Date.current + 90 }
-    status { 'pending' }
+    status { "pending" }
   end
 end
-

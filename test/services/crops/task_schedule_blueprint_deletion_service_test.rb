@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 module Crops
   class TaskScheduleBlueprintDeletionServiceTest < ActiveSupport::TestCase
-    test 'deletes blueprint and template when no remaining blueprints' do
-      blueprint = mock('blueprint')
-      crop = mock('crop')
+    test "deletes blueprint and template when no remaining blueprints" do
+      blueprint = mock("blueprint")
+      crop = mock("crop")
 
       blueprint.expects(:destroy!).returns(true)
       blueprint.stubs(:agricultural_task_id).returns(42)
 
       # Simulate no remaining blueprints
-      crop_stubs = mock('relation')
+      crop_stubs = mock("relation")
       crop_stubs.stubs(:where).returns(stub(exists?: false))
       crop.stubs(:crop_task_schedule_blueprints).returns(crop_stubs)
 
-      template = mock('template')
+      template = mock("template")
       template.stubs(:id).returns(123)
       template.expects(:destroy!).returns(true)
       crop.stubs(:crop_task_templates).returns(stub(find_by: template))
@@ -30,14 +30,14 @@ module Crops
       # mocha will verify expectations automatically
     end
 
-    test 'does not delete template when other blueprints remain' do
-      blueprint = mock('blueprint')
-      crop = mock('crop')
+    test "does not delete template when other blueprints remain" do
+      blueprint = mock("blueprint")
+      crop = mock("crop")
 
       blueprint.expects(:destroy!).returns(true)
       blueprint.stubs(:agricultural_task_id).returns(99)
 
-      crop_stubs = mock('relation')
+      crop_stubs = mock("relation")
       crop_stubs.stubs(:where).returns(stub(exists?: true))
       crop.stubs(:crop_task_schedule_blueprints).returns(crop_stubs)
 
@@ -53,9 +53,9 @@ module Crops
       # mocha verifies
     end
 
-    test 'handles blueprint without agricultural_task_id' do
-      blueprint = mock('blueprint')
-      crop = mock('crop')
+    test "handles blueprint without agricultural_task_id" do
+      blueprint = mock("blueprint")
+      crop = mock("crop")
 
       blueprint.expects(:destroy!).returns(true)
       blueprint.stubs(:agricultural_task_id).returns(nil)
@@ -74,4 +74,3 @@ module Crops
     end
   end
 end
-

@@ -14,7 +14,7 @@ Rails.application.config.force_ssl = true if Rails.env.production?
 # For SPA session cookie to be sent cross-site from a custom domain (e.g. agrr.net),
 # set SameSite=None and Secure. Use domain: :all so cookies are valid for subdomains.
 Rails.application.config.session_store :cookie_store,
-  key: '_agrr_session',
+  key: "_agrr_session",
   secure: Rails.env.production?,
   httponly: true,
   same_site: :none, # required for cross-site cookies (SPA served from different origin)
@@ -55,16 +55,15 @@ if defined?(Rack::Attack) && Rails.env.production?
   Rails.application.config.middleware.insert_before 0, Rack::Attack
 
   # Rate limiting rules
-  Rack::Attack.throttle('auth/ip', limit: 5, period: 1.minute) do |req|
-    if req.path.start_with?('/auth/')
+  Rack::Attack.throttle("auth/ip", limit: 5, period: 1.minute) do |req|
+    if req.path.start_with?("/auth/")
       req.ip
     end
   end
 
-  Rack::Attack.throttle('api/ip', limit: 100, period: 1.minute) do |req|
-    if req.path.start_with?('/api/')
+  Rack::Attack.throttle("api/ip", limit: 100, period: 1.minute) do |req|
+    if req.path.start_with?("/api/")
       req.ip
     end
   end
 end
-

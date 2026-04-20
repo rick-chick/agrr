@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require_dependency 'field_cultivation_climate/mock_progress_records'
+require_dependency "field_cultivation_climate/mock_progress_records"
 
 module Api
   module V1
     module Plans
       class FieldCultivationsController < ApplicationController
         before_action :authenticate_user!
-        skip_before_action :verify_authenticity_token, only: [:update]
+        skip_before_action :verify_authenticity_token, only: [ :update ]
         include Views::Api::Plans::FieldCultivations::FieldCultivationClimateDataView
         include ::FieldCultivationClimate::MockProgressRecords
-        
+
         def show
           @field_cultivation = find_field_cultivation
-          
+
           render json: {
             id: @field_cultivation.id,
             field_name: @field_cultivation.field_display_name,
@@ -23,11 +23,11 @@ module Api
             completion_date: @field_cultivation.completion_date,
             cultivation_days: @field_cultivation.cultivation_days,
             estimated_cost: @field_cultivation.estimated_cost,
-            gdd: @field_cultivation.optimization_result&.dig('raw', 'total_gdd'),
+            gdd: @field_cultivation.optimization_result&.dig("raw", "total_gdd"),
             status: @field_cultivation.status
           }
         end
-        
+
         # GET /api/v1/plans/field_cultivations/:id/climate_data
         # 栽培期間の気温・GDDデータを返す（agrr progressコマンドを使用）
         def climate_data
@@ -39,11 +39,11 @@ module Api
             )
           )
         end
-        
+
         # PATCH /api/v1/plans/field_cultivations/:id
         def update
           @field_cultivation = find_field_cultivation
-          
+
           if @field_cultivation.update(field_cultivation_params)
             render json: {
               success: true,
@@ -60,7 +60,7 @@ module Api
             }, status: :unprocessable_entity
           end
         end
-        
+
         def render_response(json:, status:)
           render json: json, status: status
         end

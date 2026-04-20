@@ -18,7 +18,7 @@ module Domain
           # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, @translator.t('fertilizes.flash.reference_only_admin')
+            raise StandardError, @translator.t("fertilizes.flash.reference_only_admin")
           end
 
           fertilize_model = Domain::Shared::Policies::FertilizePolicy.build_for_create(::Fertilize, user, {
@@ -31,7 +31,7 @@ module Domain
             region: input_dto.region,
             is_reference: is_reference
           })
-          raise StandardError, fertilize_model.errors.full_messages.join(', ') unless fertilize_model.save
+          raise StandardError, fertilize_model.errors.full_messages.join(", ") unless fertilize_model.save
 
           fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model)
           @output_port.on_success(fertilize_entity)

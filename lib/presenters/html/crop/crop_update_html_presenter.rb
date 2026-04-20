@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(crop_entity)
-          @view.redirect_to @view.crop_path(crop_entity.id), notice: I18n.t('crops.flash.updated')
+          @view.redirect_to @view.crop_path(crop_entity.id), notice: I18n.t("crops.flash.updated")
         end
 
         def on_failure(error_dto)

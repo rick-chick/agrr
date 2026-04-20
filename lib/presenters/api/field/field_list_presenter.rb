@@ -16,10 +16,10 @@ module Presenters
         def on_failure(error_dto)
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           status = case msg
-                   when 'Farm not found' then :not_found
-                   when 'User not found' then :unauthorized
-                   else :unprocessable_entity
-                   end
+          when "Farm not found" then :not_found
+          when "User not found" then :unauthorized
+          else :unprocessable_entity
+          end
           @view.render_response(json: { error: msg }, status: status)
         end
 

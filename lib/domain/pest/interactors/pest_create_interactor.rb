@@ -18,7 +18,7 @@ module Domain
           # is_referenceをbooleanに変換
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, @translator.t('pests.flash.reference_only_admin')
+            raise StandardError, @translator.t("pests.flash.reference_only_admin")
           end
 
           attrs = {
@@ -38,7 +38,7 @@ module Domain
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
           pest_model = Domain::Shared::Policies::PestPolicy.build_for_create(::Pest, user, attrs)
-          raise StandardError, pest_model.errors.full_messages.join(', ') unless pest_model.save
+          raise StandardError, pest_model.errors.full_messages.join(", ") unless pest_model.save
 
           if Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
             PestCropAssociationService.associate_crops(pest_model, input_dto.crop_ids, user: user)

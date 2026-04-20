@@ -17,7 +17,7 @@ module Api
             "variety" => "スプラウト",
             "area_per_unit" => 10.5,
             "revenue_per_area" => 20000,
-            "groups" => ["葉物"]
+            "groups" => [ "葉物" ]
           },
           "stage_requirements" => []
         }
@@ -41,7 +41,7 @@ module Api
         crop = ::Crop.find(json["crop_id"])
         assert_equal @user.id, crop.user_id
         assert_not crop.is_reference
-        assert_equal ["葉物"], crop.groups
+        assert_equal [ "葉物" ], crop.groups
       end
 
       test "ai_create updates existing editable crop instead of creating a new one" do
@@ -55,7 +55,7 @@ module Api
             "variety" => "改良種",
             "area_per_unit" => 8.0,
             "revenue_per_area" => 15000,
-            "groups" => ["果菜"]
+            "groups" => [ "果菜" ]
           },
           "stage_requirements" => []
         }
@@ -80,11 +80,10 @@ module Api
         assert_equal existing.id, json["crop_id"]
         assert_equal 8.0, existing.area_per_unit
         assert_equal 15000, existing.revenue_per_area
-        assert_equal ["果菜"], existing.groups
+        assert_equal [ "果菜" ], existing.groups
         assert_equal @user.id, existing.user_id
         assert_not existing.is_reference
       end
     end
   end
 end
-

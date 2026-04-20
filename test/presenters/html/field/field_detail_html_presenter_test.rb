@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test 'on_success sets @field' do
+  test "on_success sets @field" do
     view_mock = mock
     farm = mock
     presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock, farm: farm)
@@ -23,17 +23,17 @@ class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter.on_success(detail_dto)
   end
 
-  test 'on_failure sets flash alert and redirects' do
+  test "on_failure sets flash alert and redirects" do
     view_mock = mock
     farm = mock
     farm.expects(:id).returns(1)
     presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock, farm: farm)
 
     error_dto = mock
-    error_dto.expects(:message).returns('Test error')
+    error_dto.expects(:message).returns("Test error")
 
-    view_mock.expects(:farm_fields_path).with(1).returns('/farms/1/fields')
-    view_mock.expects(:redirect_to).with('/farms/1/fields', alert: 'Test error')
+    view_mock.expects(:farm_fields_path).with(1).returns("/farms/1/fields")
+    view_mock.expects(:redirect_to).with("/farms/1/fields", alert: "Test error")
 
     presenter.on_failure(error_dto)
   end

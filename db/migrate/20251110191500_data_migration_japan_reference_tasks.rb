@@ -242,4 +242,3 @@ class DataMigrationJapanReferenceTasks < ActiveRecord::Migration[8.0]
     say "✅ 日本の参照タスクを削除しました"
   end
 end
-

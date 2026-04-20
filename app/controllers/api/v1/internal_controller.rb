@@ -8,47 +8,47 @@ module Api
       # CSRF保護をスキップ（内部API用）
       skip_before_action :verify_authenticity_token
       skip_before_action :authenticate_user!
-      
+
       # 開発・テスト環境のみ許可
       before_action :check_environment
-      
+
       # POST /api/v1/internal/farms/:farm_id/fetch_weather_data
       # 特定の農場の天気データを取得開始
       def fetch_weather_data
         farm = Farm.find(params[:farm_id])
-        
+
         # 既に取得済みの場合はスキップ
-        if farm.weather_location && farm.weather_data_status == 'completed'
+        if farm.weather_location && farm.weather_data_status == "completed"
           return render json: {
             success: true,
-            message: I18n.t('api.messages.common.weather_data_already_exists'),
+            message: I18n.t("api.messages.common.weather_data_already_exists"),
             farm_id: farm.id,
             status: farm.weather_data_status,
             weather_data_count: farm.weather_location.weather_data.count
           }
         end
-        
+
         # 天気データ取得を開始
         farm.send(:enqueue_weather_data_fetch)
-        
+
         render json: {
           success: true,
-          message: I18n.t('api.messages.common.weather_data_fetch_started'),
+          message: I18n.t("api.messages.common.weather_data_fetch_started"),
           farm_id: farm.id,
           status: farm.weather_data_status,
           total_blocks: farm.weather_data_total_years
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
+        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       rescue => e
         render json: { error: e.message }, status: :internal_server_error
       end
-      
+
       # GET /api/v1/internal/farms/:farm_id/weather_status
       # 天気データ取得の進捗状況を確認
       def weather_status
         farm = Farm.find(params[:farm_id])
-        
+
         render json: {
           success: true,
           farm_id: farm.id,
@@ -60,18 +60,18 @@ module Api
           last_error: farm.weather_data_last_error
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
+        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       end
-      
+
       # GET /api/v1/internal/farms/:farm_id/weather_data
       # 天気データをJSON形式で取得
       def get_weather_data
         farm = Farm.find(params[:farm_id])
-        
+
         unless farm.weather_location
-          return render json: { error: I18n.t('api.errors.common.weather_location_not_found') }, status: :not_found
+          return render json: { error: I18n.t("api.errors.common.weather_location_not_found") }, status: :not_found
         end
-        
+
         weather_data = farm.weather_location.weather_data.order(:date).map do |wd|
           {
             date: wd.date.to_s,
@@ -84,7 +84,7 @@ module Api
             weather_code: wd.weather_code
           }
         end
-        
+
         render json: {
           success: true,
           farm: {
@@ -104,18 +104,17 @@ module Api
           count: weather_data.count
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t('api.errors.common.farm_not_found') }, status: :not_found
+        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       end
-      
+
       private
-      
+
       def check_environment
         unless Rails.env.development? || Rails.env.test?
-          render json: { error: I18n.t('api.errors.common.env_only') }, 
+          render json: { error: I18n.t("api.errors.common.env_only") },
                  status: :forbidden
         end
       end
     end
   end
 end
-

@@ -3,7 +3,7 @@
 module Crops
   class PestsController < ApplicationController
     before_action :set_crop
-    before_action :set_pest, only: [:show, :edit, :update]
+    before_action :set_pest, only: [ :show, :edit, :update ]
 
     # GET /crops/:crop_id/pests
     def index
@@ -26,7 +26,7 @@ module Crops
       @pest.build_pest_temperature_profile
       @pest.build_pest_thermal_requirement
       @pest.pest_control_methods.build
-      
+
       # この作物にまだ関連付けられていない害虫のリスト（Policy経由、参照害虫も含む）
       available_pests = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user)
       @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
@@ -46,14 +46,14 @@ module Crops
           # 既に関連付けられていないかチェック
           unless @crop.pests.include?(existing_pest)
             @crop.pests << existing_pest
-            redirect_to crop_pests_path(@crop), notice: I18n.t('crops.pests.flash.associated')
+            redirect_to crop_pests_path(@crop), notice: I18n.t("crops.pests.flash.associated")
             return
           else
-            redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.already_associated')
+            redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.already_associated")
             return
           end
         else
-          redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.not_found')
+          redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.not_found")
           return
         end
       end
@@ -61,7 +61,7 @@ module Crops
       # 新しい害虫を作成する場合
       is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
       if is_reference && !admin_user?
-        return redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.reference_only_admin')
+        return redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.reference_only_admin")
       end
 
       @pest = Pest.new(pest_params)
@@ -73,7 +73,7 @@ module Crops
       if @pest.save
         # 作成した害虫を作物に関連付け
         @crop.pests << @pest unless @crop.pests.include?(@pest)
-        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t('crops.pests.flash.created')
+        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t("crops.pests.flash.created")
       else
         available_pests = Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user)
         @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
@@ -86,12 +86,12 @@ module Crops
       if pest_params.key?(:is_reference) && !admin_user?
         is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
         if is_reference != @pest.is_reference
-          return redirect_to crop_pest_path(@crop, @pest), alert: I18n.t('crops.pests.flash.reference_flag_admin_only')
+          return redirect_to crop_pest_path(@crop, @pest), alert: I18n.t("crops.pests.flash.reference_flag_admin_only")
         end
       end
 
       if @pest.update(pest_params)
-        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t('crops.pests.flash.updated')
+        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t("crops.pests.flash.updated")
       else
         render :edit, status: :unprocessable_entity
       end
@@ -101,20 +101,20 @@ module Crops
 
     def set_crop
       @crop = Crop.find(params[:crop_id])
-      
+
       # 作物へのアクセス権限チェック
       # 管理者も参照作物と自身が作成した作物のみアクセス可能
       unless @crop.is_reference || @crop.user_id == current_user.id
-        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
+        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
       end
     rescue ActiveRecord::RecordNotFound
-      redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
+      redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
     end
 
     def set_pest
       @pest = @crop.pests.find(params[:id])
     rescue ActiveRecord::RecordNotFound
-      redirect_to crop_pests_path(@crop), alert: I18n.t('crops.pests.flash.not_found')
+      redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.not_found")
     end
 
     def pest_params
@@ -150,4 +150,3 @@ module Crops
     end
   end
 end
-

@@ -265,7 +265,7 @@ class LoadAllFixtures < ActiveRecord::Migration[8.0]
 
             TempWeatherDatum.upsert_all(
               weather_records,
-              unique_by: [:weather_location_id, :date]
+              unique_by: [ :weather_location_id, :date ]
             ) if weather_records.any?
 
             # 進捗情報更新
@@ -578,7 +578,7 @@ class LoadAllFixtures < ActiveRecord::Migration[8.0]
 
             TempWeatherDatum.upsert_all(
               weather_records,
-              unique_by: [:weather_location_id, :date]
+              unique_by: [ :weather_location_id, :date ]
             ) if weather_records.any?
 
             # 進捗情報更新

@@ -1,5 +1,5 @@
-require 'test_helper'
-require Rails.root.join('db/migrate/20251107194500_data_migration_india_reference_tasks')
+require "test_helper"
+require Rails.root.join("db/migrate/20251107194500_data_migration_india_reference_tasks")
 
 class DataMigrationIndiaReferenceTasksTest < ActiveSupport::TestCase
   EXPECTED_TASKS = DataMigrationIndiaReferenceTasks::TASK_DEFINITIONS.transform_values do |definition|
@@ -11,8 +11,8 @@ class DataMigrationIndiaReferenceTasksTest < ActiveSupport::TestCase
     AgriculturalTask.delete_all
 
     reference_crop_names.each do |crop_name|
-      Crop.where(name: crop_name, region: 'in').delete_all
-      create(:crop, :reference, name: crop_name, region: 'in')
+      Crop.where(name: crop_name, region: "in").delete_all
+      create(:crop, :reference, name: crop_name, region: "in")
     end
 
     @migration = DataMigrationIndiaReferenceTasks.new
@@ -22,11 +22,11 @@ class DataMigrationIndiaReferenceTasksTest < ActiveSupport::TestCase
     # agricultural_task_cropsテーブルが削除されているため、マイグレーションは実行できない
     # このマイグレーションは既に実行済みなので、テストをスキップ
     skip "agricultural_task_cropsテーブルが削除されているため、マイグレーションは実行できません"
-    
+
     @migration.up
 
     EXPECTED_TASKS.each do |name, attributes|
-      task = AgriculturalTask.find_by(name: name, region: 'in', is_reference: true)
+      task = AgriculturalTask.find_by(name: name, region: "in", is_reference: true)
       assert task, "Expected task '#{name}' to be created"
 
       assert_equal attributes[:description], task.description
@@ -45,12 +45,12 @@ class DataMigrationIndiaReferenceTasksTest < ActiveSupport::TestCase
     # agricultural_task_cropsテーブルが削除されているため、マイグレーションは実行できない
     # このマイグレーションは既に実行済みなので、テストをスキップ
     skip "agricultural_task_cropsテーブルが削除されているため、マイグレーションは実行できません"
-    
+
     @migration.up
     @migration.down
 
     EXPECTED_TASKS.keys.each do |name|
-      assert_nil AgriculturalTask.find_by(name: name, region: 'in', is_reference: true)
+      assert_nil AgriculturalTask.find_by(name: name, region: "in", is_reference: true)
     end
 
     assert_equal 0, CropTaskTemplate.count
@@ -62,4 +62,3 @@ class DataMigrationIndiaReferenceTasksTest < ActiveSupport::TestCase
     EXPECTED_TASKS.values.flat_map { |attrs| attrs[:crops] }.uniq
   end
 end
-

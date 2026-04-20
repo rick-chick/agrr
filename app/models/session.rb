@@ -7,8 +7,8 @@ class Session < ApplicationRecord
   validates :expires_at, presence: true
 
   # Clean up expired sessions
-  scope :active, -> { where('expires_at > ?', Time.current) }
-  scope :expired, -> { where('expires_at <= ?', Time.current) }
+  scope :active, -> { where("expires_at > ?", Time.current) }
+  scope :expired, -> { where("expires_at <= ?", Time.current) }
 
   # Generate secure session ID
   def self.generate_session_id

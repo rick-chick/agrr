@@ -21,12 +21,12 @@ class CreateCropTaskScheduleBlueprints < ActiveRecord::Migration[8.0]
     end
 
     add_index :crop_task_schedule_blueprints,
-              [:crop_id, :stage_order, :agricultural_task_id],
+              [ :crop_id, :stage_order, :agricultural_task_id ],
               unique: true,
               where: 'agricultural_task_id IS NOT NULL'
 
     add_index :crop_task_schedule_blueprints,
-              [:crop_id, :stage_order, :source_agricultural_task_id],
+              [ :crop_id, :stage_order, :source_agricultural_task_id ],
               unique: true,
               where: 'agricultural_task_id IS NULL AND source_agricultural_task_id IS NOT NULL',
               name: 'index_blueprints_on_crop_stage_and_source_task'

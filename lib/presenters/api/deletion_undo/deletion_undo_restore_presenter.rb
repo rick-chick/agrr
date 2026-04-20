@@ -20,9 +20,9 @@ module Presenters
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           error_type = determine_error_type(msg)
           status = http_status_for_error(error_type)
-          display_msg = (error_type == :unprocessable_entity && msg.match?(/expired|token/i)) ? I18n.t('deletion_undo.expired', default: msg) : msg
+          display_msg = (error_type == :unprocessable_entity && msg.match?(/expired|token/i)) ? I18n.t("deletion_undo.expired", default: msg) : msg
 
-          @view.render_response(json: { status: 'error', error: display_msg }, status: status)
+          @view.render_response(json: { status: "error", error: display_msg }, status: status)
         end
 
         private

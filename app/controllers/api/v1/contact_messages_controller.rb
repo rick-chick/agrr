@@ -10,7 +10,7 @@ module Api
 
       protect_from_forgery with: :null_session
       # Allow anonymous clients to submit contact messages
-      skip_before_action :authenticate_api_request, only: [:create]
+      skip_before_action :authenticate_api_request, only: [ :create ]
 
       def create
         return unless verify_recaptcha!
@@ -21,7 +21,7 @@ module Api
         interactor.call(contact_message_input, output_port: presenter)
       rescue StandardError => e
         log_unexpected_error(e)
-        render_response(json: { error: 'Internal server error' }, status: :internal_server_error)
+        render_response(json: { error: "Internal server error" }, status: :internal_server_error)
       end
 
       def render_response(json:, status:)
@@ -57,7 +57,7 @@ module Api
         self.class::RATE_LIMITER_CLASS.new(request: request).track!
         true
       rescue ::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded
-        render_response(json: { error: 'Too many requests' }, status: :too_many_requests)
+        render_response(json: { error: "Too many requests" }, status: :too_many_requests)
         false
       end
 
@@ -67,4 +67,3 @@ module Api
     end
   end
 end
-

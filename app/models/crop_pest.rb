@@ -15,4 +15,3 @@ class CropPest < ApplicationRecord
   validates :pest, presence: true
   validates :pest_id, uniqueness: { scope: :crop_id }
 end
-

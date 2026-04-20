@@ -19,7 +19,7 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert_equal 1, entity.id
           assert_equal "尿素", entity.name
           assert_equal 46.0, entity.n
@@ -42,7 +42,7 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert_nil entity.package_size
         end
 
@@ -76,7 +76,7 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert entity.has_nutrient?(:n)
           assert_not entity.has_nutrient?(:p)
           assert_not entity.has_nutrient?(:k)
@@ -95,7 +95,7 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert_equal "20-10-5", entity.npk_summary
         end
 
@@ -112,7 +112,7 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert_equal "20-10", entity.npk_summary
         end
 
@@ -131,11 +131,10 @@ module Domain
             created_at: Time.current,
             updated_at: Time.current
           )
-          
+
           assert entity.reference?
         end
       end
     end
   end
 end
-

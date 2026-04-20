@@ -15,7 +15,7 @@ class CreateAgriculturalTasks < ActiveRecord::Migration[8.0]
 
     add_index :agricultural_tasks, :user_id
     add_index :agricultural_tasks, :is_reference
-    add_index :agricultural_tasks, [:user_id, :name], unique: true, where: "is_reference = false"
+    add_index :agricultural_tasks, [ :user_id, :name ], unique: true, where: "is_reference = false"
     add_index :agricultural_tasks, :name, where: "is_reference = true"
   end
 end

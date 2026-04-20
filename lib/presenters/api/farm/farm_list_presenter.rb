@@ -10,12 +10,12 @@ module Presenters
 
         def on_success(farms)
           # 成功データをコントローラーに渡す
-          @view.instance_variable_set('@farm_list_data', farms)
+          @view.instance_variable_set("@farm_list_data", farms)
         end
 
         def on_failure(error_dto)
           # エラーデータをコントローラーに渡す
-          @view.instance_variable_set('@farm_list_error', error_dto)
+          @view.instance_variable_set("@farm_list_error", error_dto)
         end
       end
     end

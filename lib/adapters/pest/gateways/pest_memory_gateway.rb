@@ -29,7 +29,7 @@ module Adapters
           pest = ::Pest.find(pest_id)
           Domain::Pest::Entities::PestEntity.from_model(pest)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Pest not found'
+          raise StandardError, "Pest not found"
         end
 
         def create(create_input_dto)
@@ -42,7 +42,7 @@ module Adapters
             occurrence_season: create_input_dto.occurrence_season,
             region: create_input_dto.region
           )
-          raise StandardError, pest.errors.full_messages.join(', ') unless pest.save
+          raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
 
           Domain::Pest::Entities::PestEntity.from_model(pest)
         end
@@ -59,11 +59,11 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           pest.update(attrs)
-          raise StandardError, pest.errors.full_messages.join(', ') if pest.errors.any?
+          raise StandardError, pest.errors.full_messages.join(", ") if pest.errors.any?
 
           Domain::Pest::Entities::PestEntity.from_model(pest.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Pest not found'
+          raise StandardError, "Pest not found"
         end
       end
     end

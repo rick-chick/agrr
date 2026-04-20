@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -12,7 +12,7 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
     @farm.update!(weather_location: @weather_location)
   end
 
-  test '予測要求は過去2年分未満のデータなら422を返す' do
+  test "予測要求は過去2年分未満のデータなら422を返す" do
     # テストの高速化: 実際に大量レコードを DB に作成する代わりに
     # association をスタブして過去データが不足している状況を模擬する
     fake_rel = Object.new
@@ -26,14 +26,12 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
     gateway_mock = mock
     def gateway_mock.historical_data_count(weather_location_id:, start_date:, end_date:); 500; end
     Adapters::WeatherData::WeatherDataGatewayFactory.stub(:resolve, gateway_mock) do
-      get farm_weather_data_path(@farm, predict: 'true'), headers: { 'Accept' => 'application/json' }
+      get farm_weather_data_path(@farm, predict: "true"), headers: { "Accept" => "application/json" }
 
       assert_response :unprocessable_entity
       body = JSON.parse(response.body)
-      assert_equal false, body['success']
-      assert_equal I18n.t('farms.weather_data.insufficient_historical_data'), body['message']
+      assert_equal false, body["success"]
+      assert_equal I18n.t("farms.weather_data.insufficient_historical_data"), body["message"]
     end
   end
 end
-
-

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative '../dtos/create_contact_message_input'
-require_relative '../dtos/create_contact_message_success'
-require_relative '../dtos/create_contact_message_failure'
+require_relative "../dtos/create_contact_message_input"
+require_relative "../dtos/create_contact_message_success"
+require_relative "../dtos/create_contact_message_failure"
 
 module ContactMessages
   module Interactors

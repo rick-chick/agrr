@@ -81,4 +81,3 @@ module Crops
     end
   end
 end
-

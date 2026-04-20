@@ -20,10 +20,10 @@ module Agrr
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
-    
+
     # Add lib directory to autoload paths for Clean Architecture
-    config.autoload_paths += %W(#{config.root}/lib)
-    config.eager_load_paths += %W(#{config.root}/lib)
+    config.autoload_paths += %W[#{config.root}/lib]
+    config.eager_load_paths += %W[#{config.root}/lib]
 
     # Use SQLite for caching
     config.cache_store = :solid_cache_store
@@ -39,23 +39,23 @@ module Agrr
     # Configure CORS
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        frontend_origins = ENV.fetch('FRONTEND_URL', 'http://localhost:4200')
-                              .split(',')
+        frontend_origins = ENV.fetch("FRONTEND_URL", "http://localhost:4200")
+                              .split(",")
                               .map(&:strip)
                               .reject(&:empty?)
         origins(*frontend_origins)
-        resource '/api/*',
+        resource "/api/*",
                  headers: :any,
-                 methods: [:get, :post, :put, :patch, :delete, :options, :head],
+                 methods: [ :get, :post, :put, :patch, :delete, :options, :head ],
                  credentials: true
         # undo_deletion: /undo_deletion または /:locale/undo_deletion（Angular からの復元用）
         resource %r{^(/(ja|us|in))?/undo_deletion$},
                  headers: :any,
-                 methods: [:post, :options],
+                 methods: [ :post, :options ],
                  credentials: true
-        resource '/cable',
+        resource "/cable",
                  headers: :any,
-                 methods: [:get, :post, :options],
+                 methods: [ :get, :post, :options ],
                  credentials: true
       end
     end
@@ -63,12 +63,12 @@ module Agrr
 
     # Propshaft configuration (Rails 8 default asset pipeline)
     config.assets.enabled = true
-    config.assets.version = '1.0'
-    config.assets.paths << Rails.root.join('vendor/assets/stylesheets')
-    
+    config.assets.version = "1.0"
+    config.assets.paths << Rails.root.join("vendor/assets/stylesheets")
+
     # Add builds directory to Propshaft load paths (for esbuild output)
-    config.assets.paths << Rails.root.join('app/assets/builds')
-    
+    config.assets.paths << Rails.root.join("app/assets/builds")
+
     # Propshaft specific configuration
     config.assets.configure do |env|
       env.logger = Rails.logger
@@ -76,8 +76,8 @@ module Agrr
 
     # I18n configuration
     config.i18n.default_locale = :ja
-    config.i18n.available_locales = [:ja, :us, :in, :en]
-    config.i18n.fallbacks = [:us, :en]
-    config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
+    config.i18n.available_locales = [ :ja, :us, :in, :en ]
+    config.i18n.fallbacks = [ :us, :en ]
+    config.i18n.load_path += Dir[Rails.root.join("config", "locales", "**", "*.{rb,yml}")]
   end
 end

@@ -14,8 +14,7 @@ class CreateDeletionUndoEvents < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :deletion_undo_events, [:resource_type, :resource_id], name: 'index_deletion_undo_events_on_resource', where: "state = 'scheduled'"
+    add_index :deletion_undo_events, [ :resource_type, :resource_id ], name: 'index_deletion_undo_events_on_resource', where: "state = 'scheduled'"
     add_index :deletion_undo_events, :expires_at
   end
 end
-

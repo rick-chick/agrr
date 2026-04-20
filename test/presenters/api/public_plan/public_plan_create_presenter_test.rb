@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
-  test 'on_success calls view.render_response with ok status and plan_id' do
+  test "on_success calls view.render_response with ok status and plan_id" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
@@ -25,7 +25,7 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_success(success_dto)
   end
 
-  test 'on_success logs plan_id' do
+  test "on_success logs plan_id" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
@@ -40,14 +40,14 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_success(success_dto)
   end
 
-  test 'on_success executes job chain when view supports it' do
+  test "on_success executes job chain when view supports it" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 789)
 
     job_instance_mock = mock
-    job_instances = [job_instance_mock]
+    job_instances = [ job_instance_mock ]
 
     view_mock.stubs(:respond_to?).with(:create_job_instances_for_public_plans, true).returns(true)
     view_mock.stubs(:respond_to?).with(:execute_job_chain_async, true).returns(true)
@@ -62,14 +62,14 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_success(success_dto)
   end
 
-  test 'on_failure calls view.render_response with not_found status when Farm not found' do
+  test "on_failure calls view.render_response with not_found status when Farm not found" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
-    error_dto = Domain::Shared::Dtos::ErrorDto.new('Farm not found')
+    error_dto = Domain::Shared::Dtos::ErrorDto.new("Farm not found")
 
     expected_json = {
-      error: 'Farm not found'
+      error: "Farm not found"
     }
 
     view_mock.expects(:render_response).with(
@@ -80,14 +80,14 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_failure(error_dto)
   end
 
-  test 'on_failure calls view.render_response with unprocessable_entity status for validation errors' do
+  test "on_failure calls view.render_response with unprocessable_entity status for validation errors" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
-    error_dto = Domain::Shared::Dtos::ErrorDto.new('No crops selected')
+    error_dto = Domain::Shared::Dtos::ErrorDto.new("No crops selected")
 
     expected_json = {
-      error: 'No crops selected'
+      error: "No crops selected"
     }
 
     view_mock.expects(:render_response).with(
@@ -98,14 +98,14 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_failure(error_dto)
   end
 
-  test 'on_failure calls view.render_response with internal_server_error status for unexpected errors' do
+  test "on_failure calls view.render_response with internal_server_error status for unexpected errors" do
     view_mock = mock
     presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
 
-    failure_dto = 'Some error string'
+    failure_dto = "Some error string"
 
     expected_json = {
-      error: 'Some error string'
+      error: "Some error string"
     }
 
     view_mock.expects(:render_response).with(

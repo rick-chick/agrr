@@ -11,12 +11,12 @@ class ApiKeysController < ApplicationController
   # POST /api_keys/generate
   def generate
     @user = current_user
-    
+
     if @user.generate_api_key!
-      flash[:notice] = I18n.t('api_keys.flash.generate.success')
+      flash[:notice] = I18n.t("api_keys.flash.generate.success")
       redirect_to api_keys_path
     else
-      flash[:alert] = I18n.t('api_keys.flash.generate.failure')
+      flash[:alert] = I18n.t("api_keys.flash.generate.failure")
       redirect_to api_keys_path
     end
   end
@@ -24,12 +24,12 @@ class ApiKeysController < ApplicationController
   # POST /api_keys/regenerate
   def regenerate
     @user = current_user
-    
+
     if @user.regenerate_api_key!
-      flash[:notice] = I18n.t('api_keys.flash.regenerate.success')
+      flash[:notice] = I18n.t("api_keys.flash.regenerate.success")
       redirect_to api_keys_path
     else
-      flash[:alert] = I18n.t('api_keys.flash.regenerate.failure')
+      flash[:alert] = I18n.t("api_keys.flash.regenerate.failure")
       redirect_to api_keys_path
     end
   end

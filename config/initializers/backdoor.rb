@@ -7,12 +7,11 @@ module BackdoorConfig
   # Get backdoor token from environment variable
   # Set AGRR_BACKDOOR_TOKEN environment variable to enable this feature
   def self.token
-    ENV['AGRR_BACKDOOR_TOKEN']
+    ENV["AGRR_BACKDOOR_TOKEN"]
   end
-  
+
   # Check if backdoor is enabled (token is configured)
   def self.enabled?
     token.present?
   end
 end
-

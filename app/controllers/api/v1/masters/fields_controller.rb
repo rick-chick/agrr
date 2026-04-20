@@ -41,7 +41,7 @@ module Api
           return unless input_valid?(:create)
           input_dto = Domain::Field::Dtos::FieldCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_create_params?(input_dto)
-            render_response(json: { errors: ['name is required'] }, status: :unprocessable_entity)
+            render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
           presenter = Presenters::Api::Field::FieldCreatePresenter.new(view: self)
@@ -103,11 +103,11 @@ module Api
           case action
           when :index, :create
             return true if params[:farm_id].present?
-            render_response(json: { error: 'Farm not found' }, status: :not_found)
+            render_response(json: { error: "Farm not found" }, status: :not_found)
             false
           when :show, :destroy, :update
             return true if params[:id].present?
-            render_response(json: { error: 'Field not found' }, status: :not_found)
+            render_response(json: { error: "Field not found" }, status: :not_found)
             false
           else
             true

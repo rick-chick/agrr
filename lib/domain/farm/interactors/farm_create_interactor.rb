@@ -20,7 +20,7 @@ module Domain
             latitude: input_dto.latitude,
             longitude: input_dto.longitude
           })
-          raise StandardError, farm_model.errors.full_messages.join(', ') unless farm_model.save
+          raise StandardError, farm_model.errors.full_messages.join(", ") unless farm_model.save
 
           farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model)
           @output_port.on_success(farm_entity)

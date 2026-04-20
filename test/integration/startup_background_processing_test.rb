@@ -9,12 +9,12 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
   test "background database restoration can be performed" do
     # バックグラウンド処理で実行されるデータベース復元のロジックをテスト
     # 実際のLitestreamコマンドは実行しないが、データベース接続の準備を確認
-    
+
     # メインデータベースの接続確認
     assert_nothing_raised do
       ActiveRecord::Base.connection.execute("SELECT 1")
     end
-    
+
     # キャッシュデータベースの接続は MonitorMigrationStatusJob を通じて確認（Solid Queue 廃止により queue は削除）
     results = MonitorMigrationStatusJob.perform_now
     assert results.is_a?(Hash)
@@ -24,10 +24,10 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
   test "background migration can be performed" do
     # バックグラウンド処理で実行されるマイグレーションのロジックをテスト
     # MonitorMigrationStatusJobを使ってマイグレーション状態を確認
-    
+
     # MonitorMigrationStatusJobが正常に動作することを確認
     results = MonitorMigrationStatusJob.perform_now
-    
+
     assert results.is_a?(Hash)
     assert results.key?(:primary)
     assert results.key?(:cache)
@@ -35,7 +35,7 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
     results.each do |_database, result|
       assert result.is_a?(Hash)
       assert result.key?(:status)
-      assert_includes ["ok", "error"], result[:status]
+      assert_includes [ "ok", "error" ], result[:status]
     end
   end
 
@@ -50,11 +50,10 @@ class StartupBackgroundProcessingTest < ActionDispatch::IntegrationTest
     # マイグレーション状態監視ジョブが正常に実行できることを確認
     perform_enqueued_jobs do
       results = MonitorMigrationStatusJob.perform_now
-      
+
       assert results.is_a?(Hash)
       assert results.key?(:primary)
       assert results.key?(:cache)
     end
   end
 end
-

@@ -11,7 +11,7 @@ module Adapters
         def setup
           @gateway = PublicPlanActiveRecordGateway.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
           @farm = create(:farm, :reference)
-          @crops = [create(:crop, :reference), create(:crop, :reference)]
+          @crops = [ create(:crop, :reference), create(:crop, :reference) ]
         end
 
         test "should delegate to CultivationPlanCreator and return result with plan_id" do
@@ -20,7 +20,7 @@ module Adapters
             total_area: 30.0,
             crops: @crops,
             user: nil,
-            session_id: 'test_session_123',
+            session_id: "test_session_123",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )
@@ -42,8 +42,8 @@ module Adapters
           persisted_plan = ::CultivationPlan.find_by(id: plan_id)
           assert_not_nil persisted_plan, "CultivationPlan should be persisted"
           assert_equal @farm.id, persisted_plan.farm_id
-          assert_equal 'public', persisted_plan.plan_type
-          assert_equal 'test_session_123', persisted_plan.session_id
+          assert_equal "public", persisted_plan.plan_type
+          assert_equal "test_session_123", persisted_plan.session_id
         end
 
         test "should log plan_id when creation succeeds" do
@@ -52,7 +52,7 @@ module Adapters
             total_area: 30.0,
             crops: @crops,
             user: nil,
-            session_id: 'test_session_456',
+            session_id: "test_session_456",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )
@@ -74,7 +74,7 @@ module Adapters
             total_area: -1.0,  # 無効な値
             crops: @crops,
             user: nil,
-            session_id: 'test_session_789',
+            session_id: "test_session_789",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )
@@ -94,7 +94,7 @@ module Adapters
             total_area: -1.0,
             crops: @crops,
             user: nil,
-            session_id: 'test_session_error',
+            session_id: "test_session_error",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )
@@ -116,7 +116,7 @@ module Adapters
             total_area: 30.0,
             crops: @crops,
             user: nil,
-            session_id: 'test_session_exception',
+            session_id: "test_session_exception",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )
@@ -137,7 +137,7 @@ module Adapters
             total_area: 30.0,
             crops: @crops,
             user: nil,
-            session_id: 'test_session_unique',
+            session_id: "test_session_unique",
             planning_start_date: Date.current,
             planning_end_date: Date.current.end_of_year
           )

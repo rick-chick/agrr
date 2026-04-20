@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require_relative 'concerns/job_arguments_provider'
+require_relative "concerns/job_arguments_provider"
 
 class FetchWeatherDataJob < ApplicationJob
-
   include JobArgumentsProvider
 
   def initialize(*args)
@@ -12,13 +11,13 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   queue_as :weather_data_sequential
-  
+
   MAX_RETRY_ATTEMPTS = 5
   ALLOWED_MISSING_RATIO = 0.05
-  
+
   # インスタンス変数の定義
   attr_accessor :latitude, :longitude, :start_date, :end_date, :farm_id, :cultivation_plan_id, :channel_class, :translator
-  
+
   # インスタンス変数をハッシュとして返す
   def job_arguments
     {
@@ -125,7 +124,6 @@ class FetchWeatherDataJob < ApplicationJob
     )
 
         interactor.execute(input_dto:)
-
   end
 
     def farm_gateway
@@ -153,7 +151,4 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   private
-
-
 end
-

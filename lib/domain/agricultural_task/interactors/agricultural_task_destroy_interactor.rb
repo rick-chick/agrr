@@ -51,7 +51,7 @@ module Domain
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: task_model,
             actor: user,
-            toast_message: @translator.t('agricultural_tasks.undo.toast', name: task_model.name),
+            toast_message: @translator.t("agricultural_tasks.undo.toast", name: task_model.name),
             auto_hide_after: 5000,
             metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(task_model) }
           )

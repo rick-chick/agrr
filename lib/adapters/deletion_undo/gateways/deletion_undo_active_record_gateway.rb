@@ -70,7 +70,7 @@ module Adapters
         end
 
         def default_ttl
-          seconds = ENV.fetch('DELETION_UNDO_TTL_SECONDS', nil)&.to_i
+          seconds = ENV.fetch("DELETION_UNDO_TTL_SECONDS", nil)&.to_i
           seconds && seconds.positive? ? seconds.seconds : 5.minutes
         end
 
@@ -86,7 +86,7 @@ module Adapters
 
         def default_toast_message(record)
           I18n.t(
-            'deletion_undo.toast_message',
+            "deletion_undo.toast_message",
             resource: default_resource_label(record)
           )
         end

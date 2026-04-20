@@ -28,7 +28,7 @@ module DeletionUndoFlow
       if in_use_message_key
         I18n.t(in_use_message_key)
       else
-        I18n.t(delete_error_message_key, message: I18n.t('errors.messages.restrict_dependent_destroy'))
+        I18n.t(delete_error_message_key, message: I18n.t("errors.messages.restrict_dependent_destroy"))
       end
 
     render_deletion_failure(
@@ -47,4 +47,3 @@ module DeletionUndoFlow
     )
   end
 end
-

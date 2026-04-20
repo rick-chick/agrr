@@ -3,12 +3,12 @@
 module Crops
   class TaskScheduleBlueprintsController < ApplicationController
     before_action :set_crop
-    before_action :set_blueprint, only: [:update_position, :destroy]
+    before_action :set_blueprint, only: [ :update_position, :destroy ]
 
     # PATCH /crops/:crop_id/task_schedule_blueprints/:id/update_position
     def update_position
       unless can_edit_crop?
-        return render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
+        return render json: { error: I18n.t("crops.flash.no_permission") }, status: :forbidden
       end
 
       gdd_trigger = params[:gdd_trigger]&.to_f
@@ -16,11 +16,11 @@ module Crops
 
       # バリデーション
       if gdd_trigger && gdd_trigger < 0
-        return render json: { error: 'gdd_trigger must be non-negative' }, status: :bad_request
+        return render json: { error: "gdd_trigger must be non-negative" }, status: :bad_request
       end
 
       if priority && priority < 0
-        return render json: { error: 'priority must be non-negative' }, status: :bad_request
+        return render json: { error: "priority must be non-negative" }, status: :bad_request
       end
 
       # 更新
@@ -30,29 +30,29 @@ module Crops
       if @blueprint.save
         # gdd_triggerとpriorityでソートし直して、priorityを再割り当て
         reorder_priorities
-        
+
         # 再読み込みして最新のpriorityを取得
         @blueprint.reload
-        
+
         render json: {
           id: @blueprint.id,
           gdd_trigger: @blueprint.gdd_trigger.to_f,
           priority: @blueprint.priority,
-          message: I18n.t('crops.flash.blueprint_position_updated')
+          message: I18n.t("crops.flash.blueprint_position_updated")
         }
       else
-        render json: { error: @blueprint.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        render json: { error: @blueprint.errors.full_messages.join(", ") }, status: :unprocessable_entity
       end
     rescue StandardError => e
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to update position: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
-      render json: { error: I18n.t('crops.flash.blueprint_update_failed') }, status: :internal_server_error
+      render json: { error: I18n.t("crops.flash.blueprint_update_failed") }, status: :internal_server_error
     end
 
     # DELETE /crops/:crop_id/task_schedule_blueprints/:id
     def destroy
       unless can_edit_crop?
-        return render json: { error: I18n.t('crops.flash.no_permission') }, status: :forbidden
+        return render json: { error: I18n.t("crops.flash.no_permission") }, status: :forbidden
       end
       # Delegate deletion logic to a service to make the controller lightweight
       service = Crops::TaskScheduleBlueprintDeletionService.new(crop: @crop, blueprint: @blueprint)
@@ -71,19 +71,19 @@ module Crops
       respond_to do |format|
         format.html { head :no_content }
         format.turbo_stream
-        format.json { render json: { message: I18n.t('crops.flash.blueprint_deleted') } }
+        format.json { render json: { message: I18n.t("crops.flash.blueprint_deleted") } }
       end
     rescue ActiveRecord::RecordNotFound
       respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
-        format.json { render json: { error: I18n.t('crops.flash.blueprint_not_found') }, status: :not_found }
+        format.json { render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found }
       end
     rescue StandardError => e
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to delete blueprint: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{@blueprint.id}", partial: 'crops/task_schedule_blueprints/error', locals: { error: I18n.t('crops.flash.blueprint_delete_failed') }) }
-        format.json { render json: { error: I18n.t('crops.flash.blueprint_delete_failed') }, status: :internal_server_error }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{@blueprint.id}", partial: "crops/task_schedule_blueprints/error", locals: { error: I18n.t("crops.flash.blueprint_delete_failed") }) }
+        format.json { render json: { error: I18n.t("crops.flash.blueprint_delete_failed") }, status: :internal_server_error }
       end
     end
 
@@ -92,14 +92,14 @@ module Crops
     def set_crop
       @crop = Crop.find(params[:crop_id])
       unless can_view_crop?
-        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
+        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
       end
     end
 
     def set_blueprint
       @blueprint = @crop.crop_task_schedule_blueprints.find(params[:id])
     rescue ActiveRecord::RecordNotFound
-      render json: { error: I18n.t('crops.flash.blueprint_not_found') }, status: :not_found
+      render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found
     end
 
     def can_edit_crop?
@@ -114,7 +114,7 @@ module Crops
     def reorder_priorities
       blueprints = @crop.crop_task_schedule_blueprints
                         .order(:gdd_trigger, :priority, :id)
-      
+
       blueprints.each_with_index do |blueprint, index|
         blueprint.update_column(:priority, index + 1) if blueprint.priority != index + 1
       end
@@ -129,7 +129,7 @@ module Crops
         tasks = tasks.where(region: crop.region) if crop.region.present?
         return tasks.order(:name)
       end
-      
+
       # 参照作物であれば参照作業のみ
       if crop.is_reference
         tasks = AgriculturalTask.reference
@@ -137,7 +137,7 @@ module Crops
         tasks = tasks.where(region: crop.region) if crop.region.present?
         return tasks.order(:name)
       end
-      
+
       # どちらでもない場合は空のコレクション
       AgriculturalTask.none
     end
@@ -148,4 +148,3 @@ module Crops
     end
   end
 end
-

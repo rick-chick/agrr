@@ -12,11 +12,11 @@ module Presenters
           farm = @view.instance_variable_get(:@farm)
           event = destroy_output_dto.undo
           if event&.undo_token.present?
-            resource_label = event.metadata['resource_label']
+            resource_label = event.metadata["resource_label"]
             @view.redirect_back fallback_location: @view.farm_fields_path(farm),
-                               notice: I18n.t('deletion_undo.redirect_notice', resource: resource_label)
+                               notice: I18n.t("deletion_undo.redirect_notice", resource: resource_label)
           else
-            @view.redirect_to @view.farm_fields_path(farm), notice: I18n.t('fields.flash.destroyed')
+            @view.redirect_to @view.farm_fields_path(farm), notice: I18n.t("fields.flash.destroyed")
           end
         end
 

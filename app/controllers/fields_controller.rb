@@ -2,7 +2,7 @@
 
 class FieldsController < ApplicationController
   before_action :set_farm
-  before_action :set_field, only: [:show, :edit, :update, :destroy]
+  before_action :set_field, only: [ :show, :edit, :update, :destroy ]
 
   # GET /farms/:farm_id/fields
   def index
@@ -110,13 +110,13 @@ class FieldsController < ApplicationController
       @farm = Domain::Shared::Policies::FarmPolicy.find_owned!(Farm, current_user, params[:farm_id])
     end
   rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-    redirect_to farms_path, alert: I18n.t('fields.flash.farm_not_found')
+    redirect_to farms_path, alert: I18n.t("fields.flash.farm_not_found")
   end
 
   def set_field
     @field = @farm.fields.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to url_for(controller: 'fields', action: 'index', farm_id: @farm.id), alert: I18n.t('fields.flash.not_found')
+    redirect_to url_for(controller: "fields", action: "index", farm_id: @farm.id), alert: I18n.t("fields.flash.not_found")
   end
 
   def field_gateway

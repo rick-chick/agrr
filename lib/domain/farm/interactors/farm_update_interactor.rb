@@ -22,7 +22,7 @@ module Domain
 
           farm_model = Domain::Shared::Policies::FarmPolicy.find_editable!(::Farm, user, input_dto.farm_id)
           Domain::Shared::Policies::FarmPolicy.apply_update!(user, farm_model, attrs)
-          raise StandardError, farm_model.errors.full_messages.join(', ') if farm_model.errors.any?
+          raise StandardError, farm_model.errors.full_messages.join(", ") if farm_model.errors.any?
 
           farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model.reload)
           @output_port.on_success(farm_entity)

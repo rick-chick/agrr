@@ -8,4 +8,3 @@ class ContactMessage < ApplicationRecord
   validates :subject, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: STATUSES }
 end
-

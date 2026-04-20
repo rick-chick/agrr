@@ -11,12 +11,11 @@ class CreateFertilizes < ActiveRecord::Migration[8.0]
       t.text :usage
       t.string :application_rate
       t.boolean :is_reference, default: true, null: false
-      
+
       t.timestamps
     end
-    
+
     # nameは一意制約
     add_index :fertilizes, :name, unique: true
   end
 end
-

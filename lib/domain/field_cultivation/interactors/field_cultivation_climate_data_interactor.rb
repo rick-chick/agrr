@@ -24,7 +24,7 @@ module Domain
           if climate_data.nil?
             @logger.warn("[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id=#{field_cultivation_id}")
             @output_port.on_error(
-              Domain::Shared::Dtos::ErrorDto.new('Field cultivation climate data not found')
+              Domain::Shared::Dtos::ErrorDto.new("Field cultivation climate data not found")
             )
             return
           end
@@ -56,7 +56,7 @@ module Domain
         end
 
         def fallback_trigger?(error)
-          error.message.include?('weather_format_invalid') || error.message.include?('no_weather_data') || error.message.include?('no_cultivation_period')
+          error.message.include?("weather_format_invalid") || error.message.include?("no_weather_data") || error.message.include?("no_cultivation_period")
         end
 
         def fallback_fetch(field_cultivation_id, display_start_date, display_end_date)
@@ -69,7 +69,7 @@ module Domain
           @gateway.ensure_cultivation_period!(field_cultivation)
 
           crop = @gateway.fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
-          raise ActiveRecord::RecordNotFound, @translator.t('api.errors.crop_not_found') unless crop
+          raise ActiveRecord::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
 
           weather_payload = fallback_get_weather_data_for_period(weather_location, field_cultivation.start_date, field_cultivation.completion_date, farm.latitude, farm.longitude, display_start_date, display_end_date)
 
@@ -122,18 +122,18 @@ module Domain
           )
 
           training_formatted = {
-            'latitude' => latitude,
-            'longitude' => longitude,
-            'timezone' => weather_location.timezone || 'Asia/Tokyo',
-            'data' => training_data.filter_map do |datum|
+            "latitude" => latitude,
+            "longitude" => longitude,
+            "timezone" => weather_location.timezone || "Asia/Tokyo",
+            "data" => training_data.filter_map do |datum|
               next if datum.temperature_max.nil? || datum.temperature_min.nil?
               temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
               {
-                'time' => datum.date.to_s,
-                'temperature_2m_max' => datum.temperature_max.to_f,
-                'temperature_2m_min' => datum.temperature_min.to_f,
-                'temperature_2m_mean' => temp_mean.to_f,
-                'precipitation_sum' => (datum.precipitation || 0.0).to_f
+                "time" => datum.date.to_s,
+                "temperature_2m_max" => datum.temperature_max.to_f,
+                "temperature_2m_min" => datum.temperature_min.to_f,
+                "temperature_2m_mean" => temp_mean.to_f,
+                "precipitation_sum" => (datum.precipitation || 0.0).to_f
               }
             end
           }
@@ -145,13 +145,13 @@ module Domain
             future = prediction_gateway.predict(
               historical_data: training_formatted,
               days: prediction_days,
-              model: 'lightgbm'
+              model: "lightgbm"
             )
 
             # 表示期間に応じた実測データを取得
             observed_start = display_start_date || Date.new(Date.current.year, 1, 1)
             observed_end = display_end_date || training_end_date
-            observed_end = [observed_end, Date.current - 1.day].min # 昨日まで
+            observed_end = [ observed_end, Date.current - 1.day ].min # 昨日まで
 
             current_year_data = @weather_data_gateway.weather_data_for_period(
               weather_location_id: weather_location.id,
@@ -160,29 +160,29 @@ module Domain
             )
 
             current_year_formatted = {
-              'latitude' => latitude,
-              'longitude' => longitude,
-              'timezone' => weather_location.timezone || 'Asia/Tokyo',
-              'data' => current_year_data.filter_map do |datum|
+              "latitude" => latitude,
+              "longitude" => longitude,
+              "timezone" => weather_location.timezone || "Asia/Tokyo",
+              "data" => current_year_data.filter_map do |datum|
                 next if datum.temperature_max.nil? || datum.temperature_min.nil?
                 temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
                 {
-                  'time' => datum.date.to_s,
-                  'temperature_2m_max' => datum.temperature_max,
-                  'temperature_2m_min' => datum.temperature_min,
-                  'temperature_2m_mean' => temp_mean,
-                  'precipitation_sum' => datum.precipitation || 0.0
+                  "time" => datum.date.to_s,
+                  "temperature_2m_max" => datum.temperature_max,
+                  "temperature_2m_min" => datum.temperature_min,
+                  "temperature_2m_mean" => temp_mean,
+                  "precipitation_sum" => datum.precipitation || 0.0
                 }
               end
             }
 
-            merged_data = current_year_formatted['data'] + Domain::Shared::ValidationHelpers.to_array(future['data'])
+            merged_data = current_year_formatted["data"] + Domain::Shared::ValidationHelpers.to_array(future["data"])
 
             {
-              'latitude' => latitude,
-              'longitude' => longitude,
-              'timezone' => weather_location.timezone || 'Asia/Tokyo',
-              'data' => merged_data
+              "latitude" => latitude,
+              "longitude" => longitude,
+              "timezone" => weather_location.timezone || "Asia/Tokyo",
+              "data" => merged_data
             }
           else
             @weather_data_gateway.format_for_agrr(
@@ -201,8 +201,8 @@ module Domain
           return climate_data unless gantt_start && gantt_end
 
           # 作付期間
-          cultivation_start = parse_date(climate_data.field_cultivation[:start_date] || climate_data.field_cultivation['start_date'])
-          cultivation_end = parse_date(climate_data.field_cultivation[:completion_date] || climate_data.field_cultivation['completion_date'])
+          cultivation_start = parse_date(climate_data.field_cultivation[:start_date] || climate_data.field_cultivation["start_date"])
+          cultivation_end = parse_date(climate_data.field_cultivation[:completion_date] || climate_data.field_cultivation["completion_date"])
 
           # 全てのコンポーネントの幅: 作付期間 ∩ ガントチャート範囲
           # 気温データが存在しない場合でも作付期間全体を表示
@@ -241,7 +241,7 @@ module Domain
               effective_end: effective_end.to_s,
               weather_records: filtered_weather.length,
               gdd_records: filtered_gdd.length,
-              note: 'All components use intersection of cultivation period and gantt chart bounds'
+              note: "All components use intersection of cultivation period and gantt chart bounds"
             }
           )
 
@@ -259,7 +259,7 @@ module Domain
 
         def filter_weather_data(weather_data, range_start, range_end)
           Domain::Shared::ValidationHelpers.to_array(weather_data).select do |datum|
-            date_value = parse_date(datum['date'] || datum[:date])
+            date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end
           end
@@ -267,7 +267,7 @@ module Domain
 
         def filter_gdd_data(gdd_data, range_start, range_end)
           Domain::Shared::ValidationHelpers.to_array(gdd_data).select do |datum|
-            date_value = parse_date(datum['date'] || datum[:date])
+            date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end
           end

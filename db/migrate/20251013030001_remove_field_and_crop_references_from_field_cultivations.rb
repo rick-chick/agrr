@@ -10,11 +10,10 @@ class RemoveFieldAndCropReferencesFromFieldCultivations < ActiveRecord::Migratio
       remove_column :field_cultivations, :crop_id
     end
   end
-  
+
   def down
     # ロールバック時は再度カラムを追加
     add_reference :field_cultivations, :field, foreign_key: { on_delete: :nullify }
     add_reference :field_cultivations, :crop, foreign_key: true
   end
 end
-

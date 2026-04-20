@@ -9,7 +9,6 @@ module Domain
         def initialize(crop:)
           @crop = crop
         end
-
       end
     end
   end

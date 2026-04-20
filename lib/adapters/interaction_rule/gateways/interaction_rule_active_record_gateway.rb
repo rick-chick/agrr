@@ -14,7 +14,7 @@ module Adapters
           rule = ::InteractionRule.find(rule_id)
           Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'InteractionRule not found'
+          raise StandardError, "InteractionRule not found"
         end
 
         def create(create_input_dto)
@@ -28,7 +28,7 @@ module Adapters
             region: create_input_dto.region,
             is_reference: create_input_dto.is_reference
           )
-          raise StandardError, rule.errors.full_messages.join(', ') unless rule.save
+          raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
 
           Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule)
         end
@@ -45,20 +45,20 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           rule.update(attrs)
-          raise StandardError, rule.errors.full_messages.join(', ') if rule.errors.any?
+          raise StandardError, rule.errors.full_messages.join(", ") if rule.errors.any?
 
           Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'InteractionRule not found'
+          raise StandardError, "InteractionRule not found"
         end
 
         def destroy(rule_id)
           rule = ::InteractionRule.find(rule_id)
           rule.destroy!
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'InteractionRule not found'
+          raise StandardError, "InteractionRule not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('interaction_rules.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("interaction_rules.flash.cannot_delete_in_use")
         end
       end
     end

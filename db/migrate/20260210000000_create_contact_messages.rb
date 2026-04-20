@@ -15,4 +15,3 @@ class CreateContactMessages < ActiveRecord::Migration[6.1]
     add_index :contact_messages, :email
   end
 end
-

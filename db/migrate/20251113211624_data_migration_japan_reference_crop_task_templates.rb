@@ -3,7 +3,7 @@
 class DataMigrationJapanReferenceCropTaskTemplates < ActiveRecord::Migration[8.0]
   # 一時モデル定義（マイグレーション内でのみ使用）
   # モデルクラスへの依存を避け、スキーマ変更に強い設計
-  
+
   class TempAgriculturalTask < ActiveRecord::Base
     self.table_name = 'agricultural_tasks'
   end
@@ -174,7 +174,7 @@ class DataMigrationJapanReferenceCropTaskTemplates < ActiveRecord::Migration[8.0
     TASK_DEFINITIONS.each do |task_name, attributes|
       # 既存のAgriculturalTaskを取得（DataMigrationJapanReferenceTasksで作成されたもの）
       agricultural_task = TempAgriculturalTask.find_by(name: task_name, region: 'jp', is_reference: true)
-      
+
       unless agricultural_task
         say "⚠️  AgriculturalTask '#{task_name}' が見つかりません。スキップします。"
         next
@@ -182,7 +182,7 @@ class DataMigrationJapanReferenceCropTaskTemplates < ActiveRecord::Migration[8.0
 
       attributes[:crops].each do |crop_name|
         crop = TempCrop.find_by(name: crop_name, region: 'jp', is_reference: true)
-        
+
         unless crop
           say "⚠️  Crop '#{crop_name}' が見つかりません。スキップします。"
           next
@@ -218,7 +218,7 @@ class DataMigrationJapanReferenceCropTaskTemplates < ActiveRecord::Migration[8.0
 
     task_names = TASK_DEFINITIONS.keys
     task_ids = TempAgriculturalTask.where(name: task_names, region: 'jp', is_reference: true).pluck(:id)
-    
+
     if task_ids.any?
       TempCropTaskTemplate.where(agricultural_task_id: task_ids, is_reference: true).delete_all
     end
@@ -226,4 +226,3 @@ class DataMigrationJapanReferenceCropTaskTemplates < ActiveRecord::Migration[8.0
     say "✅ 日本の参照CropTaskTemplateを削除しました"
   end
 end
-

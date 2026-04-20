@@ -12,4 +12,3 @@ class AddRegionToFieldsCropsAndInteractionRules < ActiveRecord::Migration[8.0]
     add_index :interaction_rules, :region
   end
 end
-

@@ -1,4 +1,4 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
 class FieldPolicy
   # Field の所有権ポリシー
@@ -44,4 +44,3 @@ class FieldPolicy
     Field.new(attributes)
   end
 end
-

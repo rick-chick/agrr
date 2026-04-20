@@ -5,7 +5,7 @@ class DropCropFertilizeProfilesAndApplications < ActiveRecord::Migration[8.0]
     # Foreign key constraints を削除
     remove_foreign_key :crop_fertilize_applications, :crop_fertilize_profiles if foreign_key_exists?(:crop_fertilize_applications, :crop_fertilize_profiles)
     remove_foreign_key :crop_fertilize_profiles, :crops if foreign_key_exists?(:crop_fertilize_profiles, :crops)
-    
+
     # テーブルを削除
     drop_table :crop_fertilize_applications, if_exists: true do |t|
       t.references :crop_fertilize_profile, null: false, foreign_key: true
@@ -24,4 +24,3 @@ class DropCropFertilizeProfilesAndApplications < ActiveRecord::Migration[8.0]
     end
   end
 end
-

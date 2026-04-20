@@ -27,7 +27,7 @@ module Domain
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FarmPolicy.expects(:find_editable!).with(::Farm, @user, farm_id.to_s).returns(farm)
-          @mock_translator.expects(:t).with('flash.farms.deleted', name: "Test Farm").returns("Test Farm deleted")
+          @mock_translator.expects(:t).with("flash.farms.deleted", name: "Test Farm").returns("Test Farm deleted")
           @mock_output_port.expects(:on_success).with(instance_of(Domain::Farm::Dtos::FarmDestroyOutputDto))
 
           gateway = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new

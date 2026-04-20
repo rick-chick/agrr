@@ -43,11 +43,11 @@ module Domain
             updated_at: record.updated_at
           )
         end
-        
+
         def reference?
           !!is_reference
         end
-        
+
         def has_nutrient?(nutrient)
           case nutrient.to_sym
           when :n
@@ -60,13 +60,13 @@ module Domain
             false
           end
         end
-        
+
         def npk_summary
-          [n, p, k].compact.map { |v| v.to_i }.join('-')
+          [ n, p, k ].compact.map { |v| v.to_i }.join("-")
         end
-        
+
         private
-        
+
         def validate!
           raise ArgumentError, "Name is required" if Domain::Shared::ValidationHelpers.blank?(name)
         end
@@ -74,4 +74,3 @@ module Domain
     end
   end
 end
-

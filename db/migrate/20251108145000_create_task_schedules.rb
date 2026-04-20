@@ -12,7 +12,7 @@ class CreateTaskSchedules < ActiveRecord::Migration[7.1]
     end
 
     add_index :task_schedules,
-              [:cultivation_plan_id, :field_cultivation_id, :category],
+              [ :cultivation_plan_id, :field_cultivation_id, :category ],
               unique: true,
               name: 'index_task_schedules_unique_scope'
 
@@ -39,8 +39,7 @@ class CreateTaskSchedules < ActiveRecord::Migration[7.1]
     end
 
     add_index :task_schedule_items, :scheduled_date
-    add_index :task_schedule_items, [:task_schedule_id, :scheduled_date], name: 'index_task_schedule_items_on_schedule_and_date'
+    add_index :task_schedule_items, [ :task_schedule_id, :scheduled_date ], name: 'index_task_schedule_items_on_schedule_and_date'
     add_index :task_schedule_items, :source_agricultural_task_id
   end
 end
-

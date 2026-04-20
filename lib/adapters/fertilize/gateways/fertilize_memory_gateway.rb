@@ -6,14 +6,14 @@ module Adapters
       class FertilizeMemoryGateway < Domain::Fertilize::Gateways::FertilizeGateway
         def list
           # Entity は name 必須のため、name が present なレコードのみ変換する
-          ::Fertilize.where.not(name: [nil, '']).map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
+          ::Fertilize.where.not(name: [ nil, "" ]).map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
         end
 
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Fertilize not found'
+          raise StandardError, "Fertilize not found"
         end
 
         def create(create_input_dto)
@@ -28,7 +28,7 @@ module Adapters
             is_reference: true,
             user_id: nil
           )
-          raise StandardError, fertilize.errors.full_messages.join(', ') unless fertilize.save
+          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
         end
@@ -45,13 +45,12 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           fertilize.update(attrs)
-          raise StandardError, fertilize.errors.full_messages.join(', ') if fertilize.errors.any?
+          raise StandardError, fertilize.errors.full_messages.join(", ") if fertilize.errors.any?
 
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Fertilize not found'
+          raise StandardError, "Fertilize not found"
         end
-
       end
     end
   end

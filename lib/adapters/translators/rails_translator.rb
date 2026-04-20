@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'i18n'
+require "i18n"
 
 module Adapters
   module Translators

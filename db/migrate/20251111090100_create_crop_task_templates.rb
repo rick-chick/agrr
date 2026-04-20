@@ -15,16 +15,14 @@ class CreateCropTaskTemplates < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :crop_task_templates, [:crop_id, :name], unique: true
+    add_index :crop_task_templates, [ :crop_id, :name ], unique: true
     add_index :crop_task_templates,
-              [:crop_id, :source_agricultural_task_id],
+              [ :crop_id, :source_agricultural_task_id ],
               unique: true,
               name: "idx_crop_task_templates_on_crop_and_source"
-
   end
 
   def down
     drop_table :crop_task_templates
   end
 end
-

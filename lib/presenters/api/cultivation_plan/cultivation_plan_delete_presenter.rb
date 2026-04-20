@@ -29,7 +29,7 @@ module Presenters
         def success_payload_for(event)
           {
             undo_token: event.undo_token,
-            undo_deadline: event.metadata['undo_deadline'],
+            undo_deadline: event.metadata["undo_deadline"],
             toast_message: event.toast_message,
             undo_path: @view.undo_deletion_path(undo_token: event.undo_token),
             auto_hide_after: event.auto_hide_after,
@@ -40,18 +40,18 @@ module Presenters
         end
 
         def resource_label_for(event)
-          event.metadata['resource_label'] || event.metadata['resource']
+          event.metadata["resource_label"] || event.metadata["resource"]
         end
 
         def redirect_path
-          '/plans'
+          "/plans"
         end
 
         def resource_dom_id_for(event)
-          stored = event.metadata['resource_dom_id']
+          stored = event.metadata["resource_dom_id"]
           return stored if stored.present?
 
-          [event.resource_type.demodulize.underscore, event.resource_id].join('_')
+          [ event.resource_type.demodulize.underscore, event.resource_id ].join("_")
         end
 
         def failure_message(error_dto)
@@ -59,10 +59,10 @@ module Presenters
         end
 
         def failure_status_for(message)
-          return :not_found if message == I18n.t('plans.errors.not_found')
+          return :not_found if message == I18n.t("plans.errors.not_found")
 
-          delete_failed_message = I18n.t('plans.errors.delete_failed')
-          delete_error_prefix = I18n.t('plans.errors.delete_error', message: '')
+          delete_failed_message = I18n.t("plans.errors.delete_failed")
+          delete_error_prefix = I18n.t("plans.errors.delete_error", message: "")
 
           return :unprocessable_entity if message == delete_failed_message
           return :unprocessable_entity if message.start_with?(delete_error_prefix)

@@ -13,7 +13,7 @@ module Adapters
           crop = ::Crop.find(crop_id)
           Domain::Crop::Entities::CropEntity.from_model(crop)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Crop not found'
+          raise StandardError, "Crop not found"
         end
 
         def create(create_input_dto)
@@ -28,7 +28,7 @@ module Adapters
           crop_attributes[:crop_stages_attributes] = create_input_dto.crop_stages_attributes if create_input_dto.crop_stages_attributes.present?
 
           crop = ::Crop.new(crop_attributes)
-          raise StandardError, crop.errors.full_messages.join(', ') unless crop.save
+          raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
 
           Domain::Crop::Entities::CropEntity.from_model(crop)
         end
@@ -45,11 +45,11 @@ module Adapters
           attrs[:crop_stages_attributes] = update_input_dto.crop_stages_attributes if update_input_dto.crop_stages_attributes.present?
 
           crop.update(attrs)
-          raise StandardError, crop.errors.full_messages.join(', ') if crop.errors.any?
+          raise StandardError, crop.errors.full_messages.join(", ") if crop.errors.any?
 
           Domain::Crop::Entities::CropEntity.from_model(crop.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Crop not found'
+          raise StandardError, "Crop not found"
         end
 
         # CropStage methods
@@ -59,7 +59,7 @@ module Adapters
 
           crop_stage = ::CropStage.new(crop_stage_attributes)
           unless crop_stage.save
-            raise StandardError, crop_stage.errors.full_messages.join(', ')
+            raise StandardError, crop_stage.errors.full_messages.join(", ")
           end
           crop_stage_entity_from_record(crop_stage)
         end
@@ -69,20 +69,20 @@ module Adapters
           attrs = attributes_from_crop_stage_dto(update_dto.payload)
 
           unless crop_stage.update(attrs)
-            raise StandardError, crop_stage.errors.full_messages.join(', ')
+            raise StandardError, crop_stage.errors.full_messages.join(", ")
           end
           crop_stage_entity_from_record(crop_stage.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'CropStage not found'
+          raise StandardError, "CropStage not found"
         end
 
         def delete_crop_stage(crop_stage_id)
           crop_stage = ::CropStage.find(crop_stage_id)
           unless crop_stage.destroy
-            raise StandardError, crop_stage.errors.full_messages.join(', ')
+            raise StandardError, crop_stage.errors.full_messages.join(", ")
           end
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'CropStage not found'
+          raise StandardError, "CropStage not found"
         end
 
         def list_crop_stages_by_crop_id(crop_id)
@@ -94,7 +94,7 @@ module Adapters
           crop_stage = ::CropStage.find(crop_stage_id)
           crop_stage_entity_from_record(crop_stage)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'CropStage not found'
+          raise StandardError, "CropStage not found"
         end
 
         # TemperatureRequirement methods
@@ -110,7 +110,7 @@ module Adapters
 
           requirement = ::TemperatureRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           temperature_requirement_entity_from_record(requirement)
         end
@@ -120,11 +120,11 @@ module Adapters
           attrs = attributes_from_temperature_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           temperature_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'TemperatureRequirement not found'
+          raise StandardError, "TemperatureRequirement not found"
         end
 
         # ThermalRequirement methods
@@ -140,7 +140,7 @@ module Adapters
 
           requirement = ::ThermalRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           thermal_requirement_entity_from_record(requirement)
         end
@@ -150,11 +150,11 @@ module Adapters
           attrs = attributes_from_thermal_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           thermal_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'ThermalRequirement not found'
+          raise StandardError, "ThermalRequirement not found"
         end
 
         # SunshineRequirement methods
@@ -170,7 +170,7 @@ module Adapters
 
           requirement = ::SunshineRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           sunshine_requirement_entity_from_record(requirement)
         end
@@ -180,11 +180,11 @@ module Adapters
           attrs = attributes_from_sunshine_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           sunshine_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'SunshineRequirement not found'
+          raise StandardError, "SunshineRequirement not found"
         end
 
         # NutrientRequirement methods
@@ -200,7 +200,7 @@ module Adapters
 
           requirement = ::NutrientRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           nutrient_requirement_entity_from_record(requirement)
         end
@@ -210,11 +210,11 @@ module Adapters
           attrs = attributes_from_nutrient_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(', ')
+            raise StandardError, requirement.errors.full_messages.join(", ")
           end
           nutrient_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'NutrientRequirement not found'
+          raise StandardError, "NutrientRequirement not found"
         end
 
         private
@@ -323,10 +323,7 @@ module Adapters
             region: dto[:region]
           }.compact
         end
-
       end
     end
   end
 end
-
-

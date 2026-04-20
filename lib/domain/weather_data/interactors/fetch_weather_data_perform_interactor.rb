@@ -56,7 +56,7 @@ module Domain
 
           # フェーズ更新 (開始)
           if cultivation_plan_id && channel_class
-            @cultivation_plan_gateway.update_phase(cultivation_plan_id, 'phase_fetching_weather', channel_class)
+            @cultivation_plan_gateway.update_phase(cultivation_plan_id, "phase_fetching_weather", channel_class)
             @presenter.info "🌤️ [FetchWeatherDataJob] Started fetching weather data for plan ##{cultivation_plan_id}"
           end
 
@@ -95,17 +95,17 @@ module Domain
           weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
 
           unless weather_data.is_a?(Hash)
-            raise StandardError, 'Weather data response is invalid or missing'
+            raise StandardError, "Weather data response is invalid or missing"
           end
 
-          data_points = weather_data['data']
+          data_points = weather_data["data"]
           unless data_points.is_a?(Array)
-            raise StandardError, 'Weather data response is invalid or missing'
+            raise StandardError, "Weather data response is invalid or missing"
           end
 
           expected_days = (start_date..end_date).count
           actual_days = data_points.size
-          missing_days = [expected_days - actual_days, 0].max
+          missing_days = [ expected_days - actual_days, 0 ].max
           allowed_missing_days = (expected_days * ALLOWED_MISSING_RATIO).ceil
 
           if data_points.empty?
@@ -117,15 +117,15 @@ module Domain
           end
 
           # WeatherLocation作成/取得
-          location_data = weather_data['location']
+          location_data = weather_data["location"]
           unless location_data.is_a?(Hash)
-            raise StandardError, 'Weather data is missing location information'
+            raise StandardError, "Weather data is missing location information"
           end
           weather_location = @weather_data_gateway.find_or_create_weather_location(
-            latitude: location_data['latitude'],
-            longitude: location_data['longitude'],
-            elevation: location_data['elevation'],
-            timezone: location_data['timezone']
+            latitude: location_data["latitude"],
+            longitude: location_data["longitude"],
+            elevation: location_data["elevation"],
+            timezone: location_data["timezone"]
           )
 
           # Farmリンク
@@ -137,17 +137,17 @@ module Domain
           # DTO作成 & upsert
           all_records = []
           data_points.each_with_index do |daily_data, index|
-            date = Date.parse(daily_data['time'])
+            date = Date.parse(daily_data["time"])
             record_attrs = {
               weather_location_id: weather_location.id,
               date: date,
-              temperature_max: daily_data['temperature_2m_max'],
-              temperature_min: daily_data['temperature_2m_min'],
-              temperature_mean: daily_data['temperature_2m_mean'],
-              precipitation: daily_data['precipitation_sum'],
-              sunshine_hours: daily_data['sunshine_hours'],
-              wind_speed: daily_data['wind_speed_10m'],
-              weather_code: daily_data['weather_code'],
+              temperature_max: daily_data["temperature_2m_max"],
+              temperature_min: daily_data["temperature_2m_min"],
+              temperature_mean: daily_data["temperature_2m_mean"],
+              precipitation: daily_data["precipitation_sum"],
+              sunshine_hours: daily_data["sunshine_hours"],
+              wind_speed: daily_data["wind_speed_10m"],
+              weather_code: daily_data["weather_code"],
               updated_at: current_time
             }
             all_records << record_attrs
@@ -181,7 +181,7 @@ module Domain
 
           # フェーズ更新 (完了)
           if cultivation_plan_id && channel_class
-            @cultivation_plan_gateway.update_phase(cultivation_plan_id, 'phase_weather_data_fetched', channel_class)
+            @cultivation_plan_gateway.update_phase(cultivation_plan_id, "phase_weather_data_fetched", channel_class)
             @presenter.info "🌤️ [FetchWeatherDataJob] Weather data fetching completed for plan ##{cultivation_plan_id}"
           end
         end
@@ -206,25 +206,24 @@ module Domain
           farm_entity = farm_id && @farm_gateway.find_by_id(farm_id) rescue nil
 
           if farm_entity
-            return 'jma' if farm_entity.region == 'jp'
+            return "jma" if farm_entity.region == "jp"
             lat = latitude
             lon = longitude
-            return 'jma' if japan_location?(lat, lon)
-            return 'nasa-power' if farm_entity.region.nil?
-            return 'noaa'
+            return "jma" if japan_location?(lat, lon)
+            return "nasa-power" if farm_entity.region.nil?
+            return "noaa"
           end
 
           lat = latitude
           lon = longitude
-          return 'jma' if japan_location?(lat, lon)
-          'noaa'
+          return "jma" if japan_location?(lat, lon)
+          "noaa"
         end
 
         def japan_location?(latitude, longitude)
           return false if latitude.nil? || longitude.nil?
           latitude.between?(24.0, 46.0) && longitude.between?(130.0, 146.0)
         end
-
       end
     end
   end

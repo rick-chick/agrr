@@ -4,7 +4,6 @@ module Domain
   module WeatherData
     module Gateways
       module WeatherDataGateway
-
         def total_weather_data_count
           raise NotImplementedError
         end

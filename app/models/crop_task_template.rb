@@ -21,13 +21,13 @@ class CropTaskTemplate < ApplicationRecord
 
   def to_agrr_format
     {
-      'task_id' => agrr_task_id.to_s,
-      'name' => name,
-      'description' => description,
-      'time_per_sqm' => time_per_sqm&.to_f,
-      'weather_dependency' => weather_dependency,
-      'required_tools' => required_tools || [],
-      'skill_level' => skill_level
+      "task_id" => agrr_task_id.to_s,
+      "name" => name,
+      "description" => description,
+      "time_per_sqm" => time_per_sqm&.to_f,
+      "weather_dependency" => weather_dependency,
+      "required_tools" => required_tools || [],
+      "skill_level" => skill_level
     }.compact
   end
 
@@ -41,4 +41,3 @@ class CropTaskTemplate < ApplicationRecord
     agricultural_task_id || id
   end
 end
-

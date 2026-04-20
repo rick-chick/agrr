@@ -22,7 +22,7 @@ module Domain
             stage_id: 1,
             payload: payload
           )
-          gateway.expect(:update_crop_stage, updated_crop_stage, [1, input_dto])
+          gateway.expect(:update_crop_stage, updated_crop_stage, [ 1, input_dto ])
 
           received = nil
           output_port = Minitest::Mock.new

@@ -23,7 +23,7 @@ module Domain
 
           pesticide_model = Domain::Shared::Policies::PesticidePolicy.find_editable!(::Pesticide, user, input_dto.pesticide_id)
           Domain::Shared::Policies::PesticidePolicy.apply_update!(user, pesticide_model, attrs)
-          raise StandardError, pesticide_model.errors.full_messages.join(', ') if pesticide_model.errors.any?
+          raise StandardError, pesticide_model.errors.full_messages.join(", ") if pesticide_model.errors.any?
 
           pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model.reload)
           @output_port.on_success(pesticide_entity)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'digest'
+require "digest"
 
 # ETag 付き JSON 応答（エントリ作物スケジュール API 共通）
 module EntryScheduleJsonRendering
@@ -12,12 +12,12 @@ module EntryScheduleJsonRendering
     json_str = ActiveSupport::JSON.encode(payload)
     etag = Digest::SHA256.hexdigest(json_str)
     quoted = %("#{etag}")
-    if request.headers['If-None-Match'].present?
-      client = request.headers['If-None-Match'].strip
+    if request.headers["If-None-Match"].present?
+      client = request.headers["If-None-Match"].strip
       return head :not_modified if client == quoted || client == etag
     end
 
-    response.headers['ETag'] = quoted
+    response.headers["ETag"] = quoted
     render json: payload
   end
 end

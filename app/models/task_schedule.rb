@@ -3,8 +3,8 @@
 class TaskSchedule < ApplicationRecord
   CATEGORIES = %w[general fertilizer].freeze
   STATUSES = {
-    active: 'active',
-    archived: 'archived'
+    active: "active",
+    archived: "archived"
   }.freeze
 
   belongs_to :cultivation_plan
@@ -21,4 +21,3 @@ class TaskSchedule < ApplicationRecord
 
   scope :active, -> { where(status: STATUSES[:active]) }
 end
-

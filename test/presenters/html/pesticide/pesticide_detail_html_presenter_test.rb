@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class PesticideDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test 'on_success sets @pesticide' do
+  test "on_success sets @pesticide" do
     view_mock = mock
     presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: view_mock)
 
@@ -21,20 +21,20 @@ class PesticideDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter.on_success(pesticide_detail_dto)
   end
 
-  test 'on_failure sets flash alert and redirects' do
+  test "on_failure sets flash alert and redirects" do
     view_mock = mock
     presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
-    error_dto.expects(:message).returns('Test error')
+    error_dto.expects(:message).returns("Test error")
 
     flash_now_mock = mock
     flash_mock = mock
     flash_mock.expects(:now).returns(flash_now_mock)
-    flash_now_mock.expects(:[]=).with(:alert, 'Test error')
+    flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
-    view_mock.expects(:pesticides_path).returns('/pesticides')
-    view_mock.expects(:redirect_to).with('/pesticides')
+    view_mock.expects(:pesticides_path).returns("/pesticides")
+    view_mock.expects(:redirect_to).with("/pesticides")
 
     presenter.on_failure(error_dto)
   end

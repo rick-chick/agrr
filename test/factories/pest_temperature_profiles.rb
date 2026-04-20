@@ -7,10 +7,3 @@ FactoryBot.define do
     max_temperature { 30.0 }
   end
 end
-
-
-
-
-
-
-

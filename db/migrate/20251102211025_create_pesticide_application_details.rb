@@ -8,16 +8,8 @@ class CreatePesticideApplicationDetails < ActiveRecord::Migration[8.0]
       t.float :amount_per_m2
       t.string :amount_unit
       t.string :application_method
-      
+
       t.timestamps
     end
   end
 end
-
-
-
-
-
-
-
-

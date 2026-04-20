@@ -10,7 +10,7 @@ module Presenters
 
         def on_success(output_dto)
           @view.redirect_back fallback_location: @view.root_path,
-                            notice: I18n.t('deletion_undo.restored')
+                            notice: I18n.t("deletion_undo.restored")
         end
 
         def on_failure(error_dto)
@@ -39,11 +39,11 @@ module Presenters
         def error_message_for_display(error_type, original_message)
           case error_type
           when :not_found
-            I18n.t('deletion_undo.not_found', default: 'Deletion undo not found')
+            I18n.t("deletion_undo.not_found", default: "Deletion undo not found")
           when :expired
-            I18n.t('deletion_undo.expired', default: 'Undo token has expired')
+            I18n.t("deletion_undo.expired", default: "Undo token has expired")
           when :conflict
-            I18n.t('deletion_undo.restore_failed', default: 'Restore failed due to conflict')
+            I18n.t("deletion_undo.restore_failed", default: "Restore failed due to conflict")
           else
             original_message
           end

@@ -29,4 +29,3 @@ class FertilizeAiGatewayStub
     end
   end
 end
-

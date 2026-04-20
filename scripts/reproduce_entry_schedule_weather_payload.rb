@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
 #
 # エントリ作物スケジュール: 気象ペイロードの形（フラット vs 二重 data）による挙動差を再現・確認する。
 #

@@ -25,7 +25,7 @@ module Domain
 
           crop_model = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, user, input_dto.crop_id)
           Domain::Shared::Policies::CropPolicy.apply_update!(user, crop_model, attrs)
-          raise StandardError, crop_model.errors.full_messages.join(', ') if crop_model.errors.any?
+          raise StandardError, crop_model.errors.full_messages.join(", ") if crop_model.errors.any?
 
           crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model.reload)
           @output_port.on_success(crop_entity)

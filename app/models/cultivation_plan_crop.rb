@@ -27,9 +27,9 @@ class CultivationPlanCrop < ApplicationRecord
   validates :crop_id, presence: true
   validates :area_per_unit, numericality: { greater_than: 0 }, allow_nil: true
   validates :revenue_per_area, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  
+
   # == Instance Methods ====================================================
-  
+
   def display_name
     if variety.present?
       "#{name}（#{variety}）"
@@ -44,4 +44,3 @@ class CultivationPlanCrop < ApplicationRecord
     field_cultivations.find_each(&:destroy!)
   end
 end
-

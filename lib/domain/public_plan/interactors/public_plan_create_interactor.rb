@@ -52,7 +52,7 @@ module Domain
           result = @gateway.create(gateway_dto)
 
           unless result.success? && result.cultivation_plan
-            error_message = result.errors&.join(', ') || "Failed to create cultivation plan"
+            error_message = result.errors&.join(", ") || "Failed to create cultivation plan"
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(error_message))
             return
           end

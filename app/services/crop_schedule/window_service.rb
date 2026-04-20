@@ -49,7 +49,7 @@ module CropSchedule
         sowing_windows: merge_consecutive_dates(sow_ok_dates),
         transplant_windows: merge_consecutive_dates(tr_ok_dates),
         reason_parts: {
-          rule: 'temperature_thresholds',
+          rule: "temperature_thresholds",
           sowing_stage_name: sow_st.name,
           transplant_stage_name: tr_st.name,
           days_evaluated: daily.size
@@ -76,7 +76,7 @@ module CropSchedule
 
     # @return [Array<Hash{:date=>Date, :t_min=>Float, :t_max=>Float, :t_mean=>Float}>]
     def extract_daily_series
-      data = @weather_payload['data'] || @weather_payload[:data]
+      data = @weather_payload["data"] || @weather_payload[:data]
       return [] unless data.is_a?(Array)
 
       rows = []
@@ -86,9 +86,9 @@ module CropSchedule
         date = parse_day(datum)
         next unless date
 
-        t_max = float_val(datum['temperature_2m_max'] || datum[:temperature_2m_max])
-        t_min = float_val(datum['temperature_2m_min'] || datum[:temperature_2m_min])
-        t_mean = float_val(datum['temperature_2m_mean'] || datum[:temperature_2m_mean])
+        t_max = float_val(datum["temperature_2m_max"] || datum[:temperature_2m_max])
+        t_min = float_val(datum["temperature_2m_min"] || datum[:temperature_2m_min])
+        t_mean = float_val(datum["temperature_2m_mean"] || datum[:temperature_2m_mean])
         if t_mean.nil? && t_max && t_min
           t_mean = (t_max + t_min) / 2.0
         end
@@ -100,7 +100,7 @@ module CropSchedule
     end
 
     def parse_day(datum)
-      raw = datum['time'] || datum['date'] || datum[:time] || datum[:date]
+      raw = datum["time"] || datum["date"] || datum[:time] || datum[:date]
       return nil if raw.blank?
 
       Date.parse(raw.to_s)

@@ -14,14 +14,14 @@ class User < ApplicationRecord
   has_many :agricultural_tasks, dependent: :destroy
 
   # Validations
-  validates :email, presence: true, 
+  validates :email, presence: true,
                     format: { with: URI::MailTo::EMAIL_REGEXP },
                     uniqueness: { case_sensitive: false, conditions: -> { where(is_anonymous: false) } },
                     unless: :is_anonymous?
   validates :name, presence: true, length: { maximum: 50 }, unless: :is_anonymous?
   validates :google_id, presence: true, uniqueness: { conditions: -> { where(is_anonymous: false) } }, unless: :is_anonymous?
-  validates :avatar_url, format: { with: /\A(#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}|[a-zA-Z0-9_-]+\.svg)\z/, 
-                                   message: ->(_, _) { I18n.t('activerecord.errors.models.user.attributes.avatar_url.invalid_format') } },
+  validates :avatar_url, format: { with: /\A(#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}|[a-zA-Z0-9_-]+\.svg)\z/,
+                                   message: ->(_, _) { I18n.t("activerecord.errors.models.user.attributes.avatar_url.invalid_format") } },
                          allow_blank: true
 
   # Normalize email before validation
@@ -50,10 +50,10 @@ class User < ApplicationRecord
   # Avatar URL processing for OAuth
   def self.process_avatar_url(url)
     return url unless url.present?
-    return url unless url.start_with?('/assets/')
+    return url unless url.start_with?("/assets/")
 
     # Extract filename from /assets/filename.ext path
-    url.sub('/assets/', '')
+    url.sub("/assets/", "")
   end
 
   # Admin methods
@@ -73,13 +73,13 @@ class User < ApplicationRecord
   def generate_api_key!
     max_retries = 10
     retries = 0
-    
+
     loop do
       new_key = SecureRandom.hex(32)
       if update(api_key: new_key)
         break self.api_key = new_key
       end
-      
+
       retries += 1
       raise "Failed to generate unique API key after #{max_retries} attempts" if retries >= max_retries
     end
@@ -103,30 +103,30 @@ class User < ApplicationRecord
   # Class method to find or create user from OmniAuth hash
   def self.from_omniauth(auth_hash)
     # Validate required fields from auth hash
-    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash['uid'].present?
-    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash.dig('info', 'email').present?
-    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash.dig('info', 'name').present?
+    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash["uid"].present?
+    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash.dig("info", "email").present?
+    raise ActiveRecord::RecordInvalid.new(User.new) unless auth_hash.dig("info", "name").present?
 
     # Find existing user by google_id
-    user = find_by(google_id: auth_hash['uid'])
-    
+    user = find_by(google_id: auth_hash["uid"])
+
     # Process avatar URL to extract filename if it's a local asset
-    avatar_url = process_avatar_url(auth_hash.dig('info', 'image'))
-    
+    avatar_url = process_avatar_url(auth_hash.dig("info", "image"))
+
     if user
       # Update existing user with latest info
       user.update!(
-        email: auth_hash.dig('info', 'email'),
-        name: auth_hash.dig('info', 'name'),
+        email: auth_hash.dig("info", "email"),
+        name: auth_hash.dig("info", "name"),
         avatar_url: avatar_url
       )
       user
     else
       # Create new user
       create!(
-        email: auth_hash.dig('info', 'email'),
-        name: auth_hash.dig('info', 'name'),
-        google_id: auth_hash['uid'],
+        email: auth_hash.dig("info", "email"),
+        name: auth_hash.dig("info", "name"),
+        google_id: auth_hash["uid"],
         avatar_url: avatar_url
       )
     end
@@ -135,11 +135,11 @@ class User < ApplicationRecord
   # Process avatar URL to extract filename for local assets
   def self.process_avatar_url(url)
     return nil if url.blank?
-    
+
     # If it's a local asset path like '/assets/dev-avatar.svg'
     # extract just the filename 'dev-avatar.svg'
-    if url.start_with?('/assets/')
-      url.sub(%r{\A/assets/}, '')
+    if url.start_with?("/assets/")
+      url.sub(%r{\A/assets/}, "")
     else
       # External URL (like Google profile image), keep as-is
       url

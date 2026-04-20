@@ -168,7 +168,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Tilling soil to make it soft',
       time_per_sqm: 0.05,
       weather_dependency: 'medium',
-      required_tools: ['Shovel', 'Hoe', 'Tiller'],
+      required_tools: [ 'Shovel', 'Hoe', 'Tiller' ],
       skill_level: 'intermediate',
       crops: ALL_CROPS
     },
@@ -176,7 +176,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Fertilizer mixed into soil before planting',
       time_per_sqm: 0.01,
       weather_dependency: 'low',
-      required_tools: ['Shovel', 'Fertilizer'],
+      required_tools: [ 'Shovel', 'Fertilizer' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -184,7 +184,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Sowing seeds',
       time_per_sqm: 0.005,
       weather_dependency: 'medium',
-      required_tools: ['Seeds', 'Seeder'],
+      required_tools: [ 'Seeds', 'Seeder' ],
       skill_level: 'beginner',
       crops: DIRECT_SEEDING_CROPS
     },
@@ -192,7 +192,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Planting seedlings',
       time_per_sqm: 0.02,
       weather_dependency: 'medium',
-      required_tools: ['Seedlings', 'Trowel'],
+      required_tools: [ 'Seedlings', 'Trowel' ],
       skill_level: 'beginner',
       crops: TRANSPLANT_CROPS
     },
@@ -200,7 +200,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Watering crops',
       time_per_sqm: 0.01,
       weather_dependency: 'high',
-      required_tools: ['Hose', 'Sprinkler'],
+      required_tools: [ 'Hose', 'Sprinkler' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -208,7 +208,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Removing weeds',
       time_per_sqm: 0.03,
       weather_dependency: 'medium',
-      required_tools: ['Sickle', 'Weed Fork'],
+      required_tools: [ 'Sickle', 'Weed Fork' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -216,7 +216,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Harvesting crops',
       time_per_sqm: 0.05,
       weather_dependency: 'medium',
-      required_tools: ['Shears', 'Harvest Basket'],
+      required_tools: [ 'Shears', 'Harvest Basket' ],
       skill_level: 'intermediate',
       crops: ALL_CROPS
     },
@@ -224,7 +224,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Preparation work before shipping (washing, sorting, etc.)',
       time_per_sqm: 0.05,
       weather_dependency: 'low',
-      required_tools: ['Bucket', 'Sorting Basket', 'Brush'],
+      required_tools: [ 'Bucket', 'Sorting Basket', 'Brush' ],
       skill_level: 'intermediate',
       crops: ALL_CROPS
     },
@@ -232,7 +232,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Laying mulch sheets',
       time_per_sqm: 0.01,
       weather_dependency: 'medium',
-      required_tools: ['Mulch Sheet', 'Mulch Anchor'],
+      required_tools: [ 'Mulch Sheet', 'Mulch Anchor' ],
       skill_level: 'intermediate',
       crops: MULCHING_CROPS
     },
@@ -240,7 +240,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Installing tunnel supports',
       time_per_sqm: 0.02,
       weather_dependency: 'medium',
-      required_tools: ['Tunnel Supports', 'Plastic Sheet'],
+      required_tools: [ 'Tunnel Supports', 'Plastic Sheet' ],
       skill_level: 'intermediate',
       crops: TUNNEL_CROPS
     },
@@ -248,7 +248,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Setting up supports for crops',
       time_per_sqm: 0.015,
       weather_dependency: 'low',
-      required_tools: ['Stakes', 'Ties'],
+      required_tools: [ 'Stakes', 'Ties' ],
       skill_level: 'intermediate',
       crops: SUPPORT_STRUCTURE_CROPS
     },
@@ -256,7 +256,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Installing pest control nets',
       time_per_sqm: 0.015,
       weather_dependency: 'medium',
-      required_tools: ['Pest Net', 'Net Anchor'],
+      required_tools: [ 'Pest Net', 'Net Anchor' ],
       skill_level: 'intermediate',
       crops: NET_CROPS
     },
@@ -264,7 +264,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Thinning overcrowded seedlings',
       time_per_sqm: 0.01,
       weather_dependency: 'low',
-      required_tools: ['Shears'],
+      required_tools: [ 'Shears' ],
       skill_level: 'beginner',
       crops: THINNING_CROPS
     },
@@ -272,7 +272,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Cutting unnecessary branches',
       time_per_sqm: 0.02,
       weather_dependency: 'low',
-      required_tools: ['Pruning Shears'],
+      required_tools: [ 'Pruning Shears' ],
       skill_level: 'intermediate',
       crops: PRUNING_CROPS
     },
@@ -280,7 +280,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Training crops on supports',
       time_per_sqm: 0.015,
       weather_dependency: 'low',
-      required_tools: ['Ties', 'Stakes'],
+      required_tools: [ 'Ties', 'Stakes' ],
       skill_level: 'intermediate',
       crops: TRAINING_CROPS
     },
@@ -288,7 +288,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Sorting harvested produce by grade',
       time_per_sqm: 0.05,
       weather_dependency: 'low',
-      required_tools: ['Sorting Basket', 'Grade Chart', 'Scale'],
+      required_tools: [ 'Sorting Basket', 'Grade Chart', 'Scale' ],
       skill_level: 'intermediate',
       crops: ALL_CROPS
     },
@@ -296,7 +296,7 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'Packing into boxes or bags for shipping',
       time_per_sqm: 0.03,
       weather_dependency: 'low',
-      required_tools: ['Boxes', 'Bags', 'Labels'],
+      required_tools: [ 'Boxes', 'Bags', 'Labels' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     }
@@ -354,5 +354,3 @@ class DataMigrationUnitedStatesReferenceTasks < ActiveRecord::Migration[8.0]
     say "✅ United States reference tasks removed"
   end
 end
-
-

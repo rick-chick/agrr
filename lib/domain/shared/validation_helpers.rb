@@ -33,7 +33,7 @@ module Domain
         when Array
           value
         else
-          [value]
+          [ value ]
         end
       end
     end

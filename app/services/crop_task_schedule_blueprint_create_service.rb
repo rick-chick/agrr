@@ -20,12 +20,12 @@ class CropTaskScheduleBlueprintCreateService
       raise MissingCropTaskTemplatesError, "作業テンプレート生成には作物の作業テンプレート登録が必要です"
     end
 
-    stage_requirements = crop.to_agrr_requirement.fetch('stage_requirements')
+    stage_requirements = crop.to_agrr_requirement.fetch("stage_requirements")
     agricultural_tasks = CropTaskTemplate.to_agrr_format_array(templates)
 
     schedule_response = schedule_gateway.generate(
       crop_name: crop.name,
-      variety: crop.variety.presence || 'general',
+      variety: crop.variety.presence || "general",
       stage_requirements: stage_requirements,
       agricultural_tasks: agricultural_tasks
     )
@@ -63,7 +63,7 @@ class CropTaskScheduleBlueprintCreateService
       normalized_attrs[:amount] = normalize_decimal(attrs[:amount])
       normalized_attrs[:time_per_sqm] = normalize_decimal(attrs[:time_per_sqm])
       normalized_attrs = normalized_attrs.merge(created_at: timestamp, updated_at: timestamp)
-      
+
       # モデルのカラムに存在する属性のみを保持
       normalized_attrs.select { |key, _| allowed_columns.include?(key) }
     end
@@ -80,6 +80,6 @@ class CropTaskScheduleBlueprintCreateService
     return nil if value.nil?
 
     decimal = value.is_a?(BigDecimal) ? value : BigDecimal(value.to_s)
-    decimal.to_s('F')
+    decimal.to_s("F")
   end
 end

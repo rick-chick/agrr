@@ -41,7 +41,7 @@ module Domain
             is_reference: false
           )
 
-          assert_equal [35.0, 135.0], entity.coordinates
+          assert_equal [ 35.0, 135.0 ], entity.coordinates
         end
 
         test "has_coordinates? should return true when both latitude and longitude are present" do

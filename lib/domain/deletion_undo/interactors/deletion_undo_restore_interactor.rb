@@ -18,20 +18,20 @@ module Domain
             if event.expired?
               @gateway.expire_if_needed(event.id)
             else
-              @gateway.mark_failed(event.id, 'Token expired')
+              @gateway.mark_failed(event.id, "Token expired")
             end
-            raise Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError, 'Undo token has expired'
+            raise Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError, "Undo token has expired"
           end
 
           @gateway.perform_restore(event.id)
 
           output_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreOutputDto.new(
-            status: 'restored',
+            status: "restored",
             undo_token: event.undo_token
           )
           @output_port.on_success(output_dto)
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoNotFoundError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new('Not found'))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Not found"))
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoRestoreConflictError => e

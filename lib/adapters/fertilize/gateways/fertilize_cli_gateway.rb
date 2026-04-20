@@ -1,5 +1,5 @@
-require 'open3'
-require 'json'
+require "open3"
+require "json"
 
 module Adapters
   module Fertilize
@@ -27,7 +27,7 @@ module Adapters
 
           attempt = 0
           last_error = nil
-          client_path = Rails.root.join('bin', 'agrr_client').to_s
+          client_path = Rails.root.join("bin", "agrr_client").to_s
 
           max_retries.times do |retry_count|
             attempt = retry_count + 1
@@ -35,26 +35,26 @@ module Adapters
             begin
               @logger.debug "🔧 [AGRR Fertilize Query] fertilize get --name #{name} --json (attempt #{attempt}/#{max_retries})"
 
-              stdout, stderr, status = Open3.capture3(client_path, 'fertilize', 'get', '--name', name, '--json')
+              stdout, stderr, status = Open3.capture3(client_path, "fertilize", "get", "--name", name, "--json")
 
               unless status.success?
                 error_msg = stderr.strip
 
-                if error_msg.include?('FileNotFoundError') ||
-                   error_msg.include?('No such file or directory') ||
-                   error_msg.include?('SOCKET_PATH')
+                if error_msg.include?("FileNotFoundError") ||
+                   error_msg.include?("No such file or directory") ||
+                   error_msg.include?("SOCKET_PATH")
                   @logger.error "❌ [AGRR Fertilize Query] Daemon not running: #{error_msg}"
                   return {
-                    'success' => false,
-                    'error' => @translator.t('api.errors.fertilizes.daemon_not_running', default: 'AGRRサービスが起動していません。サービスを起動してから再度お試しください。'),
-                    'code' => 'daemon_not_running'
+                    "success" => false,
+                    "error" => @translator.t("api.errors.fertilizes.daemon_not_running", default: "AGRRサービスが起動していません。サービスを起動してから再度お試しください。"),
+                    "code" => "daemon_not_running"
                   }
                 end
 
-                if error_msg.include?('decompressing') ||
-                   error_msg.include?('Connection') ||
-                   error_msg.include?('timeout') ||
-                   error_msg.include?('Network')
+                if error_msg.include?("decompressing") ||
+                   error_msg.include?("Connection") ||
+                   error_msg.include?("timeout") ||
+                   error_msg.include?("Network")
                   @logger.warn "⚠️  [AGRR Fertilize Query] Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}"
 
                   if attempt < max_retries
@@ -74,16 +74,16 @@ module Adapters
 
               parsed_data = JSON.parse(stdout)
 
-              if parsed_data['success'] == false
+              if parsed_data["success"] == false
                 @logger.error "📊 [AGRR Fertilize Error] #{parsed_data['error']} (code: #{parsed_data['code']})"
               else
-                fertilize_data = parsed_data['fertilize'] || parsed_data
+                fertilize_data = parsed_data["fertilize"] || parsed_data
 
-                if fertilize_data['npk'] && !fertilize_data['n']
-                  npk_values = fertilize_data['npk'].split('-').map { |v| v.to_f }
-                  fertilize_data['n'] = npk_values[0] if npk_values[0]&.positive?
-                  fertilize_data['p'] = npk_values[1] if npk_values[1]&.positive?
-                  fertilize_data['k'] = npk_values[2] if npk_values[2]&.positive?
+                if fertilize_data["npk"] && !fertilize_data["n"]
+                  npk_values = fertilize_data["npk"].split("-").map { |v| v.to_f }
+                  fertilize_data["n"] = npk_values[0] if npk_values[0]&.positive?
+                  fertilize_data["p"] = npk_values[1] if npk_values[1]&.positive?
+                  fertilize_data["k"] = npk_values[2] if npk_values[2]&.positive?
                 end
 
                 @logger.debug "📊 [AGRR Fertilize Data] name: #{fertilize_data&.dig('name')}"
@@ -94,7 +94,7 @@ module Adapters
                   @logger.info "✅ [AGRR Fertilize Query] Succeeded after #{attempt} attempts"
                 end
 
-                parsed_data = { 'fertilize' => fertilize_data, 'success' => true } unless parsed_data['fertilize']
+                parsed_data = { "fertilize" => fertilize_data, "success" => true } unless parsed_data["fertilize"]
               end
 
               return parsed_data
@@ -123,4 +123,3 @@ module Adapters
     end
   end
 end
-

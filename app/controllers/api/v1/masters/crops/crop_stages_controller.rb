@@ -9,12 +9,12 @@ module Api::V1::Masters::Crops
     include Views::Api::Crop::CropStageDeleteView
 
     rescue_from Domain::Shared::Policies::PolicyPermissionDenied do
-      render(json: { error: 'Crop not found' }, status: :not_found)
+      render(json: { error: "Crop not found" }, status: :not_found)
     end
 
-    before_action :find_visible_crop, only: [:index, :show]
-    before_action :find_editable_crop, only: [:create, :update, :destroy]
-    before_action :find_crop_stage, only: [:show, :update, :destroy]
+    before_action :find_visible_crop, only: [ :index, :show ]
+    before_action :find_editable_crop, only: [ :create, :update, :destroy ]
+    before_action :find_crop_stage, only: [ :show, :update, :destroy ]
 
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
@@ -40,7 +40,7 @@ module Api::V1::Masters::Crops
 
     def create
       unless valid_create_params?
-        return render(json: { error: 'Invalid parameters' }, status: :bad_request)
+        return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
       input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
@@ -58,7 +58,7 @@ module Api::V1::Masters::Crops
 
     def update
       unless valid_update_params?
-        return render(json: { error: 'Invalid parameters' }, status: :bad_request)
+        return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
       input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
@@ -118,19 +118,19 @@ module Api::V1::Masters::Crops
     def find_visible_crop
       @crop = Domain::Shared::Policies::CropPolicy.find_visible!(::Crop, current_user, params[:crop_id])
     rescue ActiveRecord::RecordNotFound
-      render(json: { error: 'Crop not found' }, status: :not_found)
+      render(json: { error: "Crop not found" }, status: :not_found)
     end
 
     def find_editable_crop
       @crop = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, current_user, params[:crop_id])
     rescue ActiveRecord::RecordNotFound
-      render(json: { error: 'Crop not found' }, status: :not_found)
+      render(json: { error: "Crop not found" }, status: :not_found)
     end
 
     def find_crop_stage
       @crop_stage = @crop.crop_stages.find(params[:id])
     rescue ActiveRecord::RecordNotFound
-      render(json: { error: 'CropStage not found' }, status: :not_found)
+      render(json: { error: "CropStage not found" }, status: :not_found)
     end
 
     def list_presenter

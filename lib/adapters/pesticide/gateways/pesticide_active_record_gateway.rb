@@ -13,7 +13,7 @@ module Adapters
           pesticide = ::Pesticide.find(pesticide_id)
           Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Pesticide not found'
+          raise StandardError, "Pesticide not found"
         end
 
         def create(create_input_dto)
@@ -25,7 +25,7 @@ module Adapters
             pest_id: create_input_dto.pest_id,
             region: create_input_dto.region
           )
-          raise StandardError, pesticide.errors.full_messages.join(', ') unless pesticide.save
+          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
           Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide)
         end
@@ -41,11 +41,11 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           pesticide.update(attrs)
-          raise StandardError, pesticide.errors.full_messages.join(', ') if pesticide.errors.any?
+          raise StandardError, pesticide.errors.full_messages.join(", ") if pesticide.errors.any?
 
           Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Pesticide not found'
+          raise StandardError, "Pesticide not found"
         end
 
         def destroy(pesticide_id)
@@ -53,9 +53,9 @@ module Adapters
           # DeletionUndo scheduling is handled in the interactor layer
           pesticide.destroy!
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'Pesticide not found'
+          raise StandardError, "Pesticide not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('pesticides.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("pesticides.flash.cannot_delete_in_use")
         end
       end
     end

@@ -31,16 +31,16 @@ module Api
 
         # エラーメッセージに基づいて適切なステータスコードを決定
         status = case error_message
-                 when 'Farm not found'
+        when "Farm not found"
                    :not_found
-                 when 'Invalid farm size', 'Invalid total area', 'No crops selected'
+        when "Invalid farm size", "Invalid total area", "No crops selected"
                    :unprocessable_entity
-                 when /Failed to create cultivation plan/
+        when /Failed to create cultivation plan/
                    :internal_server_error
-                 else
+        else
                    # 予期しないエラー（StandardError など）は 500 を返す
                    :internal_server_error
-                 end
+        end
 
         @view.render_response(
           json: { error: error_message },

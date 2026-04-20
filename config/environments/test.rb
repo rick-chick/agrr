@@ -77,16 +77,16 @@ Rails.application.configure do
   config.assets.check_precompiled_asset = false
 
   # Skip JavaScript build if SKIP_ASSET_BUILD is set
-  if ENV['SKIP_ASSET_BUILD']
+  if ENV["SKIP_ASSET_BUILD"]
     config.assets.compile = false
   end
-  
+
   # Google OAuth and frontend URL for test
   config.after_initialize do
     # Set test OAuth credentials
-    ENV['GOOGLE_CLIENT_ID'] = 'test_client_id' if ENV['GOOGLE_CLIENT_ID'].blank?
-    ENV['GOOGLE_CLIENT_SECRET'] = 'test_client_secret' if ENV['GOOGLE_CLIENT_SECRET'].blank?
+    ENV["GOOGLE_CLIENT_ID"] = "test_client_id" if ENV["GOOGLE_CLIENT_ID"].blank?
+    ENV["GOOGLE_CLIENT_SECRET"] = "test_client_secret" if ENV["GOOGLE_CLIENT_SECRET"].blank?
     # Allow redirect to frontend in AuthTestController (return_to)
-    ENV['FRONTEND_URL'] = 'http://localhost:4200' if ENV['FRONTEND_URL'].blank?
+    ENV["FRONTEND_URL"] = "http://localhost:4200" if ENV["FRONTEND_URL"].blank?
   end
 end

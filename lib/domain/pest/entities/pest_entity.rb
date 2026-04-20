@@ -39,11 +39,11 @@ module Domain
             updated_at: record.updated_at
           )
         end
-        
+
         def reference?
           !!is_reference
         end
-        
+
         def to_hash
           {
             id: id,
@@ -58,7 +58,7 @@ module Domain
             updated_at: updated_at
           }
         end
-        
+
         private
 
         def validate!
@@ -78,11 +78,3 @@ module Domain
     end
   end
 end
-
-
-
-
-
-
-
-

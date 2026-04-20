@@ -26,7 +26,7 @@ module Adapters
             is_reference: create_input_dto.is_reference || false,
             user_id: create_input_dto.user_id
           )
-          raise StandardError, fertilize.errors.full_messages.join(', ') unless fertilize.save
+          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
         end
@@ -41,7 +41,7 @@ module Adapters
           attrs[:description] = update_input_dto.description if update_input_dto.description.present?
           attrs[:package_size] = update_input_dto.package_size if update_input_dto.package_size.present?
           attrs[:region] = update_input_dto.region if update_input_dto.region.present?
-          raise StandardError, fertilize.errors.full_messages.join(', ') unless fertilize.update(attrs)
+          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(attrs)
 
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize.reload)
         end
@@ -51,10 +51,10 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: fertilize,
             actor: fertilize.user,
-            toast_message: @translator.t('fertilizes.undo.toast', name: fertilize.name)
+            toast_message: @translator.t("fertilizes.undo.toast", name: fertilize.name)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('fertilizes.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("fertilizes.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

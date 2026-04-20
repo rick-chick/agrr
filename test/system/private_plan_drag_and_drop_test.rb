@@ -330,4 +330,3 @@ class PrivatePlanDragAndDropTest < ApplicationSystemTestCase
     WeatherDatum.insert_all(records) if records.any?
   end
 end
-

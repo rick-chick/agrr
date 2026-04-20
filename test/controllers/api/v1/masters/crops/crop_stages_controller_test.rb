@@ -82,7 +82,7 @@ module Api::V1::Masters::Crops
 
     test "should return unauthorized when not logged in" do
       # Clear session by setting invalid session_id
-      cookies[:session_id] = 'invalid_session'
+      cookies[:session_id] = "invalid_session"
 
       valid_params = {
         crop_stage: {
@@ -122,7 +122,7 @@ module Api::V1::Masters::Crops
 
       json = response.parsed_body
       assert_equal 3, json.length  # setupで1つ、テストで2つ作成
-      assert_equal ["種まき", "発芽", @crop_stage.name].sort, json.pluck("name").sort
+      assert_equal [ "種まき", "発芽", @crop_stage.name ].sort, json.pluck("name").sort
     end
 
     test "index should return not_found for non-existent crop" do

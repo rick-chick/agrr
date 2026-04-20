@@ -4,11 +4,11 @@ module ContactMessages
   module Ports
     class CreateContactMessageOutputPort
       def on_success(success_dto)
-        raise NotImplementedError, 'Subclasses must implement on_success'
+        raise NotImplementedError, "Subclasses must implement on_success"
       end
 
       def on_failure(failure_dto)
-        raise NotImplementedError, 'Subclasses must implement on_failure'
+        raise NotImplementedError, "Subclasses must implement on_failure"
       end
     end
   end

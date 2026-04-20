@@ -7,7 +7,7 @@ FactoryBot.define do
     high_stress_threshold { 30.0 }
     frost_threshold { 0.0 }
     max_temperature { 35.0 }
-    
+
     association :crop_stage
 
     trait :germination do
@@ -67,4 +67,3 @@ FactoryBot.define do
     end
   end
 end
-

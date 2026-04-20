@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(pesticide_entity)
-          @view.redirect_to @view.pesticide_path(pesticide_entity.id), notice: I18n.t('pesticides.flash.updated')
+          @view.redirect_to @view.pesticide_path(pesticide_entity.id), notice: I18n.t("pesticides.flash.updated")
         end
 
         def on_failure(error_dto)

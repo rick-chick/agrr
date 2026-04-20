@@ -6,4 +6,3 @@
 module Domain
   ContactMessages = ::ContactMessages
 end
-

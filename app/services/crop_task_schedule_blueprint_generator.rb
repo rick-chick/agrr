@@ -10,13 +10,13 @@ class CropTaskScheduleBlueprintGenerator
     blueprint_attributes = []
 
     blueprint_attributes.concat(
-      Array(schedule_response&.dig('task_schedules')).map do |task|
+      Array(schedule_response&.dig("task_schedules")).map do |task|
         build_general_blueprint(task)
       end.compact
     )
 
     blueprint_attributes.concat(
-      Array(fertilize_response&.dig('schedule')).each_with_index.map do |entry, index|
+      Array(fertilize_response&.dig("schedule")).each_with_index.map do |entry, index|
         build_fertilizer_blueprint(entry, index)
       end.compact
     )
@@ -29,57 +29,57 @@ class CropTaskScheduleBlueprintGenerator
   attr_reader :crop, :templates
 
   def build_general_blueprint(task)
-    task_id = integer_value(task['task_id'])
+    task_id = integer_value(task["task_id"])
     template = template_for_task(task_id)
     agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
 
     # agrrが返した作業名を優先的に使用（関連作業が未設定の場合でも作業名を設定するため）
-    agrr_task_name = task['name'] || task['description']
+    agrr_task_name = task["name"] || task["description"]
 
     {
       crop_id: crop.id,
       agricultural_task_id: agricultural_task&.id,
-      stage_order: integer_value(task['stage_order']),
-      stage_name: task['stage_name'],
-      gdd_trigger: decimal_value(task['gdd_trigger']),
-      gdd_tolerance: decimal_value(task['gdd_tolerance']),
+      stage_order: integer_value(task["stage_order"]),
+      stage_name: task["stage_name"],
+      gdd_trigger: decimal_value(task["gdd_trigger"]),
+      gdd_tolerance: decimal_value(task["gdd_tolerance"]),
       task_type: TaskScheduleItem::FIELD_WORK_TYPE,
-      source: 'agrr_schedule',
-      priority: integer_value(task['priority']),
+      source: "agrr_schedule",
+      priority: integer_value(task["priority"]),
       description: agrr_task_name || template&.description,
       amount: nil,
       amount_unit: nil,
-      weather_dependency: task['weather_dependency'] || template&.weather_dependency,
-      time_per_sqm: decimal_value(task['time_per_sqm']) || template&.time_per_sqm
+      weather_dependency: task["weather_dependency"] || template&.weather_dependency,
+      time_per_sqm: decimal_value(task["time_per_sqm"]) || template&.time_per_sqm
     }
   end
 
   def build_fertilizer_blueprint(entry, index)
-    task_type = entry['task_type'] ||
+    task_type = entry["task_type"] ||
       (index.zero? ? TaskScheduleItem::BASAL_FERTILIZATION_TYPE : TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
-    task_id = integer_value(entry['task_id'])
+    task_id = integer_value(entry["task_id"])
     template = template_for_task(task_id)
     agricultural_task = template&.agricultural_task || AgriculturalTask.find_by(id: task_id)
 
     # 1回目は「基肥」、2回目は「追肥」として固定（AGRRのstage_nameに依存しない）
-    fixed_stage_name = index.zero? ? '基肥' : '追肥'
+    fixed_stage_name = index.zero? ? "基肥" : "追肥"
     agrr_task_name = fixed_stage_name
 
     {
       crop_id: crop.id,
       agricultural_task_id: agricultural_task&.id,
-      stage_order: integer_value(entry['stage_order']),
+      stage_order: integer_value(entry["stage_order"]),
       stage_name: fixed_stage_name,
-      gdd_trigger: decimal_value(entry['gdd_trigger']),
-      gdd_tolerance: decimal_value(entry['gdd_tolerance']),
+      gdd_trigger: decimal_value(entry["gdd_trigger"]),
+      gdd_tolerance: decimal_value(entry["gdd_tolerance"]),
       task_type: task_type,
-      source: 'agrr_fertilize_plan',
-      priority: integer_value(entry['priority']),
+      source: "agrr_fertilize_plan",
+      priority: integer_value(entry["priority"]),
       description: agrr_task_name || template&.description,
-      amount: decimal_value(entry['amount_g_per_m2']),
-      amount_unit: entry['amount_unit'] || (entry['amount_g_per_m2'].present? ? 'g/m2' : nil),
-      weather_dependency: entry['weather_dependency'] || template&.weather_dependency,
-      time_per_sqm: decimal_value(entry['time_per_sqm']) || template&.time_per_sqm
+      amount: decimal_value(entry["amount_g_per_m2"]),
+      amount_unit: entry["amount_unit"] || (entry["amount_g_per_m2"].present? ? "g/m2" : nil),
+      weather_dependency: entry["weather_dependency"] || template&.weather_dependency,
+      time_per_sqm: decimal_value(entry["time_per_sqm"]) || template&.time_per_sqm
     }
   end
 

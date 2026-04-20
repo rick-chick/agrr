@@ -27,29 +27,29 @@ module Adapters
         test "returns climate dto for authorized field cultivation" do
           start_date = @field_cultivation.start_date
           weather_data_cli = {
-            'data' => [
+            "data" => [
               {
-                'time' => start_date.to_s,
-                'temperature_2m_max' => 25.0,
-                'temperature_2m_min' => 15.0,
-                'temperature_2m_mean' => 20.0
+                "time" => start_date.to_s,
+                "temperature_2m_max" => 25.0,
+                "temperature_2m_min" => 15.0,
+                "temperature_2m_mean" => 20.0
               }
             ]
           }
 
           progress_result = {
-            'progress_records' => [
-              { 'date' => start_date.to_s, 'cumulative_gdd' => 5.0, 'stage_name' => 'Stage 1' }
+            "progress_records" => [
+              { "date" => start_date.to_s, "cumulative_gdd" => 5.0, "stage_name" => "Stage 1" }
             ]
           }
 
-          weather_service = mock('WeatherPredictionService')
+          weather_service = mock("WeatherPredictionService")
           weather_service
             .expects(:predict_for_cultivation_plan)
             .with(@plan)
             .returns({ data: weather_data_cli })
 
-          progress_gateway = mock('AgrrProgressGateway')
+          progress_gateway = mock("AgrrProgressGateway")
           progress_gateway
             .expects(:calculate_progress)
             .with(
@@ -83,26 +83,26 @@ module Adapters
         test "falls back to manual gdd when agrr progress returns no records" do
           start_date = @field_cultivation.start_date
           weather_data_cli = {
-            'data' => [
+            "data" => [
               {
-                'time' => start_date.to_s,
-                'temperature_2m_max' => 25.0,
-                'temperature_2m_min' => 15.0
+                "time" => start_date.to_s,
+                "temperature_2m_max" => 25.0,
+                "temperature_2m_min" => 15.0
               }
             ]
           }
 
           progress_result = {
-            'progress_records' => []
+            "progress_records" => []
           }
 
-          weather_service = mock('WeatherPredictionService')
+          weather_service = mock("WeatherPredictionService")
           weather_service
             .expects(:predict_for_cultivation_plan)
             .with(@plan)
             .returns({ data: weather_data_cli })
 
-          progress_gateway = mock('AgrrProgressGateway')
+          progress_gateway = mock("AgrrProgressGateway")
           progress_gateway
             .expects(:calculate_progress)
             .with(

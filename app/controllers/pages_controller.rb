@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PagesController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:privacy, :terms, :contact, :about]
+  skip_before_action :authenticate_user!, only: [ :privacy, :terms, :contact, :about ]
 
   def privacy
     # プライバシーポリシーページ
@@ -19,4 +19,3 @@ class PagesController < ApplicationController
     # サイト概要ページ
   end
 end
-

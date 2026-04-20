@@ -30,7 +30,7 @@ module Api
               if @requirement
                 render json: @requirement
               else
-                render json: { error: 'TemperatureRequirement not found' }, status: :not_found
+                render json: { error: "TemperatureRequirement not found" }, status: :not_found
               end
             end
 
@@ -46,7 +46,7 @@ module Api
             # @return [422] バリデーションエラー
             def create
               if @crop_stage.temperature_requirement
-                render json: { error: 'TemperatureRequirement already exists' }, status: :unprocessable_entity
+                render json: { error: "TemperatureRequirement already exists" }, status: :unprocessable_entity
                 return
               end
 
@@ -72,7 +72,7 @@ module Api
             def update
               @requirement = @crop_stage.temperature_requirement
               unless @requirement
-                render json: { error: 'TemperatureRequirement not found' }, status: :not_found
+                render json: { error: "TemperatureRequirement not found" }, status: :not_found
                 return
               end
 
@@ -93,7 +93,7 @@ module Api
             def destroy
               @requirement = @crop_stage.temperature_requirement
               unless @requirement
-                render json: { error: 'TemperatureRequirement not found' }, status: :not_found
+                render json: { error: "TemperatureRequirement not found" }, status: :not_found
                 return
               end
 
@@ -109,13 +109,13 @@ module Api
             def set_crop
               @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
             rescue ActiveRecord::RecordNotFound
-              render json: { error: 'Crop not found' }, status: :not_found
+              render json: { error: "Crop not found" }, status: :not_found
             end
 
             def set_crop_stage
               @crop_stage = @crop.crop_stages.find(params[:crop_stage_id])
             rescue ActiveRecord::RecordNotFound
-              render json: { error: 'CropStage not found' }, status: :not_found
+              render json: { error: "CropStage not found" }, status: :not_found
             end
 
             def temperature_requirement_params

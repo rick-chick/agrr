@@ -25,7 +25,7 @@ module Domain
 
           rule_model = Domain::Shared::Policies::InteractionRulePolicy.find_editable!(::InteractionRule, user, update_input_dto.id)
           Domain::Shared::Policies::InteractionRulePolicy.apply_update!(user, rule_model, attrs)
-          raise StandardError, rule_model.errors.full_messages.join(', ') if rule_model.errors.any?
+          raise StandardError, rule_model.errors.full_messages.join(", ") if rule_model.errors.any?
 
           reloaded_rule = rule_model.reload
           puts "DEBUG: Reloaded rule - id: #{reloaded_rule.id}, region: #{reloaded_rule.region}"

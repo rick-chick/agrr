@@ -7,12 +7,12 @@ module DeletionUndo
 
     class << self
       def default_ttl
-        seconds = ENV.fetch('DELETION_UNDO_TTL_SECONDS', nil)&.to_i
+        seconds = ENV.fetch("DELETION_UNDO_TTL_SECONDS", nil)&.to_i
         seconds && seconds.positive? ? seconds.seconds : DEFAULT_TTL
       end
 
       def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {})
-        raise ArgumentError, 'record must be persisted' unless record&.persisted?
+        raise ArgumentError, "record must be persisted" unless record&.persisted?
 
         ActiveRecord::Base.transaction do
           snapshot = SnapshotBuilder.new(record).build
@@ -36,7 +36,7 @@ module DeletionUndo
           event = DeletionUndoEvent.find(undo_token)
           event.expire_if_needed!
 
-          raise Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError, 'Undo token has expired' if event.expired? || !event.scheduled?
+          raise Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError, "Undo token has expired" if event.expired? || !event.scheduled?
 
           ActiveRecord::Base.transaction do
             SnapshotRestorer.new(event.snapshot).restore!
@@ -45,7 +45,7 @@ module DeletionUndo
 
           event
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError
-          event&.mark_failed!(error_message: 'Token expired') unless event&.expired?
+          event&.mark_failed!(error_message: "Token expired") unless event&.expired?
           raise
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved, ActiveRecord::RecordNotUnique => e
           event&.mark_failed!(error_message: e.message)
@@ -53,7 +53,7 @@ module DeletionUndo
         end
 
       def finalize_expired!(now: Time.current)
-        DeletionUndoEvent.scheduled.where('expires_at <= ?', now).find_each(&:expire_if_needed!)
+        DeletionUndoEvent.scheduled.where("expires_at <= ?", now).find_each(&:expire_if_needed!)
       end
 
       private
@@ -70,7 +70,7 @@ module DeletionUndo
 
       def default_toast_message(record)
         I18n.t(
-          'deletion_undo.toast_message',
+          "deletion_undo.toast_message",
           resource: default_resource_label(record)
         )
       end
@@ -87,4 +87,3 @@ module DeletionUndo
     end
   end
 end
-

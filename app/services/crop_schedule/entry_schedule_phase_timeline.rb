@@ -8,8 +8,8 @@ module CropSchedule
       # @param result [CropSchedule::WindowService::Result]
       def phase_segments(crop, result)
         rp = result.reason_parts || {}
-        src = rp[:source] || rp['source']
-        return agrr_ratio_phase_segments(result) if src.to_s == 'agrr_optimize_period'
+        src = rp[:source] || rp["source"]
+        return agrr_ratio_phase_segments(result) if src.to_s == "agrr_optimize_period"
 
         weather_end = result.weather_end_date
         sow_first = result.sowing_windows.first
@@ -36,7 +36,7 @@ module CropSchedule
         by_month = {}
         ranges.each do |r|
           walk_months(r[:start_date], r[:end_date]) do |month_start|
-            key = month_start.strftime('%Y-%m')
+            key = month_start.strftime("%Y-%m")
             by_month[key] ||= []
             by_month[key] << r[:label]
           end
@@ -46,7 +46,7 @@ module CropSchedule
           labels = by_month[ym].uniq
           {
             month: ym,
-            summary: I18n.t('api.entry_schedule.timeline.month_summary', labels: labels.join('・'))
+            summary: I18n.t("api.entry_schedule.timeline.month_summary", labels: labels.join("・"))
           }
         end
       end
@@ -55,10 +55,10 @@ module CropSchedule
         segs = phase_segments(crop, result)
         parts = segs.filter_map { |s| s[:label] if s[:empty_reason].blank? && s[:start_date].present? }
         if parts.empty?
-          return I18n.t('api.entry_schedule.flow.summary_fallback')
+          return I18n.t("api.entry_schedule.flow.summary_fallback")
         end
 
-        I18n.t('api.entry_schedule.flow.summary', phases: parts.join('→'))
+        I18n.t("api.entry_schedule.flow.summary", phases: parts.join("→"))
       end
 
       def schedule_flow_detail(crop, result)
@@ -67,14 +67,14 @@ module CropSchedule
           next if s[:start_date].blank?
 
           I18n.t(
-            'api.entry_schedule.flow.detail_chunk',
+            "api.entry_schedule.flow.detail_chunk",
             label: s[:label],
             range: format_month_range(s[:start_date], s[:end_date])
           )
         end
         return nil if chunks.empty?
 
-        chunks.join(' ')
+        chunks.join(" ")
       end
 
       # optimize period は「栽培開始〜完了」の1区間のみ返すが、API はまき／植えの2帯を出すため
@@ -82,10 +82,10 @@ module CropSchedule
       # @return [Hash] { sowing_windows: Array<{start_date:, end_date: Date}>, transplant_windows: ... }
       def chart_windows(crop, result)
         rp = result.reason_parts || {}
-        if rp[:source].to_s == 'agrr_optimize_period' && result.eligible
+        if rp[:source].to_s == "agrr_optimize_period" && result.eligible
           segs = phase_segments(crop, result)
-          sow_seg = segs.find { |s| s[:phase_key].to_s == 'sowing' && s[:empty_reason].blank? && s[:start_date].present? }
-          tr_seg = segs.find { |s| s[:phase_key].to_s == 'transplant' && s[:empty_reason].blank? && s[:start_date].present? }
+          sow_seg = segs.find { |s| s[:phase_key].to_s == "sowing" && s[:empty_reason].blank? && s[:start_date].present? }
+          tr_seg = segs.find { |s| s[:phase_key].to_s == "transplant" && s[:empty_reason].blank? && s[:start_date].present? }
           out_sow = []
           out_tr = []
           if sow_seg
@@ -116,10 +116,10 @@ module CropSchedule
         weather_end = result.weather_end_date
         unless result.eligible && w
           return [
-            phase_base(:sowing).merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible')),
-            phase_base(:nursery).merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible')),
-            phase_base(:transplant).merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible')),
-            phase_base(:harvest).merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible'))
+            phase_base(:sowing).merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible")),
+            phase_base(:nursery).merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible")),
+            phase_base(:transplant).merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible")),
+            phase_base(:harvest).merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible"))
           ]
         end
 
@@ -144,11 +144,11 @@ module CropSchedule
       def segment_harvest_from_quarter(s0, e0, weather_end, quarter_index)
         h = phase_base(:harvest)
         if weather_end.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.no_weather_end'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.no_weather_end"))
         end
 
         a, b = quarter_date_range(s0, e0, quarter_index)
-        end_d = [b, weather_end].min
+        end_d = [ b, weather_end ].min
         end_d = a if end_d < a
         h.merge(start_date: a.iso8601, end_date: end_d.iso8601, empty_reason: nil)
       end
@@ -164,16 +164,16 @@ module CropSchedule
         b = range_start + end_off
         b = range_end if b > range_end
         b = a if b < a
-        [a, b]
+        [ a, b ]
       end
 
       def segment_sowing(sow_first, _weather_end, eligible)
         h = phase_base(:sowing)
         unless eligible
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible"))
         end
         if sow_first.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.no_sowing_window'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.no_sowing_window"))
         end
 
         h.merge(
@@ -186,16 +186,16 @@ module CropSchedule
       def segment_nursery(sow_first, tr_first, _weather_end, eligible)
         h = phase_base(:nursery)
         unless eligible
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible"))
         end
         if sow_first.blank? || tr_first.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.nursery_gap'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.nursery_gap"))
         end
 
         start_d = sow_first[:end_date] + 1.day
         end_d = tr_first[:start_date] - 1.day
         if end_d < start_d
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.nursery_gap'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.nursery_gap"))
         end
 
         h.merge(
@@ -208,10 +208,10 @@ module CropSchedule
       def segment_transplant(tr_first, _weather_end, eligible)
         h = phase_base(:transplant)
         unless eligible
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible"))
         end
         if tr_first.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.no_transplant_window'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.no_transplant_window"))
         end
 
         h.merge(
@@ -224,17 +224,17 @@ module CropSchedule
       def segment_harvest(tr_first, weather_end, _crop, eligible)
         h = phase_base(:harvest)
         unless eligible
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.ineligible'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.ineligible"))
         end
         if tr_first.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.no_transplant_window'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.no_transplant_window"))
         end
         if weather_end.blank?
-          return h.merge(empty_reason: I18n.t('api.entry_schedule.phase.empty.no_weather_end'))
+          return h.merge(empty_reason: I18n.t("api.entry_schedule.phase.empty.no_weather_end"))
         end
 
         start_d = tr_first[:end_date] + 1.day
-        end_d = [weather_end, tr_first[:end_date] + 120.days].min
+        end_d = [ weather_end, tr_first[:end_date] + 120.days ].min
         end_d = start_d if end_d < start_d
 
         h.merge(
@@ -263,11 +263,11 @@ module CropSchedule
       end
 
       def format_month_range(start_iso, end_iso)
-        return '' if start_iso.blank?
+        return "" if start_iso.blank?
 
         s = Date.parse(start_iso)
         e = end_iso.present? ? Date.parse(end_iso) : s
-        I18n.t('api.entry_schedule.flow.month_range', start: s.strftime('%Y-%m'), end: e.strftime('%Y-%m'))
+        I18n.t("api.entry_schedule.flow.month_range", start: s.strftime("%Y-%m"), end: e.strftime("%Y-%m"))
       end
 
       def sowing_proximity_days(sow_first, eligible)

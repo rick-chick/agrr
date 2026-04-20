@@ -19,7 +19,7 @@ class CropTaskScheduleBlueprint < ApplicationRecord
   validates :time_per_sqm, numericality: true, allow_nil: true
   validates :amount, numericality: true, allow_nil: true
   validates :agricultural_task_id,
-            uniqueness: { scope: [:crop_id, :stage_order], allow_nil: true }
+            uniqueness: { scope: [ :crop_id, :stage_order ], allow_nil: true }
 
   scope :ordered, -> { order(:stage_order, :priority, :id) }
 end

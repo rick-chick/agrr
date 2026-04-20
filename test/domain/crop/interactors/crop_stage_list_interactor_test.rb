@@ -18,7 +18,7 @@ module Domain
             )
           ]
           gateway = Minitest::Mock.new
-          gateway.expect(:list_crop_stages_by_crop_id, crop_stages, [1])
+          gateway.expect(:list_crop_stages_by_crop_id, crop_stages, [ 1 ])
 
           received = nil
           output_port = Minitest::Mock.new

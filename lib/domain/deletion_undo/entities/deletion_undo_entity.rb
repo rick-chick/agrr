@@ -18,15 +18,15 @@ module Domain
         end
 
         def scheduled?
-          status == 'scheduled'
+          status == "scheduled"
         end
 
         def restored?
-          status == 'restored'
+          status == "restored"
         end
 
         def failed?
-          status == 'failed'
+          status == "failed"
         end
 
         def undo_token
@@ -35,11 +35,11 @@ module Domain
 
         # API Presenter 互換（DeletionUndoEvent と同様に metadata から取得）
         def toast_message
-          metadata['toast_message']
+          metadata["toast_message"]
         end
 
         def auto_hide_after
-          metadata['auto_hide_after'] || 5
+          metadata["auto_hide_after"] || 5
         end
       end
     end

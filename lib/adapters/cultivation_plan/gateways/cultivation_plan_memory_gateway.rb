@@ -11,7 +11,7 @@ module Adapters
             total_area: create_dto.total_area,
             crops: create_dto.crops,
             user: create_dto.user,
-            plan_type: 'private',
+            plan_type: "private",
             plan_name: create_dto.plan_name,
             planning_start_date: Date.current.beginning_of_year,
             planning_end_date: Date.new(Date.current.year + 1, 12, 31)
@@ -19,14 +19,14 @@ module Adapters
 
           result = creator.call
           unless result.success?
-            raise StandardError, result.errors.join(', ')
+            raise StandardError, result.errors.join(", ")
           end
 
           result
         end
 
         def find_existing(farm, user)
-          ::CultivationPlan.where(farm: farm, user: user, plan_type: 'private').first
+          ::CultivationPlan.where(farm: farm, user: user, plan_type: "private").first
         end
 
         def find_farm(farm_id, user)

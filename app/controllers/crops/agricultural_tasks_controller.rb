@@ -4,7 +4,7 @@ module Crops
   class AgriculturalTasksController < ApplicationController
     before_action :authenticate_user!
     before_action :set_crop
-    before_action :set_template, only: [:edit, :update, :destroy]
+    before_action :set_template, only: [ :edit, :update, :destroy ]
 
     # GET /crops/:crop_id/agricultural_tasks
     def index
@@ -30,12 +30,12 @@ module Crops
         if existing_task
           # 権限チェック: 選択した作業が利用可能か確認
           unless can_access_agricultural_task?(existing_task)
-            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t('crops.agricultural_tasks.flash.no_permission')
+            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t("crops.agricultural_tasks.flash.no_permission")
             return
           end
-          
+
           if template_exists_for?(existing_task)
-            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t('crops.agricultural_tasks.flash.template_already_exists')
+            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t("crops.agricultural_tasks.flash.template_already_exists")
             return
           end
 
@@ -53,18 +53,18 @@ module Crops
           )
 
           redirect_to crop_agricultural_tasks_path(@crop),
-                      notice: I18n.t('crops.agricultural_tasks.flash.template_created')
+                      notice: I18n.t("crops.agricultural_tasks.flash.template_created")
           return
         end
       end
 
       # 新しい作業を作成する場合は、通常のagricultural_tasksコントローラーにリダイレクト
-      redirect_to new_agricultural_task_path, notice: I18n.t('crops.agricultural_tasks.flash.redirect_to_create')
+      redirect_to new_agricultural_task_path, notice: I18n.t("crops.agricultural_tasks.flash.redirect_to_create")
     end
 
     def update
       if @template.update(template_params)
-        redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t('crops.agricultural_tasks.flash.template_updated')
+        redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t("crops.agricultural_tasks.flash.template_updated")
       else
         render :edit, status: :unprocessable_entity
       end
@@ -72,7 +72,7 @@ module Crops
 
     def destroy
       @template.destroy!
-      redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t('crops.agricultural_tasks.flash.template_deleted')
+      redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t("crops.agricultural_tasks.flash.template_deleted")
     end
 
     private
@@ -93,14 +93,14 @@ module Crops
         required_tools: []
       )
     end
-      
+
       # 作物へのアクセス権限チェック
       # 管理者も参照作物と自身が作成した作物のみアクセス可能
       unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
-        redirect_to crops_path, alert: I18n.t('crops.flash.no_permission')
+        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
       end
     rescue ActiveRecord::RecordNotFound
-      redirect_to crops_path, alert: I18n.t('crops.flash.not_found')
+      redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
     end
 
     def can_access_agricultural_task?(task)
@@ -125,9 +125,3 @@ module Crops
     end
   end
 end
-
-
-
-
-
-

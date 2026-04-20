@@ -5,10 +5,10 @@ class SitemapsIndexViewTest < ActiveSupport::TestCase
     error = assert_raises(ActionView::Template::Error) do
       ApplicationController.renderer.render(
         template: "sitemaps/index",
-        formats: [:xml],
+        formats: [ :xml ],
         assigns: {
           base_url: "https://example.com",
-          research_pages: ["research/missing.html"]
+          research_pages: [ "research/missing.html" ]
         }
       )
     end
@@ -17,4 +17,3 @@ class SitemapsIndexViewTest < ActiveSupport::TestCase
     assert_includes error.cause.message, "research/missing.html"
   end
 end
-

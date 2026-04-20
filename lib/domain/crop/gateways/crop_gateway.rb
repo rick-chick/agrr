@@ -92,10 +92,7 @@ module Domain
         def update_nutrient_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement update_nutrient_requirement"
         end
-
       end
     end
   end
 end
-
-

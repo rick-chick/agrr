@@ -15,7 +15,7 @@ module Api
           region = params[:region].presence || locale_to_region(I18n.locale)
           farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region)
           # 関連データを除外してJSONサイズを削減
-          render json: farms.as_json(only: [:id, :name, :latitude, :longitude, :region])
+          render json: farms.as_json(only: [ :id, :name, :latitude, :longitude, :region ])
         end
 
         def farm_sizes
@@ -31,11 +31,11 @@ module Api
           render json: crops
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]} - #{e.message}"
-          render json: { error: I18n.t('api.errors.common.farm_not_found'), error_key: 'api.errors.common.farm_not_found' }, status: :not_found
+          render json: { error: I18n.t("api.errors.common.farm_not_found"), error_key: "api.errors.common.farm_not_found" }, status: :not_found
         rescue => e
           Rails.logger.error "❌ [WizardController#crops] Unexpected error: #{e.class} - #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
-          render json: { error: I18n.t('api.errors.internal_server_error'), error_key: 'api.errors.internal_server_error' }, status: :internal_server_error
+          render json: { error: I18n.t("api.errors.internal_server_error"), error_key: "api.errors.internal_server_error" }, status: :internal_server_error
         end
 
         def create
@@ -88,9 +88,9 @@ module Api
 
         def base_farm_sizes
           [
-            { id: 'home_garden', area_sqm: 30 },
-            { id: 'community_garden', area_sqm: 50 },
-            { id: 'rental_farm', area_sqm: 300 }
+            { id: "home_garden", area_sqm: 30 },
+            { id: "community_garden", area_sqm: 50 },
+            { id: "rental_farm", area_sqm: 300 }
           ]
         end
 
@@ -110,14 +110,14 @@ module Api
 
         def locale_to_region(locale)
           case locale.to_s
-          when 'ja'
-            'jp'
-          when 'us'
-            'us'
-          when 'in'
-            'in'
+          when "ja"
+            "jp"
+          when "us"
+            "us"
+          when "in"
+            "in"
           else
-            'jp'
+            "jp"
           end
         end
 

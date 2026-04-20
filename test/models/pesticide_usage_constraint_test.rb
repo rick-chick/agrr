@@ -37,24 +37,24 @@ class PesticideUsageConstraintTest < ActiveSupport::TestCase
   end
 
   test "should validate min_temperature must be less than or equal to max_temperature" do
-    constraint = build(:pesticide_usage_constraint, 
-                      pesticide: @pesticide, 
-                      min_temperature: 40.0, 
+    constraint = build(:pesticide_usage_constraint,
+                      pesticide: @pesticide,
+                      min_temperature: 40.0,
                       max_temperature: 35.0)
     assert_not constraint.valid?
     assert_includes constraint.errors[:min_temperature], "must be less than or equal to max_temperature"
   end
 
   test "should allow min_temperature equal to max_temperature" do
-    constraint = build(:pesticide_usage_constraint, 
-                      pesticide: @pesticide, 
-                      min_temperature: 20.0, 
+    constraint = build(:pesticide_usage_constraint,
+                      pesticide: @pesticide,
+                      min_temperature: 20.0,
                       max_temperature: 20.0)
     assert constraint.valid?
   end
 
   test "should allow nil for optional fields" do
-    constraint = build(:pesticide_usage_constraint, 
+    constraint = build(:pesticide_usage_constraint,
                       pesticide: @pesticide,
                       min_temperature: nil,
                       max_temperature: nil,
@@ -74,11 +74,3 @@ class PesticideUsageConstraintTest < ActiveSupport::TestCase
     assert_not PesticideUsageConstraint.exists?(constraint_id)
   end
 end
-
-
-
-
-
-
-
-

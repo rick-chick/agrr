@@ -75,7 +75,7 @@ module Api
           end
 
           test "should create association with default values" do
-            task = create(:agricultural_task, :user_owned, user: @user, 
+            task = create(:agricultural_task, :user_owned, user: @user,
                          name: "デフォルトタスク名",
                          description: "デフォルト説明",
                          time_per_sqm: 1.0)

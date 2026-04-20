@@ -26,54 +26,54 @@ class AgriculturalTask < ApplicationRecord
   has_many :crop_task_templates, dependent: :destroy
   has_many :crops, through: :crop_task_templates
   has_many :crop_task_schedule_blueprints, dependent: :restrict_with_exception
-  
+
   # required_toolsをJSON配列としてシリアライズ
   serialize :required_tools, coder: JSON
-  
+
   # デフォルト値を設定
   after_initialize do
     self.required_tools ||= []
     self.is_reference = true if is_reference.nil?
   end
-  
+
   # バリデーション
   validates :name, presence: true
-  validates :is_reference, inclusion: { in: [true, false] }
+  validates :is_reference, inclusion: { in: [ true, false ] }
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :time_per_sqm, numericality: { greater_than: 0, allow_nil: true }
   validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validate :name_uniqueness_scope
   validates :source_agricultural_task_id, uniqueness: { scope: :user_id }, allow_nil: true
-  
+
   # スコープ
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
-  
+
   # agrr CLI の agricultural-tasks フォーマットに変換
   # @return [Hash] agrr CLI が期待するタスクのハッシュ
   def to_agrr_format
     {
-      'task_id' => id.to_s,
-      'name' => name,
-      'description' => description,
-      'time_per_sqm' => time_per_sqm&.to_f,
-      'weather_dependency' => weather_dependency,
-      'required_tools' => required_tools || [],
-      'skill_level' => skill_level
+      "task_id" => id.to_s,
+      "name" => name,
+      "description" => description,
+      "time_per_sqm" => time_per_sqm&.to_f,
+      "weather_dependency" => weather_dependency,
+      "required_tools" => required_tools || [],
+      "skill_level" => skill_level
     }.compact
   end
-  
+
   # 複数のタスクをagrr CLI形式の配列に変換
   # @param tasks [ActiveRecord::Relation<AgriculturalTask>] タスクのコレクション
   # @return [Array<Hash>] agrr CLI形式のタスク配列
   def self.to_agrr_format_array(tasks)
     tasks.map(&:to_agrr_format)
   end
-  
+
   private
-  
+
   def name_uniqueness_scope
     if is_reference?
       # 参照タスクは名前が一意
@@ -95,4 +95,3 @@ class AgriculturalTask < ApplicationRecord
     errors.add(:user, "は参照データには設定できません")
   end
 end
-

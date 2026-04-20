@@ -284,7 +284,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'मिट्टी को नरम करने के लिए जुताई करना',
       time_per_sqm: 0.05,
       weather_dependency: 'medium',
-      required_tools: ['कुदाल', 'फावड़ा', 'हल'],
+      required_tools: [ 'कुदाल', 'फावड़ा', 'हल' ],
       skill_level: 'intermediate',
       crops: PLOWING_CROPS
     },
@@ -292,7 +292,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'रोपण से पहले मिट्टी में मिलाया जाने वाला उर्वरक',
       time_per_sqm: 0.01,
       weather_dependency: 'low',
-      required_tools: ['कुदाल', 'उर्वरक'],
+      required_tools: [ 'कुदाल', 'उर्वरक' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -300,7 +300,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'बीजを圃場に直接播種する',
       time_per_sqm: 0.005,
       weather_dependency: 'medium',
-      required_tools: ['बीज', 'बीज बोने का यंत्र'],
+      required_tools: [ 'बीज', 'बीज बोने का यंत्र' ],
       skill_level: 'beginner',
       crops: DIRECT_SEEDING_CROPS
     },
@@ -308,7 +308,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'पौधे लगाना',
       time_per_sqm: 0.02,
       weather_dependency: 'medium',
-      required_tools: ['पौध', 'रोपण करने का औजार'],
+      required_tools: [ 'पौध', 'रोपण करने का औजार' ],
       skill_level: 'beginner',
       crops: TRANSPLANT_CROPS
     },
@@ -316,7 +316,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'फसलों को नियमित रूप से पानी देना',
       time_per_sqm: 0.01,
       weather_dependency: 'high',
-      required_tools: ['पानी की पाइप', 'सिंचाई का कनस्तर'],
+      required_tools: [ 'पानी की पाइप', 'सिंचाई का कनस्तर' ],
       skill_level: 'beginner',
       crops: IRRIGATION_CROPS
     },
@@ -324,7 +324,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'खरपतवार को हटाकर खेत साफ़ करना',
       time_per_sqm: 0.03,
       weather_dependency: 'medium',
-      required_tools: ['दरांती', 'निराई उपकरण'],
+      required_tools: [ 'दरांती', 'निराई उपकरण' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -332,7 +332,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'परिपक्व फसलों की कटाई करना',
       time_per_sqm: 0.05,
       weather_dependency: 'medium',
-      required_tools: ['कैंची', 'कटाई टोकरी'],
+      required_tools: [ 'कैंची', 'कटाई टोकरी' ],
       skill_level: 'beginner',
       crops: ALL_CROPS
     },
@@ -340,7 +340,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'शिपिंग से पहले साफ़ करना, छँटाई करना और पैकिंग तैयार करना',
       time_per_sqm: 0.05,
       weather_dependency: 'low',
-      required_tools: ['बाल्टी', 'छँटाई टोकरी', 'ब्रश'],
+      required_tools: [ 'बाल्टी', 'छँटाई टोकरी', 'ब्रश' ],
       skill_level: 'intermediate',
       crops: SHIPPING_PREPARATION_CROPS
     },
@@ -348,7 +348,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'मल्च शीट बिछाकर मिट्टी को ढकना',
       time_per_sqm: 0.01,
       weather_dependency: 'medium',
-      required_tools: ['मल्च शीट', 'दांव'],
+      required_tools: [ 'मल्च शीट', 'दांव' ],
       skill_level: 'intermediate',
       crops: MULCHING_CROPS
     },
@@ -356,7 +356,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'टनल (सुरंग) संरचना को स्थापित करना',
       time_per_sqm: 0.02,
       weather_dependency: 'medium',
-      required_tools: ['सुरंग फ्रेम', 'प्लास्टिक शीट'],
+      required_tools: [ 'सुरंग फ्रेम', 'प्लास्टिक शीट' ],
       skill_level: 'intermediate',
       crops: TUNNEL_CROPS
     },
@@ -364,7 +364,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'फसल को सहारा देने हेतु संरचना स्थापित करना',
       time_per_sqm: 0.015,
       weather_dependency: 'low',
-      required_tools: ['सहारा डंडे', 'बांधने का टेप'],
+      required_tools: [ 'सहारा डंडे', 'बांधने का टेप' ],
       skill_level: 'intermediate',
       crops: SUPPORT_STRUCTURE_CROPS
     },
@@ -372,7 +372,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'कीट नियंत्रण के लिए नेट लगाना',
       time_per_sqm: 0.015,
       weather_dependency: 'medium',
-      required_tools: ['कीट नियंत्रण नेट', 'क्लिप'],
+      required_tools: [ 'कीट नियंत्रण नेट', 'क्लिप' ],
       skill_level: 'intermediate',
       crops: NET_CROPS
     },
@@ -380,7 +380,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'घने पौधों को हटाकर उचित दूरी बनाए रखना',
       time_per_sqm: 0.01,
       weather_dependency: 'low',
-      required_tools: ['कैंची'],
+      required_tools: [ 'कैंची' ],
       skill_level: 'beginner',
       crops: THINNING_CROPS
     },
@@ -388,7 +388,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'अनावश्यक शाखाओं को काटना',
       time_per_sqm: 0.02,
       weather_dependency: 'low',
-      required_tools: ['छँटाई कैंची'],
+      required_tools: [ 'छँटाई कैंची' ],
       skill_level: 'intermediate',
       crops: PRUNING_CROPS
     },
@@ -396,7 +396,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'फसल को सहारों पर बांधकर दिशा देना',
       time_per_sqm: 0.015,
       weather_dependency: 'low',
-      required_tools: ['क्लिप', 'सहारा डंडे'],
+      required_tools: [ 'क्लिप', 'सहारा डंडे' ],
       skill_level: 'intermediate',
       crops: TRAINING_CROPS
     },
@@ -404,7 +404,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'उपज को निर्धारित मानकों के अनुसार श्रेणियों में बांटना',
       time_per_sqm: 0.05,
       weather_dependency: 'low',
-      required_tools: ['छँटाई टोकरी', 'ग्रेड शीट', 'तुला'],
+      required_tools: [ 'छँटाई टोकरी', 'ग्रेड शीट', 'तुला' ],
       skill_level: 'intermediate',
       crops: GRADING_CROPS
     },
@@ -412,7 +412,7 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
       description: 'उपज को डिब्बों या बैग में भरना',
       time_per_sqm: 0.03,
       weather_dependency: 'low',
-      required_tools: ['डिब्बा', 'बैग', 'लेबल'],
+      required_tools: [ 'डिब्बा', 'बैग', 'लेबल' ],
       skill_level: 'beginner',
       crops: PACKAGING_CROPS
     }
@@ -470,4 +470,3 @@ class DataMigrationIndiaReferenceTasks < ActiveRecord::Migration[8.0]
     say '✅ インドの参照タスクを削除しました'
   end
 end
-

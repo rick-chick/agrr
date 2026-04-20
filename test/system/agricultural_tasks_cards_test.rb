@@ -72,4 +72,3 @@ class AgriculturalTasksCardsTest < ApplicationSystemTestCase
     page.driver.browser.manage.window.resize_to(1400, 1400)
   end
 end
-

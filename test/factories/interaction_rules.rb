@@ -9,7 +9,7 @@ FactoryBot.define do
     is_directional { true }
     description { "連作障害により収量が30%減少" }
     is_reference { false }
-    
+
     association :user
 
     trait :reference do

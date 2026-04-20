@@ -5,31 +5,31 @@
 module AgrrMockHelper
   # 簡略版：モックデータの構造を新形式に変換
   # テストが通ることを優先し、詳細なデータは後で追加
-  
+
   # Weather APIのモックデータ（新しいJSON構造）
   def mock_weather_data(latitude, longitude, start_date, end_date)
     days = (start_date..end_date).to_a
-    
+
     {
-      'location' => {
-        'latitude' => latitude.round(2),
-        'longitude' => longitude.round(2),
-        'elevation' => 50.0,
-        'timezone' => 'Asia/Tokyo'
+      "location" => {
+        "latitude" => latitude.round(2),
+        "longitude" => longitude.round(2),
+        "elevation" => 50.0,
+        "timezone" => "Asia/Tokyo"
       },
-      'data' => days.map.with_index do |date, index|
+      "data" => days.map.with_index do |date, index|
         {
-          'time' => date.to_s,
-          'temperature_2m_max' => 20.0 + (index % 10),
-          'temperature_2m_min' => 10.0 + (index % 8),
-          'temperature_2m_mean' => 15.0 + (index % 9),
-          'precipitation_sum' => index.even? ? 0.0 : (5.0 + (index % 15)),
-          'sunshine_hours' => 6.0 + (index % 6),
-          'wind_speed_10m' => 3.0 + (index % 5),
-          'weather_code' => index.even? ? 0 : 61
+          "time" => date.to_s,
+          "temperature_2m_max" => 20.0 + (index % 10),
+          "temperature_2m_min" => 10.0 + (index % 8),
+          "temperature_2m_mean" => 15.0 + (index % 9),
+          "precipitation_sum" => index.even? ? 0.0 : (5.0 + (index % 15)),
+          "sunshine_hours" => 6.0 + (index % 6),
+          "wind_speed_10m" => 3.0 + (index % 5),
+          "weather_code" => index.even? ? 0 : 61
         }
       end,
-      'total_count' => days.count
+      "total_count" => days.count
     }
   end
 
@@ -37,30 +37,30 @@ module AgrrMockHelper
   def stub_fetch_weather_data(latitude: nil, longitude: nil, start_date: nil, end_date: nil)
     Agrr::WeatherGateway.class_eval do
       define_method(:fetch_by_date_range) do |latitude:, longitude:, start_date:, end_date:, data_source: nil|
-        resolved_data_source = data_source || ENV['WEATHER_DATA_SOURCE'] || 'noaa'
+        resolved_data_source = data_source || ENV["WEATHER_DATA_SOURCE"] || "noaa"
         days = (start_date..end_date).to_a
 
         {
-          'location' => {
-            'latitude' => latitude.round(2),
-            'longitude' => longitude.round(2),
-            'elevation' => 50.0,
-            'timezone' => 'Asia/Tokyo'
+          "location" => {
+            "latitude" => latitude.round(2),
+            "longitude" => longitude.round(2),
+            "elevation" => 50.0,
+            "timezone" => "Asia/Tokyo"
           },
-          'data' => days.map.with_index do |date, index|
+          "data" => days.map.with_index do |date, index|
             {
-              'time' => date.to_s,
-              'temperature_2m_max' => 20.0 + (index % 10),
-              'temperature_2m_min' => 10.0 + (index % 8),
-              'temperature_2m_mean' => 15.0 + (index % 9),
-              'precipitation_sum' => index.even? ? 0.0 : (5.0 + (index % 15)),
-              'sunshine_hours' => 6.0 + (index % 6),
-              'wind_speed_10m' => 3.0 + (index % 5),
-              'weather_code' => index.even? ? 0 : 61
+              "time" => date.to_s,
+              "temperature_2m_max" => 20.0 + (index % 10),
+              "temperature_2m_min" => 10.0 + (index % 8),
+              "temperature_2m_mean" => 15.0 + (index % 9),
+              "precipitation_sum" => index.even? ? 0.0 : (5.0 + (index % 15)),
+              "sunshine_hours" => 6.0 + (index % 6),
+              "wind_speed_10m" => 3.0 + (index % 5),
+              "weather_code" => index.even? ? 0 : 61
             }
           end,
-          'total_count' => days.count,
-          'data_source' => resolved_data_source
+          "total_count" => days.count,
+          "data_source" => resolved_data_source
         }
       end
     end
@@ -86,38 +86,38 @@ module AgrrMockHelper
       define_method(:fetch_crop_info_from_agrr) do |name|
         # 新しい構造でモックデータを返す
         {
-          'crop' => {
-            'crop_id' => name.downcase.gsub(/\s+/, '_'),
-            'name' => name,
-            'variety' => nil,
-            'area_per_unit' => 0.5,
-            'revenue_per_area' => 500.0,
-            'groups' => ['unknown']
+          "crop" => {
+            "crop_id" => name.downcase.gsub(/\s+/, "_"),
+            "name" => name,
+            "variety" => nil,
+            "area_per_unit" => 0.5,
+            "revenue_per_area" => 500.0,
+            "groups" => [ "unknown" ]
           },
-          'stage_requirements' => [
+          "stage_requirements" => [
             {
-              'stage' => { 'name' => '生育期', 'order' => 1 },
-              'temperature' => {
-                'base_temperature' => 10.0,
-                'optimal_min' => 20.0,
-                'optimal_max' => 25.0,
-                'low_stress_threshold' => 15.0,
-                'high_stress_threshold' => 30.0,
-                'frost_threshold' => 0.0,
-                'sterility_risk_threshold' => nil
+              "stage" => { "name" => "生育期", "order" => 1 },
+              "temperature" => {
+                "base_temperature" => 10.0,
+                "optimal_min" => 20.0,
+                "optimal_max" => 25.0,
+                "low_stress_threshold" => 15.0,
+                "high_stress_threshold" => 30.0,
+                "frost_threshold" => 0.0,
+                "sterility_risk_threshold" => nil
               },
-              'sunshine' => {
-                'minimum_sunshine_hours' => 5.0,
-                'target_sunshine_hours' => 8.0
+              "sunshine" => {
+                "minimum_sunshine_hours" => 5.0,
+                "target_sunshine_hours" => 8.0
               },
-              'thermal' => {
-                'required_gdd' => 500.0
+              "thermal" => {
+                "required_gdd" => 500.0
               },
-              'nutrients' => {
-                'daily_uptake' => {
-                  'N' => 0.5,
-                  'P' => 0.2,
-                  'K' => 0.8
+              "nutrients" => {
+                "daily_uptake" => {
+                  "N" => 0.5,
+                  "P" => 0.2,
+                  "K" => 0.8
                 }
               }
             }
@@ -142,15 +142,15 @@ module AgrrMockHelper
         Array(moves).each do |move|
           next unless move.is_a?(Hash) || move.respond_to?(:to_h)
           mv = move.to_h
-          alloc_id = mv[:allocation_id] || mv['allocation_id'] || mv[:cultivation_id] || mv['cultivation_id']
-          new_start = mv[:to_start_date] || mv['to_start_date']
+          alloc_id = mv[:allocation_id] || mv["allocation_id"] || mv[:cultivation_id] || mv["cultivation_id"]
+          new_start = mv[:to_start_date] || mv["to_start_date"]
           if alloc_id && new_start
             copied.each do |fs|
-              (fs[:allocations] || fs['allocations'] || []).each do |alloc|
+              (fs[:allocations] || fs["allocations"] || []).each do |alloc|
                 # allocation_id は文字列/数値混在の可能性があるため文字列比較
-                if alloc['allocation_id'].to_s == alloc_id.to_s || alloc[:allocation_id].to_s == alloc_id.to_s
+                if alloc["allocation_id"].to_s == alloc_id.to_s || alloc[:allocation_id].to_s == alloc_id.to_s
                   # 更新（文字列キーで返すため string 化）
-                  alloc['start_date'] = new_start
+                  alloc["start_date"] = new_start
                 end
               end
             end
@@ -158,24 +158,24 @@ module AgrrMockHelper
         end
 
         # 集計値を再計算（簡易）
-        total_profit = copied.sum { |fs| (fs['total_profit'] || fs[:total_profit] || 0).to_f }
-        total_revenue = copied.sum { |fs| (fs['total_revenue'] || fs[:total_revenue] || 0).to_f }
-        total_cost = copied.sum { |fs| (fs['total_cost'] || fs[:total_cost] || 0).to_f }
+        total_profit = copied.sum { |fs| (fs["total_profit"] || fs[:total_profit] || 0).to_f }
+        total_revenue = copied.sum { |fs| (fs["total_revenue"] || fs[:total_revenue] || 0).to_f }
+        total_cost = copied.sum { |fs| (fs["total_cost"] || fs[:total_cost] || 0).to_f }
 
         {
           total_profit: total_profit,
           total_revenue: total_revenue,
           total_cost: total_cost,
           field_schedules: copied.map { |fs| fs.deep_stringify_keys },
-          summary: { status: 'success' },
+          summary: { status: "success" },
           optimization_time: 0.1,
-          algorithm_used: 'mock',
+          algorithm_used: "mock",
           is_optimal: true
         }
       end
     end
   end
-  
+
   # 天気予測のモック (Minitest用)
   def stub_weather_prediction
     Agrr::PredictionGateway.class_eval do
@@ -187,24 +187,24 @@ module AgrrMockHelper
         prediction_data = (1..days).map do |i|
           date = start_date + i.days
           {
-            'time' => date.to_s,
-            'temperature_2m_max' => 25.0 + rand(-5..5),
-            'temperature_2m_min' => 15.0 + rand(-5..5),
-            'temperature_2m_mean' => 20.0 + rand(-3..3),
-            'precipitation_sum' => rand(0..10),
-            'sunshine_duration' => rand(6..12) * 3600, # 秒単位
-            'wind_speed_10m_max' => rand(1..5),
-            'weather_code' => rand(0..3)
+            "time" => date.to_s,
+            "temperature_2m_max" => 25.0 + rand(-5..5),
+            "temperature_2m_min" => 15.0 + rand(-5..5),
+            "temperature_2m_mean" => 20.0 + rand(-3..3),
+            "precipitation_sum" => rand(0..10),
+            "sunshine_duration" => rand(6..12) * 3600, # 秒単位
+            "wind_speed_10m_max" => rand(1..5),
+            "weather_code" => rand(0..3)
           }
         end
 
         # モックデータを返す
         {
-          'data' => prediction_data,
-          'metadata' => {
-            'prediction_method' => 'mock',
-            'created_at' => Time.current.iso8601,
-            'data_points' => prediction_data.size
+          "data" => prediction_data,
+          "metadata" => {
+            "prediction_method" => "mock",
+            "created_at" => Time.current.iso8601,
+            "data_points" => prediction_data.size
           }
         }
       end
@@ -218,7 +218,7 @@ module AgrrMockHelper
     stub_weather_prediction
     mock_agrr_adjust_success
   end
-  
+
   # Alias for convenience
   alias_method :mock_agrr_cli_success, :mock_agrr_adjust_success
 end

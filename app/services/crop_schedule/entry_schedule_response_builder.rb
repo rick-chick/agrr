@@ -7,9 +7,9 @@ module CropSchedule
       return {} unless payload_hash.is_a?(Hash)
 
       {
-        generated_at: payload_hash['generated_at'] || payload_hash['predicted_at'],
-        prediction_start_date: payload_hash['prediction_start_date'],
-        prediction_end_date: payload_hash['prediction_end_date'] || payload_hash['target_end_date'],
+        generated_at: payload_hash["generated_at"] || payload_hash["predicted_at"],
+        prediction_start_date: payload_hash["prediction_start_date"],
+        prediction_end_date: payload_hash["prediction_end_date"] || payload_hash["target_end_date"],
         weather_location_id: farm.weather_location_id,
         chart_calendar_year: Time.zone.today.year
       }.compact
@@ -30,8 +30,8 @@ module CropSchedule
         transplant_summary: tr_first ? { start_date: tr_first[:start_date].iso8601, end_date: tr_first[:end_date].iso8601 } : nil,
         reason_summary: reason_summary_text(result),
         labels: {
-          sowing: I18n.t('api.entry_schedule.label.sowing'),
-          transplanting: I18n.t('api.entry_schedule.label.transplanting')
+          sowing: I18n.t("api.entry_schedule.label.sowing"),
+          transplanting: I18n.t("api.entry_schedule.label.transplanting")
         },
         schedule_flow_summary: timeline.schedule_flow_summary(crop, result),
         schedule_flow_detail: timeline.schedule_flow_detail(crop, result),
@@ -54,10 +54,10 @@ module CropSchedule
         crop_stages: crop.crop_stages.order(:order).map do |s|
           { id: s.id, name: s.name, order: s.order }
         end,
-        entry_disclaimer: I18n.t('api.entry_schedule.disclaimer.short'),
+        entry_disclaimer: I18n.t("api.entry_schedule.disclaimer.short"),
         next_task: {
           available: false,
-          code: 'catalog',
+          code: "catalog",
           summary: nil
         }
       )
@@ -73,12 +73,12 @@ module CropSchedule
       parts = result.reason_parts || {}
       return parts[:error].to_s if parts[:error]
 
-      src = parts[:source] || parts['source']
-      if src.to_s == 'agrr_optimize_period'
+      src = parts[:source] || parts["source"]
+      if src.to_s == "agrr_optimize_period"
         return "agrr_optimize_period days=#{parts[:days_evaluated]}"
       end
-      if src.to_s == 'agrr_failed'
-        ek = parts[:error_key] || parts['error_key'] || 'generic'
+      if src.to_s == "agrr_failed"
+        ek = parts[:error_key] || parts["error_key"] || "generic"
         return "agrr_failed:#{ek}"
       end
 
@@ -89,25 +89,25 @@ module CropSchedule
       parts = result.reason_parts || {}
       return parts[:error].to_s if parts[:error]
 
-      src = parts[:source] || parts['source']
-      if src.to_s == 'agrr_optimize_period'
+      src = parts[:source] || parts["source"]
+      if src.to_s == "agrr_optimize_period"
         return I18n.t(
-          'api.entry_schedule.reason.agrr',
-          start: (parts[:optimal_start_date] || parts['optimal_start_date']).to_s.slice(0, 10),
-          completion: (parts[:completion_date] || parts['completion_date']).to_s.slice(0, 10),
-          days: (parts[:growth_days] || parts['growth_days']).to_i,
-          gdd: (parts[:gdd] || parts['gdd']).to_s
+          "api.entry_schedule.reason.agrr",
+          start: (parts[:optimal_start_date] || parts["optimal_start_date"]).to_s.slice(0, 10),
+          completion: (parts[:completion_date] || parts["completion_date"]).to_s.slice(0, 10),
+          days: (parts[:growth_days] || parts["growth_days"]).to_i,
+          gdd: (parts[:gdd] || parts["gdd"]).to_s
         )
       end
-      if src.to_s == 'agrr_failed'
-        ek = (parts[:error_key] || parts['error_key'] || 'generic').to_s
-        return I18n.t("api.entry_schedule.reason.agrr_failed.#{ek}", default: I18n.t('api.entry_schedule.reason.agrr_failed.generic'))
+      if src.to_s == "agrr_failed"
+        ek = (parts[:error_key] || parts["error_key"] || "generic").to_s
+        return I18n.t("api.entry_schedule.reason.agrr_failed.#{ek}", default: I18n.t("api.entry_schedule.reason.agrr_failed.generic"))
       end
 
       I18n.t(
-        'api.entry_schedule.reason.list',
-        sowing: parts[:sowing_stage_name] || '-',
-        transplant: parts[:transplant_stage_name] || '-',
+        "api.entry_schedule.reason.list",
+        sowing: parts[:sowing_stage_name] || "-",
+        transplant: parts[:transplant_stage_name] || "-",
         days: parts[:days_evaluated].to_i,
         default: default_reason_summary(result)
       )
@@ -115,11 +115,11 @@ module CropSchedule
 
     # 一覧用: eligible → まき近さ → 帯の狭さ（昇順キー）
     def self.sort_tuple_for_list_item(item)
-      sm = item[:sort_meta] || item['sort_meta'] || {}
-      eligible = sm[:eligible] != false && sm['eligible'] != false ? 0 : 1
-      prox = (sm[:sowing_proximity_days] || sm['sowing_proximity_days']).to_i
-      width = (sm[:sowing_window_width_days] || sm['sowing_window_width_days']).to_i
-      [eligible, prox, width, item[:id] || item['id'].to_i]
+      sm = item[:sort_meta] || item["sort_meta"] || {}
+      eligible = sm[:eligible] != false && sm["eligible"] != false ? 0 : 1
+      prox = (sm[:sowing_proximity_days] || sm["sowing_proximity_days"]).to_i
+      width = (sm[:sowing_window_width_days] || sm["sowing_window_width_days"]).to_i
+      [ eligible, prox, width, item[:id] || item["id"].to_i ]
     end
   end
 end

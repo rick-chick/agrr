@@ -12,7 +12,7 @@ class CropTest < ActiveSupport::TestCase
     20.times do |i|
       create(:crop, user: @user, name: "作物 #{i+1}", is_reference: false)
     end
-    
+
     # Attempt to create 21st crop
     crop = Crop.new(user: @user, name: "作物 21", is_reference: false)
     assert_not crop.valid?
@@ -24,7 +24,7 @@ class CropTest < ActiveSupport::TestCase
     19.times do |i|
       create(:crop, user: @user, name: "作物 #{i+1}", is_reference: false)
     end
-    
+
     # 20th crop should be valid
     crop = Crop.new(user: @user, name: "作物 20", is_reference: false)
     assert crop.valid?
@@ -35,7 +35,7 @@ class CropTest < ActiveSupport::TestCase
     20.times do |i|
       create(:crop, name: "参照作物 #{i+1}", is_reference: true, user: nil)
     end
-    
+
     # User should still be able to create 20 crops
     crop = Crop.new(user: @user, name: "ユーザー作物", is_reference: false)
     assert crop.valid?
@@ -72,13 +72,13 @@ class CropTest < ActiveSupport::TestCase
 
   test "should allow different users to have their own 20 crops" do
     @user2 = create(:user)
-    
+
     # Each user creates 20 crops
     20.times do |i|
       create(:crop, user: @user, name: "User1 作物 #{i+1}", is_reference: false)
       create(:crop, user: @user2, name: "User2 作物 #{i+1}", is_reference: false)
     end
-    
+
     # Both users should be at limit
     assert_not Crop.new(user: @user, name: "New", is_reference: false).valid?
     assert_not Crop.new(user: @user2, name: "New", is_reference: false).valid?
@@ -104,10 +104,10 @@ class CropTest < ActiveSupport::TestCase
     crop = create(:crop)
     pest1 = create(:pest)
     pest2 = create(:pest)
-    
+
     create(:crop_pest, crop: crop, pest: pest1)
     create(:crop_pest, crop: crop, pest: pest2)
-    
+
     assert_equal 2, crop.crop_pests.count
   end
 
@@ -115,10 +115,10 @@ class CropTest < ActiveSupport::TestCase
     crop = create(:crop)
     pest1 = create(:pest)
     pest2 = create(:pest)
-    
+
     create(:crop_pest, crop: crop, pest: pest1)
     create(:crop_pest, crop: crop, pest: pest2)
-    
+
     assert_equal 2, crop.pests.count
     assert_includes crop.pests, pest1
     assert_includes crop.pests, pest2
@@ -127,7 +127,7 @@ class CropTest < ActiveSupport::TestCase
   # associate_pests_from_agrr_output テスト
   test "should associate pests from agrr output" do
     crop = create(:crop, :tomato)
-    
+
     pest_output_data = {
       "pests" => [
         {
@@ -182,20 +182,20 @@ class CropTest < ActiveSupport::TestCase
         }
       ]
     }
-    
+
     associated_pests = crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     assert_equal 2, associated_pests.count
     assert_equal 2, crop.pests.count
     assert_equal 2, crop.crop_pests.count
-    
+
     aphid = crop.pests.find_by(name: "アブラムシ")
     assert_not_nil aphid
     assert_equal "アブラムシ", aphid.name
     assert_not_nil aphid.pest_temperature_profile
     assert_equal 5, aphid.pest_temperature_profile.base_temperature
     assert_equal 1, aphid.pest_control_methods.count
-    
+
     spider_mite = crop.pests.find_by(name: "ダニ")
     assert_not_nil spider_mite
     assert_equal "ダニ", spider_mite.name
@@ -207,7 +207,7 @@ class CropTest < ActiveSupport::TestCase
     crop = create(:crop)
     existing_pest = create(:pest, name: "アブラムシ", is_reference: true)
     create(:crop_pest, crop: crop, pest: existing_pest)
-    
+
     pest_output_data = {
       "pests" => [
         {
@@ -230,9 +230,9 @@ class CropTest < ActiveSupport::TestCase
         }
       ]
     }
-    
+
     crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     # 既存の関連が残っていること、重複していないこと
     assert_equal 1, crop.crop_pests.count
     assert_equal 1, crop.pests.count
@@ -243,7 +243,7 @@ class CropTest < ActiveSupport::TestCase
     invalid_data = {
       "pests" => "not an array"
     }
-    
+
     assert_raises(StandardError, "Invalid pest_output_data: 'pests' must be an array") do
       crop.associate_pests_from_agrr_output(pest_output_data: invalid_data)
     end
@@ -254,9 +254,9 @@ class CropTest < ActiveSupport::TestCase
     empty_data = {
       "pests" => []
     }
-    
+
     associated_pests = crop.associate_pests_from_agrr_output(pest_output_data: empty_data)
-    
+
     assert_equal 0, associated_pests.count
     assert_equal 0, crop.pests.count
   end
@@ -264,7 +264,7 @@ class CropTest < ActiveSupport::TestCase
   test "associate_pests_from_agrr_output should update existing pests" do
     crop = create(:crop)
     existing_pest = create(:pest, name: "新しい名前", is_reference: true)
-    
+
     pest_output_data = {
       "pests" => [
         {
@@ -287,9 +287,9 @@ class CropTest < ActiveSupport::TestCase
         }
       ]
     }
-    
+
     crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     existing_pest.reload
     assert_equal "新しい名前", existing_pest.name
     # 新しいpestが作成されず、既存のpestが更新されていること
@@ -299,7 +299,7 @@ class CropTest < ActiveSupport::TestCase
   # 複数害虫の統合テスト（実際のagrr出力に基づく）
   test "associate_pests_from_agrr_output should handle 8 pests with various formats and null values" do
     crop = create(:crop, :tomato)
-    
+
     # 実際のagrr出力に近い8つの害虫データ
     pest_output_data = {
       "pests" => [
@@ -347,40 +347,40 @@ class CropTest < ActiveSupport::TestCase
         ], "occurrence_season" => "春〜秋" }
       ]
     }
-    
+
     associated_pests = crop.associate_pests_from_agrr_output(pest_output_data: pest_output_data)
-    
+
     assert_equal 8, associated_pests.count
     assert_equal 8, crop.pests.count
     assert_equal 8, crop.crop_pests.count
-    
+
     # 異なるpest_id形式がすべて正しく処理されていること（nameで検索）
     assert_not_nil crop.pests.find_by(name: "アブラムシ") # 英単語
     assert_not_nil crop.pests.find_by(name: "ハダニ") # 数字のみ
     assert_not_nil crop.pests.find_by(name: "ホーンワーム") # アンダースコア
-    
+
     # control_methodsの数の違いが正しく処理されていること
     aphid = crop.pests.find_by(name: "アブラムシ")
     thrips = crop.pests.find_by(name: "スリップス")
     assert_equal 4, aphid.pest_control_methods.count
     assert_equal 4, thrips.pest_control_methods.count
-    
+
     numeric_pest = crop.pests.find_by(name: "ハダニ")
     assert_equal 3, numeric_pest.pest_control_methods.count
-    
+
     # physicalタイプが正しく処理されていること
     assert_not_nil aphid.pest_control_methods.find_by(method_type: "physical")
     assert_not_nil thrips.pest_control_methods.find_by(method_type: "physical")
-    
+
     # first_generation_gddがnullの害虫が正しく処理されていること
     leafminer = crop.pests.find_by(name: "リーフマイナー")
     cutworm = crop.pests.find_by(name: "カットワーム")
     white_grub = crop.pests.find_by(name: "シロアリ")
-    
+
     assert_nil leafminer.pest_thermal_requirement.first_generation_gdd
     assert_nil cutworm.pest_thermal_requirement.first_generation_gdd
     assert_nil white_grub.pest_thermal_requirement.first_generation_gdd
-    
+
     # first_generation_gddが設定されている害虫も正しく処理されていること
     assert_equal 100, aphid.pest_thermal_requirement.first_generation_gdd
     assert_equal 300, numeric_pest.pest_thermal_requirement.first_generation_gdd
@@ -389,62 +389,62 @@ class CropTest < ActiveSupport::TestCase
   # to_agrr_requirement の nutrients 出力テスト
   test "to_agrr_requirement should include nutrients when present" do
     crop = create(:crop, :with_stages)
-    
+
     # 栄養素要件を追加（with_stagesは既に栄養素要件があるので、それを上書き）
     crop.crop_stages.first.nutrient_requirement.update!(
       daily_uptake_n: 0.5,
       daily_uptake_p: 0.2,
       daily_uptake_k: 0.8
     )
-    
+
     result = crop.to_agrr_requirement
-    
+
     # stage_requirementsにnutrientsが含まれていること
-    stage_with_nutrients = result['stage_requirements'].find { |sr| sr['stage']['name'] == crop.crop_stages.first.name }
-    assert_not_nil stage_with_nutrients['nutrients']
-    assert_equal 0.5, stage_with_nutrients['nutrients']['daily_uptake']['N']
-    assert_equal 0.2, stage_with_nutrients['nutrients']['daily_uptake']['P']
-    assert_equal 0.8, stage_with_nutrients['nutrients']['daily_uptake']['K']
+    stage_with_nutrients = result["stage_requirements"].find { |sr| sr["stage"]["name"] == crop.crop_stages.first.name }
+    assert_not_nil stage_with_nutrients["nutrients"]
+    assert_equal 0.5, stage_with_nutrients["nutrients"]["daily_uptake"]["N"]
+    assert_equal 0.2, stage_with_nutrients["nutrients"]["daily_uptake"]["P"]
+    assert_equal 0.8, stage_with_nutrients["nutrients"]["daily_uptake"]["K"]
   end
 
   test "to_agrr_requirement should not include nutrients when absent" do
     crop = create(:crop)
-    
+
     # 栄養素要件なしでCropStageを作成
     crop_stage = create(:crop_stage, crop: crop, order: 1)
     create(:temperature_requirement, crop_stage: crop_stage)
     create(:thermal_requirement, crop_stage: crop_stage)
-    
+
     result = crop.to_agrr_requirement
-    
+
     # stage_requirementsにnutrientsが含まれていないこと
-    stage_without_nutrients = result['stage_requirements'].first
-    assert_nil stage_without_nutrients['nutrients']
+    stage_without_nutrients = result["stage_requirements"].first
+    assert_nil stage_without_nutrients["nutrients"]
   end
 
   test "to_agrr_requirement should handle multiple stages with and without nutrients" do
     crop = create(:crop)
-    
+
     # Stage 1: 栄養素要件あり
     stage1 = create(:crop_stage, crop: crop, name: "栄養成長期", order: 1)
     create(:temperature_requirement, crop_stage: stage1)
     create(:thermal_requirement, crop_stage: stage1)
     create(:nutrient_requirement, crop_stage: stage1, daily_uptake_n: 1.0, daily_uptake_p: 0.5, daily_uptake_k: 1.5)
-    
+
     # Stage 2: 栄養素要件なし
     stage2 = create(:crop_stage, crop: crop, name: "成熟期", order: 2)
     create(:temperature_requirement, crop_stage: stage2)
     create(:thermal_requirement, crop_stage: stage2)
-    
+
     result = crop.to_agrr_requirement
-    
+
     # Stage 1は nutrients が含まれていること
-    stage1_result = result['stage_requirements'].find { |sr| sr['stage']['name'] == '栄養成長期' }
-    assert_not_nil stage1_result['nutrients']
-    assert_equal 1.0, stage1_result['nutrients']['daily_uptake']['N']
-    
+    stage1_result = result["stage_requirements"].find { |sr| sr["stage"]["name"] == "栄養成長期" }
+    assert_not_nil stage1_result["nutrients"]
+    assert_equal 1.0, stage1_result["nutrients"]["daily_uptake"]["N"]
+
     # Stage 2は nutrients が含まれていないこと
-    stage2_result = result['stage_requirements'].find { |sr| sr['stage']['name'] == '成熟期' }
-    assert_nil stage2_result['nutrients']
+    stage2_result = result["stage_requirements"].find { |sr| sr["stage"]["name"] == "成熟期" }
+    assert_nil stage2_result["nutrients"]
   end
 end

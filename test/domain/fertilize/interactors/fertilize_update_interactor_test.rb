@@ -52,7 +52,7 @@ module Domain
 
           User.expects(:find).with(@user_id).returns(@user)
           Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).with(::Fertilize, @user, 1).returns(fertilize_model)
-          @mock_translator.expects(:t).with('fertilizes.flash.reference_flag_admin_only').returns('admin only')
+          @mock_translator.expects(:t).with("fertilizes.flash.reference_flag_admin_only").returns("admin only")
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)
@@ -95,7 +95,7 @@ module Domain
 
           fertilize_model = mock
           errors_mock = mock
-          errors_mock.expects(:full_messages).returns(["Update failed"])
+          errors_mock.expects(:full_messages).returns([ "Update failed" ])
           fertilize_model.expects(:errors).returns(errors_mock)
 
           User.expects(:find).with(@user_id).returns(@user)

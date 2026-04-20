@@ -17,36 +17,36 @@ module Agrr
       Rails.logger.info "📅 [AGRR Candidates] Planning period: #{planning_start} ~ #{planning_end}"
 
       # 各種ファイルを作成
-      allocation_file = write_temp_file(current_allocation, prefix: 'candidates_allocation')
-      fields_file = write_temp_file({ 'fields' => fields }, prefix: 'candidates_fields')
-      crops_file = write_temp_file({ 'crops' => crops }, prefix: 'candidates_crops')
-      weather_file = write_temp_file(weather_data, prefix: 'candidates_weather')
-      output_file = Tempfile.new(['candidates_output', '.json'])
+      allocation_file = write_temp_file(current_allocation, prefix: "candidates_allocation")
+      fields_file = write_temp_file({ "fields" => fields }, prefix: "candidates_fields")
+      crops_file = write_temp_file({ "crops" => crops }, prefix: "candidates_crops")
+      weather_file = write_temp_file(weather_data, prefix: "candidates_weather")
+      output_file = Tempfile.new([ "candidates_output", ".json" ])
 
       begin
         command_args = [
-          'dummy_path',
-          'optimize',
-          'candidates',
-          '--allocation', allocation_file.path,
-          '--fields-file', fields_file.path,
-          '--crops-file', crops_file.path,
-          '--target-crop', target_crop.to_s,
-          '--planning-start', planning_start.to_s,
-          '--planning-end', planning_end.to_s,
-          '--weather-file', weather_file.path,
-          '--output', output_file.path,
-          '--format', 'json'
+          "dummy_path",
+          "optimize",
+          "candidates",
+          "--allocation", allocation_file.path,
+          "--fields-file", fields_file.path,
+          "--crops-file", crops_file.path,
+          "--target-crop", target_crop.to_s,
+          "--planning-start", planning_start.to_s,
+          "--planning-end", planning_end.to_s,
+          "--weather-file", weather_file.path,
+          "--output", output_file.path,
+          "--format", "json"
         ]
 
         if interaction_rules
-          rules_file = write_temp_file(interaction_rules, prefix: 'candidates_rules')
-          command_args += ['--interaction-rules-file', rules_file.path]
+          rules_file = write_temp_file(interaction_rules, prefix: "candidates_rules")
+          command_args += [ "--interaction-rules-file", rules_file.path ]
         end
 
         # デバッグ用にファイルを保存（本番環境以外のみ）
         unless Rails.env.production?
-          debug_dir = Rails.root.join('tmp/debug')
+          debug_dir = Rails.root.join("tmp/debug")
           FileUtils.mkdir_p(debug_dir)
           ts = Time.current.to_i
           FileUtils.cp(allocation_file.path, debug_dir.join("candidates_allocation_#{ts}.json"))
@@ -102,34 +102,34 @@ module Agrr
       candidates = if File.exist?(output_file.path) && File.size(output_file.path) > 0
                      raw = JSON.parse(File.read(output_file.path))
                      case raw
-                     when Hash then raw['candidates'] || []
+                     when Hash then raw["candidates"] || []
                      when Array then raw
                      else []
                      end
-                   else
+      else
                      []
-                   end
+      end
 
       candidates.filter_map do |c|
         # start_date の datetime 形式を date のみに正規化（"2025-01-01T00:00:00" → "2025-01-01"）
-        start_date = normalize_date(c['start_date'])
-        completion_date = normalize_date(c['completion_date'])
+        start_date = normalize_date(c["start_date"])
+        completion_date = normalize_date(c["completion_date"])
 
         # candidate_type に関わらず共通フィールドを抽出
         # profit は expected_profit をフォールバックとして使用
-        profit = c['profit'] || c['expected_profit']
+        profit = c["profit"] || c["expected_profit"]
 
         {
-          field_id: c['field_id'],
-          field_name: c['field_name'],
-          candidate_type: c['candidate_type'],
+          field_id: c["field_id"],
+          field_name: c["field_name"],
+          candidate_type: c["candidate_type"],
           start_date: start_date,
           completion_date: completion_date,
           profit: profit,
-          cost: c['cost'],
-          revenue: c['revenue'],
-          growth_days: c['growth_days'],
-          move_instruction: c['move_instruction']
+          cost: c["cost"],
+          revenue: c["revenue"],
+          growth_days: c["growth_days"],
+          move_instruction: c["move_instruction"]
         }
       end
     end

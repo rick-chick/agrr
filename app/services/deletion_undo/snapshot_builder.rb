@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'set'
+require "set"
 
 module DeletionUndo
   class SnapshotBuilder
@@ -12,7 +12,7 @@ module DeletionUndo
     end
 
     def build
-      raise ArgumentError, 'record must be present' if record.nil?
+      raise ArgumentError, "record must be present" if record.nil?
 
       key = cache_key_for(record)
       return reference_snapshot(record) if @visited.include?(key)
@@ -20,24 +20,24 @@ module DeletionUndo
       @visited.add(key)
 
       {
-        'model' => record.class.name,
-        'attributes' => serialize_attributes(record),
-        'associations' => build_associations(record)
+        "model" => record.class.name,
+        "attributes" => serialize_attributes(record),
+        "associations" => build_associations(record)
       }
     end
 
     private
 
     def cache_key_for(rec)
-      [rec.class.name, rec.id]
+      [ rec.class.name, rec.id ]
     end
 
     def reference_snapshot(rec)
       {
-        'model' => rec.class.name,
-        'attributes' => { rec.class.primary_key => rec.id },
-        'associations' => {},
-        'reference' => true
+        "model" => rec.class.name,
+        "attributes" => { rec.class.primary_key => rec.id },
+        "associations" => {},
+        "reference" => true
       }
     end
 
@@ -64,7 +64,7 @@ module DeletionUndo
         next false if reflection.macro == :belongs_to
 
         dependency = reflection.options[:dependent]
-        dependency.in?([:destroy, :delete_all])
+        dependency.in?([ :destroy, :delete_all ])
       end
     end
 
@@ -84,4 +84,3 @@ module DeletionUndo
     end
   end
 end
-

@@ -10,24 +10,23 @@ class HealthController < ApplicationController
   def show
     # メインデータベースの接続確認
     ActiveRecord::Base.connection.execute("SELECT 1")
-    
-    render json: { 
-      status: 'ok', 
+
+    render json: {
+      status: "ok",
       timestamp: Time.current.iso8601,
-      database: 'primary'
+      database: "primary"
     }, status: :ok
   rescue => e
     msg = e.message.to_s
-    if msg.include?('unable to open database file') || msg.include?('database is locked') || msg.include?('no such table')
+    if msg.include?("unable to open database file") || msg.include?("database is locked") || msg.include?("no such table")
       Rails.logger.warn "Health check: DB bootstrap in progress or not ready (#{msg})"
     else
       Rails.logger.error "Health check failed: #{msg}"
     end
     render json: {
-      status: 'error',
+      status: "error",
       error: msg,
       timestamp: Time.current.iso8601
     }, status: :service_unavailable
   end
 end
-

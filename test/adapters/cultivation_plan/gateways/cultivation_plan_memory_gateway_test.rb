@@ -14,7 +14,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanMemoryGatewayTest < Ac
 
     create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
       farm: farm,
-      crops: [crop],
+      crops: [ crop ],
       user: user,
       plan_name: "Test Plan",
       total_area: 100.0
@@ -33,7 +33,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanMemoryGatewayTest < Ac
   test "should find existing cultivation plan" do
     user = create(:user)
     farm = create(:farm, user: user)
-    existing_plan = create(:cultivation_plan, farm: farm, user: user, plan_type: 'private')
+    existing_plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
     found_plan = @gateway.find_existing(farm, user)
 
@@ -78,7 +78,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanMemoryGatewayTest < Ac
     # 参照作物は除外されるべき（user_idなしで作成）
     create(:crop, :reference)
 
-    found_crops = @gateway.find_crops([crop1.id, crop2.id], user)
+    found_crops = @gateway.find_crops([ crop1.id, crop2.id ], user)
 
     assert_equal 2, found_crops.length
     assert_instance_of Array, found_crops
@@ -90,7 +90,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanMemoryGatewayTest < Ac
   test "should return empty array when no crops found" do
     user = create(:user)
 
-    found_crops = @gateway.find_crops([9999], user)
+    found_crops = @gateway.find_crops([ 9999 ], user)
 
     assert_empty found_crops
   end
@@ -101,11 +101,11 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanMemoryGatewayTest < Ac
     crop = create(:crop, user: user, is_reference: false)
 
     # 同じfarm×userの計画が既に存在する場合
-    create(:cultivation_plan, farm: farm, user: user, plan_type: 'private')
+    create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
     create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
       farm: farm,
-      crops: [crop],
+      crops: [ crop ],
       user: user,
       plan_name: "Test Plan",
       total_area: 100.0

@@ -29,7 +29,7 @@ module Api
         # @note 中間テーブル: CropTaskTemplateの属性（name, time_per_sqm, description等）も管理します
         class AgriculturalTasksController < BaseController
           before_action :set_crop
-          before_action :set_template, only: [:update, :destroy]
+          before_action :set_template, only: [ :update, :destroy ]
 
           # 作物に紐づく農業タスク一覧を取得
           #
@@ -60,28 +60,28 @@ module Api
           # @return [422] 既に関連付けられている、またはバリデーションエラー
           def create
             agricultural_task_id = params[:agricultural_task_id]
-            
+
             unless agricultural_task_id.present?
-              render json: { error: 'agricultural_task_id is required' }, status: :unprocessable_entity
+              render json: { error: "agricultural_task_id is required" }, status: :unprocessable_entity
               return
             end
 
             agricultural_task = AgriculturalTask.find_by(id: agricultural_task_id)
             unless agricultural_task
-              render json: { error: 'AgriculturalTask not found' }, status: :not_found
+              render json: { error: "AgriculturalTask not found" }, status: :not_found
               return
             end
 
             # 権限チェック: 参照タスクまたは自分のタスクのみ関連付け可能
             unless agricultural_task.is_reference || agricultural_task.user_id == current_user.id
-              render json: { error: 'You do not have permission to associate this agricultural task' }, status: :forbidden
+              render json: { error: "You do not have permission to associate this agricultural task" }, status: :forbidden
               return
             end
 
             # 既に関連付けられているかチェック
             existing_template = @crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task_id)
             if existing_template
-              render json: { error: 'AgriculturalTask is already associated with this crop' }, status: :unprocessable_entity
+              render json: { error: "AgriculturalTask is already associated with this crop" }, status: :unprocessable_entity
               return
             end
 
@@ -119,7 +119,7 @@ module Api
           # @return [422] バリデーションエラー
           def update
             update_params = template_params.except(:agricultural_task_id)
-            
+
             if @template.update(update_params)
               render json: format_template(@template.reload)
             else
@@ -144,13 +144,13 @@ module Api
           def set_crop
             @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
-            render json: { error: 'Crop not found' }, status: :not_found
+            render json: { error: "Crop not found" }, status: :not_found
           end
 
           def set_template
             @template = @crop.crop_task_templates.find(params[:id])
           rescue ActiveRecord::RecordNotFound
-            render json: { error: 'AgriculturalTask association not found' }, status: :not_found
+            render json: { error: "AgriculturalTask association not found" }, status: :not_found
           end
 
           def template_params

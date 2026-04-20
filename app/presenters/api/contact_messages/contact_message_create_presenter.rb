@@ -3,7 +3,7 @@
 module Api
   module ContactMessages
     class ContactMessageCreatePresenter
-      INTERNAL_SERVER_ERROR_MESSAGE = 'Internal server error'.freeze
+      INTERNAL_SERVER_ERROR_MESSAGE = "Internal server error".freeze
 
       def initialize(view:)
         @view = view
@@ -24,7 +24,7 @@ module Api
       def on_failure(failure_dto)
         if failure_dto.respond_to?(:errors) && failure_dto.errors.respond_to?(:messages)
           @view.render_response(
-            json: { error: 'Validation failed', field_errors: failure_dto.errors.messages },
+            json: { error: "Validation failed", field_errors: failure_dto.errors.messages },
             status: :unprocessable_entity
           )
         else
@@ -48,4 +48,3 @@ module Api
     end
   end
 end
-

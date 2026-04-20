@@ -61,12 +61,12 @@ class ScheduleTableFieldArranger
       # 最新の期間にセルを配置し、そこから下方向にrowspanでマージする
       start_period = periods_for_cultivation.max_by { |p| p[:start_date] }
       start_period_index = start_period ? periods.find_index { |p| p[:start_date] == start_period[:start_date] && p[:end_date] == start_period[:end_date] } : nil
-      
+
       # 期ごとに作付を数えて、colspanを決定
       # その期に作付が2つある場合はcolspan=1、1つある場合はcolspan=2
       # ただし、前後の期間で作付が2つある場合、列数を一致させるため、colspan=1を2つ使う
       rowspan = periods_for_cultivation.size
-      
+
       {
         cultivation: cultivation,
         start_period_index: start_period_index,
@@ -124,7 +124,7 @@ class ScheduleTableFieldArranger
 
     # 配置された作付を開始期間順にソート
     sorted_cultivations = placed_cultivations.sort_by { |c| c[:start_period_index] || 999 }
-    
+
     # 各期間ごとに作付を数えて、各作付のcolspanを決定
     periods.each_with_index do |period, period_index|
       # この期間に表示される作付を取得
@@ -132,31 +132,31 @@ class ScheduleTableFieldArranger
         sorted_cultivations: sorted_cultivations,
         period: period
       )
-      
+
       # 前後の期間で作付が2つあるかどうかを確認
       prev_total_count = count_cultivations_in_period(
         sorted_cultivations: sorted_cultivations,
         periods: periods,
         period_index: period_index + 1
       )
-      
+
       next_total_count = count_cultivations_in_period(
         sorted_cultivations: sorted_cultivations,
         periods: periods,
         period_index: period_index - 1
       )
-      
+
       # この期間でcolspanを決定
       # その期に作付が2つある場合、または前後の期間で作付が2つある場合はcolspan=1
       # そうでない場合はcolspan=2
       total_count = cultivations_in_period.size
       target_colspan = (total_count == 2 || prev_total_count == 2 || next_total_count == 2) ? 1 : 2
-      
+
       cultivations_in_period.each do |c|
         c[:colspan] = target_colspan if c[:colspan].nil?
       end
     end
-    
+
     sorted_cultivations
   end
 
@@ -196,7 +196,7 @@ class ScheduleTableFieldArranger
     slot0 = cultivations_in_period.find { |c| c[:slot_index] == SLOT_INDEX_PRIMARY }
     slot1 = cultivations_in_period.find { |c| c[:slot_index] == SLOT_INDEX_SECONDARY }
 
-    { colspan: colspan, slots: [slot0, slot1] }
+    { colspan: colspan, slots: [ slot0, slot1 ] }
   end
 
   # 期間レイアウトをセル配列に展開（ビューはこの配列をそのまま描画すればよい）
@@ -213,21 +213,21 @@ class ScheduleTableFieldArranger
 
     if colspan == 2
       if slot0
-        [{
+        [ {
           CELL_TYPE_KEY => :cultivation,
           CELL_COLSPAN_KEY => 2,
           CELL_RENDER_KEY => (slot0[:start_period_index] == period_index),
           CELL_SHOW_LABEL_KEY => false,
           CELL_CULTIVATION_KEY => slot0
-        }]
+        } ]
       else
-        [{
+        [ {
           CELL_TYPE_KEY => :empty,
           CELL_COLSPAN_KEY => 2,
           CELL_RENDER_KEY => true,
           CELL_SHOW_LABEL_KEY => true,
           CELL_CULTIVATION_KEY => nil
-        }]
+        } ]
       end
     else
       cells = []
@@ -286,7 +286,7 @@ class ScheduleTableFieldArranger
   def self.periods_overlap?(periods1, periods2)
     # 期間の配列が空の場合は重ならない
     return false if periods1.empty? || periods2.empty?
-    
+
     # 期間の配列に共通の期間があるかどうかを確認
     periods1.any? do |p1|
       periods2.any? do |p2|
@@ -328,7 +328,7 @@ class ScheduleTableFieldArranger
   # @return [Integer] この期間に表示される作付数
   def self.count_cultivations_in_period(sorted_cultivations:, periods:, period_index:)
     return 0 if period_index < 0 || period_index >= periods.size
-    
+
     period = periods[period_index]
     cultivations_for_period_in_sorted(
       sorted_cultivations: sorted_cultivations,
@@ -336,4 +336,3 @@ class ScheduleTableFieldArranger
     ).size
   end
 end
-

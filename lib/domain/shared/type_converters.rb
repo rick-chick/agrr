@@ -6,8 +6,8 @@ module Domain
       # ActiveModel::Type::BooleanのRails非依存代替実装
       # 既存のActiveModel::Type::Boolean.new.cast()と同じ振る舞いを維持
       class BooleanConverter
-        TRUTHY_VALUES = [true, 'true', '1', 1, 'yes', 'on', 't', 'y'].freeze
-        FALSY_VALUES = [false, 'false', '0', 0, 'no', 'off', 'f', 'n', nil, ''].freeze
+        TRUTHY_VALUES = [ true, "true", "1", 1, "yes", "on", "t", "y" ].freeze
+        FALSY_VALUES = [ false, "false", "0", 0, "no", "off", "f", "n", nil, "" ].freeze
 
         def self.cast(value)
           return false if FALSY_VALUES.include?(value)

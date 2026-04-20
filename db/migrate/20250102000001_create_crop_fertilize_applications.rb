@@ -24,8 +24,7 @@ class CreateCropFertilizeApplications < ActiveRecord::Migration[8.0]
 
     # application_typeにインデックス
     add_index :crop_fertilize_applications, :application_type
-    
+
     # application_typeのバリデーションはモデルで行う
   end
 end
-

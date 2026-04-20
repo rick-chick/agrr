@@ -17,7 +17,7 @@ module Api
 
         # PolicyPermissionDenied例外を403 Forbiddenとして扱う（domain の Policy が raise するクラス）
         rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |_exception|
-          render json: { error: I18n.t('agricultural_tasks.flash.no_permission') }, status: :forbidden
+          render json: { error: I18n.t("agricultural_tasks.flash.no_permission") }, status: :forbidden
         end
 
         before_action :authenticate_api_key_or_session!
@@ -29,7 +29,7 @@ module Api
           if api_key.present?
             user = User.find_by_api_key(api_key)
             unless user
-              render json: { error: 'Invalid API key' }, status: :unauthorized
+              render json: { error: "Invalid API key" }, status: :unauthorized
               return false
             end
             @current_user = user
@@ -43,7 +43,7 @@ module Api
             return true
           end
 
-          render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+          render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
           false
         end
 
@@ -64,19 +64,19 @@ module Api
           # 1. Authorizationヘッダー: "Bearer <api_key>"
           # 2. X-API-Keyヘッダー
           # 3. api_keyパラメータ（クエリパラメータ）
-          
+
           # Authorizationヘッダーから取得
-          auth_header = request.headers['Authorization']
-          if auth_header&.start_with?('Bearer ')
-            return auth_header.sub(/^Bearer /, '').strip
+          auth_header = request.headers["Authorization"]
+          if auth_header&.start_with?("Bearer ")
+            return auth_header.sub(/^Bearer /, "").strip
           end
-          
+
           # X-API-Keyヘッダーから取得
-          return request.headers['X-API-Key'] if request.headers['X-API-Key'].present?
-          
+          return request.headers["X-API-Key"] if request.headers["X-API-Key"].present?
+
           # クエリパラメータから取得
           return params[:api_key] if params[:api_key].present?
-          
+
           nil
         end
 

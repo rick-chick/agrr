@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 module Api
   module V1
@@ -12,10 +12,10 @@ module Api
 
           # 参照農場を作成
           @farm = create(:farm, :reference,
-            name: '参照農場',
+            name: "参照農場",
             latitude: 35.6762,
             longitude: 139.6503,
-            region: 'jp',
+            region: "jp",
             user: @anonymous_user
           )
 
@@ -33,15 +33,15 @@ module Api
           @cultivation_plan = create(:cultivation_plan,
             farm: @farm,
             user: nil,
-            plan_type: 'public',
-            status: 'completed'
+            plan_type: "public",
+            status: "completed"
           )
 
           # 圃場を作成
-          @field = create(:field, farm: @farm, name: 'Test Field')
+          @field = create(:field, farm: @farm, name: "Test Field")
 
           # 作物を作成
-          @crop = create(:crop, name: 'Test Crop')
+          @crop = create(:crop, name: "Test Crop")
 
           # 作物の成長段階を作成（最低1つ必要）
           create(:crop_stage, :germination, crop: @crop)
@@ -55,7 +55,7 @@ module Api
           # 栽培計画圃場を作成
           @cultivation_plan_field = create(:cultivation_plan_field,
             cultivation_plan: @cultivation_plan,
-            name: 'Test Field',
+            name: "Test Field",
             area: 1000.0,
             daily_fixed_cost: 500.0
           )
@@ -65,23 +65,23 @@ module Api
             cultivation_plan: @cultivation_plan,
             cultivation_plan_crop: @cultivation_plan_crop,
             cultivation_plan_field: @cultivation_plan_field,
-            start_date: '2026-01-01',
-            completion_date: '2026-03-01'
+            start_date: "2026-01-01",
+            completion_date: "2026-03-01"
           )
         end
-        
+
         test "find_api_cultivation_plan が正常に動作する（認証不要）" do
           # Concern のメソッドを直接テストするため、コントローラをインスタンス化
           controller = Api::V1::PublicPlans::CultivationPlansController.new
           controller.params = ActionController::Parameters.new(id: @cultivation_plan.id)
-          
+
           plan = controller.send(:find_api_cultivation_plan)
-          
+
           assert_not_nil plan
           assert_equal @cultivation_plan.id, plan.id
-          assert_equal 'public', plan.plan_type
+          assert_equal "public", plan.plan_type
         end
-        
+
         test "find_api_cultivation_plan で存在しないIDの場合はRecordNotFoundを発生させる" do
           controller = Api::V1::PublicPlans::CultivationPlansController.new
           controller.params = ActionController::Parameters.new(id: 99999)
@@ -93,14 +93,14 @@ module Api
 
         test "data アクションが正常に動作する（認証不要）" do
           # CultivationPlanにplan_typeを設定
-          @cultivation_plan.update!(plan_type: 'public')
+          @cultivation_plan.update!(plan_type: "public")
 
           # CultivationPlanCropを作成
           plan_crop = CultivationPlanCrop.create!(
             cultivation_plan: @cultivation_plan,
-            crop: create(:crop, :reference, region: 'jp'),
-            name: 'テスト作物',
-            variety: 'テスト品種',
+            crop: create(:crop, :reference, region: "jp"),
+            name: "テスト作物",
+            variety: "テスト品種",
             area_per_unit: 1.0,
             revenue_per_area: 1000.0
           )
@@ -108,7 +108,7 @@ module Api
           # CultivationPlanFieldを作成
           plan_field = CultivationPlanField.create!(
             cultivation_plan: @cultivation_plan,
-            name: 'テスト圃場',
+            name: "テスト圃場",
             area: 100.0,
             daily_fixed_cost: 10.0
           )
@@ -122,38 +122,38 @@ module Api
             start_date: Date.current,
             completion_date: Date.current + 60.days,
             cultivation_days: 60,
-            status: 'completed'
+            status: "completed"
           )
 
           get "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/data"
 
           assert_response :success
           data = JSON.parse(response.body)
-          assert data['success']
-          assert_equal @cultivation_plan.id, data['data']['id']
-          assert_equal 'public', data['data']['plan_type']
-          assert data['data']['fields'].is_a?(Array)
-          assert data['data']['crops'].is_a?(Array)
-          assert data['data']['cultivations'].is_a?(Array)
+          assert data["success"]
+          assert_equal @cultivation_plan.id, data["data"]["id"]
+          assert_equal "public", data["data"]["plan_type"]
+          assert data["data"]["fields"].is_a?(Array)
+          assert data["data"]["crops"].is_a?(Array)
+          assert data["data"]["cultivations"].is_a?(Array)
         end
 
         test "data action exposes reference crops scoped to farm region" do
-          reference_crop = create(:crop, :reference, region: 'jp', name: 'Reference Crop', variety: 'Region Var', area_per_unit: 1.2)
-          create(:crop, :reference, region: 'us')
+          reference_crop = create(:crop, :reference, region: "jp", name: "Reference Crop", variety: "Region Var", area_per_unit: 1.2)
+          create(:crop, :reference, region: "us")
 
           get "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/data"
 
           assert_response :success
 
           json = JSON.parse(response.body)
-          available_crops = json['data']['available_crops']
+          available_crops = json["data"]["available_crops"]
           assert available_crops.is_a?(Array)
           assert_equal 1, available_crops.size
           crop_json = available_crops.first
-          assert_equal reference_crop.id, crop_json['id']
-          assert_equal reference_crop.name, crop_json['name']
-          assert_equal reference_crop.variety, crop_json['variety']
-          assert_equal reference_crop.area_per_unit, crop_json['area_per_unit']
+          assert_equal reference_crop.id, crop_json["id"]
+          assert_equal reference_crop.name, crop_json["name"]
+          assert_equal reference_crop.variety, crop_json["variety"]
+          assert_equal reference_crop.area_per_unit, crop_json["area_per_unit"]
         end
 
         test "data アクションで存在しないIDの場合は404を返す" do
@@ -161,8 +161,8 @@ module Api
 
           assert_response :not_found
           data = JSON.parse(response.body)
-          assert_not data['success']
-          assert_includes data['message'], '見つかりません'
+          assert_not data["success"]
+          assert_includes data["message"], "見つかりません"
         end
 
         test "adjust endpoint works with proper crop stages" do
@@ -172,10 +172,10 @@ module Api
           # WeatherPredictionService をスタブして天気データ不足によるエラーを防ぐ
           weather_double = Object.new
           weather_double.define_singleton_method(:get_existing_prediction) do |**_|
-            { data: { 'data' => [{ 'time' => '2026-01-01', 'temperature_2m_mean' => 5.0 }] } }
+            { data: { "data" => [ { "time" => "2026-01-01", "temperature_2m_mean" => 5.0 } ] } }
           end
           weather_double.define_singleton_method(:predict_for_cultivation_plan) do |*|
-            { data: { 'data' => [{ 'time' => '2026-01-01', 'temperature_2m_mean' => 5.0 }] } }
+            { data: { "data" => [ { "time" => "2026-01-01", "temperature_2m_mean" => 5.0 } ] } }
           end
 
           WeatherPredictionService.stub(:new, weather_double) do
@@ -188,18 +188,18 @@ module Api
             variety = @cultivation_plan_crop.variety
 
             allocation = {
-              'allocation_id' => nil,
-              'crop_id' => crop_id,
-              'crop_name' => crop_name,
-              'variety' => variety,
-              'area_used' => 10.0,
-              'start_date' => '2026-04-12',
-              'completion_date' => '2026-06-01',
-              'growth_days' => 51,
-              'accumulated_gdd' => 150.0,
-              'total_cost' => 100.0,
-              'expected_revenue' => 200.0,
-              'profit' => 100.0
+              "allocation_id" => nil,
+              "crop_id" => crop_id,
+              "crop_name" => crop_name,
+              "variety" => variety,
+              "area_used" => 10.0,
+              "start_date" => "2026-04-12",
+              "completion_date" => "2026-06-01",
+              "growth_days" => 51,
+              "accumulated_gdd" => 150.0,
+              "total_cost" => 100.0,
+              "expected_revenue" => 200.0,
+              "profit" => 100.0
             }
 
             # Define singleton method to return a realistic result (uses captured locals)
@@ -207,8 +207,8 @@ module Api
               {
                 field_schedules: [
                   {
-                    'field_id' => field_id,
-                    'allocations' => [allocation]
+                    "field_id" => field_id,
+                    "allocations" => [ allocation ]
                   }
                 ],
                 total_profit: 100.0,
@@ -216,7 +216,7 @@ module Api
                 total_cost: 100.0,
                 summary: {},
                 optimization_time: 0.1,
-                algorithm_used: 'test',
+                algorithm_used: "test",
                 is_optimal: true
               }
             end
@@ -227,9 +227,9 @@ module Api
                      moves: [
                        {
                          allocation_id: @field_cultivation.id,
-                         action: 'move',
+                         action: "move",
                          to_field_id: @cultivation_plan_field.id,
-                         to_start_date: '2026-04-12'
+                         to_start_date: "2026-04-12"
                        }
                      ]
                    },
@@ -239,7 +239,7 @@ module Api
               assert_response :success, "Expected success but got #{response.status}. Response: #{response.body}"
 
               json = JSON.parse(response.body)
-              assert json['success'], "Response should be successful: #{json.inspect}"
+              assert json["success"], "Response should be successful: #{json.inspect}"
             end
           end
         end
@@ -247,7 +247,7 @@ module Api
       test "adjust should work" do
         skip "Adjust API test - Action Cable testing requires integration setup"
       end
+      end
     end
   end
-end
 end

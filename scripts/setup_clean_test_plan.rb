@@ -34,7 +34,7 @@ fc1 = FieldCultivation.create!(
   cultivation_days: 61,
   area: 150.0,
   estimated_cost: 610.0,
-  optimization_result: {revenue: 10000.0, profit: 9390.0, accumulated_gdd: 500.0}
+  optimization_result: { revenue: 10000.0, profit: 9390.0, accumulated_gdd: 500.0 }
 )
 
 fc2 = FieldCultivation.create!(
@@ -46,7 +46,7 @@ fc2 = FieldCultivation.create!(
   cultivation_days: 60,
   area: 150.0,
   estimated_cost: 600.0,
-  optimization_result: {revenue: 10000.0, profit: 9400.0, accumulated_gdd: 500.0}
+  optimization_result: { revenue: 10000.0, profit: 9400.0, accumulated_gdd: 500.0 }
 )
 
 fc3 = FieldCultivation.create!(
@@ -58,7 +58,7 @@ fc3 = FieldCultivation.create!(
   cultivation_days: 60,
   area: 150.0,
   estimated_cost: 600.0,
-  optimization_result: {revenue: 10000.0, profit: 9400.0, accumulated_gdd: 500.0}
+  optimization_result: { revenue: 10000.0, profit: 9400.0, accumulated_gdd: 500.0 }
 )
 
 puts "✅ テスト計画を作成しました"
@@ -72,4 +72,3 @@ puts "  - FC #{fc2.id}: #{field2.name} (field_#{field2.id}), 2026-06-01 - 2026-0
 puts "  - FC #{fc3.id}: #{field3.name} (field_#{field3.id}), 2026-09-01 - 2026-10-30"
 puts ""
 puts "🌐 テストURL: http://localhost:3000/public_plans/results?plan_id=#{cp.id}"
-

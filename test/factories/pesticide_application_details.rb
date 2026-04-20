@@ -9,11 +9,3 @@ FactoryBot.define do
     application_method { "散布" }
   end
 end
-
-
-
-
-
-
-
-

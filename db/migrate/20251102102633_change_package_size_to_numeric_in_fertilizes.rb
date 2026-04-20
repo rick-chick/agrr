@@ -13,7 +13,7 @@ class ChangePackageSizeToNumericInFertilizes < ActiveRecord::Migration[8.0]
         fertilize.update_column(:package_size, numeric_value)
       end
     end
-    
+
     # カラム型をfloatに変更
     change_column :fertilizes, :package_size, :float
   end
@@ -29,4 +29,3 @@ class ChangePackageSizeToNumericInFertilizes < ActiveRecord::Migration[8.0]
     end
   end
 end
-

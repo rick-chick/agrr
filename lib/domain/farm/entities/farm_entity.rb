@@ -21,7 +21,7 @@ module Domain
         end
 
         def coordinates
-          [latitude, longitude]
+          [ latitude, longitude ]
         end
 
         def has_coordinates?

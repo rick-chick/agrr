@@ -11,4 +11,3 @@ class CookieConsentBannerViewTest < ActiveSupport::TestCase
     assert_no_match(/<script\b/i, html)
   end
 end
-

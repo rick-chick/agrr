@@ -23,7 +23,7 @@ module Domain
             region: create_input_dto.region,
             task_type: create_input_dto.task_type
           })
-          raise StandardError, task_model.errors.full_messages.join(', ') unless task_model.save
+          raise StandardError, task_model.errors.full_messages.join(", ") unless task_model.save
 
           task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model)
           @output_port.on_success(task_entity)

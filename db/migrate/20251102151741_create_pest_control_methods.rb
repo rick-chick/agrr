@@ -8,10 +8,10 @@ class CreatePestControlMethods < ActiveRecord::Migration[8.0]
       t.string :method_name, null: false
       t.text :description
       t.string :timing_hint
-      
+
       t.timestamps
     end
-    
+
     add_index :pest_control_methods, :method_type
   end
 end

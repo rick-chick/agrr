@@ -3,104 +3,104 @@
 class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
   # 一時モデル定義（マイグレーション内でのみ使用）
   # モデルクラスへの依存を避け、スキーマ変更に強い設計
-  
+
   class TempUser < ActiveRecord::Base
     self.table_name = 'users'
   end
-  
+
   class TempFarm < ActiveRecord::Base
     self.table_name = 'farms'
   end
-  
+
   class TempWeatherLocation < ActiveRecord::Base
     self.table_name = 'weather_locations'
   end
-  
+
   class TempWeatherDatum < ActiveRecord::Base
     self.table_name = 'weather_data'
   end
-  
+
   class TempCrop < ActiveRecord::Base
     self.table_name = 'crops'
     has_many :crop_stages, class_name: 'SeedJapanReferenceData::TempCropStage', foreign_key: 'crop_id'
   end
-  
+
   class TempCropStage < ActiveRecord::Base
     self.table_name = 'crop_stages'
     belongs_to :crop, class_name: 'SeedJapanReferenceData::TempCrop', foreign_key: 'crop_id'
   end
-  
+
   class TempTemperatureRequirement < ActiveRecord::Base
     self.table_name = 'temperature_requirements'
   end
-  
+
   class TempThermalRequirement < ActiveRecord::Base
     self.table_name = 'thermal_requirements'
   end
-  
+
   class TempSunshineRequirement < ActiveRecord::Base
     self.table_name = 'sunshine_requirements'
   end
-  
+
   class TempField < ActiveRecord::Base
     self.table_name = 'fields'
   end
-  
+
   class TempInteractionRule < ActiveRecord::Base
     self.table_name = 'interaction_rules'
   end
-  
+
   def up
     say "🌱 Seeding Japan (jp) reference data..."
-    
+
     # 1. Admin User
     seed_admin_user
-    
+
     # 2. Reference Farms + Weather Data
     seed_reference_farms_and_weather
-    
+
     # 3. Reference Crops
     seed_reference_crops
-    
+
     # 4. Sample Fields
     seed_sample_fields
-    
+
     # 5. Interaction Rules
     seed_interaction_rules
-    
+
     say "✅ Japan reference data seeding completed!"
   end
-  
+
   def down
     say "🗑️  Removing Japan (jp) reference data..."
-    
+
     # 逆順で削除
     TempInteractionRule.where(region: 'jp').delete_all
     TempField.where(region: 'jp').delete_all
-    
+
     # Crops関連（外部キー制約を考慮）
     jp_crop_ids = TempCrop.where(region: 'jp', is_reference: true).pluck(:id)
     jp_crop_stage_ids = TempCropStage.where(crop_id: jp_crop_ids).pluck(:id)
-    
+
     TempSunshineRequirement.where(crop_stage_id: jp_crop_stage_ids).delete_all
     TempThermalRequirement.where(crop_stage_id: jp_crop_stage_ids).delete_all
     TempTemperatureRequirement.where(crop_stage_id: jp_crop_stage_ids).delete_all
     TempCropStage.where(crop_id: jp_crop_ids).delete_all
     TempCrop.where(region: 'jp', is_reference: true).delete_all
-    
+
     # Farms関連
     jp_farm_ids = TempFarm.where(region: 'jp', is_reference: true).pluck(:id)
     jp_weather_location_ids = TempFarm.where(id: jp_farm_ids).pluck(:weather_location_id).compact.uniq
-    
+
     TempWeatherDatum.where(weather_location_id: jp_weather_location_ids).delete_all
     TempWeatherLocation.where(id: jp_weather_location_ids).delete_all
     TempFarm.where(region: 'jp', is_reference: true).delete_all
-    
+
     say "✅ Japan reference data removed"
   end
-  
+
   private
-  
+
   def seed_admin_user
     say_with_time "Creating admin user..." do
       # Anonymous userを取得（既に存在する前提）
@@ -112,7 +112,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
           is_anonymous: true
         )
       end
-      
+
       # Admin user作成
       admin = TempUser.find_or_initialize_by(google_id: 'dev_user_001')
       admin.assign_attributes(
@@ -122,28 +122,28 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
         is_anonymous: false
       )
       admin.save!
-      
+
       1 # 処理件数を返す
     end
   end
-  
+
   def seed_reference_farms_and_weather
     fixture_path = Rails.root.join('db/fixtures/reference_weather.json')
-    
+
     unless File.exist?(fixture_path)
       say "⚠️  Fixture not found: #{fixture_path}", true
       return create_basic_farms_without_weather
     end
-    
+
     say_with_time "Loading reference farms with weather data from fixture..." do
       weather_fixture = JSON.parse(File.read(fixture_path))
       sorted_farms = weather_fixture.sort_by { |farm_name, farm_data| -farm_data['latitude'].to_f }
-      
+
       count = 0
       sorted_farms.each do |farm_name, farm_data|
         # Anonymous userを取得
         anonymous_user = TempUser.find_by(is_anonymous: true)
-        
+
         # Farm作成
         farm = TempFarm.find_or_initialize_by(name: farm_name, is_reference: true, region: 'jp')
         farm.assign_attributes(
@@ -152,7 +152,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
           longitude: farm_data['longitude']
         )
         farm.save!
-        
+
         # WeatherLocation作成
         if farm_data['weather_location']
           wl_data = farm_data['weather_location']
@@ -163,9 +163,9 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
             wl.elevation = wl_data['elevation']
             wl.timezone = wl_data['timezone']
           end
-          
+
           farm.update_column(:weather_location_id, weather_location.id) unless farm.weather_location_id == weather_location.id
-          
+
           # WeatherData一括投入
           if farm_data['weather_data']&.any?
             weather_records = farm_data['weather_data'].map do |wd|
@@ -183,12 +183,12 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
                 updated_at: Time.current
               }
             end
-            
+
             TempWeatherDatum.upsert_all(
               weather_records,
-              unique_by: [:weather_location_id, :date]
+              unique_by: [ :weather_location_id, :date ]
             ) if weather_records.any?
-            
+
             # 進捗情報更新
             total_blocks = ((Date.today.year - 2000 + 1) / 5.0).ceil
             farm.update_columns(
@@ -198,14 +198,14 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
             )
           end
         end
-        
+
         count += 1
       end
-      
+
       count
     end
   end
-  
+
   def create_basic_farms_without_weather
     say_with_time "Creating basic farms without weather data..." do
       reference_farms = [
@@ -257,9 +257,9 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
         { name: '鹿児島', latitude: 31.5966, longitude: 130.5571 },
         { name: '沖縄', latitude: 26.2124, longitude: 127.6809 }
       ]
-      
+
       anonymous_user = TempUser.find_by(is_anonymous: true)
-      
+
       reference_farms.each do |farm_data|
         TempFarm.find_or_create_by!(name: farm_data[:name], is_reference: true, region: 'jp') do |f|
           f.user_id = anonymous_user.id
@@ -267,23 +267,23 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
           f.longitude = farm_data[:longitude]
         end
       end
-      
+
       reference_farms.size
     end
   end
-  
+
   def seed_reference_crops
     fixture_path = Rails.root.join('db/fixtures/reference_crops.json')
-    
+
     unless File.exist?(fixture_path)
       say "⚠️  Crop fixture not found: #{fixture_path}", true
       return 0
     end
-    
+
     say_with_time "Loading reference crops from fixture..." do
       crop_fixture = JSON.parse(File.read(fixture_path))
       count = 0
-      
+
       crop_fixture.each do |crop_name, crop_data|
         crop = TempCrop.find_or_initialize_by(name: crop_name, variety: crop_data['variety'], is_reference: true, region: 'jp')
         crop.assign_attributes(
@@ -293,13 +293,13 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
           revenue_per_area: crop_data['revenue_per_area']
         )
         crop.save!
-        
+
         # CropStages作成
         crop_data['crop_stages']&.each do |stage_data|
           stage = TempCropStage.find_or_initialize_by(crop_id: crop.id, order: stage_data['order'])
           stage.name = stage_data['name']
           stage.save!
-          
+
           # Temperature Requirement
           if stage_data['temperature_requirement']
             temp_req = stage_data['temperature_requirement']
@@ -317,7 +317,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
               tr.save!
             end
           end
-          
+
           # Sunshine Requirement
           if stage_data['sunshine_requirement']
             sun_req = stage_data['sunshine_requirement']
@@ -329,7 +329,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
               sr.save!
             end
           end
-          
+
           # Thermal Requirement
           if stage_data['thermal_requirement']
             thermal_req = stage_data['thermal_requirement']
@@ -341,28 +341,28 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
             end
           end
         end
-        
+
         count += 1
       end
-      
+
       count
     end
   end
-  
+
   def seed_sample_fields
     say_with_time "Creating sample fields for reference farms..." do
       reference_farms = TempFarm.where(is_reference: true, region: 'jp').limit(5)
       field_count = 0
-      
+
       reference_farms.each_with_index do |farm, farm_index|
         farm_prefix = farm.name.gsub(/[県市]/, '').strip[0, 3]
-        
+
         fields_data = [
           { name: "#{farm_prefix}_第1圃場", area: 1000.0, daily_fixed_cost: 3000.0 },
           { name: "#{farm_prefix}_第2圃場", area: 1500.0, daily_fixed_cost: 4500.0 },
           { name: "#{farm_prefix}_第3圃場", area: 800.0, daily_fixed_cost: 2500.0 }
         ]
-        
+
       fields_data.first(farm_index % 2 + 2).each do |field_data|
         field = TempField.find_or_initialize_by(farm_id: farm.id, name: field_data[:name])
         attrs = {
@@ -383,11 +383,11 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
         field_count += 1
       end
       end
-      
+
       field_count
     end
   end
-  
+
   def seed_interaction_rules
     say_with_time "Creating interaction rules for Japan..." do
       # 参照作物のgroupsから科を抽出
@@ -398,7 +398,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
                                .compact
                                .uniq
                                .sort
-      
+
       # 連作の影響度
       continuous_cultivation_impacts = {
         "ナス科" => { impact_ratio: 0.6, description: "ナス科の連作（非常に強い、収益40%減少）- トマト、ナス、ジャガイモ、ピーマンなど" },
@@ -410,14 +410,14 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
         "ヒユ科" => { impact_ratio: 0.9, description: "ヒユ科の連作（軽い、収益10%減少）- ほうれん草、ビートなど" },
         "イネ科" => { impact_ratio: 0.95, description: "イネ科の連作（ほとんどなし、収益5%減少）- とうもろこし、麦、イネなど" }
       }
-      
+
       count = 0
       unique_families.each do |family|
         impact = continuous_cultivation_impacts[family] || {
           impact_ratio: 0.8,
           description: "#{family}の連作（中程度、収益20%減少）"
         }
-        
+
         rule = TempInteractionRule.find_or_initialize_by(
           rule_type: 'continuous_cultivation',
           source_group: family,
@@ -434,7 +434,7 @@ class SeedJapanReferenceData < ActiveRecord::Migration[8.0]
         rule.save!
         count += 1
       end
-      
+
       count
     end
   end

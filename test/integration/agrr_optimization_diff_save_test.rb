@@ -23,7 +23,7 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
       completion_date: Date.current + 10,
       area: 10.0,
       estimated_cost: 1000.0,
-      status: 'pending'
+      status: "pending"
     )
 
     @fc_delete = create(:field_cultivation,
@@ -34,7 +34,7 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
       completion_date: Date.current + 5,
       area: 5.0,
       estimated_cost: 500.0,
-      status: 'pending'
+      status: "pending"
     )
 
     # 削除対象のスケジュール（null化されることを確認）
@@ -56,29 +56,29 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
       is_optimal: true,
       field_schedules: [
         {
-          'field_id' => @field1.id,
-          'allocations' => [
+          "field_id" => @field1.id,
+          "allocations" => [
             {
-              'allocation_id' => @fc_keep.id, # 既存 -> 更新
-              'crop_id' => @crop1.id.to_s,
-              'area_used' => 20.0, # 変更
-              'total_cost' => 1500.0, # 変更
-              'expected_revenue' => 3000.0,
-              'profit' => 1500.0,
-              'accumulated_gdd' => 100.0,
-              'start_date' => (Date.current + 2).to_s, # 変更
-              'completion_date' => (Date.current + 12).to_s
+              "allocation_id" => @fc_keep.id, # 既存 -> 更新
+              "crop_id" => @crop1.id.to_s,
+              "area_used" => 20.0, # 変更
+              "total_cost" => 1500.0, # 変更
+              "expected_revenue" => 3000.0,
+              "profit" => 1500.0,
+              "accumulated_gdd" => 100.0,
+              "start_date" => (Date.current + 2).to_s, # 変更
+              "completion_date" => (Date.current + 12).to_s
             },
             {
-              'allocation_id' => nil, # 新規 -> 作成
-              'crop_id' => @crop2.id.to_s,
-              'area_used' => 7.5,
-              'total_cost' => 700.0,
-              'expected_revenue' => 2000.0,
-              'profit' => 1300.0,
-              'accumulated_gdd' => 55.0,
-              'start_date' => (Date.current + 1).to_s,
-              'completion_date' => (Date.current + 8).to_s
+              "allocation_id" => nil, # 新規 -> 作成
+              "crop_id" => @crop2.id.to_s,
+              "area_used" => 7.5,
+              "total_cost" => 700.0,
+              "expected_revenue" => 2000.0,
+              "profit" => 1300.0,
+              "accumulated_gdd" => 55.0,
+              "start_date" => (Date.current + 1).to_s,
+              "completion_date" => (Date.current + 8).to_s
             }
           ]
         }
@@ -112,11 +112,9 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
 
     # サマリ更新
     @plan.reload
-    assert_equal 'completed', @plan.status
+    assert_equal "completed", @plan.status
     assert_in_delta 123.0, @plan.total_profit.to_f, 0.001
     assert_in_delta 456.0, @plan.total_revenue.to_f, 0.001
     assert_in_delta 333.0, @plan.total_cost.to_f, 0.001
   end
 end
-
-

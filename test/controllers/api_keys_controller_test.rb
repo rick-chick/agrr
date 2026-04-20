@@ -10,28 +10,28 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "should show api key page" do
     get api_keys_path
-    
+
     assert_response :success
     assert_select "h1", I18n.t("api_keys.title")
   end
 
   test "should show generate button when api key is not set" do
     assert_not @user.has_api_key?
-    
+
     get api_keys_path
-    
+
     assert_response :success
     assert_select "button", I18n.t("api_keys.actions.generate")
   end
 
   test "should generate api key" do
     assert_not @user.has_api_key?
-    
+
     post generate_api_key_path
-    
+
     assert_redirected_to api_keys_path
     assert_equal I18n.t("api_keys.flash.generate.success"), flash[:notice]
-    
+
     @user.reload
     assert @user.has_api_key?
     assert_not_nil @user.api_key
@@ -39,9 +39,9 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "should show api key when it exists" do
     @user.generate_api_key!
-    
+
     get api_keys_path
-    
+
     assert_response :success
     assert_select "input#api_key[value=?]", @user.api_key
     assert_select "button", "APIキーを再生成"
@@ -49,19 +49,19 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "should regenerate api key" do
     old_key = @user.generate_api_key!
-    
+
     post regenerate_api_key_path
-    
+
     assert_redirected_to api_keys_path
     assert_equal I18n.t("api_keys.flash.regenerate.success"), flash[:notice]
-    
+
     @user.reload
     assert_not_equal old_key, @user.api_key
   end
 
   test "should require authentication" do
     delete auth_logout_path
-    
+
     get api_keys_path
     assert_redirected_to auth_login_path
   end

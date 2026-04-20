@@ -22,7 +22,7 @@ module Domain
 
           @presenter.error "❌ [Farm##{farm_id}] Invalid data for #{period_str}: #{error_message}"
 
-          error_msg = @translator.t('jobs.fetch_weather_data.validation_error', error: error_message)
+          error_msg = @translator.t("jobs.fetch_weather_data.validation_error", error: error_message)
           @farm_gateway.mark_weather_data_failed(farm_id, error_msg) if farm_id
         end
       end

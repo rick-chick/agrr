@@ -22,7 +22,7 @@ module Domain
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != fertilize_model.is_reference && !user.admin?
-              raise StandardError, @translator.t('fertilizes.flash.reference_flag_admin_only')
+              raise StandardError, @translator.t("fertilizes.flash.reference_flag_admin_only")
             end
             attrs[:is_reference] = is_reference
           end
@@ -35,7 +35,7 @@ module Domain
           attrs[:package_size] = input_dto.package_size if !input_dto.package_size.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
           unless Domain::Shared::Policies::FertilizePolicy.apply_update!(user, fertilize_model, attrs)
-            raise StandardError, fertilize_model.errors.full_messages.join(', ')
+            raise StandardError, fertilize_model.errors.full_messages.join(", ")
           end
 
           fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model.reload)

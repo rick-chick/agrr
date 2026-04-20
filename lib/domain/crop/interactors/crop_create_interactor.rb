@@ -22,7 +22,7 @@ module Domain
             groups: input_dto.groups || [],
             is_reference: input_dto.is_reference
           })
-          raise StandardError, crop_model.errors.full_messages.join(', ') unless crop_model.save
+          raise StandardError, crop_model.errors.full_messages.join(", ") unless crop_model.save
 
           crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model)
           @output_port.on_success(crop_entity)
@@ -35,5 +35,3 @@ module Domain
     end
   end
 end
-
-

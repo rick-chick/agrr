@@ -2,7 +2,7 @@
 
 class WeatherLocation < ApplicationRecord
   serialize :predicted_weather_data, coder: JSON
-  
+
   # Associations
   has_many :weather_data, dependent: :destroy
 
@@ -22,13 +22,13 @@ class WeatherLocation < ApplicationRecord
     # 既存のレコードを検索
     location = find_by(latitude: latitude, longitude: longitude)
     return location if location
-    
+
     # 存在しない場合は作成（競合状態を考慮）
     create!(
       latitude: latitude,
       longitude: longitude,
       elevation: elevation,
-      timezone: timezone || 'UTC'
+      timezone: timezone || "UTC"
     )
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
     # 別のジョブが同時に作成した場合は再取得
@@ -37,7 +37,7 @@ class WeatherLocation < ApplicationRecord
 
   # Instance methods
   def coordinates
-    [latitude, longitude]
+    [ latitude, longitude ]
   end
 
   def coordinates_string
@@ -68,4 +68,3 @@ class WeatherLocation < ApplicationRecord
     gateway.earliest_date(weather_location_id: id)
   end
 end
-

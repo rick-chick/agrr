@@ -1,14 +1,14 @@
-require 'test_helper'
+require "test_helper"
 
 module DeletionUndo
   class SnapshotRestorerTest < ActiveSupport::TestCase
-    test 'raises error when reference snapshot record is missing' do
+    test "raises error when reference snapshot record is missing" do
       missing_id = SecureRandom.uuid
 
       snapshot = {
-        'model' => 'Pesticide',
-        'attributes' => { 'id' => missing_id },
-        'reference' => true
+        "model" => "Pesticide",
+        "attributes" => { "id" => missing_id },
+        "reference" => true
       }
 
       assert_raises DeletionUndo::SnapshotRestorer::ReferenceRecordNotFoundError do
@@ -17,5 +17,3 @@ module DeletionUndo
     end
   end
 end
-
-

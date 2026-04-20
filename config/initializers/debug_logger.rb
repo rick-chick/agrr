@@ -17,12 +17,3 @@ if ENV["AGRR_DEBUG"].to_s == "1"
 
   Rails.logger.info "🛠  AGRR_DEBUG enabled. Broadcasting DEBUG logs to #{debug_log_path}"
 end
-
-
-
-
-
-
-
-
-

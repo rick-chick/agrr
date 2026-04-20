@@ -43,15 +43,15 @@ module Domain
           crop_model = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, user, crop_id)
 
           if crop_model.cultivation_plan_crops.any?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('crops.flash.cannot_delete_in_use.plan')))
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.cannot_delete_in_use.plan")))
             return
           end
           if crop_model.free_crop_plans.any?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('crops.flash.cannot_delete_in_use.other')))
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.cannot_delete_in_use.other")))
             return
           end
           if crop_model.pesticides.any?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('crops.flash.cannot_delete_in_use.other')))
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.cannot_delete_in_use.other")))
             return
           end
 
@@ -64,7 +64,7 @@ module Domain
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: crop_model,
             actor: user,
-            toast_message: @translator.t('crops.undo.toast', name: crop_model.name),
+            toast_message: @translator.t("crops.undo.toast", name: crop_model.name),
             auto_hide_after: 5000,
             metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(crop_model) }
           )

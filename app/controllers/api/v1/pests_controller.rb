@@ -1,25 +1,25 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'json'
+require "open3"
+require "json"
 
 module Api
   module V1
     class PestsController < Api::V1::BaseController
       # ai_createは認証不要（無料プラン機能の一部）
       # ai_updateはHTMLフォームから呼び出すため認証必須
-      skip_before_action :authenticate_api_request, only: [:ai_create]
-      before_action :authenticate_api_request, only: [:ai_update]
-      before_action :set_interactors, only: [:ai_create, :ai_update]
-      before_action :set_pest, only: [:ai_update]
+      skip_before_action :authenticate_api_request, only: [ :ai_create ]
+      before_action :authenticate_api_request, only: [ :ai_update ]
+      before_action :set_interactors, only: [ :ai_create, :ai_update ]
+      before_action :set_pest, only: [ :ai_update ]
 
       # POST /api/v1/pests/ai_create
       # AIで害虫情報を取得して保存
       def ai_create
         pest_name = params[:name]&.strip
-        
+
         if current_user.anonymous?
-          return render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+          return render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
         end
 
         # affected_cropsを適切に処理（ActionController::Parametersまたは配列に対応）
@@ -38,7 +38,7 @@ module Api
         else
           []
         end
-        
+
         # デバッグ: 受け取ったパラメータをログに記録
         Rails.logger.info "🔍 [AI Pest] Received params: name=#{pest_name}"
         Rails.logger.info "🔍 [AI Pest] affected_crops_raw class: #{affected_crops_raw.class}, is_array?: #{affected_crops_raw.is_a?(Array)}"
@@ -46,7 +46,7 @@ module Api
         Rails.logger.info "🔍 [AI Pest] affected_crops count: #{affected_crops.count}"
 
         unless pest_name.present?
-          return render json: { error: I18n.t('api.errors.pests.name_required', default: '害虫名を入力してください') }, status: :bad_request
+          return render json: { error: I18n.t("api.errors.pests.name_required", default: "害虫名を入力してください") }, status: :bad_request
         end
 
         begin
@@ -55,24 +55,24 @@ module Api
           pest_info = fetch_pest_info_from_agrr(pest_name, affected_crops)
 
           # エラーチェック
-          if pest_info['success'] == false
-            error_msg = pest_info['error'] || I18n.t('api.errors.pests.fetch_failed', default: '害虫情報の取得に失敗しました')
-            status_code = pest_info['code'] == 'daemon_not_running' ? :service_unavailable : :unprocessable_entity
+          if pest_info["success"] == false
+            error_msg = pest_info["error"] || I18n.t("api.errors.pests.fetch_failed", default: "害虫情報の取得に失敗しました")
+            status_code = pest_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
             return render json: { error: error_msg }, status: status_code
           end
 
           # 正常時は pest がトップレベルに存在
-          pest_data = pest_info['data']&.dig('pest')
-          
+          pest_data = pest_info["data"]&.dig("pest")
+
           unless pest_data
-            return render json: { error: I18n.t('api.errors.pests.invalid_payload', default: '不正なデータ形式です') }, status: :unprocessable_entity
+            return render json: { error: I18n.t("api.errors.pests.invalid_payload", default: "不正なデータ形式です") }, status: :unprocessable_entity
           end
 
-          affected_crops_from_agrr = pest_info.dig('data', 'affected_crops')
+          affected_crops_from_agrr = pest_info.dig("data", "affected_crops")
           if affected_crops_from_agrr.present? && !affected_crops_from_agrr.is_a?(Array)
             message = I18n.t(
-              'api.errors.pests.invalid_affected_crops',
-              default: 'agrr応答のaffected_cropsが不正です'
+              "api.errors.pests.invalid_affected_crops",
+              default: "agrr応答のaffected_cropsが不正です"
             )
             Rails.logger.error "❌ [AI Pest] Invalid affected_crops format: #{affected_crops_from_agrr.inspect}"
             return render json: { error: message }, status: :unprocessable_entity
@@ -82,22 +82,22 @@ module Api
 
           # 2. 既存の害虫を検索（AI作成は常にユーザー害虫）
           existing_pest = ::Pest.find_by(
-            name: pest_data['name'],
+            name: pest_data["name"],
             is_reference: false,
             user_id: current_user.id
           )
 
           # 3. pest_dataを整形（所有者・参照フラグは Policy に委譲）
           base_attrs = {
-            name: pest_data['name'],
-            name_scientific: pest_data['name_scientific'],
-            family: pest_data['family'],
-            order: pest_data['order'],
-            description: pest_data['description'],
-            occurrence_season: pest_data['occurrence_season'],
-            temperature_profile: pest_data['temperature_profile'],
-            thermal_requirement: pest_data['thermal_requirement'],
-            control_methods: pest_data['control_methods'] || []
+            name: pest_data["name"],
+            name_scientific: pest_data["name_scientific"],
+            family: pest_data["family"],
+            order: pest_data["order"],
+            description: pest_data["description"],
+            occurrence_season: pest_data["occurrence_season"],
+            temperature_profile: pest_data["temperature_profile"],
+            thermal_requirement: pest_data["thermal_requirement"],
+            control_methods: pest_data["control_methods"] || []
           }
 
           if existing_pest
@@ -156,7 +156,7 @@ module Api
               order: pest_entity.order,
               description: pest_entity.description,
               occurrence_season: pest_entity.occurrence_season,
-              message: I18n.t('api.messages.pests.created_by_ai', name: pest_entity.name, default: '害虫「%{name}」の情報を取得して保存しました')
+              message: I18n.t("api.messages.pests.created_by_ai", name: pest_entity.name, default: "害虫「%{name}」の情報を取得して保存しました")
             }, status: status_code
           else
             Rails.logger.error "❌ [AI Pest] Failed to #{existing_pest ? 'update' : 'create'}: #{result.error}"
@@ -166,7 +166,7 @@ module Api
         rescue => e
           Rails.logger.error "❌ [AI Pest] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: I18n.t('api.errors.pests.fetch_failed_with_reason', message: e.message, default: '害虫情報の取得に失敗しました: %{message}') }, status: :internal_server_error
+          render json: { error: I18n.t("api.errors.pests.fetch_failed_with_reason", message: e.message, default: "害虫情報の取得に失敗しました: %{message}") }, status: :internal_server_error
         end
       end
 
@@ -176,11 +176,11 @@ module Api
         pest_name = params[:name]&.strip
 
         unless pest_name.present?
-          return render json: { error: I18n.t('api.errors.pests.name_required', default: '害虫名を入力してください') }, status: :bad_request
+          return render json: { error: I18n.t("api.errors.pests.name_required", default: "害虫名を入力してください") }, status: :bad_request
         end
 
         unless @pest
-          return render json: { error: I18n.t('api.errors.pests.not_found', default: '害虫が見つかりません') }, status: :not_found
+          return render json: { error: I18n.t("api.errors.pests.not_found", default: "害虫が見つかりません") }, status: :not_found
         end
 
         begin
@@ -190,30 +190,30 @@ module Api
           pest_info = fetch_pest_info_from_agrr(pest_name, affected_crops)
 
           # エラーチェック
-          if pest_info['success'] == false
-            error_msg = pest_info['error'] || I18n.t('api.errors.pests.fetch_failed', default: '害虫情報の取得に失敗しました')
-            status_code = pest_info['code'] == 'daemon_not_running' ? :service_unavailable : :unprocessable_entity
+          if pest_info["success"] == false
+            error_msg = pest_info["error"] || I18n.t("api.errors.pests.fetch_failed", default: "害虫情報の取得に失敗しました")
+            status_code = pest_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
             return render json: { error: error_msg }, status: status_code
           end
 
-          pest_data = pest_info['data']&.dig('pest')
+          pest_data = pest_info["data"]&.dig("pest")
           unless pest_data
-            return render json: { error: I18n.t('api.errors.pests.invalid_payload', default: '不正なデータ形式です') }, status: :unprocessable_entity
+            return render json: { error: I18n.t("api.errors.pests.invalid_payload", default: "不正なデータ形式です") }, status: :unprocessable_entity
           end
 
           Rails.logger.info "🔄 [AI Pest] Updating pest##{@pest.id} with latest data from agrr"
 
           # pest_dataを整形
           attrs = {
-            name: pest_data['name'],
-            name_scientific: pest_data['name_scientific'],
-            family: pest_data['family'],
-            order: pest_data['order'],
-            description: pest_data['description'],
-            occurrence_season: pest_data['occurrence_season'],
-            temperature_profile: pest_data['temperature_profile'],
-            thermal_requirement: pest_data['thermal_requirement'],
-            control_methods: pest_data['control_methods'] || []
+            name: pest_data["name"],
+            name_scientific: pest_data["name_scientific"],
+            family: pest_data["family"],
+            order: pest_data["order"],
+            description: pest_data["description"],
+            occurrence_season: pest_data["occurrence_season"],
+            temperature_profile: pest_data["temperature_profile"],
+            thermal_requirement: pest_data["thermal_requirement"],
+            control_methods: pest_data["control_methods"] || []
           }
 
           result = @update_interactor.call(@pest.id, attrs.symbolize_keys)
@@ -232,7 +232,7 @@ module Api
               description: pest_entity.description,
               occurrence_season: pest_entity.occurrence_season,
               is_reference: pest_entity.is_reference,
-              message: I18n.t('api.messages.pests.updated_by_ai', name: pest_entity.name, default: '害虫「%{name}」を更新しました')
+              message: I18n.t("api.messages.pests.updated_by_ai", name: pest_entity.name, default: "害虫「%{name}」を更新しました")
             }, status: :ok
           else
             Rails.logger.error "❌ [AI Pest] Failed to update: #{result.error}"
@@ -242,7 +242,7 @@ module Api
         rescue => e
           Rails.logger.error "❌ [AI Pest] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: I18n.t('api.errors.pests.fetch_failed_with_reason', message: e.message, default: '害虫情報の取得に失敗しました: %{message}') }, status: :internal_server_error
+          render json: { error: I18n.t("api.errors.pests.fetch_failed_with_reason", message: e.message, default: "害虫情報の取得に失敗しました: %{message}") }, status: :internal_server_error
         end
       end
 
@@ -265,21 +265,21 @@ module Api
 
       def fetch_pest_info_from_agrr(pest_name, affected_crops = [], max_retries: 3)
         agrr_service = AgrrService.new
-        
+
         attempt = 0
         last_error = nil
 
         # リトライループ
         max_retries.times do |retry_count|
           attempt = retry_count + 1
-          
+
           begin
             # 影響作物をJSON配列に変換
             crops_json = affected_crops.to_json
             Rails.logger.debug "🔧 [AGRR Pest-to-Crop Query] pest-to-crop --pest #{pest_name} --crops #{crops_json} (attempt #{attempt}/#{max_retries})"
 
             # AgrrServiceを使ってpest_to_cropコマンドを実行
-            stdout = agrr_service.pest_to_crop(pest: pest_name, crops: crops_json, language: 'ja')
+            stdout = agrr_service.pest_to_crop(pest: pest_name, crops: crops_json, language: "ja")
 
             # agrrコマンドの生の出力をログに記録
             Rails.logger.debug "📥 [AGRR Pest-to-Crop Output] #{stdout[0..500]}#{'...' if stdout.length > 500}"
@@ -287,13 +287,13 @@ module Api
             parsed_data = JSON.parse(stdout)
 
             # データ構造を検証
-            if parsed_data['success'] == false
+            if parsed_data["success"] == false
               Rails.logger.error "📊 [AGRR Pest-to-Crop Error] #{parsed_data['error']} (code: #{parsed_data['code']})"
             else
-              pest_data = parsed_data['data']&.dig('pest')
+              pest_data = parsed_data["data"]&.dig("pest")
               Rails.logger.debug "📊 [AGRR Pest-to-Crop Data] name: #{pest_data&.dig('name')}"
               Rails.logger.debug "📊 [AGRR Pest-to-Crop Data] family: #{pest_data&.dig('family')}"
-              
+
               if attempt > 1
                 Rails.logger.info "✅ [AGRR Pest-to-Crop Query] Succeeded after #{attempt} attempts"
               end
@@ -304,21 +304,21 @@ module Api
           rescue AgrrService::DaemonNotRunningError => e
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query] Daemon not running: #{e.message}"
             return {
-              'success' => false,
-              'error' => I18n.t('api.errors.pests.daemon_not_running', default: 'AGRRサービスが起動していません。サービスを起動してから再度お試しください。'),
-              'code' => 'daemon_not_running'
+              "success" => false,
+              "error" => I18n.t("api.errors.pests.daemon_not_running", default: "AGRRサービスが起動していません。サービスを起動してから再度お試しください。"),
+              "code" => "daemon_not_running"
             }
           rescue AgrrService::CommandExecutionError => e
             error_msg = e.message
-            
+
             # 一時的なエラーの場合はリトライ
-            if error_msg.include?('decompressing') || 
-               error_msg.include?('Connection') || 
-               error_msg.include?('timeout') ||
-               error_msg.include?('Network')
-              
+            if error_msg.include?("decompressing") ||
+               error_msg.include?("Connection") ||
+               error_msg.include?("timeout") ||
+               error_msg.include?("Network")
+
               Rails.logger.warn "⚠️  [AGRR Pest-to-Crop Query] Transient error (attempt #{attempt}/#{max_retries}): #{error_msg}"
-              
+
               if attempt < max_retries
                 sleep_time = 2 ** attempt
                 Rails.logger.info "⏳ [AGRR Pest-to-Crop Query] Retrying in #{sleep_time} seconds..."
@@ -326,24 +326,24 @@ module Api
                 next
               end
             end
-            
+
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query Error] Command failed: #{error_msg}"
             raise "Failed to query pest info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query] JSON parse error: #{e.message}"
             raise "Invalid JSON response from agrr: #{e.message}"
-            
+
           rescue => e
             last_error = e
             Rails.logger.warn "⚠️  [AGRR Pest-to-Crop Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
-            
+
             if attempt < max_retries
               sleep_time = 2 ** attempt
               Rails.logger.info "⏳ [AGRR Pest-to-Crop Query] Retrying in #{sleep_time} seconds..."
               sleep(sleep_time)
               next
             end
-            
+
             raise
           end
         end
@@ -358,16 +358,16 @@ module Api
 
       def associate_crops_from_api(pest, affected_crops)
         Rails.logger.info "🔗 [AI Pest] associate_crops_from_api called with: #{affected_crops.inspect}"
-        
+
         # affected_cropsは [{"crop_id": "1", "crop_name": "ブロッコリー"}, ...] の形式
         # ハッシュまたはシンボルキーのハッシュの両方に対応
         crop_ids = affected_crops.map do |c|
           # ハッシュの場合（文字列キーまたはシンボルキー）
           if c.is_a?(Hash)
-            c['crop_id'] || c[:crop_id] || c['crop_id'.to_sym] || c[:'crop_id']
+            c["crop_id"] || c[:crop_id] || c["crop_id".to_sym] || c[:'crop_id']
           # ActionController::Parametersの場合はハッシュのように扱える
           elsif c.respond_to?(:[])
-            c['crop_id'] || c[:crop_id] || c['crop_id'.to_sym]
+            c["crop_id"] || c[:crop_id] || c["crop_id".to_sym]
           # オブジェクトの場合
           elsif c.respond_to?(:crop_id)
             c.crop_id
@@ -375,7 +375,7 @@ module Api
             nil
           end
         end.compact.reject(&:blank?).map(&:to_i)
-        
+
         Rails.logger.info "🔗 [AI Pest] Extracted crop IDs: #{crop_ids.inspect}"
         Rails.logger.info "🔗 [AI Pest] Current user: #{current_user&.id || 'nil'}, is_admin?: #{admin_user?}"
 
@@ -383,9 +383,9 @@ module Api
         if crop_ids.empty?
           crop_names = affected_crops.map do |c|
             if c.is_a?(Hash)
-              c['crop_name'] || c[:crop_name] || c['crop_name'.to_sym] || c[:'crop_name']
+              c["crop_name"] || c[:crop_name] || c["crop_name".to_sym] || c[:'crop_name']
             elsif c.respond_to?(:[])
-              c['crop_name'] || c[:crop_name] || c['crop_name'.to_sym]
+              c["crop_name"] || c[:crop_name] || c["crop_name".to_sym]
             elsif c.respond_to?(:crop_name)
               c.crop_name
             else
@@ -415,12 +415,12 @@ module Api
           crop_ids.uniq!
           Rails.logger.info "🔗 [AI Pest] Crop IDs after fallback: #{crop_ids.inspect}"
         end
-        
+
         if crop_ids.empty?
           Rails.logger.warn "⚠️  [AI Pest] No crop IDs extracted from affected_crops"
           return
         end
-        
+
         associated_count = 0
         crop_ids.each do |crop_id|
           crop = ::Crop.find_by(id: crop_id)
@@ -428,9 +428,9 @@ module Api
             Rails.logger.warn "⚠️  [AI Pest] Crop not found: ID=#{crop_id}"
             next
           end
-          
+
           Rails.logger.info "🔗 [AI Pest] Processing crop: #{crop.name} (ID: #{crop.id}, is_reference: #{crop.is_reference}, user_id: #{crop.user_id})"
-          
+
           # 権限チェック：参照作物は常にアクセス可能（AI API特有のロジック）
           # ユーザー作物の場合はPolicy経由で関連付け可否を判定
           can_access = if crop.is_reference
@@ -443,9 +443,9 @@ module Api
             # Policy経由で関連付け可否を判定
             PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: current_user)
           end
-          
+
           Rails.logger.info "🔗 [AI Pest] Can access crop #{crop.name}? #{can_access}"
-          
+
           if can_access
             if pest.crops.include?(crop)
               Rails.logger.info "ℹ️  [AI Pest] Crop already associated: #{crop.name}"
@@ -458,7 +458,7 @@ module Api
             Rails.logger.warn "⚠️  [AI Pest] Cannot access crop: #{crop.name} (user_id: #{crop.user_id}, current_user: #{current_user&.id})"
           end
         end
-        
+
         Rails.logger.info "✅ [AI Pest] Crop association completed: #{associated_count} crops associated"
       rescue => e
         Rails.logger.error "❌ [AI Pest] Failed to associate crops: #{e.message}"
@@ -468,4 +468,3 @@ module Api
     end
   end
 end
-

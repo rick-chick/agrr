@@ -58,7 +58,7 @@ module Domain
           )
 
           User.expects(:find).with(@user_id).returns(@user)
-          @mock_translator.expects(:t).with('fertilizes.flash.reference_only_admin').returns('admin only')
+          @mock_translator.expects(:t).with("fertilizes.flash.reference_only_admin").returns("admin only")
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)
@@ -107,7 +107,7 @@ module Domain
 
           fertilize_model = mock
           errors_mock = mock
-          errors_mock.expects(:full_messages).returns(["Name can't be blank"])
+          errors_mock.expects(:full_messages).returns([ "Name can't be blank" ])
           fertilize_model.expects(:errors).returns(errors_mock)
 
           User.expects(:find).with(@user_id).returns(@user)

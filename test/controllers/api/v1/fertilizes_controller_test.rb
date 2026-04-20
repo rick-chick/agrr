@@ -31,7 +31,7 @@ module Api
         )
 
         assert_difference "Fertilize.count", +1 do
-          post api_v1_fertilizes_ai_create_path, 
+          post api_v1_fertilizes_ai_create_path,
              params: { name: "尿素" },
              headers: { "Accept" => "application/json" }
         end
@@ -62,10 +62,10 @@ module Api
           error_response: nil
         )
 
-        post api_v1_fertilizes_ai_create_path, 
+        post api_v1_fertilizes_ai_create_path,
              params: { name: "リン酸一安" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
         json_response = JSON.parse(response.body)
         assert_equal 20.0, json_response["package_size"]
@@ -82,10 +82,10 @@ module Api
           error_response: nil
         )
 
-        post api_v1_fertilizes_ai_create_path, 
+        post api_v1_fertilizes_ai_create_path,
              params: { name: "リン酸一安" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
         json_response = JSON.parse(response.body)
         assert_nil json_response["package_size"]
@@ -94,7 +94,7 @@ module Api
       test "ai_create should update existing fertilize with package_size from agrr" do
         # 既存の肥料を作成
         existing = create(:fertilize, :user_owned, user: @user, name: "尿素", package_size: 20.0)
-        
+
         Rails.configuration.x.fertilize_ai_gateway = FertilizeAiGatewayStub.new(
           success_response: {
             "name" => "尿素",
@@ -107,7 +107,7 @@ module Api
         )
 
         assert_no_difference "Fertilize.count" do
-          post api_v1_fertilizes_ai_create_path, 
+          post api_v1_fertilizes_ai_create_path,
                params: { name: "尿素" },
                headers: { "Accept" => "application/json" }
         end
@@ -116,7 +116,7 @@ module Api
         json_response = JSON.parse(response.body)
         assert json_response["success"]
         assert_equal 25.0, json_response["package_size"]
-        
+
         # DBを確認
         existing.reload
         assert_equal 25.0, existing.package_size
@@ -144,10 +144,10 @@ module Api
           error_response: nil
         )
 
-        post api_v1_fertilizes_ai_create_path, 
+        post api_v1_fertilizes_ai_create_path,
              params: { name: "尿素" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
         json_response = JSON.parse(response.body)
         assert json_response["success"]
@@ -165,10 +165,10 @@ module Api
           }
         )
 
-        post api_v1_fertilizes_ai_create_path, 
+        post api_v1_fertilizes_ai_create_path,
              params: { name: "尿素" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :service_unavailable
         json_response = JSON.parse(response.body)
         assert_includes json_response["error"], "AGRRサービスが起動していません"
@@ -207,4 +207,3 @@ module Api
     end
   end
 end
-

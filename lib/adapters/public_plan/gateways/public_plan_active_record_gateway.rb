@@ -14,11 +14,11 @@ module Adapters
 
         def find_farm_size(farm_size_id)
           farm_sizes = [
-            { id: 'home_garden', area_sqm: 30 },
-            { id: 'community_garden', area_sqm: 50 },
-            { id: 'rental_farm', area_sqm: 300 }
+            { id: "home_garden", area_sqm: 30 },
+            { id: "community_garden", area_sqm: 50 },
+            { id: "rental_farm", area_sqm: 300 }
           ]
-          
+
           farm_sizes.find do |size|
             size[:id].to_s == farm_size_id.to_s || size[:area_sqm] == farm_size_id.to_i
           end
@@ -36,7 +36,7 @@ module Adapters
             crops: create_dto.crops,
             user: create_dto.user,
             session_id: create_dto.session_id,
-            plan_type: 'public',
+            plan_type: "public",
             planning_start_date: create_dto.planning_start_date,
             planning_end_date: create_dto.planning_end_date
           )
@@ -49,7 +49,7 @@ module Adapters
             @logger.info "🌱 [PublicPlanActiveRecordGateway] Created new CultivationPlan with plan_id: #{plan_id}"
           else
             # 失敗時のエラーログ出力
-            error_message = result.errors&.join(', ') || "Failed to create cultivation plan"
+            error_message = result.errors&.join(", ") || "Failed to create cultivation plan"
             @logger.error "❌ [PublicPlanActiveRecordGateway] CultivationPlan creation failed: #{error_message}"
             raise StandardError, error_message
           end

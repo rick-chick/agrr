@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'json'
-require 'net/http'
-require 'uri'
+require "json"
+require "net/http"
+require "uri"
 
 module ContactMessages
   module Services
     class RecaptchaVerifier
       class VerificationError < StandardError; end
 
-      VERIFY_URI = URI('https://www.google.com/recaptcha/api/siteverify')
+      VERIFY_URI = URI("https://www.google.com/recaptcha/api/siteverify")
 
-      def initialize(secret_key: ENV['RECAPTCHA_SECRET_KEY'])
+      def initialize(secret_key: ENV["RECAPTCHA_SECRET_KEY"])
         @secret_key = secret_key
       end
 
@@ -21,7 +21,7 @@ module ContactMessages
         response = Net::HTTP.post_form(VERIFY_URI, request_payload(token: token, remote_ip: remote_ip))
         payload = parse_response(response.body)
 
-        return true if payload['success']
+        return true if payload["success"]
 
         raise VerificationError, error_message(payload)
       rescue VerificationError
@@ -53,12 +53,11 @@ module ContactMessages
       end
 
       def error_message(payload)
-        errors = Array(payload['error-codes']).map(&:to_s)
-        return 'reCAPTCHA verification failed' if errors.empty?
+        errors = Array(payload["error-codes"]).map(&:to_s)
+        return "reCAPTCHA verification failed" if errors.empty?
 
         "reCAPTCHA failure: #{errors.join(', ')}"
       end
     end
   end
 end
-

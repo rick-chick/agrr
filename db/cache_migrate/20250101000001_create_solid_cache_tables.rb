@@ -10,9 +10,8 @@ class CreateSolidCacheTables < ActiveRecord::Migration[8.0]
       t.integer :byte_size, limit: 4, null: false
 
       t.index :byte_size
-      t.index [:key_hash, :byte_size]
+      t.index [ :key_hash, :byte_size ]
       t.index :key_hash, unique: true
     end
   end
 end
-

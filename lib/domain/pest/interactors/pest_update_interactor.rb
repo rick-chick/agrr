@@ -32,7 +32,7 @@ module Domain
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != Pest.find(input_dto.pest_id).is_reference && !user.admin?
-              raise StandardError, @translator.t('pests.flash.reference_flag_admin_only')
+              raise StandardError, @translator.t("pests.flash.reference_flag_admin_only")
             end
             attrs[:is_reference] = is_reference
           end
@@ -46,7 +46,7 @@ module Domain
             pest_model.pest_thermal_requirement&.errors&.full_messages&.each { |msg| error_messages << "PestThermalRequirement: #{msg}" }
             pest_model.pest_control_methods&.each { |method| method.errors.full_messages.each { |msg| error_messages << "PestControlMethod: #{msg}" } }
             @logger.error "PestUpdateInteractor errors: #{error_messages.flatten.join(', ')}"
-            raise StandardError, error_messages.flatten.join(', ')
+            raise StandardError, error_messages.flatten.join(", ")
           end
 
           unless input_dto.crop_ids.nil?

@@ -12,12 +12,12 @@ module Presenters
           # crop association は Interactor 内で実施済み
           @view.redirect_to(
             @view.pest_path(pest_entity.id),
-            notice: I18n.t('pests.flash.created')
+            notice: I18n.t("pests.flash.created")
           )
         end
 
         def on_failure(error_dto)
-          ref_msg = I18n.t('pests.flash.reference_only_admin')
+          ref_msg = I18n.t("pests.flash.reference_only_admin")
           if error_dto.message.to_s == ref_msg || error_dto.message.to_s.include?(ref_msg.to_s)
             @view.redirect_to @view.pests_path, alert: ref_msg
             return

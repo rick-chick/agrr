@@ -10,7 +10,7 @@ module Api
         if current_user.generate_api_key!
           render json: { api_key: current_user.api_key, success: true }
         else
-          render json: { error: 'Failed to generate API key' }, status: :unprocessable_entity
+          render json: { error: "Failed to generate API key" }, status: :unprocessable_entity
         end
       end
 
@@ -19,7 +19,7 @@ module Api
         if current_user.regenerate_api_key!
           render json: { api_key: current_user.api_key, success: true }
         else
-          render json: { error: 'Failed to regenerate API key' }, status: :unprocessable_entity
+          render json: { error: "Failed to regenerate API key" }, status: :unprocessable_entity
         end
       end
     end

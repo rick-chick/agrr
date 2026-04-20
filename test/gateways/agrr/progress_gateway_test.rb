@@ -1,4 +1,4 @@
-require 'test_helper'
+require "test_helper"
 
 class AgrrProgressGatewayTest < ActiveSupport::TestCase
   class StubAgrrService
@@ -7,14 +7,14 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
 
     def initialize
       @response = {
-        'progress_records' => [
+        "progress_records" => [
           {
-            'date' => '2025-04-01T00:00:00',
-            'cumulative_gdd' => 75.5,
-            'total_required_gdd' => 240.0
+            "date" => "2025-04-01T00:00:00",
+            "cumulative_gdd" => 75.5,
+            "total_required_gdd" => 240.0
           }
         ],
-        'total_gdd' => 320.0
+        "total_gdd" => 320.0
       }.to_json
     end
 
@@ -38,33 +38,33 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
 
     @crop_profile = {
-      'crop' => { 'name' => 'トマト', 'variety' => 'アイコ' },
-      'stage_requirements' => [
+      "crop" => { "name" => "トマト", "variety" => "アイコ" },
+      "stage_requirements" => [
         {
-          'stage' => { 'name' => '発芽', 'order' => 1 },
-          'thermal' => { 'required_gdd' => 240 },
-          'temperature' => {
-            'base_temperature' => 8.0,
-            'optimal_min' => 15.0,
-            'optimal_max' => 28.0,
-            'low_stress_threshold' => 5.0,
-            'high_stress_threshold' => 32.0,
-            'frost_threshold' => -2.0,
-            'max_temperature' => 40.0
+          "stage" => { "name" => "発芽", "order" => 1 },
+          "thermal" => { "required_gdd" => 240 },
+          "temperature" => {
+            "base_temperature" => 8.0,
+            "optimal_min" => 15.0,
+            "optimal_max" => 28.0,
+            "low_stress_threshold" => 5.0,
+            "high_stress_threshold" => 32.0,
+            "frost_threshold" => -2.0,
+            "max_temperature" => 40.0
           }
         }
       ]
     }
 
     @weather_data = {
-      'data' => [
-        { 'time' => '2025-04-01T00:00:00', 'temperature_2m_mean' => 16.5 },
-        { 'time' => '2025-04-02T00:00:00', 'temperature_2m_mean' => 18.0 }
+      "data" => [
+        { "time" => "2025-04-01T00:00:00", "temperature_2m_mean" => 16.5 },
+        { "time" => "2025-04-02T00:00:00", "temperature_2m_mean" => 18.0 }
       ]
     }
   end
 
-  test 'calculate_progress uploads temp files and parses agrr response' do
+  test "calculate_progress uploads temp files and parses agrr response" do
     crop = Class.new do
       def initialize(profile)
         @profile = profile
@@ -75,7 +75,7 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
       end
 
       def name
-        'トマト'
+        "トマト"
       end
     end.new(@crop_profile)
 
@@ -85,18 +85,17 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
       weather_data: @weather_data
     )
 
-    assert_not_nil @stub_service.received_args, 'AGRR service should be called'
-    assert_equal '2025-04-01', @stub_service.received_args[:start_date]
+    assert_not_nil @stub_service.received_args, "AGRR service should be called"
+    assert_equal "2025-04-01", @stub_service.received_args[:start_date]
 
     crop_json = JSON.parse(@stub_service.crop_file_content)
-    assert_equal 'トマト', crop_json.dig('crop', 'name')
+    assert_equal "トマト", crop_json.dig("crop", "name")
 
     weather_json = JSON.parse(@stub_service.weather_file_content)
-    assert_equal 2, weather_json['data'].size
+    assert_equal 2, weather_json["data"].size
 
-    progress = result['progress_records'].first
-    assert_in_delta 75.5, progress['cumulative_gdd'], 1e-6
-    assert_equal '2025-04-01T00:00:00', progress['date']
+    progress = result["progress_records"].first
+    assert_in_delta 75.5, progress["cumulative_gdd"], 1e-6
+    assert_equal "2025-04-01T00:00:00", progress["date"]
   end
 end
-

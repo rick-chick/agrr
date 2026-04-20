@@ -5,101 +5,101 @@ module ApplicationHelper
   def js_i18n_data
     {
       # fields.js validation messages
-      fields_validation_coordinates_numeric: t('fields.js.validation.coordinates_must_be_numeric'),
-      fields_validation_latitude_range: t('fields.js.validation.latitude_range'),
-      fields_validation_longitude_range: t('fields.js.validation.longitude_range'),
-      
+      fields_validation_coordinates_numeric: t("fields.js.validation.coordinates_must_be_numeric"),
+      fields_validation_latitude_range: t("fields.js.validation.latitude_range"),
+      fields_validation_longitude_range: t("fields.js.validation.longitude_range"),
+
       # crop_palette_drag.js messages
-      crop_palette_plan_id_missing: t('js.crop_palette.plan_id_missing'),
-      crop_palette_communication_error: t('js.crop_palette.communication_error'),
-      
+      crop_palette_plan_id_missing: t("js.crop_palette.plan_id_missing"),
+      crop_palette_communication_error: t("js.crop_palette.communication_error"),
+
       # custom_gantt_chart.js messages
-      js_gantt_optimization_failed: t('js.gantt.optimization_failed'),
-      js_gantt_update_failed: t('js.gantt.update_failed'),
-      js_gantt_fetch_error: t('js.gantt.fetch_error'),
-      js_gantt_field_info_error: t('js.gantt.field_info_error'),
-      js_gantt_communication_error: t('js.gantt.communication_error'),
-      js_gantt_invalid_area: t('js.gantt.invalid_area'),
-      js_gantt_field_add_failed: t('js.gantt.field_add_failed'),
-      js_gantt_field_delete_failed: t('js.gantt.field_delete_failed'),
-      js_gantt_add_field_button: t('js.gantt.add_field_button'),
-      js_gantt_adding_field_loading: t('js.gantt.adding_field_loading'),
-      copy_to_clipboard_success: t('js.copy_to_clipboard.success'),
-      copy_to_clipboard_failure: t('js.copy_to_clipboard.failure'),
-      copy_to_clipboard_fallback: t('js.copy_to_clipboard.fallback'),
-      fields_map_load_failed: t('js.fields.map_load_failed'),
-      fields_retry: t('js.fields.retry'),
-      crop_ai_enter_name: t('js.crop_ai.enter_name'),
-      crop_ai_fetching: t('js.crop_ai.fetching'),
-      crop_ai_button_fetching: t('js.crop_ai.button_fetching'),
-      crop_ai_button_idle: t('js.crop_ai.button_idle'),
-      crop_ai_fetch_failed: t('js.crop_ai.fetch_failed'),
-      crop_ai_network_error: t('js.crop_ai.network_error'),
-      crop_ai_created_success: t('js.crop_ai.created_success'),
-      plans_gantt_not_loaded: t('js.plans.gantt_not_loaded'),
-      plans_data_missing: t('js.plans.data_missing'),
-      plans_load_failed: t('js.plans.load_failed'),
-      timeline_update_failed: t('js.timeline.update_failed'),
-      timeline_date_required: t('js.timeline.date_required'),
-      timeline_complete_failed: t('js.timeline.complete_failed'),
-      timeline_cancel_failed: t('js.timeline.cancel_failed'),
-      timeline_name_required: t('js.timeline.name_required'),
-      timeline_create_failed: t('js.timeline.create_failed'),
-      timeline_crop_required: t('js.timeline.crop_required'),
-      timeline_notes_placeholder: t('js.timeline.notes_placeholder'),
-      
+      js_gantt_optimization_failed: t("js.gantt.optimization_failed"),
+      js_gantt_update_failed: t("js.gantt.update_failed"),
+      js_gantt_fetch_error: t("js.gantt.fetch_error"),
+      js_gantt_field_info_error: t("js.gantt.field_info_error"),
+      js_gantt_communication_error: t("js.gantt.communication_error"),
+      js_gantt_invalid_area: t("js.gantt.invalid_area"),
+      js_gantt_field_add_failed: t("js.gantt.field_add_failed"),
+      js_gantt_field_delete_failed: t("js.gantt.field_delete_failed"),
+      js_gantt_add_field_button: t("js.gantt.add_field_button"),
+      js_gantt_adding_field_loading: t("js.gantt.adding_field_loading"),
+      copy_to_clipboard_success: t("js.copy_to_clipboard.success"),
+      copy_to_clipboard_failure: t("js.copy_to_clipboard.failure"),
+      copy_to_clipboard_fallback: t("js.copy_to_clipboard.fallback"),
+      fields_map_load_failed: t("js.fields.map_load_failed"),
+      fields_retry: t("js.fields.retry"),
+      crop_ai_enter_name: t("js.crop_ai.enter_name"),
+      crop_ai_fetching: t("js.crop_ai.fetching"),
+      crop_ai_button_fetching: t("js.crop_ai.button_fetching"),
+      crop_ai_button_idle: t("js.crop_ai.button_idle"),
+      crop_ai_fetch_failed: t("js.crop_ai.fetch_failed"),
+      crop_ai_network_error: t("js.crop_ai.network_error"),
+      crop_ai_created_success: t("js.crop_ai.created_success"),
+      plans_gantt_not_loaded: t("js.plans.gantt_not_loaded"),
+      plans_data_missing: t("js.plans.data_missing"),
+      plans_load_failed: t("js.plans.load_failed"),
+      timeline_update_failed: t("js.timeline.update_failed"),
+      timeline_date_required: t("js.timeline.date_required"),
+      timeline_complete_failed: t("js.timeline.complete_failed"),
+      timeline_cancel_failed: t("js.timeline.cancel_failed"),
+      timeline_name_required: t("js.timeline.name_required"),
+      timeline_create_failed: t("js.timeline.create_failed"),
+      timeline_crop_required: t("js.timeline.crop_required"),
+      timeline_notes_placeholder: t("js.timeline.notes_placeholder"),
+
       # crop_form.js placeholders
-      js_crop_stage_name_placeholder: t('js.crop_form.stage_name_placeholder'),
-      js_crop_order_placeholder: t('js.crop_form.order_placeholder'),
-      js_crop_base_temperature_placeholder: t('js.crop_form.base_temperature_placeholder'),
-      js_crop_optimal_min_placeholder: t('js.crop_form.optimal_min_placeholder'),
-      js_crop_optimal_max_placeholder: t('js.crop_form.optimal_max_placeholder'),
-      js_crop_low_stress_placeholder: t('js.crop_form.low_stress_placeholder'),
-      js_crop_high_stress_placeholder: t('js.crop_form.high_stress_placeholder'),
-      js_crop_frost_threshold_placeholder: t('js.crop_form.frost_threshold_placeholder'),
-      js_crop_sterility_risk_placeholder: t('js.crop_form.sterility_risk_placeholder'),
-      js_crop_minimum_sunshine_placeholder: t('js.crop_form.minimum_sunshine_placeholder'),
-      js_crop_target_sunshine_placeholder: t('js.crop_form.target_sunshine_placeholder'),
-      js_crop_daily_uptake_n_placeholder: t('js.crop_form.daily_uptake_n_placeholder'),
-      js_crop_daily_uptake_p_placeholder: t('js.crop_form.daily_uptake_p_placeholder'),
-      js_crop_daily_uptake_k_placeholder: t('js.crop_form.daily_uptake_k_placeholder'),
-      
+      js_crop_stage_name_placeholder: t("js.crop_form.stage_name_placeholder"),
+      js_crop_order_placeholder: t("js.crop_form.order_placeholder"),
+      js_crop_base_temperature_placeholder: t("js.crop_form.base_temperature_placeholder"),
+      js_crop_optimal_min_placeholder: t("js.crop_form.optimal_min_placeholder"),
+      js_crop_optimal_max_placeholder: t("js.crop_form.optimal_max_placeholder"),
+      js_crop_low_stress_placeholder: t("js.crop_form.low_stress_placeholder"),
+      js_crop_high_stress_placeholder: t("js.crop_form.high_stress_placeholder"),
+      js_crop_frost_threshold_placeholder: t("js.crop_form.frost_threshold_placeholder"),
+      js_crop_sterility_risk_placeholder: t("js.crop_form.sterility_risk_placeholder"),
+      js_crop_minimum_sunshine_placeholder: t("js.crop_form.minimum_sunshine_placeholder"),
+      js_crop_target_sunshine_placeholder: t("js.crop_form.target_sunshine_placeholder"),
+      js_crop_daily_uptake_n_placeholder: t("js.crop_form.daily_uptake_n_placeholder"),
+      js_crop_daily_uptake_p_placeholder: t("js.crop_form.daily_uptake_p_placeholder"),
+      js_crop_daily_uptake_k_placeholder: t("js.crop_form.daily_uptake_k_placeholder"),
+
       # crop_selection.js messages
-      js_crop_selection_hint: t('js.crop_selection.hint_select'),
-      
+      js_crop_selection_hint: t("js.crop_selection.hint_select"),
+
       # cultivation_results.js messages
-      js_cultivation_load_error: t('js.cultivation_results.load_error'),
-      js_cultivation_data_error: t('js.cultivation_results.data_error'),
-      js_cultivation_temp_max_label: t('js.cultivation_results.temp_max_label'),
-      js_cultivation_temp_mean_label: t('js.cultivation_results.temp_mean_label'),
-      js_cultivation_temp_min_label: t('js.cultivation_results.temp_min_label'),
-      js_cultivation_optimal_range_label: t('js.cultivation_results.optimal_range_label'),
-      js_cultivation_date_label: t('js.cultivation_results.date_label'),
-      js_cultivation_temp_axis_label: t('js.cultivation_results.temp_axis_label'),
-      js_cultivation_gdd_label: t('js.cultivation_results.gdd_label'),
-      js_cultivation_gdd_axis_label: t('js.cultivation_results.gdd_axis_label'),
-      js_cultivation_no_risks: t('js.cultivation_results.no_risks'),
-      
+      js_cultivation_load_error: t("js.cultivation_results.load_error"),
+      js_cultivation_data_error: t("js.cultivation_results.data_error"),
+      js_cultivation_temp_max_label: t("js.cultivation_results.temp_max_label"),
+      js_cultivation_temp_mean_label: t("js.cultivation_results.temp_mean_label"),
+      js_cultivation_temp_min_label: t("js.cultivation_results.temp_min_label"),
+      js_cultivation_optimal_range_label: t("js.cultivation_results.optimal_range_label"),
+      js_cultivation_date_label: t("js.cultivation_results.date_label"),
+      js_cultivation_temp_axis_label: t("js.cultivation_results.temp_axis_label"),
+      js_cultivation_gdd_label: t("js.cultivation_results.gdd_label"),
+      js_cultivation_gdd_axis_label: t("js.cultivation_results.gdd_axis_label"),
+      js_cultivation_no_risks: t("js.cultivation_results.no_risks"),
+
       # plans_show.js messages
-      js_plans_load_error: t('js.plans.load_error')
+      js_plans_load_error: t("js.plans.load_error")
     }
   end
-  
+
   # 動的なパラメータ付きメッセージ用（JavaScript側で補間）
   def js_i18n_templates
     {
-      crop_palette_crop_types_limit: t('js.crop_palette.crop_types_limit', max_types: '__MAX_TYPES__', current_types: '__CURRENT_TYPES__'),
-      crop_palette_crop_add_failed: t('js.crop_palette.crop_add_failed', message: '__MESSAGE__'),
-      
+      crop_palette_crop_types_limit: t("js.crop_palette.crop_types_limit", max_types: "__MAX_TYPES__", current_types: "__CURRENT_TYPES__"),
+      crop_palette_crop_add_failed: t("js.crop_palette.crop_add_failed", message: "__MESSAGE__"),
+
       # custom_gantt_chart.js templates
-      js_gantt_confirm_delete_field: t('js.gantt.confirm_delete_field', field_name: '__FIELD_NAME__'),
-      js_gantt_confirm_delete_crop: t('js.gantt.confirm_delete_crop', crop_name: '__CROP_NAME__'),
-      
+      js_gantt_confirm_delete_field: t("js.gantt.confirm_delete_field", field_name: "__FIELD_NAME__"),
+      js_gantt_confirm_delete_crop: t("js.gantt.confirm_delete_crop", crop_name: "__CROP_NAME__"),
+
       # crop_selection.js templates
-      js_crop_selection_max_message: t('js.crop_selection.max_crops_message', max: '__MAX__'),
-      
+      js_crop_selection_max_message: t("js.crop_selection.max_crops_message", max: "__MAX__"),
+
       # cultivation_results.js templates
-      js_cultivation_gdd_target_label: t('js.cultivation_results.gdd_target_label', target: '__TARGET__')
+      js_cultivation_gdd_target_label: t("js.cultivation_results.gdd_target_label", target: "__TARGET__")
     }
   end
 
@@ -107,25 +107,25 @@ module ApplicationHelper
   # 日本語コンテンツは /research/ 直下にあるため、us のみ /research/en/ を返す
   # 'us' -> '/research/en/', それ以外 -> '/research/'
   def research_path_for(locale)
-    locale.to_s == 'us' ? '/research/en/' : '/research/'
+    locale.to_s == "us" ? "/research/en/" : "/research/"
   end
 
   # サイトマップ用: research ページの xhtml:link rel="alternate" 候補を返す
   # 各言語のファイルが存在する場合のみ含める。hreflang は BCP 47（ja, en, in はヒンディー用の内部キー）
   # ja/in は /research/ 直下、英語は /research/en/ 配下（URL パスは従来どおり）
   def research_alternate_urls(research_page_path, base_url)
-    path = research_page_path.to_s.delete_prefix('research/').delete_prefix('/')
-    content_path = path.sub(/\A(ja|en|in)\//, '') # 既に lang 付きパスなら除去
+    path = research_page_path.to_s.delete_prefix("research/").delete_prefix("/")
+    content_path = path.sub(/\A(ja|en|in)\//, "") # 既に lang 付きパスなら除去
 
     alternates = []
     # ja, in: /research/ 直下のファイルを参照
     %w[ja in].each do |hreflang|
       candidate = "research/#{content_path}"
-      alternates << { hreflang: hreflang, href: "#{base_url}/#{candidate}" } if File.exist?(Rails.root.join('public', candidate))
+      alternates << { hreflang: hreflang, href: "#{base_url}/#{candidate}" } if File.exist?(Rails.root.join("public", candidate))
     end
     # us(en): /research/en/ 配下のファイルを参照
     en_candidate = "research/en/#{content_path}"
-    alternates << { hreflang: 'en', href: "#{base_url}/#{en_candidate}" } if File.exist?(Rails.root.join('public', en_candidate))
+    alternates << { hreflang: "en", href: "#{base_url}/#{en_candidate}" } if File.exist?(Rails.root.join("public", en_candidate))
 
     alternates
   end
@@ -137,14 +137,14 @@ module ApplicationHelper
 
   # ナビゲーションリンクのクラスを返す（現在地の強調用）
   def nav_link_class(path, base_class = "nav-link")
-    classes = [base_class]
+    classes = [ base_class ]
     classes << "nav-link-active" if current_page?(path)
     classes.join(" ")
   end
 
   # ドロップダウンアイテムのクラスを返す（現在地の強調用）
   def nav_dropdown_item_class(path, base_class = "nav-dropdown-item")
-    classes = [base_class]
+    classes = [ base_class ]
     classes << "nav-dropdown-item-active" if current_page?(path)
     classes.join(" ")
   end
@@ -152,7 +152,7 @@ module ApplicationHelper
   # ============================================
   # UI/UX統一: スタイルシート読み込み順序の統一
   # ============================================
-  
+
   # コアデザインシステムのスタイルシートを読み込む（必須・最初に読み込む）
   def render_core_stylesheets
     capture do
@@ -181,9 +181,9 @@ module ApplicationHelper
       "components/undo_toast",
       "components/cookie_consent"
     ]
-    
+
     components_to_load = components || default_components
-    
+
     capture do
       components_to_load.each do |component|
         concat stylesheet_link_tag(component, "data-turbo-track": "reload")
@@ -194,7 +194,7 @@ module ApplicationHelper
   # 機能固有のスタイルシートを読み込む
   def render_feature_stylesheets(features: [])
     return "" if features.empty?
-    
+
     capture do
       features.each do |feature|
         concat stylesheet_link_tag(feature, "data-turbo-track": "reload")
@@ -207,7 +207,7 @@ module ApplicationHelper
     capture do
       concat javascript_include_tag("application", "data-turbo-track": "reload", type: "module")
       concat javascript_include_tag("i18n_helper", "data-turbo-track": "reload", defer: true)
-      
+
       if include_shared_systems
         concat javascript_include_tag("svg_drag_utils", "data-turbo-track": "reload", defer: true)
         concat javascript_include_tag("shared/notification_system", "data-turbo-track": "reload", defer: true)
@@ -217,4 +217,3 @@ module ApplicationHelper
     end
   end
 end
-

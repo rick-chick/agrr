@@ -2,7 +2,7 @@
 
 class PestsController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_pest, only: [:edit, :update, :destroy]
+  before_action :set_pest, only: [ :edit, :update, :destroy ]
 
   # GET /pests
   def index
@@ -57,7 +57,7 @@ class PestsController < ApplicationController
       translator: translator
     ).call(input_dto)
   rescue StandardError => e
-    if e.message == I18n.t('pests.flash.reference_only_admin')
+    if e.message == I18n.t("pests.flash.reference_only_admin")
       redirect_to pests_path, alert: e.message
     else
       @pest = Pest.new(pest_params.to_h.symbolize_keys)
@@ -73,7 +73,7 @@ class PestsController < ApplicationController
     if pest_params.key?(:is_reference) && !current_user.admin?
       requested = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference])
       if requested != @pest.is_reference
-        redirect_to pest_path(@pest), alert: I18n.t('pests.flash.reference_flag_admin_only')
+        redirect_to pest_path(@pest), alert: I18n.t("pests.flash.reference_flag_admin_only")
         return
       end
     end
@@ -105,22 +105,22 @@ class PestsController < ApplicationController
       format.html do
         schedule_deletion_with_undo(
           record: @pest,
-          toast_message: I18n.t('pests.undo.toast', name: @pest.name),
+          toast_message: I18n.t("pests.undo.toast", name: @pest.name),
           fallback_location: pests_path,
-          in_use_message_key: 'pests.flash.cannot_delete_in_use',
-          delete_error_message_key: 'pests.flash.delete_error'
+          in_use_message_key: "pests.flash.cannot_delete_in_use",
+          delete_error_message_key: "pests.flash.delete_error"
         )
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pests_path, alert: I18n.t('pests.flash.not_found')
+        redirect_to pests_path, alert: I18n.t("pests.flash.not_found")
       end
 
       format.json do
         schedule_deletion_with_undo(
           record: @pest,
-          toast_message: I18n.t('pests.undo.toast', name: @pest.name),
+          toast_message: I18n.t("pests.undo.toast", name: @pest.name),
           fallback_location: pests_path,
-          in_use_message_key: 'pests.flash.cannot_delete_in_use',
-          delete_error_message_key: 'pests.flash.delete_error'
+          in_use_message_key: "pests.flash.cannot_delete_in_use",
+          delete_error_message_key: "pests.flash.delete_error"
         )
       end
     end
@@ -135,9 +135,9 @@ class PestsController < ApplicationController
   def set_pest
     @pest = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pests_path, alert: I18n.t('pests.flash.no_permission')
+    redirect_to pests_path, alert: I18n.t("pests.flash.no_permission")
   rescue ActiveRecord::RecordNotFound
-    redirect_to pests_path, alert: I18n.t('pests.flash.not_found')
+    redirect_to pests_path, alert: I18n.t("pests.flash.not_found")
   end
 
   def pest_params
@@ -224,5 +224,3 @@ class PestsController < ApplicationController
     @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
-
-

@@ -13,5 +13,3 @@ FactoryBot.define do
     weather_code { 0 }
   end
 end
-
-

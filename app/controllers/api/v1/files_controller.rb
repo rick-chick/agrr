@@ -3,7 +3,7 @@
 module Api
   module V1
     class FilesController < BaseController
-      before_action :set_file, only: [:show, :destroy]
+      before_action :set_file, only: [ :show, :destroy ]
 
       # GET /api/v1/files
       def index
@@ -24,10 +24,10 @@ module Api
             filename: params[:file].original_filename,
             content_type: params[:file].content_type
           )
-          
+
           render json: file_attributes(blob), status: :created
         else
-          render json: { error: I18n.t('api.errors.common.files.no_file') }, status: :unprocessable_entity
+          render json: { error: I18n.t("api.errors.common.files.no_file") }, status: :unprocessable_entity
         end
       end
 
@@ -42,7 +42,7 @@ module Api
       def set_file
         @file = ActiveStorage::Blob.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t('api.errors.common.files.not_found') }, status: :not_found
+        render json: { error: I18n.t("api.errors.common.files.not_found") }, status: :not_found
       end
 
       def file_attributes(blob)

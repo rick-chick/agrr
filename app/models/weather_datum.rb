@@ -36,4 +36,3 @@ class WeatherDatum < ApplicationRecord
     )
   end
 end
-

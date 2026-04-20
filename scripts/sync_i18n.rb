@@ -16,15 +16,15 @@ end
 def sync_locales
   locales_dir = File.expand_path('../config/locales', __dir__)
   output_dir = File.expand_path('../frontend/src/assets/i18n', __dir__)
-  
+
   FileUtils.mkdir_p(output_dir)
-  
+
   merged_data = {
     'ja' => {},
     'en' => {},
     'in' => {}
   }
-  
+
   # Mapping from file suffix to merged key
   locale_map = {
     'ja' => 'ja',
@@ -32,22 +32,22 @@ def sync_locales
     'us' => 'en',
     'in' => 'in'
   }
-  
+
   Dir.glob(File.join(locales_dir, '**/*.yml')).each do |file|
     # Determine locale from filename (e.g. ja.yml, crops.ja.yml)
     filename = File.basename(file)
     parts = filename.split('.')
-    
+
     # Simple ja.yml or crops.ja.yml
     locale_key = if parts.length == 2
                    parts[0]
-                 else
+    else
                    parts[-2]
-                 end
-    
+    end
+
     target_locale = locale_map[locale_key]
     next unless target_locale
-    
+
     begin
       data = YAML.load_file(file)
       if data && data.is_a?(Hash)
@@ -60,7 +60,7 @@ def sync_locales
       puts "Error parsing #{file}: #{e.message}"
     end
   end
-  
+
   merged_data.each do |locale, data|
     output_path = File.join(output_dir, "#{locale}.json")
     File.write(output_path, JSON.pretty_generate(data))

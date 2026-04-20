@@ -13,10 +13,9 @@ class CreateInteractionRules < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :interaction_rules, [:rule_type, :source_group, :target_group], name: 'index_interaction_rules_on_type_and_groups'
+    add_index :interaction_rules, [ :rule_type, :source_group, :target_group ], name: 'index_interaction_rules_on_type_and_groups'
     add_index :interaction_rules, :rule_type
     add_index :interaction_rules, :source_group
     add_index :interaction_rules, :target_group
   end
 end
-

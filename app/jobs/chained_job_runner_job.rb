@@ -2,7 +2,7 @@
 
 class ChainedJobRunnerJob < ApplicationJob
   queue_as :default
-  
+
   # chain: [ { "class" => "SomeJob", "args" => { key: value } }, ... ]
   # index: 実行中のインデックス（0始まり）
   def perform(chain:, index: 0)
@@ -10,15 +10,15 @@ class ChainedJobRunnerJob < ApplicationJob
       Rails.logger.info "ℹ️ [ChainedJobRunnerJob] Chain finished or invalid at index=#{index}"
       return
     end
-    
+
     current = chain[index]
     job_class_name = current.with_indifferent_access[:class]
     # ActiveJob引数はJSON化で文字列キーになるため、キーワード引数として渡す前に必ずシンボル化
     job_args = (current.with_indifferent_access[:args] || {}).to_h.deep_symbolize_keys
     job_args[:channel_class] = normalize_channel_class(job_args[:channel_class])
-    
+
     Rails.logger.info "🔗 [ChainedJobRunnerJob] Executing #{index + 1}/#{chain.length}: #{job_class_name} with #{job_args.inspect}"
-    
+
     begin
       job_class = job_class_name.constantize
       # ActiveJobを経由せず直接performを呼ぶことで確実に同期実行し、引数もキーワードで渡す
@@ -29,7 +29,7 @@ class ChainedJobRunnerJob < ApplicationJob
       Rails.logger.error e.backtrace.first(5).join("\n")
       raise
     end
-    
+
     # 次のジョブがあれば自身を再度enqueue
     next_index = index + 1
     if next_index < chain.length
@@ -50,5 +50,3 @@ class ChainedJobRunnerJob < ApplicationJob
     raise
   end
 end
-
-

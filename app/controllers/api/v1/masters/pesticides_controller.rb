@@ -6,7 +6,7 @@ module Api
       class PesticidesController < BaseController
         # PolicyPermissionDenied例外を403 Forbiddenとして扱う
         rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
-          render json: { error: '権限がありません。' }, status: :forbidden
+          render json: { error: "権限がありません。" }, status: :forbidden
         end
 
         include Views::Api::Pesticide::PesticideListView
@@ -44,7 +44,7 @@ module Api
         def create
           input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_pesticide_params?(input_dto)
-            render_response(json: { errors: ['name, crop_id, pest_id are required'] }, status: :unprocessable_entity)
+            render_response(json: { errors: [ "name, crop_id, pest_id are required" ] }, status: :unprocessable_entity)
             return
           end
           presenter = Presenters::Api::Pesticide::PesticideCreatePresenter.new(view: self)
@@ -102,7 +102,7 @@ module Api
           case action
           when :show, :destroy
             return true if params[:id].present?
-            render_response(json: { error: 'Pesticide not found' }, status: :not_found)
+            render_response(json: { error: "Pesticide not found" }, status: :not_found)
             false
           else
             true

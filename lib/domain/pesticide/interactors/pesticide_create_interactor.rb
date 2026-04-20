@@ -22,7 +22,7 @@ module Domain
             region: input_dto.region,
             is_reference: input_dto.is_reference
           }.compact)
-          raise StandardError, pesticide_model.errors.full_messages.join(', ') unless pesticide_model.save
+          raise StandardError, pesticide_model.errors.full_messages.join(", ") unless pesticide_model.save
 
           pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model)
           @output_port.on_success(pesticide_entity)

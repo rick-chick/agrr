@@ -6,4 +6,3 @@ FactoryBot.define do
     daily_fixed_cost { 500.0 }
   end
 end
-

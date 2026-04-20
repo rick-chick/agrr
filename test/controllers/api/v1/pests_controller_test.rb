@@ -10,12 +10,12 @@ module Api
       setup do
         @user = create(:user)
         sign_in_as @user
-        
+
         # テスト用の作物を作成
-        @crop1 = create(:crop, user: @user, name: 'ブロッコリー')
-        @crop2 = create(:crop, user: @user, name: 'ほうれん草')
-        @crop3 = create(:crop, user: @user, name: 'レタス')
-        @reference_crop = create(:crop, :reference, name: 'かぼちゃ', region: 'jp')
+        @crop1 = create(:crop, user: @user, name: "ブロッコリー")
+        @crop2 = create(:crop, user: @user, name: "ほうれん草")
+        @crop3 = create(:crop, user: @user, name: "レタス")
+        @reference_crop = create(:crop, :reference, name: "かぼちゃ", region: "jp")
       end
 
       test "ai_create should create pest with affected crops" do
@@ -60,8 +60,8 @@ module Api
         end
 
         assert_difference "Pest.count", +1 do
-          post api_v1_pests_ai_create_path, 
-               params: { 
+          post api_v1_pests_ai_create_path,
+               params: {
                  name: "アオムシ",
                  affected_crops: [
                    { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
@@ -76,7 +76,7 @@ module Api
         assert json_response["success"]
         assert_equal "アオムシ", json_response["pest_name"]
         assert_equal "シロチョウ科", json_response["family"]
-        
+
         # 害虫が作成されたことを確認
         pest = Pest.find(json_response["pest_id"])
         assert_not_nil pest
@@ -117,18 +117,18 @@ module Api
           define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
         end
 
-        post api_v1_pests_ai_create_path, 
-             params: { 
+        post api_v1_pests_ai_create_path,
+             params: {
                name: "テスター",
                affected_crops: [
                  { "crop_id" => @reference_crop.id.to_s, "crop_name" => "かぼちゃ" }
                ]
              },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
         json_response = JSON.parse(response.body)
-        
+
         # 参照作物も関連付けできることを確認
         pest = Pest.find(json_response["pest_id"])
         assert_equal 1, pest.crops.count
@@ -159,13 +159,13 @@ module Api
           define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
         end
 
-        post api_v1_pests_ai_create_path, 
+        post api_v1_pests_ai_create_path,
              params: { name: "テスター2" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
         json_response = JSON.parse(response.body)
-        
+
         # 作物なしでも作成できることを確認
         pest = Pest.find(json_response["pest_id"])
         assert_equal 0, pest.crops.count
@@ -182,10 +182,10 @@ module Api
           define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(error_output) }
         end
 
-        post api_v1_pests_ai_create_path, 
+        post api_v1_pests_ai_create_path,
              params: { name: "アオムシ" },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :service_unavailable
         json_response = JSON.parse(response.body)
         assert_includes json_response["error"], "AGRRサービスが起動していません"
@@ -235,8 +235,8 @@ module Api
 
       test "ai_create should prevent accessing other user's crops" do
         other_user = create(:user)
-        other_crop = create(:crop, user: other_user, name: '他人の作物')
-        
+        other_crop = create(:crop, user: other_user, name: "他人の作物")
+
         agrr_output = {
           "success" => true,
           "data" => {
@@ -260,8 +260,8 @@ module Api
           define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
         end
 
-        post api_v1_pests_ai_create_path, 
-             params: { 
+        post api_v1_pests_ai_create_path,
+             params: {
                name: "テスター3",
                affected_crops: [
                  { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
@@ -269,9 +269,9 @@ module Api
                ]
              },
              headers: { "Accept" => "application/json" }
-        
+
         assert_response :created
-        
+
         # 自分の作物のみ関連付けられていることを確認
         pest = Pest.last
         assert_equal 1, pest.crops.count

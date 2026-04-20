@@ -21,17 +21,9 @@ class PestTemperatureProfileTest < ActiveSupport::TestCase
   test "should destroy when pest is destroyed" do
     profile = create(:pest_temperature_profile, pest: @pest)
     profile_id = profile.id
-    
+
     @pest.destroy
-    
+
     assert_not PestTemperatureProfile.exists?(profile_id)
   end
 end
-
-
-
-
-
-
-
-

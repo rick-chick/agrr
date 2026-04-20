@@ -29,7 +29,7 @@ module Domain
 
           task_model = Domain::Shared::Policies::AgriculturalTaskPolicy.find_editable!(::AgriculturalTask, user, update_input_dto.id)
           Domain::Shared::Policies::AgriculturalTaskPolicy.apply_update!(user, task_model, attrs)
-          raise StandardError, task_model.errors.full_messages.join(', ') if task_model.errors.any?
+          raise StandardError, task_model.errors.full_messages.join(", ") if task_model.errors.any?
 
           task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model.reload)
           @output_port.on_success(task_entity)

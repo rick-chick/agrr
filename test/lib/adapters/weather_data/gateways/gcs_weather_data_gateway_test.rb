@@ -120,7 +120,7 @@ class GcsWeatherDataGatewayTest < ActiveSupport::TestCase
   test "format_for_agrr formats DTOs to AGRR hash" do
     dto = Domain::WeatherData::Dtos::WeatherDataDto.new(date: Date.new(2023, 1, 1), temperature_max: 10.0)
     location = OpenStruct.new(latitude: 35.0, longitude: 139.0, elevation: 0.0, timezone: "UTC")
-    result = @gateway.format_for_agrr(weather_data_dtos: [dto], weather_location: location)
+    result = @gateway.format_for_agrr(weather_data_dtos: [ dto ], weather_location: location)
     assert_kind_of Hash, result
     assert_equal 35.0, result["latitude"]
     assert_equal 1, result["data"].size
@@ -137,7 +137,7 @@ class GcsWeatherDataGatewayTest < ActiveSupport::TestCase
   end
 
   test "upsert_weather_data! writes to GCS" do
-    attrs = [{ date: Date.new(2023, 1, 3), temperature_max: 15.0, temperature_min: 10.0, temperature_mean: 12.5 }]
+    attrs = [ { date: Date.new(2023, 1, 3), temperature_max: 15.0, temperature_min: 10.0, temperature_mean: 12.5 } ]
     dtos = attrs.map { |a| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(a) }
     @gateway.upsert_weather_data!(weather_data_dtos: dtos, weather_location_id: @weather_location.id)
 
@@ -153,7 +153,7 @@ class GcsWeatherDataGatewayTest < ActiveSupport::TestCase
   test "upsert_weather_data! merges with existing" do
     path = "weather_data/#{@weather_location.id}/2023.json"
     @bucket.put(path, { "2023-01-01" => { "temperature_max" => 8.0, "temperature_min" => 4.0 } }.to_json)
-    attrs = [{ date: Date.new(2023, 1, 2), temperature_max: 12.0, temperature_min: 6.0, temperature_mean: 9.0 }]
+    attrs = [ { date: Date.new(2023, 1, 2), temperature_max: 12.0, temperature_min: 6.0, temperature_mean: 9.0 } ]
     dtos = attrs.map { |a| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(a) }
     @gateway.upsert_weather_data!(weather_data_dtos: dtos, weather_location_id: @weather_location.id)
 

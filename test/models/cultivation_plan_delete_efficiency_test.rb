@@ -26,5 +26,3 @@ class CultivationPlanDeleteEfficiencyTest < ActiveSupport::TestCase
     end
   end
 end
-
-

@@ -28,7 +28,7 @@ module Domain
         end
 
         def display_name
-          [name, variety].compact.join(" ")
+          [ name, variety ].compact.join(" ")
         end
 
         def to_model
@@ -71,5 +71,3 @@ module Domain
     end
   end
 end
-
-

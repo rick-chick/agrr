@@ -2,7 +2,7 @@
 
 class InteractionRulesController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_interaction_rule, only: [:show, :edit, :update, :destroy]
+  before_action :set_interaction_rule, only: [ :show, :edit, :update, :destroy ]
 
   # GET /interaction_rules
   def index
@@ -49,7 +49,7 @@ class InteractionRulesController < ApplicationController
 
     is_reference = filtered_params[:is_reference] || false
     if is_reference && !admin_user?
-      return redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.reference_only_admin')
+      return redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.reference_only_admin")
     end
 
     presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: self)
@@ -73,7 +73,7 @@ class InteractionRulesController < ApplicationController
   # PATCH/PUT /interaction_rules/:id
   def update
     if interaction_rule_params.key?(:is_reference) && !admin_user?
-      return redirect_to @interaction_rule, alert: I18n.t('interaction_rules.flash.reference_flag_admin_only')
+      return redirect_to @interaction_rule, alert: I18n.t("interaction_rules.flash.reference_flag_admin_only")
     end
 
     # 一般ユーザーの場合はregionパラメータを除外
@@ -102,15 +102,15 @@ class InteractionRulesController < ApplicationController
   # DELETE /interaction_rules/:id
   def destroy
     rule = Domain::Shared::Policies::InteractionRulePolicy.find_editable!(::InteractionRule, current_user, params[:id])
-    toast_message = t('interaction_rules.undo.toast', source: rule.source_group, target: rule.target_group)
+    toast_message = t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
     schedule_deletion_with_undo(
       record: rule,
       toast_message: toast_message,
       fallback_location: interaction_rules_path,
-      delete_error_message_key: 'interaction_rules.flash.destroy_error'
+      delete_error_message_key: "interaction_rules.flash.destroy_error"
     )
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.not_found')
+    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
   rescue StandardError => e
     if request.format.json?
       render json: { error: e.message }, status: :unprocessable_entity
@@ -133,15 +133,15 @@ class InteractionRulesController < ApplicationController
     action = params[:action].to_sym
 
     @interaction_rule =
-      if action.in?([:edit, :update, :destroy])
+      if action.in?([ :edit, :update, :destroy ])
         Domain::Shared::Policies::InteractionRulePolicy.find_editable!(InteractionRule, current_user, params[:id])
       else
         Domain::Shared::Policies::InteractionRulePolicy.find_visible!(InteractionRule, current_user, params[:id])
       end
   rescue PolicyPermissionDenied
-    redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.no_permission')
+    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.no_permission")
   rescue ActiveRecord::RecordNotFound
-    redirect_to interaction_rules_path, alert: I18n.t('interaction_rules.flash.not_found')
+    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
   end
 
   def interaction_rule_params
@@ -159,4 +159,3 @@ class InteractionRulesController < ApplicationController
     params.require(:interaction_rule).permit(*permitted)
   end
 end
-

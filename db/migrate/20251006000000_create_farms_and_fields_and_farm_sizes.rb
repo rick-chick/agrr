@@ -11,9 +11,9 @@ class CreateFarmsAndFieldsAndFarmSizes < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
-    add_index :farms, [:user_id, :name], unique: true
-    
+
+    add_index :farms, [ :user_id, :name ], unique: true
+
     # Fields table
     create_table :fields do |t|
       t.references :farm, null: false, foreign_key: true
@@ -23,10 +23,10 @@ class CreateFarmsAndFieldsAndFarmSizes < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
-    add_index :fields, [:farm_id, :name], unique: true
-    add_index :fields, [:user_id, :name], unique: true
-    
+
+    add_index :fields, [ :farm_id, :name ], unique: true
+    add_index :fields, [ :user_id, :name ], unique: true
+
     # FarmSizes table
     create_table :farm_sizes do |t|
       t.string :name, null: false
@@ -36,9 +36,8 @@ class CreateFarmsAndFieldsAndFarmSizes < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
+
     add_index :farm_sizes, :display_order
     add_index :farm_sizes, :active
   end
 end
-

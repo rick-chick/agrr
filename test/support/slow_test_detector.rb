@@ -1,15 +1,16 @@
 # frozen_string_literal: true
+
 #
 # Slow test detector for Minitest
 # - 設定:
 #   - SLOW_TEST_THRESHOLD (秒) デフォルト 0.5
 #   - SLOW_TEST_FAIL=1 を設定すると遅いテストが見つかった場合に非0で終了する
 
-require 'benchmark'
-require 'minitest'
+require "benchmark"
+require "minitest"
 
 module SlowTestDetector
-  THRESHOLD = (ENV['SLOW_TEST_THRESHOLD'] || '0.5').to_f # seconds
+  THRESHOLD = (ENV["SLOW_TEST_THRESHOLD"] || "0.5").to_f # seconds
   @slow_tests = []
 
   class << self
@@ -28,7 +29,7 @@ module SlowTestDetector
         puts format("  %.3fs - %s%s", t[:time], t[:name], loc)
       end
 
-      if ENV['SLOW_TEST_FAIL'] == '1'
+      if ENV["SLOW_TEST_FAIL"] == "1"
         puts "Failing test run because SLOW_TEST_FAIL=1"
         exit 2
       end
@@ -61,4 +62,3 @@ end
 Minitest.after_run do
   SlowTestDetector.report
 end
-

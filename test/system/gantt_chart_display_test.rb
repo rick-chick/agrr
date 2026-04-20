@@ -6,8 +6,8 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   setup do
     # テストデータを作成
     @user = User.create!(
-      email: 'gantt_test@example.com',
-      name: 'Gantt Test User',
+      email: "gantt_test@example.com",
+      name: "Gantt Test User",
       google_id: "gantt_#{SecureRandom.hex(8)}"
     )
 
@@ -19,24 +19,24 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
 
     @farm = Farm.create!(
       user: @user,
-      name: 'ガントテスト農場',
+      name: "ガントテスト農場",
       latitude: 35.6812,
       longitude: 139.7671,
       weather_location: @weather_location,
       is_reference: false,
-      region: 'jp'
+      region: "jp"
     )
 
     @field = Field.create!(
       farm: @farm,
       user: @user,
-      name: 'テスト1',
+      name: "テスト1",
       area: 100.0
     )
 
     @crop = Crop.create!(
       user: @user,
-      name: 'テストトマト',
+      name: "テストトマト",
       is_reference: false,
       area_per_unit: 1.0,
       revenue_per_area: 1000.0
@@ -47,10 +47,10 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
       farm: @farm,
       user: @user,
       total_area: 100.0,
-      status: 'completed',
-      plan_type: 'private',
+      status: "completed",
+      plan_type: "private",
       plan_year: 2025,
-      plan_name: 'テスト計画 2025',
+      plan_name: "テスト計画 2025",
       planning_start_date: Date.new(2025, 1, 1),
       planning_end_date: Date.new(2025, 12, 31)
     )
@@ -92,33 +92,33 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     # Public計画用の参照農場を作成
     @ref_farm = Farm.create!(
       user: User.anonymous_user,
-      name: 'Tokyo Reference Farm',
+      name: "Tokyo Reference Farm",
       latitude: 35.6812,
       longitude: 139.7671,
       weather_location: @weather_location,
       is_reference: true,
-      region: 'jp'
+      region: "jp"
     )
 
     # Public計画用の参照作物を作成
     @ref_crop = Crop.create!(
       user: nil,
-      name: 'トマト',
-      variety: '桃太郎',
+      name: "トマト",
+      variety: "桃太郎",
       is_reference: true,
       area_per_unit: 1.0,
       revenue_per_area: 1000.0,
-      region: 'jp'
+      region: "jp"
     )
 
     # Public計画を作成
     @public_plan = CultivationPlan.create!(
       farm: @ref_farm,
       user: nil,
-      session_id: 'test_session_public_gantt',
+      session_id: "test_session_public_gantt",
       total_area: 100.0,
-      status: 'completed',
-      plan_type: 'public',
+      status: "completed",
+      plan_type: "public",
       planning_start_date: Date.current.beginning_of_year,
       planning_end_date: Date.current.end_of_year
     )
@@ -126,7 +126,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     # Public計画のCultivationPlanFieldを作成
     @public_plan_field = CultivationPlanField.create!(
       cultivation_plan: @public_plan,
-      name: 'A',
+      name: "A",
       area: 100.0,
       daily_fixed_cost: 0.0
     )
@@ -191,12 +191,12 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     # 別の農場を作成して空の計画を作る
     empty_farm = Farm.create!(
       user: @user,
-      name: '空のテスト農場',
+      name: "空のテスト農場",
       latitude: 35.6812,
       longitude: 139.7671,
       weather_location: @weather_location,
       is_reference: false,
-      region: 'jp'
+      region: "jp"
     )
 
     # 圃場データが空の計画を作成
@@ -204,10 +204,10 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
       farm: empty_farm,
       user: @user,
       total_area: 100.0,
-      status: 'completed',
-      plan_type: 'private',
+      status: "completed",
+      plan_type: "private",
       plan_year: 2025,
-      plan_name: '空のテスト計画',
+      plan_name: "空のテスト計画",
       planning_start_date: Date.new(2025, 1, 1),
       planning_end_date: Date.new(2025, 12, 31)
     )
@@ -218,119 +218,117 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     login_and_visit plan_path(empty_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector 'h1', text: /空のテスト計画/, wait: 10
+    assert_selector "h1", text: /空のテスト計画/, wait: 10
 
     # 「計画データが読み込まれていません」または「圃場データがありません」のメッセージが表示されることを確認
-    assert_selector '.no-data-message', wait: 5, visible: :all
-    assert_text '圃場データがありません', wait: 5
+    assert_selector ".no-data-message", wait: 5, visible: :all
+    assert_text "圃場データがありません", wait: 5
 
     # ガントチャートコンテナが存在しない、または空であることを確認
-    gantt_container = find('#gantt-chart-container', visible: :all)
-    assert gantt_container['data-fields'].blank? || JSON.parse(gantt_container['data-fields'] || '[]').empty?,
-           'Fields data should be empty or not present'
+    gantt_container = find("#gantt-chart-container", visible: :all)
+    assert gantt_container["data-fields"].blank? || JSON.parse(gantt_container["data-fields"] || "[]").empty?,
+           "Fields data should be empty or not present"
   end
 
   test "private plans should display gantt chart" do
     login_and_visit plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector 'h1', text: /2025/, wait: 10
+    assert_selector "h1", text: /2025/, wait: 10
 
     # ガントチャートコンテナが存在することを確認
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
 
     # ガントチャートのデータ属性が設定されていることを確認
-    gantt_container = find('#gantt-chart-container', visible: :all)
-    assert gantt_container['data-cultivation-plan-id'].present?, 'cultivation-plan-id should be present'
-    assert gantt_container['data-cultivations'].present?, 'cultivations data should be present'
-    assert gantt_container['data-fields'].present?, 'fields data should be present'
-    assert gantt_container['data-plan-start-date'].present?, 'plan start date should be present'
-    assert gantt_container['data-plan-end-date'].present?, 'plan end date should be present'
-    assert_equal 'private', gantt_container['data-plan-type']
+    gantt_container = find("#gantt-chart-container", visible: :all)
+    assert gantt_container["data-cultivation-plan-id"].present?, "cultivation-plan-id should be present"
+    assert gantt_container["data-cultivations"].present?, "cultivations data should be present"
+    assert gantt_container["data-fields"].present?, "fields data should be present"
+    assert gantt_container["data-plan-start-date"].present?, "plan start date should be present"
+    assert gantt_container["data-plan-end-date"].present?, "plan end date should be present"
+    assert_equal "private", gantt_container["data-plan-type"]
 
     # データが正しくパースできることを確認
-    cultivations = JSON.parse(gantt_container['data-cultivations'])
-    assert cultivations.length > 0, 'Should have at least one cultivation'
-    assert cultivations.first['crop_name'].present?, 'Should have crop name'
+    cultivations = JSON.parse(gantt_container["data-cultivations"])
+    assert cultivations.length > 0, "Should have at least one cultivation"
+    assert cultivations.first["crop_name"].present?, "Should have crop name"
 
     # JavaScriptが実行されるまで待つ（SVG生成には時間がかかる場合がある）
     sleep 2
 
     # SVGまたはガント要素が表示されることを確認（custom_gantt_chart.jsの実装による）
     # SVGが生成されない場合でも、コンテナとデータが正しければOK
-    has_svg = page.has_selector?('svg.gantt-chart', wait: 3)
-    has_gantt_elements = page.has_selector?('.gantt-row', wait: 3) ||
-                         page.has_selector?('.gantt-table', wait: 3)
+    has_svg = page.has_selector?("svg.gantt-chart", wait: 3)
+    has_gantt_elements = page.has_selector?(".gantt-row", wait: 3) ||
+                         page.has_selector?(".gantt-table", wait: 3)
 
-    assert has_svg || has_gantt_elements || gantt_container['data-cultivations'].present?,
+    assert has_svg || has_gantt_elements || gantt_container["data-cultivations"].present?,
            "Gantt chart should be rendered or data should be present"
 
     # 作物パレットが表示されることを確認（show_crop_palette: true）
-    assert_selector '.crop-palette-container', wait: 5
-    assert_selector '.crop-palette-toggle-btn', wait: 5
+    assert_selector ".crop-palette-container", wait: 5
+    assert_selector ".crop-palette-toggle-btn", wait: 5
 
     # ガントチャートヘッダーの構造を確認
-    assert_selector '.gantt-header', wait: 5
-    assert_selector '.gantt-title', wait: 5
-
+    assert_selector ".gantt-header", wait: 5
+    assert_selector ".gantt-title", wait: 5
   end
 
   test "public plans should display gantt chart" do
     login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
 
     # ページが読み込まれるまで待つ
-    assert_selector 'h1', text: /計画/, wait: 10
+    assert_selector "h1", text: /計画/, wait: 10
 
     # ガントチャートコンテナが存在することを確認
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
 
     # ガントチャートのデータ属性が設定されていることを確認
-    gantt_container = find('#gantt-chart-container', visible: :all)
-    assert gantt_container['data-cultivation-plan-id'].present?, 'cultivation-plan-id should be present'
-    assert gantt_container['data-cultivations'].present?, 'cultivations data should be present'
-    assert gantt_container['data-fields'].present?, 'fields data should be present'
-    assert gantt_container['data-plan-start-date'].present?, 'plan start date should be present'
-    assert gantt_container['data-plan-end-date'].present?, 'plan end date should be present'
-    assert_equal 'public', gantt_container['data-plan-type']
+    gantt_container = find("#gantt-chart-container", visible: :all)
+    assert gantt_container["data-cultivation-plan-id"].present?, "cultivation-plan-id should be present"
+    assert gantt_container["data-cultivations"].present?, "cultivations data should be present"
+    assert gantt_container["data-fields"].present?, "fields data should be present"
+    assert gantt_container["data-plan-start-date"].present?, "plan start date should be present"
+    assert gantt_container["data-plan-end-date"].present?, "plan end date should be present"
+    assert_equal "public", gantt_container["data-plan-type"]
 
     # データが正しくパースできることを確認
-    cultivations = JSON.parse(gantt_container['data-cultivations'])
-    assert cultivations.length > 0, 'Should have at least one cultivation'
-    assert cultivations.first['crop_name'].present?, 'Should have crop name'
+    cultivations = JSON.parse(gantt_container["data-cultivations"])
+    assert cultivations.length > 0, "Should have at least one cultivation"
+    assert cultivations.first["crop_name"].present?, "Should have crop name"
 
     # JavaScriptが実行されるまで待つ
     sleep 2
 
     # SVGまたはガント要素が表示されることを確認
-    has_svg = page.has_selector?('svg.gantt-chart', wait: 3)
-    has_gantt_elements = page.has_selector?('.gantt-row', wait: 3) ||
-                         page.has_selector?('.gantt-table', wait: 3)
+    has_svg = page.has_selector?("svg.gantt-chart", wait: 3)
+    has_gantt_elements = page.has_selector?(".gantt-row", wait: 3) ||
+                         page.has_selector?(".gantt-table", wait: 3)
 
-    assert has_svg || has_gantt_elements || gantt_container['data-cultivations'].present?,
+    assert has_svg || has_gantt_elements || gantt_container["data-cultivations"].present?,
            "Gantt chart should be rendered or data should be present"
 
     # 作物パレットが表示されることを確認（show_crop_palette: true）
-    assert_selector '.crop-palette-container', wait: 5
-    assert_selector '.crop-palette-toggle-btn', wait: 5
-
+    assert_selector ".crop-palette-container", wait: 5
+    assert_selector ".crop-palette-toggle-btn", wait: 5
   end
 
   test "both plans and public_plans use the same gantt chart component" do
     login_and_visit plan_path(@private_plan, locale: :ja)
 
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_selector '.plans-gantt-section > .gantt-section', wait: 5, visible: :all
-    assert_no_selector '.content-card .gantt-section', wait: 1
-    private_container = find('#gantt-chart-container', visible: :all)
-    private_cultivations = JSON.parse(private_container['data-cultivations'])
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_selector ".plans-gantt-section > .gantt-section", wait: 5, visible: :all
+    assert_no_selector ".content-card .gantt-section", wait: 1
+    private_container = find("#gantt-chart-container", visible: :all)
+    private_cultivations = JSON.parse(private_container["data-cultivations"])
 
     # Public計画のガントチャートを確認
     login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
 
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_selector '.gantt-section', wait: 5, visible: :all
-    public_container = find('#gantt-chart-container', visible: :all)
-    public_cultivations = JSON.parse(public_container['data-cultivations'])
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_selector ".gantt-section", wait: 5, visible: :all
+    public_container = find("#gantt-chart-container", visible: :all)
+    public_cultivations = JSON.parse(public_container["data-cultivations"])
 
     # 両方とも同じデータ構造を持つことを確認
     # 両方とも必要なキーを持つことを確認
@@ -344,8 +342,8 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   test "ガントチャートの余白が最小化される" do
     login_and_visit plan_path(@private_plan, locale: :ja)
 
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_selector 'svg.custom-gantt-chart', wait: 10, visible: :all
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_selector "svg.custom-gantt-chart", wait: 10, visible: :all
 
     metrics = page.evaluate_script(<<~'JS')
       (() => {
@@ -380,29 +378,29 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   test "ガントチャートヘッダーは余計な制御を表示しない" do
     login_and_visit plan_path(@private_plan, locale: :ja)
 
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_no_selector '[data-gantt-control]', wait: 1
-    assert_no_selector '.gantt-controls', wait: 1
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_no_selector "[data-gantt-control]", wait: 1
+    assert_no_selector ".gantt-controls", wait: 1
   end
 
   test "大量データでもレンダリング状態とUXメッセージが表示される" do
     login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
 
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    assert_no_selector '#gantt-loading-indicator', wait: 1
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_no_selector "#gantt-loading-indicator", wait: 1
   end
 
   test "モバイル幅ではスクロールとフォールバックが提供される" do
     login_and_visit plan_path(@private_plan, locale: :ja)
     page.driver.browser.manage.window.resize_to(390, 844)
 
-    assert_selector '#gantt-chart-scroll-area', wait: 5, visible: :all
+    assert_selector "#gantt-chart-scroll-area", wait: 5, visible: :all
     scroll_width = page.evaluate_script("document.querySelector('#gantt-chart-scroll-area').scrollWidth").to_i
-    viewport_width = page.evaluate_script('window.innerWidth').to_i
+    viewport_width = page.evaluate_script("window.innerWidth").to_i
     assert scroll_width > viewport_width
 
     page.driver.browser.manage.window.resize_to(320, 480)
-    assert_selector '#gantt-chart-fallback', wait: 5, visible: :all
+    assert_selector "#gantt-chart-fallback", wait: 5, visible: :all
   ensure
     page.driver.browser.manage.window.resize_to(1400, 1400)
   end
@@ -412,28 +410,28 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     visit "/public_plans/results?planId=#{@public_plan.id}&locale=ja"
 
     # ページが読み込まれるまで待つ
-    assert_selector 'h1', text: /計画/, wait: 10
+    assert_selector "h1", text: /計画/, wait: 10
 
     # ガントチャートコンテナが存在し、データが正しく設定されていることを確認
-    assert_selector '#gantt-chart-container', wait: 10, visible: :all
-    gantt_container = find('#gantt-chart-container', visible: :all)
-    assert gantt_container['data-cultivations'].present?, 'Cultivations data should be present'
-    assert gantt_container['data-fields'].present?, 'Fields data should be present'
+    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    gantt_container = find("#gantt-chart-container", visible: :all)
+    assert gantt_container["data-cultivations"].present?, "Cultivations data should be present"
+    assert gantt_container["data-fields"].present?, "Fields data should be present"
 
     # データが正しくパースできることを確認
-    cultivations = JSON.parse(gantt_container['data-cultivations'])
-    fields = JSON.parse(gantt_container['data-fields'])
-    assert cultivations.length > 0, 'Should have cultivations data'
-    assert fields.length > 0, 'Should have fields data'
+    cultivations = JSON.parse(gantt_container["data-cultivations"])
+    fields = JSON.parse(gantt_container["data-fields"])
+    assert cultivations.length > 0, "Should have cultivations data"
+    assert fields.length > 0, "Should have fields data"
   end
 
   test "RED: adjust API fails with drag and drop data" do
     # adjust APIを直接テスト（system testなのでHTTPリクエストとして実行）
-    moves_data = [{
+    moves_data = [ {
       allocation_id: @public_field_cultivation.id,
       to_field_id: @public_plan_field.id,
-      start_date: '2025-04-01'
-    }]
+      start_date: "2025-04-01"
+    } ]
 
     # adjust APIを呼び出し、レスポンスを確認
     # Railsのintegration testとして直接APIをテスト
@@ -443,7 +441,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
 
     # レスポンスが成功でないことを確認（REDテスト）
     response_body = JSON.parse(response.body) rescue {}
-    assert_not (response.status == 200 && response_body['success'] == true),
+    assert_not (response.status == 200 && response_body["success"] == true),
                "Adjust API should fail but got: status=#{response.status}, body=#{response_body}"
   end
 
@@ -462,9 +460,9 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     def login_and_visit(url)
       visit root_path(locale: :ja)
       page.driver.browser.manage.add_cookie(
-        name: 'session_id',
+        name: "session_id",
         value: @session.session_id,
-        path: '/'
+        path: "/"
       )
       visit url
     end

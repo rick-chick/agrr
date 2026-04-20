@@ -40,7 +40,7 @@ begin
     end_date: '2024-01-03',
     json: true
   )
-  
+
   if result && !result.strip.empty?
     puts "   ✓ Weather data fetched successfully"
     puts "   Data length: #{result.length} characters"
@@ -60,7 +60,7 @@ end
 puts "\n5. Testing forecast command..."
 begin
   result = service.forecast(location: '35.6762,139.6503', json: true)
-  
+
   if result && !result.strip.empty?
     puts "   ✓ Forecast data fetched successfully"
     puts "   Data length: #{result.length} characters"

@@ -33,7 +33,7 @@ module Domain
             rule.is_reference = false if rule.is_reference.nil?
           end
 
-          [rule, is_reference]
+          [ rule, is_reference ]
         end
 
         # show 用の1件取得

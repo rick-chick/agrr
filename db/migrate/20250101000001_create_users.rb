@@ -15,4 +15,3 @@ class CreateUsers < ActiveRecord::Migration[8.0]
     add_index :users, :google_id, unique: true
   end
 end
-

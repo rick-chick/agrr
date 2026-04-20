@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(task)
-          @view.redirect_to @view.agricultural_task_path(task), notice: I18n.t('agricultural_tasks.flash.updated')
+          @view.redirect_to @view.agricultural_task_path(task), notice: I18n.t("agricultural_tasks.flash.updated")
         end
 
         def on_failure(error_dto)

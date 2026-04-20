@@ -28,7 +28,7 @@ class ChangePrivatePlansToAnnualPlanning < ActiveRecord::Migration[8.0]
                  if_exists: true
 
     # 3. 新しい一意制約を追加（plan_yearを除外）
-    add_index :cultivation_plans, [:farm_id, :user_id],
+    add_index :cultivation_plans, [ :farm_id, :user_id ],
               unique: true,
               name: 'index_cultivation_plans_on_farm_user_unique',
               where: "plan_type = 'private'"
@@ -45,7 +45,7 @@ class ChangePrivatePlansToAnnualPlanning < ActiveRecord::Migration[8.0]
                  name: 'index_cultivation_plans_on_farm_user_unique',
                  if_exists: true
 
-    add_index :cultivation_plans, [:farm_id, :user_id, :plan_year],
+    add_index :cultivation_plans, [ :farm_id, :user_id, :plan_year ],
               unique: true,
               name: 'index_cultivation_plans_on_farm_user_year_unique',
               where: "plan_type = 'private'"
@@ -62,4 +62,3 @@ class ChangePrivatePlansToAnnualPlanning < ActiveRecord::Migration[8.0]
     change_column_null :cultivation_plans, :plan_year, false
   end
 end
-

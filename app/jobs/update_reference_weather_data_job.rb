@@ -46,14 +46,14 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     Rails.logger.error "❌ [UpdateReferenceWeatherDataJob] すべてのリトライが失敗しました"
     Rails.logger.error "   エラー: #{exception.class} - #{exception.message}"
     Rails.logger.error "   Backtrace: #{exception.backtrace.first(5).join("\n   ")}"
-    
+
     # 将来的にはここで管理者通知を実装
     # AdminNotifier.job_failed(job.class.name, exception).deliver_later
   end
 
   def perform
     start_time = Time.current
-    
+
     Rails.logger.info "🌤️  [UpdateReferenceWeatherDataJob] 参照農場の天気データ更新を開始"
 
     # 全参照農場を取得
@@ -76,7 +76,7 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     max_available_year = 2025
     if end_date.year > max_available_year
       end_date = Date.new(max_available_year, 12, 31)
-      start_date = [start_date, Date.new(max_available_year, 1, 1)].max
+      start_date = [ start_date, Date.new(max_available_year, 1, 1) ].max
     end
 
     Rails.logger.info "📅 [UpdateReferenceWeatherDataJob] 取得期間: #{start_date} 〜 #{end_date}"
@@ -91,7 +91,7 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
         start_date: start_date,
         end_date: end_date
       )
-      
+
       Rails.logger.info "✅ [UpdateReferenceWeatherDataJob] [Farm##{farm.id}] '#{farm.name}' をエンキュー"
     end
 
@@ -99,4 +99,3 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     Rails.logger.info "🎉 [UpdateReferenceWeatherDataJob] 完了: #{reference_farms.count}件（#{elapsed_time}秒）"
   end
 end
-

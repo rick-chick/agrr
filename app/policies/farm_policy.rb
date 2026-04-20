@@ -1,4 +1,4 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
 class FarmPolicy
   # HTML/JSON 双方から利用する、Farm の所有権ポリシー
@@ -50,4 +50,3 @@ class FarmPolicy
     scope
   end
 end
-

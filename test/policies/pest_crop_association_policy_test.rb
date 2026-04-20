@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class PestCropAssociationPolicyTest < ActiveSupport::TestCase
   setup do
@@ -33,9 +33,9 @@ class PestCropAssociationPolicyTest < ActiveSupport::TestCase
   end
 
   test "accessible_crops_scope filters by region when pest has region" do
-    reference_pest = create(:pest, is_reference: true, user: nil, region: 'jp')
-    jp_crop = create(:crop, is_reference: true, user: nil, region: 'jp')
-    us_crop = create(:crop, is_reference: true, user: nil, region: 'us')
+    reference_pest = create(:pest, is_reference: true, user: nil, region: "jp")
+    jp_crop = create(:crop, is_reference: true, user: nil, region: "jp")
+    us_crop = create(:crop, is_reference: true, user: nil, region: "us")
 
     scope = PestCropAssociationPolicy.accessible_crops_scope(reference_pest, user: @user)
 
@@ -72,8 +72,8 @@ class PestCropAssociationPolicyTest < ActiveSupport::TestCase
   end
 
   test "crop_accessible_for_pest? returns false when region mismatch" do
-    reference_pest = create(:pest, is_reference: true, user: nil, region: 'jp')
-    us_crop = create(:crop, is_reference: true, user: nil, region: 'us')
+    reference_pest = create(:pest, is_reference: true, user: nil, region: "jp")
+    us_crop = create(:crop, is_reference: true, user: nil, region: "us")
 
     assert_not PestCropAssociationPolicy.crop_accessible_for_pest?(us_crop, reference_pest, user: @user)
   end

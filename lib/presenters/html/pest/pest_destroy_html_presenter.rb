@@ -11,12 +11,12 @@ module Presenters
         def on_success(destroy_output_dto)
           event = destroy_output_dto.undo
           if event&.undo_token.present?
-            resource_label = event.metadata['resource_label']
+            resource_label = event.metadata["resource_label"]
             @view.redirect_back fallback_location: @view.pests_path,
-                               notice: I18n.t('deletion_undo.redirect_notice', resource: resource_label)
+                               notice: I18n.t("deletion_undo.redirect_notice", resource: resource_label)
           else
             # undo トークンがない場合は通常のリダイレクト
-            @view.redirect_to @view.pests_path, notice: I18n.t('pests.flash.destroyed')
+            @view.redirect_to @view.pests_path, notice: I18n.t("pests.flash.destroyed")
           end
         end
 

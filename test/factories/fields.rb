@@ -3,7 +3,7 @@ FactoryBot.define do
     sequence(:name) { |n| "Test Field #{n}" }
     area { 1000.0 }  # 1000㎡
     daily_fixed_cost { 500.0 }  # 1日あたり500円
-    
+
     association :farm
     association :user
 
@@ -26,4 +26,3 @@ FactoryBot.define do
     end
   end
 end
-

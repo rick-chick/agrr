@@ -7,12 +7,12 @@ FactoryBot.define do
     weather_data_status { :pending }
     weather_data_fetched_years { 0 }
     weather_data_total_years { 0 }
-    
+
     association :user
 
     trait :reference do
       is_reference { true }
-      association :user, factory: [:user, :anonymous]
+      association :user, factory: [ :user, :anonymous ]
     end
 
     trait :user_owned do
@@ -70,4 +70,3 @@ FactoryBot.define do
     end
   end
 end
-

@@ -39,7 +39,7 @@ module Api
         def create
           input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_create_params?(input_dto)
-            render_response(json: { errors: ['rule_type, source_group, target_group, impact_ratio are required'] }, status: :unprocessable_entity)
+            render_response(json: { errors: [ "rule_type, source_group, target_group, impact_ratio are required" ] }, status: :unprocessable_entity)
             return
           end
           presenter = Presenters::Api::InteractionRule::InteractionRuleCreatePresenter.new(view: self)
@@ -98,7 +98,7 @@ module Api
           case action
           when :show, :destroy, :update
             return true if params[:id].present?
-            render_response(json: { error: 'InteractionRule not found' }, status: :not_found)
+            render_response(json: { error: "InteractionRule not found" }, status: :not_found)
             false
           else
             true

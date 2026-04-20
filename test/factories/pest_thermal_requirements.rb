@@ -7,10 +7,3 @@ FactoryBot.define do
     first_generation_gdd { 100.0 }
   end
 end
-
-
-
-
-
-
-

@@ -19,9 +19,9 @@ module Domain
           dto = Domain::Pest::Dtos::PestDetailOutputDto.new(pest: pest_entity, pest_model: pest_model)
           @output_port.on_success(dto)
         rescue ActiveRecord::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.not_found')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t('pests.flash.no_permission')))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

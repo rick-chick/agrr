@@ -10,7 +10,7 @@ module Presenters
 
         def on_success(field_entity)
           farm = @view.instance_variable_get(:@farm)
-          @view.redirect_to @view.farm_field_path(farm.id, field_entity.id), notice: I18n.t('fields.flash.updated')
+          @view.redirect_to @view.farm_field_path(farm.id, field_entity.id), notice: I18n.t("fields.flash.updated")
         end
 
         def on_failure(error_dto)

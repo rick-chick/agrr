@@ -41,13 +41,13 @@ module CropSchedule
       cached = service.get_existing_prediction(target_end_date: target_end)
       payload_hash = if cached && cached[:data].is_a?(Hash)
                        cached[:data]
-                     else
+      else
                        service.predict_for_farm(target_end_date: target_end)
                        @farm.reload
                        @farm.predicted_weather_data
-                     end
+      end
 
-      raise PredictionPayloadMissingError if payload_hash.blank? || payload_hash['data'].blank?
+      raise PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
 
       payload_hash
     rescue WeatherPredictionService::WeatherDataNotFoundError,

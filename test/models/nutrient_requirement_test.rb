@@ -14,7 +14,7 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: 0.2,
       daily_uptake_k: 0.8
     )
-    
+
     assert nutrient_req.valid?
     assert nutrient_req.save
   end
@@ -25,7 +25,7 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: 0.2,
       daily_uptake_k: 0.8
     )
-    
+
     assert_not nutrient_req.valid?
     assert_includes nutrient_req.errors[:crop_stage], "を入力してください"
   end
@@ -37,7 +37,7 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: 0.2,
       daily_uptake_k: 0.8
     )
-    
+
     assert_not nutrient_req.valid?
     assert_includes nutrient_req.errors[:daily_uptake_n], "は0以上の値にしてください"
   end
@@ -49,7 +49,7 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: -0.1,
       daily_uptake_k: 0.8
     )
-    
+
     assert_not nutrient_req.valid?
     assert_includes nutrient_req.errors[:daily_uptake_p], "は0以上の値にしてください"
   end
@@ -61,7 +61,7 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: 0.2,
       daily_uptake_k: -0.5
     )
-    
+
     assert_not nutrient_req.valid?
     assert_includes nutrient_req.errors[:daily_uptake_k], "は0以上の値にしてください"
   end
@@ -73,13 +73,13 @@ class NutrientRequirementTest < ActiveSupport::TestCase
       daily_uptake_p: nil,
       daily_uptake_k: nil
     )
-    
+
     assert nutrient_req.valid?
   end
 
   test "should belong to crop_stage" do
     nutrient_req = create(:nutrient_requirement, crop_stage: @crop_stage)
-    
+
     assert_equal @crop_stage, nutrient_req.crop_stage
   end
 
@@ -92,17 +92,10 @@ class NutrientRequirementTest < ActiveSupport::TestCase
 
   test "crop stage should have nutrient requirement" do
     create(:nutrient_requirement, crop_stage: @crop_stage)
-    
+
     assert_not_nil @crop_stage.nutrient_requirement
     assert_equal 0.5, @crop_stage.nutrient_requirement.daily_uptake_n
     assert_equal 0.2, @crop_stage.nutrient_requirement.daily_uptake_p
     assert_equal 0.8, @crop_stage.nutrient_requirement.daily_uptake_k
   end
 end
-
-
-
-
-
-
-

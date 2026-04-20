@@ -14,21 +14,21 @@ module DeletionUndo
     private
 
     def restore_node(node, parent: nil, reflection: nil, skip_associations: false)
-      raise ArgumentError, 'snapshot node must be present' if node.blank?
+      raise ArgumentError, "snapshot node must be present" if node.blank?
 
       # 参照スナップショットの場合は既存レコードのみを再利用し、新規作成しない
-      if node['reference']
-        klass = node.fetch('model').constantize
-        attributes = node.fetch('attributes')
+      if node["reference"]
+        klass = node.fetch("model").constantize
+        attributes = node.fetch("attributes")
         primary_key = klass.primary_key.to_s
         record = klass.find_by(primary_key => attributes[primary_key])
         raise ReferenceRecordNotFoundError, "Referenced #{klass.name} with #{primary_key}=#{attributes[primary_key].inspect} not found" unless record
         return record
       end
 
-      klass = node.fetch('model').constantize
-      attributes = node.fetch('attributes').dup
-      associations = node.fetch('associations', {})
+      klass = node.fetch("model").constantize
+      attributes = node.fetch("attributes").dup
+      associations = node.fetch("associations", {})
       primary_key = klass.primary_key.to_s
 
       # 既に保存されているレコードを再利用
@@ -66,7 +66,7 @@ module DeletionUndo
       first_pass.each do |name, child_snapshot|
         reflection = record.class.reflect_on_association(name.to_sym)
         next unless reflection
-        
+
         if reflection.collection?
           Array(child_snapshot).each do |child|
             first_pass_parent_records << restore_node(child, parent: record, reflection: reflection, skip_associations: true)
@@ -135,7 +135,7 @@ module DeletionUndo
       # 子レコードのbelongs_toアソシエーションを確認
       child_model.reflect_on_all_associations(:belongs_to).any? do |belongs_to_ref|
         belongs_to_class_name = belongs_to_ref.class_name
-        
+
         # belongs_toのクラス名が他のアソシエーションのクラス名と一致するか確認
         # ただし、親レコード自身を参照している場合は除外
         if association_class_names.values.include?(belongs_to_class_name) &&
@@ -160,4 +160,3 @@ module DeletionUndo
     end
   end
 end
-

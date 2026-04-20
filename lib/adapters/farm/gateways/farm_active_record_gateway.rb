@@ -13,7 +13,7 @@ module Adapters
         def list(input_dto)
           if input_dto.is_admin
             # 管理者の場合は自分の農場と参照農場の両方を取得
-            ::Farm.where('user_id = ? OR is_reference = ?', @user_id, true).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+            ::Farm.where("user_id = ? OR is_reference = ?", @user_id, true).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
           else
             # 通常ユーザーの場合は自分の農場のみ（参照農場・他ユーザー農場は含めない）
             ::Farm.where(user_id: @user_id, is_reference: false).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
@@ -34,7 +34,7 @@ module Adapters
             user_id: create_input_dto.user_id,
             is_reference: create_input_dto.is_reference || false
           )
-          raise StandardError, farm.errors.full_messages.join(', ') unless farm.save
+          raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
 
           Domain::Farm::Entities::FarmEntity.from_model(farm)
         end
@@ -46,7 +46,7 @@ module Adapters
           attrs[:region] = update_input_dto.region if update_input_dto.region.present?
           attrs[:latitude] = update_input_dto.latitude if !update_input_dto.latitude.nil?
           attrs[:longitude] = update_input_dto.longitude if !update_input_dto.longitude.nil?
-          raise StandardError, farm.errors.full_messages.join(', ') unless farm.update(attrs)
+          raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(attrs)
 
           Domain::Farm::Entities::FarmEntity.from_model(farm.reload)
         end
@@ -56,10 +56,10 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: farm,
             actor: farm.user,
-            toast_message: @translator.t('farms.undo.toast', name: farm.display_name)
+            toast_message: @translator.t("farms.undo.toast", name: farm.display_name)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('farms.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("farms.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end

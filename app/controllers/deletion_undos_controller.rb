@@ -42,4 +42,3 @@ class DeletionUndosController < ApplicationController
     @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
   end
 end
-

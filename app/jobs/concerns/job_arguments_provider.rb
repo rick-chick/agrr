@@ -2,7 +2,7 @@
 
 module JobArgumentsProvider
   extend ActiveSupport::Concern
-  
+
   # 各ジョブで実装する必要があるメソッド
   # インスタンス変数をハッシュとして返す
   def job_arguments

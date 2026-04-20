@@ -20,10 +20,10 @@ module CropSchedule
     def self.normalize_entry_weather_payload(raw)
       h = raw.is_a?(Hash) ? raw.deep_dup : {}
       h = h.deep_stringify_keys
-      d = h['data']
-      if d.is_a?(Hash) && d['data'].is_a?(Array)
+      d = h["data"]
+      if d.is_a?(Hash) && d["data"].is_a?(Array)
         inner = d.deep_stringify_keys
-        h['data'] = inner['data']
+        h["data"] = inner["data"]
         %w[latitude longitude elevation timezone].each do |key|
           h[key] = inner[key] if h[key].blank? && inner[key].present?
         end
@@ -34,22 +34,22 @@ module CropSchedule
     # @param requirement_hash [Hash] Crop#to_agrr_requirement 相当
     # @return [Hash] 各 stage の thermal.required_gdd をスケールしたコピー
     def self.scale_stage_gdd_for_optimize_period(requirement_hash, max_total_gdd: nil)
-      max_total = (max_total_gdd || ENV['ENTRY_SCHEDULE_MAX_TOTAL_GDD'].presence&.to_f)
+      max_total = (max_total_gdd || ENV["ENTRY_SCHEDULE_MAX_TOTAL_GDD"].presence&.to_f)
       max_total = DEFAULT_MAX_TOTAL_GDD_FOR_OPTIMIZE if max_total.nil? || max_total <= 0
 
       req = requirement_hash.deep_dup
-      stages = req['stage_requirements']
+      stages = req["stage_requirements"]
       return req unless stages.is_a?(Array)
 
-      sum = stages.sum { |s| s.dig('thermal', 'required_gdd').to_f }
+      sum = stages.sum { |s| s.dig("thermal", "required_gdd").to_f }
       return req if sum <= 0.0 || sum <= max_total
 
       factor = max_total / sum
       stages.each do |s|
-        next unless s.is_a?(Hash) && s['thermal'].is_a?(Hash)
+        next unless s.is_a?(Hash) && s["thermal"].is_a?(Hash)
 
-        g = s['thermal']['required_gdd'].to_f
-        s['thermal']['required_gdd'] = (g * factor).round(2)
+        g = s["thermal"]["required_gdd"].to_f
+        s["thermal"]["required_gdd"] = (g * factor).round(2)
       end
       req
     end
@@ -73,7 +73,7 @@ module CropSchedule
       gateway = Agrr::OptimizationGateway.new
       parsed = gateway.optimize(
         crop_name: @crop.name,
-        crop_variety: @crop.variety.presence || 'general',
+        crop_variety: @crop.variety.presence || "general",
         weather_data: weather_for_file,
         field_area: 1.0,
         daily_fixed_cost: 0.01,
@@ -89,15 +89,15 @@ module CropSchedule
 
       sow_st = StageRoleResolver.sowing_stage(@crop)
       tr_st = StageRoleResolver.transplant_stage(@crop)
-      daily_count = Array(weather_for_file['data']).size
+      daily_count = Array(weather_for_file["data"]).size
 
       WindowService::Result.new(
         eligible: true,
-        sowing_windows: [{ start_date: start_d, end_date: end_d }],
-        transplant_windows: [{ start_date: start_d, end_date: end_d }],
+        sowing_windows: [ { start_date: start_d, end_date: end_d } ],
+        transplant_windows: [ { start_date: start_d, end_date: end_d } ],
         reason_parts: {
-          source: 'agrr_optimize_period',
-          rule: 'agrr_optimize_period',
+          source: "agrr_optimize_period",
+          rule: "agrr_optimize_period",
           optimal_start_date: start_d.iso8601,
           completion_date: end_d.iso8601,
           growth_days: parsed[:days],
@@ -134,7 +134,7 @@ module CropSchedule
         sowing_windows: [],
         transplant_windows: [],
         reason_parts: {
-          source: 'agrr_failed',
+          source: "agrr_failed",
           error_key: error_key.to_s
         },
         sowing_stage_id: nil,
@@ -144,31 +144,31 @@ module CropSchedule
     end
 
     def agrr_enabled?
-      ENV['ENTRY_SCHEDULE_DISABLE_AGRR'].to_s.blank?
+      ENV["ENTRY_SCHEDULE_DISABLE_AGRR"].to_s.blank?
     end
 
     def weather_hash_for_agrr
       h = @weather_payload.deep_stringify_keys
-      data = h['data']
+      data = h["data"]
       return nil unless data.is_a?(Array) && data.any?
 
-      core = h.slice('latitude', 'longitude', 'elevation', 'timezone', 'data')
+      core = h.slice("latitude", "longitude", "elevation", "timezone", "data")
       enrich_weather_geo!(core)
-      return nil if core['latitude'].blank? || core['longitude'].blank?
+      return nil if core["latitude"].blank? || core["longitude"].blank?
 
       core
     end
 
     def enrich_weather_geo!(core)
       wl = @farm&.weather_location
-      if core['latitude'].blank? && @farm&.latitude.present?
-        core['latitude'] = @farm.latitude.to_f
+      if core["latitude"].blank? && @farm&.latitude.present?
+        core["latitude"] = @farm.latitude.to_f
       end
-      if core['longitude'].blank? && @farm&.longitude.present?
-        core['longitude'] = @farm.longitude.to_f
+      if core["longitude"].blank? && @farm&.longitude.present?
+        core["longitude"] = @farm.longitude.to_f
       end
-      core['elevation'] = core['elevation'].presence || wl&.elevation&.to_f
-      core['timezone'] = core['timezone'].presence || wl&.timezone
+      core["elevation"] = core["elevation"].presence || wl&.elevation&.to_f
+      core["timezone"] = core["timezone"].presence || wl&.timezone
     end
 
     def extract_weather_end
@@ -186,7 +186,7 @@ module CropSchedule
     # 気象が短い場合はその範囲にクリップ。交差しなければ不足扱い。
     def evaluation_range
       dates = daily_dates_from_payload
-      return [nil, nil] if dates.empty?
+      return [ nil, nil ] if dates.empty?
 
       data_min = dates.min
       data_max = dates.max
@@ -196,22 +196,22 @@ module CropSchedule
       ideal_start = Date.new(y - 1, 6, 1)
       ideal_end = Date.new(y + 1, 6, 30)
 
-      eval_start = [ideal_start, data_min].max
-      eval_end = [ideal_end, data_max].min
+      eval_start = [ ideal_start, data_min ].max
+      eval_end = [ ideal_end, data_max ].min
 
-      return [nil, nil] if eval_start > eval_end
+      return [ nil, nil ] if eval_start > eval_end
 
-      [eval_start, eval_end]
+      [ eval_start, eval_end ]
     end
 
     def daily_dates_from_payload
-      data = @weather_payload['data'] || @weather_payload[:data]
+      data = @weather_payload["data"] || @weather_payload[:data]
       return [] unless data.is_a?(Array)
 
       data.filter_map do |row|
         next unless row.is_a?(Hash)
 
-        raw = row['time'] || row[:time] || row['date'] || row[:date]
+        raw = row["time"] || row[:time] || row["date"] || row[:date]
         Date.parse(raw.to_s)
       rescue ArgumentError, TypeError
         nil

@@ -8,7 +8,7 @@ class Field < ApplicationRecord
 
   # == Validations =========================================================
   validates :name, presence: true, length: { maximum: 100 }
-  validates :name, uniqueness: { scope: [:user_id, :farm_id], case_sensitive: false }
+  validates :name, uniqueness: { scope: [ :user_id, :farm_id ], case_sensitive: false }
   validates :area, numericality: { greater_than: 0 }, allow_nil: true
   validates :daily_fixed_cost, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
@@ -25,7 +25,7 @@ class Field < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   # == Instance Methods ====================================================
-  
+
   def display_name
     name.presence || "##{id}"
   end
@@ -51,7 +51,7 @@ class Field < ApplicationRecord
   def broadcast_field_created
     return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field created"
-    
+
     # 圃場一覧画面を更新
     broadcast_prepend_to(
       farm,
@@ -59,7 +59,7 @@ class Field < ApplicationRecord
       partial: "fields/field_card",
       locals: { field: self, farm: farm }
     )
-    
+
     # 農場の圃場数も更新（直接ブロードキャスト）
     farm.broadcast_replace_to(
       farm,
@@ -73,7 +73,7 @@ class Field < ApplicationRecord
   def broadcast_field_updated
     return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field updated"
-    
+
     # 圃場一覧画面を更新
     broadcast_replace_to(
       farm,
@@ -87,13 +87,13 @@ class Field < ApplicationRecord
   def broadcast_field_destroyed
     return if Rails.env.test?
     Rails.logger.info "🔔 [Field##{id}] Broadcasting field destroyed"
-    
+
     # 圃場一覧画面から削除
     broadcast_remove_to(
       farm,
       target: dom_id(self)
     )
-    
+
     # 農場の圃場数も更新（直接ブロードキャスト）
     farm.broadcast_replace_to(
       farm,

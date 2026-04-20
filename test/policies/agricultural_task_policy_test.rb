@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::TestCase
   setup do
@@ -8,7 +8,7 @@ class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::Test
     @admin = create(:user, :admin)
   end
 
-  test 'visible_scope delegates to visible_scope_for and respects admin/user rules' do
+  test "visible_scope delegates to visible_scope_for and respects admin/user rules" do
     reference_task = create(:agricultural_task) # デフォルトは参照タスク想定
     admin_task = create(:agricultural_task, :user_owned, user: @admin)
     user_task = create(:agricultural_task, :user_owned, user: @user)
@@ -27,7 +27,7 @@ class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::Test
     assert_not_includes scope_for_admin, user_task
   end
 
-  test 'user_owned_non_reference_scope returns only non-reference tasks owned by given user' do
+  test "user_owned_non_reference_scope returns only non-reference tasks owned by given user" do
     reference_task = create(:agricultural_task)
     user_task = create(:agricultural_task, :user_owned, user: @user)
     other_user_task = create(:agricultural_task, :user_owned, user: create(:user))

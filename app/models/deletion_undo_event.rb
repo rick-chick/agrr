@@ -3,13 +3,13 @@
 class DeletionUndoEvent < ApplicationRecord
   DEFAULT_AUTO_HIDE_SECONDS = 5
 
-  belongs_to :deleted_by, class_name: 'User', optional: true
+  belongs_to :deleted_by, class_name: "User", optional: true
 
   enum :state, {
-    scheduled: 'scheduled',
-    restored: 'restored',
-    expired: 'expired',
-    failed: 'failed'
+    scheduled: "scheduled",
+    restored: "restored",
+    expired: "expired",
+    failed: "failed"
   }
 
   validates :resource_type, :resource_id, :snapshot, :expires_at, :state, presence: true
@@ -19,7 +19,7 @@ class DeletionUndoEvent < ApplicationRecord
   before_validation :ensure_auto_hide_metadata, on: :create
   before_validation :ensure_id, on: :create
 
-  scope :active, -> { scheduled.where('expires_at > ?', Time.current) }
+  scope :active, -> { scheduled.where("expires_at > ?", Time.current) }
 
   def undo_token
     id
@@ -48,7 +48,7 @@ class DeletionUndoEvent < ApplicationRecord
   end
 
   def mark_failed!(error_message: nil)
-    metadata['error'] = error_message if error_message.present?
+    metadata["error"] = error_message if error_message.present?
     update!(
       state: :failed,
       finalized_at: Time.current,
@@ -57,17 +57,17 @@ class DeletionUndoEvent < ApplicationRecord
   end
 
   def toast_message
-    metadata['toast_message']
+    metadata["toast_message"]
   end
 
   def auto_hide_after
-    metadata['auto_hide_after'] || DEFAULT_AUTO_HIDE_SECONDS
+    metadata["auto_hide_after"] || DEFAULT_AUTO_HIDE_SECONDS
   end
 
   private
 
   def ensure_state
-    self.state ||= 'scheduled'
+    self.state ||= "scheduled"
   end
 
   def ensure_expires_at
@@ -75,11 +75,10 @@ class DeletionUndoEvent < ApplicationRecord
   end
 
   def ensure_auto_hide_metadata
-    metadata['auto_hide_after'] ||= DEFAULT_AUTO_HIDE_SECONDS
+    metadata["auto_hide_after"] ||= DEFAULT_AUTO_HIDE_SECONDS
   end
 
   def ensure_id
     self.id = SecureRandom.uuid if id.blank?
   end
 end
-

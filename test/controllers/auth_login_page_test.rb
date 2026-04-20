@@ -8,17 +8,16 @@ class AuthLoginPageTest < ActionDispatch::IntegrationTest
       get auth_login_path
 
       assert_response :success
-      assert_select ".subtitle", I18n.t('auth.login.subtitle', locale: :ja)
-      assert_includes response.body, I18n.t('auth.login.google_button', locale: :ja)
+      assert_select ".subtitle", I18n.t("auth.login.subtitle", locale: :ja)
+      assert_includes response.body, I18n.t("auth.login.google_button", locale: :ja)
     end
   end
 
   test "renders login page in English when Accept-Language is en-US" do
-    get "/auth/login", headers: { 'Accept-Language' => 'en-US,en;q=0.9' }
+    get "/auth/login", headers: { "Accept-Language" => "en-US,en;q=0.9" }
 
     assert_response :success
-    assert_select ".subtitle", I18n.t('auth.login.subtitle', locale: :us)
-    assert_includes response.body, I18n.t('auth.login.google_button', locale: :us)
+    assert_select ".subtitle", I18n.t("auth.login.subtitle", locale: :us)
+    assert_includes response.body, I18n.t("auth.login.google_button", locale: :us)
   end
 end
-

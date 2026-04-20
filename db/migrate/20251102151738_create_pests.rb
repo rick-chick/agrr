@@ -11,10 +11,10 @@ class CreatePests < ActiveRecord::Migration[8.0]
       t.text :description
       t.string :occurrence_season
       t.boolean :is_reference, default: false, null: false
-      
+
       t.timestamps
     end
-    
+
     add_index :pests, :pest_id, unique: true
     add_index :pests, :is_reference
   end

@@ -13,7 +13,7 @@ module DatabaseCleanerSetup
     if self.class < ActionDispatch::SystemTestCase
       return super
     end
-    
+
     # 通常のテストではtransactionを使用
     DatabaseCleaner[:active_record].strategy = :transaction
     DatabaseCleaner[:active_record].start
@@ -34,4 +34,3 @@ end
 class ActiveSupport::TestCase
   include DatabaseCleanerSetup
 end
-

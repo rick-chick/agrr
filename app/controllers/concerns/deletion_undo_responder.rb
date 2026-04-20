@@ -6,11 +6,11 @@ module DeletionUndoResponder
   private
 
   def render_deletion_undo_response(event, fallback_location:, status: :ok)
-    raise DeletionUndo::Error, 'DeletionUndoEvent must be present' unless event
+    raise DeletionUndo::Error, "DeletionUndoEvent must be present" unless event
 
     if event.undo_token.blank?
       Rails.logger.error("[DeletionUndo] Missing undo_token for #{event.resource_type}##{event.resource_id}")
-      raise DeletionUndo::Error, 'Undo token could not be generated'
+      raise DeletionUndo::Error, "Undo token could not be generated"
     end
 
     respond_to do |format|
@@ -18,11 +18,11 @@ module DeletionUndoResponder
         resource_dom_id = resource_dom_id_for(event)
         render json: {
           undo_token: event.undo_token,
-          undo_deadline: event.metadata['undo_deadline'],
+          undo_deadline: event.metadata["undo_deadline"],
           toast_message: event.toast_message,
           undo_path: undo_deletion_path(undo_token: event.undo_token),
           auto_hide_after: event.auto_hide_after,
-          resource: event.metadata['resource_label'],
+          resource: event.metadata["resource_label"],
           redirect_path: fallback_location,
           resource_dom_id: resource_dom_id
         }, status: status
@@ -30,13 +30,13 @@ module DeletionUndoResponder
 
       format.html do
         redirect_back fallback_location: fallback_location,
-                      notice: I18n.t('deletion_undo.redirect_notice', resource: event.metadata['resource_label'])
+                      notice: I18n.t("deletion_undo.redirect_notice", resource: event.metadata["resource_label"])
       end
     end
   end
 
   def resource_dom_id_for(event)
-    stored_dom_id = event.metadata['resource_dom_id']
+    stored_dom_id = event.metadata["resource_dom_id"]
     return stored_dom_id if stored_dom_id.present?
 
     [
@@ -56,4 +56,3 @@ module DeletionUndoResponder
     end
   end
 end
-

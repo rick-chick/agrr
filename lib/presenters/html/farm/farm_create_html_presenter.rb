@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(farm_entity)
-          @view.redirect_to @view.farm_path(farm_entity.id), notice: I18n.t('farms.flash.created')
+          @view.redirect_to @view.farm_path(farm_entity.id), notice: I18n.t("farms.flash.created")
         end
 
         def on_failure(error_dto)

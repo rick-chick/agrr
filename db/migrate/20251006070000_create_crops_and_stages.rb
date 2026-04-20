@@ -16,7 +16,7 @@ class CreateCropsAndStages < ActiveRecord::Migration[7.1]
       t.integer :order, null: false
       t.timestamps
     end
-    add_index :crop_stages, [:crop_id, :order], unique: true
+    add_index :crop_stages, [ :crop_id, :order ], unique: true
 
     create_table :temperature_requirements do |t|
       t.references :crop_stage, null: false, foreign_key: true
@@ -44,5 +44,3 @@ class CreateCropsAndStages < ActiveRecord::Migration[7.1]
     end
   end
 end
-
-

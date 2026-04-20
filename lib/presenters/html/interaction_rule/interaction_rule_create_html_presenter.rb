@@ -10,7 +10,7 @@ module Presenters
 
         def on_success(rule)
           # 成功時は作成したルールの詳細ページにリダイレクト
-          @view.redirect_to @view.interaction_rule_path(rule.id), notice: I18n.t('interaction_rules.flash.created')
+          @view.redirect_to @view.interaction_rule_path(rule.id), notice: I18n.t("interaction_rules.flash.created")
         end
 
         def on_failure(error_dto)

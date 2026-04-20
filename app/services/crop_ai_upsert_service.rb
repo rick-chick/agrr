@@ -20,7 +20,7 @@ class CropAiUpsertService
   # @return [Result] success?/status/body を持つ結果オブジェクト
   def call(crop_name:, variety: nil, crop_info:)
     # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
-    dummy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, { name: 'dummy' })
+    dummy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, { name: "dummy" })
     unless dummy_crop.valid?
       validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
       if validation_error
@@ -32,8 +32,8 @@ class CropAiUpsertService
       end
     end
 
-    if crop_info['success'] == false
-      error_msg = crop_info['error'] || I18n.t('api.errors.crops.fetch_failed')
+    if crop_info["success"] == false
+      error_msg = crop_info["error"] || I18n.t("api.errors.crops.fetch_failed")
       return Result.new(
         success: false,
         status: :unprocessable_entity,
@@ -41,18 +41,18 @@ class CropAiUpsertService
       )
     end
 
-    crop_data = crop_info['crop']
-    stage_requirements = crop_info['stage_requirements']
+    crop_data = crop_info["crop"]
+    stage_requirements = crop_info["stage_requirements"]
 
     unless crop_data
       return Result.new(
         success: false,
         status: :unprocessable_entity,
-        body: { error: I18n.t('api.errors.crops.invalid_payload') }
+        body: { error: I18n.t("api.errors.crops.invalid_payload") }
       )
     end
 
-    crop_id = crop_data['crop_id'] # agrrが返すcrop_id
+    crop_id = crop_data["crop_id"] # agrrが返すcrop_id
     Rails.logger.info "📊 [AI Crop] Retrieved data: crop_id=#{crop_id}, area=#{crop_data['area_per_unit']}, revenue=#{crop_data['revenue_per_area']}, stages=#{stage_requirements&.count || 0}"
 
     existing_crop = find_existing_crop_for_update(crop_id)
@@ -68,7 +68,7 @@ class CropAiUpsertService
     Result.new(
       success: false,
       status: :internal_server_error,
-      body: { error: I18n.t('api.errors.crops.fetch_failed_with_reason', message: e.message) }
+      body: { error: I18n.t("api.errors.crops.fetch_failed_with_reason", message: e.message) }
     )
   end
 
@@ -92,10 +92,10 @@ class CropAiUpsertService
 
     ActiveRecord::Base.transaction do
       existing_crop.update!(
-        variety: variety.present? ? variety : (crop_data['variety'] || existing_crop.variety),
-        area_per_unit: crop_data['area_per_unit'],
-        revenue_per_area: crop_data['revenue_per_area'],
-        groups: crop_data['groups'] || []
+        variety: variety.present? ? variety : (crop_data["variety"] || existing_crop.variety),
+        area_per_unit: crop_data["area_per_unit"],
+        revenue_per_area: crop_data["revenue_per_area"],
+        groups: crop_data["groups"] || []
       )
 
       existing_crop.crop_stages.destroy_all
@@ -117,7 +117,7 @@ class CropAiUpsertService
         revenue_per_area: existing_crop.revenue_per_area,
         stages_count: stage_requirements&.count || 0,
         is_reference: existing_crop.is_reference,
-        message: I18n.t('api.messages.crops.updated_with_latest', name: existing_crop.name)
+        message: I18n.t("api.messages.crops.updated_with_latest", name: existing_crop.name)
       }
     )
   end
@@ -126,10 +126,10 @@ class CropAiUpsertService
     Rails.logger.info "🆕 [AI Crop] Creating new crop: #{crop_name} (crop_id: #{crop_data['crop_id']})"
     base_attrs = {
       name: crop_name,
-      variety: variety || crop_data['variety'],
-      area_per_unit: crop_data['area_per_unit'],
-      revenue_per_area: crop_data['revenue_per_area'],
-      groups: crop_data['groups'] || []
+      variety: variety || crop_data["variety"],
+      area_per_unit: crop_data["area_per_unit"],
+      revenue_per_area: crop_data["revenue_per_area"],
+      groups: crop_data["groups"] || []
     }
 
     validate_stage_requirements!(stage_requirements)
@@ -183,7 +183,7 @@ class CropAiUpsertService
         area_per_unit: crop_entity.area_per_unit,
         revenue_per_area: crop_entity.revenue_per_area,
         stages_count: stage_requirements&.count || 0,
-        message: I18n.t('api.messages.crops.created_by_ai', name: crop_entity.name)
+        message: I18n.t("api.messages.crops.created_by_ai", name: crop_entity.name)
       }
     )
   end
@@ -192,58 +192,58 @@ class CropAiUpsertService
     saved_count = 0
 
     stages_data.each do |stage_requirement|
-      stage_info = stage_requirement['stage']
-      raise ArgumentError, 'stage information is required' unless stage_info
-      if stage_info['order'].nil? || stage_info['order'].to_s.strip.empty?
-        raise ArgumentError, 'stage order is required'
+      stage_info = stage_requirement["stage"]
+      raise ArgumentError, "stage information is required" unless stage_info
+      if stage_info["order"].nil? || stage_info["order"].to_s.strip.empty?
+        raise ArgumentError, "stage order is required"
       end
 
       stage = ::CropStage.create!(
         crop_id: crop_id,
-        name: stage_info['name'],
-        order: stage_info['order']
+        name: stage_info["name"],
+        order: stage_info["order"]
       )
 
-      if stage_requirement['temperature'].present?
-        temp_data = stage_requirement['temperature']
+      if stage_requirement["temperature"].present?
+        temp_data = stage_requirement["temperature"]
         ::TemperatureRequirement.create!(
           crop_stage_id: stage.id,
-          base_temperature: temp_data['base_temperature'],
-          optimal_min: temp_data['optimal_min'],
-          optimal_max: temp_data['optimal_max'],
-          low_stress_threshold: temp_data['low_stress_threshold'],
-          high_stress_threshold: temp_data['high_stress_threshold'],
-          frost_threshold: temp_data['frost_threshold'],
-          sterility_risk_threshold: temp_data['sterility_risk_threshold']
+          base_temperature: temp_data["base_temperature"],
+          optimal_min: temp_data["optimal_min"],
+          optimal_max: temp_data["optimal_max"],
+          low_stress_threshold: temp_data["low_stress_threshold"],
+          high_stress_threshold: temp_data["high_stress_threshold"],
+          frost_threshold: temp_data["frost_threshold"],
+          sterility_risk_threshold: temp_data["sterility_risk_threshold"]
         )
       end
 
-      if stage_requirement['sunshine'].present?
-        sunshine_data = stage_requirement['sunshine']
+      if stage_requirement["sunshine"].present?
+        sunshine_data = stage_requirement["sunshine"]
         ::SunshineRequirement.create!(
           crop_stage_id: stage.id,
-          minimum_sunshine_hours: sunshine_data['minimum_sunshine_hours'],
-          target_sunshine_hours: sunshine_data['target_sunshine_hours']
+          minimum_sunshine_hours: sunshine_data["minimum_sunshine_hours"],
+          target_sunshine_hours: sunshine_data["target_sunshine_hours"]
         )
       end
 
-      if stage_requirement['thermal'].present?
-        thermal_data = stage_requirement['thermal']
+      if stage_requirement["thermal"].present?
+        thermal_data = stage_requirement["thermal"]
         ::ThermalRequirement.create!(
           crop_stage_id: stage.id,
-          required_gdd: thermal_data['required_gdd']
+          required_gdd: thermal_data["required_gdd"]
         )
       end
 
-      if stage_requirement['nutrients'].present?
-        nutrients_data = stage_requirement['nutrients']
-        daily_uptake = nutrients_data['daily_uptake']
+      if stage_requirement["nutrients"].present?
+        nutrients_data = stage_requirement["nutrients"]
+        daily_uptake = nutrients_data["daily_uptake"]
         if daily_uptake.present?
           ::NutrientRequirement.create!(
             crop_stage_id: stage.id,
-            daily_uptake_n: daily_uptake['N'],
-            daily_uptake_p: daily_uptake['P'],
-            daily_uptake_k: daily_uptake['K']
+            daily_uptake_n: daily_uptake["N"],
+            daily_uptake_p: daily_uptake["P"],
+            daily_uptake_k: daily_uptake["K"]
           )
         end
       end
@@ -259,12 +259,11 @@ class CropAiUpsertService
     return unless stage_requirements.present?
 
     stage_requirements.each do |stage_requirement|
-      stage_info = stage_requirement['stage']
-      raise ArgumentError, 'stage information is required' unless stage_info
-      if stage_info['order'].nil? || stage_info['order'].to_s.strip.empty?
-        raise ArgumentError, 'stage order is required'
+      stage_info = stage_requirement["stage"]
+      raise ArgumentError, "stage information is required" unless stage_info
+      if stage_info["order"].nil? || stage_info["order"].to_s.strip.empty?
+        raise ArgumentError, "stage order is required"
       end
     end
   end
 end
-

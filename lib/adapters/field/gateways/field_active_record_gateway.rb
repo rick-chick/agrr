@@ -11,7 +11,7 @@ module Adapters
           scope = FieldPolicy.scope_for_farm(user, farm)
           scope.map { |record| Domain::Farm::Entities::FieldEntity.from_model(record) }
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise StandardError, 'Farm not found'
+          raise StandardError, "Farm not found"
         end
 
         def find_by_id_and_user(field_id, user_id)
@@ -19,7 +19,7 @@ module Adapters
           record = FieldPolicy.find_owned!(user, field_id)
           Domain::Farm::Entities::FieldEntity.from_model(record)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise StandardError, 'Field not found'
+          raise StandardError, "Field not found"
         end
 
         def create(create_input_dto, farm_id, user_id)
@@ -32,11 +32,11 @@ module Adapters
             region: create_input_dto.region
           }
           field = FieldPolicy.build_for_create(user, farm, attrs)
-          raise StandardError, field.errors.full_messages.join(', ') unless field.save
+          raise StandardError, field.errors.full_messages.join(", ") unless field.save
 
           Domain::Farm::Entities::FieldEntity.from_model(field)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise StandardError, 'Farm not found'
+          raise StandardError, "Farm not found"
         end
 
         def update(field_id, update_input_dto, user_id)
@@ -47,11 +47,11 @@ module Adapters
           attrs[:area] = update_input_dto.area if !update_input_dto.area.nil?
           attrs[:daily_fixed_cost] = update_input_dto.daily_fixed_cost if !update_input_dto.daily_fixed_cost.nil?
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
-          raise StandardError, field.errors.full_messages.join(', ') unless field.update(attrs)
+          raise StandardError, field.errors.full_messages.join(", ") unless field.update(attrs)
 
           Domain::Farm::Entities::FieldEntity.from_model(field.reload)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise StandardError, 'Field not found'
+          raise StandardError, "Field not found"
         end
 
         def destroy(field_id, user_id)
@@ -60,15 +60,15 @@ module Adapters
           DeletionUndo::Manager.schedule(
             record: field,
             actor: user,
-            toast_message: @translator.t('fields.undo.toast', name: field.display_name),
+            toast_message: @translator.t("fields.undo.toast", name: field.display_name),
             metadata: {
               farm_id: field.farm_id
             }
           )
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise StandardError, 'Field not found'
+          raise StandardError, "Field not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t('fields.flash.cannot_delete_in_use')
+          raise StandardError, @translator.t("fields.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end
@@ -78,7 +78,7 @@ module Adapters
         def find_user!(user_id)
           User.find(user_id)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, 'User not found'
+          raise StandardError, "User not found"
         end
       end
     end

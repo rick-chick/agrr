@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class TaskScheduleItem < ApplicationRecord
-  FIELD_WORK_TYPE = 'field_work'
-  BASAL_FERTILIZATION_TYPE = 'basal_fertilization'
-  TOPDRESS_FERTILIZATION_TYPE = 'topdress_fertilization'
+  FIELD_WORK_TYPE = "field_work"
+  BASAL_FERTILIZATION_TYPE = "basal_fertilization"
+  TOPDRESS_FERTILIZATION_TYPE = "topdress_fertilization"
   AGRR_SOURCES = %w[agrr agrr_schedule agrr_fertilize_plan copied_from_public_plan manual].freeze
   STATUSES = {
-    planned: 'planned',
-    rescheduled: 'rescheduled',
-    completed: 'completed',
-    cancelled: 'cancelled'
+    planned: "planned",
+    rescheduled: "rescheduled",
+    completed: "completed",
+    cancelled: "cancelled"
   }.freeze
 
   belongs_to :task_schedule
@@ -30,8 +30,7 @@ class TaskScheduleItem < ApplicationRecord
     return unless source.in?(AGRR_SOURCES)
 
     if gdd_trigger.nil?
-      errors.add(:gdd_trigger, I18n.t('activerecord.errors.models.task_schedule_item.attributes.gdd_trigger.agrr_required'))
+      errors.add(:gdd_trigger, I18n.t("activerecord.errors.models.task_schedule_item.attributes.gdd_trigger.agrr_required"))
     end
   end
 end
-

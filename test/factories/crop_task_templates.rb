@@ -7,10 +7,9 @@ FactoryBot.define do
     description { "作業テンプレートの説明" }
     time_per_sqm { 0.1 }
     weather_dependency { "low" }
-    required_tools { ["手袋"] }
+    required_tools { [ "手袋" ] }
     skill_level { "beginner" }
     task_type { "field" }
     is_reference { false }
   end
 end
-

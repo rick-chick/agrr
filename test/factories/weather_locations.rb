@@ -9,5 +9,3 @@ FactoryBot.define do
     predicted_weather_data { nil }
   end
 end
-
-

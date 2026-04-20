@@ -25,41 +25,41 @@ class PesticideApplicationDetailTest < ActiveSupport::TestCase
   end
 
   test "should validate amount_unit requires amount_per_m2" do
-    detail = build(:pesticide_application_detail, 
-                   pesticide: @pesticide, 
-                   amount_unit: "ml", 
+    detail = build(:pesticide_application_detail,
+                   pesticide: @pesticide,
+                   amount_unit: "ml",
                    amount_per_m2: nil)
     assert_not detail.valid?
     assert_includes detail.errors[:amount_unit], "requires amount_per_m2"
   end
 
   test "should validate amount_per_m2 requires amount_unit" do
-    detail = build(:pesticide_application_detail, 
-                   pesticide: @pesticide, 
-                   amount_per_m2: 0.1, 
+    detail = build(:pesticide_application_detail,
+                   pesticide: @pesticide,
+                   amount_per_m2: 0.1,
                    amount_unit: nil)
     assert_not detail.valid?
     assert_includes detail.errors[:amount_per_m2], "requires amount_unit"
   end
 
   test "should allow both amount_per_m2 and amount_unit present" do
-    detail = build(:pesticide_application_detail, 
-                   pesticide: @pesticide, 
-                   amount_per_m2: 0.1, 
+    detail = build(:pesticide_application_detail,
+                   pesticide: @pesticide,
+                   amount_per_m2: 0.1,
                    amount_unit: "ml")
     assert detail.valid?
   end
 
   test "should allow both amount_per_m2 and amount_unit nil" do
-    detail = build(:pesticide_application_detail, 
-                   pesticide: @pesticide, 
-                   amount_per_m2: nil, 
+    detail = build(:pesticide_application_detail,
+                   pesticide: @pesticide,
+                   amount_per_m2: nil,
                    amount_unit: nil)
     assert detail.valid?
   end
 
   test "should allow nil for optional fields" do
-    detail = build(:pesticide_application_detail, 
+    detail = build(:pesticide_application_detail,
                    pesticide: @pesticide,
                    dilution_ratio: nil,
                    amount_per_m2: nil,
@@ -77,11 +77,3 @@ class PesticideApplicationDetailTest < ActiveSupport::TestCase
     assert_not PesticideApplicationDetail.exists?(detail_id)
   end
 end
-
-
-
-
-
-
-
-

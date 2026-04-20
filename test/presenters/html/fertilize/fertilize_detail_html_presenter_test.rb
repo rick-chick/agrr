@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test 'on_success sets @fertilize from dto' do
+  test "on_success sets @fertilize from dto" do
     view_mock = mock
     presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
 
@@ -20,18 +20,18 @@ class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter.on_success(fertilize_detail_dto)
   end
 
-  test 'on_failure sets flash alert and renders show template' do
+  test "on_failure sets flash alert and renders show template" do
     view_mock = mock
     presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:respond_to?).with(:message).returns(true)
-    error_dto.expects(:message).returns('Test error')
+    error_dto.expects(:message).returns("Test error")
 
     flash_now_mock = mock
     flash_mock = mock
     flash_mock.expects(:now).returns(flash_now_mock)
-    flash_now_mock.expects(:[]=).with(:alert, 'Test error')
+    flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
     view_mock.expects(:render).with(:show, status: :unprocessable_entity)
 

@@ -81,7 +81,7 @@ module Crops
 
     test "should return unauthorized when not logged in" do
       # Clear session by setting invalid session_id
-      cookies[:session_id] = 'invalid_session'
+      cookies[:session_id] = "invalid_session"
 
       valid_params = {
         crop_stage: {

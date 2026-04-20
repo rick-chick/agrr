@@ -9,4 +9,3 @@ FactoryBot.define do
     revenue_per_area { crop.revenue_per_area }
   end
 end
-

@@ -27,11 +27,3 @@ class PesticideApplicationDetail < ApplicationRecord
     end
   end
 end
-
-
-
-
-
-
-
-

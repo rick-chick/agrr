@@ -23,7 +23,7 @@ module Api
         # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
         class PestsController < BaseController
           before_action :set_crop
-          before_action :set_pest, only: [:destroy]
+          before_action :set_pest, only: [ :destroy ]
 
           # 作物に紐づく害虫一覧を取得
           #
@@ -50,32 +50,32 @@ module Api
           # @return [422] 既に関連付けられている、またはバリデーションエラー
           def create
             pest_id = params[:pest_id]
-            
+
             unless pest_id.present?
-              render json: { error: I18n.t('api.errors.pests.pest_id_required') }, status: :unprocessable_entity
+              render json: { error: I18n.t("api.errors.pests.pest_id_required") }, status: :unprocessable_entity
               return
             end
 
             pest = Pest.find_by(id: pest_id)
             unless pest
-              render json: { error: I18n.t('api.errors.pests.not_found') }, status: :not_found
+              render json: { error: I18n.t("api.errors.pests.not_found") }, status: :not_found
               return
             end
 
             # 権限チェック: Policy経由で関連付け可否を判定（参照害虫も含む）
             unless Domain::Shared::Policies::PestPolicy.selectable_scope(Pest, current_user).exists?(id: pest.id)
-              render json: { error: I18n.t('api.errors.pests.permission_denied') }, status: :forbidden
+              render json: { error: I18n.t("api.errors.pests.permission_denied") }, status: :forbidden
               return
             end
 
             # 既に関連付けられているかチェック
             if @crop.pests.include?(pest)
-              render json: { error: I18n.t('api.errors.pests.already_associated') }, status: :unprocessable_entity
+              render json: { error: I18n.t("api.errors.pests.already_associated") }, status: :unprocessable_entity
               return
             end
 
             @crop.pests << pest
-            render json: { message: I18n.t('api.messages.pests.associated_successfully'), crop_id: @crop.id, pest_id: pest.id }, status: :created
+            render json: { message: I18n.t("api.messages.pests.associated_successfully"), crop_id: @crop.id, pest_id: pest.id }, status: :created
           end
 
           # 作物から害虫の関連を削除
@@ -87,7 +87,7 @@ module Api
           # @return [404] 作物または害虫が見つからない、または関連が存在しない
           def destroy
             unless @crop.pests.include?(@pest)
-              render json: { error: I18n.t('api.errors.pests.not_associated') }, status: :not_found
+              render json: { error: I18n.t("api.errors.pests.not_associated") }, status: :not_found
               return
             end
 
@@ -100,13 +100,13 @@ module Api
           def set_crop
             @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
-            render json: { error: I18n.t('api.errors.crop_not_found') }, status: :not_found
+            render json: { error: I18n.t("api.errors.crop_not_found") }, status: :not_found
           end
 
           def set_pest
             @pest = Pest.find_by(id: params[:id])
             unless @pest
-              render json: { error: I18n.t('api.errors.pests.not_found') }, status: :not_found
+              render json: { error: I18n.t("api.errors.pests.not_found") }, status: :not_found
             end
           end
         end

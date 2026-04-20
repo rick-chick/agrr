@@ -6,11 +6,3 @@ FactoryBot.define do
     association :pest
   end
 end
-
-
-
-
-
-
-
-

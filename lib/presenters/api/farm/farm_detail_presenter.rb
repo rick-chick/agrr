@@ -10,13 +10,13 @@ module Presenters
 
         def on_success(farm_detail_dto)
           # 成功データをコントローラーに渡す
-          @view.instance_variable_set('@farm_detail_data', farm_detail_dto)
+          @view.instance_variable_set("@farm_detail_data", farm_detail_dto)
         end
 
         def on_failure(error_dto)
           # エラーハンドリングはコントローラーに委ねる
           # Presenter はデータを返すだけ
-          @view.instance_variable_set('@farm_detail_error', error_dto)
+          @view.instance_variable_set("@farm_detail_error", error_dto)
         end
 
         private

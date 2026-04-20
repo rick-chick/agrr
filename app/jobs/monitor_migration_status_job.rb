@@ -7,37 +7,37 @@ class MonitorMigrationStatusJob < ApplicationJob
 
   def perform
     Rails.logger.info "[MonitorMigrationStatusJob] Checking migration status..."
-    
+
     results = {}
-    
+
     # メインデータベースのマイグレーション状態確認
     begin
       primary_status = check_migration_status(:primary)
-      results[:primary] = { status: 'ok', pending: primary_status[:pending] }
+      results[:primary] = { status: "ok", pending: primary_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Primary database: #{primary_status[:pending]} pending migrations"
     rescue => e
-      results[:primary] = { status: 'error', error: e.message }
+      results[:primary] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Primary database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
     end
-    
+
     # キャッシュデータベースのマイグレーション状態確認
     begin
       cache_status = check_migration_status(:cache)
-      results[:cache] = { status: 'ok', pending: cache_status[:pending] }
+      results[:cache] = { status: "ok", pending: cache_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Cache database: #{cache_status[:pending]} pending migrations"
     rescue => e
-      results[:cache] = { status: 'error', error: e.message }
+      results[:cache] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Cache database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
     end
-    
+
     # エラーがある場合は警告ログを出力
-    errors = results.select { |_db, result| result[:status] == 'error' }
+    errors = results.select { |_db, result| result[:status] == "error" }
     if errors.any?
       Rails.logger.warn "[MonitorMigrationStatusJob] Migration check found errors: #{errors.keys.join(', ')}"
     end
-    
+
     results
   end
 
@@ -61,4 +61,3 @@ class MonitorMigrationStatusJob < ApplicationJob
     end
   end
 end
-

@@ -7,9 +7,9 @@
 # production は production.rb で AWS_S3_BUCKET により :amazon_env / :local を設定済み
 Rails.application.configure do
   case Rails.env
-  when 'development', 'docker'
+  when "development", "docker"
     config.active_storage.service = :local
-  when 'test'
+  when "test"
     config.active_storage.service = :test
   end
 end

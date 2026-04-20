@@ -24,7 +24,7 @@ module Adapters
             assert_equal plan.id.to_s, event.resource_id
             assert_equal @user.id, event.deleted_by_id
             assert_equal "scheduled", event.state
-            expected_toast = I18n.t('plans.undo.toast', name: plan.display_name)
+            expected_toast = I18n.t("plans.undo.toast", name: plan.display_name)
             assert_equal expected_toast, event.toast_message
             assert_not_nil event.undo_token
           end
@@ -37,7 +37,7 @@ module Adapters
             @gateway.destroy(9999, @user)
           end
 
-          assert_equal I18n.t('plans.errors.not_found'), error.message
+          assert_equal I18n.t("plans.errors.not_found"), error.message
         end
 
         test "raises not found error when user is not the owner" do
@@ -47,7 +47,7 @@ module Adapters
             @gateway.destroy(plan.id, @other_user)
           end
 
-          assert_equal I18n.t('plans.errors.not_found'), error.message
+          assert_equal I18n.t("plans.errors.not_found"), error.message
           assert_not_nil ::CultivationPlan.find_by(id: plan.id)
         end
 
@@ -60,7 +60,7 @@ module Adapters
               @gateway.destroy(plan.id, @user)
             end
 
-            assert_equal I18n.t('plans.errors.delete_failed'), error.message
+            assert_equal I18n.t("plans.errors.delete_failed"), error.message
           end
 
           assert_not_nil ::CultivationPlan.find_by(id: plan.id)
@@ -74,7 +74,7 @@ module Adapters
               @gateway.destroy(plan.id, @user)
             end
 
-            assert_equal I18n.t('plans.errors.delete_failed'), error.message
+            assert_equal I18n.t("plans.errors.delete_failed"), error.message
           end
 
           assert_not_nil ::CultivationPlan.find_by(id: plan.id)
@@ -89,7 +89,7 @@ module Adapters
               @gateway.destroy(plan.id, @user)
             end
 
-            expected_message = I18n.t('plans.errors.delete_error', message: failure_message)
+            expected_message = I18n.t("plans.errors.delete_error", message: failure_message)
             assert_equal expected_message, error.message
           end
 

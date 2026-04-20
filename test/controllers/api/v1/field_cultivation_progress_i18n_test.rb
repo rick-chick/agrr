@@ -11,10 +11,9 @@ class Api::V1::FieldCultivationProgressI18nTest < ActionController::TestCase
     end_date = start_date + 90.days
 
     records = @controller.send(:generate_mock_progress_records, start_date, end_date, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
-    translated_stage_names = I18n.t('controllers.field_cultivations.mock_progress.stage_names')
+    translated_stage_names = I18n.t("controllers.field_cultivations.mock_progress.stage_names")
 
     assert records.present?, "mock progress records should be generated"
-    assert (records.map { |r| r['stage_name'] }.uniq - translated_stage_names).empty?, "stage names should be translated"
+    assert (records.map { |r| r["stage_name"] }.uniq - translated_stage_names).empty?, "stage names should be translated"
   end
 end
-

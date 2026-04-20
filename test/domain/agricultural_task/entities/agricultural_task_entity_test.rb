@@ -14,7 +14,7 @@ module Domain
             description: "Test description",
             time_per_sqm: 0.5,
             weather_dependency: "sunny",
-            required_tools: ["tool1", "tool2"],
+            required_tools: [ "tool1", "tool2" ],
             skill_level: "beginner",
             region: "jp",
             task_type: "planting",
@@ -29,7 +29,7 @@ module Domain
           assert_equal "Test description", entity.description
           assert_equal 0.5, entity.time_per_sqm
           assert_equal "sunny", entity.weather_dependency
-          assert_equal ["tool1", "tool2"], entity.required_tools
+          assert_equal [ "tool1", "tool2" ], entity.required_tools
           assert_equal "beginner", entity.skill_level
           assert_equal "jp", entity.region
           assert_equal "planting", entity.task_type

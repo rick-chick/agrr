@@ -10,31 +10,31 @@ module DeletionUndo
     TARGET_FARMS = [
       {
         key: :basic,
-        name: 'Selenium Farm Timeout 20251110',
+        name: "Selenium Farm Timeout 20251110",
         latitude: 34.5,
         longitude: 134.5
       },
       {
         key: :field,
-        name: 'Selenium Farm 20251110',
+        name: "Selenium Farm 20251110",
         latitude: 35.0,
         longitude: 135.0
       },
       {
         key: :sequential_a,
-        name: 'Selenium Farm Sequential A 20251110',
+        name: "Selenium Farm Sequential A 20251110",
         latitude: 34.6,
         longitude: 134.6
       },
       {
         key: :sequential_b,
-        name: 'Selenium Farm Sequential B 20251110',
+        name: "Selenium Farm Sequential B 20251110",
         latitude: 34.7,
         longitude: 134.7
       }
     ].freeze
 
-    FIELD_NAME = 'Selenium Field 20251110'
+    FIELD_NAME = "Selenium Field 20251110"
     FIELD_AREA = 100
 
     def initialize(user_google_id:, logger: Rails.logger)
@@ -139,7 +139,7 @@ module DeletionUndo
         is_reference: false,
         source_farm_id: nil,
         region: nil,
-        weather_data_status: 'pending',
+        weather_data_status: "pending",
         weather_data_fetched_years: 0,
         weather_data_total_years: 0,
         weather_data_last_error: nil

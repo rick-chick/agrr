@@ -84,7 +84,6 @@ module Domain
 
           admin_interactor.call(input_dto)
         end
-
       end
     end
   end

@@ -9,9 +9,9 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
         test "should find fertilize by id" do
           fertilize = create(:fertilize, name: "尿素")
-          
+
           entity = @gateway.find_by_id(fertilize.id)
-          
+
           assert_not_nil entity
           assert_equal fertilize.id, entity.id
           assert_equal "尿素", entity.name
@@ -26,41 +26,41 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
         test "should create fertilize from data" do
           fertilize_data = {
-            'name' => '尿素',
-            'n' => 46.0,
-            'p' => nil,
-            'k' => nil,
-            'description' => '窒素肥料として広く使用される',
-            'package_size' => 25.0
+            "name" => "尿素",
+            "n" => 46.0,
+            "p" => nil,
+            "k" => nil,
+            "description" => "窒素肥料として広く使用される",
+            "package_size" => 25.0
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
           entity = @gateway.create(dto)
 
           assert_not_nil entity
-          assert_equal '尿素', entity.name
+          assert_equal "尿素", entity.name
           assert_equal 46.0, entity.n
           assert_nil entity.p
           assert_nil entity.k
           assert_equal 25.0, entity.package_size
           assert entity.reference?
-          
+
           # Verify it was saved to database
-          record = ::Fertilize.find_by(name: '尿素')
+          record = ::Fertilize.find_by(name: "尿素")
           assert_not_nil record
           assert_equal 25.0, record.package_size
         end
 
         test "should create fertilize with nil package_size" do
           fertilize_data = {
-            'name' => '尿素',
-            'n' => 46.0,
-            'p' => nil,
-            'k' => nil,
-            'description' => '窒素肥料として広く使用される',
-            'usage' => '基肥・追肥に使用可能',
-            'application_rate' => '1㎡あたり10-30g',
-            'package_size' => nil
+            "name" => "尿素",
+            "n" => 46.0,
+            "p" => nil,
+            "k" => nil,
+            "description" => "窒素肥料として広く使用される",
+            "usage" => "基肥・追肥に使用可能",
+            "application_rate" => "1㎡あたり10-30g",
+            "package_size" => nil
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
@@ -68,15 +68,15 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
           assert_not_nil entity
           assert_nil entity.package_size
-          
-          record = ::Fertilize.find_by(name: '尿素')
+
+          record = ::Fertilize.find_by(name: "尿素")
           assert_nil record.package_size
         end
 
         test "should raise error when create fails validation" do
           fertilize_data = {
-            'name' => '',
-            'n' => 46.0
+            "name" => "",
+            "n" => 46.0
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
@@ -87,10 +87,10 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
         test "should update fertilize" do
           fertilize = create(:fertilize, name: "尿素", n: 46.0)
-          
+
           update_data = {
-            :name => "尿素（粒状）",
-            :description => "粒状の尿素肥料"
+            name: "尿素（粒状）",
+            description: "粒状の尿素肥料"
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
@@ -103,9 +103,9 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
         test "should update fertilize package_size" do
           fertilize = create(:fertilize, name: "尿素", n: 46.0, package_size: 20.0)
-          
+
           update_data = {
-            :package_size => 25.0
+            package_size: 25.0
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
@@ -118,9 +118,9 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
         test "should only update provided attributes" do
           fertilize = create(:fertilize, name: "尿素", n: 46.0, p: nil)
-          
+
           update_data = {
-            :n => 50.0
+            n: 50.0
           }
 
           dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
@@ -140,6 +140,4 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
 
           assert_equal 3, entities.length
         end
-
 end
-

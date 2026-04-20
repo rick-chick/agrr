@@ -18,18 +18,18 @@ namespace :weather do
     end
 
     puts "Found #{farms.count} unique farm location(s)"
-    
+
     # 各緯度経度ごとにジョブをキューに追加
     farms.each do |farm|
       # 年ごとに分割して取得（APIへの負荷を考慮）
       (2000..Date.today.year).each do |year|
-        year_start = [Date.new(year, 1, 1), start_date].max
-        year_end = [Date.new(year, 12, 31), end_date].min
+        year_start = [ Date.new(year, 1, 1), start_date ].max
+        year_end = [ Date.new(year, 12, 31), end_date ].min
 
         next if year_start > year_end
 
         puts "Queueing job for (#{farm.latitude}, #{farm.longitude}) - Year #{year}"
-        
+
         FetchWeatherDataJob.perform_later(
           latitude: farm.latitude,
           longitude: farm.longitude,
@@ -45,9 +45,9 @@ namespace :weather do
   end
 
   desc "Fetch weather data for a specific farm"
-  task :fetch_for_farm, [:farm_id, :start_date, :end_date] => :environment do |t, args|
+  task :fetch_for_farm, [ :farm_id, :start_date, :end_date ] => :environment do |t, args|
     farm = Farm.find(args[:farm_id])
-    
+
     unless farm.has_coordinates?
       puts "Farm #{farm.id} does not have coordinates."
       exit 1
@@ -72,7 +72,7 @@ namespace :weather do
   end
 
   desc "Fetch weather data immediately (synchronous) for testing"
-  task :fetch_now, [:latitude, :longitude, :start_date, :end_date] => :environment do |t, args|
+  task :fetch_now, [ :latitude, :longitude, :start_date, :end_date ] => :environment do |t, args|
     latitude = args[:latitude].to_f
     longitude = args[:longitude].to_f
     start_date = args[:start_date] ? Date.parse(args[:start_date]) : Date.today - 7.days
@@ -92,7 +92,7 @@ namespace :weather do
 
     puts "=" * 80
     puts "Weather data fetched successfully!"
-    
+
     # 結果を表示
     location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
     if location
@@ -187,7 +187,7 @@ namespace :weather do
     puts "=" * 80
     puts "Weather Locations: #{WeatherLocation.count}"
     puts "Weather Data Records: #{gateway.total_weather_data_count}"
-    
+
     if WeatherLocation.any?
       puts "\nLocations:"
       WeatherLocation.includes(:weather_data).each do |location|
@@ -202,4 +202,3 @@ namespace :weather do
     end
   end
 end
-

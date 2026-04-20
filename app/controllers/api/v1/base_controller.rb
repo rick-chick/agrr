@@ -6,19 +6,19 @@ module Api
       # API versioning base controller
       # Skip CSRF verification for API endpoints (use token-based auth instead)
       skip_before_action :verify_authenticity_token
-      
+
       # ApplicationControllerの認証をスキップし、API専用の認証を使用
       skip_before_action :authenticate_user!
-      before_action :authenticate_api_request, except: [:health_check]
+      before_action :authenticate_api_request, except: [ :health_check ]
 
       def health_check
         render json: {
-          status: 'ok',
-          database: 'sqlite3',
-          storage: 'connected',
+          status: "ok",
+          database: "sqlite3",
+          storage: "connected",
           timestamp: Time.current,
           environment: Rails.env,
-          version: '1.0.0'
+          version: "1.0.0"
         }
       end
 
@@ -29,7 +29,7 @@ module Api
         # CRUD操作は認証必須
         # current_userが存在しない、またはアノニマスユーザーの場合は401を返す
         if current_user.nil? || current_user.anonymous?
-          render json: { error: I18n.t('auth.api.login_required') }, status: :unauthorized
+          render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
           return false
         end
 

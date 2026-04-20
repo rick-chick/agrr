@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'base64'
+require "base64"
 
 module Api
   module V1
@@ -85,7 +85,7 @@ module Api
           raw = params[:limit]
           return 20 if raw.blank?
 
-          [[raw.to_i, 1].max, 50].min
+          [ [ raw.to_i, 1 ].max, 50 ].min
         end
 
         def encode_entry_cursor(offset)
@@ -96,16 +96,16 @@ module Api
           return nil if raw.blank?
 
           json = JSON.parse(Base64.urlsafe_decode64(raw))
-          Integer(json['o'])
+          Integer(json["o"])
         rescue ArgumentError, JSON::ParserError, TypeError
           nil
         end
 
         def find_reference_farm!
-          raise ActiveRecord::RecordNotFound, 'farm_id is required' if params[:farm_id].blank?
+          raise ActiveRecord::RecordNotFound, "farm_id is required" if params[:farm_id].blank?
 
           farm = Farm.find(params[:farm_id])
-          raise ActiveRecord::RecordNotFound, 'not a reference farm' unless farm.reference?
+          raise ActiveRecord::RecordNotFound, "not a reference farm" unless farm.reference?
 
           farm
         end
@@ -122,13 +122,13 @@ module Api
           cached = service.get_existing_prediction(target_end_date: target_end)
           payload_hash = if cached && cached[:data].is_a?(Hash)
                            cached[:data]
-                         else
+          else
                            service.predict_for_farm(target_end_date: target_end)
                            farm.reload
                            farm.predicted_weather_data
-                         end
+          end
 
-          raise CropSchedule::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash['data'].blank?
+          raise CropSchedule::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
 
           payload_hash
         rescue WeatherPredictionService::WeatherDataNotFoundError,
@@ -155,35 +155,35 @@ module Api
 
         def locale_to_region(locale)
           case locale.to_s
-          when 'ja' then 'jp'
-          when 'us' then 'us'
-          when 'in' then 'in'
-          else 'jp'
+          when "ja" then "jp"
+          when "us" then "us"
+          when "in" then "in"
+          else "jp"
           end
         end
 
         rescue_from ActiveRecord::RecordNotFound do |e|
-          render json: { error: e.message, error_key: 'api.errors.common.farm_not_found' }, status: :not_found
+          render json: { error: e.message, error_key: "api.errors.common.farm_not_found" }, status: :not_found
         end
 
         rescue_from CropSchedule::EntryScheduleShowPayload::WeatherLocationMissingError do
           render json: {
-            error: I18n.t('api.entry_schedule.errors.weather_location_required'),
-            error_key: 'api.entry_schedule.errors.weather_location_required'
+            error: I18n.t("api.entry_schedule.errors.weather_location_required"),
+            error_key: "api.entry_schedule.errors.weather_location_required"
           }, status: :unprocessable_entity
         end
 
         rescue_from CropSchedule::EntryScheduleShowPayload::PredictionPayloadMissingError do
           render json: {
-            error: I18n.t('api.errors.common.no_weather_data'),
-            error_key: 'api.errors.common.no_weather_data'
+            error: I18n.t("api.errors.common.no_weather_data"),
+            error_key: "api.errors.common.no_weather_data"
           }, status: :unprocessable_entity
         end
 
         rescue_from CropSchedule::EntryScheduleShowPayload::WeatherPredictionFailedError do |e|
           render json: {
             error: e.message,
-            error_key: 'api.entry_schedule.errors.prediction_failed'
+            error_key: "api.entry_schedule.errors.prediction_failed"
           }, status: :service_unavailable
         end
       end

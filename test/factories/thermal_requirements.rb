@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :thermal_requirement do
     required_gdd { 200.0 }
-    
+
     association :crop_stage
 
     trait :germination do
@@ -29,4 +29,3 @@ FactoryBot.define do
     end
   end
 end
-

@@ -3,7 +3,7 @@ FactoryBot.define do
     daily_uptake_n { 0.5 }
     daily_uptake_p { 0.2 }
     daily_uptake_k { 0.8 }
-    
+
     association :crop_stage
 
     trait :vegetative_high do
@@ -31,10 +31,3 @@ FactoryBot.define do
     end
   end
 end
-
-
-
-
-
-
-

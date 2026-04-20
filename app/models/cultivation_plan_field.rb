@@ -24,11 +24,11 @@ class CultivationPlanField < ApplicationRecord
   validates :name, presence: true, length: { maximum: 100 }
   validates :area, presence: true, numericality: { greater_than: 0 }
   validates :daily_fixed_cost, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  
+
   # == Instance Methods ====================================================
-  
+
   def display_name
-    name.presence || I18n.t('models.cultivation_plan_field.default_name', id: id)
+    name.presence || I18n.t("models.cultivation_plan_field.default_name", id: id)
   end
 
   private
@@ -37,4 +37,3 @@ class CultivationPlanField < ApplicationRecord
     field_cultivations.find_each(&:destroy!)
   end
 end
-

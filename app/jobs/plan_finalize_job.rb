@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'concerns/job_arguments_provider'
+require_relative "concerns/job_arguments_provider"
 
 class PlanFinalizeJob < ApplicationJob
   include JobArgumentsProvider
@@ -21,7 +21,7 @@ class PlanFinalizeJob < ApplicationJob
     channel_class ||= self.channel_class
 
     unless cultivation_plan_id
-      Rails.logger.warn '⚠️ [PlanFinalizeJob] cultivation_plan_id が指定されていません'
+      Rails.logger.warn "⚠️ [PlanFinalizeJob] cultivation_plan_id が指定されていません"
       return
     end
 
@@ -34,9 +34,7 @@ class PlanFinalizeJob < ApplicationJob
     Rails.logger.info "✅ [PlanFinalizeJob] Finalized CultivationPlan##{plan.id}"
   rescue => e
     Rails.logger.error "❌ [PlanFinalizeJob] Failed to finalize plan ##{cultivation_plan_id}: #{e.message}"
-    plan&.phase_failed!('task_schedule_generation', channel_class)
+    plan&.phase_failed!("task_schedule_generation", channel_class)
     raise
   end
 end
-
-

@@ -10,7 +10,7 @@ FactoryBot.define do
     occurrence_season { "春〜秋" }
     is_reference { true }
     user_id { nil } # 参照害虫の場合はuser_idはnil
-    
+
     trait :reference do
       is_reference { true }
       user_id { nil }
@@ -66,4 +66,3 @@ FactoryBot.define do
     end
   end
 end
-

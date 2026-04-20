@@ -6,7 +6,7 @@ class CreatePestThermalRequirements < ActiveRecord::Migration[8.0]
       t.references :pest, null: false, foreign_key: true
       t.float :required_gdd
       t.float :first_generation_gdd
-      
+
       t.timestamps
     end
   end

@@ -58,4 +58,3 @@ class InteractionRuleTest < ActiveSupport::TestCase
     assert_includes rule.errors[:user], "は参照データには設定できません"
   end
 end
-

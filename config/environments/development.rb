@@ -58,17 +58,17 @@ Rails.application.configure do
 
   # Suppress logger output for asset requests.
   config.assets.quiet = true
-  
+
   # Propshaft configuration for development
   # Propshaft handles assets automatically in development, no compilation needed
   # config.assets.prefix = '/assets'
   # config.assets.compile = true  # Not needed for Propshaft
   # config.assets.digest = false  # Propshaft handles this automatically
   # config.assets.debug = true
-  
+
   # Enable static file serving in development
   config.public_file_server.enabled = true
-  
+
   # Propshaft specific configuration
   config.assets.configure do |env|
     env.logger = Rails.logger
@@ -99,7 +99,7 @@ Rails.application.configure do
   # APの軽量化優先：最小限のスレッド数でAPへの影響を最小化
   config.active_job.queue_adapter = :async
   config.active_job.async_queue_size = 1
-  
+
   # 特定のキューに対してスレッド数を制限
   config.after_initialize do
     if Rails.env.development?
@@ -108,8 +108,8 @@ Rails.application.configure do
         min_threads: 1,
         max_threads: 1,
         queues: {
-          'weather_data_sequential' => 1,
-          'default' => 1
+          "weather_data_sequential" => 1,
+          "default" => 1
         }
       )
     end
@@ -139,7 +139,7 @@ Rails.application.configure do
   # Google OAuth development configuration
   config.after_initialize do
     # Set development OAuth credentials (replace with your actual credentials)
-    ENV['GOOGLE_CLIENT_ID'] ||= 'your_google_client_id_here'
-    ENV['GOOGLE_CLIENT_SECRET'] ||= 'your_google_client_secret_here'
+    ENV["GOOGLE_CLIENT_ID"] ||= "your_google_client_id_here"
+    ENV["GOOGLE_CLIENT_SECRET"] ||= "your_google_client_secret_here"
   end
 end

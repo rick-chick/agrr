@@ -77,8 +77,8 @@ module Api
         test "should show farm" do
           farm = create(:farm, :user_owned, user: @user, name: "テスト農場")
 
-          get api_v1_masters_farm_path(farm), 
-              headers: { 
+          get api_v1_masters_farm_path(farm),
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -147,12 +147,12 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert json_response.key?('undo')
-          assert json_response['undo'].key?('undo_token')
-          assert json_response['undo'].key?('undo_path')
-          assert json_response['undo'].key?('toast_message')
-          assert json_response['undo'].key?('undo_deadline')
-          assert json_response['undo'].key?('auto_hide_after')
+          assert json_response.key?("undo")
+          assert json_response["undo"].key?("undo_token")
+          assert json_response["undo"].key?("undo_path")
+          assert json_response["undo"].key?("toast_message")
+          assert json_response["undo"].key?("undo_deadline")
+          assert json_response["undo"].key?("auto_hide_after")
         end
 
         test "cannot access other user's farm" do

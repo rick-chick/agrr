@@ -11,7 +11,7 @@ module Presenters
         def on_success(fertilize_entity)
           @view.redirect_to(
             @view.fertilize_path(fertilize_entity.id),
-            notice: I18n.t('fertilizes.flash.updated')
+            notice: I18n.t("fertilizes.flash.updated")
           )
         end
 

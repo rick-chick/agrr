@@ -5,4 +5,3 @@ class AddWeatherLocationToFarms < ActiveRecord::Migration[8.0]
     add_reference :farms, :weather_location, foreign_key: true, null: true, index: true
   end
 end
-

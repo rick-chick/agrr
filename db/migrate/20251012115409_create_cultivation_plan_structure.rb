@@ -12,7 +12,7 @@ class CreateCultivationPlanStructure < ActiveRecord::Migration[8.0]
       t.text :error_message
       t.timestamps
     end
-    
+
     # FieldCultivations テーブル
     create_table :field_cultivations do |t|
       t.references :cultivation_plan, null: false, foreign_key: true
@@ -27,7 +27,7 @@ class CreateCultivationPlanStructure < ActiveRecord::Migration[8.0]
       t.text :optimization_result
       t.timestamps
     end
-    
-    add_index :field_cultivations, [:cultivation_plan_id, :field_id]
+
+    add_index :field_cultivations, [ :cultivation_plan_id, :field_id ]
   end
 end

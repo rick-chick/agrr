@@ -25,8 +25,8 @@ module Presenters
 
         def on_failure(error_dto)
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == 'Farm not found') ? :not_found : :unprocessable_entity
-          json = (status == :not_found) ? { error: msg } : { errors: [msg] }
+          status = (msg == "Farm not found") ? :not_found : :unprocessable_entity
+          json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)
         end
       end

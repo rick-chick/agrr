@@ -12,7 +12,7 @@ puts "1. Testing WeatherGateway..."
 begin
   weather_gateway = Agrr::WeatherGateway.new
   puts "   ✓ WeatherGateway created successfully"
-  
+
   # Test daemon status
   agrr_service = AgrrService.new
   if agrr_service.daemon_running?

@@ -7,7 +7,7 @@ class FixAvatarUrlsInUsers < ActiveRecord::Migration[8.0]
     User.find_each do |user|
       next if user.avatar_url.blank?
       next unless user.avatar_url.start_with?('/assets/')
-      
+
       new_avatar_url = user.avatar_url.sub(%r{\A/assets/}, '')
       user.update_column(:avatar_url, new_avatar_url)
     end

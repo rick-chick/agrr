@@ -4,8 +4,8 @@ module FieldCultivationClimate
       records = []
       current_date = start_date
       cumulative_gdd = 0.0
-      stage_names = I18n.t('controllers.field_cultivations.mock_progress.stage_names')
-      stage_thresholds = [75.0, 375.0, 875.0]
+      stage_names = I18n.t("controllers.field_cultivations.mock_progress.stage_names")
+      stage_thresholds = [ 75.0, 375.0, 875.0 ]
 
       while current_date <= end_date
         daily_gdd = rand(12.0..18.0).round(2)
@@ -20,9 +20,9 @@ module FieldCultivationClimate
         end
 
         records << {
-          'date' => current_date.to_s,
-          'cumulative_gdd' => cumulative_gdd.round(2),
-          'stage_name' => stage_name
+          "date" => current_date.to_s,
+          "cumulative_gdd" => cumulative_gdd.round(2),
+          "stage_name" => stage_name
         }
 
         current_date += 1.day

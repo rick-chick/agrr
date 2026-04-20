@@ -35,9 +35,9 @@ module Api
           cookie_domain = nil
         end
 
-        cookies.delete(:session_id, path: '/')
-        cookies.delete(:session_id, domain: cookie_domain, path: '/') if cookie_domain
-        cookies.delete(:session_id, domain: :all, path: '/')
+        cookies.delete(:session_id, path: "/")
+        cookies.delete(:session_id, domain: cookie_domain, path: "/") if cookie_domain
+        cookies.delete(:session_id, domain: :all, path: "/")
       end
     end
   end

@@ -2,8 +2,8 @@
 
 module PlanningSchedulesHelper
   # CSSクラス定数（見通し向上・タイポ防止）
-  CLASS_SCHEDULE_CELL     = 'schedule-table-cell'.freeze
-  CLASS_SCHEDULE_CELL_TOP = 'schedule-table-cell--top'.freeze
+  CLASS_SCHEDULE_CELL     = "schedule-table-cell".freeze
+  CLASS_SCHEDULE_CELL_TOP = "schedule-table-cell--top".freeze
 
   # 期間のcolspanを決定
   # @param cultivations_in_period [Array<Hash>] この期間に表示される作付情報の配列
@@ -22,7 +22,7 @@ module PlanningSchedulesHelper
       end
       prev_total_count = prev_cultivations_in_period.size
     end
-    
+
     next_period_index = period_index - 1
     next_total_count = 0
     if next_period_index >= 0
@@ -32,7 +32,7 @@ module PlanningSchedulesHelper
       end
       next_total_count = next_cultivations_in_period.size
     end
-    
+
     total_count = cultivations_in_period.size
     if total_count == 2 || prev_total_count == 2 || next_total_count == 2
       1  # colspan=1を2つ使う
@@ -72,7 +72,7 @@ module PlanningSchedulesHelper
   # @param period_index [Integer] 現在の期間のインデックス
   # @return [String] HTML文字列（開始する期間でない場合は空文字列）
   def render_cultivation_cell(cultivation_info:, colspan:, period_index:)
-    return '' unless cultivation_starts_in_period?(cultivation_info, period_index)
+    return "" unless cultivation_starts_in_period?(cultivation_info, period_index)
 
     cultivation = cultivation_info[:cultivation]
     crop_color = get_crop_color_for_schedule(cultivation[:crop_name].to_s)
@@ -85,10 +85,10 @@ module PlanningSchedulesHelper
     }.merge(rowspan_attrs)
 
     content_tag(:td, tag_attrs) do
-      content_tag(:div, class: 'cultivation-items') do
-        content_tag(:div, class: 'cultivation-item', style: "background-color: #{crop_color[:fill]}; border-left: 4px solid #{crop_color[:stroke]}; color: #{crop_color[:text]};") do
-          content_tag(:div, cultivation[:crop_name], class: 'cultivation-crop-name') +
-          content_tag(:div, class: 'cultivation-period') do
+      content_tag(:div, class: "cultivation-items") do
+        content_tag(:div, class: "cultivation-item", style: "background-color: #{crop_color[:fill]}; border-left: 4px solid #{crop_color[:stroke]}; color: #{crop_color[:text]};") do
+          content_tag(:div, cultivation[:crop_name], class: "cultivation-crop-name") +
+          content_tag(:div, class: "cultivation-period") do
             "#{I18n.l(cultivation[:start_date], format: :short)} - #{I18n.l(cultivation[:completion_date], format: :short)}"
           end
         end
@@ -102,12 +102,11 @@ module PlanningSchedulesHelper
   # @return [String] HTML文字列
   def render_empty_cell(colspan:, show_label: true)
     content_tag(:td,
-      content_tag(:div, class: 'cultivation-empty') do
-        show_label ? t('planning_schedules.schedule.no_cultivation') : ''
+      content_tag(:div, class: "cultivation-empty") do
+        show_label ? t("planning_schedules.schedule.no_cultivation") : ""
       end,
-      class: 'schedule-table-cell',
+      class: "schedule-table-cell",
       colspan: colspan
     )
   end
 end
-

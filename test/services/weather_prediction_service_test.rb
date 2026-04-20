@@ -117,12 +117,12 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
     service.stub(:get_training_data, fake_training_result) do |_, _|
       # 予測データをモック
       fake_prediction = {
-        'latitude' => @weather_location.latitude.to_f,
-        'longitude' => @weather_location.longitude.to_f,
-        'elevation' => (@weather_location.elevation || 0.0).to_f,
-        'timezone' => @weather_location.timezone,
-        'data' => [
-          { 'time' => '2026-01-30', 'temperature_2m_max' => 20.0, 'temperature_2m_min' => 10.0, 'temperature_2m_mean' => 15.0, 'precipitation_sum' => 0.0 }
+        "latitude" => @weather_location.latitude.to_f,
+        "longitude" => @weather_location.longitude.to_f,
+        "elevation" => (@weather_location.elevation || 0.0).to_f,
+        "timezone" => @weather_location.timezone,
+        "data" => [
+          { "time" => "2026-01-30", "temperature_2m_max" => 20.0, "temperature_2m_min" => 10.0, "temperature_2m_mean" => 15.0, "precipitation_sum" => 0.0 }
         ]
       }
       service.stub(:get_prediction_data, fake_prediction) do
@@ -132,12 +132,9 @@ class WeatherPredictionServiceTest < ActiveSupport::TestCase
         assert_not_nil result
         assert_not_nil result[:data]
         # 現在の年のデータがない場合でも予測データが使用される
-        assert result[:data]['data'].is_a?(Array)
-        assert_not_empty result[:data]['data'], "Prediction data should be used when current year data is missing"
+        assert result[:data]["data"].is_a?(Array)
+        assert_not_empty result[:data]["data"], "Prediction data should be used when current year data is missing"
       end
     end
   end
 end
-
-
-

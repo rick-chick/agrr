@@ -1,4 +1,4 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
 class PlanPolicy
   # CultivationPlan のアクセスポリシー
@@ -42,4 +42,3 @@ class PlanPolicy
     plan
   end
 end
-

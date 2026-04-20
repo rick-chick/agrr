@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'tempfile'
+require "open3"
+require "tempfile"
 
 class AgrrService
   class AgrrError < StandardError; end
@@ -20,8 +20,8 @@ class AgrrService
   end
 
   def initialize
-    @client_path = Rails.root.join('bin', 'agrr_client')
-    @socket_path = '/tmp/agrr.sock'
+    @client_path = Rails.root.join("bin", "agrr_client")
+    @socket_path = "/tmp/agrr.sock"
   end
 
   # Check if daemon is running
@@ -30,34 +30,34 @@ class AgrrService
   end
 
   # Get weather data
-  def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: 'noaa', json: true)
+  def weather(location:, start_date: nil, end_date: nil, days: nil, data_source: "noaa", json: true)
     ensure_daemon_running!
 
     # 日本国内の場合はデフォルトのnoaaからjmaまたはopenmeteoに切り替える
-    if data_source == 'noaa' && location_in_japan?(location)
+    if data_source == "noaa" && location_in_japan?(location)
       Rails.logger.info "🇯🇵 [AgrrService] Location in Japan detected, switching data source from noaa to jma"
-      data_source = 'jma'
+      data_source = "jma"
     end
 
     output_file = nil
     output_path = nil
 
-    output_file = Tempfile.new(['weather_output', '.json'])
+    output_file = Tempfile.new([ "weather_output", ".json" ])
     output_path = output_file.path
     output_file.close
 
-    args = ['weather', '--location', location]
-    args += ['--start-date', start_date] if start_date
-    args += ['--end-date', end_date] if end_date
-    args += ['--days', days.to_s] if days
-    args += ['--data-source', data_source] if data_source
-    args += ['--output', output_path]
-    args << '--json' if json
+    args = [ "weather", "--location", location ]
+    args += [ "--start-date", start_date ] if start_date
+    args += [ "--end-date", end_date ] if end_date
+    args += [ "--days", days.to_s ] if days
+    args += [ "--data-source", data_source ] if data_source
+    args += [ "--output", output_path ]
+    args << "--json" if json
 
     execute_command(args)
 
     unless output_path && File.exist?(output_path)
-      raise CommandExecutionError, 'Weather command did not produce an output file'
+      raise CommandExecutionError, "Weather command did not produce an output file"
     end
 
     output_content = File.read(output_path)
@@ -81,8 +81,8 @@ class AgrrService
   def forecast(location:, json: true)
     ensure_daemon_running!
 
-    args = ['forecast', '--location', location]
-    args << '--json' if json
+    args = [ "forecast", "--location", location ]
+    args << "--json" if json
 
     execute_command(args)
   end
@@ -91,8 +91,8 @@ class AgrrService
   def crop(query:, json: true)
     ensure_daemon_running!
 
-    args = ['crop', '--query', query]
-    args << '--json' if json
+    args = [ "crop", "--query", query ]
+    args << "--json" if json
 
     execute_command(args)
   end
@@ -101,67 +101,67 @@ class AgrrService
   def progress(crop_file:, start_date:, weather_file:, json: true)
     ensure_daemon_running!
 
-    args = ['progress', '--crop-file', crop_file, '--start-date', start_date, '--weather-file', weather_file]
-    args += ['--format', 'json'] if json
+    args = [ "progress", "--crop-file", crop_file, "--start-date", start_date, "--weather-file", weather_file ]
+    args += [ "--format", "json" ] if json
 
     execute_command(args)
   end
 
   # Optimize period
-  def optimize_period(crop_file:, evaluation_start:, evaluation_end:, weather_file:, field_file:, interaction_rules_file: nil, format: 'json')
+  def optimize_period(crop_file:, evaluation_start:, evaluation_end:, weather_file:, field_file:, interaction_rules_file: nil, format: "json")
     ensure_daemon_running!
 
-    args = ['optimize', 'period', '--crop-file', crop_file, '--evaluation-start', evaluation_start,
-            '--evaluation-end', evaluation_end, '--weather-file', weather_file, '--field-file', field_file,
-            '--format', format]
-    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
+    args = [ "optimize", "period", "--crop-file", crop_file, "--evaluation-start", evaluation_start,
+            "--evaluation-end", evaluation_end, "--weather-file", weather_file, "--field-file", field_file,
+            "--format", format ]
+    args += [ "--interaction-rules-file", interaction_rules_file ] if interaction_rules_file
 
     execute_command(args)
   end
 
   # Optimize allocation
-  def optimize_allocate(fields_file:, crops_file:, planning_start:, planning_end:, weather_file:, format: 'json', interaction_rules_file: nil)
+  def optimize_allocate(fields_file:, crops_file:, planning_start:, planning_end:, weather_file:, format: "json", interaction_rules_file: nil)
     ensure_daemon_running!
 
-    args = ['optimize', 'allocate', '--fields-file', fields_file, '--crops-file', crops_file,
-            '--planning-start', planning_start, '--planning-end', planning_end, 
-            '--weather-file', weather_file, '--format', format]
-    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
+    args = [ "optimize", "allocate", "--fields-file", fields_file, "--crops-file", crops_file,
+            "--planning-start", planning_start, "--planning-end", planning_end,
+            "--weather-file", weather_file, "--format", format ]
+    args += [ "--interaction-rules-file", interaction_rules_file ] if interaction_rules_file
 
     execute_command(args)
   end
 
   # Generate candidate suggestions
-  def optimize_candidates(allocation:, fields_file:, crops_file:, target_crop:, planning_start:, planning_end:, weather_file:, output:, format: 'json', interaction_rules_file: nil)
+  def optimize_candidates(allocation:, fields_file:, crops_file:, target_crop:, planning_start:, planning_end:, weather_file:, output:, format: "json", interaction_rules_file: nil)
     ensure_daemon_running!
 
-    args = ['optimize', 'candidates', '--allocation', allocation, '--fields-file', fields_file,
-            '--crops-file', crops_file, '--target-crop', target_crop,
-            '--planning-start', planning_start, '--planning-end', planning_end,
-            '--weather-file', weather_file, '--output', output, '--format', format]
-    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
+    args = [ "optimize", "candidates", "--allocation", allocation, "--fields-file", fields_file,
+            "--crops-file", crops_file, "--target-crop", target_crop,
+            "--planning-start", planning_start, "--planning-end", planning_end,
+            "--weather-file", weather_file, "--output", output, "--format", format ]
+    args += [ "--interaction-rules-file", interaction_rules_file ] if interaction_rules_file
 
     execute_command(args)
   end
 
   # Adjust allocation
-  def optimize_adjust(current_allocation:, moves:, weather_file:, fields_file:, crops_file:, planning_start:, planning_end:, format: 'json', interaction_rules_file: nil)
+  def optimize_adjust(current_allocation:, moves:, weather_file:, fields_file:, crops_file:, planning_start:, planning_end:, format: "json", interaction_rules_file: nil)
     ensure_daemon_running!
 
-    args = ['optimize', 'adjust', '--current-allocation', current_allocation, '--moves', moves,
-            '--weather-file', weather_file, '--fields-file', fields_file, '--crops-file', crops_file,
-            '--planning-start', planning_start, '--planning-end', planning_end, '--format', format]
-    args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
+    args = [ "optimize", "adjust", "--current-allocation", current_allocation, "--moves", moves,
+            "--weather-file", weather_file, "--fields-file", fields_file, "--crops-file", crops_file,
+            "--planning-start", planning_start, "--planning-end", planning_end, "--format", format ]
+    args += [ "--interaction-rules-file", interaction_rules_file ] if interaction_rules_file
 
     execute_command(args)
   end
 
   # Predict weather
-  def predict(input:, output:, days:, model: 'lightgbm', metrics: nil)
+  def predict(input:, output:, days:, model: "lightgbm", metrics: nil)
     ensure_daemon_running!
 
-    args = ['predict', '--input', input, '--output', output, '--days', days.to_s, '--model', model]
-    args += ['--metrics', metrics] if metrics && !metrics.to_s.empty?
+    args = [ "predict", "--input", input, "--output", output, "--days", days.to_s, "--model", model ]
+    args += [ "--metrics", metrics ] if metrics && !metrics.to_s.empty?
 
     execute_command(args)
   end
@@ -170,10 +170,10 @@ class AgrrService
   def schedule(crop_name:, variety:, stage_requirements:, agricultural_tasks:, output: nil, json: true)
     ensure_daemon_running!
 
-    args = ['schedule', '--crop-name', crop_name, '--variety', variety,
-            '--stage-requirements', stage_requirements, '--agricultural-tasks', agricultural_tasks]
-    args += ['--output', output] if output
-    args << '--json' if json
+    args = [ "schedule", "--crop-name", crop_name, "--variety", variety,
+            "--stage-requirements", stage_requirements, "--agricultural-tasks", agricultural_tasks ]
+    args += [ "--output", output ] if output
+    args << "--json" if json
 
     execute_command(args)
   end
@@ -182,20 +182,20 @@ class AgrrService
   def fertilize_plan(crop_file:, use_harvest_start: false, max_applications: 2, json: true)
     ensure_daemon_running!
 
-    args = ['fertilize', 'plan', '--crop-file', crop_file]
-    args << '--use-harvest-start' if use_harvest_start
+    args = [ "fertilize", "plan", "--crop-file", crop_file ]
+    args << "--use-harvest-start" if use_harvest_start
     # デフォルトで最大施用回数を2に制限
-    args += ['--max-applications', max_applications.to_s] if max_applications
-    args << '--json' if json
+    args += [ "--max-applications", max_applications.to_s ] if max_applications
+    args << "--json" if json
 
     execute_command(args)
   end
 
   # Get pest profile by pest name
-  def pest_to_crop(pest:, crops:, language: 'ja')
+  def pest_to_crop(pest:, crops:, language: "ja")
     ensure_daemon_running!
 
-    args = ['pest-to-crop', '--pest', pest, '--crops', crops, '--language', language]
+    args = [ "pest-to-crop", "--pest", pest, "--crops", crops, "--language", language ]
 
     execute_command(args)
   end
@@ -204,23 +204,23 @@ class AgrrService
 
   def execute_command(args, retried: false)
     Rails.logger.info "Executing AGRR command: #{args.join(' ')}"
-    
+
     stdout, stderr, status = Open3.capture3(@client_path.to_s, *args)
-    
+
     Rails.logger.info "🔍 [AgrrService] Exit code: #{status.exitstatus}"
     Rails.logger.info "🔍 [AgrrService] stdout length: #{stdout&.length || 0}, content: #{stdout&.first(100)}..."
     Rails.logger.info "🔍 [AgrrService] stdout last 100: #{stdout&.last(100) if stdout}" if stdout&.length.to_i > 200
     Rails.logger.info "🔍 [AgrrService] stderr length: #{stderr&.length || 0}, content: #{stderr&.first(100)}..."
-    
+
     # Check if stdout contains valid JSON (even if exit code is non-zero)
-    has_valid_json = stdout&.strip&.start_with?('{') || stdout&.strip&.start_with?('[')
-    
+    has_valid_json = stdout&.strip&.start_with?("{") || stdout&.strip&.start_with?("[")
+
     # Extract only the JSON part if there's extra text after the JSON
     if has_valid_json
       # Find the last } or ] to extract only the JSON
-      last_brace = stdout.rindex('}')
-      last_bracket = stdout.rindex(']')
-      last_pos = [last_brace, last_bracket].compact.max
+      last_brace = stdout.rindex("}")
+      last_bracket = stdout.rindex("]")
+      last_pos = [ last_brace, last_bracket ].compact.max
       if last_pos
         clean_output = stdout[0..last_pos]
         Rails.logger.info "🔍 [AgrrService] Extracted JSON (removed #{stdout.length - clean_output.length} chars after JSON)"
@@ -230,11 +230,11 @@ class AgrrService
     else
       clean_output = stdout
     end
-    
+
     if status.success?
       # 成功ステータスだがstdoutが空でstderrに明らかなエラーが含まれているケースをエラーとして扱う
       if (clean_output.nil? || clean_output.strip.empty?) && stderr.present?
-        if stderr.include?('Traceback (most recent call last):') || stderr.downcase.include?('error')
+        if stderr.include?("Traceback (most recent call last):") || stderr.downcase.include?("error")
           Rails.logger.error "❌ [AgrrService] Command reported success but stderr contains error output"
           Rails.logger.error "❌ [AgrrService] stderr: #{stderr}"
           raise CommandExecutionError, stderr
@@ -271,7 +271,7 @@ class AgrrService
           end
         else
           Rails.logger.warn "[AgrrService] Failed to start daemon, raising DaemonNotRunningError"
-          raise DaemonNotRunningError, 'AGRR daemon is not running'
+          raise DaemonNotRunningError, "AGRR daemon is not running"
         end
       end
 
@@ -285,7 +285,7 @@ class AgrrService
   rescue => e
     # ソケット接続エラーなどの予期しないエラーもリトライ対象とする
     # ただし、既にリトライ済み（retried: true）の場合は再リトライしない
-    if !retried && (e.is_a?(Errno::ECONNREFUSED) || e.message.to_s.include?('socket') || e.message.to_s.include?('Connection refused'))
+    if !retried && (e.is_a?(Errno::ECONNREFUSED) || e.message.to_s.include?("socket") || e.message.to_s.include?("Connection refused"))
       Rails.logger.info "[AgrrService] Connection error detected, attempting to start daemon and retry..."
 
       if start_daemon_if_not_running
@@ -305,7 +305,7 @@ class AgrrService
         end
       else
         Rails.logger.warn "[AgrrService] Failed to start daemon after connection error, raising DaemonNotRunningError"
-        raise DaemonNotRunningError, 'AGRR daemon is not running'
+        raise DaemonNotRunningError, "AGRR daemon is not running"
       end
     end
 
@@ -319,7 +319,7 @@ class AgrrService
       return true
     end
 
-    raise DaemonNotRunningError, 'AGRR daemon is not running'
+    raise DaemonNotRunningError, "AGRR daemon is not running"
   end
 
   def start_daemon_if_not_running
@@ -333,7 +333,7 @@ class AgrrService
 
     Rails.logger.info "[AgrrService] AGRR daemon is not running, starting (fire-and-forget)..."
 
-    stdout, stderr, status = Open3.capture3(agrr_bin, 'daemon', 'start')
+    stdout, stderr, status = Open3.capture3(agrr_bin, "daemon", "start")
 
     unless status.success?
       Rails.logger.error "[AgrrService] Failed to start AGRR daemon: #{stderr}"
@@ -345,14 +345,14 @@ class AgrrService
   end
 
   def find_agrr_binary
-    agrr_bin = ENV['AGRR_BIN_PATH']
+    agrr_bin = ENV["AGRR_BIN_PATH"]
     return agrr_bin if agrr_bin.present? && File.executable?(agrr_bin)
 
-    default_path = '/usr/local/bin/agrr'
+    default_path = "/usr/local/bin/agrr"
     return default_path if File.executable?(default_path)
 
     # 開発環境: プロジェクト内 lib/core/agrr（Docker と同じパス）
-    project_path = Rails.root.join('lib/core/agrr').to_s
+    project_path = Rails.root.join("lib/core/agrr").to_s
     return project_path if File.executable?(project_path)
 
     nil
@@ -361,10 +361,10 @@ class AgrrService
   def should_retry_with_daemon_start?(error_message, stderr)
     combined_error = "#{error_message} #{stderr}".downcase
 
-    combined_error.include?('connection refused') ||
-      combined_error.include?('no such file') ||
-      combined_error.include?('socket') ||
-      combined_error.include?('daemon') ||
+    combined_error.include?("connection refused") ||
+      combined_error.include?("no such file") ||
+      combined_error.include?("socket") ||
+      combined_error.include?("daemon") ||
       !daemon_running?
   end
 
@@ -372,7 +372,7 @@ class AgrrService
     return false unless location.present?
 
     # location format: "lat,lon"
-    lat, lon = location.split(',').map(&:to_f)
+    lat, lon = location.split(",").map(&:to_f)
     return false if lat == 0.0 && lon == 0.0
 
     # 緯度: 20-46, 経度: 122-154
@@ -383,9 +383,9 @@ class AgrrService
   def self.normalize_weather_data(data)
     return nil if data.blank?
 
-    if data['data'].is_a?(Hash) && data['data']['data'].is_a?(Array)
+    if data["data"].is_a?(Hash) && data["data"]["data"].is_a?(Array)
       Rails.logger.warn "⚠️ [AgrrService] Old nested weather format detected, extracting inner data"
-      data['data']
+      data["data"]
     else
       data
     end

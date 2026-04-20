@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
   setup do
@@ -9,14 +9,14 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
       latitude: 35.6762,
       longitude: 139.6503,
       elevation: 10.0,
-      timezone: 'Asia/Tokyo'
+      timezone: "Asia/Tokyo"
     )
   end
 
   test "通常農場がない場合は何も実行しない" do
     # 参照農場のみ存在する場合
     create(:farm, :reference, weather_location: @weather_location)
-    
+
     assert_no_enqueued_jobs(only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
     end
@@ -25,7 +25,7 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
   test "weather_locationが設定されていない農場はスキップされる" do
     # weather_locationがnilの農場を作成
     create(:farm, :user_owned, user: @user, weather_location: nil)
-    
+
     assert_no_enqueued_jobs(only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
     end
@@ -41,9 +41,9 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
       temperature_min: 15.0,
       temperature_mean: 20.0
     )
-    
+
     farm = create(:farm, :user_owned, user: @user, weather_location: @weather_location)
-    
+
     # ジョブがエンキューされることを確認
     assert_enqueued_jobs(1, only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
@@ -52,7 +52,7 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
 
   test "最新データがない場合は過去7日分を取得する" do
     farm = create(:farm, :user_owned, user: @user, weather_location: @weather_location)
-    
+
     # ジョブがエンキューされることを確認
     assert_enqueued_jobs(1, only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
@@ -68,9 +68,9 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
       temperature_min: 15.0,
       temperature_mean: 20.0
     )
-    
+
     create(:farm, :user_owned, user: @user, weather_location: @weather_location)
-    
+
     assert_no_enqueued_jobs(only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
     end
@@ -82,12 +82,12 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
       latitude: 36.2048,
       longitude: 138.2529,
       elevation: 20.0,
-      timezone: 'Asia/Tokyo'
+      timezone: "Asia/Tokyo"
     )
-    
+
     farm1 = create(:farm, :user_owned, user: @user, weather_location: @weather_location)
     farm2 = create(:farm, :user_owned, user: @user, weather_location: weather_location2)
-    
+
     assert_enqueued_jobs(2, only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
     end
@@ -96,7 +96,7 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
   test "参照農場は処理対象外" do
     # 参照農場を作成
     create(:farm, :reference, weather_location: @weather_location)
-    
+
     assert_no_enqueued_jobs(only: FetchWeatherDataJob) do
       UpdateUserFarmsWeatherDataJob.perform_now
     end
@@ -110,4 +110,3 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
     skip "リトライロジックのテストは統合テストで実施"
   end
 end
-

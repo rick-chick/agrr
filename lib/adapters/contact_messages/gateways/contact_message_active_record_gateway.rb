@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../domain/contact_messages/entities/contact_message'
+require_relative "../../../domain/contact_messages/entities/contact_message"
 module Adapters
   module ContactMessages
     module Gateways
@@ -19,7 +19,7 @@ module Adapters
             subject: create_dto.subject,
             message: create_dto.message,
             source: create_dto.source,
-            status: 'queued'
+            status: "queued"
           )
 
           # save! will raise ActiveRecord::RecordInvalid on validation errors

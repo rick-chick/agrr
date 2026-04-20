@@ -12,7 +12,7 @@ exit_code = 0
 
 # 1. カラムの存在確認
 puts "【1. カラムの存在確認】"
-models = [Farm, Field, Crop, InteractionRule]
+models = [ Farm, Field, Crop, InteractionRule ]
 all_have_region = models.all? { |m| m.column_names.include?('region') }
 
 if all_have_region
@@ -30,13 +30,13 @@ end
 puts ""
 puts "【2. インデックスの確認】"
 connection = ActiveRecord::Base.connection
-tables = ['farms', 'fields', 'crops', 'interaction_rules']
+tables = [ 'farms', 'fields', 'crops', 'interaction_rules' ]
 all_indexed = true
 
 tables.each do |table|
   indexes = connection.indexes(table)
   has_region_index = indexes.any? { |idx| idx.columns.include?('region') }
-  
+
   if has_region_index
     puts "  ✅ #{table}: regionインデックスあり"
   else
@@ -59,18 +59,18 @@ begin
   puts "  参照作物: #{jp_crops.count}件"
   puts "  サンプル圃場: #{jp_fields.count}件"
   puts "  輪作ルール: #{jp_rules.count}件"
-  
+
   # 最低限のデータがあるか確認
   if jp_farms.count == 0
     puts "  ⚠️  参照農場が0件です"
     exit_code = 1
   end
-  
+
   if jp_crops.count == 0
     puts "  ⚠️  参照作物が0件です"
     exit_code = 1
   end
-  
+
 rescue => e
   puts "  ❌ エラー: #{e.message}"
   exit_code = 1
@@ -95,12 +95,12 @@ begin
     puts "     輪作ルール: #{nil_rules}件" if nil_rules > 0
     puts "     圃場: #{nil_fields}件" if nil_fields > 0
   end
-  
+
   # nilがある場合は警告（エラーにはしない）
   if nil_farms > 0 || nil_crops > 0 || nil_rules > 0
     puts "  💡 ヒント: bin/rails db:seed を実行して地域情報を設定してください"
   end
-  
+
 rescue => e
   puts "  ❌ エラー: #{e.message}"
   exit_code = 1
@@ -116,16 +116,16 @@ begin
   Field.by_region('jp').limit(1).to_a
   Crop.by_region('jp').limit(1).to_a
   InteractionRule.by_region('jp').limit(1).to_a
-  
+
   puts "  ✅ by_regionスコープが正常に動作しています"
-  
+
   # referenceスコープとの組み合わせ
   Farm.reference.by_region('jp').limit(1).to_a
   Crop.reference.by_region('jp').limit(1).to_a
   InteractionRule.reference.by_region('jp').limit(1).to_a
-  
+
   puts "  ✅ referenceスコープとの組み合わせも正常です"
-  
+
 rescue => e
   puts "  ❌ スコープエラー: #{e.message}"
   puts "     #{e.backtrace.first}"
@@ -143,21 +143,21 @@ begin
   else
     puts "  ⚠️  サンプル農場が見つかりません"
   end
-  
+
   sample_crop = Crop.reference.by_region('jp').first
   if sample_crop
     puts "  サンプル作物: #{sample_crop.name} (region: #{sample_crop.region})"
   else
     puts "  ⚠️  サンプル作物が見つかりません"
   end
-  
+
   sample_rule = InteractionRule.reference.by_region('jp').first
   if sample_rule
     puts "  サンプルルール: #{sample_rule.source_group} → #{sample_rule.target_group} (region: #{sample_rule.region})"
   else
     puts "  ⚠️  サンプルルールが見つかりません"
   end
-  
+
 rescue => e
   puts "  ❌ エラー: #{e.message}"
   exit_code = 1
@@ -169,16 +169,16 @@ puts "【7. パフォーマンステスト】"
 
 begin
   require 'benchmark'
-  
+
   # インデックスが効いているか確認
   time = Benchmark.realtime do
     Farm.by_region('jp').count
     Crop.by_region('jp').count
     InteractionRule.by_region('jp').count
   end
-  
+
   puts "  地域別クエリ実行時間: #{(time * 1000).round(2)}ms"
-  
+
   if time < 0.1
     puts "  ✅ パフォーマンスは良好です"
   elsif time < 0.5
@@ -186,7 +186,7 @@ begin
   else
     puts "  ❌ パフォーマンスに問題があります（インデックスを確認してください）"
   end
-  
+
 rescue => e
   puts "  ⚠️  パフォーマンステストをスキップ: #{e.message}"
 end
@@ -211,4 +211,3 @@ puts ""
 puts "検証完了"
 
 exit exit_code
-

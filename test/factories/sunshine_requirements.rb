@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :sunshine_requirement do
     minimum_sunshine_hours { 4.0 }
     target_sunshine_hours { 8.0 }
-    
+
     association :crop_stage
 
     trait :low_light do
@@ -26,4 +26,3 @@ FactoryBot.define do
     end
   end
 end
-

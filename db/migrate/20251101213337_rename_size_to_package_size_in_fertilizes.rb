@@ -5,4 +5,3 @@ class RenameSizeToPackageSizeInFertilizes < ActiveRecord::Migration[8.0]
     rename_column :fertilizes, :size, :package_size
   end
 end
-

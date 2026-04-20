@@ -46,31 +46,31 @@ class UpdateUserFarmsWeatherDataJob < ApplicationJob
     Rails.logger.error "❌ [UpdateUserFarmsWeatherDataJob] すべてのリトライが失敗しました"
     Rails.logger.error "   エラー: #{exception.class} - #{exception.message}"
     Rails.logger.error "   Backtrace: #{exception.backtrace.first(5).join("\n   ")}"
-    
+
     # 将来的にはここで管理者通知を実装
     # AdminNotifier.job_failed(job.class.name, exception).deliver_later
   end
 
   def perform
     start_time = Time.current
-    
+
     Rails.logger.info "🌤️  [UpdateUserFarmsWeatherDataJob] 通常農場の天気データ更新を開始"
-    
+
     # 全通常農場を取得（weather_locationが設定されているもののみ）
     user_farms = Farm.user_owned.where.not(weather_location_id: nil)
-    
+
     if user_farms.empty?
       Rails.logger.info "⏭️  [UpdateUserFarmsWeatherDataJob] 通常農場が見つかりませんでした"
       return
     end
-    
+
     Rails.logger.info "📋 [UpdateUserFarmsWeatherDataJob] 通常農場#{user_farms.count}件を発見"
-    
+
     # 各農場の最新データを取得
     user_farms.find_each.with_index do |farm, index|
       weather_location = farm.weather_location
       latest_date = weather_location.latest_weather_date
-      
+
       # 最新日付から今日までのデータを取得
       if latest_date
         start_date = latest_date + 1.day
@@ -83,14 +83,14 @@ class UpdateUserFarmsWeatherDataJob < ApplicationJob
         # 最新日付がない場合は過去7日分を取得
         start_date = Time.zone.today - DEFAULT_LOOKBACK_DAYS.days
       end
-      
+
       end_date = Time.zone.today
 
       if start_date > end_date
         Rails.logger.warn "⏭️  [UpdateUserFarmsWeatherDataJob] [Farm##{farm.id}] Skip: invalid range #{start_date}..#{end_date} (latest_weather_date may be inconsistent)"
         next
       end
-      
+
       # API負荷軽減のため、設定した間隔でジョブを実行
       FetchWeatherDataJob.set(wait: index * API_INTERVAL_SECONDS.seconds).perform_later(
         farm_id: farm.id,
@@ -99,12 +99,11 @@ class UpdateUserFarmsWeatherDataJob < ApplicationJob
         start_date: start_date,
         end_date: end_date
       )
-      
+
       Rails.logger.info "✅ [UpdateUserFarmsWeatherDataJob] [Farm##{farm.id}] '#{farm.name}' をエンキュー (#{start_date} 〜 #{end_date})"
     end
-    
+
     elapsed_time = (Time.current - start_time).round(2)
     Rails.logger.info "🎉 [UpdateUserFarmsWeatherDataJob] 完了: #{user_farms.count}件（#{elapsed_time}秒）"
   end
 end
-

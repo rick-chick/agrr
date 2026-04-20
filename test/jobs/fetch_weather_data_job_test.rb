@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class FetchWeatherDataJobTest < ActiveJob::TestCase
   include AgrrMockHelper
@@ -12,7 +12,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     @end_date = Date.new(2025, 1, 7)
   end
 
-  test 'dataが空の場合は例外を発生させ進捗を変更しない' do
+  test "dataが空の場合は例外を発生させ進捗を変更しない" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -22,13 +22,13 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     clear_enqueued_jobs
 
     empty_data = {
-      'location' => {
-        'latitude' => farm.latitude,
-        'longitude' => farm.longitude,
-        'elevation' => 50.0,
-        'timezone' => 'Asia/Tokyo'
+      "location" => {
+        "latitude" => farm.latitude,
+        "longitude" => farm.longitude,
+        "elevation" => 50.0,
+        "timezone" => "Asia/Tokyo"
       },
-      'data' => []
+      "data" => []
     }
 
     gateway_mock = Class.new do
@@ -52,15 +52,15 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
           end_date: @end_date
         )
       end
-      assert_includes error.message, 'Weather data missing'
+      assert_includes error.message, "Weather data missing"
     end
 
     farm.reload
     assert_equal 0, farm.weather_data_fetched_years
-    assert_equal 'fetching', farm.weather_data_status
+    assert_equal "fetching", farm.weather_data_status
   end
 
-  test 'gatewayがnilを返した場合は無効データとして例外を出す' do
+  test "gatewayがnilを返した場合は無効データとして例外を出す" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -86,11 +86,11 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
           end_date: @end_date
         )
       end
-      assert_includes error.message, 'invalid or missing'
+      assert_includes error.message, "invalid or missing"
     end
   end
 
-  test 'gatewayがハッシュ以外を返した場合は無効データとして例外を出す' do
+  test "gatewayがハッシュ以外を返した場合は無効データとして例外を出す" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -120,11 +120,11 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
           end_date: @end_date
         )
       end
-      assert_includes error.message, 'invalid or missing'
+      assert_includes error.message, "invalid or missing"
     end
   end
 
-  test 'locationが欠損している場合は例外を発生させる' do
+  test "locationが欠損している場合は例外を発生させる" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -134,17 +134,17 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     clear_enqueued_jobs
 
     broken_data = {
-      'location' => nil,
-      'data' => [
+      "location" => nil,
+      "data" => [
         {
-          'time' => @start_date.to_s,
-          'temperature_2m_max' => 20.0,
-          'temperature_2m_min' => 10.0,
-          'temperature_2m_mean' => 15.0,
-          'precipitation_sum' => nil,
-          'sunshine_hours' => 6.0,
-          'wind_speed_10m' => 3.0,
-          'weather_code' => 0
+          "time" => @start_date.to_s,
+          "temperature_2m_max" => 20.0,
+          "temperature_2m_min" => 10.0,
+          "temperature_2m_mean" => 15.0,
+          "precipitation_sum" => nil,
+          "sunshine_hours" => 6.0,
+          "wind_speed_10m" => 3.0,
+          "weather_code" => 0
         }
       ]
     }
@@ -173,7 +173,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     end
   end
 
-  test '取得日数が許容欠損以内なら保存し進捗が上限を超えない' do
+  test "取得日数が許容欠損以内なら保存し進捗が上限を超えない" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -188,72 +188,72 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     )
 
     partial_data = {
-      'location' => {
-        'latitude' => farm.latitude,
-        'longitude' => farm.longitude,
-        'elevation' => 50.0,
-        'timezone' => 'Asia/Tokyo'
+      "location" => {
+        "latitude" => farm.latitude,
+        "longitude" => farm.longitude,
+        "elevation" => 50.0,
+        "timezone" => "Asia/Tokyo"
       },
-      'data' => [
+      "data" => [
         {
-          'time' => @start_date.to_s,
-          'temperature_2m_max' => 20.0,
-          'temperature_2m_min' => 10.0,
-          'temperature_2m_mean' => 15.0,
-          'precipitation_sum' => nil,
-          'sunshine_hours' => 6.0,
-          'wind_speed_10m' => 3.0,
-          'weather_code' => 0
+          "time" => @start_date.to_s,
+          "temperature_2m_max" => 20.0,
+          "temperature_2m_min" => 10.0,
+          "temperature_2m_mean" => 15.0,
+          "precipitation_sum" => nil,
+          "sunshine_hours" => 6.0,
+          "wind_speed_10m" => 3.0,
+          "weather_code" => 0
         },
         {
-          'time' => (@start_date + 1.day).to_s,
-          'temperature_2m_max' => 20.5,
-          'temperature_2m_min' => 10.5,
-          'temperature_2m_mean' => 15.5,
-          'precipitation_sum' => 0.2,
-          'sunshine_hours' => 6.5,
-          'wind_speed_10m' => 3.5,
-          'weather_code' => 1
+          "time" => (@start_date + 1.day).to_s,
+          "temperature_2m_max" => 20.5,
+          "temperature_2m_min" => 10.5,
+          "temperature_2m_mean" => 15.5,
+          "precipitation_sum" => 0.2,
+          "sunshine_hours" => 6.5,
+          "wind_speed_10m" => 3.5,
+          "weather_code" => 1
         },
         {
-          'time' => (@start_date + 2.days).to_s,
-          'temperature_2m_max' => 21.0,
-          'temperature_2m_min' => 11.0,
-          'temperature_2m_mean' => 16.0,
-          'precipitation_sum' => 0.5,
-          'sunshine_hours' => 7.0,
-          'wind_speed_10m' => 4.0,
-          'weather_code' => 1
+          "time" => (@start_date + 2.days).to_s,
+          "temperature_2m_max" => 21.0,
+          "temperature_2m_min" => 11.0,
+          "temperature_2m_mean" => 16.0,
+          "precipitation_sum" => 0.5,
+          "sunshine_hours" => 7.0,
+          "wind_speed_10m" => 4.0,
+          "weather_code" => 1
         },
         {
-          'time' => (@start_date + 3.days).to_s,
-          'temperature_2m_max' => 21.5,
-          'temperature_2m_min' => 11.5,
-          'temperature_2m_mean' => 16.5,
-          'precipitation_sum' => 0.8,
-          'sunshine_hours' => 7.5,
-          'wind_speed_10m' => 4.5,
-          'weather_code' => 1
+          "time" => (@start_date + 3.days).to_s,
+          "temperature_2m_max" => 21.5,
+          "temperature_2m_min" => 11.5,
+          "temperature_2m_mean" => 16.5,
+          "precipitation_sum" => 0.8,
+          "sunshine_hours" => 7.5,
+          "wind_speed_10m" => 4.5,
+          "weather_code" => 1
         },
         {
-          'time' => (@start_date + 4.days).to_s,
-          'temperature_2m_max' => 22.0,
-          'temperature_2m_min' => 12.0,
-          'temperature_2m_mean' => 17.0,
-          'precipitation_sum' => 1.0,
-          'sunshine_hours' => 8.0,
-          'wind_speed_10m' => 5.0,
-          'weather_code' => 1
+          "time" => (@start_date + 4.days).to_s,
+          "temperature_2m_max" => 22.0,
+          "temperature_2m_min" => 12.0,
+          "temperature_2m_mean" => 17.0,
+          "precipitation_sum" => 1.0,
+          "sunshine_hours" => 8.0,
+          "wind_speed_10m" => 5.0,
+          "weather_code" => 1
         },
         {
-          'time' => (@start_date + 5.days).to_s,
-          'temperature_2m_max' => 22.5,
-          'temperature_2m_min' => 12.5,
-          'temperature_2m_mean' => 17.5,
-          'precipitation_sum' => 1.2,
-          'sunshine_hours' => 8.5,
-          'wind_speed_10m' => 5.5,
-          'weather_code' => 1
+          "time" => (@start_date + 5.days).to_s,
+          "temperature_2m_max" => 22.5,
+          "temperature_2m_min" => 12.5,
+          "temperature_2m_mean" => 17.5,
+          "precipitation_sum" => 1.2,
+          "sunshine_hours" => 8.5,
+          "wind_speed_10m" => 5.5,
+          "weather_code" => 1
         }
         # 1日欠損（許容範囲内）
       ]
@@ -304,10 +304,10 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     farm.reload
     assert_equal 1, farm.weather_data_fetched_years
     assert_equal 100, farm.weather_data_progress
-    assert_equal 'completed', farm.weather_data_status
+    assert_equal "completed", farm.weather_data_status
   end
 
-  test '欠損率が許容を超える場合は例外を発生させる' do
+  test "欠損率が許容を超える場合は例外を発生させる" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :fetching,
@@ -317,32 +317,32 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     clear_enqueued_jobs
 
     heavily_missing = {
-      'location' => {
-        'latitude' => farm.latitude,
-        'longitude' => farm.longitude,
-        'elevation' => 50.0,
-        'timezone' => 'Asia/Tokyo'
+      "location" => {
+        "latitude" => farm.latitude,
+        "longitude" => farm.longitude,
+        "elevation" => 50.0,
+        "timezone" => "Asia/Tokyo"
       },
-      'data' => [
+      "data" => [
         {
-          'time' => @start_date.to_s,
-          'temperature_2m_max' => 20.0,
-          'temperature_2m_min' => 10.0,
-          'temperature_2m_mean' => 15.0,
-          'precipitation_sum' => nil,
-          'sunshine_hours' => 6.0,
-          'wind_speed_10m' => 3.0,
-          'weather_code' => 0
+          "time" => @start_date.to_s,
+          "temperature_2m_max" => 20.0,
+          "temperature_2m_min" => 10.0,
+          "temperature_2m_mean" => 15.0,
+          "precipitation_sum" => nil,
+          "sunshine_hours" => 6.0,
+          "wind_speed_10m" => 3.0,
+          "weather_code" => 0
         },
         {
-          'time' => (@start_date + 1.day).to_s,
-          'temperature_2m_max' => 21.0,
-          'temperature_2m_min' => 11.0,
-          'temperature_2m_mean' => 16.0,
-          'precipitation_sum' => 0.5,
-          'sunshine_hours' => 7.0,
-          'wind_speed_10m' => 4.0,
-          'weather_code' => 1
+          "time" => (@start_date + 1.day).to_s,
+          "temperature_2m_max" => 21.0,
+          "temperature_2m_min" => 11.0,
+          "temperature_2m_mean" => 16.0,
+          "precipitation_sum" => 0.5,
+          "sunshine_hours" => 7.0,
+          "wind_speed_10m" => 4.0,
+          "weather_code" => 1
         }
         # 残り5日欠損（許容1日を超過）
       ]
@@ -372,7 +372,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     end
   end
 
-  test '完了済みの農場では進捗を増やさない' do
+  test "完了済みの農場では進捗を増やさない" do
     farm = create(:farm, :user_owned,
       user: @user,
       weather_data_status: :completed,
@@ -387,22 +387,22 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     )
 
     minimal_data = {
-      'location' => {
-        'latitude' => farm.latitude,
-        'longitude' => farm.longitude,
-        'elevation' => 50.0,
-        'timezone' => 'Asia/Tokyo'
+      "location" => {
+        "latitude" => farm.latitude,
+        "longitude" => farm.longitude,
+        "elevation" => 50.0,
+        "timezone" => "Asia/Tokyo"
       },
-      'data' => [
+      "data" => [
         {
-          'time' => @start_date.to_s,
-          'temperature_2m_max' => 20.0,
-          'temperature_2m_min' => 10.0,
-          'temperature_2m_mean' => 15.0,
-          'precipitation_sum' => nil,
-          'sunshine_hours' => 6.0,
-          'wind_speed_10m' => 3.0,
-          'weather_code' => 0
+          "time" => @start_date.to_s,
+          "temperature_2m_max" => 20.0,
+          "temperature_2m_min" => 10.0,
+          "temperature_2m_mean" => 15.0,
+          "precipitation_sum" => nil,
+          "sunshine_hours" => 6.0,
+          "wind_speed_10m" => 3.0,
+          "weather_code" => 0
         }
       ]
     }
@@ -430,11 +430,11 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     farm.reload
     assert_equal 1, farm.weather_data_fetched_years
     assert_equal 100, farm.weather_data_progress
-    assert_equal 'completed', farm.weather_data_status
+    assert_equal "completed", farm.weather_data_status
   end
 
-  test 'perform calls PerformInteractor' do
-    perform_interactor = mock('PerformInteractor')
+  test "perform calls PerformInteractor" do
+    perform_interactor = mock("PerformInteractor")
     perform_interactor.expects(:execute).with(has_entries(input_dto: has_entries(farm_id: 1, latitude: 35.6762)))
     Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).returns(perform_interactor)
 
@@ -442,31 +442,29 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
   end
 
-  test 'retry_on handles StandardError' do
+  test "retry_on handles StandardError" do
     # ジョブのperform_nowでStandardErrorが発生することを確認（retry_onが動作するための前提）
     job = FetchWeatherDataJob.new
-    perform_mock = mock('perform_mock')
+    perform_mock = mock("perform_mock")
     Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).returns(perform_mock)
-    perform_mock.stubs(:execute).raises(StandardError.new('timeout'))
+    perform_mock.stubs(:execute).raises(StandardError.new("timeout"))
 
     assert_raises(StandardError) do
       job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
     end
   end
 
-  test 'discard_on handles ActiveRecord::RecordInvalid' do
+  test "discard_on handles ActiveRecord::RecordInvalid" do
     # ジョブのperform_nowで例外が発生することを確認（discard_onが動作するための前提）
     job = FetchWeatherDataJob.new
-    perform_mock = mock('perform_mock')
+    perform_mock = mock("perform_mock")
     Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.stubs(:new).returns(perform_mock)
 
     # シンプルな例外を使用（ActiveRecord::RecordInvalidの詳細なモック作成は複雑なので基本的な例外テストに留める）
-    perform_mock.stubs(:execute).raises(RuntimeError.new('test error'))
+    perform_mock.stubs(:execute).raises(RuntimeError.new("test error"))
 
     assert_raises(RuntimeError) do
       job.perform(farm_id: 1, latitude: 35.6762, longitude: 139.6503, start_date: @start_date, end_date: @end_date)
     end
   end
-
 end
-

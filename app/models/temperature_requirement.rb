@@ -20,5 +20,3 @@ class TemperatureRequirement < ApplicationRecord
             :frost_threshold, :sterility_risk_threshold, :max_temperature,
             numericality: true, allow_nil: true
 end
-
-

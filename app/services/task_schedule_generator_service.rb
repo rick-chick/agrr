@@ -63,10 +63,10 @@ class TaskScheduleGeneratorService
       weather_data: filtered_weather_data
     )
 
-    progress_records = Array(progress_data['progress_records'])
+    progress_records = Array(progress_data["progress_records"])
     filtered_records = if start_date.present?
       progress_records.select do |record|
-        record_date = safe_parse_date(record['date'])
+        record_date = safe_parse_date(record["date"])
         record_date && record_date >= start_date
       end
     else
@@ -80,7 +80,7 @@ class TaskScheduleGeneratorService
     create_schedule!(
       plan: plan,
       field_cultivation: field_cultivation,
-      category: 'general'
+      category: "general"
     ) do |schedule|
       general_blueprints.each do |blueprint|
         build_task_from_blueprint(
@@ -97,7 +97,7 @@ class TaskScheduleGeneratorService
       create_schedule!(
         plan: plan,
         field_cultivation: field_cultivation,
-        category: 'fertilizer'
+        category: "fertilizer"
       ) do |schedule|
         fertilizer_blueprints.each do |blueprint|
           build_task_from_blueprint(
@@ -110,7 +110,7 @@ class TaskScheduleGeneratorService
         end
       end
     else
-      clear_schedule(plan: plan, field_cultivation: field_cultivation, category: 'fertilizer')
+      clear_schedule(plan: plan, field_cultivation: field_cultivation, category: "fertilizer")
     end
   end
 
@@ -148,13 +148,13 @@ class TaskScheduleGeneratorService
       end
     end
 
-    [general, fertilizer]
+    [ general, fertilizer ]
   end
 
   def build_task_from_blueprint(schedule:, blueprint:, agricultural_tasks_lookup:, progress_records:, fallback_start_date:)
     gdd_trigger = blueprint.gdd_trigger
     if gdd_trigger.nil?
-      raise GddTriggerMissingError, 'GDDトリガーが設定されていません'
+      raise GddTriggerMissingError, "GDDトリガーが設定されていません"
     end
 
     task = find_agricultural_task_for_blueprint(blueprint, agricultural_tasks_lookup)
@@ -174,7 +174,7 @@ class TaskScheduleGeneratorService
       weather_dependency: blueprint.weather_dependency || task&.weather_dependency,
       time_per_sqm: blueprint.time_per_sqm || task&.time_per_sqm,
       amount: blueprint.amount,
-      amount_unit: blueprint.amount_unit || (blueprint.amount.present? ? 'g/m2' : nil)
+      amount_unit: blueprint.amount_unit || (blueprint.amount.present? ? "g/m2" : nil)
     )
   end
 
@@ -191,11 +191,11 @@ class TaskScheduleGeneratorService
 
     case blueprint.task_type
     when TaskScheduleItem::BASAL_FERTILIZATION_TYPE
-      '基肥施用'
+      "基肥施用"
     when TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE
-      '追肥施用'
+      "追肥施用"
     else
-      'field_task'
+      "field_task"
     end
   end
 
@@ -219,7 +219,7 @@ class TaskScheduleGeneratorService
       field_cultivation: field_cultivation,
       category: category,
       status: TaskSchedule::STATUSES[:active],
-      source: 'agrr',
+      source: "agrr",
       generated_at: clock.now
     )
 
@@ -231,14 +231,14 @@ class TaskScheduleGeneratorService
   def date_for_gdd(progress_records, target_gdd, fallback_date)
     target_value = decimal_value(target_gdd)
     if target_value.nil?
-      raise GddTriggerMissingError, 'GDDトリガーが設定されていません'
+      raise GddTriggerMissingError, "GDDトリガーが設定されていません"
     end
 
     progress_records.each do |record|
-      cumulative = decimal_value(record['cumulative_gdd'])
+      cumulative = decimal_value(record["cumulative_gdd"])
       next if target_value.present? && cumulative < target_value
 
-      return Date.parse(record['date'])
+      return Date.parse(record["date"])
     end
 
     raise ProgressDataMissingError, "GDD #{target_value} に対応する日付が見つかりません"
@@ -264,16 +264,16 @@ class TaskScheduleGeneratorService
     return weather_data unless start_date && weather_data.is_a?(Hash)
 
     duplicated = weather_data.deep_dup
-    data_array = Array(duplicated['data'] || duplicated[:data])
+    data_array = Array(duplicated["data"] || duplicated[:data])
 
     filtered = data_array.select do |entry|
-      entry_time = entry['time'] || entry[:time]
+      entry_time = entry["time"] || entry[:time]
       entry_time.present? && safe_parse_date(entry_time) && safe_parse_date(entry_time) >= start_date
     end
 
     if filtered.any?
-      if duplicated.key?('data')
-        duplicated['data'] = filtered
+      if duplicated.key?("data")
+        duplicated["data"] = filtered
       else
         duplicated[:data] = filtered
       end
@@ -282,4 +282,3 @@ class TaskScheduleGeneratorService
     duplicated
   end
 end
-

@@ -19,10 +19,10 @@
 #     - user_idが設定される（ユーザー所有）
 class Fertilize < ApplicationRecord
   belongs_to :user, optional: true
-  
+
   # バリデーション
   validates :name, presence: true, uniqueness: { case_sensitive: false }
-  validates :is_reference, inclusion: { in: [true, false] }
+  validates :is_reference, inclusion: { in: [ true, false ] }
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
   validates :n, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
@@ -30,13 +30,13 @@ class Fertilize < ApplicationRecord
   validates :k, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :package_size, numericality: { greater_than: 0, allow_nil: true }
   validates :source_fertilize_id, uniqueness: { scope: :user_id }, allow_nil: true
-  
+
   # スコープ
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
   scope :by_region, ->(region) { where(region: region) }
   scope :recent, -> { order(created_at: :desc) }
-  
+
   # ヘルパーメソッド
   def has_nutrient?(nutrient)
     case nutrient.to_sym
@@ -50,9 +50,9 @@ class Fertilize < ApplicationRecord
       false
     end
   end
-  
+
   def npk_summary
-    [n, p, k].compact.map { |v| v.to_i }.join('-')
+    [ n, p, k ].compact.map { |v| v.to_i }.join("-")
   end
 
   # 参照肥料は user を持たない（システム所有）
@@ -62,4 +62,3 @@ class Fertilize < ApplicationRecord
     errors.add(:user, "は参照データには設定できません")
   end
 end
-

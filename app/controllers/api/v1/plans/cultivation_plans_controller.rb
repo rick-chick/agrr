@@ -10,14 +10,14 @@ module Api
       # - ユーザー作物・ユーザー農場のみ使用
       class CultivationPlansController < ApplicationController
         include CultivationPlanApi
-        
+
         before_action :authenticate_user!
         skip_before_action :verify_authenticity_token
-        
+
         # add_crop, add_field, remove_field, data, adjust はConcernで実装
-        
+
         private
-        
+
         def find_api_cultivation_plan
           # eager load associated records to avoid N+1 when serializing in data/adjust
           # Use preload to eager load associations in separate queries to avoid
@@ -27,11 +27,11 @@ module Api
             .preload(
               :cultivation_plan_fields,
               { cultivation_plan_crops: :crop },
-              { field_cultivations: [:cultivation_plan_field, { cultivation_plan_crop: :crop }] }
+              { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: :crop } ] }
             )
             .find(params[:id])
         end
-        
+
         def get_crop_for_add_crop(crop_id)
           Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).find_by(id: crop_id, is_reference: false)
         end
@@ -45,4 +45,3 @@ module Api
     end
   end
 end
-

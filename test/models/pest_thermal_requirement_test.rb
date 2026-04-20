@@ -27,17 +27,9 @@ class PestThermalRequirementTest < ActiveSupport::TestCase
   test "should destroy when pest is destroyed" do
     requirement = create(:pest_thermal_requirement, pest: @pest)
     requirement_id = requirement.id
-    
+
     @pest.destroy
-    
+
     assert_not PestThermalRequirement.exists?(requirement_id)
   end
 end
-
-
-
-
-
-
-
-

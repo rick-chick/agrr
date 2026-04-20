@@ -8,7 +8,7 @@ module Domain
       class CropStageDeleteInteractorTest < ActiveSupport::TestCase
         test "calls on_success with delete result when gateway succeeds" do
           gateway = Minitest::Mock.new
-          gateway.expect(:delete_crop_stage, nil, [1])
+          gateway.expect(:delete_crop_stage, nil, [ 1 ])
 
           received = nil
           output_port = Minitest::Mock.new

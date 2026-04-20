@@ -142,11 +142,11 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, :reference)
     pest = create(:pest, is_reference: true)
     pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
-    
+
     pesticide.is_reference = false
     assert_not pesticide.valid?
     assert_includes pesticide.errors[:user], "を入力してください"
-    
+
     pesticide.user_id = user.id
     assert pesticide.valid?
   end
@@ -189,7 +189,7 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, :reference)
     pest = create(:pest, is_reference: true)
     pesticide = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
-    
+
     assert_equal user.id, pesticide.user_id
     assert_equal user, pesticide.user
   end
@@ -198,7 +198,7 @@ class PesticideTest < ActiveSupport::TestCase
     crop = create(:crop, :reference)
     pest = create(:pest, is_reference: true)
     pesticide = create(:pesticide, user_id: nil, crop: crop, pest: pest, is_reference: true)
-    
+
     assert_nil pesticide.user_id
     assert_nil pesticide.user
   end
@@ -209,7 +209,7 @@ class PesticideTest < ActiveSupport::TestCase
     pest = create(:pest, is_reference: true)
     pesticide1 = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
     pesticide2 = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
-    
+
     assert_equal 2, user.pesticides.count
     assert_includes user.pesticides, pesticide1
     assert_includes user.pesticides, pesticide2
@@ -221,9 +221,9 @@ class PesticideTest < ActiveSupport::TestCase
     pest = create(:pest, is_reference: true)
     pesticide = create(:pesticide, user: user, crop: crop, pest: pest, is_reference: false)
     pesticide_id = pesticide.id
-    
+
     user.destroy
-    
+
     assert_not Pesticide.exists?(pesticide_id)
   end
 
@@ -232,14 +232,14 @@ class PesticideTest < ActiveSupport::TestCase
     user2 = create(:user)
     crop = create(:crop, :reference)
     pest = create(:pest, is_reference: true)
-    
+
     ref_pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
     user1_pesticide = create(:pesticide, is_reference: false, user: user1, crop: crop, pest: pest)
     user2_pesticide = create(:pesticide, is_reference: false, user: user2, crop: crop, pest: pest)
-    
+
     # 一般ユーザーの視点
     visible_pesticides = Pesticide.where("is_reference = ? OR user_id = ?", true, user1.id)
-    
+
     assert_includes visible_pesticides, ref_pesticide
     assert_includes visible_pesticides, user1_pesticide
     assert_not_includes visible_pesticides, user2_pesticide
@@ -733,9 +733,9 @@ class PesticideTest < ActiveSupport::TestCase
     pest = create(:pest, is_reference: true)
     reference_pesticide = create(:pesticide, is_reference: true, user_id: nil, crop: crop, pest: pest)
     user_pesticide = create(:pesticide, is_reference: false, user: user, crop: crop, pest: pest)
-    
+
     user_owned_pesticides = Pesticide.user_owned
-    
+
     assert_includes user_owned_pesticides, user_pesticide
     assert_not_includes user_owned_pesticides, reference_pesticide
   end
@@ -760,7 +760,7 @@ class PesticideTest < ActiveSupport::TestCase
     pesticide.update(
       pesticide_usage_constraint_attributes: {
         id: constraint_id,
-        _destroy: '1'
+        _destroy: "1"
       }
     )
 
@@ -774,7 +774,7 @@ class PesticideTest < ActiveSupport::TestCase
     pesticide.update(
       pesticide_application_detail_attributes: {
         id: detail_id,
-        _destroy: '1'
+        _destroy: "1"
       }
     )
 
@@ -806,4 +806,3 @@ class PesticideTest < ActiveSupport::TestCase
                     "requires amount_unit"
   end
 end
-

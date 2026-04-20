@@ -6,7 +6,7 @@ FactoryBot.define do
     area_per_unit { 0.25 }  # 0.25㎡
     revenue_per_area { 5000.0 }  # 5000円/㎡
     groups { [] }
-    
+
     association :user
 
     trait :reference do
@@ -24,7 +24,7 @@ FactoryBot.define do
       variety { "桃太郎" }
       area_per_unit { 0.5 }
       revenue_per_area { 8000.0 }
-      groups { ["果菜類", "ナス科"] }
+      groups { [ "果菜類", "ナス科" ] }
     end
 
     trait :lettuce do
@@ -32,7 +32,7 @@ FactoryBot.define do
       variety { "玉レタス" }
       area_per_unit { 0.2 }
       revenue_per_area { 6000.0 }
-      groups { ["葉菜類", "キク科"] }
+      groups { [ "葉菜類", "キク科" ] }
     end
 
     trait :carrot do
@@ -40,7 +40,7 @@ FactoryBot.define do
       variety { "五寸人参" }
       area_per_unit { 0.15 }
       revenue_per_area { 4000.0 }
-      groups { ["根菜類", "セリ科"] }
+      groups { [ "根菜類", "セリ科" ] }
     end
 
     trait :with_stages do
@@ -53,4 +53,3 @@ FactoryBot.define do
     end
   end
 end
-

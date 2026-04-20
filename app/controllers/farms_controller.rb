@@ -2,7 +2,7 @@
 
 class FarmsController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_farm, only: [:edit, :update, :destroy]
+  before_action :set_farm, only: [ :edit, :update, :destroy ]
 
   # GET /farms
   def index
@@ -55,7 +55,7 @@ class FarmsController < ApplicationController
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to farms_path, alert: I18n.t('farms.flash.not_found')
+        redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
       rescue StandardError => e
         redirect_to farms_path, alert: e.message
       end
@@ -173,35 +173,35 @@ class FarmsController < ApplicationController
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to farms_path, alert: I18n.t('farms.flash.not_found')
+        redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
       end
 
       format.json do
         # API の destroy は既存の API コントローラに委譲するか、既存のロジックを使用
         if @farm.free_crop_plans.any?
-          return render json: { error: I18n.t('farms.flash.cannot_delete', count: @farm.free_crop_plans.count) }, status: :unprocessable_entity
+          return render json: { error: I18n.t("farms.flash.cannot_delete", count: @farm.free_crop_plans.count) }, status: :unprocessable_entity
         end
 
         schedule_deletion_with_undo(
           record: @farm,
-          toast_message: I18n.t('farms.undo.toast', name: @farm.display_name),
+          toast_message: I18n.t("farms.undo.toast", name: @farm.display_name),
           fallback_location: Rails.application.routes.url_helpers.farms_path,
           in_use_message_key: nil,
-          delete_error_message_key: 'farms.flash.delete_error'
+          delete_error_message_key: "farms.flash.delete_error"
         )
       rescue ActiveRecord::InvalidForeignKey => e
         message =
-          if e.message.include?('cultivation_plans')
-            I18n.t('farms.flash.cannot_delete_in_use.plan')
-          elsif e.message.include?('fields')
-            I18n.t('farms.flash.cannot_delete_in_use.field')
+          if e.message.include?("cultivation_plans")
+            I18n.t("farms.flash.cannot_delete_in_use.plan")
+          elsif e.message.include?("fields")
+            I18n.t("farms.flash.cannot_delete_in_use.field")
           else
-            I18n.t('farms.flash.cannot_delete_in_use.other')
+            I18n.t("farms.flash.cannot_delete_in_use.other")
           end
 
         render json: { error: message }, status: :unprocessable_entity
       rescue ActiveRecord::DeleteRestrictionError
-        render json: { error: I18n.t('farms.flash.cannot_delete_in_use.other') }, status: :unprocessable_entity
+        render json: { error: I18n.t("farms.flash.cannot_delete_in_use.other") }, status: :unprocessable_entity
       end
     end
   end
@@ -238,11 +238,11 @@ class FarmsController < ApplicationController
       @farm = Domain::Shared::Policies::FarmPolicy.find_owned!(Farm, current_user, params[:id])
     end
   rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-    redirect_to farms_path, alert: I18n.t('farms.flash.not_found')
+    redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
   end
 
   def farm_params
-    permitted = [:name, :latitude, :longitude]
+    permitted = [ :name, :latitude, :longitude ]
 
     # 管理者のみregionを許可
     permitted << :region if admin_user?
@@ -258,4 +258,3 @@ class FarmsController < ApplicationController
     @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
-
