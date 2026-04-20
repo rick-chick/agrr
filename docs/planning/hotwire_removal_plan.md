@@ -39,3 +39,10 @@
 
 - ロードマップ Phase 4（T-040〜T-043）
 - `ARCHITECTURE.md`（フロント配信・SPA 方針）
+
+---
+
+## 前提達成状況（2026-04-20 追記）
+
+- **T-041〜T-043 は未着手**（上表の未 Angular 化画面が残存する限り、ロードマップ Phase 3 のゲートにより着手しない）。
+- **ユーザー確認**: Gantt / optimizing / task schedule HTML・マスタ AI 等の Angular 移行完了を確認したうえで Hotwire 撤去タスクを起票すること。
