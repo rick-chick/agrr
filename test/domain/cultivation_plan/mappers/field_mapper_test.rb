@@ -1,0 +1,55 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class Domain::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestCase
+  include PlanSaveMapperTestSupport
+
+  test "creates fields from session when farm is new" do
+    user = unique_test_user
+    ref_farm = ensure_reference_farm
+    result = plan_save_result
+    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+      user: user,
+      session_data: {
+        farm_id: ref_farm.id,
+        field_data: [
+          { name: "区画A", area: 12.5, coordinates: [ 35.0, 139.0 ] }
+        ]
+      },
+      result: result
+    )
+    farm = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+
+    fields = Domain::CultivationPlan::Mappers::FieldMapper.new(ctx).create_user_fields(farm)
+    assert_equal 1, fields.size
+    assert_equal "区画A", fields.first.name
+    assert_in_delta 12.5, fields.first.area.to_f, 0.001
+    assert_equal farm.id, fields.first.farm_id
+    assert_equal user.id, fields.first.user_id
+  end
+
+  test "reuses existing fields and records skips when farm_reused" do
+    user = unique_test_user
+    ref_farm = ensure_reference_farm
+    session_data = {
+      farm_id: ref_farm.id,
+      field_data: [ { name: "再利用圃場", area: 3.0 } ]
+    }
+
+    result1 = plan_save_result
+    ctx1 = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: session_data, result: result1)
+    farm1 = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx1).create_or_get_user_farm
+    Domain::CultivationPlan::Mappers::FieldMapper.new(ctx1).create_user_fields(farm1)
+
+    result2 = plan_save_result
+    ctx2 = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: session_data, result: result2)
+    farm2 = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx2).create_or_get_user_farm
+    assert ctx2.farm_reused
+
+    fields = Domain::CultivationPlan::Mappers::FieldMapper.new(ctx2).create_user_fields(farm2)
+    assert_equal 1, fields.size
+    assert fields.all? { |f| f.persisted? }
+    assert result2.skipped_items[:fields].present?
+  end
+end

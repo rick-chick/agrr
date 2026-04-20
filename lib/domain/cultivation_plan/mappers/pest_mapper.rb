@@ -139,10 +139,7 @@ module Domain
             user_crop_id = crop_mapper.user_crop_id_for_reference_crop(crop_pest.crop_id)
             next unless user_crop_id
 
-            ::CropPest.create!(
-              crop_id: user_crop_id,
-              pest: new_pest
-            )
+            ::CropPest.find_or_create_by!(crop_id: user_crop_id, pest: new_pest)
           end
         end
       end
