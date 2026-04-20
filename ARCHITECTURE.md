@@ -1,398 +1,208 @@
 # AGRR Architecture Documentation
 
-## 🏗️ System Overview
+## System Overview
 
-AGRR is an agricultural planning and optimization system with a decoupled frontend and backend.
+AGRR is an agricultural planning and optimization system with a decoupled Angular SPA and a Ruby on Rails 8 JSON API.
 
-**Technology Stack:**
-- Frontend: Angular SPA (Clean Architecture)
-- Frontend Hosting: S3 + CloudFront
-- Backend: Ruby on Rails 8 (API)
-- Database: SQLite3 (development/test), with Litestream backup
-- Architecture: **Decoupled SPA + Rails API** (primary architecture)
-- External Services: Python-based AGRR CLI for advanced predictions
+**Technology stack**
 
-## 🎯 Architecture Pattern
+| Layer | Technology |
+|-------|------------|
+| Frontend | Angular 21 SPA (Clean Architecture–oriented layers under `frontend/src/app/`) |
+| Frontend hosting | Google Cloud Storage + Cloud CDN (see `scripts/gcp-frontend-deploy.sh`) |
+| Backend | Ruby on Rails 8 on **Google Cloud Run** (see `scripts/gcp-deploy.sh`) |
+| Database | SQLite3 (Solid Cache / Solid Cable / Solid Queue as applicable), **Litestream** replica to GCS |
+| Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads |
+| Contract-first API | `docs/contracts/*.md` describe Angular ↔ Rails JSON contracts |
 
-### Primary: Angular SPA + Rails API
+**Architecture (primary):** Decoupled **Angular SPA + Rails API**. Server-rendered Rails HTML exists for some master CRUD flows and is being aligned with the same domain layer (`lib/domain`) via HTML presenters (`lib/presenters/html/`) per [docs/contracts/rails-html-clean-architecture-contract.md](docs/contracts/rails-html-clean-architecture-contract.md).
 
-**Main Architecture Pattern:** Decoupled frontend and backend with a JSON API.
+## System flow
 
-- **Frontend**: Angular SPA served from S3 + CloudFront
-- **Backend API Controllers**: Rails API endpoints returning JSON
-- **Models**: ActiveRecord ORM with validations and business rules
-
-**Note:** Server-rendered Rails Views are legacy and will be phased out.
-
-### Frontend: Clean Architecture (Angular)
-
-- **Domain**: Pure entities and business rules (framework-agnostic)
-- **UseCase**: Interactors + Ports + Gateway interfaces
-- **Adapters**: Presenters, Views, API gateway implementations
-- **Infrastructure**: Angular components, services, guards, interceptors
-
-**Dependency Direction (Frontend):**
-- UI components depend on Presenters/Views
-- Presenters depend on UseCase Ports
-- UseCase depends on Domain and Gateway interfaces
-- Adapter Gateways implement UseCase Gateway interfaces
-
-### Additional: Clean Architecture (AI Features Only)
-
-Clean Architecture is used **only** for 3 AI-powered API endpoints:
-
-- `/api/v1/crops/ai_create` → Uses `CropCreateInteractor` + `CropMemoryGateway`
-- `/api/v1/fertilizes/ai_create` → Uses `FertilizeCreateInteractor` + `FertilizeMemoryGateway`
-- `/api/v1/fertilizes/:id/ai_update` → Uses `FertilizeUpdateInteractor` + `FertilizeMemoryGateway`
-
-**Note:** All other API controllers use traditional Rails MVC; HTML controllers are legacy.
-
-## 🧩 System Flow (SPA + API)
 ```mermaid
 flowchart TD
-  User[User] --> CloudFront[CloudFront]
-  CloudFront --> S3[S3]
-  User --> RailsAPI[RailsAPI]
-  RailsAPI --> Database[SQLite3]
-  RailsAPI --> AgrrCli[AgrrCli]
+  User[User] --> CDN[CloudCDN]
+  CDN --> GCS[GCS_static_SPA]
+  User --> CloudRun[Rails_CloudRun]
+  CloudRun --> SQLite[(SQLite_primary)]
+  CloudRun --> Litestream[Litestream_GCS]
+  CloudRun --> AgrrDaemon[Agrr_daemon_binary]
 ```
 
-## 🧩 Frontend Layer Dependencies (Angular Clean Architecture)
+## Backend: Clean Architecture (canonical)
+
+Business logic for API and progressively for HTML flows lives under **`lib/`**, not only for AI endpoints.
+
+### Domain modules (`lib/domain/`)
+
+Each bounded context typically has: `entities/`, `dtos/`, `gateways/` (interfaces), `interactors/`, `ports/` (input/output), and sometimes shared policies under `lib/domain/shared/`.
+
+Current domains include (non-exhaustive; inspect `lib/domain/` for source of truth):
+
+- `agricultural_task`, `contact_messages`, `crop`, `cultivation_plan`, `deletion_undo`, `farm`, `fertilize`, `field`, `field_cultivation`, `interaction_rule`, `pest`, `pesticide`, `public_plan`, `weather_data`, plus `shared` and `logger` gateways.
+
+### Adapters (`lib/adapters/`)
+
+Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live under `lib/adapters/<context>/gateways/`.
+
+### Presenters (`lib/presenters/`)
+
+- **API JSON:** `lib/presenters/api/<resource>/` — implement domain output ports and call `view.render_response(json:, status:)`.
+- **HTML (Rails views):** `lib/presenters/html/<resource>/` — same output ports; perform `redirect_to` / `render` instead of JSON.
+
+**Rule:** New presenters belong under `lib/presenters/{api,html}/`, not under `app/presenters/` (legacy paths are being retired).
+
+### Rails application layer (`app/`)
+
+- **`app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters.
+- **`app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
+- **`app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
+- **`app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
+- **`app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
+
+### External agrr integration
+
+- Gateways under `app/gateways/agrr/` encapsulate the agrr CLI/daemon protocol.
+- Tests: `test/gateways/agrr/`.
+
+## Frontend: Angular layers (`frontend/src/app/`)
+
+**Intended dependency direction**
+
 ```mermaid
 flowchart TB
-  AngularUI[AngularUI] --> Presenter[Presenter]
-  Presenter --> UseCase[UseCase]
-  UseCase --> Domain[Domain]
-  UseCase --> GatewayInterface[GatewayInterface]
-  GatewayInterface --> InfraAdapter[InfraAdapter]
-  InfraAdapter --> RailsAPI[RailsAPI]
+  Components[components_pages] --> UseCase[usecase]
+  UseCase --> DomainFE[domain]
+  UseCase --> GatewayIF[gateway_tokens]
+  Adapters[adapters] --> GatewayIF
+  Adapters --> RailsAPI[Rails_JSON_API]
 ```
 
-## 📊 Core Business Rules
+- **`domain/`** — Types and pure rules (framework-agnostic where possible).
+- **`usecase/`** — Use cases, gateway interfaces (injection tokens), ports.
+- **`adapters/`** — API gateway implementations, presenters that map DTOs to view state.
+- **`components/`** — Standalone components, routes, templates.
+- **`services/`** — Cross-cutting and feature-specific helpers (list refresh, auth, etc.); **target state** is to consolidate cross-cutting pieces under `infrastructure/` (see project roadmap).
+- **`core/`** — i18n loader, API base URL, browser region, cookie consent helpers.
+- **`guards/`** — e.g. `authGuard`.
+- **`infrastructure/`** — Reserved for future consolidation of cross-cutting services (may be empty until refactors land).
 
-### Resource Limits
-- **Farm Limit**: Maximum 4 farms per user (`is_reference: false`)
-- **Crop Limit**: Maximum 20 crops per user (`is_reference: false`)
-- **Reference Records**: Always excluded from limits (`is_reference: true`)
+**i18n:** `@ngx-translate` with `frontend/src/assets/i18n/ja.json` and `en.json`.
 
-**Implementation:** Resource limits are enforced at the Model level using ActiveRecord validations.
+**Routing:** `HashLocationStrategy` may still be in use in `app.config.ts`; path-based hosting requires CDN URL map fallback to `index.html` (see `scripts/agrr-frontend-url-map-simple.yaml` when migrating off hash URLs).
 
-## 📁 Directory Structure
+## Core business rules
 
-### Main Structure (Rails API + Angular)
+### Resource limits
+
+- **Farm limit:** max 4 non-reference farms per user (`is_reference: false`).
+- **Crop limit:** max 20 non-reference crops per user.
+- **Reference data:** `is_reference: true` records do not count toward limits.
+
+Enforced in ActiveRecord models via validations.
+
+## Directory structure (summary)
+
 ```
 app/
-├── controllers/          # Rails controllers
-│   ├── <model>s_controller.rb    # Legacy HTML controllers (to be removed)
-│   └── api/v1/          # API controllers (JSON)
-│       ├── crops_controller.rb      # AI feature (Clean Architecture)
-│       ├── fertilizes_controller.rb # AI feature (Clean Architecture)
-│       ├── plans/                   # Rails MVC (API)
-│       ├── public_plans/           # Rails MVC (API)
-│       └── ...                      # Other API controllers
-├── models/              # ActiveRecord models
-├── services/            # Application services
-├── gateways/agrr/       # External API gateways
-└── jobs/                # Background jobs
-frontend/                # Angular app (SPA)
-└── src/app/              # Angular Clean Architecture layers
-    ├── domain/           # Entities
-    ├── usecase/          # Interactors, ports, gateway interfaces, DTOs
-    ├── adapters/         # Presenters, views, API gateways, helpers
-    └── infrastructure/   # Components, pages, services, guards, interceptors
+├── controllers/          # HTML + api/v1/
+├── models/
+├── services/             # Application services (migrate toward lib/domain where possible)
+├── gateways/agrr/        # agrr daemon clients
+├── jobs/
+└── views/                # HTML ERB (legacy + masters)
+
+lib/
+├── domain/<context>/     # Entities, DTOs, gateways (interfaces), interactors, ports
+├── adapters/<context>/gateways/
+└── presenters/
+    ├── api/<resource>/
+    └── html/<resource>/
+
+frontend/
+└── src/app/
+    ├── domain/
+    ├── usecase/
+    ├── adapters/
+    ├── components/
+    ├── services/
+    ├── core/
+    └── guards/
+
+docs/
+├── contracts/            # API / feature contracts (contract-first)
+└── planning/             # Design notes, migrations
 ```
 
-### Clean Architecture (AI Features Only)
-```
-lib/domain/              # Clean Architecture layers (3 endpoints only)
-├── crop/
-│   ├── entities/
-│   ├── gateways/
-│   └── interactors/
-├── fertilize/
-│   ├── entities/
-│   ├── gateways/
-│   └── interactors/
-└── shared/
-    └── result.rb
+## API controller pattern (Interactor + Presenter)
 
-lib/adapters/            # Gateway implementations (AI features only)
-├── crop/gateways/
-└── fertilize/gateways/
-```
+Typical API action shape:
 
-## 🎯 Backend API Pattern (Primary)
+1. Build input DTO from `params`.
+2. Instantiate gateway (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new`).
+3. Instantiate API presenter implementing the domain output port.
+4. Call `Domain::<Context>::Interactors::<Action>Interactor.new(...).call(input_dto)`.
 
-### Standard API Controller Pattern
-```ruby
-# app/controllers/api/v1/plans/cultivation_plans_controller.rb
-class Api::V1::Plans::CultivationPlansController < Api::V1::BaseController
-  def create
-    @plan = CultivationPlan.new(plan_params)
-    @plan.user = current_user
-    
-    if @plan.save
-      render json: @plan, status: :created
-    else
-      render json: { errors: @plan.errors }, status: :unprocessable_entity
-    end
-  end
+AI-specific endpoints (`ai_create`, etc.) follow the same pattern; they are **not** the only Clean Architecture entry points.
 
-  private
+## Testing
 
-  def plan_params
-    params.require(:cultivation_plan).permit(:name, :planning_start_date, ...)
-  end
-end
-```
-
-### Standard Model Pattern
-```ruby
-# app/models/farm.rb
-class Farm < ApplicationRecord
-  belongs_to :user
-  has_many :fields, dependent: :destroy
-
-  validates :user, presence: true
-  validates :name, presence: true
-  validate :user_farm_count_limit, unless: :is_reference?
-
-  private
-
-  def user_farm_count_limit
-    return if user.nil? || is_reference?
-    
-    existing_farms_count = user.farms.where(is_reference: false).count
-    current_count = new_record? ? existing_farms_count : existing_farms_count - 1
-    
-    if current_count >= 4
-      errors.add(:user, :farm_limit_exceeded)
-    end
-  end
-end
-```
-
-## 🧭 Frontend Hosting (Angular SPA)
-
-- Build output is deployed to S3 and served via CloudFront (HTTPS, caching, custom domain).
-- SPA routing uses CloudFront/S3 fallback to `index.html`.
-- Environment configuration is provided at build time (e.g., `environment.prod.ts`).
-
-## 🎯 Clean Architecture Pattern (AI Features Only)
-
-### Controller Pattern (AI Features)
-```ruby
-# app/controllers/api/v1/crops_controller.rb
-class Api::V1::CropsController < Api::V1::BaseController
-  before_action :set_interactors, only: [:ai_create]
-
-  def ai_create
-    # ... parameter validation and AI data fetching ...
-    result = @create_interactor.call(attributes)
-    
-    if result.success?
-      render json: { success: true, crop_id: result.data.id }
-    else
-      render json: { error: result.error }, status: :unprocessable_entity
-    end
-  end
-
-  private
-
-  def set_interactors
-    gateway = Adapters::Crop::Gateways::CropMemoryGateway.new
-    @create_interactor = Domain::Crop::Interactors::CropCreateInteractor.new(gateway)
-  end
-end
-```
-
-### Interactor Pattern
-```ruby
-# lib/domain/crop/interactors/crop_create_interactor.rb
-module Domain
-  module Crop
-    module Interactors
-      class CropCreateInteractor
-        def initialize(gateway)
-          @gateway = gateway
-        end
-
-        def call(attributes)
-          crop = @gateway.create(attributes)
-          Domain::Shared::Result.success(crop)
-        rescue StandardError => e
-          Domain::Shared::Result.failure(e.message)
-        end
-      end
-    end
-  end
-end
-```
-
-### Gateway Implementation Pattern
-```ruby
-# lib/adapters/crop/gateways/crop_memory_gateway.rb
-module Adapters
-  module Crop
-    module Gateways
-      class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
-        def create(crop_data)
-          record = ::Crop.create!(crop_data)
-          entity_from_record(record)
-        end
-
-        private
-
-        def entity_from_record(record)
-          Domain::Crop::Entities::CropEntity.new(
-            id: record.id,
-            user_id: record.user_id,
-            name: record.name,
-            # ... other attributes
-          )
-        end
-      end
-    end
-  end
-end
-```
-
-## 🎯 Validation Architecture
-
-### Resource Limit Implementation (Rails MVC)
-Resource limits are enforced at the Model level using ActiveRecord validations:
-
-```ruby
-# app/models/farm.rb
-class Farm < ApplicationRecord
-  validates :user, presence: true
-  validate :user_farm_count_limit, unless: :is_reference?
-
-  private
-
-  def user_farm_count_limit
-    return if user.nil? || is_reference?
-    
-    existing_farms_count = user.farms.where(is_reference: false).count
-    current_count = new_record? ? existing_farms_count : existing_farms_count - 1
-    
-    if current_count >= 4
-      errors.add(:user, :farm_limit_exceeded)
-    end
-  end
-end
-```
-
-### Domain Entity Validation (Clean Architecture - AI Features Only)
-```ruby
-# lib/domain/crop/entities/crop_entity.rb
-module Domain
-  module Crop
-    module Entities
-      class CropEntity
-        def initialize(attributes)
-          # ... set attributes ...
-          validate!
-        end
-
-        private
-
-        def validate!
-          raise ArgumentError, "Name is required" if name.blank?
-        end
-      end
-    end
-  end
-end
-```
-
-## 🧪 Testing Architecture
-
-### Test Structure
 ```
 test/
-├── controllers/         # Controller tests (Rails MVC)
-├── models/              # Model tests (Rails MVC)
-├── services/            # Service tests
-├── integration/         # Integration tests
-├── system/              # System tests
-├── domain/              # Domain layer tests (AI features only)
-│   ├── crop/
-│   └── fertilize/
-└── adapters/            # Adapter layer tests (AI features only)
-    ├── crop/gateways/
-    └── fertilize/gateways/
+├── domain/               # Interactor / entity tests per context
+├── adapters/             # Gateway implementation tests
+├── presenters/           # API / HTML presenter tests
+├── controllers/
+├── models/
+├── services/
+├── gateways/agrr/
+└── system/
 ```
 
-### Test Pyramid
-- **Unit Tests (70%)**: Models, Services, Domain entities (AI), Interactors (AI), Gateways (AI)
-- **Integration Tests (20%)**: Controller tests, Service integration, Gateway-model integration
-- **System Tests (10%)**: User flows, UI interactions, End-to-end scenarios
+**Rules**
 
-## 📚 Implementation Guidelines
+- Prefer `./bin/test` (or `.cursor/skills/test-common/scripts/run-test-rails.sh`) over raw `rails test` to avoid corrupting the development database.
+- Frontend: `cd frontend && npm test`, `npm run build`, and i18n check scripts as documented in `frontend/package.json`.
 
-### For Most Features (Rails MVC)
+## Implementation guidelines
 
-1. **Create Model** with validations and business rules
-2. **Create Controller** with standard CRUD actions
-3. **Create Views** (HTML or JSON)
-4. **Define Routes**
-5. **Write Tests**: Model tests, Controller tests, Integration tests
+### New API features
 
-### For AI Features (Clean Architecture)
+1. Update or add `docs/contracts/<feature>-contract.md`.
+2. Add/adjust DTOs and interactors under `lib/domain/`.
+3. Add/adjust gateway implementation under `lib/adapters/`.
+4. Add API presenter under `lib/presenters/api/`.
+5. Thin controller in `app/controllers/api/v1/`.
+6. Tests in `test/domain/`, `test/adapters/`, `test/presenters/`, `test/controllers/`.
 
-Only use Clean Architecture when implementing AI-powered features. For those cases:
+### HTML master CRUD (Rails)
 
-1. **Create Domain Entity** with business logic
-2. **Create Gateway Interface**
-3. **Create Interactor** (one action per interactor)
-4. **Create Gateway Implementation**
-5. **Update Controller** to instantiate and use Interactor
-6. **Write Tests**: Entity tests, Interactor tests, Gateway tests, Controller tests
+Follow [docs/contracts/rails-html-clean-architecture-contract.md](docs/contracts/rails-html-clean-architecture-contract.md): HTML presenters in `lib/presenters/html/`, reuse interactors from `lib/domain/`.
 
-## 🚫 Anti-Patterns
+## Anti-patterns
 
-### ❌ FORBIDDEN: Resource Limit Validation at Controller Only
-```ruby
-def create
-  return if user.farms.count >= 4  # Can be bypassed!
-  # ...
-end
-```
+### Resource limits only in controllers
 
-### ✅ CORRECT: Model-Level Validation
-```ruby
-# Model validation ensures limits are enforced regardless of entry point
-validate :user_farm_count_limit, unless: :is_reference?
-```
+Invalid — bypassable. Use model validations (and interactors that respect model state).
 
-## 🔍 Quality Assurance
+### Business rules only in `app/services/`
 
-### Code Review Checklist
+Discouraged for long-lived rules; prefer `lib/domain/.../interactors` with tests.
 
-**For Rails MVC Features:**
-- [ ] Models validated properly
-- [ ] Controllers are thin (business logic in Models/Services)
-- [ ] Proper error handling
-- [ ] Tests cover models and controllers
+## Key principles
 
-**For Clean Architecture Features (AI only):**
-- [ ] Entities contain business logic
-- [ ] Interactors are single-purpose
-- [ ] Gateways properly abstracted
-- [ ] Tests cover all layers
+1. **Contract-first** for Angular ↔ Rails JSON (`docs/contracts/`).
+2. **Domain-centric backend** — `lib/domain` is the home for use-case logic; ActiveRecord is persistence.
+3. **Thin controllers** — orchestration and HTTP concerns only.
+4. **Model-level invariants** — resource limits and DB-backed constraints on models where appropriate.
+5. **One action per interactor** (when using Clean Architecture interactors).
+6. **Testability** — memory gateways for fast unit tests; integration tests for controllers.
 
-## 📖 Key Principles
+## Additional resources
 
-1. **Rails MVC First**: Use traditional Rails MVC for all features unless specifically implementing AI features
-2. **Model-Level Validation**: Business rules (like resource limits) must be enforced at the Model level
-3. **Thin Controllers**: Controllers should be thin; business logic belongs in Models or Services
-4. **Clean Architecture for AI**: Only use Clean Architecture for AI-powered features
-5. **One UseCase per Interactor**: Each interactor handles one action (when using Clean Architecture)
-6. **Testability**: All code should be easily testable
-
-## 📚 Additional Resources
-
-- [DEVELOPMENT_RULES.md](docs/DEVELOPMENT_RULES.md): Development conventions
-- [TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md): Testing standards
-- [RESOURCE_LIMIT_TEMPLATE.md](docs/RESOURCE_LIMIT_TEMPLATE.md): Resource limit pattern
+- [docs/README.md](docs/README.md)（契約・ADR・アーカイブ索引）
+- [docs/adr/](docs/adr/)（Architecture Decision Records）
+- [docs/DEVELOPMENT_RULES.md](docs/DEVELOPMENT_RULES.md)
+- [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md)
+- [docs/contracts/README.md](docs/contracts/README.md)
+- [docs/RESOURCE_LIMIT_TEMPLATE.md](docs/RESOURCE_LIMIT_TEMPLATE.md)

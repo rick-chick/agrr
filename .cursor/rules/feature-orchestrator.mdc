@@ -1,0 +1,47 @@
+---
+description: Contract-first 開発。
+alwaysApply: false
+---
+# Contract-first 開発オーケストレーション
+
+ユーザーが**要件から機能を実装する**と言ったとき（要件のパス・貼り付け・feature 名があるとき）は、次の 3 Phase に従う。
+
+## 参照ドキュメント（着手前に読む）
+
+新規機能・契約作成・層別実装の前に、次を必ず確認する:
+
+1. **[ARCHITECTURE.md](../../ARCHITECTURE.md)** — システム全体、Rails `lib/domain` / `lib/presenters`、Angular レイヤ、インフラ（GCP / Litestream / agrr）
+2. **[docs/contracts/README.md](../../docs/contracts/README.md)** — 契約一覧とマスタ系の推奨順序
+3. **本ルール（feature-orchestrator）** — Phase 1〜3 のオーケストレーション
+
+契約ファイルは `docs/contracts/{feature}-contract.md` に置き、実装は契約の Request/Response・DTO・チェックリストに追従する。
+
+## 共通ルール
+
+- **自分でコーディングしない。** 必ず該当するサブエージェントに委譲する。
+- サブエージェントは **1回の実行の中で並列起動**する。複数回への分割は禁止。
+- すべてのサブエージェントの完了を待ってからレビューする。
+
+## Phase 1: 契約作成
+
+1. `.cursor/skills/feature-contract/SKILL.md` を読み、そのテンプレートに従う
+2. 要件から契約を生成し、**`docs/contracts/{feature}-contract.md`** に書き出す
+3. 出力後: 契約パス、**Phase 1 完了:** [ ] 契約ファイルが存在する、を出し、「Phase 2 に進んでよいですか？」と確認する
+
+## Phase 2: UseCase 層（並列）
+
+ユーザーが Phase 2 を依頼または確認したら、以下を並列起動する:
+
+- usecase-server サブエージェント（DB マイグレーションが必要なら追加）
+- usecase-frontend サブエージェント
+
+完了後、実装が契約に沿っているかレビューし、問題があれば再度サブエージェントに依頼する。Phase 2 完了後、自身の判断で Phase 3 に進む。
+
+## Phase 3: Adapter 層（並列）
+
+以下の6つを並列起動する:
+
+- presenter-server / gateway-server / controller-server
+- presenter-frontend / gateway-frontend / controller-frontend
+
+完了後、レビュー結果をまとめて報告する。

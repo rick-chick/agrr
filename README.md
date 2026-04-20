@@ -181,13 +181,16 @@ docker compose up
 
 | カテゴリ | 技術 |
 |---------|------|
-| フレームワーク | Rails 8 |
+| フレームワーク | Rails 8（JSON API + 一部 HTML マスタ） |
+| フロント SPA | Angular 21（`frontend/`、Clean Architecture 志向のレイヤ構成） |
+| フロント配信 | Google Cloud Storage + Cloud CDN（`scripts/gcp-frontend-deploy.sh`） |
 | データベース | SQLite（Solid Queue, Solid Cache, Solid Cable） |
-| バックアップ | Litestream |
-| インフラ | Google Cloud Run |
-| アセット | Propshaft + jsbundling-rails (esbuild) |
-| フロントエンド | Hotwire (Turbo + Stimulus) |
+| バックアップ | Litestream（GCS レプリカ） |
+| バックエンド実行 | Google Cloud Run（`scripts/gcp-deploy.sh`） |
+| レガシーアセット | Propshaft + jsbundling-rails + Hotwire（Turbo/Stimulus）は段階的撤去予定（ルート `package.json` / `app/javascript/`） |
+
+アーキテクチャの詳細は [ARCHITECTURE.md](ARCHITECTURE.md) を参照。
 
 ---
 
-**最終更新**: 2025-10-19
+**最終更新**: 2026-04-20
