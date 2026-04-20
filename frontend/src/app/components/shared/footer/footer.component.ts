@@ -9,6 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
   template: `
     <footer class="app-footer">
       <div class="footer-links">
+        <a routerLink="/entry-schedule">{{ 'footer.entry_schedule' | translate }}</a>
         <a routerLink="/about">{{ 'footer.about' | translate }}</a>
         <a routerLink="/terms">{{ 'footer.terms' | translate }}</a>
         <a routerLink="/privacy">{{ 'footer.privacy' | translate }}</a>

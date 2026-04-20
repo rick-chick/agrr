@@ -1,17 +1,20 @@
-import { Component, Inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [TranslateModule],
+  imports: [TranslateModule, RouterLink],
   template: `
     <section class="hero-section">
       <h1>{{ 'home.index.hero.title' | translate }}</h1>
       <p [innerHTML]="'home.index.hero.subtitle_html' | translate"></p>
-      <button (click)="navigateToPlan()" class="primary-button large">{{ 'home.index.hero.cta_button' | translate }}</button>
+      <div class="hero-actions">
+        <button (click)="navigateToPlan()" class="primary-button large">{{ 'home.index.hero.cta_button' | translate }}</button>
+        <a routerLink="/entry-schedule" class="secondary-button large">{{ 'home.index.hero.entry_schedule_link' | translate }}</a>
+      </div>
     </section>
     
     <section class="features-section">
