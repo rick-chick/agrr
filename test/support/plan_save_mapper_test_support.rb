@@ -63,4 +63,41 @@ module PlanSaveMapperTestSupport
       region: region
     )
   end
+
+  # 圃場・作付・CPC を持つ参照公開計画（PlanCopyGateway 用）
+  def build_public_plan_with_field_cultivation(farm:, ref_crop:, plan_name: "Gateway plan")
+    plan = CultivationPlan.create!(
+      farm: farm,
+      user: nil,
+      total_area: 10.0,
+      plan_type: "public",
+      plan_year: Date.current.year,
+      plan_name: plan_name,
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: "completed"
+    )
+    cpf = CultivationPlanField.create!(
+      cultivation_plan: plan,
+      name: "Fld#{SecureRandom.hex(3)}",
+      area: 10.0,
+      daily_fixed_cost: 0
+    )
+    cpc = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: ref_crop,
+      name: ref_crop.name,
+      variety: ref_crop.variety,
+      area_per_unit: ref_crop.area_per_unit,
+      revenue_per_area: ref_crop.revenue_per_area
+    )
+    fc = FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: cpf,
+      cultivation_plan_crop: cpc,
+      area: 10.0,
+      status: :pending
+    )
+    [ plan, cpf, cpc, fc ]
+  end
 end
