@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CultivationPlanOptimizerTest < ActiveSupport::TestCase
+class CultivationPlanOptimizeInteractorTest < ActiveSupport::TestCase
   def setup
     @user = create(:user)
     @farm = create(:farm, user: @user)
@@ -10,7 +10,7 @@ class CultivationPlanOptimizerTest < ActiveSupport::TestCase
     plan = create(:cultivation_plan, :public_plan, farm: @farm, user: @user)
     plan.field_cultivations.destroy_all
 
-    optimizer = CultivationPlanOptimizer.new(plan, "OptimizationChannel")
+    optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(plan, "OptimizationChannel")
     planning_start, planning_end = optimizer.send(:calculate_planning_period)
 
     assert_equal Date.current, planning_start

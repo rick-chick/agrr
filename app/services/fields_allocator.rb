@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "ostruct"
+
 class FieldsAllocator
   attr_reader :total_area, :crops
 

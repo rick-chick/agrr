@@ -103,7 +103,7 @@ module Api
 
       def create_cultivation_plan_with_jobs(farm, crops, plan_name = nil)
         creator_params = build_creator_params(farm, crops, plan_name)
-        result = CultivationPlanCreator.new(**creator_params).call
+        result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
         # エラーハンドリング
         unless result.success? && result.cultivation_plan

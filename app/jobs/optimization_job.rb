@@ -35,7 +35,7 @@ class OptimizationJob < ApplicationJob
       cultivation_plan.phase_optimizing!(channel_class)
 
       # 最適化処理
-      optimizer = CultivationPlanOptimizer.new(cultivation_plan, channel_class)
+      optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(cultivation_plan, channel_class)
       optimizer.call
 
       # 最適化完了通知（作業予定生成へ移行）

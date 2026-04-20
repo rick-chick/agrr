@@ -278,7 +278,7 @@ class PlansController < ApplicationController
   # 栽培計画作成とジョブ実行
   def create_cultivation_plan_with_jobs(farm, crops)
     creator_params = build_creator_params(farm, crops)
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
     # エラーハンドリング: 計画作成に失敗した場合
     unless result.success? && result.cultivation_plan

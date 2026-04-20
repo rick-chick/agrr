@@ -14,7 +14,7 @@ module Adapters
           @crops = [ create(:crop, :reference), create(:crop, :reference) ]
         end
 
-        test "should delegate to CultivationPlanCreator and return result with plan_id" do
+        test "should delegate to CultivationPlanInitializeInteractor and return result with plan_id" do
           create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
             farm: @farm,
             total_area: 30.0,
@@ -29,7 +29,7 @@ module Adapters
 
           # Creator への委譲が成功し、Result が返されることを確認
           assert_not_nil result
-          assert_instance_of CultivationPlanCreator::Result, result
+          assert_instance_of Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result, result
           assert result.success?, "Creation should succeed"
           assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
 
@@ -121,8 +121,8 @@ module Adapters
             planning_end_date: Date.current.end_of_year
           )
 
-          # CultivationPlanCreator が例外を発生させるようにスタブ
-          CultivationPlanCreator.any_instance.stubs(:call).raises(StandardError, "Unexpected error")
+          # CultivationPlanInitializeInteractor が例外を発生させるようにスタブ
+          Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.any_instance.stubs(:call).raises(StandardError, "Unexpected error")
 
           error = assert_raises(StandardError) do
             @gateway.create(create_dto)

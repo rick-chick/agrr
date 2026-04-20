@@ -13,7 +13,7 @@ module Domain
           cultivation_plan = create(:cultivation_plan, id: 123, farm: farm)
 
           # Mock CultivationPlanCreator result
-          creator_result = CultivationPlanCreator::Result.new(
+          creator_result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
             cultivation_plan: cultivation_plan,
             errors: []
           )
@@ -155,7 +155,7 @@ module Domain
           crops = [ create(:crop) ]
 
           # Mock failed CultivationPlanCreator result
-          creator_result = CultivationPlanCreator::Result.new(
+          creator_result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
             cultivation_plan: nil,
             errors: [ "Creation failed" ]
           )

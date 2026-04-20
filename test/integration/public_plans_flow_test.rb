@@ -115,12 +115,12 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
       if plan_id
         CultivationPlan.find(plan_id).update!(status: "failed")
       end
-      raise CultivationPlanOptimizer::WeatherDataNotFoundError
+      raise Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError
     }) do
       begin
         OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: "OptimizationChannel")
-        flunk "Expected CultivationPlanOptimizer::WeatherDataNotFoundError to be raised"
-      rescue CultivationPlanOptimizer::WeatherDataNotFoundError
+        flunk "Expected Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError to be raised"
+      rescue Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError
         # 期待される例外が発生
       end
     end

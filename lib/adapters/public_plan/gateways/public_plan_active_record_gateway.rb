@@ -30,7 +30,7 @@ module Adapters
 
         def create(create_dto)
           # CultivationPlanCreatorを使って計画を作成（常に新しい計画を作成）
-          creator = CultivationPlanCreator.new(
+          creator = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
             farm: create_dto.farm,
             total_area: create_dto.total_area,
             crops: create_dto.crops,

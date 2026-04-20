@@ -124,7 +124,7 @@ class PublicPlansController < ApplicationController
     }
 
     # Service で計画作成（最適化はしない）
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
     cultivation_plan = result.cultivation_plan
 
     # セッションに計画IDを保存

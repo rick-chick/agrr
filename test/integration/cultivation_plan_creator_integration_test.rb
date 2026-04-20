@@ -68,10 +68,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
     # 成功を確認
-    assert result.success?, "CultivationPlanCreator should succeed: #{result.errors.join(', ')}"
+    assert result.success?, "CultivationPlanInitializeInteractor should succeed: #{result.errors.join(', ')}"
     assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
     assert_equal @ref_farm.id, result.cultivation_plan.farm_id, "Farm should be set correctly"
     assert_equal "public", result.cultivation_plan.plan_type, "Plan type should be public"
@@ -103,10 +103,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
     # 空の作物配列でも成功することを確認
-    assert result.success?, "CultivationPlanCreator should succeed with empty crops"
+    assert result.success?, "CultivationPlanInitializeInteractor should succeed with empty crops"
     assert_not_nil result.cultivation_plan, "CultivationPlan should be created even with empty crops"
     assert_equal 0, result.cultivation_plan.cultivation_plan_crops.count,
       "Should have no CultivationPlanCrops with empty crops"
@@ -127,10 +127,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
     # 成功を確認
-    assert result.success?, "CultivationPlanCreator should succeed for private plan"
+    assert result.success?, "CultivationPlanInitializeInteractor should succeed for private plan"
     assert_not_nil result.cultivation_plan, "Private CultivationPlan should be created"
     assert_equal @user.id, result.cultivation_plan.user_id, "User should be set correctly"
     assert_equal "private", result.cultivation_plan.plan_type, "Plan type should be private"
@@ -181,10 +181,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = CultivationPlanCreator.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
     # 成功を確認
-    assert result.success?, "CultivationPlanCreator should succeed with various area_per_unit values"
+    assert result.success?, "CultivationPlanInitializeInteractor should succeed with various area_per_unit values"
     assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
 
     # FieldsAllocatorが正しく動作しているか確認
@@ -252,10 +252,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
         planning_end_date: Date.current.end_of_year
       }
 
-      result = CultivationPlanCreator.new(**creator_params).call
+      result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
 
       # 成功を確認
-      assert result.success?, "CultivationPlanCreator should succeed with fixed logic"
+      assert result.success?, "CultivationPlanInitializeInteractor should succeed with fixed logic"
       assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
 
       puts "✅ Original error scenario fixed successfully"
