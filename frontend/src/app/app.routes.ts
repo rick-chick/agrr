@@ -216,6 +216,22 @@ export const routes: Routes = [
     path: 'public-plans/results', 
     loadComponent: () => import('./components/public-plans/public-plan-results.component').then(m => m.PublicPlanResultsComponent)
   },
+
+  // Entry schedule (public, no auth) — より深いパスを先に定義
+  {
+    path: 'entry-schedule/crop/:cropId',
+    loadComponent: () =>
+      import('./components/entry-schedule/entry-schedule-detail.component').then(
+        (m) => m.EntryScheduleDetailComponent
+      )
+  },
+  {
+    path: 'entry-schedule',
+    loadComponent: () =>
+      import('./components/entry-schedule/entry-schedule-list.component').then(
+        (m) => m.EntryScheduleListComponent
+      )
+  },
   
   // Weather
   { 

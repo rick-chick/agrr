@@ -1,0 +1,443 @@
+/* エントリ作物スケジュール — グラフィカル表示（一覧・詳細共通トークン） */
+:host {
+  --es-sow: #2d6a4f;
+  --es-sow-soft: rgba(45, 106, 79, 0.18);
+  --es-transplant: #1d6b9c;
+  --es-transplant-soft: rgba(29, 107, 156, 0.18);
+  --es-track: #e8ecf0;
+  --es-card-border: rgba(15, 23, 42, 0.08);
+  --es-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --es-radius: 14px;
+}
+
+.es-crop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.es-crop-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--es-card-border);
+  border-radius: var(--es-radius);
+  padding: 1rem 1.1rem 1.1rem;
+  box-shadow: var(--es-shadow);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.es-crop-card:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+  border-color: rgba(45, 106, 79, 0.25);
+}
+
+.es-crop-card.ineligible {
+  opacity: 0.92;
+  filter: saturate(0.85);
+}
+
+.es-crop-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.es-crop-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-text, #0f172a);
+  line-height: 1.3;
+}
+
+.es-flow-line {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #475569);
+  line-height: 1.45;
+  margin-bottom: 0.85rem;
+}
+
+/* ミニガント（一覧） */
+.es-mini-chart {
+  margin: 0.5rem 0 0.65rem;
+}
+
+.es-mini-chart-intro,
+.es-mini-chart-foot {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary, #475569);
+  margin: 0 0 0.5rem;
+}
+
+.es-mini-chart-foot {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted, #64748b);
+}
+
+.es-mini-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.es-mini-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
+@media (max-width: 360px) {
+  .es-mini-row {
+    grid-template-columns: 4rem 1fr;
+  }
+}
+
+.es-mini-row-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #475569);
+  line-height: 1.25;
+}
+
+.es-year-banner {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #475569);
+  margin-bottom: 0.35rem;
+}
+
+.es-month-ruler {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0;
+  margin-top: 0.4rem;
+  padding: 0.2rem 0 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  font-variant-numeric: tabular-nums;
+}
+
+.es-month-ruler--detail {
+  margin-top: 0.5rem;
+}
+
+.es-month-tick {
+  display: block;
+  text-align: center;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  color: var(--color-text-muted, #64748b);
+}
+
+.es-gantt-intro,
+.es-gantt-foot {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary, #475569);
+  margin: 0.25rem 0 0.65rem;
+}
+
+.es-gantt-foot {
+  margin: 0.45rem 0 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.78rem;
+}
+
+.es-track {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--es-track), #f1f5f9);
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.es-seg {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 5px;
+  min-width: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.es-seg.sow {
+  background: linear-gradient(180deg, var(--es-sow-soft), var(--es-sow));
+}
+
+.es-seg.transplant {
+  background: linear-gradient(180deg, var(--es-transplant-soft), var(--es-transplant));
+}
+
+.es-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.es-dot.sow {
+  background: var(--es-sow);
+}
+
+.es-dot.transplant {
+  background: var(--es-transplant);
+}
+
+.es-date-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.es-pill {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.es-pill.sow {
+  background: var(--es-sow-soft);
+  color: #14532d;
+  border: 1px solid rgba(45, 106, 79, 0.25);
+}
+
+.es-pill.transplant {
+  background: var(--es-transplant-soft);
+  color: #0c4a6e;
+  border: 1px solid rgba(29, 107, 156, 0.25);
+}
+
+.es-card-actions {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--es-card-border);
+}
+
+.es-link-detail {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.es-expand-wrap {
+  margin-top: 0.5rem;
+}
+
+/* 詳細 — 大型ガント */
+.es-gantt-section {
+  margin-top: 1rem;
+}
+
+.es-gantt-track-wrap {
+  position: relative;
+  padding: 0.5rem 0 1.5rem;
+}
+
+.es-gantt-row {
+  position: relative;
+  height: 36px;
+  margin-bottom: 0.65rem;
+}
+
+.es-gantt-row-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #475569);
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.es-gantt-track {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--es-track);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.es-gantt-seg {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 5px;
+  min-width: 4px;
+}
+
+.es-gantt-seg.sow {
+  background: linear-gradient(180deg, var(--es-sow-soft), var(--es-sow));
+}
+
+.es-gantt-seg.transplant {
+  background: linear-gradient(180deg, var(--es-transplant-soft), var(--es-transplant));
+}
+
+.es-gantt-empty {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.es-detail-hero {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text, #0f172a);
+  margin: 0 0 0.35rem;
+}
+
+/* 4フェーズ レール */
+.es-phase-rail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .es-phase-rail {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.es-phase-card {
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--es-card-border);
+  background: linear-gradient(180deg, #fafbfc, #fff);
+  min-height: 4.5rem;
+}
+
+.es-phase-card-top {
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  margin: -0.65rem -0.7rem 0.5rem;
+}
+
+.es-phase-card-top.sowing {
+  background: var(--es-sow);
+}
+.es-phase-card-top.nursery {
+  background: #7c3aed;
+}
+.es-phase-card-top.transplant {
+  background: var(--es-transplant);
+}
+.es-phase-card-top.harvest {
+  background: #c2410c;
+}
+
+.es-phase-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.es-phase-dates {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, #475569);
+  margin-top: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.es-phase-empty {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #64748b);
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
+/* 月次タイムライン（縦） */
+.es-month-vtimeline {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-left: 3px solid var(--es-track);
+  margin-left: 0.6rem;
+}
+
+.es-month-vtimeline li {
+  position: relative;
+  padding: 0.5rem 0 0.85rem 1.1rem;
+}
+
+.es-month-vtimeline li::before {
+  content: '';
+  position: absolute;
+  left: -0.45rem;
+  top: 0.65rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--es-sow);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--es-track);
+}
+
+.es-month-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: linear-gradient(135deg, var(--es-sow), #1b4332);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+}
+
+.es-month-body {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #334155);
+  line-height: 1.45;
+}
+
+/* 予測メタをチップ風 */
+.es-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.es-meta-chip {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.eligible-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: none;
+}
+
+.eligible-pill[data-state='ok'] {
+  background: rgba(45, 106, 79, 0.15);
+  color: #14532d;
+}
+
+.eligible-pill[data-state='no'] {
+  background: rgba(180, 83, 9, 0.12);
+  color: #9a3412;
+}

@@ -7,10 +7,13 @@ import 'chartjs-adapter-date-fns';
 
 import { routes } from './app.routes';
 import { createTranslateLoader } from './core/i18n/translate-loader';
+import { ENTRY_SCHEDULE_GATEWAY } from './usecase/entry-schedule/entry-schedule-gateway';
+import { EntryScheduleApiGateway } from './adapters/entry-schedule/entry-schedule-api.gateway';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
+    { provide: ENTRY_SCHEDULE_GATEWAY, useExisting: EntryScheduleApiGateway },
     provideRouter(routes),
     { provide: LocationStrategy, useClass: HashLocationStrategy },
     importProvidersFrom(
