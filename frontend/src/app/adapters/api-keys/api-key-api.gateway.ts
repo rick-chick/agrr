@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { ApiKeyService } from '../../services/api-key.service';
 import { ApiKeyGateway, ApiKeyResponse } from '../../usecase/api-keys/api-key-gateway';
 
 @Injectable()
 export class ApiKeyApiGateway implements ApiKeyGateway {
-  private readonly apiClient = inject(ApiClientService);
+  private readonly apiClient = inject(ApiService);
   private readonly authService = inject(AuthService);
   private readonly apiKeyService = inject(ApiKeyService);
 

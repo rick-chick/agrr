@@ -1,7 +1,7 @@
 import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanApiGateway } from './plan-api.gateway';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -19,7 +19,7 @@ describe('PlanApiGateway', () => {
       get: vi.fn(),
       delete: vi.fn()
     };
-    gateway = new PlanApiGateway(apiClient as unknown as ApiClientService);
+    gateway = new PlanApiGateway(apiClient as unknown as ApiService);
   });
 
   describe('listPlans', () => {

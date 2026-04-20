@@ -1,7 +1,7 @@
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PublicPlanApiGateway } from './public-plan-api.gateway';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import {
   SavePublicPlanResponse,
   CreatePublicPlanResponse
@@ -13,7 +13,7 @@ describe('PublicPlanApiGateway', () => {
 
   beforeEach(() => {
     apiClient = { get: vi.fn(), post: vi.fn() };
-    gateway = new PublicPlanApiGateway(apiClient as unknown as ApiClientService);
+    gateway = new PublicPlanApiGateway(apiClient as unknown as ApiService);
   });
 
   describe('createPlan', () => {

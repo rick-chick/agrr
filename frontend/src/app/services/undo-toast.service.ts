@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, NgZone } from '@angular/core';
-import { ApiClientService } from './api-client.service';
+import { ApiService } from './api.service';
 
 export type UndoToastState = {
   visible: boolean;
@@ -14,7 +14,7 @@ type PendingUndo = {
 
 @Injectable({ providedIn: 'root' })
 export class UndoToastService {
-  private readonly apiClient = inject(ApiClientService);
+  private readonly apiClient = inject(ApiService);
   private readonly ngZone = inject(NgZone);
 
   private readonly stateSignal = signal<UndoToastState>({

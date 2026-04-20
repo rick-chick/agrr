@@ -1,7 +1,7 @@
 import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PrivatePlanCreateApiGateway } from './private-plan-create-api.gateway';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import { CreatePrivatePlanInputDto, CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
@@ -18,7 +18,7 @@ describe('PrivatePlanCreateApiGateway', () => {
       get: vi.fn(),
       post: vi.fn()
     };
-    gateway = new PrivatePlanCreateApiGateway(apiClient as unknown as ApiClientService);
+    gateway = new PrivatePlanCreateApiGateway(apiClient as unknown as ApiService);
   });
 
   describe('fetchFarms', () => {

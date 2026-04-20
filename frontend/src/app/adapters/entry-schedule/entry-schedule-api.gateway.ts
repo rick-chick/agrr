@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import {
   EntryScheduleCropsListResponse,
@@ -13,7 +13,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class EntryScheduleApiGateway implements EntryScheduleGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   getEntryScheduleFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;

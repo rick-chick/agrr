@@ -12,7 +12,7 @@ import { RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT } from '../../usecase/publ
 import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { detectBrowserRegion } from '../../core/browser-region';
 
@@ -35,7 +35,7 @@ const initialControl: PublicPlanCreateViewState = {
     { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
     { provide: RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT, useValue: {} },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway },
-    ApiClientService
+    ApiService
   ],
   template: `
     <main class="page-main public-plans-wrapper">

@@ -1,7 +1,7 @@
 import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HttpContactGateway } from './http-contact-gateway.service';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import {
   ContactMessagePayload,
   ContactMessageRecord
@@ -13,7 +13,7 @@ describe('HttpContactGateway', () => {
 
   beforeEach(() => {
     apiClient = { post: vi.fn() };
-    gateway = new HttpContactGateway(apiClient as unknown as ApiClientService);
+    gateway = new HttpContactGateway(apiClient as unknown as ApiService);
   });
 
   it('postMessage posts payload with optional source and returns ContactMessageRecord', async () => {

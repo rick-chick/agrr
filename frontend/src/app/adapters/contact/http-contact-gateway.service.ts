@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import {
   ContactMessagePayload,
   ContactMessageRecord,
@@ -11,7 +11,7 @@ import { ContactGateway, CONTACT_GATEWAY } from '../../usecase/contact/contact-g
 
 @Injectable()
 export class HttpContactGateway implements ContactGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   postMessage(payload: ContactMessagePayload): Observable<ContactMessageRecord> {
     // POST to API as contract: POST /api/v1/contact_messages with flat JSON body

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { FieldClimateGateway } from '../../usecase/plans/field-climate/field-climate.gateway';
 import { FetchFieldClimateDataRequestDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 
 @Injectable()
 export class FieldClimateApiGateway implements FieldClimateGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   fetchFieldClimateData(
     dto: FetchFieldClimateDataRequestDto

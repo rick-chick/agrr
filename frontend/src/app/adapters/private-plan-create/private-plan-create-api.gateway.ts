@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import { PrivatePlanCreateGateway, FarmWithTotalAreaDto } from '../../usecase/private-plan-create/private-plan-create-gateway';
@@ -12,7 +12,7 @@ interface FarmWithFields extends Farm {
 
 @Injectable()
 export class PrivatePlanCreateApiGateway implements PrivatePlanCreateGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   fetchFarms(): Observable<Farm[]> {
     return this.apiClient.get<Farm[]>('/api/v1/masters/farms');

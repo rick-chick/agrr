@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
@@ -12,7 +12,7 @@ import {
 
 @Injectable()
 export class PublicPlanApiGateway implements PublicPlanGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   getFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;

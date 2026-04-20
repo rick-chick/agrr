@@ -1,7 +1,7 @@
 import { of, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FieldClimateApiGateway } from './field-climate-api.gateway';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 
 describe('FieldClimateApiGateway', () => {
@@ -40,7 +40,7 @@ describe('FieldClimateApiGateway', () => {
       get: vi.fn()
     };
     gateway = new FieldClimateApiGateway(
-      apiClient as unknown as ApiClientService
+      apiClient as unknown as ApiService
     );
   });
 

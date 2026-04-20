@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../api-client.service';
+import { ApiService } from '../api.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 
 @Injectable({ providedIn: 'root' })
 export class PlanService {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   listPlans(): Observable<PlanSummary[]> {
     return this.apiClient.get<PlanSummary[]>('/api/v1/plans');

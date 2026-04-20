@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../api-client.service';
+import { ApiService } from '../api.service';
 import { Farm, Crop } from '../../models/masters/master-data';
 
 export type FarmSizeOption = {
@@ -16,7 +16,7 @@ export type CreatePublicPlanResponse = {
 
 @Injectable({ providedIn: 'root' })
 export class PublicPlanService {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   getFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;

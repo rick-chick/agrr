@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
+import { ApiService } from '../../services/api.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
@@ -9,7 +9,7 @@ import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response
 
 @Injectable()
 export class PlanApiGateway implements PlanGateway {
-  constructor(private readonly apiClient: ApiClientService) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   listPlans(): Observable<PlanSummary[]> {
     return this.apiClient.get<PlanSummary[]>('/api/v1/plans');

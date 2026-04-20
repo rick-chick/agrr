@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { ApiClientService } from './api-client.service';
+import { ApiService } from './api.service';
 import { Observable, tap } from 'rxjs';
 
 const STORAGE_KEY = 'agrr_api_key';
 
 @Injectable({ providedIn: 'root' })
 export class ApiKeyService {
-  private apiClient = inject(ApiClientService);
+  private apiClient = inject(ApiService);
 
   getApiKey(): string | null {
     return localStorage.getItem(STORAGE_KEY);

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
 import { Observable, defer } from 'rxjs';
-import { ApiClientService } from '../api-client.service';
+import { ApiService } from '../api.service';
 import { ApiKeyService } from '../api-key.service';
 
 @Injectable({ providedIn: 'root' })
 export class MastersClientService {
   constructor(
-    private readonly apiClient: ApiClientService,
+    private readonly apiClient: ApiService,
     private readonly apiKeyService: ApiKeyService
   ) {}
 
