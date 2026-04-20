@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-module CropSchedule
+module Domain::CultivationPlan::Interactors::EntrySchedule
   class EntrySchedulePhaseTimelineTest < ActiveSupport::TestCase
     setup do
       @crop = create(:crop, :reference, :with_stages, region: "jp")

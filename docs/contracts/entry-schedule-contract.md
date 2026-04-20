@@ -168,4 +168,8 @@
 ## 実装参照
 
 - コントローラ: `app/controllers/api/v1/public_plans/entry_schedule_controller.rb`
-- サービス: `app/services/crop_schedule/window_service.rb`, `stage_role_resolver.rb`, `entry_schedule_response_builder.rb`, `entry_schedule_phase_timeline.rb`（フェーズ・タイムライン生成）、`entry_schedule_show_payload.rb`（公開詳細）、`copy_reference_crop_stages.rb`（他機能からの作物複製用）
+- **Domain / Adapter / Presenter（T-035）**:
+  - `lib/domain/cultivation_plan/interactors/entry_schedule/` — `window_service.rb`, `stage_role_resolver.rb`, `entry_schedule_phase_timeline.rb`
+  - `lib/adapters/agrr/entry_schedule_optimization_gateway.rb` — AGRR `optimize period` 呼び出し
+  - `lib/presenters/api/public_plans/entry_schedule_response_builder.rb`, `entry_schedule_show_payload.rb`
+  - `lib/domain/crop/interactors/copy_reference_crop_stages.rb`（他機能からの作物複製用）

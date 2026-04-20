@@ -33,8 +33,8 @@ nested = {
   'prediction_end_date' => '2026-12-31'
 }
 
-norm_flat = CropSchedule::EntryAgrrOptimization.normalize_entry_weather_payload(flat)
-norm_nested = CropSchedule::EntryAgrrOptimization.normalize_entry_weather_payload(nested)
+norm_flat = Adapters::Agrr::EntryScheduleOptimizationGateway.normalize_entry_weather_payload(flat)
+norm_nested = Adapters::Agrr::EntryScheduleOptimizationGateway.normalize_entry_weather_payload(nested)
 
 puts '=== Entry schedule weather payload reproduction ==='
 puts "Flat:   data.size=#{Array(norm_flat['data']).size} lat=#{norm_flat['latitude']} lon=#{norm_flat['longitude']}"

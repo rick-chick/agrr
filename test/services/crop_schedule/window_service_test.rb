@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-module CropSchedule
+module Domain::CultivationPlan::Interactors::EntrySchedule
   class WindowServiceTest < ActiveSupport::TestCase
     setup do
       @crop = create(:crop, :reference, :with_stages, region: "jp")
@@ -19,7 +19,7 @@ module CropSchedule
       end
       payload = { "data" => rows }
 
-      result = CropSchedule::WindowService.call(crop: @crop.reload, weather_payload: payload)
+      result = WindowService.call(crop: @crop.reload, weather_payload: payload)
 
       assert result.eligible
       assert result.sowing_windows.any?
@@ -28,7 +28,7 @@ module CropSchedule
     end
 
     test "returns empty result when weather series is missing" do
-      result = CropSchedule::WindowService.call(crop: @crop, weather_payload: {})
+      result = WindowService.call(crop: @crop, weather_payload: {})
 
       assert_not result.eligible
       assert_equal "no_weather_series", result.reason_parts[:error]

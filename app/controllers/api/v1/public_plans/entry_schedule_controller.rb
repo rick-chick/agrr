@@ -25,7 +25,7 @@ module Api
         def crops
           farm = find_reference_farm!
           payload_hash = load_or_predict_weather!(farm)
-          prediction_meta = CropSchedule::EntryScheduleResponseBuilder.prediction_meta(farm: farm, payload_hash: payload_hash)
+          prediction_meta = Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.prediction_meta(farm: farm, payload_hash: payload_hash)
 
           crop_scope = Domain::Shared::Policies::CropPolicy
                        .reference_scope(::Crop, region: farm.region)
@@ -33,11 +33,11 @@ module Api
                        .order(:name)
           items = []
           crop_scope.find_each do |crop|
-            result = CropSchedule::EntryAgrrOptimization.call(crop: crop, weather_payload: payload_hash, farm: farm)
-            items << CropSchedule::EntryScheduleResponseBuilder.crop_list_item(crop, result)
+            result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(crop: crop, weather_payload: payload_hash, farm: farm)
+            items << Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.crop_list_item(crop, result)
           end
 
-          items.sort_by! { |it| CropSchedule::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
+          items.sort_by! { |it| Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
 
           total_count = items.size
           limit = parse_entry_limit
@@ -71,7 +71,7 @@ module Api
                  .reference_scope(::Crop, region: farm.region)
                  .includes(crop_stages: :temperature_requirement)
                  .find(params[:id])
-          payload = CropSchedule::EntryScheduleShowPayload.call(
+          payload = Presenters::Api::PublicPlans::EntryScheduleShowPayload.call(
             farm: farm,
             crop: crop,
             prediction_end_date: params[:prediction_end_date].presence
@@ -114,7 +114,7 @@ module Api
         #
         # @return [Hash] predicted_weather_data 形式（トップレベルに data 配列）
         def load_or_predict_weather!(farm)
-          raise CropSchedule::EntryScheduleShowPayload::WeatherLocationMissingError if farm.weather_location.blank?
+          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError if farm.weather_location.blank?
 
           target_end = parse_prediction_end_date
           service = WeatherPredictionService.new(weather_location: farm.weather_location, farm: farm)
@@ -128,12 +128,12 @@ module Api
                            farm.predicted_weather_data
           end
 
-          raise CropSchedule::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
+          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
 
           payload_hash
         rescue WeatherPredictionService::WeatherDataNotFoundError,
                WeatherPredictionService::InsufficientPredictionDataError => e
-          raise CropSchedule::EntryScheduleShowPayload::WeatherPredictionFailedError, e.message
+          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherPredictionFailedError, e.message
         end
 
         def parse_prediction_end_date
@@ -166,21 +166,21 @@ module Api
           render json: { error: e.message, error_key: "api.errors.common.farm_not_found" }, status: :not_found
         end
 
-        rescue_from CropSchedule::EntryScheduleShowPayload::WeatherLocationMissingError do
+        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError do
           render json: {
             error: I18n.t("api.entry_schedule.errors.weather_location_required"),
             error_key: "api.entry_schedule.errors.weather_location_required"
           }, status: :unprocessable_entity
         end
 
-        rescue_from CropSchedule::EntryScheduleShowPayload::PredictionPayloadMissingError do
+        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::PredictionPayloadMissingError do
           render json: {
             error: I18n.t("api.errors.common.no_weather_data"),
             error_key: "api.errors.common.no_weather_data"
           }, status: :unprocessable_entity
         end
 
-        rescue_from CropSchedule::EntryScheduleShowPayload::WeatherPredictionFailedError do |e|
+        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherPredictionFailedError do |e|
           render json: {
             error: e.message,
             error_key: "api.entry_schedule.errors.prediction_failed"
