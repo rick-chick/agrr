@@ -82,14 +82,14 @@ flowchart TB
 - **`usecase/`** — Use cases, gateway interfaces (injection tokens), ports.
 - **`adapters/`** — API gateway implementations, presenters that map DTOs to view state.
 - **`components/`** — Standalone components, routes, templates.
-- **`services/`** — Cross-cutting and feature-specific helpers (list refresh, auth, etc.); **target state** is to consolidate cross-cutting pieces under `infrastructure/` (see project roadmap).
-- **`core/`** — i18n loader, API base URL, browser region, cookie consent helpers.
+- **`services/`** — Cross-cutting and feature-specific helpers（認証、一覧リフレッシュ、マスタ API クライアント等）。HTTP や環境依存の実装は **`adapters/`** に寄せる（T-053: 空の `infrastructure/` 層は採用しない）。
+- **`core/`** — i18n loader, API base URL, browser region, cookie consent helpers, `ListRefreshBus` 等の横断ユーティリティ。
 - **`guards/`** — e.g. `authGuard`.
-- **`infrastructure/`** — Reserved for future consolidation of cross-cutting services (may be empty until refactors land).
+- **`routes/`** — `app.routes.ts` が合成する feature 別ルート定義（T-054）。
 
 **i18n:** `@ngx-translate` with `frontend/src/assets/i18n/ja.json` and `en.json`.
 
-**Routing:** `HashLocationStrategy` may still be in use in `app.config.ts`; path-based hosting requires CDN URL map fallback to `index.html` (see `scripts/agrr-frontend-url-map-simple.yaml` when migrating off hash URLs).
+**Routing:** 本番は `PathLocationStrategy`（`app.config.ts`）。CDN では URL map で SPA フォールバックを `index.html` に向ける（`scripts/agrr-frontend-url-map-simple.yaml`）。
 
 ## Core business rules
 
