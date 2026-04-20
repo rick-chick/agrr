@@ -1,0 +1,137 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 105,
+      "fingerprint": "1bb05248f4571a2f7e6101c9bcd302560fdfac936e9dc64a28b7f2a154287b67",
+      "check_name": "PermitAttributes",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "file": "app/controllers/api/v1/backdoor/backdoor_controller.rb",
+      "line": 340,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "params.require(:user).permit(:email, :name, :google_id, :avatar_url, :admin)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Backdoor::BackdoorController",
+        "method": "user_update_params"
+      },
+      "user_input": ":admin",
+      "confidence": "High",
+      "cwe_id": [
+        915
+      ]
+    },
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "fingerprint": "550b53a735f93e32ff9292607be89b107b45d6e305864b3efc8c02d0ad7d5a87",
+      "check_name": "Execute",
+      "message": "Possible command injection",
+      "file": "app/controllers/api/v1/backdoor/backdoor_controller.rb",
+      "line": 34,
+      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
+      "code": "`#{Rails.root.join(\"lib\", \"core\", \"agrr\")} daemon status 2>&1`",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Backdoor::BackdoorController",
+        "method": "status"
+      },
+      "user_input": "Rails.root.join(\"lib\", \"core\", \"agrr\")",
+      "confidence": "Medium",
+      "cwe_id": [
+        77
+      ]
+    },
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "fingerprint": "5b3e5652db1d353d2f7b8e14176c21fb9a010ca0d09abd290a7a3d58b1fdd034",
+      "check_name": "Execute",
+      "message": "Possible command injection",
+      "file": "app/controllers/api/v1/backdoor/backdoor_controller.rb",
+      "line": 53,
+      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
+      "code": "`ps -o etime= -p #{(nil or `#{Rails.root.join(\"lib\", \"core\", \"agrr\")} daemon status 2>&1`.strip.match(/PID[:\\s]+(\\d+)/i)[1].to_i)}`",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Backdoor::BackdoorController",
+        "method": "status"
+      },
+      "user_input": "nil",
+      "confidence": "Medium",
+      "cwe_id": [
+        77
+      ]
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 105,
+      "fingerprint": "8bc718ae122ea428d9633e3a4e6db2b83eac069cdaabbf05e1d974a18c182949",
+      "check_name": "PermitAttributes",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "file": "app/controllers/api/v1/backdoor/backdoor_controller.rb",
+      "line": 336,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "params.require(:user).permit(:email, :name, :google_id, :avatar_url, :admin)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Backdoor::BackdoorController",
+        "method": "user_create_params"
+      },
+      "user_input": ":admin",
+      "confidence": "High",
+      "cwe_id": [
+        915
+      ]
+    },
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "fingerprint": "e8983247b72675b25ba8ee76ab27d40d6d7d06c71543eeec54e2c7bbcec00605",
+      "check_name": "Execute",
+      "message": "Possible command injection",
+      "file": "app/controllers/api/v1/backdoor/backdoor_controller.rb",
+      "line": 49,
+      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
+      "code": "`ps -o rss= -p #{(nil or `#{Rails.root.join(\"lib\", \"core\", \"agrr\")} daemon status 2>&1`.strip.match(/PID[:\\s]+(\\d+)/i)[1].to_i)}`",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Backdoor::BackdoorController",
+        "method": "status"
+      },
+      "user_input": "nil",
+      "confidence": "Medium",
+      "cwe_id": [
+        77
+      ]
+    },
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "f46f0acc4aa8ea0eaad58a7cfca0e332f6dffe52b294e3e607b09fb550c73e97",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/auth_test_controller.rb",
+      "line": 104,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to((params[:return_to] or session.delete(:return_to)), :allow_other_host => true, :notice => I18n.t(\"auth_test.mock_login_success\", :name => User.find_or_create_by(:google_id => OmniAuth.config.mock_auth[auth_key][\"uid\"]) do\n u.email = OmniAuth.config.mock_auth[auth_key][\"info\"][\"email\"]\nu.name = OmniAuth.config.mock_auth[auth_key][\"info\"][\"name\"]\nu.avatar_url = User.process_avatar_url(OmniAuth.config.mock_auth[auth_key][\"info\"][\"image\"])\nu.admin = [:google_oauth2, :developer].include?(auth_key)\n end.name))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "AuthTestController",
+        "method": "mock_login_as_user"
+      },
+      "user_input": "params[:return_to]",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ]
+    }
+  ],
+  "version": "3.0.0"
+}
