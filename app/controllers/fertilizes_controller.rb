@@ -2,8 +2,7 @@
 
 class FertilizesController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_fertilize, only: [:show, :edit, :update, :destroy]
+  before_action :set_fertilize, only: [ :show, :edit, :update, :destroy ]
 
   # GET /fertilizes
   def index
@@ -28,9 +27,9 @@ class FertilizesController < ApplicationController
     )
     interactor.call(@fertilize.id)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue ActiveRecord::RecordNotFound
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.not_found')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.not_found")
   rescue StandardError => e
     redirect_to fertilizes_path, alert: e.message
   end
@@ -47,7 +46,7 @@ class FertilizesController < ApplicationController
   # POST /fertilizes
   def create
     if fertilize_params[:is_reference].present? && ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) && !admin_user?
-      redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.reference_only_admin')
+      redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.reference_only_admin")
       return
     end
     input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
@@ -59,7 +58,7 @@ class FertilizesController < ApplicationController
       logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
     @fertilize = Fertilize.new(fertilize_params.to_h.symbolize_keys)
     @fertilize.valid?
@@ -70,7 +69,7 @@ class FertilizesController < ApplicationController
   # PATCH/PUT /fertilizes/:id
   def update
     if fertilize_params[:is_reference].present? && ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) != @fertilize.is_reference && !admin_user?
-      redirect_to fertilize_path(@fertilize), alert: I18n.t('fertilizes.flash.reference_flag_admin_only')
+      redirect_to fertilize_path(@fertilize), alert: I18n.t("fertilizes.flash.reference_flag_admin_only")
       return
     end
     input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
@@ -82,7 +81,7 @@ class FertilizesController < ApplicationController
       logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
     @fertilize.assign_attributes(fertilize_params.to_h.symbolize_keys)
     @fertilize.valid?
@@ -102,19 +101,19 @@ class FertilizesController < ApplicationController
           logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+        redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
       end
 
       format.json do
         schedule_deletion_with_undo(
           record: @fertilize,
-          toast_message: I18n.t('fertilizes.undo.toast', name: @fertilize.name),
+          toast_message: I18n.t("fertilizes.undo.toast", name: @fertilize.name),
           fallback_location: fertilizes_path,
           in_use_message_key: nil,
-          delete_error_message_key: 'fertilizes.flash.delete_error'
+          delete_error_message_key: "fertilizes.flash.delete_error"
         )
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+        redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
       end
     end
   end
@@ -124,9 +123,9 @@ class FertilizesController < ApplicationController
   def set_fertilize
     @fertilize = Domain::Shared::Policies::FertilizePolicy.find_visible!(Fertilize, current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.no_permission')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue ActiveRecord::RecordNotFound
-    redirect_to fertilizes_path, alert: I18n.t('fertilizes.flash.not_found')
+    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.not_found")
   end
 
   def fertilize_gateway
@@ -154,4 +153,3 @@ class FertilizesController < ApplicationController
     params.require(:fertilize).permit(*permitted)
   end
 end
-

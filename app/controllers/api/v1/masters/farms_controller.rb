@@ -4,7 +4,6 @@ module Api
   module V1
     module Masters
       class FarmsController < BaseController
-        include ApiCrudResponder
         include Views::Api::Farm::FarmListView
         include Views::Api::Farm::FarmDetailView
         include Views::Api::Farm::FarmCreateView
@@ -85,7 +84,7 @@ module Api
             render_response(json: { error: msg }, status: :not_found)
           else
             Rails.logger.warn "No data or error set by presenter"
-            render_response(json: { error: 'Unknown error' }, status: :internal_server_error)
+            render_response(json: { error: "Unknown error" }, status: :internal_server_error)
           end
         end
 
@@ -93,7 +92,7 @@ module Api
         def create
           input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_farm_params?(input_dto)
-            render_response(json: { errors: ['name, region, latitude, longitude are required'] }, status: :unprocessable_entity)
+            render_response(json: { errors: [ "name, region, latitude, longitude are required" ] }, status: :unprocessable_entity)
             return
           end
           presenter = Presenters::Api::Farm::FarmCreatePresenter.new(view: self)
@@ -141,13 +140,13 @@ module Api
                           {
                             undo_token: undo_data.undo_token,
                             undo_path: undo_deletion_path(undo_token: undo_data.undo_token),
-                            toast_message: @translator.t('flash.farms.deleted', name: @farm_delete_data.farm_name),
+                            toast_message: @translator.t("flash.farms.deleted", name: @farm_delete_data.farm_name),
                             undo_deadline: undo_data.expires_at.iso8601,
                             auto_hide_after: 5000
                           }
-                        else
+            else
                           nil
-                        end
+            end
             Rails.logger.info("FarmController destroy response: #{ { undo: undo_json }.inspect }")
             render_response(json: { undo: undo_json }, status: :ok)
           elsif instance_variable_defined?(:@farm_delete_error) && @farm_delete_error
@@ -178,10 +177,10 @@ module Api
         end
 
         def resource_dom_id_for(event)
-          stored = event.metadata['resource_dom_id']
+          stored = event.metadata["resource_dom_id"]
           return stored if stored.present?
 
-          [event.resource_type.demodulize.underscore, event.resource_id].join('_')
+          [ event.resource_type.demodulize.underscore, event.resource_id ].join("_")
         end
 
         def entity_to_json(entity)
@@ -216,7 +215,7 @@ module Api
           case action
           when :show, :destroy
             return true if params[:id].present?
-            render_response(json: { error: 'Farm not found' }, status: :not_found)
+            render_response(json: { error: "Farm not found" }, status: :not_found)
             false
           else
             true
@@ -235,7 +234,6 @@ module Api
         def translator
           @translator ||= Adapters::Translators::RailsTranslator.new
         end
-
       end
     end
   end

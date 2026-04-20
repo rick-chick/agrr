@@ -2,8 +2,7 @@
 
 class PesticidesController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_pesticide, only: [:edit, :update, :destroy]
+  before_action :set_pesticide, only: [ :edit, :update, :destroy ]
 
   # GET /pesticides
   def index
@@ -26,7 +25,7 @@ class PesticidesController < ApplicationController
       logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # GET /pesticides/new
@@ -49,7 +48,7 @@ class PesticidesController < ApplicationController
     # is_referenceをbooleanに変換してチェック（既存のロジックを維持）
     is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
     if is_reference && !admin_user?
-      return redirect_to pesticides_path, alert: I18n.t('pesticides.flash.reference_only_admin')
+      return redirect_to pesticides_path, alert: I18n.t("pesticides.flash.reference_only_admin")
     end
 
     input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
@@ -65,7 +64,7 @@ class PesticidesController < ApplicationController
       logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # PATCH/PUT /pesticides/:id
@@ -74,7 +73,7 @@ class PesticidesController < ApplicationController
     if pesticide_params.key?(:is_reference)
       is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
       if is_reference != @pesticide.is_reference && !admin_user?
-        return redirect_to pesticide_path(@pesticide), alert: I18n.t('pesticides.flash.reference_flag_admin_only')
+        return redirect_to pesticide_path(@pesticide), alert: I18n.t("pesticides.flash.reference_flag_admin_only")
       end
     end
 
@@ -91,7 +90,7 @@ class PesticidesController < ApplicationController
       logger: logger_gateway
     ).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # DELETE /pesticides/:id
@@ -106,19 +105,19 @@ class PesticidesController < ApplicationController
           logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
           translator: translator).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+        redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
       end
 
       format.json do
         schedule_deletion_with_undo(
           record: @pesticide,
-          toast_message: I18n.t('pesticides.undo.toast', name: @pesticide.name),
+          toast_message: I18n.t("pesticides.undo.toast", name: @pesticide.name),
           fallback_location: pesticides_path,
           in_use_message_key: nil,
-          delete_error_message_key: 'pesticides.flash.delete_error'
+          delete_error_message_key: "pesticides.flash.delete_error"
         )
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+        redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
       end
     end
   end
@@ -133,15 +132,15 @@ class PesticidesController < ApplicationController
   def set_pesticide
     @pesticide = Domain::Shared::Policies::PesticidePolicy.find_visible!(Pesticide, current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   rescue ActiveRecord::RecordNotFound
-    redirect_to pesticides_path, alert: I18n.t('pesticides.flash.not_found')
+    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   def load_crops_and_pests
     # 作物の選択範囲を決定（Policy経由）
     @crops = PesticideAssociationPolicy.accessible_crops_scope(current_user)
-    
+
     # 害虫の選択範囲を決定（Policy経由）
     @pests = PesticideAssociationPolicy.accessible_pests_scope(current_user)
   end
@@ -188,4 +187,3 @@ class PesticidesController < ApplicationController
     @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
-

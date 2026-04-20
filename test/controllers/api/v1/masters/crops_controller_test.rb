@@ -6,9 +6,6 @@ module Api
   module V1
     module Masters
       class CropsControllerTest < ActionDispatch::IntegrationTest
-        test "includes ApiCrudResponder" do
-          assert_includes Api::V1::Masters::CropsController.included_modules, ApiCrudResponder
-        end
         setup do
           @user = create(:user)
           @user.generate_api_key!
@@ -24,8 +21,8 @@ module Api
           other_user = create(:user)
           other_crop = create(:crop, :user_owned, user: other_user)
 
-          get api_v1_masters_crops_path, 
-              headers: { 
+          get api_v1_masters_crops_path,
+              headers: {
                 "Accept" => "application/json",
                 "X-API-Key" => @api_key
               }
@@ -92,8 +89,8 @@ module Api
 
         test "should create crop" do
           assert_difference("@user.crops.where(is_reference: false).count", 1) do
-            post api_v1_masters_crops_path, 
-                 params: { 
+            post api_v1_masters_crops_path,
+                 params: {
                    crop: {
                      name: "新規作物",
                      variety: "テスト品種",
@@ -101,7 +98,7 @@ module Api
                      revenue_per_area: 5000.0
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -117,13 +114,13 @@ module Api
 
         test "should not create crop with invalid params" do
           assert_no_difference("@user.crops.count") do
-            post api_v1_masters_crops_path, 
-                 params: { 
+            post api_v1_masters_crops_path,
+                 params: {
                    crop: {
                      name: nil
                    }
                  },
-                 headers: { 
+                 headers: {
                    "Accept" => "application/json",
                    "X-API-Key" => @api_key
                  }
@@ -137,13 +134,13 @@ module Api
         test "should update crop" do
           crop = create(:crop, :user_owned, user: @user, name: "元の名前")
 
-          patch api_v1_masters_crop_path(crop), 
-                params: { 
+          patch api_v1_masters_crop_path(crop),
+                params: {
                   crop: {
                     name: "更新された名前"
                   }
                 },
-                headers: { 
+                headers: {
                   "Accept" => "application/json",
                   "X-API-Key" => @api_key
                 }
@@ -151,7 +148,7 @@ module Api
           assert_response :success
           json_response = JSON.parse(response.body)
           assert_equal "更新された名前", json_response["name"]
-          
+
           crop.reload
           assert_equal "更新された名前", crop.name
         end
@@ -172,7 +169,7 @@ module Api
                 }
 
           assert_response :forbidden
-          
+
           other_crop.reload
           assert_equal "他のユーザーの作物", other_crop.name
         end
@@ -181,8 +178,8 @@ module Api
           crop = create(:crop, :user_owned, user: @user)
 
           assert_difference("@user.crops.where(is_reference: false).count", -1) do
-            delete api_v1_masters_crop_path(crop), 
-                   headers: { 
+            delete api_v1_masters_crop_path(crop),
+                   headers: {
                      "Accept" => "application/json",
                      "X-API-Key" => @api_key
                    }

@@ -2,10 +2,9 @@
 
 class AgriculturalTasksController < ApplicationController
   include DeletionUndoFlow
-  include HtmlCrudResponder
-  before_action :set_agricultural_task, only: [:show, :edit, :update, :destroy]
-  before_action :load_crop_selection_data, only: [:edit, :update]
-  before_action :prepare_crop_cards_for_edit, only: [:edit]
+  before_action :set_agricultural_task, only: [ :show, :edit, :update, :destroy ]
+  before_action :load_crop_selection_data, only: [ :edit, :update ]
+  before_action :prepare_crop_cards_for_edit, only: [ :edit ]
 
   # GET /agricultural_tasks
   def index
@@ -45,7 +44,7 @@ class AgriculturalTasksController < ApplicationController
 
     interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
   rescue StandardError => e
     redirect_to agricultural_tasks_path, alert: e.message
   end
@@ -65,7 +64,7 @@ class AgriculturalTasksController < ApplicationController
 
     is_reference = ActiveModel::Type::Boolean.new.cast(task_attributes[:is_reference]) || false
     if is_reference && !admin_user?
-      return redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.reference_only_admin')
+      return redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.reference_only_admin")
     end
 
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash({ agricultural_task: task_attributes })
@@ -103,7 +102,7 @@ class AgriculturalTasksController < ApplicationController
     selected_crop_ids = selected_crop_ids_from_params
 
     if reference_changed && !admin_user?
-      return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t('agricultural_tasks.flash.reference_flag_admin_only')
+      return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t("agricultural_tasks.flash.reference_flag_admin_only")
     end
 
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash({ agricultural_task: task_attributes }, params[:id])
@@ -154,19 +153,19 @@ class AgriculturalTasksController < ApplicationController
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+        redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
       end
 
       format.json do
         schedule_deletion_with_undo(
           record: @agricultural_task,
-          toast_message: I18n.t('agricultural_tasks.undo.toast', name: @agricultural_task.name),
+          toast_message: I18n.t("agricultural_tasks.undo.toast", name: @agricultural_task.name),
           fallback_location: agricultural_tasks_path,
           in_use_message_key: nil,
-          delete_error_message_key: 'agricultural_tasks.flash.delete_error'
+          delete_error_message_key: "agricultural_tasks.flash.delete_error"
         )
       rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+        redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
       end
     end
   end
@@ -180,13 +179,13 @@ class AgriculturalTasksController < ApplicationController
       @agricultural_task = Domain::Shared::Policies::AgriculturalTaskPolicy.find_visible!(AgriculturalTask, current_user, params[:id])
     end
   rescue PolicyPermissionDenied
-    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.no_permission')
+    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.no_permission")
   rescue ActiveRecord::RecordNotFound
-    redirect_to agricultural_tasks_path, alert: I18n.t('agricultural_tasks.flash.not_found')
+    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
   end
 
   def action_requires_edit_permission?
-    [:edit, :update, :destroy].include?(params[:action].to_sym)
+    [ :edit, :update, :destroy ].include?(params[:action].to_sym)
   end
 
   def build_task_attributes
@@ -204,15 +203,15 @@ class AgriculturalTasksController < ApplicationController
 
     return filter if admin_user? && allowed_filters.include?(filter)
 
-    admin_user? ? 'all' : 'user'
+    admin_user? ? "all" : "user"
   end
 
   def agricultural_tasks_for_admin(filter, base_scope = nil)
     base_scope ||= AgriculturalTask.all
     case filter
-    when 'reference'
+    when "reference"
       base_scope.where(is_reference: true)
-    when 'all'
+    when "all"
       base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(AgriculturalTask, current_user).pluck(:id))
     else
       base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.user_owned_non_reference_scope(AgriculturalTask, current_user).pluck(:id))
@@ -221,9 +220,9 @@ class AgriculturalTasksController < ApplicationController
 
   def apply_user_filter(scope, filter)
     case filter
-    when 'reference'
+    when "reference"
       scope.where(is_reference: true)
-    when 'user'
+    when "user"
       scope.where(is_reference: false)
     else
       scope
@@ -263,10 +262,10 @@ class AgriculturalTasksController < ApplicationController
       :source_agricultural_task_id,
       required_tools: []
     ]
-    
+
     # 管理者のみregionを許可
     permitted << :region if admin_user?
-    
+
     params.require(:agricultural_task).permit(*permitted)
   end
 
@@ -274,7 +273,7 @@ class AgriculturalTasksController < ApplicationController
     return unless action_requires_edit_permission?
 
     preview_task =
-      if params[:action] == 'update'
+      if params[:action] == "update"
         build_preview_task_for_selection
       else
         @agricultural_task
@@ -413,5 +412,3 @@ class AgriculturalTasksController < ApplicationController
     @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end
-
-

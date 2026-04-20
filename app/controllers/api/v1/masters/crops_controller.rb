@@ -26,10 +26,9 @@ module Api
       # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
       # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
       class CropsController < BaseController
-        include ApiCrudResponder
         # PolicyPermissionDenied例外を403 Forbiddenとして扱う
         rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
-          render json: { error: '権限がありません。' }, status: :forbidden
+          render json: { error: "権限がありません。" }, status: :forbidden
         end
 
         include Views::Api::Crop::CropListView
@@ -67,11 +66,11 @@ module Api
         def create
           input_dto = Domain::Crop::Dtos::CropCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_crop_params?(input_dto)
-            render_response(json: { errors: ['name is required'] }, status: :unprocessable_entity)
+            render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
           if input_dto.is_reference && !admin_user?
-            render_response(json: { error: I18n.t('crops.flash.reference_only_admin') }, status: :forbidden)
+            render_response(json: { error: I18n.t("crops.flash.reference_only_admin") }, status: :forbidden)
             return
           end
           presenter = Presenters::Api::Crop::CropCreatePresenter.new(view: self)
@@ -87,7 +86,7 @@ module Api
         # PATCH/PUT /api/v1/masters/crops/:id
         def update
           if params.dig(:crop, :is_reference).present? && !admin_user?
-            render_response(json: { error: I18n.t('crops.flash.reference_flag_admin_only') }, status: :forbidden)
+            render_response(json: { error: I18n.t("crops.flash.reference_flag_admin_only") }, status: :forbidden)
             return
           end
           input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
@@ -135,7 +134,7 @@ module Api
           case action
           when :show, :destroy
             return true if params[:id].present?
-            render_response(json: { error: 'Crop not found' }, status: :not_found)
+            render_response(json: { error: "Crop not found" }, status: :not_found)
             false
           else
             true

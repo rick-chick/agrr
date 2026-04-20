@@ -2,17 +2,12 @@
 
 require "test_helper"
 
-# ApiCrudResponderの動作を既存のコントローラーで検証
+# Api::V1::Masters::FarmsController の JSON API 統合テスト（旧 ApiCrudResponder 名のファイル名は互換のため維持）
 class ApiCrudResponderTest < ActionDispatch::IntegrationTest
   setup do
     @user = create(:user)
     @user.generate_api_key!
     @api_key = @user.api_key
-  end
-
-  # Api::V1::Masters::FarmsControllerがApiCrudResponderを使用していることを確認
-  test "FarmsController includes ApiCrudResponder" do
-    assert_includes Api::V1::Masters::FarmsController.included_modules, ApiCrudResponder
   end
 
   test "respond_to_index renders json array" do
