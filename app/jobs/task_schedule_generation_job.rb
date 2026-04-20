@@ -38,16 +38,16 @@ class TaskScheduleGenerationJob < ApplicationJob
     cultivation_plan.phase_completed!(channel_class)
 
     Rails.logger.info "✅ [TaskScheduleGenerationJob] Completed generation for CultivationPlan##{cultivation_plan_id}"
-  rescue TaskScheduleGeneratorService::TemplateMissingError => e
+  rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError => e
     Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Template missing for CultivationPlan##{cultivation_plan_id}: #{e.message}"
     handle_template_missing(cultivation_plan, channel_class, e)
-  rescue TaskScheduleGeneratorService::WeatherDataMissingError,
-         TaskScheduleGeneratorService::ProgressDataMissingError,
-         TaskScheduleGeneratorService::GddTriggerMissingError => e
+  rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::WeatherDataMissingError,
+         Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError,
+         Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::GddTriggerMissingError => e
     Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Failed CultivationPlan##{cultivation_plan_id}: #{e.message}"
     handle_failure(cultivation_plan, channel_class, e)
     raise
-  rescue TaskScheduleGeneratorService::Error => e
+  rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::Error => e
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Failed for CultivationPlan##{cultivation_plan_id}: #{e.message}"
     handle_failure(cultivation_plan, channel_class, e)
     raise
@@ -56,7 +56,7 @@ class TaskScheduleGenerationJob < ApplicationJob
   private
 
   def task_schedule_generator
-    @task_schedule_generator ||= TaskScheduleGeneratorService.new
+    @task_schedule_generator ||= Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new
   end
 
   def handle_failure(cultivation_plan, channel_class, error)

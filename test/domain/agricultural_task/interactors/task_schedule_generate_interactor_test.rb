@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
+class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   class StubScheduleGateway
     attr_reader :called
 
@@ -135,7 +135,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: schedule_gateway,
       fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
@@ -174,13 +174,13 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: schedule_gateway,
       fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
     )
 
-    assert_raises TaskScheduleGeneratorService::TemplateMissingError do
+    assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError do
       service.generate!(cultivation_plan_id: @plan.id)
     end
 
@@ -190,13 +190,13 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
 
   test "generate! raises error when progress has no records" do
     progress_gateway = StubProgressGateway.new(progress_response.merge("progress_records" => []))
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: StubScheduleGateway.new,
       fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
-    assert_raises TaskScheduleGeneratorService::ProgressDataMissingError do
+    assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError do
       service.generate!(cultivation_plan_id: @plan.id)
     end
   end
@@ -206,7 +206,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: schedule_gateway,
       fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
@@ -230,7 +230,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     )
 
     progress_gateway = StubProgressGateway.new(early_progress_response)
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: StubScheduleGateway.new,
       fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
@@ -247,7 +247,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
 
   test "generate! raises error when gdd trigger is missing in blueprints" do
     progress_gateway = StubProgressGateway.new(progress_response)
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: StubScheduleGateway.new,
       fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
@@ -257,7 +257,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     broken_blueprints.first.gdd_trigger = nil
 
     service.stub(:blueprints_for, ->(_crop, _cache) { broken_blueprints }) do
-      assert_raises TaskScheduleGeneratorService::GddTriggerMissingError do
+      assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::GddTriggerMissingError do
         service.generate!(cultivation_plan_id: @plan.id)
       end
     end
@@ -276,7 +276,7 @@ class TaskScheduleGeneratorServiceTest < ActiveSupport::TestCase
     )
 
     progress_gateway = StubProgressGateway.new(staggered_progress)
-    service = TaskScheduleGeneratorService.new(
+    service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       schedule_gateway: StubScheduleGateway.new,
       fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway

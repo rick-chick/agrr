@@ -12,9 +12,9 @@ class TaskScheduleGenerationJobTest < ActiveJob::TestCase
       @received_args = args
       case @behavior
       when :weather_missing
-        raise TaskScheduleGeneratorService::WeatherDataMissingError, "missing weather data"
+        raise Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::WeatherDataMissingError, "missing weather data"
       when :progress_missing
-        raise TaskScheduleGeneratorService::ProgressDataMissingError, "missing progress data"
+        raise Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError, "missing progress data"
       end
     end
   end
@@ -38,7 +38,7 @@ class TaskScheduleGenerationJobTest < ActiveJob::TestCase
     StubChannel.reset!
   end
 
-  test "perform delegates to TaskScheduleGeneratorService" do
+  test "perform delegates to Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor" do
     job = TaskScheduleGenerationJob.new
     job.cultivation_plan_id = @plan.id
     stub_generator = StubGenerator.new
@@ -63,7 +63,7 @@ class TaskScheduleGenerationJobTest < ActiveJob::TestCase
     job.task_schedule_generator = stub_generator
     job.channel_class = StubChannel
 
-    error = assert_raises TaskScheduleGeneratorService::WeatherDataMissingError do
+    error = assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::WeatherDataMissingError do
       job.perform(**job.job_arguments)
     end
     assert_equal "missing weather data", error.message
