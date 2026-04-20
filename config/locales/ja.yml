@@ -54,6 +54,45 @@ ja:
 
   # API用エラーメッセージ
   api:
+    entry_schedule:
+      label:
+        sowing: "種をまく目安"
+        transplanting: "畑に植える目安"
+      phase:
+        label:
+          sowing: "播種"
+          nursery: "育苗"
+          transplant: "定植"
+          harvest: "収穫"
+        empty:
+          ineligible: "この条件では適期帯を示せません（データまたは温度条件）。"
+          no_sowing_window: "まき帯を算出できませんでした。"
+          no_transplant_window: "植え帯を算出できませんでした。"
+          nursery_gap: "育苗の期間を区切れませんでした。"
+          no_weather_end: "気象予測の終端がありません。"
+      flow:
+        summary: "%{phases}の流れ（地域の予測に基づく目安）"
+        summary_fallback: "この条件では生育の流れを短く示せませんでした。"
+        detail_chunk: "%{label} %{range}"
+        month_range: "%{start}〜%{end}"
+      timeline:
+        month_summary: "%{labels}の目安"
+      disclaimer:
+        short: "表示は目安です。結果を保証するものではありません。未入力の一般目安を含む場合があります。"
+      reason:
+        list: "ステージ「%{sowing}」「%{transplant}」の温度帯に基づき、予測気象を走査しました（%{days}日分）。"
+        agrr: "栽培期間の最適化結果: %{start}〜%{completion}（生育約%{days}日、GDD %{gdd}）。4フェーズの帯はその期間を4等分した目安です。"
+        agrr_failed:
+          generic: "栽培期間を算出できませんでした。"
+          daemon_unavailable: "最適化処理に接続できません（バックエンドの処理が利用できない可能性）。時間をおいて再度お試しください。"
+          execution_failed: "栽培期間の最適化に失敗しました。しばらくしてから再度お試しください。"
+          invalid_response: "最適化結果を解釈できませんでした。"
+          insufficient_weather: "気象データが不足しているか、この画面で使える形式ではありません。"
+          disabled: "この環境では栽培期間の最適化が無効です。"
+          crop_requirement_error: "作物マスタの情報が不十分です（生育ステージや温度・積算温度要件の欠落）。参照作物データを確認してください。"
+      errors:
+        weather_location_required: "この農場に気象地点が紐づいていません。"
+        prediction_failed: "気象予測の取得に失敗しました。"
     errors:
       backdoor:
         not_enabled: "Backdoor 機能が有効化されていません。設定を確認してください。"
@@ -67,6 +106,7 @@ ja:
         forecast_fetch_failed: "予報データの取得に失敗しました: %{message}"
         weather_invalid_response: "天気サービスからの応答が不正です"
         invalid_date_format: "日付形式が不正です: %{message}"
+        not_found: "リソースが見つかりません"
         farm_not_found: "農場が見つかりません"
         weather_location_not_found: "天気取得地点が見つかりません"
         env_only: "このエンドポイントは開発・テスト環境でのみ利用できます"

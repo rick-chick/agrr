@@ -266,6 +266,45 @@ en:
   # Error messages (common for ActiveRecord and other validations)
   # API translations
   api:
+    entry_schedule:
+      label:
+        sowing: "Sowing window (guide)"
+        transplanting: "Transplanting window (guide)"
+      phase:
+        label:
+          sowing: "Sowing"
+          nursery: "Nursery"
+          transplant: "Transplant"
+          harvest: "Harvest"
+        empty:
+          ineligible: "No suitable window under current data or temperature rules."
+          no_sowing_window: "Could not derive a sowing window."
+          no_transplant_window: "Could not derive a transplant window."
+          nursery_gap: "Could not define a nursery period between sowing and transplant."
+          no_weather_end: "Weather forecast has no end date."
+      flow:
+        summary: "Typical flow: %{phases} (guide from forecast)"
+        summary_fallback: "Could not summarize the growth flow."
+        detail_chunk: "%{label} %{range}"
+        month_range: "%{start}–%{end}"
+      timeline:
+        month_summary: "%{labels} (guide)"
+      disclaimer:
+        short: "This is a guide only—not a guarantee of outcomes. May include generic estimates where data is missing."
+      reason:
+        list: "Based on temperature bands for stages \"%{sowing}\" and \"%{transplant}\", scanned %{days} days of forecast weather."
+        agrr: "Optimized cultivation period: %{start}–%{completion} (~%{days} days, GDD %{gdd}). The four phase bands split that period into quarters (approximate)."
+        agrr_failed:
+          generic: "Could not compute a cultivation period."
+          daemon_unavailable: "The optimization service is unavailable (it may not be running). Please try again later."
+          execution_failed: "Cultivation-period optimization failed. Please try again later."
+          invalid_response: "Could not interpret the optimization result."
+          insufficient_weather: "Weather data is missing or not in a format this feature can use."
+          disabled: "Cultivation-period optimization is disabled in this environment."
+          crop_requirement_error: "Reference crop data is incomplete (missing stages or temperature/GDD requirements). Check the crop master."
+      errors:
+        weather_location_required: "This farm has no weather location linked."
+        prediction_failed: "Failed to fetch weather prediction."
     errors:
       backdoor:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
@@ -286,6 +325,7 @@ en:
         weather_fetch_failed: "Weather data fetch failed: %{message}"
         forecast_fetch_failed: "Forecast fetch failed: %{message}"
         weather_invalid_response: "Invalid response from weather service"
+        not_found: "Resource not found"
         farm_not_found: "Farm not found"
         weather_location_not_found: "Weather location not found"
         env_only: "This endpoint is only available in development and test environments"

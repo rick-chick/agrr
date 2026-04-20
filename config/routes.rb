@@ -139,6 +139,10 @@ Rails.application.routes.draw do
           get :farms, to: 'wizard#farms'
           get :farm_sizes, to: 'wizard#farm_sizes'
           get :crops, to: 'wizard#crops'
+          # 作物スケジュール（エントリ）
+          get 'entry_schedule/farms', to: 'entry_schedule#farms', as: :entry_schedule_farms
+          get 'entry_schedule/crops', to: 'entry_schedule#crops', as: :entry_schedule_crops
+          get 'entry_schedule/crops/:id', to: 'entry_schedule#show', as: :entry_schedule_crop
           post :plans, to: 'wizard#create'
           post :save_plan
           resources :field_cultivations, only: [:show, :update] do
