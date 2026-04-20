@@ -2,7 +2,7 @@
 
 module Agrr
   class OptimizationGateway < BaseGatewayV2
-    def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, interaction_rules: nil)
+    def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, crop_requirement: nil, interaction_rules: nil)
       Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{crop_variety}"
       
       # Cropモデルは必須
@@ -16,8 +16,8 @@ module Agrr
       weather_file = write_temp_file(weather_data, prefix: 'weather')
       field_file = write_temp_file(field_config, prefix: 'field')
       
-      # Cropモデルから作物プロファイルを生成
-      crop_requirement = crop.to_agrr_requirement
+      # Cropモデルから作物プロファイルを生成（呼び出し側で crop_requirement を渡せば上書き）
+      crop_requirement ||= crop.to_agrr_requirement
       crop_file = write_temp_file(crop_requirement, prefix: 'crop_profile')
       Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
       
@@ -93,13 +93,24 @@ module Agrr
     end
     
     def parse_optimization_result(raw_result)
-      optimal = raw_result['optimal_periods']&.first || raw_result
-      
+      raise ParseError, 'optimize period: response is not a Hash' unless raw_result.is_a?(Hash)
+
+      optimal = raw_result['optimal_periods']&.first
+      optimal ||= raw_result['optimalPeriods']&.first
+      if optimal.nil? && (raw_result['optimal_start_date'].present? || raw_result['optimalStartDate'].present?)
+        optimal = raw_result
+      end
+      raise ParseError, 'optimize period: missing optimal period' unless optimal.is_a?(Hash)
+
+      start_s = optimal['optimal_start_date'].presence || optimal['optimalStartDate'].presence
+      end_s = optimal['completion_date'].presence || optimal['completionDate'].presence
+      raise ParseError, "optimize period: missing start/end (keys: #{optimal.keys.first(12).join(',')})" if start_s.blank? || end_s.blank?
+
       {
-        start_date: Date.parse(optimal['optimal_start_date']),
-        completion_date: Date.parse(optimal['completion_date']),
-        days: optimal['growth_days'],
-        cost: optimal['total_cost'],
+        start_date: Date.parse(start_s.to_s),
+        completion_date: Date.parse(end_s.to_s),
+        days: optimal['growth_days'] || optimal['growthDays'],
+        cost: optimal['total_cost'] || optimal['totalCost'],
         gdd: optimal['gdd'],
         raw: raw_result
       }

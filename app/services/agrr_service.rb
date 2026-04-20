@@ -108,11 +108,12 @@ class AgrrService
   end
 
   # Optimize period
-  def optimize_period(crop_file:, evaluation_start:, evaluation_end:, weather_file:, field_file:, interaction_rules_file: nil)
+  def optimize_period(crop_file:, evaluation_start:, evaluation_end:, weather_file:, field_file:, interaction_rules_file: nil, format: 'json')
     ensure_daemon_running!
 
-    args = ['optimize', 'period', '--crop-file', crop_file, '--evaluation-start', evaluation_start, 
-            '--evaluation-end', evaluation_end, '--weather-file', weather_file, '--field-file', field_file]
+    args = ['optimize', 'period', '--crop-file', crop_file, '--evaluation-start', evaluation_start,
+            '--evaluation-end', evaluation_end, '--weather-file', weather_file, '--field-file', field_file,
+            '--format', format]
     args += ['--interaction-rules-file', interaction_rules_file] if interaction_rules_file
 
     execute_command(args)
