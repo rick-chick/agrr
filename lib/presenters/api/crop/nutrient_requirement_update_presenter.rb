@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Crop
-      class CropStageListPresenter < Domain::Crop::Ports::CropStageListOutputPort
+      class NutrientRequirementUpdatePresenter < Domain::Crop::Ports::NutrientRequirementUpdateOutputPort
         def initialize(view:)
           @view = view
         end
@@ -19,23 +19,22 @@ module Presenters
           error_message = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
           @view.render_response(
             json: { error: error_message },
-            status: :not_found
+            status: :unprocessable_entity
           )
         end
 
         private
 
         def serialize_success(dto)
-          dto.stages.map do |stage|
-            {
-              id: stage.id,
-              crop_id: stage.crop_id,
-              name: stage.name,
-              order: stage.order,
-              created_at: stage.created_at,
-              updated_at: stage.updated_at
-            }
-          end
+          requirement = dto.requirement
+          {
+            id: requirement.id,
+            crop_stage_id: requirement.crop_stage_id,
+            daily_uptake_n: requirement.daily_uptake_n,
+            daily_uptake_p: requirement.daily_uptake_p,
+            daily_uptake_k: requirement.daily_uptake_k,
+            region: requirement.region
+          }
         end
       end
     end

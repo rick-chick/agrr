@@ -1,32 +1,32 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 # Load the presenter class
-require_relative '../../../../lib/presenters/api/crop/crop_stage_update_presenter'
+require_relative "../../../../lib/presenters/api/crop/crop_stage_update_presenter"
 
 class CropStageUpdatePresenterTest < ActiveSupport::TestCase
-  test 'on_success calls view.render_response with ok status and serialized success data' do
+  test "on_success calls view.render_response with ok status and serialized success data" do
     view_mock = mock
     presenter = Presenters::Api::Crop::CropStageUpdatePresenter.new(view: view_mock)
 
     stage_mock = mock
     stage_mock.expects(:id).returns(123)
     stage_mock.expects(:crop_id).returns(456)
-    stage_mock.expects(:name).returns('Updated Flowering Stage')
+    stage_mock.expects(:name).returns("Updated Flowering Stage")
     stage_mock.expects(:order).returns(3)
-    stage_mock.expects(:created_at).returns('2026-01-31T00:00:00.000Z')
-    stage_mock.expects(:updated_at).returns('2026-01-31T00:00:00.000Z')
+    stage_mock.expects(:created_at).returns("2026-01-31T00:00:00.000Z")
+    stage_mock.expects(:updated_at).returns("2026-01-31T00:00:00.000Z")
 
     success_dto = Domain::Crop::Dtos::CropStageOutputDto.new(stage: stage_mock)
 
     expected_json = {
       id: 123,
       crop_id: 456,
-      name: 'Updated Flowering Stage',
+      name: "Updated Flowering Stage",
       order: 3,
-      created_at: '2026-01-31T00:00:00.000Z',
-      updated_at: '2026-01-31T00:00:00.000Z'
+      created_at: "2026-01-31T00:00:00.000Z",
+      updated_at: "2026-01-31T00:00:00.000Z"
     }
 
     view_mock.expects(:render_response).with(
@@ -37,14 +37,14 @@ class CropStageUpdatePresenterTest < ActiveSupport::TestCase
     presenter.on_success(success_dto)
   end
 
-  test 'on_failure calls view.render_response with unprocessable_entity status and error message' do
+  test "on_failure calls view.render_response with unprocessable_entity status and error message" do
     view_mock = mock
     presenter = Presenters::Api::Crop::CropStageUpdatePresenter.new(view: view_mock)
 
-    error_dto = Domain::Shared::Dtos::ErrorDto.new('Crop stage update failed')
+    error_dto = Domain::Shared::Dtos::ErrorDto.new("Crop stage update failed")
 
     expected_json = {
-      error: 'Crop stage update failed'
+      error: "Crop stage update failed"
     }
 
     view_mock.expects(:render_response).with(
@@ -55,14 +55,14 @@ class CropStageUpdatePresenterTest < ActiveSupport::TestCase
     presenter.on_failure(error_dto)
   end
 
-  test 'on_failure handles non-ErrorDto failure objects' do
+  test "on_failure handles non-ErrorDto failure objects" do
     view_mock = mock
     presenter = Presenters::Api::Crop::CropStageUpdatePresenter.new(view: view_mock)
 
-    failure_dto = 'Some error string'
+    failure_dto = "Some error string"
 
     expected_json = {
-      error: 'Some error string'
+      error: "Some error string"
     }
 
     view_mock.expects(:render_response).with(

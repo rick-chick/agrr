@@ -15,7 +15,7 @@ module Presenters
 
         def on_failure(error_dto)
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == 'Crop not found') ? :not_found : :unprocessable_entity
+          status = (msg == "Crop not found") ? :not_found : :unprocessable_entity
           @view.render_response(json: { error: msg }, status: status)
         end
 

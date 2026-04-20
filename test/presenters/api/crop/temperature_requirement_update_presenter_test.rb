@@ -1,14 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
-
-# Load the presenter class
-require_relative '../../../../app/presenters/api/crop/temperature_requirement_update_presenter'
+require "test_helper"
 
 class TemperatureRequirementUpdatePresenterTest < ActiveSupport::TestCase
-  test 'on_success calls view.render_response with ok status and serialized success data' do
+  test "on_success calls view.render_response with ok status and serialized success data" do
     view_mock = mock
-    presenter = Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
 
     requirement_mock = mock
     requirement_mock.expects(:id).returns(123)
@@ -45,14 +42,14 @@ class TemperatureRequirementUpdatePresenterTest < ActiveSupport::TestCase
     presenter.on_success(success_dto)
   end
 
-  test 'on_failure calls view.render_response with unprocessable_entity status and error message' do
+  test "on_failure calls view.render_response with unprocessable_entity status and error message" do
     view_mock = mock
-    presenter = Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
 
-    error_dto = Domain::Shared::Dtos::ErrorDto.new('Temperature requirement update failed')
+    error_dto = Domain::Shared::Dtos::ErrorDto.new("Temperature requirement update failed")
 
     expected_json = {
-      error: 'Temperature requirement update failed'
+      error: "Temperature requirement update failed"
     }
 
     view_mock.expects(:render_response).with(
@@ -63,14 +60,14 @@ class TemperatureRequirementUpdatePresenterTest < ActiveSupport::TestCase
     presenter.on_failure(error_dto)
   end
 
-  test 'on_failure handles non-ErrorDto failure objects' do
+  test "on_failure handles non-ErrorDto failure objects" do
     view_mock = mock
-    presenter = Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::TemperatureRequirementUpdatePresenter.new(view: view_mock)
 
-    failure_dto = 'Some error string'
+    failure_dto = "Some error string"
 
     expected_json = {
-      error: 'Some error string'
+      error: "Some error string"
     }
 
     view_mock.expects(:render_response).with(
