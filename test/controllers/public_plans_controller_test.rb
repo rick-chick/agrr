@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class PublicPlansControllerSessionTest < ActionController::TestCase
   tests PublicPlansController
 
-  test 'create does not store crop_ids in session' do
-    farm = Farm.reference.first || Farm.create!(user: User.anonymous_user, name: 'Ref Farm', is_reference: true, region: 'jp', latitude: 35.0, longitude: 139.0)
+  test "create does not store crop_ids in session" do
+    farm = Farm.reference.first || Farm.create!(user: User.anonymous_user, name: "Ref Farm", is_reference: true, region: "jp", latitude: 35.0, longitude: 139.0)
 
     # Step2: farm_idをセッションに入れる（GETアクションを直接呼び出し）
     get :select_farm_size, params: { farm_id: farm.id }
 
     # Step3: 作物選択画面を通過（farm_size_id必須）
-    get :select_crop, params: { farm_size_id: 'home_garden' }
+    get :select_crop, params: { farm_size_id: "home_garden" }
 
     # Step4: 計画作成（create）
-    crop = Crop.reference.first || Crop.create!(name: 'Ref Crop', is_reference: true, region: 'jp')
-    post :create, params: { crop_ids: [crop.id] }
+    crop = Crop.reference.first || Crop.create!(name: "Ref Crop", is_reference: true, region: "jp")
+    post :create, params: { crop_ids: [ crop.id ] }
 
     public_plan = @request.session[:public_plan]
     assert public_plan.is_a?(Hash)
@@ -24,16 +24,16 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
     assert_nil public_plan[:crop_ids]
   end
 
-  test 'job chain includes task schedule generation job at the end' do
+  test "job chain includes task schedule generation job at the end" do
     weather_location = WeatherLocation.create!(
       latitude: 36.0,
       longitude: 140.0,
       elevation: 50.0,
-      timezone: 'Asia/Tokyo'
+      timezone: "Asia/Tokyo"
     )
 
-    farm = create(:farm, weather_location: weather_location, latitude: 36.0, longitude: 140.0, region: 'jp')
-    plan = create(:cultivation_plan, farm: farm, plan_type: 'public')
+    farm = create(:farm, weather_location: weather_location, latitude: 36.0, longitude: 140.0, region: "jp")
+    plan = create(:cultivation_plan, farm: farm, plan_type: "public")
 
     controller = PublicPlansController.new
     job_instances = controller.send(:create_job_instances_for_public_plans, plan.id, OptimizationChannel)
@@ -45,12 +45,12 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
   # RED: WeatherPredictionService requires current year data (Date.current.year, 1, 1) to (Date.current - 2.days).
   # When latest_weather_date is in the past, calculate_weather_data_params must return end_date >= Date.current - 2.days
   # so that FetchWeatherDataJob fetches the current year and WeatherPredictionJob does not fail.
-  test 'calculate_weather_data_params returns end_date at least Date.current - 2.days when latest_weather_date is in the past' do
+  test "calculate_weather_data_params returns end_date at least Date.current - 2.days when latest_weather_date is in the past" do
     weather_location = WeatherLocation.create!(
       latitude: 38.0,
       longitude: 142.0,
       elevation: 10.0,
-      timezone: 'Asia/Tokyo'
+      timezone: "Asia/Tokyo"
     )
     # Data only up to 1 year ago → latest_weather_date will be in the past
     past_end_date = 1.year.ago.to_date
@@ -77,16 +77,16 @@ end
 
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   setup do
     # アノニマスユーザーを作成
     @anonymous_user = User.anonymous_user
-    
+
     # 既存の参照農場を使用（マイグレーションで作成されたもの）
-    @japan_farm = Farm.reference.where(region: 'jp').first
-    
+    @japan_farm = Farm.reference.where(region: "jp").first
+
     # 既存の農場がない場合は作成
     if @japan_farm.nil?
       # 気象データ用のWeatherLocationを作成
@@ -94,19 +94,19 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
         latitude: 35.6762,
         longitude: 139.6503,
         elevation: 10.0,
-        timezone: 'Asia/Tokyo'
+        timezone: "Asia/Tokyo"
       )
-      
+
       # 日本の参照農場を作成（気象データ付き）
-      @japan_farm = create(:farm, :reference, 
-        name: "関東農場", 
-        latitude: 35.6762, 
+      @japan_farm = create(:farm, :reference,
+        name: "関東農場",
+        latitude: 35.6762,
         longitude: 139.6503,
-        region: 'jp',
+        region: "jp",
         user: @anonymous_user,
         weather_location: @weather_location
       )
-      
+
       # テスト用の気象データを作成（過去15年分、バッチ処理）
       weather_records = []
       (15.years.ago.to_date..Date.current).each do |date|
@@ -126,18 +126,18 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       end
       WeatherDatum.insert_all(weather_records)
     end
-    
+
     # ほうれん草の参照作物を作成
     @spinach_crop = create(:crop, :reference,
       name: "ほうれん草",
       variety: "一般",
       area_per_unit: 0.1,
       revenue_per_area: 800.0,
-      groups: ["ヒユ科"],
-      region: 'jp',
+      groups: [ "ヒユ科" ],
+      region: "jp",
       user: nil
     )
-    
+
     # ほうれん草の生育ステージを作成
     create(:crop_stage, :germination, crop: @spinach_crop, order: 1)
     create(:crop_stage, :vegetative, crop: @spinach_crop, order: 2)
@@ -157,23 +157,23 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2" # ビューにh2タグが存在することを確認
 
     # Step 3: 作物選択画面の表示（セッション経由）
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    get select_crop_public_plans_path(farm_size_id: "home_garden")
     assert_response :success
     assert_select "h2" # ビューにh2タグが存在することを確認
 
     # Step 4: 計画作成（セッション経由）
-    post public_plans_path, params: { crop_ids: [@spinach_crop.id] }
-    
+    post public_plans_path, params: { crop_ids: [ @spinach_crop.id ] }
+
     # 計画が作成され、最適化画面にリダイレクトされる
     assert_redirected_to "/public_plans/optimizing"
-    
+
     # 作成された計画を取得
     cultivation_plan = CultivationPlan.last
     assert_not_nil cultivation_plan
     assert_equal @japan_farm.id, cultivation_plan.farm_id
     assert_equal 30, cultivation_plan.total_area
-    assert_equal 'public', cultivation_plan.plan_type
-    assert_equal 'pending', cultivation_plan.status
+    assert_equal "public", cultivation_plan.plan_type
+    assert_equal "pending", cultivation_plan.status
 
     # Step 5: 最適化画面の表示
     get optimizing_public_plans_path
@@ -186,7 +186,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
 
     # Step 7: 結果画面の表示（完了済みの場合）
-    if cultivation_plan.status == 'completed'
+    if cultivation_plan.status == "completed"
       get results_public_plans_path(plan_id: cultivation_plan.id)
       assert_response :success
       assert_select "h2" # ビューにh2タグが存在することを確認
@@ -204,14 +204,14 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Step 3: 作物選択画面（セッションにfarm_size/total_area保存）
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    get select_crop_public_plans_path(farm_size_id: "home_garden")
     assert_response :success
 
     # Step 4: 作物未選択でPOST
     post public_plans_path, params: { crop_ids: [] }
     assert_response :unprocessable_entity
     assert_select "h2" # 同画面を再描画
-    assert_includes @response.body, I18n.t('public_plans.errors.select_crop')
+    assert_includes @response.body, I18n.t("public_plans.errors.select_crop")
   end
 
   test "最適化処理の実際の動作をテスト（気象データ不足のバグを発見）" do
@@ -219,87 +219,87 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cultivation_plan = CultivationPlan.create!(
       farm: @japan_farm,
       total_area: 30,
-      plan_type: 'public',
-      status: 'pending'
+      plan_type: "public",
+      status: "pending"
     )
-    
+
     # 最適化ジョブは重いためスタブ化して期待例外を発生させ高速化
     OptimizationJob.stub(:perform_now, ->(*args) {
       opts = args.first || {}
-      plan_id = opts[:cultivation_plan_id] || opts['cultivation_plan_id']
+      plan_id = opts[:cultivation_plan_id] || opts["cultivation_plan_id"]
       if plan_id
-        CultivationPlan.find(plan_id).update!(status: 'failed')
+        CultivationPlan.find(plan_id).update!(status: "failed")
       end
       raise CultivationPlanOptimizer::WeatherDataNotFoundError
     }) do
       begin
-        OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
+        OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: "OptimizationChannel")
         flunk "Expected CultivationPlanOptimizer::WeatherDataNotFoundError to be raised"
       rescue CultivationPlanOptimizer::WeatherDataNotFoundError
         # 期待される例外が発生
       end
     end
-    
+
     # 計画のステータスが'failed'に更新されることを確認（エラーハンドリングが動作）
     cultivation_plan.reload
-    assert_equal 'failed', cultivation_plan.status
+    assert_equal "failed", cultivation_plan.status
   end
 
   test "エラーハンドリング（存在しない農場ID）" do
     get select_farm_size_public_plans_path(farm_id: 99999)
     assert_redirected_to public_plans_path
-    assert_equal I18n.t('public_plans.errors.select_region'), flash[:alert]
+    assert_equal I18n.t("public_plans.errors.select_region"), flash[:alert]
   end
 
   test "エラーハンドリング（作物が選択されていない）" do
     # セッションを設定してから作物選択画面にアクセス
-    get select_crop_public_plans_path(farm_size_id: 'home_garden')
+    get select_crop_public_plans_path(farm_size_id: "home_garden")
     # セッションが無効なため、リダイレクトされる
     assert_redirected_to public_plans_path
-    assert_equal I18n.t('public_plans.errors.restart'), flash[:alert]
+    assert_equal I18n.t("public_plans.errors.restart"), flash[:alert]
   end
 
   test "農場サイズの定数が正しく定義されている" do
     farm_sizes = PublicPlansController.farm_sizes
     assert_equal 3, farm_sizes.length
-    
+
     # home_garden
-    home_garden = farm_sizes.find { |size| size[:id] == 'home_garden' }
+    home_garden = farm_sizes.find { |size| size[:id] == "home_garden" }
     assert_not_nil home_garden
     assert_equal 30, home_garden[:area_sqm]
-    
+
     # community_garden
-    community_garden = farm_sizes.find { |size| size[:id] == 'community_garden' }
+    community_garden = farm_sizes.find { |size| size[:id] == "community_garden" }
     assert_not_nil community_garden
     assert_equal 50, community_garden[:area_sqm]
-    
+
     # rental_farm
-    rental_farm = farm_sizes.find { |size| size[:id] == 'rental_farm' }
+    rental_farm = farm_sizes.find { |size| size[:id] == "rental_farm" }
     assert_not_nil rental_farm
     assert_equal 300, rental_farm[:area_sqm]
   end
 
   test "地域コードの変換が正しく動作する" do
     controller = PublicPlansController.new
-    
+
     # 日本語ロケール
-    assert_equal 'jp', controller.send(:locale_to_region, :ja)
-    
+    assert_equal "jp", controller.send(:locale_to_region, :ja)
+
     # 英語ロケール
-    assert_equal 'us', controller.send(:locale_to_region, :us)
-    
+    assert_equal "us", controller.send(:locale_to_region, :us)
+
     # インドロケール
-    assert_equal 'in', controller.send(:locale_to_region, :in)
-    
+    assert_equal "in", controller.send(:locale_to_region, :in)
+
     # デフォルト（不明なロケール）
-    assert_equal 'jp', controller.send(:locale_to_region, :unknown)
+    assert_equal "jp", controller.send(:locale_to_region, :unknown)
   end
 
   test "農場の件数制限に達している場合にエラーメッセージが表示される" do
     # テストユーザーを作成（農場上限に達している）
     user = User.create!(
-      email: 'flash_test@example.com',
-      name: 'Flash Test User',
+      email: "flash_test@example.com",
+      name: "Flash Test User",
       google_id: "flash_#{SecureRandom.hex(8)}"
     )
 
@@ -310,7 +310,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
         name: "既存農場 #{i + 1}",
         latitude: 35.6812,
         longitude: 139.7671,
-        region: 'jp',
+        region: "jp",
         is_reference: false
       )
     end
@@ -323,8 +323,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       farm: @japan_farm,
       user: nil,
       total_area: 100.0,
-      status: 'completed',
-      plan_type: 'public',
+      status: "completed",
+      plan_type: "public",
       planning_start_date: Date.current,
       planning_end_date: Date.current.end_of_year
     )
@@ -333,15 +333,15 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     session_data = {
       plan_id: public_plan.id,
       farm_id: @japan_farm.id,
-      crop_ids: [@spinach_crop.id],
-      field_data: [{ name: 'テスト圃場', area: 100.0, coordinates: [35.0, 139.0] }]
+      crop_ids: [ @spinach_crop.id ],
+      field_data: [ { name: "テスト圃場", area: 100.0, coordinates: [ 35.0, 139.0 ] } ]
     }
 
     # save_planをシミュレート
     cookies[:session_id] = session.session_id
 
     # PlanSaveServiceを直接呼び出し
-    result = PlanSaveService.new(
+    result = PlanSaveSession.new(
       user: user,
       session_data: session_data
     ).call
@@ -355,8 +355,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   test "POST /api/v1/public_plans/save_plan - 正常に計画を保存できる" do
     # テストユーザーを作成
     user = User.create!(
-      email: 'api_test@example.com',
-      name: 'API Test User',
+      email: "api_test@example.com",
+      name: "API Test User",
       google_id: "api_#{SecureRandom.hex(8)}"
     )
 
@@ -368,8 +368,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       farm: @japan_farm,
       user: nil,
       total_area: 30.0,
-      status: 'completed',
-      plan_type: 'public',
+      status: "completed",
+      plan_type: "public",
       planning_start_date: Date.current,
       planning_end_date: Date.current.end_of_year
     )
@@ -385,43 +385,45 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # 圃場を作成
     field = CultivationPlanField.create!(
       cultivation_plan: public_plan,
-      name: 'テスト圃場',
+      name: "テスト圃場",
       area: 30.0
     )
 
-    # APIリクエスト（PlanSaveServiceをモックしてコントローラ挙動のみ検証）
+    # APIリクエスト（Interactor をモックしてコントローラ挙動のみ検証）
     cookies[:session_id] = session.session_id
-    PlanSaveService.stub(:new, ->(*_) { Class.new { def call; Struct.new(:success, :error_message).new(true, nil); end }.new }) do
-      post '/api/v1/public_plans/save_plan',
+    ok = PlanSaveSession::Result.new
+    ok.success = true
+    Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| ok }) do
+      post "/api/v1/public_plans/save_plan",
            params: { plan_id: public_plan.id },
            as: :json
 
       # レスポンス確認
       assert_response :success
       response_body = JSON.parse(@response.body)
-      assert response_body['success']
-      assert_not response_body.key?('error')
+      assert response_body["success"]
+      assert_not response_body.key?("error")
     end
   end
 
   test "POST /api/v1/public_plans/save_plan - 未認証の場合401を返す" do
     # 認証なしでAPIリクエスト
-    post '/api/v1/public_plans/save_plan',
+    post "/api/v1/public_plans/save_plan",
          params: { plan_id: 1 },
          as: :json
 
     # レスポンス確認
     assert_response :unauthorized
     response_body = JSON.parse(@response.body)
-    assert_not response_body['success']
-    assert_equal I18n.t('auth.api.login_required'), response_body['error']
+    assert_not response_body["success"]
+    assert_equal I18n.t("auth.api.login_required"), response_body["error"]
   end
 
   test "POST /api/v1/public_plans/save_plan - plan_idが欠けている場合400を返す" do
     # テストユーザーを作成
     user = User.create!(
-      email: 'api_test2@example.com',
-      name: 'API Test User 2',
+      email: "api_test2@example.com",
+      name: "API Test User 2",
       google_id: "api2_#{SecureRandom.hex(8)}"
     )
 
@@ -430,22 +432,22 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # plan_idなしでAPIリクエスト
     cookies[:session_id] = session.session_id
-    post '/api/v1/public_plans/save_plan',
+    post "/api/v1/public_plans/save_plan",
          params: {},
          as: :json
 
     # レスポンス確認
     assert_response :bad_request
     response_body = JSON.parse(@response.body)
-    assert_not response_body['success']
-    assert_equal 'plan_id is required', response_body['error']
+    assert_not response_body["success"]
+    assert_equal "plan_id is required", response_body["error"]
   end
 
   test "POST /api/v1/public_plans/save_plan - 存在しない計画の場合404を返す" do
     # テストユーザーを作成
     user = User.create!(
-      email: 'api_test3@example.com',
-      name: 'API Test User 3',
+      email: "api_test3@example.com",
+      name: "API Test User 3",
       google_id: "api3_#{SecureRandom.hex(8)}"
     )
 
@@ -454,22 +456,22 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # 存在しないplan_idでAPIリクエスト
     cookies[:session_id] = session.session_id
-    post '/api/v1/public_plans/save_plan',
+    post "/api/v1/public_plans/save_plan",
          params: { plan_id: 99999 },
          as: :json
 
     # レスポンス確認
     assert_response :not_found
     response_body = JSON.parse(@response.body)
-    assert_not response_body['success']
-    assert_equal 'Plan not found', response_body['error']
+    assert_not response_body["success"]
+    assert_equal "Plan not found", response_body["error"]
   end
 
   test "POST /api/v1/public_plans/save_plan - 保存失敗の場合エラーレスポンスを返す" do
     # テストユーザーを作成（農場上限に達している）
     user = User.create!(
-      email: 'api_test4@example.com',
-      name: 'API Test User 4',
+      email: "api_test4@example.com",
+      name: "API Test User 4",
       google_id: "api4_#{SecureRandom.hex(8)}"
     )
 
@@ -480,7 +482,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
         name: "既存農場 #{i + 1}",
         latitude: 35.6812,
         longitude: 139.7671,
-        region: 'jp',
+        region: "jp",
         is_reference: false
       )
     end
@@ -493,8 +495,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       farm: @japan_farm,
       user: nil,
       total_area: 30.0,
-      status: 'completed',
-      plan_type: 'public',
+      status: "completed",
+      plan_type: "public",
       planning_start_date: Date.current,
       planning_end_date: Date.current.end_of_year
     )
@@ -510,23 +512,26 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # 圃場を作成
     field = CultivationPlanField.create!(
       cultivation_plan: public_plan,
-      name: 'テスト圃場',
+      name: "テスト圃場",
       area: 30.0
     )
 
-    # APIリクエスト（PlanSaveServiceをモックして保存失敗をシミュレート）
+    # APIリクエスト（Interactor をモックして保存失敗をシミュレート）
     cookies[:session_id] = session.session_id
-    PlanSaveService.stub(:new, ->(*_) { Class.new { def call; Struct.new(:success, :error_message).new(false, "作成できるFarmは4件までです"); end }.new }) do
-      post '/api/v1/public_plans/save_plan',
+    bad = PlanSaveSession::Result.new
+    bad.success = false
+    bad.error_message = "作成できるFarmは4件までです"
+    Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| bad }) do
+      post "/api/v1/public_plans/save_plan",
            params: { plan_id: public_plan.id },
            as: :json
 
       # レスポンス確認
       assert_response :unprocessable_entity
       response_body = JSON.parse(@response.body)
-      assert_not response_body['success']
-      assert_not_nil response_body['error']
-      assert_includes response_body['error'], "作成できるFarmは4件までです"
+      assert_not response_body["success"]
+      assert_not_nil response_body["error"]
+      assert_includes response_body["error"], "作成できるFarmは4件までです"
     end
   end
 
@@ -535,23 +540,23 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     public_plan = CultivationPlan.create!(
       farm: @japan_farm,
       user: nil,
-      session_id: 'test_session_public_results',
+      session_id: "test_session_public_results",
       total_area: 30.0,
-      status: 'completed',
-      plan_type: 'public',
+      status: "completed",
+      plan_type: "public",
       planning_start_date: Date.current,
       planning_end_date: Date.current.end_of_year
     )
 
     # CultivationPlanCropを作成
-    crop = Crop.reference.where(region: 'jp').first || Crop.create!(
+    crop = Crop.reference.where(region: "jp").first || Crop.create!(
       user: nil,
-      name: 'テスト作物',
-      variety: 'テスト品種',
+      name: "テスト作物",
+      variety: "テスト品種",
       is_reference: true,
       area_per_unit: 1.0,
       revenue_per_area: 1000.0,
-      region: 'jp'
+      region: "jp"
     )
 
     plan_crop = CultivationPlanCrop.create!(
@@ -566,7 +571,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # CultivationPlanFieldを作成
     plan_field = CultivationPlanField.create!(
       cultivation_plan: public_plan,
-      name: 'テスト圃場',
+      name: "テスト圃場",
       area: 30.0
     )
 

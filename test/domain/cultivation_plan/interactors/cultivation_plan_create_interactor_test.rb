@@ -23,7 +23,7 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
             plan_name: "Test Plan",
-            crop_ids: [crop.id],
+            crop_ids: [ crop.id ],
             user: @user
           )
 
@@ -36,7 +36,7 @@ module Domain
           mock_result.stubs(:cultivation_plan).returns(mock_cultivation_plan)
 
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
-          @mock_gateway.expects(:find_crops).with([crop.id], @user).returns([crop])
+          @mock_gateway.expects(:find_crops).with([ crop.id ], @user).returns([ crop ])
           @mock_gateway.expects(:find_existing).with(farm, @user).returns(nil)
           @mock_gateway.expects(:create).returns(mock_result)
 
@@ -49,7 +49,7 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: 999,
             plan_name: "Test Plan",
-            crop_ids: [1],
+            crop_ids: [ 1 ],
             user: @user
           )
 
@@ -64,12 +64,12 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
             plan_name: "Test Plan",
-            crop_ids: [999],
+            crop_ids: [ 999 ],
             user: @user
           )
 
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
-          @mock_gateway.expects(:find_crops).with([999], @user).returns([])
+          @mock_gateway.expects(:find_crops).with([ 999 ], @user).returns([])
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)
@@ -81,12 +81,12 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
             plan_name: "Test Plan",
-            crop_ids: [1],
+            crop_ids: [ 1 ],
             user: @user
           )
 
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
-          @mock_gateway.expects(:find_crops).with([1], @user).returns([create(:crop, user: @user, is_reference: false)])
+          @mock_gateway.expects(:find_crops).with([ 1 ], @user).returns([ create(:crop, user: @user, is_reference: false) ])
           @mock_gateway.expects(:find_existing).with(farm, @user).returns(existing_plan)
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
@@ -99,7 +99,7 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
             plan_name: "Test Plan",
-            crop_ids: [crop.id],
+            crop_ids: [ crop.id ],
             user: @user
           )
 
@@ -107,7 +107,7 @@ module Domain
           mock_result.stubs(:success?).returns(false)
 
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
-          @mock_gateway.expects(:find_crops).with([crop.id], @user).returns([crop])
+          @mock_gateway.expects(:find_crops).with([ crop.id ], @user).returns([ crop ])
           @mock_gateway.expects(:find_existing).with(farm, @user).returns(nil)
           @mock_gateway.expects(:create).returns(mock_result)
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
@@ -120,7 +120,7 @@ module Domain
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
             plan_name: "Test Plan",
-            crop_ids: [1],
+            crop_ids: [ 1 ],
             user: @user
           )
 

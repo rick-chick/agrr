@@ -36,13 +36,13 @@
 
 ## 4. 既存サーバー側との関係
 
-- 既存の `PlanSaveService`（`app/services/plan_save_service.rb`）を利用する。
+- 既存の `PlanSaveSession`（`app/services/plan_save_session.rb`）を `Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session` 経由で利用する。
 - 既存の HTML 用 `save_plan` / `process_saved_plan`（PublicPlansController）はそのまま維持する。Rails に `post 'public_plans/save_plan'` と `get 'public_plans/process_saved_plan'` のルートが未定義の場合は追加する（ERB フォーム・OAuth コールバック用）。
 
 ## 5. 実装チェックリスト
 
 - [x] Rails: `config/routes.rb` に `post 'public_plans/save_plan'` と `get 'public_plans/process_saved_plan'` を追加（HTML 用）
-- [x] Rails: `POST /api/v1/public_plans/save_plan` を追加（JSON、認証必須）。既存 `PlanSaveService` を呼び出し、JSON で success/error を返す（`Api::V1::PublicPlansController#save_plan`）
+- [x] Rails: `POST /api/v1/public_plans/save_plan` を追加（JSON、認証必須）。`CultivationPlanCreateInteractor.save_from_public_plan_session`（内部で `PlanSaveSession`）を呼び出し、JSON で success/error を返す（`Api::V1::PublicPlansController#save_plan`）
 - [x] Angular: SavePublicPlanUseCase で上記 API を呼ぶ
 - [x] Angular: PublicPlanApiGateway に `savePlan(planId: number)` を追加
 - [x] Angular: 結果画面の `savePlan()` で、ログイン済みなら API 呼び出し→成功時は `/plans` へ遷移＋メッセージ、失敗時はエラー表示

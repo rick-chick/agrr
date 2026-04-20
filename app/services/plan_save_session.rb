@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'set'
+require "set"
 
-class PlanSaveService
+class PlanSaveSession
   include ActiveModel::Model
 
   class InvalidTaskScheduleItemError < StandardError; end
@@ -32,17 +32,17 @@ class PlanSaveService
   end
 
   attr_accessor :user, :session_data, :result
-  
+
   def initialize(user:, session_data:)
     @user = user
     @session_data = session_data
     @result = Result.new
     @farm_reused = false
   end
-  
+
   def call
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.session_data_received', data: @session_data.inspect)
-    
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.session_data_received", data: @session_data.inspect)
+
     ActiveRecord::Base.transaction do
       # 1. マスタデータの作成・取得
       farm = create_or_get_user_farm
@@ -64,40 +64,40 @@ class PlanSaveService
         @result.success = true
         return @result
       end
-      
+
       # 2. 計画のコピー
       new_plan = copy_cultivation_plan(farm, crops)
-      
+
       # 3. マスタデータ間の関連付け
       establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
-      
+
       # 4. 関連データのコピー
       copy_crop_task_schedule_blueprints_for_user_crops
       field_cultivation_map = copy_plan_relations(new_plan)
       copy_task_schedules(new_plan, field_cultivation_map)
-      
-      Rails.logger.info I18n.t('services.plan_save_service.messages.service_completed')
+
+      Rails.logger.info I18n.t("services.plan_save_service.messages.service_completed")
       @result.success = true
       @result.new_plan = new_plan
     end
-    
+
     @result
   rescue InvalidTaskScheduleItemError => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.task_schedule_invalid', error: e.message) if I18n.exists?('services.plan_save_service.errors.task_schedule_invalid')
+    Rails.logger.error I18n.t("services.plan_save_service.errors.task_schedule_invalid", error: e.message) if I18n.exists?("services.plan_save_service.errors.task_schedule_invalid")
     Rails.logger.error e.backtrace.join("\n")
     raise
   rescue => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.unknown_error', error: e.message)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.unknown_error", error: e.message)
     Rails.logger.error e.backtrace.join("\n")
     @result.error_message = e.message
     @result
   end
-  
+
   private
-  
+
   def copy_crop_task_schedule_blueprints_for_user_crops
     return unless @reference_crop_id_to_user_crop_id.present?
-    
+
     @reference_crop_id_to_user_crop_id.each do |reference_crop_id, user_crop_id|
       reference_blueprints = CropTaskScheduleBlueprint
                                .where(crop_id: reference_crop_id)
@@ -105,15 +105,15 @@ class PlanSaveService
                                .ordered
                                .to_a
       next if reference_blueprints.empty?
-      
+
       timestamp = Time.current
       allowed_columns = CropTaskScheduleBlueprint.column_names.map(&:to_sym)
-      
+
       blueprint_attributes = reference_blueprints.map do |bp|
         # 参照元タスクIDの決定（sourceがあれば優先、無ければ自身のagri task）
         reference_task_id = bp.source_agricultural_task_id.presence || bp.agricultural_task_id
         mapped_user_task_id = reference_task_id ? user_agricultural_task_id_for(reference_task_id) : nil
-        
+
         attrs = {
           crop_id: user_crop_id,
           agricultural_task_id: mapped_user_task_id,
@@ -133,30 +133,30 @@ class PlanSaveService
           created_at: timestamp,
           updated_at: timestamp
         }
-        
+
         # モデルカラムに存在するものだけ
-        attrs.select { |key, _| allowed_columns.include?(key) || [:created_at, :updated_at].include?(key) }
+        attrs.select { |key, _| allowed_columns.include?(key) || [ :created_at, :updated_at ].include?(key) }
       end
-      
+
       CropTaskScheduleBlueprint.transaction do
         CropTaskScheduleBlueprint.where(crop_id: user_crop_id).delete_all
         CropTaskScheduleBlueprint.insert_all!(blueprint_attributes)
       end
     end
   end
-  
+
   def normalize_decimal(value)
     return nil if value.nil?
     decimal = value.is_a?(BigDecimal) ? value : BigDecimal(value.to_s)
-    decimal.to_s('F')
+    decimal.to_s("F")
   end
-  
+
   def create_or_get_user_farm
-    farm_id = @session_data[:farm_id] || @session_data['farm_id']
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.farm_id_extracted', farm_id: farm_id)
-    
+    farm_id = @session_data[:farm_id] || @session_data["farm_id"]
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.farm_id_extracted", farm_id: farm_id)
+
     reference_farm = Farm.find(farm_id)
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_farm_found', farm_name: reference_farm.name)
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_farm_found", farm_name: reference_farm.name)
 
     existing_farm = @user.farms.find_by(source_farm_id: reference_farm.id)
     if existing_farm
@@ -165,7 +165,7 @@ class PlanSaveService
       @result.add_skip(:farm, existing_farm.id)
       return existing_farm
     end
-    
+
     # 新しい農場を作成（バリデーションエラーを捕捉）
     new_farm = @user.farms.build(
       name: "#{reference_farm.name} (コピー #{Time.current.strftime('%Y%m%d_%H%M%S')})",
@@ -176,35 +176,35 @@ class PlanSaveService
       weather_location_id: reference_farm.weather_location_id,
       source_farm_id: reference_farm.id
     )
-    
+
     unless new_farm.save
-      error_message = new_farm.errors.full_messages.join(', ')
+      error_message = new_farm.errors.full_messages.join(", ")
       Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
       # 農場件数制限のエラーの場合は特別なメッセージを返す
       if new_farm.errors.details[:user].any? { |e| e[:error] == :farm_limit_exceeded }
-        raise StandardError, I18n.t('activerecord.errors.models.farm.attributes.user.farm_limit_exceeded')
+        raise StandardError, I18n.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
       end
       raise StandardError, error_message
     end
-    
-    Rails.logger.info I18n.t('services.plan_save_service.messages.farm_created', farm_name: new_farm.name)
+
+    Rails.logger.info I18n.t("services.plan_save_service.messages.farm_created", farm_name: new_farm.name)
     @farm_reused = false
     new_farm
   rescue ActiveRecord::RecordNotFound => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.farm_not_found', farm_id: farm_id)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.farm_not_found", farm_id: farm_id)
     raise e
   end
-  
+
   def find_existing_private_plan(farm)
     # 通年計画: farm_id × user_idのみで検索（plan_yearを除外）
-    @user.cultivation_plans.where(plan_type: 'private', farm: farm).first
+    @user.cultivation_plans.where(plan_type: "private", farm: farm).first
   end
 
   def create_user_crops_from_plan
-    plan_id = @session_data[:plan_id] || @session_data['plan_id']
-    raise StandardError, 'plan_id is required to derive crops' unless plan_id
+    plan_id = @session_data[:plan_id] || @session_data["plan_id"]
+    raise StandardError, "plan_id is required to derive crops" unless plan_id
 
-    reference_plan = CultivationPlan.includes(cultivation_plan_crops: [crop: { crop_stages: [:temperature_requirement, :sunshine_requirement, :thermal_requirement] }]).find(plan_id)
+    reference_plan = CultivationPlan.includes(cultivation_plan_crops: [ crop: { crop_stages: [ :temperature_requirement, :sunshine_requirement, :thermal_requirement ] } ]).find(plan_id)
     reference_region = reference_plan.farm&.region || @current_farm_region
 
     user_crops = []
@@ -241,10 +241,10 @@ class PlanSaveService
       @ref_cpc_id_to_user_crop_id[reference_cpc.id] = user_crop.id
     end
 
-    Rails.logger.info I18n.t('services.plan_save_service.debug.user_crops_created', count: user_crops.count)
+    Rails.logger.info I18n.t("services.plan_save_service.debug.user_crops_created", count: user_crops.count)
     user_crops
   end
-  
+
   def create_user_fields(farm)
     if @farm_reused
       Rails.logger.info "♻️ [PlanSaveService] Skipping field creation because farm was reused"
@@ -253,23 +253,23 @@ class PlanSaveService
       return existing_fields
     end
 
-    field_data = @session_data[:field_data] || @session_data['field_data']
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.field_data_extracted', field_data: field_data.inspect)
-    
+    field_data = @session_data[:field_data] || @session_data["field_data"]
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.field_data_extracted", field_data: field_data.inspect)
+
     return [] unless field_data&.any?
-    
+
     user_fields = []
-    
+
     field_data.each do |field_info|
       Rails.logger.debug "🔍 [PlanSaveService] Processing field_info: #{field_info.inspect}"
-      
+
       # ハッシュのキーをシンボルと文字列の両方に対応
-      field_name = field_info[:name] || field_info['name']
-      field_area = field_info[:area] || field_info['area']
-      field_coordinates = field_info[:coordinates] || field_info['coordinates']
-      
+      field_name = field_info[:name] || field_info["name"]
+      field_area = field_info[:area] || field_info["area"]
+      field_coordinates = field_info[:coordinates] || field_info["coordinates"]
+
       Rails.logger.debug "🔍 [PlanSaveService] Extracted: name=#{field_name}, area=#{field_area}, coordinates=#{field_coordinates}"
-      
+
       # 常に新しい圃場を作成（農場ごとにユニークなので重複チェック不要）
       field_attrs = {
         farm: farm,
@@ -277,37 +277,37 @@ class PlanSaveService
         name: field_name,
         area: field_area
       }
-      
+
       # Fieldモデルには座標属性がないため、座標情報はスキップ
       # 必要に応じてdescriptionに座標情報を保存
       if field_coordinates&.is_a?(Array) && field_coordinates.length >= 2
-        field_attrs[:description] = I18n.t('services.plan_save_service.messages.coordinates', lat: field_coordinates[0], lng: field_coordinates[1])
+        field_attrs[:description] = I18n.t("services.plan_save_service.messages.coordinates", lat: field_coordinates[0], lng: field_coordinates[1])
       end
-      
+
       Rails.logger.debug "🔍 [PlanSaveService] Creating field with attrs: #{field_attrs.inspect}"
-      
+
       new_field = farm.fields.create!(field_attrs)
       user_fields << new_field
-      Rails.logger.info I18n.t('services.plan_save_service.messages.field_created', field_name: new_field.name)
+      Rails.logger.info I18n.t("services.plan_save_service.messages.field_created", field_name: new_field.name)
     end
-    
-    Rails.logger.info I18n.t('services.plan_save_service.debug.user_fields_created', count: user_fields.count)
+
+    Rails.logger.info I18n.t("services.plan_save_service.debug.user_fields_created", count: user_fields.count)
     user_fields
   end
-  
+
   def copy_interaction_rules_for_region(region)
     # 参照計画に含まれている作物のグループを取得
     reference_crop_groups = get_reference_crop_groups
     return [] if reference_crop_groups.empty?
 
-    reference_scope = InteractionRule.reference.where(rule_type: 'continuous_cultivation')
-    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+    reference_scope = InteractionRule.reference.where(rule_type: "continuous_cultivation")
+    reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     interaction_rules = []
 
     reference_scope.find_each do |reference_rule|
       # 参照計画に含まれている作物のグループに関連するルールのみをコピー
-      next unless reference_crop_groups.include?(reference_rule.source_group) || 
+      next unless reference_crop_groups.include?(reference_rule.source_group) ||
                   reference_crop_groups.include?(reference_rule.target_group)
 
       existing_rule = @user.interaction_rules.find_by(source_interaction_rule_id: reference_rule.id)
@@ -354,7 +354,7 @@ class PlanSaveService
     return [] if reference_crop_ids.empty?
 
     reference_scope = Pest.reference
-    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+    reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     reference_scope = reference_scope.includes(
       :pest_temperature_profile,
@@ -399,12 +399,12 @@ class PlanSaveService
         # 一意制約違反の場合、既存の害虫を取得して再利用
         error_messages = new_pest.errors.full_messages
         error_keys = new_pest.errors.keys
-        
+
         # source_pest_idの一意制約違反、またはエラーメッセージに「Pest」と「すでに存在」が含まれる場合
         # エラーメッセージのパターン: "Pestはすでに存在します" または "Source pestはすでに存在します"
-        is_uniqueness_error = error_keys.include?(:source_pest_id) || 
-                              error_messages.any? { |msg| (msg.include?('Pest') || msg.include?('pest')) && (msg.include?('すでに存在') || msg.include?('already') || msg.include?('taken')) }
-        
+        is_uniqueness_error = error_keys.include?(:source_pest_id) ||
+                              error_messages.any? { |msg| (msg.include?("Pest") || msg.include?("pest")) && (msg.include?("すでに存在") || msg.include?("already") || msg.include?("taken")) }
+
         if is_uniqueness_error
           # 再度既存の害虫を検索（並行処理などで作成された可能性がある）
           # リロードしてキャッシュの問題を回避
@@ -423,9 +423,9 @@ class PlanSaveService
             raise StandardError, error_message
           end
         end
-        
+
         # 一意制約違反でない場合はエラーを発生
-        error_message = error_messages.join(', ')
+        error_message = error_messages.join(", ")
         Rails.logger.error "❌ [PlanSaveService] Pest creation failed: #{error_message} (keys: #{error_keys.inspect})"
         raise StandardError, error_message
       end
@@ -436,7 +436,7 @@ class PlanSaveService
 
       user_pests << new_pest
       @reference_pest_id_to_user_pest_id[reference_pest.id] = new_pest.id
-      Rails.logger.info I18n.t('services.plan_save_service.messages.pest_created', pest_name: new_pest.name)
+      Rails.logger.info I18n.t("services.plan_save_service.messages.pest_created", pest_name: new_pest.name)
     end
 
     user_pests
@@ -531,7 +531,7 @@ class PlanSaveService
     return [] if reference_crop_ids.empty?
 
     reference_scope = AgriculturalTask.reference
-    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+    reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     reference_scope = reference_scope.includes(crop_task_templates: :crop)
 
@@ -568,7 +568,7 @@ class PlanSaveService
       )
 
       unless new_task.save
-        error_message = new_task.errors.full_messages.join(', ')
+        error_message = new_task.errors.full_messages.join(", ")
         Rails.logger.error "❌ [PlanSaveService] Agricultural task creation failed: #{error_message}"
         raise StandardError, error_message
       end
@@ -577,7 +577,7 @@ class PlanSaveService
 
       user_tasks << new_task
       @reference_agricultural_task_id_to_user_task_id[reference_task.id] = new_task.id
-      Rails.logger.info I18n.t('services.plan_save_service.messages.agricultural_task_created', task_name: new_task.name)
+      Rails.logger.info I18n.t("services.plan_save_service.messages.agricultural_task_created", task_name: new_task.name)
     end
 
     user_tasks
@@ -615,7 +615,7 @@ class PlanSaveService
 
   def copy_fertilizes_for_region(region)
     reference_scope = Fertilize.reference
-    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+    reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     user_fertilizes = []
 
@@ -641,13 +641,13 @@ class PlanSaveService
       )
 
       unless new_fertilize.save
-        error_message = new_fertilize.errors.full_messages.join(', ')
+        error_message = new_fertilize.errors.full_messages.join(", ")
         Rails.logger.error "❌ [PlanSaveService] Fertilize creation failed: #{error_message}"
         raise StandardError, error_message
       end
 
       user_fertilizes << new_fertilize
-      Rails.logger.info I18n.t('services.plan_save_service.messages.fertilize_created', fertilize_name: new_fertilize.name)
+      Rails.logger.info I18n.t("services.plan_save_service.messages.fertilize_created", fertilize_name: new_fertilize.name)
     end
 
     user_fertilizes
@@ -672,7 +672,7 @@ class PlanSaveService
       :crop,
       :pest
     )
-    reference_scope = reference_scope.where(region: [region, nil]) if region.present?
+    reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     user_pesticides = []
 
@@ -705,7 +705,7 @@ class PlanSaveService
       )
 
       unless new_pesticide.save
-        error_message = new_pesticide.errors.full_messages.join(', ')
+        error_message = new_pesticide.errors.full_messages.join(", ")
         Rails.logger.error "❌ [PlanSaveService] Pesticide creation failed: #{error_message}"
         raise StandardError, error_message
       end
@@ -714,7 +714,7 @@ class PlanSaveService
       copy_pesticide_application_detail(reference_pesticide, new_pesticide)
 
       user_pesticides << new_pesticide
-      Rails.logger.info I18n.t('services.plan_save_service.messages.pesticide_created', pesticide_name: new_pesticide.name)
+      Rails.logger.info I18n.t("services.plan_save_service.messages.pesticide_created", pesticide_name: new_pesticide.name)
     end
 
     user_pesticides
@@ -745,14 +745,14 @@ class PlanSaveService
       application_method: reference_detail.application_method
     )
   end
-  
+
   def copy_cultivation_plan(farm, crops)
-    plan_id = @session_data[:plan_id] || @session_data['plan_id']
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.plan_id_extracted', plan_id: plan_id)
-    
+    plan_id = @session_data[:plan_id] || @session_data["plan_id"]
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.plan_id_extracted", plan_id: plan_id)
+
     reference_plan = CultivationPlan.includes(:field_cultivations).find(plan_id)
-    Rails.logger.debug I18n.t('services.plan_save_service.debug.reference_plan_found', plan_name: reference_plan.plan_name)
-    
+    Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_plan_found", plan_name: reference_plan.plan_name)
+
     # 参照計画が通年計画（plan_yearがnull）の場合は、plan_yearを設定せず、期間を計算
     if reference_plan.plan_year.nil?
       # 通年計画: 作付け期間からplanning_start_dateとplanning_end_dateを計算
@@ -765,42 +765,42 @@ class PlanSaveService
       planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
       Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
     end
-    
+
     # 新しい計画を作成
     new_plan = CultivationPlan.create!(
       farm: farm,
       user: @user,
       total_area: reference_plan.total_area,
-      plan_type: 'private',
+      plan_type: "private",
       plan_year: plan_year,
       plan_name: "#{reference_plan.farm.name}の計画",
       planning_start_date: planning_dates[:start_date],
       planning_end_date: planning_dates[:end_date],
-      status: 'pending',
+      status: "pending",
       # 予測データをコピー（存在する場合）
       predicted_weather_data: reference_plan.predicted_weather_data
     )
-    
+
     if reference_plan.predicted_weather_data.present?
       Rails.logger.info "✅ [PlanSaveService] Copied predicted_weather_data to new plan ##{new_plan.id}"
     else
       Rails.logger.warn "⚠️ [PlanSaveService] Reference plan has no predicted_weather_data"
     end
-    
-    Rails.logger.info I18n.t('services.plan_save_service.messages.plan_created', plan_id: new_plan.id)
+
+    Rails.logger.info I18n.t("services.plan_save_service.messages.plan_created", plan_id: new_plan.id)
     new_plan
   rescue ActiveRecord::RecordNotFound => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.plan_not_found', plan_id: plan_id)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.plan_not_found", plan_id: plan_id)
     raise e
   rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.plan_creation_failed', errors: e.message)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.plan_creation_failed", errors: e.message)
     raise e
   end
-  
+
   def establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
     # 農場と圃場の関連付けは既にcreate_user_fieldsで完了
     # 作物と連作ルールの関連付けは既にcreate_interaction_rulesで完了
-    
+
     # データ整合性チェック
     Rails.logger.info "🔍 [PlanSaveService] Data integrity check:"
     Rails.logger.info "  - Farm: #{farm.name} (ID: #{farm.id})"
@@ -811,21 +811,21 @@ class PlanSaveService
     Rails.logger.info "  - Fertilizes: #{fertilizes.count} fertilizes"
     Rails.logger.info "  - Pesticides: #{pesticides.count} pesticides"
     Rails.logger.info "  - Interaction rules: #{interaction_rules.count} rules"
-    
+
     # 農場の圃場数が一致しているかチェック
     if farm.fields.count != fields.count
       Rails.logger.warn "⚠️ [PlanSaveService] Field count mismatch: farm.fields.count=#{farm.fields.count}, fields.count=#{fields.count}"
     end
-    
+
     # 全てのマスタデータが正しく作成されているかチェック
     unless fields.all?(&:persisted?)
       raise "Some fields were not properly created"
     end
-    
+
     unless crops.all?(&:persisted?)
       raise "Some crops were not properly created"
     end
-    
+
     unless pests.all?(&:persisted?)
       raise "Some pests were not properly created"
     end
@@ -845,21 +845,21 @@ class PlanSaveService
     unless interaction_rules.all?(&:persisted?)
       raise "Some interaction rules were not properly created"
     end
-    
+
     Rails.logger.info "✅ [PlanSaveService] All master data relationships established successfully"
   end
-  
+
   def copy_plan_relations(new_plan)
     # 参照計画を取得（includesで関連データを一括読み込み）
-    plan_id = @session_data[:plan_id] || @session_data['plan_id']
+    plan_id = @session_data[:plan_id] || @session_data["plan_id"]
     reference_plan = CultivationPlan.includes(
       :cultivation_plan_fields,
       :cultivation_plan_crops,
       :field_cultivations,
       cultivation_plan_crops: :crop,
-      field_cultivations: [:cultivation_plan_field, :cultivation_plan_crop]
+      field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ]
     ).find(plan_id)
-    
+
     # 1. CultivationPlanFieldを新規作成
     new_fields = reference_plan.cultivation_plan_fields.map do |reference_field|
       CultivationPlanField.create!(
@@ -870,13 +870,13 @@ class PlanSaveService
         description: reference_field.description
       )
     end
-    
+
     # 2. CultivationPlanCropを新規作成（登録順マッピングを使用）
     new_crops = []
     reference_plan.cultivation_plan_crops.order(:id).each do |reference_crop_plan|
       user_crop_id = @ref_cpc_id_to_user_crop_id[reference_crop_plan.id]
       next unless user_crop_id
-      
+
       new_crop = CultivationPlanCrop.create!(
         cultivation_plan: new_plan,
         crop_id: user_crop_id,
@@ -886,26 +886,26 @@ class PlanSaveService
         revenue_per_area: reference_crop_plan.revenue_per_area
       )
       new_crops << new_crop
-      
+
       Rails.logger.debug "✅ [PlanSaveService] Created CultivationPlanCrop: #{new_crop.name} (variety: #{new_crop.variety})"
     end
-    
+
     # 3. FieldCultivationを新規作成（IDマッピングを使用）
     field_cultivation_count = 0
     field_cultivation_map = {}
     reference_plan.field_cultivations.each do |reference_field_cultivation|
       # 圃場は名前でマッチング
       new_field = new_fields.find { |f| f.name == reference_field_cultivation.cultivation_plan_field.name }
-      
+
       # 作物は登録順マッピングを使用
       mapped_user_crop_id = @ref_cpc_id_to_user_crop_id[reference_field_cultivation.cultivation_plan_crop_id]
       new_crop = new_crops.find { |c| c.crop_id == mapped_user_crop_id }
-      
+
       unless new_field && new_crop
         Rails.logger.warn "⚠️ [PlanSaveService] Skipping FieldCultivation: field=#{new_field&.name}, crop=#{new_crop&.name}"
         next
       end
-      
+
       new_field_cultivation = FieldCultivation.create!(
         cultivation_plan: new_plan,
         cultivation_plan_field: new_field,
@@ -920,22 +920,22 @@ class PlanSaveService
       )
       field_cultivation_count += 1
       field_cultivation_map[reference_field_cultivation.id] = new_field_cultivation.id
-      
+
       Rails.logger.debug "✅ [PlanSaveService] Created FieldCultivation: #{new_field.name} + #{new_crop.name}"
     end
-    
-    Rails.logger.info I18n.t('services.plan_save_service.debug.plan_relations_copied', 
-                            fields: new_fields.count, 
-                            crops: new_crops.count, 
+
+    Rails.logger.info I18n.t("services.plan_save_service.debug.plan_relations_copied",
+                            fields: new_fields.count,
+                            crops: new_crops.count,
                             cultivations: field_cultivation_count)
     field_cultivation_map
   rescue => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.plan_relations_copy_failed', errors: e.message)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.plan_relations_copy_failed", errors: e.message)
     raise e
   end
 
   def copy_task_schedules(new_plan, field_cultivation_map)
-    plan_id = @session_data[:plan_id] || @session_data['plan_id']
+    plan_id = @session_data[:plan_id] || @session_data["plan_id"]
     reference_plan = CultivationPlan.includes(task_schedules: { task_schedule_items: :agricultural_task }).find(plan_id)
 
     invalid_item = TaskScheduleItem
@@ -955,8 +955,8 @@ class PlanSaveService
         cultivation_plan: new_plan,
         field_cultivation_id: new_field_cultivation_id,
         category: reference_schedule.category,
-        status: reference_schedule.status || 'active',
-        source: 'copied_from_public_plan',
+        status: reference_schedule.status || "active",
+        source: "copied_from_public_plan",
         generated_at: reference_schedule.generated_at
       )
 
@@ -1024,40 +1024,40 @@ class PlanSaveService
   def requires_gdd?(_reference_item)
     true
   end
-  
+
   # 作付け期間の平均から年度を算出（既存データ用）
   # @param reference_plan [CultivationPlan] 参照プラン
   # @return [Integer] 計画年度
   def calculate_plan_year_from_cultivations(reference_plan)
     field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
-    
+
     # 作付けが存在しない場合は現在の年度を返す
     if field_cultivations.empty?
       Rails.logger.info "⚠️ [PlanSaveService] No field_cultivations found, using current year: #{Date.current.year}"
       return Date.current.year
     end
-    
+
     # 各作付けの期間の中間点を計算
     midpoints = field_cultivations.map do |cultivation|
       start_date = cultivation.start_date
       completion_date = cultivation.completion_date
-      
+
       # 日数を計算して中間点を取得
       days_diff = (completion_date - start_date).to_i
       start_date + days_diff / 2
     end
-    
+
     # 中間点の平均を計算（ユリウス通日を使って平均を計算）
     julian_days = midpoints.map(&:jd)
     avg_julian_day = julian_days.sum / julian_days.size
     avg_date = Date.jd(avg_julian_day.round)
-    
+
     plan_year = avg_date.year
-    
+
     Rails.logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
     Rails.logger.debug "📊 [PlanSaveService] Average midpoint date: #{avg_date}"
     Rails.logger.debug "📊 [PlanSaveService] Calculated plan_year: #{plan_year}"
-    
+
     plan_year
   end
 
@@ -1066,7 +1066,7 @@ class PlanSaveService
   # @return [Hash] { start_date: Date, end_date: Date }
   def calculate_planning_dates_from_cultivations(reference_plan)
     field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
-    
+
     # 作付けが存在しない場合は現在年から2年間を返す
     if field_cultivations.empty?
       Rails.logger.info "⚠️ [PlanSaveService] No field_cultivations found, using default 2-year period from current date"
@@ -1075,32 +1075,32 @@ class PlanSaveService
         end_date: Date.new(Date.current.year + 1, 12, 31)
       }
     end
-    
+
     # 全ての作付けの開始日と終了日から最小・最大を取得
     start_dates = field_cultivations.pluck(:start_date).compact
     end_dates = field_cultivations.pluck(:completion_date).compact
-    
+
     min_start_date = start_dates.min
     max_end_date = end_dates.max
-    
+
     # 計画期間は作付け期間の前後1年を追加
     planning_start_date = min_start_date.beginning_of_year
     planning_end_date = max_end_date.end_of_year
-    
+
     Rails.logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
     Rails.logger.debug "📊 [PlanSaveService] Min start date: #{min_start_date}, Max end date: #{max_end_date}"
     Rails.logger.debug "📊 [PlanSaveService] Calculated planning dates: #{planning_start_date} to #{planning_end_date}"
-    
+
     {
       start_date: planning_start_date,
       end_date: planning_end_date
     }
   end
-  
+
   def copy_crop_stages(reference_crop, new_crop)
     CropSchedule::CopyReferenceCropStages.call(reference_crop, new_crop)
   rescue => e
-    Rails.logger.error I18n.t('services.plan_save_service.errors.crop_stage_copy_failed', errors: e.message)
+    Rails.logger.error I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)
     raise e
   end
 end

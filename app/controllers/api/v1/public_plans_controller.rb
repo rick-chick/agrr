@@ -11,7 +11,7 @@ class Api::V1::PublicPlansController < Api::V1::BaseController
     plan_id = params[:plan_id]
     unless plan_id.present?
       Rails.logger.warn "❌ [API PublicPlans#save_plan] plan_id is missing"
-      render json: { success: false, error: 'plan_id is required' }, status: :bad_request
+      render json: { success: false, error: "plan_id is required" }, status: :bad_request
       return
     end
 
@@ -24,7 +24,7 @@ class Api::V1::PublicPlansController < Api::V1::BaseController
         {
           name: field.name,
           area: field.area,
-          coordinates: [35.0, 139.0] # デフォルト座標
+          coordinates: [ 35.0, 139.0 ] # デフォルト座標
         }
       end
 
@@ -35,26 +35,25 @@ class Api::V1::PublicPlansController < Api::V1::BaseController
         field_data: field_data
       }
 
-      # PlanSaveService を呼び出し
-      result = PlanSaveService.new(
+      result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
         user: current_user,
         session_data: save_data
-      ).call
+      )
 
       if result.success
         Rails.logger.info "✅ [API PublicPlans#save_plan] Plan saved successfully"
         render json: { success: true }
       else
         Rails.logger.error "❌ [API PublicPlans#save_plan] Save failed: #{result.error_message}"
-        render json: { success: false, error: result.error_message || 'Save failed' }, status: :unprocessable_entity
+        render json: { success: false, error: result.error_message || "Save failed" }, status: :unprocessable_entity
       end
     rescue ActiveRecord::RecordNotFound
       Rails.logger.warn "❌ [API PublicPlans#save_plan] Plan not found: #{plan_id}"
-      render json: { success: false, error: 'Plan not found' }, status: :not_found
+      render json: { success: false, error: "Plan not found" }, status: :not_found
     rescue => e
       Rails.logger.error "❌ [API PublicPlans#save_plan] Error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { success: false, error: 'Internal server error' }, status: :internal_server_error
+      render json: { success: false, error: "Internal server error" }, status: :internal_server_error
     end
   end
 end
