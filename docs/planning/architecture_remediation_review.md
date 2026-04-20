@@ -10,7 +10,7 @@
 | 区分 | 件数 | 備考 |
 |---|---|---|
 | 完了（要件通り） | 多数 | Phase 0（T-022b 含む）/ T-031〜T-036 / T-051〜T-054 / T-052 等（2026-04-20 時点でロードマップ主要項目を反映） |
-| 完了（暫定・要フォロー） | 0 | **T-030b**: `PlanSaveSession` を `PlanSaveContext` + `Mappers/*` + `Adapters::CultivationPlan::PlanCopyGateway` / `CropTaskScheduleBlueprintGateway` + `Calculators::PlanningDateCalculator` に分解済み（2026-04-20）。`test/services/plan_save_service_test.rb` は E2E として継続、Mapper/Gateway 単体テストは段階的拡張可。 |
+| 完了（暫定・要フォロー） | 0 | **T-030b**: 同上分解済み。E2E は [`test/domain/cultivation_plan/interactors/plan_save_session_test.rb`](../../test/domain/cultivation_plan/interactors/plan_save_session_test.rb)。Mapper 8 / Gateway 2 の単体テストを追加済み（2026-04-20 フォローアップ）。 |
 | 意図的未着手 | 3 | **T-041〜T-043**: `hotwire_removal_plan.md` の Angular 未移行画面が残るためゲート維持 |
 | ロードマップ外の副作用 | 0 | T-022b は独立コミット方針に整理済み |
 
@@ -62,7 +62,7 @@
 2. **Gateway**（`lib/adapters/cultivation_plan/`）: `PlanCopyGateway`（計画・関連・タスクスケジュール複製）、`CropTaskScheduleBlueprintGateway`（ブループリント一括挿入）。
 3. **Calculator**（`lib/domain/cultivation_plan/calculators/planning_date_calculator.rb`）: 通年/年次の日付・`normalize_decimal`。
 4. **Orchestrator**: `PlanSaveSession#call` が上記を順に呼び出し。共有状態は `PlanSaveContext`。
-5. 既存 E2E は `test/services/plan_save_service_test.rb`。追加の単体例: `test/domain/cultivation_plan/calculators/planning_date_calculator_test.rb`。
+5. E2E は `test/domain/cultivation_plan/interactors/plan_save_session_test.rb`。単体: `test/domain/cultivation_plan/mappers/*_test.rb`、`test/adapters/cultivation_plan/*_gateway_test.rb`、`test/domain/cultivation_plan/calculators/planning_date_calculator_test.rb`。
 
 ## 3. 作業残骸の untracked ファイル（解消済み）
 
@@ -84,7 +84,22 @@
 
 ### 継続（T-030b 深度）
 
-- `PlanSaveSession` 内の手続きを **Mapper + 複数 Persistence Gateway** へ抽出し、テストを層別に分解する。
+- Mapper / Gateway / Calculator への抽出と層別テストの土台は完了。**残る深掘り**（例: Interactor への完全吸収、top-level 名残の解消）は別タスクとする。
+
+### `app/services` 残存ファイル棚卸し（移設は未実施・T-055〜T-062 予約）
+
+| ID | パス | 役割の要約 | 移設先候補レイヤー |
+|---|---|---|---|
+| T-055 | [`app/services/agrr_service.rb`](../../app/services/agrr_service.rb) | `agrr` CLI/デーモンとのプロセス実行・プロトコル | `lib/adapters/agrr/`（プロセス I/O Gateway） |
+| T-056 | [`app/services/crop_ai_upsert_service.rb`](../../app/services/crop_ai_upsert_service.rb) | 作物マスタの AI 連携 Upsert | `lib/domain/crop/interactors/` + `lib/adapters/`（外部 API） |
+| T-057 | [`app/services/crop_task_schedule_blueprint_create_service.rb`](../../app/services/crop_task_schedule_blueprint_create_service.rb) | ブループリント作成オーケストレーション | `lib/domain/.../interactors/` + 既存 Gateway 再利用 |
+| T-058 | [`app/services/crop_task_schedule_blueprint_generator.rb`](../../app/services/crop_task_schedule_blueprint_generator.rb) | ブループリント生成ロジック | `lib/domain/`（ドメインサービス）または `lib/presenters/` |
+| T-059 | [`app/services/crops/task_schedule_blueprint_deletion_service.rb`](../../app/services/crops/task_schedule_blueprint_deletion_service.rb) | ブループリント削除 | `lib/domain/crop/interactors/` |
+| T-060 | [`app/services/fields_allocator.rb`](../../app/services/fields_allocator.rb) | 圃場面積割付 | `lib/domain/farm/` または `lib/domain/cultivation_plan/` |
+| T-061 | [`app/services/pest_crop_association_service.rb`](../../app/services/pest_crop_association_service.rb) | 害虫・作物関連付け | `lib/domain/pest/interactors/` |
+| T-062 | [`app/services/plan_copier.rb`](../../app/services/plan_copier.rb) | 計画の年度コピー | `lib/domain/cultivation_plan/interactors/` + Persistence Gateway |
+
+- **衛生**: `app/services/crop_schedule/` は空ディレクトリの残骸（git 管理外）。ワークスペースから削除済み。再出現した場合は削除してよい。
 
 ### Hotwire/Stimulus 撤去（§8）— **前提未達のため着手禁止**
 
@@ -98,5 +113,5 @@
 
 ## 推奨継続順序
 
-1. **T-030b 深度**（Gateway/Mapper/テスト分解）
+1. **T-055〜T-062**（`app/services` 残の段階的移設・1 ファイル 1 PR）
 2. Angular 未移行画面の完了 → **T-041〜T-043**
