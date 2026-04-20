@@ -90,11 +90,6 @@ export const routes: Routes = [
     loadComponent: () => import('./components/masters/fertilizes/fertilize-detail.component').then(m => m.FertilizeDetailComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'pests', 
-    loadComponent: () => import('./components/masters/pests/pest-list.component').then(m => m.PestListComponent),
-    canActivate: [authGuard] 
-  },
   {
     path: 'pesticides',
     loadComponent: () => import('./components/masters/pesticides/pesticide-list.component').then(m => m.PesticideListComponent),
@@ -256,5 +251,10 @@ export const routes: Routes = [
   { 
     path: 'terms', 
     loadComponent: () => import('./components/pages/terms/terms.component').then(m => m.TermsComponent) 
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./components/pages/not-found/not-found.component').then((m) => m.NotFoundComponent)
   }
 ];
