@@ -86,4 +86,4 @@ HTML Presenter が呼び出す View メソッドは以下とする。
 - 既存 API Presenter: `lib/presenters/api/farm/farm_create_presenter.rb`
 - 既存 Interactor: `lib/domain/farm/interactors/farm_create_interactor.rb`
 - 既存 Rails コントローラ: `app/controllers/farms_controller.rb`
-- HtmlCrudResponder: `app/controllers/concerns/html_crud_responder.rb`
+- ~~HtmlCrudResponder~~: 空マーカー concern は削除済み。HTML 応答は `lib/presenters/html/` の Presenter に統一する。
