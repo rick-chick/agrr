@@ -1098,62 +1098,7 @@ class PlanSaveService
   end
   
   def copy_crop_stages(reference_crop, new_crop)
-    reference_crop.crop_stages.each do |reference_stage|
-      # 既存のステージを検索
-      existing_stage = new_crop.crop_stages.find_by(name: reference_stage.name)
-      stage = existing_stage || CropStage.create!(
-        crop_id: new_crop.id,
-        name: reference_stage.name,
-        order: reference_stage.order
-      )
-      
-      Rails.logger.debug I18n.t('services.plan_save_service.messages.crop_stage_copied', stage_name: stage.name)
-      
-      # 温度要件をコピー（既に存在する場合はスキップ）
-      if reference_stage.temperature_requirement && !stage.temperature_requirement
-        TemperatureRequirement.create!(
-          crop_stage_id: stage.id,
-          base_temperature: reference_stage.temperature_requirement.base_temperature,
-          optimal_min: reference_stage.temperature_requirement.optimal_min,
-          optimal_max: reference_stage.temperature_requirement.optimal_max,
-          low_stress_threshold: reference_stage.temperature_requirement.low_stress_threshold,
-          high_stress_threshold: reference_stage.temperature_requirement.high_stress_threshold,
-          frost_threshold: reference_stage.temperature_requirement.frost_threshold,
-          sterility_risk_threshold: reference_stage.temperature_requirement.sterility_risk_threshold,
-          max_temperature: reference_stage.temperature_requirement.max_temperature
-        )
-        Rails.logger.debug I18n.t('services.plan_save_service.messages.temperature_requirement_copied', stage_name: stage.name)
-      end
-      
-      # 日照要件をコピー（既に存在する場合はスキップ）
-      if reference_stage.sunshine_requirement && !stage.sunshine_requirement
-        SunshineRequirement.create!(
-          crop_stage_id: stage.id,
-          minimum_sunshine_hours: reference_stage.sunshine_requirement.minimum_sunshine_hours,
-          target_sunshine_hours: reference_stage.sunshine_requirement.target_sunshine_hours
-        )
-        Rails.logger.debug I18n.t('services.plan_save_service.messages.sunshine_requirement_copied', stage_name: stage.name)
-      end
-      
-      # 熱量要件をコピー（既に存在する場合はスキップ）
-      if reference_stage.thermal_requirement && !stage.thermal_requirement
-        ThermalRequirement.create!(
-          crop_stage_id: stage.id,
-          required_gdd: reference_stage.thermal_requirement.required_gdd
-        )
-        Rails.logger.debug I18n.t('services.plan_save_service.messages.thermal_requirement_copied', stage_name: stage.name)
-      end
-
-      if reference_stage.nutrient_requirement && !stage.nutrient_requirement
-        NutrientRequirement.create!(
-          crop_stage_id: stage.id,
-          daily_uptake_n: reference_stage.nutrient_requirement.daily_uptake_n,
-          daily_uptake_p: reference_stage.nutrient_requirement.daily_uptake_p,
-          daily_uptake_k: reference_stage.nutrient_requirement.daily_uptake_k
-        )
-        Rails.logger.debug I18n.t('services.plan_save_service.messages.nutrient_requirement_copied', stage_name: stage.name)
-      end
-    end
+    CropSchedule::CopyReferenceCropStages.call(reference_crop, new_crop)
   rescue => e
     Rails.logger.error I18n.t('services.plan_save_service.errors.crop_stage_copy_failed', errors: e.message)
     raise e
