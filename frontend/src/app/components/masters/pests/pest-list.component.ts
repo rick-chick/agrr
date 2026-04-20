@@ -10,7 +10,8 @@ import { LOAD_PEST_LIST_OUTPUT_PORT } from '../../../usecase/pests/load-pest-lis
 import { DELETE_PEST_OUTPUT_PORT } from '../../../usecase/pests/delete-pest.output-port';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
-import { PestListRefreshService } from '../../../services/pest-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: PestListViewState = {
   loading: true,
@@ -81,7 +82,7 @@ export class PestListComponent implements PestListView, OnInit, OnDestroy {
   private readonly deleteUseCase = inject(DeletePestUseCase);
   private readonly presenter = inject(PestListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly pestListRefresh = inject(PestListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: PestListViewState = initialControl;
@@ -96,7 +97,7 @@ export class PestListComponent implements PestListView, OnInit, OnDestroy {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.pestListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.pests, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

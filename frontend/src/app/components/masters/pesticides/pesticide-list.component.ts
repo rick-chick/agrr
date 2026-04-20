@@ -10,7 +10,8 @@ import { LOAD_PESTICIDE_LIST_OUTPUT_PORT } from '../../../usecase/pesticides/loa
 import { DELETE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/delete-pesticide.output-port';
 import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
 import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
-import { PesticideListRefreshService } from '../../../services/pesticide-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: PesticideListViewState = {
   loading: true,
@@ -79,7 +80,7 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly pesticideListRefresh = inject(PesticideListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: PesticideListViewState = initialControl;
@@ -94,7 +95,7 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.pesticideListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.pesticides, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

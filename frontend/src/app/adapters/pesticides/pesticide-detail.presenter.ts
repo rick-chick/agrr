@@ -7,13 +7,14 @@ import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesti
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { PesticideListRefreshService } from '../../services/pesticide-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly pesticideListRefresh = inject(PesticideListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PesticideDetailView | null = null;
 
   setView(view: PesticideDetailView): void {
@@ -46,7 +47,7 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.pesticideListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pesticides)
       );
     }
   }

@@ -9,7 +9,8 @@ import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-por
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { FarmListRefreshService } from '../../services/farm-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class FarmDetailPresenter
@@ -17,7 +18,7 @@ export class FarmDetailPresenter
 {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly farmListRefresh = inject(FarmListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -74,7 +75,7 @@ export class FarmDetailPresenter
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.farmListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms)
       );
     }
   }

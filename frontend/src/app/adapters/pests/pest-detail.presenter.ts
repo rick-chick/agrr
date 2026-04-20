@@ -7,13 +7,14 @@ import { DeletePestOutputPort } from '../../usecase/pests/delete-pest.output-por
 import { DeletePestSuccessDto } from '../../usecase/pests/delete-pest.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { PestListRefreshService } from '../../services/pest-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePestOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly pestListRefresh = inject(PestListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PestDetailView | null = null;
 
   setView(view: PestDetailView): void {
@@ -46,7 +47,7 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.pestListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pests)
       );
     }
   }

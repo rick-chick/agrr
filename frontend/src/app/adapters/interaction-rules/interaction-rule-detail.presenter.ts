@@ -7,13 +7,14 @@ import { DeleteInteractionRuleOutputPort } from '../../usecase/interaction-rules
 import { DeleteInteractionRuleSuccessDto } from '../../usecase/interaction-rules/delete-interaction-rule.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { InteractionRuleListRefreshService } from '../../services/interaction-rule-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetailOutputPort, DeleteInteractionRuleOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly interactionRuleListRefresh = inject(InteractionRuleListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: InteractionRuleDetailView | null = null;
 
   setView(view: InteractionRuleDetailView): void {
@@ -46,7 +47,7 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.interactionRuleListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.interactionRules)
       );
     }
   }

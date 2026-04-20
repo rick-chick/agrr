@@ -13,7 +13,8 @@ import { LOAD_INTERACTION_RULE_LIST_OUTPUT_PORT } from '../../../usecase/interac
 import { DELETE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/delete-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
 import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
-import { InteractionRuleListRefreshService } from '../../../services/interaction-rule-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: InteractionRuleListViewState = {
   loading: true,
@@ -81,7 +82,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly interactionRuleListRefresh = inject(InteractionRuleListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: InteractionRuleListViewState = initialControl;
@@ -96,7 +97,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.interactionRuleListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.interactionRules, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

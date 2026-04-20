@@ -11,7 +11,8 @@ import { LOAD_CROP_LIST_OUTPUT_PORT } from '../../../usecase/crops/load-crop-lis
 import { DELETE_CROP_OUTPUT_PORT } from '../../../usecase/crops/delete-crop.output-port';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
-import { CropListRefreshService } from '../../../services/crop-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: CropListViewState = {
   loading: true,
@@ -79,7 +80,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly cropListRefresh = inject(CropListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: CropListViewState = initialControl;
@@ -94,7 +95,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.cropListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.crops, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

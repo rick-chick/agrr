@@ -13,7 +13,8 @@ import { LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT } from '../../../usecase/agricu
 import { DELETE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/delete-agricultural-task.output-port';
 import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
 import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
-import { AgriculturalTaskListRefreshService } from '../../../services/agricultural-task-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: AgriculturalTaskListViewState = {
   loading: true,
@@ -94,7 +95,7 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly agriculturalTaskListRefresh = inject(AgriculturalTaskListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: AgriculturalTaskListViewState = initialControl;
@@ -109,7 +110,7 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.agriculturalTaskListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.agriculturalTasks, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

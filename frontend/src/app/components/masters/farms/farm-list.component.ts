@@ -10,7 +10,8 @@ import { LOAD_FARM_LIST_OUTPUT_PORT } from '../../../usecase/farms/load-farm-lis
 import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
-import { FarmListRefreshService } from '../../../services/farm-list-refresh.service';
+import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
 const initialControl: FarmListViewState = {
   loading: true,
@@ -86,7 +87,7 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   private readonly deleteUseCase = inject(DeleteFarmUseCase);
   private readonly presenter = inject(FarmListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly farmListRefresh = inject(FarmListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: FarmListViewState = initialControl;
@@ -101,7 +102,7 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.load();
-    this.unsubRefresh = this.farmListRefresh.onRefresh(() => this.refreshAfterUndo());
+    this.unsubRefresh = this.listRefreshBus.onRefresh(LIST_REFRESH_CHANNEL.farms, () => this.refreshAfterUndo());
   }
 
   ngOnDestroy(): void {

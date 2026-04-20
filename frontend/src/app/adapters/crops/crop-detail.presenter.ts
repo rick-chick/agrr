@@ -7,13 +7,14 @@ import { DeleteCropOutputPort } from '../../usecase/crops/delete-crop.output-por
 import { DeleteCropSuccessDto } from '../../usecase/crops/delete-crop.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { CropListRefreshService } from '../../services/crop-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class CropDetailPresenter implements LoadCropDetailOutputPort, DeleteCropOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly cropListRefresh = inject(CropListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: CropDetailView | null = null;
 
   setView(view: CropDetailView): void {
@@ -46,7 +47,7 @@ export class CropDetailPresenter implements LoadCropDetailOutputPort, DeleteCrop
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.cropListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.crops)
       );
     }
   }

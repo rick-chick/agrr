@@ -7,13 +7,14 @@ import { DeleteAgriculturalTaskOutputPort } from '../../usecase/agricultural-tas
 import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/delete-agricultural-task.dtos';
 import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-import { AgriculturalTaskListRefreshService } from '../../services/agricultural-task-list-refresh.service';
+import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 @Injectable()
 export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDetailOutputPort, DeleteAgriculturalTaskOutputPort {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
-  private readonly agriculturalTaskListRefresh = inject(AgriculturalTaskListRefreshService);
+  private readonly listRefreshBus = inject(ListRefreshBus);
   private view: AgriculturalTaskDetailView | null = null;
 
   setView(view: AgriculturalTaskDetailView): void {
@@ -46,7 +47,7 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.agriculturalTaskListRefresh.refresh()
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.agriculturalTasks)
       );
     }
   }
