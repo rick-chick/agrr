@@ -341,7 +341,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cookies[:session_id] = session.session_id
 
     # PlanSaveServiceを直接呼び出し
-    result = PlanSaveSession.new(
+    result = Domain::CultivationPlan::Interactors::PlanSaveSession.new(
       user: user,
       session_data: session_data
     ).call
@@ -391,7 +391,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # APIリクエスト（Interactor をモックしてコントローラ挙動のみ検証）
     cookies[:session_id] = session.session_id
-    ok = PlanSaveSession::Result.new
+    ok = Domain::CultivationPlan::Interactors::PlanSaveSession::Result.new
     ok.success = true
     Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| ok }) do
       post "/api/v1/public_plans/save_plan",
@@ -518,7 +518,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # APIリクエスト（Interactor をモックして保存失敗をシミュレート）
     cookies[:session_id] = session.session_id
-    bad = PlanSaveSession::Result.new
+    bad = Domain::CultivationPlan::Interactors::PlanSaveSession::Result.new
     bad.success = false
     bad.error_message = "作成できるFarmは4件までです"
     Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| bad }) do

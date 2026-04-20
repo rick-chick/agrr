@@ -36,7 +36,7 @@
 
 ## 4. 既存サーバー側との関係
 
-- 既存の `PlanSaveSession`（`app/services/plan_save_session.rb`）を `Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session` 経由で利用する。
+- 既存の `Domain::CultivationPlan::Interactors::PlanSaveSession`（`lib/domain/cultivation_plan/interactors/plan_save_session.rb`）を `CultivationPlanCreateInteractor.save_from_public_plan_session` 経由で利用する。
 - 既存の HTML 用 `save_plan` / `process_saved_plan`（PublicPlansController）はそのまま維持する。Rails に `post 'public_plans/save_plan'` と `get 'public_plans/process_saved_plan'` のルートが未定義の場合は追加する（ERB フォーム・OAuth コールバック用）。
 
 ## 5. 実装チェックリスト

@@ -6,7 +6,7 @@ module Domain
       class CultivationPlanCreateInteractor < Domain::CultivationPlan::Ports::CultivationPlanCreateInputPort
         # 公開プラン保存フロー（セッションデータ → ユーザー農場・マスタ・私有計画）。PlanSaveSession へ委譲。
         def self.save_from_public_plan_session(user:, session_data:)
-          ::PlanSaveSession.new(user: user, session_data: session_data).call
+          PlanSaveSession.new(user: user, session_data: session_data).call
         end
 
         def initialize(output_port:, gateway:, logger:)

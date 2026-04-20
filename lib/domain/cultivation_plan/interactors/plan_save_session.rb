@@ -2,7 +2,10 @@
 
 require "set"
 
-class PlanSaveSession
+module Domain
+  module CultivationPlan
+    module Interactors
+      class PlanSaveSession
   include ActiveModel::Model
 
   class InvalidTaskScheduleItemError < StandardError; end
@@ -99,7 +102,7 @@ class PlanSaveSession
     return unless @reference_crop_id_to_user_crop_id.present?
 
     @reference_crop_id_to_user_crop_id.each do |reference_crop_id, user_crop_id|
-      reference_blueprints = CropTaskScheduleBlueprint
+      reference_blueprints = ::CropTaskScheduleBlueprint
                                .where(crop_id: reference_crop_id)
                                .includes(:agricultural_task)
                                .ordered
@@ -107,7 +110,7 @@ class PlanSaveSession
       next if reference_blueprints.empty?
 
       timestamp = Time.current
-      allowed_columns = CropTaskScheduleBlueprint.column_names.map(&:to_sym)
+      allowed_columns = ::CropTaskScheduleBlueprint.column_names.map(&:to_sym)
 
       blueprint_attributes = reference_blueprints.map do |bp|
         # 参照元タスクIDの決定（sourceがあれば優先、無ければ自身のagri task）
@@ -138,9 +141,9 @@ class PlanSaveSession
         attrs.select { |key, _| allowed_columns.include?(key) || [ :created_at, :updated_at ].include?(key) }
       end
 
-      CropTaskScheduleBlueprint.transaction do
-        CropTaskScheduleBlueprint.where(crop_id: user_crop_id).delete_all
-        CropTaskScheduleBlueprint.insert_all!(blueprint_attributes)
+      ::CropTaskScheduleBlueprint.transaction do
+        ::CropTaskScheduleBlueprint.where(crop_id: user_crop_id).delete_all
+        ::CropTaskScheduleBlueprint.insert_all!(blueprint_attributes)
       end
     end
   end
@@ -155,7 +158,7 @@ class PlanSaveSession
     farm_id = @session_data[:farm_id] || @session_data["farm_id"]
     Rails.logger.debug I18n.t("services.plan_save_service.debug.farm_id_extracted", farm_id: farm_id)
 
-    reference_farm = Farm.find(farm_id)
+    reference_farm = ::Farm.find(farm_id)
     Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_farm_found", farm_name: reference_farm.name)
 
     existing_farm = @user.farms.find_by(source_farm_id: reference_farm.id)
@@ -204,7 +207,7 @@ class PlanSaveSession
     plan_id = @session_data[:plan_id] || @session_data["plan_id"]
     raise StandardError, "plan_id is required to derive crops" unless plan_id
 
-    reference_plan = CultivationPlan.includes(cultivation_plan_crops: [ crop: { crop_stages: [ :temperature_requirement, :sunshine_requirement, :thermal_requirement ] } ]).find(plan_id)
+    reference_plan = ::CultivationPlan.includes(cultivation_plan_crops: [ crop: { crop_stages: [ :temperature_requirement, :sunshine_requirement, :thermal_requirement ] } ]).find(plan_id)
     reference_region = reference_plan.farm&.region || @current_farm_region
 
     user_crops = []
@@ -300,7 +303,7 @@ class PlanSaveSession
     reference_crop_groups = get_reference_crop_groups
     return [] if reference_crop_groups.empty?
 
-    reference_scope = InteractionRule.reference.where(rule_type: "continuous_cultivation")
+    reference_scope = ::InteractionRule.reference.where(rule_type: "continuous_cultivation")
     reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     interaction_rules = []
@@ -353,7 +356,7 @@ class PlanSaveSession
     reference_crop_ids = get_reference_crop_ids
     return [] if reference_crop_ids.empty?
 
-    reference_scope = Pest.reference
+    reference_scope = ::Pest.reference
     reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     reference_scope = reference_scope.includes(
@@ -474,7 +477,7 @@ class PlanSaveSession
       user_crop_id = user_crop_id_for_reference_crop(crop_pest.crop_id)
       next unless user_crop_id
 
-      CropPest.create!(
+      ::CropPest.create!(
         crop_id: user_crop_id,
         pest: new_pest
       )
@@ -503,7 +506,7 @@ class PlanSaveSession
     reference_crop_ids = get_reference_crop_ids
     return [] if reference_crop_ids.empty?
 
-    crops = Crop.where(id: reference_crop_ids)
+    crops = ::Crop.where(id: reference_crop_ids)
     # 連作ルールは作物のnameとgroupsの両方を使用する可能性があるため、両方を取得
     groups = crops.pluck(:name)
     crops.each do |crop|
@@ -530,7 +533,7 @@ class PlanSaveSession
     reference_crop_ids = get_reference_crop_ids
     return [] if reference_crop_ids.empty?
 
-    reference_scope = AgriculturalTask.reference
+    reference_scope = ::AgriculturalTask.reference
     reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     reference_scope = reference_scope.includes(crop_task_templates: :crop)
@@ -593,7 +596,7 @@ class PlanSaveSession
   end
 
   def ensure_crop_task_template!(crop_id:, task:)
-    crop = Crop.find_by(id: crop_id)
+    crop = ::Crop.find_by(id: crop_id)
     return unless crop
 
     template = crop.crop_task_templates.find_or_initialize_by(agricultural_task_id: task.id)
@@ -614,7 +617,7 @@ class PlanSaveSession
   end
 
   def copy_fertilizes_for_region(region)
-    reference_scope = Fertilize.reference
+    reference_scope = ::Fertilize.reference
     reference_scope = reference_scope.where(region: [ region, nil ]) if region.present?
 
     user_fertilizes = []
@@ -655,18 +658,18 @@ class PlanSaveSession
 
   def generate_unique_fertilize_name(base_name)
     candidate = "#{base_name} (コピー)"
-    return candidate unless Fertilize.exists?(name: candidate)
+    return candidate unless ::Fertilize.exists?(name: candidate)
 
     suffix = 2
     loop do
       candidate = "#{base_name} (コピー #{suffix})"
-      break candidate unless Fertilize.exists?(name: candidate)
+      break candidate unless ::Fertilize.exists?(name: candidate)
       suffix += 1
     end
   end
 
   def copy_pesticides_for_region(region)
-    reference_scope = Pesticide.reference.includes(
+    reference_scope = ::Pesticide.reference.includes(
       :pesticide_usage_constraint,
       :pesticide_application_detail,
       :crop,
@@ -750,7 +753,7 @@ class PlanSaveSession
     plan_id = @session_data[:plan_id] || @session_data["plan_id"]
     Rails.logger.debug I18n.t("services.plan_save_service.debug.plan_id_extracted", plan_id: plan_id)
 
-    reference_plan = CultivationPlan.includes(:field_cultivations).find(plan_id)
+    reference_plan = ::CultivationPlan.includes(:field_cultivations).find(plan_id)
     Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_plan_found", plan_name: reference_plan.plan_name)
 
     # 参照計画が通年計画（plan_yearがnull）の場合は、plan_yearを設定せず、期間を計算
@@ -762,12 +765,12 @@ class PlanSaveSession
     else
       # 既存データ（plan_yearあり）: 従来通りplan_yearから計算
       plan_year = calculate_plan_year_from_cultivations(reference_plan)
-      planning_dates = CultivationPlan.calculate_planning_dates(plan_year)
+      planning_dates = ::CultivationPlan.calculate_planning_dates(plan_year)
       Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
     end
 
     # 新しい計画を作成
-    new_plan = CultivationPlan.create!(
+    new_plan = ::CultivationPlan.create!(
       farm: farm,
       user: @user,
       total_area: reference_plan.total_area,
@@ -852,7 +855,7 @@ class PlanSaveSession
   def copy_plan_relations(new_plan)
     # 参照計画を取得（includesで関連データを一括読み込み）
     plan_id = @session_data[:plan_id] || @session_data["plan_id"]
-    reference_plan = CultivationPlan.includes(
+    reference_plan = ::CultivationPlan.includes(
       :cultivation_plan_fields,
       :cultivation_plan_crops,
       :field_cultivations,
@@ -862,7 +865,7 @@ class PlanSaveSession
 
     # 1. CultivationPlanFieldを新規作成
     new_fields = reference_plan.cultivation_plan_fields.map do |reference_field|
-      CultivationPlanField.create!(
+      ::CultivationPlanField.create!(
         cultivation_plan: new_plan,
         name: reference_field.name,
         area: reference_field.area,
@@ -877,7 +880,7 @@ class PlanSaveSession
       user_crop_id = @ref_cpc_id_to_user_crop_id[reference_crop_plan.id]
       next unless user_crop_id
 
-      new_crop = CultivationPlanCrop.create!(
+      new_crop = ::CultivationPlanCrop.create!(
         cultivation_plan: new_plan,
         crop_id: user_crop_id,
         name: reference_crop_plan.name,
@@ -906,7 +909,7 @@ class PlanSaveSession
         next
       end
 
-      new_field_cultivation = FieldCultivation.create!(
+      new_field_cultivation = ::FieldCultivation.create!(
         cultivation_plan: new_plan,
         cultivation_plan_field: new_field,
         cultivation_plan_crop: new_crop,
@@ -936,9 +939,9 @@ class PlanSaveSession
 
   def copy_task_schedules(new_plan, field_cultivation_map)
     plan_id = @session_data[:plan_id] || @session_data["plan_id"]
-    reference_plan = CultivationPlan.includes(task_schedules: { task_schedule_items: :agricultural_task }).find(plan_id)
+    reference_plan = ::CultivationPlan.includes(task_schedules: { task_schedule_items: :agricultural_task }).find(plan_id)
 
-    invalid_item = TaskScheduleItem
+    invalid_item = ::TaskScheduleItem
                      .joins(:task_schedule)
                      .find_by(task_schedules: { cultivation_plan_id: plan_id }, gdd_trigger: nil)
     if invalid_item
@@ -951,7 +954,7 @@ class PlanSaveSession
       new_field_cultivation_id = field_cultivation_map[reference_schedule.field_cultivation_id]
       next unless new_field_cultivation_id
 
-      new_schedule = TaskSchedule.create!(
+      new_schedule = ::TaskSchedule.create!(
         cultivation_plan: new_plan,
         field_cultivation_id: new_field_cultivation_id,
         category: reference_schedule.category,
@@ -967,7 +970,7 @@ class PlanSaveSession
           raise InvalidTaskScheduleItemError, "Reference TaskScheduleItem##{reference_item.id} has nil gdd_trigger"
         end
 
-        TaskScheduleItem.create!(
+        ::TaskScheduleItem.create!(
           task_schedule: new_schedule,
           task_type: reference_item.task_type,
           name: reference_item.name,
@@ -982,7 +985,7 @@ class PlanSaveSession
           time_per_sqm: reference_item.time_per_sqm,
           amount: reference_item.amount,
           amount_unit: reference_item.amount_unit,
-          status: reference_item.status.presence || TaskScheduleItem::STATUSES[:planned],
+          status: reference_item.status.presence || ::TaskScheduleItem::STATUSES[:planned],
           actual_date: reference_item.actual_date,
           actual_notes: reference_item.actual_notes,
           rescheduled_at: reference_item.rescheduled_at,
@@ -1098,9 +1101,13 @@ class PlanSaveSession
   end
 
   def copy_crop_stages(reference_crop, new_crop)
-    CropSchedule::CopyReferenceCropStages.call(reference_crop, new_crop)
+    Domain::Crop::Interactors::CopyReferenceCropStages.call(reference_crop, new_crop)
   rescue => e
     Rails.logger.error I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)
     raise e
+  end
+end
+
+    end
   end
 end
