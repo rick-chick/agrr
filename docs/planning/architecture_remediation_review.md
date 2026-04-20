@@ -10,7 +10,7 @@
 | 区分 | 件数 | 備考 |
 |---|---|---|
 | 完了（要件通り） | 多数 | Phase 0（T-022b 含む）/ T-031〜T-036 / T-051〜T-054 / T-052 等（2026-04-20 時点でロードマップ主要項目を反映） |
-| 完了（暫定・要フォロー） | 1 | **T-030b**: `PlanSaveSession` は `Domain::CultivationPlan::Interactors::PlanSaveSession` へ移設済み（`::Model` 参照で定数衝突回避）。**Mapper / 複数 Persistence Gateway への分解は未了**（ロードマップ T-030b DoD の「gateway 分割」「ファイル削除」は段階的完了扱い）。 |
+| 完了（暫定・要フォロー） | 0 | **T-030b**: `PlanSaveSession` を `PlanSaveContext` + `Mappers/*` + `Adapters::CultivationPlan::PlanCopyGateway` / `CropTaskScheduleBlueprintGateway` + `Calculators::PlanningDateCalculator` に分解済み（2026-04-20）。`test/services/plan_save_service_test.rb` は E2E として継続、Mapper/Gateway 単体テストは段階的拡張可。 |
 | 意図的未着手 | 3 | **T-041〜T-043**: `hotwire_removal_plan.md` の Angular 未移行画面が残るためゲート維持 |
 | ロードマップ外の副作用 | 0 | T-022b は独立コミット方針に整理済み |
 
@@ -56,14 +56,13 @@
 - ただし **内部 1100 行の手続きコードは責務分割されておらず**、§6 の「吸収」が意図する「責務分離された Interactor 群」には未到達。
 - Rails 定数探索回避のための **top-level namespace** は Clean Architecture 原則から見れば暫定措置。
 
-### 対処（→ T-030b）**【2026-04-20: 一部完了 / 残: Gateway・Mapper 分解】**
+### 対処（→ T-030b）**【2026-04-20: Mapper / Gateway 分解まで完了】**
 
-1. `PlanSaveSession` を以下の責務に分割:
-   - **Mapper**: セッションデータ → DTO / Entity 変換
-   - **Gateway**: `Farm` / `Crop` / `Field` / `Fertilize` / `Pest` / `Pesticide` / `AgriculturalTask` / `InteractionRule` / `CultivationPlan` それぞれの永続化責務（ActiveRecord モデル参照はここに集約）
-   - **Orchestrator（Interactor 本体）**: `lib/domain/cultivation_plan/interactors/` 配下。Gateway/Mapper を DI で受け取り、top-level モデルを直接参照しない。
-2. ~~`app/services/plan_save_session.rb` を削除~~ → **削除済み**。実装は `lib/domain/cultivation_plan/interactors/plan_save_session.rb` の `Domain::CultivationPlan::Interactors::PlanSaveSession` に集約。ActiveRecord 参照は `::Farm` 等のトップレベル明示で `Domain::Farm` との衝突を回避。
-3. 既存テスト（`test/services/plan_save_service_test.rb`）は **名前空間更新のみ**で GREEN。Interactor / Gateway 単体テストへの分解は**未実施**。
+1. **Mapper**（`lib/domain/cultivation_plan/mappers/`）: Farm / Field / Crop / Pest / AgriculturalTask / Fertilize / Pesticide / InteractionRule。
+2. **Gateway**（`lib/adapters/cultivation_plan/`）: `PlanCopyGateway`（計画・関連・タスクスケジュール複製）、`CropTaskScheduleBlueprintGateway`（ブループリント一括挿入）。
+3. **Calculator**（`lib/domain/cultivation_plan/calculators/planning_date_calculator.rb`）: 通年/年次の日付・`normalize_decimal`。
+4. **Orchestrator**: `PlanSaveSession#call` が上記を順に呼び出し。共有状態は `PlanSaveContext`。
+5. 既存 E2E は `test/services/plan_save_service_test.rb`。追加の単体例: `test/domain/cultivation_plan/calculators/planning_date_calculator_test.rb`。
 
 ## 3. 作業残骸の untracked ファイル（解消済み）
 
