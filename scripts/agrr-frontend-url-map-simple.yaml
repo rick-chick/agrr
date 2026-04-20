@@ -1,3 +1,4 @@
+# Angular は PathLocationStrategy（ハッシュなし）。未一致パスは /* → /index.html へフォールバックして SPA を配信する。
 creationTimestamp: '2026-02-04T02:31:36.040-08:00'
 defaultService: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
 fingerprint: jBVyFlSQMDg=
