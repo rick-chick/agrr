@@ -27,20 +27,20 @@
 - `CropTaskTemplateBackfillService`を修正するか削除する
 - または、テストをスキップする
 
-### 2. PlanSaveServiceTest（2エラー）
-**問題**: テスト内で`agricultural_task_crops`テーブルを参照している
+### 2. PlanSaveSessionTest（2エラー）※当時の記録
+**問題**: テスト内で`agricultural_task_crops`テーブルを参照していた
 
-**エラー箇所**:
-- `test_copies_task_schedules_and_items_from_reference_plan` (1464行目)
-- `test_raises_error_when_reference_agrr_item_loses_gdd_trigger` (1572行目)
+**エラー箇所（※ 参考: 当時の行番号。現行は `test/domain/cultivation_plan/interactors/plan_save_session_test.rb`）**:
+- `test "copies task schedules and items from reference plan"`（当時 1464 行付近 → 現行では該当テスト名で検索）
+- `test "raises error when reference agrr item loses gdd trigger"`（当時 1572 行付近）
 
-**修正方針**: 該当箇所を確認して、`CropTaskTemplate`を使用するように修正
+**修正方針**: 該当箇所を確認して、`CropTaskTemplate`を使用するように修正（**現行テストでは対応済み**）
 
 ## 修正が必要なファイル
 
 ### テストコード（修正可能）
-1. **`test/services/plan_save_service_test.rb`**
-   - 1464行目、1572行目: `agricultural_task_crops`テーブル参照を修正
+1. **`test/domain/cultivation_plan/interactors/plan_save_session_test.rb`**
+   - 当時の 1464 / 1572 行付近: `agricultural_task_crops`テーブル参照を修正（現行では解消済み）
 
 ### サービスコード（テストコードでは修正不可）
 2. **`app/services/crop_task_template_backfill_service.rb`**
@@ -55,5 +55,9 @@
 
 **残りの問題**: 
 - サービスコードの問題（`CropTaskTemplateBackfillService`）
-- `PlanSaveServiceTest`の2箇所（テストコードで修正可能）
+- ~~`PlanSaveSessionTest`の2箇所~~（テストコード側は現行で解消済み）
+
+---
+
+*2026-04-20: 公開プラン保存フローの E2E テストのファイル名・クラス名を `plan_save_session_test` / `PlanSaveSessionTest` に追随して参照を更新。*
 

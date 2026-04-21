@@ -526,10 +526,10 @@ us:
 
 #### 6.1 単体テスト
 ```ruby
-# test/services/plan_save_service_test.rb
+# test/domain/cultivation_plan/interactors/plan_save_session_test.rb
 require 'test_helper'
 
-class PlanSaveServiceTest < ActiveSupport::TestCase
+class Domain::CultivationPlan::Interactors::PlanSaveSessionTest < ActiveSupport::TestCase
   def setup
     @user = users(:one)
     @session_data = {
@@ -541,16 +541,16 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
   
   test "should save plan successfully" do
-    service = PlanSaveService.new(user: @user, session_data: @session_data)
-    result = service.call
+    session = Domain::CultivationPlan::Interactors::PlanSaveSession.new(user: @user, session_data: @session_data)
+    result = session.call
     
     assert result.success?
     assert @user.cultivation_plans.count > 0
   end
   
   test "should create user farm from reference farm" do
-    service = PlanSaveService.new(user: @user, session_data: @session_data)
-    result = service.call
+    session = Domain::CultivationPlan::Interactors::PlanSaveSession.new(user: @user, session_data: @session_data)
+    result = session.call
     
     assert result.success?
     assert @user.farms.count > 0
@@ -558,8 +558,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
   
   test "should create user crops from reference crops" do
-    service = PlanSaveService.new(user: @user, session_data: @session_data)
-    result = service.call
+    session = Domain::CultivationPlan::Interactors::PlanSaveSession.new(user: @user, session_data: @session_data)
+    result = session.call
     
     assert result.success?
     assert @user.crops.count > 0
@@ -567,8 +567,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
   
   test "should establish master data relationships" do
-    service = PlanSaveService.new(user: @user, session_data: @session_data)
-    result = service.call
+    session = Domain::CultivationPlan::Interactors::PlanSaveSession.new(user: @user, session_data: @session_data)
+    result = session.call
     
     assert result.success?
     
@@ -581,8 +581,8 @@ class PlanSaveServiceTest < ActiveSupport::TestCase
   end
   
   test "should copy crop stages with requirements" do
-    service = PlanSaveService.new(user: @user, session_data: @session_data)
-    result = service.call
+    session = Domain::CultivationPlan::Interactors::PlanSaveSession.new(user: @user, session_data: @session_data)
+    result = session.call
     
     assert result.success?
     

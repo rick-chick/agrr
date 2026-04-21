@@ -29,13 +29,8 @@
   - このアサーションは不要（CropTaskTemplateで確認すべき）
 
 #### サービステスト
-- `test/services/plan_save_service_test.rb`
-  - 582行目: `AgriculturalTaskCrop.create!`
-  - 591行目: `AgriculturalTaskCrop.create!`
-  - 600行目: `AgriculturalTaskCrop.create!`
-  - 666行目: `AgriculturalTaskCrop.create!`
-  - 1428行目: `AgriculturalTaskCrop.create!`
-  - 1536行目: `AgriculturalTaskCrop.create!`
+- `test/domain/cultivation_plan/interactors/plan_save_session_test.rb`
+  - ※ 参考: 当時の行番号（582, 591, 600, 666, 1428, 1536）で `AgriculturalTaskCrop.create!` を列挙していた。**現行テストでは当該参照は解消済み**。
 
 - `test/services/crop_task_template_backfill_service_test.rb`
   - 7行目: `AgriculturalTaskCrop.create!`
@@ -104,3 +99,6 @@
 - テスト失敗: 1件
 - 合計: 40件のテストが`agricultural_task_crops`テーブル削除の影響を受けている
 
+---
+
+*2026-04-20: 上記「サービステスト」のファイル/クラス名を現行の `plan_save_session_test` に追随して更新。*
