@@ -3,7 +3,7 @@
 require "test_helper"
 require "stringio"
 
-class PlanCopierTest < ActiveSupport::TestCase
+class Domain::CultivationPlan::Interactors::PlanCopierTest < ActiveSupport::TestCase
   def setup
     @user = User.create!(
       email: "plan_copier_user_#{SecureRandom.hex(4)}@example.com",
@@ -44,7 +44,11 @@ class PlanCopierTest < ActiveSupport::TestCase
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    result = PlanCopier.new(source_plan: source_plan, new_year: plan_year + 1, user: @user).call
+    result = Domain::CultivationPlan::Interactors::PlanCopier.new(
+      source_plan: source_plan,
+      new_year: plan_year + 1,
+      user: @user
+    ).call
 
     assert result.success?, result.errors.join(", ")
     new_plan = result.new_plan
