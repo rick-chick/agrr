@@ -238,7 +238,7 @@ end
 
 #### 関連ファイル
 - `app/controllers/plans_controller.rb`（`copy`メソッド）
-- `app/services/plan_copier.rb`（存在する場合）
+- `lib/domain/cultivation_plan/interactors/plan_copier.rb` / `Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year`
 
 ---
 

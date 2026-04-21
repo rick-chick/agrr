@@ -103,7 +103,6 @@
 | T-059 | [`app/services/crops/task_schedule_blueprint_deletion_service.rb`](../../app/services/crops/task_schedule_blueprint_deletion_service.rb) | ブループリント削除 | `lib/domain/crop/interactors/` |
 | T-060 | [`app/services/fields_allocator.rb`](../../app/services/fields_allocator.rb) | 圃場面積割付 | `lib/domain/farm/` または `lib/domain/cultivation_plan/` |
 | T-061 | [`app/services/pest_crop_association_service.rb`](../../app/services/pest_crop_association_service.rb) | 害虫・作物関連付け | `lib/domain/pest/interactors/` |
-| T-062 | [`app/services/plan_copier.rb`](../../app/services/plan_copier.rb) | 計画の年度コピー | `lib/domain/cultivation_plan/interactors/` + Persistence Gateway |
 
 - **衛生**: `app/services/crop_schedule/` は空ディレクトリの残骸（git 管理外）。ワークスペースから削除済み。再出現した場合は削除してよい。
 
@@ -116,8 +115,9 @@
 - T-031〜T-034 / T-035（`crop_schedule` → domain / adapter / presenter）/ T-036（`deletion_undo` を **`lib/deletion_undo/`** へ移設し `app/services/deletion_undo/` を空に。完全な `Domain::DeletionUndo::Interactors` 再編は未実施でよい暫定整理）
 - T-051 / T-052（`ApiService` 統合、`api-client.service.ts` 削除）/ T-053 / T-054
 - T-022b（コミット境界整理）
+- **T-062**（2026-04-21）: [`lib/domain/cultivation_plan/interactors/plan_copier.rb`](../../lib/domain/cultivation_plan/interactors/plan_copier.rb) + [`Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year`](../../lib/adapters/cultivation_plan/plan_copy_gateway.rb)。E2E/添付: [`test/domain/cultivation_plan/interactors/plan_copier_test.rb`](../../test/domain/cultivation_plan/interactors/plan_copier_test.rb)。Gateway 単体: `copy_private_plan_for_year` / `copy_attachments_for_plan_copy` を [`test/adapters/cultivation_plan/plan_copy_gateway_test.rb`](../../test/adapters/cultivation_plan/plan_copy_gateway_test.rb) に追加。
 
 ## 推奨継続順序
 
-1. **T-055〜T-062**（`app/services` 残の段階的移設・1 ファイル 1 PR）
+1. **T-055〜T-061**（`app/services` 残の段階的移設・1 ファイル 1 PR）。次の優先候補: **T-059**（[`app/services/crops/task_schedule_blueprint_deletion_service.rb`](../../app/services/crops/task_schedule_blueprint_deletion_service.rb)）
 2. Angular 未移行画面の完了 → **T-041〜T-043**
