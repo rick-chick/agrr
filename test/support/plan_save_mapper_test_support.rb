@@ -100,4 +100,19 @@ module PlanSaveMapperTestSupport
     )
     [ plan, cpf, cpc, fc ]
   end
+
+  # 指定カテゴリごとのスキップ id が一致し、それ以外のカテゴリは空であることを表明する
+  # 例: assert_skipped_exact(result2, { farm: [1], fields: [2] })
+  def assert_skipped_exact(result, expected_slices)
+    actual = result.skipped_items
+    expected_slices.each do |cat, ids|
+      assert_equal Array(ids).sort, Array(actual[cat]).sort,
+                   "expected skipped_items[#{cat.inspect}] to match"
+    end
+    actual.each do |key, values|
+      next if expected_slices.key?(key)
+
+      assert_empty Array(values), "unexpected skipped in #{key}: #{values.inspect}"
+    end
+  end
 end

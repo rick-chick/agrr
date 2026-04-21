@@ -40,7 +40,8 @@ class Domain::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestCas
     result1 = plan_save_result
     ctx1 = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: session_data, result: result1)
     farm1 = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx1).create_or_get_user_farm
-    Domain::CultivationPlan::Mappers::FieldMapper.new(ctx1).create_user_fields(farm1)
+    fields1 = Domain::CultivationPlan::Mappers::FieldMapper.new(ctx1).create_user_fields(farm1)
+    field_id = fields1.first.id
 
     result2 = plan_save_result
     ctx2 = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: session_data, result: result2)
@@ -50,6 +51,6 @@ class Domain::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestCas
     fields = Domain::CultivationPlan::Mappers::FieldMapper.new(ctx2).create_user_fields(farm2)
     assert_equal 1, fields.size
     assert fields.all? { |f| f.persisted? }
-    assert result2.skipped_items[:fields].present?
+    assert_skipped_exact result2, { farm: [ farm2.id ], fields: [ field_id ] }
   end
 end

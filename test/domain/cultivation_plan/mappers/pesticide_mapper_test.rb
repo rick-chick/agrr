@@ -82,6 +82,10 @@ class Domain::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::Tes
 
     result2 = plan_save_result
     run_copy.call(result2)
-    assert_includes result2.skipped_items[:pesticides], existing.id
+    existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)
+    assert_skipped_exact result2,
+                         { crops: [ existing_crop.id ],
+                           pests: user.pests.where.not(source_pest_id: nil).pluck(:id),
+                           pesticides: user.pesticides.where.not(source_pesticide_id: nil).pluck(:id) }
   end
 end

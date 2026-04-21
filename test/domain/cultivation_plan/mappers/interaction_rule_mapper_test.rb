@@ -72,6 +72,9 @@ class Domain::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSuppor
     Domain::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
     Domain::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx2).copy_interaction_rules_for_region(ref_farm.region)
 
-    assert_includes result2.skipped_items[:interaction_rules], existing.id
+    existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)
+    assert_skipped_exact result2,
+                         { crops: [ existing_crop.id ],
+                           interaction_rules: user.interaction_rules.where.not(source_interaction_rule_id: nil).pluck(:id) }
   end
 end

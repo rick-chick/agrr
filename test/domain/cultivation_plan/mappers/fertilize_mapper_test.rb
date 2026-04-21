@@ -50,6 +50,6 @@ class Domain::CultivationPlan::Mappers::FertilizeMapperTest < ActiveSupport::Tes
     ctx2 = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: {}, result: result2)
     Domain::CultivationPlan::Mappers::FertilizeMapper.new(ctx2).copy_fertilizes_for_region("jp")
 
-    assert_includes result2.skipped_items[:fertilizes], existing.id
+    assert_skipped_exact result2, { fertilizes: user.fertilizes.where.not(source_fertilize_id: nil).pluck(:id) }
   end
 end

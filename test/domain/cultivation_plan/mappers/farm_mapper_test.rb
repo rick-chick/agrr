@@ -25,6 +25,6 @@ class Domain::CultivationPlan::Mappers::FarmMapperTest < ActiveSupport::TestCase
     farm_again = mapper.create_or_get_user_farm
     assert_equal farm.id, farm_again.id
     assert ctx.farm_reused
-    assert_includes result.skipped_items[:farm], farm.id
+    assert_skipped_exact result, { farm: [ farm.id ] }
   end
 end

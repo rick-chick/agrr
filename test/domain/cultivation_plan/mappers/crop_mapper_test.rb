@@ -50,6 +50,6 @@ class Domain::CultivationPlan::Mappers::CropMapperTest < ActiveSupport::TestCase
     )
     Domain::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
 
-    assert_includes result2.skipped_items[:crops], existing.id
+    assert_skipped_exact result2, { crops: [ existing.id ] }
   end
 end
