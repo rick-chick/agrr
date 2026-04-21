@@ -3,6 +3,96 @@
 module Adapters
   module CultivationPlan
     class PlanCopyGateway
+      # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）
+      def self.copy_private_plan_for_year(source_plan:, new_year:, user:, session_id: nil)
+        planning_dates = ::CultivationPlan.calculate_planning_dates(new_year)
+
+        plan_attrs = {
+          farm: source_plan.farm,
+          user: user,
+          total_area: source_plan.total_area,
+          plan_type: "private",
+          plan_year: new_year,
+          plan_name: source_plan.plan_name,
+          planning_start_date: planning_dates[:start_date],
+          planning_end_date: planning_dates[:end_date],
+          status: "pending"
+        }
+        plan_attrs[:session_id] = session_id if session_id.present?
+
+        new_plan = ::CultivationPlan.create!(plan_attrs)
+
+        Rails.logger.info "✅ Created new plan ##{new_plan.id} (year: #{new_year})"
+
+        copied_attachments = copy_attachments_for_plan_copy(source_plan: source_plan, new_plan: new_plan)
+        Rails.logger.info "✅ Copied #{copied_attachments} attachments"
+
+        source_plan.cultivation_plan_fields.each do |source_field|
+          ::CultivationPlanField.create!(
+            cultivation_plan: new_plan,
+            name: source_field.name,
+            area: source_field.area,
+            daily_fixed_cost: source_field.daily_fixed_cost,
+            description: source_field.description
+          )
+        end
+
+        Rails.logger.info "✅ Copied #{source_plan.cultivation_plan_fields.count} fields"
+
+        source_plan.cultivation_plan_crops.each do |source_crop|
+          ::CultivationPlanCrop.create!(
+            cultivation_plan: new_plan,
+            crop: source_crop.crop,
+            name: source_crop.name,
+            variety: source_crop.variety,
+            area_per_unit: source_crop.area_per_unit,
+            revenue_per_area: source_crop.revenue_per_area
+          )
+        end
+
+        Rails.logger.info "✅ Copied #{source_plan.cultivation_plan_crops.count} crops"
+
+        field_mapping = {}
+        source_plan.cultivation_plan_fields.each_with_index do |source_field, index|
+          field_mapping[source_field.id] = new_plan.cultivation_plan_fields[index].id
+        end
+
+        crop_mapping = {}
+        source_plan.cultivation_plan_crops.each_with_index do |source_crop, index|
+          crop_mapping[source_crop.id] = new_plan.cultivation_plan_crops[index].id
+        end
+
+        source_plan.field_cultivations.each do |source_fc|
+          ::FieldCultivation.create!(
+            cultivation_plan: new_plan,
+            cultivation_plan_field_id: field_mapping[source_fc.cultivation_plan_field_id],
+            cultivation_plan_crop_id: crop_mapping[source_fc.cultivation_plan_crop_id],
+            area: source_fc.area,
+            status: "pending"
+          )
+        end
+
+        Rails.logger.info "✅ Copied #{source_plan.field_cultivations.count} field cultivations"
+        Rails.logger.info "✅ Plan copy completed: #{source_plan.id} -> #{new_plan.id}"
+
+        new_plan
+      end
+
+      def self.copy_attachments_for_plan_copy(source_plan:, new_plan:)
+        attachments = ActiveStorage::Attachment.where(record: source_plan)
+        attachments_count = attachments.count
+
+        attachments.find_each do |attachment|
+          ActiveStorage::Attachment.create!(
+            name: attachment.name,
+            record: new_plan,
+            blob: attachment.blob
+          )
+        end
+
+        attachments_count
+      end
+
       def initialize(ctx)
         @ctx = ctx
         @task_mapper = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
