@@ -180,14 +180,14 @@ module Adapters
             actor: user,
             toast_message: @translator.t("plans.undo.toast", name: plan_model.display_name)
           )
-        rescue PolicyPermissionDenied
-          raise StandardError, @translator.t("plans.errors.not_found")
+        rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
+          raise
         rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
-          raise StandardError, @translator.t("plans.errors.not_found")
+          raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("plans.errors.not_found")
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("plans.errors.delete_failed")
-        rescue DeletionUndo::Error => e
-          raise StandardError, @translator.t("plans.errors.delete_error", message: e.message)
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("plans.errors.delete_failed")
+        rescue DeletionUndo::Error
+          raise
         end
 
         # phase 更新

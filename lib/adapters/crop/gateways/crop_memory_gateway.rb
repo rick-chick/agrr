@@ -6,7 +6,7 @@ module Adapters
       class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
         def list(scope = nil)
           query = scope || ::Crop.all
-          query.map { |record| Domain::Crop::Entities::CropEntity.from_model(record) }
+          query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
         def visible_records(user)
@@ -26,22 +26,45 @@ module Adapters
           region ? scope.where(region: region) : scope
         end
 
-        def find_authorized_for_view(user, id)
+        CROP_HTML_INCLUDES = {
+          crop_stages: [ :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement ],
+          agricultural_tasks: [],
+          crop_task_templates: [ :agricultural_task ],
+          crop_task_schedule_blueprints: [ :agricultural_task ]
+        }.freeze
+
+        def find_authorized_model_for_view(user, id)
           crop = find_crop_model!(id)
           unless Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           crop
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           crop = find_crop_model!(id)
           unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
+          crop
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_edit(user, id))
+        end
+
+        def find_authorized_model_for_html(user, id, for_edit:)
+          crop = ::Crop.includes(CROP_HTML_INCLUDES).find(id)
+          allowed = for_edit ? Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id) : Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
 
           crop
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def find_model(id)
@@ -53,7 +76,7 @@ module Adapters
           crop = ::Crop.new(h)
           raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
 
-          crop
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         end
 
         def update_for_user(user, id, attrs)
@@ -69,12 +92,42 @@ module Adapters
           )
           raise StandardError, crop.errors.full_messages.join(", ") unless crop.update(normalized)
 
-          crop.reload
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
+        end
+
+        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= Adapters::Translators::RailsTranslator.new
+          crop = find_crop_model!(crop_id)
+          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          if crop.cultivation_plan_crops.any?
+            return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("crops.flash.cannot_delete_in_use.plan")) }
+          end
+          if crop.free_crop_plans.any?
+            return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("crops.flash.cannot_delete_in_use.other")) }
+          end
+          if crop.pesticides.any?
+            return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("crops.flash.cannot_delete_in_use.other")) }
+          end
+          toast_message = translator.t("crops.undo.toast", name: crop.name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: crop,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         def find_by_id(crop_id)
           crop = ::Crop.find(crop_id)
-          Domain::Crop::Entities::CropEntity.from_model(crop)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Crop not found"
         end
@@ -93,7 +146,7 @@ module Adapters
           crop = ::Crop.new(crop_attributes)
           raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
 
-          Domain::Crop::Entities::CropEntity.from_model(crop)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         end
 
         def update(crop_id, update_input_dto)
@@ -110,7 +163,7 @@ module Adapters
           crop.update(attrs)
           raise StandardError, crop.errors.full_messages.join(", ") if crop.errors.any?
 
-          Domain::Crop::Entities::CropEntity.from_model(crop.reload)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Crop not found"
         end

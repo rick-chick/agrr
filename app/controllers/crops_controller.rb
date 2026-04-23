@@ -110,8 +110,7 @@ class CropsController < ApplicationController
           gateway: crop_gateway,
           user_id: current_user.id,
           logger: logger_gateway,
-          translator: translator,
-          deletion_undo_gateway: deletion_undo_gateway
+          translator: translator
         )
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -217,25 +216,15 @@ class CropsController < ApplicationController
 
   def set_crop
     action = params[:action].to_sym
-
-    # まず権限チェック（編集系か閲覧系かで分岐）
-    authorized_crop =
-      if action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
-        Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(current_user, params[:id])
-      else
-        Domain::Crop::Gateways::CropGateway.default.find_authorized_for_view(current_user, params[:id])
-      end
-
-    # 付加情報を preload したレコードとして再取得
-    @crop = Crop.includes(
-      crop_stages: [ :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement ],
-      agricultural_tasks: [],
-      crop_task_templates: [ :agricultural_task ],
-      crop_task_schedule_blueprints: [ :agricultural_task ]
-    ).find(authorized_crop.id)
+    for_edit = action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
+    @crop = Domain::Crop::Gateways::CropGateway.default.find_authorized_model_for_html(
+      current_user,
+      params[:id],
+      for_edit: for_edit
+    )
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
-  rescue ActiveRecord::RecordNotFound
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
   end
 

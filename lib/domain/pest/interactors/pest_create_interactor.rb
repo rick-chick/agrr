@@ -38,13 +38,12 @@ module Domain
           attrs[:pest_thermal_requirement_attributes] = input_dto.pest_thermal_requirement_attributes if input_dto.pest_thermal_requirement_attributes
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
-          pest_model = @gateway.create_for_user(user, attrs)
+          pest_entity = @gateway.create_for_user(user, attrs)
 
           if Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
-            PestCropAssociationService.associate_crops(pest_model, input_dto.crop_ids, user: user)
+            PestCropAssociationService.associate_crops_by_pest_id(pest_entity.id, input_dto.crop_ids, user: user)
           end
 
-          pest_entity = Domain::Pest::Entities::PestEntity.from_model(pest_model)
           @output_port.on_success(pest_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

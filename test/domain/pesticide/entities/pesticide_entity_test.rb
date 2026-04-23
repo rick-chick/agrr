@@ -73,7 +73,7 @@ module Domain
           end
         end
 
-        test "should create entity from model" do
+        test "Adapters::Pesticide::Mappers::PesticideMapper maps record to entity" do
           record = mock
           record.stubs(:id).returns(1)
           record.stubs(:user_id).returns(2)
@@ -87,7 +87,7 @@ module Domain
           record.stubs(:created_at).returns(Time.current)
           record.stubs(:updated_at).returns(Time.current)
 
-          entity = PesticideEntity.from_model(record)
+          entity = Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record)
           assert_equal 1, entity.id
           assert_equal 2, entity.user_id
           assert_equal "Test Pesticide", entity.name

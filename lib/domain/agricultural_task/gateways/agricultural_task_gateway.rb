@@ -56,6 +56,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
+        def find_authorized_model_for_view(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
+        end
+
+        def find_authorized_model_for_edit(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
+        end
+
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end
@@ -83,6 +91,10 @@ module Domain
         # 管理者一覧など、全件を起点にした ActiveRecord::Relation（Adapter でモデル全件相当）
         def all_records_relation
           raise NotImplementedError, "Subclasses must implement all_records_relation"
+        end
+
+        def soft_destroy_with_undo(user:, task_id:, auto_hide_after:, translator:)
+          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
       end
     end

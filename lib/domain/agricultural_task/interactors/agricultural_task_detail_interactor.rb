@@ -14,13 +14,12 @@ module Domain
 
         def call(task_id)
           user = @user_lookup.find(@user_id)
-          task_model = @gateway.find_authorized_for_view(user, task_id)
-          task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model)
+          task_entity = @gateway.find_authorized_for_view(user, task_id)
           task_detail_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutputDto.new(task: task_entity)
           @output_port.on_success(task_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

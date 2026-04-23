@@ -15,11 +15,10 @@ module Domain
 
         def call(pest_id)
           user = @user_lookup.find(@user_id)
-          pest_model = @gateway.find_authorized_for_view(user, pest_id)
-          pest_entity = Domain::Pest::Entities::PestEntity.from_model(pest_model)
-          dto = Domain::Pest::Dtos::PestDetailOutputDto.new(pest: pest_entity, pest_model: pest_model)
+          pest_entity = @gateway.find_authorized_for_view(user, pest_id)
+          dto = Domain::Pest::Dtos::PestDetailOutputDto.new(pest: pest_entity)
           @output_port.on_success(dto)
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
+        rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))

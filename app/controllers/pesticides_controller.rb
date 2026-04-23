@@ -130,10 +130,10 @@ class PesticidesController < ApplicationController
   private
 
   def set_pesticide
-    @pesticide = Domain::Pesticide::Gateways::PesticideGateway.default.find_authorized_for_view(current_user, params[:id])
+    @pesticide = Domain::Pesticide::Gateways::PesticideGateway.default.find_authorized_model_for_view(current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
-  rescue ActiveRecord::RecordNotFound
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 

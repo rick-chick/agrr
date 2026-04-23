@@ -22,7 +22,7 @@ module Domain
             raise StandardError, @translator.t("fertilizes.flash.reference_only_admin")
           end
 
-          fertilize_model = @gateway.create_for_user(user, {
+          fertilize_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             n: input_dto.n,
             p: input_dto.p,
@@ -33,7 +33,6 @@ module Domain
             is_reference: is_reference
           })
 
-          fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model)
           @output_port.on_success(fertilize_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

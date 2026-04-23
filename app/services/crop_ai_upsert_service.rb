@@ -80,7 +80,8 @@ class CropAiUpsertService
 
     begin
       Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(@user, crop_id)
-    rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound
+      ::Crop.find(crop_id)
+    rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
       nil
     end
   end

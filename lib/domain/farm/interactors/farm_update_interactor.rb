@@ -21,13 +21,12 @@ module Domain
           attrs[:latitude] = input_dto.latitude if !input_dto.latitude.nil?
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
 
-          farm_model = @gateway.update_for_user(user, input_dto.farm_id, attrs)
+          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, attrs)
 
-          farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model)
           @output_port.on_success(farm_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

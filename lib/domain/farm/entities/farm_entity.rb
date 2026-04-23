@@ -36,21 +36,6 @@ module Domain
           is_reference
         end
 
-        # ActiveRecordモデルからの変換
-        def self.from_model(farm_model)
-          new(
-            id: farm_model.id,
-            name: farm_model.name,
-            latitude: farm_model.latitude,
-            longitude: farm_model.longitude,
-            region: farm_model.region,
-            user_id: farm_model.user_id,
-            created_at: farm_model.created_at,
-            updated_at: farm_model.updated_at,
-            is_reference: farm_model.is_reference
-          )
-        end
-
         # ハッシュからの変換（テスト用）
         def self.from_hash(hash)
           new(**hash)

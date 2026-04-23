@@ -12,7 +12,12 @@ module Domain
           farm_id = @ctx.session_data[:farm_id] || @ctx.session_data["farm_id"]
           Rails.logger.debug I18n.t("services.plan_save_service.debug.farm_id_extracted", farm_id: farm_id)
 
-          reference_farm = ::Farm.find(farm_id)
+          reference_farm = ::Farm.find_by(id: farm_id)
+          unless reference_farm
+            Rails.logger.error I18n.t("services.plan_save_service.errors.farm_not_found", farm_id: farm_id)
+            raise Domain::Shared::Exceptions::RecordNotFound,
+                  I18n.t("services.plan_save_service.errors.farm_not_found", farm_id: farm_id)
+          end
           Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_farm_found", farm_name: reference_farm.name)
 
           existing_farm = @ctx.user.farms.find_by(source_farm_id: reference_farm.id)
@@ -45,9 +50,6 @@ module Domain
           Rails.logger.info I18n.t("services.plan_save_service.messages.farm_created", farm_name: new_farm.name)
           @ctx.farm_reused = false
           new_farm
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
-          Rails.logger.error I18n.t("services.plan_save_service.errors.farm_not_found", farm_id: farm_id)
-          raise e
         end
 
         def find_existing_private_plan(farm)

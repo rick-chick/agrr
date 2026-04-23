@@ -24,13 +24,12 @@ module Domain
           attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
           attrs[:crop_stages_attributes] = input_dto.crop_stages_attributes if Domain::Shared::ValidationHelpers.present?(input_dto.crop_stages_attributes)
 
-          crop_model = @gateway.update_for_user(user, input_dto.crop_id, attrs)
+          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, attrs)
 
-          crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model)
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

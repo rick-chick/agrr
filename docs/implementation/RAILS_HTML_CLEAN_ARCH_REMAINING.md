@@ -1,5 +1,7 @@
 # Rails HTML Clean Architecture 化 - 残り確認メモ
 
+**2026-04-24 追記**: ドメイン Gateway に `find_authorized_model_for_view` / `find_authorized_model_for_edit`、Crop に `find_authorized_model_for_html` を追加し、HTML/一部 API での「認可 + `find_model`」二重取得を解消。詳細は [`docs/planning/architecture_remediation_review.md`](../planning/architecture_remediation_review.md) の「AR クリーンアップ追従」節。
+
 ## 実施した修正（本確認時）
 
 1. **CropsController#show**  
@@ -46,7 +48,7 @@
 
 ## テスト確認で実施した修正
 
-1. **PestDetailHtmlPresenter**: `to_model` 廃止。Interactor から `pest_model` を DTO で渡し、Presenter は `pest_detail_dto.pest_model` を使用。
+1. **PestDetailHtmlPresenter**: DTO は `pest`（Entity）のみ。Presenter は `::Pest.find(pest_detail_dto.pest.id)` で AR を取得（2026-04-23）。
 2. **PestsController**: `set_pest` に `:update`, `:destroy` を追加。`destroy` に `respond_to`（format.json で schedule_deletion_with_undo）を追加。`pest_params` に管理者用 `:pest_id` を追加。
 3. **PestsControllerTest**: `includes HtmlCrudResponder` を `does not include HtmlCrudResponder (Clean Architecture)` に変更。
 

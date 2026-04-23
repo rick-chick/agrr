@@ -30,7 +30,6 @@ module Domain
             region: "Kyoto"
           )
 
-          fertilize_model = mock
           fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
@@ -43,8 +42,7 @@ module Domain
             package_size: nil,
             region: "Kyoto",
             is_reference: false
-          }).returns(fertilize_model)
-          Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(fertilize_entity)
+          }).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
           @interactor.call(input_dto)
@@ -78,7 +76,6 @@ module Domain
             is_reference: true
           )
 
-          fertilize_model = mock
           fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
@@ -91,8 +88,7 @@ module Domain
             package_size: nil,
             region: nil,
             is_reference: true
-          }).returns(fertilize_model)
-          Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(fertilize_entity)
+          }).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
           admin_interactor.call(input_dto)

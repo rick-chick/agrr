@@ -46,7 +46,7 @@ module Api
         end
 
         # Interactor が StandardError を rescue すると Presenter が 422 を返す。
-        # Gateway#list が name が空の Pest を返すと PestEntity.from_model が ArgumentError を起こし 422 になる。
+        # Gateway#list が name が空の Pest を返すと PestMapper 経由の Pest 構築で ArgumentError を起こし 422 になる。
         test "index returns 422 when a pest has blank name" do
           create(:pest, :user_owned, user: @user)
           pest_invalid = Pest.new(name: "", is_reference: false, user_id: @user.id)

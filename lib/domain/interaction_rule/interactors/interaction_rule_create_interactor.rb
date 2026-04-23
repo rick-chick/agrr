@@ -14,7 +14,7 @@ module Domain
 
         def call(create_input_dto)
           user = @user_lookup.find(@user_id)
-          rule_model = @gateway.create_for_user(user, {
+          rule_entity = @gateway.create_for_user(user, {
             rule_type: create_input_dto.rule_type,
             source_group: create_input_dto.source_group,
             target_group: create_input_dto.target_group,
@@ -25,7 +25,6 @@ module Domain
             is_reference: create_input_dto.is_reference
           })
 
-          rule_entity = Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule_model)
           @output_port.on_success(rule_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

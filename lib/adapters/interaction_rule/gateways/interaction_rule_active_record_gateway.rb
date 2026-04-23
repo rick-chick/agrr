@@ -7,12 +7,12 @@ module Adapters
         attr_accessor :translator
         def list(scope = nil)
           query = scope || ::InteractionRule.all
-          query.map { |record| Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(record) }
+          query.map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
         end
 
         def find_by_id(rule_id)
           rule = ::InteractionRule.find(rule_id)
-          Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "InteractionRule not found"
         end
@@ -30,7 +30,7 @@ module Adapters
           )
           raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
 
-          Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end
 
         def update(rule_id, update_input_dto)
@@ -47,7 +47,7 @@ module Adapters
           rule.update(attrs)
           raise StandardError, rule.errors.full_messages.join(", ") if rule.errors.any?
 
-          Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule.reload)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "InteractionRule not found"
         end
@@ -90,22 +90,28 @@ module Adapters
           end
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           rule = find_interaction_rule_model!(id)
           unless Domain::Shared::Policies::InteractionRulePolicy.view_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           rule
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           rule = find_interaction_rule_model!(id)
           unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           rule
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -117,7 +123,7 @@ module Adapters
           rule = ::InteractionRule.new(h)
           raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
 
-          rule
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end
 
         def update_for_user(user, id, attrs)
@@ -133,7 +139,29 @@ module Adapters
           )
           raise StandardError, rule.errors.full_messages.join(", ") unless rule.update(normalized)
 
-          rule.reload
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
+        end
+
+        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= @translator
+          translator ||= Adapters::Translators::RailsTranslator.new
+          rule = find_interaction_rule_model!(rule_id)
+          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: rule,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         private

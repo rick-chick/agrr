@@ -15,16 +15,15 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
-          farm_model = @gateway.create_for_user(user, {
+          farm_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             region: input_dto.region,
             latitude: input_dto.latitude,
             longitude: input_dto.longitude
           })
 
-          farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model)
           @output_port.on_success(farm_entity)
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

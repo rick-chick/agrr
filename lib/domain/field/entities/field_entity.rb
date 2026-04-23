@@ -25,22 +25,6 @@ module Domain
           name.presence || "Field #{id}"
         end
 
-        # ActiveRecordモデルからの変換
-        def self.from_model(field_model)
-          new(
-            id: field_model.id,
-            farm_id: field_model.farm_id,
-            user_id: field_model.user_id,
-            name: field_model.name,
-            description: field_model.description,
-            created_at: field_model.created_at,
-            updated_at: field_model.updated_at,
-            area: field_model.area,
-            daily_fixed_cost: field_model.daily_fixed_cost,
-            region: field_model.region
-          )
-        end
-
         # ハッシュからの変換（テスト用）
         def self.from_hash(hash)
           new(**hash)

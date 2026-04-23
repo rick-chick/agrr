@@ -17,18 +17,6 @@ module Domain
           validate!
         end
 
-        # ActiveRecordモデルからの変換
-        def self.from_model(model)
-          new(
-            id: model.id,
-            crop_stage_id: model.crop_stage_id,
-            daily_uptake_n: model.daily_uptake_n,
-            daily_uptake_p: model.daily_uptake_p,
-            daily_uptake_k: model.daily_uptake_k,
-            region: model.region
-          )
-        end
-
         private
 
         def validate!

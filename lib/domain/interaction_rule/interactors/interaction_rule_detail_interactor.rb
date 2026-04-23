@@ -14,8 +14,7 @@ module Domain
 
         def call(rule_id)
           user = @user_lookup.find(@user_id)
-          rule_model = @gateway.find_authorized_for_view(user, rule_id)
-          rule_entity = Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule_model)
+          rule_entity = @gateway.find_authorized_for_view(user, rule_id)
           rule_detail_dto = Domain::InteractionRule::Dtos::InteractionRuleDetailOutputDto.new(rule: rule_entity)
           @output_port.on_success(rule_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

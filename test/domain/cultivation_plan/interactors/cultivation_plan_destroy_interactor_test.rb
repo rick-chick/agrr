@@ -41,7 +41,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::RecordNotFound)
+          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
+            Domain::Shared::Exceptions::RecordNotFound, I18n.t("plans.errors.not_found")
+          )
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.not_found")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 
@@ -65,7 +67,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::DeleteRestrictionError)
+          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
+            Domain::Shared::Exceptions::AssociationInUse, I18n.t("plans.errors.delete_failed")
+          )
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 
@@ -77,7 +81,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::InvalidForeignKey)
+          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
+            Domain::Shared::Exceptions::AssociationInUse, I18n.t("plans.errors.delete_failed")
+          )
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 

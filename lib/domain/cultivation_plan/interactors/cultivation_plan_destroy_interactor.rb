@@ -18,10 +18,11 @@ module Domain
           undo_response = @gateway.destroy(plan_id, user)
           destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound,
-               Domain::Shared::Exceptions::RecordNotFound
+        rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
           handle_failure(@translator.t("plans.errors.not_found"))
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          handle_failure(@translator.t("plans.errors.not_found"))
+        rescue Domain::Shared::Exceptions::AssociationInUse
           handle_failure(@translator.t("plans.errors.delete_failed"))
         rescue DeletionUndo::Error => e
           handle_failure(@translator.t("plans.errors.delete_error", message: e.message))

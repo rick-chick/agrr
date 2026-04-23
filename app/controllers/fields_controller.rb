@@ -102,14 +102,10 @@ class FieldsController < ApplicationController
   private
 
   def set_farm
-    if admin_user?
-      # Admin can access any farm
-      @farm = Farm.find(params[:farm_id])
-    else
-      # Regular users can only access their own farms
-      @farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(current_user, params[:farm_id])
-    end
-  rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+    @farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_model_for_edit(current_user, params[:farm_id])
+  rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to farms_path, alert: I18n.t("fields.flash.farm_not_found")
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to farms_path, alert: I18n.t("fields.flash.farm_not_found")
   end
 

@@ -14,13 +14,12 @@ module Domain
 
         def call(crop_id)
           user = @user_lookup.find(@user_id)
-          crop_model = @gateway.find_authorized_for_view(user, crop_id)
-          crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model)
+          crop_entity = @gateway.find_authorized_for_view(user, crop_id)
           crop_detail_dto = Domain::Crop::Dtos::CropDetailOutputDto.new(crop: crop_entity)
           @output_port.on_success(crop_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

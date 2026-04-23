@@ -10,7 +10,7 @@ module Adapters
           else
             scope = query || ::Pest.all
           end
-          scope.map { |record| Domain::Pest::Entities::PestEntity.from_model(record) }
+          scope.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
         def visible_records(user)
@@ -25,22 +25,28 @@ module Adapters
           ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           pest = find_pest_model!(id)
           unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           pest
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           pest = find_pest_model!(id)
           unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           pest
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -52,7 +58,7 @@ module Adapters
           pest = ::Pest.new(h)
           raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
 
-          pest
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         end
 
         def update_for_user(user, id, attrs)
@@ -74,12 +80,36 @@ module Adapters
           end
           raise StandardError, pest.errors.full_messages.join(", ") unless success
 
-          pest.reload
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
+        end
+
+        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= Adapters::Translators::RailsTranslator.new
+          pest = find_pest_model!(pest_id)
+          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          if pest.pesticides.any?
+            return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("pests.flash.cannot_delete_in_use")) }
+          end
+          toast_message = translator.t("pests.undo.toast", name: pest.name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: pest,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         def find_by_id(pest_id)
           pest = ::Pest.find(pest_id)
-          Domain::Pest::Entities::PestEntity.from_model(pest)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Pest not found"
         end
@@ -96,7 +126,7 @@ module Adapters
           )
           raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
 
-          Domain::Pest::Entities::PestEntity.from_model(pest)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         end
 
         def update(pest_id, update_input_dto)
@@ -113,7 +143,7 @@ module Adapters
           pest.update(attrs)
           raise StandardError, pest.errors.full_messages.join(", ") if pest.errors.any?
 
-          Domain::Pest::Entities::PestEntity.from_model(pest.reload)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Pest not found"
         end

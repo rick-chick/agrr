@@ -6,12 +6,12 @@ module Adapters
       class FertilizeActiveRecordGateway < Domain::Fertilize::Gateways::FertilizeGateway
         attr_accessor :translator
         def list
-          ::Fertilize.all.map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
+          ::Fertilize.all.map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
 
         def create(create_input_dto)
@@ -28,7 +28,7 @@ module Adapters
           )
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
 
         def update(fertilize_id, update_input_dto)
@@ -43,7 +43,7 @@ module Adapters
           attrs[:region] = update_input_dto.region if update_input_dto.region.present?
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(attrs)
 
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize.reload)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
 
         def destroy(fertilize_id)
@@ -67,22 +67,28 @@ module Adapters
           end
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           fertilize = find_fertilize_model!(id)
           unless Domain::Shared::Policies::FertilizePolicy.view_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           fertilize
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           fertilize = find_fertilize_model!(id)
           unless Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           fertilize
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -94,7 +100,7 @@ module Adapters
           fertilize = ::Fertilize.new(h)
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
-          fertilize
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
 
         def update_for_user(user, id, attrs)
@@ -110,11 +116,34 @@ module Adapters
           )
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(normalized)
 
-          fertilize.reload
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
+        end
+
+        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= @translator
+          translator ||= Adapters::Translators::RailsTranslator.new
+          fertilize = find_fertilize_model!(fertilize_id)
+          unless Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          name = fertilize.name
+          toast_message = translator.t("fertilizes.undo.toast", name: name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: fertilize,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event, resource_name: name }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         def list_from_relation(relation)
-          relation.map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
+          relation.map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
         private

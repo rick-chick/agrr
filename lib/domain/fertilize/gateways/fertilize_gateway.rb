@@ -44,6 +44,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
+        def find_authorized_model_for_view(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
+        end
+
+        def find_authorized_model_for_edit(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
+        end
+
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end
@@ -58,6 +66,10 @@ module Domain
 
         def list_from_relation(relation)
           raise NotImplementedError, "Subclasses must implement list_from_relation"
+        end
+
+        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after:, translator:)
+          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
       end
     end

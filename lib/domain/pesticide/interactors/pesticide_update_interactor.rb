@@ -22,9 +22,8 @@ module Domain
           attrs[:pest_id] = input_dto.pest_id if !input_dto.pest_id.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
 
-          pesticide_model = @gateway.update_for_user(user, input_dto.pesticide_id, attrs)
+          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, attrs)
 
-          pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model)
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise

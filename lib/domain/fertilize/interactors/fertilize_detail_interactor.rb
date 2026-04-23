@@ -14,8 +14,7 @@ module Domain
 
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
-          fertilize_model = @gateway.find_authorized_for_view(user, fertilize_id)
-          fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model)
+          fertilize_entity = @gateway.find_authorized_for_view(user, fertilize_id)
           dto = Domain::Fertilize::Dtos::FertilizeDetailOutputDto.new(fertilize: fertilize_entity)
           @output_port.on_success(dto)
         rescue StandardError => e

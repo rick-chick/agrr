@@ -14,7 +14,7 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
-          crop_model = @gateway.create_for_user(user, {
+          crop_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             variety: input_dto.variety,
             area_per_unit: input_dto.area_per_unit,
@@ -24,9 +24,8 @@ module Domain
             is_reference: input_dto.is_reference
           })
 
-          crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model)
           @output_port.on_success(crop_entity)
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

@@ -12,6 +12,14 @@ class PestCropAssociationService
   # @param crop_ids [Array<Integer>, Array<String>] 関連付ける作物IDの配列
   # @param user [User, nil] 現在のユーザー（オプション）
   # @return [Integer] 関連付けられた作物の数
+  def self.associate_crops_by_pest_id(pest_id, crop_ids, user: nil)
+    associate_crops(::Pest.find(pest_id), crop_ids, user: user)
+  end
+
+  def self.update_crop_associations_by_pest_id(pest_id, crop_ids, user: nil)
+    update_crop_associations(::Pest.find(pest_id), crop_ids, user: user)
+  end
+
   def self.associate_crops(pest, crop_ids, user: nil)
     associated_count = 0
 

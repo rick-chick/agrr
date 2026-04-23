@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(pest_detail_dto)
-          pest_model = pest_detail_dto.pest_model || ::Pest.find(pest_detail_dto.pest.id)
+          pest_model = ::Pest.find(pest_detail_dto.pest.id)
           @view.instance_variable_set(:@pest, pest_model)
           @view.instance_variable_set(:@crops, pest_model.crops.recent)
           # show テンプレートをレンダリング（暗黙的に）

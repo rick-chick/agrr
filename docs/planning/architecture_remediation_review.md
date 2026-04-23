@@ -129,6 +129,22 @@
 - **次 PR（計画どおり対象外）**: `PlanSaveSession` および `lib/domain/cultivation_plan/mappers/*` 内の `Rails.logger` / `I18n.t` 直呼びと Mapper の adapter 層移設。
 - **検証**: `docker compose --profile test run --rm -e COVERAGE=false test bundle exec rails test` で全テスト GREEN、slow test 検出はスクリプト出力に従い閾値 0.5s 超の一覧を確認済み。
 
+### Interactor からの AR 排除（2026-04-23 実装）
+
+- **方針**: `lib/domain/**/interactors` から ActiveRecord モデル変数・`Entity.from_model(AR)` を除去。`find_authorized_for_*` / `create_for_user` / `update_for_user` は Gateway が **Entity** を返却。destroy は各 Gateway に `soft_destroy_with_undo`（Adapter 内で `DeletionUndoGateway#schedule`）。Crop / Pest は利用可否チェックも Adapter に集約。
+- **Controller**: ビュー用に AR が必要な箇所は `find_authorized_*` 認可成功後に `find_model(id)` で再取得（二重クエリを許容）。
+- **農場**: `detail_for_authorized_view`、`FarmActiveRecordGateway` + [`lib/adapters/farm/mappers/farm_mapper.rb`](../../lib/adapters/farm/mappers/farm_mapper.rb)。`FarmDetailOutputDto#from_models` 削除。
+- **害虫**: `PestDetailOutputDto#pest_model` 削除。[`PestCropAssociationService`](../../app/services/pest_crop_association_service.rb) に `associate_crops_by_pest_id` / `update_crop_associations_by_pest_id` を追加。
+- **後続（任意）**: Domain `Entity.from_model` を廃止し、マッピングを全て `lib/adapters/**/mappers` に集約（現状は Interactor 非参照のため優先度低）。
+- **検証**（本変更）: `run-test-rails.sh` 全件 GREEN。slow 検出: 閾値 0.5s 超の一覧をスクリプト出力のとおり（主要は `EntrySchedule` / `Backdoor` 等）。
+
+### AR クリーンアップ追従（2026-04-23 実装・`ar-cleanup-followup`）
+
+- **Step 1**: `lib/domain/**/interactors` の `rescue ActiveRecord::*` を撤去。`Domain::Shared::Exceptions::AssociationInUse` を新設。`CultivationPlanActiveRecordGateway#destroy` は `RecordNotFound` / `InvalidForeignKey` 等をドメイン例外に正規化。`lib/domain/cultivation_plan/mappers/farm_mapper.rb` は `Farm.find` + `rescue` を廃止し `find_by` + `raise Domain::RecordNotFound` に変更。
+- **Step 2**: `Entity.from_model` を `lib/domain` から全削除。Farm / Fertilize / Pesticide / Pest / InteractionRule / AgriculturalTask / Crop（ステージ・要求系含む）のマッピングを [`lib/adapters/**/mappers/`](../../lib/adapters/)（例: `crop_mapper.rb`, `pest_mapper.rb` 等）へ集約。Adapter Gateway は `*Mapper.*_entity_from_record` のみ使用。
+- **Step 3**: 各 `*Gateway` に `find_authorized_model_for_view` / `find_authorized_model_for_edit`（AR を認可1回で返す）を追加。`Crop` の HTML 用に `find_authorized_model_for_html`（`includes` 集約）。Controller の `find_authorized` + `find_model` 二重取得を上記に置換（`Farms` / `Fields` / `Crops` / マスタ系 API 等）。
+- **完了確認**: `rg "from_model" lib/domain` / `rg "rescue ActiveRecord" lib/domain` は 0 件。`run-test-rails.sh` **1608 runs, 0 failures**。slow 検出: スクリプト出力の 0.5s 超一覧（`EntrySchedule` / `Backdoor` / `PublicPlans` 等）。
+
 ## 推奨継続順序
 
 1. **T-055〜T-061**（`app/services` 残の段階的移設・1 ファイル 1 PR）。次の優先候補: **T-059**（[`app/services/crops/task_schedule_blueprint_deletion_service.rb`](../../app/services/crops/task_schedule_blueprint_deletion_service.rb)）

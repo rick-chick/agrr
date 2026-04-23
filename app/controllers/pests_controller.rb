@@ -133,10 +133,10 @@ class PestsController < ApplicationController
   end
 
   def set_pest
-    @pest = Domain::Pest::Gateways::PestGateway.default.find_authorized_for_edit(current_user, params[:id])
+    @pest = Domain::Pest::Gateways::PestGateway.default.find_authorized_model_for_edit(current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pests_path, alert: I18n.t("pests.flash.no_permission")
-  rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to pests_path, alert: I18n.t("pests.flash.not_found")
   end
 

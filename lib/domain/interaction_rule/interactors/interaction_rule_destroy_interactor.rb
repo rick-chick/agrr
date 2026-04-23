@@ -4,65 +4,28 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleDestroyInteractor < Domain::InteractionRule::Ports::InteractionRuleDestroyInputPort
-        # DeletionUndo の結果を扱う内部プレゼンター
-        class DeletionUndoPresenter < Domain::DeletionUndo::Ports::DeletionUndoScheduleOutputPort
-          attr_reader :undo_entity, :error
-
-          def initialize
-            @success = false
-            @undo_entity = nil
-            @error = nil
-          end
-
-          def success?
-            @success
-          end
-
-          def on_success(undo_entity)
-            @success = true
-            @undo_entity = undo_entity
-          end
-
-          def on_failure(error_dto)
-            @success = false
-            @error = error_dto
-          end
-        end
-
-        def initialize(output_port:, gateway:, user_id:, logger:, translator:, deletion_undo_gateway: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
-          @translator = translator
-          @deletion_undo_gateway = deletion_undo_gateway || Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          @translator = translator || Adapters::Translators::RailsTranslator.new
           @user_lookup = user_lookup
         end
 
         def call(rule_id)
           user = @user_lookup.find(@user_id)
-          rule_model = @gateway.find_authorized_for_edit(user, rule_id)
-
-          undo_presenter = DeletionUndoPresenter.new
-          deletion_undo_interactor = Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
-            output_port: undo_presenter,
-            gateway: @deletion_undo_gateway
+          result = @gateway.soft_destroy_with_undo(
+            user: user,
+            rule_id: rule_id,
+            auto_hide_after: 5000,
+            translator: @translator
           )
-
-          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: rule_model,
-            actor: user,
-            toast_message: @translator.t("interaction_rules.undo.toast", source: rule_model.source_group, target: rule_model.target_group),
-            auto_hide_after: 5000
-          )
-
-          deletion_undo_interactor.call(input_dto)
-
-          if undo_presenter.success?
-            destroy_output_dto = Domain::InteractionRule::Dtos::InteractionRuleDestroyOutputDto.new(undo: undo_presenter.undo_entity)
+          if result[:success]
+            destroy_output_dto = Domain::InteractionRule::Dtos::InteractionRuleDestroyOutputDto.new(undo: result[:undo_entity])
             @output_port.on_success(destroy_output_dto)
           else
-            @output_port.on_failure(undo_presenter.error)
+            @output_port.on_failure(result[:error_dto])
           end
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

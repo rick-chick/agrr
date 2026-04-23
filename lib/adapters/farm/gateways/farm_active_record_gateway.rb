@@ -13,17 +13,17 @@ module Adapters
         def list(input_dto)
           if input_dto.is_admin
             # 管理者の場合は自分の農場と参照農場の両方を取得
-            ::Farm.where("user_id = ? OR is_reference = ?", @user_id, true).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+            ::Farm.where("user_id = ? OR is_reference = ?", @user_id, true).map { |record| Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record) }
           else
             # 通常ユーザーの場合は自分の農場のみ（参照農場・他ユーザー農場は含めない）
-            ::Farm.where(user_id: @user_id, is_reference: false).map { |record| Domain::Farm::Entities::FarmEntity.from_model(record) }
+            ::Farm.where(user_id: @user_id, is_reference: false).map { |record| Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record) }
           end
         end
 
-  def find_by_id(farm_id)
-    farm = ::Farm.find(farm_id)
-    Domain::Farm::Entities::FarmEntity.from_model(farm)
-  end
+        def find_by_id(farm_id)
+          farm = ::Farm.find(farm_id)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
+        end
 
         def create(create_input_dto)
           farm = ::Farm.new(
@@ -36,7 +36,7 @@ module Adapters
           )
           raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
 
-          Domain::Farm::Entities::FarmEntity.from_model(farm)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
 
         def update(farm_id, update_input_dto)
@@ -48,7 +48,7 @@ module Adapters
           attrs[:longitude] = update_input_dto.longitude if !update_input_dto.longitude.nil?
           raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(attrs)
 
-          Domain::Farm::Entities::FarmEntity.from_model(farm.reload)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end
 
         def destroy(farm_id)
@@ -115,22 +115,28 @@ module Adapters
           region ? scope.where(region: region) : scope
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           farm = find_farm_model!(id)
           unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           farm
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           farm = find_farm_model!(id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           farm
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -142,7 +148,7 @@ module Adapters
           farm = ::Farm.new(h)
           raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
 
-          farm
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
 
         def update_for_user(user, id, attrs)
@@ -158,10 +164,48 @@ module Adapters
           )
           raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(normalized)
 
-          farm.reload
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
+        end
+
+        def detail_for_authorized_view(user, id)
+          farm = find_farm_with_fields!(id)
+          unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
+        end
+
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= @translator
+          translator ||= Adapters::Translators::RailsTranslator.new
+          farm = find_farm_model!(farm_id)
+          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          farm_name = farm.name
+          toast_message = translator.t("flash.farms.deleted", name: farm_name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: farm,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event, farm_name: farm_name }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         private
+
+        def find_farm_with_fields!(id)
+          ::Farm.includes(:fields).find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
 
         def find_farm_model!(id)
           ::Farm.find(id)

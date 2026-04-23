@@ -28,13 +28,12 @@ module Domain
             attrs[:is_reference] = false if attrs[:is_reference].nil?
           end
 
-          task_model = @gateway.update_for_user(user, update_input_dto.id, attrs)
+          task_entity = @gateway.update_for_user(user, update_input_dto.id, attrs)
 
-          task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model)
           @output_port.on_success(task_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

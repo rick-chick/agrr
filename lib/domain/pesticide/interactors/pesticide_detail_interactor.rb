@@ -14,8 +14,7 @@ module Domain
 
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
-          pesticide_model = @gateway.find_authorized_for_view(user, pesticide_id)
-          pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model)
+          pesticide_entity = @gateway.find_authorized_for_view(user, pesticide_id)
           dto = Domain::Pesticide::Dtos::PesticideDetailOutputDto.new(pesticide: pesticide_entity)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied

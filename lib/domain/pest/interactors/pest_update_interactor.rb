@@ -32,19 +32,18 @@ module Domain
           # is_referenceのチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            if is_reference != @gateway.find_model(input_dto.pest_id).is_reference && !user.admin?
+            if is_reference != @gateway.find_authorized_for_edit(user, input_dto.pest_id).is_reference && !user.admin?
               raise StandardError, @translator.t("pests.flash.reference_flag_admin_only")
             end
             attrs[:is_reference] = is_reference
           end
 
-          pest_model = @gateway.update_for_user(user, input_dto.pest_id, attrs)
+          pest_entity = @gateway.update_for_user(user, input_dto.pest_id, attrs)
 
           unless input_dto.crop_ids.nil?
-            PestCropAssociationService.update_crop_associations(pest_model, input_dto.crop_ids, user: user)
+            PestCropAssociationService.update_crop_associations_by_pest_id(pest_entity.id, input_dto.crop_ids, user: user)
           end
 
-          pest_entity = Domain::Pest::Entities::PestEntity.from_model(pest_model)
           @logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"
           @output_port.on_success(pest_entity)
         rescue StandardError => e

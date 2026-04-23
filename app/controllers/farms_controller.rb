@@ -105,7 +105,8 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        @farm = Domain::Farm::Gateways::FarmGateway.default.create_for_user(current_user, farm_params.to_h.symbolize_keys)
+        farm_entity = Domain::Farm::Gateways::FarmGateway.default.create_for_user(current_user, farm_params.to_h.symbolize_keys)
+        @farm = ::Farm.find(farm_entity.id)
         Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
         render json: @farm, status: :created
       rescue StandardError => e
@@ -227,14 +228,10 @@ class FarmsController < ApplicationController
   private
 
   def set_farm
-    if admin_user?
-      # Admin can access any farm
-      @farm = Farm.find(params[:id])
-    else
-      # Regular users can only access their own farms
-      @farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(current_user, params[:id])
-    end
-  rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+    @farm = farm_gateway.find_authorized_model_for_edit(current_user, params[:id])
+  rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
   end
 

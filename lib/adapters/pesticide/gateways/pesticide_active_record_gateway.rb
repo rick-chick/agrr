@@ -6,12 +6,12 @@ module Adapters
       class PesticideActiveRecordGateway < Domain::Pesticide::Gateways::PesticideGateway
         attr_accessor :translator
         def list
-          ::Pesticide.all.map { |record| Domain::Pesticide::Entities::PesticideEntity.from_model(record) }
+          ::Pesticide.all.map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
         def find_by_id(pesticide_id)
           pesticide = ::Pesticide.find(pesticide_id)
-          Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide)
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Pesticide not found"
         end
@@ -27,7 +27,7 @@ module Adapters
           )
           raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
-          Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide)
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         end
 
         def update(pesticide_id, update_input_dto)
@@ -43,7 +43,7 @@ module Adapters
           pesticide.update(attrs)
           raise StandardError, pesticide.errors.full_messages.join(", ") if pesticide.errors.any?
 
-          Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide.reload)
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Pesticide not found"
         end
@@ -70,17 +70,28 @@ module Adapters
           ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           pesticide = find_pesticide_model!(id)
           unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           pesticide
         end
 
+        def find_authorized_model_for_edit(user, id)
+          pesticide = find_pesticide_model!(id)
+          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          pesticide
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
         def find_authorized_for_edit(user, id)
-          find_authorized_for_view(user, id)
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -92,7 +103,7 @@ module Adapters
           pesticide = ::Pesticide.new(h)
           raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
-          pesticide
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         end
 
         def update_for_user(user, id, attrs)
@@ -108,11 +119,34 @@ module Adapters
           )
           raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.update(normalized)
 
-          pesticide.reload
+          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
+        end
+
+        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= @translator
+          translator ||= Adapters::Translators::RailsTranslator.new
+          pesticide = find_pesticide_model!(pesticide_id)
+          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          name = pesticide.name
+          toast_message = translator.t("pesticides.undo.toast", name: name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: pesticide,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event, resource_name: name }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         def list_from_relation(relation)
-          relation.map { |record| Domain::Pesticide::Entities::PesticideEntity.from_model(record) }
+          relation.map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
         private

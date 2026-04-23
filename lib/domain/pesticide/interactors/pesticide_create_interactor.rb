@@ -14,7 +14,7 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
-          pesticide_model = @gateway.create_for_user(user, {
+          pesticide_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             active_ingredient: input_dto.active_ingredient,
             description: input_dto.description,
@@ -24,7 +24,6 @@ module Domain
             is_reference: input_dto.is_reference
           }.compact)
 
-          pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model)
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise

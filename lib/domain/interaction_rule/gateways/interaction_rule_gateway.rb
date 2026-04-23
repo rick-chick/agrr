@@ -54,6 +54,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
+        def find_authorized_model_for_view(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
+        end
+
+        def find_authorized_model_for_edit(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
+        end
+
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end
@@ -64,6 +72,10 @@ module Domain
 
         def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
+        end
+
+        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after:, translator:)
+          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
       end
     end

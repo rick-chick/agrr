@@ -33,7 +33,7 @@ module Domain
 
           filtered_data = apply_display_range(climate_data, display_start_date, display_end_date)
           @output_port.present(filtered_data)
-        rescue Domain::Shared::Exceptions::RecordNotFound, ActiveRecord::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Field cultivation not found: #{e.message}")
           @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

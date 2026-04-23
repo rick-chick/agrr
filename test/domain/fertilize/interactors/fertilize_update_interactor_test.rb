@@ -28,12 +28,10 @@ module Domain
             n: 15.0
           )
 
-          fertilize_model = mock
           updated_fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, { name: "Updated Fertilize", n: 15.0 }).returns(fertilize_model)
-          Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, { name: "Updated Fertilize", n: 15.0 }).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           @interactor.call(input_dto)
@@ -45,11 +43,11 @@ module Domain
             is_reference: true
           )
 
-          fertilize_model = mock
-          fertilize_model.expects(:is_reference).returns(false)
+          current_entity = mock
+          current_entity.expects(:is_reference).returns(false)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(fertilize_model)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_translator.expects(:t).with("fertilizes.flash.reference_flag_admin_only").returns("admin only")
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
@@ -71,14 +69,13 @@ module Domain
             is_reference: true
           )
 
-          fertilize_model = mock
-          fertilize_model.expects(:is_reference).returns(false)
+          current_entity = mock
+          current_entity.expects(:is_reference).returns(false)
           updated_fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1).returns(fertilize_model)
-          @mock_gateway.expects(:update_for_user).with(admin_user, 1, { is_reference: true }).returns(fertilize_model)
-          Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1).returns(current_entity)
+          @mock_gateway.expects(:update_for_user).with(admin_user, 1, { is_reference: true }).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           admin_interactor.call(input_dto)

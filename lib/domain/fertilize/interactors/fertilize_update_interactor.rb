@@ -21,8 +21,8 @@ module Domain
           # is_referenceをbooleanに変換してチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            fertilize_model = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
-            if is_reference != fertilize_model.is_reference && !user.admin?
+            current_entity = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
+            if is_reference != current_entity.is_reference && !user.admin?
               raise StandardError, @translator.t("fertilizes.flash.reference_flag_admin_only")
             end
             attrs[:is_reference] = is_reference
@@ -36,9 +36,8 @@ module Domain
           attrs[:package_size] = input_dto.package_size if !input_dto.package_size.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
 
-          fertilize_model = @gateway.update_for_user(user, input_dto.fertilize_id, attrs)
+          fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, attrs)
 
-          fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model)
           @output_port.on_success(fertilize_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

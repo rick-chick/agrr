@@ -19,7 +19,6 @@ class PestDetailHtmlPresenterTest < ActiveSupport::TestCase
     crops.expects(:recent).returns([ crop1, crop2 ])
 
     pest_detail_dto = mock
-    pest_detail_dto.stubs(:pest_model).returns(nil)
     pest_detail_dto.stubs(:pest).returns(pest_entity)
 
     ::Pest.stubs(:find).with(1).returns(pest_model)

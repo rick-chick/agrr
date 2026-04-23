@@ -121,10 +121,10 @@ class FertilizesController < ApplicationController
   private
 
   def set_fertilize
-    @fertilize = Domain::Fertilize::Gateways::FertilizeGateway.default.find_authorized_for_view(current_user, params[:id])
+    @fertilize = Domain::Fertilize::Gateways::FertilizeGateway.default.find_authorized_model_for_view(current_user, params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
-  rescue ActiveRecord::RecordNotFound
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.not_found")
   end
 

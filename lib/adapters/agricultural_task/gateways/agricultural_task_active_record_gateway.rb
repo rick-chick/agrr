@@ -6,16 +6,16 @@ module Adapters
       class AgriculturalTaskActiveRecordGateway < Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway
         attr_accessor :translator
         def list
-          ::AgriculturalTask.all.map { |record| Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(record) }
+          ::AgriculturalTask.all.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
         def list_from_relation(relation)
-          relation.map { |record| Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(record) }
+          relation.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
         def find_by_id(task_id)
           task = ::AgriculturalTask.find(task_id)
-          Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "AgriculturalTask not found"
         end
@@ -33,7 +33,7 @@ module Adapters
           )
           raise StandardError, task.errors.full_messages.join(", ") unless task.save
 
-          Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
 
         def update(task_id, update_input_dto)
@@ -51,7 +51,7 @@ module Adapters
           task.update(attrs)
           raise StandardError, task.errors.full_messages.join(", ") if task.errors.any?
 
-          Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task.reload)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "AgriculturalTask not found"
         end
@@ -88,22 +88,28 @@ module Adapters
           region ? scope.where(region: region) : scope
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_model_for_view(user, id)
           task = find_agricultural_task_model!(id)
           unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           task
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id)
           task = find_agricultural_task_model!(id)
           unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-
           task
+        end
+
+        def find_authorized_for_view(user, id)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_model_for_view(user, id))
+        end
+
+        def find_authorized_for_edit(user, id)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
         def find_model(id)
@@ -115,7 +121,7 @@ module Adapters
           task = ::AgriculturalTask.new(h)
           raise StandardError, task.errors.full_messages.join(", ") unless task.save
 
-          task
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
 
         def update_for_user(user, id, attrs)
@@ -131,7 +137,30 @@ module Adapters
           )
           raise StandardError, task.errors.full_messages.join(", ") unless task.update(normalized)
 
-          task.reload
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
+        end
+
+        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator: nil)
+          translator ||= @translator
+          translator ||= Adapters::Translators::RailsTranslator.new
+          task = find_agricultural_task_model!(task_id)
+          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          name = task.name
+          toast_message = translator.t("agricultural_tasks.undo.toast", name: name)
+          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          event = undo_gw.schedule(
+            record: task,
+            actor: user,
+            toast_message: toast_message,
+            auto_hide_after: auto_hide_after
+          )
+          { success: true, undo_entity: event, resource_name: name }
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue StandardError => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
         def recent_for_user(user, limit: nil)

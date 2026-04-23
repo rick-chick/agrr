@@ -14,7 +14,7 @@ module Domain
 
         def call(create_input_dto)
           user = @user_lookup.find(@user_id)
-          task_model = @gateway.create_for_user(user, {
+          task_entity = @gateway.create_for_user(user, {
             name: create_input_dto.name,
             description: create_input_dto.description,
             time_per_sqm: create_input_dto.time_per_sqm,
@@ -25,9 +25,8 @@ module Domain
             task_type: create_input_dto.task_type
           })
 
-          task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model)
           @output_port.on_success(task_entity)
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

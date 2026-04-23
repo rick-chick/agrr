@@ -21,22 +21,6 @@ module Domain
           validate!
         end
 
-        # ActiveRecordモデルからの変換
-        def self.from_model(crop_stage_model)
-          new(
-            id: crop_stage_model.id,
-            crop_id: crop_stage_model.crop_id,
-            name: crop_stage_model.name,
-            order: crop_stage_model.order,
-            temperature_requirement: crop_stage_model.temperature_requirement ? TemperatureRequirementEntity.from_model(crop_stage_model.temperature_requirement) : nil,
-            thermal_requirement: crop_stage_model.thermal_requirement ? ThermalRequirementEntity.from_model(crop_stage_model.thermal_requirement) : nil,
-            sunshine_requirement: crop_stage_model.sunshine_requirement ? SunshineRequirementEntity.from_model(crop_stage_model.sunshine_requirement) : nil,
-            nutrient_requirement: crop_stage_model.nutrient_requirement ? NutrientRequirementEntity.from_model(crop_stage_model.nutrient_requirement) : nil,
-            created_at: crop_stage_model.created_at,
-            updated_at: crop_stage_model.updated_at
-          )
-        end
-
         private
 
         def validate!

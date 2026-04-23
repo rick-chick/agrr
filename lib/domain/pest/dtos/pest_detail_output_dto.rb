@@ -4,11 +4,10 @@ module Domain
   module Pest
     module Dtos
       class PestDetailOutputDto
-        attr_reader :pest, :pest_model
+        attr_reader :pest
 
-        def initialize(pest:, pest_model: nil)
+        def initialize(pest:)
           @pest = pest
-          @pest_model = pest_model
         end
       end
     end

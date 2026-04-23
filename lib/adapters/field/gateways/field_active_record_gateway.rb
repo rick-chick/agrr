@@ -7,9 +7,10 @@ module Adapters
         attr_accessor :translator
         def list_by_farm(farm_id, user_id)
           user = find_user!(user_id)
-          farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          farm = Domain::Farm::Gateways::FarmGateway.default.find_model(farm_id)
           scope = FieldPolicy.scope_for_farm(user, farm)
-          scope.map { |record| Domain::Farm::Entities::FieldEntity.from_model(record) }
+          scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise StandardError, "Farm not found"
         end
@@ -17,14 +18,15 @@ module Adapters
         def find_by_id_and_user(field_id, user_id)
           user = ::User.find(user_id)
           record = FieldPolicy.find_owned!(user, field_id)
-          Domain::Farm::Entities::FieldEntity.from_model(record)
+          Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise StandardError, "Field not found"
         end
 
         def create(create_input_dto, farm_id, user_id)
           user = ::User.find(user_id)
-          farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          farm = Domain::Farm::Gateways::FarmGateway.default.find_model(farm_id)
           attrs = {
             name: create_input_dto.name,
             area: create_input_dto.area,
@@ -34,7 +36,7 @@ module Adapters
           field = FieldPolicy.build_for_create(user, farm, attrs)
           raise StandardError, field.errors.full_messages.join(", ") unless field.save
 
-          Domain::Farm::Entities::FieldEntity.from_model(field)
+          Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise StandardError, "Farm not found"
         end
@@ -49,7 +51,7 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
           raise StandardError, field.errors.full_messages.join(", ") unless field.update(attrs)
 
-          Domain::Farm::Entities::FieldEntity.from_model(field.reload)
+          Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field.reload)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise StandardError, "Field not found"
         end

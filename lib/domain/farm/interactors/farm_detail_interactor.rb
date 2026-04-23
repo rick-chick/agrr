@@ -15,12 +15,11 @@ module Domain
 
         def call(farm_id)
           user = @user_lookup.find(@user_id)
-          farm_model = @gateway.find_authorized_for_view(user, farm_id)
-          farm_detail_dto = Domain::Farm::Dtos::FarmDetailOutputDto.from_models(farm_model, farm_model.fields)
+          farm_detail_dto = @gateway.detail_for_authorized_view(user, farm_id)
           @output_port.on_success(farm_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

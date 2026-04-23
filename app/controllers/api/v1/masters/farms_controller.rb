@@ -127,8 +127,7 @@ module Api
             gateway: farm_gateway,
             user_id: current_user.id,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: translator,
-            deletion_undo_gateway: deletion_undo_gateway
+            translator: translator
           )
           interactor.call(params[:id])
 

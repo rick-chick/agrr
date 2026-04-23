@@ -24,20 +24,25 @@ module Domain
         test "should destroy farm successfully when no crop plans exist" do
           farm = create(:farm, user: @user, name: "Test Farm")
           farm_id = farm.id
+          mock_undo = mock
+          mock_undo.stubs(:expires_at).returns(Time.current + 5.minutes)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, farm_id.to_s).returns(farm)
-          @mock_translator.expects(:t).with("flash.farms.deleted", name: "Test Farm").returns("Test Farm deleted")
+          @mock_gateway.expects(:soft_destroy_with_undo).with(
+            user: @user,
+            farm_id: farm_id.to_s,
+            auto_hide_after: 5000,
+            translator: @mock_translator
+          ).returns({ success: true, undo_entity: mock_undo, farm_name: "Test Farm" })
+
           @mock_output_port.expects(:on_success).with(instance_of(Domain::Farm::Dtos::FarmDestroyOutputDto))
 
-          gateway = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
           interactor = FarmDestroyInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             user_id: @user_id,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: @mock_translator,
-            deletion_undo_gateway: gateway
+            translator: @mock_translator
           )
 
           interactor.call(farm_id.to_s)
@@ -47,7 +52,7 @@ module Domain
           farm_id = 1
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          @mock_gateway.expects(:soft_destroy_with_undo).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
             @interactor.call(farm_id)

@@ -173,14 +173,16 @@ class AgriculturalTasksController < ApplicationController
   private
 
   def set_agricultural_task
-    if action_requires_edit_permission?
-      @agricultural_task = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_authorized_for_edit(current_user, params[:id])
-    else
-      @agricultural_task = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_authorized_for_view(current_user, params[:id])
-    end
-  rescue PolicyPermissionDenied
+    gw = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default
+    @agricultural_task =
+      if action_requires_edit_permission?
+        gw.find_authorized_model_for_edit(current_user, params[:id])
+      else
+        gw.find_authorized_model_for_view(current_user, params[:id])
+      end
+  rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.no_permission")
-  rescue ActiveRecord::RecordNotFound
+  rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
   end
 

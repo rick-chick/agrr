@@ -250,8 +250,8 @@ module Api
       def set_pest
         @pest =
           begin
-            Domain::Pest::Gateways::PestGateway.default.find_authorized_for_edit(current_user, params[:id])
-          rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+            Domain::Pest::Gateways::PestGateway.default.find_authorized_model_for_edit(current_user, params[:id])
+          rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
             nil
           end
       end

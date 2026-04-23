@@ -11,12 +11,12 @@ module Adapters
         end
 
         def list
-          ::Fertilize.where.not(name: [ nil, "" ]).map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
+          ::Fertilize.where.not(name: [ nil, "" ]).map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Fertilize not found"
         end
@@ -35,7 +35,7 @@ module Adapters
           )
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
       end
     end

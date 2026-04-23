@@ -23,9 +23,8 @@ module Domain
           attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
-          rule_model = @gateway.update_for_user(user, update_input_dto.id, attrs)
+          rule_entity = @gateway.update_for_user(user, update_input_dto.id, attrs)
 
-          rule_entity = Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule_model)
           @output_port.on_success(rule_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
