@@ -4,16 +4,17 @@ module Domain
   module Pesticide
     module Interactors
       class PesticideDetailInteractor < Domain::Pesticide::Ports::PesticideDetailInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:)
+        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @user_lookup = user_lookup
         end
 
         def call(pesticide_id)
-          user = User.find(@user_id)
-          pesticide_model = Domain::Shared::Policies::PesticidePolicy.find_visible!(::Pesticide, user, pesticide_id)
+          user = @user_lookup.find(@user_id)
+          pesticide_model = @gateway.find_authorized_for_view(user, pesticide_id)
           pesticide_entity = Domain::Pesticide::Entities::PesticideEntity.from_model(pesticide_model)
           dto = Domain::Pesticide::Dtos::PesticideDetailOutputDto.new(pesticide: pesticide_entity)
           @output_port.on_success(dto)

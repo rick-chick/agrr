@@ -105,15 +105,12 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        @farm = Domain::Shared::Policies::FarmPolicy.build_for_create(Farm, current_user, farm_params)
-
-        if @farm.save
-          Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
-          render json: @farm, status: :created
-        else
-          Rails.logger.warn "⚠️  Failed to create farm: #{@farm.errors.full_messages.join(', ')}"
-          render json: { errors: @farm.errors }, status: :unprocessable_entity
-        end
+        @farm = Domain::Farm::Gateways::FarmGateway.default.create_for_user(current_user, farm_params.to_h.symbolize_keys)
+        Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
+        render json: @farm, status: :created
+      rescue StandardError => e
+        Rails.logger.warn "⚠️  Failed to create farm: #{e.message}"
+        render json: { errors: [ e.message ] }, status: :unprocessable_entity
       end
     end
   end
@@ -235,7 +232,7 @@ class FarmsController < ApplicationController
       @farm = Farm.find(params[:id])
     else
       # Regular users can only access their own farms
-      @farm = Domain::Shared::Policies::FarmPolicy.find_owned!(Farm, current_user, params[:id])
+      @farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(current_user, params[:id])
     end
   rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
     redirect_to farms_path, alert: I18n.t("farms.flash.not_found")

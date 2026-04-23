@@ -48,7 +48,7 @@ module Domain
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
           farm_mapper = Mappers::FarmMapper.new(ctx)
 
-          ActiveRecord::Base.transaction do
+          Domain::CultivationPlan::Gateways::CultivationPlanGateway.default.within_transaction do
             farm = farm_mapper.create_or_get_user_farm
             ctx.current_farm_region = farm.region
 

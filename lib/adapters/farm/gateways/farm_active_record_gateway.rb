@@ -93,6 +93,81 @@ module Adapters
           farm = ::Farm.find_by(id: farm_id)
           farm&.update_column(:weather_location_id, weather_location_id)
         end
+
+        def update_predicted_weather_data(farm_id, payload)
+          ::Farm.find(farm_id).update!(predicted_weather_data: payload)
+        end
+
+        def visible_records(user)
+          if user.admin?
+            ::Farm.all
+          else
+            ::Farm.where("is_reference = ? OR user_id = ?", true, user.id)
+          end
+        end
+
+        def user_owned_records(user)
+          ::Farm.user_owned.by_user(user)
+        end
+
+        def reference_records(region: nil)
+          scope = ::Farm.reference
+          region ? scope.where(region: region) : scope
+        end
+
+        def find_authorized_for_view(user, id)
+          farm = find_farm_model!(id)
+          unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          farm
+        end
+
+        def find_authorized_for_edit(user, id)
+          farm = find_farm_model!(id)
+          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          farm
+        end
+
+        def find_model(id)
+          find_farm_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_create(user, attrs)
+          farm = ::Farm.new(h)
+          raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
+
+          farm
+        end
+
+        def update_for_user(user, id, attrs)
+          farm = find_farm_model!(id)
+          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_update(
+            user,
+            farm.attributes.symbolize_keys,
+            attrs
+          )
+          raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(normalized)
+
+          farm.reload
+        end
+
+        private
+
+        def find_farm_model!(id)
+          ::Farm.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
       end
     end
   end

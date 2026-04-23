@@ -13,7 +13,7 @@ module Api
 
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region)
+          farms = Domain::Farm::Gateways::FarmGateway.default.reference_records(region: region)
           # 関連データを除外してJSONサイズを削減
           render json: farms.as_json(only: [ :id, :name, :latitude, :longitude, :region ])
         end
@@ -26,7 +26,7 @@ module Api
           Rails.logger.info "🌱 [WizardController#crops] Called with farm_id: #{params[:farm_id]}"
           farm = Farm.find(params[:farm_id])
           Rails.logger.info "🌱 [WizardController#crops] Found farm: #{farm.id}, region: #{farm.region}"
-          crops = Domain::Shared::Policies::CropPolicy.reference_scope(::Crop, region: farm.region).order(:name)
+          crops = Domain::Crop::Gateways::CropGateway.default.reference_records(region: farm.region).order(:name)
           Rails.logger.info "🌱 [WizardController#crops] Found #{crops.count} crops"
           render json: crops
         rescue ActiveRecord::RecordNotFound => e

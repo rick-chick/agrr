@@ -4,23 +4,24 @@ module Domain
   module Fertilize
     module Interactors
       class FertilizeUpdateInteractor < Domain::Fertilize::Ports::FertilizeUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          user = User.find(@user_id)
-          fertilize_model = Domain::Shared::Policies::FertilizePolicy.find_editable!(::Fertilize, user, input_dto.fertilize_id)
+          user = @user_lookup.find(@user_id)
 
           attrs = {}
 
           # is_referenceをbooleanに変換してチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
+            fertilize_model = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
             if is_reference != fertilize_model.is_reference && !user.admin?
               raise StandardError, @translator.t("fertilizes.flash.reference_flag_admin_only")
             end
@@ -34,11 +35,10 @@ module Domain
           attrs[:description] = input_dto.description if !input_dto.description.nil?
           attrs[:package_size] = input_dto.package_size if !input_dto.package_size.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
-          unless Domain::Shared::Policies::FertilizePolicy.apply_update!(user, fertilize_model, attrs)
-            raise StandardError, fertilize_model.errors.full_messages.join(", ")
-          end
 
-          fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model.reload)
+          fertilize_model = @gateway.update_for_user(user, input_dto.fertilize_id, attrs)
+
+          fertilize_entity = Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize_model)
           @output_port.on_success(fertilize_entity)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

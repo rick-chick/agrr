@@ -33,8 +33,8 @@ module Domain
           fertilize_model = mock
           fertilize_entity = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:build_for_create).with(::Fertilize, @user, {
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:create_for_user).with(@user, {
             name: "Test Fertilize",
             n: 10.0,
             p: 5.0,
@@ -44,7 +44,6 @@ module Domain
             region: "Kyoto",
             is_reference: false
           }).returns(fertilize_model)
-          fertilize_model.expects(:save).returns(true)
           Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
@@ -57,7 +56,7 @@ module Domain
             is_reference: true
           )
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_translator.expects(:t).with("fertilizes.flash.reference_only_admin").returns("admin only")
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
@@ -82,8 +81,8 @@ module Domain
           fertilize_model = mock
           fertilize_entity = mock
 
-          User.expects(:find).with(admin_user_id).returns(admin_user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:build_for_create).with(::Fertilize, admin_user, {
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
+          @mock_gateway.expects(:create_for_user).with(admin_user, {
             name: "Test Reference Fertilize",
             n: nil,
             p: nil,
@@ -93,7 +92,6 @@ module Domain
             region: nil,
             is_reference: true
           }).returns(fertilize_model)
-          fertilize_model.expects(:save).returns(true)
           Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
@@ -105,14 +103,18 @@ module Domain
             name: "Test Fertilize"
           )
 
-          fertilize_model = mock
-          errors_mock = mock
-          errors_mock.expects(:full_messages).returns([ "Name can't be blank" ])
-          fertilize_model.expects(:errors).returns(errors_mock)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:create_for_user).raises(StandardError.new("Name can't be blank"))
+          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:build_for_create).returns(fertilize_model)
-          fertilize_model.expects(:save).returns(false)
+          @interactor.call(input_dto)
+        end
+
+        test "should call on_failure when user lookup raises RecordNotFound" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.new(name: "X")
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).raises(
+            Domain::Shared::Exceptions::RecordNotFound, "User not found"
+          )
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)

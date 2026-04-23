@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(crop_detail_dto)
-          crop_model = crop_detail_dto.crop.to_model
+          crop_model = Domain::Crop::Gateways::CropGateway.default.find_model(crop_detail_dto.crop.id)
           @view.instance_variable_set(:@crop, crop_model)
 
           @view.instance_variable_set(:@task_schedule_blueprints,

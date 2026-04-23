@@ -7,6 +7,8 @@ module Presenters
       class EntryScheduleResponseBuilder
         ES = Domain::CultivationPlan::Interactors::EntrySchedule
 
+        DEFAULT_ENTRY_SCHEDULE_TRANSLATOR = ->(key, **opts) { I18n.t(key, **opts) }.freeze
+
         def self.prediction_meta(farm:, payload_hash:)
           return {} unless payload_hash.is_a?(Hash)
 
@@ -21,7 +23,7 @@ module Presenters
 
         # @param result [ES::WindowService::Result]
         def self.crop_list_item(crop, result)
-          timeline = ES::EntrySchedulePhaseTimeline
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: DEFAULT_ENTRY_SCHEDULE_TRANSLATOR)
           cw = timeline.chart_windows(crop, result)
           sow_first = cw[:sowing_windows].first
           tr_first = cw[:transplant_windows].first
@@ -46,7 +48,7 @@ module Presenters
         end
 
         def self.crop_detail(crop, result)
-          timeline = ES::EntrySchedulePhaseTimeline
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: DEFAULT_ENTRY_SCHEDULE_TRANSLATOR)
           cw = timeline.chart_windows(crop, result)
           crop_list_item(crop, result).merge(
             sowing_windows: serialize_windows(cw[:sowing_windows]),

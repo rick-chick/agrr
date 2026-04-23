@@ -10,7 +10,8 @@ module Presenters
         end
 
         def on_success(fields)
-          @view.instance_variable_set(:@fields, fields.map(&:to_model))
+          gw = Domain::Field::Gateways::FieldGateway.default
+          @view.instance_variable_set(:@fields, fields.map { |f| gw.find_model(f.id) })
           @view.instance_variable_set(:@farm, @farm)
           # index テンプレートをレンダリング（暗黙的に）
         end

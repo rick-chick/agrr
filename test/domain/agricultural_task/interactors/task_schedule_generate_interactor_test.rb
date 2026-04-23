@@ -1,32 +1,6 @@
 require "test_helper"
 
 class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
-  class StubScheduleGateway
-    attr_reader :called
-
-    def initialize
-      @called = false
-    end
-
-    def generate(*)
-      @called = true
-      {}
-    end
-  end
-
-  class StubFertilizeGateway
-    attr_reader :called
-
-    def initialize
-      @called = false
-    end
-
-    def plan(*)
-      @called = true
-      {}
-    end
-  end
-
   class StubProgressGateway
     attr_reader :received_payloads
 
@@ -131,13 +105,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   end
 
   test "generate! creates schedules from blueprints and skips agrr gateways" do
-    schedule_gateway = StubScheduleGateway.new
-    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
     )
 
@@ -162,37 +132,25 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     assert_equal Date.new(2025, 4, 1), fertilizer_items.first.scheduled_date
     assert_equal BigDecimal("160.0"), fertilizer_items.second.gdd_trigger
     assert_equal Date.new(2025, 4, 6), fertilizer_items.second.scheduled_date
-
-    refute schedule_gateway.called, "schedule gateway should not be called when blueprints exist"
-    refute fertilize_gateway.called, "fertilize gateway should not be called when blueprints exist"
   end
 
   test "generate! raises TemplateMissingError when crop has no blueprints" do
     @crop.crop_task_schedule_blueprints.delete_all
 
-    schedule_gateway = StubScheduleGateway.new
-    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
     )
 
     assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError do
       service.generate!(cultivation_plan_id: @plan.id)
     end
-
-    refute schedule_gateway.called
-    refute fertilize_gateway.called
   end
 
   test "generate! raises error when progress has no records" do
     progress_gateway = StubProgressGateway.new(progress_response.merge("progress_records" => []))
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: StubScheduleGateway.new,
-      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
@@ -202,13 +160,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   end
 
   test "progress gateway receives weather data filtered from start date" do
-    schedule_gateway = StubScheduleGateway.new
-    fertilize_gateway = StubFertilizeGateway.new
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: schedule_gateway,
-      fertilize_gateway: fertilize_gateway,
       progress_gateway: progress_gateway
     )
 
@@ -231,8 +185,6 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     progress_gateway = StubProgressGateway.new(early_progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: StubScheduleGateway.new,
-      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
@@ -248,8 +200,6 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   test "generate! raises error when gdd trigger is missing in blueprints" do
     progress_gateway = StubProgressGateway.new(progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: StubScheduleGateway.new,
-      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 
@@ -277,8 +227,6 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     progress_gateway = StubProgressGateway.new(staggered_progress)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      schedule_gateway: StubScheduleGateway.new,
-      fertilize_gateway: StubFertilizeGateway.new,
       progress_gateway: progress_gateway
     )
 

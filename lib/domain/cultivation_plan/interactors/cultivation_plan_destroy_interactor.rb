@@ -4,20 +4,22 @@ module Domain
   module CultivationPlan
     module Interactors
       class CultivationPlanDestroyInteractor < Domain::CultivationPlan::Ports::CultivationPlanDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator:)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator
+          @user_lookup = user_lookup
         end
 
         def call(plan_id)
-          user = User.find(@user_id)
+          user = @user_lookup.find(@user_id)
           undo_response = @gateway.destroy(plan_id, user)
           destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)
-        rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound,
+               Domain::Shared::Exceptions::RecordNotFound
           handle_failure(@translator.t("plans.errors.not_found"))
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
           handle_failure(@translator.t("plans.errors.delete_failed"))

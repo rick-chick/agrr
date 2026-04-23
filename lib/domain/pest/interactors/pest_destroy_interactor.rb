@@ -29,18 +29,19 @@ module Domain
           end
         end
 
-        def initialize(output_port:, gateway:, user_id:, logger:, translator:, deletion_undo_gateway: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator:, deletion_undo_gateway: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator
-          @deletion_undo_gateway = deletion_undo_gateway || Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          @deletion_undo_gateway = deletion_undo_gateway || Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          @user_lookup = user_lookup
         end
 
         def call(pest_id)
-          user = User.find(@user_id)
-          pest_model = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, user, pest_id)
+          user = @user_lookup.find(@user_id)
+          pest_model = @gateway.find_authorized_for_edit(user, pest_id)
 
           if pest_model.pesticides.any?
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.cannot_delete_in_use")))
@@ -57,8 +58,7 @@ module Domain
             record: pest_model,
             actor: user,
             toast_message: @translator.t("pests.undo.toast", name: pest_model.name),
-            auto_hide_after: 5000,
-            metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(pest_model) }
+            auto_hide_after: 5000
           )
 
           deletion_undo_interactor.call(input_dto)
@@ -69,7 +69,7 @@ module Domain
           else
             @output_port.on_failure(undo_presenter.error)
           end
-        rescue ActiveRecord::RecordNotFound
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Pest not found"))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))

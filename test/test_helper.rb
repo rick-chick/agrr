@@ -107,6 +107,27 @@ module ActiveSupport
       Rails.application.routes.default_url_options[:locale] = :ja
     end
 
+    teardown do
+      Domain::Shared::Ports::UserLookupPort.default_reset!
+      Domain::Shared::Ports::SqlLikeSanitizePort.default_reset!
+      Domain::CultivationPlan::Gateways::CultivationPlanGateway.default_reset!
+      Domain::CultivationPlan::Gateways::PlanAllocationGateway.default_reset!
+      Domain::Farm::Gateways::FarmGateway.default_reset!
+      Domain::Field::Gateways::FieldGateway.default_reset!
+      Domain::Crop::Gateways::CropGateway.default_reset!
+      Domain::Crop::Gateways::CropStageCopyGateway.default_reset!
+      Domain::Pest::Gateways::PestGateway.default_reset!
+      Domain::Pesticide::Gateways::PesticideGateway.default_reset!
+      Domain::Fertilize::Gateways::FertilizeGateway.default_reset!
+      Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default_reset!
+      Domain::AgriculturalTask::Gateways::TaskScheduleGateway.default_reset!
+      Domain::AgriculturalTask::Gateways::AgrrProgressGateway.default_reset!
+      Domain::WeatherData::Gateways::WeatherDataGateway.default_reset!
+      Domain::WeatherData::Gateways::PredictionGateway.default_reset!
+      Domain::DeletionUndo::Gateways::DeletionUndoGateway.default_reset!
+      Domain::InteractionRule::Gateways::InteractionRuleGateway.default_reset!
+    end
+
     # application.jsがビルドされているか確認し、なければダミーファイルを作成
     def ensure_application_js_built
       app_js_path = Rails.root.join("app", "assets", "builds", "application.js")

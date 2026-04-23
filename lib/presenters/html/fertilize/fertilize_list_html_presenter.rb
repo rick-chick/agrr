@@ -9,7 +9,8 @@ module Presenters
         end
 
         def on_success(fertilizes)
-          @view.instance_variable_set(:@fertilizes, fertilizes.map(&:to_model))
+          gw = Domain::Fertilize::Gateways::FertilizeGateway.default
+          @view.instance_variable_set(:@fertilizes, fertilizes.map { |f| gw.find_model(f.id) })
         end
 
         def on_failure(error_dto)

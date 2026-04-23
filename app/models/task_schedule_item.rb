@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class TaskScheduleItem < ApplicationRecord
-  FIELD_WORK_TYPE = "field_work"
-  BASAL_FERTILIZATION_TYPE = "basal_fertilization"
-  TOPDRESS_FERTILIZATION_TYPE = "topdress_fertilization"
+  FIELD_WORK_TYPE = Domain::AgriculturalTask::Constants::ScheduleItemTypes::FIELD_WORK
+  BASAL_FERTILIZATION_TYPE = Domain::AgriculturalTask::Constants::ScheduleItemTypes::BASAL_FERTILIZATION
+  TOPDRESS_FERTILIZATION_TYPE = Domain::AgriculturalTask::Constants::ScheduleItemTypes::TOPDRESS_FERTILIZATION
   AGRR_SOURCES = %w[agrr agrr_schedule agrr_fertilize_plan copied_from_public_plan manual].freeze
   STATUSES = {
     planned: "planned",

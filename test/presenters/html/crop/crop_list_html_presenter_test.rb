@@ -12,8 +12,12 @@ class CropListHtmlPresenterTest < ActiveSupport::TestCase
     crop_entity2 = mock
     crop_model1 = mock
     crop_model2 = mock
-    crop_entity1.expects(:to_model).returns(crop_model1)
-    crop_entity2.expects(:to_model).returns(crop_model2)
+    crop_entity1.expects(:id).returns(1)
+    crop_entity2.expects(:id).returns(2)
+    gw = mock
+    gw.expects(:find_model).with(1).returns(crop_model1)
+    gw.expects(:find_model).with(2).returns(crop_model2)
+    Domain::Crop::Gateways::CropGateway.stubs(:default).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@crops, [ crop_model1, crop_model2 ])
 

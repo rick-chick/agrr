@@ -10,7 +10,8 @@ module Presenters
         end
 
         def on_success(tasks)
-          @view.instance_variable_set(:@agricultural_tasks, tasks.map(&:to_model))
+          gw = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default
+          @view.instance_variable_set(:@agricultural_tasks, tasks.map { |t| gw.find_model(t.id) })
           @view.instance_variable_set(:@query, @input_dto.query.to_s)
           @view.instance_variable_set(:@selected_filter, @input_dto.filter.to_s)
 

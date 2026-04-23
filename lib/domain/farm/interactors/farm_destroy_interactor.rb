@@ -28,18 +28,19 @@ module Domain
             @error = error_dto
           end
         end
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
-          @deletion_undo_gateway = deletion_undo_gateway || Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          @deletion_undo_gateway = deletion_undo_gateway || Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          @user_lookup = user_lookup
         end
 
         def call(farm_id)
-          user = User.find(@user_id)
-          farm_model = Domain::Shared::Policies::FarmPolicy.find_editable!(::Farm, user, farm_id)
+          user = @user_lookup.find(@user_id)
+          farm_model = @gateway.find_authorized_for_edit(user, farm_id)
 
           # Note: FreeCropPlan check removed as FreeCropPlan is deprecated
 
@@ -54,8 +55,7 @@ module Domain
             record: farm_model,
             actor: user,
             toast_message: @translator.t("flash.farms.deleted", name: farm_model.name),
-            auto_hide_after: 5000,
-            metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(farm_model) }
+            auto_hide_after: 5000
           )
 
           deletion_undo_interactor.call(input_dto)
@@ -70,7 +70,7 @@ module Domain
           end
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

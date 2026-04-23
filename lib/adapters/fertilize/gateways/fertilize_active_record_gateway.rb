@@ -58,6 +58,72 @@ module Adapters
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end
+
+        def visible_records(user)
+          if user.admin?
+            ::Fertilize.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Fertilize.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def find_authorized_for_view(user, id)
+          fertilize = find_fertilize_model!(id)
+          unless Domain::Shared::Policies::FertilizePolicy.view_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          fertilize
+        end
+
+        def find_authorized_for_edit(user, id)
+          fertilize = find_fertilize_model!(id)
+          unless Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          fertilize
+        end
+
+        def find_model(id)
+          find_fertilize_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, attrs)
+          fertilize = ::Fertilize.new(h)
+          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
+
+          fertilize
+        end
+
+        def update_for_user(user, id, attrs)
+          fertilize = find_fertilize_model!(id)
+          unless Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_update(
+            user,
+            fertilize.attributes.symbolize_keys,
+            attrs
+          )
+          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(normalized)
+
+          fertilize.reload
+        end
+
+        def list_from_relation(relation)
+          relation.map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
+        end
+
+        private
+
+        def find_fertilize_model!(id)
+          ::Fertilize.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
       end
     end
   end

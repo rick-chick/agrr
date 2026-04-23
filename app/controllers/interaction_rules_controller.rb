@@ -101,7 +101,7 @@ class InteractionRulesController < ApplicationController
 
   # DELETE /interaction_rules/:id
   def destroy
-    rule = Domain::Shared::Policies::InteractionRulePolicy.find_editable!(::InteractionRule, current_user, params[:id])
+    rule = Domain::InteractionRule::Gateways::InteractionRuleGateway.default.find_authorized_for_edit(current_user, params[:id])
     toast_message = t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
     schedule_deletion_with_undo(
       record: rule,
@@ -134,9 +134,9 @@ class InteractionRulesController < ApplicationController
 
     @interaction_rule =
       if action.in?([ :edit, :update, :destroy ])
-        Domain::Shared::Policies::InteractionRulePolicy.find_editable!(InteractionRule, current_user, params[:id])
+        Domain::InteractionRule::Gateways::InteractionRuleGateway.default.find_authorized_for_edit(current_user, params[:id])
       else
-        Domain::Shared::Policies::InteractionRulePolicy.find_visible!(InteractionRule, current_user, params[:id])
+        Domain::InteractionRule::Gateways::InteractionRuleGateway.default.find_authorized_for_view(current_user, params[:id])
       end
   rescue PolicyPermissionDenied
     redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.no_permission")

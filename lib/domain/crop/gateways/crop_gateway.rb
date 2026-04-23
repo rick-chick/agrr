@@ -4,6 +4,18 @@ module Domain
   module Crop
     module Gateways
       class CropGateway
+        class << self
+          def default
+            @default ||= Adapters::Crop::Gateways::CropMemoryGateway.new
+          end
+
+          attr_writer :default
+
+          def default_reset!
+            @default = nil
+          end
+        end
+
         def list
           raise NotImplementedError, "Subclasses must implement list"
         end
@@ -91,6 +103,39 @@ module Domain
 
         def update_nutrient_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement update_nutrient_requirement"
+        end
+
+        # Policy 連携（永続化は Adapter）
+        def visible_records(user)
+          raise NotImplementedError, "Subclasses must implement visible_records"
+        end
+
+        def user_owned_non_reference_records(user)
+          raise NotImplementedError, "Subclasses must implement user_owned_non_reference_records"
+        end
+
+        def reference_records(region: nil)
+          raise NotImplementedError, "Subclasses must implement reference_records"
+        end
+
+        def find_authorized_for_view(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
+        end
+
+        def find_authorized_for_edit(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
+        end
+
+        def find_model(id)
+          raise NotImplementedError, "Subclasses must implement find_model"
+        end
+
+        def create_for_user(user, attrs)
+          raise NotImplementedError, "Subclasses must implement create_for_user"
+        end
+
+        def update_for_user(user, id, attrs)
+          raise NotImplementedError, "Subclasses must implement update_for_user"
         end
       end
     end

@@ -174,9 +174,9 @@ class AgriculturalTasksController < ApplicationController
 
   def set_agricultural_task
     if action_requires_edit_permission?
-      @agricultural_task = Domain::Shared::Policies::AgriculturalTaskPolicy.find_editable!(AgriculturalTask, current_user, params[:id])
+      @agricultural_task = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_authorized_for_edit(current_user, params[:id])
     else
-      @agricultural_task = Domain::Shared::Policies::AgriculturalTaskPolicy.find_visible!(AgriculturalTask, current_user, params[:id])
+      @agricultural_task = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_authorized_for_view(current_user, params[:id])
     end
   rescue PolicyPermissionDenied
     redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.no_permission")
@@ -212,9 +212,9 @@ class AgriculturalTasksController < ApplicationController
     when "reference"
       base_scope.where(is_reference: true)
     when "all"
-      base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.visible_scope(AgriculturalTask, current_user).pluck(:id))
+      base_scope.merge(Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.visible_records(current_user))
     else
-      base_scope.where(id: Domain::Shared::Policies::AgriculturalTaskPolicy.user_owned_non_reference_scope(AgriculturalTask, current_user).pluck(:id))
+      base_scope.merge(Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.user_owned_non_reference_records(current_user))
     end
   end
 

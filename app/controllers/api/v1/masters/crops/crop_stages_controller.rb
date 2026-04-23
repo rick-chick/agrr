@@ -116,14 +116,14 @@ module Api::V1::Masters::Crops
     end
 
     def find_visible_crop
-      @crop = Domain::Shared::Policies::CropPolicy.find_visible!(::Crop, current_user, params[:crop_id])
-    rescue ActiveRecord::RecordNotFound
+      @crop = Domain::Crop::Gateways::CropGateway.default.find_authorized_for_view(current_user, params[:crop_id])
+    rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
       render(json: { error: "Crop not found" }, status: :not_found)
     end
 
     def find_editable_crop
-      @crop = Domain::Shared::Policies::CropPolicy.find_editable!(::Crop, current_user, params[:crop_id])
-    rescue ActiveRecord::RecordNotFound
+      @crop = Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(current_user, params[:crop_id])
+    rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
       render(json: { error: "Crop not found" }, status: :not_found)
     end
 

@@ -5,24 +5,76 @@ module Adapters
     module Gateways
       class PestMemoryGateway < Domain::Pest::Gateways::PestGateway
         def list(query = nil)
-          # 後方互換性のため、ActiveRecord::Relationやnilも受け付ける
           if query.is_a?(Domain::Shared::Dtos::QueryDto)
             scope = build_scope_from_query(query)
           else
-            # 後方互換: scopeが直接渡された場合
             scope = query || ::Pest.all
           end
           scope.map { |record| Domain::Pest::Entities::PestEntity.from_model(record) }
         end
 
-        private
+        def visible_records(user)
+          if user.admin?
+            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pest.where(user_id: user.id, is_reference: false)
+          end
+        end
 
-        def build_scope_from_query(query)
-          return ::Pest.all unless query.present?
+        def selectable_records(user)
+          ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+        end
 
-          scope = ::Pest.all
-          # QueryDtoに基づいてscopeを構築（必要に応じて拡張）
-          scope
+        def find_authorized_for_view(user, id)
+          pest = find_pest_model!(id)
+          unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          pest
+        end
+
+        def find_authorized_for_edit(user, id)
+          pest = find_pest_model!(id)
+          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          pest
+        end
+
+        def find_model(id)
+          find_pest_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
+          pest = ::Pest.new(h)
+          raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
+
+          pest
+        end
+
+        def update_for_user(user, id, attrs)
+          pest = find_pest_model!(id)
+          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_update(
+            user,
+            pest.attributes.symbolize_keys,
+            attrs
+          )
+          success = pest.update(normalized)
+          if success
+            success = pest.pest_temperature_profile&.valid? != false &&
+                     pest.pest_thermal_requirement&.valid? != false &&
+                     pest.pest_control_methods.all? { |method| method.valid? }
+          end
+          raise StandardError, pest.errors.full_messages.join(", ") unless success
+
+          pest.reload
         end
 
         def find_by_id(pest_id)
@@ -64,6 +116,20 @@ module Adapters
           Domain::Pest::Entities::PestEntity.from_model(pest.reload)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "Pest not found"
+        end
+
+        private
+
+        def find_pest_model!(id)
+          ::Pest.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def build_scope_from_query(query)
+          return ::Pest.all unless query.present?
+
+          ::Pest.all
         end
       end
     end

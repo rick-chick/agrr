@@ -21,10 +21,6 @@ module Domain
           @updated_at = updated_at
         end
 
-        def to_model
-          ::Pesticide.find(id)
-        end
-
         def self.from_model(record)
           new(
             id: record.id,

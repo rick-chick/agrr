@@ -29,18 +29,19 @@ module Domain
           end
         end
 
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
-          @deletion_undo_gateway = deletion_undo_gateway || Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          @deletion_undo_gateway = deletion_undo_gateway || Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          @user_lookup = user_lookup
         end
 
         def call(task_id)
-          user = User.find(@user_id)
-          task_model = Domain::Shared::Policies::AgriculturalTaskPolicy.find_editable!(::AgriculturalTask, user, task_id)
+          user = @user_lookup.find(@user_id)
+          task_model = @gateway.find_authorized_for_edit(user, task_id)
 
           undo_presenter = DeletionUndoPresenter.new
           deletion_undo_interactor = Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
@@ -52,8 +53,7 @@ module Domain
             record: task_model,
             actor: user,
             toast_message: @translator.t("agricultural_tasks.undo.toast", name: task_model.name),
-            auto_hide_after: 5000,
-            metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(task_model) }
+            auto_hide_after: 5000
           )
 
           deletion_undo_interactor.call(input_dto)
@@ -66,7 +66,7 @@ module Domain
           end
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

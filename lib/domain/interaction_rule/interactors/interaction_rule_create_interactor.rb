@@ -4,16 +4,17 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleCreateInteractor < Domain::InteractionRule::Ports::InteractionRuleCreateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:)
+        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @user_lookup = user_lookup
         end
 
         def call(create_input_dto)
-          user = User.find(@user_id)
-          rule_model, = Domain::Shared::Policies::InteractionRulePolicy.build_for_create(::InteractionRule, user, {
+          user = @user_lookup.find(@user_id)
+          rule_model = @gateway.create_for_user(user, {
             rule_type: create_input_dto.rule_type,
             source_group: create_input_dto.source_group,
             target_group: create_input_dto.target_group,
@@ -23,7 +24,6 @@ module Domain
             region: create_input_dto.region,
             is_reference: create_input_dto.is_reference
           })
-          rule_model.save!
 
           rule_entity = Domain::InteractionRule::Entities::InteractionRuleEntity.from_model(rule_model)
           @output_port.on_success(rule_entity)

@@ -9,6 +9,69 @@ module Adapters
           query.map { |record| Domain::Crop::Entities::CropEntity.from_model(record) }
         end
 
+        def visible_records(user)
+          if user.admin?
+            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Crop.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def user_owned_non_reference_records(user)
+          ::Crop.where(user_id: user.id, is_reference: false)
+        end
+
+        def reference_records(region: nil)
+          scope = ::Crop.reference
+          region ? scope.where(region: region) : scope
+        end
+
+        def find_authorized_for_view(user, id)
+          crop = find_crop_model!(id)
+          unless Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          crop
+        end
+
+        def find_authorized_for_edit(user, id)
+          crop = find_crop_model!(id)
+          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          crop
+        end
+
+        def find_model(id)
+          find_crop_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user, attrs)
+          crop = ::Crop.new(h)
+          raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
+
+          crop
+        end
+
+        def update_for_user(user, id, attrs)
+          crop = find_crop_model!(id)
+          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_update(
+            user,
+            crop.attributes.symbolize_keys,
+            attrs
+          )
+          raise StandardError, crop.errors.full_messages.join(", ") unless crop.update(normalized)
+
+          crop.reload
+        end
+
         def find_by_id(crop_id)
           crop = ::Crop.find(crop_id)
           Domain::Crop::Entities::CropEntity.from_model(crop)
@@ -218,6 +281,12 @@ module Adapters
         end
 
         private
+
+        def find_crop_model!(id)
+          ::Crop.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
 
         def crop_stage_entity_from_record(record)
           temperature_req = record.temperature_requirement ? temperature_requirement_entity_from_record(record.temperature_requirement) : nil

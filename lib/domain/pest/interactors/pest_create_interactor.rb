@@ -4,16 +4,17 @@ module Domain
   module Pest
     module Interactors
       class PestCreateInteractor < Domain::Pest::Ports::PestCreateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          user = User.find(@user_id)
+          user = @user_lookup.find(@user_id)
 
           # is_referenceをbooleanに変換
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
@@ -37,8 +38,7 @@ module Domain
           attrs[:pest_thermal_requirement_attributes] = input_dto.pest_thermal_requirement_attributes if input_dto.pest_thermal_requirement_attributes
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
-          pest_model = Domain::Shared::Policies::PestPolicy.build_for_create(::Pest, user, attrs)
-          raise StandardError, pest_model.errors.full_messages.join(", ") unless pest_model.save
+          pest_model = @gateway.create_for_user(user, attrs)
 
           if Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
             PestCropAssociationService.associate_crops(pest_model, input_dto.crop_ids, user: user)

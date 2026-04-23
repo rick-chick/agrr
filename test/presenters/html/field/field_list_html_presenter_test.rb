@@ -14,8 +14,12 @@ class FieldListHtmlPresenterTest < ActiveSupport::TestCase
     field_entity2 = mock
     field_model1 = mock
     field_model2 = mock
-    field_entity1.expects(:to_model).returns(field_model1)
-    field_entity2.expects(:to_model).returns(field_model2)
+    field_entity1.expects(:id).returns(1)
+    field_entity2.expects(:id).returns(2)
+    gw = mock
+    gw.expects(:find_model).with(1).returns(field_model1)
+    gw.expects(:find_model).with(2).returns(field_model2)
+    Domain::Field::Gateways::FieldGateway.stubs(:default).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
     view_mock.expects(:instance_variable_set).with(:@farm, farm)

@@ -4,7 +4,8 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
-        def initialize(output_port:, gateway:, weather_data_gateway:, prediction_factory:, progress_factory:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, weather_data_gateway:, prediction_factory:, progress_factory:, logger:, translator: nil,
+                       cultivation_plan_gateway: Domain::CultivationPlan::Gateways::CultivationPlanGateway.default)
           @output_port = output_port
           @gateway = gateway
           @weather_data_gateway = weather_data_gateway
@@ -12,6 +13,7 @@ module Domain
           @progress_factory = progress_factory
           @translator = translator || Adapters::Translators::RailsTranslator.new
           @logger = logger
+          @cultivation_plan_gateway = cultivation_plan_gateway
         end
 
         def call(input_dto)
@@ -31,7 +33,7 @@ module Domain
 
           filtered_data = apply_display_range(climate_data, display_start_date, display_end_date)
           @output_port.present(filtered_data)
-        rescue ActiveRecord::RecordNotFound => e
+        rescue Domain::Shared::Exceptions::RecordNotFound, ActiveRecord::RecordNotFound => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Field cultivation not found: #{e.message}")
           @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
@@ -69,13 +71,13 @@ module Domain
           @gateway.ensure_cultivation_period!(field_cultivation)
 
           crop = @gateway.fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
-          raise ActiveRecord::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
+          raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
 
           weather_payload = fallback_get_weather_data_for_period(weather_location, field_cultivation.start_date, field_cultivation.completion_date, farm.latitude, farm.longitude, display_start_date, display_end_date)
 
           # 予測データをCultivationPlanに保存（次回以降のキャッシュとして使用）
           unless Domain::Shared::ValidationHelpers.present?(plan.predicted_weather_data)
-            plan.update!(predicted_weather_data: weather_payload)
+            @cultivation_plan_gateway.update_predicted_weather_data(plan.id, weather_payload)
             @logger.info "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan##{plan.id}"
           end
 
@@ -141,8 +143,7 @@ module Domain
           prediction_days = (end_date - training_end_date).to_i
 
           if prediction_days > 0
-            prediction_gateway = Agrr::PredictionGateway.new
-            future = prediction_gateway.predict(
+            future = Domain::WeatherData::Gateways::PredictionGateway.default.predict(
               historical_data: training_formatted,
               days: prediction_days,
               model: "lightgbm"

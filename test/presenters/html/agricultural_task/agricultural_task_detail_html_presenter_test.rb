@@ -11,7 +11,10 @@ class AgriculturalTaskDetailHtmlPresenterTest < ActiveSupport::TestCase
 
     task_entity = mock
     task_model = mock
-    task_entity.expects(:to_model).returns(task_model)
+    task_entity.expects(:id).returns(5)
+    gw = mock
+    gw.expects(:find_model).with(5).returns(task_model)
+    Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.stubs(:default).returns(gw)
 
     detail_dto = mock
     detail_dto.expects(:task).returns(task_entity)

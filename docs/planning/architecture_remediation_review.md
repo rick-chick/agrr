@@ -117,6 +117,18 @@
 - T-022b（コミット境界整理）
 - **T-062**（2026-04-21）: [`lib/domain/cultivation_plan/interactors/plan_copier.rb`](../../lib/domain/cultivation_plan/interactors/plan_copier.rb) + [`Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year`](../../lib/adapters/cultivation_plan/plan_copy_gateway.rb)。E2E/添付: [`test/domain/cultivation_plan/interactors/plan_copier_test.rb`](../../test/domain/cultivation_plan/interactors/plan_copier_test.rb)。Gateway 単体: `copy_private_plan_for_year` / `copy_attachments_for_plan_copy` を [`test/adapters/cultivation_plan/plan_copy_gateway_test.rb`](../../test/adapters/cultivation_plan/plan_copy_gateway_test.rb) に追加。
 
+### PlanSaveSession の Mapper 境界（2026-04-21 方針）
+
+- `lib/domain/cultivation_plan/interactors/plan_save_session.rb` および `lib/domain/cultivation_plan/mappers/*` は依然として ActiveRecord へ直接触れる（永続化の境界は「Gateway 経由」への移行を次 PR で実施）。
+- **次ステップ（別 PR）**: Farm / Field / Crop / Pest / … の各 Mapper を `lib/adapters/cultivation_plan/`（または `lib/adapters/public_plan/`）配下へ移し、`PlanSaveSession` は DTO / Port のみを扱う形へ縮小する。
+
+### AR 依存撲滅（2026-04-21 完了）
+
+- **本 PR の範囲**: `lib/domain/shared/policies/*` の純化（認可 + 属性正規化のみ）、各 Domain `Gateway` / Adapter の `find_authorized_*` / `create_for_user` / `update_for_user` / `visible_records` 等、Interactor・Controller・Presenter の Gateway 経由化、`TaskScheduleGateway` / `PredictionGateway`（`Domain::WeatherData::Gateways`）/ `PlanAllocationGateway`（Agrr 例外 → `Domain::CultivationPlan::Errors::*`）、`AgrrProgressGateway` default、`FieldGateway` に `default` + `find_model`、Entity から `to_model` 除去と Presenter の `gateway.find_model` 化、`PlanningDateCalculator` / `CultivationPlanInitializeInteractor` の `logger:` DI（`Rails.logger` デフォルト）、`FertilizeMemoryGateway` を `FertilizeActiveRecordGateway` 継承で CRUD 整合。
+- **フォローアップ（同一ロードマップ内・完了条件の完全達成）**: `CultivationPlanGateway` に optimize 用メソッド（`clear_field_cultivations` / `create_field_cultivation` / `upsert_cultivation_plan_field` / `find_plan_crop_id_by_crop_id!` / `apply_optimization_result` / `cultivation_plan_crops_with_crop` / `field_cultivations_present?`）を追加し [`CultivationPlanOptimizeInteractor`](../../lib/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rb) の AR 直叩きを除去。`TaskScheduleGenerateInteractor` の未使用 Agrr DI 削除と `Domain::AgriculturalTask::Constants::ScheduleItemTypes`（`TaskScheduleItem` は当該定数を参照）。`CultivationPlanOptimizeInteractor` / [`PlanCopier`](../../lib/domain/cultivation_plan/interactors/plan_copier.rb) / [`WeatherPredictionInteractor`](../../lib/domain/weather_data/interactors/weather_prediction_interactor.rb) の `logger:` DI。[`EntrySchedulePhaseTimeline`](../../lib/domain/cultivation_plan/interactors/entry_schedule/entry_schedule_phase_timeline.rb) は `translator:` 注入（[`EntryScheduleResponseBuilder`](../../lib/presenters/api/public_plans/entry_schedule_response_builder.rb) で `I18n.t` をデフォルト注入）。
+- **次 PR（計画どおり対象外）**: `PlanSaveSession` および `lib/domain/cultivation_plan/mappers/*` 内の `Rails.logger` / `I18n.t` 直呼びと Mapper の adapter 層移設。
+- **検証**: `docker compose --profile test run --rm -e COVERAGE=false test bundle exec rails test` で全テスト GREEN、slow test 検出はスクリプト出力に従い閾値 0.5s 超の一覧を確認済み。
+
 ## 推奨継続順序
 
 1. **T-055〜T-061**（`app/services` 残の段階的移設・1 ファイル 1 PR）。次の優先候補: **T-059**（[`app/services/crops/task_schedule_blueprint_deletion_service.rb`](../../app/services/crops/task_schedule_blueprint_deletion_service.rb)）

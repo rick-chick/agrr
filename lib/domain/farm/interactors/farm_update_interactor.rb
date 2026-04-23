@@ -4,31 +4,30 @@ module Domain
   module Farm
     module Interactors
       class FarmUpdateInteractor < Domain::Farm::Ports::FarmUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          user = User.find(@user_id)
+          user = @user_lookup.find(@user_id)
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:region] = input_dto.region if Domain::Shared::ValidationHelpers.present?(input_dto.region)
           attrs[:latitude] = input_dto.latitude if !input_dto.latitude.nil?
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
 
-          farm_model = Domain::Shared::Policies::FarmPolicy.find_editable!(::Farm, user, input_dto.farm_id)
-          Domain::Shared::Policies::FarmPolicy.apply_update!(user, farm_model, attrs)
-          raise StandardError, farm_model.errors.full_messages.join(", ") if farm_model.errors.any?
+          farm_model = @gateway.update_for_user(user, input_dto.farm_id, attrs)
 
-          farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model.reload)
+          farm_entity = Domain::Farm::Entities::FarmEntity.from_model(farm_model)
           @output_port.on_success(farm_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

@@ -4,22 +4,23 @@ module Domain
   module Farm
     module Interactors
       class FarmDetailInteractor < Domain::Farm::Ports::FarmDetailInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call(farm_id)
-          user = User.find(@user_id)
-          farm_model = Domain::Shared::Policies::FarmPolicy.find_visible!(::Farm, user, farm_id)
+          user = @user_lookup.find(@user_id)
+          farm_model = @gateway.find_authorized_for_view(user, farm_id)
           farm_detail_dto = Domain::Farm::Dtos::FarmDetailOutputDto.from_models(farm_model, farm_model.fields)
           @output_port.on_success(farm_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

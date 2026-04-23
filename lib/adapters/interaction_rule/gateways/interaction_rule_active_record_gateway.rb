@@ -60,6 +60,89 @@ module Adapters
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
           raise StandardError, @translator.t("interaction_rules.flash.cannot_delete_in_use")
         end
+
+        def agrr_rules_for_cultivation_plan(cultivation_plan)
+          farm_region = cultivation_plan.farm.region
+
+          rules = if cultivation_plan.user_id
+            ::InteractionRule.where(
+              "((user_id = ? AND is_reference = ?) OR is_reference = ?) AND region = ?",
+              cultivation_plan.user_id,
+              false,
+              true,
+              farm_region
+            )
+          else
+            ::InteractionRule.reference.where(region: farm_region)
+          end
+
+          rules_array = ::InteractionRule.to_agrr_format_array(rules)
+          return nil if rules_array.empty?
+
+          rules_array
+        end
+
+        def visible_records(user)
+          if user.admin?
+            ::InteractionRule.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::InteractionRule.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def find_authorized_for_view(user, id)
+          rule = find_interaction_rule_model!(id)
+          unless Domain::Shared::Policies::InteractionRulePolicy.view_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          rule
+        end
+
+        def find_authorized_for_edit(user, id)
+          rule = find_interaction_rule_model!(id)
+          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          rule
+        end
+
+        def find_model(id)
+          find_interaction_rule_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_create(user, attrs)
+          rule = ::InteractionRule.new(h)
+          raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
+
+          rule
+        end
+
+        def update_for_user(user, id, attrs)
+          rule = find_interaction_rule_model!(id)
+          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_update(
+            user,
+            rule.attributes.symbolize_keys,
+            attrs
+          )
+          raise StandardError, rule.errors.full_messages.join(", ") unless rule.update(normalized)
+
+          rule.reload
+        end
+
+        private
+
+        def find_interaction_rule_model!(id)
+          ::InteractionRule.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
       end
     end
   end

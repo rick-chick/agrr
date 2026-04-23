@@ -45,7 +45,7 @@ module Domain
           Rails.logger.info I18n.t("services.plan_save_service.messages.farm_created", farm_name: new_farm.name)
           @ctx.farm_reused = false
           new_farm
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           Rails.logger.error I18n.t("services.plan_save_service.errors.farm_not_found", farm_id: farm_id)
           raise e
         end

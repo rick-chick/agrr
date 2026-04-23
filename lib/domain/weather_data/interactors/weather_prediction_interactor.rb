@@ -11,7 +11,12 @@ module Domain
 
   BENCHMARK_ENABLED = ENV.fetch("WEATHER_BENCHMARK", "false") != "false"
 
-  def initialize(weather_location:, farm: nil)
+  def initialize(weather_location:, farm: nil,
+                 cultivation_plan_gateway: nil,
+                 farm_gateway: nil,
+                 weather_data_gateway: nil,
+                 prediction_gateway: nil,
+                 logger: Rails.logger)
     raise ArgumentError, "weather_location is required" unless weather_location
 
     if farm && farm.weather_location_id && farm.weather_location_id != weather_location.id
@@ -20,7 +25,11 @@ module Domain
 
     @weather_location = weather_location
     @farm = farm
-    @prediction_gateway = Agrr::PredictionGateway.new
+    @prediction_gateway = prediction_gateway || Domain::WeatherData::Gateways::PredictionGateway.default
+    @cultivation_plan_gateway = cultivation_plan_gateway || Domain::CultivationPlan::Gateways::CultivationPlanGateway.default
+    @farm_gateway = farm_gateway || Domain::Farm::Gateways::FarmGateway.default
+    @weather_data_gateway = weather_data_gateway || Domain::WeatherData::Gateways::WeatherDataGateway.default
+    @logger = logger
   end
 
   # 天気予測を実行してCultivationPlanに保存
@@ -50,7 +59,7 @@ module Domain
       persist_prediction_payload(payload)
     end
 
-    cultivation_plan.update!(predicted_weather_data: payload)
+    @cultivation_plan_gateway.update_predicted_weather_data(cultivation_plan.id, payload)
 
     # Rails.logger.info "✅ [WeatherPrediction] Prediction data saved to CultivationPlan##{cultivation_plan.id}"
 
@@ -73,7 +82,7 @@ module Domain
 
     persist_prediction_payload(payload)
 
-    @farm.update!(predicted_weather_data: payload)
+    @farm_gateway.update_predicted_weather_data(@farm.id, payload)
 
     # Rails.logger.info "✅ [WeatherPrediction] Prediction data saved to Farm##{@farm.id}"
 
@@ -156,15 +165,15 @@ module Domain
     merged_end_date = merged_dates.max
     if merged_end_date.nil? || merged_end_date < target_end_date
       message = "Merged weather data ends at #{merged_end_date}, but target_end_date is #{target_end_date}. AGRR prediction may be insufficient."
-      Rails.logger.error "❌ [WeatherPrediction] #{message}"
+      @logger.error "❌ [WeatherPrediction] #{message}"
       raise InsufficientPredictionDataError, message
     end
 
     # 予測開始日を計算
     prediction_start_date = (training_end_date + 1.day > Date.today) ? training_end_date + 1.day : Date.today
 
-    Rails.logger.info "✅ [WeatherPrediction] Weather data prepared successfully"
-    Rails.logger.info "🧮 [WeatherPrediction] Prediction range prepared: start=#{prediction_start_date} end=#{target_end_date} (merged_end=#{merged_end_date})"
+    @logger.info "✅ [WeatherPrediction] Weather data prepared successfully"
+    @logger.info "🧮 [WeatherPrediction] Prediction range prepared: start=#{prediction_start_date} end=#{target_end_date} (merged_end=#{merged_end_date})"
 
     {
       data: merged_data,
@@ -235,7 +244,7 @@ module Domain
     prediction_start_date = training_end_date + 1.day
     prediction_days = (target_end_date - training_end_date).to_i
 
-    Rails.logger.info "🔮 [WeatherPrediction] Predicting weather from #{prediction_start_date} until #{target_end_date} (#{prediction_days} days)"
+    @logger.info "🔮 [WeatherPrediction] Predicting weather from #{prediction_start_date} until #{target_end_date} (#{prediction_days} days)"
     # Rails.logger.info "🔮 [WeatherPrediction] Predicting weather from #{prediction_start_date} until #{target_end_date} (#{prediction_days} days)"
 
 
@@ -248,23 +257,23 @@ module Domain
     future_data = Array(future["data"])
     actual_prediction_days = future_data.count
     data_end = latest_payload_date(future_data)
-    Rails.logger.info "🧮 [WeatherPrediction] Prediction days: expected=#{prediction_days} returned=#{actual_prediction_days}, data_end=#{data_end}"
+    @logger.info "🧮 [WeatherPrediction] Prediction days: expected=#{prediction_days} returned=#{actual_prediction_days}, data_end=#{data_end}"
 
     # Debug AGRR predictions
     if future["predictions"]
       sample_predictions = future["predictions"]
-      Rails.logger.info "🔍 [WeatherPrediction] AGRR predictions sample: first=#{sample_predictions.first(3).map { |p| p['date'] }}, last=#{sample_predictions.last(3).map { |p| p['date'] }}"
+      @logger.info "🔍 [WeatherPrediction] AGRR predictions sample: first=#{sample_predictions.first(3).map { |p| p['date'] }}, last=#{sample_predictions.last(3).map { |p| p['date'] }}"
     end
 
     if actual_prediction_days < prediction_days
       message = "Expected #{prediction_days} days from #{prediction_start_date} to #{target_end_date}, but received #{actual_prediction_days} days."
-      Rails.logger.warn "⚠️ [WeatherPrediction] #{message}"
+      @logger.warn "⚠️ [WeatherPrediction] #{message}"
       raise InsufficientPredictionDataError, message
     end
 
     if data_end && data_end < target_end_date
       message = "Expected prediction to end at #{target_end_date}, but received data ending at #{data_end}."
-      Rails.logger.warn "⚠️ [WeatherPrediction] #{message}"
+      @logger.warn "⚠️ [WeatherPrediction] #{message}"
       raise InsufficientPredictionDataError, message
     end
 
@@ -333,7 +342,7 @@ module Domain
 
     # Check if prediction data covers the target_end_date
     if data_end && data_end < target_end_date
-      Rails.logger.warn "⚠️ [WeatherPrediction] Prediction data ends at #{data_end}, but target_end_date is #{target_end_date}. AGRR may not be predicting for the full requested period."
+      @logger.warn "⚠️ [WeatherPrediction] Prediction data ends at #{data_end}, but target_end_date is #{target_end_date}. AGRR may not be predicting for the full requested period."
     end
 
     (data || {}).merge(
@@ -349,10 +358,7 @@ module Domain
   def persist_prediction_payload(payload)
     return unless @weather_location
 
-    # Ensure timezone is set before updating (for backward compatibility)
-    @weather_location.timezone ||= "UTC"
-
-    @weather_location.update!(predicted_weather_data: payload)
+    @weather_data_gateway.update_predicted_weather_data(weather_location_id: @weather_location.id, payload: payload)
   end
 
   def cached_prediction_result(payload, target_end_date)

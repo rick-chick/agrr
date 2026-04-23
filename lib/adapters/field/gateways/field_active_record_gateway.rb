@@ -7,7 +7,7 @@ module Adapters
         attr_accessor :translator
         def list_by_farm(farm_id, user_id)
           user = find_user!(user_id)
-          farm = Domain::Shared::Policies::FarmPolicy.find_owned!(::Farm, user, farm_id)
+          farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
           scope = FieldPolicy.scope_for_farm(user, farm)
           scope.map { |record| Domain::Farm::Entities::FieldEntity.from_model(record) }
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
@@ -15,7 +15,7 @@ module Adapters
         end
 
         def find_by_id_and_user(field_id, user_id)
-          user = User.find(user_id)
+          user = ::User.find(user_id)
           record = FieldPolicy.find_owned!(user, field_id)
           Domain::Farm::Entities::FieldEntity.from_model(record)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
@@ -23,8 +23,8 @@ module Adapters
         end
 
         def create(create_input_dto, farm_id, user_id)
-          user = User.find(user_id)
-          farm = Domain::Shared::Policies::FarmPolicy.find_owned!(::Farm, user, farm_id)
+          user = ::User.find(user_id)
+          farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
           attrs = {
             name: create_input_dto.name,
             area: create_input_dto.area,
@@ -40,7 +40,7 @@ module Adapters
         end
 
         def update(field_id, update_input_dto, user_id)
-          user = User.find(user_id)
+          user = ::User.find(user_id)
           field = FieldPolicy.find_owned!(user, field_id)
           attrs = {}
           attrs[:name] = update_input_dto.name if update_input_dto.name.present?
@@ -54,8 +54,12 @@ module Adapters
           raise StandardError, "Field not found"
         end
 
+        def find_model(id)
+          ::Field.find(id)
+        end
+
         def destroy(field_id, user_id)
-          user = User.find(user_id)
+          user = ::User.find(user_id)
           field = FieldPolicy.find_owned!(user, field_id)
           DeletionUndo::Manager.schedule(
             record: field,
@@ -76,7 +80,7 @@ module Adapters
         private
 
         def find_user!(user_id)
-          User.find(user_id)
+          ::User.find(user_id)
         rescue ActiveRecord::RecordNotFound
           raise StandardError, "User not found"
         end

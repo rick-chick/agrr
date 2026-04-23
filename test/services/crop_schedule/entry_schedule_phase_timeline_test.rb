@@ -26,7 +26,8 @@ module Domain::CultivationPlan::Interactors::EntrySchedule
     end
 
     test "chart_windows splits agrr_optimize_period into distinct sowing vs transplant quarters" do
-      cw = EntrySchedulePhaseTimeline.chart_windows(@crop, @result)
+      timeline = EntrySchedulePhaseTimeline.new(translator: ->(key, **opts) { I18n.t(key, **opts) })
+      cw = timeline.chart_windows(@crop, @result)
       sow = cw[:sowing_windows].first
       tr = cw[:transplant_windows].first
 

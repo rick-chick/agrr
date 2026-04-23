@@ -3,9 +3,14 @@
 module Adapters
   module Fertilize
     module Gateways
-      class FertilizeMemoryGateway < Domain::Fertilize::Gateways::FertilizeGateway
+      # AI 作成フロー等で使う。永続化は DB（ActiveRecord）だが list のみ従来仕様を維持。
+      class FertilizeMemoryGateway < FertilizeActiveRecordGateway
+        # Entity 変換で name 必須のため、一覧 API では空名を除外（従来仕様）
+        def visible_records(user)
+          super.where.not(name: [ nil, "" ])
+        end
+
         def list
-          # Entity は name 必須のため、name が present なレコードのみ変換する
           ::Fertilize.where.not(name: [ nil, "" ]).map { |record| Domain::Fertilize::Entities::FertilizeEntity.from_model(record) }
         end
 
@@ -31,25 +36,6 @@ module Adapters
           raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize)
-        end
-
-        def update(fertilize_id, update_input_dto)
-          fertilize = ::Fertilize.find(fertilize_id)
-          attrs = {}
-          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
-          attrs[:n] = update_input_dto.n if !update_input_dto.n.nil?
-          attrs[:p] = update_input_dto.p if !update_input_dto.p.nil?
-          attrs[:k] = update_input_dto.k if !update_input_dto.k.nil?
-          attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
-          attrs[:package_size] = update_input_dto.package_size if !update_input_dto.package_size.nil?
-          attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
-
-          fertilize.update(attrs)
-          raise StandardError, fertilize.errors.full_messages.join(", ") if fertilize.errors.any?
-
-          Domain::Fertilize::Entities::FertilizeEntity.from_model(fertilize.reload)
-        rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Fertilize not found"
         end
       end
     end

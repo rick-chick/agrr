@@ -4,22 +4,23 @@ module Domain
   module AgriculturalTask
     module Interactors
       class AgriculturalTaskDetailInteractor < Domain::AgriculturalTask::Ports::AgriculturalTaskDetailInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:)
+        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @user_lookup = user_lookup
         end
 
         def call(task_id)
-          user = User.find(@user_id)
-          task_model = Domain::Shared::Policies::AgriculturalTaskPolicy.find_visible!(::AgriculturalTask, user, task_id)
+          user = @user_lookup.find(@user_id)
+          task_model = @gateway.find_authorized_for_view(user, task_id)
           task_entity = Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.from_model(task_model)
           task_detail_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutputDto.new(task: task_entity)
           @output_port.on_success(task_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

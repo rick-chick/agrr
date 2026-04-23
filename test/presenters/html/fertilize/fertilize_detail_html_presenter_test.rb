@@ -11,7 +11,10 @@ class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
 
     fertilize_model = mock
     fertilize_entity = mock
-    fertilize_entity.expects(:to_model).returns(fertilize_model)
+    fertilize_entity.expects(:id).returns(7)
+    gw = mock
+    gw.expects(:find_model).with(7).returns(fertilize_model)
+    Domain::Fertilize::Gateways::FertilizeGateway.stubs(:default).returns(gw)
     fertilize_detail_dto = mock
     fertilize_detail_dto.expects(:fertilize).returns(fertilize_entity)
 

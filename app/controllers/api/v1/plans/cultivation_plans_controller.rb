@@ -33,12 +33,12 @@ module Api
         end
 
         def get_crop_for_add_crop(crop_id)
-          Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).find_by(id: crop_id, is_reference: false)
+          Domain::Crop::Gateways::CropGateway.default.visible_records(current_user).find_by(id: crop_id, is_reference: false)
         end
 
         def get_available_crops
-          Domain::Shared::Policies::CropPolicy
-            .user_owned_non_reference_scope(::Crop, current_user)
+          Domain::Crop::Gateways::CropGateway.default
+            .user_owned_non_reference_records(current_user)
             .order(:name)
         end
       end

@@ -9,7 +9,10 @@ module Presenters
         end
 
         def on_success(detail_dto)
-          @view.instance_variable_set(:@agricultural_task, detail_dto.task.to_model)
+          @view.instance_variable_set(
+            :@agricultural_task,
+            Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_model(detail_dto.task.id)
+          )
         end
 
         def on_failure(error_dto)

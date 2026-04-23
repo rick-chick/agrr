@@ -20,7 +20,8 @@ class CropAiUpsertService
   # @return [Result] success?/status/body を持つ結果オブジェクト
   def call(crop_name:, variety: nil, crop_info:)
     # 事前バリデーション: 件数制限をチェック（ダミーCropでバリデーション実行）
-    dummy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, { name: "dummy" })
+    dummy_attrs = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(@user, { name: "dummy" })
+    dummy_crop = ::Crop.new(dummy_attrs)
     unless dummy_crop.valid?
       validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
       if validation_error
@@ -78,8 +79,8 @@ class CropAiUpsertService
     return nil unless crop_id.present?
 
     begin
-      Domain::Shared::Policies::CropPolicy.find_editable!(Crop, @user, crop_id)
-    rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
+      Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(@user, crop_id)
+    rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound
       nil
     end
   end
@@ -139,11 +140,7 @@ class CropAiUpsertService
     saved_stages = 0
 
     ActiveRecord::Base.transaction do
-      policy_crop = Domain::Shared::Policies::CropPolicy.build_for_create(Crop, @user, base_attrs)
-      attrs_for_create = base_attrs.merge(
-        user_id: policy_crop.user_id,
-        is_reference: policy_crop.is_reference
-      )
+      attrs_for_create = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(@user, base_attrs)
 
       result = @create_interactor.call(attrs_for_create)
 

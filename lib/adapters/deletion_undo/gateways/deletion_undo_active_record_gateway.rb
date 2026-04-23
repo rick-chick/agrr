@@ -74,6 +74,7 @@ module Adapters
           seconds && seconds.positive? ? seconds.seconds : 5.minutes
         end
 
+        # resource_dom_id は削除直前の AR から生成（Interactor / Domain に ActionView を置かない）。
         def build_metadata(record, toast_message, auto_hide_after, metadata)
           metadata = metadata.to_h.with_indifferent_access
           metadata[:toast_message] ||= toast_message || default_toast_message(record)

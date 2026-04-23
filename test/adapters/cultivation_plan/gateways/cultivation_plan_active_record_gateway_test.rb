@@ -2,100 +2,117 @@
 
 require "test_helper"
 
-module Adapters
-  module CultivationPlan
-    module Gateways
-      class CultivationPlanActiveRecordGatewayTest < ActiveSupport::TestCase
-        def setup
-          @gateway = CultivationPlanActiveRecordGateway.new
-          @user = create(:user)
-          @other_user = create(:user)
-          @farm = create(:farm, user: @user)
-        end
+class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTest < ActiveSupport::TestCase
+  def setup
+    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+  end
 
-        test "schedules deletion undo event and returns it" do
-          plan = create(:cultivation_plan, farm: @farm, user: @user, plan_name: "My Plan")
+  test "should create cultivation plan" do
+    user = create(:user)
+    farm = create(:farm, user: user)
+    crop = create(:crop, user: user, is_reference: false)
 
-          assert_difference("DeletionUndoEvent.count", 1) do
-            event = @gateway.destroy(plan.id, @user)
+    create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
+      farm: farm,
+      crops: [ crop ],
+      user: user,
+      plan_name: "Test Plan",
+      total_area: 100.0
+    )
 
-            assert_instance_of DeletionUndoEvent, event
-            assert_equal "CultivationPlan", event.resource_type
-            assert_equal plan.id.to_s, event.resource_id
-            assert_equal @user.id, event.deleted_by_id
-            assert_equal "scheduled", event.state
-            expected_toast = I18n.t("plans.undo.toast", name: plan.display_name)
-            assert_equal expected_toast, event.toast_message
-            assert_not_nil event.undo_token
-          end
+    result = @gateway.create(create_dto)
 
-          assert_nil ::CultivationPlan.find_by(id: plan.id)
-        end
+    assert result.success?
+    assert_not_nil result.cultivation_plan
+    assert_equal "Test Plan", result.cultivation_plan.plan_name
+    assert_equal user.id, result.cultivation_plan.user_id
+    assert_equal farm.id, result.cultivation_plan.farm_id
+    assert_equal "private", result.cultivation_plan.plan_type
+  end
 
-        test "raises not found error when plan does not exist" do
-          error = assert_raises(StandardError) do
-            @gateway.destroy(9999, @user)
-          end
+  test "should find existing cultivation plan" do
+    user = create(:user)
+    farm = create(:farm, user: user)
+    existing_plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
-          assert_equal I18n.t("plans.errors.not_found"), error.message
-        end
+    found_plan = @gateway.find_existing(farm, user)
 
-        test "raises not found error when user is not the owner" do
-          plan = create(:cultivation_plan, farm: @farm, user: @user)
+    assert_not_nil found_plan
+    assert_equal existing_plan.id, found_plan.id
+    assert_instance_of ::CultivationPlan, found_plan
+  end
 
-          error = assert_raises(StandardError) do
-            @gateway.destroy(plan.id, @other_user)
-          end
+  test "should return nil when no existing plan found" do
+    user = create(:user)
+    farm = create(:farm, user: user)
 
-          assert_equal I18n.t("plans.errors.not_found"), error.message
-          assert_not_nil ::CultivationPlan.find_by(id: plan.id)
-        end
+    found_plan = @gateway.find_existing(farm, user)
 
-        test "wraps foreign key violations with delete_failed message" do
-          plan = create(:cultivation_plan, farm: @farm, user: @user)
-          create(:task_schedule, cultivation_plan: plan)
+    assert_nil found_plan
+  end
 
-          DeletionUndo::Manager.stub(:schedule, ->(*) { raise ActiveRecord::InvalidForeignKey.new("Cannot delete") }) do
-            error = assert_raises(StandardError) do
-              @gateway.destroy(plan.id, @user)
-            end
+  test "should find farm by id and user" do
+    user = create(:user)
+    farm = create(:farm, user: user)
 
-            assert_equal I18n.t("plans.errors.delete_failed"), error.message
-          end
+    found_farm = @gateway.find_farm(farm.id, user)
 
-          assert_not_nil ::CultivationPlan.find_by(id: plan.id)
-        end
+    assert_not_nil found_farm
+    assert_equal farm.id, found_farm.id
+    assert_equal farm.name, found_farm.name
+    assert_instance_of ::Farm, found_farm
+  end
 
-        test "wraps delete restriction errors with delete_failed message" do
-          plan = create(:cultivation_plan, farm: @farm, user: @user)
+  test "should return nil when farm not found" do
+    user = create(:user)
 
-          DeletionUndo::Manager.stub(:schedule, ->(*) { raise ActiveRecord::DeleteRestrictionError.new("Cannot delete") }) do
-            error = assert_raises(StandardError) do
-              @gateway.destroy(plan.id, @user)
-            end
+    found_farm = @gateway.find_farm(9999, user)
 
-            assert_equal I18n.t("plans.errors.delete_failed"), error.message
-          end
+    assert_nil found_farm
+  end
 
-          assert_not_nil ::CultivationPlan.find_by(id: plan.id)
-        end
+  test "should find crops by ids and user" do
+    user = create(:user)
+    crop1 = create(:crop, user: user, is_reference: false)
+    crop2 = create(:crop, user: user, is_reference: false)
+    # 参照作物は除外されるべき（user_idなしで作成）
+    create(:crop, :reference)
 
-        test "wraps undo scheduling errors with delete_error message" do
-          plan = create(:cultivation_plan, farm: @farm, user: @user)
-          failure_message = "Undo scheduling failed"
+    found_crops = @gateway.find_crops([ crop1.id, crop2.id ], user)
 
-          DeletionUndo::Manager.stub(:schedule, ->(*) { raise DeletionUndo::Error.new(failure_message) }) do
-            error = assert_raises(StandardError) do
-              @gateway.destroy(plan.id, @user)
-            end
+    assert_equal 2, found_crops.length
+    assert_instance_of Array, found_crops
+    crop_ids = found_crops.map(&:id)
+    assert_includes crop_ids, crop1.id
+    assert_includes crop_ids, crop2.id
+  end
 
-            expected_message = I18n.t("plans.errors.delete_error", message: failure_message)
-            assert_equal expected_message, error.message
-          end
+  test "should return empty array when no crops found" do
+    user = create(:user)
 
-          assert_not_nil ::CultivationPlan.find_by(id: plan.id)
-        end
-      end
+    found_crops = @gateway.find_crops([ 9999 ], user)
+
+    assert_empty found_crops
+  end
+
+  test "should raise error when create fails" do
+    user = create(:user)
+    farm = create(:farm, user: user)
+    crop = create(:crop, user: user, is_reference: false)
+
+    # 同じfarm×userの計画が既に存在する場合
+    create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
+
+    create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
+      farm: farm,
+      crops: [ crop ],
+      user: user,
+      plan_name: "Test Plan",
+      total_area: 100.0
+    )
+
+    assert_raises(StandardError) do
+      @gateway.create(create_dto)
     end
   end
 end

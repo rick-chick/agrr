@@ -124,6 +124,12 @@ module Adapters
             location.timezone = timezone
           end
         end
+
+        def update_predicted_weather_data(weather_location_id:, payload:)
+          wl = ::WeatherLocation.find(weather_location_id)
+          wl.timezone ||= "UTC"
+          wl.update!(predicted_weather_data: payload)
+        end
       end
     end
   end

@@ -10,7 +10,10 @@ module Presenters
         end
 
         def on_success(detail_output_dto)
-          @view.instance_variable_set(:@field, detail_output_dto.field.to_model)
+          @view.instance_variable_set(
+            :@field,
+            Domain::Field::Gateways::FieldGateway.default.find_model(detail_output_dto.field.id)
+          )
           @view.instance_variable_set(:@farm, @farm)
           # show テンプレートをレンダリング（暗黙的に）
         end

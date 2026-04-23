@@ -4,6 +4,18 @@ module Domain
   module DeletionUndo
     module Gateways
       class DeletionUndoGateway
+        class << self
+          def default
+            @default ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          end
+
+          attr_writer :default
+
+          def default_reset!
+            @default = nil
+          end
+        end
+
         def find_by_token(undo_token)
           raise NotImplementedError, "Subclasses must implement find_by_token"
         end

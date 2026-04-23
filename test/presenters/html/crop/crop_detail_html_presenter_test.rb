@@ -9,8 +9,11 @@ class CropDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(view: view_mock)
 
     crop_entity = mock
+    crop_entity.expects(:id).returns(42)
     crop_model = mock
-    crop_entity.expects(:to_model).returns(crop_model)
+    gw = mock
+    gw.expects(:find_model).with(42).returns(crop_model)
+    Domain::Crop::Gateways::CropGateway.stubs(:default).returns(gw)
 
     blueprints_relation = mock
     blueprints_relation.expects(:includes).with(:agricultural_task).returns(blueprints_relation)

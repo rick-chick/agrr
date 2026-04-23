@@ -9,7 +9,10 @@ module Presenters
         end
 
         def on_success(pesticide_detail_dto)
-          @view.instance_variable_set(:@pesticide, pesticide_detail_dto.pesticide.to_model)
+          @view.instance_variable_set(
+            :@pesticide,
+            Domain::Pesticide::Gateways::PesticideGateway.default.find_model(pesticide_detail_dto.pesticide.id)
+          )
           # show テンプレートをレンダリング（暗黙的に）
         end
 

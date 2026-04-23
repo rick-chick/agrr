@@ -11,7 +11,10 @@ class PesticideDetailHtmlPresenterTest < ActiveSupport::TestCase
 
     pesticide_entity = mock
     pesticide_model = mock
-    pesticide_entity.expects(:to_model).returns(pesticide_model)
+    pesticide_entity.expects(:id).returns(3)
+    gw = mock
+    gw.expects(:find_model).with(3).returns(pesticide_model)
+    Domain::Pesticide::Gateways::PesticideGateway.stubs(:default).returns(gw)
 
     pesticide_detail_dto = mock
     pesticide_detail_dto.expects(:pesticide).returns(pesticide_entity)

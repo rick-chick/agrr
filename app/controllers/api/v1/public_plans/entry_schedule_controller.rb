@@ -17,7 +17,7 @@ module Api
         # GET .../public_plans/entry_schedule/farms
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          farms = Domain::Shared::Policies::FarmPolicy.reference_scope(Farm, region: region)
+          farms = Domain::Farm::Gateways::FarmGateway.default.reference_records(region: region)
           render json: farms.as_json(only: %i[id name latitude longitude region])
         end
 
@@ -27,8 +27,8 @@ module Api
           payload_hash = load_or_predict_weather!(farm)
           prediction_meta = Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.prediction_meta(farm: farm, payload_hash: payload_hash)
 
-          crop_scope = Domain::Shared::Policies::CropPolicy
-                       .reference_scope(::Crop, region: farm.region)
+          crop_scope = Domain::Crop::Gateways::CropGateway.default
+                       .reference_records(region: farm.region)
                        .includes(crop_stages: :temperature_requirement)
                        .order(:name)
           items = []
@@ -67,8 +67,8 @@ module Api
         # GET .../public_plans/entry_schedule/crops/:id?farm_id=
         def show
           farm = find_reference_farm!
-          crop = Domain::Shared::Policies::CropPolicy
-                 .reference_scope(::Crop, region: farm.region)
+          crop = Domain::Crop::Gateways::CropGateway.default
+                 .reference_records(region: farm.region)
                  .includes(crop_stages: :temperature_requirement)
                  .find(params[:id])
           payload = Presenters::Api::PublicPlans::EntryScheduleShowPayload.call(

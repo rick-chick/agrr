@@ -139,8 +139,8 @@ module Adapters
           if plan_type_public
             ::Crop.find_by(id: plan_crop.crop_id)
           else
-            Domain::Shared::Policies::CropPolicy
-              .user_owned_non_reference_scope(::Crop, @current_user)
+            Domain::Crop::Gateways::CropGateway.default
+              .user_owned_non_reference_records(@current_user)
               .find_by(id: plan_crop.crop_id)
           end
         end

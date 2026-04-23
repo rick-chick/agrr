@@ -29,18 +29,19 @@ module Domain
           end
         end
 
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, deletion_undo_gateway: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
-          @deletion_undo_gateway = deletion_undo_gateway || Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+          @deletion_undo_gateway = deletion_undo_gateway || Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          @user_lookup = user_lookup
         end
 
         def call(pesticide_id)
-          user = User.find(@user_id)
-          pesticide_model = Domain::Shared::Policies::PesticidePolicy.find_editable!(::Pesticide, user, pesticide_id)
+          user = @user_lookup.find(@user_id)
+          pesticide_model = @gateway.find_authorized_for_edit(user, pesticide_id)
 
           undo_presenter = DeletionUndoPresenter.new
           deletion_undo_interactor = Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
@@ -52,8 +53,7 @@ module Domain
             record: pesticide_model,
             actor: user,
             toast_message: @translator.t("pesticides.undo.toast", name: pesticide_model.name),
-            auto_hide_after: 5000,
-            metadata: { resource_dom_id: ActionView::RecordIdentifier.dom_id(pesticide_model) }
+            auto_hide_after: 5000
           )
 
           deletion_undo_interactor.call(input_dto)

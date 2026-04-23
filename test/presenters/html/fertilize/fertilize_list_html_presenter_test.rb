@@ -13,8 +13,12 @@ class FertilizeListHtmlPresenterTest < ActiveSupport::TestCase
     fertilize_entity2 = mock
     fertilize_model1 = mock
     fertilize_model2 = mock
-    fertilize_entity1.expects(:to_model).returns(fertilize_model1)
-    fertilize_entity2.expects(:to_model).returns(fertilize_model2)
+    fertilize_entity1.expects(:id).returns(1)
+    fertilize_entity2.expects(:id).returns(2)
+    gw = mock
+    gw.expects(:find_model).with(1).returns(fertilize_model1)
+    gw.expects(:find_model).with(2).returns(fertilize_model2)
+    Domain::Fertilize::Gateways::FertilizeGateway.stubs(:default).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@fertilizes, [ fertilize_model1, fertilize_model2 ])
 

@@ -31,10 +31,8 @@ module Domain
           fertilize_model = mock
           updated_fertilize_entity = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).with(::Fertilize, @user, 1).returns(fertilize_model)
-          Domain::Shared::Policies::FertilizePolicy.expects(:apply_update!).with(@user, fertilize_model, { name: "Updated Fertilize", n: 15.0 }).returns(true)
-          fertilize_model.expects(:reload).returns(fertilize_model)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, { name: "Updated Fertilize", n: 15.0 }).returns(fertilize_model)
           Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
@@ -50,8 +48,8 @@ module Domain
           fertilize_model = mock
           fertilize_model.expects(:is_reference).returns(false)
 
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).with(::Fertilize, @user, 1).returns(fertilize_model)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(fertilize_model)
           @mock_translator.expects(:t).with("fertilizes.flash.reference_flag_admin_only").returns("admin only")
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
@@ -77,10 +75,9 @@ module Domain
           fertilize_model.expects(:is_reference).returns(false)
           updated_fertilize_entity = mock
 
-          User.expects(:find).with(admin_user_id).returns(admin_user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).with(::Fertilize, admin_user, 1).returns(fertilize_model)
-          Domain::Shared::Policies::FertilizePolicy.expects(:apply_update!).with(admin_user, fertilize_model, { is_reference: true }).returns(true)
-          fertilize_model.expects(:reload).returns(fertilize_model)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
+          @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1).returns(fertilize_model)
+          @mock_gateway.expects(:update_for_user).with(admin_user, 1, { is_reference: true }).returns(fertilize_model)
           Domain::Fertilize::Entities::FertilizeEntity.expects(:from_model).with(fertilize_model).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
@@ -93,14 +90,8 @@ module Domain
             name: "Updated Fertilize"
           )
 
-          fertilize_model = mock
-          errors_mock = mock
-          errors_mock.expects(:full_messages).returns([ "Update failed" ])
-          fertilize_model.expects(:errors).returns(errors_mock)
-
-          User.expects(:find).with(@user_id).returns(@user)
-          Domain::Shared::Policies::FertilizePolicy.expects(:find_editable!).returns(fertilize_model)
-          Domain::Shared::Policies::FertilizePolicy.expects(:apply_update!).returns(false)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
           @interactor.call(input_dto)

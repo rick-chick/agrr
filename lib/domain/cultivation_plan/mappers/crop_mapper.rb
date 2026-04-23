@@ -4,8 +4,9 @@ module Domain
   module CultivationPlan
     module Mappers
       class CropMapper
-        def initialize(ctx)
+        def initialize(ctx, stage_copy_gateway: nil)
           @ctx = ctx
+          @stage_copy_gateway = stage_copy_gateway || Domain::Crop::Gateways::CropStageCopyGateway.default
         end
 
         def create_user_crops_from_plan
@@ -81,7 +82,10 @@ module Domain
         end
 
         def copy_crop_stages(reference_crop, new_crop)
-          Domain::Crop::Interactors::CopyReferenceCropStages.call(reference_crop, new_crop)
+          @stage_copy_gateway.copy_reference_stages(
+            reference_crop: reference_crop,
+            new_crop: new_crop
+          )
         rescue => e
           Rails.logger.error I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)
           raise e

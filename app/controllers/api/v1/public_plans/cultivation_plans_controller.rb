@@ -38,8 +38,8 @@ module Api
 
         def get_available_crops
           region = @cultivation_plan.farm&.region
-          Domain::Shared::Policies::CropPolicy
-            .reference_scope(::Crop, region: region)
+          Domain::Crop::Gateways::CropGateway.default
+            .reference_records(region: region)
             .order(:name)
         end
       end

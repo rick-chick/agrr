@@ -23,10 +23,6 @@ module Domain
           validate!
         end
 
-        def to_model
-          ::Fertilize.find(id)
-        end
-
         def self.from_model(record)
           new(
             id: record.id,

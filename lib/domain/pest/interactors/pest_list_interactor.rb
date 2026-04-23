@@ -4,17 +4,18 @@ module Domain
   module Pest
     module Interactors
       class PestListInteractor < Domain::Pest::Ports::PestListInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call
-          user = User.find(@user_id)
-          visible_scope = Domain::Shared::Policies::PestPolicy.visible_scope(::Pest, user)
+          user = @user_lookup.find(@user_id)
+          visible_scope = @gateway.visible_records(user)
           pests = @gateway.list(visible_scope)
           @output_port.on_success(pests)
         rescue StandardError => e

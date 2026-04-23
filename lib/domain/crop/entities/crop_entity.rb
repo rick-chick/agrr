@@ -31,10 +31,6 @@ module Domain
           [ name, variety ].compact.join(" ")
         end
 
-        def to_model
-          ::Crop.find(id)
-        end
-
         # ActiveRecordモデルからの変換
         def self.from_model(crop_model)
           crop_stages = crop_model.crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement).order(:order).map do |stage|

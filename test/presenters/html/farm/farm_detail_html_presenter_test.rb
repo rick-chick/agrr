@@ -10,14 +10,21 @@ class FarmDetailHtmlPresenterTest < ActiveSupport::TestCase
 
     farm_entity = mock
     farm_model = mock
-    farm_entity.expects(:to_model).returns(farm_model)
+    farm_entity.expects(:id).returns(10)
+    farm_gw = mock
+    farm_gw.expects(:find_model).with(10).returns(farm_model)
+    Domain::Farm::Gateways::FarmGateway.stubs(:default).returns(farm_gw)
 
     field_entity1 = mock
     field_entity2 = mock
     field_model1 = mock
     field_model2 = mock
-    field_entity1.expects(:to_model).returns(field_model1)
-    field_entity2.expects(:to_model).returns(field_model2)
+    field_entity1.expects(:id).returns(101)
+    field_entity2.expects(:id).returns(102)
+    field_gw = mock
+    field_gw.expects(:find_model).with(101).returns(field_model1)
+    field_gw.expects(:find_model).with(102).returns(field_model2)
+    Domain::Field::Gateways::FieldGateway.stubs(:default).returns(field_gw)
 
     farm_detail_dto = mock
     farm_detail_dto.expects(:farm).returns(farm_entity)

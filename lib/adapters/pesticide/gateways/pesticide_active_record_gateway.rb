@@ -57,6 +57,71 @@ module Adapters
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
           raise StandardError, @translator.t("pesticides.flash.cannot_delete_in_use")
         end
+
+        def visible_records(user)
+          if user.admin?
+            ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pesticide.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def selectable_records(user)
+          ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+        end
+
+        def find_authorized_for_view(user, id)
+          pesticide = find_pesticide_model!(id)
+          unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          pesticide
+        end
+
+        def find_authorized_for_edit(user, id)
+          find_authorized_for_view(user, id)
+        end
+
+        def find_model(id)
+          find_pesticide_model!(id)
+        end
+
+        def create_for_user(user, attrs)
+          h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
+          pesticide = ::Pesticide.new(h)
+          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
+
+          pesticide
+        end
+
+        def update_for_user(user, id, attrs)
+          pesticide = find_pesticide_model!(id)
+          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          normalized = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_update(
+            user,
+            pesticide.attributes.symbolize_keys,
+            attrs
+          )
+          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.update(normalized)
+
+          pesticide.reload
+        end
+
+        def list_from_relation(relation)
+          relation.map { |record| Domain::Pesticide::Entities::PesticideEntity.from_model(record) }
+        end
+
+        private
+
+        def find_pesticide_model!(id)
+          ::Pesticide.find(id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
       end
     end
   end

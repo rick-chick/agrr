@@ -91,7 +91,7 @@ module Api
 
         # ユーザー所有かつ非参照の作物のみ取得
         # 明示的にトップレベルの Crop を参照して、名前空間由来の解決ミスを避ける
-        Domain::Shared::Policies::CropPolicy.user_owned_non_reference_scope(::Crop, current_user).where(id: crop_ids)
+        Domain::Crop::Gateways::CropGateway.default.user_owned_non_reference_records(current_user).where(id: crop_ids)
       end
 
       def find_existing_plan(farm)

@@ -12,8 +12,12 @@ class FarmListHtmlPresenterTest < ActiveSupport::TestCase
     farm_entity2 = mock
     farm_model1 = mock
     farm_model2 = mock
-    farm_entity1.expects(:to_model).returns(farm_model1)
-    farm_entity2.expects(:to_model).returns(farm_model2)
+    farm_entity1.expects(:id).returns(1)
+    farm_entity2.expects(:id).returns(2)
+    gw = mock
+    gw.expects(:find_model).with(1).returns(farm_model1)
+    gw.expects(:find_model).with(2).returns(farm_model2)
+    Domain::Farm::Gateways::FarmGateway.stubs(:default).returns(gw)
 
     reference_farm = mock
     Farm.expects(:reference).returns([ reference_farm ])
@@ -31,7 +35,10 @@ class FarmListHtmlPresenterTest < ActiveSupport::TestCase
 
     farm_entity = mock
     farm_model = mock
-    farm_entity.expects(:to_model).returns(farm_model)
+    farm_entity.expects(:id).returns(9)
+    gw = mock
+    gw.expects(:find_model).with(9).returns(farm_model)
+    Domain::Farm::Gateways::FarmGateway.stubs(:default).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@farms, [ farm_model ])
     view_mock.expects(:instance_variable_set).with(:@reference_farms, [])

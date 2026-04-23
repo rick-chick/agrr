@@ -27,7 +27,7 @@ module Domain
           undo_response = mock
           destroy_output_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).returns(undo_response)
           Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto
             .expects(:new).with(undo: undo_response).returns(destroy_output_dto)
@@ -40,7 +40,7 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::RecordNotFound)
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.not_found")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -52,8 +52,8 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(PolicyPermissionDenied)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.not_found")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 
@@ -64,7 +64,7 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::DeleteRestrictionError)
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -76,7 +76,7 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(ActiveRecord::InvalidForeignKey)
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -88,7 +88,7 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           deletion_error = DeletionUndo::Error.new("Undo error")
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(deletion_error)
           Domain::Shared::Dtos::ErrorDto
@@ -102,7 +102,7 @@ module Domain
           plan_id = 1
           error_dto = mock
 
-          User.expects(:find).with(@user_id).returns(@user)
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(StandardError.new("Unexpected error"))
           Domain::Shared::Dtos::ErrorDto
             .expects(:new).with("Unexpected error").returns(error_dto)

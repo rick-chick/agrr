@@ -4,16 +4,17 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil)
+        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
           @translator = translator || Adapters::Translators::RailsTranslator.new
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          user = User.find(@user_id)
+          user = @user_lookup.find(@user_id)
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:name_scientific] = input_dto.name_scientific if !input_dto.name_scientific.nil?
@@ -31,23 +32,13 @@ module Domain
           # is_referenceのチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            if is_reference != Pest.find(input_dto.pest_id).is_reference && !user.admin?
+            if is_reference != @gateway.find_model(input_dto.pest_id).is_reference && !user.admin?
               raise StandardError, @translator.t("pests.flash.reference_flag_admin_only")
             end
             attrs[:is_reference] = is_reference
           end
 
-          pest_model = Domain::Shared::Policies::PestPolicy.find_editable!(::Pest, user, input_dto.pest_id)
-          success = Domain::Shared::Policies::PestPolicy.apply_update!(user, pest_model, attrs)
-          unless success
-            error_messages = []
-            error_messages << pest_model.errors.full_messages
-            # 関連モデルのエラーもチェック
-            pest_model.pest_thermal_requirement&.errors&.full_messages&.each { |msg| error_messages << "PestThermalRequirement: #{msg}" }
-            pest_model.pest_control_methods&.each { |method| method.errors.full_messages.each { |msg| error_messages << "PestControlMethod: #{msg}" } }
-            @logger.error "PestUpdateInteractor errors: #{error_messages.flatten.join(', ')}"
-            raise StandardError, error_messages.flatten.join(", ")
-          end
+          pest_model = @gateway.update_for_user(user, input_dto.pest_id, attrs)
 
           unless input_dto.crop_ids.nil?
             PestCropAssociationService.update_crop_associations(pest_model, input_dto.crop_ids, user: user)

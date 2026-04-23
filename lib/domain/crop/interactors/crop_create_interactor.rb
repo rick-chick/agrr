@@ -4,16 +4,17 @@ module Domain
   module Crop
     module Interactors
       class CropCreateInteractor < Domain::Crop::Ports::CropCreateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:)
+        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          user = User.find(@user_id)
-          crop_model = Domain::Shared::Policies::CropPolicy.build_for_create(::Crop, user, {
+          user = @user_lookup.find(@user_id)
+          crop_model = @gateway.create_for_user(user, {
             name: input_dto.name,
             variety: input_dto.variety,
             area_per_unit: input_dto.area_per_unit,
@@ -22,11 +23,10 @@ module Domain
             groups: input_dto.groups || [],
             is_reference: input_dto.is_reference
           })
-          raise StandardError, crop_model.errors.full_messages.join(", ") unless crop_model.save
 
           crop_entity = Domain::Crop::Entities::CropEntity.from_model(crop_model)
           @output_port.on_success(crop_entity)
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

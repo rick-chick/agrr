@@ -221,9 +221,9 @@ class CropsController < ApplicationController
     # まず権限チェック（編集系か閲覧系かで分岐）
     authorized_crop =
       if action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
-        Domain::Shared::Policies::CropPolicy.find_editable!(Crop, current_user, params[:id])
+        Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(current_user, params[:id])
       else
-        Domain::Shared::Policies::CropPolicy.find_visible!(Crop, current_user, params[:id])
+        Domain::Crop::Gateways::CropGateway.default.find_authorized_for_view(current_user, params[:id])
       end
 
     # 付加情報を preload したレコードとして再取得

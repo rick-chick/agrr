@@ -112,7 +112,7 @@ module Api
           private
 
           def set_crop
-            @crop = Domain::Shared::Policies::CropPolicy.visible_scope(::Crop, current_user).where(is_reference: false).find(params[:crop_id])
+            @crop = Domain::Crop::Gateways::CropGateway.default.visible_records(current_user).where(is_reference: false).find(params[:crop_id])
           rescue ActiveRecord::RecordNotFound
             Rails.logger.info("Crop not found: crop_id=#{params[:crop_id]}, user_id=#{current_user.id}, user_admin?=#{current_user.admin?}")
             render json: { error: "Crop not found" }, status: :not_found
