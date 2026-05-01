@@ -11,9 +11,8 @@ module Domain
           end
         end
 
-        def initialize(source_plan:, new_year:, user:, session_id: nil,
-                       gateway: Domain::CultivationPlan::Gateways::CultivationPlanGateway.default,
-                       logger: Rails.logger)
+        def initialize(source_plan:, new_year:, user:, session_id: nil, logger:,
+                       gateway: Domain::CultivationPlan::Gateways::CultivationPlanGateway.default)
           @source_plan = source_plan
           @new_year = new_year
           @user = user
@@ -28,7 +27,8 @@ module Domain
               source_cultivation_plan_id: @source_plan.id,
               new_year: @new_year,
               user: @user,
-              session_id: @session_id
+              session_id: @session_id,
+              logger: @logger
             )
             Result.new(new_plan: new_plan, errors: [])
           end

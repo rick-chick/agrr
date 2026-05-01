@@ -343,7 +343,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # PlanSaveServiceを直接呼び出し
     result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
       user: user,
-      session_data: session_data
+      session_data: session_data,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call
 
     # エラーが発生することを確認

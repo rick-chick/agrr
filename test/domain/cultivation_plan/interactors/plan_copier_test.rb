@@ -47,7 +47,8 @@ class Domain::CultivationPlan::Interactors::PlanCopierTest < ActiveSupport::Test
     result = Domain::CultivationPlan::Interactors::PlanCopier.new(
       source_plan: source_plan,
       new_year: plan_year + 1,
-      user: @user
+      user: @user,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     ).call
 
     assert result.success?, result.errors.join(", ")

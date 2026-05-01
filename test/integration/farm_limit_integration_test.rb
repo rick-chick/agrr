@@ -138,7 +138,11 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
     session_data[:plan_id] = plan.id
 
     # PlanSaveServiceを実行（失敗するはず）
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
+      user: @user,
+      session_data: session_data,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+    ).call
 
     # 失敗することを確認
     assert_not result.success, "PlanSaveService should fail when farm limit is reached"

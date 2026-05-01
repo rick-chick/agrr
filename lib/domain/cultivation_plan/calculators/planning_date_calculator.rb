@@ -11,7 +11,7 @@ module Domain
         end
 
         # 作付け期間の平均から年度を算出（既存データ用）
-        def self.calculate_plan_year_from_cultivations(reference_plan, logger: Rails.logger)
+        def self.calculate_plan_year_from_cultivations(reference_plan, logger:)
           field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
 
           if field_cultivations.empty?
@@ -39,7 +39,7 @@ module Domain
         end
 
         # 作付け期間から計画期間を計算（通年計画用）
-        def self.calculate_planning_dates_from_cultivations(reference_plan, logger: Rails.logger)
+        def self.calculate_planning_dates_from_cultivations(reference_plan, logger:)
           field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
 
           if field_cultivations.empty?

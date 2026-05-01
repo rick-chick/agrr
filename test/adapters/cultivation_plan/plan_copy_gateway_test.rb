@@ -29,7 +29,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
     user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
 
-    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx)
+    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, [])
 
     assert new_plan.persisted?
@@ -59,7 +59,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     user_crop_id = ctx.ref_cpc_id_to_user_crop_id[cpc.id]
     assert user_crop_id.present?
 
-    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx)
+    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], [], [], [], [])
 
@@ -125,7 +125,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
     assert_not_nil user_task
 
-    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx)
+    gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], tasks, [], [], [])
 
@@ -149,10 +149,12 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     new_year = Date.current.year + 1
+    log = CapturingLogger.new
     new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: new_year,
-      user: user
+      user: user,
+      logger: log
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 
@@ -164,6 +166,10 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     assert_equal source_plan.cultivation_plan_fields.count, new_plan.cultivation_plan_fields.count
     assert_equal source_plan.cultivation_plan_crops.count, new_plan.cultivation_plan_crops.count
     assert_equal source_plan.field_cultivations.count, new_plan.field_cultivations.count
+    assert(
+      log.entries.any? { |lvl, msg| lvl == :info && msg.include?("Plan copy completed") },
+      "注入 logger に年度コピー完了ログが残ること"
+    )
   end
 
   test "copy_private_plan_for_year sets session_id when given" do
@@ -181,7 +187,8 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 1,
       user: user,
-      session_id: sid
+      session_id: sid,
+      logger: CapturingLogger.new
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 
@@ -208,7 +215,8 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 2,
-      user: user
+      user: user,
+      logger: CapturingLogger.new
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 

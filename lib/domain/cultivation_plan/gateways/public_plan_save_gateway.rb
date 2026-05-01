@@ -6,17 +6,8 @@ module Domain
       # 公開プラン保存フローの Domain 抽象。
       # 実体は AR を扱う Adapters::CultivationPlan::Sessions::PlanSaveSession。
       class PublicPlanSaveGateway
-        class << self
-          # @return [PublicPlanSaveGateway]
-          def default
-            @default ||= self.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
+        def initialize(logger:)
+          @logger = logger
         end
 
         # @param user  [User]
@@ -25,7 +16,8 @@ module Domain
         def save_from_session(user:, session_data:)
           ::Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
             user: user,
-            session_data: session_data
+            session_data: session_data,
+            logger: @logger
           ).call
         end
       end

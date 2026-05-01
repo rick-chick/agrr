@@ -39,14 +39,15 @@ module Adapters
 
         attr_accessor :user, :session_data, :result
 
-        def initialize(user:, session_data:)
+        def initialize(user:, session_data:, logger:)
           @user = user
           @session_data = session_data
+          @logger = logger
           @result = Result.new
         end
 
         def call
-          Rails.logger.debug I18n.t("services.plan_save_service.debug.session_data_received", data: @session_data.inspect)
+          @logger.debug I18n.t("services.plan_save_service.debug.session_data_received", data: @session_data.inspect)
 
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
           farm_mapper = Mappers::FarmMapper.new(ctx)
@@ -66,14 +67,14 @@ module Adapters
             existing_plan = farm_mapper.find_existing_private_plan(farm)
 
             if existing_plan
-              Rails.logger.info "♻️ [PlanSaveService] Existing private plan detected (##{existing_plan.id}), skipping plan copy"
+              @logger.info "♻️ [PlanSaveService] Existing private plan detected (##{existing_plan.id}), skipping plan copy"
               @result.add_skip(:plan, existing_plan.id)
               @result.new_plan = existing_plan
               @result.success = true
               return @result
             end
 
-            plan_gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx)
+            plan_gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx, logger: @logger)
             new_plan = plan_gateway.copy_cultivation_plan(farm, crops)
 
             plan_gateway.establish_master_data_relationships(
@@ -84,19 +85,19 @@ module Adapters
             field_cultivation_map = plan_gateway.copy_plan_relations(new_plan)
             plan_gateway.copy_task_schedules(new_plan, field_cultivation_map)
 
-            Rails.logger.info I18n.t("services.plan_save_service.messages.service_completed")
+            @logger.info I18n.t("services.plan_save_service.messages.service_completed")
             @result.success = true
             @result.new_plan = new_plan
           end
 
           @result
         rescue InvalidTaskScheduleItemError => e
-          Rails.logger.error I18n.t("services.plan_save_service.errors.task_schedule_invalid", error: e.message) if I18n.exists?("services.plan_save_service.errors.task_schedule_invalid")
-          Rails.logger.error e.backtrace.join("\n")
+          @logger.error I18n.t("services.plan_save_service.errors.task_schedule_invalid", error: e.message) if I18n.exists?("services.plan_save_service.errors.task_schedule_invalid")
+          @logger.error e.backtrace.join("\n")
           raise
         rescue => e
-          Rails.logger.error I18n.t("services.plan_save_service.errors.unknown_error", error: e.message)
-          Rails.logger.error e.backtrace.join("\n")
+          @logger.error I18n.t("services.plan_save_service.errors.unknown_error", error: e.message)
+          @logger.error e.backtrace.join("\n")
           @result.error_message = e.message
           @result
         end

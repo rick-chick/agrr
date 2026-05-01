@@ -86,7 +86,7 @@ module CompositionRoot
     end
 
     def public_plan_save_gateway
-      @public_plan_save_gateway ||= Domain::CultivationPlan::Gateways::PublicPlanSaveGateway.new
+      @public_plan_save_gateway ||= Domain::CultivationPlan::Gateways::PublicPlanSaveGateway.new(logger: logger)
     end
 
     def public_plan_gateway

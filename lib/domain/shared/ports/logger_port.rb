@@ -3,24 +3,13 @@
 module Domain
   module Shared
     module Ports
-      # Interactor が Rails.logger を直接参照しないためのポート。
-      # 実装は lib/adapters/logger/gateways/rails_logger_gateway.rb。
-      # NOTE: Clean Architecture 純化のため、Controller (Composition Root) で
-      # Adapter インスタンスを生成し Interactor へ DI する方式に段階移行中。
-      # `.default` は移行未完了の Interactor 互換のため残置（移行完了後に削除）。
+      # Interactor が Rails.logger を直接参照しないためのインクルード用ポート（メソッド契約）。
+      # 完全な契約の参照先は Domain::Logger::Gateways::LoggerGateway（debug〜unknown）。
+      # Rails 向け具体実装は Adapters::Logger::Gateways::RailsLoggerGateway。
+      # Controller / CompositionRoot で Adapter を生成しインスタンスへ DI する。
+      # このモジュールは Interactor 側がよく使う #info / #warn / #error / #debug のみを列挙している。
+      # include 必須ではなく、呼び出しが触るメソッドを備えたダックタイプのインスタンスでもよい。
       module LoggerPort
-        class << self
-          def default
-            @default ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def info(message)
           raise NotImplementedError, "#{self.class}#info"
         end

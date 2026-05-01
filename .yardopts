@@ -1,0 +1,8 @@
+# lib のみだと test 配下の定義にリンクできないため、YARD で明示的に取り込む。
+# test/support 全体は毎回増えるドキュメントノイズになるので、必要なファイルだけ列挙する。
+#
+# 運用: lib 側コメントが test/support 内の定義へ {ClassName} でリンクしたくなったら、
+# 当該 .rb をこのファイルに 1 行追加する（support 丸ごとの glob は増やさない）。
+lib/**/*.rb
+app/**/*.rb
+test/support/capturing_logger.rb

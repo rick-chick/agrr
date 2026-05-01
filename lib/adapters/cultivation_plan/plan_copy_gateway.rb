@@ -3,8 +3,14 @@
 module Adapters
   module CultivationPlan
     class PlanCopyGateway
-      # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）
-      def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil)
+      # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）。
+      # ログはすべて +logger+ 経由（本メソッド内で Rails.logger は使わない）。
+      #
+      # @param logger [#info] 成功パス用（必須）。本メソッドは #info のみ使用。
+      #   推奨: {Domain::Logger::Gateways::LoggerGateway} のサブクラス
+      #   （{Adapters::Logger::Gateways::RailsLoggerGateway}、テストでは test/support/capturing_logger.rb の CapturingLogger）。
+      #   注入は CompositionRoot.logger 経由を想定。
+      def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil, logger:)
         source_plan = ::CultivationPlan.find(source_cultivation_plan_id)
         ar_user = Adapters::Shared::UserActorResolver.user_for_deleted_by(user)
         planning_dates = ::CultivationPlan.calculate_planning_dates(new_year)
@@ -24,10 +30,10 @@ module Adapters
 
         new_plan = ::CultivationPlan.create!(plan_attrs)
 
-        Rails.logger.info "✅ Created new plan ##{new_plan.id} (year: #{new_year})"
+        logger.info "✅ Created new plan ##{new_plan.id} (year: #{new_year})"
 
         copied_attachments = copy_attachments_for_plan_copy(source_plan: source_plan, new_plan: new_plan)
-        Rails.logger.info "✅ Copied #{copied_attachments} attachments"
+        logger.info "✅ Copied #{copied_attachments} attachments"
 
         source_plan.cultivation_plan_fields.each do |source_field|
           ::CultivationPlanField.create!(
@@ -39,7 +45,7 @@ module Adapters
           )
         end
 
-        Rails.logger.info "✅ Copied #{source_plan.cultivation_plan_fields.count} fields"
+        logger.info "✅ Copied #{source_plan.cultivation_plan_fields.count} fields"
 
         source_plan.cultivation_plan_crops.each do |source_crop|
           ::CultivationPlanCrop.create!(
@@ -52,7 +58,7 @@ module Adapters
           )
         end
 
-        Rails.logger.info "✅ Copied #{source_plan.cultivation_plan_crops.count} crops"
+        logger.info "✅ Copied #{source_plan.cultivation_plan_crops.count} crops"
 
         field_mapping = {}
         source_plan.cultivation_plan_fields.each_with_index do |source_field, index|
@@ -74,8 +80,8 @@ module Adapters
           )
         end
 
-        Rails.logger.info "✅ Copied #{source_plan.field_cultivations.count} field cultivations"
-        Rails.logger.info "✅ Plan copy completed: #{source_plan.id} -> #{new_plan.id}"
+        logger.info "✅ Copied #{source_plan.field_cultivations.count} field cultivations"
+        logger.info "✅ Plan copy completed: #{source_plan.id} -> #{new_plan.id}"
 
         Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(new_plan.reload)
       end
@@ -95,27 +101,28 @@ module Adapters
         attachments_count
       end
 
-      def initialize(ctx)
+      def initialize(ctx, logger:)
         @ctx = ctx
+        @logger = logger
         @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
         @calc = Domain::CultivationPlan::Calculators::PlanningDateCalculator
       end
 
       def copy_cultivation_plan(farm, _crops)
         plan_id = @ctx.session_data[:plan_id] || @ctx.session_data["plan_id"]
-        Rails.logger.debug I18n.t("services.plan_save_service.debug.plan_id_extracted", plan_id: plan_id)
+        @logger.debug I18n.t("services.plan_save_service.debug.plan_id_extracted", plan_id: plan_id)
 
         reference_plan = ::CultivationPlan.includes(:field_cultivations).find(plan_id)
-        Rails.logger.debug I18n.t("services.plan_save_service.debug.reference_plan_found", plan_name: reference_plan.plan_name)
+        @logger.debug I18n.t("services.plan_save_service.debug.reference_plan_found", plan_name: reference_plan.plan_name)
 
         if reference_plan.plan_year.nil?
-          planning_dates = @calc.calculate_planning_dates_from_cultivations(reference_plan)
+          planning_dates = @calc.calculate_planning_dates_from_cultivations(reference_plan, logger: @logger)
           plan_year = nil
-          Rails.logger.info "📅 [PlanSaveService] Reference plan is annual planning (plan_year is null), calculated dates from cultivations"
+          @logger.info "📅 [PlanSaveService] Reference plan is annual planning (plan_year is null), calculated dates from cultivations"
         else
-          plan_year = @calc.calculate_plan_year_from_cultivations(reference_plan)
+          plan_year = @calc.calculate_plan_year_from_cultivations(reference_plan, logger: @logger)
           planning_dates = ::CultivationPlan.calculate_planning_dates(plan_year)
-          Rails.logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
+          @logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
         end
 
         new_plan = ::CultivationPlan.create!(
@@ -132,34 +139,34 @@ module Adapters
         )
 
         if reference_plan.predicted_weather_data.present?
-          Rails.logger.info "✅ [PlanSaveService] Copied predicted_weather_data to new plan ##{new_plan.id}"
+          @logger.info "✅ [PlanSaveService] Copied predicted_weather_data to new plan ##{new_plan.id}"
         else
-          Rails.logger.warn "⚠️ [PlanSaveService] Reference plan has no predicted_weather_data"
+          @logger.warn "⚠️ [PlanSaveService] Reference plan has no predicted_weather_data"
         end
 
-        Rails.logger.info I18n.t("services.plan_save_service.messages.plan_created", plan_id: new_plan.id)
+        @logger.info I18n.t("services.plan_save_service.messages.plan_created", plan_id: new_plan.id)
         new_plan
       rescue ActiveRecord::RecordNotFound => e
-        Rails.logger.error I18n.t("services.plan_save_service.errors.plan_not_found", plan_id: plan_id)
+        @logger.error I18n.t("services.plan_save_service.errors.plan_not_found", plan_id: plan_id)
         raise e
       rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error I18n.t("services.plan_save_service.errors.plan_creation_failed", errors: e.message)
+        @logger.error I18n.t("services.plan_save_service.errors.plan_creation_failed", errors: e.message)
         raise e
       end
 
       def establish_master_data_relationships(farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules)
-        Rails.logger.info "🔍 [PlanSaveService] Data integrity check:"
-        Rails.logger.info "  - Farm: #{farm.name} (ID: #{farm.id})"
-        Rails.logger.info "  - Fields: #{fields.count} fields"
-        Rails.logger.info "  - Crops: #{crops.count} crops"
-        Rails.logger.info "  - Pests: #{pests.count} pests"
-        Rails.logger.info "  - Agricultural tasks: #{agricultural_tasks.count} tasks"
-        Rails.logger.info "  - Fertilizes: #{fertilizes.count} fertilizes"
-        Rails.logger.info "  - Pesticides: #{pesticides.count} pesticides"
-        Rails.logger.info "  - Interaction rules: #{interaction_rules.count} rules"
+        @logger.info "🔍 [PlanSaveService] Data integrity check:"
+        @logger.info "  - Farm: #{farm.name} (ID: #{farm.id})"
+        @logger.info "  - Fields: #{fields.count} fields"
+        @logger.info "  - Crops: #{crops.count} crops"
+        @logger.info "  - Pests: #{pests.count} pests"
+        @logger.info "  - Agricultural tasks: #{agricultural_tasks.count} tasks"
+        @logger.info "  - Fertilizes: #{fertilizes.count} fertilizes"
+        @logger.info "  - Pesticides: #{pesticides.count} pesticides"
+        @logger.info "  - Interaction rules: #{interaction_rules.count} rules"
 
         if farm.fields.count != fields.count
-          Rails.logger.warn "⚠️ [PlanSaveService] Field count mismatch: farm.fields.count=#{farm.fields.count}, fields.count=#{fields.count}"
+          @logger.warn "⚠️ [PlanSaveService] Field count mismatch: farm.fields.count=#{farm.fields.count}, fields.count=#{fields.count}"
         end
 
         raise "Some fields were not properly created" unless fields.all?(&:persisted?)
@@ -170,7 +177,7 @@ module Adapters
         raise "Some pesticides were not properly created" unless pesticides.all?(&:persisted?)
         raise "Some interaction rules were not properly created" unless interaction_rules.all?(&:persisted?)
 
-        Rails.logger.info "✅ [PlanSaveService] All master data relationships established successfully"
+        @logger.info "✅ [PlanSaveService] All master data relationships established successfully"
       end
 
       def copy_plan_relations(new_plan)
@@ -208,7 +215,7 @@ module Adapters
           )
           new_crops << new_crop
 
-          Rails.logger.debug "✅ [PlanSaveService] Created CultivationPlanCrop: #{new_crop.name} (variety: #{new_crop.variety})"
+          @logger.debug "✅ [PlanSaveService] Created CultivationPlanCrop: #{new_crop.name} (variety: #{new_crop.variety})"
         end
 
         field_cultivation_count = 0
@@ -220,7 +227,7 @@ module Adapters
           new_crop = new_crops.find { |c| c.crop_id == mapped_user_crop_id }
 
           unless new_field && new_crop
-            Rails.logger.warn "⚠️ [PlanSaveService] Skipping FieldCultivation: field=#{new_field&.name}, crop=#{new_crop&.name}"
+            @logger.warn "⚠️ [PlanSaveService] Skipping FieldCultivation: field=#{new_field&.name}, crop=#{new_crop&.name}"
             next
           end
 
@@ -239,16 +246,16 @@ module Adapters
           field_cultivation_count += 1
           field_cultivation_map[reference_field_cultivation.id] = new_field_cultivation.id
 
-          Rails.logger.debug "✅ [PlanSaveService] Created FieldCultivation: #{new_field.name} + #{new_crop.name}"
+          @logger.debug "✅ [PlanSaveService] Created FieldCultivation: #{new_field.name} + #{new_crop.name}"
         end
 
-        Rails.logger.info I18n.t("services.plan_save_service.debug.plan_relations_copied",
+        @logger.info I18n.t("services.plan_save_service.debug.plan_relations_copied",
                                 fields: new_fields.count,
                                 crops: new_crops.count,
                                 cultivations: field_cultivation_count)
         field_cultivation_map
       rescue => e
-        Rails.logger.error I18n.t("services.plan_save_service.errors.plan_relations_copy_failed", errors: e.message)
+        @logger.error I18n.t("services.plan_save_service.errors.plan_relations_copy_failed", errors: e.message)
         raise e
       end
 
@@ -314,7 +321,7 @@ module Adapters
           end
         end
       rescue => e
-        Rails.logger.error "❌ [PlanSaveService] Task schedule copy failed: #{e.message}"
+        @logger.error "❌ [PlanSaveService] Task schedule copy failed: #{e.message}"
         raise e
       end
     end
