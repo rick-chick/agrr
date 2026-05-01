@@ -36,8 +36,8 @@ module Adapters
           @result = Result.new(success?: true, data: fertilize_entity, error: nil)
         end
 
-        def on_failure(error_dto)
-          @result = Result.new(success?: false, data: nil, error: error_dto.message)
+        def on_failure(failure_dto)
+          @result = Result.new(success?: false, data: nil, error: failure_dto.message)
         end
       end
     end

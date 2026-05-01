@@ -14,6 +14,7 @@ module Domain
         end
 
         def call(input_dto)
+          user = nil
           user = @user_lookup.find(@user_id)
 
           attrs = {}
@@ -40,7 +41,17 @@ module Domain
 
           @output_port.on_success(fertilize_entity)
         rescue StandardError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          reload_bundle = nil
+          if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
+            begin
+              reload_bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, input_dto.fertilize_id.to_i, for_edit: true)
+            rescue StandardError
+              reload_bundle = nil
+            end
+          end
+          @output_port.on_failure(
+            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle)
+          )
         end
       end
     end

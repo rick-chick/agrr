@@ -46,13 +46,22 @@ module Domain
 
           current_entity = mock
           current_entity.expects(:is_reference).returns(false)
+          entity = mock
+          persisted = mock
+          bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_translator.expects(:t).with("fertilizes.flash.reference_flag_admin_only").returns("admin only")
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
           @interactor.call(input_dto)
+
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
+          assert_equal "admin only", received.message
+          assert_equal bundle, received.reload_bundle
         end
 
         test "should allow admin user to change is_reference flag" do
@@ -90,11 +99,53 @@ module Domain
             name: "Updated Fertilize"
           )
 
+          entity = mock
+          persisted = mock
+          bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
+
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
           @interactor.call(input_dto)
+
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
+          assert_equal "Update failed", received.message
+          assert_equal bundle, received.reload_bundle
+        end
+
+        test "on_failure has nil reload_bundle when user lookup raises" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
+
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).raises(StandardError, "no user")
+          @mock_gateway.expects(:update_for_user).never
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).never
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
+          assert_equal "no user", received.message
+          assert_nil received.reload_bundle
+        end
+
+        test "on_failure has nil reload_bundle when reload bundle raises" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
+
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(StandardError, "reload failed")
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
+          assert_equal "Update failed", received.message
+          assert_nil received.reload_bundle
         end
       end
     end

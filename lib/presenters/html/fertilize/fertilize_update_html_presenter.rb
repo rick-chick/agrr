@@ -4,9 +4,8 @@ module Presenters
   module Html
     module Fertilize
       class FertilizeUpdateHtmlPresenter < Domain::Fertilize::Ports::FertilizeUpdateOutputPort
-        def initialize(view:, reload_fertilize_model_for_edit:)
+        def initialize(view:)
           @view = view
-          @reload_fertilize_model_for_edit = reload_fertilize_model_for_edit
         end
 
         def on_success(fertilize_entity)
@@ -16,12 +15,12 @@ module Presenters
           )
         end
 
-        def on_failure(error_dto)
-          @fertilize = @view.instance_variable_get(:@fertilize) || @reload_fertilize_model_for_edit.call(@view.params[:id])
+        def on_failure(failure_dto)
+          @fertilize = failure_dto.reload_bundle&.persisted_fertilize || @view.instance_variable_get(:@fertilize)
           @fertilize.assign_attributes(@view.params[:fertilize].to_h.symbolize_keys)
           @fertilize.valid?
           @view.instance_variable_set(:@fertilize, @fertilize)
-          @view.flash.now[:alert] = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          @view.flash.now[:alert] = failure_dto.message
           @view.render :edit, status: :unprocessable_entity
         end
       end

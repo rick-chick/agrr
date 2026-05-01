@@ -7,8 +7,7 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success redirects with success notice" do
     view_mock = mock
-    reload = ->(_) { flunk }
-    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock, reload_fertilize_model_for_edit: reload)
+    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock)
 
     fertilize_entity = mock
     fertilize_entity.expects(:id).returns(1)
@@ -22,12 +21,12 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
   test "on_failure sets flash alert and renders edit template" do
     view_mock = mock
     fertilize_mock = mock
-    reload = ->(id) { assert_equal 1, id; fertilize_mock }
-    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock, reload_fertilize_model_for_edit: reload)
-
-    error_dto = mock
-    error_dto.expects(:respond_to?).with(:message).returns(true)
-    error_dto.expects(:message).returns("Test error")
+    bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(
+      fertilize_entity: mock,
+      persisted_fertilize: fertilize_mock
+    )
+    failure_dto = Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: "Test error", reload_bundle: bundle)
+    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock)
 
     fertilize_mock.expects(:assign_attributes)
     fertilize_mock.expects(:valid?)
@@ -42,6 +41,6 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:render).with(:edit, status: :unprocessable_entity)
 
-    presenter.on_failure(error_dto)
+    presenter.on_failure(failure_dto)
   end
 end
