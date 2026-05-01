@@ -13,8 +13,8 @@ module Domain
           @metadata = metadata || {}
         end
 
-        def expired?
-          Time.current > expires_at
+        def expired?(now:)
+          now > expires_at
         end
 
         def scheduled?

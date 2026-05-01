@@ -4,9 +4,10 @@ module Domain
   module DeletionUndo
     module Interactors
       class DeletionUndoRestoreInteractor < Domain::DeletionUndo::Ports::DeletionUndoRestoreInputPort
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, clock:)
           @output_port = output_port
           @gateway = gateway
+          @clock = clock
         end
 
         def call(input_dto)
@@ -14,8 +15,8 @@ module Domain
 
           event = @gateway.find_by_token(undo_token)
 
-          if event.expired? || !event.scheduled?
-            if event.expired?
+          if event.expired?(now: @clock.now) || !event.scheduled?
+            if event.expired?(now: @clock.now)
               @gateway.expire_if_needed(event.id)
             else
               @gateway.mark_failed(event.id, "Token expired")

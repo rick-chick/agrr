@@ -85,7 +85,7 @@ INJECT = {
     "gateway: CompositionRoot.cultivation_plan_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor" => "", # class method only
   "Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor" =>
-    "gateway: CompositionRoot.deletion_undo_gateway",
+    "gateway: CompositionRoot.deletion_undo_gateway, clock: Time.zone",
   "Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor" =>
     "gateway: CompositionRoot.deletion_undo_gateway",
   "Domain::Farm::Interactors::FarmCreateInteractor" =>

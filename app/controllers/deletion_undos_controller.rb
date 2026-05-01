@@ -31,7 +31,11 @@ class DeletionUndosController < ApplicationController
 
   def execute_restore_use_case(input_dto, presenter_class)
     presenter = presenter_class.new(view: self)
-    interactor = Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor.new(output_port: presenter, gateway: CompositionRoot.deletion_undo_gateway)
+    interactor = Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor.new(
+      output_port: presenter,
+      gateway: CompositionRoot.deletion_undo_gateway,
+      clock: Time.zone
+    )
     interactor.call(input_dto)
   end
 end
