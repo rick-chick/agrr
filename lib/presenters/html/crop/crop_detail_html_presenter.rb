@@ -10,7 +10,7 @@ module Presenters
 
         def on_success(crop_detail_dto)
           crop_entity = crop_detail_dto.crop
-          crop_model = Domain::Crop::Gateways::CropGateway.default.find_model(crop_entity.id)
+          crop_model = CompositionRoot.crop_gateway.find_model(crop_entity.id)
           task_schedule_blueprints = crop_model.crop_task_schedule_blueprints
                                         .includes(:agricultural_task)
                                         .ordered

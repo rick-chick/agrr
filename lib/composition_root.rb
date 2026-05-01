@@ -86,7 +86,17 @@ module CompositionRoot
     end
 
     def public_plan_save_gateway
-      @public_plan_save_gateway ||= Domain::CultivationPlan::Gateways::PublicPlanSaveGateway.new(logger: logger)
+      @public_plan_save_gateway ||= Domain::CultivationPlan::Gateways::PublicPlanSaveGateway.new(
+        logger: logger,
+        save_from_session_runner: lambda do |user:, session_data:, logger:|
+          Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
+            user: user,
+            session_data: session_data,
+            logger: logger,
+            cultivation_plan_gateway: cultivation_plan_gateway
+          ).call
+        end
+      )
     end
 
     def public_plan_gateway

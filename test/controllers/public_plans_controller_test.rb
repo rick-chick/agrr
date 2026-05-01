@@ -344,7 +344,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
       user: user,
       session_data: session_data,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     ).call
 
     # エラーが発生することを確認

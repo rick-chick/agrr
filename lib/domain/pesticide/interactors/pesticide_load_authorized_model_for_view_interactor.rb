@@ -13,7 +13,7 @@ module Domain
 
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
-          pesticide = @gateway.authorized_record_for_view(user, pesticide_id)
+          pesticide = @gateway.find_authorized_model_for_view(user, pesticide_id)
           @output_port.on_success(pesticide)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure

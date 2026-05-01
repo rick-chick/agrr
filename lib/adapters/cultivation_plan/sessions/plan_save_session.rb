@@ -39,10 +39,11 @@ module Adapters
 
         attr_accessor :user, :session_data, :result
 
-        def initialize(user:, session_data:, logger:)
+        def initialize(user:, session_data:, logger:, cultivation_plan_gateway:)
           @user = user
           @session_data = session_data
           @logger = logger
+          @cultivation_plan_gateway = cultivation_plan_gateway
           @result = Result.new
         end
 
@@ -52,7 +53,7 @@ module Adapters
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
           farm_mapper = Mappers::FarmMapper.new(ctx)
 
-          Domain::CultivationPlan::Gateways::CultivationPlanGateway.default.within_transaction do
+          @cultivation_plan_gateway.within_transaction do
             farm = farm_mapper.create_or_get_user_farm
             ctx.current_farm_region = farm.region
 

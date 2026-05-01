@@ -9,8 +9,8 @@ module Presenters
         end
 
         def on_success(farm_detail_dto)
-          farm_gw = Domain::Farm::Gateways::FarmGateway.default
-          field_gw = Domain::Field::Gateways::FieldGateway.default
+          farm_gw = CompositionRoot.farm_gateway
+          field_gw = CompositionRoot.field_gateway
           @view.instance_variable_set(:@farm, farm_gw.find_model(farm_detail_dto.farm.id))
           @view.instance_variable_set(:@fields, farm_detail_dto.fields.map { |fe| field_gw.find_model(fe.id) })
           # show テンプレートをレンダリング（暗黙的に）

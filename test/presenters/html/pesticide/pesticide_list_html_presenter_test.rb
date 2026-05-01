@@ -18,7 +18,7 @@ class PesticideListHtmlPresenterTest < ActiveSupport::TestCase
     gw = mock
     gw.expects(:find_model).with(1).returns(pesticide_model1)
     gw.expects(:find_model).with(2).returns(pesticide_model2)
-    Domain::Pesticide::Gateways::PesticideGateway.stubs(:default).returns(gw)
+    CompositionRoot.stubs(:pesticide_gateway).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@pesticides, [ pesticide_model1, pesticide_model2 ])
 

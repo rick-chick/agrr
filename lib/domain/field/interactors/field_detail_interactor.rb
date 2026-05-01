@@ -4,12 +4,12 @@ module Domain
   module Field
     module Interactors
       class FieldDetailInteractor < Domain::Field::Ports::FieldDetailInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
-          @gateway.translator = Domain::Shared::Ports::TranslatorPort.default if @gateway.respond_to?(:translator=)
+          @gateway.translator = translator if @gateway.respond_to?(:translator=)
         end
 
         def call(field_id)

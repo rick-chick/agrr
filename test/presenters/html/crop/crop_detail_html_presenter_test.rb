@@ -13,7 +13,7 @@ class CropDetailHtmlPresenterTest < ActiveSupport::TestCase
     crop_model = mock
     gw = mock
     gw.expects(:find_model).with(42).returns(crop_model)
-    Domain::Crop::Gateways::CropGateway.stubs(:default).returns(gw)
+    CompositionRoot.stubs(:crop_gateway).returns(gw)
 
     blueprints_relation = mock
     blueprints_relation.expects(:includes).with(:agricultural_task).returns(blueprints_relation)

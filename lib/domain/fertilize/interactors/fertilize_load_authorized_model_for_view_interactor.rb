@@ -13,7 +13,7 @@ module Domain
 
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
-          fertilize = @gateway.authorized_record_for_view(user, fertilize_id)
+          fertilize = @gateway.find_authorized_model_for_view(user, fertilize_id)
           @output_port.on_success(fertilize)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_permission_denied

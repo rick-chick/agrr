@@ -11,7 +11,7 @@ module Presenters
         def on_success(pesticide_detail_dto)
           @view.instance_variable_set(
             :@pesticide,
-            Domain::Pesticide::Gateways::PesticideGateway.default.find_model(pesticide_detail_dto.pesticide.id)
+            CompositionRoot.pesticide_gateway.find_model(pesticide_detail_dto.pesticide.id)
           )
           # show テンプレートをレンダリング（暗黙的に）
         end

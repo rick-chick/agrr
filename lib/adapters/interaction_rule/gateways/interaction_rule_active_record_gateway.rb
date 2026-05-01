@@ -161,7 +161,7 @@ module Adapters
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = CompositionRoot.deletion_undo_gateway
           event = undo_gw.schedule(
             record: rule,
             actor: user,

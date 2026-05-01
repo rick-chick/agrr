@@ -14,7 +14,7 @@ module Domain
 
         def call(pest_id)
           user = @user_lookup.find(@user_id)
-          pest = @gateway.authorized_record_for_edit(user, pest_id)
+          pest = @gateway.find_authorized_model_for_edit(user, pest_id)
           @output_port.on_success(pest)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(:no_permission)

@@ -11,7 +11,7 @@ module Presenters
         def on_success(detail_dto)
           @view.instance_variable_set(
             :@agricultural_task,
-            Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.find_model(detail_dto.task.id)
+            CompositionRoot.agricultural_task_gateway.find_model(detail_dto.task.id)
           )
         end
 

@@ -20,8 +20,9 @@
 
 ```ruby
 # app/services/crop_task_template_backfill_service.rb
+# 呼び出し側でロガーを注入する（例: CompositionRoot.logger またはテストダブル）
 class CropTaskTemplateBackfillService
-  def initialize(logger: Rails.logger)
+  def initialize(logger:)
     @logger = logger
   end
 

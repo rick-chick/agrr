@@ -15,7 +15,7 @@ class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
     field_entity.expects(:id).returns(88)
     gw = mock
     gw.expects(:find_model).with(88).returns(field_model)
-    Domain::Field::Gateways::FieldGateway.stubs(:default).returns(gw)
+    CompositionRoot.stubs(:field_gateway).returns(gw)
 
     detail_dto = mock
     detail_dto.expects(:field).returns(field_entity)

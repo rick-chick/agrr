@@ -48,7 +48,8 @@ class Domain::CultivationPlan::Interactors::PlanCopierTest < ActiveSupport::Test
       source_plan: source_plan,
       new_year: plan_year + 1,
       user: @user,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+      gateway: CompositionRoot.cultivation_plan_gateway
     ).call
 
     assert result.success?, result.errors.join(", ")

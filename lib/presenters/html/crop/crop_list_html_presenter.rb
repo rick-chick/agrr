@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(crops)
-          gw = Domain::Crop::Gateways::CropGateway.default
+          gw = CompositionRoot.crop_gateway
           @view.instance_variable_set(:@crops, crops.map { |c| gw.find_model(c.id) })
           # index テンプレートをレンダリング（暗黙的に）
         end

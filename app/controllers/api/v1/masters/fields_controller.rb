@@ -15,7 +15,8 @@ module Api
           return unless input_valid?(:index)
           presenter = Presenters::Api::Field::FieldListPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
+            translator: CompositionRoot.translator)
           interactor.call(params[:farm_id])
         end
 
@@ -24,7 +25,8 @@ module Api
           input_valid?(:show) || return
           presenter = Presenters::Api::Field::FieldDetailPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
+            translator: CompositionRoot.translator)
           interactor.call(params[:id])
         end
 
@@ -38,7 +40,8 @@ module Api
           end
           presenter = Presenters::Api::Field::FieldCreatePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
+            translator: CompositionRoot.translator)
           interactor.call(input_dto, params[:farm_id])
         end
 
@@ -48,7 +51,8 @@ module Api
           input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Field::FieldUpdatePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
+            translator: CompositionRoot.translator)
           interactor.call(input_dto)
         end
 
@@ -57,7 +61,8 @@ module Api
           input_valid?(:destroy) || return
           presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
+            translator: CompositionRoot.translator)
           interactor.call(params[:id])
         end
 

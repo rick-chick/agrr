@@ -19,7 +19,7 @@ class FieldListHtmlPresenterTest < ActiveSupport::TestCase
     gw = mock
     gw.expects(:find_model).with(1).returns(field_model1)
     gw.expects(:find_model).with(2).returns(field_model2)
-    Domain::Field::Gateways::FieldGateway.stubs(:default).returns(gw)
+    CompositionRoot.stubs(:field_gateway).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
     view_mock.expects(:instance_variable_set).with(:@farm, farm)

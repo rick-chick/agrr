@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(fertilize_detail_dto)
-          fertilize_model = Domain::Fertilize::Gateways::FertilizeGateway.default.find_model(fertilize_detail_dto.fertilize.id)
+          fertilize_model = CompositionRoot.fertilize_gateway.find_model(fertilize_detail_dto.fertilize.id)
           @view.instance_variable_set(:@fertilize, fertilize_model)
         end
 

@@ -2,7 +2,7 @@
 
 フロント（Angular）とサーバー（Rails）間の API 契約。`docs/contracts/{feature}-contract.md` に配置。
 
-**実装ステータス**: 契約 MD **25 件**の目視ベース概況（詳細は各契約のチェックリスト参照）。
+**実装ステータス**: 契約 MD **24 件**の目視ベース概況（詳細は各契約のチェックリスト参照）。
 
 | # | 契約 | ファイル | ステータス |
 |---|------|----------|------------|
@@ -29,8 +29,7 @@
 | 21 | 管理農場一覧修正 | [admin-farm-list-fix-contract.md](admin-farm-list-fix-contract.md) | 実装済み |
 | 22 | 農作業参照フラグ更新 | [agricultural-task-update-reference-flag-contract.md](agricultural-task-update-reference-flag-contract.md) | 実装済み |
 | 23 | 私有プラン作成 | [private-plan-create-contract.md](private-plan-create-contract.md) | 実装済み |
-| 24 | Rails HTML Clean Architecture | [rails-html-clean-architecture-contract.md](rails-html-clean-architecture-contract.md) | 段階的適用 |
-| 25 | 栽培計画初期化・多圃場最適化（allocate） | [cultivation-plan-optimization-contract.md](cultivation-plan-optimization-contract.md) | 実装済み |
+| 24 | 栽培計画初期化・多圃場最適化（allocate） | [cultivation-plan-optimization-contract.md](cultivation-plan-optimization-contract.md) | 実装済み |
 
 ## 順次対応の進め方
 

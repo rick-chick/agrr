@@ -115,7 +115,7 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
     assert_not_nil current_week_entry
     assert_equal 1, current_week_entry[:task_count]
     assert_equal "low", current_week_entry[:density]
-    assert_equal Date.current.strftime("%Y-%m"), current_week_entry[:month_key]
+    assert_equal Date.iso8601(week_start).strftime("%Y-%m"), current_week_entry[:month_key]
   end
 
   test "minimap excludes weeks without tasks and assigns density levels" do

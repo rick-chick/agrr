@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(pesticides)
-          gw = Domain::Pesticide::Gateways::PesticideGateway.default
+          gw = CompositionRoot.pesticide_gateway
           @view.instance_variable_set(:@pesticides, pesticides.map { |p| gw.find_model(p.id) })
           # index テンプレートをレンダリング（暗黙的に）
         end

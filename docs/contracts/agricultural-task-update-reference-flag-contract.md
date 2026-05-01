@@ -1,13 +1,13 @@
 # 契約: AgriculturalTask Update — 参照フラグ変更時の作物関連付け
 
-Rails の AgriculturalTasksController#update において、参照フラグ（is_reference）変更時に Interactor が is_reference/user_id を更新し、そのうえで作物紐付け（CropTaskTemplate）が「許可された作物のみ」になるよう振る舞いを規定する契約。**Rails（テスト）が正**とする。
+PATCH /agricultural_tasks/:id（HTML）において、参照フラグ（is_reference）変更時に Interactor が is_reference/user_id を更新し、そのうえで作物紐付け（CropTaskTemplate）が「許可された作物のみ」になるよう振る舞いを規定する契約。**本契約本文および** `test/controllers/agricultural_tasks_controller_test.rb` **に書かれた期待を正とする**。Rails の実装そのものを唯一の正典とはみなさない。
 
-## 1. スコープ・正とする仕様（Rails）
+## 1. スコープ・本契約が規定する仕様
 
-- **正**: `test/controllers/agricultural_tasks_controller_test.rb` の以下 2 テストが期待する挙動。
+- **根拠**: `test/controllers/agricultural_tasks_controller_test.rb` の以下 2 テストが期待する挙動。
 - **対象**: PATCH /agricultural_tasks/:id（HTML）、Interactor の update、および update_crop_task_templates。
 
-## 2. 期待される振る舞い（Rails テストから抽出）
+## 2. 期待される振る舞い（テストで固定した挙動）
 
 ### 2.1 管理者が参照フラグを有効に変更するとユーザー作物の関連付けが解除される
 
@@ -25,7 +25,7 @@ Rails の AgriculturalTasksController#update において、参照フラグ（is
   - タスクがユーザー所有になる: `task.is_reference? == false`, `task.user_id == current_user.id`。
   - **タスクに紐づく作物は「そのユーザーの作物」のみ**: `task.crops.pluck(:id) == [user_crop.id]`（参照作物は許可されず除外）。
 
-## 3. 許可作物のルール（Rails に合わせる）
+## 3. 許可作物のルール
 
 | タスクの状態 | 紐付けを許可する作物 |
 |--------------|----------------------|

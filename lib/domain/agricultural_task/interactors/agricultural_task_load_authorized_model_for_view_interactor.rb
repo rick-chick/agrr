@@ -14,7 +14,7 @@ module Domain
 
         def call(task_id)
           user = @user_lookup.find(@user_id)
-          task = @gateway.authorized_record_for_view(user, task_id)
+          task = @gateway.find_authorized_model_for_view(user, task_id)
           @output_port.on_success(task)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @logger.warn("[AgriculturalTaskLoadAuthorizedModelForViewInteractor] #{e.message}")

@@ -18,7 +18,7 @@ class FertilizeListHtmlPresenterTest < ActiveSupport::TestCase
     gw = mock
     gw.expects(:find_model).with(1).returns(fertilize_model1)
     gw.expects(:find_model).with(2).returns(fertilize_model2)
-    Domain::Fertilize::Gateways::FertilizeGateway.stubs(:default).returns(gw)
+    CompositionRoot.stubs(:fertilize_gateway).returns(gw)
 
     view_mock.expects(:instance_variable_set).with(:@fertilizes, [ fertilize_model1, fertilize_model2 ])
 

@@ -184,7 +184,7 @@ module Adapters
           end
           farm_name = farm.name
           toast_message = translator.t("flash.farms.deleted", name: farm_name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = CompositionRoot.deletion_undo_gateway
           event = undo_gw.schedule(
             record: farm,
             actor: user,

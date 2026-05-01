@@ -1,6 +1,6 @@
 # 契約: Crop Update（HTML）— crop_stages_attributes / nutrients の反映
 
-Rails HTML の作物編集（CropsController#update）において、Interactor が Rails のネストした属性（crop_stages_attributes / nutrient_requirement_attributes 等）を再現し、モデルに正しく反映するための契約。
+HTML の作物編集（CropsController#update）において、ネストしたパラメータ（crop_stages_attributes / nutrient_requirement_attributes 等）を DTO からそのまま更新属性へ渡し、モデルに正しく反映するための契約。
 
 ## 1. 機能名・スコープ
 

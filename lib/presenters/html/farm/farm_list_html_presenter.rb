@@ -10,7 +10,7 @@ module Presenters
         end
 
         def on_success(farms)
-          gw = Domain::Farm::Gateways::FarmGateway.default
+          gw = CompositionRoot.farm_gateway
           @view.instance_variable_set(:@farms, farms.map { |f| gw.find_model(f.id) })
           if @is_admin
             @view.instance_variable_set(:@reference_farms, ::Farm.reference)

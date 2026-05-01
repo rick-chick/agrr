@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(fertilizes)
-          gw = Domain::Fertilize::Gateways::FertilizeGateway.default
+          gw = CompositionRoot.fertilize_gateway
           @view.instance_variable_set(:@fertilizes, fertilizes.map { |f| gw.find_model(f.id) })
         end
 

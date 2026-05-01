@@ -13,7 +13,7 @@ module Domain
 
         def call(crop_id, for_edit:)
           user = @user_lookup.find(@user_id)
-          crop = @gateway.load_authorized_crop_for_html(user, crop_id, for_edit: for_edit)
+          crop = @gateway.find_authorized_model_for_html(user, crop_id, for_edit: for_edit)
           @output_port.on_success(crop)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure

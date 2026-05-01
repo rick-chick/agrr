@@ -90,7 +90,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       farm_id: -1, # 不正ID
       field_data: []
     }
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert_equal false, result.success
     assert_match(/Couldn't find Farm|存在しない|見つかりません/i, result.error_message.to_s)
   end
@@ -133,7 +133,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     # CPCループで create! されたか（source_crop_id が us 作物）
@@ -189,7 +189,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     assert_not_nil existing_rule.reload.source_interaction_rule_id, "既存ルールのsource_interaction_rule_idが補完されるべき"
@@ -278,7 +278,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
@@ -309,7 +309,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     assert_equal reference_task.id, second_bp.source_agricultural_task_id
 
     # 既存があれば置換されることを確認（再実行で件数は変わらない）
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert second_result.success, second_result.error_message
     assert_equal 2, user_crop.crop_task_schedule_blueprints.count
   end
@@ -358,7 +358,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     # 成功を確認
@@ -407,7 +407,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_crops_count = @user.crops.count
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
     assert_not first_result.skipped?, "First copy should not report skips"
 
@@ -420,7 +420,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     farm_count = @user.farms.count
 
     before_second_crops_count = @user.crops.count
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing farm"
     assert_includes second_result.skipped_items[:farm], original_farm.id
@@ -469,7 +469,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
 
     original_crop = @user.crops.where(source_crop_id: @crops[0].id).first
@@ -477,7 +477,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
 
     crop_count = @user.crops.count
 
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing crop"
     assert_includes second_result.skipped_items[:crops], original_crop.id
@@ -545,7 +545,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
 
     original_rule = @user.interaction_rules.where(rule_type: "continuous_cultivation", source_group: "GroupA", target_group: "GroupB").first
@@ -553,7 +553,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
 
     rule_count = @user.interaction_rules.count
 
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing interaction rule"
     assert_includes second_result.skipped_items[:interaction_rules], original_rule.id
@@ -654,7 +654,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_rules = @user.interaction_rules.where(is_reference: false)
@@ -728,7 +728,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_crops = @user.crops.where(is_reference: false)
@@ -817,7 +817,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_fertilizes = @user.fertilizes.where(is_reference: false)
@@ -880,7 +880,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.fertilizes.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
 
     assert result.success, result.error_message
     assert result.skipped?, "Copy should report skips when reusing fertilize"
@@ -988,7 +988,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_tasks = @user.agricultural_tasks.where(is_reference: false)
@@ -1072,7 +1072,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.agricultural_tasks.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
 
     assert result.success, result.error_message
     assert result.skipped?, "Copy should report skips when reusing task"
@@ -1212,7 +1212,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_pesticides = @user.pesticides.where(is_reference: false)
@@ -1327,7 +1327,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.pesticides.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
 
     assert result.success, result.error_message
     assert result.skipped?, "Copy should report skips when reusing pesticide"
@@ -1410,7 +1410,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_pests = @user.pests.where(is_reference: false)
@@ -1494,7 +1494,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.pests.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
 
     assert result.success, result.error_message
     assert result.skipped?, "Copy should report skips when reusing pest"
@@ -1561,7 +1561,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     # 成功を確認
@@ -1629,7 +1629,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     # 成功を確認
@@ -1700,7 +1700,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     user_crop = @user.crops.find_by(source_crop_id: reference_crop.id)
@@ -1777,7 +1777,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # 実行
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     new_plan = @user.cultivation_plans.where(plan_type: "private").order(:created_at).last
@@ -1912,7 +1912,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     new_plan = result.new_plan
@@ -2042,7 +2042,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     assert service.send(:requires_gdd?, item), "sanity check: item should require gdd"
     error = assert_raises Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError do
       service.call
@@ -2107,7 +2107,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # 実行
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
     assert result.success, result.error_message
 
     # 作成されたユーザーの連作ルールを取得
@@ -2152,7 +2152,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     session_data[:plan_id] = plan.id
 
     # PlanSaveServiceを実行（失敗するはず）
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger).call
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway).call
 
     # 失敗することを確認
     assert_not result.success, "PlanSaveService should fail when farm limit is reached"
@@ -2247,7 +2247,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     # 成功を確認
@@ -2336,7 +2336,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     assert result.success, "PlanSaveService should succeed: #{result.error_message}"
@@ -2385,7 +2385,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     assert result.success, "PlanSaveService should succeed: #{result.error_message}"
@@ -2465,7 +2465,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger)
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway)
     result = service.call
 
     assert result.success, "PlanSaveService should succeed: #{result.error_message}"
