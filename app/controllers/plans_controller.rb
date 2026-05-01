@@ -32,10 +32,18 @@ class PlansController < ApplicationController
 
   # Step 1: 農場選択
   def new
-    @vm = Presenters::Html::Plans::NewPresenter.new(current_user: current_user)
-    @farms = @vm.farms
-    @default_plan_name = @vm.default_plan_name
-    Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@farms.count}"
+    presenter = Presenters::Html::Plans::PrivatePlanNewHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      farm_gateway: CompositionRoot.farm_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
+    return if performed?
+
+    Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@private_plan_new_page.farm_choices.size}"
   end
 
   # Step 2: 作物選択

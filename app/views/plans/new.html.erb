@@ -24,8 +24,13 @@
           <p class="plans-form-hint">
             <%= t('plans.new.farm_hint') %>
           </p>
+          <% unless @private_plan_new_page.empty? %>
+            <p class="plans-form-hint">
+              <%= t('plans.new.suggested_plan_name_hint', name: @private_plan_new_page.default_plan_name) %>
+            </p>
+          <% end %>
 
-          <% if @vm.farms.empty? %>
+          <% if @private_plan_new_page.empty? %>
             <!-- 農場がない場合 -->
             <div class="plans-empty">
               <div class="plans-empty-icon">🌾</div>
@@ -41,7 +46,7 @@
           <% else %>
             <!-- 農場カードグリッド -->
             <div class="radio-card-grid">
-              <% @vm.farms.each do |farm| %>
+              <% @private_plan_new_page.farm_choices.each do |farm| %>
                 <label class="radio-card-wrapper">
                   <input type="radio" name="farm_id" value="<%= farm.id %>" required
                          class="radio-card-input" />
@@ -53,9 +58,9 @@
                       <div>
                         📍 <%= farm.latitude.round(4) %>, <%= farm.longitude.round(4) %>
                       </div>
-                      <% if farm.fields.any? %>
+                      <% if farm.fields_present? %>
                         <div>
-                          🌾 <%= farm.fields.count %>圃場 / 総面積: <%= number_with_delimiter(farm.fields.sum(:area)) %>㎡
+                          🌾 <%= farm.fields_count %>圃場 / 総面積: <%= number_with_delimiter(farm.fields_total_area) %>㎡
                         </div>
                       <% end %>
                     </div>
@@ -67,7 +72,7 @@
         </div>
 
         <!-- 送信ボタン -->
-        <% if @vm.farms.any? %>
+        <% unless @private_plan_new_page.empty? %>
           <div class="text-center mt-8">
             <button type="submit" class="btn btn-primary w-full max-w-sm">
               <%= t('plans.new.next_button') %>

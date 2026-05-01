@@ -8,7 +8,7 @@
 ## Output Port
 
 - **HTML**: `Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter`（`PrivatePlanIndexPageOutputPort`）
-- **`on_failure`**: `redirect_to plans_path` + `alert`（想定外エラーは `plans.errors.restart`＋logger。**恒久的に一覧だけが失敗し続ける場合はインターラクタ／Gateway の修正が必要**）
+- **`on_failure`**: `redirect_to plans_path` + `alert`（文言は **`session_invalid` / `not_found` / `restart`** 等。**恒久的に一覧だけが失敗し続ける場合はインターラクタ／Gateway の修正が必要**）
 
 ## Gateway
 
@@ -18,6 +18,12 @@
 
 - **注入**: `gateway` / `translator` / `logger` / `user_lookup` は **Interactor のみ**。
 - **`on_failure` で redirect した場合**は `return if performed?` する。
+
+## Interactor（失敗時）
+
+- **`user_lookup.find` が `Domain::Shared::Exceptions::RecordNotFound`**: **`plans.errors.session_invalid`** を `on_failure`（logger **warn**、`user_record_not_found`）。
+- **上記以外の `Domain::Shared::Exceptions::RecordNotFound`**（例: Gateway）: **`plans.errors.not_found`** を `on_failure`（logger **warn**）。
+- **その他 `StandardError`（`on_failure` 扱い）**: logger に **先頭20行の backtrace**（`/backtrace:` 以下）。
 
 ## テンプレ（`plans/index`）
 

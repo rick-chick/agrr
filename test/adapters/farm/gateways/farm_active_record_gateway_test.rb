@@ -152,4 +152,38 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal "RowTest", rows.first.display_name
     assert rows.first.weather_data_status_text.present?
   end
+
+  test "private_plan_new_page returns empty page when user has no farms" do
+    other = create(:user)
+    create(:farm, user: other, is_reference: false)
+
+    dto = @gateway.private_plan_new_page(user: @user)
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto, dto
+    assert dto.empty?
+    assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
+  end
+
+  test "private_plan_new_page returns choices ordered by farm id with field aggregates" do
+    a = create(:farm, user: @user, is_reference: false, name: "A", latitude: 35.0, longitude: 138.0)
+    b = create(:farm, user: @user, is_reference: false, name: "B", latitude: 36.0, longitude: 139.0)
+    low, high = [ a, b ].minmax_by(&:id)
+    create(:field, farm: low, area: 10.0)
+    create(:field, farm: low, area: 5.0)
+
+    dto = @gateway.private_plan_new_page(user: @user)
+    refute dto.empty?
+    assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
+    assert_equal [ low.id, high.id ], dto.farm_choices.map(&:id)
+
+    first = dto.farm_choices.first
+    assert_equal low.id, first.id
+    assert_equal 2, first.fields_count
+    assert_in_delta 15.0, first.fields_total_area, 0.001
+    assert first.fields_present?
+
+    second = dto.farm_choices.last
+    assert_equal high.id, second.id
+    assert_not second.fields_present?
+    assert_equal 0, second.fields_count
+  end
 end

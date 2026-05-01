@@ -2,26 +2,19 @@
 
 require "test_helper"
 
-class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
-  test "call passes dto from gateway to on_success" do
+class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
+  test "call passes dto from farm_gateway to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    row = Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto.new(
-      id: 1,
-      farm_display_name: "F",
-      total_area: 100,
-      crops_count: 2,
-      fields_count: 1,
-      status: "pending",
-      display_name: "Plan",
-      created_at: Time.zone.parse("2026-01-01 12:00:00")
+    dto = Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto.new(
+      farm_choices: [],
+      default_plan_name: "D"
     )
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: [ row ])
 
-    gateway = mock
-    gateway.expects(:private_plan_index_page).with(user: user).returns(dto)
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).with(user: user).returns(dto)
 
     translator = mock
     logger = mock
@@ -29,10 +22,10 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     output = mock
     output.expects(:on_success).with(dto)
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
       output_port: output,
       user_id: 9,
-      gateway: gateway,
+      farm_gateway: farm_gateway,
       translator: translator,
       logger: logger,
       user_lookup: user_lookup
@@ -44,15 +37,15 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    gateway = mock
-    gateway.expects(:private_plan_index_page).raises(StandardError.new("db"))
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).raises(StandardError.new("db"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.restart").returns("再開")
 
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanIndexPageInteractor") &&
+      msg.include?("PrivatePlanNewPageInteractor") &&
         msg.include?("db") &&
         msg.include?("/backtrace:")
     end
@@ -63,10 +56,10 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
       output_port: output,
       user_id: 9,
-      gateway: gateway,
+      farm_gateway: farm_gateway,
       translator: translator,
       logger: logger,
       user_lookup: user_lookup
@@ -83,8 +76,8 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     logger = mock
     logger.expects(:warn).with(includes("user_record_not_found"))
 
-    gateway = mock
-    gateway.expects(:private_plan_index_page).never
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).never
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -92,10 +85,10 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
       output_port: output,
       user_id: 9,
-      gateway: gateway,
+      farm_gateway: farm_gateway,
       translator: translator,
       logger: logger,
       user_lookup: user_lookup
@@ -107,8 +100,8 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    gateway = mock
-    gateway.expects(:private_plan_index_page).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つからない")
@@ -122,10 +115,10 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
       output_port: output,
       user_id: 9,
-      gateway: gateway,
+      farm_gateway: farm_gateway,
       translator: translator,
       logger: logger,
       user_lookup: user_lookup
@@ -137,8 +130,8 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    gateway = mock
-    gateway.expects(:private_plan_index_page).raises(NoMethodError.new("bug"))
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).raises(NoMethodError.new("bug"))
 
     translator = mock
     logger = mock
@@ -146,10 +139,10 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(NoMethodError) do
-      Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
         output_port: output,
         user_id: 9,
-        gateway: gateway,
+        farm_gateway: farm_gateway,
         translator: translator,
         logger: logger,
         user_lookup: user_lookup

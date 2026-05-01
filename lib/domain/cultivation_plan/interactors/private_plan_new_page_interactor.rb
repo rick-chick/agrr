@@ -3,11 +3,11 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class PrivatePlanIndexPageInteractor
-        def initialize(output_port:, user_id:, gateway:, translator:, logger:, user_lookup:)
+      class PrivatePlanNewPageInteractor
+        def initialize(output_port:, user_id:, farm_gateway:, translator:, logger:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
-          @gateway = gateway
+          @farm_gateway = farm_gateway
           @translator = translator
           @logger = logger
           @user_lookup = user_lookup
@@ -17,12 +17,12 @@ module Domain
           user = begin
             @user_lookup.find(@user_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
-            @logger.warn("[PrivatePlanIndexPageInteractor] user_record_not_found user_id=#{@user_id.inspect}")
+            @logger.warn("[PrivatePlanNewPageInteractor] user_record_not_found user_id=#{@user_id.inspect}")
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
             return
           end
 
-          dto = @gateway.private_plan_index_page(user: user)
+          dto = @farm_gateway.private_plan_new_page(user: user)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
@@ -30,7 +30,7 @@ module Domain
           log_interactor_error(e)
           raise
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @logger.warn("[PrivatePlanIndexPageInteractor] record_not_found: #{e.class}: #{e.message}")
+          @logger.warn("[PrivatePlanNewPageInteractor] record_not_found: #{e.class}: #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
         rescue StandardError => e
           log_interactor_error(e)
@@ -42,7 +42,7 @@ module Domain
         def log_interactor_error(error)
           bt = error.backtrace&.first(20)&.join("\n").to_s
           @logger.error(
-            "[PrivatePlanIndexPageInteractor] #{error.class}: #{error.message}\n/backtrace:\n#{bt}"
+            "[PrivatePlanNewPageInteractor] #{error.class}: #{error.message}\n/backtrace:\n#{bt}"
           )
         end
       end
