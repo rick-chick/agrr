@@ -11,7 +11,7 @@ module Presenters
 
             weather_prediction_service = yield(farm)
 
-            Adapters::PublicPlans::EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
+            Domain::PublicPlan::Services::EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
               farm: farm,
               prediction_end_date_raw: prediction_end_date_raw,
               reference_date: reference_date,

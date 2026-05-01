@@ -108,15 +108,15 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 
-        # 農場一覧 HTML: インデックス用データをまとめて取得（list + 行DTO 変換の二重クエリを避ける）
-        def farm_list_html_index(input_dto)
-          raise NotImplementedError, "Subclasses must implement farm_list_html_index"
+        # 農場一覧カード行: メイン一覧＋参照農場行を一度に組み立てる（list + 行DTO 変換の二重クエリを避ける）
+        def farm_list_rows_bundle(input_dto)
+          raise NotImplementedError, "Subclasses must implement farm_list_rows_bundle"
         end
 
-        # 農場一覧 HTML: カード用の行 DTO（entities の順を維持。AR はアダプタ内のみ）。
-        # 可能なら farm_list_html_index を使う（こちらは補助・他用途向け）。
-        def farm_list_html_rows_from_entities(entities)
-          raise NotImplementedError, "Subclasses must implement farm_list_html_rows_from_entities"
+        # カード用の行 DTO（entities の順を維持。AR はアダプタ内のみ）。
+        # 可能なら farm_list_rows_bundle を使う（こちらは補助・他用途向け）。
+        def farm_list_rows_from_entities(entities)
+          raise NotImplementedError, "Subclasses must implement farm_list_rows_from_entities"
         end
 
         # プライベート計画ウィザード「農場選択」HTML 用

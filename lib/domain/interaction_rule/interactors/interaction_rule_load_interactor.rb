@@ -3,7 +3,8 @@
 module Domain
   module InteractionRule
     module Interactors
-      class InteractionRuleLoadForHtmlInteractor
+      # show / edit / update 前処理: 認可済みルールを読み込み Output Port に渡す（チャネル名を型に含めない）。
+      class InteractionRuleLoadInteractor
         def initialize(output_port:, user_id:, gateway:, user_lookup:)
           @output_port = output_port
           @gateway = gateway

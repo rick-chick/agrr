@@ -2,7 +2,7 @@
 
 class InteractionRulesController < ApplicationController
   include DeletionUndoFlow
-  before_action :load_interaction_rule_for_html, only: [ :show, :edit, :update ]
+  before_action :preload_interaction_rule_entity, only: [ :show, :edit, :update ]
   before_action :load_interaction_rule_record, only: [ :destroy ]
 
   # GET /interaction_rules
@@ -36,7 +36,7 @@ class InteractionRulesController < ApplicationController
 
   # GET /interaction_rules/:id/edit
   def edit
-    # @form は load_interaction_rule_for_html → Presenter で設定済み
+    # @form は preload_interaction_rule_entity → Presenter で設定済み
   end
 
   # POST /interaction_rules
@@ -130,10 +130,10 @@ class InteractionRulesController < ApplicationController
     @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
   end
 
-  def load_interaction_rule_for_html
+  def preload_interaction_rule_entity
     for_edit = params[:action].to_sym.in?([ :edit, :update ])
     presenter = Presenters::Html::InteractionRule::InteractionRuleHtmlLoadPresenter.new(view: self, for_edit: for_edit)
-    Domain::InteractionRule::Interactors::InteractionRuleLoadForHtmlInteractor.new(
+    Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       gateway: interaction_rule_gateway,

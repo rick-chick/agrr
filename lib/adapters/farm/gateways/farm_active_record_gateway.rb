@@ -20,7 +20,7 @@ module Adapters
           end
         end
 
-        def farm_list_html_index(input_dto)
+        def farm_list_rows_bundle(input_dto)
           main_scope = if input_dto.is_admin
             ::Farm.where("user_id = ? OR is_reference = ?", @user_id, true)
           else
@@ -34,13 +34,13 @@ module Adapters
             []
           end
 
-          Domain::Farm::Dtos::FarmListHtmlSuccessDto.new(
+          Domain::Farm::Dtos::FarmListRowsBundleDto.new(
             farm_rows: farm_rows,
             reference_farm_rows: reference_rows
           )
         end
 
-        def farm_list_html_rows_from_entities(entities)
+        def farm_list_rows_from_entities(entities)
           return [] if entities.blank?
 
           ids = entities.map(&:id)
@@ -50,7 +50,7 @@ module Adapters
             record = by_id[entity.id]
             unless record
               Rails.logger.warn(
-                "[#{self.class.name}] farm_list_html_rows_from_entities: Farm id=#{entity.id} missing (stale entity?)"
+                "[#{self.class.name}] farm_list_rows_from_entities: Farm id=#{entity.id} missing (stale entity?)"
               )
               next nil
             end

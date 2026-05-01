@@ -96,7 +96,7 @@ INJECT = {
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Farm::Interactors::FarmListInteractor" =>
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator",
-  "Domain::Farm::Interactors::FarmListHtmlInteractor" =>
+  "Domain::Farm::Interactors::FarmListRowsBundleInteractor" =>
     "gateway: CompositionRoot.farm_gateway",
   "Domain::Farm::Interactors::FarmListReferenceForRegionInteractor" =>
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger",
@@ -138,7 +138,7 @@ INJECT = {
     "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleListInteractor" =>
     "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
-  "Domain::InteractionRule::Interactors::InteractionRuleLoadForHtmlInteractor" =>
+  "Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor" =>
     "gateway: CompositionRoot.interaction_rule_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor" =>
     "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",

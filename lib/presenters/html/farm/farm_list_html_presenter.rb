@@ -3,14 +3,14 @@
 module Presenters
   module Html
     module Farm
-      class FarmListHtmlPresenter < Domain::Farm::Ports::FarmListHtmlOutputPort
+      class FarmListHtmlPresenter < Domain::Farm::Ports::FarmListRowsBundleOutputPort
         def initialize(view:)
           @view = view
         end
 
-        def on_success(success_dto)
-          @view.instance_variable_set(:@farms, success_dto.farm_rows)
-          @view.instance_variable_set(:@reference_farms, success_dto.reference_farm_rows)
+        def on_success(rows_bundle_dto)
+          @view.instance_variable_set(:@farms, rows_bundle_dto.farm_rows)
+          @view.instance_variable_set(:@reference_farms, rows_bundle_dto.reference_farm_rows)
         end
 
         def on_failure(error_dto)

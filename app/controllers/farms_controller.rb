@@ -11,7 +11,7 @@ class FarmsController < ApplicationController
         input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
         presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmListHtmlInteractor.new(
+        interactor = Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
           gateway: CompositionRoot.farm_gateway

@@ -23,11 +23,11 @@ class FarmListHtmlPresenterTest < ActiveSupport::TestCase
     )
   end
 
-  test "on_success sets @farms and @reference_farms from success DTO" do
+  test "on_success sets @farms and @reference_farms from rows bundle DTO" do
     view_mock = mock
     row1 = build_row(id: 1)
     ref_row = build_row(id: 99)
-    success = Domain::Farm::Dtos::FarmListHtmlSuccessDto.new(
+    success = Domain::Farm::Dtos::FarmListRowsBundleDto.new(
       farm_rows: [ row1 ],
       reference_farm_rows: [ ref_row ]
     )

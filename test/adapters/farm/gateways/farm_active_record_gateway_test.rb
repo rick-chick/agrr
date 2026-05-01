@@ -110,11 +110,11 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_operator ref_entities.size, :>=, 1
   end
 
-  test "farm_list_html_index returns success dto with main and reference rows for admin" do
+  test "farm_list_rows_bundle returns dto with main and reference rows for admin" do
     user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
     create(:field, farm: user_farm)
     user_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
-    dto_user = @gateway.farm_list_html_index(user_input)
+    dto_user = @gateway.farm_list_rows_bundle(user_input)
     assert_equal 1, dto_user.farm_rows.size
     assert_equal user_farm.id, dto_user.farm_rows.first.id
     assert_equal 1, dto_user.farm_rows.first.field_count
@@ -122,7 +122,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
 
     admin_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
     ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
-    dto_admin = @gateway.farm_list_html_index(admin_input)
+    dto_admin = @gateway.farm_list_rows_bundle(admin_input)
     ref_ids = dto_admin.reference_farm_rows.map(&:id)
     assert_includes ref_ids, ref.id
     main_ids = dto_admin.farm_rows.map(&:id)
@@ -130,7 +130,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_includes main_ids, ref.id
   end
 
-  test "farm_list_html_rows_from_entities maps field count and presentation fields" do
+  test "farm_list_rows_from_entities maps field count and presentation fields" do
     farm = create(:farm, user: @user, is_reference: false, name: "RowTest")
     create(:field, farm: farm)
     entity = Domain::Farm::Entities::FarmEntity.from_hash(
@@ -145,7 +145,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       is_reference: farm.is_reference
     )
 
-    rows = @gateway.farm_list_html_rows_from_entities([ entity ])
+    rows = @gateway.farm_list_rows_from_entities([ entity ])
     assert_equal 1, rows.size
     assert_equal farm.id, rows.first.id
     assert_equal 1, rows.first.field_count

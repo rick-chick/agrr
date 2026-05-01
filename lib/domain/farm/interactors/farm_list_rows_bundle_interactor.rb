@@ -3,8 +3,8 @@
 module Domain
   module Farm
     module Interactors
-      # 農場一覧（HTML）: gateway のみでデータを充足し、カード表示用 DTO を Port に渡す（AR は境界を越えない）。
-      class FarmListHtmlInteractor < Domain::Farm::Ports::FarmListInputPort
+      # 農場一覧（カード表示用の行 DTO 束を取得）。Gateway のみでデータを充足し AR は境界を越えない。
+      class FarmListRowsBundleInteractor < Domain::Farm::Ports::FarmListInputPort
         def initialize(output_port:, user_id:, gateway:)
           @output_port = output_port
           @gateway = gateway
@@ -16,8 +16,8 @@ module Domain
           input_dto ||= Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
           @gateway.user_id = @user_id
 
-          success = @gateway.farm_list_html_index(input_dto)
-          @output_port.on_success(success)
+          bundle = @gateway.farm_list_rows_bundle(input_dto)
+          @output_port.on_success(bundle)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

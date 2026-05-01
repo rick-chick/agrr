@@ -1,14 +1,14 @@
-# 農場一覧（HTML）契約
+# 農場一覧（行 DTO 束）契約
 
 ## スコープ
 
-- **ユースケース**: `GET /farms`（`format.html`）→ `Domain::Farm::Interactors::FarmListHtmlInteractor#call`
+- **ユースケース**: `GET /farms`（`format.html`）→ `Domain::Farm::Interactors::FarmListRowsBundleInteractor#call`
 - **API 一覧**（`/api/v1/masters/farms`）は別契約（`FarmListInteractor` + `FarmEntity`）
 
 ## Output Port
 
-- **実装**: `Presenters::Html::Farm::FarmListHtmlPresenter`（`FarmListHtmlOutputPort`）
-- **`on_success`**: 引数は **`Domain::Farm::Dtos::FarmListHtmlSuccessDto` のみ**
+- **実装**: `Presenters::Html::Farm::FarmListHtmlPresenter`（`FarmListRowsBundleOutputPort`）。クラスは HTML レイアウト配下のため `Html` を含んでもよい（ドメインの型・Interactor 名にチャネル語を載せない）。
+- **`on_success`**: 引数は **`Domain::Farm::Dtos::FarmListRowsBundleDto` のみ**
   - `farm_rows`: `Array<FarmListRowDto>` — メイン一覧（管理者時は「自分の農場∪参照農場」に相当するスコープの行）
   - `reference_farm_rows`: `Array<FarmListRowDto>` — 参照農場ブロック用（管理者のみ中身あり、非管理者は空）
 - **境界**: DTO に **ActiveRecord を渡さない**
@@ -26,8 +26,8 @@
 
 ## Gateway
 
-- **HTML インデックス一式**: `farm_list_html_index(input_dto)` → `FarmListHtmlSuccessDto`（`includes(:fields)` で圃場件数取得、**list + 再 fetch の二重化を避ける**）
-- **補助**: `farm_list_html_rows_from_entities` — entity 順で行 DTO を再構築。DB に無い id は **`Rails.logger.warn`** のうえスキップ
+- **`farm_list_rows_bundle(input_dto)`** → `FarmListRowsBundleDto`（`includes(:fields)` で圃場件数取得、**list + 再 fetch の二重化を避ける**）
+- **補助**: `farm_list_rows_from_entities` — entity 順で行 DTO を再構築。DB に無い id は **`Rails.logger.warn`** のうえスキップ
 
 ## Controller
 
