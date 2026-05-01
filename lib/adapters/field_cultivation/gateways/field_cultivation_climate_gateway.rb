@@ -239,8 +239,8 @@ module Adapters
               model: "lightgbm"
             )
 
-            observed_start = display_start_date || Date.new(Date.current.year, 1, 1)
-            observed_end = display_end_date || training_end_date
+            observed_start = coerce_to_optional_date(display_start_date) || Date.new(Date.current.year, 1, 1)
+            observed_end = coerce_to_optional_date(display_end_date) || training_end_date
             observed_end = [ observed_end, Date.current - 1.day ].min
 
             current_year_data = @weather_data_gateway.weather_data_for_period(
@@ -302,6 +302,9 @@ module Adapters
         end
 
         def merge_with_observed_data(cached_weather_payload, weather_location, display_start_date, display_end_date, cultivation_period = nil)
+          display_start_date = coerce_to_optional_date(display_start_date)
+          display_end_date = coerce_to_optional_date(display_end_date)
+
           # GDD/気温チャート表示期間の実測データを取得
           # 表示期間が指定されている場合はそれを使用、未指定の場合は栽培期間に基づく
           if display_start_date && display_end_date
@@ -309,12 +312,18 @@ module Adapters
             observed_end = display_end_date
           elsif cultivation_period && cultivation_period.start_date && cultivation_period.completion_date
             # 栽培期間に基づいて実測データを取得（GDD計算のため）
-            observed_start = cultivation_period.start_date
-            observed_end = cultivation_period.completion_date
+            observed_start = coerce_to_optional_date(cultivation_period.start_date)
+            observed_end = coerce_to_optional_date(cultivation_period.completion_date)
           else
             # デフォルト：今年の実測データ
             observed_start = Date.new(Date.current.year, 1, 1)
             observed_end = Date.current - 1.day
+          end
+
+          # cultivation_period 由来が不正な場合はキャッシュのみ返す
+          if observed_start.nil? || observed_end.nil?
+            @logger.warn "🔄 [FieldCultivationClimateGateway] Skip observed merge: invalid observed range start=#{observed_start.inspect} end=#{observed_end.inspect}"
+            return cached_weather_payload
           end
 
           # 未来データは存在しないので昨日まで
@@ -536,6 +545,21 @@ module Adapters
           days = (end_date - start_date).to_i + 1
           prediction_gateway = Agrr::PredictionGateway.new
           prediction_gateway.predict(historical_data: historical_payload, days: days, model: "lightgbm")
+        end
+
+        # API の query param 等は String のまま渡る。.min や DB 比較で Date と混ざると ArgumentError になる。
+        def coerce_to_optional_date(value)
+          return nil if value.nil?
+          return nil if value.respond_to?(:empty?) && value.empty?
+          return value if value.is_a?(Date)
+
+          if value.respond_to?(:to_date)
+            value.to_date
+          else
+            Date.parse(value.to_s)
+          end
+        rescue ArgumentError, TypeError, NoMethodError, Date::Error
+          nil
         end
       end
     end

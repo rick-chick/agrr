@@ -150,6 +150,25 @@ module Adapters
             gateway.fetch_field_cultivation_climate_data(field_cultivation_id: 999_999)
           end
         end
+
+        test "coerce_to_optional_date normalizes API query strings to Date" do
+          gateway = FieldCultivationClimateGateway.new(
+            current_user: @user,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new,
+            progress_gateway_factory: -> { Agrr::ProgressGateway.new },
+            weather_prediction_service_factory: ->(*) { raise "unused" },
+            weather_data_gateway: CompositionRoot.weather_data_gateway,
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+          )
+
+          d = Date.new(2024, 6, 1)
+          assert_equal d, gateway.send(:coerce_to_optional_date, d)
+          assert_equal d, gateway.send(:coerce_to_optional_date, "2024-06-01")
+          assert_nil gateway.send(:coerce_to_optional_date, nil)
+          assert_nil gateway.send(:coerce_to_optional_date, "")
+          assert_nil gateway.send(:coerce_to_optional_date, "not-a-date")
+        end
       end
     end
   end
