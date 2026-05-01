@@ -278,7 +278,7 @@ class PlansController < ApplicationController
   # 栽培計画作成とジョブ実行
   def create_cultivation_plan_with_jobs(farm, crops)
     creator_params = build_creator_params(farm, crops)
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
     # エラーハンドリング: 計画作成に失敗した場合
     unless result.success? && result.cultivation_plan
@@ -385,8 +385,11 @@ class PlansController < ApplicationController
       return []
     end
 
-    # ユーザー所有かつ非参照の作物のみ取得（Policy 経由）
-    crops = Domain::Crop::Gateways::CropGateway.default.user_owned_non_reference_records(current_user).where(id: crop_ids)
+    presenter = Presenters::Html::Plans::SelectedCropsPresenter.new(view: self)
+    Domain::Crop::Interactors::CropListUserOwnedNonReferenceByIdsInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(crop_ids)
+
+    crops = @selected_crops || []
     Rails.logger.info "🌾 [PlansController#create] Found #{crops.count} crops for user #{current_user.id}"
     crops.each { |crop| Rails.logger.info "  - #{crop.name} (ID: #{crop.id})" }
 

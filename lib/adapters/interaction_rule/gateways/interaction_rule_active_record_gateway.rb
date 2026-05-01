@@ -14,7 +14,7 @@ module Adapters
           rule = ::InteractionRule.find(rule_id)
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "InteractionRule not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         end
 
         def create(create_input_dto)
@@ -45,23 +45,24 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           rule.update(attrs)
-          raise StandardError, rule.errors.full_messages.join(", ") if rule.errors.any?
+          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") if rule.errors.any?
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "InteractionRule not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         end
 
         def destroy(rule_id)
           rule = ::InteractionRule.find(rule_id)
           rule.destroy!
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "InteractionRule not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("interaction_rules.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("interaction_rules.flash.cannot_delete_in_use")
         end
 
-        def agrr_rules_for_cultivation_plan(cultivation_plan)
+        def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
+          cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm_region = cultivation_plan.farm.region
 
           rules = if cultivation_plan.user_id
@@ -80,15 +81,25 @@ module Adapters
           return nil if rules_array.empty?
 
           rules_array
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def visible_records(user)
+        def list_index_for_user(user)
+          list(index_scope_for_user(user))
+        end
+
+        private
+
+        def index_scope_for_user(user)
           if user.admin?
             ::InteractionRule.where("is_reference = ? OR user_id = ?", true, user.id)
           else
             ::InteractionRule.where(user_id: user.id, is_reference: false)
           end
         end
+
+        public
 
         def find_authorized_model_for_view(user, id)
           rule = find_interaction_rule_model!(id)
@@ -121,7 +132,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_create(user, attrs)
           rule = ::InteractionRule.new(h)
-          raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
+          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.save
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end
@@ -137,7 +148,7 @@ module Adapters
             rule.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, rule.errors.full_messages.join(", ") unless rule.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.update(normalized)
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end

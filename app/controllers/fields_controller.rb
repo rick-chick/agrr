@@ -7,24 +7,16 @@ class FieldsController < ApplicationController
   # GET /farms/:farm_id/fields
   def index
     presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: self, farm: @farm)
-    interactor = Domain::Field::Interactors::FieldListInteractor.new(
-      output_port: presenter,
-      gateway: field_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(@farm.id)
   end
 
   # GET /fields/:id
   def show
     presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: self, farm: @farm)
-    interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
-      output_port: presenter,
-      gateway: field_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(params[:id])
   end
 
@@ -42,12 +34,8 @@ class FieldsController < ApplicationController
   def create
     input_dto = Domain::Field::Dtos::FieldCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
     presenter = Presenters::Html::Field::FieldCreateHtmlPresenter.new(view: self)
-    interactor = Domain::Field::Interactors::FieldCreateInteractor.new(
-      output_port: presenter,
-      gateway: field_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(input_dto, @farm.id)
   end
 
@@ -55,12 +43,8 @@ class FieldsController < ApplicationController
   def update
     input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id])
     presenter = Presenters::Html::Field::FieldUpdateHtmlPresenter.new(view: self)
-    interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(
-      output_port: presenter,
-      gateway: field_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(input_dto)
   end
 
@@ -69,22 +53,14 @@ class FieldsController < ApplicationController
     respond_to do |format|
       format.html do
         presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self)
-        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
-          output_port: presenter,
-          gateway: field_gateway,
-          user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-        )
+        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
         interactor.call(params[:id])
       end
       format.json do
         presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
-        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
-          output_port: presenter,
-          gateway: field_gateway,
-          user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-        )
+        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
         interactor.call(params[:id])
       end
     end
@@ -102,11 +78,10 @@ class FieldsController < ApplicationController
   private
 
   def set_farm
-    @farm = Domain::Farm::Gateways::FarmGateway.default.find_authorized_model_for_edit(current_user, params[:farm_id])
-  rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to farms_path, alert: I18n.t("fields.flash.farm_not_found")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to farms_path, alert: I18n.t("fields.flash.farm_not_found")
+    presenter = Presenters::Html::Farm::FarmLoadForEditHtmlPresenter.new(view: self)
+    interactor = Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:farm_id])
   end
 
   def set_field
@@ -115,13 +90,4 @@ class FieldsController < ApplicationController
     redirect_to url_for(controller: "fields", action: "index", farm_id: @farm.id), alert: I18n.t("fields.flash.not_found")
   end
 
-  def field_gateway
-    gateway = Adapters::Field::Gateways::FieldActiveRecordGateway.new
-    gateway.translator = translator
-    gateway
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-  end
 end

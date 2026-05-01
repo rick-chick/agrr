@@ -20,7 +20,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement delete_all_for_field_category"
         end
 
-        def replace_schedule_for_field_category!(cultivation_plan_id:, field_cultivation_id:, category:, generated_at:, &block)
+        # @return [Boolean]
+        def replace_schedule_for_field_category!(cultivation_plan_id:, field_cultivation_id:, category:, generated_at:, items:)
           raise NotImplementedError, "Subclasses must implement replace_schedule_for_field_category!"
         end
       end

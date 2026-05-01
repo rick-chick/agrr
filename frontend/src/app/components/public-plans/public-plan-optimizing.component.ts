@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -60,7 +67,10 @@ const initialControl: PublicPlanOptimizingViewState = {
             <div class="progress-info">
               <div class="progress-phase-message" [class.error]="control.status === 'failed'">
                 @if (control.status !== 'failed') {
-                  {{ control.phaseMessage }}
+                  {{
+                    control.phaseMessage ||
+                      ('public_plans.optimizing.progress.default_message' | translate)
+                  }}
                 }
               </div>
               @if (control.status !== 'failed') {
@@ -108,6 +118,7 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   private readonly presenter = inject(PublicPlanOptimizingPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
 
   elapsedTime = 0;
   private channel: Channel | null = null;
@@ -170,7 +181,11 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
 
   private startTimer(): void {
     this.timer = setInterval(() => {
-      this.elapsedTime++;
+      // Zone 外で setInterval が動く環境と、Default 戦略で markForCheck が自身に無効な点の両方を潰す
+      this.ngZone.run(() => {
+        this.elapsedTime++;
+        this.cdr.detectChanges();
+      });
     }, 1000);
   }
 

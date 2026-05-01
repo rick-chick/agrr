@@ -2,52 +2,51 @@
 
 class InteractionRulesController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_interaction_rule, only: [ :show, :edit, :update, :destroy ]
+  before_action :load_interaction_rule_for_html, only: [ :show, :edit, :update ]
+  before_action :load_interaction_rule_record, only: [ :destroy ]
 
   # GET /interaction_rules
   def index
     presenter = Presenters::Html::InteractionRule::InteractionRuleListHtmlPresenter.new(view: self)
-    interactor = Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
+    Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
       output_port: presenter,
-      gateway: interaction_rule_gateway,
       user_id: current_user.id,
-      logger: logger_gateway
-    )
-    interactor.call
+      gateway: interaction_rule_gateway,
+      logger: logger_adapter,
+      user_lookup: user_lookup_adapter
+    ).call
   end
 
   # GET /interaction_rules/:id
   def show
     presenter = Presenters::Html::InteractionRule::InteractionRuleDetailHtmlPresenter.new(view: self)
-    interactor = Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
+    Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
       output_port: presenter,
+      user_id: current_user.id,
       gateway: interaction_rule_gateway,
-      logger: logger_gateway
-    )
-    interactor.call(Domain::InteractionRule::Dtos::InteractionRuleDetailInputDto.new(
-      rule_id: params[:id],
-      user_id: current_user.id
-    ))
+      logger: logger_adapter,
+      user_lookup: user_lookup_adapter
+    ).call(params[:id])
   end
 
   # GET /interaction_rules/new
   def new
-    @interaction_rule = InteractionRule.new
+    @form = InteractionRuleForm.new
   end
 
   # GET /interaction_rules/:id/edit
   def edit
+    # @form は load_interaction_rule_for_html → Presenter で設定済み
   end
 
   # POST /interaction_rules
   def create
-    # 一般ユーザーの場合はregionパラメータを除外
-    filtered_params = interaction_rule_params.to_unsafe_h
+    filtered_params = interaction_rule_params.to_unsafe_h.symbolize_keys
     filtered_params.delete(:region) unless admin_user?
 
-    @interaction_rule = InteractionRule.new(filtered_params.symbolize_keys)
+    @form = InteractionRuleForm.from_params(filtered_params)
 
-    is_reference = filtered_params[:is_reference] || false
+    is_reference = ActiveModel::Type::Boolean.new.cast(filtered_params[:is_reference]) || false
     if is_reference && !admin_user?
       return redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.reference_only_admin")
     end
@@ -55,17 +54,19 @@ class InteractionRulesController < ApplicationController
     presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
       output_port: presenter,
-      gateway: interaction_rule_gateway,
       user_id: current_user.id,
-      logger: logger_gateway
+      gateway: interaction_rule_gateway,
+      logger: logger_adapter,
+      user_lookup: user_lookup_adapter
     )
 
     input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.from_hash(
-      filtered_params.deep_symbolize_keys.merge(user_id: current_user.id)
+      filtered_params.merge(user_id: current_user.id)
     )
     interactor.call(input_dto)
   rescue StandardError => e
-    @interaction_rule.assign_attributes(filtered_params.symbolize_keys) if @interaction_rule
+    @form ||= InteractionRuleForm.new
+    @form.errors_from(base: e.message)
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
   end
@@ -73,35 +74,38 @@ class InteractionRulesController < ApplicationController
   # PATCH/PUT /interaction_rules/:id
   def update
     if interaction_rule_params.key?(:is_reference) && !admin_user?
-      return redirect_to @interaction_rule, alert: I18n.t("interaction_rules.flash.reference_flag_admin_only")
+      return redirect_to interaction_rule_path(params[:id]), alert: I18n.t("interaction_rules.flash.reference_flag_admin_only")
     end
 
-    # 一般ユーザーの場合はregionパラメータを除外
-    filtered_params = interaction_rule_params.to_unsafe_h
+    filtered_params = interaction_rule_params.to_unsafe_h.symbolize_keys
     filtered_params.delete(:region) unless admin_user?
+
+    @form = InteractionRuleForm.from_params(filtered_params.merge(id: params[:id].to_i))
 
     presenter = Presenters::Html::InteractionRule::InteractionRuleUpdateHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
       output_port: presenter,
-      gateway: interaction_rule_gateway,
       user_id: current_user.id,
-      logger: logger_gateway
+      gateway: interaction_rule_gateway,
+      logger: logger_adapter,
+      user_lookup: user_lookup_adapter
     )
 
     input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.from_hash(
-      filtered_params.deep_symbolize_keys.merge(user_id: current_user.id),
+      filtered_params,
       params[:id]
     )
     interactor.call(input_dto)
   rescue StandardError => e
-    @interaction_rule.assign_attributes(interaction_rule_params) if @interaction_rule
+    @form ||= InteractionRuleForm.from_params(interaction_rule_params.to_unsafe_h.merge(id: params[:id].to_i))
+    @form.errors_from(base: e.message)
     flash.now[:alert] = e.message
     render :edit, status: :unprocessable_entity
   end
 
   # DELETE /interaction_rules/:id
   def destroy
-    rule = Domain::InteractionRule::Gateways::InteractionRuleGateway.default.find_authorized_model_for_edit(current_user, params[:id])
+    rule = @interaction_rule_record
     toast_message = t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
     schedule_deletion_with_undo(
       record: rule,
@@ -121,25 +125,29 @@ class InteractionRulesController < ApplicationController
 
   private
 
+  # ドメイン Gateway adapter (Composition Root として Controller で生成)
   def interaction_rule_gateway
     @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
   end
 
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
+  def load_interaction_rule_for_html
+    for_edit = params[:action].to_sym.in?([ :edit, :update ])
+    presenter = Presenters::Html::InteractionRule::InteractionRuleHtmlLoadPresenter.new(view: self, for_edit: for_edit)
+    Domain::InteractionRule::Interactors::InteractionRuleLoadForHtmlInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: interaction_rule_gateway,
+      user_lookup: user_lookup_adapter
+    ).call(rule_id: params[:id], for_edit: for_edit)
   end
 
-  def set_interaction_rule
-    action = params[:action].to_sym
-    gw = Domain::InteractionRule::Gateways::InteractionRuleGateway.default
-    @interaction_rule =
-      if action.in?([ :edit, :update, :destroy ])
-        gw.find_authorized_model_for_edit(current_user, params[:id])
-      else
-        gw.find_authorized_model_for_view(current_user, params[:id])
-      end
-  rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.no_permission")
+  # destroy 用に AR レコードを取得する。
+  # `schedule_deletion_with_undo` は ActiveRecord のレコードを必要とするため、
+  # この経路だけは Adapter Gateway 経由で AR を直接取得する。
+  def load_interaction_rule_record
+    @interaction_rule_record = interaction_rule_gateway.find_authorized_model_for_edit(current_user, params[:id])
+  rescue Domain::Shared::Policies::PolicyPermissionDenied
+    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
   rescue Domain::Shared::Exceptions::RecordNotFound
     redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
   end
@@ -155,7 +163,6 @@ class InteractionRulesController < ApplicationController
       :is_reference,
       :region  # regionパラメータは常に許可（一般ユーザーの場合は無視される）
     ]
-
     params.require(:interaction_rule).permit(*permitted)
   end
 end

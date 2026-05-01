@@ -9,9 +9,8 @@ module Presenters
         end
 
         def on_success(result)
-          # view は ActiveRecord モデルを期待するため ID から取得
-          @view.instance_variable_set(:@interaction_rules, (result[:interaction_rules] || []).map { |e| ::InteractionRule.find(e.id) })
-          @view.instance_variable_set(:@reference_rules, (result[:reference_rules] || []).map { |e| ::InteractionRule.find(e.id) })
+          @view.instance_variable_set(:@interaction_rules, result[:interaction_rules] || [])
+          @view.instance_variable_set(:@reference_rules, result[:reference_rules] || [])
         end
 
         def on_failure(error_dto)

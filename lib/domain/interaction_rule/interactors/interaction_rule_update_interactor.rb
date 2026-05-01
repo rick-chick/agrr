@@ -4,7 +4,7 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleUpdateInteractor < Domain::InteractionRule::Ports::InteractionRuleUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id

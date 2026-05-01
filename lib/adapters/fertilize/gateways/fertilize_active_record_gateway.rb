@@ -12,6 +12,8 @@ module Adapters
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def create(create_input_dto)
@@ -26,7 +28,7 @@ module Adapters
             is_reference: create_input_dto.is_reference || false,
             user_id: create_input_dto.user_id
           )
-          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
+          raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
@@ -41,30 +43,32 @@ module Adapters
           attrs[:description] = update_input_dto.description if update_input_dto.description.present?
           attrs[:package_size] = update_input_dto.package_size if update_input_dto.package_size.present?
           attrs[:region] = update_input_dto.region if update_input_dto.region.present?
-          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(attrs)
+          raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.update(attrs)
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def destroy(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           DeletionUndo::Manager.schedule(
             record: fertilize,
-            actor: fertilize.user,
+            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(fertilize.user),
             toast_message: @translator.t("fertilizes.undo.toast", name: fertilize.name)
           )
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("fertilizes.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fertilizes.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::Fertilize.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Fertilize.where(user_id: user.id, is_reference: false)
-          end
+        def list_index_for_user(user)
+          fertilize_visible_scope(user)
+            .where.not(name: [ nil, "" ])
+            .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
         def find_authorized_model_for_view(user, id)
@@ -98,7 +102,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, attrs)
           fertilize = ::Fertilize.new(h)
-          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
+          raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
@@ -114,7 +118,7 @@ module Adapters
             fertilize.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.update(normalized)
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
@@ -142,11 +146,15 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
-        def list_from_relation(relation)
-          relation.map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
-        end
-
         private
+
+        def fertilize_visible_scope(user)
+          if user.admin?
+            ::Fertilize.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Fertilize.where(user_id: user.id, is_reference: false)
+          end
+        end
 
         def find_fertilize_model!(id)
           ::Fertilize.find(id)

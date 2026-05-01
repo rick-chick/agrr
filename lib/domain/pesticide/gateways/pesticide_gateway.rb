@@ -36,12 +36,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
+        def list_index_for_user(user)
+          raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
-        def selectable_records(user)
-          raise NotImplementedError, "Subclasses must implement selectable_records"
+        def selectable_pesticide_ids(user)
+          raise NotImplementedError, "Subclasses must implement selectable_pesticide_ids"
+        end
+
+        def pesticide_selectable_by_user?(user, pesticide_id)
+          raise NotImplementedError, "Subclasses must implement pesticide_selectable_by_user?"
         end
 
         def find_authorized_for_view(user, id)
@@ -72,12 +76,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def list_from_relation(relation)
-          raise NotImplementedError, "Subclasses must implement list_from_relation"
-        end
-
         def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        end
+
+        # Crop に紐づく、user に閲覧可能な Pesticide エンティティを最近順で返す。
+        # @return [Array<Domain::Pesticide::Entities::PesticideEntity>] entities or AR records
+        def list_for_crop_with_user(crop_id:, user:)
+          raise NotImplementedError, "Subclasses must implement list_for_crop_with_user"
         end
       end
     end

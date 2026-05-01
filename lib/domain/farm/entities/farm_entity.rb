@@ -32,6 +32,20 @@ module Domain
           name.presence || "Farm #{id}"
         end
 
+        def as_json(options = nil)
+          {
+            id: id,
+            name: name,
+            latitude: latitude,
+            longitude: longitude,
+            region: region,
+            user_id: user_id,
+            is_reference: is_reference,
+            created_at: created_at,
+            updated_at: updated_at
+          }
+        end
+
         def reference?
           is_reference
         end

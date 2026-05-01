@@ -4,7 +4,7 @@ module Domain
   module Crop
     module Interactors
       class CropDestroyInteractor < Domain::Crop::Ports::CropDestroyInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id

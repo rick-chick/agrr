@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, NgZone, inject } from '@angular/core';
 import * as ActionCable from 'actioncable';
 import { getApiBaseUrl } from '../../core/api-base-url';
 
@@ -10,6 +10,7 @@ export type ActionCableCallback = (data: ActionCableMessage) => void;
 
 @Injectable({ providedIn: 'root' })
 export class OptimizationService implements OnDestroy {
+  private readonly ngZone = inject(NgZone);
   private consumer: ActionCable.Cable | null = null;
 
   private getConsumer(): ActionCable.Cable {
@@ -38,19 +39,19 @@ export class OptimizationService implements OnDestroy {
       {
         received: payload => {
           console.debug(`${subscriptionTag} received`, payload);
-          received(payload);
+          this.ngZone.run(() => received(payload));
         },
         connected: () => {
           console.debug(`${subscriptionTag} connected`);
-          connected?.();
+          this.ngZone.run(() => connected?.());
         },
         disconnected: () => {
           console.warn(`${subscriptionTag} disconnected`);
-          disconnected?.();
+          this.ngZone.run(() => disconnected?.());
         },
         rejected: () => {
           console.error(`${subscriptionTag} rejected`);
-          rejected?.();
+          this.ngZone.run(() => rejected?.());
         }
       }
     );

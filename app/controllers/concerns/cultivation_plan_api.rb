@@ -26,13 +26,15 @@ module CultivationPlanApi
     @cultivation_plan = find_api_cultivation_plan
 
     # サブクラスで実装された作物取得メソッドを呼び出す
-    crop = get_crop_for_add_crop(params[:crop_id])
-    unless crop
+    crop_entity = get_crop_for_add_crop(params[:crop_id])
+    unless crop_entity
       return render json: {
         success: false,
         message: i18n_t("errors.crop_not_found")
       }, status: :not_found
     end
+
+    crop = ::Crop.find(crop_entity.id)
 
     # cultivation_plan_crops に追加（スナップショット）
     plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
@@ -465,10 +467,8 @@ module CultivationPlanApi
       return nil
     end
 
-    weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
-      weather_location: weather_location,
-      farm: farm
-    )
+    weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location,
+      farm: farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
     weather_data = get_or_predict_weather(weather_prediction_service, cultivation_plan, target_end_date)
     return nil unless weather_data
@@ -533,20 +533,20 @@ module CultivationPlanApi
 
   # candidates コマンドを実行
   def run_candidates(current_allocation, fields, crops, crop, weather_data, planning_start, planning_end, interaction_rules, field_id)
-    gateway = Agrr::CandidatesGateway.new
-    gateway.candidates(
+    interactor = Domain::CultivationPlan::Interactors::AgrrCandidatesInteractor.new(
+      gateway: CompositionRoot.agrr_candidates_gateway,
+      logger: CompositionRoot.logger
+    )
+    interactor.call(
       current_allocation: current_allocation,
       fields: fields,
       crops: crops,
-      target_crop: crop.id.to_s,
+      target_crop_id: crop.id,
       weather_data: weather_data,
       planning_start: planning_start,
       planning_end: planning_end,
       interaction_rules: interaction_rules.empty? ? nil : interaction_rules
     )
-  rescue Agrr::BaseGatewayV2::NoAllocationCandidatesError => e
-    Rails.logger.info "ℹ️ [Candidates] No allocation candidates: #{e.message}"
-    []
   rescue => e
     Rails.logger.error "❌ [Candidates] Failed to run candidates: #{e.message}"
     []

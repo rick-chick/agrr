@@ -4,12 +4,12 @@ module Domain
   module Farm
     module Interactors
       class FarmUpdateInteractor < Domain::Farm::Ports::FarmUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
-          @translator = translator || Adapters::Translators::RailsTranslator.new
+          @translator = translator
           @user_lookup = user_lookup
         end
 

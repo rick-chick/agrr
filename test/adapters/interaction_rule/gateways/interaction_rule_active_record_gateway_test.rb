@@ -108,6 +108,15 @@ module Adapters
           assert_equal record1.id, entities.first.id
           assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }
         end
+
+        test "list_index_for_user returns scoped entities for non-admin" do
+          user = create(:user, admin: false)
+          my_rule = create(:interaction_rule, user: user, is_reference: false, region: "jp")
+          create(:interaction_rule, :reference, region: "jp")
+          entities = @gateway.list_index_for_user(user)
+          assert_equal 1, entities.size
+          assert_equal my_rule.id, entities.first.id
+        end
       end
     end
   end

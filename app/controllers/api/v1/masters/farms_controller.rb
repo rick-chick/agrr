@@ -10,12 +10,6 @@ module Api
         include Views::Api::Farm::FarmUpdateView
         include Views::Api::Farm::FarmDeleteView
 
-        private
-
-        def farm_gateway
-          @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
-        end
-
         public
 
         # GET /api/v1/masters/farms
@@ -27,14 +21,8 @@ module Api
 
           # Interactor のインスタンス化と委譲
           presenter = Presenters::Api::Farm::FarmListPresenter.new(view: self)
-          gateway = farm_gateway
-          gateway.user_id = current_user.id
-          interactor = Domain::Farm::Interactors::FarmListInteractor.new(
-            output_port: presenter,
-            gateway: gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
           interactor.call(input_dto)
 
           # Presenter の結果をチェック
@@ -59,12 +47,8 @@ module Api
           Rails.logger.info "Input validation passed"
 
           presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
-          interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(
-            output_port: presenter,
-            gateway: farm_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
 
           Rails.logger.info "Calling interactor with farm_id: #{params[:id]}"
           interactor.call(params[:id])
@@ -96,12 +80,8 @@ module Api
             return
           end
           presenter = Presenters::Api::Farm::FarmCreatePresenter.new(view: self)
-          interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(
-            output_port: presenter,
-            gateway: farm_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -109,26 +89,18 @@ module Api
         def update
           input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Farm::FarmUpdatePresenter.new(view: self)
-          interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(
-            output_port: presenter,
-            gateway: farm_gateway,
+          interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: logger_gateway,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
         # DELETE /api/v1/masters/farms/:id
         def destroy
           presenter = Presenters::Api::Farm::FarmDeletePresenter.new(view: self)
-          interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(
-            output_port: presenter,
-            gateway: farm_gateway,
+          interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
 
           # Presenter の結果をチェック
@@ -167,13 +139,6 @@ module Api
 
         private
 
-        def farm_gateway
-          @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
-        end
-
-        def deletion_undo_gateway
-          @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
-        end
 
         def resource_dom_id_for(event)
           stored = event.metadata["resource_dom_id"]
@@ -224,10 +189,6 @@ module Api
         def valid_farm_params?(input_dto)
           input_dto.name.present? && input_dto.region.present? &&
             !input_dto.latitude.nil? && !input_dto.longitude.nil?
-        end
-
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
 
         def translator

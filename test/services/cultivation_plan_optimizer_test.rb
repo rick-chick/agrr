@@ -10,7 +10,17 @@ class CultivationPlanOptimizeInteractorTest < ActiveSupport::TestCase
     plan = create(:cultivation_plan, :public_plan, farm: @farm, user: @user)
     plan.field_cultivations.destroy_all
 
-    optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(plan, "OptimizationChannel")
+    optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
+      plan,
+      "OptimizationChannel",
+      allocation_gateway: CompositionRoot.plan_allocation_gateway,
+      interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      logger: CompositionRoot.logger,
+      weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
+        CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
+      }
+    )
     planning_start, planning_end = optimizer.send(:calculate_planning_period)
 
     assert_equal Date.current, planning_start

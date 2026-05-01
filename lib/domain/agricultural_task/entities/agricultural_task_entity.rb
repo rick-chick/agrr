@@ -29,6 +29,10 @@ module Domain
           !!is_reference
         end
 
+        def to_param
+          id.to_s
+        end
+
         def to_hash
           {
             id: id,

@@ -12,7 +12,8 @@ module Adapters
           ).delete_all
         end
 
-        def replace_schedule_for_field_category!(cultivation_plan_id:, field_cultivation_id:, category:, generated_at:, &block)
+        # @param items [Array<Hash>] TaskScheduleItem 生成用の属性（:agricultural_task_id 等）
+        def replace_schedule_for_field_category!(cultivation_plan_id:, field_cultivation_id:, category:, generated_at:, items:)
           plan = ::CultivationPlan.find(cultivation_plan_id)
           fc = ::FieldCultivation.find(field_cultivation_id)
 
@@ -31,10 +32,14 @@ module Adapters
             generated_at: generated_at
           )
 
-          yield schedule
+          items.each { |attrs| schedule.task_schedule_items.build(attrs) }
 
           schedule.save!
-          schedule
+          true
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
       end
     end

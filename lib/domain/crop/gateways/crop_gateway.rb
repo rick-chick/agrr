@@ -105,17 +105,40 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_nutrient_requirement"
         end
 
-        # Policy 連携（永続化は Adapter）
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
+        # Policy 連携（永続化は Adapter）。一覧は Entity 配列のみ公開
+        def list_index_for_user(user)
+          raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
-        def user_owned_non_reference_records(user)
-          raise NotImplementedError, "Subclasses must implement user_owned_non_reference_records"
+        def list_user_owned_non_reference_crops_ordered_by_name(user)
+          raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_ordered_by_name"
         end
 
-        def reference_records(region: nil)
-          raise NotImplementedError, "Subclasses must implement reference_records"
+        def list_user_owned_non_reference_crops_by_ids(user, ids)
+          raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_by_ids"
+        end
+
+        # マスター系 HTML/API: 自ユーザーの非参照作物を id で取得（失敗時 RecordNotFound）
+        def find_user_non_reference_crop_for_masters!(user, crop_id)
+          raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_for_masters!"
+        end
+
+        # 個人計画 API 等: 自ユーザーの非参照作物を id で取得（なければ nil）。戻りは永続レコード。
+        def find_user_non_reference_crop_record(user, crop_id)
+          raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_record"
+        end
+
+        def list_reference_crop_entities(region: nil)
+          raise NotImplementedError, "Subclasses must implement list_reference_crop_entities"
+        end
+
+        # エントリスケジュール: Crop#to_agrr_requirement 用に AR を逐次 yield（Relation は公開しない）
+        def each_reference_crop_for_entry_schedule(region, &block)
+          raise NotImplementedError, "Subclasses must implement each_reference_crop_for_entry_schedule"
+        end
+
+        def find_reference_crop_for_entry_schedule!(region, crop_id)
+          raise NotImplementedError, "Subclasses must implement find_reference_crop_for_entry_schedule!"
         end
 
         def find_authorized_for_view(user, id)

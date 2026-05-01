@@ -16,7 +16,7 @@ module Domain
           end
         end
 
-        def copy_reference_stages(reference_crop:, new_crop:)
+        def copy_reference_stages(reference_crop_id:, new_crop_id:)
           raise NotImplementedError, "#{self.class} must implement #copy_reference_stages"
         end
       end

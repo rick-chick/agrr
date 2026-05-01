@@ -11,18 +11,20 @@ module Domain
         def initialize(
           cultivation_plan,
           channel_class,
-          allocation_gateway: nil,
-          interaction_rule_gateway: nil,
-          cultivation_plan_gateway: nil,
-          logger: Rails.logger
+          allocation_gateway:,
+          interaction_rule_gateway:,
+          cultivation_plan_gateway:,
+          logger:,
+          weather_prediction_interactor_factory:
         )
           @cultivation_plan = cultivation_plan
           @plan_id = cultivation_plan.id
           @channel_class = channel_class
-          @allocation_gateway = allocation_gateway || Domain::CultivationPlan::Gateways::PlanAllocationGateway.default
-          @interaction_rule_gateway = interaction_rule_gateway || Domain::InteractionRule::Gateways::InteractionRuleGateway.default
-          @cultivation_plan_gateway = cultivation_plan_gateway || Domain::CultivationPlan::Gateways::CultivationPlanGateway.default
+          @allocation_gateway = allocation_gateway
+          @interaction_rule_gateway = interaction_rule_gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
           @logger = logger
+          @weather_prediction_interactor_factory = weather_prediction_interactor_factory
         end
 
         def call
@@ -38,10 +40,9 @@ module Domain
             end
 
             _, planning_end_date = calculate_planning_period
-            weather_prediction_service = ::Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
+            weather_prediction_service = @weather_prediction_interactor_factory.call(
               weather_location: weather_location,
-              farm: @cultivation_plan.farm,
-              logger: @logger
+              farm: @cultivation_plan.farm
             )
             existing_prediction = weather_prediction_service.get_existing_prediction(
               target_end_date: planning_end_date,
@@ -130,7 +131,7 @@ module Domain
         end
 
         def prepare_interaction_rules
-          @interaction_rule_gateway.agrr_rules_for_cultivation_plan(@cultivation_plan)
+          @interaction_rule_gateway.agrr_rules_for_cultivation_plan_id(@plan_id)
         end
 
         def prepare_allocation_data(evaluation_end)
@@ -147,13 +148,11 @@ module Domain
           crops_collection = {}
 
           cultivation_plan_crops.each do |cpc|
-            crop = cpc.crop
+            @logger.debug "🌾 [AGRR] Processing crop: #{cpc.crop_name} (ID: #{cpc.crop_id})"
 
-            @logger.debug "🌾 [AGRR] Processing crop: #{crop.name} (ID: #{crop.id})"
-
-            crop_key = crop.id.to_s
+            crop_key = cpc.crop_id.to_s
             unless crops_collection[crop_key]
-              crops_collection[crop_key] = crop
+              crops_collection[crop_key] = cpc
             end
           end
 
@@ -178,10 +177,10 @@ module Domain
             }
           end
 
-          crops_collection.each do |_crop_key, crop|
-            crop_requirement = crop.to_agrr_requirement
+          crops_collection.each do |_crop_key, cpc|
+            crop_requirement = cpc.agrr_requirement.deep_dup
 
-            revenue_per_area = crop.revenue_per_area || 5000.0
+            revenue_per_area = cpc.revenue_per_area || 5000.0
 
             original_max_revenue = crop_requirement["crop"]["max_revenue"]
 
@@ -189,7 +188,7 @@ module Domain
 
             crop_requirement["crop"]["max_revenue"] = adjusted_max_revenue
 
-            @logger.info "🔧 [AGRR] Crop '#{crop.name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
+            @logger.info "🔧 [AGRR] Crop '#{cpc.crop_name}' - revenue_per_area: ¥#{revenue_per_area}/㎡, " \
                               "max_revenue: ¥#{original_max_revenue.round(0)} → ¥#{adjusted_max_revenue.round(0)} " \
                               "(limited to ~#{(adjusted_max_revenue / revenue_per_area).round(1)}㎡, 3 crops)"
 

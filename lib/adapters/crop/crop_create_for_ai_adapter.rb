@@ -14,12 +14,10 @@ module Adapters
 
       def call(attrs)
         output_port = CapturingOutputPort.new
-        interactor = Domain::Crop::Interactors::CropCreateInteractor.new(
-          output_port: output_port,
+        interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-        )
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new, user_lookup: CompositionRoot.user_lookup)
         input_dto = build_input_dto(attrs)
         interactor.call(input_dto)
         output_port.result

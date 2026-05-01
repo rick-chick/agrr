@@ -157,17 +157,19 @@ module Adapters
         end
 
         def find_weather_location_by_coordinates(latitude:, longitude:)
-          ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+          loc = ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+          Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(loc)
         end
 
         def find_or_create_weather_location(latitude:, longitude:, elevation: nil, timezone: nil)
-          ::WeatherLocation.find_or_create_by(
+          loc = ::WeatherLocation.find_or_create_by(
             latitude: latitude,
             longitude: longitude
           ) do |location|
             location.elevation = elevation
             location.timezone = timezone
           end
+          Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(loc)
         end
 
         private

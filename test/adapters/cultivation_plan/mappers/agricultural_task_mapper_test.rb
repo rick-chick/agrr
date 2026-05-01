@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Domain::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copies reference task linked to plan crops via crop_task_templates" do
@@ -26,14 +26,14 @@ class Domain::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSuppo
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
 
-    tasks = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(ref_farm.region)
+    tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(ref_farm.region)
     assert_equal 1, tasks.size
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
     assert_not_nil user_task
@@ -60,23 +60,23 @@ class Domain::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSuppo
       time_per_sqm: 2.0
     )
 
-    ctx1 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx1).copy_agricultural_tasks_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx1).copy_agricultural_tasks_for_region(ref_farm.region)
     existing = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
 
     result2 = plan_save_result
-    ctx2 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx2).copy_agricultural_tasks_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx2).copy_agricultural_tasks_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)
     assert_skipped_exact result2,
@@ -86,12 +86,12 @@ class Domain::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSuppo
 
   test "requires_gdd? delegates to true" do
     user = unique_test_user
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: {},
       result: plan_save_result
     )
-    mapper = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
+    mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
     assert mapper.requires_gdd?(nil)
   end
 end

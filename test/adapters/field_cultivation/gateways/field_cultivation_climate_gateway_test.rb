@@ -62,9 +62,12 @@ module Adapters
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
-            weather_prediction_service_factory: ->(weather_location, farm) { weather_service }
+            weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
+            weather_data_gateway: CompositionRoot.weather_data_gateway,
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
           )
 
           dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
@@ -115,9 +118,12 @@ module Adapters
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
-            weather_prediction_service_factory: ->(weather_location, farm) { weather_service }
+            weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
+            weather_data_gateway: CompositionRoot.weather_data_gateway,
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
           )
 
           dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
@@ -130,7 +136,15 @@ module Adapters
         end
 
         test "raises record not found when field cultivation missing" do
-          gateway = FieldCultivationClimateGateway.new(current_user: @user, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          gateway = FieldCultivationClimateGateway.new(
+            current_user: @user,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new,
+            progress_gateway_factory: -> { Agrr::ProgressGateway.new },
+            weather_prediction_service_factory: ->(*) { raise "weather prediction should not be called" },
+            weather_data_gateway: CompositionRoot.weather_data_gateway,
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+          )
 
           assert_raises(ActiveRecord::RecordNotFound) do
             gateway.fetch_field_cultivation_climate_data(field_cultivation_id: 999_999)

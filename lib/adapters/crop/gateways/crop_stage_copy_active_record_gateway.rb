@@ -5,7 +5,9 @@ module Adapters
     module Gateways
       # 参照作物の生育ステージ・要件をユーザー作物へ複製（旧 CopyReferenceCropStages）。
       class CropStageCopyActiveRecordGateway < Domain::Crop::Gateways::CropStageCopyGateway
-        def copy_reference_stages(reference_crop:, new_crop:)
+        def copy_reference_stages(reference_crop_id:, new_crop_id:)
+          reference_crop = ::Crop.find(reference_crop_id)
+          new_crop = ::Crop.find(new_crop_id)
           reference_crop.crop_stages.each do |reference_stage|
             existing_stage = new_crop.crop_stages.find_by(name: reference_stage.name)
             stage = existing_stage || ::CropStage.create!(
@@ -52,6 +54,10 @@ module Adapters
               daily_uptake_k: reference_stage.nutrient_requirement.daily_uptake_k
             )
           end
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
       end
     end

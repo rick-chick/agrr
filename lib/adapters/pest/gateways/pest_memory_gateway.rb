@@ -13,16 +13,20 @@ module Adapters
           scope.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Pest.where(user_id: user.id, is_reference: false)
-          end
+        def list_index_for_user(user)
+          list(index_scope_for_user(user))
         end
 
-        def selectable_records(user)
-          ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+        def selectable_pest_ids(user)
+          selectable_scope(user).pluck(:id)
+        end
+
+        def pest_selectable_by_user?(user, pest_id)
+          selectable_scope(user).exists?(id: pest_id)
+        end
+
+        def list_selectable_pest_entities_recent_first(user)
+          selectable_scope(user).recent.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
         def find_authorized_model_for_view(user, id)
@@ -111,7 +115,90 @@ module Adapters
           pest = ::Pest.find(pest_id)
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Pest not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
+        end
+
+        def build_blank_pest_for_form
+          pest = ::Pest.new
+          pest.build_pest_temperature_profile
+          pest.build_pest_thermal_requirement
+          pest.pest_control_methods.build
+          pest
+        end
+
+        def link_pest_to_crop_id(crop_id:, pest_id:)
+          crop = ::Crop.find_by(id: crop_id)
+          pest = ::Pest.find_by(id: pest_id)
+          return :missing unless crop && pest
+          return :already_linked if crop.pests.include?(pest)
+
+          crop.pests << pest
+          :linked
+        end
+
+        def create_pest_for_crop(user:, crop_id:, pest_attrs:, admin:)
+          attrs = pest_attrs.to_h.symbolize_keys
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attrs[:is_reference]) || false
+          if is_reference && !admin
+            return { status: :reference_only_admin, pest_record: nil, unassociated_pest_entities: [] }
+          end
+
+          pest = ::Pest.new(attrs)
+          unless admin
+            pest.is_reference = false
+            pest.user_id = user.id
+          end
+
+          if pest.save
+            crop = ::Crop.find_by(id: crop_id)
+            crop.pests << pest if crop && !crop.pests.include?(pest)
+            return { status: :created, pest_record: pest, unassociated_pest_entities: [] }
+          end
+
+          available_entities = list_selectable_pest_entities_recent_first(user)
+          crop_pests_ids = crop_id ? (::Crop.find_by(id: crop_id)&.pest_ids || []) : []
+          unassociated = available_entities.reject { |e| crop_pests_ids.include?(e.id) }
+          { status: :invalid, pest_record: pest, unassociated_pest_entities: unassociated }
+        end
+
+        def update_pest_for_crop(crop_id:, pest_id:, pest_attrs:, admin:)
+          crop = ::Crop.find_by(id: crop_id)
+          return { status: :crop_missing, pest_record: nil } unless crop
+
+          pest = crop.pests.find_by(id: pest_id)
+          return { status: :pest_missing, pest_record: nil } unless pest
+
+          attrs = pest_attrs.to_h.symbolize_keys
+          if attrs.key?(:is_reference) && !admin
+            is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attrs[:is_reference]) || false
+            if is_reference != pest.is_reference
+              return { status: :reference_flag_denied, pest_record: pest }
+            end
+          end
+
+          if pest.update(attrs)
+            { status: :updated, pest_record: pest }
+          else
+            { status: :invalid, pest_record: pest }
+          end
+        end
+
+        def find_pest_in_crop(crop_id:, pest_id:)
+          crop = ::Crop.find_by(id: crop_id)
+          return { status: :crop_missing, pest_record: nil } unless crop
+
+          pest = crop.pests.find_by(id: pest_id)
+          return { status: :not_found, pest_record: nil } unless pest
+
+          { status: :found, pest_record: pest }
+        end
+
+        def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
+          ::PestCropAssociationService.associate_crops_by_pest_id(pest_id, crop_ids, user: user)
+        end
+
+        def update_pest_crop_associations(pest_id:, crop_ids:, user:)
+          ::PestCropAssociationService.update_crop_associations_by_pest_id(pest_id, crop_ids, user: user)
         end
 
         def create(create_input_dto)
@@ -145,10 +232,22 @@ module Adapters
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Pest not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
         private
+
+        def index_scope_for_user(user)
+          if user.admin?
+            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pest.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def selectable_scope(user)
+          ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+        end
 
         def find_pest_model!(id)
           ::Pest.find(id)

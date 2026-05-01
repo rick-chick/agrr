@@ -49,7 +49,7 @@
 <% if @agricultural_tasks.any? %>
   <div class="agricultural-tasks-grid">
     <% @agricultural_tasks.each do |task| %>
-      <div class="agricultural-task-card" id="<%= dom_id(task) %>" data-undo-delete-record>
+      <div class="agricultural-task-card" id="agricultural_task_<%= task.id %>" data-undo-delete-record>
         <div class="agricultural-task-card__header">
           <h3 class="agricultural-task-name"><%= task.name %></h3>
           <% if admin_user? && task.is_reference %>

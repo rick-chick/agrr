@@ -4,7 +4,7 @@ module Domain
   module Crop
     module Interactors
       class CropListInteractor < Domain::Crop::Ports::CropListInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
@@ -14,8 +14,7 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          visible_scope = @gateway.visible_records(user)
-          crops = @gateway.list(visible_scope)
+          crops = @gateway.list_index_for_user(user)
           @output_port.on_success(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

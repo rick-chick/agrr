@@ -13,7 +13,7 @@ module Adapters
           pesticide = ::Pesticide.find(pesticide_id)
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Pesticide not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
         def create(create_input_dto)
@@ -25,7 +25,7 @@ module Adapters
             pest_id: create_input_dto.pest_id,
             region: create_input_dto.region
           )
-          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
+          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         end
@@ -41,33 +41,34 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           pesticide.update(attrs)
-          raise StandardError, pesticide.errors.full_messages.join(", ") if pesticide.errors.any?
+          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") if pesticide.errors.any?
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Pesticide not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
         def destroy(pesticide_id)
           pesticide = ::Pesticide.find(pesticide_id)
           # DeletionUndo scheduling is handled in the interactor layer
           pesticide.destroy!
+          true
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Pesticide not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("pesticides.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("pesticides.flash.cannot_delete_in_use")
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Pesticide.where(user_id: user.id, is_reference: false)
-          end
+        def list_index_for_user(user)
+          visible_scope(user).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def selectable_records(user)
-          ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+        def selectable_pesticide_ids(user)
+          selectable_scope(user).pluck(:id)
+        end
+
+        def pesticide_selectable_by_user?(user, pesticide_id)
+          selectable_scope(user).exists?(id: pesticide_id)
         end
 
         def find_authorized_model_for_view(user, id)
@@ -101,7 +102,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
           pesticide = ::Pesticide.new(h)
-          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.save
+          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         end
@@ -117,9 +118,15 @@ module Adapters
             pesticide.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, pesticide.errors.full_messages.join(", ") unless pesticide.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.update(normalized)
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
+        end
+
+        def list_for_crop_with_user(crop_id:, user:)
+          ::Pesticide.where(crop_id: crop_id, id: selectable_scope(user).select(:id)).recent.map do |record|
+            Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record)
+          end
         end
 
         def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator: nil)
@@ -145,11 +152,19 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
-        def list_from_relation(relation)
-          relation.map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
+        private
+
+        def visible_scope(user)
+          if user.admin?
+            ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pesticide.where(user_id: user.id, is_reference: false)
+          end
         end
 
-        private
+        def selectable_scope(user)
+          ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+        end
 
         def find_pesticide_model!(id)
           ::Pesticide.find(id)

@@ -38,7 +38,7 @@
    各 `{feature}-contract.md` の「フロント UseCase 一覧」「API 一覧」「共有 DTO」に従う。
 
 2. **サーバー側 Clean Architecture 化**  
-   [MASTER_SERVER_CLEAN_ARCHITECTURE_TODO.md](../implementation/MASTER_SERVER_CLEAN_ARCHITECTURE_TODO.md) に従い、Interactor / Presenter / Gateway で実装する。
+   各契約および `docs/adr/0001-clean-architecture-all-domains.md` に沿い、Interactor / Presenter / Gateway で実装する。
 
 3. **実装チェックリスト**  
    各契約の「実装チェックリスト」を完了時に照合する。

@@ -31,6 +31,22 @@ module Domain
           [ name, variety ].compact.join(" ")
         end
 
+        def as_json(options = nil)
+          {
+            id: id,
+            user_id: user_id,
+            name: name,
+            variety: variety,
+            is_reference: is_reference,
+            area_per_unit: area_per_unit,
+            revenue_per_area: revenue_per_area,
+            region: region,
+            groups: groups,
+            created_at: created_at,
+            updated_at: updated_at
+          }
+        end
+
         # ハッシュからの変換（テスト用）
         def self.from_hash(hash)
           new(**hash)

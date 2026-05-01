@@ -108,7 +108,6 @@
 
 ## 関連ドキュメント
 
-- [public-plans-rails-angular-design-diff.md](./public-plans-rails-angular-design-diff.md) - Rails と Angular の無料作付画面のデザイン差分
 - [public-plans-error-center-explanation.md](./public-plans-error-center-explanation.md) - エラー中寄せが効かなかった理由と対応
 - [public-plans-progress-bar-white-on-white-investigation.md](./public-plans-progress-bar-white-on-white-investigation.md) - 進捗バー白地問題の調査
 - [public-plans-optimizing-badge-white-investigation.md](./public-plans-optimizing-badge-white-investigation.md) - 「最適化中」バッジ白地問題の調査

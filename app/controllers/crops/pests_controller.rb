@@ -2,17 +2,14 @@
 
 module Crops
   class PestsController < ApplicationController
-    before_action :set_crop
-    before_action :set_pest, only: [ :show, :edit, :update ]
+    before_action :load_authorized_crop
+    before_action :load_nested_pest, only: [ :show, :edit, :update ]
 
     # GET /crops/:crop_id/pests
     def index
-      # この作物に関連付けられている害虫を取得（アクセス権限のある害虫のみ）
-      # Policy経由で選択可能な害虫のみ表示（参照害虫も含む）
-      accessible_pest_ids = Domain::Pest::Gateways::PestGateway.default.selectable_records(current_user).pluck(:id)
-      @pests = @crop.pests.where(id: accessible_pest_ids).recent
-      # 参照害虫も選択可能にするため、利用可能な害虫を取得（Policy経由）
-      @available_pests = Domain::Pest::Gateways::PestGateway.default.selectable_records(current_user).recent
+      presenter = Presenters::Html::Crop::CropPestsIndexHtmlPresenter.new(view: self)
+      Domain::Pest::Interactors::CropsNestedPestsIndexInteractor.new(output_port: presenter,
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop)
     end
 
     # GET /crops/:crop_id/pests/:id
@@ -21,15 +18,9 @@ module Crops
 
     # GET /crops/:crop_id/pests/new
     def new
-      # 既存の害虫を選択する場合
-      @pest = Pest.new
-      @pest.build_pest_temperature_profile
-      @pest.build_pest_thermal_requirement
-      @pest.pest_control_methods.build
-
-      # この作物にまだ関連付けられていない害虫のリスト（Policy経由、参照害虫も含む）
-      available_pests = Domain::Pest::Gateways::PestGateway.default.selectable_records(current_user)
-      @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
+      presenter = Presenters::Html::Crop::CropPestsNewHtmlPresenter.new(view: self)
+      Domain::Pest::Interactors::CropsNestedPestsNewInteractor.new(output_port: presenter,
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop)
     end
 
     # GET /crops/:crop_id/pests/:id/edit
@@ -39,82 +30,50 @@ module Crops
 
     # POST /crops/:crop_id/pests
     def create
-      # 既存の害虫を選択して関連付ける場合
-      if params[:pest_id].present?
-        existing_pest = Pest.find_by(id: params[:pest_id])
-        if existing_pest
-          # 既に関連付けられていないかチェック
-          unless @crop.pests.include?(existing_pest)
-            @crop.pests << existing_pest
-            redirect_to crop_pests_path(@crop), notice: I18n.t("crops.pests.flash.associated")
-            return
-          else
-            redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.already_associated")
-            return
-          end
+      presenter = Presenters::Html::Crop::CropPestsCreateHtmlPresenter.new(view: self)
+      pest_attrs =
+        if params[:pest].present?
+          pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
         else
-          redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.not_found")
-          return
+          {}
         end
-      end
-
-      # 新しい害虫を作成する場合
-      is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
-      if is_reference && !admin_user?
-        return redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.reference_only_admin")
-      end
-
-      @pest = Pest.new(pest_params)
-      unless admin_user?
-        @pest.is_reference = false
-        @pest.user = current_user
-      end
-
-      if @pest.save
-        # 作成した害虫を作物に関連付け
-        @crop.pests << @pest unless @crop.pests.include?(@pest)
-        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t("crops.pests.flash.created")
-      else
-        available_pests = Domain::Pest::Gateways::PestGateway.default.selectable_records(current_user)
-        @unassociated_pests = available_pests.where.not(id: @crop.pest_ids).recent
-        render :new, status: :unprocessable_entity
-      end
+      Domain::Pest::Interactors::CropsNestedPestsCreateInteractor.new(output_port: presenter,
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(
+        crop: @crop,
+        link_pest_id: params[:pest_id],
+        pest_attrs: pest_attrs,
+        admin: admin_user?
+      )
     end
 
     # PATCH/PUT /crops/:crop_id/pests/:id
     def update
-      if pest_params.key?(:is_reference) && !admin_user?
-        is_reference = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference]) || false
-        if is_reference != @pest.is_reference
-          return redirect_to crop_pest_path(@crop, @pest), alert: I18n.t("crops.pests.flash.reference_flag_admin_only")
+      presenter = Presenters::Html::Crop::CropPestsUpdateHtmlPresenter.new(view: self)
+      pest_attrs =
+        if params[:pest].present?
+          pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
+        else
+          {}
         end
-      end
-
-      if @pest.update(pest_params)
-        redirect_to crop_pest_path(@crop, @pest), notice: I18n.t("crops.pests.flash.updated")
-      else
-        render :edit, status: :unprocessable_entity
-      end
+      Domain::Pest::Interactors::CropsNestedPestsUpdateInteractor.new(output_port: presenter, pest_gateway: CompositionRoot.pest_gateway).call(
+        crop: @crop,
+        pest: @pest,
+        pest_attrs: pest_attrs,
+        admin: admin_user?
+      )
     end
 
     private
 
-    def set_crop
-      @crop = Crop.find(params[:crop_id])
-
-      # 作物へのアクセス権限チェック
-      # 管理者も参照作物と自身が作成した作物のみアクセス可能
-      unless @crop.is_reference || @crop.user_id == current_user.id
-        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
-      end
-    rescue ActiveRecord::RecordNotFound
-      redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
+    def load_authorized_crop
+      presenter = Presenters::Html::Crop::CropPestsLoadCropHtmlPresenter.new(view: self)
+      Domain::Crop::Interactors::CropLoadAuthorizedForCropPestsInteractor.new(output_port: presenter,
+        user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:crop_id])
     end
 
-    def set_pest
-      @pest = @crop.pests.find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      redirect_to crop_pests_path(@crop), alert: I18n.t("crops.pests.flash.not_found")
+    def load_nested_pest
+      presenter = Presenters::Html::Crop::CropPestsLoadPestHtmlPresenter.new(view: self)
+      Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(output_port: presenter, pest_gateway: CompositionRoot.pest_gateway).call(@crop, params[:id])
     end
 
     def pest_params

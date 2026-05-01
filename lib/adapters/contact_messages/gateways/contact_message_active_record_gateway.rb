@@ -22,10 +22,11 @@ module Adapters
             status: "queued"
           )
 
-          # save! will raise ActiveRecord::RecordInvalid on validation errors
           record.save!
 
           entity_from_record(record)
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: e.record.errors, record: e.record)
         end
 
         private

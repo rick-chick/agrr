@@ -9,21 +9,50 @@ module Adapters
           query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Crop.where(user_id: user.id, is_reference: false)
-          end
+        def list_index_for_user(user)
+          list(index_scope_for_user(user))
         end
 
-        def user_owned_non_reference_records(user)
-          ::Crop.where(user_id: user.id, is_reference: false)
+        def list_user_owned_non_reference_crops_ordered_by_name(user)
+          user_owned_non_reference_scope(user).order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def reference_records(region: nil)
+        def list_user_owned_non_reference_crops_by_ids(user, ids)
+          return [] if ids.blank?
+
+          user_owned_non_reference_scope(user).where(id: ids).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
+        end
+
+        def find_user_non_reference_crop_for_masters!(user, crop_id)
+          user_owned_non_reference_scope(user).find(crop_id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def find_user_non_reference_crop_record(user, crop_id)
+          user_owned_non_reference_scope(user).find_by(id: crop_id)
+        end
+
+        def list_reference_crop_entities(region: nil)
           scope = ::Crop.reference
-          region ? scope.where(region: region) : scope
+          scope = scope.where(region: region) if region.present?
+          scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
+        end
+
+        def each_reference_crop_for_entry_schedule(region)
+          ::Crop.reference
+            .yield_self { |s| region.present? ? s.where(region: region) : s }
+            .includes(crop_stages: :temperature_requirement)
+            .order(:name)
+            .find_each { |crop| yield crop }
+        end
+
+        def find_reference_crop_for_entry_schedule!(region, crop_id)
+          scope = ::Crop.reference
+          scope = scope.where(region: region) if region.present?
+          scope.includes(crop_stages: :temperature_requirement).find(crop_id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         CROP_HTML_INCLUDES = {
@@ -65,6 +94,22 @@ module Adapters
           crop
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def find_authorized_crop_show_detail(user, crop_id)
+          crop = find_authorized_model_for_html(user, crop_id, for_edit: false)
+          task_schedule_blueprints = crop.crop_task_schedule_blueprints
+                                          .includes(:agricultural_task)
+                                          .ordered
+          available_tasks = available_agricultural_tasks_for_crop(crop)
+          selected_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
+
+          Domain::Crop::Dtos::CropDetailOutputDto.new(
+            crop: crop,
+            task_schedule_blueprints: task_schedule_blueprints,
+            available_agricultural_tasks: available_tasks,
+            selected_task_ids: selected_task_ids
+          )
         end
 
         def find_model(id)
@@ -129,7 +174,7 @@ module Adapters
           crop = ::Crop.find(crop_id)
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Crop not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Crop not found"
         end
 
         def create(create_input_dto)
@@ -165,7 +210,7 @@ module Adapters
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "Crop not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "Crop not found"
         end
 
         # CropStage methods
@@ -189,7 +234,7 @@ module Adapters
           end
           crop_stage_entity_from_record(crop_stage.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "CropStage not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
         def delete_crop_stage(crop_stage_id)
@@ -198,7 +243,7 @@ module Adapters
             raise StandardError, crop_stage.errors.full_messages.join(", ")
           end
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "CropStage not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
         def list_crop_stages_by_crop_id(crop_id)
@@ -210,7 +255,7 @@ module Adapters
           crop_stage = ::CropStage.find(crop_stage_id)
           crop_stage_entity_from_record(crop_stage)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "CropStage not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
         # TemperatureRequirement methods
@@ -240,7 +285,7 @@ module Adapters
           end
           temperature_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "TemperatureRequirement not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "TemperatureRequirement not found"
         end
 
         # ThermalRequirement methods
@@ -270,7 +315,7 @@ module Adapters
           end
           thermal_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "ThermalRequirement not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "ThermalRequirement not found"
         end
 
         # SunshineRequirement methods
@@ -300,7 +345,7 @@ module Adapters
           end
           sunshine_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "SunshineRequirement not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "SunshineRequirement not found"
         end
 
         # NutrientRequirement methods
@@ -330,10 +375,38 @@ module Adapters
           end
           nutrient_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "NutrientRequirement not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "NutrientRequirement not found"
         end
 
         private
+
+        def available_agricultural_tasks_for_crop(crop)
+          if !crop.is_reference && crop.user_id.present?
+            tasks = ::AgriculturalTask.user_owned.where(user_id: crop.user_id)
+            tasks = tasks.where(region: crop.region) if crop.region.present?
+            return tasks.order(:name)
+          end
+
+          if crop.is_reference
+            tasks = ::AgriculturalTask.reference
+            tasks = tasks.where(region: crop.region) if crop.region.present?
+            return tasks.order(:name)
+          end
+
+          ::AgriculturalTask.none
+        end
+
+        def index_scope_for_user(user)
+          if user.admin?
+            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Crop.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def user_owned_non_reference_scope(user)
+          ::Crop.where(user_id: user.id, is_reference: false)
+        end
 
         def find_crop_model!(id)
           ::Crop.find(id)

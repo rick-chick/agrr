@@ -39,7 +39,8 @@ class PublicPlansController < ApplicationController
     region = locale_to_region(I18n.locale)
 
     # 選択された地域の参照農場のみ取得（Policy 経由）
-    @farms = Domain::Farm::Gateways::FarmGateway.default.reference_records(region: region).to_a
+    presenter = Presenters::Html::PublicPlans::ReferenceFarmsPresenter.new(view: self)
+    Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
 
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
@@ -73,8 +74,8 @@ class PublicPlansController < ApplicationController
                   alert: I18n.t("public_plans.errors.select_farm_size") and return
     end
 
-    # 選択された農場の地域の作物のみ取得（Policy 経由）
-    @crops = Domain::Crop::Gateways::CropGateway.default.reference_records(region: @farm.region).order(:name)
+    presenter = Presenters::Html::PublicPlans::ReferenceCropsPresenter.new(view: self)
+    Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: @farm.region)
     session[:public_plan] = session_data.merge(
       total_area: @farm_size[:area_sqm],
       farm_size_id: @farm_size[:id]
@@ -102,7 +103,8 @@ class PublicPlansController < ApplicationController
       # Turbo対応: フォールバックせず同画面を422で再描画
       @farm = farm
       @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == session_data[:farm_size_id] }
-      @crops = Domain::Crop::Gateways::CropGateway.default.reference_records(region: @farm.region).order(:name)
+      presenter = Presenters::Html::PublicPlans::ReferenceCropsPresenter.new(view: self)
+      Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: @farm.region)
       flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
       return render :select_crop, status: :unprocessable_entity
     end
@@ -124,7 +126,7 @@ class PublicPlansController < ApplicationController
     }
 
     # Service で計画作成（最適化はしない）
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
     cultivation_plan = result.cultivation_plan
 
     # セッションに計画IDを保存
@@ -197,7 +199,8 @@ class PublicPlansController < ApplicationController
     begin
       result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
         user: current_user,
-        session_data: session[:public_plan_save_data]
+        session_data: session[:public_plan_save_data],
+        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
       )
 
       if result.success
@@ -255,7 +258,8 @@ class PublicPlansController < ApplicationController
 
       result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
         user: current_user,
-        session_data: save_data
+        session_data: save_data,
+        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
       )
 
       if result.success
@@ -430,7 +434,8 @@ class PublicPlansController < ApplicationController
 
       result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
         user: current_user,
-        session_data: save_data
+        session_data: save_data,
+        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
       )
 
       if result.success

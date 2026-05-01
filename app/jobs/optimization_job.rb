@@ -35,7 +35,17 @@ class OptimizationJob < ApplicationJob
       cultivation_plan.phase_optimizing!(channel_class)
 
       # 最適化処理
-      optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(cultivation_plan, channel_class)
+      optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
+        cultivation_plan,
+        channel_class,
+        allocation_gateway: CompositionRoot.plan_allocation_gateway,
+        interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
+        cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+        logger: CompositionRoot.logger,
+        weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
+          CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
+        }
+      )
       optimizer.call
 
       # 最適化完了通知（作業予定生成へ移行）

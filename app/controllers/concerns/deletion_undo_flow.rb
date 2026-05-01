@@ -23,7 +23,7 @@ module DeletionUndoFlow
       event,
       fallback_location: fallback_location
     )
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+  rescue Domain::Shared::Exceptions::AssociationInUse, ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
     message =
       if in_use_message_key
         I18n.t(in_use_message_key)

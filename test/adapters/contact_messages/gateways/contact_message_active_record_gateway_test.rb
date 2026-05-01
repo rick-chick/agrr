@@ -65,7 +65,7 @@ module Adapters
             message: ""
           )
 
-          assert_raises(ActiveRecord::RecordInvalid) { gateway.create(create_dto) }
+          assert_raises(Domain::Shared::Exceptions::RecordInvalid) { gateway.create(create_dto) }
         end
       end
     end

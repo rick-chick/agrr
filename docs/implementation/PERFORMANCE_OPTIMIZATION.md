@@ -154,5 +154,3 @@ end
 
 ## 参照
 - [実装設計書](./PUBLIC_PLANS_SAVE_IMPLEMENTATION_DESIGN.md)
-- [プロジェクト管理チェックリスト](./PROJECT_MANAGEMENT_CHECKLIST.md)
-- [テスト結果](./PUBLIC_PLANS_SAVE_STATUS.md)

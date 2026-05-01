@@ -7,24 +7,16 @@ class FertilizesController < ApplicationController
   # GET /fertilizes
   def index
     presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: self)
-    interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
-      output_port: presenter,
-      gateway: fertilize_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call
   end
 
   # GET /fertilizes/:id
   def show
     presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: self)
-    interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(
-      output_port: presenter,
-      gateway: fertilize_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call(@fertilize.id)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
@@ -51,12 +43,8 @@ class FertilizesController < ApplicationController
     end
     input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
     presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
-    Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(
-      output_port: presenter,
-      gateway: fertilize_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    ).call(input_dto)
+    Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
@@ -74,12 +62,8 @@ class FertilizesController < ApplicationController
     end
     input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
-    Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(
-      output_port: presenter,
-      gateway: fertilize_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    ).call(input_dto)
+    Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
@@ -94,12 +78,9 @@ class FertilizesController < ApplicationController
     respond_to do |format|
       format.html do
         presenter = Presenters::Html::Fertilize::FertilizeDestroyHtmlPresenter.new(view: self)
-        Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(
-          output_port: presenter,
-          gateway: fertilize_gateway,
+        Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator).call(params[:id])
+          translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
         redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
       end
@@ -121,19 +102,10 @@ class FertilizesController < ApplicationController
   private
 
   def set_fertilize
-    @fertilize = Domain::Fertilize::Gateways::FertilizeGateway.default.find_authorized_model_for_view(current_user, params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.not_found")
-  end
-
-  def fertilize_gateway
-    Adapters::Fertilize::Gateways::FertilizeActiveRecordGateway.new
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
+    presenter = Presenters::Html::Fertilize::FertilizeLoadForViewHtmlPresenter.new(view: self)
+    interactor = Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:id])
   end
 
   def fertilize_params

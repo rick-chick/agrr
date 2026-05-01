@@ -248,18 +248,14 @@ module Api
       private
 
       def set_pest
-        @pest =
-          begin
-            Domain::Pest::Gateways::PestGateway.default.find_authorized_model_for_edit(current_user, params[:id])
-          rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
-            nil
-          end
+        presenter = Presenters::Api::Pest::PestLoadForAiUpdatePresenter.new(view: self)
+        Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+          user_id: current_user.id, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       def set_interactors
-        gateway = Adapters::Pest::Gateways::PestMemoryGateway.new
-        @create_interactor = Adapters::Pest::PestCreateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
-        @update_interactor = Adapters::Pest::PestUpdateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
+        @create_interactor = Adapters::Pest::PestCreateForAiAdapter.new(user_id: current_user.id)
+        @update_interactor = Adapters::Pest::PestUpdateForAiAdapter.new(user_id: current_user.id)
       end
 
       def fetch_pest_info_from_agrr(pest_name, affected_crops = [], max_retries: 3)

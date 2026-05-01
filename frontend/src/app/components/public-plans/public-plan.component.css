@@ -703,6 +703,8 @@
 }
 
 .title-text {
+  flex: 1;
+  min-width: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-gray-800);
@@ -710,6 +712,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* バッジは flex 縮小で幅 0 になり overflow:hidden で切れないようにする */
+.compact-header-title .status-badge {
+  flex-shrink: 0;
 }
 
 .compact-subtitle {

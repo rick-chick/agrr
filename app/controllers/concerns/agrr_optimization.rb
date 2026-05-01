@@ -495,10 +495,8 @@ module AgrrOptimization
               "気象データがありません。農場にWeatherLocationが設定されていません。"
       end
 
-      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
-        weather_location: weather_location,
-        farm: farm
-      )
+      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location,
+        farm: farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
       # effective_planning_endをtarget_end_dateとして使用して既存の予測データを確認
       existing_prediction = weather_prediction_service.get_existing_prediction(
@@ -664,8 +662,11 @@ module AgrrOptimization
       perf_before_adjust = Time.current
       Rails.logger.info "⏱️ [PERF] AdjustGateway.adjust() 呼び出し開始"
       Rails.logger.info "📅 [Adjust] 計画期間: #{effective_planning_start} 〜 #{effective_planning_end} (制約として使用しない)"
-      adjust_gateway = Agrr::AdjustGateway.new
-      result = adjust_gateway.adjust(
+      interactor = Domain::CultivationPlan::Interactors::AgrrAdjustInteractor.new(
+        gateway: CompositionRoot.agrr_adjust_gateway,
+        logger: CompositionRoot.logger
+      )
+      result = interactor.call(
         current_allocation: current_allocation,
         moves: moves,
         fields: fields,

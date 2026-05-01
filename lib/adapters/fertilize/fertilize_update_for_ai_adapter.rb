@@ -14,12 +14,10 @@ module Adapters
 
       def call(fertilize_id, attrs)
         output_port = CapturingOutputPort.new
-        interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(
-          output_port: output_port,
+        interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-        )
+          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
         input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(attrs, fertilize_id)
         interactor.call(input_dto)
         output_port.result

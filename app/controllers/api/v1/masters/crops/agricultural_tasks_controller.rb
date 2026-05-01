@@ -142,9 +142,10 @@ module Api
           private
 
           def set_crop
-            @crop = Domain::Crop::Gateways::CropGateway.default.visible_records(current_user).where(is_reference: false).find(params[:crop_id])
-          rescue ActiveRecord::RecordNotFound
-            render json: { error: "Crop not found" }, status: :not_found
+            presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
+            interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
+              user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
+            interactor.call(params[:crop_id])
           end
 
           def set_template

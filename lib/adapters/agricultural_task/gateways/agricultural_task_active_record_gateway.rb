@@ -9,15 +9,29 @@ module Adapters
           ::AgriculturalTask.all.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
-        def list_from_relation(relation)
-          relation.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
+        def list_for_index(user:, is_admin:, filter: nil, query: nil)
+          scope = if is_admin
+            case filter
+            when "reference"
+              ::AgriculturalTask.where(is_reference: true)
+            when "all"
+              visible_scope(user)
+            else
+              ::AgriculturalTask.all.merge(user_owned_non_reference_scope(user))
+            end
+          else
+            visible_scope(user)
+          end
+          scope = apply_search_scope(scope, query) if Domain::Shared::ValidationHelpers.present?(query)
+          scope = scope.recent
+          scope.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
         def find_by_id(task_id)
           task = ::AgriculturalTask.find(task_id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "AgriculturalTask not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
         end
 
         def create(create_input_dto)
@@ -31,7 +45,7 @@ module Adapters
             region: create_input_dto.region,
             task_type: create_input_dto.task_type
           )
-          raise StandardError, task.errors.full_messages.join(", ") unless task.save
+          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.save
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
@@ -49,11 +63,11 @@ module Adapters
           attrs[:task_type] = update_input_dto.task_type if !update_input_dto.task_type.nil?
 
           task.update(attrs)
-          raise StandardError, task.errors.full_messages.join(", ") if task.errors.any?
+          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") if task.errors.any?
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "AgriculturalTask not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
         end
 
         def destroy(task_id)
@@ -64,52 +78,27 @@ module Adapters
             toast_message: @translator.t("agricultural_tasks.undo.toast", name: task.name)
           )
         rescue ActiveRecord::RecordNotFound
-          raise StandardError, "AgriculturalTask not found"
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("agricultural_tasks.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("agricultural_tasks.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::AgriculturalTask.where(user_id: user.id, is_reference: false)
-          end
-        end
-
-        def user_owned_non_reference_records(user)
-          ::AgriculturalTask.where(user_id: user.id, is_reference: false)
-        end
-
-        def reference_records(region: nil)
-          scope = ::AgriculturalTask.reference
-          region ? scope.where(region: region) : scope
-        end
-
-        def find_authorized_model_for_view(user, id)
-          task = find_agricultural_task_model!(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          task
-        end
-
-        def find_authorized_model_for_edit(user, id)
-          task = find_agricultural_task_model!(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          task
-        end
-
         def find_authorized_for_view(user, id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_model_for_view(user, id))
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_view(user, id))
         end
 
         def find_authorized_for_edit(user, id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_model_for_edit(user, id))
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_edit(user, id))
+        end
+
+        def find_authorized_model_for_view(user, id)
+          find_authorized_task_model_for_view(user, id)
+        end
+
+        def find_authorized_model_for_edit(user, id)
+          find_authorized_task_model_for_edit(user, id)
         end
 
         def find_model(id)
@@ -119,7 +108,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_create(user, attrs)
           task = ::AgriculturalTask.new(h)
-          raise StandardError, task.errors.full_messages.join(", ") unless task.save
+          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.save
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
@@ -135,7 +124,7 @@ module Adapters
             task.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, task.errors.full_messages.join(", ") unless task.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(normalized)
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         end
@@ -164,19 +153,54 @@ module Adapters
         end
 
         def recent_for_user(user, limit: nil)
-          scope = visible_records(user).recent
-          limit ? scope.limit(limit) : scope
+          scope = visible_scope(user).recent
+          limit ? scope.limit(limit).map { |r| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(r) } : scope.map { |r| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(r) }
         end
 
         def any_visible_for_user?(user)
-          visible_records(user).exists?
-        end
-
-        def all_records_relation
-          ::AgriculturalTask.all
+          visible_scope(user).exists?
         end
 
         private
+
+        def find_authorized_task_model_for_view(user, id)
+          task = find_agricultural_task_model!(id)
+          unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          task
+        end
+
+        def find_authorized_task_model_for_edit(user, id)
+          task = find_agricultural_task_model!(id)
+          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          task
+        end
+
+        def visible_scope(user)
+          if user.admin?
+            ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::AgriculturalTask.where(user_id: user.id, is_reference: false)
+          end
+        end
+
+        def user_owned_non_reference_scope(user)
+          ::AgriculturalTask.where(user_id: user.id, is_reference: false)
+        end
+
+        def apply_search_scope(scope, term)
+          return scope if Domain::Shared::ValidationHelpers.blank?(term)
+
+          sanitized = Domain::Shared::SqlLike.sanitize(term)
+          q = "%#{sanitized}%"
+          scope.where(
+            "agricultural_tasks.name LIKE :query OR COALESCE(agricultural_tasks.description, '') LIKE :query",
+            query: q
+          )
+        end
 
         def find_agricultural_task_model!(id)
           ::AgriculturalTask.find(id)

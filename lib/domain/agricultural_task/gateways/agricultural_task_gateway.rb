@@ -36,16 +36,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
-        end
-
-        def user_owned_non_reference_records(user)
-          raise NotImplementedError, "Subclasses must implement user_owned_non_reference_records"
-        end
-
-        def reference_records(region: nil)
-          raise NotImplementedError, "Subclasses must implement reference_records"
+        def list_for_index(user:, is_admin:, filter: nil, query: nil)
+          raise NotImplementedError, "Subclasses must implement list_for_index"
         end
 
         def find_authorized_for_view(user, id)
@@ -56,6 +48,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
+        # 表層（コントローラ等）で AR インスタンスが必要な場合のみ
         def find_authorized_model_for_view(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
         end
@@ -82,15 +75,6 @@ module Domain
 
         def any_visible_for_user?(user)
           raise NotImplementedError, "Subclasses must implement any_visible_for_user?"
-        end
-
-        def list_from_relation(relation)
-          raise NotImplementedError, "Subclasses must implement list_from_relation"
-        end
-
-        # 管理者一覧など、全件を起点にした ActiveRecord::Relation（Adapter でモデル全件相当）
-        def all_records_relation
-          raise NotImplementedError, "Subclasses must implement all_records_relation"
         end
 
         def soft_destroy_with_undo(user:, task_id:, auto_hide_after:, translator:)

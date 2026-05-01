@@ -17,8 +17,8 @@ module Api
         # GET .../public_plans/entry_schedule/farms
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          farms = Domain::Farm::Gateways::FarmGateway.default.reference_records(region: region)
-          render json: farms.as_json(only: %i[id name latitude longitude region])
+          presenter = Presenters::Api::PublicPlans::ReferenceFarmsPresenter.new(view: self)
+          Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
         end
 
         # GET .../public_plans/entry_schedule/crops?farm_id=&prediction_end_date=&limit=&cursor=
@@ -27,12 +27,12 @@ module Api
           payload_hash = load_or_predict_weather!(farm)
           prediction_meta = Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.prediction_meta(farm: farm, payload_hash: payload_hash)
 
-          crop_scope = Domain::Crop::Gateways::CropGateway.default
-                       .reference_records(region: farm.region)
-                       .includes(crop_stages: :temperature_requirement)
-                       .order(:name)
           items = []
-          crop_scope.find_each do |crop|
+          presenter = Presenters::Api::PublicPlans::EntryScheduleReferenceCropsPresenter.new(view: self)
+          Domain::Crop::Interactors::CropListReferenceForEntryScheduleInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(farm.region)
+          return if performed?
+
+          @reference_crops.each do |crop|
             result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(crop: crop, weather_payload: payload_hash, farm: farm)
             items << Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.crop_list_item(crop, result)
           end
@@ -67,10 +67,11 @@ module Api
         # GET .../public_plans/entry_schedule/crops/:id?farm_id=
         def show
           farm = find_reference_farm!
-          crop = Domain::Crop::Gateways::CropGateway.default
-                 .reference_records(region: farm.region)
-                 .includes(crop_stages: :temperature_requirement)
-                 .find(params[:id])
+          presenter = Presenters::Api::PublicPlans::EntryScheduleReferenceCropPresenter.new(view: self)
+          Domain::Crop::Interactors::CropFindReferenceForEntryScheduleInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(farm.region, params[:id])
+          return if performed?
+
+          crop = @reference_crop
           payload = Presenters::Api::PublicPlans::EntryScheduleShowPayload.call(
             farm: farm,
             crop: crop,
@@ -117,7 +118,7 @@ module Api
           raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError if farm.weather_location.blank?
 
           target_end = parse_prediction_end_date
-          service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: farm.weather_location, farm: farm)
+          service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: farm.weather_location, farm: farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
           cached = service.get_existing_prediction(target_end_date: target_end)
           payload_hash = if cached && cached[:data].is_a?(Hash)

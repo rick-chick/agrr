@@ -22,7 +22,7 @@
         </thead>
         <tbody>
             <% @reference_rules.each do |rule| %>
-              <tr id="<%= dom_id(rule) %>" data-undo-delete-record>
+              <tr id="interaction_rule_<%= rule.id %>" data-undo-delete-record>
                 <td><%= rule.rule_type %></td>
                 <td><%= rule.source_group %></td>
                 <td><%= rule.target_group %></td>

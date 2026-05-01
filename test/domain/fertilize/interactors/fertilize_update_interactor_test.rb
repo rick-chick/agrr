@@ -17,7 +17,8 @@ module Domain
             gateway: @mock_gateway,
             user_id: @user_id,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: @mock_translator
+            translator: @mock_translator,
+            user_lookup: Adapters::Shared::Gateways::UserActiveRecordGateway.new
           )
         end
 
@@ -61,7 +62,9 @@ module Domain
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             user_id: admin_user_id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new,
+            user_lookup: Adapters::Shared::Gateways::UserActiveRecordGateway.new
           )
 
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(

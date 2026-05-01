@@ -13,12 +13,8 @@ module Api
         # GET /api/v1/masters/fertilizes
         def index
           presenter = Presenters::Api::Fertilize::FertilizeListPresenter.new(view: self)
-          interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
-            output_port: presenter,
-            gateway: fertilize_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -26,12 +22,8 @@ module Api
         def show
           input_valid?(:show) || return
           presenter = Presenters::Api::Fertilize::FertilizeDetailPresenter.new(view: self)
-          interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(
-            output_port: presenter,
-            gateway: fertilize_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -43,13 +35,9 @@ module Api
             return
           end
           presenter = Presenters::Api::Fertilize::FertilizeCreatePresenter.new(view: self)
-          interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(
-            output_port: presenter,
-            gateway: fertilize_gateway,
+          interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -57,13 +45,9 @@ module Api
         def update
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Fertilize::FertilizeUpdatePresenter.new(view: self)
-          interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(
-            output_port: presenter,
-            gateway: fertilize_gateway,
+          interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: logger_gateway,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -71,13 +55,9 @@ module Api
         def destroy
           input_valid?(:destroy) || return
           presenter = Presenters::Api::Fertilize::FertilizeDeletePresenter.new(view: self)
-          interactor = Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(
-            output_port: presenter,
-            gateway: fertilize_gateway,
+          interactor = Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -91,9 +71,6 @@ module Api
 
         private
 
-        def fertilize_gateway
-          @fertilize_gateway ||= Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
-        end
 
         def input_valid?(action)
           case action
@@ -110,9 +87,6 @@ module Api
           input_dto.name.present?
         end
 
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-        end
       end
     end
   end

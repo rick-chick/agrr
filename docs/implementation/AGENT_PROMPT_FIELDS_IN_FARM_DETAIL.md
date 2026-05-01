@@ -1,7 +1,6 @@
 # ほ場（Fields）農場詳細内 CRUD 実装（cursor-agent 用プロンプト）
 
 ## 参照
-- `docs/implementation/MASTER_MANAGEMENT_FRONTEND_TODO.md` の「2.8 ほ場」「TODO 7」「3. Rails API パラメータ fields」「5. 削除のトースト＋Undo」「6. 共通実装パターン」
 - Rails: `app/controllers/api/v1/masters/fields_controller.rb` — index(farm_id), show(id), create(farm_id), update(id), destroy(id)。destroy は 200 + DeletionUndoResponse。
 - 既存: farm-detail（control.fields 一覧表示のみ）、FarmGateway#listFieldsByFarm、LoadFarmDetailUseCase
 - スキル: usecase-frontend, gateway-frontend, presenter-frontend, controller-frontend（`.cursor/skills/`）

@@ -21,8 +21,13 @@ module JobExecution
     Rails.logger.info "🔄 [JobExecution] Job completed, redirecting to: #{redirect_path}"
 
     # チャンネル経由でリダイレクト通知を送信
+    # NOTE: broadcast_to は ActionCable のチャンネルモデルとして AR インスタンスを必要とするため、
+    # ここだけは AR モデルを直接ロードする（`channel_class` がチャンネル契約を保つ責務）。
+    # Domain 例外への翻訳は呼び出し元層では不要（ジョブのインフラ専用）。
     if channel_class
-      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan = ::CultivationPlan.find_by(id: cultivation_plan_id)
+      return unless cultivation_plan
+
       channel_class.broadcast_to(
         cultivation_plan,
         {

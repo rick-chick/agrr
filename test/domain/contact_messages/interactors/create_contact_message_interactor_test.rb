@@ -47,7 +47,11 @@ module ContactMessages
 
         record = ::ContactMessage.new(email: "invalid", message: "")
         record.valid?
-        invalid_exception = ActiveRecord::RecordInvalid.new(record)
+        invalid_exception = Domain::Shared::Exceptions::RecordInvalid.new(
+          "Validation failed",
+          errors: record.errors,
+          record: record
+        )
 
         gateway = Minitest::Mock.new
         gateway.expect(:create, nil) { raise invalid_exception }
@@ -61,9 +65,9 @@ module ContactMessages
         result = interactor.call(input, output_port: output_port)
 
         refute result.success?
-        assert_equal invalid_exception.record.errors, result.errors
+        assert_equal record.errors, result.errors
         assert_instance_of ContactMessages::Dtos::CreateContactMessageFailure, received
-        assert_equal invalid_exception.record.errors, received.errors
+        assert_equal record.errors, received.errors
 
         gateway.verify
         output_port.verify

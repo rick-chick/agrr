@@ -69,8 +69,6 @@ end
 - テストケースの修正
 
 ## 関連ドキュメント
-- [REQUIREMENTS_COMPARISON.md](./project_management/REQUIREMENTS_COMPARISON.md)
-- [PUBLIC_PLANS_SAVE_STATUS.md](./implementation/PUBLIC_PLANS_SAVE_STATUS.md)
 - [PUBLIC_PLANS_SAVE_REQUIREMENTS.md](./design/PUBLIC_PLANS_SAVE_REQUIREMENTS.md)
 
 ## 更新履歴

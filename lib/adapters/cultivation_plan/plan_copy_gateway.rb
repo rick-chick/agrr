@@ -4,12 +4,14 @@ module Adapters
   module CultivationPlan
     class PlanCopyGateway
       # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）
-      def self.copy_private_plan_for_year(source_plan:, new_year:, user:, session_id: nil)
+      def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil)
+        source_plan = ::CultivationPlan.find(source_cultivation_plan_id)
+        ar_user = Adapters::Shared::UserActorResolver.user_for_deleted_by(user)
         planning_dates = ::CultivationPlan.calculate_planning_dates(new_year)
 
         plan_attrs = {
           farm: source_plan.farm,
-          user: user,
+          user: ar_user,
           total_area: source_plan.total_area,
           plan_type: "private",
           plan_year: new_year,
@@ -75,7 +77,7 @@ module Adapters
         Rails.logger.info "✅ Copied #{source_plan.field_cultivations.count} field cultivations"
         Rails.logger.info "✅ Plan copy completed: #{source_plan.id} -> #{new_plan.id}"
 
-        new_plan
+        Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(new_plan.reload)
       end
 
       def self.copy_attachments_for_plan_copy(source_plan:, new_plan:)
@@ -95,7 +97,7 @@ module Adapters
 
       def initialize(ctx)
         @ctx = ctx
-        @task_mapper = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
+        @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
         @calc = Domain::CultivationPlan::Calculators::PlanningDateCalculator
       end
 
@@ -258,7 +260,7 @@ module Adapters
                          .joins(:task_schedule)
                          .find_by(task_schedules: { cultivation_plan_id: plan_id }, gdd_trigger: nil)
         if invalid_item
-          raise Domain::CultivationPlan::Interactors::PlanSaveSession::InvalidTaskScheduleItemError,
+          raise Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError,
                 "Reference TaskScheduleItem##{invalid_item.id} has nil gdd_trigger"
         end
 
@@ -281,7 +283,7 @@ module Adapters
             mapped_task_id = @task_mapper.mapped_agricultural_task_id(reference_item)
 
             if reference_item.gdd_trigger.nil?
-              raise Domain::CultivationPlan::Interactors::PlanSaveSession::InvalidTaskScheduleItemError,
+              raise Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError,
                     "Reference TaskScheduleItem##{reference_item.id} has nil gdd_trigger"
             end
 

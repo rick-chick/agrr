@@ -3,6 +3,11 @@
 module Domain
   module InteractionRule
     module Gateways
+      # InteractionRule ドメインの Gateway interface。
+      # Adapter 実装は lib/adapters/interaction_rule/gateways/ に存在する。
+      # NOTE: Clean Architecture 純化のため、Controller (Composition Root) で
+      # Adapter インスタンスを生成し Interactor へ DI する方式に段階移行中。
+      # `.default` は移行未完了の Interactor 互換のため残置（移行完了後に削除）。
       class InteractionRuleGateway
         class << self
           def default
@@ -38,12 +43,12 @@ module Domain
         end
 
         # agrr 分配用のルール配列（空なら nil）
-        def agrr_rules_for_cultivation_plan(cultivation_plan)
-          raise NotImplementedError, "Subclasses must implement agrr_rules_for_cultivation_plan"
+        def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
+          raise NotImplementedError, "Subclasses must implement agrr_rules_for_cultivation_plan_id"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
+        def list_index_for_user(user)
+          raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
         def find_authorized_for_view(user, id)

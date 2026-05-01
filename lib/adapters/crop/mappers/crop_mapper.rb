@@ -83,6 +83,21 @@ module Adapters
           )
         end
 
+        def self.crop_task_schedule_blueprint_entity_from_record(record)
+          at = record.agricultural_task
+          at_entity = at ? Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(at) : nil
+          Domain::Crop::Entities::CropTaskScheduleBlueprintEntity.new(
+            id: record.id,
+            crop_id: record.crop_id,
+            gdd_trigger: record.gdd_trigger,
+            priority: record.priority,
+            task_type: record.task_type,
+            description: record.description,
+            stage_name: record.stage_name,
+            agricultural_task: at_entity
+          )
+        end
+
       end
     end
   end

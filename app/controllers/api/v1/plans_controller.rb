@@ -49,13 +49,9 @@ module Api
       # - renders the DeletionUndoResponse through the presenter/view contract
       def destroy
         presenter = Presenters::Api::CultivationPlan::CultivationPlanDeletePresenter.new(view: self)
-        interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
-          output_port: presenter,
-          gateway: cultivation_plan_gateway,
+        interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])
       end
       def render_response(json:, status:)
@@ -89,9 +85,11 @@ module Api
         crop_ids = create_params[:crop_ids] || []
         return [] if crop_ids.empty?
 
-        # ユーザー所有かつ非参照の作物のみ取得
-        # 明示的にトップレベルの Crop を参照して、名前空間由来の解決ミスを避ける
-        Domain::Crop::Gateways::CropGateway.default.user_owned_non_reference_records(current_user).where(id: crop_ids)
+        presenter = Presenters::Api::Plans::SelectedCropsPresenter.new(view: self)
+        Domain::Crop::Interactors::CropListUserOwnedNonReferenceByIdsInteractor.new(output_port: presenter,
+          user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(crop_ids)
+
+        @selected_crops || []
       end
 
       def find_existing_plan(farm)
@@ -103,7 +101,7 @@ module Api
 
       def create_cultivation_plan_with_jobs(farm, crops, plan_name = nil)
         creator_params = build_creator_params(farm, crops, plan_name)
-        result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+        result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
         # エラーハンドリング
         unless result.success? && result.cultivation_plan
@@ -199,9 +197,6 @@ module Api
         job_chain
       end
 
-      def cultivation_plan_gateway
-        @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
-      end
     end
   end
 end

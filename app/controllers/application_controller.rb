@@ -12,8 +12,17 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # Composition Root 経由（lib/composition_root.rb）で Adapter を取得する。
   def translator
-    @translator ||= Adapters::Translators::RailsTranslator.new
+    CompositionRoot.translator
+  end
+
+  def logger_adapter
+    CompositionRoot.logger
+  end
+
+  def user_lookup_adapter
+    CompositionRoot.user_lookup
   end
 
   def switch_locale(&action)

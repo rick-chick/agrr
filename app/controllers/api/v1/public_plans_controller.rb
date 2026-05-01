@@ -37,7 +37,8 @@ class Api::V1::PublicPlansController < Api::V1::BaseController
 
       result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
         user: current_user,
-        session_data: save_data
+        session_data: save_data,
+        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
       )
 
       if result.success

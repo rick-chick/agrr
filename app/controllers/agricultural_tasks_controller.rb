@@ -17,12 +17,8 @@ class AgriculturalTasksController < ApplicationController
 
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(view: self, input_dto: input_dto)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
-      output_port: presenter,
-      gateway: agricultural_task_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(input_dto)
   rescue StandardError => e
@@ -35,12 +31,8 @@ class AgriculturalTasksController < ApplicationController
   def show
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
-      output_port: presenter,
-      gateway: agricultural_task_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -70,12 +62,8 @@ class AgriculturalTasksController < ApplicationController
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash({ agricultural_task: task_attributes })
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
-      output_port: presenter,
-      gateway: agricultural_task_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   rescue StandardError => e
@@ -108,12 +96,8 @@ class AgriculturalTasksController < ApplicationController
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash({ agricultural_task: task_attributes }, params[:id])
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(
-      output_port: presenter,
-      gateway: agricultural_task_gateway,
-      user_id: current_user.id,
-      logger: logger_gateway
-    )
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
 
@@ -143,13 +127,9 @@ class AgriculturalTasksController < ApplicationController
       format.html do
         presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
-        interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
-          output_port: presenter,
-          gateway: agricultural_task_gateway,
+        interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -173,17 +153,17 @@ class AgriculturalTasksController < ApplicationController
   private
 
   def set_agricultural_task
-    gw = Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default
-    @agricultural_task =
-      if action_requires_edit_permission?
-        gw.find_authorized_model_for_edit(current_user, params[:id])
-      else
-        gw.find_authorized_model_for_view(current_user, params[:id])
-      end
-  rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.no_permission")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
+    if action_requires_edit_permission?
+      presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
+      interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+        user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+    else
+      presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
+      interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
+        user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+    end
+
+    interactor.call(params[:id])
   end
 
   def action_requires_edit_permission?
@@ -206,40 +186,6 @@ class AgriculturalTasksController < ApplicationController
     return filter if admin_user? && allowed_filters.include?(filter)
 
     admin_user? ? "all" : "user"
-  end
-
-  def agricultural_tasks_for_admin(filter, base_scope = nil)
-    base_scope ||= AgriculturalTask.all
-    case filter
-    when "reference"
-      base_scope.where(is_reference: true)
-    when "all"
-      base_scope.merge(Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.visible_records(current_user))
-    else
-      base_scope.merge(Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.default.user_owned_non_reference_records(current_user))
-    end
-  end
-
-  def apply_user_filter(scope, filter)
-    case filter
-    when "reference"
-      scope.where(is_reference: true)
-    when "user"
-      scope.where(is_reference: false)
-    else
-      scope
-    end
-  end
-
-  def apply_search(scope, term)
-    return scope if term.blank?
-
-    sanitized = ActiveRecord::Base.sanitize_sql_like(term)
-    query = "%#{sanitized}%"
-    scope.where(
-      "agricultural_tasks.name LIKE :query OR COALESCE(agricultural_tasks.description, '') LIKE :query",
-      query: query
-    )
   end
 
   def normalize_required_tools(value)
@@ -406,11 +352,4 @@ class AgriculturalTasksController < ApplicationController
 
   private
 
-  def agricultural_task_gateway
-    @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-  end
 end

@@ -54,7 +54,7 @@ class Adapters::CultivationPlan::CropTaskScheduleBlueprintGatewayTest < ActiveSu
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: {}, result: result)
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
     ::Adapters::CultivationPlan::CropTaskScheduleBlueprintGateway.new(ctx).copy_for_user_crops
@@ -114,7 +114,7 @@ class Adapters::CultivationPlan::CropTaskScheduleBlueprintGatewayTest < ActiveSu
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(user: user, session_data: {}, result: result)
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
     gw = ::Adapters::CultivationPlan::CropTaskScheduleBlueprintGateway

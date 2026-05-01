@@ -43,11 +43,12 @@ module Adapters
         end
 
         def format_for_agrr(weather_data_dtos:, weather_location:)
+          wl = weather_location
           {
-            "latitude" => weather_location.latitude.to_f,
-            "longitude" => weather_location.longitude.to_f,
-            "elevation" => (weather_location.elevation || 0.0).to_f,
-            "timezone" => weather_location.timezone,
+            "latitude" => wl.latitude.to_f,
+            "longitude" => wl.longitude.to_f,
+            "elevation" => (wl.elevation || 0.0).to_f,
+            "timezone" => wl.timezone,
             "data" => weather_data_dtos.map do |dto|
               {
                 "time" => dto.date.to_s,
@@ -109,26 +110,32 @@ module Adapters
           WeatherDatum.where(weather_location_id: weather_location_id).maximum(:date)
         end
 
-        # WeatherLocation 検索
+        # @return [Domain::WeatherData::Dtos::WeatherLocationDto, nil]
         def find_weather_location_by_coordinates(latitude:, longitude:)
-          ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+          loc = ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
+          Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(loc)
         end
 
-        # WeatherLocation 検索/作成
+        # @return [Domain::WeatherData::Dtos::WeatherLocationDto]
         def find_or_create_weather_location(latitude:, longitude:, elevation: nil, timezone: nil)
-          ::WeatherLocation.find_or_create_by(
+          loc = ::WeatherLocation.find_or_create_by(
             latitude: latitude,
             longitude: longitude
           ) do |location|
             location.elevation = elevation
             location.timezone = timezone
           end
+          Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(loc)
         end
 
         def update_predicted_weather_data(weather_location_id:, payload:)
           wl = ::WeatherLocation.find(weather_location_id)
           wl.timezone ||= "UTC"
           wl.update!(predicted_weather_data: payload)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
       end
     end

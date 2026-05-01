@@ -33,12 +33,20 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
+        def list_index_for_user(user)
+          raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
-        def selectable_records(user)
-          raise NotImplementedError, "Subclasses must implement selectable_records"
+        def selectable_pest_ids(user)
+          raise NotImplementedError, "Subclasses must implement selectable_pest_ids"
+        end
+
+        def pest_selectable_by_user?(user, pest_id)
+          raise NotImplementedError, "Subclasses must implement pest_selectable_by_user?"
+        end
+
+        def list_selectable_pest_entities_recent_first(user)
+          raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
         end
 
         def find_authorized_for_view(user, id)
@@ -71,6 +79,48 @@ module Domain
 
         def soft_destroy_with_undo(user:, pest_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        end
+
+        # AR を Domain に持ち込まないためのマスタ系操作。
+
+        # 既存の Pest を crop に紐付ける（id ベース）。
+        # @return [Symbol] :linked / :already_linked / :missing
+        def link_pest_to_crop_id(crop_id:, pest_id:)
+          raise NotImplementedError, "Subclasses must implement link_pest_to_crop_id"
+        end
+
+        # 新規作成 + crop への紐付け（HTML/Masters 共用）。
+        # @return [Hash] { status: :created|:invalid, pest_record:, unassociated_pest_entities: [...] }
+        def create_pest_for_crop(user:, crop_id:, pest_attrs:, admin:)
+          raise NotImplementedError, "Subclasses must implement create_pest_for_crop"
+        end
+
+        # crop 配下の Pest を更新する。
+        # @return [Hash] { status: :updated|:invalid|:reference_flag_denied, pest_record: }
+        def update_pest_for_crop(crop_id:, pest_id:, pest_attrs:, admin:)
+          raise NotImplementedError, "Subclasses must implement update_pest_for_crop"
+        end
+
+        # crop 配下の Pest を取得する（HTML 編集等向け）。
+        # @return [Hash] { status: :found|:not_found, pest_record: }
+        def find_pest_in_crop(crop_id:, pest_id:)
+          raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
+        end
+
+        # 新規 Pest フォーム描画用の空インスタンスをビルド（nested 関連付き）。
+        # @return [Pest] 未保存の AR レコード（HTML form_with で使う）
+        def build_blank_pest_for_form
+          raise NotImplementedError, "Subclasses must implement build_blank_pest_for_form"
+        end
+
+        # PestCropAssociationService の置換。Pest 作成後に作物群と関連付け。
+        def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
+          raise NotImplementedError, "Subclasses must implement associate_crops_with_pest_id"
+        end
+
+        # Pest 更新後の作物関連付け差分更新。
+        def update_pest_crop_associations(pest_id:, crop_ids:, user:)
+          raise NotImplementedError, "Subclasses must implement update_pest_crop_associations"
         end
       end
     end

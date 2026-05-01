@@ -5,7 +5,7 @@ module Adapters
     class CropTaskScheduleBlueprintGateway
       def initialize(ctx)
         @ctx = ctx
-        @task_mapper = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
+        @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
       end
 
       def copy_for_user_crops

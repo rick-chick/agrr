@@ -22,12 +22,12 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
 
     gateway = ::Adapters::CultivationPlan::PlanCopyGateway.new(ctx)
     new_plan = gateway.copy_cultivation_plan(user_farm, [])
@@ -49,13 +49,13 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
-    crops = Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    crops = Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
     user_crop_id = ctx.ref_cpc_id_to_user_crop_id[cpc.id]
     assert user_crop_id.present?
 
@@ -113,15 +113,15 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Domain::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
     ctx.current_farm_region = user_farm.region
-    crops = Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
-    tasks = Domain::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(user_farm.region)
+    crops = Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(user_farm.region)
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
     assert_not_nil user_task
 
@@ -149,11 +149,12 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     new_year = Date.current.year + 1
-    new_plan = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
-      source_plan: source_plan,
+    new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
+      source_cultivation_plan_id: source_plan.id,
       new_year: new_year,
       user: user
     )
+    new_plan = ::CultivationPlan.find(new_entity.id)
 
     assert new_plan.persisted?
     assert new_plan.plan_type_private?
@@ -176,12 +177,13 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     sid = "ws-sess-#{SecureRandom.hex(8)}"
-    new_plan = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
-      source_plan: source_plan,
+    new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
+      source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 1,
       user: user,
       session_id: sid
     )
+    new_plan = ::CultivationPlan.find(new_entity.id)
 
     assert_equal sid, new_plan.session_id
   end
@@ -203,11 +205,12 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    new_plan = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
-      source_plan: source_plan,
+    new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
+      source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 2,
       user: user
     )
+    new_plan = ::CultivationPlan.find(new_entity.id)
 
     copied = ActiveStorage::Attachment.where(record: new_plan, name: "attachments")
     assert_equal 1, copied.count

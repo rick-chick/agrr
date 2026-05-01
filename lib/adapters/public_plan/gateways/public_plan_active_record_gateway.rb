@@ -9,7 +9,8 @@ module Adapters
         end
 
         def find_farm(farm_id)
-          ::Farm.find_by(id: farm_id)
+          f = ::Farm.find_by(id: farm_id)
+          f && Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(f)
         end
 
         def find_farm_size(farm_size_id)
@@ -25,21 +26,19 @@ module Adapters
         end
 
         def find_crops(crop_ids)
-          ::Crop.where(id: crop_ids).to_a
+          ::Crop.where(id: crop_ids).map { |c| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(c) }
         end
 
         def create(create_dto)
           # CultivationPlanCreatorを使って計画を作成（常に新しい計画を作成）
-          creator = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
-            farm: create_dto.farm,
+          creator = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(farm: create_dto.farm,
             total_area: create_dto.total_area,
             crops: create_dto.crops,
             user: create_dto.user,
             session_id: create_dto.session_id,
             plan_type: "public",
             planning_start_date: create_dto.planning_start_date,
-            planning_end_date: create_dto.planning_end_date
-          )
+            planning_end_date: create_dto.planning_end_date, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger)
 
           result = creator.call
 

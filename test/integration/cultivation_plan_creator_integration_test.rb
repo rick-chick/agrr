@@ -68,7 +68,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed: #{result.errors.join(', ')}"
@@ -77,17 +77,17 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
     assert_equal "public", result.cultivation_plan.plan_type, "Plan type should be public"
     assert_equal 1000.0, result.cultivation_plan.total_area, "Total area should be set correctly"
 
-    # CultivationPlanCropが正しく作成されているか確認
-    assert_equal crops.count, result.cultivation_plan.cultivation_plan_crops.count,
+    # CultivationPlanCropが正しく作成されているか確認（Interactor は Entity を返す）
+    assert_equal crops.count, result.cultivation_plan.cultivation_plan_crops_count,
       "Should create CultivationPlanCrop for each crop"
 
     # CultivationPlanFieldが作成されているか確認
-    assert result.cultivation_plan.cultivation_plan_fields.count > 0,
+    assert result.cultivation_plan.cultivation_plan_fields_count > 0,
       "Should create CultivationPlanFields"
 
     puts "✅ Successfully created CultivationPlan ID: #{result.cultivation_plan.id}"
-    puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops.count}"
-    puts "   - CultivationPlanFields: #{result.cultivation_plan.cultivation_plan_fields.count}"
+    puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops_count}"
+    puts "   - CultivationPlanFields: #{result.cultivation_plan.cultivation_plan_fields_count}"
   end
 
   test "should handle empty crops array gracefully" do
@@ -103,12 +103,12 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
     # 空の作物配列でも成功することを確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed with empty crops"
     assert_not_nil result.cultivation_plan, "CultivationPlan should be created even with empty crops"
-    assert_equal 0, result.cultivation_plan.cultivation_plan_crops.count,
+    assert_equal 0, result.cultivation_plan.cultivation_plan_crops_count,
       "Should have no CultivationPlanCrops with empty crops"
   end
 
@@ -127,7 +127,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed for private plan"
@@ -181,23 +181,24 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed with various area_per_unit values"
     assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
 
     # FieldsAllocatorが正しく動作しているか確認
-    assert result.cultivation_plan.cultivation_plan_fields.count > 0,
+    assert result.cultivation_plan.cultivation_plan_fields_count > 0,
       "Should create CultivationPlanFields with FieldsAllocator"
 
-    # 各圃場の面積が正しく設定されているか確認
-    total_field_area = result.cultivation_plan.cultivation_plan_fields.sum(:area)
+    # 各圃場の面積が正しく設定されているか確認（集計は AR 再読込）
+    plan_ar = ::CultivationPlan.find(result.cultivation_plan.id)
+    total_field_area = plan_ar.cultivation_plan_fields.sum(:area)
     assert_equal 2000.0, total_field_area, "Total field area should match total_area"
 
     puts "✅ FieldsAllocator test passed"
     puts "   - Total area: 2000.0"
-    puts "   - Fields created: #{result.cultivation_plan.cultivation_plan_fields.count}"
+    puts "   - Fields created: #{result.cultivation_plan.cultivation_plan_fields_count}"
     puts "   - Total field area: #{total_field_area}"
   end
 
@@ -252,7 +253,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
         planning_end_date: Date.current.end_of_year
       }
 
-      result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params).call
+      result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
 
       # 成功を確認
       assert result.success?, "CultivationPlanInitializeInteractor should succeed with fixed logic"
@@ -260,7 +261,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
 
       puts "✅ Original error scenario fixed successfully"
       puts "   - CultivationPlan ID: #{result.cultivation_plan.id}"
-      puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops.count}"
+      puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops_count}"
     else
       # 作物が見つからない場合でも、変換ロジックが正しく動作することを確認
       assert_equal 0, crops_old_logic.count, "Old logic should find 0 crops"

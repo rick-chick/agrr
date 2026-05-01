@@ -12,11 +12,11 @@ module Domain
   BENCHMARK_ENABLED = ENV.fetch("WEATHER_BENCHMARK", "false") != "false"
 
   def initialize(weather_location:, farm: nil,
-                 cultivation_plan_gateway: nil,
-                 farm_gateway: nil,
-                 weather_data_gateway: nil,
-                 prediction_gateway: nil,
-                 logger: Rails.logger)
+                 cultivation_plan_gateway:,
+                 farm_gateway:,
+                 weather_data_gateway:,
+                 prediction_gateway:,
+                 logger:)
     raise ArgumentError, "weather_location is required" unless weather_location
 
     if farm && farm.weather_location_id && farm.weather_location_id != weather_location.id
@@ -25,10 +25,10 @@ module Domain
 
     @weather_location = weather_location
     @farm = farm
-    @prediction_gateway = prediction_gateway || Domain::WeatherData::Gateways::PredictionGateway.default
-    @cultivation_plan_gateway = cultivation_plan_gateway || Domain::CultivationPlan::Gateways::CultivationPlanGateway.default
-    @farm_gateway = farm_gateway || Domain::Farm::Gateways::FarmGateway.default
-    @weather_data_gateway = weather_data_gateway || Domain::WeatherData::Gateways::WeatherDataGateway.default
+    @prediction_gateway = prediction_gateway
+    @cultivation_plan_gateway = cultivation_plan_gateway
+    @farm_gateway = farm_gateway
+    @weather_data_gateway = weather_data_gateway
     @logger = logger
   end
 

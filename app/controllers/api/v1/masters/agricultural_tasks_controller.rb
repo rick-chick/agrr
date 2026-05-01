@@ -13,12 +13,8 @@ module Api
         # GET /api/v1/masters/agricultural_tasks
         def index
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskListPresenter.new(view: self)
-          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(
-            output_port: presenter,
-            gateway: agricultural_task_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -26,12 +22,8 @@ module Api
         def show
           input_valid?(:show) || return
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDetailPresenter.new(view: self)
-          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(
-            output_port: presenter,
-            gateway: agricultural_task_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -43,12 +35,8 @@ module Api
             return
           end
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskCreatePresenter.new(view: self)
-          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(
-            output_port: presenter,
-            gateway: agricultural_task_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -57,12 +45,8 @@ module Api
           input_valid?(:update) || return
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskUpdatePresenter.new(view: self)
-          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(
-            output_port: presenter,
-            gateway: agricultural_task_gateway,
-            user_id: current_user.id,
-            logger: logger_gateway
-          )
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -70,13 +54,9 @@ module Api
         def destroy
           input_valid?(:destroy) || return
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDeletePresenter.new(view: self)
-          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(
-            output_port: presenter,
-            gateway: agricultural_task_gateway,
+          interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -90,9 +70,6 @@ module Api
 
         private
 
-        def agricultural_task_gateway
-          @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
-        end
 
         def input_valid?(action)
           case action
@@ -109,9 +86,6 @@ module Api
           input_dto.name.present?
         end
 
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-        end
       end
     end
   end

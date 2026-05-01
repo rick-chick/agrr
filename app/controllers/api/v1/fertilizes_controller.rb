@@ -242,26 +242,21 @@ module Api
       end
 
       def set_fertilize
-        @fertilize =
-          begin
-            Domain::Fertilize::Gateways::FertilizeGateway.default.find_authorized_model_for_edit(current_user, params[:id])
-          rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
-            nil
-          end
+        presenter = Presenters::Api::Fertilize::FertilizeLoadForEditPresenter.new(view: self)
+        interactor = Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+          user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
+        interactor.call(params[:id])
       end
 
       def set_interactors
-        gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
-        @create_interactor = Adapters::Fertilize::FertilizeCreateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
-        @update_interactor = Adapters::Fertilize::FertilizeUpdateForAiAdapter.new(user_id: current_user.id, gateway: gateway)
+        @create_interactor = Adapters::Fertilize::FertilizeCreateForAiAdapter.new(user_id: current_user.id)
+        @update_interactor = Adapters::Fertilize::FertilizeUpdateForAiAdapter.new(user_id: current_user.id)
       end
 
       def ai_gateway
-        Rails.configuration.x.fertilize_ai_gateway || default_ai_gateway
-      end
-
-      def default_ai_gateway
-        @default_ai_gateway ||= Adapters::Fertilize::Gateways::FertilizeCliGateway.new
+        Adapters::Fertilize::FertilizeAiGatewayResolver.new(
+          config_gateway: Rails.configuration.x.fertilize_ai_gateway
+        ).resolve
       end
     end
   end

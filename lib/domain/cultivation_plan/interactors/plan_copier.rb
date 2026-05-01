@@ -25,7 +25,7 @@ module Domain
         def call
           @gateway.within_transaction do
             new_plan = @gateway.copy_private_plan_for_year(
-              source_plan: @source_plan,
+              source_cultivation_plan_id: @source_plan.id,
               new_year: @new_year,
               user: @user,
               session_id: @session_id

@@ -2,7 +2,7 @@
 <%# 作物詳細画面 - パーシャル化により各セクションを分離 %>
 <% content_for :title, "#{@crop.name} - AGRR" %>
 
-<div class="crop-detail-card" id="<%= dom_id(@crop) %>" data-undo-delete-record>
+<div class="crop-detail-card" id="crop_<%= @crop.id %>" data-undo-delete-record>
   <%= render 'crops/header', crop: @crop %>
   
   <%= render 'crops/basic_info', crop: @crop %>

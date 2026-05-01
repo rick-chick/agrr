@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Domain::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copies continuous_cultivation rule when crop group matches reference plan" do
@@ -23,14 +23,14 @@ class Domain::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSuppor
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
 
-    rules = Domain::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(ref_farm.region)
+    rules = Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(ref_farm.region)
     assert_equal 1, rules.size
     ur = user.interaction_rules.find_by(source_interaction_rule_id: ref_rule.id)
     assert_not_nil ur
@@ -54,23 +54,23 @@ class Domain::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSuppor
       region: "jp"
     )
 
-    ctx1 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx1).copy_interaction_rules_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx1).copy_interaction_rules_for_region(ref_farm.region)
     existing = user.interaction_rules.find_by(source_interaction_rule_id: ref_rule.id)
 
     result2 = plan_save_result
-    ctx2 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx2).copy_interaction_rules_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx2).copy_interaction_rules_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)
     assert_skipped_exact result2,

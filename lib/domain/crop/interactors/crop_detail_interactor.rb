@@ -4,7 +4,7 @@ module Domain
   module Crop
     module Interactors
       class CropDetailInteractor < Domain::Crop::Ports::CropDetailInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
@@ -14,8 +14,7 @@ module Domain
 
         def call(crop_id)
           user = @user_lookup.find(@user_id)
-          crop_entity = @gateway.find_authorized_for_view(user, crop_id)
-          crop_detail_dto = Domain::Crop::Dtos::CropDetailOutputDto.new(crop: crop_entity)
+          crop_detail_dto = @gateway.find_authorized_crop_show_detail(user, crop_id)
           @output_port.on_success(crop_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise

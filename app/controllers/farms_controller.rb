@@ -2,7 +2,7 @@
 
 class FarmsController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_farm, only: [ :edit, :update, :destroy ]
+  before_action :load_farm_for_edit, only: [ :edit, :update, :destroy ]
 
   # GET /farms
   def index
@@ -11,13 +11,9 @@ class FarmsController < ApplicationController
         input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
         presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self, is_admin: admin_user?)
 
-        interactor = Domain::Farm::Interactors::FarmListInteractor.new(
-          output_port: presenter,
-          gateway: farm_gateway,
+        interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger)
 
         interactor.call(input_dto)
       rescue StandardError => e
@@ -45,13 +41,9 @@ class FarmsController < ApplicationController
       format.html do
         presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(
-          output_port: presenter,
-          gateway: farm_gateway,
+        interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -83,13 +75,9 @@ class FarmsController < ApplicationController
         @input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
         presenter = Presenters::Html::Farm::FarmCreateHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(
-          output_port: presenter,
-          gateway: farm_gateway,
+        interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
       rescue StandardError => e
@@ -105,13 +93,11 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        farm_entity = Domain::Farm::Gateways::FarmGateway.default.create_for_user(current_user, farm_params.to_h.symbolize_keys)
-        @farm = ::Farm.find(farm_entity.id)
-        Rails.logger.info "🎉 Farm created: ##{@farm.id} '#{@farm.name}' by user ##{current_user.id}"
-        render json: @farm, status: :created
-      rescue StandardError => e
-        Rails.logger.warn "⚠️  Failed to create farm: #{e.message}"
-        render json: { errors: [ e.message ] }, status: :unprocessable_entity
+        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(view: self)
+        input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
+        Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
+          user_id: current_user.id,
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
       end
     end
   end
@@ -123,13 +109,9 @@ class FarmsController < ApplicationController
         @input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
         presenter = Presenters::Html::Farm::FarmUpdateHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(
-          output_port: presenter,
-          gateway: farm_gateway,
+        interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: logger_gateway,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
       rescue StandardError => e
@@ -161,13 +143,9 @@ class FarmsController < ApplicationController
       format.html do
         presenter = Presenters::Html::Farm::FarmDestroyHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(
-          output_port: presenter,
-          gateway: farm_gateway,
+        interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: logger_gateway,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -227,12 +205,10 @@ class FarmsController < ApplicationController
 
   private
 
-  def set_farm
-    @farm = farm_gateway.find_authorized_model_for_edit(current_user, params[:id])
-  rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
+  def load_farm_for_edit
+    presenter = Presenters::Html::Farm::FarmLoadForEditHtmlPresenter.new(view: self)
+    Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   def farm_params
@@ -244,11 +220,4 @@ class FarmsController < ApplicationController
     params.require(:farm).permit(*permitted)
   end
 
-  def farm_gateway
-    @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-  end
 end

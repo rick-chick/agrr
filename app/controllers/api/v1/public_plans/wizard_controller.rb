@@ -13,9 +13,8 @@ module Api
 
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          farms = Domain::Farm::Gateways::FarmGateway.default.reference_records(region: region)
-          # 関連データを除外してJSONサイズを削減
-          render json: farms.as_json(only: [ :id, :name, :latitude, :longitude, :region ])
+          presenter = Presenters::Api::PublicPlans::ReferenceFarmsPresenter.new(view: self)
+          Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
         end
 
         def farm_sizes
@@ -26,9 +25,9 @@ module Api
           Rails.logger.info "🌱 [WizardController#crops] Called with farm_id: #{params[:farm_id]}"
           farm = Farm.find(params[:farm_id])
           Rails.logger.info "🌱 [WizardController#crops] Found farm: #{farm.id}, region: #{farm.region}"
-          crops = Domain::Crop::Gateways::CropGateway.default.reference_records(region: farm.region).order(:name)
-          Rails.logger.info "🌱 [WizardController#crops] Found #{crops.count} crops"
-          render json: crops
+          presenter = Presenters::Api::PublicPlans::ReferenceCropsPresenter.new(view: self)
+          Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: farm.region)
+          Rails.logger.info "🌱 [WizardController#crops] Rendered reference crops"
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]} - #{e.message}"
           render json: { error: I18n.t("api.errors.common.farm_not_found"), error_key: "api.errors.common.farm_not_found" }, status: :not_found
@@ -52,14 +51,9 @@ module Api
 
           # Presenter と Gateway を準備
           presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
-          gateway = Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new(logger: logger_gateway)
 
           # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
-          interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
-            output_port: presenter,
-            gateway: gateway,
-            logger: logger_gateway
-          )
+          interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(output_port: presenter, gateway: CompositionRoot.public_plan_gateway, logger: CompositionRoot.logger)
 
           interactor.call(input_dto)
         end
@@ -159,11 +153,6 @@ module Api
           job_instances
         end
 
-        private
-
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-        end
       end
     end
   end

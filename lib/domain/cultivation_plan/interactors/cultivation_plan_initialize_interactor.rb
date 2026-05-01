@@ -12,8 +12,8 @@ module Domain
           end
         end
 
-        def initialize(farm:, total_area:, crops:, user: nil, session_id: nil, plan_type: "public", plan_year: nil, plan_name: nil, planning_start_date: nil, planning_end_date: nil, gateway: nil,
-                       logger: Rails.logger)
+        def initialize(farm:, total_area:, crops:, user: nil, session_id: nil, plan_type: "public", plan_year: nil, plan_name: nil, planning_start_date: nil, planning_end_date: nil, gateway:,
+                       logger:)
           @farm = farm
           @total_area = total_area
           @crops = crops
@@ -24,7 +24,7 @@ module Domain
           @plan_name = plan_name
           @planning_start_date = planning_start_date
           @planning_end_date = planning_end_date
-          @gateway = gateway || Domain::CultivationPlan::Gateways::CultivationPlanGateway.default
+          @gateway = gateway
           @logger = logger
         end
 

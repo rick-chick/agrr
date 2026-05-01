@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Domain::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copies reference pesticide when crop and pest mappings exist" do
@@ -29,15 +29,15 @@ class Domain::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::Tes
     )
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
 
-    list = Domain::CultivationPlan::Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(ref_farm.region)
+    list = Adapters::CultivationPlan::Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(ref_farm.region)
     assert(list.any? { |p| p.source_pesticide_id == ref_pesticide.id })
     user_pz = user.pesticides.find_by(source_pesticide_id: ref_pesticide.id)
     assert_not_nil user_pz
@@ -67,14 +67,14 @@ class Domain::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::Tes
     )
 
     run_copy = lambda do |res|
-      c = Domain::CultivationPlan::PlanSaveContext.new(
+      c = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
         user: user,
         session_data: { plan_id: plan.id },
         result: res
       )
-      Domain::CultivationPlan::Mappers::CropMapper.new(c).create_user_crops_from_plan
-      Domain::CultivationPlan::Mappers::PestMapper.new(c).copy_pests_for_region(ref_farm.region)
-      Domain::CultivationPlan::Mappers::PesticideMapper.new(c).copy_pesticides_for_region(ref_farm.region)
+      Adapters::CultivationPlan::Mappers::CropMapper.new(c).create_user_crops_from_plan
+      Adapters::CultivationPlan::Mappers::PestMapper.new(c).copy_pests_for_region(ref_farm.region)
+      Adapters::CultivationPlan::Mappers::PesticideMapper.new(c).copy_pesticides_for_region(ref_farm.region)
     end
 
     run_copy.call(plan_save_result)

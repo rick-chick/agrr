@@ -12,10 +12,10 @@ module Domain
         class TemplateMissingError < Error; end
 
         def initialize(
-          progress_gateway: Domain::AgriculturalTask::Gateways::AgrrProgressGateway.default,
-          task_schedule_gateway: Domain::AgriculturalTask::Gateways::TaskScheduleGateway.default,
-          clock: Time.zone,
-          cultivation_plan_gateway: Domain::CultivationPlan::Gateways::CultivationPlanGateway.default
+          progress_gateway:,
+          task_schedule_gateway:,
+          clock:,
+          cultivation_plan_gateway:
         )
           @progress_gateway = progress_gateway
           @task_schedule_gateway = task_schedule_gateway
@@ -24,7 +24,8 @@ module Domain
         end
 
         def generate!(cultivation_plan_id:)
-          plan = @cultivation_plan_gateway.find_with_field_cultivations_for_task_schedule(cultivation_plan_id)
+          ctx = @cultivation_plan_gateway.find_with_field_cultivations_for_task_schedule(cultivation_plan_id)
+          plan = ctx.plan
 
           unless plan.predicted_weather_data.present?
             raise WeatherDataMissingError, "CultivationPlan##{plan.id} に気象予測データが存在しません"
@@ -33,7 +34,7 @@ module Domain
           blueprint_cache = {}
 
           @cultivation_plan_gateway.within_transaction do
-            plan.field_cultivations.find_each do |field_cultivation|
+            plan.field_cultivations.each do |field_cultivation|
               generate_for_field(plan, field_cultivation, blueprint_cache)
             end
           end
@@ -44,7 +45,7 @@ module Domain
         attr_reader :progress_gateway, :task_schedule_gateway, :clock, :cultivation_plan_gateway
 
         def generate_for_field(plan, field_cultivation, blueprint_cache)
-          crop = field_cultivation.cultivation_plan_crop&.crop
+          crop = field_cultivation.crop
           return unless crop
 
           blueprints = blueprints_for(crop, blueprint_cache)
@@ -60,13 +61,8 @@ module Domain
           agricultural_tasks_lookup = index_agricultural_tasks(crop)
 
           start_date = field_cultivation.start_date || plan.calculated_planning_start_date
-          filtered_weather_data = filtered_weather_data(plan.predicted_weather_data, start_date)
-
-          progress_data = progress_gateway.calculate_progress(
-            crop: crop,
-            start_date: start_date,
-            weather_data: filtered_weather_data
-          )
+          filtered_weather = filtered_weather_data(plan.predicted_weather_data, start_date)
+          progress_data = progress_for_crop(crop, start_date, filtered_weather)
 
           progress_records = Array(progress_data["progress_records"])
           filtered_records = if start_date.present?
@@ -86,10 +82,9 @@ module Domain
             plan: plan,
             field_cultivation: field_cultivation,
             category: "general"
-          ) do |schedule|
-            general_blueprints.each do |blueprint|
-              build_task_from_blueprint(
-                schedule: schedule,
+          ) do
+            general_blueprints.map do |blueprint|
+              item_attributes_for_blueprint(
                 blueprint: blueprint,
                 agricultural_tasks_lookup: agricultural_tasks_lookup,
                 progress_records: progress_records,
@@ -103,10 +98,9 @@ module Domain
               plan: plan,
               field_cultivation: field_cultivation,
               category: "fertilizer"
-            ) do |schedule|
-              fertilizer_blueprints.each do |blueprint|
-                build_task_from_blueprint(
-                  schedule: schedule,
+            ) do
+              fertilizer_blueprints.map do |blueprint|
+                item_attributes_for_blueprint(
                   blueprint: blueprint,
                   agricultural_tasks_lookup: agricultural_tasks_lookup,
                   progress_records: progress_records,
@@ -119,9 +113,17 @@ module Domain
           end
         end
 
+        def progress_for_crop(crop, start_date, weather_data)
+          progress_gateway.calculate_progress(
+            crop: crop,
+            start_date: start_date,
+            weather_data: weather_data
+          )
+        end
+
         def index_agricultural_tasks(crop)
           lookup = {}
-          crop.crop_task_templates.includes(:agricultural_task).each do |template|
+          crop.crop_task_templates.each do |template|
             task = template.agricultural_task
             if task
               lookup[task.id] = task
@@ -135,9 +137,6 @@ module Domain
           return cache[crop.id] if cache.key?(crop.id)
 
           cache[crop.id] = crop.crop_task_schedule_blueprints
-                               .includes(:agricultural_task)
-                               .ordered
-                               .to_a
         end
 
         def partition_blueprints(blueprints)
@@ -157,7 +156,7 @@ module Domain
           [ general, fertilizer ]
         end
 
-        def build_task_from_blueprint(schedule:, blueprint:, agricultural_tasks_lookup:, progress_records:, fallback_start_date:)
+        def item_attributes_for_blueprint(blueprint:, agricultural_tasks_lookup:, progress_records:, fallback_start_date:)
           gdd_trigger = blueprint.gdd_trigger
           if gdd_trigger.nil?
             raise GddTriggerMissingError, "GDDトリガーが設定されていません"
@@ -165,9 +164,9 @@ module Domain
 
           task = find_agricultural_task_for_blueprint(blueprint, agricultural_tasks_lookup)
 
-          schedule.task_schedule_items.build(
+          {
             task_type: blueprint.task_type,
-            agricultural_task: task,
+            agricultural_task_id: task&.id,
             name: name_for_blueprint(blueprint, task),
             description: blueprint.description.presence || task&.description,
             stage_name: blueprint.stage_name,
@@ -177,11 +176,12 @@ module Domain
             scheduled_date: date_for_gdd(progress_records, gdd_trigger, fallback_start_date),
             priority: blueprint.priority,
             source: blueprint.source,
+            status: ::TaskScheduleItem::STATUSES[:planned],
             weather_dependency: blueprint.weather_dependency || task&.weather_dependency,
             time_per_sqm: blueprint.time_per_sqm || task&.time_per_sqm,
             amount: blueprint.amount,
             amount_unit: blueprint.amount_unit || (blueprint.amount.present? ? "g/m2" : nil)
-          )
+          }
         end
 
         def find_agricultural_task_for_blueprint(blueprint, lookup)
@@ -190,7 +190,7 @@ module Domain
 
         def name_for_blueprint(blueprint, task)
           # 関連作業が設定されている場合は、その名前を優先
-          return task.name if task&.name.present?
+          return task.name if task && task.name.present?
           # 関連作業が未設定の場合、agrrが返した作業名（description）を優先的に使用
           # agrrが返したnameを優先し、stage_nameは使用しない
           return blueprint.description if blueprint.description.present?
@@ -215,14 +215,14 @@ module Domain
         end
 
         def create_schedule!(plan:, field_cultivation:, category:)
+          items = yield
           task_schedule_gateway.replace_schedule_for_field_category!(
             cultivation_plan_id: plan.id,
             field_cultivation_id: field_cultivation.id,
             category: category,
-            generated_at: clock.now
-          ) do |schedule|
-            yield schedule
-          end
+            generated_at: clock.now,
+            items: items
+          )
         end
 
         def date_for_gdd(progress_records, target_gdd, fallback_date)

@@ -40,6 +40,7 @@ module Adapters
         end
 
         def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {})
+          ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(actor)
           ActiveRecord::Base.transaction do
             snapshot = ::DeletionUndo::SnapshotBuilder.new(record).build
 
@@ -48,7 +49,7 @@ module Adapters
               resource_id: record.id.to_s,
               snapshot: snapshot,
               metadata: build_metadata(record, toast_message, auto_hide_after, metadata),
-              deleted_by: actor,
+              deleted_by: ar_actor,
               expires_at: Time.current + default_ttl
             )
 

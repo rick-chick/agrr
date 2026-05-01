@@ -38,9 +38,10 @@ module Api
 
         def get_available_crops
           region = @cultivation_plan.farm&.region
-          Domain::Crop::Gateways::CropGateway.default
-            .reference_records(region: region)
-            .order(:name)
+          presenter = Presenters::Api::PublicPlans::AvailableCropsPresenter.new(view: self)
+          Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: region)
+
+          @available_crops || []
         end
       end
     end

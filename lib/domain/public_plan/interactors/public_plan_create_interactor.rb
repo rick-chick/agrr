@@ -6,8 +6,8 @@ module Domain
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
         def initialize(output_port:, gateway:, logger:)
           @output_port = output_port
-          @gateway = gateway
           @logger = logger
+          @gateway = gateway
         end
 
         def call(input_dto)

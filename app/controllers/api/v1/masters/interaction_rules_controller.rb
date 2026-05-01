@@ -13,26 +13,26 @@ module Api
         # GET /api/v1/masters/interaction_rules
         def index
           presenter = Presenters::Api::InteractionRule::InteractionRuleListPresenter.new(view: self)
-          interactor = Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
+          Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
             output_port: presenter,
-            gateway: interaction_rule_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
-          )
-          interactor.call
+            gateway: interaction_rule_gateway,
+            logger: logger_adapter,
+            user_lookup: user_lookup_adapter
+          ).call
         end
 
         # GET /api/v1/masters/interaction_rules/:id
         def show
           input_valid?(:show) || return
           presenter = Presenters::Api::InteractionRule::InteractionRuleDetailPresenter.new(view: self)
-          interactor = Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
+          Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
             output_port: presenter,
-            gateway: interaction_rule_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
-          )
-          interactor.call(params[:id])
+            gateway: interaction_rule_gateway,
+            logger: logger_adapter,
+            user_lookup: user_lookup_adapter
+          ).call(params[:id])
         end
 
         # POST /api/v1/masters/interaction_rules
@@ -43,13 +43,13 @@ module Api
             return
           end
           presenter = Presenters::Api::InteractionRule::InteractionRuleCreatePresenter.new(view: self)
-          interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
+          Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
             output_port: presenter,
-            gateway: interaction_rule_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
-          )
-          interactor.call(input_dto)
+            gateway: interaction_rule_gateway,
+            logger: logger_adapter,
+            user_lookup: user_lookup_adapter
+          ).call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/interaction_rules/:id
@@ -57,27 +57,27 @@ module Api
           input_valid?(:update) || return
           input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::InteractionRule::InteractionRuleUpdatePresenter.new(view: self)
-          interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
+          Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
             output_port: presenter,
-            gateway: interaction_rule_gateway,
             user_id: current_user.id,
-            logger: logger_gateway
-          )
-          interactor.call(input_dto)
+            gateway: interaction_rule_gateway,
+            logger: logger_adapter,
+            user_lookup: user_lookup_adapter
+          ).call(input_dto)
         end
 
         # DELETE /api/v1/masters/interaction_rules/:id
         def destroy
           input_valid?(:destroy) || return
           presenter = Presenters::Api::InteractionRule::InteractionRuleDeletePresenter.new(view: self)
-          interactor = Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
+          Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
             output_port: presenter,
-            gateway: interaction_rule_gateway,
             user_id: current_user.id,
-            logger: logger_gateway,
-            translator: translator
-          )
-          interactor.call(params[:id])
+            gateway: interaction_rule_gateway,
+            logger: logger_adapter,
+            translator: translator,
+            user_lookup: user_lookup_adapter
+          ).call(params[:id])
         end
 
         def render_response(json:, status:)
@@ -107,10 +107,6 @@ module Api
 
         def valid_create_params?(input_dto)
           input_dto.rule_type.present? && input_dto.source_group.present? && input_dto.target_group.present? && !input_dto.impact_ratio.nil?
-        end
-
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

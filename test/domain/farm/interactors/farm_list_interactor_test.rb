@@ -15,7 +15,8 @@ module Domain
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             user_id: @user_id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new
           )
         end
 
@@ -49,7 +50,8 @@ module Domain
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             user_id: admin_user_id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            translator: Adapters::Translators::RailsTranslator.new
           )
 
           all_farms = [

@@ -12,7 +12,7 @@ module PlanSaveMapperTestSupport
   end
 
   def plan_save_result
-    Domain::CultivationPlan::Interactors::PlanSaveSession::Result.new
+    Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
   end
 
   def ensure_reference_farm(region: "jp")

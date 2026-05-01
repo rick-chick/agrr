@@ -17,7 +17,7 @@ module Api
         return unless enforce_rate_limit!
 
         presenter = self.class::PRESENTER_CLASS.new(view: self)
-        interactor = self.class::INTERACTOR_CLASS.new
+        interactor = self.class::INTERACTOR_CLASS.new(gateway: CompositionRoot.contact_message_gateway)
         interactor.call(contact_message_input, output_port: presenter)
       rescue StandardError => e
         log_unexpected_error(e)

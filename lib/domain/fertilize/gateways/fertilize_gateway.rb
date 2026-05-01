@@ -32,8 +32,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
+        def list_index_for_user(user)
+          raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
         def find_authorized_for_view(user, id)
@@ -62,10 +62,6 @@ module Domain
 
         def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
-        end
-
-        def list_from_relation(relation)
-          raise NotImplementedError, "Subclasses must implement list_from_relation"
         end
 
         def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after:, translator:)

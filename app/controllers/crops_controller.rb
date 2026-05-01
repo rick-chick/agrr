@@ -9,12 +9,8 @@ class CropsController < ApplicationController
   def index
     presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: self)
 
-    interactor = Domain::Crop::Interactors::CropListInteractor.new(
-      output_port: presenter,
-      gateway: crop_gateway,
-      user_id: current_user.id,
-      logger: logger_gateway
-    )
+    interactor = Domain::Crop::Interactors::CropListInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call
   rescue StandardError => e
@@ -24,12 +20,8 @@ class CropsController < ApplicationController
   # GET /crops/:id
   def show
     presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(view: self)
-    interactor = Domain::Crop::Interactors::CropDetailInteractor.new(
-      output_port: presenter,
-      gateway: crop_gateway,
-      user_id: current_user.id,
-      logger: logger_gateway
-    )
+    interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
@@ -61,12 +53,8 @@ class CropsController < ApplicationController
     @input_dto = Domain::Crop::Dtos::CropCreateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys })
     presenter = Presenters::Html::Crop::CropCreateHtmlPresenter.new(view: self)
 
-    interactor = Domain::Crop::Interactors::CropCreateInteractor.new(
-      output_port: presenter,
-      gateway: crop_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    )
+    interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   rescue StandardError => e
@@ -85,12 +73,8 @@ class CropsController < ApplicationController
     @input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys }, params[:id])
     presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: self)
 
-    interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(
-      output_port: presenter,
-      gateway: crop_gateway,
-      user_id: current_user.id,
-      logger: logger_gateway
-    )
+    interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   rescue StandardError => e
@@ -105,13 +89,9 @@ class CropsController < ApplicationController
     respond_to do |format|
       format.html do
         presenter = Presenters::Html::Crop::CropDestroyHtmlPresenter.new(view: self)
-        interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(
-          output_port: presenter,
-          gateway: crop_gateway,
+        interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: logger_gateway,
-          translator: translator
-        )
+          translator: translator, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
         redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
@@ -217,15 +197,10 @@ class CropsController < ApplicationController
   def set_crop
     action = params[:action].to_sym
     for_edit = action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
-    @crop = Domain::Crop::Gateways::CropGateway.default.find_authorized_model_for_html(
-      current_user,
-      params[:id],
-      for_edit: for_edit
-    )
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
+    presenter = Presenters::Html::Crop::CropLoadForHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+    interactor = Domain::Crop::Interactors::CropLoadAuthorizedModelForHtmlInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:id], for_edit: for_edit)
   end
 
   def crop_params
@@ -352,15 +327,4 @@ class CropsController < ApplicationController
     raise
   end
 
-  def crop_gateway
-    @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
-  end
-
-  def deletion_undo_gateway
-    @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-  end
 end

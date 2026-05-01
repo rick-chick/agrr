@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Domain::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copies reference pest linked to plan crops and maps ids" do
@@ -20,14 +20,14 @@ class Domain::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCase
     CropPest.create!(crop: ref_crop, pest: ref_pest)
 
     result = plan_save_result
-    ctx = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
 
-    pests = Domain::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
+    pests = Adapters::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
     assert_equal 1, pests.size
     user_pest = user.pests.find_by(source_pest_id: ref_pest.id)
     assert_not_nil user_pest
@@ -48,23 +48,23 @@ class Domain::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCase
     )
     CropPest.create!(crop: ref_crop, pest: ref_pest)
 
-    ctx1 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::PestMapper.new(ctx1).copy_pests_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::PestMapper.new(ctx1).copy_pests_for_region(ref_farm.region)
     existing = user.pests.find_by(source_pest_id: ref_pest.id)
 
     result2 = plan_save_result
-    ctx2 = Domain::CultivationPlan::PlanSaveContext.new(
+    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Domain::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
-    Domain::CultivationPlan::Mappers::PestMapper.new(ctx2).copy_pests_for_region(ref_farm.region)
+    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    Adapters::CultivationPlan::Mappers::PestMapper.new(ctx2).copy_pests_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)
     assert_skipped_exact result2,

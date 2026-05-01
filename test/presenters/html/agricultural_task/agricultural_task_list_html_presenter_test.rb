@@ -11,16 +11,8 @@ class AgriculturalTaskListHtmlPresenterTest < ActiveSupport::TestCase
 
     task_entity1 = mock
     task_entity2 = mock
-    task_model1 = mock
-    task_model2 = mock
-    task_entity1.expects(:id).returns(1)
-    task_entity2.expects(:id).returns(2)
-    gw = mock
-    gw.expects(:find_model).with(1).returns(task_model1)
-    gw.expects(:find_model).with(2).returns(task_model2)
-    Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway.stubs(:default).returns(gw)
 
-    view_mock.expects(:instance_variable_set).with(:@agricultural_tasks, [ task_model1, task_model2 ])
+    view_mock.expects(:instance_variable_set).with(:@agricultural_tasks, [ task_entity1, task_entity2 ])
     view_mock.expects(:instance_variable_set).with(:@query, "")
     view_mock.expects(:instance_variable_set).with(:@selected_filter, "")
     view_mock.expects(:instance_variable_set).with(:@reference_farms, [])

@@ -18,7 +18,7 @@ module Api
         fake_success_dto = OpenStruct.new(contact_message: fake_contact_message)
         fake_result = OpenStruct.new(success?: true, contact_message: fake_contact_message)
         fake_class = Class.new do
-          define_method(:initialize) { }
+          define_method(:initialize) { |**_| }
           define_method(:call) do |_input, output_port: nil|
             output_port&.on_success(fake_success_dto)
             fake_result
@@ -52,7 +52,7 @@ module Api
         fake_failure_dto = OpenStruct.new(errors: fake_errors)
         fake_result = OpenStruct.new(success?: false, errors: fake_errors)
         fake_class = Class.new do
-          define_method(:initialize) { }
+          define_method(:initialize) { |**_| }
           define_method(:call) do |_input, output_port: nil|
             output_port&.on_failure(fake_failure_dto)
             fake_result
@@ -127,7 +127,7 @@ module Api
 
       test "returns internal server error when unexpected exception bubbles up" do
         failing_interactor = Class.new do
-          define_method(:initialize) { }
+          define_method(:initialize) { |**_| }
           define_method(:call) { |_input, **| raise "boom" }
         end
 

@@ -36,9 +36,24 @@ module Domain
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
-        # Presenter 等で AR を再取得するための生 lookup（認可なし）
-        def find_model(id)
-          raise NotImplementedError, "Subclasses must implement find_model"
+        def find_authorized_for_view(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
+        end
+
+        def find_authorized_for_edit(user, id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
+        end
+
+        def create_for_user(user, farm_id, attrs)
+          raise NotImplementedError, "Subclasses must implement create_for_user"
+        end
+
+        def update_for_user(user, id, attrs)
+          raise NotImplementedError, "Subclasses must implement update_for_user"
+        end
+
+        def soft_destroy_with_undo(user:, field_id:, auto_hide_after: 5000, translator: nil)
+          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
       end
     end

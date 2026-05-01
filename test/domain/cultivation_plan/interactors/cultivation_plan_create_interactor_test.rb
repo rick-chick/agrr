@@ -38,6 +38,7 @@ module Domain
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
           @mock_gateway.expects(:find_crops).with([ crop.id ], @user).returns([ crop ])
           @mock_gateway.expects(:find_existing).with(farm, @user).returns(nil)
+          @mock_gateway.expects(:total_field_area_for_farm).with(farm.id, @user).returns(1000.0)
           @mock_gateway.expects(:create).returns(mock_result)
 
           @mock_output_port.expects(:on_success).with(instance_of(Domain::CultivationPlan::Dtos::CultivationPlanCreateSuccessDto))
@@ -109,6 +110,7 @@ module Domain
           @mock_gateway.expects(:find_farm).with(farm.id, @user).returns(farm)
           @mock_gateway.expects(:find_crops).with([ crop.id ], @user).returns([ crop ])
           @mock_gateway.expects(:find_existing).with(farm, @user).returns(nil)
+          @mock_gateway.expects(:total_field_area_for_farm).with(farm.id, @user).returns(1000.0)
           @mock_gateway.expects(:create).returns(mock_result)
           @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 

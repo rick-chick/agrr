@@ -8,17 +8,18 @@ module Adapters
     module Gateways
       class FieldCultivationClimateGateway < Domain::FieldCultivation::Gateways::FieldCultivationGateway
         include ::FieldCultivationClimate::MockProgressRecords
-        def initialize(current_user:, logger:, translator: nil, use_mock_progress: nil,
-                       progress_gateway_factory: nil,
-                       weather_prediction_service_factory: nil, weather_data_gateway: nil)
+        def initialize(current_user:, logger:, translator:, use_mock_progress: nil,
+                       progress_gateway_factory:,
+                       weather_prediction_service_factory:, weather_data_gateway:,
+                       cultivation_plan_gateway:)
           @current_user = current_user
           @logger = logger
-          @translator = translator || Adapters::Translators::RailsTranslator.new
+          @translator = translator
           @use_mock_progress = use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
-          @progress_gateway_factory = progress_gateway_factory || -> { Agrr::ProgressGateway.new }
-          @weather_prediction_service_factory = weather_prediction_service_factory ||
-            ->(weather_location, farm) { Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location, farm: farm) }
-          @weather_data_gateway = weather_data_gateway || Adapters::WeatherData::WeatherDataGatewayFactory.resolve
+          @progress_gateway_factory = progress_gateway_factory
+          @weather_prediction_service_factory = weather_prediction_service_factory
+          @weather_data_gateway = weather_data_gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
         end
 
         def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
@@ -68,9 +69,68 @@ module Adapters
           raise ActiveRecord::RecordNotFound
         end
 
+        def climate_data_fallback_dto(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
+          field_cultivation = find_authorized_field_cultivation(field_cultivation_id)
+          plan = field_cultivation.cultivation_plan
+          farm = plan.farm
+          weather_location = farm.weather_location
+
+          ensure_weather_location!(farm)
+          ensure_cultivation_period!(field_cultivation)
+
+          crop = fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
+          raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
+
+          weather_payload = fallback_get_weather_data_for_period(
+            weather_location,
+            field_cultivation.start_date,
+            field_cultivation.completion_date,
+            farm.latitude,
+            farm.longitude,
+            display_start_date,
+            display_end_date
+          )
+
+          unless Domain::Shared::ValidationHelpers.present?(plan.predicted_weather_data)
+            @cultivation_plan_gateway.update_predicted_weather_data(plan.id, weather_payload)
+            @logger.info "💾 [FieldCultivationClimateGateway] Saved prediction data to CultivationPlan##{plan.id}"
+          end
+
+          weather_data_records = extract_actual_weather_data(weather_payload, field_cultivation.start_date, field_cultivation.completion_date)
+          temp_req = crop.crop_stages.order(:order).first&.temperature_requirement
+          progress_result = @progress_gateway_factory.call.calculate_progress(
+            crop: crop,
+            start_date: field_cultivation.start_date,
+            weather_data: weather_payload
+          )
+          daily_gdd, baseline_gdd, filtered_records, progress_records = build_daily_gdd(
+            progress_result,
+            weather_data_records,
+            field_cultivation,
+            temp_req&.base_temperature || 10.0
+          )
+
+          build_success_dto(
+            field_cultivation: field_cultivation,
+            farm: farm,
+            weather_data_records: weather_data_records,
+            temp_req: temp_req,
+            optimal_temperature_range: build_optimal_temperature_range(temp_req),
+            daily_gdd: daily_gdd,
+            progress_result: progress_result,
+            stages: build_stage_requirements(crop),
+            baseline_gdd: baseline_gdd,
+            filtered_records: filtered_records,
+            progress_records: progress_records
+          )
+        rescue PolicyPermissionDenied
+          raise ActiveRecord::RecordNotFound
+        end
+
+        private
 
         def build_success_dto(field_cultivation:, farm:, temp_req: nil, weather_data_records: nil, optimal_temperature_range:, daily_gdd:, progress_result:, stages:, baseline_gdd:, filtered_records:, progress_records:)
-    weather_data_records ||= []
+          weather_data_records ||= []
           Domain::FieldCultivation::Dtos::FieldCultivationClimateDataSuccessDto.new(
             field_cultivation: {
               id: field_cultivation.id,
@@ -140,8 +200,85 @@ module Adapters
             ::Crop.find_by(id: plan_crop.crop_id)
           else
             Domain::Crop::Gateways::CropGateway.default
-              .user_owned_non_reference_records(@current_user)
-              .find_by(id: plan_crop.crop_id)
+              .find_user_non_reference_crop_record(@current_user, plan_crop.crop_id)
+          end
+        end
+
+        def fallback_get_weather_data_for_period(weather_location, start_date, end_date, latitude, longitude, display_start_date, display_end_date)
+          training_start_date = Date.current - 20.years
+          training_end_date = Date.current - 2.days
+          training_data = @weather_data_gateway.weather_data_for_period(
+            weather_location_id: weather_location.id,
+            start_date: training_start_date,
+            end_date: training_end_date
+          )
+
+          training_formatted = {
+            "latitude" => latitude,
+            "longitude" => longitude,
+            "timezone" => weather_location.timezone || "Asia/Tokyo",
+            "data" => training_data.filter_map do |datum|
+              next if datum.temperature_max.nil? || datum.temperature_min.nil?
+              temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
+              {
+                "time" => datum.date.to_s,
+                "temperature_2m_max" => datum.temperature_max.to_f,
+                "temperature_2m_min" => datum.temperature_min.to_f,
+                "temperature_2m_mean" => temp_mean.to_f,
+                "precipitation_sum" => (datum.precipitation || 0.0).to_f
+              }
+            end
+          }
+
+          prediction_days = (end_date - training_end_date).to_i
+
+          if prediction_days > 0
+            future = Domain::WeatherData::Gateways::PredictionGateway.default.predict(
+              historical_data: training_formatted,
+              days: prediction_days,
+              model: "lightgbm"
+            )
+
+            observed_start = display_start_date || Date.new(Date.current.year, 1, 1)
+            observed_end = display_end_date || training_end_date
+            observed_end = [ observed_end, Date.current - 1.day ].min
+
+            current_year_data = @weather_data_gateway.weather_data_for_period(
+              weather_location_id: weather_location.id,
+              start_date: observed_start,
+              end_date: observed_end
+            )
+
+            current_year_formatted = {
+              "latitude" => latitude,
+              "longitude" => longitude,
+              "timezone" => weather_location.timezone || "Asia/Tokyo",
+              "data" => current_year_data.filter_map do |datum|
+                next if datum.temperature_max.nil? || datum.temperature_min.nil?
+                temp_mean = datum.temperature_mean || (datum.temperature_max + datum.temperature_min) / 2.0
+                {
+                  "time" => datum.date.to_s,
+                  "temperature_2m_max" => datum.temperature_max,
+                  "temperature_2m_min" => datum.temperature_min,
+                  "temperature_2m_mean" => temp_mean,
+                  "precipitation_sum" => datum.precipitation || 0.0
+                }
+              end
+            }
+
+            merged_data = current_year_formatted["data"] + Domain::Shared::ValidationHelpers.to_array(future["data"])
+
+            {
+              "latitude" => latitude,
+              "longitude" => longitude,
+              "timezone" => weather_location.timezone || "Asia/Tokyo",
+              "data" => merged_data
+            }
+          else
+            @weather_data_gateway.format_for_agrr(
+              weather_data_dtos: @weather_data_gateway.weather_data_for_period(weather_location_id: weather_location.id, start_date:, end_date:),
+              weather_location: weather_location
+            )
           end
         end
 

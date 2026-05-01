@@ -4,7 +4,7 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleListInteractor < Domain::InteractionRule::Ports::InteractionRuleListInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
@@ -14,8 +14,7 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          visible_scope = @gateway.visible_records(user)
-          rules = @gateway.list(visible_scope)
+          rules = @gateway.list_index_for_user(user)
           reference_rules = rules.select(&:is_reference)
           interaction_rules = rules.reject(&:is_reference)
           @output_port.on_success(interaction_rules: interaction_rules, reference_rules: reference_rules)

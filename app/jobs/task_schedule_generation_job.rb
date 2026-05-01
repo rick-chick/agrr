@@ -56,7 +56,7 @@ class TaskScheduleGenerationJob < ApplicationJob
   private
 
   def task_schedule_generator
-    @task_schedule_generator ||= Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new
+    @task_schedule_generator ||= CompositionRoot.task_schedule_generate_interactor
   end
 
   def handle_failure(cultivation_plan, channel_class, error)

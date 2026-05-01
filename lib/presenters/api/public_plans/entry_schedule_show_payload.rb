@@ -38,7 +38,7 @@ module Presenters
           raise WeatherLocationMissingError if @farm.weather_location.blank?
 
           target_end = parse_prediction_end_date
-          service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: @farm.weather_location, farm: @farm)
+          service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: @farm.weather_location, farm: @farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
           cached = service.get_existing_prediction(target_end_date: target_end)
           payload_hash = if cached && cached[:data].is_a?(Hash)

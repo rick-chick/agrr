@@ -5,16 +5,13 @@ require "test_helper"
 class InteractionRuleListHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @interaction_rules and @reference_rules" do
+  test "on_success sets @interaction_rules and @reference_rules with entities" do
     view_mock = mock
     presenter = Presenters::Html::InteractionRule::InteractionRuleListHtmlPresenter.new(view: view_mock)
 
     rule = mock
-    rule.expects(:id).returns(1)
-    rule_model = mock
-    ::InteractionRule.expects(:find).with(1).returns(rule_model)
 
-    view_mock.expects(:instance_variable_set).with(:@interaction_rules, [ rule_model ])
+    view_mock.expects(:instance_variable_set).with(:@interaction_rules, [ rule ])
     view_mock.expects(:instance_variable_set).with(:@reference_rules, [])
 
     presenter.on_success({ interaction_rules: [ rule ], reference_rules: [] })

@@ -34,7 +34,7 @@ module Adapters
             user_id: create_input_dto.user_id,
             is_reference: create_input_dto.is_reference || false
           )
-          raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.save
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
@@ -46,20 +46,22 @@ module Adapters
           attrs[:region] = update_input_dto.region if update_input_dto.region.present?
           attrs[:latitude] = update_input_dto.latitude if !update_input_dto.latitude.nil?
           attrs[:longitude] = update_input_dto.longitude if !update_input_dto.longitude.nil?
-          raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(attrs)
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(attrs)
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def destroy(farm_id)
           farm = ::Farm.find(farm_id)
           DeletionUndo::Manager.schedule(
             record: farm,
-            actor: farm.user,
+            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(farm.user),
             toast_message: @translator.t("farms.undo.toast", name: farm.display_name)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise StandardError, @translator.t("farms.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("farms.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message
         end
@@ -96,23 +98,20 @@ module Adapters
 
         def update_predicted_weather_data(farm_id, payload)
           ::Farm.find(farm_id).update!(predicted_weather_data: payload)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
 
-        def visible_records(user)
-          if user.admin?
-            ::Farm.all
-          else
-            ::Farm.where("is_reference = ? OR user_id = ?", true, user.id)
-          end
+        def list_reference_farms_for_region(region)
+          scope = ::Farm.reference
+          scope = scope.where(region: region) if region.present?
+          scope.map { |record| Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record) }
         end
 
         def user_owned_records(user)
           ::Farm.user_owned.by_user(user)
-        end
-
-        def reference_records(region: nil)
-          scope = ::Farm.reference
-          region ? scope.where(region: region) : scope
         end
 
         def find_authorized_model_for_view(user, id)
@@ -146,7 +145,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_create(user, attrs)
           farm = ::Farm.new(h)
-          raise StandardError, farm.errors.full_messages.join(", ") unless farm.save
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.save
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
@@ -162,7 +161,7 @@ module Adapters
             farm.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, farm.errors.full_messages.join(", ") unless farm.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(normalized)
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end

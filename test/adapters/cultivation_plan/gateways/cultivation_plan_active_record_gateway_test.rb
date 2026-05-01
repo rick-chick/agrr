@@ -39,7 +39,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
 
     assert_not_nil found_plan
     assert_equal existing_plan.id, found_plan.id
-    assert_instance_of ::CultivationPlan, found_plan
+    assert_instance_of Domain::CultivationPlan::Entities::CultivationPlanEntity, found_plan
   end
 
   test "should return nil when no existing plan found" do
@@ -60,7 +60,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_not_nil found_farm
     assert_equal farm.id, found_farm.id
     assert_equal farm.name, found_farm.name
-    assert_instance_of ::Farm, found_farm
+    assert_instance_of Domain::Farm::Entities::FarmEntity, found_farm
   end
 
   test "should return nil when farm not found" do

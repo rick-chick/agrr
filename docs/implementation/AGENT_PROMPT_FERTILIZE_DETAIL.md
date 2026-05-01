@@ -1,7 +1,6 @@
 # 肥料 詳細表示ルート実装（cursor-agent 用プロンプト）
 
 ## 参照
-- `docs/implementation/MASTER_MANAGEMENT_FRONTEND_TODO.md` の「2.3 肥料」「TODO 2」
 - 既存: crop-detail, pest-detail（LoadXxxDetailUseCase + XxxDetailPresenter + detail.view / component）
 - スキル: usecase-frontend, presenter-frontend, controller-frontend（`.cursor/skills/`）
 

@@ -1,9 +1,13 @@
-<%= form_with(model: interaction_rule, local: true) do |form| %>
-  <% if interaction_rule.errors.any? %>
+<%
+  form_url = @form.persisted? ? interaction_rule_path(@form) : interaction_rules_path
+  form_method = @form.persisted? ? :patch : :post
+%>
+<%= form_with(model: @form, url: form_url, method: form_method, local: true) do |form| %>
+  <% if @form.errors.any? %>
     <div class="alert alert-danger">
-      <h3><%= t('interaction_rules.form.errors.title', count: interaction_rule.errors.count) %></h3>
+      <h3><%= t('interaction_rules.form.errors.title', count: @form.errors.count) %></h3>
       <ul>
-        <% interaction_rule.errors.full_messages.each do |message| %>
+        <% @form.errors.full_messages.each do |message| %>
           <li><%= message %></li>
         <% end %>
       </ul>
@@ -62,23 +66,23 @@
       </div>
       <small class="form-text text-muted"><%= t('interaction_rules.form.is_reference_help') %></small>
     </div>
-    
+
     <div class="form-group">
       <%= form.label :region, t('interaction_rules.form.region_label'), class: "form-label" %>
-      <%= form.select :region, 
+      <%= form.select :region,
           options_for_select([
             [t('interaction_rules.form.region_jp'), 'jp'],
             [t('interaction_rules.form.region_us'), 'us'],
             [t('interaction_rules.form.region_in'), 'in']
-          ], interaction_rule.region), 
-          { include_blank: t('interaction_rules.form.region_blank') }, 
+          ], @form.region),
+          { include_blank: t('interaction_rules.form.region_blank') },
           { class: "form-control" } %>
       <small class="form-text text-muted"><%= t('interaction_rules.form.region_help') %></small>
     </div>
   <% end %>
 
   <div class="form-actions">
-    <%= form.submit t("interaction_rules.form.submit_#{interaction_rule.new_record? ? 'create' : 'update'}"), class: "btn btn-success" %>
+    <%= form.submit t("interaction_rules.form.submit_#{@form.new_record? ? 'create' : 'update'}"), class: "btn btn-success" %>
     <%= link_to t('interaction_rules.form.cancel'), interaction_rules_path, class: "btn btn-ghost" %>
   </div>
 <% end %>

@@ -4,12 +4,12 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
-        def initialize(output_port:, gateway:, user_id:, logger:, translator: nil, user_lookup: Domain::Shared::Ports::UserLookupPort.default)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
-          @translator = translator || Adapters::Translators::RailsTranslator.new
+          @translator = translator
           @user_lookup = user_lookup
         end
 
@@ -41,7 +41,7 @@ module Domain
           pest_entity = @gateway.update_for_user(user, input_dto.pest_id, attrs)
 
           unless input_dto.crop_ids.nil?
-            PestCropAssociationService.update_crop_associations_by_pest_id(pest_entity.id, input_dto.crop_ids, user: user)
+            @gateway.update_pest_crop_associations(pest_id: pest_entity.id, crop_ids: input_dto.crop_ids, user: user)
           end
 
           @logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"

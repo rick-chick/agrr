@@ -2,28 +2,20 @@
 
 class PesticidesController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_pesticide, only: [ :edit, :update, :destroy ]
+  before_action :load_pesticide_for_view, only: [ :edit, :update, :destroy ]
 
   # GET /pesticides
   def index
     presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideListInteractor.new(
-      output_port: presenter,
-      gateway: pesticide_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    ).call
+    Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id
   def show
     presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
-      output_port: presenter,
-      gateway: pesticide_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    ).call(params[:id])
+    Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
@@ -57,12 +49,8 @@ class PesticidesController < ApplicationController
     # 失敗時にフォーム再表示するために @pesticide をセット
     @pesticide = Pesticide.new(pesticide_params)
 
-    Domain::Pesticide::Interactors::PesticideCreateInteractor.new(
-      output_port: presenter,
-      gateway: pesticide_gateway,
-      user_id: current_user.id,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-    ).call(input_dto)
+    Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
@@ -83,12 +71,8 @@ class PesticidesController < ApplicationController
     # 失敗時にフォーム再表示するために @pesticide を更新
     @pesticide.assign_attributes(pesticide_params)
 
-    Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
-      output_port: presenter,
-      gateway: pesticide_gateway,
-      user_id: current_user.id,
-      logger: logger_gateway
-    ).call(input_dto)
+    Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
@@ -98,12 +82,9 @@ class PesticidesController < ApplicationController
     respond_to do |format|
       format.html do
         presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
-        Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
-          output_port: presenter,
-          gateway: pesticide_gateway,
+        Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-          translator: translator).call(params[:id])
+          translator: translator, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       rescue Domain::Shared::Policies::PolicyPermissionDenied
         redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
       end
@@ -129,12 +110,10 @@ class PesticidesController < ApplicationController
 
   private
 
-  def set_pesticide
-    @pesticide = Domain::Pesticide::Gateways::PesticideGateway.default.find_authorized_model_for_view(current_user, params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
+  def load_pesticide_for_view
+    presenter = Presenters::Html::Pesticide::PesticideLoadForViewHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   def load_crops_and_pests
@@ -177,13 +156,5 @@ class PesticidesController < ApplicationController
     permitted << :region if admin_user?
 
     params.require(:pesticide).permit(*permitted)
-  end
-
-  def pesticide_gateway
-    @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
-  end
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 end

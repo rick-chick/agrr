@@ -2,30 +2,22 @@
 
 class PestsController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_pest, only: [ :edit, :update, :destroy ]
+  before_action :load_pest_for_edit, only: [ :edit, :update, :destroy ]
 
   # GET /pests
   def index
     presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestListInteractor.new(
-      output_port: presenter,
-      gateway: pest_gateway,
+    Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      logger: logger_gateway,
-      translator: translator
-    ).call
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pests/:id
   def show
     presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestDetailInteractor.new(
-      output_port: presenter,
-      gateway: pest_gateway,
+    Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      logger: logger_gateway,
-      translator: translator
-    ).call(params[:id])
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   # GET /pests/new
@@ -49,13 +41,9 @@ class PestsController < ApplicationController
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] }
     )
     presenter = Presenters::Html::Pest::PestCreateHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestCreateInteractor.new(
-      output_port: presenter,
-      gateway: pest_gateway,
+    Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      logger: logger_gateway,
-      translator: translator
-    ).call(input_dto)
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue StandardError => e
     if e.message == I18n.t("pests.flash.reference_only_admin")
       redirect_to pests_path, alert: e.message
@@ -83,13 +71,9 @@ class PestsController < ApplicationController
       params[:id]
     )
     presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestUpdateInteractor.new(
-      output_port: presenter,
-      gateway: pest_gateway,
+    Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      logger: logger_gateway,
-      translator: translator
-    ).call(input_dto)
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue StandardError => e
     Rails.logger.error "PestsController#update error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
     @pest.assign_attributes(pest_params.to_h.symbolize_keys)
@@ -132,12 +116,10 @@ class PestsController < ApplicationController
     @translator ||= Adapters::Translators::RailsTranslator.new
   end
 
-  def set_pest
-    @pest = Domain::Pest::Gateways::PestGateway.default.find_authorized_model_for_edit(current_user, params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pests_path, alert: I18n.t("pests.flash.no_permission")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to pests_path, alert: I18n.t("pests.flash.not_found")
+  def load_pest_for_edit
+    presenter = Presenters::Html::Pest::PestLoadForEditHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   def pest_params
@@ -188,10 +170,6 @@ class PestsController < ApplicationController
     PestCropAssociationService.update_crop_associations(pest, crop_ids, user: current_user)
   end
 
-  def pest_gateway
-    @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new
-  end
-
   public
 
   # Presenter から呼ばれるため public
@@ -219,8 +197,4 @@ class PestsController < ApplicationController
   end
 
   private
-
-  def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-  end
 end

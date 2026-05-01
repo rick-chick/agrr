@@ -40,7 +40,11 @@ RSpec.describe Domain::FieldCultivation::Interactors::FieldCultivationClimateDat
 
       it "delivers the climate information" do
         expect(gateway).to receive(:fetch_field_cultivation_climate_data)
-          .with(field_cultivation_id: field_cultivation_id)
+          .with(
+            field_cultivation_id: field_cultivation_id,
+            display_start_date: nil,
+            display_end_date: nil
+          )
           .and_return(success_dto)
         expect(output_port).to receive(:present).with(success_dto)
 

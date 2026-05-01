@@ -28,7 +28,7 @@ module CultivationPlanManageable
     find_cultivation_plan_scope
       .includes(field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ])
       .find(plan_id)
-  rescue ActiveRecord::RecordNotFound
+  rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
     redirect_to send(redirect_path_method), alert: I18n.t("#{i18n_scope}.errors.not_found")
     nil
   end

@@ -67,22 +67,14 @@ module Api
 
         private
 
-        def climate_gateway
-          Adapters::FieldCultivation::Gateways::FieldCultivationClimateGateway.new(
-            current_user: current_user,
-            logger: logger_gateway
-          )
-        end
-
         def field_cultivation_climate_data_interactor
+          uid = current_user.id
           Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
             output_port: Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: self),
-            gateway: climate_gateway,
-            weather_data_gateway: Adapters::WeatherData::WeatherDataGatewayFactory.resolve,
-            prediction_factory: ->(weather_location, farm) { Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location, farm: farm) },
-            progress_factory: -> { Agrr::ProgressGateway.new },
-            logger: logger_gateway,
-            translator: translator
+            user_id: uid,
+            gateway: CompositionRoot.field_cultivation_climate_gateway_for(CompositionRoot.user_lookup.find(uid)),
+            logger: CompositionRoot.logger,
+            user_lookup: CompositionRoot.user_lookup
           )
         end
 
@@ -106,9 +98,6 @@ module Api
           params.require(:field_cultivation).permit(:start_date, :completion_date)
         end
 
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-        end
       end
     end
   end

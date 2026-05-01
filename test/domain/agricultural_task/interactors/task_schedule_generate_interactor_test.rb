@@ -108,7 +108,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     assert_difference -> { TaskSchedule.count }, 2 do
@@ -140,7 +143,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError do
@@ -151,7 +157,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   test "generate! raises error when progress has no records" do
     progress_gateway = StubProgressGateway.new(progress_response.merge("progress_records" => []))
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError do
@@ -163,7 +172,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(progress_response)
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)
@@ -185,7 +197,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     progress_gateway = StubProgressGateway.new(early_progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)
@@ -200,7 +215,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
   test "generate! raises error when gdd trigger is missing in blueprints" do
     progress_gateway = StubProgressGateway.new(progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     broken_blueprints = @crop.crop_task_schedule_blueprints.includes(:agricultural_task).ordered.to_a
@@ -227,7 +245,10 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     progress_gateway = StubProgressGateway.new(staggered_progress)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
-      progress_gateway: progress_gateway
+      progress_gateway: progress_gateway,
+      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      clock: Time.zone,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)

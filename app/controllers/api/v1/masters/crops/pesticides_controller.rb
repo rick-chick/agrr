@@ -4,38 +4,24 @@ module Api
   module V1
     module Masters
       module Crops
-        # 作物に紐づく農薬一覧取得API
-        #
-        # @example 作物に紐づく農薬一覧の取得
-        #   GET /api/v1/masters/crops/:crop_id/pesticides
-        #   Headers: X-API-Key: <api_key>
-        #
-        # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
-        # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
-        # @note 農薬の作成・更新・削除は /api/v1/masters/pesticides を使用してください
         class PesticidesController < BaseController
           before_action :set_crop
 
-          # 作物に紐づく農薬一覧を取得
-          #
-          # @param crop_id [Integer] 作物ID
-          # @return [Array<Pesticide>] 作物に紐づく農薬の配列
-          # @return [200] 成功
-          # @return [401] APIキーが無効
-          # @return [404] 作物が見つからない
           def index
-            # Policy経由で選択可能な農薬のみ表示（参照農薬も含む）
-            accessible_pesticide_ids = Domain::Pesticide::Gateways::PesticideGateway.default.selectable_records(current_user).pluck(:id)
-            @pesticides = Pesticide.where(crop_id: @crop.id, id: accessible_pesticide_ids).recent
-            render json: @pesticides
+            presenter = Presenters::Api::Pesticide::MastersCropPesticidesIndexPresenter.new(view: self)
+            Domain::Pesticide::Interactors::MastersCropPesticidesIndexInteractor.new(output_port: presenter,
+              user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pesticide_gateway: CompositionRoot.pesticide_gateway).call(@crop)
           end
 
           private
 
           def set_crop
-            @crop = Domain::Crop::Gateways::CropGateway.default.visible_records(current_user).where(is_reference: false).find(params[:crop_id])
-          rescue ActiveRecord::RecordNotFound
-            render json: { error: "Crop not found" }, status: :not_found
+            presenter = Presenters::Api::Crop::MastersNestedCropContextPresenter.new(
+              view: self,
+              not_found_message: "Crop not found"
+            )
+            Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
+              user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:crop_id])
           end
         end
       end

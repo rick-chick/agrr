@@ -33,21 +33,27 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_crops"
         end
 
+        # @return [Float]
+        def total_field_area_for_farm(farm_id, user)
+          raise NotImplementedError, "Subclasses must implement total_field_area_for_farm"
+        end
+
         def destroy(plan_id, user)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
-        # ID で検索 (Entity または Model を返す)
+        # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def find_by_id(plan_id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
         # phase 更新 proxy (phase_fetching_weather! など)
+        # @return [Boolean]
         def update_phase(plan_id, phase_name, *args)
           raise NotImplementedError, "Subclasses must implement update_phase"
         end
 
-        # TaskSchedule 生成用に CultivationPlan を関連込みで取得
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleGenerationContext]
         def find_with_field_cultivations_for_task_schedule(plan_id)
           raise NotImplementedError, "Subclasses must implement find_with_field_cultivations_for_task_schedule"
         end
@@ -62,7 +68,8 @@ module Domain
         end
 
         # 年度指定で既存計画を私有コピー（年度計画フロー）
-        def copy_private_plan_for_year(source_plan:, new_year:, user:, session_id: nil)
+        # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
+        def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil)
           raise NotImplementedError, "Subclasses must implement copy_private_plan_for_year"
         end
 
@@ -77,8 +84,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement field_cultivations_present?"
         end
 
-        # CultivationPlanCrop を Crop 同梱で返す（to_agrr_requirement 用に crop が必要）
-        # @return [Array]
+        # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanCropWithAgrrDto>]
         def cultivation_plan_crops_with_crop(plan_id)
           raise NotImplementedError, "Subclasses must implement cultivation_plan_crops_with_crop"
         end
@@ -88,7 +94,7 @@ module Domain
         end
 
         # @param attrs [Hash] FieldCultivation#create! に渡す属性（シンボルキー可）
-        # @return 作成された FieldCultivation（AR）
+        # @return [Domain::CultivationPlan::Entities::FieldCultivationEntity]
         def create_field_cultivation(plan_id:, attrs:)
           raise NotImplementedError, "Subclasses must implement create_field_cultivation"
         end

@@ -14,12 +14,8 @@ module Api
         def index
           return unless input_valid?(:index)
           presenter = Presenters::Api::Field::FieldListPresenter.new(view: self)
-          interactor = Domain::Field::Interactors::FieldListInteractor.new(
-            output_port: presenter,
-            gateway: field_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(params[:farm_id])
         end
 
@@ -27,12 +23,8 @@ module Api
         def show
           input_valid?(:show) || return
           presenter = Presenters::Api::Field::FieldDetailPresenter.new(view: self)
-          interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
-            output_port: presenter,
-            gateway: field_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(params[:id])
         end
 
@@ -45,12 +37,8 @@ module Api
             return
           end
           presenter = Presenters::Api::Field::FieldCreatePresenter.new(view: self)
-          interactor = Domain::Field::Interactors::FieldCreateInteractor.new(
-            output_port: presenter,
-            gateway: field_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(input_dto, params[:farm_id])
         end
 
@@ -59,12 +47,8 @@ module Api
           input_valid?(:update) || return
           input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Field::FieldUpdatePresenter.new(view: self)
-          interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(
-            output_port: presenter,
-            gateway: field_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(input_dto)
         end
 
@@ -72,12 +56,8 @@ module Api
         def destroy
           input_valid?(:destroy) || return
           presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
-          interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(
-            output_port: presenter,
-            gateway: field_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(params[:id])
         end
 
@@ -91,13 +71,6 @@ module Api
 
         private
 
-        def field_gateway
-          @field_gateway ||= begin
-            gateway = Adapters::Field::Gateways::FieldActiveRecordGateway.new
-            gateway.translator = translator
-            gateway
-          end
-        end
 
         def input_valid?(action)
           case action
@@ -118,9 +91,6 @@ module Api
           input_dto.name.present?
         end
 
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
-        end
       end
     end
   end

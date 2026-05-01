@@ -71,9 +71,10 @@ module Crops
     end
 
     def find_crop
-      @crop = Domain::Crop::Gateways::CropGateway.default.visible_records(current_user).where(is_reference: false).find(params[:crop_id])
-    rescue ActiveRecord::RecordNotFound
-      render(json: { error: "Crop not found" }, status: :not_found)
+      presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
+        user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
+      interactor.call(params[:crop_id])
     end
 
     def find_crop_stage
@@ -83,51 +84,28 @@ module Crops
     end
 
     def interactor
-      @interactor ||= Domain::Crop::Interactors::CropStageCreateInteractor.new(
-        output_port: presenter,
-        gateway: gateway,
-        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-      )
+      @interactor ||= Domain::Crop::Interactors::CropStageCreateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
     end
 
     def list_interactor
-      @list_interactor ||= Domain::Crop::Interactors::CropStageListInteractor.new(
-        output_port: presenter,
-        gateway: gateway,
-        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-      )
+      @list_interactor ||= Domain::Crop::Interactors::CropStageListInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
     end
 
     def detail_interactor
-      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(
-        output_port: presenter,
-        gateway: gateway,
-        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-      )
+      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
     end
 
     def update_interactor
-      @update_interactor ||= Domain::Crop::Interactors::CropStageUpdateInteractor.new(
-        output_port: presenter,
-        gateway: gateway,
-        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-      )
+      @update_interactor ||= Domain::Crop::Interactors::CropStageUpdateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
     end
 
     def destroy_interactor
-      @destroy_interactor ||= Domain::Crop::Interactors::CropStageDeleteInteractor.new(
-        output_port: presenter,
-        gateway: gateway,
-        logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-      )
+      @destroy_interactor ||= Domain::Crop::Interactors::CropStageDeleteInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
     end
 
     def presenter
       @presenter ||= Presenters::Api::Crop::CropStageCreatePresenter.new(view: self)
     end
 
-    def gateway
-      @gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new
-    end
   end
 end

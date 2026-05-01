@@ -8,7 +8,8 @@ module Adapters
         include Domain::Shared::Ports::UserLookupPort
 
         def find(user_id)
-          ::User.find(user_id)
+          record = ::User.find(user_id)
+          Adapters::Shared::Mappers::UserMapper.user_dto_from_record(record)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

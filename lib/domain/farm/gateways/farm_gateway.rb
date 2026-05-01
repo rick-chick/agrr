@@ -64,16 +64,12 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_predicted_weather_data"
         end
 
-        def visible_records(user)
-          raise NotImplementedError, "Subclasses must implement visible_records"
-        end
-
         def user_owned_records(user)
           raise NotImplementedError, "Subclasses must implement user_owned_records"
         end
 
-        def reference_records(region: nil)
-          raise NotImplementedError, "Subclasses must implement reference_records"
+        def list_reference_farms_for_region(region)
+          raise NotImplementedError, "Subclasses must implement list_reference_farms_for_region"
         end
 
         def find_authorized_for_view(user, id)

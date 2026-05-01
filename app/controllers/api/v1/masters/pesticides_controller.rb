@@ -18,12 +18,8 @@ module Api
         # GET /api/v1/masters/pesticides
         def index
           presenter = Presenters::Api::Pesticide::PesticideListPresenter.new(view: self)
-          interactor = Domain::Pesticide::Interactors::PesticideListInteractor.new(
-            output_port: presenter,
-            gateway: pesticide_gateway,
-            user_id: current_user.id,
-            logger: logger_gateway
-          )
+          interactor = Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -31,12 +27,8 @@ module Api
         def show
           input_valid?(:show) || return
           presenter = Presenters::Api::Pesticide::PesticideDetailPresenter.new(view: self)
-          interactor = Domain::Pesticide::Interactors::PesticideDetailInteractor.new(
-            output_port: presenter,
-            gateway: pesticide_gateway,
-            user_id: current_user.id,
-            logger: logger_gateway
-          )
+          interactor = Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -48,12 +40,8 @@ module Api
             return
           end
           presenter = Presenters::Api::Pesticide::PesticideCreatePresenter.new(view: self)
-          interactor = Domain::Pesticide::Interactors::PesticideCreateInteractor.new(
-            output_port: presenter,
-            gateway: pesticide_gateway,
-            user_id: current_user.id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
-          )
+          interactor = Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -61,12 +49,8 @@ module Api
         def update
           input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Pesticide::PesticideUpdatePresenter.new(view: self)
-          interactor = Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(
-            output_port: presenter,
-            gateway: pesticide_gateway,
-            user_id: current_user.id,
-            logger: logger_gateway
-          )
+          interactor = Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -74,13 +58,9 @@ module Api
         def destroy
           input_valid?(:destroy) || return
           presenter = Presenters::Api::Pesticide::PesticideDeletePresenter.new(view: self)
-          interactor = Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(
-            output_port: presenter,
-            gateway: pesticide_gateway,
+          interactor = Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            logger: logger_gateway,
-            translator: translator
-          )
+            translator: translator, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -93,10 +73,6 @@ module Api
         end
 
         private
-
-        def pesticide_gateway
-          @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
-        end
 
         def input_valid?(action)
           case action
@@ -111,10 +87,6 @@ module Api
 
         def valid_pesticide_params?(input_dto)
           input_dto.name.present? && input_dto.crop_id.present? && input_dto.pest_id.present?
-        end
-
-        def logger_gateway
-          @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
         end
       end
     end

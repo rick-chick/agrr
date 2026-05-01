@@ -108,6 +108,8 @@ module ActiveSupport
     end
 
     teardown do
+      CompositionRoot.reset!
+      # NOTE: Clean Architecture 純化に伴い、Domain Gateway の `.default` グローバルは段階的に廃止中。
       Domain::Shared::Ports::UserLookupPort.default_reset!
       Domain::Shared::Ports::SqlLikeSanitizePort.default_reset!
       Domain::CultivationPlan::Gateways::CultivationPlanGateway.default_reset!

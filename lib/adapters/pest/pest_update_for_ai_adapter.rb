@@ -14,11 +14,9 @@ module Adapters
 
       def call(pest_id, attrs)
         output_port = CapturingOutputPort.new
-        interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(
-          output_port: output_port,
+        interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: output_port,
           gateway: @gateway,
-          user_id: @user_id
-        )
+          user_id: @user_id, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
         input_dto = build_input_dto(pest_id, attrs)
         interactor.call(input_dto)
         output_port.result

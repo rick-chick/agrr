@@ -45,10 +45,8 @@ class WeatherPredictionJob < ApplicationJob
         raise Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
               "気象データがありません。農場にWeatherLocationが設定されていません。"
       end
-      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
-        weather_location: weather_location,
-        farm: cultivation_plan.farm
-      )
+      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location,
+        farm: cultivation_plan.farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
       weather_prediction_service.predict_for_cultivation_plan(cultivation_plan)
 
       # 天気予測完了通知

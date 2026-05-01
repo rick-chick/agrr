@@ -18,7 +18,8 @@ module Domain
             gateway: @mock_gateway,
             user_id: @user_id,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: @mock_translator
+            translator: @mock_translator,
+            user_lookup: Adapters::Shared::Gateways::UserActiveRecordGateway.new
           )
         end
 

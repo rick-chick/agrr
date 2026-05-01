@@ -4,9 +4,10 @@ module Domain
   module CultivationPlan
     module Interactors
       class CultivationPlanCreateInteractor < Domain::CultivationPlan::Ports::CultivationPlanCreateInputPort
-        # 公開プラン保存フロー（セッションデータ → ユーザー農場・マスタ・私有計画）。PlanSaveSession へ委譲。
-        def self.save_from_public_plan_session(user:, session_data:)
-          PlanSaveSession.new(user: user, session_data: session_data).call
+        # 公開プラン保存フロー（セッションデータ → ユーザー農場・マスタ・私有計画）。
+        # AR を含む保存ロジックは Domain::CultivationPlan::Gateways::PublicPlanSaveGateway 経由。
+        def self.save_from_public_plan_session(user:, session_data:, public_plan_save_gateway:)
+          public_plan_save_gateway.save_from_session(user: user, session_data: session_data)
         end
 
         def initialize(output_port:, gateway:, logger:)
@@ -37,6 +38,8 @@ module Domain
             return
           end
 
+          total_area = @gateway.total_field_area_for_farm(farm.id, input_dto.user)
+
           # 計画を作成
           result = @gateway.create(
             Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
@@ -44,7 +47,7 @@ module Domain
               crops: crops,
               user: input_dto.user,
               plan_name: input_dto.plan_name,
-              total_area: farm.fields.sum(:area)
+              total_area: total_area
             )
           )
 
