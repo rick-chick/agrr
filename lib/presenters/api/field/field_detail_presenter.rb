@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(detail_dto)
-          json = entity_to_json(detail_dto.field)
+        def on_success(field_with_farm)
+          json = entity_to_json(field_with_farm.field)
           @view.render_response(json: json, status: :ok)
         end
 

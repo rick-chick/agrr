@@ -10,6 +10,42 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     @farm = create(:farm, user: @user)
   end
 
+  test "index_renders_farm_and_field_names" do
+    sign_in_as @user
+    field = create(:field, farm: @farm, user: @user, name: "Alpha Plot")
+
+    get farm_fields_path(@farm)
+    assert_response :success
+    assert_includes @response.body, @farm.display_name
+    assert_includes @response.body, field.display_name
+    assert_includes @response.body, "field_#{field.id}"
+  end
+
+  test "index_redirects_when_user_cannot_access_farm" do
+    other = create(:user)
+    sign_in_as other
+    get farm_fields_path(@farm)
+    assert_redirected_to farms_path
+    assert_predicate flash[:alert], :present?
+  end
+
+  test "show_renders_field_detail" do
+    sign_in_as @user
+    field = create(:field, farm: @farm, user: @user, name: "Beta Row")
+
+    get farm_field_path(@farm, field)
+    assert_response :success
+    assert_includes @response.body, field.display_name
+    assert_includes @response.body, "field_#{field.id}"
+  end
+
+  test "show_redirects_when_field_not_found" do
+    sign_in_as @user
+    get farm_field_path(@farm, 99_999_999)
+    assert_redirected_to farm_fields_path(@farm)
+    assert_predicate flash[:alert], :present?
+  end
+
   test "destroy_returns_undo_token_json" do
     sign_in_as @user
     field = create(:field, farm: @farm, user: @user)

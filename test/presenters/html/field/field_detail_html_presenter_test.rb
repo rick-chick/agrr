@@ -5,44 +5,46 @@ require "test_helper"
 class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @field" do
+  test "on_success sets @farm and @field from FieldWithFarm" do
     view_mock = mock
     farm = mock
-    field_model = mock
-    detail_dto = mock
+    field = mock
+    result = Domain::Field::Results::FieldWithFarm.new(farm: farm, field: field)
 
-    field_record_for_detail_dto = lambda { |dto|
-      assert_equal detail_dto, dto
-      field_model
-    }
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(
-      view: view_mock,
-      farm: farm,
-      field_record_for_detail_dto: field_record_for_detail_dto
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@field, field_model)
     view_mock.expects(:instance_variable_set).with(:@farm, farm)
+    view_mock.expects(:instance_variable_set).with(:@field, field)
 
-    presenter.on_success(detail_dto)
+    presenter.on_success(result)
   end
 
-  test "on_failure sets flash alert and redirects" do
+  test "on_failure redirects to farm_fields_path when farm_id in params" do
     view_mock = mock
-    farm = mock
-    farm.expects(:id).returns(1)
-    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(
-      view: view_mock,
-      farm: farm,
-      field_record_for_detail_dto: ->(_) { nil }
-    )
+    view_mock.expects(:params).returns(ActionController::Parameters.new(farm_id: "7"))
+
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
-    error_dto.expects(:message).returns("Test error")
+    error_dto.expects(:message).returns("Field not found")
 
-    view_mock.expects(:farm_fields_path).with(1).returns("/farms/1/fields")
-    view_mock.expects(:redirect_to).with("/farms/1/fields", alert: "Test error")
+    view_mock.expects(:farm_fields_path).with("7").returns("/farms/7/fields")
+    view_mock.expects(:redirect_to).with("/farms/7/fields", alert: "Field not found")
+
+    presenter.on_failure(error_dto)
+  end
+
+  test "on_failure redirects to farms_path when farm_id missing" do
+    view_mock = mock
+    view_mock.expects(:params).returns(ActionController::Parameters.new)
+
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock)
+
+    error_dto = mock
+    error_dto.expects(:message).returns("x")
+
+    view_mock.expects(:farms_path).returns("/farms")
+    view_mock.expects(:redirect_to).with("/farms", alert: "x")
 
     presenter.on_failure(error_dto)
   end

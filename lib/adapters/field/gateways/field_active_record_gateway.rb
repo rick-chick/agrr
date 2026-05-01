@@ -13,13 +13,19 @@ module Adapters
         end
 
         def list_by_farm(farm_id, user_id)
+          authorized_farm_fields_list(farm_id, user_id).fields
+        end
+
+        def authorized_farm_fields_list(farm_id, user_id)
+          farm_entity, fields = farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
+          Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: fields)
+        end
+
+        def field_with_farm_for_user(field_id, user_id)
+          field_entity = find_by_id_and_user(field_id, user_id)
           user = find_user!(user_id)
-          @farm_gateway.find_authorized_for_edit(user, farm_id)
-          farm = ::Farm.find(farm_id)
-          scope = FieldPolicy.scope_for_farm(user, farm)
-          scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "Farm not found"
+          farm_entity = @farm_gateway.find_authorized_for_edit(user, field_entity.farm_id)
+          Domain::Field::Results::FieldWithFarm.new(farm: farm_entity, field: field_entity)
         end
 
         def find_by_id_and_user(field_id, user_id)
@@ -151,6 +157,17 @@ module Adapters
         end
 
         private
+
+        def farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
+          user = find_user!(user_id)
+          farm_entity = @farm_gateway.find_authorized_for_edit(user, farm_id)
+          farm = ::Farm.find(farm_id)
+          scope = FieldPolicy.scope_for_farm(user, farm)
+          fields = scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
+          [ farm_entity, fields ]
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "Farm not found"
+        end
 
         def find_user!(user_id)
           ::User.find(user_id)

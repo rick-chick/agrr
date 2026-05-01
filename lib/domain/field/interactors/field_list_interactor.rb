@@ -13,8 +13,8 @@ module Domain
         end
 
         def call(farm_id)
-          fields = @gateway.list_by_farm(farm_id, @user_id)
-          @output_port.on_success(fields)
+          result = @gateway.authorized_farm_fields_list(farm_id, @user_id)
+          @output_port.on_success(result)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

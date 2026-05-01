@@ -4,22 +4,17 @@ module Presenters
   module Html
     module Field
       class FieldListHtmlPresenter < Domain::Field::Ports::FieldListOutputPort
-        def initialize(view:, farm:, field_records_for_entities:)
+        def initialize(view:)
           @view = view
-          @farm = farm
-          @field_records_for_entities = field_records_for_entities
         end
 
-        def on_success(fields)
-          @view.instance_variable_set(:@fields, @field_records_for_entities.call(fields))
-          @view.instance_variable_set(:@farm, @farm)
-          # index テンプレートをレンダリング（暗黙的に）
+        def on_success(farm_fields_list)
+          @view.instance_variable_set(:@farm, farm_fields_list.farm)
+          @view.instance_variable_set(:@fields, farm_fields_list.fields)
         end
 
         def on_failure(error_dto)
-          @view.flash.now[:alert] = error_dto.message
-          @view.instance_variable_set(:@fields, [])
-          @view.instance_variable_set(:@farm, @farm)
+          @view.redirect_to @view.farms_path, alert: error_dto.message
         end
       end
     end

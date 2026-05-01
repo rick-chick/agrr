@@ -4,7 +4,7 @@ module Domain
   module Field
     module Ports
       class FieldListOutputPort
-        def on_success(fields)
+        def on_success(farm_fields_list)
           raise NotImplementedError, "Subclasses must implement on_success"
         end
 

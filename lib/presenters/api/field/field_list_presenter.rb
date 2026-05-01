@@ -8,7 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(fields)
+        def on_success(farm_fields_list)
+          fields = farm_fields_list.fields
           json = fields.is_a?(Array) ? fields.map { |e| entity_to_json(e) } : []
           @view.render_response(json: json, status: :ok)
         end

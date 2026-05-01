@@ -1,30 +1,20 @@
 # frozen_string_literal: true
 
 class FieldsController < ApplicationController
-  before_action :set_farm
-  before_action :set_field, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_farm, except: [ :index ]
+  before_action :set_field, only: [ :edit, :update, :destroy ]
 
   # GET /farms/:farm_id/fields
   def index
-    field_gateway = CompositionRoot.field_gateway
-    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(
-      view: self,
-      farm: @farm,
-      field_records_for_entities: ->(entities) { entities.map { |e| field_gateway.find_model(e.id) } }
-    )
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
-    interactor.call(@farm.id)
+    interactor.call(params[:farm_id])
   end
 
-  # GET /fields/:id
+  # GET /farms/:farm_id/fields/:id
   def show
-    field_gateway = CompositionRoot.field_gateway
-    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(
-      view: self,
-      farm: @farm,
-      field_record_for_detail_dto: ->(dto) { field_gateway.find_model(dto.field.id) }
-    )
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
     interactor.call(params[:id])

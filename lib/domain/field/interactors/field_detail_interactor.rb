@@ -13,9 +13,8 @@ module Domain
         end
 
         def call(field_id)
-          field = @gateway.find_by_id_and_user(field_id, @user_id)
-          dto = Domain::Field::Dtos::FieldDetailOutputDto.new(field: field)
-          @output_port.on_success(dto)
+          result = @gateway.field_with_farm_for_user(field_id, @user_id)
+          @output_port.on_success(result)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

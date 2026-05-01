@@ -4,23 +4,22 @@ module Presenters
   module Html
     module Field
       class FieldDetailHtmlPresenter < Domain::Field::Ports::FieldDetailOutputPort
-        def initialize(view:, farm:, field_record_for_detail_dto:)
+        def initialize(view:)
           @view = view
-          @farm = farm
-          @field_record_for_detail_dto = field_record_for_detail_dto
         end
 
-        def on_success(detail_output_dto)
-          @view.instance_variable_set(
-            :@field,
-            @field_record_for_detail_dto.call(detail_output_dto)
-          )
-          @view.instance_variable_set(:@farm, @farm)
-          # show テンプレートをレンダリング（暗黙的に）
+        def on_success(field_with_farm)
+          @view.instance_variable_set(:@farm, field_with_farm.farm)
+          @view.instance_variable_set(:@field, field_with_farm.field)
         end
 
         def on_failure(error_dto)
-          @view.redirect_to @view.farm_fields_path(@farm.id), alert: error_dto.message
+          farm_id = @view.params[:farm_id]
+          if farm_id.present?
+            @view.redirect_to @view.farm_fields_path(farm_id), alert: error_dto.message
+          else
+            @view.redirect_to @view.farms_path, alert: error_dto.message
+          end
         end
       end
     end

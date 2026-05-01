@@ -3,17 +3,17 @@
 <div class="breadcrumb">
   <%= link_to t('.breadcrumb.farms'), farms_path, class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
-  <%= link_to @farm.display_name, farm_path(@farm), class: "breadcrumb-link" %>
+  <%= link_to @farm.display_name, farm_path(@farm.id), class: "breadcrumb-link" %>
   <span class="breadcrumb-separator">></span>
   <span class="breadcrumb-current"><%= t('.breadcrumb.current') %></span>
 </div>
 
 <div class="page-header">
   <h1 class="page-title"><%= @farm.display_name %> - <%= t('.title') %></h1>
-  <%= link_to t('.new_field'), new_farm_field_path(@farm), class: "btn btn-success" %>
+  <%= link_to t('.new_field'), new_farm_field_path(@farm.id), class: "btn btn-success" %>
 </div>
 
-<%= turbo_stream_from @farm %>
+<%= turbo_stream_from Farm, @farm.id %>
 
 <% if @fields.any? %>
   <div class="fields-grid" id="fields">
@@ -26,6 +26,6 @@
     <div class="empty-state-icon"><%= t('.empty.icon') %></div>
     <h3><%= t('.empty.title') %></h3>
     <p><%= t('.empty.description') %></p>
-    <%= link_to t('.empty.button'), new_farm_field_path(@farm), class: "btn btn-success" %>
+    <%= link_to t('.empty.button'), new_farm_field_path(@farm.id), class: "btn btn-success" %>
   </div>
 <% end %>

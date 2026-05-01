@@ -3,52 +3,29 @@
 require "test_helper"
 
 class FieldListHtmlPresenterTest < ActiveSupport::TestCase
-  include Rails.application.routes.url_helpers
-
-  test "on_success sets @fields" do
+  test "on_success sets @farm and @fields from FarmFieldsList" do
     view_mock = mock
     farm = mock
-    field_entity1 = mock
-    field_entity2 = mock
-    field_model1 = mock
-    field_model2 = mock
+    field_entity = mock
+    result = Domain::Field::Results::FarmFieldsList.new(farm: farm, fields: [ field_entity ])
 
-    field_records_for_entities = lambda { |entities|
-      assert_equal [ field_entity1, field_entity2 ], entities
-      [ field_model1, field_model2 ]
-    }
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(
-      view: view_mock,
-      farm: farm,
-      field_records_for_entities: field_records_for_entities
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
     view_mock.expects(:instance_variable_set).with(:@farm, farm)
+    view_mock.expects(:instance_variable_set).with(:@fields, [ field_entity ])
 
-    presenter.on_success([ field_entity1, field_entity2 ])
+    presenter.on_success(result)
   end
 
-  test "on_failure sets flash alert and empty array" do
+  test "on_failure redirects to farms_path with alert" do
     view_mock = mock
-    farm = mock
-    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(
-      view: view_mock,
-      farm: farm,
-      field_records_for_entities: ->(_) { [] }
-    )
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
-    error_dto.expects(:message).returns("Test error")
+    error_dto.expects(:message).returns("Farm not found")
 
-    flash_now_mock = mock
-    flash_mock = mock
-    flash_mock.expects(:now).returns(flash_now_mock)
-    flash_now_mock.expects(:[]=).with(:alert, "Test error")
-    view_mock.expects(:flash).returns(flash_mock)
-    view_mock.expects(:instance_variable_set).with(:@fields, [])
-    view_mock.expects(:instance_variable_set).with(:@farm, farm)
+    view_mock.expects(:farms_path).returns("/farms")
+    view_mock.expects(:redirect_to).with("/farms", alert: "Farm not found")
 
     presenter.on_failure(error_dto)
   end

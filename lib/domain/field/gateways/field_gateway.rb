@@ -8,6 +8,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_by_farm"
         end
 
+        def authorized_farm_fields_list(farm_id, user_id)
+          raise NotImplementedError, "Subclasses must implement authorized_farm_fields_list"
+        end
+
+        def field_with_farm_for_user(field_id, user_id)
+          raise NotImplementedError, "Subclasses must implement field_with_farm_for_user"
+        end
+
         def find_by_id_and_user(field_id, user_id)
           raise NotImplementedError, "Subclasses must implement find_by_id_and_user"
         end

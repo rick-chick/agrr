@@ -1,17 +1,17 @@
-<div class="field-card" id="<%= dom_id(field) %>" data-undo-delete-record>
+<div class="field-card" id="field_<%= field.id %>" data-undo-delete-record>
   <h3 class="field-name"><%= field.display_name %></h3>
   <div class="field-actions">
-    <%= link_to t('fields.index.actions.detail'), farm_field_path(farm, field), class: "btn btn-info btn-sm" %>
-    <%= link_to t('fields.index.actions.edit'), edit_farm_field_path(farm, field), class: "btn btn-secondary btn-sm" %>
-    <%= link_to t('fields.index.actions.delete'), farm_field_path(farm, field),
+    <%= link_to t('fields.index.actions.detail'), farm_field_path(farm.id, field.id), class: "btn btn-info btn-sm" %>
+    <%= link_to t('fields.index.actions.edit'), edit_farm_field_path(farm.id, field.id), class: "btn btn-secondary btn-sm" %>
+    <%= link_to t('fields.index.actions.delete'), farm_field_path(farm.id, field.id),
                 class: "btn btn-error btn-sm",
                 data: {
                   controller: "undo-delete",
                   action: "click->undo-delete#submit",
                   turbo_method: :delete,
-                  undo_delete_url_value: farm_field_path(farm, field),
+                  undo_delete_url_value: farm_field_path(farm.id, field.id),
                   undo_delete_message_value: t('fields.undo.toast', name: field.display_name),
-                  undo_delete_redirect_url_value: farm_fields_path(farm)
+                  undo_delete_redirect_url_value: farm_fields_path(farm.id)
                 } %>
   </div>
 </div>
