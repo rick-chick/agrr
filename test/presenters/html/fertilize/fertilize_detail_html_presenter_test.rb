@@ -7,16 +7,18 @@ class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @fertilize from dto" do
     view_mock = mock
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
-
     fertilize_model = mock
-    fertilize_entity = mock
-    fertilize_entity.expects(:id).returns(7)
-    gw = mock
-    gw.expects(:find_model).with(7).returns(fertilize_model)
-    CompositionRoot.stubs(:fertilize_gateway).returns(gw)
     fertilize_detail_dto = mock
-    fertilize_detail_dto.expects(:fertilize).returns(fertilize_entity)
+
+    fertilize_record_for_detail_dto = lambda { |dto|
+      assert_equal fertilize_detail_dto, dto
+      fertilize_model
+    }
+
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
+      view: view_mock,
+      fertilize_record_for_detail_dto: fertilize_record_for_detail_dto
+    )
 
     view_mock.expects(:instance_variable_set).with(:@fertilize, fertilize_model)
 
@@ -25,7 +27,10 @@ class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_failure sets flash alert and renders show template" do
     view_mock = mock
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
+      view: view_mock,
+      fertilize_record_for_detail_dto: ->(_) { nil }
+    )
 
     error_dto = mock
     error_dto.expects(:respond_to?).with(:message).returns(true)

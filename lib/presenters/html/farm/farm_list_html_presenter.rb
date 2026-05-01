@@ -4,19 +4,17 @@ module Presenters
   module Html
     module Farm
       class FarmListHtmlPresenter < Domain::Farm::Ports::FarmListOutputPort
-        def initialize(view:, is_admin:)
+        # farm_records_for_entities: Array<FarmEntity> -> Array<ActiveRecord::Farm>（コントローラで Gateway を閉じた proc を渡す）
+        # reference_farms: -> Array<ActiveRecord::Farm>（管理者のみ参照農場など）
+        def initialize(view:, farm_records_for_entities:, reference_farms:)
           @view = view
-          @is_admin = is_admin
+          @farm_records_for_entities = farm_records_for_entities
+          @reference_farms = reference_farms
         end
 
         def on_success(farms)
-          gw = CompositionRoot.farm_gateway
-          @view.instance_variable_set(:@farms, farms.map { |f| gw.find_model(f.id) })
-          if @is_admin
-            @view.instance_variable_set(:@reference_farms, ::Farm.reference)
-          else
-            @view.instance_variable_set(:@reference_farms, [])
-          end
+          @view.instance_variable_set(:@farms, @farm_records_for_entities.call(farms))
+          @view.instance_variable_set(:@reference_farms, @reference_farms.call)
           # index テンプレートをレンダリング（暗黙的に）
         end
 

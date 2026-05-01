@@ -9,7 +9,12 @@ class FarmsController < ApplicationController
     respond_to do |format|
       format.html do
         input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
-        presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self, is_admin: admin_user?)
+        farm_gateway = CompositionRoot.farm_gateway
+        presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(
+          view: self,
+          farm_records_for_entities: ->(entities) { entities.map { |e| farm_gateway.find_model(e.id) } },
+          reference_farms: -> { admin_user? ? ::Farm.reference : [] }
+        )
 
         interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -39,7 +44,17 @@ class FarmsController < ApplicationController
   def show
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: self)
+        farm_gateway = CompositionRoot.farm_gateway
+        field_gateway = CompositionRoot.field_gateway
+        presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
+          view: self,
+          farm_detail_view_for: lambda do |dto|
+            {
+              farm: farm_gateway.find_model(dto.farm.id),
+              fields: dto.fields.map { |fe| field_gateway.find_model(fe.id) }
+            }
+          end
+        )
 
         interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
           user_id: current_user.id,

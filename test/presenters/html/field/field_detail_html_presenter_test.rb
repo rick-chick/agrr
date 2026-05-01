@@ -8,17 +8,19 @@ class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
   test "on_success sets @field" do
     view_mock = mock
     farm = mock
-    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock, farm: farm)
-
-    field_entity = mock
     field_model = mock
-    field_entity.expects(:id).returns(88)
-    gw = mock
-    gw.expects(:find_model).with(88).returns(field_model)
-    CompositionRoot.stubs(:field_gateway).returns(gw)
-
     detail_dto = mock
-    detail_dto.expects(:field).returns(field_entity)
+
+    field_record_for_detail_dto = lambda { |dto|
+      assert_equal detail_dto, dto
+      field_model
+    }
+
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(
+      view: view_mock,
+      farm: farm,
+      field_record_for_detail_dto: field_record_for_detail_dto
+    )
 
     view_mock.expects(:instance_variable_set).with(:@field, field_model)
     view_mock.expects(:instance_variable_set).with(:@farm, farm)
@@ -30,7 +32,11 @@ class FieldDetailHtmlPresenterTest < ActiveSupport::TestCase
     view_mock = mock
     farm = mock
     farm.expects(:id).returns(1)
-    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: view_mock, farm: farm)
+    presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(
+      view: view_mock,
+      farm: farm,
+      field_record_for_detail_dto: ->(_) { nil }
+    )
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

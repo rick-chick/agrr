@@ -77,11 +77,16 @@ module Api
           return if performed?
 
           crop = @reference_crop
+          reference_date = Date.current
           payload = Presenters::Api::PublicPlans::EntryScheduleShowPayload.call(
             farm: farm,
             crop: crop,
+            crop_gateway: CompositionRoot.crop_gateway,
+            reference_date: reference_date,
             prediction_end_date: params[:prediction_end_date].presence
-          )
+          ) do |f|
+            CompositionRoot.weather_prediction_interactor(weather_location: f.weather_location, farm: f)
+          end
           render_entry_json_with_etag(payload)
         end
 
@@ -120,35 +125,14 @@ module Api
         #
         # @return [Hash] predicted_weather_data 形式（トップレベルに data 配列）
         def load_or_predict_weather!(farm)
-          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError if farm.weather_location.blank?
-
-          target_end = parse_prediction_end_date
-          service = CompositionRoot.weather_prediction_interactor(weather_location: farm.weather_location, farm: farm)
-
-          cached = service.get_existing_prediction(target_end_date: target_end)
-          payload_hash = if cached && cached[:data].is_a?(Hash)
-                           cached[:data]
-          else
-                           service.predict_for_farm(target_end_date: target_end)
-                           farm.reload
-                           farm.predicted_weather_data
+          reference_date = Date.current
+          Presenters::Api::PublicPlans::EntrySchedulePredictedWeather.load_or_predict!(
+            farm: farm,
+            prediction_end_date_raw: params[:prediction_end_date].presence,
+            reference_date: reference_date
+          ) do |f|
+            CompositionRoot.weather_prediction_interactor(weather_location: f.weather_location, farm: f)
           end
-
-          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::PredictionPayloadMissingError if payload_hash.blank? || payload_hash["data"].blank?
-
-          payload_hash
-        rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
-               Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
-          raise Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherPredictionFailedError, e.message
-        end
-
-        def parse_prediction_end_date
-          raw = params[:prediction_end_date].presence
-          return Date.current.end_of_year if raw.blank?
-
-          Date.parse(raw.to_s)
-        rescue ArgumentError
-          Date.current.end_of_year
         end
 
         def apply_entry_locale

@@ -4,15 +4,16 @@ module Presenters
   module Html
     module Farm
       class FarmDetailHtmlPresenter < Domain::Farm::Ports::FarmDetailOutputPort
-        def initialize(view:)
+        # farm_detail_view_for: FarmDetailOutputDto -> { farm: AR::Farm, fields: Array<AR::Field> }
+        def initialize(view:, farm_detail_view_for:)
           @view = view
+          @farm_detail_view_for = farm_detail_view_for
         end
 
         def on_success(farm_detail_dto)
-          farm_gw = CompositionRoot.farm_gateway
-          field_gw = CompositionRoot.field_gateway
-          @view.instance_variable_set(:@farm, farm_gw.find_model(farm_detail_dto.farm.id))
-          @view.instance_variable_set(:@fields, farm_detail_dto.fields.map { |fe| field_gw.find_model(fe.id) })
+          view_models = @farm_detail_view_for.call(farm_detail_dto)
+          @view.instance_variable_set(:@farm, view_models[:farm])
+          @view.instance_variable_set(:@fields, view_models[:fields])
           # show テンプレートをレンダリング（暗黙的に）
         end
 

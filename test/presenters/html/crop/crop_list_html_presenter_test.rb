@@ -4,30 +4,35 @@ require "test_helper"
 
 class CropListHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
+
   test "on_success sets @crops" do
     view_mock = mock
-    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: view_mock)
-
     crop_entity1 = mock
     crop_entity2 = mock
     crop_model1 = mock
     crop_model2 = mock
-    crop_entity1.expects(:id).returns(1)
-    crop_entity2.expects(:id).returns(2)
-    gw = mock
-    gw.expects(:find_model).with(1).returns(crop_model1)
-    gw.expects(:find_model).with(2).returns(crop_model2)
-    CompositionRoot.stubs(:crop_gateway).returns(gw)
+
+    crop_records_for_entities = lambda { |entities|
+      assert_equal [ crop_entity1, crop_entity2 ], entities
+      [ crop_model1, crop_model2 ]
+    }
+
+    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(
+      view: view_mock,
+      crop_records_for_entities: crop_records_for_entities
+    )
 
     view_mock.expects(:instance_variable_set).with(:@crops, [ crop_model1, crop_model2 ])
 
-    crops = [ crop_entity1, crop_entity2 ]
-    presenter.on_success(crops)
+    presenter.on_success([ crop_entity1, crop_entity2 ])
   end
 
   test "on_failure sets flash alert and empty @crops" do
     view_mock = mock
-    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: view_mock)
+    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(
+      view: view_mock,
+      crop_records_for_entities: ->(_) { [] }
+    )
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

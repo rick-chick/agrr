@@ -4,14 +4,15 @@ module Presenters
   module Html
     module AgriculturalTask
       class AgriculturalTaskDetailHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskDetailOutputPort
-        def initialize(view:)
+        def initialize(view:, agricultural_task_record_for_detail_dto:)
           @view = view
+          @agricultural_task_record_for_detail_dto = agricultural_task_record_for_detail_dto
         end
 
         def on_success(detail_dto)
           @view.instance_variable_set(
             :@agricultural_task,
-            CompositionRoot.agricultural_task_gateway.find_model(detail_dto.task.id)
+            @agricultural_task_record_for_detail_dto.call(detail_dto)
           )
         end
 

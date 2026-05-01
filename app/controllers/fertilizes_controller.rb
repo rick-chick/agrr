@@ -6,7 +6,11 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes
   def index
-    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: self)
+    fertilize_gateway = CompositionRoot.fertilize_gateway
+    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(
+      view: self,
+      fertilize_records_for_entities: ->(entities) { entities.map { |e| fertilize_gateway.find_model(e.id) } }
+    )
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call
@@ -14,7 +18,11 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes/:id
   def show
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: self)
+    fertilize_gateway = CompositionRoot.fertilize_gateway
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
+      view: self,
+      fertilize_record_for_detail_dto: ->(dto) { fertilize_gateway.find_model(dto.fertilize.id) }
+    )
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call(@fertilize.id)

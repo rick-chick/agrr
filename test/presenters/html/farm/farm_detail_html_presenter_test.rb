@@ -4,31 +4,23 @@ require "test_helper"
 
 class FarmDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
+
   test "on_success sets @farm and @fields" do
     view_mock = mock
-    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: view_mock)
-
-    farm_entity = mock
     farm_model = mock
-    farm_entity.expects(:id).returns(10)
-    farm_gw = mock
-    farm_gw.expects(:find_model).with(10).returns(farm_model)
-    CompositionRoot.stubs(:farm_gateway).returns(farm_gw)
-
-    field_entity1 = mock
-    field_entity2 = mock
     field_model1 = mock
     field_model2 = mock
-    field_entity1.expects(:id).returns(101)
-    field_entity2.expects(:id).returns(102)
-    field_gw = mock
-    field_gw.expects(:find_model).with(101).returns(field_model1)
-    field_gw.expects(:find_model).with(102).returns(field_model2)
-    CompositionRoot.stubs(:field_gateway).returns(field_gw)
-
     farm_detail_dto = mock
-    farm_detail_dto.expects(:farm).returns(farm_entity)
-    farm_detail_dto.expects(:fields).returns([ field_entity1, field_entity2 ])
+
+    farm_detail_view_for = lambda { |dto|
+      assert_equal farm_detail_dto, dto
+      { farm: farm_model, fields: [ field_model1, field_model2 ] }
+    }
+
+    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
+      view: view_mock,
+      farm_detail_view_for: farm_detail_view_for
+    )
 
     view_mock.expects(:instance_variable_set).with(:@farm, farm_model)
     view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
@@ -38,7 +30,10 @@ class FarmDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_failure sets flash alert and redirects" do
     view_mock = mock
-    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: view_mock)
+    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
+      view: view_mock,
+      farm_detail_view_for: ->(_) { {} }
+    )
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

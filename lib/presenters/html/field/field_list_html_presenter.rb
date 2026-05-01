@@ -4,14 +4,14 @@ module Presenters
   module Html
     module Field
       class FieldListHtmlPresenter < Domain::Field::Ports::FieldListOutputPort
-        def initialize(view:, farm:)
+        def initialize(view:, farm:, field_records_for_entities:)
           @view = view
           @farm = farm
+          @field_records_for_entities = field_records_for_entities
         end
 
         def on_success(fields)
-          gw = CompositionRoot.field_gateway
-          @view.instance_variable_set(:@fields, fields.map { |f| gw.find_model(f.id) })
+          @view.instance_variable_set(:@fields, @field_records_for_entities.call(fields))
           @view.instance_variable_set(:@farm, @farm)
           # index テンプレートをレンダリング（暗黙的に）
         end

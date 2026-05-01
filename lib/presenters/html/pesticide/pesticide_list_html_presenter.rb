@@ -4,13 +4,13 @@ module Presenters
   module Html
     module Pesticide
       class PesticideListHtmlPresenter < Domain::Pesticide::Ports::PesticideListOutputPort
-        def initialize(view:)
+        def initialize(view:, pesticide_records_for_entities:)
           @view = view
+          @pesticide_records_for_entities = pesticide_records_for_entities
         end
 
         def on_success(pesticides)
-          gw = CompositionRoot.pesticide_gateway
-          @view.instance_variable_set(:@pesticides, pesticides.map { |p| gw.find_model(p.id) })
+          @view.instance_variable_set(:@pesticides, @pesticide_records_for_entities.call(pesticides))
           # index テンプレートをレンダリング（暗黙的に）
         end
 

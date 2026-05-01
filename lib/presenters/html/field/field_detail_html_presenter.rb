@@ -4,15 +4,16 @@ module Presenters
   module Html
     module Field
       class FieldDetailHtmlPresenter < Domain::Field::Ports::FieldDetailOutputPort
-        def initialize(view:, farm:)
+        def initialize(view:, farm:, field_record_for_detail_dto:)
           @view = view
           @farm = farm
+          @field_record_for_detail_dto = field_record_for_detail_dto
         end
 
         def on_success(detail_output_dto)
           @view.instance_variable_set(
             :@field,
-            CompositionRoot.field_gateway.find_model(detail_output_dto.field.id)
+            @field_record_for_detail_dto.call(detail_output_dto)
           )
           @view.instance_variable_set(:@farm, @farm)
           # show テンプレートをレンダリング（暗黙的に）

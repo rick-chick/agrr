@@ -4,13 +4,13 @@ module Presenters
   module Html
     module Fertilize
       class FertilizeDetailHtmlPresenter < Domain::Fertilize::Ports::FertilizeDetailOutputPort
-        def initialize(view:)
+        def initialize(view:, fertilize_record_for_detail_dto:)
           @view = view
+          @fertilize_record_for_detail_dto = fertilize_record_for_detail_dto
         end
 
         def on_success(fertilize_detail_dto)
-          fertilize_model = CompositionRoot.fertilize_gateway.find_model(fertilize_detail_dto.fertilize.id)
-          @view.instance_variable_set(:@fertilize, fertilize_model)
+          @view.instance_variable_set(:@fertilize, @fertilize_record_for_detail_dto.call(fertilize_detail_dto))
         end
 
         def on_failure(error_dto)

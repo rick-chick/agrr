@@ -7,28 +7,32 @@ class PesticideListHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @pesticides" do
     view_mock = mock
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: view_mock)
-
     pesticide_entity1 = mock
     pesticide_entity2 = mock
     pesticide_model1 = mock
     pesticide_model2 = mock
-    pesticide_entity1.expects(:id).returns(1)
-    pesticide_entity2.expects(:id).returns(2)
-    gw = mock
-    gw.expects(:find_model).with(1).returns(pesticide_model1)
-    gw.expects(:find_model).with(2).returns(pesticide_model2)
-    CompositionRoot.stubs(:pesticide_gateway).returns(gw)
+
+    pesticide_records_for_entities = lambda { |entities|
+      assert_equal [ pesticide_entity1, pesticide_entity2 ], entities
+      [ pesticide_model1, pesticide_model2 ]
+    }
+
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(
+      view: view_mock,
+      pesticide_records_for_entities: pesticide_records_for_entities
+    )
 
     view_mock.expects(:instance_variable_set).with(:@pesticides, [ pesticide_model1, pesticide_model2 ])
 
-    pesticides = [ pesticide_entity1, pesticide_entity2 ]
-    presenter.on_success(pesticides)
+    presenter.on_success([ pesticide_entity1, pesticide_entity2 ])
   end
 
   test "on_failure sets flash alert and empty @pesticides" do
     view_mock = mock
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: view_mock)
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(
+      view: view_mock,
+      pesticide_records_for_entities: ->(_) { [] }
+    )
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

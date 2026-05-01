@@ -8,30 +8,36 @@ class FieldListHtmlPresenterTest < ActiveSupport::TestCase
   test "on_success sets @fields" do
     view_mock = mock
     farm = mock
-    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: view_mock, farm: farm)
-
     field_entity1 = mock
     field_entity2 = mock
     field_model1 = mock
     field_model2 = mock
-    field_entity1.expects(:id).returns(1)
-    field_entity2.expects(:id).returns(2)
-    gw = mock
-    gw.expects(:find_model).with(1).returns(field_model1)
-    gw.expects(:find_model).with(2).returns(field_model2)
-    CompositionRoot.stubs(:field_gateway).returns(gw)
+
+    field_records_for_entities = lambda { |entities|
+      assert_equal [ field_entity1, field_entity2 ], entities
+      [ field_model1, field_model2 ]
+    }
+
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(
+      view: view_mock,
+      farm: farm,
+      field_records_for_entities: field_records_for_entities
+    )
 
     view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
     view_mock.expects(:instance_variable_set).with(:@farm, farm)
 
-    fields = [ field_entity1, field_entity2 ]
-    presenter.on_success(fields)
+    presenter.on_success([ field_entity1, field_entity2 ])
   end
 
   test "on_failure sets flash alert and empty array" do
     view_mock = mock
     farm = mock
-    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: view_mock, farm: farm)
+    presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(
+      view: view_mock,
+      farm: farm,
+      field_records_for_entities: ->(_) { [] }
+    )
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

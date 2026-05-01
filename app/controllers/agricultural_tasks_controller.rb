@@ -29,7 +29,11 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/:id
   def show
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: self)
+    ag_task_gateway = CompositionRoot.agricultural_task_gateway
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(
+      view: self,
+      agricultural_task_record_for_detail_dto: ->(dto) { ag_task_gateway.find_model(dto.task.id) }
+    )
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)

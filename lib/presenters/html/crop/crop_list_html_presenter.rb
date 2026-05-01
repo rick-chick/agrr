@@ -4,13 +4,13 @@ module Presenters
   module Html
     module Crop
       class CropListHtmlPresenter < Domain::Crop::Ports::CropListOutputPort
-        def initialize(view:)
+        def initialize(view:, crop_records_for_entities:)
           @view = view
+          @crop_records_for_entities = crop_records_for_entities
         end
 
         def on_success(crops)
-          gw = CompositionRoot.crop_gateway
-          @view.instance_variable_set(:@crops, crops.map { |c| gw.find_model(c.id) })
+          @view.instance_variable_set(:@crops, @crop_records_for_entities.call(crops))
           # index テンプレートをレンダリング（暗黙的に）
         end
 

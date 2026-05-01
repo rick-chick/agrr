@@ -6,14 +6,22 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides
   def index
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: self)
+    pesticide_gateway = CompositionRoot.pesticide_gateway
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(
+      view: self,
+      pesticide_records_for_entities: ->(entities) { entities.map { |e| pesticide_gateway.find_model(e.id) } }
+    )
     Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id
   def show
-    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
+    pesticide_gateway = CompositionRoot.pesticide_gateway
+    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(
+      view: self,
+      pesticide_record_for_detail_dto: ->(dto) { pesticide_gateway.find_model(dto.pesticide.id) }
+    )
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
