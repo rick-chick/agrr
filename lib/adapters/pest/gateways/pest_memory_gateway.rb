@@ -29,6 +29,18 @@ module Adapters
           selectable_scope(user).recent.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
+        def list_pests_for_crop_filtered(crop_id:, pest_ids:, order: :recent_first)
+          return [] if pest_ids.blank?
+
+          base = ::Pest.joins(:crop_pests).where(crop_pests: { crop_id: crop_id }).where(id: pest_ids)
+          ordered = case order.to_sym
+                    when :recent_first then base.order(created_at: :desc)
+                    when :id_asc then base.order(:id)
+                    else base.order(:id)
+                    end
+          ordered.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
+        end
+
         def find_authorized_model_for_view(user, id)
           pest = find_pest_model!(id)
           unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)

@@ -6,14 +6,16 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 
 **Technology stack**
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Angular 21 SPA (Clean Architecture–oriented layers under `frontend/src/app/`) |
-| Frontend hosting | Google Cloud Storage + Cloud CDN (see `scripts/gcp-frontend-deploy.sh`) |
-| Backend | Ruby on Rails 8 on **Google Cloud Run** (see `scripts/gcp-deploy.sh`) |
-| Database | SQLite3 (Solid Cache / Solid Cable / Solid Queue as applicable), **Litestream** replica to GCS |
-| Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads |
-| Contract-first API | `docs/contracts/*.md` describe Angular ↔ Rails JSON contracts |
+
+| Layer               | Technology                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Frontend            | Angular 21 SPA (Clean Architecture–oriented layers under `frontend/src/app/`)                  |
+| Frontend hosting    | Google Cloud Storage + Cloud CDN (see `scripts/gcp-frontend-deploy.sh`)                        |
+| Backend             | Ruby on Rails 8 on **Google Cloud Run** (see `scripts/gcp-deploy.sh`)                          |
+| Database            | SQLite3 (Solid Cache / Solid Cable / Solid Queue as applicable), **Litestream** replica to GCS |
+| Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
+| Contract-first API  | `docs/contracts/*.md` describe Angular ↔ Rails JSON contracts                                  |
+
 
 **Architecture (primary):** Decoupled **Angular SPA + Rails API**. Server-rendered Rails HTML exists for some master CRUD flows and delegates to the same domain layer (`lib/domain`) via HTML presenters (`lib/presenters/html/`).
 
@@ -29,9 +31,11 @@ flowchart TD
   CloudRun --> AgrrDaemon[Agrr_daemon_binary]
 ```
 
+
+
 ## Backend: Clean Architecture (canonical)
 
-Business logic for API and progressively for HTML flows lives under **`lib/`**, not only for AI endpoints.
+Business logic for API and progressively for HTML flows lives under `**lib/**`, not only for AI endpoints.
 
 ### Domain modules (`lib/domain/`)
 
@@ -56,11 +60,11 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 
 ### Rails application layer (`app/`)
 
-- **`app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters.
-- **`app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
-- **`app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
-- **`app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
-- **`app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
+- `**app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters.
+- `**app/controllers/*_controller.rb**` — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
+- `**app/models/**` — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
+- `**app/services/**` — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
+- `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
 
 ### External agrr integration
 
@@ -117,22 +121,15 @@ The numbering below is **one list** (1–26): the **negative** expression of [Wh
 
 ### Rationalizations and loopholes (items 19–26)
 
-Common **excuses** do not exempt new code. If it quacks like a framework/ORM dependency or a second source of truth, it violates the same rules as 1–18.
+Common **excuses** do not exempt new code. If it quacks like a framework/ORM dependency or a second source of truth, it violates the same rules as **1–18**.
 
 19. **Rules living only on models** — Durable logic expressed **only** through `app/models` callbacks and validations to avoid `lib/domain`, without an equivalent policy/interactor path and tests. Validations at the persistence boundary are fine; **exclusive** ownership of business outcomes there is not.
-
 20. **Pseudonym layers** — Coupled orchestration parked in `app/services/`, `app/forms/`, or `lib/` **outside** `lib/domain/<context>/` while still encoding use-case rules, AR traversal, or HTTP — “not in the domain folder” is not architecture.
-
 21. **Trojan `inject`** — Constructor args that smuggle the framework in disguise: e.g. `Current`, a generic `context`/`deps` hash, `ApplicationRecord` as a grab bag, or procs/callables that perform I/O. Prefer **narrow ports** and **plain DTOs/entities**.
-
 22. **Interface theater** — A “gateway” or “repository” that returns structs or types that are still **ActiveRecord**, still expose query chains, or are implemented by one **god** adapter. Rules 2–3 and 5 apply to **behavior**, not only file names.
-
 23. **Permanent temporary paths** — Endless `# TODO: move to domain`, feature flags, or `legacy_path` / `new_path` branches that **normalize two behaviors** without a plan to collapse to one truth.
-
 24. **Non-Rails infrastructure in the core** — Raw SQL, Arel, or HTTP/SDK clients used **inside** `lib/domain` interactors without going through a gateway/port at the edge. Avoiding the `Rails` constant does not avoid rule 5’s intent.
-
-25. **Edge inflation and double rules** — Many **trivial** interactors that only reorder what a controller used to do; presenters or views that **re-validate** or **recompute** outcomes “for display” instead of consuming the interactor output DTO (duplicates rules 9–10 and 14 in spirit).
-
+25. **Edge inflation and double rules** — Many **trivial** interactors that only reorder what a controller used to do; presenters or views that **re-validate** or **recompute** outcomes “for display” instead of consuming the interactor output DTO (duplicates rules 10 and 14 in spirit).
 26. **Tests that lie about the contract** — Over-mocking so units never see real **constructor arity** and types; relying on integration tests alone while production wiring still uses hidden globals or inner `CompositionRoot` calls. Complements rule 18.
 
 ## Frontend: Angular layers (`frontend/src/app/`)
@@ -148,14 +145,16 @@ flowchart TB
   Adapters --> RailsAPI[Rails_JSON_API]
 ```
 
-- **`domain/`** — Types and pure rules (framework-agnostic where possible).
-- **`usecase/`** — Use cases, gateway interfaces (injection tokens), ports.
-- **`adapters/`** — API gateway implementations, presenters that map DTOs to view state.
-- **`components/`** — Standalone components, routes, templates.
-- **`services/`** — Cross-cutting and feature-specific helpers（認証、一覧リフレッシュ、マスタ API クライアント等）。HTTP や環境依存の実装は **`adapters/`** に寄せる（T-053: 空の `infrastructure/` 層は採用しない）。
-- **`core/`** — i18n loader, API base URL, browser region, cookie consent helpers, `ListRefreshBus` 等の横断ユーティリティ。
-- **`guards/`** — e.g. `authGuard`.
-- **`routes/`** — `app.routes.ts` が合成する feature 別ルート定義（T-054）。
+
+
+- `**domain/**` — Types and pure rules (framework-agnostic where possible).
+- `**usecase/**` — Use cases, gateway interfaces (injection tokens), ports.
+- `**adapters/**` — API gateway implementations, presenters that map DTOs to view state.
+- `**components/**` — Standalone components, routes, templates.
+- `**services/**` — Cross-cutting and feature-specific helpers（認証、一覧リフレッシュ、マスタ API クライアント等）。HTTP や環境依存の実装は `**adapters/**` に寄せる（T-053: 空の `infrastructure/` 層は採用しない）。
+- `**core/**` — i18n loader, API base URL, browser region, cookie consent helpers, `ListRefreshBus` 等の横断ユーティリティ。
+- `**guards/**` — e.g. `authGuard`.
+- `**routes/**` — `app.routes.ts` が合成する feature 別ルート定義（T-054）。
 
 **i18n:** `@ngx-translate` with `frontend/src/assets/i18n/ja.json` and `en.json`.
 
@@ -276,3 +275,4 @@ Discouraged for long-lived rules; prefer `lib/domain/.../interactors` with tests
 - [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md)
 - [docs/contracts/README.md](docs/contracts/README.md)
 - [docs/RESOURCE_LIMIT_TEMPLATE.md](docs/RESOURCE_LIMIT_TEMPLATE.md)
+

@@ -10,29 +10,23 @@ module Domain
           TRANSPLANT_NAME_PATTERN = /定植|植え付/
 
           class << self
-            # @param crop [Crop]
-            # @return [CropStage, nil]
-            def sowing_stage(crop)
-              stages = ordered_stages(crop)
+            # @param ordered_crop_stages [Array<#order, #name>] CropStageSnapshot 等（order 昇順であること）
+            # @return [Object, nil]
+            def sowing_stage(ordered_crop_stages)
+              stages = Array(ordered_crop_stages).sort_by { |s| s.order.to_i }
               stages.first
             end
 
-            # @param crop [Crop]
-            # @return [CropStage, nil]
-            def transplant_stage(crop)
-              stages = ordered_stages(crop)
+            # @param ordered_crop_stages [Array<#order, #name>]
+            # @return [Object, nil]
+            def transplant_stage(ordered_crop_stages)
+              stages = Array(ordered_crop_stages).sort_by { |s| s.order.to_i }
               return nil if stages.empty?
 
               by_name = stages.find { |s| s.name.to_s.match?(TRANSPLANT_NAME_PATTERN) }
               return by_name if by_name
 
               stages.second
-            end
-
-            private
-
-            def ordered_stages(crop)
-              crop.crop_stages.includes(:temperature_requirement).order(:order).to_a
             end
           end
         end

@@ -11,11 +11,14 @@ module Domain
           @pest_gateway = pest_gateway
         end
 
-        # @param crop [Crop] ActiveRecord（set_crop で既に検証済み）
-        def call(crop)
+        def call(crop_id:)
           user = @user_lookup.find(@user_id)
           accessible_pest_ids = @pest_gateway.selectable_pest_ids(user)
-          pests = crop.pests.where(id: accessible_pest_ids)
+          pests = @pest_gateway.list_pests_for_crop_filtered(
+            crop_id: crop_id,
+            pest_ids: accessible_pest_ids,
+            order: :id_asc # API: 安定した一覧順（従来の不定順に依存しない）
+          )
           @output_port.on_success(pests)
         end
       end

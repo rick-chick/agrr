@@ -7,6 +7,8 @@ module Adapters
     class EntryScheduleOptimizationGateway
       ES = Domain::CultivationPlan::Interactors::EntrySchedule
 
+      # インスタンス生成時は必ず +crop_gateway+ を渡す（テストではスタブ可）。{.call} も同様。
+
       # 参照作物の各ステージに同一レンジの required_gdd が載っていると、ステージ合算で非現実的な総GDDになり
       # optimize period が「計画期間内に完了不可」と返すことがある。比率は保ちつつ合計を上限に収める。
       DEFAULT_MAX_TOTAL_GDD_FOR_OPTIMIZE = 2_000.0
@@ -14,9 +16,10 @@ module Adapters
       # @param crop [Crop]
       # @param weather_payload [Hash] Farm#predicted_weather_data 相当
       # @param farm [Farm, nil] 気象JSONに緯度経度が無いキャッシュ等を補うため（参照農場の座標を付与）
+      # @param crop_gateway [Domain::Crop::Gateways::CropGateway] ステージ行取得（CompositionRoot.crop_gateway を渡す）
       # @return [ES::WindowService::Result] 成功時は eligible: true。失敗時も同型で eligible: false と理由のみ。
-      def self.call(crop:, weather_payload:, farm: nil)
-        new(crop: crop, weather_payload: weather_payload, farm: farm).call
+      def self.call(crop:, weather_payload:, crop_gateway:, farm: nil)
+        new(crop: crop, weather_payload: weather_payload, farm: farm, crop_gateway: crop_gateway).call
       end
 
       # WeatherPredictionInteractor の過去互換で、トップの `data` が Hash かつ内側に `data` 配列がある形を
@@ -59,10 +62,11 @@ module Adapters
         req
       end
 
-      def initialize(crop:, weather_payload:, farm: nil)
+      def initialize(crop:, weather_payload:, crop_gateway:, farm: nil)
         @crop = crop
         @weather_payload = self.class.normalize_entry_weather_payload(weather_payload || {})
         @farm = farm
+        @crop_gateway = crop_gateway
       end
 
       def call
@@ -92,8 +96,9 @@ module Adapters
         end_d = parsed[:completion_date]
         return failed_result(:invalid_response) unless start_d.is_a?(Date) && end_d.is_a?(Date) && end_d >= start_d
 
-        sow_st = ES::StageRoleResolver.sowing_stage(@crop)
-        tr_st = ES::StageRoleResolver.transplant_stage(@crop)
+        stage_rows = @crop_gateway.entry_schedule_ordered_stage_rows(crop_id: @crop.id)
+        sow_st = ES::StageRoleResolver.sowing_stage(stage_rows)
+        tr_st = ES::StageRoleResolver.transplant_stage(stage_rows)
         daily_count = Array(weather_for_file["data"]).size
 
         ES::WindowService::Result.new(

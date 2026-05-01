@@ -10,18 +10,19 @@ module Domain
           decimal.to_s("F")
         end
 
-        # 作付け期間の平均から年度を算出（既存データ用）
-        def self.calculate_plan_year_from_cultivations(reference_plan, logger:)
-          field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
+        # @param cultivation_periods [Array<Hash>] 各要素は :start_date / :completion_date（Date）
+        # @param as_of [Date] 期間リストが空のときの「今年」の基準（adapter が注入）
+        def self.calculate_plan_year_from_cultivations(cultivation_periods:, logger:, as_of:)
+          periods = normalized_periods(cultivation_periods)
 
-          if field_cultivations.empty?
-            logger.info "⚠️ [PlanSaveService] No field_cultivations found, using current year: #{Date.current.year}"
-            return Date.current.year
+          if periods.empty?
+            logger.info "⚠️ [PlanSaveService] No field_cultivations found, using as_of year: #{as_of.year}"
+            return as_of.year
           end
 
-          midpoints = field_cultivations.map do |cultivation|
-            start_date = cultivation.start_date
-            completion_date = cultivation.completion_date
+          midpoints = periods.map do |cultivation|
+            start_date = cultivation[:start_date]
+            completion_date = cultivation[:completion_date]
             days_diff = (completion_date - start_date).to_i
             start_date + days_diff / 2
           end
@@ -31,27 +32,28 @@ module Domain
           avg_date = Date.jd(avg_julian_day.round)
           plan_year = avg_date.year
 
-          logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
+          logger.debug "📊 [PlanSaveService] Field cultivations count: #{periods.size}"
           logger.debug "📊 [PlanSaveService] Average midpoint date: #{avg_date}"
           logger.debug "📊 [PlanSaveService] Calculated plan_year: #{plan_year}"
 
           plan_year
         end
 
-        # 作付け期間から計画期間を計算（通年計画用）
-        def self.calculate_planning_dates_from_cultivations(reference_plan, logger:)
-          field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
+        # @param cultivation_periods [Array<Hash>] :start_date / :completion_date
+        # @param as_of [Date] 期間リストが空のときのデフォルト通年窓の基準
+        def self.calculate_planning_dates_from_cultivations(cultivation_periods:, logger:, as_of:)
+          periods = normalized_periods(cultivation_periods)
 
-          if field_cultivations.empty?
-            logger.info "⚠️ [PlanSaveService] No field_cultivations found, using default 2-year period from current date"
+          if periods.empty?
+            logger.info "⚠️ [PlanSaveService] No field_cultivations found, using default 2-year window from as_of: #{as_of}"
             return {
-              start_date: Date.current.beginning_of_year,
-              end_date: Date.new(Date.current.year + 1, 12, 31)
+              start_date: as_of.beginning_of_year,
+              end_date: Date.new(as_of.year + 1, 12, 31)
             }
           end
 
-          start_dates = field_cultivations.pluck(:start_date).compact
-          end_dates = field_cultivations.pluck(:completion_date).compact
+          start_dates = periods.map { |p| p[:start_date] }.compact
+          end_dates = periods.map { |p| p[:completion_date] }.compact
 
           min_start_date = start_dates.min
           max_end_date = end_dates.max
@@ -59,7 +61,7 @@ module Domain
           planning_start_date = min_start_date.beginning_of_year
           planning_end_date = max_end_date.end_of_year
 
-          logger.debug "📊 [PlanSaveService] Field cultivations count: #{field_cultivations.count}"
+          logger.debug "📊 [PlanSaveService] Field cultivations count: #{periods.size}"
           logger.debug "📊 [PlanSaveService] Min start date: #{min_start_date}, Max end date: #{max_end_date}"
           logger.debug "📊 [PlanSaveService] Calculated planning dates: #{planning_start_date} to #{planning_end_date}"
 
@@ -68,6 +70,19 @@ module Domain
             end_date: planning_end_date
           }
         end
+
+        def self.normalized_periods(cultivation_periods)
+          Array(cultivation_periods).filter_map do |row|
+            next unless row.is_a?(Hash)
+
+            sd = row[:start_date] || row["start_date"]
+            cd = row[:completion_date] || row["completion_date"]
+            next if sd.nil? || cd.nil?
+
+            { start_date: sd, completion_date: cd }
+          end
+        end
+        private_class_method :normalized_periods
       end
     end
   end

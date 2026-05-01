@@ -22,7 +22,12 @@ module Presenters
         def call
           payload_hash = load_or_predict_weather!
           prediction_meta = EntryScheduleResponseBuilder.prediction_meta(farm: @farm, payload_hash: payload_hash)
-          result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(crop: @crop, weather_payload: payload_hash, farm: @farm)
+          result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(
+            crop: @crop,
+            weather_payload: payload_hash,
+            farm: @farm,
+            crop_gateway: CompositionRoot.crop_gateway
+          )
           detail = EntryScheduleResponseBuilder.crop_detail(@crop, result)
 
           {

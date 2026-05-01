@@ -113,6 +113,12 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_blank_pest_for_form"
         end
 
+        # @param order [Symbol] :recent_first | :id_asc
+        # @return [Array<Domain::Pest::Entities::PestEntity>] 作物に紐づく害虫（HTML/API ともにエンティティ）
+        def list_pests_for_crop_filtered(crop_id:, pest_ids:, order: :recent_first)
+          raise NotImplementedError, "Subclasses must implement list_pests_for_crop_filtered"
+        end
+
         # PestCropAssociationService の置換。Pest 作成後に作物群と関連付け。
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
           raise NotImplementedError, "Subclasses must implement associate_crops_with_pest_id"

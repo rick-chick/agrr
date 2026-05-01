@@ -174,6 +174,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
+        # エントリスケジュール: StageRoleResolver / WindowService 用にステージ＋温度要件を純データで返す（N+1 回避で includes 済み想定）
+        def entry_schedule_ordered_stage_rows(crop_id:)
+          raise NotImplementedError, "Subclasses must implement entry_schedule_ordered_stage_rows"
+        end
+
         def soft_destroy_with_undo(user:, crop_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end

@@ -33,7 +33,12 @@ module Api
           return if performed?
 
           @reference_crops.each do |crop|
-            result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(crop: crop, weather_payload: payload_hash, farm: farm)
+            result = Adapters::Agrr::EntryScheduleOptimizationGateway.call(
+              crop: crop,
+              weather_payload: payload_hash,
+              farm: farm,
+              crop_gateway: CompositionRoot.crop_gateway
+            )
             items << Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.crop_list_item(crop, result)
           end
 

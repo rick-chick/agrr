@@ -116,6 +116,27 @@ module Adapters
           find_crop_model!(id)
         end
 
+        def entry_schedule_ordered_stage_rows(crop_id:)
+          crop = ::Crop.includes(crop_stages: :temperature_requirement).find(crop_id)
+          crop.crop_stages.sort_by(&:order).map do |st|
+            tr = st.temperature_requirement
+            snap_tr = tr && Domain::CultivationPlan::Interactors::EntrySchedule::TemperatureRequirementSnapshot.new(
+              frost_threshold: tr.frost_threshold,
+              optimal_min: tr.optimal_min,
+              optimal_max: tr.optimal_max,
+              base_temperature: tr.base_temperature
+            )
+            Domain::CultivationPlan::Interactors::EntrySchedule::CropStageSnapshot.new(
+              id: st.id,
+              name: st.name,
+              order: st.order,
+              temperature_requirement: snap_tr
+            )
+          end
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user, attrs)
           crop = ::Crop.new(h)

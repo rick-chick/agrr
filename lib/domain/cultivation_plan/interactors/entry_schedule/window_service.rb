@@ -18,21 +18,21 @@ module Domain
             keyword_init: true
           )
 
-          # @param crop [Crop]
+          # @param ordered_crop_stages [Array<CropStageSnapshot>] entry_schedule_ordered_stage_rows の戻りなど（AR 不可）
           # @param weather_payload [Hash] Farm/CultivationPlan の predicted_weather_data 相当（'data' => 日次配列）
           # @return [Result]
-          def self.call(crop:, weather_payload:)
-            new(crop: crop, weather_payload: weather_payload).call
+          def self.call(ordered_crop_stages:, weather_payload:)
+            new(ordered_crop_stages: ordered_crop_stages, weather_payload: weather_payload).call
           end
 
-          def initialize(crop:, weather_payload:)
-            @crop = crop
+          def initialize(ordered_crop_stages:, weather_payload:)
+            @ordered_crop_stages = ordered_crop_stages
             @weather_payload = weather_payload || {}
           end
 
           def call
-            sow_st = StageRoleResolver.sowing_stage(@crop)
-            tr_st = StageRoleResolver.transplant_stage(@crop)
+            sow_st = StageRoleResolver.sowing_stage(@ordered_crop_stages)
+            tr_st = StageRoleResolver.transplant_stage(@ordered_crop_stages)
 
             unless sow_st && tr_st && sow_st.temperature_requirement && tr_st.temperature_requirement
               return empty_result(reason: :missing_stages_or_temperature)

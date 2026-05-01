@@ -71,7 +71,7 @@ module Adapters::Agrr
       }
 
       travel_to Time.zone.parse("2026-06-15") do
-        svc = EntryScheduleOptimizationGateway.new(crop: crop, weather_payload: nested, farm: nil)
+        svc = EntryScheduleOptimizationGateway.new(crop: crop, weather_payload: nested, farm: nil, crop_gateway: CompositionRoot.crop_gateway)
         range = svc.send(:evaluation_range)
 
         assert_equal Date.new(2026, 5, 1), range[0]

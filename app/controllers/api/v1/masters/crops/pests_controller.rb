@@ -12,7 +12,7 @@ module Api
           def index
             presenter = Presenters::Api::Pest::MastersCropPestsIndexPresenter.new(view: self)
             Domain::Pest::Interactors::MastersCropPestsIndexInteractor.new(output_port: presenter,
-              user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop)
+              user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
           end
 
           def create

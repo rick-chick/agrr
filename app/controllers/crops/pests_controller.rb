@@ -9,7 +9,7 @@ module Crops
     def index
       presenter = Presenters::Html::Crop::CropPestsIndexHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsIndexInteractor.new(output_port: presenter,
-        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop)
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
     end
 
     # GET /crops/:crop_id/pests/:id

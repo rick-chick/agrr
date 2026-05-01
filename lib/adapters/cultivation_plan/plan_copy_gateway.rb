@@ -101,6 +101,12 @@ module Adapters
         attachments_count
       end
 
+      def self.cultivation_period_pairs_from_plan(reference_plan)
+        reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil).map do |fc|
+          { start_date: fc.start_date, completion_date: fc.completion_date }
+        end
+      end
+
       def initialize(ctx, logger:)
         @ctx = ctx
         @logger = logger
@@ -115,12 +121,22 @@ module Adapters
         reference_plan = ::CultivationPlan.includes(:field_cultivations).find(plan_id)
         @logger.debug I18n.t("services.plan_save_service.debug.reference_plan_found", plan_name: reference_plan.plan_name)
 
+        cultivation_periods = self.class.cultivation_period_pairs_from_plan(reference_plan)
+
         if reference_plan.plan_year.nil?
-          planning_dates = @calc.calculate_planning_dates_from_cultivations(reference_plan, logger: @logger)
+          planning_dates = @calc.calculate_planning_dates_from_cultivations(
+            cultivation_periods: cultivation_periods,
+            logger: @logger,
+            as_of: Date.current
+          )
           plan_year = nil
           @logger.info "📅 [PlanSaveService] Reference plan is annual planning (plan_year is null), calculated dates from cultivations"
         else
-          plan_year = @calc.calculate_plan_year_from_cultivations(reference_plan, logger: @logger)
+          plan_year = @calc.calculate_plan_year_from_cultivations(
+            cultivation_periods: cultivation_periods,
+            logger: @logger,
+            as_of: Date.current
+          )
           planning_dates = ::CultivationPlan.calculate_planning_dates(plan_year)
           @logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"
         end

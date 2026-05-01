@@ -11,10 +11,14 @@ module Domain
           @pest_gateway = pest_gateway
         end
 
-        def call(crop)
+        def call(crop_id:)
           user = @user_lookup.find(@user_id)
           accessible_pest_ids = @pest_gateway.selectable_pest_ids(user)
-          pests = crop.pests.where(id: accessible_pest_ids).recent
+          pests = @pest_gateway.list_pests_for_crop_filtered(
+            crop_id: crop_id,
+            pest_ids: accessible_pest_ids,
+            order: :recent_first
+          )
           available_pests = @pest_gateway.list_selectable_pest_entities_recent_first(user)
           @output_port.on_success(pests:, available_pests:)
         end

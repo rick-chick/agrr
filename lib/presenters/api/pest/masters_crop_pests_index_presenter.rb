@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(pests)
-          @view.render json: pests
+          @view.render json: pests.map(&:to_hash)
         end
       end
     end
