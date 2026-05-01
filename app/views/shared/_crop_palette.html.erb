@@ -1,18 +1,24 @@
 <%# app/views/shared/_crop_palette.html.erb %>
 <%# 作物パレット（サイドパネル） %>
-<%# 選択可能な作物をカードで表示し、ドラッグでスケジュールに追加できる %>
+<%#
+  A) crop_palette_embed: { used_crop_ids:, crops: } — crops は DTO 等 #id #name #variety
+  B) cultivation_plan: AR（レガシー）
+%>
 
 <%
-  # 現在の計画で使用されている作物
-  used_crop_ids = cultivation_plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
-  
-  # 地域の参照作物を取得
-  if cultivation_plan.plan_type == 'public'
-    # 公開計画：同じ地域の参照作物
-    available_crops = Crop.reference.where(region: cultivation_plan.farm.region).order(:name)
+  crop_palette_embed = local_assigns[:crop_palette_embed]
+
+  if crop_palette_embed.present?
+    used_crop_ids = crop_palette_embed[:used_crop_ids]
+    available_crops = crop_palette_embed[:crops]
   else
-    # 個人計画：ユーザーの作物
-    available_crops = cultivation_plan.user.crops.where(is_reference: false).order(:name)
+    cultivation_plan = local_assigns.fetch(:cultivation_plan)
+    used_crop_ids = cultivation_plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
+    if cultivation_plan.plan_type == 'public'
+      available_crops = Crop.reference.where(region: cultivation_plan.farm.region).order(:name)
+    else
+      available_crops = cultivation_plan.user.crops.where(is_reference: false).order(:name)
+    end
   end
 %>
 
@@ -24,20 +30,23 @@
     <span class="toggle-text"><%= crop_palette_title || t('shared.crop_palette.title', default: '作物を追加') %></span>
     <span class="toggle-icon">▼</span>
   </button>
-  
+
   <%# ドロップダウンパネル（初期状態は非表示） %>
   <div class="crop-palette-panel collapsed" id="crop-palette-panel">
     <div class="crop-palette-body">
       <div class="crop-palette-grid">
         <% available_crops.each do |crop| %>
-          <div class="crop-palette-card" 
-               data-crop-id="<%= crop.id %>"
-               data-crop-name="<%= crop.name %>"
-               data-crop-variety="<%= crop.variety %>">
+          <% c_id = crop.respond_to?(:id) ? crop.id : crop[:id] %>
+          <% c_name = crop.respond_to?(:name) ? crop.name : crop[:name] %>
+          <% c_variety = crop.respond_to?(:variety) ? crop.variety : crop[:variety] %>
+          <div class="crop-palette-card"
+               data-crop-id="<%= c_id %>"
+               data-crop-name="<%= c_name %>"
+               data-crop-variety="<%= c_variety %>">
             <!-- ガントカードと同じスタイルのバー -->
             <div class="crop-card-bar">
-              <span class="crop-card-label"><%= crop.name %></span>
-              <% if used_crop_ids.include?(crop.id) %>
+              <span class="crop-card-label"><%= c_name %></span>
+              <% if used_crop_ids.include?(c_id) %>
                 <span class="crop-card-badge"><%= crop_palette_in_use_label || t('shared.crop_palette.in_use', default: '使用中') %></span>
               <% end %>
             </div>
@@ -47,4 +56,3 @@
     </div>
   </div>
 </div>
-

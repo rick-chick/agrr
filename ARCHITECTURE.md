@@ -35,6 +35,8 @@ flowchart TD
 
 ## Backend: Clean Architecture (canonical)
 
+**Gateway と View の分離・「便宜実装」の禁止** など規範の補足は **[CLEANARCHITECTURE.md](./CLEANARCHITECTURE.md)** を参照すること。
+
 Business logic for API and progressively for HTML flows lives under `**lib/**`, not only for AI endpoints.
 
 ### Domain modules (`lib/domain/`)

@@ -144,12 +144,28 @@ class PlansController < ApplicationController
 
   # Step 5: 計画詳細（結果表示）
   def show
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
+    plan_id = parse_positive_route_id(params[:id])
+    unless plan_id
+      redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
+    end
 
-    # 最適化中の場合のみ進捗画面へ
-    redirect_to optimizing_plan_path(@cultivation_plan.id) if @cultivation_plan.status_optimizing?
-    @vm = Presenters::Html::Plans::ShowPresenter.new(cultivation_plan: @cultivation_plan)
+    presenter = Presenters::Html::Plans::PrivatePlanShowHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      plan_id: plan_id,
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
+    return if performed?
+
+    if @private_plan_show_page.optimizing?
+      redirect_to optimizing_plan_path(@private_plan_show_page.id) and return
+    end
+
+    Rails.logger.debug "📊 [Plans#show] User: #{current_user.id}, Plan: #{@private_plan_show_page.id}"
   end
 
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。

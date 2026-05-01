@@ -119,6 +119,12 @@ module Domain
         def private_plan_index_page(user:)
           raise NotImplementedError, "Subclasses must implement private_plan_index_page"
         end
+
+        # プライベート計画の読み取り専用スナップショット（認可つき）。View やガント埋め込み形は知らない。
+        # @return [Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto]
+        def find_private_cultivation_plan_detail(user:, plan_id:)
+          raise NotImplementedError, "Subclasses must implement find_private_cultivation_plan_detail"
+        end
       end
     end
   end

@@ -112,6 +112,40 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_equal I18n.t("plans.optimizing.error.title"), flash[:alert]
   end
 
+  # SCOPE: show（PrivatePlanShowPageInteractor / PrivatePlanShowHtmlPresenter）
+  test "show renders successfully for owned non-optimizing plan" do
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
+    get plan_path(plan)
+    assert_response :success
+    assert_select "#cultivation_plan_#{plan.id}"
+    assert_select "h1.content-card-header-title", text: plan.display_name
+  end
+
+  test "show redirects to optimizing when plan status is optimizing" do
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "optimizing")
+    get plan_path(plan)
+    assert_redirected_to optimizing_plan_path(plan.id)
+  end
+
+  test "show redirects to plans index when plan belongs to another user" do
+    other = create(:user)
+    farm = create(:farm, user: other)
+    plan = create(:cultivation_plan, user: other, farm: farm)
+    get plan_path(plan)
+    assert_redirected_to plans_path
+    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
+  end
+
+  test "show redirects to plans index when id is not a positive integer" do
+    plan = create(:cultivation_plan, user: @user, farm: @farm)
+    get plan_path(plan)
+    assert_response :success
+
+    get "/plans/0"
+    assert_redirected_to plans_path
+    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
+  end
+
   # SCOPE: copy 正常/異常
   # SCOPE: copy 正常/異常
   test "copy is disabled due to new uniqueness constraint" do

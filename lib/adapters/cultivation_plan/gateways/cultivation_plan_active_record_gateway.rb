@@ -357,6 +357,76 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
+        def find_private_cultivation_plan_detail(user:, plan_id:)
+          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
+            plan = PlanPolicy.private_scope(user)
+                      .includes(
+                        :farm,
+                        field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
+                        cultivation_plan_fields: [],
+                        cultivation_plan_crops: [ :crop ]
+                      )
+                      .find(plan_id)
+
+            field_cultivations = plan.field_cultivations.map do |fc|
+              Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::FieldCultivationRead.new(
+                id: fc.id,
+                cultivation_plan_field_id: fc.cultivation_plan_field_id,
+                field_display_name: fc.field_display_name,
+                cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
+                crop_display_name: fc.crop_display_name,
+                start_date: fc.start_date,
+                completion_date: fc.completion_date,
+                cultivation_days: fc.cultivation_days,
+                area: fc.area,
+                estimated_cost: fc.estimated_cost,
+                optimization_profit: Domain::CultivationPlan::GanttChartRowHashes.profit_from_optimization_result(
+                  fc.optimization_result
+                )
+              )
+            end
+
+            cultivation_plan_fields = plan.cultivation_plan_fields.map do |field|
+              Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::PlanFieldRead.new(
+                id: field.id,
+                name: field.name,
+                area: field.area
+              )
+            end
+
+            palette_used_crop_ids = plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
+            palette_crops = ::Crop.user_owned
+                               .where(user: user, is_reference: false)
+                               .select(:id, :name, :variety, :groups)
+                               .order(:name)
+                               .map do |c|
+              Domain::CultivationPlan::Dtos::PrivatePlanShowPaletteCropDto.new(
+                id: c.id,
+                name: c.name,
+                variety: c.variety
+              )
+            end
+
+            Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto.new(
+              id: plan.id,
+              display_name: plan.display_name,
+              farm_display_name: plan.farm.display_name,
+              total_area: plan.total_area,
+              field_cultivations_count: plan.field_cultivations.size,
+              cultivation_plan_fields_count: plan.cultivation_plan_fields.size,
+              planning_start_date: plan.planning_start_date,
+              planning_end_date: plan.planning_end_date,
+              status: plan.status,
+              field_cultivations: field_cultivations,
+              cultivation_plan_fields: cultivation_plan_fields,
+              palette_used_crop_ids: palette_used_crop_ids,
+              palette_crops: palette_crops
+            )
+          end
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
         # 部分 select の列は CultivationPlan#display_name（private）が参照する属性と一致させること
         def private_plan_index_page(user:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do

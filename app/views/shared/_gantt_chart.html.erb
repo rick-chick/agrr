@@ -1,56 +1,42 @@
 <%# app/views/shared/_gantt_chart.html.erb %>
 <%# 共通ガントチャートコンポーネント %>
-<%# 
-  使い方:
-  render 'shared/gantt_chart', 
-         cultivation_plan: @cultivation_plan,
-         show_crop_palette: true,
-         plan_type: 'public'
-  
-  パラメータ:
-  - cultivation_plan: CultivationPlanオブジェクト（必須）
-  - show_crop_palette: 作物パレットを表示するか (デフォルト: false)
-  - plan_type: 'public' または 'private' (デフォルト: 'public')
+<%#
+  使い方（いずれか）:
+  A) レガシー: cultivation_plan: AR（公開計画など）
+  B) DTO 埋め込み: gantt_embed: { plan_id:, planning_start_date, planning_end_date,
+                           gantt_cultivation_rows:, gantt_field_rows:,
+                           crop_palette_embed: { used_crop_ids:, crops: } }（プライベート計画 show 等）
+
+  その他: show_crop_palette, plan_type, data_url, adjust_url, …
 %>
 
 <%
-  # デフォルト値の設定
   show_crop_palette ||= false
   plan_type ||= 'public'
-  
-  # 栽培スケジュール期間の計算
-  plan_start_date = cultivation_plan.planning_start_date || Date.current
-  plan_end_date = cultivation_plan.planning_end_date
-  
-  # Frappe Gantt用のデータを準備
-  cultivation_data = cultivation_plan.field_cultivations.map do |fc|
-    {
-      id: fc.id,
-      field_id: fc.cultivation_plan_field_id,
-      field_name: fc.field_display_name,
-      crop_id: fc.cultivation_plan_crop_id,
-      crop_name: fc.crop_display_name,
-      start_date: fc.start_date.to_s,
-      completion_date: fc.completion_date.to_s,
-      cultivation_days: fc.cultivation_days,
-      area: fc.area,
-      estimated_cost: fc.estimated_cost,
-      profit: fc.optimization_result&.dig('profit')
-    }
+
+  gantt_embed = local_assigns[:gantt_embed]
+
+  if gantt_embed.present?
+    plan_start_date = gantt_embed[:planning_start_date] || Date.current
+    plan_end_date = gantt_embed[:planning_end_date]
+    cultivation_data = gantt_embed[:gantt_cultivation_rows]
+    fields_data = gantt_embed[:gantt_field_rows]
+    cultivation_plan_id = gantt_embed[:plan_id]
+    crop_palette_embed = gantt_embed[:crop_palette_embed]
+  else
+    cultivation_plan = local_assigns.fetch(:cultivation_plan)
+    plan_start_date = cultivation_plan.planning_start_date || Date.current
+    plan_end_date = cultivation_plan.planning_end_date
+    cultivation_data = cultivation_plan.field_cultivations.map do |fc|
+      Domain::CultivationPlan::GanttChartRowHashes.cultivation_row_from_ar(fc)
+    end
+    fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
+      Domain::CultivationPlan::GanttChartRowHashes.field_row_from_ar(field)
+    end
+    cultivation_plan_id = cultivation_plan.id
+    crop_palette_embed = nil
   end
-  
-  # 圃場情報を準備
-  fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
-    {
-      id: field.id,
-      field_id: field.id,
-      name: field.name,
-      area: field.area
-    }
-  end
-  
-  
-  # デフォルト値の設定
+
   gantt_title ||= t('plans.show.gantt.title', default: 'ガントチャート')
   detail_title ||= t('plans.show.detail.title', default: '栽培詳細')
   detail_loading ||= t('plans.show.detail.loading', default: '読み込み中...')
@@ -65,13 +51,20 @@
       </h2>
     </div>
     <div class="gantt-header-actions">
-      <%# 作物パレット（public_plansの場合のみ表示） %>
       <% if show_crop_palette %>
-        <%= render 'shared/crop_palette', 
-                   cultivation_plan: cultivation_plan,
-                   crop_palette_toggle_label: crop_palette_toggle_label,
-                   crop_palette_title: crop_palette_title,
-                   crop_palette_in_use_label: crop_palette_in_use_label %>
+        <% if crop_palette_embed.present? %>
+          <%= render 'shared/crop_palette',
+                     crop_palette_embed: crop_palette_embed,
+                     crop_palette_toggle_label: crop_palette_toggle_label,
+                     crop_palette_title: crop_palette_title,
+                     crop_palette_in_use_label: crop_palette_in_use_label %>
+        <% else %>
+          <%= render 'shared/crop_palette',
+                     cultivation_plan: cultivation_plan,
+                     crop_palette_toggle_label: crop_palette_toggle_label,
+                     crop_palette_title: crop_palette_title,
+                     crop_palette_in_use_label: crop_palette_in_use_label %>
+        <% end %>
       <% end %>
     </div>
   </div>
@@ -83,7 +76,7 @@
            data-fields="<%= fields_data.to_json %>"
            data-plan-start-date="<%= plan_start_date.to_s %>"
            data-plan-end-date="<%= plan_end_date.to_s %>"
-           data-cultivation-plan-id="<%= cultivation_plan.id %>"
+           data-cultivation-plan-id="<%= cultivation_plan_id %>"
            data-plan-type="<%= plan_type %>"
            <%# API エンドポイント（呼び出し側で設定） %>
            data-data-url="<%= data_url %>"
@@ -108,7 +101,7 @@
     <span class="gantt-fallback-icon" aria-hidden="true">📱</span>
     <span class="gantt-fallback-text"><%= t('plans.gantt.fallback.message') %></span>
   </div>
-  
+
   <%# 詳細パネル（作物クリック時に表示） %>
   <div id="detail-panel" class="gantt-detail-panel">
     <div class="gantt-detail-panel-container">
@@ -120,10 +113,8 @@
       </div>
     </div>
   </div>
-  
-  <%# Google AdSense 広告（public_plansの場合のみ） %>
+
   <% if plan_type == 'public' %>
     <%= render 'shared/adsense_display_ad', ad_slot: '0000000000', ad_format: 'horizontal' %>
   <% end %>
 </div>
-
