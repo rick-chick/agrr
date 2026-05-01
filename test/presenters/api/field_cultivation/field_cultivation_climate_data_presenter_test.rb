@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../../../app/presenters/api/field_cultivation_climate/field_cultivation_climate_data_presenter"
 
 class FieldCultivationClimateDataPresenterTest < ActiveSupport::TestCase
   test "on_success renders success payload with status ok" do
     view_mock = mock
-    presenter = Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
+    presenter = Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
 
     field_cultivation = {
       id: 1,
@@ -95,7 +94,7 @@ class FieldCultivationClimateDataPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders not_found when message indicates missing data" do
     view_mock = mock
-    presenter = Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
+    presenter = Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
 
     error_message = "Field cultivation climate data not found"
     failure_dto = Domain::Shared::Dtos::ErrorDto.new(error_message)
@@ -110,7 +109,7 @@ class FieldCultivationClimateDataPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders bad_request for cultivation period missing errors" do
     view_mock = mock
-    presenter = Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
+    presenter = Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
 
     error_message = "栽培期間が設定されていません"
     failure_dto = Domain::Shared::Dtos::ErrorDto.new(error_message)
@@ -125,7 +124,7 @@ class FieldCultivationClimateDataPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders internal_server_error for unexpected errors" do
     view_mock = mock
-    presenter = Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
+    presenter = Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: view_mock)
 
     error_message = "AGRR Progress calculation failed"
     failure_dto = Domain::Shared::Dtos::ErrorDto.new(error_message)
