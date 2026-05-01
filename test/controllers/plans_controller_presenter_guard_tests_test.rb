@@ -59,6 +59,18 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_equal I18n.t("plans.errors.farm_not_found"), flash[:alert]
   end
 
+  test "select_crop redirects to new when farm_id is not a positive integer" do
+    get select_crop_plans_path, params: { farm_id: "abc" }
+    assert_redirected_to new_plan_path
+    assert_equal I18n.t("plans.errors.select_farm"), flash[:alert]
+  end
+
+  test "select_crop redirects to new when farm_id is zero" do
+    get select_crop_plans_path, params: { farm_id: "0" }
+    assert_redirected_to new_plan_path
+    assert_equal I18n.t("plans.errors.select_farm"), flash[:alert]
+  end
+
   # SCOPE: optimize/optimizing の遷移
   test "optimize redirects to optimizing when not already optimizing" do
     plan = create(:cultivation_plan, user: @user, status: "pending")

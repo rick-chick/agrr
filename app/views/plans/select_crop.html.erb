@@ -17,14 +17,14 @@
           <div class="enhanced-summary-icon">🌍</div>
           <div class="enhanced-summary-content">
             <div class="enhanced-summary-label"><%= t('plans.select_crop.summary.farm') %></div>
-            <div class="enhanced-summary-value"><%= @vm.farm.display_name %></div>
+            <div class="enhanced-summary-value"><%= @farm.display_name %></div>
           </div>
         </div>
         <div class="enhanced-summary-row">
           <div class="enhanced-summary-icon">📐</div>
           <div class="enhanced-summary-content">
             <div class="enhanced-summary-label"><%= t('plans.select_crop.summary.total_area') %></div>
-            <div class="enhanced-summary-value"><%= number_with_delimiter(@vm.total_area) %> ㎡</div>
+            <div class="enhanced-summary-value"><%= number_with_delimiter(@total_area) %> ㎡</div>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@
       <p class="content-card-subtitle"><%= t('plans.select_crop.subtitle') %></p>
       
       <%= form_with url: plans_path, method: :post, id: "cropForm", data: { turbo: true } do |f| %>
-        <% if @vm.crops.empty? %>
+        <% if @crops.empty? %>
           <!-- 作物がない場合 -->
           <div class="plans-empty">
             <div class="plans-empty-icon">🌾</div>
@@ -52,7 +52,7 @@
         <% else %>
           <!-- 作物選択グリッド -->
           <div class="enhanced-grid">
-            <% @vm.crops.each do |crop| %>
+            <% @crops.each do |crop| %>
               <div class="crop-item">
                 <input type="checkbox" 
                        name="crop_ids[]" 
@@ -80,7 +80,7 @@
   </div>
 
   <!-- Fixed Bottom Bar -->
-  <% if @vm.crops.any? %>
+  <% if @crops.any? %>
     <div class="fixed-bottom-bar">
       <div class="fixed-bottom-bar-content">
         <div class="fixed-bottom-bar-left">

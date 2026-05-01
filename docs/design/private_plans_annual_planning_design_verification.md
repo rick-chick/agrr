@@ -13,7 +13,7 @@
 
 ### Phase 2: コントローラー・Presenter変更
 - ✅ `PlansController`の`index`, `new`, `select_crop`, `create`の変更
-- ✅ `Plans::IndexPresenter`, `Plans::NewPresenter`, `Plans::SelectCropPresenter`の変更
+- ✅ `Plans::IndexPresenter`, `Plans::NewPresenter`, 作物選択は `PrivatePlanSelectCropContextInteractor` + `PrivatePlanSelectCropHtmlPresenter` に寄せた
 
 ### Phase 3: ビュー変更
 - ✅ `plans/index.html.erb`の年度別→農場別表示

@@ -116,7 +116,7 @@
 #### 2.2 Presenter変更
 - [ ] `Plans::IndexPresenter`: 年度別から農場別に変更
 - [ ] `Plans::NewPresenter`: 年度関連のメソッドを削除
-- [ ] `Plans::SelectCropPresenter`: `plan_year`パラメータを削除
+- [x] 作物選択 HTML: `PrivatePlanSelectCropContextInteractor`（`plan_year` は未使用のまま）
 - [ ] `Plans::ShowPresenter`: 表示範囲選択機能を追加
 
 #### 2.3 テスト

@@ -232,7 +232,7 @@ end
 - 年度選択UIを削除するため、このメソッドは使用されなくなる
 - ただし、既存データの表示には必要かもしれない（確認が必要）
 
-### 10. **Plans::SelectCropPresenterの`plan_year`パラメータ** ⚠️⚠️
+### 10. **作物選択（旧 SelectCropPresenter / `plan_year`）** ⚠️⚠️
 
 **重要度: 高**
 
@@ -364,7 +364,7 @@ end
 - [ ] `PlansController#find_existing_plan`の変更（`plan_year`を除外）
 - [ ] `PlansController#build_creator_params`の変更（`plan_year`を使わずに`planning_start_date`と`planning_end_date`を設定）
 - [ ] `Plans::IndexPresenter#plans_by_year`の変更（農場別にグループ化）
-- [ ] `Plans::SelectCropPresenter`の変更（`plan_year`パラメータを削除またはオプショナル化）
+- [x] `PrivatePlanSelectCropContextInteractor` に置換済み（`plan_year` はウィザード外）
 
 ### Phase 3: ビュー変更に追加
 
@@ -440,7 +440,7 @@ end
 1. **セッション管理の変更** - `PlansController`で`plan_year`をセッションに保存している箇所が複数ある
 2. **APIレスポンスの後方互換性** - フロントエンドが`plan_year`を期待している可能性がある
 3. **PlanSaveServiceの変更** - `find_existing_private_plan`と`calculate_plan_year_from_cultivations`の扱い
-4. **Presenterの変更** - `Plans::IndexPresenter`と`Plans::SelectCropPresenter`の変更
+4. **作物選択** — `PrivatePlanSelectCropHtmlPresenter` と `Plans::IndexPresenter` などの整合
 5. **マイグレーション戦略** - 既存データと新規データの混在への対応
 
 これらの点を設計書に追加し、実装前に確認することを推奨します。

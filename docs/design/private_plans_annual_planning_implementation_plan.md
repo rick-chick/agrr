@@ -191,7 +191,7 @@ end
   - `plan_year`が`null`の計画も正しく表示
 - [ ] `Plans::NewPresenter`
   - 年度関連のメソッドを削除（`available_years`など）
-- [ ] `Plans::SelectCropPresenter`
+- [x] `PrivatePlanSelectCropContextInteractor` / `PrivatePlanSelectCropHtmlPresenter`（旧 SelectCropPresenter 廃止）
   - `plan_year`パラメータを削除またはオプショナル化
 - [ ] `Plans::ShowPresenter`
   - 表示範囲選択機能を追加（将来的に使用）

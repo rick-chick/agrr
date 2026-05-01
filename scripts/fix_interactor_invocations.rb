@@ -73,6 +73,8 @@ INJECT = {
     "gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor" =>
     "gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger",
+  "Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor" =>
+    "field_gateway: CompositionRoot.field_gateway, crop_gateway: CompositionRoot.crop_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor" => "", # class method only
   "Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor" =>
     "gateway: CompositionRoot.deletion_undo_gateway",

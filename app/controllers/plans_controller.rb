@@ -31,19 +31,13 @@ class PlansController < ApplicationController
 
   # Step 2: 作物選択
   def select_crop
-    unless params[:farm_id].present?
+    farm_id = parse_select_crop_farm_id(params[:farm_id])
+    unless farm_id
       redirect_to new_plan_path, alert: I18n.t("plans.errors.select_farm") and return
     end
 
-    @vm = Presenters::Html::Plans::SelectCropPresenter.new(
-      current_user: current_user,
-      farm_id: params[:farm_id]
-    )
-    @farm = @vm.farm
-    @plan_name = @vm.plan_name
-    @crops = @vm.crops
-    @fields = @vm.fields
-    @total_area = @vm.total_area
+    load_private_plan_select_crop_context(farm_id)
+    return if performed?
 
     # セッションに保存（plan_yearは使用しない - 年度という概念は削除されました）
     session[self.class.session_key] = {
@@ -53,8 +47,6 @@ class PlansController < ApplicationController
     }
 
     Rails.logger.debug "✅ [Plans#select_crop] Session saved: #{session[:plan_data].inspect}"
-  rescue ActiveRecord::RecordNotFound
-    redirect_to new_plan_path, alert: I18n.t("plans.errors.farm_not_found")
   end
 
   # Step 3: 計画作成（最適化はしない）
@@ -66,15 +58,14 @@ class PlansController < ApplicationController
 
     if crops.empty?
       # Turbo対応: フォールバックせず同画面を422で再描画
-      @vm = Presenters::Html::Plans::SelectCropPresenter.new(
-        current_user: current_user,
-        farm_id: session_data[:farm_id]
-      )
-      @farm = @vm.farm
-      @plan_name = @vm.plan_name
-      @crops = @vm.crops
-      @fields = @vm.fields
-      @total_area = @vm.total_area
+      farm_id = parse_select_crop_farm_id(session_data[:farm_id])
+      unless farm_id
+        redirect_to new_plan_path, alert: I18n.t("plans.errors.restart") and return
+      end
+
+      load_private_plan_select_crop_context(farm_id)
+      return if performed?
+
       flash.now[:alert] = I18n.t("plans.errors.select_crop")
       return render :select_crop, status: :unprocessable_entity
     end
@@ -180,6 +171,32 @@ class PlansController < ApplicationController
   end
 
   private
+
+  def load_private_plan_select_crop_context(farm_id)
+    presenter = Presenters::Html::Plans::PrivatePlanSelectCropHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      farm_id: farm_id,
+      field_gateway: CompositionRoot.field_gateway,
+      crop_gateway: CompositionRoot.crop_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
+  end
+
+  # 作物選択で許可する farm_id（正の整数のみ）。"abc" / 0 / 空白は nil
+  def parse_select_crop_farm_id(raw)
+    return nil if raw.nil?
+
+    s = raw.is_a?(Integer) ? raw.to_s : raw.to_s.strip
+    return nil if s.empty?
+
+    return nil unless s.match?(/\A[1-9]\d*\z/)
+
+    s.to_i
+  end
 
   # Concernで実装すべきメソッド
 
