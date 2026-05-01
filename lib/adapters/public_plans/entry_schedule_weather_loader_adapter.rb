@@ -13,7 +13,7 @@ module Adapters
         raise Domain::PublicPlan::Exceptions::WeatherLocationMissingError if farm.weather_location.blank?
 
         service = @prediction_service_factory.call(farm)
-        Domain::PublicPlan::Services::EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
+        EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
           farm: farm,
           prediction_end_date_raw: prediction_end_date_raw,
           reference_date: reference_date,

@@ -7,7 +7,10 @@ module Domain
       class EntryScheduleResponseBuilder
         ES = Domain::CultivationPlan::Interactors::EntrySchedule
 
-        DEFAULT_ENTRY_SCHEDULE_TRANSLATOR = ->(key, **opts) { I18n.t(key, **opts) }.freeze
+        # EntrySchedulePhaseTimeline は call 可能オブジェクト前提（Rails I18n 非依存）。
+        def self.phase_timeline_translator_callable(translator)
+          ->(key, **opts) { translator.t(key, **opts) }
+        end
 
         def self.prediction_meta(farm:, payload_hash:, chart_calendar_year:)
           return {} unless payload_hash.is_a?(Hash)
@@ -22,8 +25,10 @@ module Domain
         end
 
         # @param result [ES::WindowService::Result]
-        def self.crop_list_item(crop, result)
-          timeline = ES::EntrySchedulePhaseTimeline.new(translator: DEFAULT_ENTRY_SCHEDULE_TRANSLATOR)
+        # @param translator [#t] TranslatorInterface など（Injection）
+        def self.crop_list_item(crop, result, translator:)
+          timeline_callable = phase_timeline_translator_callable(translator)
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable)
           cw = timeline.chart_windows(crop, result)
           sow_first = cw[:sowing_windows].first
           tr_first = cw[:transplant_windows].first
@@ -34,10 +39,10 @@ module Domain
             eligible: result.eligible,
             sowing_summary: sow_first ? { start_date: sow_first[:start_date].iso8601, end_date: sow_first[:end_date].iso8601 } : nil,
             transplant_summary: tr_first ? { start_date: tr_first[:start_date].iso8601, end_date: tr_first[:end_date].iso8601 } : nil,
-            reason_summary: reason_summary_text(result),
+            reason_summary: reason_summary_text(result, translator: translator),
             labels: {
-              sowing: I18n.t("api.entry_schedule.label.sowing"),
-              transplanting: I18n.t("api.entry_schedule.label.transplanting")
+              sowing: translator.t("api.entry_schedule.label.sowing"),
+              transplanting: translator.t("api.entry_schedule.label.transplanting")
             },
             schedule_flow_summary: timeline.schedule_flow_summary(crop, result),
             schedule_flow_detail: timeline.schedule_flow_detail(crop, result),
@@ -47,19 +52,19 @@ module Domain
           }
         end
 
-        def self.crop_detail(crop, result)
-          timeline = ES::EntrySchedulePhaseTimeline.new(translator: DEFAULT_ENTRY_SCHEDULE_TRANSLATOR)
+        # @param crop_stages [Array<Domain::Crop::Entities::CropStageEntity>]
+        def self.crop_detail(crop, result, translator:, crop_stages:)
+          timeline_callable = phase_timeline_translator_callable(translator)
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable)
           cw = timeline.chart_windows(crop, result)
-          crop_list_item(crop, result).merge(
+          crop_list_item(crop, result, translator: translator).merge(
             sowing_windows: serialize_windows(cw[:sowing_windows]),
             transplant_windows: serialize_windows(cw[:transplant_windows]),
             reason_parts: result.reason_parts,
             sowing_stage_id: result.sowing_stage_id,
             transplant_stage_id: result.transplant_stage_id,
-            crop_stages: crop.crop_stages.order(:order).map do |s|
-              { id: s.id, name: s.name, order: s.order }
-            end,
-            entry_disclaimer: I18n.t("api.entry_schedule.disclaimer.short"),
+            crop_stages: crop_stages.map { |s| { id: s.id, name: s.name, order: s.order } },
+            entry_disclaimer: translator.t("api.entry_schedule.disclaimer.short"),
             next_task: {
               available: false,
               code: "catalog",
@@ -90,13 +95,13 @@ module Domain
           "sowing=#{parts[:sowing_stage_name]} transplant=#{parts[:transplant_stage_name]} days=#{parts[:days_evaluated]}"
         end
 
-        def self.reason_summary_text(result)
+        def self.reason_summary_text(result, translator:)
           parts = result.reason_parts || {}
           return parts[:error].to_s if parts[:error]
 
           src = parts[:source] || parts["source"]
           if src.to_s == "agrr_optimize_period"
-            return I18n.t(
+            return translator.t(
               "api.entry_schedule.reason.agrr",
               start: (parts[:optimal_start_date] || parts["optimal_start_date"]).to_s.slice(0, 10),
               completion: (parts[:completion_date] || parts["completion_date"]).to_s.slice(0, 10),
@@ -106,10 +111,13 @@ module Domain
           end
           if src.to_s == "agrr_failed"
             ek = (parts[:error_key] || parts["error_key"] || "generic").to_s
-            return I18n.t("api.entry_schedule.reason.agrr_failed.#{ek}", default: I18n.t("api.entry_schedule.reason.agrr_failed.generic"))
+            return translator.t(
+              "api.entry_schedule.reason.agrr_failed.#{ek}",
+              default: translator.t("api.entry_schedule.reason.agrr_failed.generic")
+            )
           end
 
-          I18n.t(
+          translator.t(
             "api.entry_schedule.reason.list",
             sowing: parts[:sowing_stage_name] || "-",
             transplant: parts[:transplant_stage_name] || "-",

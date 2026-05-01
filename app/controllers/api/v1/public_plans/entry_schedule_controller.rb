@@ -43,7 +43,7 @@ module Api
               farm: farm,
               crop_gateway: CompositionRoot.crop_gateway
             )
-            items << Domain::PublicPlan::Services::EntryScheduleResponseBuilder.crop_list_item(crop, result)
+            items << Domain::PublicPlan::Services::EntryScheduleResponseBuilder.crop_list_item(crop, result, translator: CompositionRoot.translator)
           end
 
           items.sort_by! { |it| Domain::PublicPlan::Services::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }

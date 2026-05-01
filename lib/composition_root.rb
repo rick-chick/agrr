@@ -269,7 +269,8 @@ module CompositionRoot
         output_port: output_port,
         crop_gateway: crop_gateway,
         weather_loader: entry_schedule_weather_loader_adapter,
-        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter
+        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter,
+        translator: translator
       )
     end
 

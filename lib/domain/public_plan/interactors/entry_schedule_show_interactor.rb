@@ -5,11 +5,12 @@ module Domain
     module Interactors
       # GET entry_schedule/crops/:id — 参照農場・参照作物・予測気象に基づくエントリ詳細（単一ユースケース）
       class EntryScheduleShowInteractor
-        def initialize(output_port:, crop_gateway:, weather_loader:, optimization_runner:)
+        def initialize(output_port:, crop_gateway:, weather_loader:, optimization_runner:, translator:)
           @output_port = output_port
           @crop_gateway = crop_gateway
           @weather_loader = weather_loader
           @optimization_runner = optimization_runner
+          @translator = translator
         end
 
         # @param farm [Farm] 参照農場（controller 事前検証済み）
@@ -28,7 +29,13 @@ module Domain
             farm: farm,
             crop_gateway: @crop_gateway
           )
-          crop_detail = Services::EntryScheduleResponseBuilder.crop_detail(crop, result)
+          crop_stages = @crop_gateway.list_crop_stages_by_crop_id(crop.id)
+          crop_detail = Services::EntryScheduleResponseBuilder.crop_detail(
+            crop,
+            result,
+            translator: @translator,
+            crop_stages: crop_stages
+          )
           prediction_meta = Services::EntryScheduleResponseBuilder.prediction_meta(
             farm: farm,
             payload_hash: payload_hash,

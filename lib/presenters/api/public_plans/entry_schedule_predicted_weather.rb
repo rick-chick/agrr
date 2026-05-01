@@ -11,7 +11,7 @@ module Presenters
 
             weather_prediction_service = yield(farm)
 
-            Domain::PublicPlan::Services::EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
+            Adapters::PublicPlans::EntrySchedulePredictionPayloadLoader.load_with_existing_service!(
               farm: farm,
               prediction_end_date_raw: prediction_end_date_raw,
               reference_date: reference_date,
@@ -23,7 +23,7 @@ module Presenters
           # @param reference_date [Date]
           # @return [Date]
           def parse_prediction_end_date(prediction_end_date_raw, reference_date:)
-            Domain::PublicPlan::Services::EntrySchedulePredictionPayloadLoader.parse_prediction_end_date(
+            Domain::PublicPlan::Services::EntrySchedulePredictionEndDate.parse(
               prediction_end_date_raw,
               reference_date: reference_date
             )

@@ -20,6 +20,12 @@ module Domain
           }
 
           crop_gateway = Minitest::Mock.new
+          crop_gateway.expect(:list_crop_stages_by_crop_id, [], [ crop.id ])
+
+          translator = Object.new
+          def translator.t(_key, **_options)
+            ""
+          end
 
           loader_calls = []
           loader = Object.new
@@ -55,7 +61,8 @@ module Domain
             output_port: output_port,
             crop_gateway: crop_gateway,
             weather_loader: loader,
-            optimization_runner: runner
+            optimization_runner: runner,
+            translator: translator
           ).call(
             farm: farm,
             crop: crop,
