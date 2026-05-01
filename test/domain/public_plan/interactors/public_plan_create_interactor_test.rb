@@ -6,6 +6,31 @@ module Domain
   module PublicPlan
     module Interactors
       class PublicPlanCreateInteractorTest < ActiveSupport::TestCase
+        FIXED_PUBLIC_PLAN_CLOCK = Struct.new(:date) do
+          def today
+            date
+          end
+        end.new(Date.new(2025, 4, 1))
+
+        test "requires clock responding to today" do
+          farm = create(:farm)
+          gateway = Minitest::Mock.new
+          gateway.expect(:find_farm, farm, [ farm.id ])
+
+          output_port = Minitest::Mock.new
+
+          error = assert_raises(ArgumentError) do
+            PublicPlanCreateInteractor.new(
+              output_port: output_port,
+              gateway: gateway,
+              cultivation_plan_gateway: Minitest::Mock.new,
+              logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+              clock: Object.new
+            )
+          end
+          assert_match(/clock/, error.message)
+        end
+
         test "calls on_success with plan_id when cultivation gateway succeeds" do
           farm = create(:farm)
           farm_size = { id: "home_garden", area_sqm: 30 }
@@ -30,7 +55,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -59,7 +85,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: 999,
@@ -90,7 +117,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -122,7 +150,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -155,7 +184,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -195,7 +225,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -226,7 +257,8 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,

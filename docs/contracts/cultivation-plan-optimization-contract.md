@@ -12,6 +12,12 @@
 | Multi-field allocation CLI | `lib/adapters/agrr/plan_allocation_gateway_adapter.rb` wrapping `Agrr::AllocationGateway#allocate` |
 | Weather (existing prediction) | `Domain::WeatherData::Interactors::WeatherPredictionInteractor#get_existing_prediction` |
 
+## WeatherPredictionInteractor 依存注入（時間境界）
+
+- `clock` と `anchors_resolver` は **CompositionRoot**（または明示的に両方を用意するテスト）からのみ渡す。**`clock`** は `#today` / `#now`。**`anchors_resolver`** は `Domain::WeatherData::Ports::WeatherPredictionAnchorsPort` に従い、呼び出しごとの `@clock.today` に対して訓練窓・当年履歴・既定予測終了を返すこと（旧 `Date.current` の都度評価と同等に揃える）。
+- **`clock` が `ActiveSupport::TimeZone` でないとき**は `anchors_resolver` を省略できない（ゾーン推測で境界がズレないようにする）。
+- 本番既定の境界計算実装は `Adapters::WeatherData::RailsWeatherPredictionAnchorsResolver`（Rails の `- 20.years` / `- 2.days` / `+ 6.months` と旧 `Date.current` 由来の動作を整合）。
+
 ## Errors
 
 - `Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError` — farm に `WeatherLocation` がない、または既存予測がない。

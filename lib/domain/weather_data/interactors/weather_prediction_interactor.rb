@@ -3,7 +3,7 @@
 # 天気予測（CultivationPlan / Farm への保存を含む）。
 # T-032: app/services から domain interactors へ移行。
 # WeatherLocation / Farm / CultivationPlan は DTO のみ受け取る（禁止3: AR をコア入力にしない）。
-# 日時は Date.current / Time.current に依存（禁止4: 時計の注入は別対応）。
+# `Date.current` を何度読むか（境界が変わらない順序）まで旧実装に揃える（同一リクエスト内の日またぎと同じ）。
 module Domain
   module WeatherData
     module Interactors
@@ -17,13 +17,23 @@ module Domain
         REQUIRED_FARM_READERS = %i[id weather_location_id predicted_weather_data].freeze
         REQUIRED_PLAN_WEATHER_READERS = %i[id prediction_target_end_date calculated_planning_end_date predicted_weather_data].freeze
 
+        # @param clock [#today, #now] アプリ TZ の「カレンダー日」とインスタント（CompositionRoot で Time.zone を渡す想定）。
+        # @param anchors_resolver [#anchors_for] 訓練窓・当年履歴・既定予測終了（Rails はアダプタで計算。禁止4）。
         def initialize(weather_location:, farm: nil,
                        cultivation_plan_gateway:,
                        farm_gateway:,
                        weather_data_gateway:,
                        prediction_gateway:,
-                       logger:)
+                       logger:,
+                       clock:,
+                       anchors_resolver:)
           raise ArgumentError, "weather_location is required" unless weather_location
+          unless clock.respond_to?(:today) && clock.respond_to?(:now)
+            raise ArgumentError, "clock must respond to :today and :now"
+          end
+          unless anchors_resolver.respond_to?(:anchors_for)
+            raise ArgumentError, "anchors_resolver must respond to :anchors_for"
+          end
           unless weather_location.is_a?(Domain::WeatherData::Contracts::WeatherLocationPredictionInput)
             raise ArgumentError, "weather_location must include Domain::WeatherData::Contracts::WeatherLocationPredictionInput (WeatherLocationDto を利用可)"
           end
@@ -44,6 +54,8 @@ module Domain
           @farm_gateway = farm_gateway
           @weather_data_gateway = weather_data_gateway
           @logger = logger
+          @clock = clock
+          @anchors_resolver = anchors_resolver
         end
 
         # 天気予測を実行してCultivationPlanに保存
@@ -78,7 +90,7 @@ module Domain
         end
 
         # 天気予測を実行してFarmに保存
-        # @param target_end_date [Date] 予測終了日（デフォルト: 翌年12月31日）
+        # @param target_end_date [Date, nil] 予測終了日。nil のとき anchors の default_target_end_date（従来: 参照日 + 6.months）
         # @return [Hash] 予測データとメタ情報
         def predict_for_farm(target_end_date: nil)
           raise ArgumentError, "farm is required to save prediction" unless @farm
@@ -152,6 +164,7 @@ module Domain
           end
         end
 
+        # prepare 〜 get_training〜get_current と、prediction_start での Today 評価を分ける（旧 Date.current を都度呼ぶ同等）。
         def prepare_weather_data(target_end_date)
           target_end_date = normalize_target_end_date(target_end_date)
 
@@ -190,7 +203,8 @@ module Domain
             raise InsufficientPredictionDataError, message
           end
 
-          prediction_start_date = (training_end_date + 1.day > Date.today) ? training_end_date + 1.day : Date.today
+          today_for_range = @clock.today
+          prediction_start_date = ((training_end_date + 1) > today_for_range) ? training_end_date + 1 : today_for_range
 
           @logger.info "✅ [WeatherPrediction] Weather data prepared successfully"
           @logger.info "🧮 [WeatherPrediction] Prediction range prepared: start=#{prediction_start_date} end=#{target_end_date} (merged_end=#{merged_end_date})"
@@ -204,8 +218,9 @@ module Domain
         end
 
         def get_training_data
-          training_start_date = Date.current - 20.years
-          training_end_date = Date.current - 2.days
+          anchors = @anchors_resolver.anchors_for(@clock.today)
+          training_start_date = anchors.training_start_date
+          training_end_date = anchors.training_end_date
           training_data = @weather_data_gateway.weather_data_for_period(
             weather_location_id: @weather_location.id,
             start_date: training_start_date,
@@ -232,8 +247,9 @@ module Domain
         end
 
         def get_current_year_data
-          current_year_start = Date.new(Date.current.year, 1, 1)
-          current_year_end = Date.current - 2.days
+          anchors = @anchors_resolver.anchors_for(@clock.today)
+          current_year_start = anchors.current_year_history_start_date
+          current_year_end = anchors.current_year_history_end_date
           current_year_data = @weather_data_gateway.weather_data_for_period(
             weather_location_id: @weather_location.id,
             start_date: current_year_start,
@@ -252,7 +268,7 @@ module Domain
           cached_future = cached_future_data(@farm&.predicted_weather_data, target_end_date)
           return cached_future if cached_future
 
-          prediction_start_date = training_end_date + 1.day
+          prediction_start_date = training_end_date + 1
           prediction_days = (target_end_date - training_end_date).to_i
 
           @logger.info "🔮 [WeatherPrediction] Predicting weather from #{prediction_start_date} until #{target_end_date} (#{prediction_days} days)"
@@ -330,7 +346,7 @@ module Domain
         end
 
         def normalize_target_end_date(target_end_date)
-          (target_end_date || (Date.current + 6.months))
+          target_end_date || @anchors_resolver.anchors_for(@clock.today).default_target_end_date
         end
 
         def build_prediction_payload(weather_info, target_end_date)
@@ -346,9 +362,11 @@ module Domain
             @logger.warn "⚠️ [WeatherPrediction] Prediction data ends at #{data_end}, but target_end_date is #{target_end_date}. AGRR may not be predicting for the full requested period."
           end
 
+          stamped_at = @clock.now.iso8601
+
           (data || {}).merge(
-            "generated_at" => Time.current.iso8601,
-            "predicted_at" => Time.current.iso8601,
+            "generated_at" => stamped_at,
+            "predicted_at" => stamped_at,
             "prediction_start_date" => weather_info[:prediction_start_date],
             "prediction_end_date" => actual_end_date.to_s,
             "target_end_date" => target_end_date.to_s,

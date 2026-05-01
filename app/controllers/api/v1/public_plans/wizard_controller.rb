@@ -57,7 +57,8 @@ module Api
             output_port: presenter,
             gateway: CompositionRoot.public_plan_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-            logger: CompositionRoot.logger
+            logger: CompositionRoot.logger,
+            clock: Time.zone
           )
 
           interactor.call(input_dto)

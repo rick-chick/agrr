@@ -1,6 +1,6 @@
 # 契約: AgriculturalTask Update — 参照フラグ変更時の作物関連付け
 
-PATCH /agricultural_tasks/:id（HTML）において、参照フラグ（is_reference）変更時に Interactor が is_reference/user_id を更新し、そのうえで作物紐付け（CropTaskTemplate）が「許可された作物のみ」になるよう振る舞いを規定する契約。**本契約本文および** `test/controllers/agricultural_tasks_controller_test.rb` **に書かれた期待を正とする**。Rails の実装だけを規約とはみなさない。
+PATCH /agricultural_tasks/:id（HTML）において、参照フラグ（is_reference）変更時に Interactor が is_reference/user_id を更新し、そのうえで作物紐付け（CropTaskTemplate）が「許可された作物のみ」になるよう振る舞いを規定する契約。**本契約本文および** `test/controllers/agricultural_tasks_controller_test.rb` **に書かれた期待を規約として採用する**。Rails の実装だけを規約とはみなさない。
 
 ## 1. スコープ・本契約が規定する仕様
 

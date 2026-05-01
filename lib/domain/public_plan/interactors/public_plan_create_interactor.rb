@@ -4,11 +4,15 @@ module Domain
   module PublicPlan
     module Interactors
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
-        def initialize(output_port:, gateway:, cultivation_plan_gateway:, logger:)
+        # @param clock [#today] CompositionRoot で Time.zone を渡す想定（禁止4）。
+        def initialize(output_port:, gateway:, cultivation_plan_gateway:, logger:, clock:)
+          raise ArgumentError, "clock must respond to :today" unless clock.respond_to?(:today)
+
           @output_port = output_port
           @logger = logger
           @gateway = gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @clock = clock
         end
 
         def call(input_dto)
@@ -40,6 +44,9 @@ module Domain
           end
 
           # 計画を作成（永続化は CultivationPlanGateway 経由。ユースケース編成はここに集約）
+          # Old: planning_start_date: Date.current; planning_end_date: Date.current.end_of_year （各キーワードで today を評価）
+          planning_start_date = @clock.today
+          planning_end_date = Date.new(@clock.today.year, 12, 31)
           result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
             farm: farm,
             total_area: total_area,
@@ -47,8 +54,8 @@ module Domain
             user: input_dto.user,
             session_id: input_dto.session_id,
             plan_type: "public",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year,
+            planning_start_date: planning_start_date,
+            planning_end_date: planning_end_date,
             gateway: @cultivation_plan_gateway,
             logger: @logger
           ).call

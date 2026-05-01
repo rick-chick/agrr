@@ -227,7 +227,7 @@ module CompositionRoot
       )
     end
 
-    def weather_prediction_interactor(weather_location:, farm: nil)
+    def weather_prediction_interactor(weather_location:, farm: nil, clock: Time.zone, anchors_resolver: nil)
       wl_dto = weather_location.is_a?(Domain::WeatherData::Contracts::WeatherLocationPredictionInput) ? weather_location : weather_location_dto_from_active_record(weather_location)
       farm_dto = if farm.nil?
         nil
@@ -237,6 +237,12 @@ module CompositionRoot
         farm_weather_prediction_dto_from_active_record(farm)
       end
 
+      anchors_resolver ||= if clock.is_a?(ActiveSupport::TimeZone)
+        Adapters::WeatherData::RailsWeatherPredictionAnchorsResolver.new(zone: clock)
+      else
+        raise ArgumentError,
+              "weather_prediction_interactor requires anchors_resolver when clock is not an ActiveSupport::TimeZone (#{clock.class})"
+      end
       Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
         weather_location: wl_dto,
         farm: farm_dto,
@@ -244,7 +250,9 @@ module CompositionRoot
         farm_gateway: farm_gateway,
         weather_data_gateway: weather_data_gateway,
         prediction_gateway: prediction_gateway,
-        logger: logger
+        logger: logger,
+        clock: clock,
+        anchors_resolver: anchors_resolver
       )
     end
 

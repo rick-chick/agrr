@@ -1,6 +1,6 @@
 # Clean Architecture — AGRR バックエンド（補足）
 
-全体像とレイヤの説明は **[ARCHITECTURE.md](./ARCHITECTURE.md)** を正とする。本書は **-gateway / 表現層の境界** と **実装方針** に特化した規範である。
+全体像とレイヤの説明は **[ARCHITECTURE.md](./ARCHITECTURE.md)** を規約とする。本書は **gateway / 表現層の境界** と **実装方針** に特化した補足的な規約である。
 
 ## Gateway は View（HTML/Partials/JSON の形）を知らない
 

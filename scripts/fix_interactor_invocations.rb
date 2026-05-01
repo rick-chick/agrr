@@ -183,9 +183,9 @@ INJECT = {
   "Domain::Pesticide::Interactors::PesticideUpdateInteractor" =>
     "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor" =>
-    "gateway: CompositionRoot.public_plan_gateway, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger",
+    "gateway: CompositionRoot.public_plan_gateway, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger, clock: Time.zone",
   "Domain::WeatherData::Interactors::WeatherPredictionInteractor" =>
-    "cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger",
+    "cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger, clock: Time.zone, anchors_resolver: Adapters::WeatherData::RailsWeatherPredictionAnchorsResolver.new(zone: Time.zone)",
   "ContactMessages::Interactors::CreateContactMessageInteractor" =>
     "gateway: CompositionRoot.contact_message_gateway"
 }.freeze
