@@ -46,7 +46,7 @@ module Adapters
           weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
           weather_service
             .expects(:predict_for_cultivation_plan)
-            .with(@plan)
+            .with { |plan_weather:, target_end_date: nil| plan_weather.id == @plan.id }
             .returns({ data: weather_data_cli })
 
           progress_gateway = mock("AgrrProgressGateway")
@@ -102,7 +102,7 @@ module Adapters
           weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
           weather_service
             .expects(:predict_for_cultivation_plan)
-            .with(@plan)
+            .with { |plan_weather:, target_end_date: nil| plan_weather.id == @plan.id }
             .returns({ data: weather_data_cli })
 
           progress_gateway = mock("AgrrProgressGateway")

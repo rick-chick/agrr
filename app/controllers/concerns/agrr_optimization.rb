@@ -495,13 +495,14 @@ module AgrrOptimization
               "気象データがありません。農場にWeatherLocationが設定されていません。"
       end
 
-      weather_prediction_service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location,
-        farm: farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
+      weather_prediction_service = CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
+
+      plan_weather_dto = CompositionRoot.cultivation_plan_weather_dto_from(cultivation_plan)
 
       # effective_planning_endをtarget_end_dateとして使用して既存の予測データを確認
       existing_prediction = weather_prediction_service.get_existing_prediction(
         target_end_date: effective_planning_end,
-        cultivation_plan: cultivation_plan
+        cultivation_plan_weather: plan_weather_dto
       )
 
       if existing_prediction
@@ -511,7 +512,7 @@ module AgrrOptimization
         # 既存の予測データが不足している場合は、effective_planning_endまで新規予測を実行
         Rails.logger.info "🔮 [Adjust] Generating new prediction data (target_end_date: #{effective_planning_end})"
         weather_info = weather_prediction_service.predict_for_cultivation_plan(
-          cultivation_plan,
+          plan_weather: plan_weather_dto,
           target_end_date: effective_planning_end
         )
         prediction_data = weather_info[:data]
@@ -578,9 +579,13 @@ module AgrrOptimization
       if merged_end_date.nil? || merged_end_date < effective_planning_end
         Rails.logger.warn "⚠️ [Adjust] Merged weather data ends at #{merged_end_date}, but effective_planning_end is #{effective_planning_end}. Extending prediction..."
 
+        # 1 回目の predict で DB 上の計画キャッシュが更新されるため、拡張予測前に DTO を取り直す
+        cultivation_plan.reload
+        plan_weather_dto = CompositionRoot.cultivation_plan_weather_dto_from(cultivation_plan)
+
         # 予測データを拡張
         extended_weather_info = weather_prediction_service.predict_for_cultivation_plan(
-          cultivation_plan,
+          plan_weather: plan_weather_dto,
           target_end_date: effective_planning_end
         )
         extended_prediction_data = extended_weather_info[:data]

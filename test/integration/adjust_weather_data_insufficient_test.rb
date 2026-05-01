@@ -83,7 +83,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # get_existing_predictionはnilを返す（既存データが不足）
     # キーワード引数で呼ばれるため、ハッシュとして渡す
     weather_prediction_service.expect(:get_existing_prediction, nil) do |kwargs|
-      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
+      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan_weather].id == @plan.id
     end
 
     # predict_for_cultivation_planが呼ばれる（effective_planning_endまで新規予測）
@@ -97,8 +97,8 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       prediction_start_date: Date.new(2024, 1, 1).to_s,
       prediction_days: 1095
     }
-    weather_prediction_service.expect(:predict_for_cultivation_plan, prediction_result) do |plan, kwargs|
-      plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
+    weather_prediction_service.expect(:predict_for_cultivation_plan, prediction_result) do |plan_weather:, target_end_date:|
+      plan_weather.id == @plan.id && target_end_date == Date.new(2026, 12, 31)
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
@@ -139,7 +139,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       prediction_days: 1095
     }
     weather_prediction_service.expect(:get_existing_prediction, existing_result) do |kwargs|
-      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
+      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan_weather].id == @plan.id
     end
 
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
@@ -176,7 +176,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # get_existing_predictionはnilを返す（既存データが不足）
     # キーワード引数で呼ばれるため、ハッシュとして渡す
     weather_prediction_service.expect(:get_existing_prediction, nil) do |kwargs|
-      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
+      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan_weather].id == @plan.id
     end
 
     # predict_for_cultivation_planが呼ばれる（effective_planning_endまで新規予測）
@@ -193,8 +193,8 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       prediction_start_date: Date.new(2024, 1, 1).to_s,
       prediction_days: 1095
     }
-    weather_prediction_service.expect(:predict_for_cultivation_plan, prediction_result) do |plan, kwargs|
-      plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
+    weather_prediction_service.expect(:predict_for_cultivation_plan, prediction_result) do |plan_weather:, target_end_date:|
+      plan_weather.id == @plan.id && target_end_date == Date.new(2026, 12, 31)
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
@@ -235,7 +235,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # Domain::WeatherData::Interactors::WeatherPredictionInteractorをモック化（1回目）
     weather_prediction_service1 = Minitest::Mock.new
     weather_prediction_service1.expect(:get_existing_prediction, nil) do |kwargs|
-      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
+      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan_weather].id == @plan.id
     end
 
     new_prediction_data = {
@@ -251,8 +251,8 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       prediction_start_date: Date.new(2024, 1, 1).to_s,
       prediction_days: 1095
     }
-    weather_prediction_service1.expect(:predict_for_cultivation_plan, prediction_result1) do |plan, kwargs|
-      plan == @plan && kwargs[:target_end_date] == Date.new(2026, 12, 31)
+    weather_prediction_service1.expect(:predict_for_cultivation_plan, prediction_result1) do |plan_weather:, target_end_date:|
+      plan_weather.id == @plan.id && target_end_date == Date.new(2026, 12, 31)
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service1) do
@@ -280,7 +280,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
       prediction_days: 1095
     }
     weather_prediction_service2.expect(:get_existing_prediction, existing_result) do |kwargs|
-      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan] == @plan
+      kwargs[:target_end_date] == Date.new(2026, 12, 31) && kwargs[:cultivation_plan_weather].id == @plan.id
     end
 
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）

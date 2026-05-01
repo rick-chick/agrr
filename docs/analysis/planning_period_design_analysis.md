@@ -538,26 +538,23 @@ class CultivationPlanOptimizer
 end
 ```
 
-#### 2.2 WeatherPredictionServiceの変更
+#### 2.2 WeatherPredictionInteractor（DTO 入力）
 
 ```ruby
-class WeatherPredictionService
-  def predict_for_cultivation_plan(cultivation_plan, target_end_date: nil)
-    # 計画期間の終了日を計算メソッドから取得
-    target_end_date = normalize_target_end_date(
-      target_end_date || cultivation_plan.calculated_planning_end_date
-    )
-    
-    # ... 既存のコード ...
-  end
-  
-  def get_existing_prediction(target_end_date: nil, cultivation_plan: nil)
-    # 計画期間の終了日を計算メソッドから取得
-    target_end_date ||= cultivation_plan&.calculated_planning_end_date
-    target_end_date = normalize_target_end_date(target_end_date)
-    
-    # ... 既存のコード ...
-  end
+# Domain::WeatherData::Interactors::WeatherPredictionInteractor
+# 栽培計画は CultivationPlanWeatherDto、cultivation_plan_weather キーワードで渡す
+def predict_for_cultivation_plan(plan_weather:, target_end_date: nil)
+  default = plan_weather.prediction_target_end_date || plan_weather.calculated_planning_end_date
+  target_end_date = normalize_target_end_date(target_end_date || default)
+  # ...
+end
+
+def get_existing_prediction(target_end_date: nil, cultivation_plan_weather: nil)
+  default_target = cultivation_plan_weather&.prediction_target_end_date ||
+                   cultivation_plan_weather&.calculated_planning_end_date
+  target_end_date ||= default_target
+  target_end_date = normalize_target_end_date(target_end_date)
+  # ...
 end
 ```
 

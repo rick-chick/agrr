@@ -160,7 +160,9 @@ module Api
               ]
             }
           }
-          mock_service.expect :predict_for_cultivation_plan, mock_prediction, [ @cultivation_plan ]
+          mock_service.expect :predict_for_cultivation_plan, mock_prediction do |plan_weather:, target_end_date: nil|
+            plan_weather.id == @cultivation_plan.id
+          end
 
           Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub :new, mock_service do
             get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"

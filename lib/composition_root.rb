@@ -115,6 +115,15 @@ module CompositionRoot
       @agrr_candidates_gateway ||= Agrr::CandidatesGateway.new
     end
 
+    def cultivation_plan_weather_dto_from(cultivation_plan)
+      Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+        id: cultivation_plan.id,
+        prediction_target_end_date: cultivation_plan.prediction_target_end_date,
+        calculated_planning_end_date: cultivation_plan.calculated_planning_end_date,
+        predicted_weather_data: cultivation_plan.predicted_weather_data
+      )
+    end
+
     # FieldCultivation 気象 AD gateway（user DTO 単位で current_user を渡す）
     def field_cultivation_climate_gateway_for(current_user_dto)
       Adapters::FieldCultivation::Gateways::FieldCultivationClimateGateway.new(
@@ -131,9 +140,18 @@ module CompositionRoot
     end
 
     def weather_prediction_interactor(weather_location:, farm: nil)
+      wl_dto = weather_location.is_a?(Domain::WeatherData::Contracts::WeatherLocationPredictionInput) ? weather_location : weather_location_dto_from_active_record(weather_location)
+      farm_dto = if farm.nil?
+        nil
+      elsif farm.is_a?(Domain::WeatherData::Contracts::FarmWeatherPredictionInput)
+        farm
+      else
+        farm_weather_prediction_dto_from_active_record(farm)
+      end
+
       Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
-        weather_location: weather_location,
-        farm: farm,
+        weather_location: wl_dto,
+        farm: farm_dto,
         cultivation_plan_gateway: cultivation_plan_gateway,
         farm_gateway: farm_gateway,
         weather_data_gateway: weather_data_gateway,
@@ -148,6 +166,27 @@ module CompositionRoot
         task_schedule_gateway: task_schedule_gateway,
         clock: clock,
         cultivation_plan_gateway: cultivation_plan_gateway
+      )
+    end
+
+    private
+
+    def weather_location_dto_from_active_record(weather_location)
+      Domain::WeatherData::Dtos::WeatherLocationDto.new(
+        id: weather_location.id,
+        latitude: weather_location.latitude,
+        longitude: weather_location.longitude,
+        elevation: weather_location.elevation,
+        timezone: weather_location.timezone,
+        predicted_weather_data: weather_location.predicted_weather_data
+      )
+    end
+
+    def farm_weather_prediction_dto_from_active_record(farm)
+      Domain::WeatherData::Dtos::FarmWeatherPredictionDto.new(
+        id: farm.id,
+        weather_location_id: farm.weather_location_id,
+        predicted_weather_data: farm.predicted_weather_data
       )
     end
   end

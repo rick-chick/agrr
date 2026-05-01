@@ -289,7 +289,7 @@ module Adapters
           else
             @logger.warn "⚠️ [FieldCultivationClimateGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
             service = @weather_prediction_service_factory.call(farm.weather_location, farm)
-            prediction_info = service.predict_for_cultivation_plan(plan)
+            prediction_info = service.predict_for_cultivation_plan(plan_weather: cultivation_plan_weather_snapshot(plan))
             prediction_info[:data]
           end
         end
@@ -545,6 +545,15 @@ module Adapters
           days = (end_date - start_date).to_i + 1
           prediction_gateway = Agrr::PredictionGateway.new
           prediction_gateway.predict(historical_data: historical_payload, days: days, model: "lightgbm")
+        end
+
+        def cultivation_plan_weather_snapshot(plan)
+          Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+            id: plan.id,
+            prediction_target_end_date: plan.prediction_target_end_date,
+            calculated_planning_end_date: plan.calculated_planning_end_date,
+            predicted_weather_data: plan.predicted_weather_data
+          )
         end
 
         # API の query param 等は String のまま渡る。.min や DB 比較で Date と混ざると ArgumentError になる。

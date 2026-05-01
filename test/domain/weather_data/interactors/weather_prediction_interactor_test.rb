@@ -9,6 +9,34 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     @farm = create(:farm, user: @user, weather_location: @weather_location)
   end
 
+  def weather_location_dto(loc = @weather_location)
+    Domain::WeatherData::Dtos::WeatherLocationDto.new(
+      id: loc.id,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      elevation: loc.elevation,
+      timezone: loc.timezone,
+      predicted_weather_data: loc.predicted_weather_data
+    )
+  end
+
+  def farm_prediction_dto(f = @farm)
+    Domain::WeatherData::Dtos::FarmWeatherPredictionDto.new(
+      id: f.id,
+      weather_location_id: f.weather_location_id,
+      predicted_weather_data: f.predicted_weather_data
+    )
+  end
+
+  def plan_weather_dto(plan)
+    Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+      id: plan.id,
+      prediction_target_end_date: plan.prediction_target_end_date,
+      calculated_planning_end_date: plan.calculated_planning_end_date,
+      predicted_weather_data: plan.predicted_weather_data
+    )
+  end
+
   test "initialize requires weather_location" do
     error = assert_raises(ArgumentError) do
       Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: nil, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
@@ -31,7 +59,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     @weather_location.update!(predicted_weather_data: prediction_payload)
     @weather_location.reload
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: @weather_location, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
     result = service.get_existing_prediction(target_end_date: Date.new(2025, 1, 1))
 
     assert_not_nil result
@@ -41,7 +69,6 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
 
   test "predict_for_cultivation_plan persists prediction on weather_location" do
     cultivation_plan = create(:cultivation_plan, farm: @farm, user: @user, planning_end_date: Date.new(2025, 12, 31))
-    # 作付計画を作成してcalculated_planning_end_dateが正しい値を返すようにする
     plan_field = create(:cultivation_plan_field, cultivation_plan: cultivation_plan)
     plan_crop = create(:cultivation_plan_crop, cultivation_plan: cultivation_plan)
     create(
@@ -68,10 +95,10 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
       prediction_days: 365
     }
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: @weather_location, farm: @farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
     service.stub(:prepare_weather_data, fake_weather_info) do
-      service.predict_for_cultivation_plan(cultivation_plan)
+      service.predict_for_cultivation_plan(plan_weather: plan_weather_dto(cultivation_plan))
     end
 
     @weather_location.reload
@@ -84,7 +111,6 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
   end
 
   test "predict_for_cultivation_plan uses prediction data when current year data is missing" do
-    # 作付計画を作成
     cultivation_plan = create(:cultivation_plan, farm: @farm, user: @user, planning_end_date: Date.new(2025, 12, 31))
     plan_field = create(:cultivation_plan_field, cultivation_plan: cultivation_plan)
     plan_crop = create(:cultivation_plan_crop, cultivation_plan: cultivation_plan)
@@ -97,25 +123,19 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
       completion_date: Date.new(2025, 10, 31)
     )
 
-    # 現在の年のデータを削除して空の状態を作る
     current_year_start = Date.new(Date.current.year, 1, 1)
     current_year_end = Date.current - 2.days
 
-    # 現在の年のデータを削除
     @weather_location.weather_data.where(date: current_year_start..current_year_end).delete_all
 
-    # 現在の年のデータが存在しないことを確認
     current_year_data = @weather_location.weather_data.where(date: current_year_start..current_year_end)
     assert_empty current_year_data, "Current year data should be empty for this test"
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: @weather_location, farm: @farm, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger)
 
-    # トレーニングデータをモックして十分なデータがあるようにする
-    # テスト用トレーニングデータは本番同等の大量作成は重いため縮小して疑似データを使用
     fake_training_data = (1..100).map { |i| build_stubbed(:weather_datum, weather_location: @weather_location, date: Date.current - 100 + i.days, temperature_max: 20.0) }
     fake_training_result = { data: fake_training_data, end_date: fake_training_data.last.date }
-    service.stub(:get_training_data, fake_training_result) do |_, _|
-      # 予測データをモック
+    service.stub(:get_training_data, fake_training_result) do
       fake_prediction = {
         "latitude" => @weather_location.latitude.to_f,
         "longitude" => @weather_location.longitude.to_f,
@@ -126,12 +146,10 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
         ]
       }
       service.stub(:get_prediction_data, fake_prediction) do
-        # predict_for_cultivation_plan が現在の年のデータがなくても正常に動作することを確認
-        result = service.predict_for_cultivation_plan(cultivation_plan)
+        result = service.predict_for_cultivation_plan(plan_weather: plan_weather_dto(cultivation_plan))
 
         assert_not_nil result
         assert_not_nil result[:data]
-        # 現在の年のデータがない場合でも予測データが使用される
         assert result[:data]["data"].is_a?(Array)
         assert_not_empty result[:data]["data"], "Prediction data should be used when current year data is missing"
       end

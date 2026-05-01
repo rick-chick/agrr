@@ -46,7 +46,12 @@ module Domain
             )
             existing_prediction = weather_prediction_service.get_existing_prediction(
               target_end_date: planning_end_date,
-              cultivation_plan: @cultivation_plan
+              cultivation_plan_weather: Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+                id: @cultivation_plan.id,
+                prediction_target_end_date: @cultivation_plan.prediction_target_end_date,
+                calculated_planning_end_date: @cultivation_plan.calculated_planning_end_date,
+                predicted_weather_data: @cultivation_plan.predicted_weather_data
+              )
             )
 
             unless existing_prediction
