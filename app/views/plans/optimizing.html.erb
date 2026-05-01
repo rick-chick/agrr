@@ -3,9 +3,9 @@
 <div class="plans-wrapper pb-0" 
      data-controller="optimizing"
      data-optimizing-container
-     data-cultivation-plan-id="<%= @vm.plan_id %>"
+     data-cultivation-plan-id="<%= @private_plan_optimizing_page.id %>"
      data-channel-name="PlansOptimizationChannel"
-     data-redirect-url="<%= plan_path(@vm.plan_id) %>"
+     data-redirect-url="<%= plan_path(@private_plan_optimizing_page.id) %>"
      data-error-message="<%= t('plans.optimizing.error_message') %>"
      data-connection-error-message="<%= t('plans.optimizing.error.connection_lost') %>"
      data-unknown-error-message="<%= t('plans.optimizing.error.unknown_error') %>"
@@ -19,9 +19,10 @@
         <span class="status-badge optimizing"><%= t('plans.optimizing.status_badge') %></span>
       </div>
       <div class="compact-subtitle">
-        <%= t('plans.optimizing.year_label', year: @vm.plan.plan_year) %> · 
-        <%= @vm.plan.farm.display_name %> · 
-        <%= t('plans.optimizing.crops_count', count: @vm.plan.cultivation_plan_crops.count) %>
+        <% year_part = @private_plan_optimizing_page.plan_year.present? ? t('plans.optimizing.year_label', year: @private_plan_optimizing_page.plan_year) : t('plans.optimizing.year_label_annual') %>
+        <%= year_part %> · 
+        <%= @private_plan_optimizing_page.farm_display_name %> · 
+        <%= t('plans.optimizing.crops_count', count: @private_plan_optimizing_page.cultivation_plan_crops_count) %>
       </div>
     </div>
     
@@ -38,7 +39,7 @@
         <span class="spinner spinner-sm" id="loading-spinner"></span>
         <div class="progress-info">
           <div class="progress-phase-message" id="phase-message">
-            <%= @cultivation_plan.optimization_phase_message || t('plans.optimizing.progress.default_message') %>
+            <%= @private_plan_optimizing_page.optimization_phase_message || t('plans.optimizing.progress.default_message') %>
           </div>
           <div class="progress-duration-hint" id="progress-duration-hint"><%= t('plans.optimizing.progress.duration_hint') %></div>
         </div>

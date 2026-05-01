@@ -116,6 +116,7 @@ us:
       title: "Cultivation Plan"
       status_badge: "Optimizing"
       year_label: "Year %{year}"
+      year_label_annual: "Year-round"
       crops_count: "%{count} crops"
       error_message: "Failed to retrieve optimization status.\n\nPlease try one of the following:\n• Reload the page (F5 key)\n• Clear your browser cache\n• Wait a moment and try again\n\nIf the issue persists, please create a new plan."
       progress:

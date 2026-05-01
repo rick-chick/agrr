@@ -87,11 +87,29 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
   end
 
   test "optimizing renders successfully" do
-    # optimizing は内部で handle_optimizing を呼ぶが、画面自体の到達を確認
-    plan = create(:cultivation_plan, user: @user, status: "pending")
-    get optimizing_plan_path(plan.id)
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "pending")
+    get optimizing_plan_path(plan)
     assert_response :success
     assert_select "body", true
+  end
+
+  test "optimizing redirects when plan id param is not a positive integer" do
+    get optimizing_plan_path(0)
+    assert_redirected_to plans_path
+    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
+  end
+
+  test "optimizing redirects to plan show when plan already completed" do
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
+    get optimizing_plan_path(plan)
+    assert_redirected_to plan_path(plan)
+  end
+
+  test "optimizing redirects to plan show with alert when plan already failed" do
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "failed")
+    get optimizing_plan_path(plan)
+    assert_redirected_to plan_path(plan)
+    assert_equal I18n.t("plans.optimizing.error.title"), flash[:alert]
   end
 
   # SCOPE: copy 正常/異常

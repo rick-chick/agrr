@@ -31,7 +31,7 @@ class PlansController < ApplicationController
 
   # Step 2: 作物選択
   def select_crop
-    farm_id = parse_select_crop_farm_id(params[:farm_id])
+    farm_id = parse_positive_route_id(params[:farm_id])
     unless farm_id
       redirect_to new_plan_path, alert: I18n.t("plans.errors.select_farm") and return
     end
@@ -58,7 +58,7 @@ class PlansController < ApplicationController
 
     if crops.empty?
       # Turbo対応: フォールバックせず同画面を422で再描画
-      farm_id = parse_select_crop_farm_id(session_data[:farm_id])
+      farm_id = parse_positive_route_id(session_data[:farm_id])
       unless farm_id
         redirect_to new_plan_path, alert: I18n.t("plans.errors.restart") and return
       end
@@ -104,9 +104,25 @@ class PlansController < ApplicationController
 
   # Step 4: 最適化進捗画面
   def optimizing
-    Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{params[:id]}"
-    @vm = Presenters::Html::Plans::OptimizingPresenter.new(plan_id: params[:id])
-    handle_optimizing(force_weather_only: true)
+    plan_id = parse_positive_route_id(params[:id])
+    unless plan_id
+      redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
+    end
+
+    Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{plan_id}"
+    load_private_plan_optimizing_page(plan_id)
+    return if performed?
+
+    dto = @private_plan_optimizing_page
+    if dto.completed?
+      redirect_to plan_path(dto.id)
+      return
+    end
+
+    if dto.failed?
+      redirect_to plan_path(dto.id), alert: I18n.t("plans.optimizing.error.title")
+      return
+    end
   end
 
   # Step 5: 計画詳細（結果表示）
@@ -186,8 +202,21 @@ class PlansController < ApplicationController
     ).call
   end
 
-  # 作物選択で許可する farm_id（正の整数のみ）。"abc" / 0 / 空白は nil
-  def parse_select_crop_farm_id(raw)
+  def load_private_plan_optimizing_page(plan_id)
+    presenter = Presenters::Html::Plans::PrivatePlanOptimizingHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      plan_id: plan_id,
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
+  end
+
+  # ルートパラメータの正の整数 ID（計画 :id・作物選択 farm_id 等）。"abc" / 0 / 空白は nil
+  def parse_positive_route_id(raw)
     return nil if raw.nil?
 
     s = raw.is_a?(Integer) ? raw.to_s : raw.to_s.strip

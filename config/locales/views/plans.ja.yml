@@ -122,8 +122,9 @@ ja:
     optimizing:
       title: "計画"
       status_badge: "最適化中"
-      # @deprecated 年度という概念は削除されました。この翻訳キーは使用されていません。
+      # @deprecated 年度という概念は削除されました。通年計画では year_label_annual を用いる。
       year_label: "%{year}年度"
+      year_label_annual: "通年"
       crops_count: "%{count}種類の作物"
       error_message: "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。"
       progress:

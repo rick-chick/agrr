@@ -115,4 +115,44 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
       @gateway.create(create_dto)
     end
   end
+
+  test "private_plan_optimizing_page_context returns dto for owned private plan" do
+    user = create(:user)
+    farm = create(:farm, user: user, name: "表示農場")
+    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "optimizing",
+                  plan_year: 2024, optimization_phase_message: "phase1")
+    crop = create(:crop, user: user, is_reference: false)
+    create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+    create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
+
+    dto = @gateway.private_plan_optimizing_page_context(plan_id: plan.id, user: user)
+
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto, dto
+    assert_equal plan.id, dto.id
+    assert_equal 2024, dto.plan_year
+    assert_equal farm.display_name, dto.farm_display_name
+    assert_equal 2, dto.cultivation_plan_crops_count
+    assert_equal "phase1", dto.optimization_phase_message
+    assert_equal "optimizing", dto.status
+    assert_not dto.completed?
+  end
+
+  test "private_plan_optimizing_page_context raises domain RecordNotFound when plan belongs to another user" do
+    owner = create(:user)
+    other = create(:user)
+    farm = create(:farm, user: owner)
+    plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
+
+    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+      @gateway.private_plan_optimizing_page_context(plan_id: plan.id, user: other)
+    end
+  end
+
+  test "private_plan_optimizing_page_context raises domain RecordNotFound when id missing" do
+    user = create(:user)
+
+    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+      @gateway.private_plan_optimizing_page_context(plan_id: 9_999_999, user: user)
+    end
+  end
 end

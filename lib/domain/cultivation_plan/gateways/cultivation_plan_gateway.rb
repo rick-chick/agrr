@@ -107,6 +107,12 @@ module Domain
         def optimization_plan_snapshot(plan_id)
           raise NotImplementedError, "Subclasses must implement optimization_plan_snapshot"
         end
+
+        # プライベート計画「最適化進捗」HTML 用（認可つき）
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto]
+        def private_plan_optimizing_page_context(plan_id:, user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_page_context"
+        end
       end
     end
   end

@@ -4,6 +4,7 @@ module Domain
   module CultivationPlan
     module Ports
       class PlanOptimizingStatusOutputPort
+        # @param plan_optimizing_view_dto [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto]
         def on_success(plan_optimizing_view_dto)
           raise NotImplementedError, "Subclasses must implement on_success"
         end
