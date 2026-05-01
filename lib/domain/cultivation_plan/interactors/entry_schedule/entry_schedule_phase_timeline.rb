@@ -246,8 +246,8 @@ module Domain
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_weather_end"))
             end
 
-            start_d = tr_first[:end_date] + 1.day
-            end_d = [ weather_end, tr_first[:end_date] + 120.days ].min
+            start_d = tr_first[:end_date].next_day
+            end_d = [ weather_end, tr_first[:end_date] + 120 ].min
             end_d = start_d if end_d < start_d
 
             h.merge(
