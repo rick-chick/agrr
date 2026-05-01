@@ -4,18 +4,6 @@ module Domain
   module WeatherData
     module Gateways
       module WeatherDataGateway
-        class << self
-          def default
-            @default ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def total_weather_data_count
           raise NotImplementedError
         end

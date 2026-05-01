@@ -4,12 +4,16 @@ module Adapters
   module Fertilize
     # API ai_update が期待する call(fertilize_id, attrs) -> result インターフェースを提供。
     # 内部で FertilizeUpdateInteractor を使用する。
+    # 依存はエッジ（Controller）から DI する。
     class FertilizeUpdateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway: nil)
+      def initialize(user_id:, gateway:, logger:, translator:, user_lookup:)
         @user_id = user_id
-        @gateway = gateway || Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
+        @gateway = gateway
+        @logger = logger
+        @translator = translator
+        @user_lookup = user_lookup
       end
 
       def call(fertilize_id, attrs)
@@ -17,7 +21,7 @@ module Adapters
         interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+          logger: @logger, translator: @translator, user_lookup: @user_lookup)
         input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(attrs, fertilize_id)
         interactor.call(input_dto)
         output_port.result

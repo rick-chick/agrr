@@ -345,7 +345,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
       user: user,
       session_data: session_data,
       logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway
     ).call
 
     # エラーが発生することを確認

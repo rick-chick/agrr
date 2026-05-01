@@ -5,22 +5,8 @@ module Domain
     module Gateways
       # InteractionRule ドメインの Gateway interface。
       # Adapter 実装は lib/adapters/interaction_rule/gateways/ に存在する。
-      # NOTE: Clean Architecture 純化のため、Controller (Composition Root) で
-      # Adapter インスタンスを生成し Interactor へ DI する方式に段階移行中。
-      # `.default` は移行未完了の Interactor 互換のため残置（移行完了後に削除）。
+      # 実装の生成は CompositionRoot のみ。
       class InteractionRuleGateway
-        class << self
-          def default
-            @default ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         # @param query [Domain::Shared::Dtos::QueryDto, nil] クエリ条件。nil の場合は全件
         def list(query = nil)
           raise NotImplementedError, "Subclasses must implement list"

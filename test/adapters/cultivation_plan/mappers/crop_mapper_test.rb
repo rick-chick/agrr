@@ -12,7 +12,7 @@ class Adapters::CultivationPlan::Mappers::CropMapperTest < ActiveSupport::TestCa
     plan = build_public_reference_plan(farm: ref_farm, ref_crop: ref_crop)
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
@@ -34,7 +34,7 @@ class Adapters::CultivationPlan::Mappers::CropMapperTest < ActiveSupport::TestCa
     ref_crop = build_reference_crop(name: "MapperCrop2_#{SecureRandom.hex(4)}")
     plan = build_public_reference_plan(farm: ref_farm, ref_crop: ref_crop, plan_name: "P2")
 
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx1 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
@@ -43,7 +43,7 @@ class Adapters::CultivationPlan::Mappers::CropMapperTest < ActiveSupport::TestCa
     existing = user.crops.find_by(source_crop_id: ref_crop.id)
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx2 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2

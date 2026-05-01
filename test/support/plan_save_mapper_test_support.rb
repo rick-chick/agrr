@@ -64,6 +64,14 @@ module PlanSaveMapperTestSupport
     )
   end
 
+  def build_plan_save_context(user:, session_data:, result:)
+    Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+      user: user,
+      session_data: session_data,
+      result: result
+    ).tap { |ctx| ctx.crop_stage_copy_gateway = CompositionRoot.crop_stage_copy_gateway }
+  end
+
   # 圃場・作付・CPC を持つ参照公開計画（PlanCopyGateway 用）
   def build_public_plan_with_field_cultivation(farm:, ref_crop:, plan_name: "Gateway plan")
     plan = CultivationPlan.create!(

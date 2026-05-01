@@ -254,8 +254,9 @@ module Api
       end
 
       def set_interactors
-        @create_interactor = Adapters::Pest::PestCreateForAiAdapter.new(user_id: current_user.id)
-        @update_interactor = Adapters::Pest::PestUpdateForAiAdapter.new(user_id: current_user.id)
+        pair = CompositionRoot.pest_ai_interactors_for(user_id: current_user.id)
+        @create_interactor = pair.create_interactor
+        @update_interactor = pair.update_interactor
       end
 
       def fetch_pest_info_from_agrr(pest_name, affected_crops = [], max_retries: 3)

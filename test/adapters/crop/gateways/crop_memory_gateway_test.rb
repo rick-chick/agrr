@@ -7,7 +7,7 @@ module Adapters
     module Gateways
       class CropMemoryGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = CropMemoryGateway.new
+          @gateway = CropMemoryGateway.new(deletion_undo_gateway: CompositionRoot.deletion_undo_gateway)
           @crop = create(:crop)
         end
 

@@ -5,6 +5,13 @@ module Adapters
     module Gateways
       class AgriculturalTaskActiveRecordGateway < Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway
         attr_accessor :translator
+
+        def initialize(deletion_undo_gateway:, sql_like_sanitize_port:)
+          @deletion_undo_gateway = deletion_undo_gateway
+          @sql_like_sanitize_port = sql_like_sanitize_port
+          @translator = Adapters::Translators::RailsTranslator.new
+        end
+
         def list
           ::AgriculturalTask.all.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
@@ -138,7 +145,7 @@ module Adapters
           end
           name = task.name
           toast_message = translator.t("agricultural_tasks.undo.toast", name: name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: task,
             actor: user,
@@ -194,7 +201,7 @@ module Adapters
         def apply_search_scope(scope, term)
           return scope if Domain::Shared::ValidationHelpers.blank?(term)
 
-          sanitized = Domain::Shared::SqlLike.sanitize(term)
+          sanitized = @sql_like_sanitize_port.sanitize_like(term)
           q = "%#{sanitized}%"
           scope.where(
             "agricultural_tasks.name LIKE :query OR COALESCE(agricultural_tasks.description, '') LIKE :query",

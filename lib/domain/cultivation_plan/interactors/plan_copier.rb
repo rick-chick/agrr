@@ -12,7 +12,7 @@ module Domain
         end
 
         def initialize(source_plan:, new_year:, user:, session_id: nil, logger:,
-                       gateway: Domain::CultivationPlan::Gateways::CultivationPlanGateway.default)
+                       gateway:)
           @source_plan = source_plan
           @new_year = new_year
           @user = user

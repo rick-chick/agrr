@@ -4,6 +4,10 @@ module Adapters
   module Crop
     module Gateways
       class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
+        def initialize(deletion_undo_gateway:)
+          @deletion_undo_gateway = deletion_undo_gateway
+        end
+
         def list(scope = nil)
           query = scope || ::Crop.all
           query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
@@ -177,7 +181,7 @@ module Adapters
             return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("crops.flash.cannot_delete_in_use.other")) }
           end
           toast_message = translator.t("crops.undo.toast", name: crop.name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: crop,
             actor: user,

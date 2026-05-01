@@ -29,7 +29,7 @@ class Adapters::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::T
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
@@ -67,7 +67,7 @@ class Adapters::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::T
     )
 
     run_copy = lambda do |res|
-      c = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+      c = build_plan_save_context(
         user: user,
         session_data: { plan_id: plan.id },
         result: res

@@ -4,18 +4,6 @@ module Domain
   module Pesticide
     module Gateways
       class PesticideGateway
-        class << self
-          def default
-            @default ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list
           raise NotImplementedError, "Subclasses must implement list"
         end

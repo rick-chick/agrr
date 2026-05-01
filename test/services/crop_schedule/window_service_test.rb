@@ -19,7 +19,7 @@ module Domain::CultivationPlan::Interactors::EntrySchedule
       end
       payload = { "data" => rows }
 
-      rows = Domain::Crop::Gateways::CropGateway.default.entry_schedule_ordered_stage_rows(crop_id: @crop.id)
+      rows = CompositionRoot.crop_gateway.entry_schedule_ordered_stage_rows(crop_id: @crop.id)
       result = WindowService.call(ordered_crop_stages: rows, weather_payload: payload)
 
       assert result.eligible
@@ -29,7 +29,7 @@ module Domain::CultivationPlan::Interactors::EntrySchedule
     end
 
     test "returns empty result when weather series is missing" do
-      rows = Domain::Crop::Gateways::CropGateway.default.entry_schedule_ordered_stage_rows(crop_id: @crop.id)
+      rows = CompositionRoot.crop_gateway.entry_schedule_ordered_stage_rows(crop_id: @crop.id)
       result = WindowService.call(ordered_crop_stages: rows, weather_payload: {})
 
       assert_not result.eligible

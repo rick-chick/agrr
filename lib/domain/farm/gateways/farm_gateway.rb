@@ -4,18 +4,6 @@ module Domain
   module Farm
     module Gateways
       class FarmGateway
-        class << self
-          def default
-            @default ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list(input_dto)
           raise NotImplementedError, "Subclasses must implement list"
         end

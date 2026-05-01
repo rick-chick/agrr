@@ -23,7 +23,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
@@ -54,7 +54,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
       region: "jp"
     )
 
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx1 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
@@ -64,7 +64,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
     existing = user.interaction_rules.find_by(source_interaction_rule_id: ref_rule.id)
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx2 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2

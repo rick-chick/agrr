@@ -79,7 +79,7 @@ class CropAiUpsertService
     return nil unless crop_id.present?
 
     begin
-      Domain::Crop::Gateways::CropGateway.default.find_authorized_for_edit(@user, crop_id)
+      CompositionRoot.crop_gateway.find_authorized_for_edit(@user, crop_id)
       ::Crop.find(crop_id)
     rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
       nil

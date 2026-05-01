@@ -4,12 +4,15 @@ module Adapters
   module Crop
     # CropAiUpsertService が期待する call(attrs) -> result インターフェースを提供。
     # 内部で CropCreateInteractor を使用する。
+    # gateway / logger / user_lookup はエッジ（Controller 等）から DI する。
     class CropCreateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway: nil)
+      def initialize(user_id:, gateway:, logger:, user_lookup:)
         @user_id = user_id
-        @gateway = gateway || Adapters::Crop::Gateways::CropMemoryGateway.new
+        @gateway = gateway
+        @logger = logger
+        @user_lookup = user_lookup
       end
 
       def call(attrs)
@@ -17,7 +20,7 @@ module Adapters
         interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new, user_lookup: CompositionRoot.user_lookup)
+          logger: @logger, user_lookup: @user_lookup)
         input_dto = build_input_dto(attrs)
         interactor.call(input_dto)
         output_port.result

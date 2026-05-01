@@ -67,7 +67,9 @@ module Adapters
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            prediction_gateway: CompositionRoot.prediction_gateway
           )
 
           dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
@@ -123,7 +125,9 @@ module Adapters
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            prediction_gateway: CompositionRoot.prediction_gateway
           )
 
           dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
@@ -143,7 +147,9 @@ module Adapters
             progress_gateway_factory: -> { Agrr::ProgressGateway.new },
             weather_prediction_service_factory: ->(*) { raise "weather prediction should not be called" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            prediction_gateway: CompositionRoot.prediction_gateway
           )
 
           assert_raises(ActiveRecord::RecordNotFound) do
@@ -159,7 +165,9 @@ module Adapters
             progress_gateway_factory: -> { Agrr::ProgressGateway.new },
             weather_prediction_service_factory: ->(*) { raise "unused" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            prediction_gateway: CompositionRoot.prediction_gateway
           )
 
           d = Date.new(2024, 6, 1)

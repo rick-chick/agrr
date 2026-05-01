@@ -6,9 +6,12 @@ module Adapters
       # 公開プラン保存セッション用 Crop マッパー（AR を扱うため Adapter 層）。
       # Domain::Crop::Gateways::CropStageCopyGateway は依存できる（gateway interface）。
       class CropMapper
-        def initialize(ctx, stage_copy_gateway: nil)
+        def initialize(ctx)
           @ctx = ctx
-          @stage_copy_gateway = stage_copy_gateway || Domain::Crop::Gateways::CropStageCopyGateway.default
+          @stage_copy_gateway = ctx.crop_stage_copy_gateway
+          unless @stage_copy_gateway
+            raise ArgumentError, "PlanSaveContext must set crop_stage_copy_gateway (use CompositionRoot.crop_stage_copy_gateway at the edge)"
+          end
         end
 
         def create_user_crops_from_plan

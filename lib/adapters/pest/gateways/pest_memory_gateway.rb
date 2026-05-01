@@ -4,6 +4,10 @@ module Adapters
   module Pest
     module Gateways
       class PestMemoryGateway < Domain::Pest::Gateways::PestGateway
+        def initialize(deletion_undo_gateway:)
+          @deletion_undo_gateway = deletion_undo_gateway
+        end
+
         def list(query = nil)
           if query.is_a?(Domain::Shared::Dtos::QueryDto)
             scope = build_scope_from_query(query)
@@ -109,7 +113,7 @@ module Adapters
             return { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(translator.t("pests.flash.cannot_delete_in_use")) }
           end
           toast_message = translator.t("pests.undo.toast", name: pest.name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: pest,
             actor: user,

@@ -4,12 +4,16 @@ module Adapters
   module Pest
     # API ai_create が期待する call(attrs) -> result インターフェースを提供。
     # 内部で PestCreateInteractor を使用する。
+    # 依存はエッジ（Controller）から DI する。
     class PestCreateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway: nil)
+      def initialize(user_id:, gateway:, logger:, translator:, user_lookup:)
         @user_id = user_id
-        @gateway = gateway || Adapters::Pest::Gateways::PestMemoryGateway.new
+        @gateway = gateway
+        @logger = logger
+        @translator = translator
+        @user_lookup = user_lookup
       end
 
       def call(attrs)
@@ -17,7 +21,7 @@ module Adapters
         interactor = Domain::Pest::Interactors::PestCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: Adapters::Logger::Gateways::RailsLoggerGateway.new, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+          logger: @logger, translator: @translator, user_lookup: @user_lookup)
         input_dto = build_input_dto(attrs)
         interactor.call(input_dto)
         output_port.result

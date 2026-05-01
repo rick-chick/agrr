@@ -20,7 +20,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
     CropPest.create!(crop: ref_crop, pest: ref_pest)
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
@@ -48,7 +48,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
     )
     CropPest.create!(crop: ref_crop, pest: ref_pest)
 
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx1 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
@@ -58,7 +58,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
     existing = user.pests.find_by(source_pest_id: ref_pest.id)
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx2 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2

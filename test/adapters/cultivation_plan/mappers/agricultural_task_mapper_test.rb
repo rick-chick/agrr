@@ -26,7 +26,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result
@@ -60,7 +60,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
       time_per_sqm: 2.0
     )
 
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx1 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: plan_save_result
@@ -70,7 +70,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
     existing = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx2 = build_plan_save_context(
       user: user,
       session_data: { plan_id: plan.id },
       result: result2
@@ -86,7 +86,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
 
   test "requires_gdd? delegates to true" do
     user = unique_test_user
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: {},
       result: plan_save_result

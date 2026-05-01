@@ -22,7 +22,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
@@ -49,7 +49,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
@@ -113,7 +113,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result

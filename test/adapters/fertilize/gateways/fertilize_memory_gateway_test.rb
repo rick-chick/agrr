@@ -4,7 +4,9 @@ require "test_helper"
 
 class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport::TestCase
       def setup
-        @gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new
+        @gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new(
+          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+        )
       end
 
         test "should find fertilize by id" do

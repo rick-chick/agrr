@@ -4,19 +4,6 @@ module Domain
   module CultivationPlan
     module Gateways
       class CultivationPlanGateway
-        class << self
-          # @return [CultivationPlanGateway] 既定実装（テストでは {.default=} で差し替え可）
-          def default
-            @default ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def create(create_dto)
           raise NotImplementedError, "Subclasses must implement create"
         end

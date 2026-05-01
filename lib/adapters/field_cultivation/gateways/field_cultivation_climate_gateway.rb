@@ -11,7 +11,7 @@ module Adapters
         def initialize(current_user:, logger:, translator:, use_mock_progress: nil,
                        progress_gateway_factory:,
                        weather_prediction_service_factory:, weather_data_gateway:,
-                       cultivation_plan_gateway:)
+                       cultivation_plan_gateway:, crop_gateway:, prediction_gateway:)
           @current_user = current_user
           @logger = logger
           @translator = translator
@@ -20,6 +20,8 @@ module Adapters
           @weather_prediction_service_factory = weather_prediction_service_factory
           @weather_data_gateway = weather_data_gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @crop_gateway = crop_gateway
+          @prediction_gateway = prediction_gateway
         end
 
         def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
@@ -199,8 +201,7 @@ module Adapters
           if plan_type_public
             ::Crop.find_by(id: plan_crop.crop_id)
           else
-            Domain::Crop::Gateways::CropGateway.default
-              .find_user_non_reference_crop_record(@current_user, plan_crop.crop_id)
+            @crop_gateway.find_user_non_reference_crop_record(@current_user, plan_crop.crop_id)
           end
         end
 
@@ -233,7 +234,7 @@ module Adapters
           prediction_days = (end_date - training_end_date).to_i
 
           if prediction_days > 0
-            future = Domain::WeatherData::Gateways::PredictionGateway.default.predict(
+            future = @prediction_gateway.predict(
               historical_data: training_formatted,
               days: prediction_days,
               model: "lightgbm"

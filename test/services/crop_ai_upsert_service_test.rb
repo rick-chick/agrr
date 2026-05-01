@@ -85,8 +85,13 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
       ]
     }
 
-    gateway = Adapters::Crop::Gateways::CropMemoryGateway.new
-    create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(user_id: @user.id, gateway: gateway)
+    gateway = Adapters::Crop::Gateways::CropMemoryGateway.new(deletion_undo_gateway: CompositionRoot.deletion_undo_gateway)
+    create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(
+      user_id: @user.id,
+      gateway: gateway,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    )
 
     service = CropAiUpsertService.new(
       user: @user,

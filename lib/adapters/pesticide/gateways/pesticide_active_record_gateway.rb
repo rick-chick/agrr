@@ -5,6 +5,12 @@ module Adapters
     module Gateways
       class PesticideActiveRecordGateway < Domain::Pesticide::Gateways::PesticideGateway
         attr_accessor :translator
+
+        def initialize(deletion_undo_gateway:, translator: nil)
+          @deletion_undo_gateway = deletion_undo_gateway
+          @translator = translator || Adapters::Translators::RailsTranslator.new
+        end
+
         def list
           ::Pesticide.all.map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
@@ -138,7 +144,7 @@ module Adapters
           end
           name = pesticide.name
           toast_message = translator.t("pesticides.undo.toast", name: name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: pesticide,
             actor: user,

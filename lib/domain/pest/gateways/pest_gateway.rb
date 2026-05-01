@@ -4,18 +4,6 @@ module Domain
   module Pest
     module Gateways
       class PestGateway
-        class << self
-          def default
-            @default ||= Adapters::Pest::Gateways::PestMemoryGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         # @param query [Domain::Shared::Dtos::QueryDto, nil] クエリ条件。nil の場合は全件
         def list(query = nil)
           raise NotImplementedError, "Subclasses must implement list"

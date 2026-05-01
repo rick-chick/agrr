@@ -5,6 +5,12 @@ module Adapters
     module Gateways
       class FertilizeActiveRecordGateway < Domain::Fertilize::Gateways::FertilizeGateway
         attr_accessor :translator
+
+        def initialize(deletion_undo_gateway:, translator: nil)
+          @deletion_undo_gateway = deletion_undo_gateway
+          @translator = translator || Adapters::Translators::RailsTranslator.new
+        end
+
         def list
           ::Fertilize.all.map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
@@ -132,7 +138,7 @@ module Adapters
           end
           name = fertilize.name
           toast_message = translator.t("fertilizes.undo.toast", name: name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: fertilize,
             actor: user,

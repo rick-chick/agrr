@@ -6,13 +6,15 @@ module Adapters
       class FieldActiveRecordGateway < Domain::Field::Gateways::FieldGateway
         attr_accessor :translator
 
-        def initialize
+        def initialize(farm_gateway:, deletion_undo_gateway:)
+          @farm_gateway = farm_gateway
+          @deletion_undo_gateway = deletion_undo_gateway
           @translator = Adapters::Translators::RailsTranslator.new
         end
 
         def list_by_farm(farm_id, user_id)
           user = find_user!(user_id)
-          Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          @farm_gateway.find_authorized_for_edit(user, farm_id)
           farm = ::Farm.find(farm_id)
           scope = FieldPolicy.scope_for_farm(user, farm)
           scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
@@ -30,7 +32,7 @@ module Adapters
 
         def create(create_input_dto, farm_id, user_id)
           user = ::User.find(user_id)
-          Domain::Farm::Gateways::FarmGateway.default.find_authorized_for_edit(user, farm_id)
+          @farm_gateway.find_authorized_for_edit(user, farm_id)
           farm = ::Farm.find(farm_id)
           attrs = {
             name: create_input_dto.name,
@@ -131,7 +133,7 @@ module Adapters
           end
           name = field.display_name
           toast_message = translator.t("fields.undo.toast", name: name)
-          undo_gw = Domain::DeletionUndo::Gateways::DeletionUndoGateway.default
+          undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             record: field,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),

@@ -9,7 +9,7 @@ class Adapters::CultivationPlan::Mappers::FarmMapperTest < ActiveSupport::TestCa
     user = unique_test_user
     ref_farm = ensure_reference_farm
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: { farm_id: ref_farm.id },
       result: result

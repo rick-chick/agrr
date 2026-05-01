@@ -4,18 +4,6 @@ module Domain
   module Fertilize
     module Gateways
       class FertilizeGateway
-        class << self
-          def default
-            @default ||= Adapters::Fertilize::Gateways::FertilizeActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list
           raise NotImplementedError, "Subclasses must implement list"
         end

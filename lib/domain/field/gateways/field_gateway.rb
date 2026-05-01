@@ -4,18 +4,6 @@ module Domain
   module Field
     module Gateways
       class FieldGateway
-        class << self
-          def default
-            @default ||= Adapters::Field::Gateways::FieldActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list_by_farm(farm_id, user_id)
           raise NotImplementedError, "Subclasses must implement list_by_farm"
         end

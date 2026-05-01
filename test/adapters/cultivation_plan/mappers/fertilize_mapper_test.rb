@@ -19,7 +19,7 @@ class Adapters::CultivationPlan::Mappers::FertilizeMapperTest < ActiveSupport::T
     )
 
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: {}, result: result)
+    ctx = build_plan_save_context(user: user, session_data: {}, result: result)
     list = Adapters::CultivationPlan::Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region("jp")
 
     assert(list.any? { |f| f.source_fertilize_id == ref_f.id })
@@ -42,12 +42,12 @@ class Adapters::CultivationPlan::Mappers::FertilizeMapperTest < ActiveSupport::T
     )
 
     result1 = plan_save_result
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: {}, result: result1)
+    ctx1 = build_plan_save_context(user: user, session_data: {}, result: result1)
     Adapters::CultivationPlan::Mappers::FertilizeMapper.new(ctx1).copy_fertilizes_for_region("jp")
     existing = user.fertilizes.find_by(source_fertilize_id: ref_f.id)
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: {}, result: result2)
+    ctx2 = build_plan_save_context(user: user, session_data: {}, result: result2)
     Adapters::CultivationPlan::Mappers::FertilizeMapper.new(ctx2).copy_fertilizes_for_region("jp")
 
     assert_skipped_exact result2, { fertilizes: user.fertilizes.where.not(source_fertilize_id: nil).pluck(:id) }

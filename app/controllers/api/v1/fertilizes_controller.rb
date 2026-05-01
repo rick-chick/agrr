@@ -249,8 +249,9 @@ module Api
       end
 
       def set_interactors
-        @create_interactor = Adapters::Fertilize::FertilizeCreateForAiAdapter.new(user_id: current_user.id)
-        @update_interactor = Adapters::Fertilize::FertilizeUpdateForAiAdapter.new(user_id: current_user.id)
+        pair = CompositionRoot.fertilize_ai_interactors_for(user_id: current_user.id)
+        @create_interactor = pair.create_interactor
+        @update_interactor = pair.update_interactor
       end
 
       def ai_gateway

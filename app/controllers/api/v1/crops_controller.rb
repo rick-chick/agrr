@@ -38,7 +38,7 @@ module Api
       private
 
       def set_interactors
-        @create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(user_id: current_user.id)
+        @create_interactor = CompositionRoot.crop_create_for_ai_adapter(user_id: current_user.id)
       end
 
       def fetch_crop_info_from_agrr(crop_name, max_retries: 3)

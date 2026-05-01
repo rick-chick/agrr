@@ -4,18 +4,6 @@ module Domain
   module AgriculturalTask
     module Gateways
       class AgriculturalTaskGateway
-        class << self
-          def default
-            @default ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list
           raise NotImplementedError, "Subclasses must implement list"
         end

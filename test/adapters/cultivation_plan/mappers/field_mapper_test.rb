@@ -9,7 +9,7 @@ class Adapters::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestC
     user = unique_test_user
     ref_farm = ensure_reference_farm
     result = plan_save_result
-    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
+    ctx = build_plan_save_context(
       user: user,
       session_data: {
         farm_id: ref_farm.id,
@@ -38,13 +38,13 @@ class Adapters::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestC
     }
 
     result1 = plan_save_result
-    ctx1 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: session_data, result: result1)
+    ctx1 = build_plan_save_context(user: user, session_data: session_data, result: result1)
     farm1 = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx1).create_or_get_user_farm
     fields1 = Adapters::CultivationPlan::Mappers::FieldMapper.new(ctx1).create_user_fields(farm1)
     field_id = fields1.first.id
 
     result2 = plan_save_result
-    ctx2 = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: session_data, result: result2)
+    ctx2 = build_plan_save_context(user: user, session_data: session_data, result: result2)
     farm2 = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx2).create_or_get_user_farm
     assert ctx2.farm_reused
 

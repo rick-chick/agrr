@@ -39,11 +39,12 @@ module Adapters
 
         attr_accessor :user, :session_data, :result
 
-        def initialize(user:, session_data:, logger:, cultivation_plan_gateway:)
+        def initialize(user:, session_data:, logger:, cultivation_plan_gateway:, crop_stage_copy_gateway:)
           @user = user
           @session_data = session_data
           @logger = logger
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @crop_stage_copy_gateway = crop_stage_copy_gateway
           @result = Result.new
         end
 
@@ -51,6 +52,7 @@ module Adapters
           @logger.debug I18n.t("services.plan_save_service.debug.session_data_received", data: @session_data.inspect)
 
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
+          ctx.crop_stage_copy_gateway = @crop_stage_copy_gateway
           farm_mapper = Mappers::FarmMapper.new(ctx)
 
           @cultivation_plan_gateway.within_transaction do

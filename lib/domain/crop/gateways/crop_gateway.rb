@@ -4,18 +4,6 @@ module Domain
   module Crop
     module Gateways
       class CropGateway
-        class << self
-          def default
-            @default ||= Adapters::Crop::Gateways::CropMemoryGateway.new
-          end
-
-          attr_writer :default
-
-          def default_reset!
-            @default = nil
-          end
-        end
-
         def list
           raise NotImplementedError, "Subclasses must implement list"
         end

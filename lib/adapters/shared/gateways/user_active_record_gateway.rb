@@ -17,6 +17,6 @@ module Adapters
     end
   end
 
-  # @deprecated Use {Adapters::Shared::Gateways::UserActiveRecordGateway} or {Domain::Shared::Ports::UserLookupPort.default}
+  # CompositionRoot から {UserActiveRecordGateway} を渡すこと。
   IdentityUserActiveRecordGateway = Shared::Gateways::UserActiveRecordGateway
 end
