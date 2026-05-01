@@ -102,6 +102,17 @@ module Adapters
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_view(user, id))
         end
 
+        def authorized_agricultural_task_detail_output(user, id)
+          task = ::AgriculturalTask.includes(:crops).find(id)
+          unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.detail_output_dto_from_record(task)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
         def find_authorized_for_edit(user, id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_edit(user, id))
         end

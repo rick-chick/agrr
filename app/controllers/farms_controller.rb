@@ -41,17 +41,7 @@ class FarmsController < ApplicationController
   def show
     respond_to do |format|
       format.html do
-        farm_gateway = CompositionRoot.farm_gateway
-        field_gateway = CompositionRoot.field_gateway
-        presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
-          view: self,
-          farm_detail_view_for: lambda do |dto|
-            {
-              farm: farm_gateway.find_model(dto.farm.id),
-              fields: dto.fields.map { |fe| field_gateway.find_model(fe.id) }
-            }
-          end
-        )
+        presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: self)
 
         interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -105,11 +95,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        farm_gateway = CompositionRoot.farm_gateway
-        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(
-          view: self,
-          farm_model_for_json_response: ->(entity) { farm_gateway.find_model(entity.id) }
-        )
+        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(view: self)
         input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
         Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,

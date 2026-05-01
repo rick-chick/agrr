@@ -4,14 +4,12 @@ module Presenters
   module Html
     module Farm
       class FarmDirectJsonCreatePresenter < Domain::Farm::Ports::FarmCreateOutputPort
-        def initialize(view:, farm_model_for_json_response:)
+        def initialize(view:)
           @view = view
-          @farm_model_for_json_response = farm_model_for_json_response
         end
 
         def on_success(farm_entity)
-          farm = @farm_model_for_json_response.call(farm_entity)
-          @view.render(json: farm, status: :created)
+          @view.render(json: farm_entity.as_json, status: :created)
         end
 
         def on_failure(error_dto)

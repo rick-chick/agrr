@@ -4,16 +4,12 @@ module Presenters
   module Html
     module AgriculturalTask
       class AgriculturalTaskDetailHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskDetailOutputPort
-        def initialize(view:, agricultural_task_record_for_detail_dto:)
+        def initialize(view:)
           @view = view
-          @agricultural_task_record_for_detail_dto = agricultural_task_record_for_detail_dto
         end
 
         def on_success(detail_dto)
-          @view.instance_variable_set(
-            :@agricultural_task,
-            @agricultural_task_record_for_detail_dto.call(detail_dto)
-          )
+          @view.instance_variable_set(:@agricultural_task, detail_dto)
         end
 
         def on_failure(error_dto)

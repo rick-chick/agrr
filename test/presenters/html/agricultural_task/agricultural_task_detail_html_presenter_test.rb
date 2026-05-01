@@ -7,30 +7,18 @@ class AgriculturalTaskDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @agricultural_task" do
     view_mock = mock
-    task_model = mock
     detail_dto = mock
 
-    agricultural_task_record_for_detail_dto = lambda { |dto|
-      assert_equal detail_dto, dto
-      task_model
-    }
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(
-      view: view_mock,
-      agricultural_task_record_for_detail_dto: agricultural_task_record_for_detail_dto
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@agricultural_task, task_model)
+    view_mock.expects(:instance_variable_set).with(:@agricultural_task, detail_dto)
 
     presenter.on_success(detail_dto)
   end
 
   test "on_failure sets flash alert and redirects" do
     view_mock = mock
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(
-      view: view_mock,
-      agricultural_task_record_for_detail_dto: ->(_) { nil }
-    )
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

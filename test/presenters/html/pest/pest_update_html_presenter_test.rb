@@ -7,8 +7,7 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success redirects with success notice" do
     view_mock = mock
-    reload = ->(_) { flunk }
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock, reload_pest_model_for_edit: reload)
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock)
 
     pest_entity = mock
     pest_entity.expects(:id).returns(1)
@@ -22,11 +21,11 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
   test "on_failure sets flash alert and renders edit template" do
     view_mock = mock
     pest_mock = mock
-    reload = ->(id) { assert_equal 1, id; pest_mock }
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock, reload_pest_model_for_edit: reload)
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock)
 
-    error_dto = mock
-    error_dto.stubs(:message).returns("Test error")
+    reload_bundle = mock
+    reload_bundle.stubs(:persisted_pest).returns(pest_mock)
+    failure_dto = Domain::Pest::Dtos::PestUpdateFailureDto.new(message: "Test error", reload_bundle: reload_bundle)
 
     pest_mock.expects(:assign_attributes)
     pest_params_mock = mock
@@ -44,6 +43,6 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
     view_mock.expects(:instance_variable_set).with(:@pest, pest_mock)
     view_mock.expects(:render_form).with(:edit, status: :unprocessable_entity)
 
-    presenter.on_failure(error_dto)
+    presenter.on_failure(failure_dto)
   end
 end

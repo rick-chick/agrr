@@ -4,9 +4,8 @@ module Presenters
   module Html
     module Pest
       class PestUpdateHtmlPresenter < Domain::Pest::Ports::PestUpdateOutputPort
-        def initialize(view:, reload_pest_model_for_edit:)
+        def initialize(view:)
           @view = view
-          @reload_pest_model_for_edit = reload_pest_model_for_edit
         end
 
         def on_success(pest_entity)
@@ -17,12 +16,12 @@ module Presenters
           )
         end
 
-        def on_failure(error_dto)
-          if error_dto.message == I18n.t("pests.flash.reference_flag_admin_only")
-            @view.redirect_to @view.pest_path(@view.params[:id]), alert: error_dto.message
+        def on_failure(failure_dto)
+          if failure_dto.message == I18n.t("pests.flash.reference_flag_admin_only")
+            @view.redirect_to @view.pest_path(@view.params[:id]), alert: failure_dto.message
             return
           end
-          @view.flash.now[:alert] = error_dto.message
+          @view.flash.now[:alert] = failure_dto.message
           # 失敗時はフォームを再表示するために @pest を再構築
           permitted = [
             :name,
@@ -55,7 +54,7 @@ module Presenters
           ]
           # 管理者のみregionを許可（Interactorでチェック済みなので常に許可）
           permitted << :region
-          pest = @reload_pest_model_for_edit.call(@view.params[:id])
+          pest = failure_dto.reload_bundle&.persisted_pest || @view.instance_variable_get(:@pest)
           pest.assign_attributes(@view.params[:pest].permit(*permitted))
           @view.instance_variable_set(:@pest, pest)
           crop_ids = @view.params[:crop_ids] ? @view.normalize_crop_ids_for(pest, @view.params[:crop_ids]) : []

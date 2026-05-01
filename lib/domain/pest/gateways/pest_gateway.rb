@@ -41,6 +41,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
+        def authorized_pest_detail_output(user, id)
+          raise NotImplementedError, "Subclasses must implement authorized_pest_detail_output"
+        end
+
         def find_authorized_for_edit(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end

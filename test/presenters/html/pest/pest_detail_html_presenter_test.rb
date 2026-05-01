@@ -7,24 +7,14 @@ class PestDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @pest and @crops" do
     view_mock = mock
-    pest_entity = mock
-    pest_model = mock
-    crops = mock
     crop1 = mock
     crop2 = mock
-    pest_model.expects(:crops).returns(crops)
-    crops.expects(:recent).returns([ crop1, crop2 ])
-
     pest_detail_dto = mock
-    pest_detail_dto.stubs(:pest).returns(pest_entity)
+    pest_detail_dto.expects(:associated_crops).returns([ crop1, crop2 ])
 
-    pest_model_for_detail = lambda { |e| assert_equal pest_entity, e; pest_model }
-    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(
-      view: view_mock,
-      pest_model_for_detail: pest_model_for_detail
-    )
+    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: view_mock)
 
-    view_mock.expects(:instance_variable_set).with(:@pest, pest_model)
+    view_mock.expects(:instance_variable_set).with(:@pest, pest_detail_dto)
     view_mock.expects(:instance_variable_set).with(:@crops, [ crop1, crop2 ])
 
     presenter.on_success(pest_detail_dto)
@@ -32,10 +22,7 @@ class PestDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_failure redirects with alert" do
     view_mock = mock
-    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(
-      view: view_mock,
-      pest_model_for_detail: ->(_) { flunk }
-    )
+    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

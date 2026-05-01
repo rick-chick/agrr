@@ -9,30 +9,18 @@ class PesticideListHtmlPresenterTest < ActiveSupport::TestCase
     view_mock = mock
     pesticide_entity1 = mock
     pesticide_entity2 = mock
-    pesticide_model1 = mock
-    pesticide_model2 = mock
 
-    pesticide_records_for_entities = lambda { |entities|
-      assert_equal [ pesticide_entity1, pesticide_entity2 ], entities
-      [ pesticide_model1, pesticide_model2 ]
-    }
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(
-      view: view_mock,
-      pesticide_records_for_entities: pesticide_records_for_entities
-    )
+    entities = [ pesticide_entity1, pesticide_entity2 ]
+    view_mock.expects(:instance_variable_set).with(:@pesticides, entities)
 
-    view_mock.expects(:instance_variable_set).with(:@pesticides, [ pesticide_model1, pesticide_model2 ])
-
-    presenter.on_success([ pesticide_entity1, pesticide_entity2 ])
+    presenter.on_success(entities)
   end
 
   test "on_failure sets flash alert and empty @pesticides" do
     view_mock = mock
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(
-      view: view_mock,
-      pesticide_records_for_entities: ->(_) { [] }
-    )
+    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

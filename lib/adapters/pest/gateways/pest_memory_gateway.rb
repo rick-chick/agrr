@@ -65,6 +65,17 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_view(user, id))
         end
 
+        def authorized_pest_detail_output(user, id)
+          pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
+          unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          Adapters::Pest::Mappers::PestMapper.detail_output_dto_from_record(pest)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
         def find_authorized_for_edit(user, id)
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id))
         end

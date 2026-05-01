@@ -37,6 +37,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
+        def authorized_agricultural_task_detail_output(user, id)
+          raise NotImplementedError, "Subclasses must implement authorized_agricultural_task_detail_output"
+        end
+
         def find_authorized_for_edit(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end

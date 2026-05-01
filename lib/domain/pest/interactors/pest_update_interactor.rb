@@ -14,6 +14,7 @@ module Domain
         end
 
         def call(input_dto)
+          user = nil
           user = @user_lookup.find(@user_id)
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
@@ -47,7 +48,17 @@ module Domain
           @logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"
           @output_port.on_success(pest_entity)
         rescue StandardError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          reload_bundle = nil
+          if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.pest_id)
+            begin
+              reload_bundle = @gateway.find_authorized_pest_loaded_bundle!(user, input_dto.pest_id.to_i, for_edit: true)
+            rescue StandardError
+              reload_bundle = nil
+            end
+          end
+          @output_port.on_failure(
+            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle)
+          )
         end
       end
     end

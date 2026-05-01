@@ -1,6 +1,6 @@
 <% content_for :title, "#{@pest.name} - AGRR" %>
 
-<div class="crop-detail-card" id="<%= dom_id(@pest) %>" data-undo-delete-record>
+<div class="crop-detail-card" id="pest_<%= @pest.id %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @pest.name %></h1>
     <% if admin_user? && @pest.is_reference %>
@@ -93,7 +93,7 @@
     <div class="stages-section">
       <h2 class="stages-title"><%= t('.control_methods_title') %></h2>
       <div class="control-methods-list">
-        <% @pest.pest_control_methods.order(:id).each do |method| %>
+        <% @pest.pest_control_methods.each do |method| %>
           <div class="control-method-card">
             <div class="method-header">
               <span class="method-type-badge method-type-<%= method.method_type %>">
@@ -124,7 +124,7 @@
           <article class="related-crop-card">
             <div class="related-crop-card__header">
               <h3 class="related-crop-card__name">
-                <%= link_to crop.name, crop_path(crop), class: "related-crop-card__link" %>
+                <%= link_to crop.name, crop_path(crop.id), class: "related-crop-card__link" %>
               </h3>
               <% if crop.is_reference %>
                 <span class="related-crop-card__badge"><%= t('.reference_crop') %></span>
@@ -151,28 +151,28 @@
       <% if @pest.is_reference %>
         <%# 参照害虫は管理者のみ編集・削除可能 %>
         <% if admin_user? %>
-          <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-          <%= link_to t('.delete'), pest_path(@pest),
+          <%= link_to t('.edit'), edit_pest_path(@pest.id), class: "btn btn-secondary" %>
+          <%= link_to t('.delete'), pest_path(@pest.id),
                       class: "btn btn-error",
                       data: {
                         controller: "undo-delete",
                         action: "click->undo-delete#submit",
                         turbo_method: :delete,
-                        undo_delete_url_value: pest_path(@pest),
+                        undo_delete_url_value: pest_path(@pest.id),
                         undo_delete_message_value: t('pests.undo.toast', name: @pest.name),
                         undo_delete_redirect_url_value: pests_path
                       } %>
         <% end %>
       <% else %>
         <%# ユーザー害虫は所有者が編集・削除可能 %>
-        <%= link_to t('.edit'), edit_pest_path(@pest), class: "btn btn-secondary" %>
-        <%= link_to t('.delete'), pest_path(@pest),
+        <%= link_to t('.edit'), edit_pest_path(@pest.id), class: "btn btn-secondary" %>
+        <%= link_to t('.delete'), pest_path(@pest.id),
                     class: "btn btn-error",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: pest_path(@pest),
+                      undo_delete_url_value: pest_path(@pest.id),
                       undo_delete_message_value: t('pests.undo.toast', name: @pest.name),
                       undo_delete_redirect_url_value: pests_path
                     } %>

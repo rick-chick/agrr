@@ -40,6 +40,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
+        # 認可済み農薬の HTML/API 詳細用 DTO（1 回の読み込みで関連名・制約を含む）
+        def authorized_pesticide_detail_output(user, id)
+          raise NotImplementedError, "Subclasses must implement authorized_pesticide_detail_output"
+        end
+
         def find_authorized_for_edit(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end

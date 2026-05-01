@@ -26,8 +26,8 @@ module Presenters
           @view.render_response(json: json, status: :ok)
         end
 
-        def on_failure(error_dto)
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+        def on_failure(failure_dto)
+          msg = failure_dto.message
           status = (msg == I18n.t("pests.flash.no_permission")) ? :forbidden : ((msg == "Pest not found") ? :not_found : :unprocessable_entity)
           json = (status == :not_found || status == :forbidden) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)

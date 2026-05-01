@@ -97,6 +97,17 @@ module Adapters
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_view(user, id))
         end
 
+        def authorized_pesticide_detail_output(user, id)
+          pesticide = ::Pesticide.includes(:crop, :pest, :pesticide_usage_constraint, :pesticide_application_detail).find(id)
+          unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          Adapters::Pesticide::Mappers::PesticideMapper.detail_output_dto_from_record(pesticide)
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
+        end
+
         def find_authorized_for_edit(user, id)
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_edit(user, id))
         end

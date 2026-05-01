@@ -14,8 +14,7 @@ module Domain
 
         def call(task_id)
           user = @user_lookup.find(@user_id)
-          task_entity = @gateway.find_authorized_for_view(user, task_id)
-          task_detail_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutputDto.new(task: task_entity)
+          task_detail_dto = @gateway.authorized_agricultural_task_detail_output(user, task_id)
           @output_port.on_success(task_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise

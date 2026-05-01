@@ -7,30 +7,18 @@ class PesticideDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @pesticide" do
     view_mock = mock
-    pesticide_model = mock
     pesticide_detail_dto = mock
 
-    pesticide_record_for_detail_dto = lambda { |dto|
-      assert_equal pesticide_detail_dto, dto
-      pesticide_model
-    }
+    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(
-      view: view_mock,
-      pesticide_record_for_detail_dto: pesticide_record_for_detail_dto
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@pesticide, pesticide_model)
+    view_mock.expects(:instance_variable_set).with(:@pesticide, pesticide_detail_dto)
 
     presenter.on_success(pesticide_detail_dto)
   end
 
   test "on_failure sets flash alert and redirects" do
     view_mock = mock
-    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(
-      view: view_mock,
-      pesticide_record_for_detail_dto: ->(_) { nil }
-    )
+    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")

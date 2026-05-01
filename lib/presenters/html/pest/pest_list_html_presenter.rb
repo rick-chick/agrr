@@ -4,13 +4,12 @@ module Presenters
   module Html
     module Pest
       class PestListHtmlPresenter < Domain::Pest::Ports::PestListOutputPort
-        def initialize(view:, pest_models_from_entities:)
+        def initialize(view:)
           @view = view
-          @pest_models_from_entities = pest_models_from_entities
         end
 
         def on_success(pests)
-          @view.instance_variable_set(:@pests, @pest_models_from_entities.call(pests))
+          @view.instance_variable_set(:@pests, pests)
           # index テンプレートをレンダリング（暗黙的に）
         end
 

@@ -15,8 +15,7 @@ module Domain
 
         def call(pest_id)
           user = @user_lookup.find(@user_id)
-          pest_entity = @gateway.find_authorized_for_view(user, pest_id)
-          dto = Domain::Pest::Dtos::PestDetailOutputDto.new(pest: pest_entity)
+          dto = @gateway.authorized_pest_detail_output(user, pest_id)
           @output_port.on_success(dto)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.not_found")))

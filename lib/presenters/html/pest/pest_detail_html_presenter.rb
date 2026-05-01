@@ -4,15 +4,13 @@ module Presenters
   module Html
     module Pest
       class PestDetailHtmlPresenter < Domain::Pest::Ports::PestDetailOutputPort
-        def initialize(view:, pest_model_for_detail:)
+        def initialize(view:)
           @view = view
-          @pest_model_for_detail = pest_model_for_detail
         end
 
         def on_success(pest_detail_dto)
-          pest_model = @pest_model_for_detail.call(pest_detail_dto.pest)
-          @view.instance_variable_set(:@pest, pest_model)
-          @view.instance_variable_set(:@crops, pest_model.crops.recent)
+          @view.instance_variable_set(:@pest, pest_detail_dto)
+          @view.instance_variable_set(:@crops, pest_detail_dto.associated_crops)
           # show テンプレートをレンダリング（暗黙的に）
         end
 

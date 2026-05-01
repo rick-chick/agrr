@@ -5,10 +5,15 @@ module Domain
     module Entities
       class FarmEntity
         attr_reader :id, :name, :latitude, :longitude, :region, :user_id,
-                    :created_at, :updated_at, :is_reference
+                    :created_at, :updated_at, :is_reference,
+                    :weather_data_status, :weather_data_fetched_years, :weather_data_total_years,
+                    :weather_data_last_error
 
+        # weather_* は HTML 詳細（気象 UI）用。一覧・API などでは nil のまま。
         def initialize(id:, name:, latitude:, longitude:, region:, user_id:,
-                      created_at:, updated_at:, is_reference:)
+                      created_at:, updated_at:, is_reference:,
+                      weather_data_status: nil, weather_data_fetched_years: nil,
+                      weather_data_total_years: nil, weather_data_last_error: nil)
           @id = id
           @name = name
           @latitude = latitude
@@ -18,6 +23,18 @@ module Domain
           @created_at = created_at
           @updated_at = updated_at
           @is_reference = is_reference
+          @weather_data_status = weather_data_status
+          @weather_data_fetched_years = weather_data_fetched_years
+          @weather_data_total_years = weather_data_total_years
+          @weather_data_last_error = weather_data_last_error
+        end
+
+        def weather_data_progress
+          total = weather_data_total_years || 0
+          return 0 if total.zero?
+
+          fetched = weather_data_fetched_years || 0
+          (fetched.to_f / total * 100).round
         end
 
         def coordinates

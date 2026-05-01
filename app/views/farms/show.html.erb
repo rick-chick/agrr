@@ -3,14 +3,14 @@
 <div class="page-header">
   <h1 class="page-title farm-name"><%= @farm.display_name %></h1>
   <div>
-    <%= link_to t('.fields_list'), farm_fields_path(@farm), class: "btn btn-info" %>
-    <%= link_to t('.edit'), edit_farm_path(@farm), class: "btn btn-secondary" %>
+    <%= link_to t('.fields_list'), farm_fields_path(@farm.id), class: "btn btn-info" %>
+    <%= link_to t('.edit'), edit_farm_path(@farm.id), class: "btn btn-secondary" %>
   </div>
 </div>
 
-<%= turbo_stream_from @farm %>
-    
-<div class="farm-card" id="<%= dom_id(@farm) %>" data-undo-delete-record>
+<%= turbo_stream_from Farm, @farm.id %>
+
+<div class="farm-card" id="farm_<%= @farm.id %>" data-undo-delete-record>
   <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>
       
       <% if @fields.any? %>
@@ -21,8 +21,8 @@
               <div class="field-card-small">
                 <h4><%= field.display_name %></h4>
                 <div class="field-actions">
-                  <%= link_to t('.detail'), farm_field_path(@farm, field), class: "btn btn-info btn-sm" %>
-                  <%= link_to t('.edit'), edit_farm_field_path(@farm, field), class: "btn btn-secondary btn-sm" %>
+                  <%= link_to t('.detail'), farm_field_path(@farm.id, field.id), class: "btn btn-info btn-sm" %>
+                  <%= link_to t('.edit'), edit_farm_field_path(@farm.id, field.id), class: "btn btn-secondary btn-sm" %>
                 </div>
               </div>
             <% end %>
@@ -31,21 +31,21 @@
       <% else %>
         <div class="empty-fields">
           <p><%= t('.no_fields') %></p>
-          <%= link_to t('.add_first_field'), new_farm_field_path(@farm), class: "btn btn-success" %>
+          <%= link_to t('.add_first_field'), new_farm_field_path(@farm.id), class: "btn btn-success" %>
         </div>
       <% end %>
       
       <div class="actions">
         <%= link_to t('.back_to_list'), farms_path, class: "btn btn-secondary" %>
-        <%= link_to t('.fields_list'), farm_fields_path(@farm), class: "btn btn-info" %>
-        <%= link_to t('.edit'), edit_farm_path(@farm), class: "btn btn-secondary" %>
-        <%= link_to t('.delete'), farm_path(@farm),
+        <%= link_to t('.fields_list'), farm_fields_path(@farm.id), class: "btn btn-info" %>
+        <%= link_to t('.edit'), edit_farm_path(@farm.id), class: "btn btn-secondary" %>
+        <%= link_to t('.delete'), farm_path(@farm.id),
                     class: "btn btn-error",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: farm_path(@farm),
+                      undo_delete_url_value: farm_path(@farm.id),
                       undo_delete_message_value: t('farms.undo.toast', name: @farm.display_name),
                       undo_delete_redirect_url_value: farms_path
                     } %>

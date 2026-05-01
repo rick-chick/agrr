@@ -7,33 +7,23 @@ class FarmDetailHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success sets @farm and @fields" do
     view_mock = mock
-    farm_model = mock
-    field_model1 = mock
-    field_model2 = mock
+    farm_record = mock
+    fields = [ mock, mock ]
     farm_detail_dto = mock
+    farm_detail_dto.expects(:farm).returns(farm_record)
+    farm_detail_dto.expects(:fields).returns(fields)
 
-    farm_detail_view_for = lambda { |dto|
-      assert_equal farm_detail_dto, dto
-      { farm: farm_model, fields: [ field_model1, field_model2 ] }
-    }
+    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
-      view: view_mock,
-      farm_detail_view_for: farm_detail_view_for
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@farm, farm_model)
-    view_mock.expects(:instance_variable_set).with(:@fields, [ field_model1, field_model2 ])
+    view_mock.expects(:instance_variable_set).with(:@farm, farm_record)
+    view_mock.expects(:instance_variable_set).with(:@fields, fields)
 
     presenter.on_success(farm_detail_dto)
   end
 
   test "on_failure sets flash alert and redirects" do
     view_mock = mock
-    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(
-      view: view_mock,
-      farm_detail_view_for: ->(_) { {} }
-    )
+    presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:message).returns("Test error")
