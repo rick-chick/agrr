@@ -6,7 +6,11 @@ class PestsController < ApplicationController
 
   # GET /pests
   def index
-    presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(view: self)
+    pest_gateway = CompositionRoot.pest_gateway
+    presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(
+      view: self,
+      pest_models_from_entities: ->(entities) { entities.map { |e| pest_gateway.find_model(e.id) } }
+    )
     Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
@@ -14,7 +18,11 @@ class PestsController < ApplicationController
 
   # GET /pests/:id
   def show
-    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: self)
+    pest_gateway = CompositionRoot.pest_gateway
+    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(
+      view: self,
+      pest_model_for_detail: ->(entity) { pest_gateway.find_authorized_model_for_view(current_user, entity.id) }
+    )
     Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
@@ -70,7 +78,10 @@ class PestsController < ApplicationController
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] },
       params[:id]
     )
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: self)
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(
+      view: self,
+      reload_pest_model_for_edit: ->(id) { CompositionRoot.pest_gateway.find_authorized_model_for_edit(current_user, id) }
+    )
     Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)

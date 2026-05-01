@@ -8,7 +8,7 @@ module Presenters
           @view = view
         end
 
-        def on_success(tasks)
+        def on_success(tasks, reference_tasks_for_index: [])
           json = tasks.is_a?(Array) ? tasks.map { |e| entity_to_json(e) } : []
           @view.render_response(json: json, status: :ok)
         end

@@ -4,7 +4,7 @@ module Domain
   module AgriculturalTask
     module Ports
       class AgriculturalTaskListOutputPort
-        def on_success(tasks)
+        def on_success(tasks, reference_tasks_for_index: [])
           raise NotImplementedError, "Subclasses must implement on_success"
         end
 

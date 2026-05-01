@@ -34,6 +34,12 @@ module Adapters
           scope.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
+        def reference_tasks_for_index(is_admin:)
+          return [] unless is_admin
+
+          ::AgriculturalTask.where(is_reference: true).map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
+        end
+
         def find_by_id(task_id)
           task = ::AgriculturalTask.find(task_id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)

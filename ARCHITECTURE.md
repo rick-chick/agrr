@@ -56,7 +56,20 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 
 **Rule:** New presenters belong under `lib/presenters/{api,html}/`, not under `app/presenters/` (legacy paths are being retired).
 
-**Boundary:** Presenters implement output ports only (format success/failure for HTTP). They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (Interactor) or in controller wiring that passes fully-built DTOs into the Interactor. `lib/domain` does not reference `Rails.*`; use injected ports (logger, translator, gateways from the composition root at the app edge), not framework singletons.
+**Boundary:** Presenters implement output ports only (format success/failure for HTTP). They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (**Interactor**), assembled from **gateways only** inside `lib/domain` (and adapters), and delivered to the presenter through the **output port as DTOs/entities**. Do not “finish” a presenter refactor by moving `find_model` or gateway calls into **controller-local procs/lambdas** passed into the presenter: that is the same dependency with extra steps. `lib/domain` does not reference `Rails.*`; inject ports from the **composition root at the app edge** (typically the controller/job), not framework singletons.
+
+#### Use-case–scoped Output Port contract (how we refactor HTML/API presenters)
+
+1. **Bundling (scope)** — Unit of work is **one `Interactor#call` = one use case** (e.g. farm list, farm detail, field list), not “one view file.” For each use case, define in **one sentence** what `on_success` (and failure) passes to the port; **ActiveRecord must not cross that boundary** (state it explicitly).
+2. **Contract-first (drift prevention)** — The output port lists what **templates or JSON consumers need** as **DTOs/entities** (fields enumerated). Anything missing is **filled by the gateway or by assembly in the Interactor** — **no fetch/load in the presenter**.
+3. **Implementation order (safe sequence)** — **Interactor (+ tests)** first: gateway-only data load, port arguments match the new contract. Then **Presenter**: mapping to HTTP/view only; remove `CompositionRoot` / `find_model` / gateway injection into presenters (including via callables). Then **Controller**: **only** `CompositionRoot` (or equivalent) injection into the interactor and presenter construction — **do not pass gateways into presenters**. Then **Views**: if `@model` assumed AR, replace with **DTO attributes and helpers** in the **same PR or the commit immediately before/after** — do **not** bring AR back through the presenter for convenience.
+4. **API orchestration** — API presenters **must not** spawn another interactor (e.g. weather). If the response needs multiple concerns, either the **controller calls multiple interactors** or a **single payload-oriented interactor** composes the result and passes **only the combined DTO** through the port.
+5. **Definition of done** — `lib/presenters/**/*.rb` contains **no** `CompositionRoot` and **no** `find_model`. Each target use case has an **Interactor test** that fixes **types and required fields** reaching the port. **System/controller tests** (where needed) prove HTML/JSON behavior is unchanged.
+
+**Planning summary (one line each):**
+
+- **Before:** “Remove presenter service location and push load toward the Interactor.”
+- **After:** “Fix the **output port contract** on **DTOs/entities**; the **Interactor** satisfies it using **gateways only**. Presenters **map for display only**; where templates assumed AR, update templates to **DTO-first** in the same scope — **do not reintroduce AR via presenters or controller-embedded fetch procs.**”
 
 ### Rails application layer (`app/`)
 
@@ -103,7 +116,7 @@ The numbering below is **one list** (1–26): the **negative** expression of [Wh
 ### `lib/presenters/` (API and HTML)
 
 1. **Service location from presenters** — Calling `CompositionRoot.*` to load data for the response.
-2. **Gateway locators / persistence rehydration in presenters** — `*Gateway.default` or gateways used for `find_model` (or similar) to load persistence models for the view. Loaded data belongs in the interactor output DTO (or controller wiring that completes the DTO before `Interactor#call`).
+2. **Gateway locators / persistence rehydration in presenters** — `*Gateway.default` or gateways used for `find_model` (or similar) to load persistence models for the view. Loaded data belongs in the **Interactor output**, carried as **DTOs/entities** on the port — **not** in the presenter, and **not** by passing controller-defined lambdas that call gateways/`find_model`.
 3. **Business rules in presenters** — Authorization outcomes, validation rules, or “can this happen?” decisions belong in domain policies / interactors.
 
 ### Views

@@ -15,7 +15,10 @@ class AgriculturalTasksController < ApplicationController
       query: params[:query].to_s.strip
     })
 
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(view: self, input_dto: input_dto)
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(
+      view: self,
+      input_dto: input_dto
+    )
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)

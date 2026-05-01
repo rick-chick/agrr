@@ -4,13 +4,13 @@ module Presenters
   module Html
     module Pest
       class PestListHtmlPresenter < Domain::Pest::Ports::PestListOutputPort
-        def initialize(view:)
+        def initialize(view:, pest_models_from_entities:)
           @view = view
+          @pest_models_from_entities = pest_models_from_entities
         end
 
         def on_success(pests)
-          # view は ActiveRecord モデルを期待するため ID から取得
-          @view.instance_variable_set(:@pests, pests.map { |pe| ::Pest.find(pe.id) })
+          @view.instance_variable_set(:@pests, @pest_models_from_entities.call(pests))
           # index テンプレートをレンダリング（暗黙的に）
         end
 

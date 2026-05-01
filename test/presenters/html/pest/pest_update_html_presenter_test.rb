@@ -7,7 +7,8 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_success redirects with success notice" do
     view_mock = mock
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock)
+    reload = ->(_) { flunk }
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock, reload_pest_model_for_edit: reload)
 
     pest_entity = mock
     pest_entity.expects(:id).returns(1)
@@ -20,18 +21,18 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_failure sets flash alert and renders edit template" do
     view_mock = mock
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock)
+    pest_mock = mock
+    reload = ->(id) { assert_equal 1, id; pest_mock }
+    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock, reload_pest_model_for_edit: reload)
 
     error_dto = mock
     error_dto.stubs(:message).returns("Test error")
 
-    pest_mock = mock
     pest_mock.expects(:assign_attributes)
     pest_params_mock = mock
     pest_params_mock.stubs(:permit).returns({})
 
     view_mock.stubs(:params).returns(id: 1, pest: pest_params_mock, crop_ids: nil)
-    ::Pest.stubs(:find).with(1).returns(pest_mock)
     view_mock.stubs(:prepare_crop_selection_for)
     view_mock.stubs(:normalize_crop_ids_for)
 

@@ -86,6 +86,29 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notice, flash[:notice]
   end
 
+  test "GET index HTML lists only current user farms for non-admin" do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: "My Listed Farm")
+    other_user = create(:user)
+    create(:farm, user: other_user, name: "Other User Farm")
+
+    get farms_path
+    assert_response :success
+    assert_select ".farm-name", text: farm.display_name
+    assert_select ".farm-name", text: "Other User Farm", count: 0
+  end
+
+  test "GET index HTML shows reference farm section for admin when reference farms exist" do
+    admin = create(:user, admin: true)
+    sign_in_as admin
+    ref_farm = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref Farm For Index")
+
+    get farms_path
+    assert_response :success
+    assert_select "h2.section-header", text: /#{Regexp.escape(I18n.t("farms.index.reference_farms"))}/
+    assert_select ".farm-name", text: ref_farm.display_name
+  end
+
   # ========== region編集のテスト ==========
 
   test "管理者は参照農場のregionを更新できる" do

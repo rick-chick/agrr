@@ -5,20 +5,20 @@ require "test_helper"
 class AgriculturalTaskListHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @agricultural_tasks" do
+  test "on_success sets @agricultural_tasks and @reference_farms" do
     view_mock = mock
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(view: view_mock)
 
     task_entity1 = mock
     task_entity2 = mock
+    ref_entity = mock
 
     view_mock.expects(:instance_variable_set).with(:@agricultural_tasks, [ task_entity1, task_entity2 ])
     view_mock.expects(:instance_variable_set).with(:@query, "")
     view_mock.expects(:instance_variable_set).with(:@selected_filter, "")
-    view_mock.expects(:instance_variable_set).with(:@reference_farms, [])
+    view_mock.expects(:instance_variable_set).with(:@reference_farms, [ ref_entity ])
 
-    tasks = [ task_entity1, task_entity2 ]
-    presenter.on_success(tasks)
+    presenter.on_success([ task_entity1, task_entity2 ], reference_tasks_for_index: [ ref_entity ])
   end
 
   test "on_failure sets flash alert and empty array" do
@@ -34,6 +34,7 @@ class AgriculturalTaskListHtmlPresenterTest < ActiveSupport::TestCase
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
     view_mock.expects(:instance_variable_set).with(:@agricultural_tasks, [])
+    view_mock.expects(:instance_variable_set).with(:@reference_farms, [])
 
     presenter.on_failure(error_dto)
   end

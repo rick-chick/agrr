@@ -86,6 +86,8 @@ INJECT = {
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Farm::Interactors::FarmListInteractor" =>
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator",
+  "Domain::Farm::Interactors::FarmListHtmlInteractor" =>
+    "gateway: CompositionRoot.farm_gateway",
   "Domain::Farm::Interactors::FarmListReferenceForRegionInteractor" =>
     "gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger",
   "Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor" =>

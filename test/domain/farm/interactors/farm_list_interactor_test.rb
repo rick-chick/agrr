@@ -38,7 +38,8 @@ module Domain
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
           @mock_gateway.expects(:user_id=).with(@user_id)
           @mock_gateway.expects(:list).with(input_dto).returns(filtered_farms)
-          @mock_output_port.expects(:on_success).with(filtered_farms)
+          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: false).returns([])
+          @mock_output_port.expects(:on_success).with(filtered_farms, reference_farms: [])
 
           @interactor.call(input_dto)
         end
@@ -80,9 +81,23 @@ module Domain
           ]
 
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
+          ref_only = [
+            Domain::Farm::Entities::FarmEntity.from_hash(
+              id: 99,
+              name: "Ref Only",
+              latitude: 35.0,
+              longitude: 135.0,
+              region: "Kyoto",
+              user_id: nil,
+              created_at: Time.current,
+              updated_at: Time.current,
+              is_reference: true
+            )
+          ]
           @mock_gateway.expects(:user_id=).with(admin_user_id)
           @mock_gateway.expects(:list).with(input_dto).returns(all_farms)
-          @mock_output_port.expects(:on_success).with(all_farms)
+          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: true).returns(ref_only)
+          @mock_output_port.expects(:on_success).with(all_farms, reference_farms: ref_only)
 
           admin_interactor.call(input_dto)
         end

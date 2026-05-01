@@ -9,7 +9,7 @@
     <div class="farm-coordinates">📍 <%= t('farms.card.location_not_set') %></div>
   <% end %>
   <div class="farm-info">
-    <p><%= t('farms.card.fields_count', count: farm.fields.count) %></p>
+    <p><%= t('farms.card.fields_count', count: farm.field_count) %></p>
     <p>
       <strong><%= t('farms.card.weather_data') %></strong>
       <span class="weather-status weather-status-<%= farm.weather_data_status %>">
@@ -30,17 +30,17 @@
     </p>
   </div>
   <div class="farm-actions">
-    <%= link_to t('farms.card.detail'), farm, class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to t('farms.card.fields_list'), farm_fields_path(farm), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to t('farms.card.edit'), edit_farm_path(farm), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to t('farms.card.delete'), farm,
+    <%= link_to t('farms.card.detail'), farm_path(farm.id), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.fields_list'), farm_fields_path(farm.id), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.edit'), edit_farm_path(farm.id), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
+    <%= link_to t('farms.card.delete'), farm_path(farm.id),
                 class: "btn btn-error btn-sm",
                 data: {
                   controller: "undo-delete",
                   action: "click->undo-delete#submit",
                   turbo_frame: "_top",
                   turbo_method: :delete,
-                  undo_delete_url_value: farm_path(farm),
+                  undo_delete_url_value: farm_path(farm.id),
                   undo_delete_message_value: t('farms.undo.toast', name: farm.display_name)
                 } %>
   </div>

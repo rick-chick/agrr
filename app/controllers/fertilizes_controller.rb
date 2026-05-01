@@ -69,7 +69,11 @@ class FertilizesController < ApplicationController
       return
     end
     input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
-    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
+    fertilize_gateway = CompositionRoot.fertilize_gateway
+    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(
+      view: self,
+      reload_fertilize_model_for_edit: ->(id) { fertilize_gateway.find_authorized_model_for_edit(current_user, id) }
+    )
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   rescue Domain::Shared::Policies::PolicyPermissionDenied

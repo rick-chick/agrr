@@ -3,8 +3,8 @@
 module Domain
   module Farm
     module Ports
-      class FarmListOutputPort
-        def on_success(farms, reference_farms: [])
+      class FarmListHtmlOutputPort
+        def on_success(success_dto)
           raise NotImplementedError, "Subclasses must implement on_success"
         end
 

@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(farms)
-          # 成功データをコントローラーに渡す
+        def on_success(farms, reference_farms: [])
+          # 成功データをコントローラーに渡す（API はメイン一覧のみ利用）
           @view.instance_variable_set("@farm_list_data", farms)
         end
 

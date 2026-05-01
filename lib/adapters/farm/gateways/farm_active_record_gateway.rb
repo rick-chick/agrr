@@ -20,6 +20,51 @@ module Adapters
           end
         end
 
+        def farm_list_html_index(input_dto)
+          main_scope = if input_dto.is_admin
+            ::Farm.where("user_id = ? OR is_reference = ?", @user_id, true)
+          else
+            ::Farm.where(user_id: @user_id, is_reference: false)
+          end
+          farm_rows = main_scope.includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
+
+          reference_rows = if input_dto.is_admin
+            ::Farm.reference.includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
+          else
+            []
+          end
+
+          Domain::Farm::Dtos::FarmListHtmlSuccessDto.new(
+            farm_rows: farm_rows,
+            reference_farm_rows: reference_rows
+          )
+        end
+
+        def farm_list_html_rows_from_entities(entities)
+          return [] if entities.blank?
+
+          ids = entities.map(&:id)
+          records = ::Farm.where(id: ids).includes(:fields)
+          by_id = records.index_by(&:id)
+          entities.filter_map do |entity|
+            record = by_id[entity.id]
+            unless record
+              Rails.logger.warn(
+                "[#{self.class.name}] farm_list_html_rows_from_entities: Farm id=#{entity.id} missing (stale entity?)"
+              )
+              next nil
+            end
+
+            farm_record_to_farm_list_row_dto(record)
+          end
+        end
+
+        def reference_farms_for_admin_list(is_admin:)
+          return [] unless is_admin
+
+          list_reference_farms_for_region(nil)
+        end
+
         def find_by_id(farm_id)
           farm = ::Farm.find(farm_id)
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
@@ -199,6 +244,44 @@ module Adapters
         end
 
         private
+
+        def farm_record_to_farm_list_row_dto(record)
+          Domain::Farm::Dtos::FarmListRowDto.new(
+            id: record.id,
+            display_name: farm_display_name(record),
+            latitude: record.latitude,
+            longitude: record.longitude,
+            region: record.region,
+            user_id: record.user_id,
+            is_reference: record.is_reference,
+            field_count: record.fields.size,
+            weather_data_status: record.weather_data_status,
+            weather_data_progress: record.weather_data_progress,
+            weather_data_total_years: record.weather_data_total_years,
+            weather_data_status_text: farm_weather_status_text(record),
+            weather_data_last_error: record.weather_data_last_error
+          )
+        end
+
+        # app/models/farm.rb の display_name / weather_data_status_text と同じ i18n キーを用いる（表示の単一性）
+        def farm_display_name(farm)
+          farm.name.presence || @translator.t("models.farm.default_name", id: farm.id)
+        end
+
+        def farm_weather_status_text(farm)
+          case farm.weather_data_status
+          when "pending"
+            @translator.t("models.farm.weather_status.pending")
+          when "fetching"
+            @translator.t("models.farm.weather_status.fetching", progress: farm.weather_data_progress)
+          when "completed"
+            @translator.t("models.farm.weather_status.completed")
+          when "failed"
+            @translator.t("models.farm.weather_status.failed")
+          else
+            @translator.t("models.farm.weather_status.unknown")
+          end
+        end
 
         def find_farm_with_fields!(id)
           ::Farm.includes(:fields).find(id)

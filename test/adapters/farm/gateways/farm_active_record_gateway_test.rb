@@ -101,4 +101,55 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       @gateway.destroy(farm.id)
     end
   end
+
+  test "reference_farms_for_admin_list returns entities for admin only" do
+    create(:farm, user: User.anonymous_user, is_reference: true)
+    assert_empty @gateway.reference_farms_for_admin_list(is_admin: false)
+    ref_entities = @gateway.reference_farms_for_admin_list(is_admin: true)
+    assert ref_entities.all? { |e| e.is_reference }
+    assert_operator ref_entities.size, :>=, 1
+  end
+
+  test "farm_list_html_index returns success dto with main and reference rows for admin" do
+    user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
+    create(:field, farm: user_farm)
+    user_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
+    dto_user = @gateway.farm_list_html_index(user_input)
+    assert_equal 1, dto_user.farm_rows.size
+    assert_equal user_farm.id, dto_user.farm_rows.first.id
+    assert_equal 1, dto_user.farm_rows.first.field_count
+    assert_empty dto_user.reference_farm_rows
+
+    admin_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
+    ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
+    dto_admin = @gateway.farm_list_html_index(admin_input)
+    ref_ids = dto_admin.reference_farm_rows.map(&:id)
+    assert_includes ref_ids, ref.id
+    main_ids = dto_admin.farm_rows.map(&:id)
+    assert_includes main_ids, user_farm.id
+    assert_includes main_ids, ref.id
+  end
+
+  test "farm_list_html_rows_from_entities maps field count and presentation fields" do
+    farm = create(:farm, user: @user, is_reference: false, name: "RowTest")
+    create(:field, farm: farm)
+    entity = Domain::Farm::Entities::FarmEntity.from_hash(
+      id: farm.id,
+      name: farm.name,
+      latitude: farm.latitude,
+      longitude: farm.longitude,
+      region: farm.region,
+      user_id: farm.user_id,
+      created_at: farm.created_at,
+      updated_at: farm.updated_at,
+      is_reference: farm.is_reference
+    )
+
+    rows = @gateway.farm_list_html_rows_from_entities([ entity ])
+    assert_equal 1, rows.size
+    assert_equal farm.id, rows.first.id
+    assert_equal 1, rows.first.field_count
+    assert_equal "RowTest", rows.first.display_name
+    assert rows.first.weather_data_status_text.present?
+  end
 end

@@ -9,16 +9,13 @@ class FarmsController < ApplicationController
     respond_to do |format|
       format.html do
         input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
-        farm_gateway = CompositionRoot.farm_gateway
-        presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(
-          view: self,
-          farm_records_for_entities: ->(entities) { entities.map { |e| farm_gateway.find_model(e.id) } },
-          reference_farms: -> { admin_user? ? ::Farm.reference : [] }
-        )
+        presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
+        interactor = Domain::Farm::Interactors::FarmListHtmlInteractor.new(
+          output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger)
+          gateway: CompositionRoot.farm_gateway
+        )
 
         interactor.call(input_dto)
       rescue StandardError => e
@@ -108,7 +105,11 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(view: self)
+        farm_gateway = CompositionRoot.farm_gateway
+        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(
+          view: self,
+          farm_model_for_json_response: ->(entity) { farm_gateway.find_model(entity.id) }
+        )
         input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
         Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,

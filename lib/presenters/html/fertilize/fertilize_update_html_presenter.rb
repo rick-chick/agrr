@@ -4,8 +4,9 @@ module Presenters
   module Html
     module Fertilize
       class FertilizeUpdateHtmlPresenter < Domain::Fertilize::Ports::FertilizeUpdateOutputPort
-        def initialize(view:)
+        def initialize(view:, reload_fertilize_model_for_edit:)
           @view = view
+          @reload_fertilize_model_for_edit = reload_fertilize_model_for_edit
         end
 
         def on_success(fertilize_entity)
@@ -16,7 +17,7 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          @fertilize = @view.instance_variable_get(:@fertilize) || ::Fertilize.find(@view.params[:id])
+          @fertilize = @view.instance_variable_get(:@fertilize) || @reload_fertilize_model_for_edit.call(@view.params[:id])
           @fertilize.assign_attributes(@view.params[:fertilize].to_h.symbolize_keys)
           @fertilize.valid?
           @view.instance_variable_set(:@fertilize, @fertilize)

@@ -28,6 +28,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_for_index"
         end
 
+        # 一覧 HTML 用: 管理者のみ参照農作業エンティティ一覧（非管理者は []）
+        def reference_tasks_for_index(is_admin:)
+          raise NotImplementedError, "Subclasses must implement reference_tasks_for_index"
+        end
+
         def find_authorized_for_view(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end

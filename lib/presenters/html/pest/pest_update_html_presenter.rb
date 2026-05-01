@@ -4,8 +4,9 @@ module Presenters
   module Html
     module Pest
       class PestUpdateHtmlPresenter < Domain::Pest::Ports::PestUpdateOutputPort
-        def initialize(view:)
+        def initialize(view:, reload_pest_model_for_edit:)
           @view = view
+          @reload_pest_model_for_edit = reload_pest_model_for_edit
         end
 
         def on_success(pest_entity)
@@ -54,7 +55,7 @@ module Presenters
           ]
           # 管理者のみregionを許可（Interactorでチェック済みなので常に許可）
           permitted << :region
-          pest = ::Pest.find(@view.params[:id])
+          pest = @reload_pest_model_for_edit.call(@view.params[:id])
           pest.assign_attributes(@view.params[:pest].permit(*permitted))
           @view.instance_variable_set(:@pest, pest)
           crop_ids = @view.params[:crop_ids] ? @view.normalize_crop_ids_for(pest, @view.params[:crop_ids]) : []

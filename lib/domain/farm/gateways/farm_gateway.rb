@@ -8,6 +8,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list"
         end
 
+        # 農場一覧 HTML 用: 管理者のみ参照農場エンティティ一覧（非管理者は []）
+        def reference_farms_for_admin_list(is_admin:)
+          raise NotImplementedError, "Subclasses must implement reference_farms_for_admin_list"
+        end
+
         def find_by_id(farm_id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
@@ -97,6 +102,17 @@ module Domain
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
         def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        end
+
+        # 農場一覧 HTML: インデックス用データをまとめて取得（list + 行DTO 変換の二重クエリを避ける）
+        def farm_list_html_index(input_dto)
+          raise NotImplementedError, "Subclasses must implement farm_list_html_index"
+        end
+
+        # 農場一覧 HTML: カード用の行 DTO（entities の順を維持。AR はアダプタ内のみ）。
+        # 可能なら farm_list_html_index を使う（こちらは補助・他用途向け）。
+        def farm_list_html_rows_from_entities(entities)
+          raise NotImplementedError, "Subclasses must implement farm_list_html_rows_from_entities"
         end
       end
     end
