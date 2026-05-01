@@ -99,9 +99,9 @@ INJECT = {
   "Domain::Fertilize::Interactors::FertilizeDestroyInteractor" =>
     "gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Fertilize::Interactors::FertilizeDetailInteractor" =>
-    "gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Fertilize::Interactors::FertilizeListInteractor" =>
-    "gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForEditInteractor" =>
     "gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForViewInteractor" =>

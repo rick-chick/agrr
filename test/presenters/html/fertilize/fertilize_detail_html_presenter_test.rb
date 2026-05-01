@@ -5,43 +5,29 @@ require "test_helper"
 class FertilizeDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @fertilize from dto" do
+  test "on_success sets @fertilize from dto entity" do
     view_mock = mock
-    fertilize_model = mock
-    fertilize_detail_dto = mock
+    entity = mock
+    dto = mock
+    dto.expects(:fertilize).returns(entity)
 
-    fertilize_record_for_detail_dto = lambda { |dto|
-      assert_equal fertilize_detail_dto, dto
-      fertilize_model
-    }
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
-      view: view_mock,
-      fertilize_record_for_detail_dto: fertilize_record_for_detail_dto
-    )
+    view_mock.expects(:instance_variable_set).with(:@fertilize, entity)
 
-    view_mock.expects(:instance_variable_set).with(:@fertilize, fertilize_model)
-
-    presenter.on_success(fertilize_detail_dto)
+    presenter.on_success(dto)
   end
 
-  test "on_failure sets flash alert and renders show template" do
+  test "on_failure redirects to fertilizes_path with alert" do
     view_mock = mock
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
-      view: view_mock,
-      fertilize_record_for_detail_dto: ->(_) { nil }
-    )
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:respond_to?).with(:message).returns(true)
     error_dto.expects(:message).returns("Test error")
 
-    flash_now_mock = mock
-    flash_mock = mock
-    flash_mock.expects(:now).returns(flash_now_mock)
-    flash_now_mock.expects(:[]=).with(:alert, "Test error")
-    view_mock.expects(:flash).returns(flash_mock)
-    view_mock.expects(:render).with(:show, status: :unprocessable_entity)
+    view_mock.expects(:fertilizes_path).returns("/fertilizes")
+    view_mock.expects(:redirect_to).with("/fertilizes", alert: "Test error")
 
     presenter.on_failure(error_dto)
   end

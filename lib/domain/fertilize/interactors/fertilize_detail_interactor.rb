@@ -4,11 +4,11 @@ module Domain
   module Fertilize
     module Interactors
       class FertilizeDetailInteractor < Domain::Fertilize::Ports::FertilizeDetailInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
-          @logger = logger
+          @translator = translator
           @user_lookup = user_lookup
         end
 
@@ -17,6 +17,10 @@ module Domain
           fertilize_entity = @gateway.find_authorized_for_view(user, fertilize_id)
           dto = Domain::Fertilize::Dtos::FertilizeDetailOutputDto.new(fertilize: fertilize_entity)
           @output_port.on_success(dto)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("fertilizes.flash.not_found")))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

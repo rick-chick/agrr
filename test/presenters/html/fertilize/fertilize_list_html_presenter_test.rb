@@ -5,39 +5,27 @@ require "test_helper"
 class FertilizeListHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @fertilizes" do
+  test "on_success sets @fertilizes to entity list" do
     view_mock = mock
     fertilize_entity1 = mock
     fertilize_entity2 = mock
-    fertilize_model1 = mock
-    fertilize_model2 = mock
 
-    fertilize_records_for_entities = lambda { |entities|
-      assert_equal [ fertilize_entity1, fertilize_entity2 ], entities
-      [ fertilize_model1, fertilize_model2 ]
-    }
+    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: view_mock)
 
-    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(
-      view: view_mock,
-      fertilize_records_for_entities: fertilize_records_for_entities
-    )
-
-    view_mock.expects(:instance_variable_set).with(:@fertilizes, [ fertilize_model1, fertilize_model2 ])
+    view_mock.expects(:instance_variable_set).with(:@fertilizes, [ fertilize_entity1, fertilize_entity2 ])
 
     presenter.on_success([ fertilize_entity1, fertilize_entity2 ])
   end
 
-  test "on_failure sets flash alert and renders index template" do
+  test "on_failure clears @fertilizes sets flash alert and renders index template" do
     view_mock = mock
-    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(
-      view: view_mock,
-      fertilize_records_for_entities: ->(_) { [] }
-    )
+    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: view_mock)
 
     error_dto = mock
     error_dto.expects(:respond_to?).with(:message).returns(true)
     error_dto.expects(:message).returns("Test error")
 
+    view_mock.expects(:instance_variable_set).with(:@fertilizes, [])
     flash_now_mock = mock
     flash_mock = mock
     flash_mock.expects(:now).returns(flash_now_mock)

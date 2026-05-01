@@ -2,36 +2,24 @@
 
 class FertilizesController < ApplicationController
   include DeletionUndoFlow
-  before_action :set_fertilize, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_fertilize, only: [ :edit, :update, :destroy ]
 
   # GET /fertilizes
   def index
-    fertilize_gateway = CompositionRoot.fertilize_gateway
-    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(
-      view: self,
-      fertilize_records_for_entities: ->(entities) { entities.map { |e| fertilize_gateway.find_model(e.id) } }
-    )
+    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: self)
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call
   end
 
   # GET /fertilizes/:id
   def show
-    fertilize_gateway = CompositionRoot.fertilize_gateway
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(
-      view: self,
-      fertilize_record_for_detail_dto: ->(dto) { fertilize_gateway.find_model(dto.fertilize.id) }
-    )
+    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: self)
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
-    interactor.call(@fertilize.id)
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:id])
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
-  rescue ActiveRecord::RecordNotFound
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.not_found")
-  rescue StandardError => e
-    redirect_to fertilizes_path, alert: e.message
   end
 
   # GET /fertilizes/new

@@ -4,18 +4,17 @@ module Presenters
   module Html
     module Fertilize
       class FertilizeDetailHtmlPresenter < Domain::Fertilize::Ports::FertilizeDetailOutputPort
-        def initialize(view:, fertilize_record_for_detail_dto:)
+        def initialize(view:)
           @view = view
-          @fertilize_record_for_detail_dto = fertilize_record_for_detail_dto
         end
 
         def on_success(fertilize_detail_dto)
-          @view.instance_variable_set(:@fertilize, @fertilize_record_for_detail_dto.call(fertilize_detail_dto))
+          @view.instance_variable_set(:@fertilize, fertilize_detail_dto.fertilize)
         end
 
         def on_failure(error_dto)
-          @view.flash.now[:alert] = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          @view.render :show, status: :unprocessable_entity
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          @view.redirect_to @view.fertilizes_path, alert: msg
         end
       end
     end

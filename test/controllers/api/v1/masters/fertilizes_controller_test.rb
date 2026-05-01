@@ -90,7 +90,7 @@ module Api
                 "X-API-Key" => @api_key
               }
 
-          assert_response :unprocessable_entity
+          assert_response :forbidden
           json_response = JSON.parse(response.body)
           assert json_response.key?("error")
         end

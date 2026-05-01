@@ -15,7 +15,14 @@ module Presenters
 
         def on_failure(error_dto)
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == I18n.t("fertilizes.flash.no_permission")) ? :forbidden : ((msg == "Fertilize not found") ? :not_found : :unprocessable_entity)
+          not_found_msg = I18n.t("fertilizes.flash.not_found")
+          status = if msg == I18n.t("fertilizes.flash.no_permission")
+            :forbidden
+          elsif msg == not_found_msg || msg == "Fertilize not found"
+            :not_found
+          else
+            :unprocessable_entity
+          end
           @view.render_response(json: { error: msg }, status: status)
         end
 

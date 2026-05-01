@@ -14,7 +14,7 @@ module Api
         def index
           presenter = Presenters::Api::Fertilize::FertilizeListPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -23,7 +23,7 @@ module Api
           input_valid?(:show) || return
           presenter = Presenters::Api::Fertilize::FertilizeDetailPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
