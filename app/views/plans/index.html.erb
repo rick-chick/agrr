@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <% if @plans_by_farm.empty? %>
+    <% if @private_plan_index_page.empty? %>
       <!-- 計画がない場合 -->
       <div class="plans-empty">
         <div class="plans-empty-icon">📅</div>
@@ -39,13 +39,12 @@
         </div>
       </div>
     <% else %>
-      <% plans = @plans_by_farm.values.flatten %>
       <div class="plans-grid">
-        <% plans.each do |plan| %>
-          <div class="plan-card" id="<%= dom_id(plan) %>" data-undo-delete-record>
+        <% @private_plan_index_page.plan_rows.each do |plan| %>
+          <div class="plan-card" id="cultivation_plan_<%= plan.id %>" data-undo-delete-record>
             <!-- カードタイトル: 地名（農場名） -->
             <h3 class="plan-card-title">
-              <%= plan.farm.display_name %>
+              <%= plan.farm_display_name %>
             </h3>
 
             <!-- 農場情報・統計情報 -->
@@ -53,7 +52,7 @@
               <div class="plan-card-detail-item">
                 <span class="plan-card-detail-icon">🏠</span>
                 <span class="plan-card-detail-label"><%= t('plans.index.plan_card.farm') %>:</span>
-                <span><%= plan.farm.display_name %></span>
+                <span><%= plan.farm_display_name %></span>
               </div>
               <div class="plan-card-detail-item">
                 <span class="plan-card-detail-icon">📐</span>
@@ -62,73 +61,73 @@
               </div>
               <div class="plan-card-detail-item">
                 <span class="plan-card-detail-icon">🌾</span>
-                <span><%= t('plans.index.plan_card.crops_count', count: @vm.crops_count(plan)) %></span>
+                <span><%= t('plans.index.plan_card.crops_count', count: plan.crops_count) %></span>
                 <span class="plan-card-detail-separator">・</span>
-                <span><%= t('plans.index.plan_card.fields_count', count: @vm.fields_count(plan)) %></span>
+                <span><%= t('plans.index.plan_card.fields_count', count: plan.fields_count) %></span>
               </div>
             </div>
 
             <!-- アクション -->
             <div class="plan-card-actions">
-              <% if plan.status_completed? %>
-                <%= link_to plan_path(plan),
+              <% if plan.completed? %>
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>
-                <%= link_to plan_path(plan),
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn danger plan-card-action-btn-secondary",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: plan_path(plan),
+                      undo_delete_url_value: plan_path(plan.id),
                       undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
                       undo_delete_redirect_url_value: plans_path
                     } do %>
                   <%= t('plans.index.plan_card.delete') %>
                 <% end %>
-              <% elsif plan.status_optimizing? %>
-                <%= link_to optimizing_plan_path(plan),
+              <% elsif plan.optimizing? %>
+                <%= link_to optimizing_plan_path(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>
-                <%= link_to plan_path(plan),
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn danger plan-card-action-btn-secondary",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: plan_path(plan),
+                      undo_delete_url_value: plan_path(plan.id),
                       undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
                       undo_delete_redirect_url_value: plans_path
                     } do %>
                   <%= t('plans.index.plan_card.delete') %>
                 <% end %>
-              <% elsif plan.status_pending? %>
-                <%= link_to plan_path(plan),
+              <% elsif plan.pending? %>
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>
-                <%= link_to plan_path(plan),
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn danger plan-card-action-btn-secondary",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: plan_path(plan),
+                      undo_delete_url_value: plan_path(plan.id),
                       undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
                       undo_delete_redirect_url_value: plans_path
                     } do %>
                   <%= t('plans.index.plan_card.delete') %>
                 <% end %>
               <% else %>
-                <%= link_to plan_path(plan),
+                <%= link_to plan_path(plan.id),
                     class: "plan-card-action-btn danger plan-card-action-btn-full",
                     data: {
                       controller: "undo-delete",
                       action: "click->undo-delete#submit",
                       turbo_method: :delete,
-                      undo_delete_url_value: plan_path(plan),
+                      undo_delete_url_value: plan_path(plan.id),
                       undo_delete_message_value: t('plans.undo.toast', name: plan.display_name),
                       undo_delete_redirect_url_value: plans_path
                     } do %>

@@ -199,11 +199,16 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     # ステータスバッジが表示されないこと
     assert_select ".plan-card-status", count: 0
 
-    # 計画名がカード本文に表示されないこと
-    assert_no_match(/テスト計画/, @response.body)
+    # 計画名がカードの見た目上の本文（タイトル・詳細・メタ）に含まれないこと
+    # ※ undo 用 data 属性には display_name が含まれるため response.body 全体では検査しない
+    doc = Nokogiri::HTML(@response.body)
+    card = doc.at_css(".plan-card")
+    assert card, "expected a plan card"
+    visible_parts = card.css("h3.plan-card-title, .plan-card-details, .plan-card-meta").map(&:text).join("\n")
+    assert_not visible_parts.include?("テスト計画")
 
     # 計画期間ラベルが表示されないこと
-    assert_no_match(/計画期間:/, @response.body)
+    assert_no_match(/計画期間:/, visible_parts)
   end
 
   test "index does not render farm accordion sections" do

@@ -113,6 +113,12 @@ module Domain
         def private_plan_optimizing_page_context(plan_id:, user:)
           raise NotImplementedError, "Subclasses must implement private_plan_optimizing_page_context"
         end
+
+        # プライベート計画一覧（HTML index）
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto]
+        def private_plan_index_page(user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_index_page"
+        end
       end
     end
   end

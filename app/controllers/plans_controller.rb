@@ -16,9 +16,18 @@ class PlansController < ApplicationController
 
   # 計画一覧（農場別）
   def index
-    @vm = Presenters::Html::Plans::IndexPresenter.new(current_user: current_user)
-    @plans_by_farm = @vm.plans_by_farm
-    Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plans by farm: #{@plans_by_farm.keys.inspect}"
+    presenter = Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
+    return if performed?
+
+    Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plan rows: #{@private_plan_index_page.plan_rows.size}"
   end
 
   # Step 1: 農場選択

@@ -155,4 +155,47 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
       @gateway.private_plan_optimizing_page_context(plan_id: 9_999_999, user: user)
     end
   end
+
+  test "private_plan_index_page returns empty dto when user has no plans" do
+    user = create(:user)
+
+    dto = @gateway.private_plan_index_page(user: user)
+
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto, dto
+    assert_predicate dto, :empty?
+    assert_empty dto.plan_rows
+  end
+
+  test "private_plan_index_page returns rows with counts in farm-flatten order" do
+    user = create(:user)
+    farm_a = create(:farm, user: user, name: "Farm A")
+    farm_b = create(:farm, user: user, name: "Farm B")
+
+    plan_a = create(:cultivation_plan, user: user, farm: farm_a, plan_type: "private", status: "completed",
+                    plan_year: nil, plan_name: "PA",
+                    planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
+    plan_b = create(:cultivation_plan, user: user, farm: farm_b, plan_type: "private", status: "pending",
+                    plan_year: nil, plan_name: "PB",
+                    planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
+
+    crop = create(:crop, user: user, is_reference: false)
+    create(:cultivation_plan_crop, cultivation_plan: plan_a, crop: crop)
+    create(:cultivation_plan_field, cultivation_plan: plan_a, name: "K1", area: 10, daily_fixed_cost: 0)
+
+    dto = @gateway.private_plan_index_page(user: user)
+
+    assert_equal 2, dto.plan_rows.size
+    # recent: plan_b が新しいので先頭 → group_by で farm_b ブロックが先に登場し、その後 farm_a
+    assert_equal [ plan_b.id, plan_a.id ], dto.plan_rows.map(&:id)
+
+    row_a = dto.plan_rows.find { |r| r.id == plan_a.id }
+    assert_equal 1, row_a.crops_count
+    assert_equal 1, row_a.fields_count
+    assert_equal farm_a.display_name, row_a.farm_display_name
+    assert row_a.completed?
+
+    row_b = dto.plan_rows.find { |r| r.id == plan_b.id }
+    assert_equal 0, row_b.crops_count
+    assert_equal 0, row_b.fields_count
+  end
 end
