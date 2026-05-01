@@ -8,8 +8,9 @@ module Domain
         # T-035: app/services/crop_schedule から domain へ移行。
         # I18n は Presenter 層から注入する translator（call）経由のみ。
         class EntrySchedulePhaseTimeline
-          def initialize(translator:)
+          def initialize(translator:, clock:)
             @translator = translator
+            @clock = clock
           end
 
           # @param crop [Crop]
@@ -286,7 +287,7 @@ module Domain
             return 999_999 unless eligible
             return 999_999 if sow_first.blank?
 
-            today = Date.current
+            today = @clock.today
             s = sow_first[:start_date]
             e = sow_first[:end_date]
             return 0 if (s..e).cover?(today)

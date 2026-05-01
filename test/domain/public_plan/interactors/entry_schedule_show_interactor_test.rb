@@ -56,13 +56,15 @@ module Domain
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
           ref_date = Date.new(2026, 5, 1)
+          clock = Struct.new(:today).new(ref_date)
 
           EntryScheduleShowInteractor.new(
             output_port: output_port,
             crop_gateway: crop_gateway,
             weather_loader: loader,
             optimization_runner: runner,
-            translator: translator
+            translator: translator,
+            clock: clock
           ).call(
             farm: farm,
             crop: crop,

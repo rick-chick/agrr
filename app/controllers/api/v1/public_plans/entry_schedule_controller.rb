@@ -43,7 +43,12 @@ module Api
               farm: farm,
               crop_gateway: CompositionRoot.crop_gateway
             )
-            items << Domain::PublicPlan::Services::EntryScheduleResponseBuilder.crop_list_item(crop, result, translator: CompositionRoot.translator)
+            items << Domain::PublicPlan::Services::EntryScheduleResponseBuilder.crop_list_item(
+              crop,
+              result,
+              translator: CompositionRoot.translator,
+              clock: Time.zone
+            )
           end
 
           items.sort_by! { |it| Domain::PublicPlan::Services::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
@@ -83,7 +88,7 @@ module Api
           crop = @reference_crop
           reference_date = Date.current
           presenter = Presenters::Api::PublicPlans::EntryScheduleShowPresenter.new(view: self)
-          CompositionRoot.entry_schedule_show_interactor(output_port: presenter).call(
+          CompositionRoot.entry_schedule_show_interactor(output_port: presenter, clock: Time.zone).call(
             farm: farm,
             crop: crop,
             reference_date: reference_date,

@@ -26,9 +26,10 @@ module Domain
 
         # @param result [ES::WindowService::Result]
         # @param translator [#t] TranslatorInterface など（Injection）
-        def self.crop_list_item(crop, result, translator:)
+        # @param clock [#today] 日付判断用（例: Time.zone）
+        def self.crop_list_item(crop, result, translator:, clock:)
           timeline_callable = phase_timeline_translator_callable(translator)
-          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable)
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable, clock: clock)
           cw = timeline.chart_windows(crop, result)
           sow_first = cw[:sowing_windows].first
           tr_first = cw[:transplant_windows].first
@@ -53,11 +54,12 @@ module Domain
         end
 
         # @param crop_stages [Array<Domain::Crop::Entities::CropStageEntity>]
-        def self.crop_detail(crop, result, translator:, crop_stages:)
+        # @param clock [#today] 日付判断用（例: Time.zone）
+        def self.crop_detail(crop, result, translator:, crop_stages:, clock:)
           timeline_callable = phase_timeline_translator_callable(translator)
-          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable)
+          timeline = ES::EntrySchedulePhaseTimeline.new(translator: timeline_callable, clock: clock)
           cw = timeline.chart_windows(crop, result)
-          crop_list_item(crop, result, translator: translator).merge(
+          crop_list_item(crop, result, translator: translator, clock: clock).merge(
             sowing_windows: serialize_windows(cw[:sowing_windows]),
             transplant_windows: serialize_windows(cw[:transplant_windows]),
             reason_parts: result.reason_parts,

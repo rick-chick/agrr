@@ -264,13 +264,14 @@ module CompositionRoot
       )
     end
 
-    def entry_schedule_show_interactor(output_port:)
+    def entry_schedule_show_interactor(output_port:, clock: Time.zone)
       Domain::PublicPlan::Interactors::EntryScheduleShowInteractor.new(
         output_port: output_port,
         crop_gateway: crop_gateway,
         weather_loader: entry_schedule_weather_loader_adapter,
         optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter,
-        translator: translator
+        translator: translator,
+        clock: clock
       )
     end
 
