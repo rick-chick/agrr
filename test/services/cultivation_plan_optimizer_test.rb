@@ -10,6 +10,9 @@ class CultivationPlanOptimizeInteractorTest < ActiveSupport::TestCase
     plan = create(:cultivation_plan, :public_plan, farm: @farm, user: @user)
     plan.field_cultivations.destroy_all
 
+    fixed_today = Date.new(2026, 7, 20)
+    fixed_clock = Struct.new(:today).new(fixed_today)
+
     optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
       plan_id: plan.id,
       channel_class: "OptimizationChannel",
@@ -19,12 +22,13 @@ class CultivationPlanOptimizeInteractorTest < ActiveSupport::TestCase
       logger: CompositionRoot.logger,
       weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
         CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
-      }
+      },
+      clock: fixed_clock
     )
     optimizer.send(:load_snapshot!)
     planning_start, planning_end = optimizer.send(:calculate_planning_period)
 
-    assert_equal Date.current, planning_start
+    assert_equal fixed_today, planning_start
     assert_equal plan.prediction_target_end_date, planning_end
   end
 end

@@ -15,7 +15,8 @@ module Domain
           interaction_rule_gateway:,
           cultivation_plan_gateway:,
           logger:,
-          weather_prediction_interactor_factory:
+          weather_prediction_interactor_factory:,
+          clock:
         )
           @plan_id = plan_id
           @channel_class = channel_class
@@ -24,6 +25,7 @@ module Domain
           @cultivation_plan_gateway = cultivation_plan_gateway
           @logger = logger
           @weather_prediction_interactor_factory = weather_prediction_interactor_factory
+          @clock = clock
         end
 
         def call
@@ -114,24 +116,24 @@ module Domain
         end
 
         def calculate_planning_period
+          today = @clock.today
+
           if @cultivation_plan_gateway.field_cultivations_present?(@plan_id)
             start_date = @snapshot.calculated_planning_start_date
             end_date = @snapshot.calculated_planning_end_date
             [ start_date, end_date ]
+          elsif @snapshot.plan_type_private
+            [
+              today.beginning_of_year,
+              Date.new(today.year + 1, 12, 31)
+            ]
           else
-            if @snapshot.plan_type_private
-              [
-                Date.current.beginning_of_year,
-                Date.new(Date.current.year + 1, 12, 31)
-              ]
-            else
-              end_date = @snapshot.prediction_target_end_date || Date.new(Date.current.year + 1, 12, 31)
+            end_date = @snapshot.prediction_target_end_date || Date.new(today.year + 1, 12, 31)
 
-              [
-                Date.current,
-                end_date
-              ]
-            end
+            [
+              today,
+              end_date
+            ]
           end
         end
 
@@ -140,7 +142,7 @@ module Domain
         end
 
         def prepare_allocation_data(evaluation_end)
-          @logger.info "🗓️  [AGRR] Evaluation period: #{Date.current} to #{evaluation_end}"
+          @logger.info "🗓️  [AGRR] Evaluation period: #{@clock.today} to #{evaluation_end}"
 
           cultivation_plan_crops = @cultivation_plan_gateway.cultivation_plan_crops_with_crop(@plan_id)
           @logger.debug "🔍 [CultivationPlanOptimizeInteractor] cultivation_plan_crops count: #{cultivation_plan_crops.count}"

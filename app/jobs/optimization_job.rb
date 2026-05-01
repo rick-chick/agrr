@@ -43,7 +43,8 @@ class OptimizationJob < ApplicationJob
         logger: CompositionRoot.logger,
         weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
           CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
-        }
+        },
+        clock: Time.zone
       )
       optimizer.call
 
