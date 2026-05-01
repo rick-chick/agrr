@@ -61,7 +61,7 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
           assert_equal "admin only", received.message
-          assert_equal bundle, received.reload_bundle
+          assert_equal persisted, received.form_fertilize
         end
 
         test "should allow admin user to change is_reference flag" do
@@ -113,10 +113,10 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
           assert_equal "Update failed", received.message
-          assert_equal bundle, received.reload_bundle
+          assert_equal persisted, received.form_fertilize
         end
 
-        test "on_failure has nil reload_bundle when user lookup raises" do
+        test "on_failure has nil form_fertilize when user lookup raises" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).raises(StandardError, "no user")
@@ -129,15 +129,18 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
           assert_equal "no user", received.message
-          assert_nil received.reload_bundle
+          assert_nil received.form_fertilize
         end
 
-        test "on_failure has nil reload_bundle when reload bundle raises" do
+        test "on_failure uses model_for_edit fallback when reload bundle raises" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
+
+          fallback_model = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(StandardError, "reload failed")
+          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).returns(fallback_model)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
@@ -145,7 +148,24 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
           assert_equal "Update failed", received.message
-          assert_nil received.reload_bundle
+          assert_equal fallback_model, received.form_fertilize
+        end
+
+        test "on_failure has nil form_fertilize when reload and fallback both fail" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
+
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(StandardError, "reload failed")
+          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).raises(StandardError, "edit failed")
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
+          assert_equal "Update failed", received.message
+          assert_nil received.form_fertilize
         end
       end
     end

@@ -41,16 +41,25 @@ module Domain
 
           @output_port.on_success(fertilize_entity)
         rescue StandardError => e
-          reload_bundle = nil
+          form_fertilize = nil
           if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
+            fid = input_dto.fertilize_id.to_i
             begin
-              reload_bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, input_dto.fertilize_id.to_i, for_edit: true)
+              bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fid, for_edit: true)
+              form_fertilize = bundle.persisted_fertilize
             rescue StandardError
-              reload_bundle = nil
+              form_fertilize = nil
+            end
+            if form_fertilize.nil?
+              begin
+                form_fertilize = @gateway.find_authorized_model_for_edit(user, fid)
+              rescue StandardError
+                form_fertilize = nil
+              end
             end
           end
           @output_port.on_failure(
-            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle)
+            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, form_fertilize: form_fertilize)
           )
         end
       end

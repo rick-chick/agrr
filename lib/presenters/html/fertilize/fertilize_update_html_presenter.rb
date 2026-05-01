@@ -16,7 +16,12 @@ module Presenters
         end
 
         def on_failure(failure_dto)
-          @fertilize = failure_dto.reload_bundle&.persisted_fertilize || @view.instance_variable_get(:@fertilize)
+          @fertilize = failure_dto.form_fertilize
+          if @fertilize.nil?
+            @view.flash.now[:alert] = failure_dto.message
+            @view.redirect_to @view.fertilizes_path
+            return
+          end
           @fertilize.assign_attributes(@view.params[:fertilize].to_h.symbolize_keys)
           @fertilize.valid?
           @view.instance_variable_set(:@fertilize, @fertilize)

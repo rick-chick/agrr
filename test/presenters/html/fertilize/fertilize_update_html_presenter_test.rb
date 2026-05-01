@@ -21,17 +21,12 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
   test "on_failure sets flash alert and renders edit template" do
     view_mock = mock
     fertilize_mock = mock
-    bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(
-      fertilize_entity: mock,
-      persisted_fertilize: fertilize_mock
-    )
-    failure_dto = Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: "Test error", reload_bundle: bundle)
+    failure_dto = Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: "Test error", form_fertilize: fertilize_mock)
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock)
 
     fertilize_mock.expects(:assign_attributes)
     fertilize_mock.expects(:valid?)
 
-    view_mock.stubs(:instance_variable_get).with(:@fertilize).returns(nil)
     view_mock.stubs(:params).returns(id: 1, fertilize: {})
     view_mock.expects(:instance_variable_set).with(:@fertilize, fertilize_mock)
     flash_now_mock = mock
@@ -40,6 +35,22 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
     flash_mock.expects(:now).returns(flash_now_mock)
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:render).with(:edit, status: :unprocessable_entity)
+
+    presenter.on_failure(failure_dto)
+  end
+
+  test "on_failure redirects to index when form_fertilize missing" do
+    view_mock = mock
+    failure_dto = Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: "Lost model", form_fertilize: nil)
+    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock)
+
+    flash_now_mock = mock
+    flash_mock = mock
+    view_mock.expects(:flash).returns(flash_mock)
+    flash_mock.expects(:now).returns(flash_now_mock)
+    flash_now_mock.expects(:[]=).with(:alert, "Lost model")
+    view_mock.expects(:fertilizes_path).returns("/fertilizes")
+    view_mock.expects(:redirect_to).with("/fertilizes")
 
     presenter.on_failure(failure_dto)
   end
