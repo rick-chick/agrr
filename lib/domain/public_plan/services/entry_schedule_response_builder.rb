@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-module Presenters
-  module Api
-    module PublicPlans
-      # エントリスケジュール API 用 JSON 断片を組み立てる（T-035）。
+module Domain
+  module PublicPlan
+    module Services
+      # エントリスケジュール API 用 JSON 断片（T-035）。Presenter から移し、ユースケースと crops 一覧で共有する。
       class EntryScheduleResponseBuilder
         ES = Domain::CultivationPlan::Interactors::EntrySchedule
 
         DEFAULT_ENTRY_SCHEDULE_TRANSLATOR = ->(key, **opts) { I18n.t(key, **opts) }.freeze
 
-        def self.prediction_meta(farm:, payload_hash:)
+        def self.prediction_meta(farm:, payload_hash:, chart_calendar_year:)
           return {} unless payload_hash.is_a?(Hash)
 
           {
@@ -17,7 +17,7 @@ module Presenters
             prediction_start_date: payload_hash["prediction_start_date"],
             prediction_end_date: payload_hash["prediction_end_date"] || payload_hash["target_end_date"],
             weather_location_id: farm.weather_location_id,
-            chart_calendar_year: Time.zone.today.year
+            chart_calendar_year: chart_calendar_year
           }.compact
         end
 

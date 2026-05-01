@@ -6,8 +6,6 @@ require "digest"
 module EntryScheduleJsonRendering
   extend ActiveSupport::Concern
 
-  private
-
   def render_entry_json_with_etag(payload)
     json_str = ActiveSupport::JSON.encode(payload)
     etag = Digest::SHA256.hexdigest(json_str)

@@ -171,5 +171,8 @@
 - **Domain / Adapter / Presenter（T-035）**:
   - `lib/domain/cultivation_plan/interactors/entry_schedule/` — `window_service.rb`, `stage_role_resolver.rb`, `entry_schedule_phase_timeline.rb`
   - `lib/adapters/agrr/entry_schedule_optimization_gateway.rb` — AGRR `optimize period` 呼び出し
-  - `lib/presenters/api/public_plans/entry_schedule_response_builder.rb`, `entry_schedule_show_payload.rb`
+  - `lib/domain/public_plan/services/entry_schedule_response_builder.rb` — 一覧・詳細の JSON 断片
+  - `lib/domain/public_plan/interactors/entry_schedule_show_interactor.rb` — `GET .../crops/:id`（単一ユースケース）
+  - `lib/presenters/api/public_plans/entry_schedule_show_presenter.rb` — ETag 付き JSON 応答
+  - `lib/adapters/public_plans/entry_schedule_weather_loader_adapter.rb`, `entry_schedule_optimization_runner_adapter.rb`
   - `lib/domain/crop/interactors/copy_reference_crop_stages.rb`（他機能からの作物複製用）

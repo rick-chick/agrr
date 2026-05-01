@@ -25,7 +25,11 @@ module Api
         def crops
           farm = find_reference_farm!
           payload_hash = load_or_predict_weather!(farm)
-          prediction_meta = Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.prediction_meta(farm: farm, payload_hash: payload_hash)
+          prediction_meta = Domain::PublicPlan::Services::EntryScheduleResponseBuilder.prediction_meta(
+            farm: farm,
+            payload_hash: payload_hash,
+            chart_calendar_year: Date.current.year
+          )
 
           items = []
           presenter = Presenters::Api::PublicPlans::EntryScheduleReferenceCropsPresenter.new(view: self)
@@ -39,10 +43,10 @@ module Api
               farm: farm,
               crop_gateway: CompositionRoot.crop_gateway
             )
-            items << Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.crop_list_item(crop, result)
+            items << Domain::PublicPlan::Services::EntryScheduleResponseBuilder.crop_list_item(crop, result)
           end
 
-          items.sort_by! { |it| Presenters::Api::PublicPlans::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
+          items.sort_by! { |it| Domain::PublicPlan::Services::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
 
           total_count = items.size
           limit = parse_entry_limit
@@ -78,16 +82,13 @@ module Api
 
           crop = @reference_crop
           reference_date = Date.current
-          payload = Presenters::Api::PublicPlans::EntryScheduleShowPayload.call(
+          presenter = Presenters::Api::PublicPlans::EntryScheduleShowPresenter.new(view: self)
+          CompositionRoot.entry_schedule_show_interactor(output_port: presenter).call(
             farm: farm,
             crop: crop,
-            crop_gateway: CompositionRoot.crop_gateway,
             reference_date: reference_date,
-            prediction_end_date: params[:prediction_end_date].presence
-          ) do |f|
-            CompositionRoot.weather_prediction_interactor(weather_location: f.weather_location, farm: f)
-          end
-          render_entry_json_with_etag(payload)
+            prediction_end_date_raw: params[:prediction_end_date].presence
+          )
         end
 
         private
@@ -156,21 +157,21 @@ module Api
           render json: { error: e.message, error_key: "api.errors.common.farm_not_found" }, status: :not_found
         end
 
-        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherLocationMissingError do
+        rescue_from Domain::PublicPlan::Exceptions::WeatherLocationMissingError do
           render json: {
             error: I18n.t("api.entry_schedule.errors.weather_location_required"),
             error_key: "api.entry_schedule.errors.weather_location_required"
           }, status: :unprocessable_entity
         end
 
-        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::PredictionPayloadMissingError do
+        rescue_from Domain::PublicPlan::Exceptions::PredictionPayloadMissingError do
           render json: {
             error: I18n.t("api.errors.common.no_weather_data"),
             error_key: "api.errors.common.no_weather_data"
           }, status: :unprocessable_entity
         end
 
-        rescue_from Presenters::Api::PublicPlans::EntryScheduleShowPayload::WeatherPredictionFailedError do |e|
+        rescue_from Domain::PublicPlan::Exceptions::WeatherPredictionFailedError do |e|
           render json: {
             error: e.message,
             error_key: "api.entry_schedule.errors.prediction_failed"

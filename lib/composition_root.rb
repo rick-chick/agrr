@@ -256,6 +256,23 @@ module CompositionRoot
       )
     end
 
+    def entry_schedule_weather_loader_adapter
+      @entry_schedule_weather_loader_adapter ||= Adapters::PublicPlans::EntryScheduleWeatherLoaderAdapter.new(
+        prediction_service_factory: lambda { |farm|
+          weather_prediction_interactor(weather_location: farm.weather_location, farm: farm)
+        }
+      )
+    end
+
+    def entry_schedule_show_interactor(output_port:)
+      Domain::PublicPlan::Interactors::EntryScheduleShowInteractor.new(
+        output_port: output_port,
+        crop_gateway: crop_gateway,
+        weather_loader: entry_schedule_weather_loader_adapter,
+        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter
+      )
+    end
+
     def task_schedule_generate_interactor(clock: Time.zone)
       Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
         progress_gateway: agrr_progress_gateway,
