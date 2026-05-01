@@ -6,7 +6,7 @@ require "ostruct"
 class ContactMessageCreatePresenterTest < ActiveSupport::TestCase
   test "on_success calls view.render_response with created status and serialized json" do
     view_mock = mock
-    presenter = Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
 
     cm = OpenStruct.new(
       id: 123,
@@ -34,7 +34,7 @@ class ContactMessageCreatePresenterTest < ActiveSupport::TestCase
 
   test "on_success includes null sent_at when not persisted yet" do
     view_mock = mock
-    presenter = Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
 
     cm = OpenStruct.new(
       id: 124,
@@ -62,7 +62,7 @@ class ContactMessageCreatePresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders validation errors with unprocessable_entity" do
     view_mock = mock
-    presenter = Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
 
     errors_obj = OpenStruct.new(messages: { email: [ "is invalid" ], message: [ "can't be blank" ] })
     failure_dto = OpenStruct.new(errors: errors_obj)
@@ -82,12 +82,12 @@ class ContactMessageCreatePresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders generic error with internal_server_error" do
     view_mock = mock
-    presenter = Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
 
     failure = "Something went wrong"
 
     view_mock.expects(:render_response).with(
-      json: { error: Api::ContactMessages::ContactMessageCreatePresenter::INTERNAL_SERVER_ERROR_MESSAGE },
+      json: { error: Presenters::Api::ContactMessages::ContactMessageCreatePresenter::INTERNAL_SERVER_ERROR_MESSAGE },
       status: :internal_server_error
     )
 
