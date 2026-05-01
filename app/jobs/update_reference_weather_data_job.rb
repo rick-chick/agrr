@@ -71,12 +71,10 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     start_date = Time.zone.today - WEATHER_DATA_LOOKBACK_DAYS.days
     end_date = Time.zone.today
 
-    # 2025年までのデータのみ取得可能（2026年データはまだ利用できない）
-    # 実際のデータ可用性を考慮してend_dateを制限
-    max_available_year = 2025
-    if end_date.year > max_available_year
-      end_date = Date.new(max_available_year, 12, 31)
-      start_date = [ start_date, Date.new(max_available_year, 1, 1) ].max
+    # 暦年の固定上限は置かない（旧 2025 上限は 2026 年以降 start > end になり無効化されていた）。
+    if start_date > end_date
+      Rails.logger.warn "⚠️  [UpdateReferenceWeatherDataJob] Skip: invalid range #{start_date}..#{end_date}"
+      return
     end
 
     Rails.logger.info "📅 [UpdateReferenceWeatherDataJob] 取得期間: #{start_date} 〜 #{end_date}"
