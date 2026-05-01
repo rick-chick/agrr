@@ -6,13 +6,12 @@ module Domain
   module PublicPlan
     module Interactors
       class PublicPlanCreateInteractorTest < ActiveSupport::TestCase
-        test "calls on_success with plan_id when gateway succeeds" do
+        test "calls on_success with plan_id when cultivation gateway succeeds" do
           farm = create(:farm)
           farm_size = { id: "home_garden", area_sqm: 30 }
           crops = [ create(:crop) ]
           cultivation_plan = create(:cultivation_plan, id: 123, farm: farm)
 
-          # Mock CultivationPlanCreator result
           creator_result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
             cultivation_plan: cultivation_plan,
             errors: []
@@ -22,13 +21,17 @@ module Domain
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
           gateway.expect(:find_crops, crops, [ [ 1 ] ])
-          gateway.expect(:create, creator_result, [ Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto ])
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "home_garden",
@@ -52,7 +55,12 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: Minitest::Mock.new,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: 999,
             farm_size_id: "home_garden",
@@ -78,7 +86,12 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: Minitest::Mock.new,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "invalid_size",
@@ -105,7 +118,12 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: Minitest::Mock.new,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "invalid",
@@ -133,7 +151,12 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: Minitest::Mock.new,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "home_garden",
@@ -154,7 +177,6 @@ module Domain
           farm_size = { id: "home_garden", area_sqm: 30 }
           crops = [ create(:crop) ]
 
-          # Mock failed CultivationPlanCreator result
           creator_result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
             cultivation_plan: nil,
             errors: [ "Creation failed" ]
@@ -164,13 +186,17 @@ module Domain
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
           gateway.expect(:find_crops, crops, [ [ 1 ] ])
-          gateway.expect(:create, creator_result, [ Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto ])
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "home_garden",
@@ -196,7 +222,12 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |arg| received = arg }
 
-          interactor = PublicPlanCreateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: Minitest::Mock.new,
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+          )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
             farm_id: farm.id,
             farm_size_id: "home_garden",
@@ -210,6 +241,14 @@ module Domain
           assert_includes received.message, "Database error"
           gateway.verify
           output_port.verify
+        end
+
+        private
+
+        def cultivation_gateway_returning(result)
+          gw = Object.new
+          gw.define_singleton_method(:initialize_plan_from_selection) { |**_kwargs| result }
+          gw
         end
       end
     end

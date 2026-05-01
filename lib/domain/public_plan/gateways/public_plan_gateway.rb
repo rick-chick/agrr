@@ -15,10 +15,6 @@ module Domain
         def find_crops(crop_ids)
           raise NotImplementedError, "Subclasses must implement find_crops"
         end
-
-        def create(create_dto)
-          raise NotImplementedError, "Subclasses must implement create"
-        end
       end
     end
   end

@@ -1,169 +1,51 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "stringio"
-require "logger"
 
 module Adapters
   module PublicPlan
     module Gateways
       class PublicPlanActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = PublicPlanActiveRecordGateway.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
-          @farm = create(:farm, :reference)
-          @crops = [ create(:crop, :reference), create(:crop, :reference) ]
+          @gateway = PublicPlanActiveRecordGateway.new
         end
 
-        test "should delegate to CultivationPlanInitializeInteractor and return result with plan_id" do
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: 30.0,
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_123",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
+        test "find_farm returns farm entity when record exists" do
+          farm = create(:farm, :reference)
 
-          result = @gateway.create(create_dto)
+          entity = @gateway.find_farm(farm.id)
 
-          # Creator への委譲が成功し、Result が返されることを確認
-          assert_not_nil result
-          assert_instance_of Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result, result
-          assert result.success?, "Creation should succeed"
-          assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
-
-          # plan_id が返されることを確認
-          plan_id = result.cultivation_plan.id
-          assert_not_nil plan_id, "plan_id should be present"
-          assert plan_id.is_a?(Integer), "plan_id should be an integer"
-
-          # DB に CultivationPlan が作成されていることを確認
-          persisted_plan = ::CultivationPlan.find_by(id: plan_id)
-          assert_not_nil persisted_plan, "CultivationPlan should be persisted"
-          assert_equal @farm.id, persisted_plan.farm_id
-          assert_equal "public", persisted_plan.plan_type
-          assert_equal "test_session_123", persisted_plan.session_id
+          assert_not_nil entity
+          assert_equal farm.id, entity.id
+          assert_equal farm.name, entity.name
         end
 
-        test "should log plan_id when creation succeeds" do
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: 30.0,
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_456",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
-
-          # ログ出力を検証
-          log_output = capture_log_output do
-            result = @gateway.create(create_dto)
-            assert result.success?
-          end
-
-          # plan_id がログに出力されていることを確認
-          assert_match(/Created new CultivationPlan with plan_id:/, log_output)
+        test "find_farm returns nil when missing" do
+          assert_nil @gateway.find_farm(999_999_999)
         end
 
-        test "should raise StandardError when creation fails" do
-          # 無効な total_area で失敗させる
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: -1.0,  # 無効な値
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_789",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
+        test "find_farm_size resolves by id string" do
+          size = @gateway.find_farm_size("home_garden")
 
-          # 例外が発生することを確認
-          error = assert_raises(StandardError) do
-            @gateway.create(create_dto)
-          end
-
-          assert_not_nil error.message
-          assert_match(/総面積は0より大きい値である必要があります/, error.message)
+          assert_equal "home_garden", size[:id]
+          assert_equal 30, size[:area_sqm]
         end
 
-        test "should log error when creation fails" do
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: -1.0,
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_error",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
+        test "find_farm_size resolves by area integer" do
+          size = @gateway.find_farm_size(300)
 
-          # エラーログ出力を検証
-          log_output = capture_log_output do
-            assert_raises(StandardError) do
-              @gateway.create(create_dto)
-            end
-          end
-
-          # エラーログが出力されていることを確認
-          assert_match(/CultivationPlan creation failed/, log_output)
+          assert_equal "rental_farm", size[:id]
         end
 
-        test "should handle unexpected exceptions" do
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: 30.0,
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_exception",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
+        test "find_crops returns entities for ids" do
+          c1 = create(:crop, :reference)
+          c2 = create(:crop, :reference)
 
-          # CultivationPlanInitializeInteractor が例外を発生させるようにスタブ
-          Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.any_instance.stubs(:call).raises(StandardError, "Unexpected error")
+          entities = @gateway.find_crops([ c1.id, c2.id ])
 
-          error = assert_raises(StandardError) do
-            @gateway.create(create_dto)
-          end
-
-          assert_equal "Unexpected error", error.message
-        end
-
-        test "should create new CultivationPlan each time" do
-          create_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
-            farm: @farm,
-            total_area: 30.0,
-            crops: @crops,
-            user: nil,
-            session_id: "test_session_unique",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
-
-          # 1回目の作成
-          result1 = @gateway.create(create_dto)
-          plan_id1 = result1.cultivation_plan.id
-
-          # 2回目の作成（同じパラメータでも新しい plan が作成される）
-          result2 = @gateway.create(create_dto)
-          plan_id2 = result2.cultivation_plan.id
-
-          # 毎回新しい plan_id が発行されることを確認
-          assert_not_equal plan_id1, plan_id2, "Each call should create a new plan with different plan_id"
-        end
-
-        private
-
-        def capture_log_output
-          log_output = StringIO.new
-          original_logger = Rails.logger
-          Rails.logger = ::Logger.new(log_output)
-          yield
-          log_output.string
-        ensure
-          Rails.logger = original_logger
+          assert_equal 2, entities.size
+          ids = entities.map(&:id).sort
+          assert_equal [ c1.id, c2.id ].sort, ids
         end
       end
     end

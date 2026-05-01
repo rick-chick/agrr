@@ -124,7 +124,7 @@ module CompositionRoot
     end
 
     def public_plan_gateway
-      @public_plan_gateway ||= Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new(logger: logger)
+      @public_plan_gateway ||= Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new
     end
 
     def contact_message_gateway

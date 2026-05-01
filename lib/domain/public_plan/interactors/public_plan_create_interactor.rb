@@ -4,10 +4,11 @@ module Domain
   module PublicPlan
     module Interactors
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
-        def initialize(output_port:, gateway:, logger:)
+        def initialize(output_port:, gateway:, cultivation_plan_gateway:, logger:)
           @output_port = output_port
           @logger = logger
           @gateway = gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
         end
 
         def call(input_dto)
@@ -38,18 +39,19 @@ module Domain
             return
           end
 
-          # 計画を作成（常に新しい CultivationPlan を作成）
-          gateway_dto = Domain::PublicPlan::Dtos::PublicPlanCreateGatewayDto.new(
+          # 計画を作成（永続化は CultivationPlanGateway 経由。ユースケース編成はここに集約）
+          result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
             farm: farm,
             total_area: total_area,
             crops: crops,
             user: input_dto.user,
             session_id: input_dto.session_id,
+            plan_type: "public",
             planning_start_date: Date.current,
-            planning_end_date: Date.current.end_of_year
-          )
-
-          result = @gateway.create(gateway_dto)
+            planning_end_date: Date.current.end_of_year,
+            gateway: @cultivation_plan_gateway,
+            logger: @logger
+          ).call
 
           unless result.success? && result.cultivation_plan
             error_message = result.errors&.join(", ") || "Failed to create cultivation plan"

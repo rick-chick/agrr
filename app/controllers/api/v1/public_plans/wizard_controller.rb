@@ -53,7 +53,12 @@ module Api
           presenter = Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
 
           # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
-          interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(output_port: presenter, gateway: CompositionRoot.public_plan_gateway, logger: CompositionRoot.logger)
+          interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
+            output_port: presenter,
+            gateway: CompositionRoot.public_plan_gateway,
+            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+            logger: CompositionRoot.logger
+          )
 
           interactor.call(input_dto)
         end
