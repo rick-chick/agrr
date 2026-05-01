@@ -85,8 +85,3 @@
 | Date | Version | Author | Changes |
 |------|---------|--------|---------|
 | 2026-02-09 | 0.1 | AIアシスタント | Initial draft for i18n update contract |
-
----
-
-Phase1（契約作成）は完了しました。Phase2（実装：テンプレート/TS の置換、翻訳キー追加等）に進めてよいですか？進める場合、並列で実行するサブエージェントは `presenter-frontend`, `gateway-frontend`, `controller-frontend`（必要な箇所のみ）および `test-common` を想定しています。
-
