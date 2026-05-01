@@ -35,8 +35,6 @@ flowchart TD
 
 ## Backend: Clean Architecture（規約）
 
-**Gateway と View の分離・「便宜実装」の禁止** など規約上の補足は **[CLEANARCHITECTURE.md](./CLEANARCHITECTURE.md)** を参照すること。
-
 Business logic for API and progressively for HTML flows lives under `**lib/**`, not only for AI endpoints.
 
 ### Domain modules (`lib/domain/`)
@@ -51,6 +49,14 @@ Current domains include (non-exhaustive; inspect `lib/domain/` for source of tru
 
 Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live under `lib/adapters/<context>/gateways/`.
 
+### Gateway boundary (presentation-agnostic)
+
+Gateways **must not** depend on HTTP or incidental UI conventions: shapes named for a specific template/partials; Hash layouts driven by `data-*` attributes or route-helper-only keying; or return types / method naming that encode a **screen identifier** (`*_page`, `*_html`, etc.) when the real intent is **view/SPA-specific key arrangement** assembled inside the persistence adapter.
+
+**Heuristic:** If the gateway’s job is effectively “produce the blob this one HTML partial or Angular screen expects,” the boundary is wrong—lift assembly to the **Interactor** or to a domain **assembler/mapper** under `lib/domain/**` (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
+
+**Allowed:** Persistence, authorization, and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). **Presenter-shaped** composites required by an output port (for example **`PrivatePlanShowPageDto`**) are composed **outside** the gateway adapter.
+
 ### Presenters (`lib/presenters/`)
 
 - **API JSON:** `lib/presenters/api/<resource>/` — implement domain output ports and call `view.render_response(json:, status:)`.
@@ -58,7 +64,7 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 
 **Rule:** New presenters belong under `lib/presenters/{api,html}/`, not under `app/presenters/` (legacy paths are being retired).
 
-**Boundary:** Presenters implement output ports only (format success/failure for HTTP). They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (**Interactor**), assembled from **gateways only** inside `lib/domain` (and adapters), and delivered to the presenter through the **output port as DTOs/entities**. Do not “finish” a presenter refactor by moving `find_model` or gateway calls into **controller-local procs/lambdas** passed into the presenter: that is the same dependency with extra steps. `lib/domain` does not reference `Rails.*`; inject ports from the **composition root at the app edge** (typically the controller/job), not framework singletons.
+**Boundary:** Presenters implement output ports only (format success/failure for HTTP). Modeled violations (authorization, concurrency, persistence conflicts, not-found, validation outcomes, etc.) should reach presenters through the **Interactor** as **explicit success/failure payloads on that port** (callbacks, result DTOs)—not principally through **controller `rescue`/`rescue_from` branches** that re-interpret exceptions into HTTP at the edge. They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (**Interactor**), assembled from **gateways only** inside `lib/domain` (and adapters), and delivered to the presenter through the **output port as DTOs/entities**. Do not “finish” a presenter refactor by moving `find_model` or gateway calls into **controller-local procs/lambdas** passed into the presenter: that is the same dependency with extra steps. `lib/domain` does not reference `Rails.*`; inject ports from the **composition root at the app edge** (typically the controller/job), not framework singletons.
 
 #### Use-case–scoped Output Port contract (how we refactor HTML/API presenters)
 
@@ -94,10 +100,11 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 - **Wiring is explicit:** Constructor signatures are the **contract**. No hidden globals, `*.default`, grab-bag context objects, or tests that green-wrap a different graph than production.
 - **Truth is specified:** Behavior is defined by **contract text and the tests bound to it**—not by “matching whatever the legacy stack does.”
 - **Refactors finish the job:** Moving code out of `lib/domain/` without fixing dependency direction and types is **relocation**, not completion.
+- **Convenience is not an exemption:** Skipping layering because it is faster, when it commits us to wholesale rework afterward, **is rejected**. Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in **`docs/contracts/`** and tests bound to those contracts—see `.cursor/rules/no-convenience-tech-debt.mdc`.
 
 ## Prohibited practices (hard rules)
 
-The numbering below is **one list** (1–26): the **negative** expression of [What we require](#what-we-require-non-negotiable)—what not to do when meeting that bar for **new code**. Existing code may still violate these; treat those spots as debt. Refactors must not **relocate** a smell (e.g. push the same coupling to a fat controller) or **reintroduce** the same dependency shape under a different name.
+The clauses in the numbered subsections below are the **negative** expression of [What we require](#what-we-require-non-negotiable)—what not to do when meeting that bar for **new code**. Existing code may still violate these; treat those spots as debt. Refactors must not **relocate** a smell (e.g. push the same coupling to a fat controller) or **reintroduce** the same dependency shape under a different name.
 
 ### `lib/domain/` (entities, policies, interactors, gateway interfaces)
 
@@ -135,6 +142,7 @@ The numbering below is **one list** (1–26): the **negative** expression of [Wh
 
 1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, or controller concern **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
 2. **Tests that hide wiring** — Making the suite pass with global stubs or implicit time while production code still lacks the constructor contract and explicit ports required above. Fix production wiring first, then tests.
+3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. Reserve edge-level `rescue` for **unexpected** failures (log + generic 500 or equivalent)—not for outcomes the interactor should model and tests should assert via normal exits.
 
 ### Rationalizations and loopholes (items 19–26)
 
@@ -228,6 +236,7 @@ Typical API action shape:
 2. Instantiate gateway (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new`).
 3. Instantiate API presenter implementing the domain output port.
 4. Call `Domain::<Context>::Interactors::<Action>Interactor.new(...).call(input_dto)`.
+5. Let the interactor finish through the **output port** for both success and **modeled failures**; avoid making **controller `rescue`** the main switch for those paths—the **presenter** should receive failure DTOs / failure callbacks and own the HTTP shape.
 
 AI-specific endpoints (`ai_create`, etc.) follow the same pattern; they are **not** the only Clean Architecture entry points.
 
@@ -279,7 +288,7 @@ Discouraged for long-lived rules; prefer `lib/domain/.../interactors` with tests
 
 1. **Contract-first** for Angular ↔ Rails JSON (`docs/contracts/`).
 2. **Domain-centric backend** — `lib/domain` is the home for use-case logic; ActiveRecord is persistence.
-3. **Thin controllers** — orchestration and HTTP concerns only.
+3. **Thin controllers** — orchestration and HTTP concerns only; **not** the primary place to branch on **modeled** use-case failures via `rescue` (those exits belong in the interactor → presenter path).
 4. **Model-level invariants** — resource limits and DB-backed constraints on models where appropriate.
 5. **One action per interactor** (when using Clean Architecture interactors).
 6. **Testability** — memory gateways for fast unit tests; integration tests for controllers.
