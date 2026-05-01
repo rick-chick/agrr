@@ -1,3 +1,6 @@
+# Ruby は LF を正とする（CRLF 警告・混在を防ぐ）
+*.rb text eol=lf
+
 # ロケールファイルは自動マージしない（手動マージ必須）
 config/locales/views/farms.*.yml merge=ours
 # その他のロケールファイルも保護

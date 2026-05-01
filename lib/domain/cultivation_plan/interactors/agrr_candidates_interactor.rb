@@ -20,9 +20,6 @@ module Domain
             planning_end: planning_end,
             interaction_rules: interaction_rules
           )
-        rescue Agrr::BaseGatewayV2::NoAllocationCandidatesError => e
-          @logger.info "ℹ️ [Candidates] No allocation candidates: #{e.message}"
-          []
         end
       end
     end

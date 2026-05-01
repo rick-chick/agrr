@@ -9,16 +9,15 @@ module Domain
         class WeatherDataNotFoundError < StandardError; end
 
         def initialize(
-          cultivation_plan,
-          channel_class,
+          plan_id:,
+          channel_class:,
           allocation_gateway:,
           interaction_rule_gateway:,
           cultivation_plan_gateway:,
           logger:,
           weather_prediction_interactor_factory:
         )
-          @cultivation_plan = cultivation_plan
-          @plan_id = cultivation_plan.id
+          @plan_id = plan_id
           @channel_class = channel_class
           @allocation_gateway = allocation_gateway
           @interaction_rule_gateway = interaction_rule_gateway
@@ -28,12 +27,13 @@ module Domain
         end
 
         def call
-          @cultivation_plan.start_optimizing!
+          load_snapshot!
+          @cultivation_plan_gateway.update_phase(@plan_id, :start_optimizing)
+          @cultivation_plan_gateway.update_phase(@plan_id, :phase_optimizing, @channel_class)
           @current_phase = nil
 
           begin
-            weather_location = @cultivation_plan.farm&.weather_location
-            unless weather_location
+            unless @snapshot.weather_location_present
               error_message = "農場にWeatherLocationが設定されていません。気象データを取得してください。"
               @logger.error "❌ [Optimizer] #{error_message}"
               raise WeatherDataNotFoundError, error_message
@@ -41,17 +41,18 @@ module Domain
 
             _, planning_end_date = calculate_planning_period
             weather_prediction_service = @weather_prediction_interactor_factory.call(
-              weather_location: weather_location,
-              farm: @cultivation_plan.farm
+              weather_location: @snapshot.weather_location_input,
+              farm: @snapshot.farm_weather_input
+            )
+            plan_weather = Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+              id: @snapshot.plan_id,
+              prediction_target_end_date: @snapshot.prediction_target_end_date,
+              calculated_planning_end_date: @snapshot.calculated_planning_end_date,
+              predicted_weather_data: @snapshot.predicted_weather_data
             )
             existing_prediction = weather_prediction_service.get_existing_prediction(
               target_end_date: planning_end_date,
-              cultivation_plan_weather: Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
-                id: @cultivation_plan.id,
-                prediction_target_end_date: @cultivation_plan.prediction_target_end_date,
-                calculated_planning_end_date: @cultivation_plan.calculated_planning_end_date,
-                predicted_weather_data: @cultivation_plan.predicted_weather_data
-              )
+              cultivation_plan_weather: plan_weather
             )
 
             unless existing_prediction
@@ -64,7 +65,6 @@ module Domain
             weather_info = existing_prediction
 
             @current_phase = "optimizing"
-            @cultivation_plan.phase_optimizing!(@channel_class)
 
             fields_data, crops_data = prepare_allocation_data(weather_info[:target_end_date])
 
@@ -90,7 +90,7 @@ module Domain
 
             update_cultivation_plan_with_results(allocation_result)
 
-            @logger.info "✅ CultivationPlan ##{@cultivation_plan.id} optimization completed"
+            @logger.info "✅ CultivationPlan ##{@plan_id} optimization completed"
             true
           rescue Domain::CultivationPlan::Errors::AllocationNoCandidatesError => e
             @logger.error "❌ [Optimizer] AGRR allocation failed: #{e.message}"
@@ -109,23 +109,23 @@ module Domain
 
         private
 
+        def load_snapshot!
+          @snapshot = @cultivation_plan_gateway.optimization_plan_snapshot(@plan_id)
+        end
+
         def calculate_planning_period
           if @cultivation_plan_gateway.field_cultivations_present?(@plan_id)
-            start_date = @cultivation_plan.calculated_planning_start_date
-            end_date = @cultivation_plan.calculated_planning_end_date
+            start_date = @snapshot.calculated_planning_start_date
+            end_date = @snapshot.calculated_planning_end_date
             [ start_date, end_date ]
           else
-            if @cultivation_plan.plan_type_private?
+            if @snapshot.plan_type_private
               [
                 Date.current.beginning_of_year,
                 Date.new(Date.current.year + 1, 12, 31)
               ]
             else
-              end_date = if @cultivation_plan.respond_to?(:prediction_target_end_date)
-                @cultivation_plan.prediction_target_end_date
-              else
-                Date.new(Date.current.year + 1, 12, 31)
-              end
+              end_date = @snapshot.prediction_target_end_date || Date.new(Date.current.year + 1, 12, 31)
 
               [
                 Date.current,
@@ -165,7 +165,7 @@ module Domain
 
           field_count = [ crop_count, 1 ].max
 
-          total_area = @cultivation_plan.total_area
+          total_area = @snapshot.total_area
 
           area_per_field = total_area / field_count.to_f
 
@@ -205,9 +205,9 @@ module Domain
 
         def distribute_allocation_results(allocation_result)
           @cultivation_plan_gateway.clear_field_cultivations(@plan_id)
-          @logger.info "🗑️  [AGRR] Cleared existing FieldCultivations for CultivationPlan ##{@cultivation_plan.id}"
+          @logger.info "🗑️  [AGRR] Cleared existing FieldCultivations for CultivationPlan ##{@plan_id}"
 
-          @logger.info "🔄 [AGRR] Keeping existing CultivationPlanFields and CultivationPlanCrops for CultivationPlan ##{@cultivation_plan.id}"
+          @logger.info "🔄 [AGRR] Keeping existing CultivationPlanFields and CultivationPlanCrops for CultivationPlan ##{@plan_id}"
 
           field_schedules = allocation_result[:field_schedules] || []
 
@@ -297,7 +297,7 @@ module Domain
             }
           )
 
-          @logger.info "📊 [AGRR] CultivationPlan ##{@cultivation_plan.id} updated with optimization results: " \
+          @logger.info "📊 [AGRR] CultivationPlan ##{@plan_id} updated with optimization results: " \
                             "profit=¥#{allocation_result[:total_profit]}, revenue=¥#{allocation_result[:total_revenue]}, " \
                             "cost=¥#{allocation_result[:total_cost]}"
         end

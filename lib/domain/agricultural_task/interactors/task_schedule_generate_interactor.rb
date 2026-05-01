@@ -176,7 +176,7 @@ module Domain
             scheduled_date: date_for_gdd(progress_records, gdd_trigger, fallback_start_date),
             priority: blueprint.priority,
             source: blueprint.source,
-            status: ::TaskScheduleItem::STATUSES[:planned],
+            status: Domain::AgriculturalTask::Constants::TaskScheduleItemStatuses::PLANNED,
             weather_dependency: blueprint.weather_dependency || task&.weather_dependency,
             time_per_sqm: blueprint.time_per_sqm || task&.time_per_sqm,
             amount: blueprint.amount,

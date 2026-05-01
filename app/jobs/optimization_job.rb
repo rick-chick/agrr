@@ -31,13 +31,12 @@ class OptimizationJob < ApplicationJob
     Rails.logger.info "🚀 [OptimizationJob] Starting optimization for plan ##{cultivation_plan_id}"
 
     begin
-      # 最適化開始通知
-      cultivation_plan.phase_optimizing!(channel_class)
+      # フェーズ遷移（status / optimization_phase / broadcast）は CultivationPlanOptimizeInteractor に集約
 
       # 最適化処理
       optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
-        cultivation_plan,
-        channel_class,
+        plan_id: cultivation_plan_id,
+        channel_class: channel_class,
         allocation_gateway: CompositionRoot.plan_allocation_gateway,
         interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
         cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,

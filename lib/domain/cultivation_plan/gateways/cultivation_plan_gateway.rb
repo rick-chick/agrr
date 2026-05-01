@@ -115,6 +115,11 @@ module Domain
         def apply_optimization_result(plan_id:, attrs:)
           raise NotImplementedError, "Subclasses must implement apply_optimization_result"
         end
+
+        # CultivationPlanOptimizeInteractor 用スナップショット（AR をインターラクタに渡さない）
+        def optimization_plan_snapshot(plan_id)
+          raise NotImplementedError, "Subclasses must implement optimization_plan_snapshot"
+        end
       end
     end
   end
