@@ -359,49 +359,51 @@ module Adapters
 
         # 部分 select の列は CultivationPlan#display_name（private）が参照する属性と一致させること
         def private_plan_index_page(user:)
-          plans = ::CultivationPlan
-                    .plan_type_private
-                    .by_user(user)
-                    .select(
-                      :id, :status, :plan_year, :plan_name, :plan_type,
-                      :total_area, :farm_id, :planning_start_date, :planning_end_date,
-                      :created_at, :updated_at
-                    )
-                    .preload(:farm)
-                    .recent
-                    .to_a
+          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
+            plans = ::CultivationPlan
+                      .plan_type_private
+                      .by_user(user)
+                      .select(
+                        :id, :status, :plan_year, :plan_name, :plan_type,
+                        :total_area, :farm_id, :planning_start_date, :planning_end_date,
+                        :created_at, :updated_at
+                      )
+                      .preload(:farm)
+                      .recent
+                      .to_a
 
-          plan_ids = plans.map(&:id)
-          crops_count_hash = if plan_ids.empty?
-            {}
-          else
-            ::CultivationPlanCrop.where(cultivation_plan_id: plan_ids)
-                                 .group(:cultivation_plan_id)
-                                 .count
-          end
-          fields_count_hash = if plan_ids.empty?
-            {}
-          else
-            ::CultivationPlanField.where(cultivation_plan_id: plan_ids)
-                                  .group(:cultivation_plan_id)
-                                  .count
-          end
+            plan_ids = plans.map(&:id)
+            crops_count_hash = if plan_ids.empty?
+              {}
+            else
+              ::CultivationPlanCrop.where(cultivation_plan_id: plan_ids)
+                                   .group(:cultivation_plan_id)
+                                   .count
+            end
+            fields_count_hash = if plan_ids.empty?
+              {}
+            else
+              ::CultivationPlanField.where(cultivation_plan_id: plan_ids)
+                                    .group(:cultivation_plan_id)
+                                    .count
+            end
 
-          ordered_plans = plans.group_by(&:farm_id).values.flatten
-          rows = ordered_plans.map do |p|
-            Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto.new(
-              id: p.id,
-              farm_display_name: p.farm.display_name,
-              total_area: p.total_area,
-              crops_count: crops_count_hash[p.id] || 0,
-              fields_count: fields_count_hash[p.id] || 0,
-              status: p.status,
-              display_name: p.display_name,
-              created_at: p.created_at
-            )
-          end
+            ordered_plans = plans.group_by(&:farm_id).values.flatten
+            rows = ordered_plans.map do |p|
+              Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto.new(
+                id: p.id,
+                farm_display_name: p.farm.display_name,
+                total_area: p.total_area,
+                crops_count: crops_count_hash[p.id] || 0,
+                fields_count: fields_count_hash[p.id] || 0,
+                status: p.status,
+                display_name: p.display_name,
+                created_at: p.created_at
+              )
+            end
 
-          Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: rows)
+            Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: rows)
+          end
         end
 
         def normalize_farm_for_plan!(farm)

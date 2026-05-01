@@ -66,6 +66,40 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     ).call
   end
 
+  test "re-raises PersistenceFailed after logging" do
+    user = mock
+    user_lookup = mock
+    user_lookup.expects(:find).with(9).returns(user)
+
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_page).raises(
+      Domain::Shared::Exceptions::PersistenceFailed.new("db")
+    )
+
+    translator = mock
+    logger = mock
+    logger.expects(:error).with do |msg|
+      msg.include?("PrivatePlanNewPageInteractor") &&
+        msg.include?("PersistenceFailed") &&
+        msg.include?("/backtrace:")
+    end
+
+    output = mock
+    output.expects(:on_success).never
+    output.expects(:on_failure).never
+
+    assert_raises(Domain::Shared::Exceptions::PersistenceFailed) do
+      Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+        output_port: output,
+        user_id: 9,
+        farm_gateway: farm_gateway,
+        translator: translator,
+        logger: logger,
+        user_lookup: user_lookup
+      ).call
+    end
+  end
+
   test "on_user_lookup_record_not_found calls on_failure with session_invalid and warns" do
     user_lookup = mock
     user_lookup.expects(:find).with(9).raises(Domain::Shared::Exceptions::RecordNotFound.new("missing user"))
