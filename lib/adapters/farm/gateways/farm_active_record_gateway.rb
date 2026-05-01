@@ -215,6 +215,18 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
+        def find_authorized_farm_loaded_bundle!(user, id, for_edit:)
+          farm = if for_edit
+                   find_authorized_model_for_edit(user, id)
+                 else
+                   find_authorized_model_for_view(user, id)
+                 end
+          Domain::Farm::Dtos::AuthorizedFarmLoadedDto.new(
+            farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
+            persisted_farm: farm
+          )
+        end
+
         def find_model(id)
           find_farm_model!(id)
         end

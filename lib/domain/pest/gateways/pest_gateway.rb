@@ -53,6 +53,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
+        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（Interactor が port に載せる DTO）。
+        def find_authorized_pest_loaded_bundle!(user, id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
+        end
+
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end

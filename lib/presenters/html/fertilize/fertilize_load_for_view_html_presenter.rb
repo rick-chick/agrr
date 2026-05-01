@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(fertilize)
-          @view.instance_variable_set(:@fertilize, fertilize)
+        def on_success(bundle)
+          @view.instance_variable_set(:@fertilize, bundle.persisted_fertilize)
         end
 
         def on_permission_denied

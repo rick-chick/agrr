@@ -59,7 +59,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        CROP_HTML_INCLUDES = {
+        CROP_ASSOCIATION_PRELOAD_INCLUDES = {
           crop_stages: [ :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement ],
           agricultural_tasks: [],
           crop_task_templates: [ :agricultural_task ],
@@ -90,18 +90,21 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
-        def find_authorized_model_for_html(user, id, for_edit:)
-          crop = ::Crop.includes(CROP_HTML_INCLUDES).find(id)
-          allowed = for_edit ? Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id) : Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
-          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
+        def find_authorized_crop_loaded_bundle!(user, id, for_edit:)
+          crop = authorized_crop_record_with_association_preloads!(user, id, for_edit: for_edit)
 
-          crop
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+          Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            persisted_crop: crop
+          )
+        end
+
+        def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
+          find_authorized_crop_loaded_bundle!(user, id, for_edit: for_edit).crop_entity
         end
 
         def find_authorized_crop_show_detail(user, crop_id)
-          crop = find_authorized_model_for_html(user, crop_id, for_edit: false)
+          crop = authorized_crop_record_with_association_preloads!(user, crop_id, for_edit: false)
           task_schedule_blueprints = crop.crop_task_schedule_blueprints
                                           .includes(:agricultural_task)
                                           .ordered
@@ -109,7 +112,8 @@ module Adapters
           selected_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
 
           Domain::Crop::Dtos::CropDetailOutputDto.new(
-            crop: crop,
+            crop: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            persisted_crop: crop,
             task_schedule_blueprints: task_schedule_blueprints,
             available_agricultural_tasks: available_tasks,
             selected_task_ids: selected_task_ids
@@ -542,6 +546,16 @@ module Adapters
             daily_uptake_k: dto[:daily_uptake_k],
             region: dto[:region]
           }.compact
+        end
+
+        def authorized_crop_record_with_association_preloads!(user, id, for_edit:)
+          crop = ::Crop.includes(CROP_ASSOCIATION_PRELOAD_INCLUDES).find(id)
+          allowed = for_edit ? Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id) : Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
+
+          crop
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
       end
     end

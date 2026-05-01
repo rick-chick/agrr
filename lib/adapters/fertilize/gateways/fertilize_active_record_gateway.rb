@@ -101,6 +101,18 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
+        def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:)
+          fertilize = if for_edit
+                        find_authorized_model_for_edit(user, id)
+                      else
+                        find_authorized_model_for_view(user, id)
+                      end
+          Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(
+            fertilize_entity: Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize),
+            persisted_fertilize: fertilize
+          )
+        end
+
         def find_model(id)
           find_fertilize_model!(id)
         end

@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(pesticide)
-          @view.instance_variable_set(:@pesticide, pesticide)
+        def on_success(bundle)
+          @view.instance_variable_set(:@pesticide, bundle.persisted_pesticide)
         end
 
         def on_failure

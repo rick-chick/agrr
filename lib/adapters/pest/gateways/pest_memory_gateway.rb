@@ -69,6 +69,18 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
+        def find_authorized_pest_loaded_bundle!(user, id, for_edit:)
+          pest = if for_edit
+                   find_authorized_model_for_edit(user, id)
+                 else
+                   find_authorized_model_for_view(user, id)
+                 end
+          Domain::Pest::Dtos::AuthorizedPestLoadedDto.new(
+            pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
+            persisted_pest: pest
+          )
+        end
+
         def find_model(id)
           find_pest_model!(id)
         end

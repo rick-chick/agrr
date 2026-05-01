@@ -145,9 +145,15 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
-        # HTML 画面用: 認可＋表示に必要な関連を includes して1回取得
-        def find_authorized_model_for_html(user, id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_html"
+        # 認可済み作物を一度読み、Entity と永続モデル（連鎖プリロード済み）を束ねる（Controller の二重取得防止）。
+        def find_authorized_crop_loaded_bundle!(user, id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_authorized_crop_loaded_bundle!"
+        end
+
+        # 認可済み作物を関連プリロード付き CropEntity で返す（詳細フォーム・マスタの親コンテキスト等）。
+        # for_edit が真なら編集許可のみ、偽なら参照許可のみで評価する。
+        def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_authorized_crop_entity_with_association_preloads"
         end
 
         def find_model(id)

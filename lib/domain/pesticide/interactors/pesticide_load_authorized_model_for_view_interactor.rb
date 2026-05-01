@@ -13,8 +13,8 @@ module Domain
 
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
-          pesticide = @gateway.find_authorized_model_for_view(user, pesticide_id)
-          @output_port.on_success(pesticide)
+          bundle = @gateway.find_authorized_pesticide_loaded_bundle!(user, pesticide_id.to_i, for_edit: false)
+          @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure
         end

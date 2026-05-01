@@ -5,27 +5,22 @@ require "test_helper"
 class CropDetailHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @crop and show-related instance variables" do
+  test "on_success sets @crop from dto persisted_crop and related instance variables" do
     view_mock = mock
-    crop_detail_dto = mock
     crop_model = mock
     blueprints = []
     tasks = []
     selected = [ 1, 2 ]
 
-    crop_show_view_data_for = lambda { |dto|
-      assert_equal crop_detail_dto, dto
-      {
-        crop: crop_model,
-        task_schedule_blueprints: blueprints,
-        available_agricultural_tasks: tasks,
-        selected_task_ids: selected
-      }
-    }
+    crop_detail_dto = stub(
+      persisted_crop: crop_model,
+      task_schedule_blueprints: blueprints,
+      available_agricultural_tasks: tasks,
+      selected_task_ids: selected
+    )
 
     presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(
-      view: view_mock,
-      crop_show_view_data_for: crop_show_view_data_for
+      view: view_mock
     )
 
     view_mock.expects(:instance_variable_set).with(:@crop, crop_model)
@@ -39,8 +34,7 @@ class CropDetailHtmlPresenterTest < ActiveSupport::TestCase
   test "on_failure sets flash alert and redirects" do
     view_mock = mock
     presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(
-      view: view_mock,
-      crop_show_view_data_for: ->(_) { {} }
+      view: view_mock
     )
 
     error_dto = mock

@@ -3,7 +3,7 @@
 module Domain
   module Pest
     module Interactors
-      # HTML before_action / API ai_update で @pest を設定するために、認可済み永続モデルを取得する。
+      # HTML before_action / API ai_update で @pest を設定するために、認可済み読み込み結果（DTO）で取得する。
       class PestLoadAuthorizedModelForEditInteractor
         def initialize(output_port:, user_id:, gateway:, user_lookup:)
           @output_port = output_port
@@ -14,8 +14,8 @@ module Domain
 
         def call(pest_id)
           user = @user_lookup.find(@user_id)
-          pest = @gateway.find_authorized_model_for_edit(user, pest_id)
-          @output_port.on_success(pest)
+          bundle = @gateway.find_authorized_pest_loaded_bundle!(user, pest_id.to_i, for_edit: true)
+          @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(:no_permission)
         rescue Domain::Shared::Exceptions::RecordNotFound

@@ -101,6 +101,18 @@ module Adapters
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
+        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:)
+          pesticide = if for_edit
+                        find_authorized_model_for_edit(user, id)
+                      else
+                        find_authorized_model_for_view(user, id)
+                      end
+          Domain::Pesticide::Dtos::AuthorizedPesticideLoadedDto.new(
+            pesticide_entity: Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide),
+            persisted_pesticide: pesticide
+          )
+        end
+
         def find_model(id)
           find_pesticide_model!(id)
         end

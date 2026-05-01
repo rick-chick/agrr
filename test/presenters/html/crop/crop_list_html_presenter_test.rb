@@ -5,24 +5,16 @@ require "test_helper"
 class CropListHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @crops" do
+  test "on_success sets @crops to crop entities unchanged" do
     view_mock = mock
     crop_entity1 = mock
     crop_entity2 = mock
-    crop_model1 = mock
-    crop_model2 = mock
-
-    crop_records_for_entities = lambda { |entities|
-      assert_equal [ crop_entity1, crop_entity2 ], entities
-      [ crop_model1, crop_model2 ]
-    }
 
     presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(
-      view: view_mock,
-      crop_records_for_entities: crop_records_for_entities
+      view: view_mock
     )
 
-    view_mock.expects(:instance_variable_set).with(:@crops, [ crop_model1, crop_model2 ])
+    view_mock.expects(:instance_variable_set).with(:@crops, [ crop_entity1, crop_entity2 ])
 
     presenter.on_success([ crop_entity1, crop_entity2 ])
   end
@@ -30,8 +22,7 @@ class CropListHtmlPresenterTest < ActiveSupport::TestCase
   test "on_failure sets flash alert and empty @crops" do
     view_mock = mock
     presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(
-      view: view_mock,
-      crop_records_for_entities: ->(_) { [] }
+      view: view_mock
     )
 
     error_dto = mock

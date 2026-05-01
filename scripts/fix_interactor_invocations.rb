@@ -41,7 +41,7 @@ INJECT = {
     "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropLoadAuthorizedForCropPestsInteractor" =>
     "gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup",
-  "Domain::Crop::Interactors::CropLoadAuthorizedModelForHtmlInteractor" =>
+  "Domain::Crop::Interactors::CropLoadAuthorizedInteractor" =>
     "gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor" =>
     "gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup",

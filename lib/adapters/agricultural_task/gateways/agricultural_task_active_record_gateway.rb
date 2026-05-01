@@ -114,6 +114,18 @@ module Adapters
           find_authorized_task_model_for_edit(user, id)
         end
 
+        def find_authorized_agricultural_task_loaded_bundle!(user, id, for_edit:)
+          task = if for_edit
+                   find_authorized_model_for_edit(user, id)
+                 else
+                   find_authorized_model_for_view(user, id)
+                 end
+          Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto.new(
+            agricultural_task_entity: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task),
+            persisted_agricultural_task: task
+          )
+        end
+
         def find_model(id)
           find_agricultural_task_model!(id)
         end

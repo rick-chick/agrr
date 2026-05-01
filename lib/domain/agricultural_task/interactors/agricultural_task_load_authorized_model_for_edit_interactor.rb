@@ -14,8 +14,8 @@ module Domain
 
         def call(task_id)
           user = @user_lookup.find(@user_id)
-          task = @gateway.find_authorized_model_for_edit(user, task_id)
-          @output_port.on_success(task)
+          bundle = @gateway.find_authorized_agricultural_task_loaded_bundle!(user, task_id.to_i, for_edit: true)
+          @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @logger.warn("[AgriculturalTaskLoadAuthorizedModelForEditInteractor] #{e.message}")
           @output_port.on_failure(:no_permission)

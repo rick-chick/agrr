@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(task)
-          @view.instance_variable_set(:@agricultural_task, task)
+        def on_success(bundle)
+          @view.instance_variable_set(:@agricultural_task, bundle.persisted_agricultural_task)
         end
 
         def on_failure(reason)

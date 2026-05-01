@@ -96,17 +96,21 @@ module Api::V1::Masters::Crops
     end
 
     def find_visible_crop
-      presenter = Presenters::Api::Crop::CropLoadForHtmlPresenter.new(view: self)
-      interactor = Domain::Crop::Interactors::CropLoadAuthorizedModelForHtmlInteractor.new(output_port: presenter,
-        user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-      interactor.call(params[:crop_id], for_edit: false)
+      load_authorized_parent_crop(for_edit: false)
     end
 
     def find_editable_crop
-      presenter = Presenters::Api::Crop::CropLoadForHtmlPresenter.new(view: self)
-      interactor = Domain::Crop::Interactors::CropLoadAuthorizedModelForHtmlInteractor.new(output_port: presenter,
+      load_authorized_parent_crop(for_edit: true)
+    end
+
+    def load_authorized_parent_crop(for_edit:)
+      presenter = Presenters::Api::Crop::CropParentAuthorizationFailurePresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-      interactor.call(params[:crop_id], for_edit: true)
+      bundle = interactor.call(params[:crop_id], for_edit: for_edit)
+      return if bundle.nil?
+
+      @crop = bundle.persisted_crop
     end
 
     def find_crop_stage

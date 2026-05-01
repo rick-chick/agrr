@@ -5,10 +5,6 @@ module Adapters
     module Mappers
       class CropMapper
         def self.crop_entity_from_record(crop_model)
-          crop_stages = crop_model.crop_stages.includes(
-            :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement
-          ).order(:order).map { |stage| crop_stage_entity_from_record(stage) }
-
           Domain::Crop::Entities::CropEntity.new(
             id: crop_model.id,
             user_id: crop_model.user_id,
@@ -19,10 +15,24 @@ module Adapters
             revenue_per_area: crop_model.revenue_per_area,
             region: crop_model.region,
             groups: crop_model.groups || [],
-            crop_stages: crop_stages,
+            crop_stages: map_crop_stage_entities_from_crop_model(crop_model),
             created_at: crop_model.created_at,
             updated_at: crop_model.updated_at
           )
+        end
+
+        def self.map_crop_stage_entities_from_crop_model(crop_model)
+          assoc = crop_model.association(:crop_stages)
+          stage_records =
+            if assoc.loaded?
+              crop_model.crop_stages.sort_by(&:order)
+            else
+              crop_model.crop_stages.includes(
+                :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement
+              ).order(:order).to_a
+            end
+
+          stage_records.map { |stage| crop_stage_entity_from_record(stage) }
         end
 
         def self.crop_stage_entity_from_record(crop_stage_model)

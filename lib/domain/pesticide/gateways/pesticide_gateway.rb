@@ -52,6 +52,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
+        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_authorized_pesticide_loaded_bundle!"
+        end
+
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end

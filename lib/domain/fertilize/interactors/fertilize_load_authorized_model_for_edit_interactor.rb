@@ -13,8 +13,8 @@ module Domain
 
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
-          fertilize = @gateway.find_authorized_model_for_edit(user, fertilize_id)
-          @output_port.on_success(fertilize)
+          bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fertilize_id.to_i, for_edit: true)
+          @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure
         end

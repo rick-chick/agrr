@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(farm)
-          @view.instance_variable_set(:@farm, farm)
+        def on_success(bundle)
+          @view.instance_variable_set(:@farm, bundle.persisted_farm)
         end
 
         def on_failure

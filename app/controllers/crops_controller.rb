@@ -7,11 +7,7 @@ class CropsController < ApplicationController
 
   # GET /crops
   def index
-    crop_gateway = CompositionRoot.crop_gateway
-    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(
-      view: self,
-      crop_records_for_entities: ->(entities) { entities.map { |e| crop_gateway.find_model(e.id) } }
-    )
+    presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
@@ -23,11 +19,7 @@ class CropsController < ApplicationController
 
   # GET /crops/:id
   def show
-    crop_gateway = CompositionRoot.crop_gateway
-    presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(
-      view: self,
-      crop_show_view_data_for: crop_show_view_data_builder(crop_gateway)
-    )
+    presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(view: self)
     interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
@@ -205,10 +197,13 @@ class CropsController < ApplicationController
   def set_crop
     action = params[:action].to_sym
     for_edit = action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
-    presenter = Presenters::Html::Crop::CropLoadForHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
-    interactor = Domain::Crop::Interactors::CropLoadAuthorizedModelForHtmlInteractor.new(output_port: presenter,
+    presenter = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+    interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-    interactor.call(params[:id], for_edit: for_edit)
+    bundle = interactor.call(params[:id], for_edit: for_edit)
+    return if bundle.nil?
+
+    @crop = bundle.persisted_crop
   end
 
   def crop_params
@@ -261,23 +256,6 @@ class CropsController < ApplicationController
     permitted << :region if admin_user?
 
     params.require(:crop).permit(*permitted)
-  end
-
-  # HTML 詳細でテンプレート用に AR 作物と関連コレクションを組み立てる（Gateway はエッジで閉じる）
-  def crop_show_view_data_builder(crop_gateway)
-    lambda do |crop_detail_dto|
-      crop_entity = crop_detail_dto.crop
-      crop_model = crop_gateway.find_model(crop_entity.id)
-      task_schedule_blueprints = crop_model.crop_task_schedule_blueprints
-                                    .includes(:agricultural_task)
-                                    .ordered
-      {
-        crop: crop_model,
-        task_schedule_blueprints: task_schedule_blueprints,
-        available_agricultural_tasks: available_agricultural_tasks_for_crop(crop_model),
-        selected_task_ids: selected_task_ids_for_crop(crop_model)
-      }
-    end
   end
 
   # 作物に利用可能な農業タスクを取得
