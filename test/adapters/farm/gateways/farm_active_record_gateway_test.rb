@@ -4,7 +4,8 @@ require "test_helper"
 
 class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::TestCase
   def setup
-    @gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new
+    deletion_undo_gateway = mock("deletion_undo_gateway")
+    @gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(deletion_undo_gateway: deletion_undo_gateway)
     @user = create(:user)
     @gateway.user_id = @user.id
   end

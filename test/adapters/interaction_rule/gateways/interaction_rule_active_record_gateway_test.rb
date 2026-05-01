@@ -7,7 +7,10 @@ module Adapters
     module Gateways
       class InteractionRuleActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
+          deletion_undo_gateway = mock("deletion_undo_gateway")
+          @gateway = Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
+            deletion_undo_gateway: deletion_undo_gateway
+          )
           ::InteractionRule.delete_all # テスト前にデータをクリーンアップ
         end
 

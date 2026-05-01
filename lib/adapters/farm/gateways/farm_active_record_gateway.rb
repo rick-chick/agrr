@@ -7,7 +7,8 @@ module Adapters
         attr_accessor :translator
         attr_accessor :user_id
 
-        def initialize
+        def initialize(deletion_undo_gateway:)
+          @deletion_undo_gateway = deletion_undo_gateway
           @translator = Adapters::Translators::RailsTranslator.new
         end
         def list(input_dto)
@@ -273,8 +274,7 @@ module Adapters
           end
           farm_name = farm.name
           toast_message = translator.t("flash.farms.deleted", name: farm_name)
-          undo_gw = CompositionRoot.deletion_undo_gateway
-          event = undo_gw.schedule(
+          event = @deletion_undo_gateway.schedule(
             record: farm,
             actor: user,
             toast_message: toast_message,

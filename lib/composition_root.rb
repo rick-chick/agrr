@@ -39,7 +39,9 @@ module CompositionRoot
     end
 
     def farm_gateway
-      @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new
+      @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
+        deletion_undo_gateway: deletion_undo_gateway
+      )
     end
 
     def field_gateway
@@ -97,7 +99,9 @@ module CompositionRoot
     end
 
     def interaction_rule_gateway
-      @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
+      @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
+        deletion_undo_gateway: deletion_undo_gateway
+      )
     end
 
     def weather_data_gateway

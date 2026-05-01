@@ -5,6 +5,11 @@ module Adapters
     module Gateways
       class InteractionRuleActiveRecordGateway < Domain::InteractionRule::Gateways::InteractionRuleGateway
         attr_accessor :translator
+
+        def initialize(deletion_undo_gateway:)
+          @deletion_undo_gateway = deletion_undo_gateway
+        end
+
         def list(scope = nil)
           query = scope || ::InteractionRule.all
           query.map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
@@ -161,8 +166,7 @@ module Adapters
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
-          undo_gw = CompositionRoot.deletion_undo_gateway
-          event = undo_gw.schedule(
+          event = @deletion_undo_gateway.schedule(
             record: rule,
             actor: user,
             toast_message: toast_message,

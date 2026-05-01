@@ -91,7 +91,9 @@ module Api
         private
 
         def interaction_rule_gateway
-          @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new
+          @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
+            deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+          )
         end
 
         def input_valid?(action)

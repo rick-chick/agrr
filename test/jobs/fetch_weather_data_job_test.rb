@@ -273,7 +273,9 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     Agrr::WeatherGateway.stub(:new, -> { gateway_mock.new(partial_data) }) do
       interactor = Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.new(
         weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
-        farm_gateway: Adapters::Farm::Gateways::FarmActiveRecordGateway.new,
+        farm_gateway: Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
+          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+        ),
         cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new,
         agrr_weather_gateway: Agrr::WeatherGateway.new,
         presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new),
