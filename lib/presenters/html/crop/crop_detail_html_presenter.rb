@@ -16,6 +16,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.flash[:alert] = I18n.t("crops.flash.no_permission")
+            @view.redirect_to @view.crops_path
+            return
+          end
+
           @view.flash.now[:alert] = error_dto.message
           @view.redirect_to @view.crops_path
         end
