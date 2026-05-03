@@ -6,10 +6,10 @@ module Adapters
       class FieldActiveRecordGateway < Domain::Field::Gateways::FieldGateway
         attr_accessor :translator
 
-        def initialize(farm_gateway:, deletion_undo_gateway:)
+        def initialize(farm_gateway:, deletion_undo_gateway:, translator:)
           @farm_gateway = farm_gateway
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = translator
         end
 
         def list_by_farm(farm_id, user_id)
