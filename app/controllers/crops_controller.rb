@@ -91,8 +91,6 @@ class CropsController < ApplicationController
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
       end
 
       format.json do
