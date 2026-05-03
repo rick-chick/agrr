@@ -233,7 +233,7 @@ docs/
 Typical API action shape:
 
 1. Build input DTO from `params`.
-2. Instantiate gateway (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new`).
+2. Instantiate gateway (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new(deletion_undo_gateway: ..., translator: ...)`).
 3. Instantiate API presenter implementing the domain output port.
 4. Call `Domain::<Context>::Interactors::<Action>Interactor.new(...).call(input_dto)`.
 5. Let the interactor finish through the **output port** for both success and **modeled failures**; avoid making **controller `rescue`** the main switch for those paths—the **presenter** should receive failure DTOs / failure callbacks and own the HTTP shape.

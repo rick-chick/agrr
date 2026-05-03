@@ -274,7 +274,8 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
       interactor = Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.new(
         weather_data_gateway: Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new,
         farm_gateway: Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
+          translator: CompositionRoot.translator
         ),
         cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new,
         agrr_weather_gateway: Agrr::WeatherGateway.new,

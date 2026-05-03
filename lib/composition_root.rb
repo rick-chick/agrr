@@ -40,7 +40,8 @@ module CompositionRoot
 
     def farm_gateway
       @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
       )
     end
 

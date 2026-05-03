@@ -7,9 +7,9 @@ module Adapters
         attr_accessor :translator
         attr_accessor :user_id
 
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = translator
         end
         def list(input_dto)
           if input_dto.is_admin
