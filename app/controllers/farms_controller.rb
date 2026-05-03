@@ -48,8 +48,6 @@ class FarmsController < ApplicationController
           translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to farms_path, alert: I18n.t("farms.flash.not_found")
       rescue StandardError => e
         redirect_to farms_path, alert: e.message
       end

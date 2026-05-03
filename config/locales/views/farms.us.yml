@@ -6,6 +6,7 @@ us:
       destroyed: "Farm was successfully deleted."
       cannot_delete: "This farm cannot be deleted because it is used by %{count} crop plans."
       not_found: "Farm not found."
+      no_permission: "You do not have permission to access this farm."
     
     index:
       title: "Farms"
