@@ -16,8 +16,8 @@ module Domain
           user = @user_lookup.find(@user_id)
           task_detail_dto = @gateway.authorized_agricultural_task_detail_output(user, task_id)
           @output_port.on_success(task_detail_dto)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

@@ -38,8 +38,6 @@ class AgriculturalTasksController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
   rescue StandardError => e
     redirect_to agricultural_tasks_path, alert: e.message
   end
