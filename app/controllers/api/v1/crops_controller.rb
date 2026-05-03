@@ -23,7 +23,8 @@ module Api
 
           service = CropAiUpsertService.new(
             user: current_user,
-            create_interactor: @create_interactor
+            create_interactor: @create_interactor,
+            crop_gateway: CompositionRoot.crop_gateway
           )
 
           result = service.call(crop_name: crop_name, variety: variety, crop_info: crop_info)

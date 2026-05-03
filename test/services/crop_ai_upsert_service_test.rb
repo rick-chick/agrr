@@ -42,7 +42,8 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
 
     service = CropAiUpsertService.new(
       user: @user,
-      create_interactor: fake_interactor
+      create_interactor: fake_interactor,
+      crop_gateway: CompositionRoot.crop_gateway
     )
 
     result = service.call(crop_name: "ブロッコリー", variety: "スプラウト", crop_info: crop_info)
@@ -95,7 +96,8 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
 
     service = CropAiUpsertService.new(
       user: @user,
-      create_interactor: create_interactor
+      create_interactor: create_interactor,
+      crop_gateway: CompositionRoot.crop_gateway
     )
 
     result = nil
@@ -134,7 +136,8 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
 
     service = CropAiUpsertService.new(
       user: @user,
-      create_interactor: fake_interactor
+      create_interactor: fake_interactor,
+      crop_gateway: CompositionRoot.crop_gateway
     )
 
     result = service.call(crop_name: "ブロッコリー", variety: "上書き品種", crop_info: crop_info)
@@ -183,7 +186,8 @@ class CropAiUpsertServiceTest < ActiveSupport::TestCase
 
     service = CropAiUpsertService.new(
       user: @user,
-      create_interactor: FakeCreateInteractor.new(FakeResult.new(true, existing_crop, nil))
+      create_interactor: FakeCreateInteractor.new(FakeResult.new(true, existing_crop, nil)),
+      crop_gateway: CompositionRoot.crop_gateway
     )
 
     result = service.call(crop_name: "トマト", variety: "更新品種", crop_info: crop_info)

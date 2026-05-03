@@ -7,9 +7,10 @@ class CropAiUpsertService
     end
   end
 
-  def initialize(user:, create_interactor:)
+  def initialize(user:, create_interactor:, crop_gateway:)
     @user = user
     @create_interactor = create_interactor
+    @crop_gateway = crop_gateway
   end
 
   # 取得済みの crop_info を元に、既存作物の更新 or 新規作成を行う
@@ -79,7 +80,7 @@ class CropAiUpsertService
     return nil unless crop_id.present?
 
     begin
-      CompositionRoot.crop_gateway.find_authorized_for_edit(@user, crop_id)
+      @crop_gateway.find_authorized_for_edit(@user, crop_id)
       ::Crop.find(crop_id)
     rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
       nil
