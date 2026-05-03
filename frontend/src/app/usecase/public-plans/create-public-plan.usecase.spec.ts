@@ -4,23 +4,18 @@ import { CreatePublicPlanUseCase } from './create-public-plan.usecase';
 import { CreatePublicPlanOutputPort } from './create-public-plan.output-port';
 import { PublicPlanGateway } from './public-plan-gateway';
 import { CreatePublicPlanInputDto } from './create-public-plan.dtos';
-import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PublicPlanSessionPort } from './public-plan-session.port';
 
-const createPublicPlanStoreMock = (
-  overrides: Partial<PublicPlanStore> = {}
-): PublicPlanStore => ({
+const createPublicPlanSessionMock = (
+  overrides: Partial<PublicPlanSessionPort> = {}
+): PublicPlanSessionPort => ({
   setPlanId: vi.fn(),
-  state: { farm: null, farmSize: null, selectedCrops: [], planId: null },
-  state$: {} as any,
   reset: vi.fn(),
-  setFarm: vi.fn(),
-  setFarmSize: vi.fn(),
-  setSelectedCrops: vi.fn(),
   ...overrides
-} as unknown as PublicPlanStore);
+});
 
 describe('CreatePublicPlanUseCase', () => {
-  it('calls outputPort.onSuccess and updates PublicPlanStore.planId when gateway succeeds', () => {
+  it('calls outputPort.onSuccess and updates session planId when gateway succeeds', () => {
     const inputDto: CreatePublicPlanInputDto = {
       farmId: 1,
       farmSizeId: 'home_garden',
@@ -34,7 +29,7 @@ describe('CreatePublicPlanUseCase', () => {
       savePlan: () => of({} as any)
     };
     const setPlanIdSpy = vi.fn();
-    const publicPlanStore = createPublicPlanStoreMock({ setPlanId: setPlanIdSpy });
+    const publicPlanSession = createPublicPlanSessionMock({ setPlanId: setPlanIdSpy });
     let receivedPlanId: number | null = null;
     const outputPort: CreatePublicPlanOutputPort = {
       onError: () => {},
@@ -42,7 +37,7 @@ describe('CreatePublicPlanUseCase', () => {
         receivedPlanId = r.plan_id;
       }
     };
-    const useCase = new CreatePublicPlanUseCase(outputPort, gateway, publicPlanStore);
+    const useCase = new CreatePublicPlanUseCase(outputPort, gateway, publicPlanSession);
     useCase.execute(inputDto);
     expect(receivedPlanId).toBe(99);
     expect(setPlanIdSpy).toHaveBeenCalledWith(99);
@@ -63,7 +58,7 @@ describe('CreatePublicPlanUseCase', () => {
         throwError(() => ({ status: 422, error: railsErrorBody })),
       savePlan: () => of({} as any)
     };
-    const publicPlanStore = createPublicPlanStoreMock();
+    const publicPlanSession = createPublicPlanSessionMock();
     let receivedMessage: string | null = null;
     const outputPort: CreatePublicPlanOutputPort = {
       onError: (dto) => {
@@ -71,7 +66,7 @@ describe('CreatePublicPlanUseCase', () => {
       },
       onSuccess: () => {}
     };
-    const useCase = new CreatePublicPlanUseCase(outputPort, gateway, publicPlanStore);
+    const useCase = new CreatePublicPlanUseCase(outputPort, gateway, publicPlanSession);
     useCase.execute({
       farmId: 1,
       farmSizeId: 'home_garden',

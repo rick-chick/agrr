@@ -13,6 +13,7 @@ import { RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT } from '../../usecase/publ
 import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PUBLIC_PLAN_SESSION_PORT } from '../../usecase/public-plans/public-plan-session.port';
 import { Crop } from '../../domain/crops/crop';
 
 const initialControl: PublicPlanSelectCropViewState = {
@@ -34,6 +35,7 @@ const initialControl: PublicPlanSelectCropViewState = {
     { provide: LOAD_PUBLIC_PLAN_CROPS_OUTPUT_PORT, useExisting: PublicPlanSelectCropPresenter },
     { provide: CREATE_PUBLIC_PLAN_OUTPUT_PORT, useExisting: PublicPlanSelectCropPresenter },
     { provide: RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT, useValue: {} },
+    { provide: PUBLIC_PLAN_SESSION_PORT, useExisting: PublicPlanStore },
     { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
   ],
   template: `

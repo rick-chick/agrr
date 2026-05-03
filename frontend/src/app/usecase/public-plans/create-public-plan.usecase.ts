@@ -6,7 +6,10 @@ import {
   CREATE_PUBLIC_PLAN_OUTPUT_PORT
 } from './create-public-plan.output-port';
 import { PUBLIC_PLAN_GATEWAY, PublicPlanGateway } from './public-plan-gateway';
-import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import {
+  PUBLIC_PLAN_SESSION_PORT,
+  PublicPlanSessionPort
+} from './public-plan-session.port';
 
 @Injectable()
 export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
@@ -14,7 +17,7 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
     @Inject(CREATE_PUBLIC_PLAN_OUTPUT_PORT)
     private readonly outputPort: CreatePublicPlanOutputPort,
     @Inject(PUBLIC_PLAN_GATEWAY) private readonly publicPlanGateway: PublicPlanGateway,
-    private readonly publicPlanStore: PublicPlanStore
+    @Inject(PUBLIC_PLAN_SESSION_PORT) private readonly publicPlanSession: PublicPlanSessionPort
   ) {}
 
   execute(dto: CreatePublicPlanInputDto): void {
@@ -24,8 +27,8 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
         next: (response) => {
           // Update store with the new planId before calling onSuccess
           // This ensures the store is updated before navigation
-          this.publicPlanStore.setPlanId(response.plan_id);
-          console.log('💾 [CreatePublicPlanUseCase] Updated PublicPlanStore.planId:', response.plan_id);
+          this.publicPlanSession.setPlanId(response.plan_id);
+          console.log('💾 [CreatePublicPlanUseCase] Updated session planId:', response.plan_id);
           this.outputPort.onSuccess(response);
           dto.onSuccess?.(response);
         },

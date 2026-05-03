@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
+import { PublicPlanSessionPort } from '../../usecase/public-plans/public-plan-session.port';
 
 export interface PublicPlanState {
   farm: Farm | null;
@@ -21,7 +22,7 @@ const INITIAL_STATE: PublicPlanState = {
 const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
 
 @Injectable({ providedIn: 'root' })
-export class PublicPlanStore {
+export class PublicPlanStore implements PublicPlanSessionPort {
   private stateSubject = new BehaviorSubject<PublicPlanState>(this.loadFromSession());
   public state$: Observable<PublicPlanState> = this.stateSubject.asObservable();
 
