@@ -100,7 +100,7 @@ class AgriculturalTasksController < ApplicationController
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
-    interactor.call(@input_dto)
+    return unless interactor.call(@input_dto)
 
     # Interactor 成功後は is_reference/user_id が更新済みのため reload してから作物紐付けを行う
     @agricultural_task.reload

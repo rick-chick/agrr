@@ -31,12 +31,16 @@ module Domain
           task_entity = @gateway.update_for_user(user, update_input_dto.id, attrs)
 
           @output_port.on_success(task_entity)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+          true
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
+          false
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          false
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          false
         end
       end
     end
