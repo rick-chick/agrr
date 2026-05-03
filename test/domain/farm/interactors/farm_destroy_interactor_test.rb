@@ -50,15 +50,18 @@ module Domain
           interactor.call(farm_id.to_s)
         end
 
-        test "should re-raise policy permission denied" do
+        test "calls on_failure when policy permission denied" do
           farm_id = 1
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:soft_destroy_with_undo).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
-          assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
-            @interactor.call(farm_id)
-          end
+          received = nil
+          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Policies::PolicyPermissionDenied)) { |e| received = e }
+
+          @interactor.call(farm_id)
+
+          assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, received
         end
       end
     end

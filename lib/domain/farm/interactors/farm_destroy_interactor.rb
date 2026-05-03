@@ -30,8 +30,8 @@ module Domain
           else
             @output_port.on_failure(result[:error_dto])
           end
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

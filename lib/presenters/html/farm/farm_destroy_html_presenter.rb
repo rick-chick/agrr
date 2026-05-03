@@ -21,6 +21,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.redirect_back fallback_location: @view.farms_path,
+                               alert: I18n.t("farms.flash.no_permission")
+            return
+          end
+
           @view.redirect_back fallback_location: @view.farms_path, alert: error_dto.message
         end
       end

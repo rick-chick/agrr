@@ -125,9 +125,13 @@ module Api
             Rails.logger.info("FarmController destroy response: #{ { undo: undo_json }.inspect }")
             render_response(json: { undo: undo_json }, status: :ok)
           elsif instance_variable_defined?(:@farm_delete_error) && @farm_delete_error
-            # エラー時: エラーレスポンス
-            msg = @farm_delete_error.respond_to?(:message) ? @farm_delete_error.message : @farm_delete_error.to_s
-            render_response(json: { error: msg }, status: :unprocessable_entity)
+            err = @farm_delete_error
+            if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+              render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
+            else
+              msg = err.respond_to?(:message) ? err.message : err.to_s
+              render_response(json: { error: msg }, status: :unprocessable_entity)
+            end
           end
         end
 
