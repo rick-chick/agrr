@@ -24,8 +24,8 @@ module Domain
           farm_entity = @gateway.update_for_user(user, input_dto.farm_id, attrs)
 
           @output_port.on_success(farm_entity)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
