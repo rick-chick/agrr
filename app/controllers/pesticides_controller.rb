@@ -16,8 +16,6 @@ class PesticidesController < ApplicationController
     presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # GET /pesticides/new
@@ -51,8 +49,6 @@ class PesticidesController < ApplicationController
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # PATCH/PUT /pesticides/:id
@@ -73,8 +69,6 @@ class PesticidesController < ApplicationController
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
   end
 
   # DELETE /pesticides/:id
@@ -85,8 +79,6 @@ class PesticidesController < ApplicationController
         Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
       end
 
       format.json do
@@ -97,8 +89,6 @@ class PesticidesController < ApplicationController
           in_use_message_key: nil,
           delete_error_message_key: "pesticides.flash.delete_error"
         )
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pesticides_path, alert: I18n.t("pesticides.flash.not_found")
       end
     end
   end

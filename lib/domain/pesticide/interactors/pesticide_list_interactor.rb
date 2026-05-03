@@ -16,8 +16,8 @@ module Domain
           user = @user_lookup.find(@user_id)
           filtered_pesticides = @gateway.list_index_for_user(user)
           @output_port.on_success(filtered_pesticides)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

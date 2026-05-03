@@ -35,4 +35,19 @@ class PesticideCreateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects back with no_permission for policy errors" do
+    view_mock = mock
+    presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: view_mock)
+
+    error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    view_mock.expects(:pesticides_path).returns("/pesticides")
+    view_mock.expects(:redirect_back).with(
+      fallback_location: "/pesticides",
+      alert: I18n.t("pesticides.flash.no_permission")
+    )
+
+    presenter.on_failure(error_dto)
+  end
 end

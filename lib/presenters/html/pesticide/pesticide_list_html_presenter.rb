@@ -14,6 +14,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.redirect_back fallback_location: @view.pesticides_path,
+                               alert: I18n.t("pesticides.flash.no_permission")
+            return
+          end
+
           # リスト表示で失敗することは通常ないが、一貫性のために
           @view.flash.now[:alert] = error_dto.message
           @view.instance_variable_set(:@pesticides, [])

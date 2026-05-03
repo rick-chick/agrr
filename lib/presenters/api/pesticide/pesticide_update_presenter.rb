@@ -26,9 +26,17 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.render_response(
+              json: { error: I18n.t("pesticides.flash.no_permission") },
+              status: :forbidden
+            )
+            return
+          end
+
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == I18n.t("pesticides.flash.no_permission")) ? :forbidden : ((msg == "Pesticide not found") ? :not_found : :unprocessable_entity)
-          json = (status == :not_found || status == :forbidden) ? { error: msg } : { errors: [ msg ] }
+          status = (msg == "Pesticide not found") ? :not_found : :unprocessable_entity
+          json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)
         end
       end

@@ -49,11 +49,10 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show pesticide" do
-    # 参照農薬は一般ユーザーでは見つからない（管理者のみアクセス可能）
-    # テストでは一般ユーザーで参照農薬にアクセスするため、403エラー
+    # 参照農薬は一般ユーザーでは閲覧できない（認可拒否）
     get pesticide_path(@pesticide)
     assert_redirected_to pesticides_path
-    assert_equal I18n.t("pesticides.flash.not_found"), flash[:alert]
+    assert_equal I18n.t("pesticides.flash.no_permission"), flash[:alert]
   end
 
   test "should get new" do
@@ -216,7 +215,7 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not update reference pesticide as non-admin" do
-    # 参照農薬は管理者のみ更新可能（一般ユーザーは参照農薬が見つからない）
+    # 参照農薬は管理者のみ更新可能（一般ユーザーは before_action で農薬が見つからない）
     patch pesticide_path(@pesticide), params: { pesticide: {
       name: "更新された名前"
     } }

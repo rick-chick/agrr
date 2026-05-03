@@ -4,11 +4,6 @@ module Api
   module V1
     module Masters
       class PesticidesController < BaseController
-        # PolicyPermissionDenied例外を403 Forbiddenとして扱う
-        rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |exception|
-          render json: { error: "権限がありません。" }, status: :forbidden
-        end
-
         include Views::Api::Pesticide::PesticideListView
         include Views::Api::Pesticide::PesticideDetailView
         include Views::Api::Pesticide::PesticideCreateView

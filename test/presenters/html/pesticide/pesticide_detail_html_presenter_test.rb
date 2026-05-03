@@ -33,4 +33,19 @@ class PesticideDetailHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure uses flash and redirect for policy errors" do
+    view_mock = mock
+    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: view_mock)
+
+    error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    flash_mock = mock
+    flash_mock.expects(:[]=).with(:alert, I18n.t("pesticides.flash.no_permission"))
+    view_mock.expects(:flash).returns(flash_mock)
+    view_mock.expects(:pesticides_path).returns("/pesticides")
+    view_mock.expects(:redirect_to).with("/pesticides")
+
+    presenter.on_failure(error_dto)
+  end
 end
