@@ -79,7 +79,8 @@ module CompositionRoot
     def agricultural_task_gateway
       @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
-        sql_like_sanitize_port: sql_like_sanitize_port
+        sql_like_sanitize_port: sql_like_sanitize_port,
+        translator: translator
       )
     end
 

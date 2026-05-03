@@ -6,10 +6,10 @@ module Adapters
       class AgriculturalTaskActiveRecordGateway < Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway
         attr_accessor :translator
 
-        def initialize(deletion_undo_gateway:, sql_like_sanitize_port:)
+        def initialize(deletion_undo_gateway:, sql_like_sanitize_port:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
           @sql_like_sanitize_port = sql_like_sanitize_port
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = translator
         end
 
         def list
