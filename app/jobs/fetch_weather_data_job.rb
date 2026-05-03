@@ -134,7 +134,9 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def cultivation_plan_gateway
-    @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+    @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+      translator: CompositionRoot.translator
+    )
   end
 
   def weather_data_gateway

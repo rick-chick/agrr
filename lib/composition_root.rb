@@ -94,7 +94,9 @@ module CompositionRoot
     end
 
     def cultivation_plan_gateway
-      @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+      @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+        translator: translator
+      )
     end
 
     def plan_allocation_gateway

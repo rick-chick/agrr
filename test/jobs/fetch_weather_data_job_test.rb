@@ -277,7 +277,9 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
           deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
           translator: CompositionRoot.translator
         ),
-        cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new,
+        cultivation_plan_gateway: Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+          translator: CompositionRoot.translator
+        ),
         agrr_weather_gateway: Agrr::WeatherGateway.new,
         presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new(logger: Adapters::Logger::Gateways::RailsLoggerGateway.new),
         logger: Adapters::Logger::Gateways::RailsLoggerGateway.new

@@ -8,8 +8,8 @@ module Adapters
 
         attr_accessor :translator
 
-        def initialize
-          @translator = Adapters::Translators::RailsTranslator.new
+        def initialize(translator:)
+          @translator = translator
         end
 
         def create(create_dto)
