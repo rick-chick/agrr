@@ -81,8 +81,10 @@ pnpm-debug.log*
 ehthumbs.db
 Thumbs.db
 
-# Editor-specific files
-/.vscode
+# Editor-specific files (root .vscode: ignore local files except shared watcher policy)
+/.vscode/*
+!/.vscode/
+!/.vscode/settings.json
 /.idea
 *.swp
 *.swo
