@@ -15,6 +15,14 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.render_response(
+              json: { error: I18n.t("fields.flash.no_permission") },
+              status: :forbidden
+            )
+            return
+          end
+
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           status = case msg
           when "Farm not found" then :not_found

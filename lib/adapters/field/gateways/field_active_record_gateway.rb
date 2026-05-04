@@ -165,7 +165,9 @@ module Adapters
           scope = FieldPolicy.scope_for_farm(user, farm)
           fields = scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
           [ farm_entity, fields ]
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied
+          raise
+        rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Farm not found"
         end
 

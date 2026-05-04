@@ -55,4 +55,23 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     )
     interactor.call(10)
   end
+
+  test "call forwards policy permission denied to on_failure as exception" do
+    err = Domain::Shared::Policies::PolicyPermissionDenied.new
+    gateway = mock
+    gateway.expects(:translator=).with(:tr)
+    gateway.expects(:authorized_farm_fields_list).with(10, 20).raises(err)
+
+    output = mock
+    output.expects(:on_failure).with(err)
+
+    interactor = Domain::Field::Interactors::FieldListInteractor.new(
+      output_port: output,
+      user_id: 20,
+      gateway: gateway,
+      logger: CompositionRoot.logger,
+      translator: :tr
+    )
+    interactor.call(10)
+  end
 end

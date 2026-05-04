@@ -43,6 +43,20 @@ module Api
           assert_not_includes field_ids, other_field.id
         end
 
+        test "should return forbidden when listing fields for another users farm" do
+          other_user = create(:user)
+          other_farm = create(:farm, :user_owned, user: other_user)
+
+          get api_v1_masters_farm_fields_path(other_farm),
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          assert_equal I18n.t("fields.flash.no_permission"), JSON.parse(response.body)["error"]
+        end
+
         test "should show field" do
           field = create(:field, farm: @farm, user: @user, name: "テスト圃場")
 

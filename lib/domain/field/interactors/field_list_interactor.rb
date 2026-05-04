@@ -15,6 +15,8 @@ module Domain
         def call(farm_id)
           result = @gateway.authorized_farm_fields_list(farm_id, @user_id)
           @output_port.on_success(result)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

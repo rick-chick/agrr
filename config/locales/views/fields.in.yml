@@ -13,6 +13,7 @@ in:
       delete_error: "हटाने के दौरान त्रुटि हुई: %{message}"
       farm_not_found: "खेत नहीं मिला।"
       not_found: "खेत क्षेत्र नहीं मिला।"
+      no_permission: "अनुमति अस्वीकृत।"
     
     index:
       title: "खेत क्षेत्र सूची"

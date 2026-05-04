@@ -13,6 +13,7 @@ us:
       delete_error: "An error occurred while deleting: %{message}"
       farm_not_found: "Farm not found."
       not_found: "Field not found."
+      no_permission: "Permission denied."
     
     index:
       title: "Fields"
