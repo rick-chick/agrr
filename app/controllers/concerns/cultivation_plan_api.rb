@@ -23,29 +23,6 @@ module CultivationPlanApi
     Rails.logger.info "🌱 [Add Crop] ========== START =========="
     Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}, field_id: #{params[:field_id]}"
 
-    @cultivation_plan = find_api_cultivation_plan
-
-    # サブクラスで実装された作物取得メソッドを呼び出す
-    crop_entity = get_crop_for_add_crop(params[:crop_id])
-    unless crop_entity
-      return render json: {
-        success: false,
-        message: i18n_t("errors.crop_not_found")
-      }, status: :not_found
-    end
-
-    crop = ::Crop.find(crop_entity.id)
-
-    # cultivation_plan_crops に追加（スナップショット）
-    plan_crop = @cultivation_plan.cultivation_plan_crops.create!(
-      crop: crop,
-      name: crop.name,
-      variety: crop.variety,
-      area_per_unit: crop.area_per_unit,
-      revenue_per_area: crop.revenue_per_area
-    )
-
-    # candidatesで最適な開始日を取得
     display_range = display_range_from_params
     display_start_date = display_range[:start_date]
     display_end_date = display_range[:end_date]
@@ -55,62 +32,18 @@ module CultivationPlanApi
       Rails.logger.info "📅 [Add Crop] Display range from UI: not provided"
     end
 
-    begin
-      best_candidate = find_best_candidate_for_crop(crop, params[:field_id], display_range: display_range)
-    rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError, Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
-      plan_crop.destroy! if plan_crop.persisted?
-      Rails.logger.warn "⚠️ [Add Crop] Prediction data incomplete: #{e.message}"
-      return render json: {
-        success: false,
-        message: i18n_t("errors.prediction_data_incomplete"),
-        technical_details: e.message
-      }, status: :service_unavailable
-    end
-
-    unless best_candidate
-      plan_crop.destroy!
-      return render json: {
-        success: false,
-        message: i18n_t("errors.no_candidates_found")
-      }, status: :unprocessable_entity
-    end
-
-    Rails.logger.info "🌱 [Add Crop] Best candidate: field=#{best_candidate[:field_id]}, start=#{best_candidate[:start_date]}"
-
-    # candidatesの結果を使って調整を実行
-    moves = [
-      {
-        allocation_id: nil,
-        action: "add",
-        crop_id: crop.id.to_s,
-        to_field_id: best_candidate[:field_id] || params[:field_id],
-        to_start_date: best_candidate[:start_date],
-        to_area: crop.area_per_unit,
-        variety: crop.variety
-      }
-    ]
-
-    result = adjust_with_db_weather(@cultivation_plan, moves)
-
-    if result[:success]
-      render json: {
-        success: true,
-        message: i18n_t("messages.crop_added"),
-        crop: {
-          id: plan_crop.id,
-          name: plan_crop.display_name
-        }
-      }
-    else
-      render json: result, status: result[:status] || :internal_server_error
-    end
-  rescue ActiveRecord::RecordNotFound => e
-    Rails.logger.error "❌ [Add Crop] Not found: #{e.message}"
-    render json: { success: false, message: i18n_t("errors.not_found") }, status: :not_found
-  rescue => e
-    Rails.logger.error "❌ [Add Crop] Error: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
-    render json: { success: false, message: e.message }, status: :internal_server_error
+    Domain::CultivationPlan::Interactors::ApiAddCropInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiAddCropPresenter.new(
+        view: self,
+        translation_scope: api_add_crop_translation_scope
+      )
+    ).call(
+      host: self,
+      load_plan: -> { find_api_cultivation_plan },
+      crop_id: params[:crop_id],
+      field_id: params[:field_id],
+      display_range: display_range
+    )
   end
 
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_field
@@ -398,6 +331,11 @@ module CultivationPlanApi
   end
 
   private
+
+  # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
+  def api_add_crop_translation_scope
+    self.class.name.include?("::PublicPlans::") ? "public_plans" : "plans"
+  end
 
   # 栽培計画の作物に成長段階があるかをバリデーション
   def validate_crops_have_growth_stages(cultivation_plan)
