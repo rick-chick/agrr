@@ -96,7 +96,7 @@ class CropsController < ApplicationController
       user_id: current_user.id,
       crop_id: @crop.id,
       gateway: CompositionRoot.crop_gateway,
-      blueprint_creator: CompositionRoot.crop_task_schedule_blueprint_create_service,
+      blueprint_regeneration_gateway: CompositionRoot.crop_task_schedule_blueprint_regeneration_gateway,
       translator: CompositionRoot.translator,
       logger: CompositionRoot.logger,
       user_lookup: CompositionRoot.user_lookup

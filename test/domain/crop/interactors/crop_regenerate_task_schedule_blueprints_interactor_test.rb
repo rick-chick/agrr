@@ -12,8 +12,8 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
     gateway = mock
     gateway.expects(:find_authorized_model_for_edit).with(user, 9).returns(crop)
 
-    creator = mock
-    creator.expects(:regenerate!).with(crop: crop)
+    regeneration_gateway = mock
+    regeneration_gateway.expects(:regenerate_from_crop!).with(crop: crop)
 
     output = mock
     output.expects(:on_success)
@@ -23,14 +23,14 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
       user_id: 1,
       crop_id: 9,
       gateway: gateway,
-      blueprint_creator: creator,
+      blueprint_regeneration_gateway: regeneration_gateway,
       translator: mock,
       logger: mock,
       user_lookup: user_lookup
     ).call
   end
 
-  test "on_failure with service domain errors uses message" do
+  test "on_failure with blueprint regeneration domain errors uses message" do
     user = Domain::Shared::Dtos::UserDto.new(id: 1, admin: true)
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
@@ -39,8 +39,8 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
     gateway = mock
     gateway.expects(:find_authorized_model_for_edit).with(user, 9).returns(crop)
 
-    creator = mock
-    creator.expects(:regenerate!).raises(CropTaskScheduleBlueprintCreateService::GenerationFailedError.new("x"))
+    regeneration_gateway = mock
+    regeneration_gateway.expects(:regenerate_from_crop!).raises(Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed.new("x"))
 
     output = mock
     output.expects(:on_failure).with do |dto|
@@ -54,7 +54,7 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
       user_id: 1,
       crop_id: 9,
       gateway: gateway,
-      blueprint_creator: creator,
+      blueprint_regeneration_gateway: regeneration_gateway,
       translator: mock,
       logger: mock,
       user_lookup: user_lookup

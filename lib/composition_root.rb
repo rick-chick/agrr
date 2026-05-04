@@ -362,8 +362,8 @@ module CompositionRoot
       )
     end
 
-    def crop_task_schedule_blueprint_create_service
-      @crop_task_schedule_blueprint_create_service ||= CropTaskScheduleBlueprintCreateService.new
+    def crop_task_schedule_blueprint_regeneration_gateway
+      @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationDelegatingGateway.new
     end
 
     def crop_task_template_toggle_gateway
