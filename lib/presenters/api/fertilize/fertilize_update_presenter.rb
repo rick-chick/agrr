@@ -27,9 +27,17 @@ module Presenters
         end
 
         def on_failure(failure_dto)
+          if failure_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.render_response(
+              json: { error: I18n.t("fertilizes.flash.no_permission") },
+              status: :forbidden
+            )
+            return
+          end
+
           msg = failure_dto.message
-          status = (msg == I18n.t("fertilizes.flash.no_permission")) ? :forbidden : ((msg == "Fertilize not found") ? :not_found : :unprocessable_entity)
-          json = (status == :not_found || status == :forbidden) ? { error: msg } : { errors: [ msg ] }
+          status = (msg == "Fertilize not found") ? :not_found : :unprocessable_entity
+          json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)
         end
       end

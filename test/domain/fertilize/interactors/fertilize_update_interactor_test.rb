@@ -38,6 +38,23 @@ module Domain
           @interactor.call(input_dto)
         end
 
+        test "should call on_failure with policy when gateway update denies" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(
+            fertilize_id: 1,
+            name: "x"
+          )
+
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+
+          received = nil
+          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Policies::PolicyPermissionDenied)) { |e| received = e }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, received
+        end
+
         test "should raise error when non-admin user tries to change is_reference flag" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(
             fertilize_id: 1,

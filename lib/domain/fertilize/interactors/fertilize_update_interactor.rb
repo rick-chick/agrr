@@ -40,6 +40,8 @@ module Domain
           fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, attrs)
 
           @output_port.on_success(fertilize_entity)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue StandardError => e
           form_fertilize = nil
           if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
