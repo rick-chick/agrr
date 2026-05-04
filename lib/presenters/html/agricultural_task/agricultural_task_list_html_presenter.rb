@@ -19,6 +19,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.redirect_back fallback_location: @view.agricultural_tasks_path,
+                               alert: I18n.t("agricultural_tasks.flash.no_permission")
+            return
+          end
+
           @view.flash.now[:alert] = error_dto.message
           @view.instance_variable_set(:@agricultural_tasks, [])
           @view.instance_variable_set(:@reference_farms, [])

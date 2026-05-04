@@ -26,6 +26,8 @@ module Domain
           reference_tasks = @gateway.reference_tasks_for_index(is_admin: input_dto.is_admin)
 
           @output_port.on_success(filtered_tasks, reference_tasks_for_index: reference_tasks)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
