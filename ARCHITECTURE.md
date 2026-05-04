@@ -25,13 +25,13 @@ One JSON action = **one interactor call** with **one presenter** as `output_port
 
 ### Controller (`app/controllers/api/v1/`)
 
-- **Do:** Strong-params → **input DTO** → `presenter = PresenterClass.new(view: self)` → `InteractorClass.new(gateway: CompositionRoot.…_gateway).call(dto, output_port: presenter)`.
-- **Do not:** Use `rescue StandardError`, `rescue ActiveRecord::RecordNotFound`, or `**rescue_from` as the main switch** that maps use-case failures to JSON/status. **HTTP shape for modeled failures belongs in the presenter** (`on_success` / `on_failure`), not in the controller. (Edge-only concerns—e.g. TLS, bogus request shape before a DTO exists—may use guard clauses that `return` early; they still must **not** replace the output-port contract for domain outcomes.)
+- **Do:** Strong-params → **input DTO** → `presenter = PresenterClass.new(view: self)` → build `InteractorClass.new(output_port: presenter, gateway: CompositionRoot.…_gateway, …dependencies).call(dto)` (some interactors take `output_port` on `call` instead—either way, **no `rescue` around the call** for modeled failures).
+- **Do not:** Use `rescue StandardError`, `rescue ActiveRecord::RecordNotFound`, or **`rescue_from` as the main switch** that maps use-case failures to JSON/status. **HTTP shape for modeled failures belongs in the presenter** (`on_success` / `on_failure`), not in the controller. (Edge-only concerns—e.g. TLS, bogus request shape before a DTO exists—may use guard clauses that `return` early; they still must **not** replace the output-port contract for domain outcomes.)
 
 ### Interactor (`lib/domain/<context>/interactors/`)
 
 - **Do:** On every failure path that should become a client-visible response, call `output_port.on_failure(failure_dto)` with an explicit DTO (validation errors, not found, conflict, etc.).
-- **Do not:** Call `output_port.on_failure(…)` and then `**raise` the same exception** so the controller can rescue. That creates a **second, conflicting HTTP path** and invites controller `rescue`. Finish the use case at the port (and return or use a `Result` object if the caller must see a value—**without** rethrowing through the controller).
+- **Do not:** Call `output_port.on_failure(…)` and then **`raise` the same exception** so the controller can rescue. That creates a **second, conflicting HTTP path** and invites controller `rescue`. Finish the use case at the port (and return or use a `Result` object if the caller must see a value—**without** rethrowing through the controller).
 
 ### Presenter (`lib/presenters/api/<resource>/`)
 
@@ -43,9 +43,9 @@ One JSON action = **one interactor call** with **one presenter** as `output_port
 - **Do:** Subclass the domain **gateway interface** (`lib/domain/.../gateways/`); persist here; map **boundary** failures to `Domain::Shared::Exceptions::*` where applicable; return **entities/DTOs** only.
 - **Do not:** `SomeAdapter.new` / `Adapters::…` inside `lib/domain`. Build concrete gateways only at the **app edge** (`lib/composition_root.rb`, controller/job wiring, etc.).
 
-### Layout example (directory shape; not every line of production code matches yet)
+### Layout example (reference implementation)
 
-A full use case typically touches, in order: **DTO (input)** → **gateway interface** → **interactor** → **output port** → **presenter** → **adapter gateway** → `**CompositionRoot`**. For a concrete file layout, see the `contact_messages` bounded context (`lib/domain/contact_messages/`, `lib/adapters/contact_messages/gateways/`, `lib/presenters/api/contact_messages/`, `app/controllers/api/v1/contact_messages_controller.rb`). **If live code still has controller `rescue` or `raise` after `on_failure`, that is debt—this section is the template to converge on, not the bug to copy.**
+A full use case typically touches, in order: **DTO (input)** → **gateway interface** → **interactor** → **output port** → **presenter** → **adapter gateway** → **`CompositionRoot`**. **Example:** CRUD under **`app/controllers/api/v1/masters/farms_controller.rb`** (e.g. `create`) with `lib/domain/farm/interactors/farm_create_interactor.rb`, `lib/presenters/api/farm/farm_create_presenter.rb`, `lib/adapters/farm/gateways/farm_active_record_gateway.rb`, and `CompositionRoot.farm_gateway`.
 
 ## System flow
 
@@ -170,7 +170,7 @@ The clauses in the numbered subsections below are the **negative** expression of
 
 1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, or controller concern **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
 2. **Tests that hide wiring** — Making the suite pass with global stubs or implicit time while production code still lacks the constructor contract and explicit ports required above. Fix production wiring first, then tests.
-3. `**rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. Reserve edge-level `rescue` for **unexpected** failures (log + generic 500 or equivalent)—not for outcomes the interactor should model and tests should assert via normal exits.
+3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. **Do not** `on_failure` in the interactor and then **`raise`** to trigger controller `rescue`. Prefer the interactor → presenter path so the action need not wrap `interactor.call` in `rescue StandardError` for modeled outcomes (aligns with **Rails JSON API: canonical vertical slice** at the top).
 
 ### Rationalizations and loopholes (items 19–26)
 
