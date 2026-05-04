@@ -273,6 +273,107 @@ module Adapters
           assert_equal false, result[:blueprint_deleted]
           assert_equal false, result[:template_deleted]
         end
+
+        test "create_masters_crop_task_template_association creates association with overrides" do
+          user = @crop.user
+          task = create(:agricultural_task, :user_owned, user: user, name: "元のタスク名")
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            user_id: user.id,
+            crop_id: @crop.id,
+            agricultural_task_id: task.id,
+            name: "カスタム名",
+            description: "カスタム説明",
+            time_per_sqm: 0.5,
+            weather_dependency: "high",
+            required_tools: [ "鍬" ],
+            skill_level: "advanced"
+          )
+          result = nil
+
+          assert_difference("CropTaskTemplate.count", 1) do
+            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+          end
+
+          assert result.success?
+          template = result.template
+          assert_equal @crop.id, template.crop_id
+          assert_equal task.id, template.agricultural_task_id
+          assert_equal "カスタム名", template.name
+          assert_equal "カスタム説明", template.description
+          assert_equal 0.5, template.time_per_sqm
+          assert_equal "high", template.weather_dependency
+          assert_equal [ "鍬" ], template.required_tools
+          assert_equal "advanced", template.skill_level
+          assert_equal task.id, template.agricultural_task.id
+        end
+
+        test "create_masters_crop_task_template_association returns failure when task not found" do
+          user = @crop.user
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            user_id: user.id,
+            crop_id: @crop.id,
+            agricultural_task_id: 99_999
+          )
+
+          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+
+          assert result.failure?
+          assert_equal :agricultural_task_not_found, result.failure.reason
+        end
+
+        test "create_masters_crop_task_template_association returns forbidden when task belongs to other user" do
+          other_user = create(:user)
+          user = @crop.user
+          task = create(:agricultural_task, :user_owned, user: other_user)
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            user_id: user.id,
+            crop_id: @crop.id,
+            agricultural_task_id: task.id
+          )
+
+          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+
+          assert result.failure?
+          assert_equal :forbidden, result.failure.reason
+        end
+
+        test "create_masters_crop_task_template_association returns duplicate when association exists" do
+          user = @crop.user
+          task = create(:agricultural_task, :user_owned, user: user)
+          create(:crop_task_template, crop: @crop, agricultural_task: task)
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            user_id: user.id,
+            crop_id: @crop.id,
+            agricultural_task_id: task.id
+          )
+
+          assert_no_difference("CropTaskTemplate.count") do
+            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+            assert result.failure?
+            assert_equal :duplicate, result.failure.reason
+          end
+        end
+
+        test "create_masters_crop_task_template_association raises record invalid when validation fails" do
+          user = @crop.user
+          task = create(:agricultural_task, :user_owned, user: user)
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            user_id: user.id,
+            crop_id: @crop.id,
+            agricultural_task_id: task.id,
+            name: ""
+          )
+
+          error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+            @gateway.create_masters_crop_task_template_association(user, input_dto)
+          end
+
+          assert error.errors.any?, "expected validation error messages"
+          assert(
+            error.errors.any? { |msg| msg.include?("Name") },
+            "expected name validation message, got: #{error.errors.inspect}"
+          )
+        end
       end
     end
   end

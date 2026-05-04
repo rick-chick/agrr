@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+
+module Domain
+  module Crop
+    module Interactors
+      class CropMastersTaskTemplateCreateInteractor < Domain::Crop::Ports::CropMastersTaskTemplateCreateInputPort
+        def initialize(output_port:, gateway:, user_lookup:)
+          @output_port = output_port
+          @gateway = gateway
+          @user_lookup = user_lookup
+        end
+
+        def call(input_dto)
+          unless Domain::Shared::ValidationHelpers.present?(input_dto.agricultural_task_id)
+            return @output_port.on_failure(
+              Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+                reason: :missing_agricultural_task_id,
+                message: "agricultural_task_id is required"
+              )
+            )
+          end
+
+          user = @user_lookup.find(input_dto.user_id)
+          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+
+          if result.failure?
+            @output_port.on_failure(result.failure)
+          else
+            @output_port.on_success(result.template)
+          end
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(
+            Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+              reason: :validation_failed,
+              errors: Array(e.errors)
+            )
+          )
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_failure(
+            Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+              reason: :crop_not_found,
+              message: "Crop not found"
+            )
+          )
+        end
+      end
+    end
+  end
+end

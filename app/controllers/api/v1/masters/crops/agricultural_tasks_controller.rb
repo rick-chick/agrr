@@ -59,47 +59,24 @@ module Api
           # @return [404] 作物または農業タスクが見つからない
           # @return [422] 既に関連付けられている、またはバリデーションエラー
           def create
-            agricultural_task_id = params[:agricultural_task_id]
-
-            unless agricultural_task_id.present?
-              render json: { error: "agricultural_task_id is required" }, status: :unprocessable_entity
-              return
-            end
-
-            agricultural_task = AgriculturalTask.find_by(id: agricultural_task_id)
-            unless agricultural_task
-              render json: { error: "AgriculturalTask not found" }, status: :not_found
-              return
-            end
-
-            # 権限チェック: 参照タスクまたは自分のタスクのみ関連付け可能
-            unless agricultural_task.is_reference || agricultural_task.user_id == current_user.id
-              render json: { error: "You do not have permission to associate this agricultural task" }, status: :forbidden
-              return
-            end
-
-            # 既に関連付けられているかチェック
-            existing_template = @crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task_id)
-            if existing_template
-              render json: { error: "AgriculturalTask is already associated with this crop" }, status: :unprocessable_entity
-              return
-            end
-
-            # 中間テーブルの属性を設定（指定がない場合は農業タスクのデフォルト値を使用）
-            template_params = {
-              agricultural_task: agricultural_task,
-              name: params[:name] || agricultural_task.name,
-              description: params[:description] || agricultural_task.description,
-              time_per_sqm: params[:time_per_sqm] || agricultural_task.time_per_sqm,
-              weather_dependency: params[:weather_dependency] || agricultural_task.weather_dependency,
-              required_tools: params[:required_tools] || agricultural_task.required_tools || [],
-              skill_level: params[:skill_level] || agricultural_task.skill_level
-            }
-
-            template = @crop.crop_task_templates.create!(template_params)
-            render json: format_template(template), status: :created
-          rescue ActiveRecord::RecordInvalid => e
-            render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+              user_id: current_user.id,
+              crop_id: params[:crop_id],
+              agricultural_task_id: template_params[:agricultural_task_id],
+              name: template_params[:name],
+              description: template_params[:description],
+              time_per_sqm: template_params[:time_per_sqm],
+              weather_dependency: template_params[:weather_dependency],
+              required_tools: template_params[:required_tools],
+              skill_level: template_params[:skill_level]
+            )
+            presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(view: self)
+            interactor = Domain::Crop::Interactors::CropMastersTaskTemplateCreateInteractor.new(
+              output_port: presenter,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            interactor.call(input_dto)
           end
 
           # 中間テーブルの属性を更新
@@ -137,6 +114,10 @@ module Api
           def destroy
             @template.destroy!
             head :no_content
+          end
+
+          def render_response(json:, status:)
+            render json: json, status: status
           end
 
           private

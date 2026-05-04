@@ -129,6 +129,51 @@ module Adapters
           find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
         end
 
+        def create_masters_crop_task_template_association(user, input_dto)
+          crop = find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
+          agricultural_task = ::AgriculturalTask.find_by(id: input_dto.agricultural_task_id)
+          unless agricultural_task
+            return build_task_template_create_result(
+              reason: :agricultural_task_not_found,
+              message: "AgriculturalTask not found"
+            )
+          end
+
+          unless agricultural_task.is_reference || agricultural_task.user_id == user.id
+            return build_task_template_create_result(
+              reason: :forbidden,
+              message: "You do not have permission to associate this agricultural task"
+            )
+          end
+
+          existing_template = crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task.id)
+          if existing_template
+            return build_task_template_create_result(
+              reason: :duplicate,
+              message: "AgriculturalTask is already associated with this crop"
+            )
+          end
+
+          template_params = {
+            agricultural_task: agricultural_task,
+            name: input_dto.name.nil? ? agricultural_task.name : input_dto.name,
+            description: input_dto.description.nil? ? agricultural_task.description : input_dto.description,
+            time_per_sqm: input_dto.time_per_sqm.nil? ? agricultural_task.time_per_sqm : input_dto.time_per_sqm,
+            weather_dependency: input_dto.weather_dependency.nil? ? agricultural_task.weather_dependency : input_dto.weather_dependency,
+            required_tools: input_dto.required_tools.nil? ? (agricultural_task.required_tools || []) : input_dto.required_tools,
+            skill_level: input_dto.skill_level.nil? ? agricultural_task.skill_level : input_dto.skill_level
+          }
+
+          template = crop.crop_task_templates.create!(template_params)
+          task_snapshot = agricultural_task_snapshot_from_record(agricultural_task)
+          template_dto = masters_crop_task_template_dto_from_record(template, task_snapshot)
+          Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(template: template_dto)
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          build_task_template_create_result(reason: :crop_not_found, message: "Crop not found")
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: e.record.errors.full_messages)
+        end
+
         def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
           crop = if for_edit
                    find_authorized_model_for_edit(user, crop_id)
@@ -495,6 +540,43 @@ module Adapters
         end
 
         private
+
+        def build_task_template_create_result(reason:, message:)
+          Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(
+            failure: Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+              reason: reason,
+              message: message
+            )
+          )
+        end
+
+        def agricultural_task_snapshot_from_record(record)
+          return nil unless record
+
+          Domain::Crop::Dtos::AgriculturalTaskSnapshotDto.new(
+            id: record.id,
+            name: record.name,
+            description: record.description,
+            is_reference: record.is_reference
+          )
+        end
+
+        def masters_crop_task_template_dto_from_record(template, task_snapshot)
+          Domain::Crop::Dtos::MastersCropTaskTemplateDto.new(
+            id: template.id,
+            crop_id: template.crop_id,
+            agricultural_task_id: template.agricultural_task_id,
+            name: template.name,
+            description: template.description,
+            time_per_sqm: template.time_per_sqm,
+            weather_dependency: template.weather_dependency,
+            required_tools: template.required_tools || [],
+            skill_level: template.skill_level,
+            agricultural_task: task_snapshot,
+            created_at: template.created_at,
+            updated_at: template.updated_at
+          )
+        end
 
         def available_agricultural_tasks_for_crop(crop)
           if !crop.is_reference && crop.user_id.present?
