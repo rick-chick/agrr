@@ -34,6 +34,8 @@ module Domain
           })
 
           @output_port.on_success(fertilize_entity)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

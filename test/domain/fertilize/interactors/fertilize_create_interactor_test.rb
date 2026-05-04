@@ -97,6 +97,22 @@ module Domain
           admin_interactor.call(input_dto)
         end
 
+        test "should call on_failure with policy exception when gateway denies" do
+          input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.new(name: "X")
+
+          Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:create_for_user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+
+          received = nil
+          @mock_output_port
+            .expects(:on_failure)
+            .with(instance_of(Domain::Shared::Policies::PolicyPermissionDenied)) { |e| received = e }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, received
+        end
+
         test "should handle save failure" do
           input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.new(
             name: "Test Fertilize"
