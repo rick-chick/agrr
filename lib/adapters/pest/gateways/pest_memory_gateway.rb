@@ -4,7 +4,7 @@ module Adapters
   module Pest
     module Gateways
       class PestMemoryGateway < Domain::Pest::Gateways::PestGateway
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
@@ -126,8 +126,7 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         end
 
-        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)
           pest = find_pest_model!(pest_id)
           unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

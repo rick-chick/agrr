@@ -9,7 +9,8 @@ module Adapters
         def setup
           deletion_undo_gateway = mock("deletion_undo_gateway")
           @gateway = Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
-            deletion_undo_gateway: deletion_undo_gateway
+            deletion_undo_gateway: deletion_undo_gateway,
+            translator: Adapters::Translators::RailsTranslator.new
           )
           ::InteractionRule.delete_all # テスト前にデータをクリーンアップ
         end

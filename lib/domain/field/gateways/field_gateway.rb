@@ -48,7 +48,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, field_id:, auto_hide_after: 5000, translator: nil)
+        def soft_destroy_with_undo(user:, field_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
       end

@@ -6,8 +6,9 @@ module Adapters
       class InteractionRuleActiveRecordGateway < Domain::InteractionRule::Gateways::InteractionRuleGateway
         attr_accessor :translator
 
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
+          @translator = translator
         end
 
         def list(scope = nil)
@@ -158,9 +159,7 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end
 
-        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= @translator
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:)
           rule = find_interaction_rule_model!(rule_id)
           unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

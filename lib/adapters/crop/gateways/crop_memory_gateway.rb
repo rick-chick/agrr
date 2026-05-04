@@ -4,7 +4,7 @@ module Adapters
   module Crop
     module Gateways
       class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
@@ -169,8 +169,7 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
 
-        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)
           crop = find_crop_model!(crop_id)
           unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

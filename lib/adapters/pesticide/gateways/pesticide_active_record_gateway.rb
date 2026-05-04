@@ -6,9 +6,9 @@ module Adapters
       class PesticideActiveRecordGateway < Domain::Pesticide::Gateways::PesticideGateway
         attr_accessor :translator
 
-        def initialize(deletion_undo_gateway:, translator: nil)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = translator || Adapters::Translators::RailsTranslator.new
+          @translator = translator
         end
 
         def list
@@ -158,9 +158,7 @@ module Adapters
           end
         end
 
-        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= @translator
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
           pesticide = find_pesticide_model!(pesticide_id)
           unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

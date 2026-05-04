@@ -54,7 +54,10 @@ module CompositionRoot
     end
 
     def crop_gateway
-      @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new(deletion_undo_gateway: deletion_undo_gateway)
+      @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new(
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
+      )
     end
 
     def crop_stage_copy_gateway
@@ -62,18 +65,23 @@ module CompositionRoot
     end
 
     def pest_gateway
-      @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new(deletion_undo_gateway: deletion_undo_gateway)
+      @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new(
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
+      )
     end
 
     def pesticide_gateway
       @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
       )
     end
 
     def fertilize_gateway
       @fertilize_gateway ||= Adapters::Fertilize::Gateways::FertilizeActiveRecordGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
       )
     end
 
@@ -105,7 +113,8 @@ module CompositionRoot
 
     def interaction_rule_gateway
       @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
       )
     end
 
@@ -187,7 +196,8 @@ module CompositionRoot
     # 空名レコードを list 経路から外す従来仕様のため、純 AR ゲートウェイとは振る舞いが異なる。
     def fertilize_ai_interactors_for(user_id:)
       gw = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        translator: translator
       )
       log = logger
       tr = translator

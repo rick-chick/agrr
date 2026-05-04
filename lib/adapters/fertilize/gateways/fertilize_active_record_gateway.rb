@@ -6,9 +6,9 @@ module Adapters
       class FertilizeActiveRecordGateway < Domain::Fertilize::Gateways::FertilizeGateway
         attr_accessor :translator
 
-        def initialize(deletion_undo_gateway:, translator: nil)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = translator || Adapters::Translators::RailsTranslator.new
+          @translator = translator
         end
 
         def list
@@ -141,9 +141,7 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
 
-        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= @translator
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:)
           fertilize = find_fertilize_model!(fertilize_id)
           unless Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

@@ -165,9 +165,7 @@ module Adapters
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         end
 
-        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= @translator
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:)
           task = find_agricultural_task_model!(task_id)
           unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

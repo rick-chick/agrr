@@ -265,9 +265,7 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, translator: nil)
-          translator ||= @translator
-          translator ||= Adapters::Translators::RailsTranslator.new
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, translator:)
           farm = find_farm_model!(farm_id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

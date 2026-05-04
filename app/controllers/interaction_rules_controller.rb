@@ -128,7 +128,8 @@ class InteractionRulesController < ApplicationController
   # ドメイン Gateway adapter (Composition Root として Controller で生成)
   def interaction_rule_gateway
     @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
-      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
+      translator: CompositionRoot.translator
     )
   end
 
