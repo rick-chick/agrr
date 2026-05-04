@@ -7,7 +7,7 @@ class FetchWeatherDataJob < ApplicationJob
 
   def initialize(*args)
     super
-    @translator ||= Adapters::Translators::RailsTranslator.new
+    @translator ||= CompositionRoot.translator
   end
 
   queue_as :weather_data_sequential
