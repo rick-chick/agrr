@@ -16,30 +16,12 @@ module Api
         def index
           input_valid?(:index) || return
 
-          # DTO 変換
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: current_user&.admin?)
 
-          # Interactor のインスタンス化と委譲
           presenter = Presenters::Api::Farm::FarmListPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
           interactor.call(input_dto)
-
-          # Presenter の結果をチェック
-          if instance_variable_defined?(:@farm_list_data) && @farm_list_data
-            # 成功時: JSON を生成してレスポンス
-            farms = @farm_list_data
-            json = farms.is_a?(Array) ? farms.map { |e| entity_to_json(e) } : []
-            render_response(json: json, status: :ok)
-          elsif instance_variable_defined?(:@farm_list_error) && @farm_list_error
-            err = @farm_list_error
-            if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
-              render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
-            else
-              msg = err.respond_to?(:message) ? err.message : err.to_s
-              render_response(json: { error: msg }, status: :unprocessable_entity)
-            end
-          end
         end
 
         # GET /api/v1/masters/farms/:id

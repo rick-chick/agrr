@@ -3,47 +3,127 @@
 require "test_helper"
 
 class FarmListPresenterTest < ActiveSupport::TestCase
-  test "on_success sets @farm_list_data on view" do
+  FarmStub = Struct.new(:id, :name, :latitude, :longitude, :region, :user_id, :created_at, :updated_at, :is_reference,
+    keyword_init: true)
+
+  test "on_success renders farms array as root JSON with ok" do
     view_mock = mock
     presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
 
-    farms = [ mock("farm1"), mock("farm2") ]
+    t = Time.zone.parse("2024-01-15 12:00:00")
+    farms = [
+      FarmStub.new(
+        id: 1,
+        name: "A",
+        latitude: 35.0,
+        longitude: 139.0,
+        region: "jp",
+        user_id: 10,
+        created_at: t,
+        updated_at: t,
+        is_reference: false
+      ),
+      FarmStub.new(
+        id: 2,
+        name: "B",
+        latitude: 36.0,
+        longitude: 140.0,
+        region: "jp",
+        user_id: 10,
+        created_at: t,
+        updated_at: t,
+        is_reference: true
+      )
+    ]
 
-    view_mock.expects(:instance_variable_set).with("@farm_list_data", farms)
+    expected_json = [
+      {
+        id: 1,
+        name: "A",
+        latitude: 35.0,
+        longitude: 139.0,
+        region: "jp",
+        user_id: 10,
+        created_at: t,
+        updated_at: t,
+        is_reference: false
+      },
+      {
+        id: 2,
+        name: "B",
+        latitude: 36.0,
+        longitude: 140.0,
+        region: "jp",
+        user_id: 10,
+        created_at: t,
+        updated_at: t,
+        is_reference: true
+      }
+    ]
+
+    view_mock.expects(:render_response).with(json: expected_json, status: :ok)
 
     presenter.on_success(farms)
   end
 
-  test "on_success handles empty farms array" do
+  test "on_success ignores reference_farms keyword for response body" do
     view_mock = mock
     presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
 
     farms = []
+    ref_extra = [ mock("ref") ]
 
-    view_mock.expects(:instance_variable_set).with("@farm_list_data", farms)
+    view_mock.expects(:render_response).with(json: [], status: :ok)
 
-    presenter.on_success(farms)
+    presenter.on_success(farms, reference_farms: ref_extra)
   end
 
-  test "on_failure sets @farm_list_error on view" do
+  test "on_success treats non-array farms as empty list" do
+    view_mock = mock
+    presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
+
+    view_mock.expects(:render_response).with(json: [], status: :ok)
+
+    presenter.on_success(nil)
+  end
+
+  test "on_failure renders forbidden for PolicyPermissionDenied" do
+    view_mock = mock
+    presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
+
+    err = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    view_mock.expects(:render_response).with(
+      json: { error: I18n.t("farms.flash.no_permission") },
+      status: :forbidden
+    )
+
+    presenter.on_failure(err)
+  end
+
+  test "on_failure renders unprocessable_entity with ErrorDto message" do
     view_mock = mock
     presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Dtos::ErrorDto.new("Database connection failed")
 
-    view_mock.expects(:instance_variable_set).with("@farm_list_error", error_dto)
+    view_mock.expects(:render_response).with(
+      json: { error: "Database connection failed" },
+      status: :unprocessable_entity
+    )
 
     presenter.on_failure(error_dto)
   end
 
-  test "on_failure handles non-ErrorDto failure objects" do
+  test "on_failure renders unprocessable_entity for string failure using to_s" do
     view_mock = mock
     presenter = Presenters::Api::Farm::FarmListPresenter.new(view: view_mock)
 
-    failure_dto = "Some error string"
+    view_mock.expects(:render_response).with(
+      json: { error: "Some error string" },
+      status: :unprocessable_entity
+    )
 
-    view_mock.expects(:instance_variable_set).with("@farm_list_error", failure_dto)
-
-    presenter.on_failure(failure_dto)
+    presenter.on_failure("Some error string")
   end
 end
