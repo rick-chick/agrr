@@ -25,12 +25,17 @@ module CultivationPlanManageable
       return nil
     end
 
-    find_cultivation_plan_scope
+    scoped = find_cultivation_plan_scope
       .includes(field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ])
-      .find(plan_id)
-  rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
-    redirect_to send(redirect_path_method), alert: I18n.t("#{i18n_scope}.errors.not_found")
-    nil
+
+    result = Adapters::CultivationPlan::ManageablePrivatePlanLookup.call(scope: scoped, plan_id: plan_id)
+
+    if result[:kind] == :not_found
+      redirect_to send(redirect_path_method), alert: I18n.t("#{i18n_scope}.errors.not_found")
+      return nil
+    end
+
+    result[:plan]
   end
 
   # セッションデータを取得
