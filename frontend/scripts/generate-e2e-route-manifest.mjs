@@ -82,7 +82,7 @@ async function main() {
   const payload = {
     generatedAt: new Date().toISOString(),
     note:
-      'path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は Playwright で `GET /api/v1/auth/me` をモックして storage state なしでも全ルートをキャプチャする。requiresAuth はルート定義上のフラグ。',
+      'path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートをキャプチャする。requiresAuth はルート定義上のフラグ。',
     routes: deduped,
   };
 
@@ -117,10 +117,10 @@ async function main() {
   lines.push('## キャプチャ前提');
   lines.push('');
   lines.push(
-    '- `e2e:capture-for-agent` は **storage state 不要**。Playwright が `GET /api/v1/auth/me` を成功レスポンスに置き換え、authGuard 通過後に各 `url` へ遷移して `out/*.png` を書き出す。',
+    '- `e2e:capture-for-agent` は **`E2E_CAPTURE_DEV_SESSION=1`** で Rails（127.0.0.1:3000）と ng を起動し、globalSetup が **`e2e/.auth/dev-session.json`** を書き出したうえで各 `url` へ遷移し `out/*.png` を書き出す（`/api/v1/auth/me` はモックしない）。',
   );
   lines.push(
-    '- 一覧・詳細はバックエンド未取得時もレイアウトレビュー用に撮影される。実データ・本番同等 UI が必要なら別途 API 起動や `e2e/.auth` を用いる。',
+    '- `e2e/resolve-capture-urls.ts` が一覧 API から実在 id を取りマニフェストの placeholder を差し替える。DB が空や API 不全のときは画面が薄い・エラーになり得る。',
   );
   lines.push('');
   await writeFile(ROUTE_TO_PNG, lines.join('\n'), 'utf8');

@@ -23,59 +23,11 @@ const manifest: Manifest = JSON.parse(
 /** Agent レビュー用 PNG（ピクセル回帰は行わない） */
 const AGENT_PNG_DIR = join(process.cwd(), 'e2e/agent-review/out');
 
-/** Rails development + E2E_CAPTURE_DEV_SESSION で実セッションを読み込むときは /me モックしない */
-const useDevSession = !!process.env.E2E_CAPTURE_DEV_SESSION;
-
-/** with-api 時、API 一覧から実在 id を取得して manifest の `1` を差し替え */
-let resolvedCaptureIds: ResolvedCaptureIds | null = null;
-
-/** OAuth や storage state なしで authGuard を通す（ng のみキャプチャ時） */
-const MOCK_ME_BODY = JSON.stringify({
-  user: {
-    id: 999001,
-    name: 'E2E Agent Review',
-    email: 'e2e-agent-review@example.invalid',
-    avatar_url: null,
-    admin: true,
-    api_key: null,
-    region: 'JP',
-  },
-});
-
-test.beforeAll(async () => {
-  mkdirSync(AGENT_PNG_DIR, { recursive: true });
-  if (!useDevSession) return;
-
-  const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
-  if (!existsSync(storagePath)) {
-    // globalSetup 失敗時など。manifest のまま capture する。
-    return;
-  }
-
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
-  const api = await request.newContext({ storageState: storagePath });
-  try {
-    resolvedCaptureIds = await buildResolvedCaptureIds(api, apiOrigin);
-  } finally {
-    await api.dispose();
-  }
-});
-
-test.beforeEach(async ({ context, page }) => {
-  if (!useDevSession) {
-    await context.route('**/api/v1/auth/me', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: MOCK_ME_BODY,
-      });
-    });
-  }
-  await page.addInitScript(() => {
-    const w = window as Window & { __disableCookieControl?: boolean };
-    w.__disableCookieControl = true;
-  });
-});
+/**
+ * `/me` をモックしないキャプチャのみ。未設定のときは本ファイルのテストは skip（`npm run test:e2e` で Rails を立てずに回すため）。
+ * Agent 用 PNG は `npm run e2e:capture-for-agent` が `E2E_CAPTURE_DEV_SESSION=1` を付与する。
+ */
+const captureDescribe = process.env.E2E_CAPTURE_DEV_SESSION ? test.describe : test.describe.skip;
 
 function routeLabel(r: RouteRow): string {
   return r.pattern === '' ? '(home)' : r.pattern;
@@ -165,20 +117,47 @@ async function waitForCaptureStable(page: Parameters<typeof assertPageValidity>[
   await expect(loadingLine).toBeHidden({ timeout: 60_000 });
 }
 
-for (const r of manifest.routes) {
-  test(`capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
-    const url =
-      useDevSession && resolvedCaptureIds
-        ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds)
-        : r.url;
-    await page.goto(url);
-    const pathnameExpect =
-      PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern) || r.pattern === 'auth/login'
-        ? undefined
-        : expectedPathnameFromResolvedGoto(url);
+captureDescribe('capture-for-agent (Rails + dev session)', () => {
+  /** API 一覧から実在 id を取得して manifest の `1` を差し替え */
+  let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
-    await assertPageValidity(page, r, pathnameExpect);
-    await waitForCaptureStable(page, r);
-    await captureForAgent(page, r);
+  test.beforeAll(async () => {
+    mkdirSync(AGENT_PNG_DIR, { recursive: true });
+
+    const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
+    if (!existsSync(storagePath)) {
+      return;
+    }
+
+    const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+    const api = await request.newContext({ storageState: storagePath });
+    try {
+      resolvedCaptureIds = await buildResolvedCaptureIds(api, apiOrigin);
+    } finally {
+      await api.dispose();
+    }
   });
-}
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as Window & { __disableCookieControl?: boolean };
+      w.__disableCookieControl = true;
+    });
+  });
+
+  for (const r of manifest.routes) {
+    test(`capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
+      const url =
+        resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
+      await page.goto(url);
+      const pathnameExpect =
+        PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern) || r.pattern === 'auth/login'
+          ? undefined
+          : expectedPathnameFromResolvedGoto(url);
+
+      await assertPageValidity(page, r, pathnameExpect);
+      await waitForCaptureStable(page, r);
+      await captureForAgent(page, r);
+    });
+  }
+});

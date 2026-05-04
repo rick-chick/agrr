@@ -28,8 +28,8 @@ const railsDev = {
 /**
  * E2E: ルート妥当性検証 + Agent レビュー用 PNG（ピクセル回帰はしない）。
  *
- * - 既定: ng のみ。`/api/v1/auth/me` はテスト側でモック（`route-manifest-visual.spec.ts`）。
- * - E2E_CAPTURE_DEV_SESSION=1: Rails development も起動し、AuthTest モックログインで実セッション。
+ * - `route-manifest-visual.spec.ts` は **`npm run e2e:capture-for-agent`** が付与する `E2E_CAPTURE_DEV_SESSION=1` のときのみ実行（それ以外は skip）。
+ * - `E2E_CAPTURE_DEV_SESSION=1`: Rails development を起動し、globalSetup が AuthTestController のモックログインで実セッションを書き出す。
  *   `getApiBaseUrl()` が 127.0.0.1:4200 → 127.0.0.1:3000 を向ける前提。
  */
 export default defineConfig({

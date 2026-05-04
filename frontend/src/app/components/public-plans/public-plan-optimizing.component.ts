@@ -137,8 +137,12 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   get selectedCropsCount() {
     return this.publicPlanStore.state.selectedCrops.length;
   }
+  /** snapshot は遅延ルート初回描画でクエリ未確定になりうるため、初期化は queryParamMap で行う */
+  private resolvedPlanId = 0;
+
   get planId(): number {
     return (
+      this.resolvedPlanId ||
       Number(this.route.snapshot.queryParamMap.get('planId')) ||
       this.publicPlanStore.state.planId ||
       0
@@ -156,18 +160,41 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    if (!this.planId) {
+    const pid = this.resolvePlanIdFromNavigation();
+    this.resolvedPlanId = pid;
+    if (!pid) {
       this.control = { ...this.control, status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
-      this.router.navigate(['/public-plans/new']);
+      void this.router.navigate(['/public-plans/new']);
       return;
     }
+    this.cdr.markForCheck();
     this.startTimer();
     this.useCase.execute({
-      planId: this.planId,
+      planId: pid,
       onSubscribed: (ch) => {
         this.channel = ch;
       }
     });
+  }
+
+  /** Playwright 直叩き・遅延ルートとも整合するよう URL とストアの両方から解決する */
+  private resolvePlanIdFromNavigation(): number {
+    try {
+      const q = new URLSearchParams(globalThis.location?.search ?? '');
+      const raw = q.get('planId');
+      const fromUrl = raw !== null && raw !== '' ? Number(raw) : NaN;
+      if (!Number.isNaN(fromUrl) && fromUrl > 0) {
+        return fromUrl;
+      }
+    } catch {
+      /* location が無い環境ではフォールバックへ */
+    }
+    const fromSnapshot = Number(this.route.snapshot.queryParamMap.get('planId'));
+    if (!Number.isNaN(fromSnapshot) && fromSnapshot > 0) {
+      return fromSnapshot;
+    }
+    const fromStore = this.publicPlanStore.state.planId;
+    return fromStore && fromStore > 0 ? fromStore : 0;
   }
 
   onOptimizationCompleted(): void {
