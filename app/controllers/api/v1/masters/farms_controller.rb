@@ -80,7 +80,7 @@ module Api
         end
 
         def translator
-          @translator ||= Adapters::Translators::RailsTranslator.new
+          @translator ||= CompositionRoot.translator
         end
 
         private

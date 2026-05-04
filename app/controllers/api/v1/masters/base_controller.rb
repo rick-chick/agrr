@@ -87,7 +87,7 @@ module Api
         private
 
         def translator
-          @translator ||= Adapters::Translators::RailsTranslator.new
+          @translator ||= CompositionRoot.translator
         end
       end
     end
