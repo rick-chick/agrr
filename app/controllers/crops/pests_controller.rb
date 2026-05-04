@@ -56,8 +56,8 @@ module Crops
           {}
         end
       Domain::Pest::Interactors::CropsNestedPestsUpdateInteractor.new(output_port: presenter, pest_gateway: CompositionRoot.pest_gateway).call(
-        crop: @crop,
-        pest: @pest,
+        crop_id: @crop.id,
+        pest_id: @pest.id,
         pest_attrs: pest_attrs,
         admin: admin_user?
       )
