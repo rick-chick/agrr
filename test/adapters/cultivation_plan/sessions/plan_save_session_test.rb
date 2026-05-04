@@ -2044,7 +2044,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
 
     service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway)
     assert service.send(:requires_gdd?, item), "sanity check: item should require gdd"
-    error = assert_raises Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError do
+    error = assert_raises Domain::Shared::Exceptions::InvalidTaskScheduleItem do
       service.call
     end
     assert_match(/nil gdd_trigger/, error.message)

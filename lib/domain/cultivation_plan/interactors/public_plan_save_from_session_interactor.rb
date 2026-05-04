@@ -32,7 +32,7 @@ module Domain
               message: text
             )
           )
-        rescue Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError => e
+        rescue Domain::Shared::Exceptions::InvalidTaskScheduleItem => e
           @logger.error("❌ [PublicPlanSaveFromSessionInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailureDto.new(

@@ -97,7 +97,7 @@ module Adapters
         rescue InvalidTaskScheduleItemError => e
           @logger.error I18n.t("services.plan_save_service.errors.task_schedule_invalid", error: e.message) if I18n.exists?("services.plan_save_service.errors.task_schedule_invalid")
           @logger.error e.backtrace.join("\n")
-          raise
+          raise Domain::Shared::Exceptions::InvalidTaskScheduleItem, e.message
         rescue => e
           @logger.error I18n.t("services.plan_save_service.errors.unknown_error", error: e.message)
           @logger.error e.backtrace.join("\n")

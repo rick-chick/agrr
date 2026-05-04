@@ -51,8 +51,8 @@ module Domain
           ).call(user: :u, session_data: {})
         end
 
-        test "on_failure unexpected when gateway raises InvalidTaskScheduleItemError" do
-          err = Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError.new("bad item")
+        test "on_failure unexpected when gateway raises InvalidTaskScheduleItem domain exception" do
+          err = Domain::Shared::Exceptions::InvalidTaskScheduleItem.new("bad item")
           @gateway.expects(:save_from_session).raises(err)
           @output_port.expects(:on_success).never
           @output_port.expects(:on_failure).with do |dto|
