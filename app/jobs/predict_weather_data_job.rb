@@ -205,9 +205,7 @@ class PredictWeatherDataJob < ApplicationJob
   rescue Agrr::BaseGateway::ParseError => e
     Rails.logger.error "❌ [PredictWeatherDataJob] AGRR output parsing failed for Farm ##{farm_id}: #{e.message}"
     raise
-  rescue Exception => e
-    raise if e.is_a?(Interrupt)
-
+  rescue StandardError => e
     # インフラ・未分類エラー: フェーズ更新後に再 raise（Solid Queue 再試行・DLQ は基盤側）。ドメイン結果の HTTP マッピングとは無関係。
     Rails.logger.error "❌ [PredictWeatherDataJob] Unexpected error for Farm ##{farm_id}: #{e.class} - #{e.message}"
     Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
