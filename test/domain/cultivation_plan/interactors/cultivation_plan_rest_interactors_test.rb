@@ -87,7 +87,7 @@ module Domain
           ).returns(kind: :success, body: body)
           @output.expects(:on_success).with(body: body)
 
-          RetrieveCultivationPlanInteractor.new(output: @output, workbook_payload_gateway: @gateway).call(
+          RetrieveCultivationPlanInteractor.new(output: @output, workbench_payload_gateway: @gateway).call(
             auth: @auth,
             plan_id: 3
           )

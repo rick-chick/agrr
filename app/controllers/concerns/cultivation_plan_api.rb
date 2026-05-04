@@ -90,7 +90,7 @@ module CultivationPlanApi
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
-      workbook_payload_gateway: cultivation_plan_rest_workbook_payload_gateway
+      workbench_payload_gateway: cultivation_plan_rest_workbench_payload_gateway
     ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i)
   end
 
@@ -135,7 +135,7 @@ module CultivationPlanApi
     )
   end
 
-  def cultivation_plan_rest_workbook_payload_gateway
+  def cultivation_plan_rest_workbench_payload_gateway
     Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
       logger: cultivation_plan_rest_logger,
       available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway

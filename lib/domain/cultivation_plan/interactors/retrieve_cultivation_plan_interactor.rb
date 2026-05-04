@@ -4,13 +4,13 @@ module Domain
   module CultivationPlan
     module Interactors
       class RetrieveCultivationPlanInteractor
-        def initialize(output:, workbook_payload_gateway:)
+        def initialize(output:, workbench_payload_gateway:)
           @output = output
-          @workbook_payload_gateway = workbook_payload_gateway
+          @workbench_payload_gateway = workbench_payload_gateway
         end
 
         def call(auth:, plan_id:)
-          result = @workbook_payload_gateway.build(
+          result = @workbench_payload_gateway.build(
             auth: auth,
             plan_id: plan_id
           )
