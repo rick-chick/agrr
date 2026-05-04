@@ -118,7 +118,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     end
   end
 
-  test "private_plan_optimizing_page_context returns dto for owned private plan" do
+  test "private_plan_optimizing_read_model returns read model for owned private plan" do
     user = create(:user)
     farm = create(:farm, user: user, name: "表示農場")
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "optimizing",
@@ -127,8 +127,10 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
 
-    dto = @gateway.private_plan_optimizing_page_context(plan_id: plan.id, user: user)
+    read = @gateway.private_plan_optimizing_read_model(plan_id: plan.id, user: user)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingPageAssembler.call(read)
 
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel, read
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto, dto
     assert_equal plan.id, dto.id
     assert_equal 2024, dto.plan_year
@@ -139,36 +141,38 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_not dto.completed?
   end
 
-  test "private_plan_optimizing_page_context raises domain RecordNotFound when plan belongs to another user" do
+  test "private_plan_optimizing_read_model raises domain RecordNotFound when plan belongs to another user" do
     owner = create(:user)
     other = create(:user)
     farm = create(:farm, user: owner)
     plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
 
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_page_context(plan_id: plan.id, user: other)
+      @gateway.private_plan_optimizing_read_model(plan_id: plan.id, user: other)
     end
   end
 
-  test "private_plan_optimizing_page_context raises domain RecordNotFound when id missing" do
+  test "private_plan_optimizing_read_model raises domain RecordNotFound when id missing" do
     user = create(:user)
 
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_page_context(plan_id: 9_999_999, user: user)
+      @gateway.private_plan_optimizing_read_model(plan_id: 9_999_999, user: user)
     end
   end
 
-  test "private_plan_index_page returns empty dto when user has no plans" do
+  test "private_plan_index_plan_rows returns empty array when user has no plans" do
     user = create(:user)
 
-    dto = @gateway.private_plan_index_page(user: user)
+    rows = @gateway.private_plan_index_plan_rows(user: user)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: rows)
 
+    assert_empty rows
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto, dto
     assert_predicate dto, :empty?
     assert_empty dto.plan_rows
   end
 
-  test "private_plan_index_page returns rows with counts in farm-flatten order" do
+  test "private_plan_index_plan_rows returns rows with counts in farm-flatten order" do
     user = create(:user)
     farm_a = create(:farm, user: user, name: "Farm A")
     farm_b = create(:farm, user: user, name: "Farm B")
@@ -184,7 +188,8 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_crop, cultivation_plan: plan_a, crop: crop)
     create(:cultivation_plan_field, cultivation_plan: plan_a, name: "K1", area: 10, daily_fixed_cost: 0)
 
-    dto = @gateway.private_plan_index_page(user: user)
+    rows = @gateway.private_plan_index_plan_rows(user: user)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: rows)
 
     assert_equal 2, dto.plan_rows.size
     # recent: plan_b が新しいので先頭 → group_by で farm_b ブロックが先に登場し、その後 farm_a

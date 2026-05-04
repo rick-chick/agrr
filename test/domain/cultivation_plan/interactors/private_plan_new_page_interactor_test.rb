@@ -8,19 +8,24 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto.new(
+    farm_gateway = mock
+    farm_gateway.expects(:private_plan_new_farm_choices).with(user: user).returns([])
+
+    translator = mock
+    translator.expects(:t).with("plans.default_plan_name").returns("D")
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
       farm_choices: [],
       default_plan_name: "D"
     )
 
-    farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).with(user: user).returns(dto)
-
-    translator = mock
     logger = mock
 
     output = mock
-    output.expects(:on_success).with(dto)
+    output.expects(:on_success).with do |actual|
+      assert_equal dto.farm_choices, actual.farm_choices
+      assert_equal dto.default_plan_name, actual.default_plan_name
+      true
+    end
 
     Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
       output_port: output,
@@ -38,7 +43,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).raises(StandardError.new("db"))
+    farm_gateway.expects(:private_plan_new_farm_choices).raises(StandardError.new("db"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.restart").returns("再開")
@@ -72,7 +77,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).raises(
+    farm_gateway.expects(:private_plan_new_farm_choices).raises(
       Domain::Shared::Exceptions::PersistenceFailed.new("db")
     )
 
@@ -111,7 +116,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     logger.expects(:warn).with(includes("user_record_not_found"))
 
     farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).never
+    farm_gateway.expects(:private_plan_new_farm_choices).never
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -135,7 +140,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
+    farm_gateway.expects(:private_plan_new_farm_choices).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つからない")
@@ -165,7 +170,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     farm_gateway = mock
-    farm_gateway.expects(:private_plan_new_page).raises(NoMethodError.new("bug"))
+    farm_gateway.expects(:private_plan_new_farm_choices).raises(NoMethodError.new("bug"))
 
     translator = mock
     logger = mock

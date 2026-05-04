@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   InteractionRuleListView,
   InteractionRuleListViewState
@@ -59,7 +59,7 @@ const initialControl: InteractionRuleListViewState = {
                 <article class="item-card">
                   <a [routerLink]="['/interaction_rules', rule.id]" class="item-card__body">
                     <span class="item-card__title">{{ rule.source_group }} → {{ rule.target_group }}</span>
-                    <span class="item-card__meta">{{ rule.rule_type }} ({{ rule.impact_ratio }})</span>
+                    <span class="item-card__meta">{{ ruleTypeLabel(rule.rule_type) }} ({{ rule.impact_ratio }})</span>
                   </a>
                   <div class="item-card__actions">
                     <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
@@ -83,6 +83,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   private readonly presenter = inject(InteractionRuleListPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
+  private readonly translate = inject(TranslateService);
   private unsubRefresh: (() => void) | null = null;
 
   private _control: InteractionRuleListViewState = initialControl;
@@ -120,5 +121,11 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
       onSuccess: () => {},
       onAfterUndo: () => this.refreshAfterUndo()
     });
+  }
+
+  ruleTypeLabel(code: string): string {
+    const key = `interaction_rules.form.rule_type_codes.${code}`;
+    const t = this.translate.instant(key);
+    return t !== key ? t : code;
   }
 }

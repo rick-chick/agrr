@@ -1,6 +1,7 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { PlanOptimizingComponent } from './plan-optimizing.component';
 import { PlanOptimizingViewState } from './plan-optimizing.view';
@@ -40,12 +41,25 @@ describe('PlanOptimizingComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [PlanOptimizingComponent],
+      imports: [PlanOptimizingComponent, TranslateModule.forRoot()],
       providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlanOptimizingComponent);
     component = fixture.componentInstance;
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    translate.setTranslation(
+      'en',
+      {
+        'plans.optimizing_live.back_to_plan': 'Back to plan',
+        'plans.optimizing_live.heading': 'Optimizing',
+        'plans.optimizing_live.progress_label': 'Progress: {{progress}}%'
+      },
+      true
+    );
   });
 
   it('renders progress without showing the redundant status label', () => {

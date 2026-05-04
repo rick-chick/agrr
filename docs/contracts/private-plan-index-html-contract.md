@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`CultivationPlanGateway#private_plan_index_page(user:)`** — ログインユーザーの **private 計画**を列挙し、作物数・圃場数を集計して DTO を組み立てる。
+- **`CultivationPlanGateway#private_plan_index_plan_rows(user:)`** — ログインユーザーの **private 計画**を列挙し、作物数・圃場数を集計して **`PrivatePlanIndexPlanRowDto`** の配列を返す。**`PrivatePlanIndexPageDto`** は Interactor 成功時に **`PrivatePlanIndexPageAssembler`** で組み立てる。
 
 ## Controller
 

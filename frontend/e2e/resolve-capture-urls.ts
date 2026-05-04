@@ -25,6 +25,28 @@ function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
 }
 
+/** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
+async function fetchEntryScheduleCropIdForFarm(
+  api: APIRequestContext,
+  base: string,
+  farmId: number,
+): Promise<number | null> {
+  const res = await api.get(
+    `${base}/api/v1/public_plans/entry_schedule/crops?farm_id=${farmId}&limit=20`,
+    { failOnStatusCode: false },
+  );
+  if (!res.ok()) return null;
+  try {
+    const data = (await res.json()) as { crops?: Array<{ id?: unknown }> };
+    const crops = data?.crops;
+    if (!Array.isArray(crops) || crops.length === 0) return null;
+    const first = crops.find((c) => c?.id != null);
+    return first != null ? Number(first.id) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function jsonArrayFirstId(res: Awaited<ReturnType<APIRequestContext['get']>>): Promise<number | null> {
   if (!res.ok()) return null;
   try {
@@ -66,7 +88,13 @@ export async function buildResolvedCaptureIds(
   }
 
   const farmId = masters['farms'] ?? null;
-  const cropId = masters['crops'] ?? null;
+  let cropId: number | null = null;
+  if (farmId != null) {
+    cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
+  }
+  if (cropId == null) {
+    cropId = masters['crops'] ?? null;
+  }
 
   const publicPlanId = await probePublicPlanId(api, base);
 

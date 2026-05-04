@@ -14,8 +14,8 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          # 失敗時は編集フォームを再表示
           error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          @view.flash.now[:alert] = error_message
           @view.render :edit, status: :unprocessable_entity
         end
       end

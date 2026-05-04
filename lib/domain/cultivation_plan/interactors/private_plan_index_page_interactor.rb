@@ -22,7 +22,8 @@ module Domain
             return
           end
 
-          dto = @gateway.private_plan_index_page(user: user)
+          plan_rows = @gateway.private_plan_index_plan_rows(user: user)
+          dto = Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: plan_rows)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

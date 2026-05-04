@@ -108,16 +108,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement optimization_plan_snapshot"
         end
 
-        # プライベート計画「最適化進捗」HTML 用（認可つき）
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto]
-        def private_plan_optimizing_page_context(plan_id:, user:)
-          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_page_context"
+        # プライベート計画「最適化進捗」HTML 用（認可つき）。読み取りスナップショットのみ（PageDto は Assembler 側）。
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel]
+        def private_plan_optimizing_read_model(plan_id:, user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_read_model"
         end
 
-        # プライベート計画一覧（HTML index）
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto]
-        def private_plan_index_page(user:)
-          raise NotImplementedError, "Subclasses must implement private_plan_index_page"
+        # プライベート計画一覧（HTML index）の行データのみ
+        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto>]
+        def private_plan_index_plan_rows(user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_index_plan_rows"
         end
 
         # プライベート計画の読み取り専用スナップショット（認可つき）。View やガント埋め込み形は知らない。

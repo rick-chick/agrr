@@ -22,7 +22,11 @@ module Domain
             return
           end
 
-          dto = @farm_gateway.private_plan_new_page(user: user)
+          farm_choices = @farm_gateway.private_plan_new_farm_choices(user: user)
+          dto = Assemblers::PrivatePlanNewPageAssembler.call(
+            farm_choices: farm_choices,
+            default_plan_name: @translator.t("plans.default_plan_name")
+          )
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

@@ -1,0 +1,54 @@
+# frozen_string_literal: true
+
+module Domain
+  module Crop
+    module Interactors
+      class CropToggleTaskTemplateInteractor
+        def initialize(output_port:, user_id:, crop_id:, agricultural_task_id:, gateway:, agricultural_task_gateway:, toggle_service:, translator:, logger:, user_lookup:)
+          @output_port = output_port
+          @user_id = user_id
+          @crop_id = crop_id
+          @agricultural_task_id = agricultural_task_id
+          @gateway = gateway
+          @agricultural_task_gateway = agricultural_task_gateway
+          @toggle_service = toggle_service
+          @translator = translator
+          @logger = logger
+          @user_lookup = user_lookup
+        end
+
+        def call
+          user = begin
+            @user_lookup.find(@user_id)
+          rescue Domain::Shared::Exceptions::RecordNotFound => e
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+            return
+          end
+
+          crop = begin
+            @gateway.find_authorized_model_for_edit(user, @crop_id)
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.not_found")))
+            return
+          end
+
+          agricultural_task = begin
+            @agricultural_task_gateway.find_model(@agricultural_task_id)
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.task_not_found")))
+            return
+          end
+
+          result = @toggle_service.call(crop: crop, agricultural_task: agricultural_task)
+          @output_port.on_success(result)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
+        rescue StandardError => e
+          bt = e.backtrace&.join("\n").to_s
+          @logger.error("[CropToggleTaskTemplateInteractor] #{e.class}: #{e.message}\n#{bt}")
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.toggle_task_template_failed")))
+        end
+      end
+    end
+  end
+end

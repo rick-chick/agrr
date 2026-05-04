@@ -129,6 +129,21 @@ class AgriculturalTasksController < ApplicationController
     end
   end
 
+  def after_agricultural_task_create_failure
+    task_attributes = build_task_attributes
+    @agricultural_task = current_user.agricultural_tasks.build(
+      name: task_attributes[:name],
+      description: task_attributes[:description],
+      time_per_sqm: task_attributes[:time_per_sqm],
+      weather_dependency: task_attributes[:weather_dependency],
+      skill_level: task_attributes[:skill_level],
+      is_reference: task_attributes[:is_reference],
+      required_tools: task_attributes[:required_tools],
+      region: task_attributes[:region]
+    )
+    @agricultural_task.valid?
+  end
+
   private
 
   def set_agricultural_task

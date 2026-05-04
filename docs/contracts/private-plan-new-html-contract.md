@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`FarmGateway#private_plan_new_page(user:)`** — **`user_owned_records(user)` と同等のスコープ**で農場を **`id` 昇順**に読み、圃場は **`Field`** を農場 ID で **`GROUP BY`** し、**`COUNT(*)` / `SUM(area)`**（欠損は 0）で件数・面積を DTO に詰める。
+- **`FarmGateway#private_plan_new_farm_choices(user:)`** — **`user_owned_records(user)` と同等のスコープ**で農場を **`id` 昇順**に読み、圃場は **`Field`** を農場 ID で **`GROUP BY`** し、**`COUNT(*)` / `SUM(area)`**（欠損は 0）で件数・面積を **`PrivatePlanNewFarmChoiceDto`** の配列に詰める。**`PrivatePlanNewPageDto`**（`default_plan_name` を含む）は Interactor 成功時に **`PrivatePlanNewPageAssembler`**（`translator.t("plans.default_plan_name")` を含む）で組み立てる。
 
 ## Controller
 

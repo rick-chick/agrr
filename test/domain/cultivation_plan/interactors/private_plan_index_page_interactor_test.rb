@@ -18,16 +18,19 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       display_name: "Plan",
       created_at: Time.zone.parse("2026-01-01 12:00:00")
     )
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: [ row ])
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: [ row ])
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).with(user: user).returns(dto)
+    gateway.expects(:private_plan_index_plan_rows).with(user: user).returns([ row ])
 
     translator = mock
     logger = mock
 
     output = mock
-    output.expects(:on_success).with(dto)
+    output.expects(:on_success).with do |actual|
+      assert_equal dto.plan_rows, actual.plan_rows
+      true
+    end
 
     Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
       output_port: output,
@@ -45,7 +48,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).raises(StandardError.new("db"))
+    gateway.expects(:private_plan_index_plan_rows).raises(StandardError.new("db"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.restart").returns("再開")
@@ -79,7 +82,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).raises(
+    gateway.expects(:private_plan_index_plan_rows).raises(
       Domain::Shared::Exceptions::PersistenceFailed.new("db")
     )
 
@@ -118,7 +121,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     logger.expects(:warn).with(includes("user_record_not_found"))
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).never
+    gateway.expects(:private_plan_index_plan_rows).never
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -142,7 +145,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
+    gateway.expects(:private_plan_index_plan_rows).raises(Domain::Shared::Exceptions::RecordNotFound.new("nf"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つからない")
@@ -172,7 +175,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(9).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_index_page).raises(NoMethodError.new("bug"))
+    gateway.expects(:private_plan_index_plan_rows).raises(NoMethodError.new("bug"))
 
     translator = mock
     logger = mock

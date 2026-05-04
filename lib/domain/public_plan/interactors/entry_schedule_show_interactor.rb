@@ -24,6 +24,7 @@ module Domain
             prediction_end_date_raw: prediction_end_date_raw,
             reference_date: reference_date
           )
+
           result = @optimization_runner.call(
             crop: crop,
             weather_payload: payload_hash,
@@ -56,6 +57,12 @@ module Domain
             crop_fragment: crop_detail
           )
           @output_port.on_success(dto)
+        rescue Domain::PublicPlan::Exceptions::WeatherLocationMissingError
+          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_location_required)
+        rescue Domain::PublicPlan::Exceptions::PredictionPayloadMissingError
+          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.prediction_payload_missing)
+        rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
+          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_prediction_failed(e.message))
         end
       end
     end

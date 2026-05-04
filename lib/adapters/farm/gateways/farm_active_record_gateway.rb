@@ -160,7 +160,7 @@ module Adapters
           ::Farm.user_owned.by_user(user)
         end
 
-        def private_plan_new_page(user:)
+        def private_plan_new_farm_choices(user:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
             farms = user_owned_records(user).order(:id).to_a
             farm_ids = farms.map(&:id)
@@ -174,7 +174,7 @@ module Adapters
               stats_by_farm = rows.to_h { |farm_id, cnt, sum_area| [ farm_id, [ cnt, sum_area.to_f ] ] }
             end
 
-            choices = farms.map do |f|
+            farms.map do |f|
               cnt, total_area = stats_by_farm[f.id] || [ 0, 0.0 ]
               Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto.new(
                 id: f.id,
@@ -185,10 +185,6 @@ module Adapters
                 fields_total_area: total_area
               )
             end
-            Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto.new(
-              farm_choices: choices,
-              default_plan_name: @translator.t("plans.default_plan_name")
-            )
           end
         end
 

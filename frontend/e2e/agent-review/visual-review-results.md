@@ -4,6 +4,7 @@
 - **対象**: `route-to-png.md` 表 #1–#52（全ルート）
 - **キャプチャ条件**: `npm run e2e:capture-for-agent:with-api`（`E2E_CAPTURE_DEV_SESSION=1`）。Rails development を `E2E_API_ORIGIN`（既定 `http://127.0.0.1:3000`）へ向け、`e2e/.auth/dev-session.json` でセッション付きキャプチャ。`**e2e/resolve-capture-urls.ts`** が一覧 API から実在 id を取得し、マニフェストの placeholder `1` を URL 組み立てで差し替える（多桁 id での誤置換はしない）。
 - **スキル**: `frontend-agent-visual-review`
+- **フォローアップ実装（リポジトリ）**: 静的ページ・ログインの i18n 整合、`resolve-capture-urls` の farm 整合 cropId、`GET /api/v1/plans/:id/task_schedule` の追加、レビュー注意項目（#6/#20/#26/#37–41/#48/#52）の一部を反映済み。再キャプチャで OK／要確認が更新される想定。
 
 ## サマリ表（1 画面 1 行）
 

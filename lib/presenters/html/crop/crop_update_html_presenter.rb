@@ -14,7 +14,7 @@ module Presenters
 
         def on_failure(error_dto)
           @view.flash.now[:alert] = error_dto.message
-          # @crop はコントローラでセットされている前提
+          @view.after_crop_update_failure
           @view.render_form(:edit, status: :unprocessable_entity)
         end
       end

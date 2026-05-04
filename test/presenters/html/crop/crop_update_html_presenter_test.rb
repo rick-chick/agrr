@@ -29,6 +29,7 @@ class CropUpdateHtmlPresenterTest < ActiveSupport::TestCase
     flash_mock.expects(:now).returns(flash_now_mock)
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
+    view_mock.expects(:after_crop_update_failure)
     view_mock.expects(:render_form).with(:edit, status: :unprocessable_entity)
 
     presenter.on_failure(error_dto)

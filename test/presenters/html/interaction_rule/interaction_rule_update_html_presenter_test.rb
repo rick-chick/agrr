@@ -26,6 +26,11 @@ class InteractionRuleUpdateHtmlPresenterTest < ActiveSupport::TestCase
     error_dto = mock
     error_dto.expects(:message).returns("Test error")
 
+    flash_now = mock
+    flash_now.expects(:[]=).with(:alert, "Test error")
+    flash_mock = mock
+    flash_mock.expects(:now).returns(flash_now)
+    view_mock.expects(:flash).returns(flash_mock)
     view_mock.expects(:render).with(:edit, status: :unprocessable_entity)
 
     presenter.on_failure(error_dto)

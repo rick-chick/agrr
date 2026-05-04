@@ -56,9 +56,7 @@ import { TranslateModule } from '@ngx-translate/core';
         <p class="page-section-content">{{ 'pages.terms.article9.content' | translate }}</p>
 
         <h2 class="page-section-title">{{ 'pages.terms.article10.title' | translate }}</h2>
-        <p class="page-section-content">
-          {{ 'pages.terms.article10.content' | translate }}
-        </p>
+        <p class="page-section-content" [innerHTML]="'pages.terms.article10.content_html' | translate"></p>
 
         <p class="page-footer-text-right">{{ 'pages.terms.effective_date' | translate }}</p>
       </div>

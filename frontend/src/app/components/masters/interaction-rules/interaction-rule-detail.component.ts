@@ -39,7 +39,7 @@ const initialControl: InteractionRuleDetailViewState = {
           <dl class="detail-card__list">
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'interaction_rules.show.rule_type' | translate }}</dt>
-              <dd class="detail-row__value">{{ control.rule.rule_type }}</dd>
+              <dd class="detail-row__value">{{ ruleTypeLabel(control.rule.rule_type) }}</dd>
             </div>
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'interaction_rules.show.source_group' | translate }}</dt>
@@ -131,5 +131,11 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
       interactionRuleId: this.control.rule.id,
       onSuccess: () => this.router.navigate(['/interaction_rules'])
     });
+  }
+
+  ruleTypeLabel(code: string): string {
+    const key = `interaction_rules.form.rule_type_codes.${code}`;
+    const t = this.translate.instant(key);
+    return t !== key ? t : code;
   }
 }

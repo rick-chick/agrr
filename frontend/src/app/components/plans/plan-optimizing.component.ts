@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
@@ -17,7 +18,7 @@ const initialControl: PlanOptimizingViewState = {
 @Component({
   selector: 'app-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   providers: [
     PlanOptimizingPresenter,
     SubscribePlanOptimizationUseCase,
@@ -26,9 +27,9 @@ const initialControl: PlanOptimizingViewState = {
   ],
   template: `
     <section class="page">
-      <a [routerLink]="['/plans', planId]">Back to plan</a>
-      <h2>Optimizing</h2>
-      <p>Progress: {{ control.progress }}%</p>
+      <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
+      <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>
+      <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
     </section>
   `,
   styles: [

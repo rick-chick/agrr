@@ -11,9 +11,9 @@ const RAILS_LOCALES: RailsLocale[] = ['ja', 'us', 'in'];
   imports: [TranslateModule],
   template: `
     <section class="login">
-      <h1>{{ 'login.title' | translate }}</h1>
-      <p>{{ 'login.description' | translate }}</p>
-      <a class="login-button" [href]="loginUrl">Google OAuth</a>
+      <h1>{{ 'auth.login.title' | translate }}</h1>
+      <p>{{ 'auth.login.description' | translate }}</p>
+      <a class="login-button" [href]="loginUrl">{{ 'auth.login.google_button' | translate }}</a>
     </section>
   `,
   styleUrls: ['./login.component.css']

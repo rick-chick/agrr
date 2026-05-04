@@ -343,9 +343,9 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def private_plan_optimizing_page_context(plan_id:, user:)
+        def private_plan_optimizing_read_model(plan_id:, user:)
           plan = PlanPolicy.private_scope(user).includes(:farm, :cultivation_plan_crops).find(plan_id)
-          Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto.new(
+          Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel.new(
             id: plan.id,
             plan_year: plan.plan_year,
             farm_display_name: plan.farm.display_name,
@@ -428,7 +428,7 @@ module Adapters
         end
 
         # 部分 select の列は CultivationPlan#display_name（private）が参照する属性と一致させること
-        def private_plan_index_page(user:)
+        def private_plan_index_plan_rows(user:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
             plans = ::CultivationPlan
                       .plan_type_private
@@ -459,7 +459,7 @@ module Adapters
             end
 
             ordered_plans = plans.group_by(&:farm_id).values.flatten
-            rows = ordered_plans.map do |p|
+            ordered_plans.map do |p|
               Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto.new(
                 id: p.id,
                 farm_display_name: p.farm.display_name,
@@ -471,8 +471,6 @@ module Adapters
                 created_at: p.created_at
               )
             end
-
-            Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: rows)
           end
         end
 

@@ -157,24 +157,33 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert rows.first.weather_data_status_text.present?
   end
 
-  test "private_plan_new_page returns empty page when user has no farms" do
+  test "private_plan_new_farm_choices returns empty array when user has no farms" do
     other = create(:user)
     create(:farm, user: other, is_reference: false)
 
-    dto = @gateway.private_plan_new_page(user: @user)
+    choices = @gateway.private_plan_new_farm_choices(user: @user)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
+      farm_choices: choices,
+      default_plan_name: I18n.t("plans.default_plan_name")
+    )
+    assert_empty choices
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto, dto
     assert dto.empty?
     assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
   end
 
-  test "private_plan_new_page returns choices ordered by farm id with field aggregates" do
+  test "private_plan_new_farm_choices returns choices ordered by farm id with field aggregates" do
     a = create(:farm, user: @user, is_reference: false, name: "A", latitude: 35.0, longitude: 138.0)
     b = create(:farm, user: @user, is_reference: false, name: "B", latitude: 36.0, longitude: 139.0)
     low, high = [ a, b ].minmax_by(&:id)
     create(:field, farm: low, area: 10.0)
     create(:field, farm: low, area: 5.0)
 
-    dto = @gateway.private_plan_new_page(user: @user)
+    choices = @gateway.private_plan_new_farm_choices(user: @user)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
+      farm_choices: choices,
+      default_plan_name: I18n.t("plans.default_plan_name")
+    )
     refute dto.empty?
     assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
     assert_equal [ low.id, high.id ], dto.farm_choices.map(&:id)

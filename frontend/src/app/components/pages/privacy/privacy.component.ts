@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
       <h1 class="page-header">{{ 'pages.privacy.heading' | translate }}</h1>
       
       <div class="page-content">
-        <p class="page-section-content" [innerHTML]="'pages.privacy.intro' | translate"></p>
+        <p class="page-section-content" [innerHTML]="'pages.privacy.intro_html' | translate"></p>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section1.title' | translate }}</h2>
         <p class="page-section-content">{{ 'pages.privacy.section1.intro' | translate }}</p>
@@ -37,10 +37,10 @@ import { TranslateModule } from '@ngx-translate/core';
         </ul>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section4.title' | translate }}</h2>
-        <p class="page-section-content" [innerHTML]="'pages.privacy.section4.content' | translate"></p>
+        <p class="page-section-content" [innerHTML]="'pages.privacy.section4.content_html' | translate"></p>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section5.title' | translate }}</h2>
-        <p class="page-section-content" [innerHTML]="'pages.privacy.section5.content' | translate"></p>
+        <p class="page-section-content" [innerHTML]="'pages.privacy.section5.content_html' | translate"></p>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section6.title' | translate }}</h2>
         <p class="page-section-content">{{ 'pages.privacy.section6.content' | translate }}</p>
@@ -49,9 +49,7 @@ import { TranslateModule } from '@ngx-translate/core';
         <p class="page-section-content">{{ 'pages.privacy.section7.content' | translate }}</p>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section8.title' | translate }}</h2>
-        <p class="page-section-content">
-          {{ 'pages.privacy.section8.content' | translate }}
-        </p>
+        <p class="page-section-content" [innerHTML]="'pages.privacy.section8.content_html' | translate"></p>
 
         <p class="page-footer-text-right">{{ 'pages.privacy.last_updated' | translate }}</p>
       </div>

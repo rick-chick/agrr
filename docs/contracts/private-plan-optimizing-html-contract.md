@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`CultivationPlanGateway#private_plan_optimizing_page_context(plan_id:, user:)`** — **`PlanPolicy.private_scope(user)`** で所有 private 計画のみ取得し、**`includes(:farm, :cultivation_plan_crops)`** で N+1 を避けつつ上記 DTO を返す（他ユーザ・不存在は `RecordNotFound`）。
+- **`CultivationPlanGateway#private_plan_optimizing_read_model(plan_id:, user:)`** — **`PlanPolicy.private_scope(user)`** で所有 private 計画のみ取得し、**`includes(:farm, :cultivation_plan_crops)`** で N+1 を避けつつ **`PrivatePlanOptimizingReadModel`**（画面非依存の読み取り用スナップショット）を返す（他ユーザ・不存在は `RecordNotFound`）。**`PrivatePlanOptimizingPageDto`** は Interactor 成功時に **`PrivatePlanOptimizingPageAssembler`** で組み立てる。
 
 ## Controller
 

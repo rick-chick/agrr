@@ -14,6 +14,7 @@ module Presenters
 
         def on_failure(error_dto)
           @view.flash.now[:alert] = error_dto.message
+          @view.after_agricultural_task_create_failure
           @view.render :new, status: :unprocessable_entity
         end
       end

@@ -283,6 +283,38 @@ module CompositionRoot
       )
     end
 
+    def entry_schedule_reference_farm_loader
+      @entry_schedule_reference_farm_loader ||= lambda do |farm_id|
+        raise Domain::Shared::Exceptions::RecordNotFound, "farm_id is required" if farm_id.blank?
+
+        farm = ::Farm.find(farm_id)
+        raise Domain::Shared::Exceptions::RecordNotFound, "not a reference farm" unless farm.reference?
+
+        farm
+      rescue ActiveRecord::RecordNotFound => e
+        raise Domain::Shared::Exceptions::RecordNotFound, e.message
+      end
+    end
+
+    def entry_schedule_resolve_reference_farm_interactor(output_port:)
+      Domain::PublicPlan::Interactors::EntryScheduleResolveReferenceFarmInteractor.new(
+        output_port: output_port,
+        farm_loader: entry_schedule_reference_farm_loader
+      )
+    end
+
+    def entry_schedule_crops_index_interactor(output_port:)
+      Domain::PublicPlan::Interactors::EntryScheduleCropsIndexInteractor.new(
+        output_port: output_port,
+        weather_loader: entry_schedule_weather_loader_adapter,
+        crop_gateway: crop_gateway,
+        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter,
+        translator: translator,
+        clock: Time.zone,
+        logger: logger
+      )
+    end
+
     def entry_schedule_show_interactor(output_port:, clock: Time.zone)
       Domain::PublicPlan::Interactors::EntryScheduleShowInteractor.new(
         output_port: output_port,
@@ -294,6 +326,33 @@ module CompositionRoot
       )
     end
 
+    def task_schedule_item_mutation_gateway
+      @task_schedule_item_mutation_gateway ||= Adapters::Plans::TaskScheduleItemActiveRecordMutationGateway.new(
+        logger: logger
+      )
+    end
+
+    def task_schedule_item_create_interactor(output_port:)
+      Domain::CultivationPlan::Interactors::TaskScheduleItemCreateInteractor.new(
+        output_port: output_port,
+        gateway: task_schedule_item_mutation_gateway
+      )
+    end
+
+    def task_schedule_item_update_interactor(output_port:)
+      Domain::CultivationPlan::Interactors::TaskScheduleItemUpdateInteractor.new(
+        output_port: output_port,
+        gateway: task_schedule_item_mutation_gateway
+      )
+    end
+
+    def task_schedule_item_complete_interactor(output_port:)
+      Domain::CultivationPlan::Interactors::TaskScheduleItemCompleteInteractor.new(
+        output_port: output_port,
+        gateway: task_schedule_item_mutation_gateway
+      )
+    end
+
     def task_schedule_generate_interactor(clock: Time.zone)
       Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
         progress_gateway: agrr_progress_gateway,
@@ -301,6 +360,14 @@ module CompositionRoot
         clock: clock,
         cultivation_plan_gateway: cultivation_plan_gateway
       )
+    end
+
+    def crop_task_schedule_blueprint_create_service
+      @crop_task_schedule_blueprint_create_service ||= CropTaskScheduleBlueprintCreateService.new
+    end
+
+    def crop_toggle_task_template_service
+      @crop_toggle_task_template_service ||= CropToggleTaskTemplateService.new
     end
 
     private

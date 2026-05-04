@@ -119,10 +119,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement farm_list_rows_from_entities"
         end
 
-        # プライベート計画ウィザード「農場選択」HTML 用
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto]
-        def private_plan_new_page(user:)
-          raise NotImplementedError, "Subclasses must implement private_plan_new_page"
+        # プライベート計画ウィザード「農場選択」HTML 用の農場選択肢のみ（PageDto は Assembler 側）
+        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto>]
+        def private_plan_new_farm_choices(user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_new_farm_choices"
         end
       end
     end

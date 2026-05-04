@@ -14,6 +14,7 @@ module Presenters
 
         def on_failure(error_dto)
           @view.flash.now[:alert] = error_dto.message
+          @view.after_crop_create_failure
           @view.render_form(:new, status: :unprocessable_entity)
         end
       end

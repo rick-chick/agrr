@@ -121,6 +121,7 @@ Rails.application.routes.draw do
         post "api_keys/regenerate", to: "api_keys#regenerate"
         # Plans summary endpoints
         get "plans", to: "plans#index"
+        get "plans/:id/task_schedule", to: "plans/task_schedules#show"
         get "plans/:id", to: "plans#show"
         post "plans", to: "plans#create"
         delete "plans/:id", to: "plans#destroy"

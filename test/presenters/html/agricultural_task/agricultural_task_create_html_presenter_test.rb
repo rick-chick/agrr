@@ -29,6 +29,7 @@ class AgriculturalTaskCreateHtmlPresenterTest < ActiveSupport::TestCase
     flash_mock.expects(:now).returns(flash_now_mock)
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
+    view_mock.expects(:after_agricultural_task_create_failure)
     view_mock.expects(:render).with(:new, status: :unprocessable_entity)
 
     presenter.on_failure(error_dto)

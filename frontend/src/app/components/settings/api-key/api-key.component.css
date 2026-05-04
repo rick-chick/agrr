@@ -29,3 +29,25 @@ button {
 .secondary {
   background: #64748b;
 }
+
+/* 再生成はプライマリトークンで視認性を揃える（generate と同等の強調） */
+.btn-primary.api-key-regenerate {
+  background: var(--color-primary, #2563eb);
+  color: var(--color-text-on-primary, #ffffff);
+  min-height: 44px;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary.api-key-regenerate:hover:not(:disabled) {
+  background: var(--color-primary-hover, #1d4ed8);
+}
+
+.btn-primary.api-key-regenerate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
