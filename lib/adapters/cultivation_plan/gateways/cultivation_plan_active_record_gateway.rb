@@ -220,11 +220,11 @@ module Adapters
           true
         end
 
-        def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil, logger:)
+        def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
           PlanCopyGateway.copy_private_plan_for_year(
             source_cultivation_plan_id: source_cultivation_plan_id,
             new_year: new_year,
-            user: user,
+            user_id: user_id,
             session_id: session_id,
             logger: logger
           )

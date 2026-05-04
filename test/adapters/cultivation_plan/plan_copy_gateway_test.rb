@@ -153,7 +153,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: new_year,
-      user: user,
+      user_id: user.id,
       logger: log
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
@@ -186,7 +186,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 1,
-      user: user,
+      user_id: user.id,
       session_id: sid,
       logger: CapturingLogger.new
     )
@@ -215,7 +215,7 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 2,
-      user: user,
+      user_id: user.id,
       logger: CapturingLogger.new
     )
     new_plan = ::CultivationPlan.find(new_entity.id)

@@ -11,11 +11,11 @@ module Domain
           end
         end
 
-        def initialize(source_plan:, new_year:, user:, session_id: nil, logger:,
+        def initialize(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:,
                        gateway:)
-          @source_plan = source_plan
+          @source_cultivation_plan_id = source_cultivation_plan_id
           @new_year = new_year
-          @user = user
+          @user_id = user_id
           @session_id = session_id
           @gateway = gateway
           @logger = logger
@@ -24,9 +24,9 @@ module Domain
         def call
           @gateway.within_transaction do
             new_plan = @gateway.copy_private_plan_for_year(
-              source_cultivation_plan_id: @source_plan.id,
+              source_cultivation_plan_id: @source_cultivation_plan_id,
               new_year: @new_year,
-              user: @user,
+              user_id: @user_id,
               session_id: @session_id,
               logger: @logger
             )

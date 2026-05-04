@@ -10,9 +10,9 @@ module Adapters
       #   推奨: {Domain::Logger::Gateways::LoggerGateway} のサブクラス
       #   （{Adapters::Logger::Gateways::RailsLoggerGateway}、テストでは test/support/capturing_logger.rb の CapturingLogger）。
       #   注入は CompositionRoot.logger 経由を想定。
-      def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user:, session_id: nil, logger:)
+      def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
         source_plan = ::CultivationPlan.find(source_cultivation_plan_id)
-        ar_user = Adapters::Shared::UserActorResolver.user_for_deleted_by(user)
+        ar_user = ::User.find(user_id)
         planning_dates = ::CultivationPlan.calculate_planning_dates(new_year)
 
         plan_attrs = {
