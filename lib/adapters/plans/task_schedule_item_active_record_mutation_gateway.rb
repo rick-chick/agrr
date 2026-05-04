@@ -57,6 +57,10 @@ module Adapters
             build_create_attributes(attrs.except(:crop_task_template_id), template: template)
           )
         end
+      rescue ActiveRecord::RecordInvalid => e
+        raise_domain_record_invalid!(e.record, e.message)
+      rescue ActiveRecord::RecordNotFound
+        raise Domain::Shared::Exceptions::RecordNotFound
       end
 
       def update_item!(item, attributes)
@@ -65,6 +69,10 @@ module Adapters
           item.update!(attrs)
         end
         item
+      rescue ActiveRecord::RecordInvalid => e
+        raise_domain_record_invalid!(e.record, e.message)
+      rescue ActiveRecord::RecordNotFound
+        raise Domain::Shared::Exceptions::RecordNotFound
       end
 
       def complete_item!(item, actual_date:, actual_notes:, completed_at:)
@@ -77,6 +85,10 @@ module Adapters
           )
         end
         item
+      rescue ActiveRecord::RecordInvalid => e
+        raise_domain_record_invalid!(e.record, e.message)
+      rescue ActiveRecord::RecordNotFound
+        raise Domain::Shared::Exceptions::RecordNotFound
       end
 
       def serialize_item(item)
@@ -130,7 +142,7 @@ module Adapters
 
         record = TaskScheduleItem.new
         record.errors.add(:base, I18n.t("plans.task_schedules.detail.actions.crop_required"))
-        raise ActiveRecord::RecordInvalid, record
+        raise_domain_record_invalid!(record)
       end
 
       def validate_template!(field_cultivation, template)
@@ -144,7 +156,7 @@ module Adapters
             default: "選択した作業テンプレートは利用できません"
           )
           record.errors.add(:base, message)
-          raise ActiveRecord::RecordInvalid, record
+          raise_domain_record_invalid!(record)
         end
       end
 
@@ -163,7 +175,7 @@ module Adapters
                   default: "無効な日付が指定されました"
                 )
               )
-              raise ActiveRecord::RecordInvalid, record
+              raise_domain_record_invalid!(record)
             end
 
           attributes["scheduled_date"] = new_date
@@ -191,7 +203,7 @@ module Adapters
           default: "作業名を入力してください"
         )
         record.errors.add(:name, message)
-        raise ActiveRecord::RecordInvalid, record
+        raise_domain_record_invalid!(record)
       end
 
       def apply_amount_unit_conversion(task_schedule_item, attributes)
@@ -282,6 +294,13 @@ module Adapters
         return false if left.nil? || right.nil?
 
         (left - right).abs <= CONVERSION_TOLERANCE
+      end
+
+      def raise_domain_record_invalid!(record, message = nil)
+        errors = record.errors.to_hash(true).transform_keys(&:to_s)
+        errors.transform_values! { |messages| Array(messages).compact }
+        msg = message || errors.values.flatten.compact.first
+        raise Domain::Shared::Exceptions::RecordInvalid.new(msg, errors: errors, record: nil)
       end
     end
   end

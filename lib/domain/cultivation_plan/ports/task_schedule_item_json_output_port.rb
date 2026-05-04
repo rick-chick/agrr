@@ -12,7 +12,7 @@ module Domain
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
 
-        def on_record_invalid(record, fallback_message)
+        def on_record_invalid(errors:, fallback_message:)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
 

@@ -23,10 +23,24 @@ module Domain
             completed_at: completed_at
           )
           @output_port.on_success(@gateway.serialize_item(item.reload))
-        rescue ActiveRecord::RecordInvalid => e
-          @output_port.on_record_invalid(e.record, e.message)
-        rescue ActiveRecord::RecordNotFound
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_record_invalid(
+            errors: normalize_errors(e.errors),
+            fallback_message: e.message
+          )
+        rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_not_found
+        end
+
+        private
+
+        def normalize_errors(errors)
+          return errors if errors.is_a?(Hash)
+          return {} unless errors.respond_to?(:to_hash)
+
+          hash = errors.to_hash(true).transform_keys(&:to_s)
+          hash.transform_values! { |messages| Array(messages).compact }
+          hash
         end
       end
     end

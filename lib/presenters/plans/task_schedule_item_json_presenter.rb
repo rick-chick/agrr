@@ -15,8 +15,8 @@ module Presenters
         @view.render json: item_payload
       end
 
-      def on_record_invalid(record, fallback_message)
-        errors = build_error_hash(record, fallback_message)
+      def on_record_invalid(errors:, fallback_message:)
+        errors = build_error_hash(errors, fallback_message)
         message = errors.values.flatten.compact.first || fallback_message
         @view.render json: { error: message, errors: errors }, status: :unprocessable_entity
       end
@@ -33,10 +33,16 @@ module Presenters
 
       private
 
-      def build_error_hash(record, fallback_message)
-        return { "base" => [ fallback_message ] } unless record&.respond_to?(:errors)
+      def build_error_hash(errors_input, fallback_message)
+        errors =
+          if errors_input.is_a?(Hash)
+            errors_input.transform_keys(&:to_s)
+          elsif errors_input&.respond_to?(:to_hash)
+            errors_input.to_hash(true).transform_keys(&:to_s)
+          else
+            return { "base" => [ fallback_message ] }
+          end
 
-        errors = record.errors.to_hash(true).transform_keys(&:to_s)
         errors.transform_values! { |messages| Array(messages).compact }
         errors["base"] = Array(errors["base"]).presence || [ fallback_message ]
         errors.delete_if { |_attribute, messages| messages.empty? }
