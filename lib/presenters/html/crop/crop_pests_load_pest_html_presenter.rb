@@ -12,8 +12,8 @@ module Presenters
           @view.instance_variable_set(:@pest, pest)
         end
 
-        def on_not_found(crop)
-          @view.redirect_to @view.crop_pests_path(crop), alert: I18n.t("crops.pests.flash.not_found")
+        def on_not_found(crop_id:)
+          @view.redirect_to @view.crop_pests_path(crop_id), alert: I18n.t("crops.pests.flash.not_found")
         end
       end
     end

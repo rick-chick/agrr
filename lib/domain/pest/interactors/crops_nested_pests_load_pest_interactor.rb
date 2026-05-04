@@ -9,13 +9,12 @@ module Domain
           @pest_gateway = pest_gateway
         end
 
-        def call(crop, pest_id)
-          crop_id = crop.respond_to?(:id) ? crop.id : crop
+        def call(crop_id:, pest_id:)
           result = @pest_gateway.find_pest_in_crop(crop_id: crop_id, pest_id: pest_id)
           if result[:status] == :found
             @output_port.on_success(result[:pest_record])
           else
-            @output_port.on_not_found(crop)
+            @output_port.on_not_found(crop_id: crop_id)
           end
         end
       end

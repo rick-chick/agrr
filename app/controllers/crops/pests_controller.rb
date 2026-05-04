@@ -73,7 +73,8 @@ module Crops
 
     def load_nested_pest
       presenter = Presenters::Html::Crop::CropPestsLoadPestHtmlPresenter.new(view: self)
-      Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(output_port: presenter, pest_gateway: CompositionRoot.pest_gateway).call(@crop, params[:id])
+      Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(output_port: presenter,
+        pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id, pest_id: params[:id])
     end
 
     def pest_params
