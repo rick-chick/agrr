@@ -7,6 +7,9 @@
 # - 圃場・作物設定を構築
 # - 交互作用ルールを構築
 # - 最適化結果をデータベースに保存
+#
+# adjust_with_db_weather 内の rescue StandardError は、HTTP ではなく { success:, message:, status: } ハッシュを返す
+# インフラ段階のフォールバック（Controller の broad rescue 主経路とは別）。
 module AgrrOptimization
   extend ActiveSupport::Concern
 

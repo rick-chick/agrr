@@ -107,6 +107,13 @@ module CompositionRoot
       )
     end
 
+    def api_private_plan_job_chain_enqueuer
+      @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
+        logger: logger,
+        clock: Time.zone
+      )
+    end
+
     def plan_allocation_gateway
       @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationGatewayAdapter.new
     end

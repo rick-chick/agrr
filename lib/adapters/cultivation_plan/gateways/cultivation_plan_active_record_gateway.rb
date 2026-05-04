@@ -80,6 +80,7 @@ module Adapters
             Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(cultivation_plan: entity, errors: [])
           end
         rescue StandardError => e
+          # アダプタ境界: 永続化の例外を Result に畳み、Interactor が on_failure へ載せられるようにする（domain は AR を掴まない）。
           Rails.logger.error "❌ CultivationPlan creation failed: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
           Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ e.message ])

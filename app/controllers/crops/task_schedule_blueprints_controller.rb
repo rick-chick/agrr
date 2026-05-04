@@ -43,6 +43,7 @@ module Crops
       else
         render json: { error: @blueprint.errors.full_messages.join(", ") }, status: :unprocessable_entity
       end
+      # HTML/JSON 部分更新の予期せぬ失敗用。モデル化失敗は上の save 分岐で扱う。
     rescue StandardError => e
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to update position: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))

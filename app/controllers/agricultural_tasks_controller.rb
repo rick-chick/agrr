@@ -84,22 +84,24 @@ class AgriculturalTasksController < ApplicationController
 
     # Interactor 成功後は is_reference/user_id が更新済みのため reload してから作物紐付けを行う
     @agricultural_task.reload
-    update_crop_task_templates(selected_crop_ids)
-  rescue StandardError => e
-    @agricultural_task.assign_attributes(
-      name: @input_dto&.name || task_attributes[:name],
-      description: @input_dto&.description || task_attributes[:description],
-      time_per_sqm: @input_dto&.time_per_sqm || task_attributes[:time_per_sqm],
-      weather_dependency: @input_dto&.weather_dependency || task_attributes[:weather_dependency],
-      skill_level: @input_dto&.skill_level || task_attributes[:skill_level],
-      is_reference: @input_dto&.is_reference || task_attributes[:is_reference],
-      required_tools: @input_dto&.required_tools || task_attributes[:required_tools],
-      region: @input_dto&.region || task_attributes[:region]
-    )
-    @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
-    prepare_crop_cards(selected_ids: selected_crop_ids)
-    flash.now[:alert] = e.message
-    render :edit, status: :unprocessable_entity
+    begin
+      update_crop_task_templates(selected_crop_ids)
+    rescue StandardError => e
+      @agricultural_task.assign_attributes(
+        name: @input_dto&.name || task_attributes[:name],
+        description: @input_dto&.description || task_attributes[:description],
+        time_per_sqm: @input_dto&.time_per_sqm || task_attributes[:time_per_sqm],
+        weather_dependency: @input_dto&.weather_dependency || task_attributes[:weather_dependency],
+        skill_level: @input_dto&.skill_level || task_attributes[:skill_level],
+        is_reference: @input_dto&.is_reference || task_attributes[:is_reference],
+        required_tools: @input_dto&.required_tools || task_attributes[:required_tools],
+        region: @input_dto&.region || task_attributes[:region]
+      )
+      @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
+      prepare_crop_cards(selected_ids: selected_crop_ids)
+      flash.now[:alert] = e.message
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   # DELETE /agricultural_tasks/:id

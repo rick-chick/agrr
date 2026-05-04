@@ -12,6 +12,8 @@ module DeletionUndoFlow
   # @param fallback_location [String] HTMLでのリダイレクト先パス
   # @param in_use_message_key [String, nil] 使用中で削除できない場合のI18nキー
   # @param delete_error_message_key [String] その他削除エラー時のI18nキー
+  #
+  # 最後の rescue StandardError は、上位で捕捉済み以外の予期せぬ失敗用。HTTP 応答形は render_deletion_failure に集約する。
   def schedule_deletion_with_undo(record:, toast_message:, fallback_location:, in_use_message_key: nil, delete_error_message_key:)
     event = DeletionUndo::Manager.schedule(
       record: record,

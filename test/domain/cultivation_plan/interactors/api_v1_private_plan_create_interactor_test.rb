@@ -1,0 +1,167 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module Domain
+  module CultivationPlan
+    module Interactors
+      class ApiV1PrivatePlanCreateInteractorTest < ActiveSupport::TestCase
+        setup do
+          @user = create(:user)
+          @farm_entity = Domain::Farm::Entities::FarmEntity.new(
+            id: 1,
+            name: "F",
+            latitude: 35.0,
+            longitude: 139.0,
+            region: "jp",
+            user_id: @user.id,
+            created_at: Time.current,
+            updated_at: Time.current,
+            is_reference: false
+          )
+          @crop_entity = Domain::Crop::Entities::CropEntity.new(
+            id: 10,
+            user_id: @user.id,
+            name: "C",
+            variety: "V",
+            is_reference: false,
+            area_per_unit: 1.0,
+            revenue_per_area: 1.0,
+            region: "jp",
+            groups: [],
+            crop_stages: [],
+            created_at: Time.current,
+            updated_at: Time.current
+          )
+          @gateway = mock("cultivation_plan_gateway")
+          @output_port = mock("output_port")
+          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+          @translator = Adapters::Translators::RailsTranslator.new
+          @clock = Object.new
+          def @clock.today
+            Date.new(2026, 6, 15)
+          end
+          @session_gen = -> { "sessionhex" }
+          @job_enqueuer = mock("job_enqueuer")
+        end
+
+        def interactor
+          ApiV1PrivatePlanCreateInteractor.new(
+            output_port: @output_port,
+            cultivation_plan_gateway: @gateway,
+            logger: @logger,
+            translator: @translator,
+            clock: @clock,
+            session_id_generator: @session_gen,
+            job_chain_enqueuer: @job_enqueuer
+          )
+        end
+
+        test "on_failure unprocessable when crop_ids empty" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [], user: @user)
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :unprocessable_entity, f.http_status
+            assert_equal @translator.t("plans.errors.select_crop"), f.message
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure not_found when farm missing" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 99, crop_ids: [ 10 ], user: @user)
+          @gateway.expects(:find_farm).with(99, @user).returns(nil)
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :not_found, f.http_status
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure not_found when no crops resolved" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_crops).returns([])
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :not_found, f.http_status
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure unprocessable when plan exists" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          existing = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 99, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
+            plan_year: nil, plan_name: "x",
+            planning_start_date: Date.current, planning_end_date: Date.current,
+            status: "draft", session_id: nil, display_name: "x",
+            cultivation_plan_crops_count: 0, cultivation_plan_fields_count: 0,
+            created_at: Time.current, updated_at: Time.current
+          )
+          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_existing).returns(existing)
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :unprocessable_entity, f.http_status
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_success enqueues jobs and returns id" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user, plan_name: "P")
+          created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 42, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
+            plan_year: nil, plan_name: "P",
+            planning_start_date: @clock.today.beginning_of_year,
+            planning_end_date: Date.new(@clock.today.year + 1, 12, 31),
+            status: "draft", session_id: "sessionhex", display_name: "P",
+            cultivation_plan_crops_count: 1, cultivation_plan_fields_count: 1,
+            created_at: Time.current, updated_at: Time.current
+          )
+          result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
+          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_existing).returns(nil)
+          @gateway.expects(:total_field_area_for_farm).with(1, @user).returns(100.0)
+          @gateway.expects(:initialize_plan_from_selection).with(
+            farm: @farm_entity,
+            total_area: 100.0,
+            crops: [ @crop_entity ],
+            user: @user,
+            session_id: "sessionhex",
+            plan_type: "private",
+            plan_year: nil,
+            plan_name: "P",
+            planning_start_date: @clock.today.beginning_of_year,
+            planning_end_date: Date.new(@clock.today.year + 1, 12, 31)
+          ).returns(result)
+
+          @job_enqueuer.expects(:enqueue_after_create).with(cultivation_plan_id: 42)
+          @output_port.expects(:on_success).with do |s|
+            assert_equal 42, s.id
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure unprocessable when initialize returns errors" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ "boom" ])
+          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_existing).returns(nil)
+          @gateway.expects(:total_field_area_for_farm).returns(10.0)
+          @gateway.expects(:initialize_plan_from_selection).returns(result)
+          @job_enqueuer.expects(:enqueue_after_create).never
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :unprocessable_entity, f.http_status
+            assert_equal "boom", f.message
+            true
+          end
+          interactor.call(dto)
+        end
+      end
+    end
+  end
+end

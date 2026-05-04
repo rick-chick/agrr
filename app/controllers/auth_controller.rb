@@ -82,6 +82,7 @@ class AuthController < ApplicationController
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error "OAuth callback error: #{e.message}"
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.invalid_data")
+    # OAuth コールバックの予期せぬ失敗（プロバイダバグ・ネットワーク等）。ユースケース分岐は上の分岐で扱う。
     rescue StandardError => e
       Rails.logger.error "OAuth callback error: #{e.message}"
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")

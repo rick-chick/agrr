@@ -101,6 +101,7 @@ module Plans
         ),
         fallback_location: fallback_location
       )
+    # validate!/schedule/render 以外の予期せぬ失敗。モデル化済み経路は上位 rescue。
     rescue StandardError => e
       Rails.logger.error("[Plans::TaskScheduleItemsController] unexpected destroy error: #{e.class} #{e.message}")
       render_deletion_failure(

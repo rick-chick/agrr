@@ -105,12 +105,6 @@ class InteractionRulesController < ApplicationController
     )
   rescue Domain::Shared::Policies::PolicyPermissionDenied
     redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
-  rescue StandardError => e
-    if request.format.json?
-      render json: { error: e.message }, status: :unprocessable_entity
-    else
-      redirect_to interaction_rules_path, alert: e.message
-    end
   end
 
   private
