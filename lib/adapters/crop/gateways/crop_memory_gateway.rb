@@ -99,7 +99,7 @@ module Adapters
           )
         end
 
-        def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
+        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           stage = crop.crop_stages.find(crop_stage_id)
           Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
@@ -110,7 +110,11 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
-        def find_masters_crop_task_template_in_crop_for_user!(user, crop_id, template_id)
+        def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
+          find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
+        end
+
+        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           tpl = crop.crop_task_templates.find(template_id)
           Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
@@ -121,7 +125,11 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
-        def find_authorized_crop_stage_in_crop!(user, crop_id, crop_stage_id, for_edit:)
+        def find_masters_crop_task_template_in_crop_for_user!(user, crop_id, template_id)
+          find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
+        end
+
+        def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
           crop = if for_edit
                    find_authorized_model_for_edit(user, crop_id)
                  else
@@ -136,6 +144,11 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
+        def find_authorized_crop_stage_in_crop!(user, crop_id, crop_stage_id, for_edit:)
+          find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit: for_edit)
+        end
+
+        # 親は view 認可（set_crop と整合）。PATCH/DELETE は can_edit_crop? で別途ゲートする。
         def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
           crop = find_authorized_model_for_view(user, crop_id)
           bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
@@ -160,6 +173,17 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound
+        end
+
+        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id)
+          crop = find_authorized_model_for_edit(user, crop_id)
+          bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
+          blueprint_id_for_response = bp.id
+          result = ::Crops::TaskScheduleBlueprintDeletionService.new(crop: crop, blueprint: bp).call
+          crop.reload
+          result.merge(crop: crop, blueprint_id_for_response: blueprint_id_for_response)
+        rescue ActiveRecord::RecordNotFound
+          { not_found: true, blueprint_deleted: false, template_deleted: false }
         end
 
         def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)

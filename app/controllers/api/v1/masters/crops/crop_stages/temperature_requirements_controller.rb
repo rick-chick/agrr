@@ -14,8 +14,7 @@ module Api
           # @note 認証: APIキー認証が必要です（X-API-KeyヘッダーまたはAuthorization: Bearer <api_key>）
           # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
           class TemperatureRequirementsController < BaseController
-            before_action :set_crop
-            before_action :set_crop_stage
+            before_action :set_crop_and_crop_stage
 
             # 温度要件を取得
             #
@@ -106,14 +105,7 @@ module Api
 
             private
 
-            def set_crop
-              presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
-              interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
-                user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-              interactor.call(params[:crop_id])
-            end
-
-            def set_crop_stage
+            def set_crop_and_crop_stage
               failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
               interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
                 failure_presenter: failure,
@@ -124,6 +116,7 @@ module Api
               bundle = interactor.call(params[:crop_id], params[:crop_stage_id])
               return if bundle.nil?
 
+              @crop = bundle.persisted_crop
               @crop_stage = bundle.persisted_crop_stage
             end
 

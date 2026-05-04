@@ -4,7 +4,7 @@ module Presenters
   module Html
     module Crop
       class CropTaskTemplateLoadFailureRedirectPresenter
-        include Domain::Crop::Ports::CropNestedJsonNotFoundFailurePort
+        include Domain::Crop::Ports::CropNestedResourceNotFoundFailurePort
 
         def initialize(view:)
           @view = view

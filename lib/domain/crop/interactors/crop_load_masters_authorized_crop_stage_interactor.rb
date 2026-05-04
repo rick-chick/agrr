@@ -15,7 +15,7 @@ module Domain
         # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto, nil]
         def call(crop_id, crop_stage_id)
           user = @user_lookup.find(@user_id)
-          @gateway.find_masters_crop_stage_in_crop_for_user!(user, crop_id.to_i, crop_stage_id.to_i)
+          @gateway.find_masters_crop_with_crop_stage_bundle!(user, crop_id.to_i, crop_stage_id.to_i)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @failure_presenter.on_not_found
           nil

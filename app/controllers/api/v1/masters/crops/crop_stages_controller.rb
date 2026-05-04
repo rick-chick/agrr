@@ -8,9 +8,9 @@ module Api::V1::Masters::Crops
     include Views::Api::Crop::CropStageUpdateView
     include Views::Api::Crop::CropStageDeleteView
 
-    before_action :find_visible_crop, only: [ :index, :show ]
-    before_action :find_editable_crop, only: [ :create, :update, :destroy ]
-    before_action :find_crop_stage, only: [ :show, :update, :destroy ]
+    before_action :find_visible_crop, only: [ :index ]
+    before_action :find_editable_crop, only: [ :create ]
+    before_action :load_authorized_crop_and_crop_stage, only: [ :show, :update, :destroy ]
 
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
@@ -109,7 +109,7 @@ module Api::V1::Masters::Crops
       @crop = bundle.persisted_crop
     end
 
-    def find_crop_stage
+    def load_authorized_crop_and_crop_stage
       for_edit = %w[update destroy].include?(action_name)
       failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropStageInteractor.new(
@@ -122,6 +122,7 @@ module Api::V1::Masters::Crops
       bundle = interactor.call(params[:crop_id], params[:id])
       return if bundle.nil?
 
+      @crop = bundle.persisted_crop
       @crop_stage = bundle.persisted_crop_stage
     end
 

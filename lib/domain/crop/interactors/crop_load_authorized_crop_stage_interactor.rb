@@ -16,7 +16,10 @@ module Domain
         # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto, nil]
         def call(crop_id, crop_stage_id)
           user = @user_lookup.find(@user_id)
-          @gateway.find_authorized_crop_stage_in_crop!(user, crop_id.to_i, crop_stage_id.to_i, for_edit: @for_edit)
+          @gateway.find_authorized_crop_with_crop_stage_bundle!(user, crop_id.to_i, crop_stage_id.to_i, for_edit: @for_edit)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @failure_presenter.on_not_found
+          nil
         rescue Domain::Shared::Exceptions::RecordNotFound
           @failure_presenter.on_not_found
           nil

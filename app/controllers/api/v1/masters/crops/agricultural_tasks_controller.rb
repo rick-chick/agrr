@@ -28,8 +28,8 @@ module Api
         # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
         # @note 中間テーブル: CropTaskTemplateの属性（name, time_per_sqm, description等）も管理します
         class AgriculturalTasksController < BaseController
-          before_action :set_crop
-          before_action :set_template, only: [ :update, :destroy ]
+          before_action :set_crop, only: [ :index, :create ]
+          before_action :set_crop_and_template, only: [ :update, :destroy ]
 
           # 作物に紐づく農業タスク一覧を取得
           #
@@ -148,7 +148,7 @@ module Api
             interactor.call(params[:crop_id])
           end
 
-          def set_template
+          def set_crop_and_template
             failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(
               view: self,
               error_message: "AgriculturalTask association not found"
@@ -162,6 +162,7 @@ module Api
             bundle = interactor.call(params[:crop_id], params[:id])
             return if bundle.nil?
 
+            @crop = bundle.persisted_crop
             @template = bundle.persisted_crop_task_template
           end
 

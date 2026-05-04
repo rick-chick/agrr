@@ -4,7 +4,7 @@ module Presenters
   module Api
     module Crop
       class CropNestedRecordNotFoundJsonPresenter
-        include Domain::Crop::Ports::CropNestedJsonNotFoundFailurePort
+        include Domain::Crop::Ports::CropNestedResourceNotFoundFailurePort
 
         def initialize(view:, error_message:)
           @view = view

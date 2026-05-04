@@ -5,8 +5,8 @@ module Crops
     include Views::Api::Crop::CropStageCreateView
 
     before_action :authenticate_user!
-    before_action :find_crop
-    before_action :find_crop_stage, only: [ :show, :update, :destroy ]
+    before_action :find_crop_for_list_and_create, only: [ :index, :create ]
+    before_action :find_crop_and_crop_stage, only: [ :show, :update, :destroy ]
 
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
@@ -70,14 +70,14 @@ module Crops
       params.require(:crop_stage).permit(:name, :order)
     end
 
-    def find_crop
+    def find_crop_for_list_and_create
       presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
       interactor.call(params[:crop_id])
     end
 
-    def find_crop_stage
+    def find_crop_and_crop_stage
       failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
       interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
         failure_presenter: failure,
@@ -88,6 +88,7 @@ module Crops
       bundle = interactor.call(params[:crop_id], params[:id])
       return if bundle.nil?
 
+      @crop = bundle.persisted_crop
       @crop_stage = bundle.persisted_crop_stage
     end
 

@@ -3,7 +3,7 @@
 module Crops
   class TaskScheduleBlueprintsController < ApplicationController
     before_action :set_crop
-    before_action :set_blueprint, only: [ :update_position, :destroy ]
+    before_action :set_blueprint, only: [ :update_position ]
 
     # PATCH /crops/:crop_id/task_schedule_blueprints/:id/update_position
     def update_position
@@ -58,9 +58,10 @@ module Crops
       unless can_edit_crop?
         return render json: { error: I18n.t("crops.flash.no_permission") }, status: :forbidden
       end
-      # Delegate deletion logic to a service to make the controller lightweight
-      service = Crops::TaskScheduleBlueprintDeletionService.new(crop: @crop, blueprint: @blueprint)
-      result = service.call
+      user = CompositionRoot.user_lookup.find(current_user.id)
+      result = CompositionRoot.crop_gateway.delete_task_schedule_blueprint_bundle_in_crop!(
+        user, @crop.id, params[:id].to_i
+      )
       if result[:not_found]
         respond_to do |format|
           format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
@@ -70,7 +71,7 @@ module Crops
         return
       end
 
-      @blueprint_id = @blueprint.id
+      @blueprint_id = result[:blueprint_id_for_response]
 
       Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deletion result: #{result.inspect}")
 
@@ -95,7 +96,7 @@ module Crops
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to delete blueprint: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{@blueprint.id}", partial: "crops/task_schedule_blueprints/error", locals: { error: I18n.t("crops.flash.blueprint_delete_failed") }) }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{params[:id]}", partial: "crops/task_schedule_blueprints/error", locals: { error: I18n.t("crops.flash.blueprint_delete_failed") }) }
         format.json { render json: { error: I18n.t("crops.flash.blueprint_delete_failed") }, status: :internal_server_error }
       end
     end

@@ -264,6 +264,15 @@ module Adapters
           assert_equal 2.0, result.daily_uptake_k
           assert_equal "updated_region", result.region
         end
+
+        test "delete_task_schedule_blueprint_bundle_in_crop! returns not_found when blueprint id does not exist" do
+          user = @crop.user
+          result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(user, @crop.id, 9_999_999)
+
+          assert result[:not_found]
+          assert_equal false, result[:blueprint_deleted]
+          assert_equal false, result[:template_deleted]
+        end
       end
     end
   end

@@ -15,7 +15,7 @@ module Domain
           )
 
           gateway = Minitest::Mock.new
-          gateway.expect(:find_masters_crop_stage_in_crop_for_user!, dto, [ :u, 1, 2 ])
+          gateway.expect(:find_masters_crop_with_crop_stage_bundle!, dto, [ :u, 1, 2 ])
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, :u, [ 9 ])
@@ -41,7 +41,7 @@ module Domain
 
         test "calls failure presenter on record not found" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_masters_crop_stage_in_crop_for_user!, nil) do
+          gateway.expect(:find_masters_crop_with_crop_stage_bundle!, nil) do
             raise Domain::Shared::Exceptions::RecordNotFound, "x"
           end
 

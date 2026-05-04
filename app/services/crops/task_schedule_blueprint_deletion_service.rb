@@ -36,9 +36,6 @@ module Crops
       end
 
       { blueprint_deleted: blueprint_deleted, template_deleted: template_deleted }
-    rescue ActiveRecord::RecordNotFound => e
-      Rails.logger.warn("⚠️ [TaskScheduleBlueprintDeletionService] RecordNotFound (treated as idempotent): #{e.message}")
-      { blueprint_deleted: false, template_deleted: false, not_found: true }
     end
   end
 end
