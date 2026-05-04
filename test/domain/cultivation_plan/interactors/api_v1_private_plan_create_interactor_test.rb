@@ -161,6 +161,32 @@ module Domain
           end
           interactor.call(dto)
         end
+
+        test "on_failure internal_server_error when enqueue raises" do
+          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 42, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
+            plan_year: nil, plan_name: "P",
+            planning_start_date: @clock.today.beginning_of_year,
+            planning_end_date: Date.new(@clock.today.year + 1, 12, 31),
+            status: "draft", session_id: "sessionhex", display_name: "P",
+            cultivation_plan_crops_count: 1, cultivation_plan_fields_count: 1,
+            created_at: Time.current, updated_at: Time.current
+          )
+          result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
+          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_existing).returns(nil)
+          @gateway.expects(:total_field_area_for_farm).returns(10.0)
+          @gateway.expects(:initialize_plan_from_selection).returns(result)
+          @job_enqueuer.expects(:enqueue_after_create).raises(StandardError, "queue down")
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :internal_server_error, f.http_status
+            assert_equal @translator.t("api.errors.internal_server_error"), f.message
+            true
+          end
+          interactor.call(dto)
+        end
       end
     end
   end

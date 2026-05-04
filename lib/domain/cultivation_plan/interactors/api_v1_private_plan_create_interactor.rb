@@ -108,7 +108,7 @@ module Domain
           @output_port.on_failure(
             Dtos::ApiPrivatePlanCreateFailureDto.new(
               http_status: :internal_server_error,
-              message: "Internal server error"
+              message: @translator.t("api.errors.internal_server_error")
             )
           )
         end
