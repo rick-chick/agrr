@@ -15,8 +15,7 @@ module Api
           return unless input_valid?(:index)
           presenter = Presenters::Api::Field::FieldListPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
-            translator: CompositionRoot.translator)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(params[:farm_id])
         end
 
@@ -25,8 +24,7 @@ module Api
           input_valid?(:show) || return
           presenter = Presenters::Api::Field::FieldDetailPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger,
-            translator: CompositionRoot.translator)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
           interactor.call(params[:id])
         end
 

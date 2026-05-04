@@ -15,7 +15,6 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     result = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [ field_entity ])
 
     gateway = mock
-    gateway.expects(:translator=).with(:tr)
     gateway.expects(:authorized_farm_fields_list).with(10, 20).returns(result)
 
     output = mock
@@ -29,20 +28,19 @@ class FieldListInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      translator: :tr
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(10)
   end
 
-  test "call forwards errors to on_failure" do
+  test "call forwards RecordNotFound to on_failure as ErrorDto" do
     gateway = mock
-    gateway.expects(:translator=).with(:tr)
-    gateway.expects(:authorized_farm_fields_list).raises(StandardError.new("boom"))
+    gateway.expects(:authorized_farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("Farm not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
-      assert_equal "boom", err.message
+      assert_instance_of Domain::Shared::Dtos::ErrorDto, err
+      assert_equal "Farm not found", err.message
       true
     end
 
@@ -50,8 +48,7 @@ class FieldListInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      translator: :tr
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(10)
   end
@@ -59,7 +56,6 @@ class FieldListInteractorTest < ActiveSupport::TestCase
   test "call forwards policy permission denied to on_failure as exception" do
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
     gateway = mock
-    gateway.expects(:translator=).with(:tr)
     gateway.expects(:authorized_farm_fields_list).with(10, 20).raises(err)
 
     output = mock
@@ -69,8 +65,7 @@ class FieldListInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      translator: :tr
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(10)
   end

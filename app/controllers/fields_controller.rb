@@ -8,7 +8,7 @@ class FieldsController < ApplicationController
   def index
     presenter = Presenters::Html::Field::FieldListHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(params[:farm_id])
   end
 
@@ -16,7 +16,7 @@ class FieldsController < ApplicationController
   def show
     presenter = Presenters::Html::Field::FieldDetailHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(params[:id])
   end
 

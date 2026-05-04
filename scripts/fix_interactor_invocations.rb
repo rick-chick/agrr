@@ -126,9 +126,9 @@ INJECT = {
   "Domain::Field::Interactors::FieldDestroyInteractor" =>
     "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger",
   "Domain::Field::Interactors::FieldDetailInteractor" =>
-    "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator",
+    "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger",
   "Domain::Field::Interactors::FieldListInteractor" =>
-    "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator",
+    "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger",
   "Domain::Field::Interactors::FieldUpdateInteractor" =>
     "gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger",
   "Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor" =>

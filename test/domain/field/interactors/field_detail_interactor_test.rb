@@ -15,7 +15,6 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
     result = Domain::Field::Results::FieldWithFarm.new(farm: farm_entity, field: field_entity)
 
     gateway = mock
-    gateway.expects(:translator=).with(:tr)
     gateway.expects(:field_with_farm_for_user).with(5, 20).returns(result)
 
     output = mock
@@ -29,20 +28,19 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      translator: :tr
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(5)
   end
 
-  test "call forwards errors to on_failure" do
+  test "call forwards RecordNotFound to on_failure as ErrorDto" do
     gateway = mock
-    gateway.expects(:translator=).with(:tr)
-    gateway.expects(:field_with_farm_for_user).raises(StandardError.new("boom"))
+    gateway.expects(:field_with_farm_for_user).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
-      assert_equal "boom", err.message
+      assert_instance_of Domain::Shared::Dtos::ErrorDto, err
+      assert_equal "Field not found", err.message
       true
     end
 
@@ -50,8 +48,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-      translator: :tr
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
     )
     interactor.call(5)
   end
