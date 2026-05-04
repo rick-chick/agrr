@@ -127,10 +127,10 @@ class PlansController < ApplicationController
     end
 
     Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{plan_id}"
-    load_private_plan_optimizing_page(plan_id)
+    load_private_plan_optimizing(plan_id)
     return if performed?
 
-    dto = @private_plan_optimizing_page
+    dto = @private_plan_optimizing
     if dto.completed?
       redirect_to plan_path(dto.id)
       return
@@ -235,9 +235,9 @@ class PlansController < ApplicationController
     ).call
   end
 
-  def load_private_plan_optimizing_page(plan_id)
+  def load_private_plan_optimizing(plan_id)
     presenter = Presenters::Html::Plans::PrivatePlanOptimizingHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       plan_id: plan_id,

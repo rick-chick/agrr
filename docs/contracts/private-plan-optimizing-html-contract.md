@@ -2,8 +2,8 @@
 
 ## スコープ
 
-- **ユースケース**: `GET .../plans/:id/optimizing` → **`Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor#call`**
-- **`on_success` に渡すもの（一文）**: **`PrivatePlanOptimizingPageDto`**（`id`: **Integer**、`plan_year`: **Integer または nil**、`farm_display_name`: **String**、`cultivation_plan_crops_count`: **Integer**、`optimization_phase_message`: **String または nil**、`status`: **String**（`CultivationPlan#status` と同値））。**ActiveRecord は Port を越えない**。
+- **ユースケース**: `GET .../plans/:id/optimizing` → **`Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor#call`**
+- **`on_success` に渡すもの（一文）**: **`PrivatePlanOptimizingDto`**（`id`: **Integer**、`plan_year`: **Integer または nil**、`farm_display_name`: **String**、`cultivation_plan_crops_count`: **Integer**、`optimization_phase_message`: **String または nil**、`status`: **String**（`CultivationPlan#status` と同値））。**ActiveRecord は Port を越えない**。
 
 ## Output Port
 
@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`CultivationPlanGateway#private_plan_optimizing_read_model(plan_id:, user:)`** — **`PlanPolicy.private_scope(user)`** で所有 private 計画のみ取得し、**`includes(:farm, :cultivation_plan_crops)`** で N+1 を避けつつ **`PrivatePlanOptimizingReadModel`**（画面非依存の読み取り用スナップショット）を返す（他ユーザ・不存在は `RecordNotFound`）。**`PrivatePlanOptimizingPageDto`** は Interactor 成功時に **`PrivatePlanOptimizingPageAssembler`** で組み立てる。
+- **`CultivationPlanGateway#private_plan_optimizing_read_model(plan_id:, user:)`** — **`PlanPolicy.private_scope(user)`** で所有 private 計画のみ取得し、**`includes(:farm, :cultivation_plan_crops)`** で N+1 を避けつつ **`PrivatePlanOptimizingReadModel`**（画面非依存の読み取り用スナップショット）を返す（他ユーザ・不存在は `RecordNotFound`）。**`PrivatePlanOptimizingDto`** は Interactor 成功時に **`PrivatePlanOptimizingAssembler`** で組み立てる。
 
 ## Controller
 
@@ -24,5 +24,5 @@
 
 ## テンプレ（`plans/optimizing`）
 
-- **`@private_plan_optimizing_page`** の属性のみ参照（`@vm` / 生の `@cultivation_plan` は使用しない）。
+- **`@private_plan_optimizing`** の属性のみ参照（`@vm` / 生の `@cultivation_plan` は使用しない）。
 - **`plan_year` が nil** の通年計画では **`plans.optimizing.year_label_annual`** をヘッダに用いる。

@@ -3,9 +3,9 @@
 module Domain
   module CultivationPlan
     module Assemblers
-      class PrivatePlanOptimizingPageAssembler
+      class PrivatePlanOptimizingAssembler
         def self.call(read_model)
-          Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto.new(
+          Domain::CultivationPlan::Dtos::PrivatePlanOptimizingDto.new(
             id: read_model.id,
             plan_year: read_model.plan_year,
             farm_display_name: read_model.farm_display_name,

@@ -4,7 +4,7 @@ module Domain
   module CultivationPlan
     module Dtos
       # プライベート計画「最適化進捗」画面用。ActiveRecord は含めない。
-      class PrivatePlanOptimizingPageDto
+      class PrivatePlanOptimizingDto
         attr_reader :id, :plan_year, :farm_display_name, :cultivation_plan_crops_count,
                     :optimization_phase_message, :status
 

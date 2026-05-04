@@ -5,9 +5,9 @@ require "test_helper"
 class PrivatePlanOptimizingHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @private_plan_optimizing_page from dto" do
+  test "on_success sets @private_plan_optimizing from dto" do
     view_mock = mock
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto.new(
+    dto = Domain::CultivationPlan::Dtos::PrivatePlanOptimizingDto.new(
       id: 1,
       plan_year: 2025,
       farm_display_name: "Farm",
@@ -15,7 +15,7 @@ class PrivatePlanOptimizingHtmlPresenterTest < ActiveSupport::TestCase
       optimization_phase_message: nil,
       status: "optimizing"
     )
-    view_mock.expects(:instance_variable_set).with(:@private_plan_optimizing_page, dto)
+    view_mock.expects(:instance_variable_set).with(:@private_plan_optimizing, dto)
 
     presenter = Presenters::Html::Plans::PrivatePlanOptimizingHtmlPresenter.new(view: view_mock)
     presenter.on_success(dto)

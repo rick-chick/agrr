@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
+class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
   test "call passes dto from gateway to on_success" do
     user = mock
     user_lookup = mock
@@ -16,7 +16,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
       optimization_phase_message: "msg",
       status: "optimizing"
     )
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingPageAssembler.call(read_model)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read_model)
 
     gateway = mock
     gateway.expects(:private_plan_optimizing_read_model).with(plan_id: 10, user: user).returns(read_model)
@@ -34,7 +34,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -64,7 +64,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -94,7 +94,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -117,7 +117,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
     translator.expects(:t).with("plans.errors.restart").returns("やり直し")
 
     logger = mock
-    logger.expects(:error).with(includes("PrivatePlanOptimizingPageInteractor"))
+    logger.expects(:error).with(includes("PrivatePlanOptimizingInteractor"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -125,7 +125,7 @@ class PrivatePlanOptimizingPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,

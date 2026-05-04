@@ -128,10 +128,10 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
 
     read = @gateway.private_plan_optimizing_read_model(plan_id: plan.id, user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingPageAssembler.call(read)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read)
 
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel, read
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingPageDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingDto, dto
     assert_equal plan.id, dto.id
     assert_equal 2024, dto.plan_year
     assert_equal farm.display_name, dto.farm_display_name

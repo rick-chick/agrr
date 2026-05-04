@@ -9,7 +9,7 @@ module Presenters
         end
 
         def on_success(dto)
-          @view.instance_variable_set(:@private_plan_optimizing_page, dto)
+          @view.instance_variable_set(:@private_plan_optimizing, dto)
         end
 
         def on_failure(error_dto)
