@@ -114,6 +114,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 - `**app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
 - `**app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
 - `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
+- **Concerns (`ActiveSupport::Concern`):** **Do not add** controller or model concerns to carry **business or use-case logic**; use **explicit action wiring** (**input DTO → interactor → presenter**). Existing concerns that encapsulate such logic are **debt**—dissolve them toward `lib/domain/` and thin edges (see **What we require**).
 
 ### External agrr integration
 
@@ -129,6 +130,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 - **Truth is specified:** Behavior is defined by **contract text and the tests bound to it**—not by “matching whatever the legacy stack does.”
 - **Refactors finish the job:** Moving code out of `lib/domain/` without fixing dependency direction and types is **relocation**, not completion.
 - **Convenience is not an exemption:** Skipping layering because it is faster, when it commits us to wholesale rework afterward, **is rejected**. Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in `**docs/contracts/`** and tests bound to those contracts—see `.cursor/rules/no-convenience-tech-debt.mdc`.
+- **Rails `ActiveSupport::Concern` is not a sharing mechanism:** Do **not** use concern modules to host **use-case judgment**, durable business rules, or cross-action orchestration. **Deduplicate and share** as **plain Ruby** under `lib/domain/` (policies, interactors, entities/DTOs) with **constructor-injected ports**. The concern mechanism anchors shared behavior to Rails’ mixin stack and **runs counter to stripping framework coupling from how behavior is organized**—this repository’s explicit direction. The **ideal** shape for reuse remains **plain Ruby in the domain**, **one decision in interactors/policies**, and **explicit wiring at the edge**—not mixin layers under `app/`.
 
 ## Prohibited practices (hard rules)
 
@@ -168,7 +170,7 @@ The clauses in the numbered subsections below are the **negative** expression of
 
 ### Application edge and tests (refactor hygiene)
 
-1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, or controller concern **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
+1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, **`ActiveSupport::Concern` modules that accumulate use-case or domain-shaped behavior**, or controller concerns **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
 2. **Tests that hide wiring** — Making the suite pass with global stubs or implicit time while production code still lacks the constructor contract and explicit ports required above. Fix production wiring first, then tests.
 3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. **Do not** `on_failure` in the interactor and then **`raise`** to trigger controller `rescue`. Prefer the interactor → presenter path so the action need not wrap `interactor.call` in `rescue StandardError` for modeled outcomes (aligns with **Rails JSON API: canonical vertical slice** at the top).
 
