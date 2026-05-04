@@ -37,6 +37,17 @@ ja:
           - "播種〜発芽"
           - "発芽〜成長"
           - "成長〜収穫"
+    api:
+      masters:
+        crops:
+          agricultural_tasks:
+            errors:
+              missing_agricultural_task_id: "agricultural_task_id is required"
+              agricultural_task_not_found: "AgriculturalTask not found"
+              forbidden_associate: "You do not have permission to associate this agricultural task"
+              duplicate_associate: "AgriculturalTask is already associated with this crop"
+              crop_not_found: "Crop not found"
+              unexpected: "Request could not be processed"
 
 us:
   controllers:
@@ -77,6 +88,17 @@ us:
           - "Sowing to germination"
           - "Germination to growth"
           - "Growth to harvest"
+    api:
+      masters:
+        crops:
+          agricultural_tasks:
+            errors:
+              missing_agricultural_task_id: "agricultural_task_id is required"
+              agricultural_task_not_found: "AgriculturalTask not found"
+              forbidden_associate: "You do not have permission to associate this agricultural task"
+              duplicate_associate: "AgriculturalTask is already associated with this crop"
+              crop_not_found: "Crop not found"
+              unexpected: "Request could not be processed"
 
 in:
   controllers:
@@ -117,4 +139,15 @@ in:
           - "बीजारोपण से अंकुरण"
           - "अंकुरण से विकास"
           - "विकास से कटाई"
+    api:
+      masters:
+        crops:
+          agricultural_tasks:
+            errors:
+              missing_agricultural_task_id: "agricultural_task_id is required"
+              agricultural_task_not_found: "AgriculturalTask not found"
+              forbidden_associate: "You do not have permission to associate this agricultural task"
+              duplicate_associate: "AgriculturalTask is already associated with this crop"
+              crop_not_found: "Crop not found"
+              unexpected: "Request could not be processed"
 

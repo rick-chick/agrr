@@ -5,7 +5,10 @@ require "test_helper"
 class CropMastersTaskTemplateCreatePresenterTest < ActiveSupport::TestCase
   test "on_success renders created template response" do
     view_mock = mock
-    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+      view: view_mock,
+      translator: translator_stub
+    )
     time = Time.zone.parse("2025-01-01 12:00:00")
     task = Domain::Crop::Dtos::AgriculturalTaskSnapshotDto.new(
       id: 10,
@@ -102,11 +105,55 @@ class CropMastersTaskTemplateCreatePresenterTest < ActiveSupport::TestCase
     )
   end
 
+  test "on_failure with unknown reason uses message when present" do
+    view_mock = mock
+    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+      view: view_mock,
+      translator: translator_stub
+    )
+    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+      reason: :totally_unknown,
+      message: "Custom detail"
+    )
+
+    view_mock.expects(:render_response).with(
+      json: { error: "Custom detail" },
+      status: :unprocessable_entity
+    )
+    presenter.on_failure(failure_dto)
+  end
+
+  test "on_failure with unknown reason without message uses unexpected fallback" do
+    view_mock = mock
+    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+      view: view_mock,
+      translator: translator_stub
+    )
+    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+      reason: :totally_unknown
+    )
+
+    view_mock.expects(:render_response).with(
+      json: { error: "Request could not be processed" },
+      status: :unprocessable_entity
+    )
+    presenter.on_failure(failure_dto)
+  end
+
   private
+
+  def translator_stub
+    @translator_stub ||= Object.new.tap do |o|
+      o.define_singleton_method(:t) { |_key, **kwargs| kwargs.fetch(:default) }
+    end
+  end
 
   def assert_failure_response(reason:, expected_json:, status:, errors: nil)
     view_mock = mock
-    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(view: view_mock)
+    presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+      view: view_mock,
+      translator: translator_stub
+    )
     failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
       reason: reason,
       errors: errors

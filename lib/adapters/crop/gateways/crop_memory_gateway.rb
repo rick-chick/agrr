@@ -133,25 +133,20 @@ module Adapters
           crop = find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
           agricultural_task = ::AgriculturalTask.find_by(id: input_dto.agricultural_task_id)
           unless agricultural_task
-            return build_task_template_create_result(
-              reason: :agricultural_task_not_found,
-              message: "AgriculturalTask not found"
-            )
+            return build_task_template_create_result(reason: :agricultural_task_not_found)
           end
 
-          unless agricultural_task.is_reference || agricultural_task.user_id == user.id
-            return build_task_template_create_result(
-              reason: :forbidden,
-              message: "You do not have permission to associate this agricultural task"
-            )
+          unless Domain::Shared::Policies::AgriculturalTaskPolicy.masters_crop_task_template_associate_allowed?(
+            user,
+            is_reference: agricultural_task.is_reference,
+            user_id: agricultural_task.user_id
+          )
+            return build_task_template_create_result(reason: :forbidden)
           end
 
           existing_template = crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task.id)
           if existing_template
-            return build_task_template_create_result(
-              reason: :duplicate,
-              message: "AgriculturalTask is already associated with this crop"
-            )
+            return build_task_template_create_result(reason: :duplicate)
           end
 
           template_params = {
@@ -169,7 +164,7 @@ module Adapters
           template_dto = masters_crop_task_template_dto_from_record(template, task_snapshot)
           Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(template: template_dto)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          build_task_template_create_result(reason: :crop_not_found, message: "Crop not found")
+          build_task_template_create_result(reason: :crop_not_found)
         rescue ActiveRecord::RecordInvalid => e
           raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: e.record.errors.full_messages)
         end
@@ -541,11 +536,10 @@ module Adapters
 
         private
 
-        def build_task_template_create_result(reason:, message:)
+        def build_task_template_create_result(reason:)
           Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(
             failure: Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
-              reason: reason,
-              message: message
+              reason: reason
             )
           )
         end

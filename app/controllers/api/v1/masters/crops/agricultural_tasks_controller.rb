@@ -28,7 +28,7 @@ module Api
         # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
         # @note 中間テーブル: CropTaskTemplateの属性（name, time_per_sqm, description等）も管理します
         class AgriculturalTasksController < BaseController
-          before_action :set_crop, only: [ :index, :create ]
+          before_action :set_crop, only: [ :index ]
           before_action :set_crop_and_template, only: [ :update, :destroy ]
 
           # 作物に紐づく農業タスク一覧を取得
@@ -70,7 +70,10 @@ module Api
               required_tools: template_params[:required_tools],
               skill_level: template_params[:skill_level]
             )
-            presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(view: self)
+            presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+              view: self,
+              translator: CompositionRoot.translator
+            )
             interactor = Domain::Crop::Interactors::CropMastersTaskTemplateCreateInteractor.new(
               output_port: presenter,
               gateway: CompositionRoot.crop_gateway,

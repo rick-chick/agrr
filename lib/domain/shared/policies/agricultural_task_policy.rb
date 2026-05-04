@@ -8,6 +8,11 @@ module Domain
           user.admin? || is_reference || user_id == user.id
         end
 
+        # マスター API: 作物に紐付ける農業タスクは参照タスクまたは自ユーザーのタスクのみ（管理者も他人所有タスクは不可）
+        def self.masters_crop_task_template_associate_allowed?(user, is_reference:, user_id:)
+          is_reference || user_id == user.id
+        end
+
         def self.edit_allowed?(user, is_reference:, user_id:)
           user.admin? || (!is_reference && user_id == user.id)
         end

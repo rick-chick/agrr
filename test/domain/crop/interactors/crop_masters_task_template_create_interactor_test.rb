@@ -45,7 +45,6 @@ module Domain
           @gateway.expects(:create_masters_crop_task_template_association).never
           @output_port.expects(:on_failure).with do |failure_dto|
             assert_equal :missing_agricultural_task_id, failure_dto.reason
-            assert_equal "agricultural_task_id is required", failure_dto.message
             true
           end
 
@@ -60,8 +59,7 @@ module Domain
           )
           user = mock
           failure = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
-            reason: :agricultural_task_not_found,
-            message: "AgriculturalTask not found"
+            reason: :agricultural_task_not_found
           )
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
@@ -80,8 +78,7 @@ module Domain
           )
           user = mock
           failure = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
-            reason: :forbidden,
-            message: "You do not have permission to associate this agricultural task"
+            reason: :forbidden
           )
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
@@ -100,8 +97,7 @@ module Domain
           )
           user = mock
           failure = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
-            reason: :duplicate,
-            message: "AgriculturalTask is already associated with this crop"
+            reason: :duplicate
           )
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
