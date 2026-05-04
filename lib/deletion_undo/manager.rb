@@ -10,11 +10,12 @@ module DeletionUndo
         seconds && seconds.positive? ? seconds.seconds : DEFAULT_TTL
       end
 
-      def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {})
+      # @param gateway [Domain::DeletionUndo::Gateways::DeletionUndoGateway, nil] 省略時は CompositionRoot の実装（テスト差し替え用）
+      def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {}, gateway: nil)
         raise ArgumentError, "record must be persisted" unless record&.persisted?
 
-        gateway = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
-        entity = gateway.schedule(
+        gw = gateway || CompositionRoot.deletion_undo_gateway
+        entity = gw.schedule(
           resource_type: record.class.name,
           resource_id: record.id,
           actor_id: actor&.id,
