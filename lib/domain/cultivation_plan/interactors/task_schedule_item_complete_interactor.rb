@@ -20,22 +20,11 @@ module Domain
           @output_port.on_success(payload)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
-            errors: normalize_errors(e.errors),
+            errors: Domain::Shared::ValidationErrorHash.from(e.errors),
             fallback_message: e.message
           )
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_not_found
-        end
-
-        private
-
-        def normalize_errors(errors)
-          return errors if errors.is_a?(Hash)
-          return {} unless errors.respond_to?(:to_hash)
-
-          hash = errors.to_hash(true).transform_keys(&:to_s)
-          hash.transform_values! { |messages| Array(messages).compact }
-          hash
         end
       end
     end
