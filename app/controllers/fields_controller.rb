@@ -35,7 +35,7 @@ class FieldsController < ApplicationController
     input_dto = Domain::Field::Dtos::FieldCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
     presenter = Presenters::Html::Field::FieldCreateHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(input_dto, @farm.id)
   end
 
@@ -44,7 +44,7 @@ class FieldsController < ApplicationController
     input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id])
     presenter = Presenters::Html::Field::FieldUpdateHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
     interactor.call(input_dto)
   end
 
@@ -54,13 +54,13 @@ class FieldsController < ApplicationController
       format.html do
         presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
         interactor.call(params[:id])
       end
       format.json do
         presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
         interactor.call(params[:id])
       end
     end

@@ -4,20 +4,27 @@ module Domain
   module Field
     module Interactors
       class FieldDestroyInteractor < Domain::Field::Ports::FieldDestroyInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, translator:)
+        def initialize(output_port:, user_id:, gateway:, logger:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
-          @gateway.translator = translator if @gateway.respond_to?(:translator=)
         end
 
         def call(field_id)
           undo_response = @gateway.destroy(field_id, @user_id)
           dto = Domain::Field::Dtos::FieldDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(dto)
-        rescue StandardError => e
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied => e
+          @output_port.on_failure(e)
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::AssociationInUse => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue DeletionUndo::Error => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue NoMethodError, NameError, ArgumentError, SyntaxError
+          raise
         end
       end
     end

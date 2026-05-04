@@ -88,8 +88,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fields.flash.cannot_delete_in_use")
-        rescue DeletionUndo::Error => e
-          raise StandardError, e.message
         end
 
         def find_authorized_for_view(user, id)
