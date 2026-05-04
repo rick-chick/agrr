@@ -40,6 +40,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
+        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id)
+          raise NotImplementedError, "Subclasses must implement find_authorized_field_loaded_in_farm!"
+        end
+
         def create_for_user(user, farm_id, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

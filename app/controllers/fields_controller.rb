@@ -85,9 +85,13 @@ class FieldsController < ApplicationController
   end
 
   def set_field
-    @field = @farm.fields.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    redirect_to url_for(controller: "fields", action: "index", farm_id: @farm.id), alert: I18n.t("fields.flash.not_found")
+    failure_presenter = Presenters::Html::Field::FieldLoadInFarmAuthorizationFailureRedirectPresenter.new(view: self)
+    interactor = Domain::Field::Interactors::FieldLoadAuthorizedInFarmInteractor.new(failure_presenter: failure_presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
+    bundle = interactor.call(@farm.id, params[:id])
+    return if bundle.nil?
+
+    @field = bundle.persisted_field
   end
 
 end

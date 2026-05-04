@@ -106,6 +106,20 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
         end
 
+        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id)
+          bundle = @farm_gateway.find_authorized_farm_loaded_bundle!(user, farm_id, for_edit: true)
+          farm = bundle.persisted_farm
+          field = begin
+            farm.fields.find(field_id)
+          rescue ActiveRecord::RecordNotFound
+            raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
+          end
+          Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto.new(
+            field_entity: Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field),
+            persisted_field: field
+          )
+        end
+
         def create_for_user(user, farm_id, attrs)
           farm = find_farm_model!(farm_id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
