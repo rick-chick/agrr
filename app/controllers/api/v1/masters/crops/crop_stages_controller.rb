@@ -8,10 +8,6 @@ module Api::V1::Masters::Crops
     include Views::Api::Crop::CropStageUpdateView
     include Views::Api::Crop::CropStageDeleteView
 
-    rescue_from Domain::Shared::Policies::PolicyPermissionDenied do
-      render(json: { error: "Crop not found" }, status: :not_found)
-    end
-
     before_action :find_visible_crop, only: [ :index, :show ]
     before_action :find_editable_crop, only: [ :create, :update, :destroy ]
     before_action :find_crop_stage, only: [ :show, :update, :destroy ]
