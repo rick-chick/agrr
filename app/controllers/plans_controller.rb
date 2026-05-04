@@ -6,7 +6,7 @@ class PlansController < ApplicationController
   include WeatherDataManagement
 
   before_action :authenticate_user!
-  before_action :set_plan, only: [ :optimize, :destroy, :copy ]
+  before_action :set_plan, only: [ :optimize, :copy ]
   layout "application"
 
   # Concern設定
@@ -115,8 +115,6 @@ class PlansController < ApplicationController
 
     # 最適化は計画作成時に既に実行されているため、進捗画面にリダイレクト
     redirect_to optimizing_plan_path(@plan.id), notice: I18n.t("plans.messages.optimization_started")
-  rescue ActiveRecord::RecordNotFound
-    redirect_to plans_path, alert: I18n.t("plans.errors.not_found")
   end
 
   # Step 4: 最適化進捗画面
@@ -178,45 +176,19 @@ class PlansController < ApplicationController
     # 既存の年度ベースの計画は後方互換性のために保持されますが、
     # 新しい計画は通年計画として作成されるため、コピー機能は不要です
     redirect_to plans_path, alert: I18n.t("plans.errors.copy_not_available_for_annual_planning") and return
-  rescue ActiveRecord::RecordNotFound
-    redirect_to plans_path, alert: I18n.t("plans.errors.not_found")
   end
 
-  # 計画削除
+  # 計画削除（Undo 対応は Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor へ委譲）
   def destroy
-    plan = @plan
-
-    event = DeletionUndo::Manager.schedule(
-      record: plan,
-      actor: current_user,
-      toast_message: I18n.t("plans.undo.toast", name: plan.display_name)
-    )
-
-    render_deletion_undo_response(
-      event,
-      fallback_location: plans_path
-    )
-  rescue ActiveRecord::RecordNotFound
-    render_deletion_failure(
-      message: I18n.t("plans.errors.not_found"),
-      fallback_location: plans_path,
-      status: :not_found
-    )
-  rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    render_deletion_failure(
-      message: I18n.t("plans.errors.delete_failed"),
-      fallback_location: plans_path
-    )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t("plans.errors.delete_error", message: e.message),
-      fallback_location: plans_path
-    )
-  rescue StandardError => e
-    render_deletion_failure(
-      message: I18n.t("plans.errors.delete_error", message: e.message),
-      fallback_location: plans_path
-    )
+    presenter = Presenters::Html::Plans::CultivationPlanDestroyHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      logger: CompositionRoot.logger,
+      translator: CompositionRoot.translator,
+      user_lookup: CompositionRoot.user_lookup
+    ).call(params[:id])
   end
 
   private
