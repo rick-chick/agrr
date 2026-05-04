@@ -5,9 +5,9 @@ require "test_helper"
 class PrivatePlanShowHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @private_plan_show_page from dto" do
+  test "on_success sets @private_plan_show from dto" do
     view_mock = mock
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanShowPageDto.new(
+    dto = Domain::CultivationPlan::Dtos::PrivatePlanShowDto.new(
       id: 1,
       display_name: "Plan",
       farm_display_name: "Farm",
@@ -22,7 +22,7 @@ class PrivatePlanShowHtmlPresenterTest < ActiveSupport::TestCase
       palette_used_crop_ids: [],
       palette_crops: []
     )
-    view_mock.expects(:instance_variable_set).with(:@private_plan_show_page, dto)
+    view_mock.expects(:instance_variable_set).with(:@private_plan_show, dto)
 
     presenter = Presenters::Html::Plans::PrivatePlanShowHtmlPresenter.new(view: view_mock)
     presenter.on_success(dto)

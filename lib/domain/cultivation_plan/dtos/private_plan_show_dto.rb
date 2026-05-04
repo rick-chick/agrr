@@ -5,7 +5,7 @@ module Domain
     module Dtos
       # プライベート計画詳細（HTML show）用。ActiveRecord は含めない。
       # ガント初期 data-* 用の配列は app/views/shared/_gantt_chart 互換の Hash 形。
-      class PrivatePlanShowPageDto
+      class PrivatePlanShowDto
         attr_reader :id,
                     :display_name,
                     :farm_display_name,

@@ -112,7 +112,7 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_equal I18n.t("plans.optimizing.error.title"), flash[:alert]
   end
 
-  # SCOPE: show（PrivatePlanShowPageInteractor / PrivatePlanShowHtmlPresenter）
+  # SCOPE: show（PrivatePlanShowInteractor / PrivatePlanShowHtmlPresenter）
   test "show renders successfully for owned non-optimizing plan" do
     plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
     get plan_path(plan)

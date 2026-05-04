@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      class PrivatePlanShowPageOutputPort
+      class PrivatePlanShowOutputPort
         def on_success(dto)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

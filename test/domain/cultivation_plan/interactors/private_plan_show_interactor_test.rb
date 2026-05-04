@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
-  test "call passes assembled page dto from gateway detail to on_success" do
+class PrivatePlanShowInteractorTest < ActiveSupport::TestCase
+  test "call passes assembled show dto from gateway detail to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
@@ -31,7 +31,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
     logger = mock
     output = mock
     output.expects(:on_success).with do |dto|
-      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowPageDto, dto
+      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowDto, dto
       assert_equal 10, dto.id
       assert_equal "Plan X", dto.display_name
       assert_equal "F1", dto.farm_display_name
@@ -42,7 +42,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -72,7 +72,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -103,7 +103,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -126,7 +126,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
     translator.expects(:t).with("plans.errors.restart").returns("やり直し")
 
     logger = mock
-    logger.expects(:error).with(includes("PrivatePlanShowPageInteractor"))
+    logger.expects(:error).with(includes("PrivatePlanShowInteractor"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -134,7 +134,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: output,
       user_id: 3,
       plan_id: 10,
@@ -158,7 +158,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
     translator = mock
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanShowPageInteractor") &&
+      msg.include?("PrivatePlanShowInteractor") &&
         msg.include?("PersistenceFailed") &&
         msg.include?("/backtrace:")
     end
@@ -168,7 +168,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(Domain::Shared::Exceptions::PersistenceFailed) do
-      Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
         output_port: output,
         user_id: 3,
         plan_id: 10,
@@ -194,7 +194,7 @@ class PrivatePlanShowPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(NoMethodError) do
-      Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
         output_port: output,
         user_id: 3,
         plan_id: 10,

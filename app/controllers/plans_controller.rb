@@ -150,7 +150,7 @@ class PlansController < ApplicationController
     end
 
     presenter = Presenters::Html::Plans::PrivatePlanShowHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       plan_id: plan_id,
@@ -161,11 +161,11 @@ class PlansController < ApplicationController
     ).call
     return if performed?
 
-    if @private_plan_show_page.optimizing?
-      redirect_to optimizing_plan_path(@private_plan_show_page.id) and return
+    if @private_plan_show.optimizing?
+      redirect_to optimizing_plan_path(@private_plan_show.id) and return
     end
 
-    Rails.logger.debug "📊 [Plans#show] User: #{current_user.id}, Plan: #{@private_plan_show_page.id}"
+    Rails.logger.debug "📊 [Plans#show] User: #{current_user.id}, Plan: #{@private_plan_show.id}"
   end
 
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。

@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Assemblers
-      class PrivatePlanShowPageAssembler
+      class PrivatePlanShowAssembler
         def self.call(detail)
           new(detail).call
         end
@@ -13,7 +13,7 @@ module Domain
         end
 
         def call
-          Domain::CultivationPlan::Dtos::PrivatePlanShowPageDto.new(
+          Domain::CultivationPlan::Dtos::PrivatePlanShowDto.new(
             id: @detail.id,
             display_name: @detail.display_name,
             farm_display_name: @detail.farm_display_name,

@@ -55,7 +55,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Heuristic:** If the gateway’s job is effectively “produce the blob this one HTML partial or Angular screen expects,” the boundary is wrong—lift assembly to the **Interactor** or to a domain **assembler/mapper** under `lib/domain/**` (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
 
-**Allowed:** Persistence, authorization, and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). **Presenter-shaped** composites required by an output port (for example **`PrivatePlanShowPageDto`**) are composed **outside** the gateway adapter.
+**Allowed:** Persistence, authorization, and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). **Presenter-shaped** composites required by an output port (for example **`PrivatePlanShowDto`**) are composed **outside** the gateway adapter.
 
 ### Presenters (`lib/presenters/`)
 

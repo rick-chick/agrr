@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class PrivatePlanShowPageAssemblerTest < ActiveSupport::TestCase
-  test "call builds page dto and gantt row hashes from detail reads" do
+class PrivatePlanShowAssemblerTest < ActiveSupport::TestCase
+  test "call builds show dto and gantt row hashes from detail reads" do
     fc_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::FieldCultivationRead.new(
       id: 1,
       cultivation_plan_field_id: 2,
@@ -38,9 +38,9 @@ class PrivatePlanShowPageAssemblerTest < ActiveSupport::TestCase
       palette_crops: []
     )
 
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanShowPageAssembler.call(detail)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanShowAssembler.call(detail)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowPageDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowDto, dto
     assert_equal 99, dto.id
     assert_equal "pending", dto.status
     assert_equal 1, dto.gantt_cultivation_rows.size

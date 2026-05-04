@@ -81,7 +81,7 @@ INJECT = {
     "gateway: CompositionRoot.cultivation_plan_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor" =>
     "farm_gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
-  "Domain::CultivationPlan::Interactors::PrivatePlanShowPageInteractor" =>
+  "Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor" =>
     "gateway: CompositionRoot.cultivation_plan_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor" => "", # class method only
   "Domain::DeletionUndo::Interactors::DeletionUndoRestoreInteractor" =>
