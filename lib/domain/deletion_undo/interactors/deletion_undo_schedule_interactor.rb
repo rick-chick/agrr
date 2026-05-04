@@ -12,6 +12,8 @@ module Domain
         def call(input_dto)
           raise ArgumentError, "record must be persisted" unless input_dto.record&.persisted?
 
+          input_dto.record.validate!
+
           event = @gateway.schedule(
             record: input_dto.record,
             actor: input_dto.actor,
@@ -21,14 +23,29 @@ module Domain
           )
 
           @output_port.on_success(event)
-        rescue DeletionUndo::Error,
-               ActiveRecord::RecordInvalid,
-               ActiveRecord::RecordNotDestroyed,
-               ActiveRecord::RecordNotSaved,
-               Domain::Shared::Exceptions::AssociationInUse,
-               ActiveRecord::InvalidForeignKey,
-               ActiveRecord::DeleteRestrictionError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue DeletionUndo::Error => e
+          @output_port.on_failure(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+              reason: :undo_system_error,
+              detail_message: e.message
+            )
+          )
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
+          @output_port.on_failure(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+              reason: :validation_error,
+              detail_message: e.message
+            )
+          )
+        rescue Domain::Shared::Exceptions::AssociationInUse,
+              ActiveRecord::InvalidForeignKey,
+              ActiveRecord::DeleteRestrictionError => e
+          @output_port.on_failure(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+              reason: :association_in_use,
+              detail_message: e.message
+            )
+          )
         end
       end
     end

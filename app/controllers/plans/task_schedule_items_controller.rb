@@ -71,9 +71,12 @@ module Plans
 
     def destroy
       fallback_location = plan_task_schedule_path(@cultivation_plan)
-
-      @task_schedule_item.validate!
-      event = DeletionUndo::Manager.schedule(
+      presenter = Presenters::Plans::TaskScheduleItemDestroyPresenter.new(
+        view: self,
+        logger: CompositionRoot.logger,
+        fallback_location: fallback_location
+      )
+      input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
         record: @task_schedule_item,
         actor: current_user,
         toast_message: I18n.t(
@@ -81,26 +84,7 @@ module Plans
           name: @task_schedule_item.name
         )
       )
-
-      render_deletion_undo_response(
-        event,
-        fallback_location: fallback_location
-      )
-    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved, ActiveRecord::RecordNotDestroyed => e
-      Rails.logger.warn("[Plans::TaskScheduleItemsController] destroy failed: #{e.class} #{e.message}")
-      render_deletion_failure(
-        message: I18n.t("controllers.plans.task_schedule_items.errors.cancel_failed"),
-        fallback_location: fallback_location
-      )
-    rescue DeletionUndo::Error => e
-      Rails.logger.error("[Plans::TaskScheduleItemsController] undo scheduling error: #{e.class} #{e.message}")
-      render_deletion_failure(
-        message: I18n.t(
-          "controllers.plans.task_schedule_items.errors.undo_failed",
-          message: e.message
-        ),
-        fallback_location: fallback_location
-      )
+      CompositionRoot.deletion_undo_schedule_interactor(output_port: presenter).call(input)
     end
 
     def complete

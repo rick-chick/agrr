@@ -360,6 +360,13 @@ module CompositionRoot
       )
     end
 
+    def deletion_undo_schedule_interactor(output_port:)
+      Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
+        output_port: output_port,
+        gateway: deletion_undo_gateway
+      )
+    end
+
     def task_schedule_generate_interactor(clock: Time.zone)
       Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
         progress_gateway: agrr_progress_gateway,
