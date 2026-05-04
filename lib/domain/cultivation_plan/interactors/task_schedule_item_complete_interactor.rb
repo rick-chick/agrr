@@ -16,13 +16,13 @@ module Domain
             return
           end
 
-          @gateway.complete_item!(
+          payload = @gateway.complete_item!(
             item,
             actual_date: actual_date,
             actual_notes: actual_notes,
             completed_at: completed_at
           )
-          @output_port.on_success(@gateway.serialize_item(item.reload))
+          @output_port.on_success(payload)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
             errors: normalize_errors(e.errors),

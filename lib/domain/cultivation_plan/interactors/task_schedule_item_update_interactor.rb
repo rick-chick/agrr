@@ -16,8 +16,8 @@ module Domain
             return
           end
 
-          @gateway.update_item!(item, attributes)
-          @output_port.on_success(@gateway.serialize_item(item.reload))
+          payload = @gateway.update_item!(item, attributes)
+          @output_port.on_success(payload)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
             errors: normalize_errors(e.errors),

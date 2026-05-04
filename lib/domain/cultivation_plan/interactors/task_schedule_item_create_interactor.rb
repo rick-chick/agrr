@@ -10,8 +10,7 @@ module Domain
         end
 
         def call(plan:, attributes:)
-          item = @gateway.create_item!(plan, attributes)
-          @output_port.on_created(@gateway.serialize_item(item))
+          @output_port.on_created(@gateway.create_item!(plan, attributes))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
             errors: normalize_errors(e.errors),

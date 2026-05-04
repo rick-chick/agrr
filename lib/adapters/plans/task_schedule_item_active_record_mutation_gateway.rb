@@ -37,7 +37,7 @@ module Adapters
 
       def create_item!(plan, attributes)
         attrs = attributes.to_h.symbolize_keys
-        ::TaskScheduleItem.transaction do
+        created = ::TaskScheduleItem.transaction do
           field_cultivation = plan.field_cultivations.find(attrs[:field_cultivation_id])
           category = "general"
           validate_crop_selection!(field_cultivation, attrs[:cultivation_plan_crop_id])
@@ -57,6 +57,7 @@ module Adapters
             build_create_attributes(attrs.except(:crop_task_template_id), template: template)
           )
         end
+        serialize_item(created)
       rescue ActiveRecord::RecordInvalid => e
         raise_domain_record_invalid!(e.record, e.message)
       rescue ActiveRecord::RecordNotFound
@@ -68,7 +69,7 @@ module Adapters
           attrs = build_update_attributes(item, attributes)
           item.update!(attrs)
         end
-        item
+        serialize_item(item.reload)
       rescue ActiveRecord::RecordInvalid => e
         raise_domain_record_invalid!(e.record, e.message)
       rescue ActiveRecord::RecordNotFound
@@ -84,7 +85,7 @@ module Adapters
             completed_at: completed_at
           )
         end
-        item
+        serialize_item(item.reload)
       rescue ActiveRecord::RecordInvalid => e
         raise_domain_record_invalid!(e.record, e.message)
       rescue ActiveRecord::RecordNotFound
