@@ -26,6 +26,28 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
     interactor.call
   end
 
+  test "call forwards policy permission denied to on_failure as exception" do
+    user = mock
+    err = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    user_lookup = mock
+    user_lookup.expects(:find).with(42).returns(user)
+
+    gateway = mock
+    gateway.expects(:list_index_for_user).with(user).raises(err)
+
+    output = mock
+    output.expects(:on_failure).with(err)
+
+    interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
+      output_port: output,
+      user_id: 42,
+      gateway: gateway,
+      user_lookup: user_lookup
+    )
+    interactor.call
+  end
+
   test "call forwards errors to on_failure" do
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(mock)
