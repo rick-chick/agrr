@@ -39,7 +39,7 @@ module Crops
         end
       Domain::Pest::Interactors::CropsNestedPestsCreateInteractor.new(output_port: presenter,
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(
-        crop: @crop,
+        crop_id: @crop.id,
         link_pest_id: params[:pest_id],
         pest_attrs: pest_attrs,
         admin: admin_user?
