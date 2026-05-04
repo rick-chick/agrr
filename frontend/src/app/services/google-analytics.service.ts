@@ -1,8 +1,17 @@
 import { Injectable } from '@angular/core';
 import { COOKIE_CONTROL_UI_DISABLED } from '../core/cookie-consent-policy';
+import { getGoogleAdsConversionId } from '../core/google-ads-runtime-config';
 import { environment } from '../../environments/environment';
 
 export type ConsentStatus = 'granted' | 'denied';
+
+/** Google Ads サイトコンバージョン `gtag('event','conversion',…)` に渡す引数の一部 */
+export interface GoogleAdsConversionPayload {
+  send_to: string;
+  value?: number;
+  currency?: string;
+  transaction_id?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GoogleAnalyticsService {
@@ -69,6 +78,26 @@ export class GoogleAnalyticsService {
     this.safeInvoke('event', eventName, params);
   }
 
+  /**
+   * Google 広告のサイトコンバージョン（広告側で作成したコンバージョンアクションの send_to）。
+   * クッキー同意で ad_storage が拒否されている場合でも gtag は呼ぶが送信はプラットフォーム側でブロックされる。
+   */
+  trackAdsConversion(payload: GoogleAdsConversionPayload): void {
+    if (!this.isEnabled) {
+      return;
+    }
+    const sendTo = payload.send_to?.trim();
+    if (!sendTo) {
+      return;
+    }
+
+    const { send_to: _drop, ...rest } = payload;
+    this.safeInvoke('event', 'conversion', {
+      send_to: sendTo,
+      ...rest
+    });
+  }
+
   getStoredConsent(): ConsentStatus | null {
     try {
       return (window.localStorage?.getItem(this.storageKey) as ConsentStatus | null) ?? null;
@@ -100,6 +129,15 @@ export class GoogleAnalyticsService {
       cookie_flags: 'SameSite=None;Secure',
       send_page_view: false
     });
+
+    const googleAdsId = getGoogleAdsConversionId();
+    if (googleAdsId) {
+      this.safeInvoke('config', googleAdsId, {
+        anonymize_ip: true,
+        cookie_flags: 'SameSite=None;Secure',
+        send_page_view: false
+      });
+    }
   }
 
   private updateConsentPayload(granted: boolean): void {

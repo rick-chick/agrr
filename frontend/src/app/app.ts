@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, Subscription } from 'rxjs';
+import { filter, Subscription, take } from 'rxjs';
+import { getGoogleAdsLoginConversionSendTo } from './core/google-ads-runtime-config';
 import { NavbarComponent } from './components/shared/navbar/navbar.component';
 import { FooterComponent } from './components/shared/footer/footer.component';
 import { FlashMessageComponent } from './components/shared/flash-message/flash-message.component';
@@ -114,18 +115,41 @@ export class App implements OnInit, OnDestroy {
     });
 
     this.googleAnalytics.applyStoredConsent();
+
+    this.authService
+      .loadCurrentUser()
+      .pipe(take(1))
+      .subscribe(() => {
+        void this.maybeTrackGoogleAdsAfterOAuthLanding();
+      });
+
     this.routerSubscription = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.googleAnalytics.trackPageView(event.urlAfterRedirects);
         this.refreshSeoMeta();
       });
-    this.authService.loadCurrentUser().subscribe();
   }
 
   ngOnDestroy(): void {
     this.routerSubscription?.unsubscribe();
     this.langChangeSubscription?.unsubscribe();
+  }
+
+  /** OAuth（または開発用モックログイン）直後のみバックエンドが付与するクエリ `_agrr_oauth=1` を消費して Google 広告コンバージョンを送る。 */
+  private async maybeTrackGoogleAdsAfterOAuthLanding(): Promise<void> {
+    const tree = this.router.parseUrl(this.router.url);
+    if (tree.queryParams['_agrr_oauth'] !== '1') {
+      return;
+    }
+
+    const sendTo = getGoogleAdsLoginConversionSendTo();
+    if (this.authService.user() && sendTo) {
+      this.googleAnalytics.trackAdsConversion({ send_to: sendTo });
+    }
+
+    delete tree.queryParams['_agrr_oauth'];
+    await this.router.navigateByUrl(tree, { replaceUrl: true });
   }
 
   private refreshSeoMeta(): void {

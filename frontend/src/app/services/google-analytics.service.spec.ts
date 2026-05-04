@@ -31,6 +31,10 @@ describe('GoogleAnalyticsService', () => {
     delete window.loadAdSense;
     delete window.dataLayer;
     environment.enableGoogleAnalytics = false;
+    environment.googleAdsId = '';
+    environment.googleAdsLoginConversionSendTo = '';
+    delete window.GOOGLE_ADS_CONVERSION_ID;
+    delete window.GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO;
   });
 
   it('applies stored consent when available', () => {
@@ -105,5 +109,40 @@ describe('GoogleAnalyticsService', () => {
     service.trackPageView('/disabled');
 
     expect(window.gtag).not.toHaveBeenCalled();
+  });
+
+  it('configures Google Ads tag when googleAdsId is set', () => {
+    window.gtag = vi.fn();
+    environment.googleAdsId = 'AW-TEST123';
+    service = new GoogleAnalyticsService();
+
+    expect(window.gtag).toHaveBeenCalledWith(
+      'config',
+      'AW-TEST123',
+      expect.objectContaining({
+        send_page_view: false
+      })
+    );
+  });
+
+  it('tracks Google Ads conversion with trimmed send_to', () => {
+    window.gtag = vi.fn();
+    service.trackAdsConversion({ send_to: ' AW-1/label ', value: 10, currency: 'JPY' });
+
+    expect(window.gtag).toHaveBeenCalledWith(
+      'event',
+      'conversion',
+      expect.objectContaining({
+        send_to: 'AW-1/label',
+        value: 10,
+        currency: 'JPY'
+      })
+    );
+  });
+
+  it('skips conversion when send_to is empty', () => {
+    window.gtag = vi.fn();
+    service.trackAdsConversion({ send_to: '   ' });
+    expect(window.gtag).not.toHaveBeenCalledWith('event', 'conversion', expect.anything());
   });
 });

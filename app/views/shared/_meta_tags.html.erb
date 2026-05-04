@@ -58,6 +58,7 @@ end %>">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
 <!-- Google Analytics 4 -->
+<% ga_ads_id = ENV['GOOGLE_ADS_CONVERSION_ID'].presence %>
 <% if Rails.env.production? %>
   <%= javascript_include_tag "https://www.googletagmanager.com/gtag/js?id=G-WNLSL6W4ZT", async: true, nonce: true %>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -66,6 +67,12 @@ end %>">
       'anonymize_ip': true,
       'cookie_flags': 'SameSite=None;Secure'
     });
+<% if ga_ads_id.present? %>
+    gtag('config', '<%= ga_ads_id %>', {
+      'anonymize_ip': true,
+      'cookie_flags': 'SameSite=None;Secure'
+    });
+<% end %>
   </script>
 <% end %>
 

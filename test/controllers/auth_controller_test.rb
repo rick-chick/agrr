@@ -37,7 +37,20 @@ class AuthControllerTest < ActionController::TestCase
     @request.session[:return_to] = "http://localhost:4200/"
 
     get :google_oauth2_callback
-    assert_redirected_to "http://localhost:4200/", allow_other_host: true
+    assert_redirected_to "http://localhost:4200/?_agrr_oauth=1", allow_other_host: true
+    assert_nil session[:return_to]
+  end
+
+  def test_callback_appends_conversion_query_when_return_to_has_existing_params
+    @request.session[:return_to] = "http://localhost:4200/dashboard?plan=1"
+
+    get :google_oauth2_callback
+    redirected = URI.parse(response.redirect_url)
+    assert_equal "4200", redirected.port.to_s
+    assert_equal "/dashboard", redirected.path
+    q = Rack::Utils.parse_query(redirected.query)
+    assert_equal "1", q["plan"]
+    assert_equal "1", q["_agrr_oauth"]
     assert_nil session[:return_to]
   end
 

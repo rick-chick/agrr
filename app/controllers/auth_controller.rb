@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
+  include OauthConversionRedirect
+
   layout "auth", only: [ :login ]
 
   # Skip CSRF protection for OAuth endpoints
@@ -69,7 +71,7 @@ class AuthController < ApplicationController
 
         # Redirect back to frontend (e.g. Angular 4200) if return_to was set
         if session[:return_to].present?
-          return_to = session.delete(:return_to)
+          return_to = append_oauth_conversion_query(session.delete(:return_to))
           redirect_to return_to, allow_other_host: true, notice: I18n.t("auth.flash.login_success")
         else
           redirect_to root_path, notice: I18n.t("auth.flash.login_success")

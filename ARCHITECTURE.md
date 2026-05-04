@@ -53,9 +53,9 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 
 Gateways **must not** depend on HTTP or incidental UI conventions: shapes named for a specific template/partials; Hash layouts driven by `data-*` attributes or route-helper-only keying; or return types / method naming that encode a **screen identifier** (`*_page`, `*_html`, etc.) when the real intent is **view/SPA-specific key arrangement** assembled inside the persistence adapter.
 
-**Heuristic:** If the gateway’s job is effectively “produce the blob this one HTML partial or Angular screen expects,” the boundary is wrong—lift assembly to the **Interactor** or to a domain **assembler/mapper** under `lib/domain/**` (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
+**Heuristic:** If the gateway’s job is effectively “produce the blob this one HTML partial or Angular screen expects,” the boundary is wrong—lift assembly to the **Interactor** or to a domain **assembler/mapper** under `lib/domain/`** (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
 
-**Allowed:** Persistence, authorization, and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). **Presenter-shaped** composites required by an output port (for example **`PrivatePlanShowDto`**) are composed **outside** the gateway adapter.
+**Allowed:** Persistence, authorization, and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). **Presenter-shaped** composites required by an output port (for example `**PrivatePlanShowDto`**) are composed **outside** the gateway adapter.
 
 ### Presenters (`lib/presenters/`)
 
@@ -83,7 +83,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 - `**app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters.
 - `**app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
-- `**app/models/**` — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
+- `**app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
 - `**app/services/**` — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
 - `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
 
@@ -94,13 +94,13 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 ## What we require (non-negotiable)
 
-- **This document wins over “industry defaults”:** When **common Rails/Clean-Architecture blog patterns**, **Pragmatism**, or **“lots of projects do X”** conflict with the rules below (including **`## Prohibited practices`**), **follow this file—not the meme**. “Existing code does it” or “tests pass” **does not** override a numbered prohibition; treat mismatches as **debt to fix**, not a template to copy.
+- **This document wins over “industry defaults”:** When **common Rails/Clean-Architecture blog patterns**, **Pragmatism**, or **“lots of projects do X”** conflict with the rules below (including `**## Prohibited practices`**), **follow this file—not the meme**. “Existing code does it” or “tests pass” **does not** override a numbered prohibition; treat mismatches as **debt to fix**, not a template to copy.
 - **Depend inward:** Frameworks, persistence, HTTP, and clocks live at the **edge** and are injected. The core consumes **data (DTOs/entities) and narrow ports**—not `Rails`, not ActiveRecord traversal, not ambient time.
 - **One decision, one place:** Business outcomes are expressed in **policies and interactors**. Presenters and templates **shape output only**; they do not re-decide the same rules. Do not duplicate truth across models, services, helpers, and views.
 - **Wiring is explicit:** Constructor signatures are the **contract**. No hidden globals, `*.default`, grab-bag context objects, or tests that green-wrap a different graph than production.
 - **Truth is specified:** Behavior is defined by **contract text and the tests bound to it**—not by “matching whatever the legacy stack does.”
 - **Refactors finish the job:** Moving code out of `lib/domain/` without fixing dependency direction and types is **relocation**, not completion.
-- **Convenience is not an exemption:** Skipping layering because it is faster, when it commits us to wholesale rework afterward, **is rejected**. Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in **`docs/contracts/`** and tests bound to those contracts—see `.cursor/rules/no-convenience-tech-debt.mdc`.
+- **Convenience is not an exemption:** Skipping layering because it is faster, when it commits us to wholesale rework afterward, **is rejected**. Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in `**docs/contracts/`** and tests bound to those contracts—see `.cursor/rules/no-convenience-tech-debt.mdc`.
 
 ## Prohibited practices (hard rules)
 
@@ -142,7 +142,7 @@ The clauses in the numbered subsections below are the **negative** expression of
 
 1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, or controller concern **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
 2. **Tests that hide wiring** — Making the suite pass with global stubs or implicit time while production code still lacks the constructor contract and explicit ports required above. Fix production wiring first, then tests.
-3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. Reserve edge-level `rescue` for **unexpected** failures (log + generic 500 or equivalent)—not for outcomes the interactor should model and tests should assert via normal exits.
+3. `**rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. Reserve edge-level `rescue` for **unexpected** failures (log + generic 500 or equivalent)—not for outcomes the interactor should model and tests should assert via normal exits.
 
 ### Rationalizations and loopholes (items 19–26)
 

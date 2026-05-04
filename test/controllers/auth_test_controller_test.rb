@@ -30,7 +30,7 @@ class AuthTestControllerTest < ActionController::TestCase
     with_env("FRONTEND_URL" => "http://localhost:4200") do
       get :mock_login_as, params: { user: "developer", return_to: "http://localhost:4200/dashboard" }
 
-      assert_redirected_to "http://localhost:4200/dashboard", allow_other_host: true
+      assert_redirected_to "http://localhost:4200/dashboard?_agrr_oauth=1", allow_other_host: true
     end
   end
 
@@ -43,6 +43,7 @@ class AuthTestControllerTest < ActionController::TestCase
       assert_response :redirect
       assert_match %r{localhost:4200/dashboard}, response.redirect_url,
         "Expected redirect to frontend (got #{response.redirect_url})"
+      assert_match %r{_agrr_oauth=1}, response.redirect_url
     end
   end
 

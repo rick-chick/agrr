@@ -11,6 +11,8 @@
 #   API_BASE_URL
 #   URL_MAP_NAME            # used for CDN invalidation (optional)
 #   DRY_RUN=1               # set to "1" to print commands instead of executing
+#   GOOGLE_ADS_CONVERSION_ID   # optional AW-… for gtag config (injected into index.html)
+#   GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO # optional AW-…/label — login conversion ping
 #
 set -eu
 
@@ -64,6 +66,9 @@ set +a
 : "${PROJECT_ID:?PROJECT_ID must be set (from env file)}"
 : "${BUCKET_NAME:?BUCKET_NAME must be set (from env file)}"
 : "${API_BASE_URL:?API_BASE_URL must be set (from env file)}"
+# Optional Google Ads conversion (see env.example GOOGLE_ADS_*)
+GOOGLE_ADS_CONVERSION_ID="${GOOGLE_ADS_CONVERSION_ID:-}"
+GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO="${GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO:-}"
 # Static path prefix for assets (used in deploy-url)
 STATIC_PATH_PREFIX="${STATIC_PATH_PREFIX:-static}"
 # URL_MAP_NAME is optional, used for CDN invalidation
@@ -179,7 +184,27 @@ else
   STATIC_JSON="\"$esc_static\""
 fi
 
-INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON; window.STATIC_PATH_PREFIX = $STATIC_JSON;</script>"
+escape_for_head_inject() {
+  if command -v python3 >/dev/null 2>&1; then
+    json_escape "$1"
+    return 0
+  fi
+  esc_val=$(printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  echo "\"$esc_val\""
+}
+
+# Optional: Ads conversion globals (omit lines when unset)
+ADS_ASSIGN=""
+if [ -n "${GOOGLE_ADS_CONVERSION_ID:-}" ]; then
+  ADS_CONV_JSON=$(escape_for_head_inject "$GOOGLE_ADS_CONVERSION_ID")
+  ADS_ASSIGN="${ADS_ASSIGN}window.GOOGLE_ADS_CONVERSION_ID=${ADS_CONV_JSON};"
+fi
+if [ -n "${GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO:-}" ]; then
+  ADS_SEND_JSON=$(escape_for_head_inject "$GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO")
+  ADS_ASSIGN="${ADS_ASSIGN}window.GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO=${ADS_SEND_JSON};"
+fi
+
+INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON; window.STATIC_PATH_PREFIX = $STATIC_JSON; ${ADS_ASSIGN}</script>"
 
 # Insert snippet before first </head> or before first </body> if head not present
 TMP_INDEX="$(mktemp)"

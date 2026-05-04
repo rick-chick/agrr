@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AuthTestController < ApplicationController
+  include OauthConversionRedirect
+
   # Skip authentication for test endpoints
   skip_before_action :authenticate_user!, only: [ :mock_login, :mock_login_as, :mock_logout ]
 
@@ -101,7 +103,7 @@ class AuthTestController < ApplicationController
     # Redirect back to frontend (e.g. Angular 4200) if return_to from params or session
     return_to = params[:return_to].presence || session.delete(:return_to)
     if return_to.present? && allowed_return_to?(return_to)
-      redirect_to return_to, allow_other_host: true, notice: I18n.t("auth_test.mock_login_success", name: user.name)
+      redirect_to append_oauth_conversion_query(return_to), allow_other_host: true, notice: I18n.t("auth_test.mock_login_success", name: user.name)
     else
       redirect_to root_path(locale: I18n.default_locale), notice: I18n.t("auth_test.mock_login_success", name: user.name)
     end
