@@ -74,6 +74,27 @@ module Api
           assert_operator json_response.length, :>=, 3
         end
 
+        test "should return forbidden on index when gateway denies policy" do
+          fake_gw = Object.new
+          def fake_gw.user_id=(_); end
+          def fake_gw.list(_dto)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          def fake_gw.reference_farms_for_admin_list(**_)
+            []
+          end
+          CompositionRoot.instance_variable_set(:@farm_gateway, fake_gw)
+
+          get api_v1_masters_farms_path,
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          assert_equal I18n.t("farms.flash.no_permission"), JSON.parse(response.body)["error"]
+        end
+
         test "should show farm" do
           farm = create(:farm, :user_owned, user: @user, name: "テスト農場")
 

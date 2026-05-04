@@ -101,6 +101,16 @@ module Domain
 
           admin_interactor.call(input_dto)
         end
+
+        test "forwards policy permission denied to on_failure as exception" do
+          err = Domain::Shared::Policies::PolicyPermissionDenied.new
+          input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
+          @mock_gateway.expects(:user_id=).with(@user_id)
+          @mock_gateway.expects(:list).with(input_dto).raises(err)
+          @mock_output_port.expects(:on_failure).with(err)
+
+          @interactor.call(input_dto)
+        end
       end
     end
   end

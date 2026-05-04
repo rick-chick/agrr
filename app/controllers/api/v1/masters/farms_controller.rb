@@ -32,9 +32,13 @@ module Api
             json = farms.is_a?(Array) ? farms.map { |e| entity_to_json(e) } : []
             render_response(json: json, status: :ok)
           elsif instance_variable_defined?(:@farm_list_error) && @farm_list_error
-            # エラー時: エラーレスポンス
-            msg = @farm_list_error.respond_to?(:message) ? @farm_list_error.message : @farm_list_error.to_s
-            render_response(json: { error: msg }, status: :unprocessable_entity)
+            err = @farm_list_error
+            if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+              render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
+            else
+              msg = err.respond_to?(:message) ? err.message : err.to_s
+              render_response(json: { error: msg }, status: :unprocessable_entity)
+            end
           end
         end
 

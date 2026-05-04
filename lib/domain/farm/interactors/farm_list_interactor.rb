@@ -20,6 +20,8 @@ module Domain
           reference_farms = @gateway.reference_farms_for_admin_list(is_admin: input_dto.is_admin)
 
           @output_port.on_success(farms, reference_farms: reference_farms)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e

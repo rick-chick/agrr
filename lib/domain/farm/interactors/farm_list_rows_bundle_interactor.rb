@@ -18,6 +18,8 @@ module Domain
 
           bundle = @gateway.farm_list_rows_bundle(input_dto)
           @output_port.on_success(bundle)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
