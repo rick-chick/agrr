@@ -4,18 +4,16 @@ module Domain
   module CultivationPlan
     module Interactors
       # add_crop API: アダプタ層の実行結果を出力ポートへ写す（コントローラでは rescue 主導にしない）。
-      class ApiAddCropInteractor
-        def initialize(output:, flow: nil)
+      class AddCropInteractor
+        def initialize(output:, flow:)
           @output = output
           @flow = flow
         end
 
-        # @param host [ApplicationController] CultivationPlanApi を include したコントローラ
-        # @param load_plan [Proc] find_api_cultivation_plan 相当（RecordNotFound の可能性あり）
-        def call(host:, load_plan:, crop_id:, field_id:, display_range:)
-          flow = @flow || Adapters::CultivationPlan::ApiAddCropFlow.new(host)
-          result = flow.full_run(
-            load_plan: load_plan,
+        # @param plan_loader [#load] find_api_cultivation_plan 相当（RecordNotFound の可能性あり）
+        def call(plan_loader:, crop_id:, field_id:, display_range:)
+          result = @flow.full_run(
+            plan_loader: plan_loader,
             crop_id: crop_id,
             field_id: field_id,
             display_range: display_range

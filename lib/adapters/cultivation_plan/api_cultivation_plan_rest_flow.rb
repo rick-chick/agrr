@@ -8,10 +8,10 @@ module Adapters
         @host = host_controller
       end
 
-      def add_field_run(load_plan:, field_name:, field_area:, daily_fixed_cost:)
+      def add_field_run(plan_loader:, field_name:, field_area:, daily_fixed_cost:)
         cultivation_plan =
           begin
-            load_plan.call
+            plan_loader.load
           rescue ActiveRecord::RecordNotFound
             return { kind: :not_found }
           end
@@ -59,10 +59,10 @@ module Adapters
         { kind: :unexpected, message: e.message }
       end
 
-      def remove_field_run(load_plan:, field_id_param:)
+      def remove_field_run(plan_loader:, field_id_param:)
         cultivation_plan =
           begin
-            load_plan.call
+            plan_loader.load
           rescue ActiveRecord::RecordNotFound
             return { kind: :not_found }
           end
@@ -107,10 +107,10 @@ module Adapters
         { kind: :unexpected, message: e.message }
       end
 
-      def data_run(load_plan:)
+      def data_run(plan_loader:)
         cultivation_plan =
           begin
-            load_plan.call
+            plan_loader.load
           rescue ActiveRecord::RecordNotFound
             return { kind: :not_found }
           end
@@ -190,10 +190,10 @@ module Adapters
         { kind: :unexpected, message: e.message }
       end
 
-      def adjust_run(load_plan:, moves_raw:)
+      def adjust_run(plan_loader:, moves_raw:)
         cultivation_plan =
           begin
-            load_plan.call
+            plan_loader.load
           rescue ActiveRecord::RecordNotFound
             return { kind: :not_found }
           end

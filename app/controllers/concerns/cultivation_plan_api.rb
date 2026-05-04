@@ -32,14 +32,14 @@ module CultivationPlanApi
       Rails.logger.info "📅 [Add Crop] Display range from UI: not provided"
     end
 
-    Domain::CultivationPlan::Interactors::ApiAddCropInteractor.new(
+    Domain::CultivationPlan::Interactors::AddCropInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiAddCropPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
-      )
+      ),
+      flow: cultivation_plan_api_add_crop_flow
     ).call(
-      host: self,
-      load_plan: -> { find_api_cultivation_plan },
+      plan_loader: cultivation_plan_api_plan_loader,
       crop_id: params[:crop_id],
       field_id: params[:field_id],
       display_range: display_range
@@ -49,14 +49,14 @@ module CultivationPlanApi
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_field
   # 新しい圃場を追加
   def add_field
-    Domain::CultivationPlan::Interactors::ApiAddFieldInteractor.new(
+    Domain::CultivationPlan::Interactors::AddFieldInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiAddFieldPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
-      )
+      ),
+      flow: cultivation_plan_api_rest_flow
     ).call(
-      host: self,
-      load_plan: -> { find_api_cultivation_plan },
+      plan_loader: cultivation_plan_api_plan_loader,
       field_name: params[:field_name],
       field_area: params[:field_area],
       daily_fixed_cost: params[:daily_fixed_cost]
@@ -66,14 +66,14 @@ module CultivationPlanApi
   # DELETE /api/v1/{plans|public_plans}/cultivation_plans/:id/remove_field/:field_id
   # 圃場を削除
   def remove_field
-    Domain::CultivationPlan::Interactors::ApiRemoveFieldInteractor.new(
+    Domain::CultivationPlan::Interactors::RemoveFieldInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiRemoveFieldPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
-      )
+      ),
+      flow: cultivation_plan_api_rest_flow
     ).call(
-      host: self,
-      load_plan: -> { find_api_cultivation_plan },
+      plan_loader: cultivation_plan_api_plan_loader,
       field_id_param: params[:field_id]
     )
   end
@@ -81,15 +81,13 @@ module CultivationPlanApi
   # GET /api/v1/{plans|public_plans}/cultivation_plans/:id/data
   # 栽培計画データを取得
   def data
-    Domain::CultivationPlan::Interactors::ApiPlanDataInteractor.new(
+    Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
-      )
-    ).call(
-      host: self,
-      load_plan: -> { find_api_cultivation_plan }
-    )
+      ),
+      flow: cultivation_plan_api_rest_flow
+    ).call(plan_loader: cultivation_plan_api_plan_loader)
   end
 
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/adjust
@@ -98,16 +96,29 @@ module CultivationPlanApi
   # このメソッドはDBに保存された天気データを再利用し、
   # 不要な天気予測を実行しないことで高速化されています
   def adjust
-    Domain::CultivationPlan::Interactors::ApiPlanAdjustInteractor.new(
-      output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self),
+      flow: cultivation_plan_api_rest_flow
     ).call(
-      host: self,
-      load_plan: -> { find_api_cultivation_plan },
+      plan_loader: cultivation_plan_api_plan_loader,
       moves_raw: params[:moves] || []
     )
   end
 
   private
+
+  # lib/domain が具象アダプタを new しないよう、CompositionRoot と同様にエッジで組み立てて注入する
+  def cultivation_plan_api_rest_flow
+    Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(self)
+  end
+
+  def cultivation_plan_api_add_crop_flow
+    Adapters::CultivationPlan::ApiAddCropFlow.new(self)
+  end
+
+  def cultivation_plan_api_plan_loader
+    Adapters::CultivationPlan::ApiCultivationPlanControllerPlanLoader.new(self)
+  end
 
   # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
   def api_cultivation_plan_translation_scope

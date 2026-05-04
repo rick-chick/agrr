@@ -3,15 +3,14 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class ApiRemoveFieldInteractor
-        def initialize(output:, flow: nil)
+      class RemoveFieldInteractor
+        def initialize(output:, flow:)
           @output = output
           @flow = flow
         end
 
-        def call(host:, load_plan:, field_id_param:)
-          flow = @flow || Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(host)
-          result = flow.remove_field_run(load_plan: load_plan, field_id_param: field_id_param)
+        def call(plan_loader:, field_id_param:)
+          result = @flow.remove_field_run(plan_loader: plan_loader, field_id_param: field_id_param)
 
           case result[:kind]
           when :success

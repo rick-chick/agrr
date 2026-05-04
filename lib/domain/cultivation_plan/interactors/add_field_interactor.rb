@@ -3,16 +3,15 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class ApiAddFieldInteractor
-        def initialize(output:, flow: nil)
+      class AddFieldInteractor
+        def initialize(output:, flow:)
           @output = output
           @flow = flow
         end
 
-        def call(host:, load_plan:, field_name:, field_area:, daily_fixed_cost:)
-          flow = @flow || Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(host)
-          result = flow.add_field_run(
-            load_plan: load_plan,
+        def call(plan_loader:, field_name:, field_area:, daily_fixed_cost:)
+          result = @flow.add_field_run(
+            plan_loader: plan_loader,
             field_name: field_name,
             field_area: field_area,
             daily_fixed_cost: daily_fixed_cost

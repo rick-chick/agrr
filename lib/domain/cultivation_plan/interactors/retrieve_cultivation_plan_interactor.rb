@@ -3,15 +3,14 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class ApiPlanDataInteractor
-        def initialize(output:, flow: nil)
+      class RetrieveCultivationPlanInteractor
+        def initialize(output:, flow:)
           @output = output
           @flow = flow
         end
 
-        def call(host:, load_plan:)
-          flow = @flow || Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(host)
-          result = flow.data_run(load_plan: load_plan)
+        def call(plan_loader:)
+          result = @flow.data_run(plan_loader: plan_loader)
 
           case result[:kind]
           when :success

@@ -9,10 +9,10 @@ module Adapters
       end
 
       # @return [Hash] keys: :kind, and kind ごとの追加キー
-      def full_run(load_plan:, crop_id:, field_id:, display_range:)
+      def full_run(plan_loader:, crop_id:, field_id:, display_range:)
         cultivation_plan =
           begin
-            load_plan.call
+            plan_loader.load
           rescue ActiveRecord::RecordNotFound
             return { kind: :not_found }
           end

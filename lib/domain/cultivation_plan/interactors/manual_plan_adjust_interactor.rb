@@ -3,15 +3,14 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class ApiPlanAdjustInteractor
-        def initialize(output:, flow: nil)
+      class ManualPlanAdjustInteractor
+        def initialize(output:, flow:)
           @output = output
           @flow = flow
         end
 
-        def call(host:, load_plan:, moves_raw:)
-          flow = @flow || Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(host)
-          result = flow.adjust_run(load_plan: load_plan, moves_raw: moves_raw)
+        def call(plan_loader:, moves_raw:)
+          result = @flow.adjust_run(plan_loader: plan_loader, moves_raw: moves_raw)
 
           case result[:kind]
           when :crop_missing_growth_stages
