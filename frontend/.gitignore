@@ -39,6 +39,19 @@ testem.log
 /typings
 __screenshots__/
 
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
+# Playwright ログイン状態（オプション・秘密を含む）
+/e2e/.auth/state.json
+/e2e/.auth/dev-session.json
+
+# Agent 向けに再生成する PNG（Cursor に添付してレビュー）
+/e2e/agent-review/out/
+
 # System files
 .DS_Store
 Thumbs.db
