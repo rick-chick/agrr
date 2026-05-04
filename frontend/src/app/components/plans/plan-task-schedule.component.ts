@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -18,7 +19,7 @@ const initialControl: PlanTaskScheduleViewState = {
 @Component({
   selector: 'app-plan-task-schedule',
   standalone: true,
-  imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent],
+  imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule],
   providers: [
     PlanTaskSchedulePresenter,
     LoadPlanTaskScheduleUseCase,
@@ -27,13 +28,13 @@ const initialControl: PlanTaskScheduleViewState = {
   ],
   template: `
     <section class="page">
-      <a [routerLink]="['/plans', planId]">Back to plan</a>
+      <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>
       @if (control.loading) {
-        <p>Loading...</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <p class="error">{{ control.error }}</p>
       } @else if (control.schedule) {
-        <h2>Task Schedule: {{ control.schedule.plan.name }}</h2>
+        <h2>{{ 'plans.task_schedule.title' | translate: { name: control.schedule.plan.name } }}</h2>
         <app-task-schedule-timeline [fields]="control.schedule.fields" />
       }
     </section>
@@ -45,6 +46,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -63,7 +65,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.presenter.setView(this);
     const planId = this.planId;
     if (!planId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid plan id.' };
+      this.control = { ...initialControl, loading: false, error: this.translate.instant('plans.errors.invalid_id') };
       return;
     }
     this.load(planId);
