@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
+class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSupport::TestCase
   class StubScheduleGateway
     def initialize(response)
       @response = response
@@ -26,7 +26,7 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
   setup do
     @crop = create(:crop, :with_stages, name: "トマト", variety: "一般")
     @soil_task = create(:agricultural_task, :soil_preparation)
-    @soil_template = create(
+    create(
       :crop_task_template,
       crop: @crop,
       agricultural_task: @soil_task,
@@ -74,14 +74,18 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
     }
   end
 
-  test "regenerate! stores crop task schedule blueprints" do
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(@schedule_response),
-      fertilize_gateway: StubFertilizeGateway.new(@fertilize_response)
+  def build_gateway(schedule:, fertilize:)
+    Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationActiveRecordGateway.new(
+      schedule_gateway: StubScheduleGateway.new(schedule),
+      fertilize_gateway: StubFertilizeGateway.new(fertilize)
     )
+  end
+
+  test "regenerate_from_crop! stores crop task schedule blueprints" do
+    gateway = build_gateway(schedule: @schedule_response, fertilize: @fertilize_response)
 
     assert_difference -> { CropTaskScheduleBlueprint.count }, 2 do
-      service.regenerate!(crop: @crop)
+      gateway.regenerate_from_crop!(crop: @crop)
     end
 
     @crop.reload
@@ -94,7 +98,7 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
     assert_equal BigDecimal("3.5"), fertilizer_blueprint.amount
   end
 
-  test "regenerate! replaces existing blueprints and updates gdd triggers" do
+  test "regenerate_from_crop! replaces existing blueprints and updates gdd triggers" do
     existing_blueprint = create(
       :crop_task_schedule_blueprint,
       crop: @crop,
@@ -106,18 +110,13 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
       source: "agrr_schedule"
     )
 
-    # preload association similarly to controller behaviour
     @crop.crop_task_schedule_blueprints.to_a
 
     updated_schedule = @schedule_response.deep_dup
     updated_schedule["task_schedules"][0]["gdd_trigger"] = 125
 
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(updated_schedule),
-      fertilize_gateway: StubFertilizeGateway.new(@fertilize_response)
-    )
-
-    service.regenerate!(crop: @crop)
+    gateway = build_gateway(schedule: updated_schedule, fertilize: @fertilize_response)
+    gateway.regenerate_from_crop!(crop: @crop)
 
     @crop.reload
     new_blueprint = @crop.crop_task_schedule_blueprints.find_by!(agricultural_task: @soil_task)
@@ -125,7 +124,7 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
     refute_equal existing_blueprint.id, new_blueprint.id
   end
 
-  test "regenerate! resets preload cache so subsequent reads reflect new values" do
+  test "regenerate_from_crop! resets preload cache so subsequent reads reflect new values" do
     create(
       :crop_task_schedule_blueprint,
       crop: @crop,
@@ -136,50 +135,36 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
       source: "agrr_schedule"
     )
 
-    # 事前に関連を読み込んでキャッシュさせる
     @crop.crop_task_schedule_blueprints.load
 
     updated_schedule = @schedule_response.deep_dup
     updated_schedule["task_schedules"][0]["gdd_trigger"] = 180
 
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(updated_schedule),
-      fertilize_gateway: StubFertilizeGateway.new(@fertilize_response)
-    )
+    gateway = build_gateway(schedule: updated_schedule, fertilize: @fertilize_response)
+    gateway.regenerate_from_crop!(crop: @crop)
 
-    service.regenerate!(crop: @crop)
-
-    # reloadせずに新しい値が参照できること
     current_blueprints = @crop.crop_task_schedule_blueprints
     assert_equal 2, current_blueprints.size
     regenerated = current_blueprints.find { |bp| bp.agricultural_task_id == @soil_task.id }
     assert_equal BigDecimal("180"), regenerated.gdd_trigger
   end
 
-  test "raises error when crop has no agricultural tasks" do
+  test "raises domain error when crop has no agricultural tasks" do
     crop_without_tasks = create(:crop, :with_stages, name: "ナス", variety: "一般")
+    gateway = build_gateway(schedule: @schedule_response, fertilize: @fertilize_response)
 
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(@schedule_response),
-      fertilize_gateway: StubFertilizeGateway.new(@fertilize_response)
-    )
-
-    assert_raises CropTaskScheduleBlueprintCreateService::MissingCropTaskTemplatesError do
-      service.regenerate!(crop: crop_without_tasks)
+    assert_raises(Domain::Crop::Exceptions::MissingTaskTemplatesForBlueprintRegeneration) do
+      gateway.regenerate_from_crop!(crop: crop_without_tasks)
     end
   end
 
-  test "raises error when generator returns no blueprints" do
+  test "raises domain error when generator returns no blueprints" do
     empty_schedule = { "task_schedules" => [] }
     empty_fertilize = { "schedule" => [] }
+    gateway = build_gateway(schedule: empty_schedule, fertilize: empty_fertilize)
 
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(empty_schedule),
-      fertilize_gateway: StubFertilizeGateway.new(empty_fertilize)
-    )
-
-    assert_raises CropTaskScheduleBlueprintCreateService::GenerationFailedError do
-      service.regenerate!(crop: @crop)
+    assert_raises(Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed) do
+      gateway.regenerate_from_crop!(crop: @crop)
     end
   end
 
@@ -216,12 +201,8 @@ class CropTaskScheduleBlueprintCreateServiceTest < ActiveSupport::TestCase
       ]
     }
 
-    service = CropTaskScheduleBlueprintCreateService.new(
-      schedule_gateway: StubScheduleGateway.new(precise_schedule),
-      fertilize_gateway: StubFertilizeGateway.new(precise_fertilize)
-    )
-
-    service.regenerate!(crop: @crop)
+    gateway = build_gateway(schedule: precise_schedule, fertilize: precise_fertilize)
+    gateway.regenerate_from_crop!(crop: @crop)
 
     @crop.reload
     precise_blueprint = @crop.crop_task_schedule_blueprints.find_by!(stage_order: 2)

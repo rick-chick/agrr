@@ -1,17 +1,18 @@
-  class BlueprintServiceDouble
-    attr_reader :calls
-
-    def initialize
-      @calls = []
-    end
-
-    def regenerate!(crop:)
-      @calls << crop
-    end
-  end
 # frozen_string_literal: true
 
 require "test_helper"
+
+class BlueprintRegenerationGatewayDouble
+  attr_reader :calls
+
+  def initialize
+    @calls = []
+  end
+
+  def regenerate_from_crop!(crop:)
+    @calls << crop
+  end
+end
 
 class CropsControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
@@ -137,14 +138,14 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
 
   test "管理者はAIで作業テンプレートを生成できる" do
     sign_in_as @admin_user
-    service_double = BlueprintServiceDouble.new
+    gateway_double = BlueprintRegenerationGatewayDouble.new
 
-    CropTaskScheduleBlueprintCreateService.stub(:new, service_double) do
+    CompositionRoot.stub(:crop_task_schedule_blueprint_regeneration_gateway, gateway_double) do
       post generate_task_schedule_blueprints_crop_path(@admin_crop)
     end
 
-    assert_equal 1, service_double.calls.size
-    assert_equal @admin_crop.id, service_double.calls.first.id
+    assert_equal 1, gateway_double.calls.size
+    assert_equal @admin_crop.id, gateway_double.calls.first.id
     assert_redirected_to crop_path(@admin_crop)
     assert_equal I18n.t("crops.flash.task_schedule_blueprints_generated"), flash[:notice]
   end

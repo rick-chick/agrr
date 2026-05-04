@@ -363,7 +363,10 @@ module CompositionRoot
     end
 
     def crop_task_schedule_blueprint_regeneration_gateway
-      @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationDelegatingGateway.new
+      @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationActiveRecordGateway.new(
+        schedule_gateway: Agrr::ScheduleGateway.new,
+        fertilize_gateway: Agrr::FertilizeGateway.new
+      )
     end
 
     def crop_task_template_toggle_gateway
