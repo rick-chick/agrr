@@ -2,17 +2,17 @@
 
 ## スコープ
 
-- **ユースケース**: `GET .../plans` → **`Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor#call`**
-- **`on_success` に渡すもの（一文）**: **`PrivatePlanIndexPageDto`**（`plan_rows`: **`Array<PrivatePlanIndexPlanRowDto>`**（各要素に **`id`**, **`farm_display_name`**, **`total_area`**, **`crops_count`**, **`fields_count`**, **`status`**（文字列）, **`display_name`**（**削除 undo トースト等用**。カード見出し・詳細には使わない。`CultivationPlan#display_name` と整合する文字列）, **`created_at`**））。表示順は従来の **`plans.group_by(&:farm_id).values.flatten`** と同じ。**ActiveRecord は Port を越えない**。
+- **ユースケース**: `GET .../plans` → **`Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor#call`**
+- **`on_success` に渡すもの（一文）**: **`PrivatePlanIndexDto`**（`plan_rows`: **`Array<PrivatePlanIndexPlanRowDto>`**（各要素に **`id`**, **`farm_display_name`**, **`total_area`**, **`crops_count`**, **`fields_count`**, **`status`**（文字列）, **`display_name`**（**削除 undo トースト等用**。カード見出し・詳細には使わない。`CultivationPlan#display_name` と整合する文字列）, **`created_at`**））。表示順は従来の **`plans.group_by(&:farm_id).values.flatten`** と同じ。**ActiveRecord は Port を越えない**。
 
 ## Output Port
 
-- **HTML**: `Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter`（`PrivatePlanIndexPageOutputPort`）
+- **HTML**: `Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter`（`PrivatePlanIndexOutputPort`）
 - **`on_failure`**: `redirect_to plans_path` + `alert`（文言は **`session_invalid` / `not_found` / `restart`** 等。**恒久的に一覧だけが失敗し続ける場合はインターラクタ／Gateway の修正が必要**）
 
 ## Gateway
 
-- **`CultivationPlanGateway#private_plan_index_plan_rows(user:)`** — ログインユーザーの **private 計画**を列挙し、作物数・圃場数を集計して **`PrivatePlanIndexPlanRowDto`** の配列を返す。**`PrivatePlanIndexPageDto`** は Interactor 成功時に **`PrivatePlanIndexPageAssembler`** で組み立てる。
+- **`CultivationPlanGateway#private_plan_index_plan_rows(user:)`** — ログインユーザーの **private 計画**を列挙し、作物数・圃場数を集計して **`PrivatePlanIndexPlanRowDto`** の配列を返す。**`PrivatePlanIndexDto`** は Interactor 成功時に **`PrivatePlanIndexAssembler`** で組み立てる。
 
 ## Controller
 
@@ -27,4 +27,4 @@
 
 ## テンプレ（`plans/index`）
 
-- **`@private_plan_index_page`** の **`plan_rows`** / **`empty?`** のみ参照（`@vm` / `@plans_by_farm` / AR は使用しない）。
+- **`@private_plan_index`** の **`plan_rows`** / **`empty?`** のみ参照（`@vm` / `@plans_by_farm` / AR は使用しない）。

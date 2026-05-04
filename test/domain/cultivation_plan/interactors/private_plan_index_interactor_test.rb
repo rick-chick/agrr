@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
+class PrivatePlanIndexInteractorTest < ActiveSupport::TestCase
   test "call passes dto from gateway to on_success" do
     user = mock
     user_lookup = mock
@@ -18,7 +18,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       display_name: "Plan",
       created_at: Time.zone.parse("2026-01-01 12:00:00")
     )
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: [ row ])
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: [ row ])
 
     gateway = mock
     gateway.expects(:private_plan_index_plan_rows).with(user: user).returns([ row ])
@@ -32,7 +32,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: output,
       user_id: 9,
       gateway: gateway,
@@ -55,7 +55,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
 
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanIndexPageInteractor") &&
+      msg.include?("PrivatePlanIndexInteractor") &&
         msg.include?("db") &&
         msg.include?("/backtrace:")
     end
@@ -66,7 +66,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: output,
       user_id: 9,
       gateway: gateway,
@@ -89,7 +89,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     translator = mock
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanIndexPageInteractor") &&
+      msg.include?("PrivatePlanIndexInteractor") &&
         msg.include?("PersistenceFailed") &&
         msg.include?("/backtrace:")
     end
@@ -99,7 +99,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(Domain::Shared::Exceptions::PersistenceFailed) do
-      Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
         output_port: output,
         user_id: 9,
         gateway: gateway,
@@ -129,7 +129,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: output,
       user_id: 9,
       gateway: gateway,
@@ -159,7 +159,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: output,
       user_id: 9,
       gateway: gateway,
@@ -183,7 +183,7 @@ class PrivatePlanIndexPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(NoMethodError) do
-      Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
         output_port: output,
         user_id: 9,
         gateway: gateway,

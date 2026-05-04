@@ -164,10 +164,10 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     user = create(:user)
 
     rows = @gateway.private_plan_index_plan_rows(user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: rows)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: rows)
 
     assert_empty rows
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndexDto, dto
     assert_predicate dto, :empty?
     assert_empty dto.plan_rows
   end
@@ -189,7 +189,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_field, cultivation_plan: plan_a, name: "K1", area: 10, daily_fixed_cost: 0)
 
     rows = @gateway.private_plan_index_plan_rows(user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexPageAssembler.call(plan_rows: rows)
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: rows)
 
     assert_equal 2, dto.plan_rows.size
     # recent: plan_b が新しいので先頭 → group_by で farm_b ブロックが先に登場し、その後 farm_a

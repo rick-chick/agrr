@@ -77,7 +77,7 @@ INJECT = {
     "field_gateway: CompositionRoot.field_gateway, crop_gateway: CompositionRoot.crop_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::PrivatePlanOptimizingPageInteractor" =>
     "gateway: CompositionRoot.cultivation_plan_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
-  "Domain::CultivationPlan::Interactors::PrivatePlanIndexPageInteractor" =>
+  "Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor" =>
     "gateway: CompositionRoot.cultivation_plan_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor" =>
     "farm_gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",

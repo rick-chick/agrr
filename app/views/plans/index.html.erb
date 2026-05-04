@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <% if @private_plan_index_page.empty? %>
+    <% if @private_plan_index.empty? %>
       <!-- 計画がない場合 -->
       <div class="plans-empty">
         <div class="plans-empty-icon">📅</div>
@@ -40,7 +40,7 @@
       </div>
     <% else %>
       <div class="plans-grid">
-        <% @private_plan_index_page.plan_rows.each do |plan| %>
+        <% @private_plan_index.plan_rows.each do |plan| %>
           <div class="plan-card" id="cultivation_plan_<%= plan.id %>" data-undo-delete-record>
             <!-- カードタイトル: 地名（農場名） -->
             <h3 class="plan-card-title">

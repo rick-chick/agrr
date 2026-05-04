@@ -5,10 +5,10 @@ require "test_helper"
 class PrivatePlanIndexHtmlPresenterTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
-  test "on_success sets @private_plan_index_page" do
+  test "on_success sets @private_plan_index" do
     view_mock = mock
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanIndexPageDto.new(plan_rows: [])
-    view_mock.expects(:instance_variable_set).with(:@private_plan_index_page, dto)
+    dto = Domain::CultivationPlan::Dtos::PrivatePlanIndexDto.new(plan_rows: [])
+    view_mock.expects(:instance_variable_set).with(:@private_plan_index, dto)
 
     presenter = Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter.new(view: view_mock)
     presenter.on_success(dto)
