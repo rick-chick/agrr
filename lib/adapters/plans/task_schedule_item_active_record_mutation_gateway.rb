@@ -28,13 +28,6 @@ module Adapters
         @logger = logger
       end
 
-      def find_item_for_plan(plan, item_id)
-        ::TaskScheduleItem
-          .joins(task_schedule: :cultivation_plan)
-          .where(task_schedules: { cultivation_plan_id: plan.id })
-          .find_by(id: item_id)
-      end
-
       def create_item!(plan, attributes)
         attrs = attributes.to_h.symbolize_keys
         created = ::TaskScheduleItem.transaction do
@@ -64,7 +57,30 @@ module Adapters
         raise Domain::Shared::Exceptions::RecordNotFound
       end
 
-      def update_item!(item, attributes)
+      def update_item_for_plan!(plan, item_id, attributes)
+        item = ar_item_for_plan(plan, item_id)
+        raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
+
+        update_record_item!(item, attributes)
+      end
+
+      def complete_item_for_plan!(plan, item_id, actual_date:, actual_notes:, completed_at:)
+        item = ar_item_for_plan(plan, item_id)
+        raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
+
+        complete_record_item!(item, actual_date: actual_date, actual_notes: actual_notes, completed_at: completed_at)
+      end
+
+      private
+
+      def ar_item_for_plan(plan, item_id)
+        ::TaskScheduleItem
+          .joins(task_schedule: :cultivation_plan)
+          .where(task_schedules: { cultivation_plan_id: plan.id })
+          .find_by(id: item_id)
+      end
+
+      def update_record_item!(item, attributes)
         ::TaskScheduleItem.transaction do
           attrs = build_update_attributes(item, attributes)
           item.update!(attrs)
@@ -76,7 +92,7 @@ module Adapters
         raise Domain::Shared::Exceptions::RecordNotFound
       end
 
-      def complete_item!(item, actual_date:, actual_notes:, completed_at:)
+      def complete_record_item!(item, actual_date:, actual_notes:, completed_at:)
         ::TaskScheduleItem.transaction do
           item.update!(
             status: TaskScheduleItem::STATUSES[:completed],
@@ -101,8 +117,6 @@ module Adapters
           category: item.task_schedule.category
         }
       end
-
-      private
 
       def build_create_attributes(raw_params, template: nil)
         params = raw_params.to_h.symbolize_keys

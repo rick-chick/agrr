@@ -10,13 +10,7 @@ module Domain
         end
 
         def call(plan:, item_id:, attributes:)
-          item = @gateway.find_item_for_plan(plan, item_id)
-          unless item
-            @output_port.on_not_found
-            return
-          end
-
-          payload = @gateway.update_item!(item, attributes)
+          payload = @gateway.update_item_for_plan!(plan, item_id, attributes)
           @output_port.on_success(payload)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(

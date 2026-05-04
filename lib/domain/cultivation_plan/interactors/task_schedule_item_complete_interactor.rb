@@ -10,14 +10,9 @@ module Domain
         end
 
         def call(plan:, item_id:, actual_date:, actual_notes:, completed_at:)
-          item = @gateway.find_item_for_plan(plan, item_id)
-          unless item
-            @output_port.on_not_found
-            return
-          end
-
-          payload = @gateway.complete_item!(
-            item,
+          payload = @gateway.complete_item_for_plan!(
+            plan,
+            item_id,
             actual_date: actual_date,
             actual_notes: actual_notes,
             completed_at: completed_at
