@@ -4,34 +4,34 @@ module Domain
   module ContactMessages
     module Interactors
       class CreateContactMessageInteractor
-        Result = Struct.new(:success, :contact_message, :errors, keyword_init: true) do
-          def success?
-            success
-          end
-        end
-
-        def initialize(gateway:)
+        def initialize(gateway:, logger: nil)
           @gateway = gateway
+          @logger = logger
         end
 
         # input: Domain::ContactMessages::Dtos::CreateContactMessageInput
-        # returns: Result with success flag, entity, and optional errors
+        # HTTP / JSON の成否は output_port（Presenter）へ委ねる（ARCHITECTURE.md の canonical vertical slice）。
         def call(input, output_port: nil)
           entity = @gateway.create(input)
 
           success_dto = Dtos::CreateContactMessageSuccess.new(contact_message: entity)
           output_port&.on_success(success_dto)
-
-          Result.new(success: true, contact_message: entity)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           failure_dto = Dtos::CreateContactMessageFailure.new(errors: e.errors)
           output_port&.on_failure(failure_dto)
-
-          Result.new(success: false, errors: e.errors)
         rescue StandardError => e
+          log_unexpected_error(e) if @logger
           failure_dto = Domain::Shared::Dtos::ErrorDto.new(e.message)
           output_port&.on_failure(failure_dto)
-          raise
+        end
+
+        private
+
+        def log_unexpected_error(error)
+          bt = error.backtrace&.first(20)&.join("\n").to_s
+          @logger.error(
+            "[CreateContactMessageInteractor] #{error.class}: #{error.message}\n/backtrace:\n#{bt}"
+          )
         end
       end
     end

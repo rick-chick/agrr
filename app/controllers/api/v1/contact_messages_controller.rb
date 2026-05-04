@@ -17,11 +17,11 @@ module Api
         return unless enforce_rate_limit!
 
         presenter = self.class::PRESENTER_CLASS.new(view: self)
-        interactor = self.class::INTERACTOR_CLASS.new(gateway: CompositionRoot.contact_message_gateway)
+        interactor = self.class::INTERACTOR_CLASS.new(
+          gateway: CompositionRoot.contact_message_gateway,
+          logger: CompositionRoot.logger
+        )
         interactor.call(contact_message_input, output_port: presenter)
-      rescue StandardError => e
-        log_unexpected_error(e)
-        render_response(json: { error: "Internal server error" }, status: :internal_server_error)
       end
 
       def render_response(json:, status:)
@@ -61,9 +61,6 @@ module Api
         false
       end
 
-      def log_unexpected_error(error)
-        Rails.logger.error("[ContactMessagesController#create] unexpected error: #{error.class} #{error.message}\n#{error.backtrace.join("\n")}")
-      end
     end
   end
 end

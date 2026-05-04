@@ -19,19 +19,71 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 
 **Architecture (primary):** Decoupled **Angular SPA + Rails API**. Server-rendered Rails HTML exists for some master CRUD flows and delegates to the same domain layer (`lib/domain`) via HTML presenters (`lib/presenters/html/`).
 
-## Rails JSON API: canonical vertical slice (read first)
+## Rails JSON API: canonical vertical slice
 
-One JSON action = **one interactor call** with **one presenter** as `output_port`. **The same mistakes recur if this section is skipped** (controller `rescue`, interactor `raise` after `on_failure`, fat presenters).
+One JSON action = **one interactor call** with **one presenter** as `output_port`.
+
+### JSON API: 役割と依存
+
+1. **Controller** — HTTP の入口。`params` を **入力 DTO** にする。Presenter と Interactor を生成し、Interactor に `output_port:` で Presenter を渡し、`CompositionRoot` 等で組み立てた **gateway 実装**（および logger 等）を渡す。モデル化された失敗の振り分けを、広い `rescue` / `rescue_from` で Controller に持ち込まない。
+2. **Presenter**（`lib/presenters/api/...`）— そのユースケースの **Output port の実装**。`on_success(dto)` / `on_failure(dto)` を受け取り、`view.render_response(json:, status:)`（HTML なら `render` / `redirect_to`）に写す。Gateway や `CompositionRoot` でデータを取らない。
+3. **Output port**（`lib/domain/.../ports/...`）— Interactor が呼ぶ **コールバックの型**（`on_success` / `on_failure` と DTO）。Presenter がこの契約を実装する。
+4. **Input port**（`lib/domain/.../ports/...`、任意）— Interactor が `include` / 継承して `call` の形を型にする場合がある。無い場合は `call(input_dto, output_port:)` のみ。入力の形は Controller が組み立てた DTO。
+5. **Interactor**（`lib/domain/.../interactors/...`）— **ユースケース**。注入された **Gateway interface** 等のみを呼び、成功またはモデル化された失敗を決めて `output_port.on_success` / `on_failure` を呼ぶ。`render`、生 `params`、Gateway を経ない ActiveRecord 直叩きは書かない。
+6. **Gateway interface**（gateway port、`lib/domain/.../gateways/...`）— **ドメイン側の契約**（取得・永続化などの操作）。Interactor はこの型に依存し、ActiveRecord に直接依存しない。
+7. **Gateway 実装**（`lib/adapters/.../gateways/...`）— Gateway interface を SQLite / ActiveRecord / HTTP 等で実現するクラス。`CompositionRoot` または Controller でインスタンス化し Interactor に注入する。
+
+```mermaid
+flowchart TB
+  subgraph http["HTTP"]
+    REQ[JSON request]
+    RES[JSON response]
+  end
+  subgraph app_edge["Rails edge app/controllers/api/v1"]
+    CTRL[Controller]
+  end
+  subgraph domain_core["lib/domain same bounded context"]
+    IP[Input port optional]
+    IU[Interactor]
+    GIF[Gateway interface]
+    OPORT[Output port contract]
+  end
+  subgraph presentation["lib/presenters/api"]
+    PRES[Presenter]
+  end
+  subgraph adapters["lib/adapters"]
+    GADP[Gateway adapter]
+  end
+  subgraph io["Outside world"]
+    DB[(DB files HTTP etc)]
+  end
+
+  REQ --> CTRL
+  CTRL -->|"builds input DTO"| IU
+  CTRL --> PRES
+  CTRL --> IU
+  IU -.->|optional| IP
+  PRES -.->|implements| OPORT
+  GADP -.->|implements| GIF
+  IU -->|"depends on type"| GIF
+  IU -->|"injected instance"| GADP
+  GADP --> DB
+  IU -->|"on_success on_failure"| PRES
+  PRES -->|"render_response"| CTRL
+  CTRL --> RES
+```
+
+
 
 ### Controller (`app/controllers/api/v1/`)
 
 - **Do:** Strong-params → **input DTO** → `presenter = PresenterClass.new(view: self)` → build `InteractorClass.new(output_port: presenter, gateway: CompositionRoot.…_gateway, …dependencies).call(dto)` (some interactors take `output_port` on `call` instead—either way, **no `rescue` around the call** for modeled failures).
-- **Do not:** Use `rescue StandardError`, `rescue ActiveRecord::RecordNotFound`, or **`rescue_from` as the main switch** that maps use-case failures to JSON/status. **HTTP shape for modeled failures belongs in the presenter** (`on_success` / `on_failure`), not in the controller. (Edge-only concerns—e.g. TLS, bogus request shape before a DTO exists—may use guard clauses that `return` early; they still must **not** replace the output-port contract for domain outcomes.)
+- **Do not:** Use `rescue StandardError`, `rescue ActiveRecord::RecordNotFound`, or `**rescue_from` as the main switch** that maps use-case failures to JSON/status. **HTTP shape for modeled failures belongs in the presenter** (`on_success` / `on_failure`), not in the controller. (Edge-only concerns—e.g. TLS, bogus request shape before a DTO exists—may use guard clauses that `return` early; they still must **not** replace the output-port contract for domain outcomes.)
 
 ### Interactor (`lib/domain/<context>/interactors/`)
 
 - **Do:** On every failure path that should become a client-visible response, call `output_port.on_failure(failure_dto)` with an explicit DTO (validation errors, not found, conflict, etc.).
-- **Do not:** Call `output_port.on_failure(…)` and then **`raise` the same exception** so the controller can rescue. That creates a **second, conflicting HTTP path** and invites controller `rescue`. Finish the use case at the port (and return or use a `Result` object if the caller must see a value—**without** rethrowing through the controller).
+- **Do not:** Call `output_port.on_failure(…)` and then `**raise` the same exception** so the controller can rescue. That creates a **second, conflicting HTTP path** and invites controller `rescue`. Finish the use case at the port (**without** rethrowing through the controller).
 
 ### Presenter (`lib/presenters/api/<resource>/`)
 
@@ -45,7 +97,7 @@ One JSON action = **one interactor call** with **one presenter** as `output_port
 
 ### Layout example (reference implementation)
 
-A full use case typically touches, in order: **DTO (input)** → **gateway interface** → **interactor** → **output port** → **presenter** → **adapter gateway** → **`CompositionRoot`**. **Example:** CRUD under **`app/controllers/api/v1/masters/farms_controller.rb`** (e.g. `create`) with `lib/domain/farm/interactors/farm_create_interactor.rb`, `lib/presenters/api/farm/farm_create_presenter.rb`, `lib/adapters/farm/gateways/farm_active_record_gateway.rb`, and `CompositionRoot.farm_gateway`.
+**DTO (input)** → **gateway interface** → **interactor** → **output port（Presenter が実装）** → **adapter gateway** → `**CompositionRoot`**. **Example:** CRUD under `**app/controllers/api/v1/masters/farms_controller.rb`** (e.g. `create`) with `lib/domain/farm/interactors/farm_create_interactor.rb`, `lib/presenters/api/farm/farm_create_presenter.rb`, `lib/adapters/farm/gateways/farm_active_record_gateway.rb`, and `CompositionRoot.farm_gateway`.
 
 ## System flow
 
@@ -92,7 +144,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Rule:** New presenters belong under `lib/presenters/{api,html}/`, not under `app/presenters/` (legacy paths are being retired).
 
-**Boundary:** Presenters implement output ports only (format success/failure for HTTP). **Canonical API flow and “do not rescue in controller / do not re-raise after `on_failure`”:** see **Rails JSON API: canonical vertical slice** at the top of this document. Modeled violations (authorization, concurrency, persistence conflicts, not-found, validation outcomes, etc.) should reach presenters through the **Interactor** as **explicit success/failure payloads on that port** (callbacks, result DTOs)—not principally through **controller `rescue`/`rescue_from` branches** that re-interpret exceptions into HTTP at the edge. They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (**Interactor**), assembled from **gateways only** inside `lib/domain` (and adapters), and delivered to the presenter through the **output port as DTOs/entities**. Do not “finish” a presenter refactor by moving `find_model` or gateway calls into **controller-local procs/lambdas** passed into the presenter: that is the same dependency with extra steps. `lib/domain` does not reference `Rails.*`; inject ports from the **composition root at the app edge** (typically the controller/job), not framework singletons.
+**Boundary:** Presenters implement output ports only (format success/failure for HTTP). **Canonical API flow and “do not rescue in controller / do not re-raise after `on_failure`”:** see **Rails JSON API: canonical vertical slice**. Modeled violations (authorization, concurrency, persistence conflicts, not-found, validation outcomes, etc.) should reach presenters through the **Interactor** as **explicit success/failure payloads on that port** (callbacks, DTOs)—not principally through **controller `rescue`/`rescue_from` branches** that re-interpret exceptions into HTTP at the edge. They do not obtain domain data via `CompositionRoot`, `*Gateway.default`, or `find_model`—that loading belongs in the use case (**Interactor**), assembled from **gateways only** inside `lib/domain` (and adapters), and delivered to the presenter through the **output port as DTOs/entities**. Do not “finish” a presenter refactor by moving `find_model` or gateway calls into **controller-local procs/lambdas** passed into the presenter: that is the same dependency with extra steps. `lib/domain` does not reference `Rails.*`; inject ports from the **composition root at the app edge** (typically the controller/job), not framework singletons.
 
 #### Use-case–scoped Output Port contract (how we refactor HTML/API presenters)
 
@@ -109,12 +161,12 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 ### Rails application layer (`app/`)
 
+- `**ActiveSupport::Concern`** — **Do not add** new concern modules under `app/controllers/concerns/`, `app/models/concerns/`, or elsewhere to share **domain-shaped or use-case** logic. Express reuse in `**lib/domain`** as **Plain Ruby**, wire it with **explicit injection** at the edge. Legacy concerns are **debt** to fold into interactors and ports.
 - `**app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters. **Exact shape (no controller `rescue` for use-case outcomes, no `raise` after `on_failure`):** see **Rails JSON API: canonical vertical slice** above.
 - `**app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
 - `**app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
 - `**app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
 - `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
-- **Concerns (`ActiveSupport::Concern`):** **Do not add** controller or model concerns to carry **business or use-case logic**; use **explicit action wiring** (**input DTO → interactor → presenter**). Existing concerns that encapsulate such logic are **debt**—dissolve them toward `lib/domain/` and thin edges (see **What we require**).
 
 ### External agrr integration
 
@@ -125,12 +177,12 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 - **This document wins over “industry defaults”:** When **common Rails/Clean-Architecture blog patterns**, **Pragmatism**, or **“lots of projects do X”** conflict with the rules below (including `**## Prohibited practices`**), **follow this file—not the meme**. “Existing code does it” or “tests pass” **does not** override a numbered prohibition; treat mismatches as **debt to fix**, not a template to copy.
 - **Depend inward:** Frameworks, persistence, HTTP, and clocks live at the **edge** and are injected. The core consumes **data (DTOs/entities) and narrow ports**—not `Rails`, not ActiveRecord traversal, not ambient time.
+- **Plain Ruby in `lib/domain`, not Rails mixins:** Shared behavior and use-case judgment belong under `**lib/domain`** as ordinary classes/modules (policies, interactors, value objects). `**ActiveSupport::Concern**` is **not** the reuse vehicle we add for that purpose—dependencies are **constructor-injected** from controllers, jobs, or `CompositionRoot`. (See **Application edge**, **Sideways escape**.)
 - **One decision, one place:** Business outcomes are expressed in **policies and interactors**. Presenters and templates **shape output only**; they do not re-decide the same rules. Do not duplicate truth across models, services, helpers, and views.
 - **Wiring is explicit:** Constructor signatures are the **contract**. No hidden globals, `*.default`, grab-bag context objects, or tests that green-wrap a different graph than production.
 - **Truth is specified:** Behavior is defined by **contract text and the tests bound to it**—not by “matching whatever the legacy stack does.”
 - **Refactors finish the job:** Moving code out of `lib/domain/` without fixing dependency direction and types is **relocation**, not completion.
 - **Convenience is not an exemption:** Skipping layering because it is faster, when it commits us to wholesale rework afterward, **is rejected**. Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in `**docs/contracts/`** and tests bound to those contracts—see `.cursor/rules/no-convenience-tech-debt.mdc`.
-- **Rails `ActiveSupport::Concern` is not a sharing mechanism:** Do **not** use concern modules to host **use-case judgment**, durable business rules, or cross-action orchestration. **Deduplicate and share** as **plain Ruby** under `lib/domain/` (policies, interactors, entities/DTOs) with **constructor-injected ports**. The concern mechanism anchors shared behavior to Rails’ mixin stack and **runs counter to stripping framework coupling from how behavior is organized**—this repository’s explicit direction. The **ideal** shape for reuse remains **plain Ruby in the domain**, **one decision in interactors/policies**, and **explicit wiring at the edge**—not mixin layers under `app/`.
 
 ## Prohibited practices (hard rules)
 
@@ -170,9 +222,9 @@ The clauses in the numbered subsections below are the **negative** expression of
 
 ### Application edge and tests (refactor hygiene)
 
-1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, **`ActiveSupport::Concern` modules that accumulate use-case or domain-shaped behavior**, or controller concerns **without** DTOs, ports, and constructor injection. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
+1. **Sideways escape** — Moving coupled logic out of `lib/domain/` into a fat controller, fat `app/services/` class, or `**ActiveSupport::Concern`** (controller/model concern) **without** DTOs, ports, and constructor injection. **Do not introduce new Concern modules** to share orchestration, authorization outcomes, validation rules, or other judgment that belongs in `**lib/domain`**. **Prefer** Plain Ruby there (policies, interactors, small POROs) and **inject** at the edge. Goal is **dependency direction and testable boundaries**, not “clean domain files.”
 2. **Tests that hide wiring** — Making the suite pass with global stubs or implicit time while production code still lacks the constructor contract and explicit ports required above. Fix production wiring first, then tests.
-3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. **Do not** `on_failure` in the interactor and then **`raise`** to trigger controller `rescue`. Prefer the interactor → presenter path so the action need not wrap `interactor.call` in `rescue StandardError` for modeled outcomes (aligns with **Rails JSON API: canonical vertical slice** at the top).
+3. **`rescue`-driven use-case outcomes** — Using `begin`/`rescue`, `rescue_from`, or similar on the controller to map **anticipated** domain or adapter failures (validation, not found, conflicts, authorization) into flashes, redirects, status codes, or JSON bodies duplicates **Interactor** judgment at the HTTP edge. The **Interactor** classifies those cases and reaches the **output port** with **explicit success/failure data**; the **Presenter** formats that into HTTP. **Do not** `on_failure` in the interactor and then **`raise`** to trigger controller `rescue`. Prefer the interactor → presenter path so the action need not wrap `interactor.call` in `rescue StandardError` for modeled outcomes (aligns with **Rails JSON API: canonical vertical slice**).
 
 ### Rationalizations and loopholes (items 19–26)
 

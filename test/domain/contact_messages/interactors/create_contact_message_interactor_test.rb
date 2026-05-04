@@ -6,7 +6,7 @@ module Domain
   module ContactMessages
     module Interactors
       class CreateContactMessageInteractorTest < ActiveSupport::TestCase
-        test "on success notifies output port and returns entity" do
+        test "on success notifies output port" do
           entity = Domain::ContactMessages::Entities::ContactMessage.new(
             id: 1,
             status: "queued"
@@ -27,10 +27,8 @@ module Domain
 
           interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
-          result = interactor.call(input, output_port: output_port)
+          interactor.call(input, output_port: output_port)
 
-          assert result.success?
-          assert_equal entity, result.contact_message
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageSuccess, received
           assert_equal entity, received.contact_message
 
@@ -63,10 +61,8 @@ module Domain
 
           interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
-          result = interactor.call(input, output_port: output_port)
+          interactor.call(input, output_port: output_port)
 
-          refute result.success?
-          assert_equal record.errors, result.errors
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageFailure, received
           assert_equal record.errors, received.errors
 
@@ -74,7 +70,7 @@ module Domain
           output_port.verify
         end
 
-        test "notifies output port on unexpected errors and re-raises" do
+        test "calls on_failure with ErrorDto on unexpected errors and logs when logger given" do
           input = Domain::ContactMessages::Dtos::CreateContactMessageInput.new(
             name: "Taro",
             email: "taro@example.com",
@@ -87,21 +83,24 @@ module Domain
 
           received = nil
           output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) do |dto|
-            received = dto
+          output_port.expect(:on_failure, nil) { |dto| received = dto }
+
+          logger = Minitest::Mock.new
+          logger.expect(:error, nil) do |msg|
+            assert_kind_of String, msg
+            assert_includes msg, "boom"
           end
 
-          interactor = CreateContactMessageInteractor.new(gateway: gateway)
+          interactor = CreateContactMessageInteractor.new(gateway: gateway, logger: logger)
 
-          assert_raises(StandardError) do
-            interactor.call(input, output_port: output_port)
-          end
+          interactor.call(input, output_port: output_port)
 
           assert_instance_of Domain::Shared::Dtos::ErrorDto, received
           assert_includes received.message, "boom"
 
           gateway.verify
           output_port.verify
+          logger.verify
         end
       end
     end

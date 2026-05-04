@@ -125,10 +125,13 @@ module Api
         end
       end
 
-      test "returns internal server error when unexpected exception bubbles up" do
+      test "returns internal server error when interactor reports unexpected failure via output port" do
         failing_interactor = Class.new do
           define_method(:initialize) { |**_| }
-          define_method(:call) { |_input, **| raise "boom" }
+          define_method(:call) do |_input, output_port:|
+            output_port&.on_failure(::Domain::Shared::Dtos::ErrorDto.new("boom"))
+            OpenStruct.new(success?: false)
+          end
         end
 
         with_controller_constants(
