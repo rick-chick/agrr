@@ -30,6 +30,8 @@ module Presenters
                 else
                   I18n.t(@delete_error_message_key, message: I18n.t("errors.messages.restrict_dependent_destroy"))
                 end
+              when :forbidden
+                I18n.t("deletion_undo.schedule_forbidden")
               when :validation_error, :undo_system_error
                 I18n.t(@delete_error_message_key, message: dto.detail_message)
               else

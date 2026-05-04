@@ -86,7 +86,7 @@ module Adapters
           )
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fields.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message

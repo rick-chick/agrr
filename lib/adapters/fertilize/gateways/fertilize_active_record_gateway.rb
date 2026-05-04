@@ -65,7 +65,7 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fertilizes.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message

@@ -1,6 +1,7 @@
 ja:
   deletion_undo:
     toast_message: "%{resource} を削除しました。元に戻すことができます。"
+    schedule_forbidden: "この操作を行う権限がありません。"
     redirect_notice: "%{resource} を削除しました。"
     restored: "削除を取り消しました。"
     undo_button: "元に戻す"

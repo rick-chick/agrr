@@ -106,7 +106,7 @@ module Adapters
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(farm.user),
             toast_message: @translator.t("farms.undo.toast", name: farm.display_name)
           )
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("farms.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message

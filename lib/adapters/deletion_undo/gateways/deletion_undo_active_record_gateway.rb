@@ -8,6 +8,7 @@ module Adapters
         SCHEDULABLE_CLASS_BY_TYPE = {
           "AgriculturalTask" => ::AgriculturalTask,
           "Crop" => ::Crop,
+          "CultivationPlan" => ::CultivationPlan,
           "Farm" => ::Farm,
           "Fertilize" => ::Fertilize,
           "Field" => ::Field,
@@ -55,6 +56,7 @@ module Adapters
         def schedule(resource_type:, resource_id:, actor_id: nil, toast_message: nil, auto_hide_after: nil,
                      metadata: {}, validate_before_schedule: false)
           record = resolve_schedulable_record!(resource_type, resource_id)
+          ensure_schedule_authorized!(record, actor_id)
           ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(
             actor_id.present? ? ::User.find_by(id: actor_id) : nil
           )
@@ -87,6 +89,40 @@ module Adapters
         end
 
         private
+
+        def ensure_schedule_authorized!(record, actor_id)
+          user = ::User.find_by(id: actor_id)
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless user
+
+          allowed =
+            case record
+            when ::Farm
+              Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::Crop
+              Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::Pest
+              Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::Pesticide
+              Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::Fertilize
+              Domain::Shared::Policies::FertilizePolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::AgriculturalTask
+              Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::InteractionRule
+              Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: record.is_reference, user_id: record.user_id)
+            when ::Field
+              user.admin? || record.farm.user_id == user.id
+            when ::TaskScheduleItem
+              plan = record.cultivation_plan
+              user.admin? || (plan.plan_type_private? && plan.user_id == user.id)
+            when ::CultivationPlan
+              user.admin? || (record.plan_type_private? && record.user_id == user.id)
+            else
+              false
+            end
+
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
+        end
 
         def resolve_schedulable_record!(resource_type, resource_id)
           klass = SCHEDULABLE_CLASS_BY_TYPE[resource_type]

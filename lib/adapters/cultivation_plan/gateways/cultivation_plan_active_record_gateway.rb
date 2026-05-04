@@ -207,7 +207,7 @@ module Adapters
           raise
         rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("plans.errors.not_found")
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("plans.errors.delete_failed")
         rescue DeletionUndo::Error
           raise

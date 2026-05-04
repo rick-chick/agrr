@@ -46,6 +46,13 @@ module Domain
               detail_message: e.message
             )
           )
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, ::PolicyPermissionDenied
+          @output_port.on_failure(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+              reason: :forbidden,
+              detail_message: nil
+            )
+          )
         end
       end
     end

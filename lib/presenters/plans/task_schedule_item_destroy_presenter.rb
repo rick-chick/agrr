@@ -40,6 +40,13 @@ module Presenters
 
       def render_failure_dto(dto)
         case dto.reason
+        when :forbidden
+          @logger&.warn("[Plans::TaskScheduleItemsController] destroy forbidden")
+          @view.send(
+            :render_deletion_failure,
+            message: I18n.t("deletion_undo.schedule_forbidden"),
+            fallback_location: @fallback_location
+          )
         when :validation_error
           @logger&.warn(
             "[Plans::TaskScheduleItemsController] destroy failed: validation #{dto.detail_message}"

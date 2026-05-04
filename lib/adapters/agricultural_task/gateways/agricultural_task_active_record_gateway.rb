@@ -92,7 +92,7 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("agricultural_tasks.flash.cannot_delete_in_use")
         rescue DeletionUndo::Error => e
           raise StandardError, e.message

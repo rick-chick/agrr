@@ -160,6 +160,31 @@ module Domain
           output_port.verify
         end
 
+        test "maps PolicyPermissionDenied to forbidden failure" do
+          gateway = Minitest::Mock.new
+          gateway.expect(:schedule, nil) do
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
+            resource_type: "Crop",
+            resource_id: 1,
+            actor_id: 2,
+            toast_message: "removed"
+          )
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_failure, nil) { |dto| received = dto }
+
+          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+
+          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto, received
+          assert_equal :forbidden, received.reason
+          gateway.verify
+          output_port.verify
+        end
+
         test "raises ArgumentError when resource_type is blank" do
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             resource_type: "",

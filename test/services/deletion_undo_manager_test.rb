@@ -5,6 +5,7 @@ class DeletionUndoManagerTest < ActiveSupport::TestCase
 
   def setup
     @user = create(:user)
+    @admin = create(:user, :admin)
     @crop = create(:crop, :reference)
     @pest = create(:pest)
     @pesticide = create(:pesticide, :complete, crop: @crop, pest: @pest, is_reference: true)
@@ -16,7 +17,7 @@ class DeletionUndoManagerTest < ActiveSupport::TestCase
     event = nil
     assert_difference -> { DeletionUndoEvent.count }, +1 do
       assert_difference -> { Pesticide.count }, -1 do
-        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @user)
+        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @admin)
       end
     end
 
@@ -42,7 +43,7 @@ class DeletionUndoManagerTest < ActiveSupport::TestCase
     event = nil
     assert_difference -> { DeletionUndoEvent.count }, +1 do
       assert_difference -> { Pesticide.count }, -1 do
-        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @user)
+        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @admin)
       end
     end
 
@@ -109,7 +110,7 @@ class DeletionUndoManagerTest < ActiveSupport::TestCase
     event = nil
     assert_difference -> { DeletionUndoEvent.count }, +1 do
       assert_difference -> { Pesticide.count }, -1 do
-        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @user)
+        event = DeletionUndo::Manager.schedule(record: @pesticide, actor: @admin)
       end
     end
 
