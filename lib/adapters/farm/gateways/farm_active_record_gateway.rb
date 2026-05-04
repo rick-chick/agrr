@@ -269,8 +269,9 @@ module Adapters
           farm_name = farm.name
           toast_message = translator.t("flash.farms.deleted", name: farm_name)
           event = @deletion_undo_gateway.schedule(
-            record: farm,
-            actor: user,
+            resource_type: farm.class.name,
+            resource_id: farm.id,
+            actor_id: user.id,
             toast_message: toast_message,
             auto_hide_after: auto_hide_after
           )

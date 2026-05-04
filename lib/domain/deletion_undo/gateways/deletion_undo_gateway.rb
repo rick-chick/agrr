@@ -20,8 +20,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement mark_failed"
         end
 
-        def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {},
-                     validate_before_schedule: false)
+        def schedule(resource_type:, resource_id:, actor_id: nil, toast_message: nil, auto_hide_after: nil,
+                     metadata: {}, validate_before_schedule: false)
           raise NotImplementedError, "Subclasses must implement schedule"
         end
       end

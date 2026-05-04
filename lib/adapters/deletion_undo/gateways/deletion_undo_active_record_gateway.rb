@@ -4,6 +4,19 @@ module Adapters
   module DeletionUndo
     module Gateways
       class DeletionUndoActiveRecordGateway < Domain::DeletionUndo::Gateways::DeletionUndoGateway
+        # Interactor 経由で Undo スケジュールされうるモデル（任意 constantize 禁止のため明示列挙）
+        SCHEDULABLE_CLASS_BY_TYPE = {
+          "AgriculturalTask" => ::AgriculturalTask,
+          "Crop" => ::Crop,
+          "Farm" => ::Farm,
+          "Fertilize" => ::Fertilize,
+          "Field" => ::Field,
+          "InteractionRule" => ::InteractionRule,
+          "Pest" => ::Pest,
+          "Pesticide" => ::Pesticide,
+          "TaskScheduleItem" => ::TaskScheduleItem
+        }.freeze
+
         def find_by_token(undo_token)
           model = ::DeletionUndoEvent.find_by(id: undo_token)
           raise Domain::DeletionUndo::Exceptions::DeletionUndoNotFoundError unless model
@@ -39,9 +52,12 @@ module Adapters
           build_entity(model)
         end
 
-        def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {},
-                     validate_before_schedule: false)
-          ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(actor)
+        def schedule(resource_type:, resource_id:, actor_id: nil, toast_message: nil, auto_hide_after: nil,
+                     metadata: {}, validate_before_schedule: false)
+          record = resolve_schedulable_record!(resource_type, resource_id)
+          ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(
+            actor_id.present? ? ::User.find_by(id: actor_id) : nil
+          )
           ActiveRecord::Base.transaction do
             record.validate! if validate_before_schedule
             snapshot = ::DeletionUndo::SnapshotBuilder.new(record).build
@@ -71,6 +87,20 @@ module Adapters
         end
 
         private
+
+        def resolve_schedulable_record!(resource_type, resource_id)
+          klass = SCHEDULABLE_CLASS_BY_TYPE[resource_type]
+          unless klass
+            raise Domain::Shared::Exceptions::RecordInvalid.new("Invalid schedulable type")
+          end
+
+          record = klass.find_by(id: resource_id)
+          unless record&.persisted?
+            raise Domain::Shared::Exceptions::RecordInvalid.new("Schedulable record not found")
+          end
+
+          record
+        end
 
         def build_entity(model)
           Domain::DeletionUndo::Entities::DeletionUndoEntity.new(

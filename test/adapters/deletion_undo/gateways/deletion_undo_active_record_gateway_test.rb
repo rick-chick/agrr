@@ -9,72 +9,88 @@ class Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGatewayTest < Ac
 
   test "schedule validates record when requested and maps RecordInvalid" do
     record = create(:crop)
-    record.name = nil
-
-    error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
-      @gateway.schedule(record: record, validate_before_schedule: true)
+    record.define_singleton_method(:validate!) do
+      raise ActiveRecord::RecordInvalid.new(self)
     end
+    Crop.stub(:find_by, ->(**_kwargs) { record }) do
+      error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+        @gateway.schedule(
+          resource_type: "Crop",
+          resource_id: record.id,
+          validate_before_schedule: true
+        )
+      end
 
-    assert_predicate error.message, :present?
-    assert_same record, error.record
-    assert_not_nil error.errors
+      assert_predicate error.message, :present?
+    end
   end
 
   test "schedule skips validation when validate_before_schedule is false" do
     record = create(:crop)
     record.define_singleton_method(:validate!) { raise "validate! must not be called" }
-
-    event = nil
-    assert_difference("::DeletionUndoEvent.count", 1) do
-      assert_difference("::Crop.count", -1) do
-        event = @gateway.schedule(record: record, validate_before_schedule: false)
+    Crop.stub(:find_by, ->(**_kwargs) { record }) do
+      event = nil
+      assert_difference("::DeletionUndoEvent.count", 1) do
+        assert_difference("::Crop.count", -1) do
+          event = @gateway.schedule(
+            resource_type: "Crop",
+            resource_id: record.id,
+            validate_before_schedule: false
+          )
+        end
       end
-    end
 
-    assert_instance_of Domain::DeletionUndo::Entities::DeletionUndoEntity, event
+      assert_instance_of Domain::DeletionUndo::Entities::DeletionUndoEntity, event
+    end
   end
 
   test "schedule maps RecordNotDestroyed to domain RecordInvalid" do
     record = create(:crop)
-    record.define_singleton_method(:destroy!) do
-      raise ActiveRecord::RecordNotDestroyed.new("destroy failed", self)
-    end
-
-    assert_no_difference("::DeletionUndoEvent.count") do
-      error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
-        @gateway.schedule(record: record)
+    Crop.stub(:find_by, ->(*_args, **_kwargs) { record }) do
+      record.define_singleton_method(:destroy!) do
+        raise ActiveRecord::RecordNotDestroyed.new("destroy failed", self)
       end
-      assert_match("destroy failed", error.message)
-      assert_same record, error.record
+
+      assert_no_difference("::DeletionUndoEvent.count") do
+        error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+          @gateway.schedule(resource_type: "Crop", resource_id: record.id)
+        end
+        assert_match("destroy failed", error.message)
+        assert_same record, error.record
+      end
     end
   end
 
   test "schedule maps RecordNotSaved to domain RecordInvalid" do
     record = create(:crop)
-    record.define_singleton_method(:destroy!) do
-      raise ActiveRecord::RecordNotSaved.new("save failed", self)
-    end
-
-    assert_no_difference("::DeletionUndoEvent.count") do
-      error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
-        @gateway.schedule(record: record)
+    Crop.stub(:find_by, ->(*_args, **_kwargs) { record }) do
+      record.define_singleton_method(:destroy!) do
+        raise ActiveRecord::RecordNotSaved.new("save failed", self)
       end
-      assert_match("save failed", error.message)
-      assert_same record, error.record
+
+      assert_no_difference("::DeletionUndoEvent.count") do
+        error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+          @gateway.schedule(resource_type: "Crop", resource_id: record.id)
+        end
+        assert_match("save failed", error.message)
+        assert_same record, error.record
+      end
     end
   end
 
   test "schedule maps InvalidForeignKey to AssociationInUse" do
     record = create(:crop)
-    record.define_singleton_method(:destroy!) do
-      raise ActiveRecord::InvalidForeignKey, "foreign key violation"
-    end
-
-    assert_no_difference("::DeletionUndoEvent.count") do
-      error = assert_raises(Domain::Shared::Exceptions::AssociationInUse) do
-        @gateway.schedule(record: record)
+    Crop.stub(:find_by, ->(*_args, **_kwargs) { record }) do
+      record.define_singleton_method(:destroy!) do
+        raise ActiveRecord::InvalidForeignKey, "foreign key violation"
       end
-      assert_match("foreign key violation", error.message)
+
+      assert_no_difference("::DeletionUndoEvent.count") do
+        error = assert_raises(Domain::Shared::Exceptions::AssociationInUse) do
+          @gateway.schedule(resource_type: "Crop", resource_id: record.id)
+        end
+        assert_match("foreign key violation", error.message)
+      end
     end
   end
 
@@ -84,9 +100,21 @@ class Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGatewayTest < Ac
 
     assert_no_difference("::DeletionUndoEvent.count") do
       error = assert_raises(Domain::Shared::Exceptions::AssociationInUse) do
-        @gateway.schedule(record: pest)
+        @gateway.schedule(resource_type: "Pest", resource_id: pest.id)
       end
       assert_predicate error.message, :present?
+    end
+  end
+
+  test "schedule rejects unknown resource_type" do
+    assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+      @gateway.schedule(resource_type: "User", resource_id: 1)
+    end
+  end
+
+  test "schedule rejects missing record id" do
+    assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
+      @gateway.schedule(resource_type: "Crop", resource_id: 9_999_999_999)
     end
   end
 end

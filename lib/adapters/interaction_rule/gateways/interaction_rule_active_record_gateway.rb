@@ -166,8 +166,9 @@ module Adapters
           end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
           event = @deletion_undo_gateway.schedule(
-            record: rule,
-            actor: user,
+            resource_type: rule.class.name,
+            resource_id: rule.id,
+            actor_id: user.id,
             toast_message: toast_message,
             auto_hide_after: auto_hide_after
           )

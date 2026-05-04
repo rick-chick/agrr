@@ -139,8 +139,9 @@ module Adapters
           toast_message = translator.t("fields.undo.toast", name: name)
           undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
-            record: field,
-            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
+            resource_type: field.class.name,
+            resource_id: field.id,
+            actor_id: user.id,
             toast_message: toast_message,
             auto_hide_after: auto_hide_after,
             metadata: { farm_id: field.farm_id }

@@ -137,8 +137,9 @@ module Adapters
           toast_message = translator.t("pests.undo.toast", name: pest.name)
           undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
-            record: pest,
-            actor: user,
+            resource_type: pest.class.name,
+            resource_id: pest.id,
+            actor_id: user.id,
             toast_message: toast_message,
             auto_hide_after: auto_hide_after
           )

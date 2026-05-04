@@ -77,8 +77,9 @@ module Plans
         fallback_location: fallback_location
       )
       input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-        record: @task_schedule_item,
-        actor: current_user,
+        resource_type: @task_schedule_item.class.name,
+        resource_id: @task_schedule_item.id,
+        actor_id: current_user.id,
         toast_message: I18n.t(
           "plans.task_schedule_items.undo.toast",
           name: @task_schedule_item.name

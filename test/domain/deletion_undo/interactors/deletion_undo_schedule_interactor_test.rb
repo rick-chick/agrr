@@ -6,11 +6,6 @@ module Domain
   module DeletionUndo
     module Interactors
       class DeletionUndoScheduleInteractorTest < ActiveSupport::TestCase
-        setup do
-          @record = Object.new
-          @record.define_singleton_method(:persisted?) { true }
-        end
-
         test "calls on_success with entity when gateway schedules" do
           entity = Domain::DeletionUndo::Entities::DeletionUndoEntity.new(
             id: "evt-1",
@@ -20,14 +15,16 @@ module Domain
           )
           gateway = Minitest::Mock.new
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: @record,
-            actor: nil,
+            resource_type: "Crop",
+            resource_id: 9,
+            actor_id: nil,
             toast_message: "removed"
           )
 
           gateway.expect(:schedule, entity) do |kwargs|
-            assert_equal @record, kwargs[:record]
-            assert_nil kwargs[:actor]
+            assert_equal "Crop", kwargs[:resource_type]
+            assert_equal 9, kwargs[:resource_id]
+            assert_nil kwargs[:actor_id]
             assert_equal "removed", kwargs[:toast_message]
             assert_equal false, kwargs[:validate_before_schedule]
           end
@@ -46,14 +43,15 @@ module Domain
         test "maps DeletionUndo::Error to undo_system_error failure" do
           gateway = Minitest::Mock.new
           gateway.expect(:schedule, nil) do |kwargs|
-            assert_equal @record, kwargs[:record]
+            assert_equal "Crop", kwargs[:resource_type]
             assert_equal false, kwargs[:validate_before_schedule]
             raise DeletionUndo::Error, "tok"
           end
 
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: @record,
-            actor: nil,
+            resource_type: "Crop",
+            resource_id: 1,
+            actor_id: nil,
             toast_message: "removed"
           )
 
@@ -72,15 +70,17 @@ module Domain
 
         test "maps shared RecordInvalid to validation_error" do
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: @record,
-            actor: nil,
+            resource_type: "Crop",
+            resource_id: 2,
+            actor_id: nil,
             toast_message: "removed",
             validate_before_schedule: true
           )
 
           gateway = Minitest::Mock.new
           gateway.expect(:schedule, nil) do |kwargs|
-            assert_equal @record, kwargs[:record]
+            assert_equal "Crop", kwargs[:resource_type]
+            assert_equal 2, kwargs[:resource_id]
             assert_equal true, kwargs[:validate_before_schedule]
             raise Domain::Shared::Exceptions::RecordInvalid, "invalid record"
           end
@@ -99,14 +99,17 @@ module Domain
 
         test "maps shared AssociationInUse to association_in_use" do
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: @record,
-            actor: nil,
+            resource_type: "Pest",
+            resource_id: 3,
+            actor_id: 7,
             toast_message: "removed"
           )
 
           gateway = Minitest::Mock.new
           gateway.expect(:schedule, nil) do |kwargs|
-            assert_equal @record, kwargs[:record]
+            assert_equal "Pest", kwargs[:resource_type]
+            assert_equal 3, kwargs[:resource_id]
+            assert_equal 7, kwargs[:actor_id]
             assert_equal false, kwargs[:validate_before_schedule]
             raise Domain::Shared::Exceptions::AssociationInUse, "in use"
           end
@@ -125,9 +128,6 @@ module Domain
         end
 
         test "passes validate_before_schedule false to gateway" do
-          record = Object.new
-          record.define_singleton_method(:persisted?) { true }
-
           entity = Domain::DeletionUndo::Entities::DeletionUndoEntity.new(
             id: "evt-1",
             expires_at: 1.hour.from_now,
@@ -136,14 +136,16 @@ module Domain
           )
           gateway = Minitest::Mock.new
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: record,
-            actor: nil,
+            resource_type: "Farm",
+            resource_id: 11,
+            actor_id: nil,
             toast_message: "removed",
             validate_before_schedule: false
           )
 
           gateway.expect(:schedule, entity) do |kwargs|
-            assert_equal record, kwargs[:record]
+            assert_equal "Farm", kwargs[:resource_type]
+            assert_equal 11, kwargs[:resource_id]
             assert_equal false, kwargs[:validate_before_schedule]
           end
 
@@ -156,6 +158,20 @@ module Domain
           assert_same entity, received
           gateway.verify
           output_port.verify
+        end
+
+        test "raises ArgumentError when resource_type is blank" do
+          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
+            resource_type: "",
+            resource_id: 1,
+            toast_message: "x"
+          )
+          gateway = Minitest::Mock.new
+          output_port = Minitest::Mock.new
+
+          assert_raises(ArgumentError) do
+            DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          end
         end
       end
     end

@@ -10,11 +10,14 @@ module Domain
         end
 
         def call(input_dto)
-          raise ArgumentError, "record must be persisted" unless input_dto.record&.persisted?
+          unless input_dto.resource_type.present? && !input_dto.resource_id.nil?
+            raise ArgumentError, "resource_type and resource_id are required"
+          end
 
           event = @gateway.schedule(
-            record: input_dto.record,
-            actor: input_dto.actor,
+            resource_type: input_dto.resource_type,
+            resource_id: input_dto.resource_id,
+            actor_id: input_dto.actor_id,
             toast_message: input_dto.toast_message,
             auto_hide_after: input_dto.auto_hide_after,
             metadata: input_dto.metadata,

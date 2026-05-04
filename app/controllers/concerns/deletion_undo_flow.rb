@@ -21,8 +21,9 @@ module DeletionUndoFlow
       delete_error_message_key: delete_error_message_key
     )
     input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-      record: record,
-      actor: current_user,
+      resource_type: record.class.name,
+      resource_id: record.id,
+      actor_id: current_user.id,
       toast_message: toast_message
     )
     CompositionRoot.deletion_undo_schedule_interactor(output_port: presenter).call(input)
