@@ -33,10 +33,6 @@ module Api
           presenter = Presenters::Api::PublicPlans::ReferenceCropsPresenter.new(view: self)
           Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: farm.region)
           Rails.logger.info "🌱 [WizardController#crops] Rendered reference crops"
-        rescue StandardError => e
-          Rails.logger.error "❌ [WizardController#crops] Unexpected error: #{e.class} - #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          render json: { error: I18n.t("api.errors.internal_server_error"), error_key: "api.errors.internal_server_error" }, status: :internal_server_error
         end
 
         def create
