@@ -13,6 +13,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.flash[:alert] = I18n.t("fertilizes.flash.no_permission")
+            @view.redirect_to @view.fertilizes_path
+            return
+          end
+
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           @view.redirect_to @view.fertilizes_path, alert: msg
         end

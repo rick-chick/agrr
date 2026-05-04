@@ -18,8 +18,6 @@ class FertilizesController < ApplicationController
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   end
 
   # GET /fertilizes/new
@@ -41,8 +39,6 @@ class FertilizesController < ApplicationController
     presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
     @fertilize = Fertilize.new(fertilize_params.to_h.symbolize_keys)
     @fertilize.valid?
@@ -60,8 +56,6 @@ class FertilizesController < ApplicationController
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
   rescue StandardError => e
     @fertilize.assign_attributes(fertilize_params.to_h.symbolize_keys)
     @fertilize.valid?
@@ -77,8 +71,6 @@ class FertilizesController < ApplicationController
         Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
       end
 
       format.json do
@@ -89,8 +81,6 @@ class FertilizesController < ApplicationController
           in_use_message_key: nil,
           delete_error_message_key: "fertilizes.flash.delete_error"
         )
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.no_permission")
       end
     end
   end

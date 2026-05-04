@@ -83,7 +83,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     interactor.call("1")
   end
 
-  test "call re-raises PolicyPermissionDenied" do
+  test "call forwards PolicyPermissionDenied to on_failure" do
     translator = mock
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(mock)
@@ -91,9 +91,9 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     gateway = mock
     gateway.expects(:find_authorized_for_view).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
+    received = nil
     output = mock
-    output.expects(:on_success).never
-    output.expects(:on_failure).never
+    output.expects(:on_failure).with(instance_of(Domain::Shared::Policies::PolicyPermissionDenied)) { |e| received = e }
 
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(
       output_port: output,
@@ -102,8 +102,8 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
       translator: translator,
       user_lookup: user_lookup
     )
-    assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
-      interactor.call("1")
-    end
+    interactor.call("1")
+
+    assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, received
   end
 end

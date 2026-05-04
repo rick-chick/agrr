@@ -17,8 +17,8 @@ module Domain
           fertilize_entity = @gateway.find_authorized_for_view(user, fertilize_id)
           dto = Domain::Fertilize::Dtos::FertilizeDetailOutputDto.new(fertilize: fertilize_entity)
           @output_port.on_success(dto)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("fertilizes.flash.not_found")))
         rescue StandardError => e
