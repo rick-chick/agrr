@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
+class PrivatePlanNewInteractorTest < ActiveSupport::TestCase
   test "call passes dto from farm_gateway to on_success" do
     user = mock
     user_lookup = mock
@@ -13,7 +13,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
 
     translator = mock
     translator.expects(:t).with("plans.default_plan_name").returns("D")
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
       farm_choices: [],
       default_plan_name: "D"
     )
@@ -27,7 +27,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: output,
       user_id: 9,
       farm_gateway: farm_gateway,
@@ -50,7 +50,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
 
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanNewPageInteractor") &&
+      msg.include?("PrivatePlanNewInteractor") &&
         msg.include?("db") &&
         msg.include?("/backtrace:")
     end
@@ -61,7 +61,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: output,
       user_id: 9,
       farm_gateway: farm_gateway,
@@ -84,7 +84,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     translator = mock
     logger = mock
     logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanNewPageInteractor") &&
+      msg.include?("PrivatePlanNewInteractor") &&
         msg.include?("PersistenceFailed") &&
         msg.include?("/backtrace:")
     end
@@ -94,7 +94,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(Domain::Shared::Exceptions::PersistenceFailed) do
-      Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
         output_port: output,
         user_id: 9,
         farm_gateway: farm_gateway,
@@ -124,7 +124,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: output,
       user_id: 9,
       farm_gateway: farm_gateway,
@@ -154,7 +154,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
       true
     end
 
-    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: output,
       user_id: 9,
       farm_gateway: farm_gateway,
@@ -178,7 +178,7 @@ class PrivatePlanNewPageInteractorTest < ActiveSupport::TestCase
     output.expects(:on_failure).never
 
     assert_raises(NoMethodError) do
-      Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+      Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
         output_port: output,
         user_id: 9,
         farm_gateway: farm_gateway,

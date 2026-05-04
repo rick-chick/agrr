@@ -4,7 +4,7 @@ module Domain
   module CultivationPlan
     module Dtos
       # プライベート計画ウィザード「農場選択」HTML 用。ActiveRecord は含めない。
-      class PrivatePlanNewPageDto
+      class PrivatePlanNewDto
         attr_reader :farm_choices, :default_plan_name
 
         # @param farm_choices [Array<Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto>]

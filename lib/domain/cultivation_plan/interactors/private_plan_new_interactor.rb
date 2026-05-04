@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Interactors
-      class PrivatePlanNewPageInteractor
+      class PrivatePlanNewInteractor
         def initialize(output_port:, user_id:, farm_gateway:, translator:, logger:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
@@ -17,13 +17,13 @@ module Domain
           user = begin
             @user_lookup.find(@user_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
-            @logger.warn("[PrivatePlanNewPageInteractor] user_record_not_found user_id=#{@user_id.inspect}")
+            @logger.warn("[PrivatePlanNewInteractor] user_record_not_found user_id=#{@user_id.inspect}")
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
             return
           end
 
           farm_choices = @farm_gateway.private_plan_new_farm_choices(user: user)
-          dto = Assemblers::PrivatePlanNewPageAssembler.call(
+          dto = Assemblers::PrivatePlanNewAssembler.call(
             farm_choices: farm_choices,
             default_plan_name: @translator.t("plans.default_plan_name")
           )
@@ -34,7 +34,7 @@ module Domain
           log_interactor_error(e)
           raise
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @logger.warn("[PrivatePlanNewPageInteractor] record_not_found: #{e.class}: #{e.message}")
+          @logger.warn("[PrivatePlanNewInteractor] record_not_found: #{e.class}: #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
         rescue StandardError => e
           log_interactor_error(e)
@@ -46,7 +46,7 @@ module Domain
         def log_interactor_error(error)
           bt = error.backtrace&.first(20)&.join("\n").to_s
           @logger.error(
-            "[PrivatePlanNewPageInteractor] #{error.class}: #{error.message}\n/backtrace:\n#{bt}"
+            "[PrivatePlanNewInteractor] #{error.class}: #{error.message}\n/backtrace:\n#{bt}"
           )
         end
       end

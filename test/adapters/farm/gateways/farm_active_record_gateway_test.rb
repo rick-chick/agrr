@@ -162,12 +162,12 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     create(:farm, user: other, is_reference: false)
 
     choices = @gateway.private_plan_new_farm_choices(user: @user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
       farm_choices: choices,
       default_plan_name: I18n.t("plans.default_plan_name")
     )
     assert_empty choices
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNewPageDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNewDto, dto
     assert dto.empty?
     assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
   end
@@ -180,7 +180,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     create(:field, farm: low, area: 5.0)
 
     choices = @gateway.private_plan_new_farm_choices(user: @user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewPageAssembler.call(
+    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
       farm_choices: choices,
       default_plan_name: I18n.t("plans.default_plan_name")
     )

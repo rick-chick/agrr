@@ -3,13 +3,13 @@
 module Presenters
   module Html
     module Plans
-      class PrivatePlanNewHtmlPresenter < Domain::CultivationPlan::Ports::PrivatePlanNewPageOutputPort
+      class PrivatePlanNewHtmlPresenter < Domain::CultivationPlan::Ports::PrivatePlanNewOutputPort
         def initialize(view:)
           @view = view
         end
 
         def on_success(dto)
-          @view.instance_variable_set(:@private_plan_new_page, dto)
+          @view.instance_variable_set(:@private_plan_new, dto)
         end
 
         def on_failure(error_dto)

@@ -33,7 +33,7 @@ class PlansController < ApplicationController
   # Step 1: 農場選択
   def new
     presenter = Presenters::Html::Plans::PrivatePlanNewHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanNewPageInteractor.new(
+    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       farm_gateway: CompositionRoot.farm_gateway,
@@ -43,7 +43,7 @@ class PlansController < ApplicationController
     ).call
     return if performed?
 
-    Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@private_plan_new_page.farm_choices.size}"
+    Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@private_plan_new.farm_choices.size}"
   end
 
   # Step 2: 作物選択
