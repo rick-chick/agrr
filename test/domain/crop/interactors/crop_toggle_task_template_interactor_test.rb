@@ -3,7 +3,7 @@
 require "test_helper"
 
 class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
-  test "on_success delegates to toggle service" do
+  test "on_success delegates to toggle gateway" do
     user = Domain::Shared::Dtos::UserDto.new(id: 1, admin: true)
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
@@ -16,14 +16,14 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
     task_gateway = mock
     task_gateway.expects(:find_model).with(44).returns(agricultural_task)
 
-    result = CropToggleTaskTemplateService::Result.new(
+    result = Domain::Crop::Dtos::CropToggleTaskTemplateSnapshotDto.new(
       available_agricultural_tasks: [],
       selected_task_ids: [],
       task_schedule_blueprints: []
     )
 
-    toggle_service = mock
-    toggle_service.expects(:call).with(crop: crop, agricultural_task: agricultural_task).returns(result)
+    toggle_gateway = mock
+    toggle_gateway.expects(:toggle_build_snapshot!).with(crop: crop, agricultural_task: agricultural_task).returns(result)
 
     output = mock
     output.expects(:on_success).with(result)
@@ -35,7 +35,7 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
       agricultural_task_id: 44,
       gateway: crop_gateway,
       agricultural_task_gateway: task_gateway,
-      toggle_service: toggle_service,
+      toggle_gateway: toggle_gateway,
       translator: mock,
       logger: mock,
       user_lookup: user_lookup

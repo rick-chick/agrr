@@ -113,7 +113,7 @@ class CropsController < ApplicationController
       agricultural_task_id: params[:agricultural_task_id],
       gateway: CompositionRoot.crop_gateway,
       agricultural_task_gateway: CompositionRoot.agricultural_task_gateway,
-      toggle_service: CompositionRoot.crop_toggle_task_template_service,
+      toggle_gateway: CompositionRoot.crop_task_template_toggle_gateway,
       translator: CompositionRoot.translator,
       logger: CompositionRoot.logger,
       user_lookup: CompositionRoot.user_lookup

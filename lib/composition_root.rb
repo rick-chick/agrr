@@ -366,8 +366,8 @@ module CompositionRoot
       @crop_task_schedule_blueprint_create_service ||= CropTaskScheduleBlueprintCreateService.new
     end
 
-    def crop_toggle_task_template_service
-      @crop_toggle_task_template_service ||= CropToggleTaskTemplateService.new
+    def crop_task_template_toggle_gateway
+      @crop_task_template_toggle_gateway ||= Adapters::Crop::Gateways::CropTaskTemplateToggleActiveRecordGateway.new
     end
 
     private

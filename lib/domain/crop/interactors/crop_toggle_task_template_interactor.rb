@@ -4,14 +4,14 @@ module Domain
   module Crop
     module Interactors
       class CropToggleTaskTemplateInteractor
-        def initialize(output_port:, user_id:, crop_id:, agricultural_task_id:, gateway:, agricultural_task_gateway:, toggle_service:, translator:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, crop_id:, agricultural_task_id:, gateway:, agricultural_task_gateway:, toggle_gateway:, translator:, logger:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
           @crop_id = crop_id
           @agricultural_task_id = agricultural_task_id
           @gateway = gateway
           @agricultural_task_gateway = agricultural_task_gateway
-          @toggle_service = toggle_service
+          @toggle_gateway = toggle_gateway
           @translator = translator
           @logger = logger
           @user_lookup = user_lookup
@@ -39,7 +39,7 @@ module Domain
             return
           end
 
-          result = @toggle_service.call(crop: crop, agricultural_task: agricultural_task)
+          result = @toggle_gateway.toggle_build_snapshot!(crop: crop, agricultural_task: agricultural_task)
           @output_port.on_success(result)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
