@@ -102,6 +102,11 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
            gdd_tolerance: BigDecimal("10.0"),
            priority: 2,
            amount: BigDecimal("4.0"))
+
+    @task_schedule_gateway = Adapters::AgriculturalTask::Gateways::TaskScheduleActiveRecordGateway.new
+    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+      translator: Adapters::Translators::RailsTranslator.new
+    )
   end
 
   test "generate! creates schedules from blueprints and skips agrr gateways" do
@@ -109,9 +114,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     assert_difference -> { TaskSchedule.count }, 2 do
@@ -144,9 +149,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError do
@@ -158,9 +163,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(progress_response.merge("progress_records" => []))
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     assert_raises Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError do
@@ -173,9 +178,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
 
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)
@@ -198,9 +203,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(early_progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)
@@ -216,9 +221,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(progress_response)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     broken_blueprints = @crop.crop_task_schedule_blueprints.includes(:agricultural_task).ordered.to_a
@@ -246,9 +251,9 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
     progress_gateway = StubProgressGateway.new(staggered_progress)
     service = Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor.new(
       progress_gateway: progress_gateway,
-      task_schedule_gateway: CompositionRoot.task_schedule_gateway,
+      task_schedule_gateway: @task_schedule_gateway,
       clock: Time.zone,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway
+      cultivation_plan_gateway: @cultivation_plan_gateway
     )
 
     service.generate!(cultivation_plan_id: @plan.id)
