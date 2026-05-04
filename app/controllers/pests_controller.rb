@@ -115,7 +115,7 @@ class PestsController < ApplicationController
   private
 
   def translator
-    @translator ||= Adapters::Translators::RailsTranslator.new
+    @translator ||= CompositionRoot.translator
   end
 
   def load_pest_for_edit
