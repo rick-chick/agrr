@@ -1,26 +1,26 @@
 .app-footer {
-  padding: 24px;
+  padding: var(--space-6);
   text-align: center;
-  color: #6b7280;
-  font-size: 12px;
-  border-top: 1px solid #e5e7eb;
-  margin-top: 40px;
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-10);
 }
 
 .footer-links {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
 .footer-links a {
-  color: #4b5563;
+  color: var(--color-text-secondary);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--transition-fast);
 }
 
 .footer-links a:hover {
-  color: #10b981;
+  color: var(--color-success);
 }

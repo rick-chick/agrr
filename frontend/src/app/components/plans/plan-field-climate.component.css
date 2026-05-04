@@ -1,7 +1,7 @@
 .plan-field-climate {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
@@ -23,15 +23,15 @@
 .plan-field-climate__header-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   font-size: 0.8rem;
   line-height: 1.2;
-  color: #64748b;
+  color: var(--color-accent);
 }
 
 .plan-field-climate__title {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin: 0;
   line-height: 1.2;
 }
@@ -40,13 +40,13 @@
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.2;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .plan-field-climate__close {
   background: transparent;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-full);
   width: 30px;
   height: 30px;
   cursor: pointer;
@@ -58,26 +58,26 @@
 
 .plan-field-climate__status,
 .plan-field-climate__error {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 10px var(--space-3);
   font-size: 0.88rem;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .plan-field-climate__error {
-  border-color: #fecdd3;
-  background: #fff1f2;
+  border-color: var(--color-error-muted-border);
+  background: var(--color-error-muted-bg);
 }
 
 .plan-field-climate__retry {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   border: none;
-  background: #2563eb;
-  color: #ffffff;
-  border-radius: 8px;
-  padding: 5px 8px;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-radius: var(--radius-lg);
+  padding: 5px var(--space-2);
   cursor: pointer;
   font-size: 0.85rem;
 }
@@ -85,7 +85,7 @@
 .plan-field-climate__content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .plan-field-climate__stats {
@@ -95,16 +95,16 @@
 }
 
 .plan-field-climate__stats div {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  background: var(--color-background);
+  border: 1px solid var(--color-gray-200);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 6px var(--space-2);
 }
 
 .plan-field-climate__stats dt {
   font-size: 0.7rem;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--color-text-disabled);
   margin-bottom: 2px;
   line-height: 1.2;
 }
@@ -112,57 +112,57 @@
 .plan-field-climate__stats dd {
   margin: 0;
   font-size: 0.85rem;
-  color: #0f172a;
+  color: var(--color-text);
   line-height: 1.2;
 }
 
 .plan-field-climate__stage-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .plan-field-climate__stage {
-  background: #f1f5f9;
-  border-radius: 12px;
-  padding: 8px 10px;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2) 10px;
+  border: 1px solid var(--color-border);
 }
 
 .plan-field-climate__stage-name {
   margin: 0;
   font-size: 0.8rem;
-  color: #334155;
+  color: var(--color-text-secondary);
   line-height: 1.2;
 }
 
 .plan-field-climate__stage-value {
   margin: 0;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
 }
 
 .plan-field-climate__charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .plan-field-climate__chart-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-xl);
   padding: 10px;
-  background: #ffffff;
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .plan-field-climate__chart-card header h4 {
   margin: 0;
   font-size: 0.85rem;
-  color: #0f172a;
+  color: var(--color-text);
   line-height: 1.2;
 }
 

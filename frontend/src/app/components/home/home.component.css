@@ -1,23 +1,23 @@
 .hero-section {
   text-align: center;
-  padding: 40px 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 16px;
-  margin-bottom: 40px;
+  padding: var(--space-10) var(--space-5);
+  background: var(--gradient-home-hero);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-10);
 }
 
 .hero-section h1 {
-  font-size: 2.5rem;
+  font-size: var(--font-size-5xl);
   font-weight: bold;
-  margin-bottom: 16px;
-  color: #1e293b;
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
 }
 
 .hero-section p {
-  font-size: 1.25rem;
-  margin-bottom: 32px;
-  color: #475569;
-  line-height: 1.6;
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-8);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-loose);
 }
 
 .hero-actions {
@@ -30,121 +30,121 @@
 
 .secondary-button {
   display: inline-block;
-  background: #fff;
-  color: #1d4ed8;
-  border: 2px solid #3b82f6;
-  padding: 16px 32px;
-  font-size: 1.125rem;
-  font-weight: 600;
-  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-primary-hover);
+  border: 2px solid var(--color-primary);
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-xl);
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all var(--transition-progress);
 }
 
 .secondary-button.large {
   padding: 18px 36px;
-  font-size: 1.25rem;
+  font-size: var(--font-size-xl);
 }
 
 .secondary-button:hover {
-  background: #eff6ff;
+  background: var(--color-home-secondary-hover-bg);
 }
 
 .primary-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-text-on-primary);
   border: none;
-  padding: 16px 32px;
-  font-size: 1.125rem;
-  font-weight: 600;
-  border-radius: 12px;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all var(--transition-progress);
+  box-shadow: var(--shadow-home-primary);
 }
 
 .primary-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: var(--shadow-home-primary-hover);
 }
 
 .primary-button.large {
-  padding: 20px 40px;
-  font-size: 1.25rem;
+  padding: var(--space-5) var(--space-10);
+  font-size: var(--font-size-xl);
 }
 
 .features-section {
-  padding: 40px 20px;
+  padding: var(--space-10) var(--space-5);
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .features-section h2 {
   text-align: center;
-  font-size: 2rem;
-  margin-bottom: 16px;
-  color: #1e293b;
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
 }
 
 .features-subtitle {
   text-align: center;
-  font-size: 1.125rem;
-  color: #64748b;
-  margin-bottom: 48px;
+  font-size: var(--font-size-lg);
+  color: var(--color-accent);
+  margin-bottom: var(--space-8);
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
+  gap: var(--space-8);
 }
 
 .feature-card {
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: var(--color-surface);
+  padding: var(--space-8);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-home-feature);
   text-align: center;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  transition: all var(--transition-progress);
+  border: 1px solid var(--color-border);
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-home-feature-hover);
 }
 
 .feature-icon {
   font-size: 3rem;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   display: block;
 }
 
 .feature-card h3 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   font-weight: bold;
-  margin-bottom: 12px;
-  color: #1e293b;
+  margin-bottom: var(--space-3);
+  color: var(--color-text);
 }
 
 .feature-card p {
-  color: #64748b;
-  line-height: 1.6;
+  color: var(--color-accent);
+  line-height: var(--line-height-loose);
 }
 
 .cta-section {
   text-align: center;
-  padding: 40px 20px;
+  padding: var(--space-10) var(--space-5);
 }
 
 @media (max-width: 768px) {
   .features-grid {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: var(--space-6);
   }
-  
+
   .hero-section h1 {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
   }
 }

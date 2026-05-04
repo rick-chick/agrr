@@ -1,7 +1,7 @@
 .gantt-container {
   width: 100%;
   overflow: hidden;
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-5);
@@ -62,7 +62,7 @@
 }
 
 .field-row-highlight {
-  fill: #FFEB3B;
+  fill: var(--color-gantt-highlight);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -75,7 +75,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay-strong);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -88,7 +88,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
-  background: white;
+  background: var(--color-surface);
   padding: var(--space-6);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -97,7 +97,7 @@
 
 .screen-lock-content p {
   margin: 0;
-  color: var(--color-text-primary);
+  color: var(--color-text);
   font-weight: 500;
 }
 
@@ -120,7 +120,7 @@
   justify-content: center;
   align-items: center;
   height: 200px;
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-5);
@@ -153,8 +153,8 @@
   margin-left: auto;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border, #e5e7eb);
-  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-surface);
 }
 
 .gantt-range-label {
@@ -163,20 +163,20 @@
   align-items: center;
   gap: 2px;
   text-align: center;
-  font-size: var(--font-size-xs, 0.75rem);
+  font-size: var(--font-size-xs);
 }
 
 .gantt-range-label__value {
-  font-size: var(--font-size-sm, 0.85rem);
+  font-size: var(--font-size-sm);
   font-weight: 700;
 }
 
 .range-button {
-  border: 1px solid var(--color-border, #d1d5db);
+  border: 1px solid var(--color-gray-300);
   border-radius: var(--radius-md);
   padding: 0.35rem 0.75rem;
-  background: var(--color-surface, #ffffff);
-  color: var(--color-text, #111827);
+  background: var(--color-surface);
+  color: var(--color-gray-900);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
@@ -192,19 +192,19 @@
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   font-weight: 600;
-  background: var(--color-primary, #2563eb);
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .action-button.active {
-  background: #1d4ed8;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+  background: var(--color-primary-hover);
+  box-shadow: var(--shadow-focus-ring-primary);
 }
 
 .crop-palette {
-  background: #ffffff;
-  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface);
+  border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   display: flex;
@@ -217,7 +217,7 @@
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .crop-list {
@@ -227,38 +227,38 @@
 }
 
 .crop-card {
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   min-width: 160px;
   max-width: 200px;
   flex: 1 1 160px;
   text-align: left;
-  background: #f9fafb;
+  background: var(--color-gray-50);
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .crop-card.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-primary);
+  background: var(--color-home-secondary-hover-bg);
   transform: translateY(-2px);
 }
 
 .crop-card .crop-name {
   display: block;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .crop-card .crop-variety {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-gray-600);
 }
 
 .crop-form,
 .field-form {
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  border-top: 1px solid var(--color-gray-200);
   padding-top: var(--space-3);
   display: flex;
   flex-direction: column;
@@ -275,14 +275,14 @@
 .crop-form-row label,
 .field-form-row label {
   font-size: 12px;
-  color: #4b5563;
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
 .crop-form-row select,
 .crop-form-row input,
 .field-form-row input {
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-md);
   padding: var(--space-1) var(--space-2);
   font-size: 14px;
@@ -290,7 +290,7 @@
 
 .empty-state {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-gray-600);
   font-size: 14px;
 }
 

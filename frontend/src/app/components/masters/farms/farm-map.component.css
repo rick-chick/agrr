@@ -1,7 +1,7 @@
 .map {
   height: 300px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-  margin-top: 16px;
+  border: 1px solid var(--color-gray-200);
+  margin-top: var(--space-4);
 }

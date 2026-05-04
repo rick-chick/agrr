@@ -1,39 +1,39 @@
 .flash-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .flash-message {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #eef2ff;
-  color: #1f2937;
-  border: 1px solid #e0e7ff;
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-info-muted-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-info-muted-border);
 }
 
 .flash-message.success {
-  background: #ecfdf3;
-  border-color: #bbf7d0;
+  background: var(--color-success-muted-bg);
+  border-color: var(--color-success-muted-border);
 }
 
 .flash-message.warning {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-border-soft);
 }
 
 .flash-message.error {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: var(--color-error-bg);
+  border-color: var(--color-error-border-soft);
 }
 
 .flash-message button {
   border: none;
   background: transparent;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   cursor: pointer;
 }

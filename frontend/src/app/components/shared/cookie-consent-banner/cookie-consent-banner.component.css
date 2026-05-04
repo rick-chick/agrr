@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(11, 16, 28, 0.85);
+  background: var(--color-overlay-scrim);
   z-index: 1300;
   padding: var(--space-4);
   box-sizing: border-box;
@@ -14,12 +14,12 @@
 }
 
 .cookie-consent-card {
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--color-surface-elevated);
   color: var(--color-gray-800);
   width: min(540px, 100%);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.3);
+  border: 1px solid var(--color-border-alpha);
+  box-shadow: var(--shadow-overlay-lg);
   padding: var(--space-6);
   box-sizing: border-box;
 }
