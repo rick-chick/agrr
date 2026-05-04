@@ -32,7 +32,7 @@ const initialControl: PlanDetailViewState = {
     <section class="page">
       <a [routerLink]="['/plans']">{{ 'plans.show.back_to_list' | translate }}</a>
       @if (control.loading) {
-        <p>{{ 'common.loading' | translate }}</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
         <p class="error">{{ control.error }}</p>
       } @else if (control.plan) {

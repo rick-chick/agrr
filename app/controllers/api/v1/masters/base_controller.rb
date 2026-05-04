@@ -15,11 +15,6 @@ module Api
         # セッション: SPAでWebログインしたユーザー用（ほ場管理画面など）
         skip_before_action :authenticate_user!
 
-        # PolicyPermissionDenied例外を403 Forbiddenとして扱う（domain の Policy が raise するクラス）
-        rescue_from Domain::Shared::Policies::PolicyPermissionDenied do |_exception|
-          render json: { error: I18n.t("agricultural_tasks.flash.no_permission") }, status: :forbidden
-        end
-
         before_action :authenticate_api_key_or_session!
 
         private

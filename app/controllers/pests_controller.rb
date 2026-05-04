@@ -43,17 +43,7 @@ class PestsController < ApplicationController
     presenter = Presenters::Html::Pest::PestCreateHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue StandardError => e
-    if e.message == I18n.t("pests.flash.reference_only_admin")
-      redirect_to pests_path, alert: e.message
-    else
-      @pest = Pest.new(pest_params.to_h.symbolize_keys)
-      @pest.valid?
-      prepare_crop_selection_for(@pest, selected_ids: normalize_crop_ids_for(@pest, params[:crop_ids]))
-      flash.now[:alert] = e.message
-      render :new, status: :unprocessable_entity
-    end
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger,       user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /pests/:id
@@ -75,14 +65,7 @@ class PestsController < ApplicationController
     )
     Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue StandardError => e
-    Rails.logger.error "PestsController#update error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
-    @pest.assign_attributes(pest_params.to_h.symbolize_keys)
-    @pest.valid?
-    prepare_crop_selection_for(@pest)
-    flash.now[:alert] = e.message
-    render :edit, status: :unprocessable_entity
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger,       user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /pests/:id

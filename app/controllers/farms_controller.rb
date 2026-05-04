@@ -18,8 +18,6 @@ class FarmsController < ApplicationController
         )
 
         interactor.call(input_dto)
-      rescue StandardError => e
-        redirect_to root_path, alert: e.message
       end
 
       format.json do
@@ -48,8 +46,6 @@ class FarmsController < ApplicationController
           translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
-      rescue StandardError => e
-        redirect_to farms_path, alert: e.message
       end
 
       format.json do
@@ -80,16 +76,6 @@ class FarmsController < ApplicationController
           translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
-      rescue StandardError => e
-        @farm = current_user.farms.build(
-          name: @input_dto.name,
-          region: @input_dto.region,
-          latitude: @input_dto.latitude,
-          longitude: @input_dto.longitude
-        )
-        @farm.valid? # エラーをセットするためにバリデーションを実行
-        flash.now[:alert] = e.message
-        render :new, status: :unprocessable_entity
       end
 
       format.json do
@@ -114,16 +100,6 @@ class FarmsController < ApplicationController
           translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
-      rescue StandardError => e
-        @farm.assign_attributes(
-          name: @input_dto.name,
-          region: @input_dto.region,
-          latitude: @input_dto.latitude,
-          longitude: @input_dto.longitude
-        )
-        @farm.valid? # エラーをセットするためにバリデーションを実行
-        flash.now[:alert] = e.message
-        render :edit, status: :unprocessable_entity
       end
 
       format.json do

@@ -53,7 +53,7 @@ const initialControl: PesticideEditViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">{{ 'pesticides.edit.title' | translate }}</h2>
+        <h2 id="form-heading" class="form-card__title">{{ 'pesticides.edit.title' | translate:{ name: control.formData.name || ('pesticides.edit.title_default' | translate) } }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {

@@ -24,10 +24,6 @@ class AgriculturalTasksController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(input_dto)
-  rescue StandardError => e
-    flash.now[:alert] = e.message
-    @agricultural_tasks = []
-    @reference_farms = []
   end
 
   # GET /agricultural_tasks/:id
@@ -38,8 +34,6 @@ class AgriculturalTasksController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
-  rescue StandardError => e
-    redirect_to agricultural_tasks_path, alert: e.message
   end
 
   # GET /agricultural_tasks/new
@@ -67,20 +61,6 @@ class AgriculturalTasksController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
-  rescue StandardError => e
-    @agricultural_task = current_user.agricultural_tasks.build(
-      name: @input_dto.name,
-      description: @input_dto.description,
-      time_per_sqm: @input_dto.time_per_sqm,
-      weather_dependency: @input_dto.weather_dependency,
-      skill_level: @input_dto.skill_level,
-      is_reference: @input_dto.is_reference,
-      required_tools: @input_dto.required_tools,
-      region: @input_dto.region
-    )
-    @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
-    flash.now[:alert] = e.message
-    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /agricultural_tasks/:id

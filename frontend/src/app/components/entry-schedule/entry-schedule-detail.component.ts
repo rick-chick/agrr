@@ -31,7 +31,7 @@ import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeli
         </p>
 
         @if (loading()) {
-          <p class="muted mt-4">{{ 'entrySchedule.loading' | translate }}</p>
+          <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
         } @else if (errorKey()) {
           <p class="error-message mt-4">{{ errorKey()! | translate }}</p>
           <button type="button" class="btn btn-secondary mt-2" (click)="reload()">{{ 'entrySchedule.retry' | translate }}</button>

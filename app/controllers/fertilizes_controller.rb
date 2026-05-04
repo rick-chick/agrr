@@ -39,11 +39,6 @@ class FertilizesController < ApplicationController
     presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue StandardError => e
-    @fertilize = Fertilize.new(fertilize_params.to_h.symbolize_keys)
-    @fertilize.valid?
-    flash.now[:alert] = e.message
-    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /fertilizes/:id
@@ -56,11 +51,6 @@ class FertilizesController < ApplicationController
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-  rescue StandardError => e
-    @fertilize.assign_attributes(fertilize_params.to_h.symbolize_keys)
-    @fertilize.valid?
-    flash.now[:alert] = e.message
-    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /fertilizes/:id

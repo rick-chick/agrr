@@ -6,7 +6,7 @@ Agent レビュー用スクリーンショット（`e2e/agent-review/out/`）
    - 各 `pattern` の E2E URL と **`out/*.png` ファイル名**が対応表になっている。Agent はユーザーに URL を聞かずここを正とする。
 2. **二通りのキャプチャ**
    - **ng のみ（既定）** … `npm run e2e:capture-for-agent`。`/api/v1/auth/me` のみモック。API へ届かない画面はエラー表示になり得る。
-   - **Rails + 実セッション** … `npm run e2e:capture-for-agent:with-api`。**development** の `AuthTestController` モックログインで `127.0.0.1:3000` にセッションを付与し、マスタ・計画など **API 依存画面も実データに近い PNG** になる（DB・Rails 起動が必要。`e2e/.auth/dev-session.json` は自動生成・gitignore）。
+   - **Rails + 実セッション** … `npm run e2e:capture-for-agent:with-api`。**development** の `AuthTestController` モックログインで `127.0.0.1:3000` にセッションを付与し、マスタ・計画など **API 依存画面も実データに近い PNG** になる（DB・Rails 起動が必要。`e2e/.auth/dev-session.json` は自動生成・gitignore）。**実行時**に `e2e/resolve-capture-urls.ts` が一覧 API から **実在 id** を取り、マニフェストの placeholder `1` を差し替える（`route-to-png.md` の URL 列は代表値のまま）。
 3. コマンド終了時に **件数検証**（`verify-capture-complete.mjs`）に通らないと失敗で終了する。
 4. **手動 OAuth** で保存したい場合は **`e2e/.auth/README.txt`**（`state.json`）を参照。
 

@@ -80,14 +80,27 @@ function normalizePathname(path: string): string {
   return path.replace(/\/$/, '') || '/';
 }
 
+export { normalizePathname };
+
+/** Playwright が実際に開いた href（相対可）から期待 pathname を得る（実行時リゾルブ後の検証用） */
+export function expectedPathnameFromResolvedGoto(href: string): string {
+  const raw = href.startsWith('/') ? href : `/${href}`;
+  const pathOnly = raw.split('?')[0] ?? raw;
+  return normalizePathname(pathOnly);
+}
+
 /**
  * ストア未初期化のクールスタートでは /public-plans/new に寄せる実装（意図したガード）。
  * スナップショットは「そのフローの安定終着」を表す。
  */
-const PUBLIC_PLAN_REDIRECT_TO_NEW = new Set(['public-plans/select-crop', 'public-plans/select-farm-size']);
+export const PUBLIC_PLAN_REDIRECT_TO_NEW = new Set(['public-plans/select-crop', 'public-plans/select-farm-size']);
 
 /** スナップショット前に「意図した URL とホストコンポーネントに到達している」ことを保証する */
-export async function assertPageValidity(page: Page, r: RouteRow): Promise<void> {
+export async function assertPageValidity(
+  page: Page,
+  r: RouteRow,
+  pathnameExpect?: string,
+): Promise<void> {
   if (PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)) {
     const want = normalizePathname('/public-plans/new');
     await expect
@@ -105,7 +118,8 @@ export async function assertPageValidity(page: Page, r: RouteRow): Promise<void>
     );
   }
 
-  const want = normalizePathname(expectedPathname(r));
+  const want =
+    pathnameExpect !== undefined ? normalizePathname(pathnameExpect) : normalizePathname(expectedPathname(r));
 
   await expect
     .poll(() => normalizePathname(new URL(page.url()).pathname), { timeout: 30_000 })

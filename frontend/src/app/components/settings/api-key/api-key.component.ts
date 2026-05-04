@@ -95,7 +95,7 @@ const initialControl: ApiKeyViewState = {
       </div>
 
       @if (control.loading) {
-        <p class="text-gray-500">{{ 'common.loading' | translate }}</p>
+        <p class="master-loading text-gray-500">{{ 'common.loading' | translate }}</p>
       } @else {
         <div class="info-box mt-8">
           <h2 class="info-box-title">{{ 'api_keys.usage.heading' | translate }}</h2>

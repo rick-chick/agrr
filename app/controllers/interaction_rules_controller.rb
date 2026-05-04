@@ -64,11 +64,6 @@ class InteractionRulesController < ApplicationController
       filtered_params.merge(user_id: current_user.id)
     )
     interactor.call(input_dto)
-  rescue StandardError => e
-    @form ||= InteractionRuleForm.new
-    @form.errors_from(base: e.message)
-    flash.now[:alert] = e.message
-    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /interaction_rules/:id
@@ -96,11 +91,6 @@ class InteractionRulesController < ApplicationController
       params[:id]
     )
     interactor.call(input_dto)
-  rescue StandardError => e
-    @form ||= InteractionRuleForm.from_params(interaction_rule_params.to_unsafe_h.merge(id: params[:id].to_i))
-    @form.errors_from(base: e.message)
-    flash.now[:alert] = e.message
-    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /interaction_rules/:id

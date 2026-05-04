@@ -13,8 +13,6 @@ class CropsController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call
-  rescue StandardError => e
-    redirect_to root_path, alert: e.message
   end
 
   # GET /crops/:id
@@ -23,10 +21,6 @@ class CropsController < ApplicationController
     interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
-  rescue StandardError => e
-    redirect_to crops_path, alert: e.message
   end
 
   # GET /crops/new
@@ -55,11 +49,6 @@ class CropsController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
-  rescue StandardError => e
-    @crop = Crop.new(crop_params.to_h.symbolize_keys)
-    @crop.valid? # エラーをセットするためにバリデーションを実行
-    flash.now[:alert] = e.message
-    render :new, status: :unprocessable_entity
   end
 
   # PATCH/PUT /crops/:id
@@ -75,11 +64,6 @@ class CropsController < ApplicationController
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
-  rescue StandardError => e
-    @crop.assign_attributes(crop_params.to_h.symbolize_keys)
-    @crop.valid? # エラーをセットするためにバリデーションを実行
-    flash.now[:alert] = e.message
-    render :edit, status: :unprocessable_entity
   end
 
   # DELETE /crops/:id

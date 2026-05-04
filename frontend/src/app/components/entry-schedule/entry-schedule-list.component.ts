@@ -35,7 +35,7 @@ const PAGE_LIMIT = 20;
             {{ 'entrySchedule.selectFarm' | translate }}
           </h2>
           @if (farmsLoading()) {
-            <p class="muted">{{ 'entrySchedule.loading' | translate }}</p>
+            <p class="muted master-loading">{{ 'entrySchedule.loading' | translate }}</p>
           } @else if (farmsError()) {
             <p class="error-message">{{ farmsError()! | translate }}</p>
             <button type="button" class="btn btn-secondary mt-2" (click)="retryFarms()">
@@ -74,7 +74,7 @@ const PAGE_LIMIT = 20;
           }
 
           @if (cropsLoading()) {
-            <p class="muted mt-4">{{ 'entrySchedule.loading' | translate }}</p>
+            <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
           } @else if (cropsError()) {
             <p class="error-message mt-4">{{ cropsError()! | translate }}</p>
             <button type="button" class="btn btn-secondary mt-2" (click)="loadCrops(false)">

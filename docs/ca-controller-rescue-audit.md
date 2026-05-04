@@ -1,0 +1,36 @@
+# CA: controller `rescue` / `rescue_from` 監査（禁止 17 関連）
+
+更新: 計画「CA 違反 一覧と計画的対応」フェーズ 0 成果物。
+
+凡例:
+
+- **DEAD**: Interactor が `StandardError` または `PolicyPermissionDenied` 等を捕捉し Port に渡すため、アクション直下の `rescue` は到達しない。
+- **LIVE**: 例外がコントローラまで上がる想定内パスがある、またはインフラ境界のみ。
+- **REFACTOR**: Interactor + Presenter へ失敗を移す必要あり（禁止 17 の本扱い）。
+
+## API
+
+| 場所 | 種別 | 分類 | メモ |
+|------|------|------|------|
+| `api/v1/masters/base_controller.rb` | `rescue_from PolicyPermissionDenied` | **DEAD** | Masters の各 Interactor が `StandardError` / 明示 rescue で捕捉。`PolicyPermissionDenied < StandardError`。 |
+| `api/v1/public_plans/entry_schedule_controller.rb` | 複数 `rescue_from` | **REFACTOR** | ドメイン例外・`RecordNotFound` を端で HTTP 化。フェーズ 2 で Port へ。 |
+| `api/v1/plans_controller.rb` | `rescue StandardError` | 要確認 | アクションごとに Interactor 完走を確認後 DEAD 化または縮小。 |
+| `api/v1/contact_messages_controller.rb` | `rescue StandardError` | **LIVE（想定外）** | インタラクタ内再 raise 後のフォールバック。 |
+
+## HTML / 一般
+
+| 場所 | 分類 | メモ |
+|------|------|------|
+| `farms_controller.rb` (html index/show/create/update) | **DEAD** | `Farm*Interactor` が `StandardError` 等を捕捉到達しない。 |
+| `crops_controller.rb`, `pests_controller.rb`, `fertilizes_controller.rb`, `agricultural_tasks_controller.rb`, `interaction_rules_controller.rb` | **DEAD 候補** | 各 `*Interactor#call` が `rescue StandardError` + `on_failure` なら同様。アクションごとに確認して除去。 |
+| `plans_controller.rb`, `crops/task_schedule_blueprints_controller.rb` | **要確認** | Interactor パターン確認後 DEAD または REFACTOR。 |
+| `plans/task_schedule_items_controller.rb` | **REFACTOR** | `rescue_from` + `StandardError`。フェーズ 3。 |
+| `auth_controller.rb` | **要確認** | 認証フロー。インフラ的 rescue の可能性。 |
+| `concerns/deletion_undo_flow.rb`, `agrr_optimization.rb` | **LIVE / 横断** | 別タスクで個別設計。 |
+
+## Gateway 境界（禁止 PageDto 参照）
+
+| 場所 | 分類 |
+|------|------|
+| `lib/adapters/cultivation_plan/gateways/cultivation_plan_active_record_gateway.rb` | **REFACTOR**（フェーズ 6） |
+| `lib/adapters/farm/gateways/farm_active_record_gateway.rb` | **REFACTOR**（フェーズ 6） |
