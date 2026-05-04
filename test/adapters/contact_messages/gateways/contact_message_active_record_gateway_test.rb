@@ -34,7 +34,7 @@ module Adapters
 
         test "create persists queued entity without enqueueing mail" do
           gateway = build_gateway
-          create_dto = ::ContactMessages::Dtos::CreateContactMessageInput.new(
+          create_dto = ::Domain::ContactMessages::Dtos::CreateContactMessageInput.new(
             name: "Hanako",
             email: "hana@example.com",
             subject: "Test",
@@ -58,7 +58,7 @@ module Adapters
         test "create raises on validation failure" do
           gateway = build_gateway
 
-          create_dto = ::ContactMessages::Dtos::CreateContactMessageInput.new(
+          create_dto = ::Domain::ContactMessages::Dtos::CreateContactMessageInput.new(
             name: "NoEmail",
             email: "invalid",
             subject: "x",

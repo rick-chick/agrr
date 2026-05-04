@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module ContactMessages
-      class ContactMessageCreatePresenter < ::ContactMessages::Ports::CreateContactMessageOutputPort
+      class ContactMessageCreatePresenter < ::Domain::ContactMessages::Ports::CreateContactMessageOutputPort
         INTERNAL_SERVER_ERROR_MESSAGE = "Internal server error".freeze
 
         def initialize(view:)

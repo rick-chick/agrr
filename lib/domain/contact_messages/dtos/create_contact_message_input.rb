@@ -1,3 +1,19 @@
 # frozen_string_literal: true
 
-require_relative "../../contact_messages/dtos/create_contact_message_input"
+module Domain
+  module ContactMessages
+    module Dtos
+      class CreateContactMessageInput
+        attr_reader :name, :email, :subject, :message, :source
+
+        def initialize(name:, email:, subject:, message:, source: nil)
+          @name = name
+          @email = email
+          @subject = subject
+          @message = message
+          @source = source
+        end
+      end
+    end
+  end
+end

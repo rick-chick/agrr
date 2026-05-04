@@ -82,7 +82,7 @@ module Api
       test "returns too many requests when rate limit exceeded" do
         rate_limiter = Class.new do
           def initialize(**); end
-          def track!; raise ::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded; end
+          def track!; raise ::Adapters::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded; end
         end
 
         with_controller_constants(
@@ -105,7 +105,7 @@ module Api
       test "returns forbidden when recaptcha fails" do
         recaptcha_verifier = Class.new do
           def initialize(**); end
-          def verify!(**); raise ::ContactMessages::Services::RecaptchaVerifier::VerificationError, "recaptcha failed"; end
+          def verify!(**); raise ::Adapters::ContactMessages::Services::RecaptchaVerifier::VerificationError, "recaptcha failed"; end
         end
 
         with_controller_constants(

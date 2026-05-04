@@ -1,10 +1,10 @@
 module Api
   module V1
     class ContactMessagesController < Api::V1::BaseController
-      INTERACTOR_CLASS = ::ContactMessages::Interactors::CreateContactMessageInteractor
+      INTERACTOR_CLASS = ::Domain::ContactMessages::Interactors::CreateContactMessageInteractor
       PRESENTER_CLASS = ::Presenters::Api::ContactMessages::ContactMessageCreatePresenter
-      RATE_LIMITER_CLASS = ::ContactMessages::Services::ContactMessageRateLimiter
-      RECAPTCHA_VERIFIER_CLASS = ::ContactMessages::Services::RecaptchaVerifier
+      RATE_LIMITER_CLASS = ::Adapters::ContactMessages::Services::ContactMessageRateLimiter
+      RECAPTCHA_VERIFIER_CLASS = ::Adapters::ContactMessages::Services::RecaptchaVerifier
 
       include Views::Api::ContactMessages::CreateView
 
@@ -31,7 +31,7 @@ module Api
       private
 
       def contact_message_input
-        ::ContactMessages::Dtos::CreateContactMessageInput.new(
+        ::Domain::ContactMessages::Dtos::CreateContactMessageInput.new(
           name: contact_message_params[:name],
           email: contact_message_params[:email],
           subject: contact_message_params[:subject],
@@ -48,7 +48,7 @@ module Api
       def verify_recaptcha!
         self.class::RECAPTCHA_VERIFIER_CLASS.new.verify!(token: params[:recaptcha_token], remote_ip: request.remote_ip)
         true
-      rescue ::ContactMessages::Services::RecaptchaVerifier::VerificationError => e
+      rescue ::Adapters::ContactMessages::Services::RecaptchaVerifier::VerificationError => e
         render_response(json: { error: e.message }, status: :forbidden)
         false
       end
@@ -56,7 +56,7 @@ module Api
       def enforce_rate_limit!
         self.class::RATE_LIMITER_CLASS.new(request: request).track!
         true
-      rescue ::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded
+      rescue ::Adapters::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded
         render_response(json: { error: "Too many requests" }, status: :too_many_requests)
         false
       end

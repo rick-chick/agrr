@@ -1,3 +1,13 @@
 # frozen_string_literal: true
 
-require_relative "../../contact_messages/ports/create_contact_message_input_port"
+module Domain
+  module ContactMessages
+    module Ports
+      class CreateContactMessageInputPort
+        def call(input_dto)
+          raise NotImplementedError, "Subclasses must implement call"
+        end
+      end
+    end
+  end
+end

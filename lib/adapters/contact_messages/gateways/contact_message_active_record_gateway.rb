@@ -4,14 +4,14 @@ require_relative "../../../domain/contact_messages/entities/contact_message"
 module Adapters
   module ContactMessages
     module Gateways
-      class ContactMessageActiveRecordGateway < ::ContactMessages::Gateways::ContactMessageGateway
+      class ContactMessageActiveRecordGateway < ::Domain::ContactMessages::Gateways::ContactMessageGateway
         def find_by_id(id)
           record = ::ContactMessage.find_by(id: id)
           return nil unless record
           entity_from_record(record)
         end
 
-        # create_dto: ContactMessages::Dtos::CreateContactMessageInput
+        # create_dto: Domain::ContactMessages::Dtos::CreateContactMessageInput
         def create(create_dto)
           record = ::ContactMessage.new(
             name: create_dto.name,
@@ -32,7 +32,7 @@ module Adapters
         private
 
         def entity_from_record(record)
-          ::ContactMessages::Entities::ContactMessage.new(
+          ::Domain::ContactMessages::Entities::ContactMessage.new(
             id: record.id,
             name: record.name,
             email: record.email,

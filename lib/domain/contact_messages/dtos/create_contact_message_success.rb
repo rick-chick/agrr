@@ -1,5 +1,15 @@
 # frozen_string_literal: true
 
-# frozen_string_literal: true
+module Domain
+  module ContactMessages
+    module Dtos
+      class CreateContactMessageSuccess
+        attr_reader :contact_message
 
-require_relative "../../contact_messages/dtos/create_contact_message_success"
+        def initialize(contact_message:)
+          @contact_message = contact_message
+        end
+      end
+    end
+  end
+end
