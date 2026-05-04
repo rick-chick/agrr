@@ -15,7 +15,12 @@ module Api
       # POST /api/v1/internal/farms/:farm_id/fetch_weather_data
       # 特定の農場の天気データを取得開始
       def fetch_weather_data
-        farm = Farm.find(params[:farm_id])
+        lookup = Adapters::Shared::InternalApiFarmLookup.find_farm(params[:farm_id])
+        if lookup[:kind] == :not_found
+          return render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
+        end
+
+        farm = lookup[:farm]
 
         # 既に取得済みの場合はスキップ
         if farm.weather_location && farm.weather_data_status == "completed"
@@ -38,8 +43,6 @@ module Api
           status: farm.weather_data_status,
           total_blocks: farm.weather_data_total_years
         }
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       rescue => e
         render json: { error: e.message }, status: :internal_server_error
       end
@@ -47,7 +50,12 @@ module Api
       # GET /api/v1/internal/farms/:farm_id/weather_status
       # 天気データ取得の進捗状況を確認
       def weather_status
-        farm = Farm.find(params[:farm_id])
+        lookup = Adapters::Shared::InternalApiFarmLookup.find_farm(params[:farm_id])
+        if lookup[:kind] == :not_found
+          return render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
+        end
+
+        farm = lookup[:farm]
 
         render json: {
           success: true,
@@ -59,14 +67,17 @@ module Api
           weather_data_count: farm.weather_location&.weather_data&.count || 0,
           last_error: farm.weather_data_last_error
         }
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       end
 
       # GET /api/v1/internal/farms/:farm_id/weather_data
       # 天気データをJSON形式で取得
       def get_weather_data
-        farm = Farm.find(params[:farm_id])
+        lookup = Adapters::Shared::InternalApiFarmLookup.find_farm(params[:farm_id])
+        if lookup[:kind] == :not_found
+          return render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
+        end
+
+        farm = lookup[:farm]
 
         unless farm.weather_location
           return render json: { error: I18n.t("api.errors.common.weather_location_not_found") }, status: :not_found
@@ -103,8 +114,6 @@ module Api
           weather_data: weather_data,
           count: weather_data.count
         }
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
       end
 
       private
