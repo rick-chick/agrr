@@ -39,9 +39,11 @@ module Adapters
           build_entity(model)
         end
 
-        def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {})
+        def schedule(record:, actor: nil, toast_message: nil, auto_hide_after: nil, metadata: {},
+                     validate_before_schedule: false)
           ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(actor)
           ActiveRecord::Base.transaction do
+            record.validate! if validate_before_schedule
             snapshot = ::DeletionUndo::SnapshotBuilder.new(record).build
 
             event = ::DeletionUndoEvent.create!(
@@ -57,6 +59,15 @@ module Adapters
 
             build_entity(event)
           end
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
+          mapped_record = e.respond_to?(:record) ? e.record : nil
+          raise Domain::Shared::Exceptions::RecordInvalid.new(
+            e.message,
+            errors: mapped_record&.errors,
+            record: mapped_record
+          )
+        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError => e
+          raise Domain::Shared::Exceptions::AssociationInUse, e.message
         end
 
         private

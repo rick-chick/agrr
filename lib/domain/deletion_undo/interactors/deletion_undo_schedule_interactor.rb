@@ -12,14 +12,13 @@ module Domain
         def call(input_dto)
           raise ArgumentError, "record must be persisted" unless input_dto.record&.persisted?
 
-          input_dto.record.validate! if input_dto.validate_before_schedule
-
           event = @gateway.schedule(
             record: input_dto.record,
             actor: input_dto.actor,
             toast_message: input_dto.toast_message,
             auto_hide_after: input_dto.auto_hide_after,
-            metadata: input_dto.metadata
+            metadata: input_dto.metadata,
+            validate_before_schedule: input_dto.validate_before_schedule
           )
 
           @output_port.on_success(event)
@@ -30,16 +29,14 @@ module Domain
               detail_message: e.message
             )
           )
-        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
             Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
               reason: :validation_error,
               detail_message: e.message
             )
           )
-        rescue Domain::Shared::Exceptions::AssociationInUse,
-              ActiveRecord::InvalidForeignKey,
-              ActiveRecord::DeleteRestrictionError => e
+        rescue Domain::Shared::Exceptions::AssociationInUse => e
           @output_port.on_failure(
             Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
               reason: :association_in_use,

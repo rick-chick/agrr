@@ -9,7 +9,6 @@ module Domain
         setup do
           @record = Object.new
           @record.define_singleton_method(:persisted?) { true }
-          @record.define_singleton_method(:validate!) { true }
         end
 
         test "calls on_success with entity when gateway schedules" do
@@ -30,6 +29,7 @@ module Domain
             assert_equal @record, kwargs[:record]
             assert_nil kwargs[:actor]
             assert_equal "removed", kwargs[:toast_message]
+            assert_equal false, kwargs[:validate_before_schedule]
           end
 
           received = nil
@@ -45,7 +45,9 @@ module Domain
 
         test "maps DeletionUndo::Error to undo_system_error failure" do
           gateway = Minitest::Mock.new
-          gateway.expect(:schedule, nil) do
+          gateway.expect(:schedule, nil) do |kwargs|
+            assert_equal @record, kwargs[:record]
+            assert_equal false, kwargs[:validate_before_schedule]
             raise DeletionUndo::Error, "tok"
           end
 
@@ -68,21 +70,20 @@ module Domain
           output_port.verify
         end
 
-        test "maps RecordInvalid to validation_error when validate_before_schedule" do
-          invalid = ::Farm.new
-
-          record = Object.new
-          record.define_singleton_method(:persisted?) { true }
-          record.define_singleton_method(:validate!) { raise ActiveRecord::RecordInvalid.new(invalid) }
-
+        test "maps shared RecordInvalid to validation_error" do
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-            record: record,
+            record: @record,
             actor: nil,
             toast_message: "removed",
             validate_before_schedule: true
           )
 
           gateway = Minitest::Mock.new
+          gateway.expect(:schedule, nil) do |kwargs|
+            assert_equal @record, kwargs[:record]
+            assert_equal true, kwargs[:validate_before_schedule]
+            raise Domain::Shared::Exceptions::RecordInvalid, "invalid record"
+          end
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |dto| received = dto }
@@ -91,13 +92,41 @@ module Domain
 
           assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto, received
           assert_equal :validation_error, received.reason
-          assert received.detail_message.present?
+          assert_equal "invalid record", received.detail_message
+          gateway.verify
+          output_port.verify
         end
 
-        test "skips validate! when validate_before_schedule is false" do
+        test "maps shared AssociationInUse to association_in_use" do
+          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
+            record: @record,
+            actor: nil,
+            toast_message: "removed"
+          )
+
+          gateway = Minitest::Mock.new
+          gateway.expect(:schedule, nil) do |kwargs|
+            assert_equal @record, kwargs[:record]
+            assert_equal false, kwargs[:validate_before_schedule]
+            raise Domain::Shared::Exceptions::AssociationInUse, "in use"
+          end
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_failure, nil) { |dto| received = dto }
+
+          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+
+          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto, received
+          assert_equal :association_in_use, received.reason
+          assert_equal "in use", received.detail_message
+          gateway.verify
+          output_port.verify
+        end
+
+        test "passes validate_before_schedule false to gateway" do
           record = Object.new
           record.define_singleton_method(:persisted?) { true }
-          record.define_singleton_method(:validate!) { raise "validate! must not be called" }
 
           entity = Domain::DeletionUndo::Entities::DeletionUndoEntity.new(
             id: "evt-1",
@@ -113,7 +142,10 @@ module Domain
             validate_before_schedule: false
           )
 
-          gateway.expect(:schedule, entity) { |kwargs| assert_equal record, kwargs[:record] }
+          gateway.expect(:schedule, entity) do |kwargs|
+            assert_equal record, kwargs[:record]
+            assert_equal false, kwargs[:validate_before_schedule]
+          end
 
           received = nil
           output_port = Minitest::Mock.new
