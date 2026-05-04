@@ -172,6 +172,6 @@ class CultivationPlanApiTest < ActionDispatch::IntegrationTest
 
     response_data = JSON.parse(response.body)
     assert_not response_data["success"]
-    assert_includes response_data["message"], "圃場が見つかりません"
+    assert_includes response_data["message"], I18n.t("plans.errors.not_found")
   end
 end

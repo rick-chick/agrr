@@ -19,7 +19,7 @@ module Adapters
 
         @host.instance_variable_set(:@cultivation_plan, cultivation_plan)
 
-        crop_entity = @host.get_crop_for_add_crop(crop_id)
+        crop_entity = @host.send(:get_crop_for_add_crop, crop_id)
         unless crop_entity
           return { kind: :crop_not_found }
         end

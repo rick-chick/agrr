@@ -35,7 +35,7 @@ module CultivationPlanApi
     Domain::CultivationPlan::Interactors::ApiAddCropInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiAddCropPresenter.new(
         view: self,
-        translation_scope: api_add_crop_translation_scope
+        translation_scope: api_cultivation_plan_translation_scope
       )
     ).call(
       host: self,
@@ -49,217 +49,47 @@ module CultivationPlanApi
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_field
   # 新しい圃場を追加
   def add_field
-    @cultivation_plan = find_api_cultivation_plan
-
-    # パラメータ取得
-    field_name = params[:field_name]
-    field_area = params[:field_area]&.to_f
-    daily_fixed_cost = params[:daily_fixed_cost]&.to_f
-
-    # バリデーション
-    if field_area <= 0
-      return render json: {
-        success: false,
-        message: i18n_t("errors.invalid_field_params")
-      }, status: :unprocessable_entity
-    end
-
-    # 圃場数の制限（最大5個まで）
-    if @cultivation_plan.cultivation_plan_fields.count >= 5
-      return render json: {
-        success: false,
-        message: i18n_t("errors.max_fields_limit")
-      }, status: :bad_request
-    end
-
-    # cultivation_plan_fields に追加
-    plan_field = @cultivation_plan.cultivation_plan_fields.create!(
-      name: field_name,
-      area: field_area,
-      daily_fixed_cost: daily_fixed_cost
+    Domain::CultivationPlan::Interactors::ApiAddFieldInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiAddFieldPresenter.new(
+        view: self,
+        translation_scope: api_cultivation_plan_translation_scope
+      )
+    ).call(
+      host: self,
+      load_plan: -> { find_api_cultivation_plan },
+      field_name: params[:field_name],
+      field_area: params[:field_area],
+      daily_fixed_cost: params[:daily_fixed_cost]
     )
-
-    # total_areaを更新
-    @cultivation_plan.update!(total_area: @cultivation_plan.cultivation_plan_fields.sum(:area))
-
-    # ActionCable経由で圃場追加を通知
-    channel_class = @cultivation_plan.plan_type == "private" ? PlansOptimizationChannel : OptimizationChannel
-    channel_class.broadcast_to(
-      @cultivation_plan,
-      {
-        type: "field_added",
-        field: {
-          id: plan_field.id,
-          field_id: plan_field.id,
-          name: plan_field.name,
-          area: plan_field.area
-        },
-        total_area: @cultivation_plan.total_area
-      }
-    )
-
-    render json: {
-      success: true,
-      message: i18n_t("messages.field_added"),
-      field: {
-        id: plan_field.id,
-        field_id: plan_field.id,
-        name: plan_field.name,
-        area: plan_field.area
-      },
-      total_area: @cultivation_plan.total_area
-    }
-  rescue ActiveRecord::RecordInvalid => e
-    render json: {
-      success: false,
-      message: i18n_t("errors.field_add_failed", message: e.message)
-    }, status: :unprocessable_entity
-  rescue => e
-    Rails.logger.error "❌ [Add Field] Error: #{e.message}"
-    render json: { success: false, message: e.message }, status: :internal_server_error
   end
 
   # DELETE /api/v1/{plans|public_plans}/cultivation_plans/:id/remove_field/:field_id
   # 圃場を削除
   def remove_field
-    @cultivation_plan = find_api_cultivation_plan
-
-    # field_idを整数に変換
-    field_id = params[:field_id].to_i
-
-    plan_field = @cultivation_plan.cultivation_plan_fields.find_by(id: field_id)
-
-    unless plan_field
-      return render json: {
-        success: false,
-        message: i18n_t("errors.field_not_found")
-      }, status: :not_found
-    end
-
-    # 圃場に栽培がある場合は削除できない
-    if plan_field.field_cultivations.any?
-      return render json: {
-        success: false,
-        message: i18n_t("errors.cannot_remove_field_with_cultivations")
-      }, status: :unprocessable_entity
-    end
-
-    # 最後の圃場は削除できない
-    if @cultivation_plan.cultivation_plan_fields.count <= 1
-      return render json: {
-        success: false,
-        message: i18n_t("errors.cannot_remove_last_field")
-      }, status: :unprocessable_entity
-    end
-
-    # 圃場を削除
-    plan_field.destroy!
-
-    # total_areaを更新
-    @cultivation_plan.update!(total_area: @cultivation_plan.cultivation_plan_fields.sum(:area))
-
-    # ActionCable経由で圃場削除を通知
-    channel_class = @cultivation_plan.plan_type == "private" ? PlansOptimizationChannel : OptimizationChannel
-    channel_class.broadcast_to(
-      @cultivation_plan,
-      {
-        type: "field_removed",
-        field_id: field_id,
-        total_area: @cultivation_plan.total_area
-      }
+    Domain::CultivationPlan::Interactors::ApiRemoveFieldInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiRemoveFieldPresenter.new(
+        view: self,
+        translation_scope: api_cultivation_plan_translation_scope
+      )
+    ).call(
+      host: self,
+      load_plan: -> { find_api_cultivation_plan },
+      field_id_param: params[:field_id]
     )
-
-    render json: {
-      success: true,
-      message: i18n_t("messages.field_removed"),
-      field_id: field_id,
-      total_area: @cultivation_plan.total_area
-    }
-  rescue ActiveRecord::RecordNotFound
-    render json: { success: false, message: i18n_t("errors.field_not_found") }, status: :not_found
-  rescue => e
-    Rails.logger.error "❌ [Remove Field] Error: #{e.message}"
-    render json: { success: false, message: e.message }, status: :internal_server_error
   end
 
   # GET /api/v1/{plans|public_plans}/cultivation_plans/:id/data
   # 栽培計画データを取得
   def data
-    @cultivation_plan = find_api_cultivation_plan
-
-    # 計画データを構築
-    # 計画データを構築
-    fields_data = @cultivation_plan.cultivation_plan_fields.map do |field|
-      {
-        id: field.id,
-        field_id: field.id,
-        name: field.display_name,
-        area: field.area,
-        daily_fixed_cost: field.daily_fixed_cost
-      }
-    end
-
-    crops_data = @cultivation_plan.cultivation_plan_crops.map do |crop|
-      {
-        id: crop.id,
-        name: crop.display_name,
-        area_per_unit: crop.area_per_unit,
-        revenue_per_area: crop.revenue_per_area
-      }
-    end
-
-    available_crops_data = get_available_crops.map do |crop|
-      {
-        id: crop.id,
-        name: crop.name,
-        variety: crop.variety,
-        area_per_unit: crop.area_per_unit
-      }
-    end
-
-    cultivations_data = @cultivation_plan.field_cultivations.map do |fc|
-      {
-        id: fc.id,
-        field_id: fc.cultivation_plan_field_id,
-        field_name: fc.field_display_name,
-        crop_id: fc.cultivation_plan_crop_id,
-        crop_name: fc.crop_display_name,
-        area: fc.area,
-        start_date: fc.start_date,
-        completion_date: fc.completion_date,
-        cultivation_days: fc.cultivation_days,
-        estimated_cost: fc.estimated_cost,
-        revenue: fc.optimization_result&.dig("revenue") || 0.0,
-        profit: fc.optimization_result&.dig("profit") || 0.0,
-        status: fc.status
-      }
-    end
-
-    render json: {
-      success: true,
-      data: {
-        id: @cultivation_plan.id,
-        plan_year: @cultivation_plan.plan_year,
-        plan_name: @cultivation_plan.plan_name,
-        plan_type: @cultivation_plan.plan_type,
-        status: @cultivation_plan.status,
-        total_area: @cultivation_plan.total_area,
-        planning_start_date: @cultivation_plan.calculated_planning_start_date,
-        planning_end_date: @cultivation_plan.prediction_target_end_date,
-        fields: fields_data,
-        crops: crops_data,
-        available_crops: available_crops_data,
-        cultivations: cultivations_data
-      },
-      total_profit: @cultivation_plan.total_profit,
-      total_revenue: @cultivation_plan.total_revenue,
-      total_cost: @cultivation_plan.total_cost
-    }
-  rescue ActiveRecord::RecordNotFound
-    render json: { success: false, message: i18n_t("errors.not_found") }, status: :not_found
-  rescue => e
-    Rails.logger.error "❌ [Data] Error: #{e.message}"
-    render json: { success: false, message: e.message }, status: :internal_server_error
+    Domain::CultivationPlan::Interactors::ApiPlanDataInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
+        view: self,
+        translation_scope: api_cultivation_plan_translation_scope
+      )
+    ).call(
+      host: self,
+      load_plan: -> { find_api_cultivation_plan }
+    )
   end
 
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/adjust
@@ -268,91 +98,33 @@ module CultivationPlanApi
   # このメソッドはDBに保存された天気データを再利用し、
   # 不要な天気予測を実行しないことで高速化されています
   def adjust
-    @cultivation_plan = find_api_cultivation_plan
-
-    # 作物に成長段階があるかを事前チェック
-    return unless validate_crops_have_growth_stages(@cultivation_plan)
-
-    # 移動指示を受け取る
-    moves_raw = params[:moves] || []
-
-    Rails.logger.info "📥 [Adjust] Received moves: #{moves_raw.inspect}"
-    Rails.logger.info "📥 [Adjust] Moves class: #{moves_raw.class}"
-
-    # movesを適切な形式に変換
-    moves = if moves_raw.is_a?(Array)
-      moves_raw.map do |move|
-        case move
-        when ActionController::Parameters
-          # permit!を使って全てのパラメータを許可してからハッシュに変換
-          move.permit!.to_h.symbolize_keys
-        when Hash
-          move.symbolize_keys
-        when String
-          # JSONパース試行
-          begin
-            JSON.parse(move).symbolize_keys
-          rescue JSON::ParserError
-            Rails.logger.error "❌ [Adjust] Failed to parse move: #{move}"
-            nil
-          end
-        else
-          nil
-        end
-      end.compact
-    else
-      []
-    end
-
-    # 型変換を追加（AGRRとの互換性のため）
-    moves = moves.map do |move|
-      # allocation_idを数値に変換
-      if move[:allocation_id].present?
-        move[:allocation_id] = move[:allocation_id].to_i
-      end
-
-      # to_field_idを文字列に変換（Python optimizer expects strings）
-      if move[:to_field_id].present?
-        move[:to_field_id] = move[:to_field_id].to_s
-      end
-
-      move
-    end
-
-    Rails.logger.info "🔧 [Adjust] Processed moves with type conversion: #{moves.inspect}"
-
-    # DBに保存された天気データを使って調整を実行
-    result = adjust_with_db_weather(@cultivation_plan, moves)
-
-    render json: result, status: result[:status] || :ok
-  rescue => e
-    Rails.logger.error "❌ [Adjust] Error: #{e.message}"
-    render json: { success: false, message: e.message }, status: :internal_server_error
+    Domain::CultivationPlan::Interactors::ApiPlanAdjustInteractor.new(
+      output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self)
+    ).call(
+      host: self,
+      load_plan: -> { find_api_cultivation_plan },
+      moves_raw: params[:moves] || []
+    )
   end
 
   private
 
   # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
-  def api_add_crop_translation_scope
+  def api_cultivation_plan_translation_scope
     self.class.name.include?("::PublicPlans::") ? "public_plans" : "plans"
   end
 
-  # 栽培計画の作物に成長段階があるかをバリデーション
-  def validate_crops_have_growth_stages(cultivation_plan)
+  # @return [nil, Hash] 問題なければ nil。成長段階不足時は Interactor / Flow 用ハッシュ
+  def validate_crops_have_growth_stages_result(cultivation_plan)
     cultivation_plan.cultivation_plan_crops.each do |plan_crop|
       crop = plan_crop.crop
-      # ログを追加してテスト時に crop の状態を可視化する
       Rails.logger.info "🔍 [Validate Growth Stages] plan_crop_id=#{plan_crop.id} crop_id=#{crop&.id} crop_stages_loaded=#{crop&.association(:crop_stages)&.loaded? rescue 'n/a'}"
       Rails.logger.info "🔍 [Validate Growth Stages] crop_stages_count=#{crop&.crop_stages&.size rescue 'n/a'}"
       if crop.crop_stages.empty?
-        render json: {
-          success: false,
-          message: I18n.t("api.errors.cultivation_plan.crop_missing_growth_stages", crop_name: crop.name)
-        }, status: :bad_request
-        return false
+        return { kind: :crop_missing_growth_stages, crop_name: crop.name }
       end
     end
-    true
+    nil
   end
 
   # I18n翻訳のヘルパーメソッド

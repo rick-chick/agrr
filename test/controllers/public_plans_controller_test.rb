@@ -394,9 +394,11 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # APIリクエスト（Interactor をモックしてコントローラ挙動のみ検証）
     cookies[:session_id] = session.session_id
-    ok = Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
-    ok.success = true
-    Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| ok }) do
+    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.stub(:new, proc { |**kwargs|
+      Object.new.tap do |o|
+        o.define_singleton_method(:call) { |**_| kwargs[:output_port].on_success }
+      end
+    }) do
       post "/api/v1/public_plans/save_plan",
            params: { plan_id: public_plan.id },
            as: :json
@@ -521,10 +523,16 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
     # APIリクエスト（Interactor をモックして保存失敗をシミュレート）
     cookies[:session_id] = session.session_id
-    bad = Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
-    bad.success = false
-    bad.error_message = "作成できるFarmは4件までです"
-    Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.stub(:save_from_public_plan_session, proc { |**_kw| bad }) do
+    fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailureDto
+    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.stub(:new, proc { |**kwargs|
+      Object.new.tap do |o|
+        o.define_singleton_method(:call) do |**_|
+          kwargs[:output_port].on_failure(
+            fdto.new(kind: fdto::KIND_SAVE_FAILED, message: "作成できるFarmは4件までです")
+          )
+        end
+      end
+    }) do
       post "/api/v1/public_plans/save_plan",
            params: { plan_id: public_plan.id },
            as: :json
