@@ -22,6 +22,17 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     @weather_location = create(:weather_location)
     @user = create(:user)
     @farm = create(:farm, user: @user, weather_location: @weather_location)
+
+    tr = Adapters::Translators::RailsTranslator.new
+    deletion_undo = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(translator: tr)
+    @farm_gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
+      deletion_undo_gateway: deletion_undo,
+      translator: tr
+    )
+    @weather_data_gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+    @prediction_gateway = Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
+    @weather_prediction_logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
   end
 
   def weather_location_dto(loc = @weather_location)
@@ -58,11 +69,11 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     error = assert_raises(ArgumentError) do
       Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
         weather_location: weather_location_dto,
-        cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-        farm_gateway: CompositionRoot.farm_gateway,
-        weather_data_gateway: CompositionRoot.weather_data_gateway,
-        prediction_gateway: CompositionRoot.prediction_gateway,
-        logger: CompositionRoot.logger,
+        cultivation_plan_gateway: @cultivation_plan_gateway,
+        farm_gateway: @farm_gateway,
+        weather_data_gateway: @weather_data_gateway,
+        prediction_gateway: @prediction_gateway,
+        logger: @weather_prediction_logger,
         clock: bad_clock,
         anchors_resolver: @anchors_resolver
       )
@@ -74,11 +85,11 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     error = assert_raises(ArgumentError) do
       Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
         weather_location: weather_location_dto,
-        cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-        farm_gateway: CompositionRoot.farm_gateway,
-        weather_data_gateway: CompositionRoot.weather_data_gateway,
-        prediction_gateway: CompositionRoot.prediction_gateway,
-        logger: CompositionRoot.logger,
+        cultivation_plan_gateway: @cultivation_plan_gateway,
+        farm_gateway: @farm_gateway,
+        weather_data_gateway: @weather_data_gateway,
+        prediction_gateway: @prediction_gateway,
+        logger: @weather_prediction_logger,
         clock: @weather_prediction_clock,
         anchors_resolver: Object.new
       )
@@ -88,7 +99,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
 
   test "initialize requires weather_location" do
     error = assert_raises(ArgumentError) do
-      Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: nil, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
+      Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: nil, cultivation_plan_gateway: @cultivation_plan_gateway, farm_gateway: @farm_gateway, weather_data_gateway: @weather_data_gateway, prediction_gateway: @prediction_gateway, logger: @weather_prediction_logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
     end
     assert_includes error.message, "weather_location"
   end
@@ -108,7 +119,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     @weather_location.update!(predicted_weather_data: prediction_payload)
     @weather_location.reload
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, cultivation_plan_gateway: @cultivation_plan_gateway, farm_gateway: @farm_gateway, weather_data_gateway: @weather_data_gateway, prediction_gateway: @prediction_gateway, logger: @weather_prediction_logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
     result = service.get_existing_prediction(target_end_date: Date.new(2025, 1, 1))
 
     assert_not_nil result
@@ -144,7 +155,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
       prediction_days: 365
     }
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: @cultivation_plan_gateway, farm_gateway: @farm_gateway, weather_data_gateway: @weather_data_gateway, prediction_gateway: @prediction_gateway, logger: @weather_prediction_logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
 
     service.stub(:prepare_weather_data, fake_weather_info) do
       service.predict_for_cultivation_plan(plan_weather: plan_weather_dto(cultivation_plan))
@@ -180,7 +191,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     current_year_data = @weather_location.weather_data.where(date: current_year_start..current_year_end)
     assert_empty current_year_data, "Current year data should be empty for this test"
 
-    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, farm_gateway: CompositionRoot.farm_gateway, weather_data_gateway: CompositionRoot.weather_data_gateway, prediction_gateway: CompositionRoot.prediction_gateway, logger: CompositionRoot.logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
+    service = Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(weather_location: weather_location_dto, farm: farm_prediction_dto, cultivation_plan_gateway: @cultivation_plan_gateway, farm_gateway: @farm_gateway, weather_data_gateway: @weather_data_gateway, prediction_gateway: @prediction_gateway, logger: @weather_prediction_logger, clock: @weather_prediction_clock, anchors_resolver: @anchors_resolver)
 
     fake_training_data = (1..100).map { |i| build_stubbed(:weather_datum, weather_location: @weather_location, date: Date.current - 100 + i.days, temperature_max: 20.0) }
     fake_training_result = { data: fake_training_data, end_date: fake_training_data.last.date }

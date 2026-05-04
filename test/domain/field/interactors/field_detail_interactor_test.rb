@@ -29,7 +29,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: CompositionRoot.logger,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
       translator: :tr
     )
     interactor.call(5)
@@ -50,7 +50,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
-      logger: CompositionRoot.logger,
+      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
       translator: :tr
     )
     interactor.call(5)
