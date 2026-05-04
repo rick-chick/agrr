@@ -9,22 +9,28 @@ module Presenters
         end
 
         def on_success(destroy_output_dto)
-          # 成功データをコントローラーに渡す
-          @view.instance_variable_set("@farm_delete_data", destroy_output_dto)
+          undo_data = destroy_output_dto.undo
+          undo_json = if undo_data
+                        {
+                          undo_token: undo_data.undo_token,
+                          undo_path: @view.undo_deletion_path(undo_token: undo_data.undo_token),
+                          toast_message: @view.translator.t("flash.farms.deleted", name: destroy_output_dto.farm_name),
+                          undo_deadline: undo_data.expires_at.iso8601,
+                          auto_hide_after: 5000
+                        }
+          else
+                        nil
+          end
+          @view.render_response(json: { undo: undo_json }, status: :ok)
         end
 
         def on_failure(error_dto)
-          # エラーデータをコントローラーに渡す
-          @view.instance_variable_set("@farm_delete_error", error_dto)
-        end
-
-        private
-
-        def resource_dom_id_for(event)
-          stored = event.metadata["resource_dom_id"]
-          return stored if stored.present?
-
-          [ event.resource_type.demodulize.underscore, event.resource_id ].join("_")
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
+          else
+            msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+            @view.render_response(json: { error: msg }, status: :unprocessable_entity)
+          end
         end
       end
     end

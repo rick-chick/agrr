@@ -14,6 +14,10 @@ module Views
         def undo_deletion_path(undo_token:)
           raise NotImplementedError, "#{self.class}#undo_deletion_path"
         end
+
+        def translator
+          raise NotImplementedError, "#{self.class}#translator"
+        end
       end
     end
   end

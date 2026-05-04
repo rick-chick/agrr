@@ -60,38 +60,13 @@ module Api
 
         # DELETE /api/v1/masters/farms/:id
         def destroy
+          input_valid?(:destroy) || return
+
           presenter = Presenters::Api::Farm::FarmDeletePresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
-
-          # Presenter の結果をチェック
-          if instance_variable_defined?(:@farm_delete_data) && @farm_delete_data
-            # 成功時: undo 情報を含む JSON を生成してレスポンス
-            undo_data = @farm_delete_data.undo
-            undo_json = if undo_data
-                          {
-                            undo_token: undo_data.undo_token,
-                            undo_path: undo_deletion_path(undo_token: undo_data.undo_token),
-                            toast_message: @translator.t("flash.farms.deleted", name: @farm_delete_data.farm_name),
-                            undo_deadline: undo_data.expires_at.iso8601,
-                            auto_hide_after: 5000
-                          }
-            else
-                          nil
-            end
-            Rails.logger.info("FarmController destroy response: #{ { undo: undo_json }.inspect }")
-            render_response(json: { undo: undo_json }, status: :ok)
-          elsif instance_variable_defined?(:@farm_delete_error) && @farm_delete_error
-            err = @farm_delete_error
-            if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
-              render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
-            else
-              msg = err.respond_to?(:message) ? err.message : err.to_s
-              render_response(json: { error: msg }, status: :unprocessable_entity)
-            end
-          end
         end
 
         # View の実装: render は controller.render への委譲のみ
@@ -104,15 +79,11 @@ module Api
           Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
 
-        private
-
-
-        def resource_dom_id_for(event)
-          stored = event.metadata["resource_dom_id"]
-          return stored if stored.present?
-
-          [ event.resource_type.demodulize.underscore, event.resource_id ].join("_")
+        def translator
+          @translator ||= Adapters::Translators::RailsTranslator.new
         end
+
+        private
 
         def entity_to_json(entity)
           {
@@ -156,10 +127,6 @@ module Api
         def valid_farm_params?(input_dto)
           input_dto.name.present? && input_dto.region.present? &&
             !input_dto.latitude.nil? && !input_dto.longitude.nil?
-        end
-
-        def translator
-          @translator ||= Adapters::Translators::RailsTranslator.new
         end
       end
     end
