@@ -72,5 +72,19 @@ module Crops
 
       # mocha verifies
     end
+
+    test "returns not_found when blueprint destroy raises RecordNotFound" do
+      blueprint = mock("blueprint")
+      crop = mock("crop")
+
+      blueprint.expects(:destroy!).raises(ActiveRecord::RecordNotFound)
+
+      service = Crops::TaskScheduleBlueprintDeletionService.new(crop: crop, blueprint: blueprint)
+      result = service.call
+
+      assert_equal true, result[:not_found]
+      assert_equal false, result[:blueprint_deleted]
+      assert_equal false, result[:template_deleted]
+    end
   end
 end

@@ -119,9 +119,17 @@ module Api
           end
 
           def set_crop_stage
-            @crop_stage = @crop.crop_stages.find(params[:id])
-          rescue ActiveRecord::RecordNotFound
-            render json: { error: "CropStage not found" }, status: :not_found
+            failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+            interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
+              failure_presenter: failure,
+              user_id: current_user.id,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            bundle = interactor.call(params[:crop_id], params[:id])
+            return if bundle.nil?
+
+            @crop_stage = bundle.persisted_crop_stage
           end
 
           def crop_stage_params

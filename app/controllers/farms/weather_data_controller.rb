@@ -228,16 +228,19 @@ module Farms
     end
 
     def set_farm
-      if admin_user?
-        @farm = Farm.find(params[:farm_id])
-      else
-        @farm = current_user.farms.find(params[:farm_id])
+      farm_id = params[:farm_id]
+      @farm = if admin_user?
+                Farm.find_by(id: farm_id)
+              else
+                current_user.farms.find_by(id: farm_id)
+              end
+      unless @farm
+        render json: {
+          success: false,
+          message: t("farms.weather_data.farm_not_found")
+        }, status: :not_found
+        return
       end
-    rescue ActiveRecord::RecordNotFound
-      render json: {
-        success: false,
-        message: t("farms.weather_data.farm_not_found")
-      }, status: :not_found
     end
   end
 end

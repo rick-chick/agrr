@@ -149,9 +149,20 @@ module Api
           end
 
           def set_template
-            @template = @crop.crop_task_templates.find(params[:id])
-          rescue ActiveRecord::RecordNotFound
-            render json: { error: "AgriculturalTask association not found" }, status: :not_found
+            failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(
+              view: self,
+              error_message: "AgriculturalTask association not found"
+            )
+            interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropTaskTemplateInteractor.new(
+              failure_presenter: failure,
+              user_id: current_user.id,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            bundle = interactor.call(params[:crop_id], params[:id])
+            return if bundle.nil?
+
+            @template = bundle.persisted_crop_task_template
           end
 
           def template_params

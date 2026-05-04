@@ -78,9 +78,32 @@ module Crops
     private
 
     def set_crop
-      @crop = Crop.find(params[:crop_id])
+      failure = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
+        failure_presenter: failure,
+        user_id: current_user.id,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      bundle = interactor.call(params[:crop_id], for_edit: false)
+      return if bundle.nil?
+
+      @crop = bundle.persisted_crop
+    end
+
     def set_template
-      @template = @crop.crop_task_templates.find(params[:id])
+      failure = Presenters::Html::Crop::CropTaskTemplateLoadFailureRedirectPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropTaskTemplateInteractor.new(
+        failure_presenter: failure,
+        user_id: current_user.id,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup,
+        for_edit: true
+      )
+      bundle = interactor.call(@crop.id, params[:id])
+      return if bundle.nil?
+
+      @template = bundle.persisted_crop_task_template
     end
 
     def template_params
@@ -92,15 +115,6 @@ module Crops
         :skill_level,
         required_tools: []
       )
-    end
-
-      # 作物へのアクセス権限チェック
-      # 管理者も参照作物と自身が作成した作物のみアクセス可能
-      unless @crop.is_reference || @crop.user_id == current_user.id || admin_user?
-        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
-      end
-    rescue ActiveRecord::RecordNotFound
-      redirect_to crops_path, alert: I18n.t("crops.flash.not_found")
     end
 
     def can_access_agricultural_task?(task)

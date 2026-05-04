@@ -99,6 +99,69 @@ module Adapters
           )
         end
 
+        def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id)
+          stage = crop.crop_stages.find(crop_stage_id)
+          Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
+            persisted_crop: crop,
+            persisted_crop_stage: stage
+          )
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
+        end
+
+        def find_masters_crop_task_template_in_crop_for_user!(user, crop_id, template_id)
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id)
+          tpl = crop.crop_task_templates.find(template_id)
+          Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
+            persisted_crop: crop,
+            persisted_crop_task_template: tpl
+          )
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
+        end
+
+        def find_authorized_crop_stage_in_crop!(user, crop_id, crop_stage_id, for_edit:)
+          crop = if for_edit
+                   find_authorized_model_for_edit(user, crop_id)
+                 else
+                   find_authorized_model_for_view(user, crop_id)
+                 end
+          stage = crop.crop_stages.find(crop_stage_id)
+          Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
+            persisted_crop: crop,
+            persisted_crop_stage: stage
+          )
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
+        end
+
+        def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
+          crop = find_authorized_model_for_view(user, crop_id)
+          bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
+          Domain::Crop::Dtos::AuthorizedCropTaskScheduleBlueprintInCropContextDto.new(
+            persisted_crop: crop,
+            persisted_blueprint: bp
+          )
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound
+        end
+
+        def find_authorized_crop_task_template_in_crop!(user, crop_id, template_id, for_edit:)
+          crop = if for_edit
+                   find_authorized_model_for_edit(user, crop_id)
+                 else
+                   find_authorized_model_for_view(user, crop_id)
+                 end
+          tpl = crop.crop_task_templates.find(template_id)
+          Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
+            persisted_crop: crop,
+            persisted_crop_task_template: tpl
+          )
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound
+        end
+
         def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
           find_authorized_crop_loaded_bundle!(user, id, for_edit: for_edit).crop_entity
         end

@@ -40,9 +40,11 @@ module Api
       private
 
       def set_file
-        @file = ActiveStorage::Blob.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: I18n.t("api.errors.common.files.not_found") }, status: :not_found
+        @file = ActiveStorage::Blob.find_by(id: params[:id])
+        unless @file
+          render json: { error: I18n.t("api.errors.common.files.not_found") }, status: :not_found
+          return
+        end
       end
 
       def file_attributes(blob)

@@ -86,8 +86,7 @@ class AgriculturalTasksController < ApplicationController
     @agricultural_task.reload
     begin
       update_crop_task_templates(selected_crop_ids)
-    rescue ActiveRecord::RecordNotFound,
-           ActiveRecord::RecordInvalid,
+    rescue ActiveRecord::RecordInvalid,
            ActiveRecord::RecordNotDestroyed,
            ActiveRecord::RecordNotSaved,
            ActiveRecord::StatementInvalid => e
@@ -306,7 +305,9 @@ class AgriculturalTasksController < ApplicationController
     # 追加する作物（allowed_crop_idsにあって、current_template_crop_idsにない）
     crops_to_add = allowed_crop_ids - current_template_crop_ids
     crops_to_add.each do |crop_id|
-      crop = Crop.find(crop_id)
+      crop = Crop.find_by(id: crop_id)
+      next unless crop
+
       # 既存のテンプレートがない場合のみ作成
       unless CropTaskTemplate.exists?(crop: crop, agricultural_task: @agricultural_task)
         crop.crop_task_templates.create!(
@@ -324,7 +325,9 @@ class AgriculturalTasksController < ApplicationController
     # 削除する作物（current_template_crop_idsにあって、allowed_crop_idsにない）
     crops_to_remove = current_template_crop_ids - allowed_crop_ids
     crops_to_remove.each do |crop_id|
-      crop = Crop.find(crop_id)
+      crop = Crop.find_by(id: crop_id)
+      next unless crop
+
       template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
       template&.destroy
     end

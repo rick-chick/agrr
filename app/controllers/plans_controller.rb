@@ -71,6 +71,9 @@ class PlansController < ApplicationController
     return unless validate_session_data
 
     farm = find_farm_from_session
+    unless farm
+      redirect_to new_plan_path, alert: I18n.t("plans.errors.restart") and return
+    end
     crops = find_selected_crops
 
     if crops.empty?
@@ -102,8 +105,6 @@ class PlansController < ApplicationController
 
     result = create_cultivation_plan_with_jobs(farm, crops)
     redirect_to_optimizing(result.cultivation_plan.id)
-  rescue ActiveRecord::RecordNotFound
-    redirect_to new_plan_path, alert: I18n.t("plans.errors.restart")
   end
 
   # 計画の最適化を実行
@@ -400,10 +401,15 @@ class PlansController < ApplicationController
 
     unless farm_id
       Rails.logger.warn "⚠️ [PlansController#create] No farm_id in session data"
-      raise ActiveRecord::RecordNotFound, "Farm ID not found in session"
+      return nil
     end
 
-    farm = current_user.farms.find(farm_id)
+    farm = current_user.farms.find_by(id: farm_id)
+    unless farm
+      Rails.logger.warn "⚠️ [PlansController#create] Farm not found for user"
+      return nil
+    end
+
     Rails.logger.info "✅ [PlansController#create] Found farm: #{farm.name} (#{farm.id})"
     farm
   end

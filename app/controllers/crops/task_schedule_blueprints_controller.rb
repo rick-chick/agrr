@@ -61,6 +61,15 @@ module Crops
       # Delegate deletion logic to a service to make the controller lightweight
       service = Crops::TaskScheduleBlueprintDeletionService.new(crop: @crop, blueprint: @blueprint)
       result = service.call
+      if result[:not_found]
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
+          format.json { render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found }
+          format.html { head :not_found }
+        end
+        return
+      end
+
       @blueprint_id = @blueprint.id
 
       Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deletion result: #{result.inspect}")
@@ -68,7 +77,7 @@ module Crops
       # @cropを再読み込みして、削除後の状態を反映
       @crop.reload
 
-      # 利用可能な作業テンプレート情報を取得
+      # 利用可能な農業タスクを取得
       @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
       @selected_task_ids = selected_task_ids_for_crop(@crop)
 
@@ -76,11 +85,6 @@ module Crops
         format.html { head :no_content }
         format.turbo_stream
         format.json { render json: { message: I18n.t("crops.flash.blueprint_deleted") } }
-      end
-    rescue ActiveRecord::RecordNotFound
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
-        format.json { render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found }
       end
     rescue ActiveRecord::StatementInvalid,
            ActiveRecord::ConnectionNotEstablished,
@@ -99,16 +103,34 @@ module Crops
     private
 
     def set_crop
-      @crop = Crop.find(params[:crop_id])
-      unless can_view_crop?
-        redirect_to crops_path, alert: I18n.t("crops.flash.no_permission")
-      end
+      failure = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
+        failure_presenter: failure,
+        user_id: current_user.id,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      bundle = interactor.call(params[:crop_id], for_edit: false)
+      return if bundle.nil?
+
+      @crop = bundle.persisted_crop
     end
 
     def set_blueprint
-      @blueprint = @crop.crop_task_schedule_blueprints.find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found
+      failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(
+        view: self,
+        error_message: I18n.t("crops.flash.blueprint_not_found")
+      )
+      interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropTaskScheduleBlueprintInteractor.new(
+        failure_presenter: failure,
+        user_id: current_user.id,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      bundle = interactor.call(@crop.id, params[:id])
+      return if bundle.nil?
+
+      @blueprint = bundle.persisted_blueprint
     end
 
     def can_edit_crop?
