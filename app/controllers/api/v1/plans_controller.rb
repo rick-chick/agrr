@@ -19,7 +19,15 @@ module Api
 
       def create
         farm = find_farm
+        unless farm
+          return render json: { error: I18n.t("plans.errors.not_found") }, status: :not_found
+        end
+
         crops = find_crops
+        if instance_variable_defined?(:@selected_crops_error) && @selected_crops_error
+          return render json: { error: I18n.t("plans.errors.not_found") }, status: :not_found
+        end
+
         plan_name = create_params[:plan_name]
 
         # 作物未選択のチェック
@@ -36,9 +44,6 @@ module Api
         # 計画作成とジョブ実行
         result = create_cultivation_plan_with_jobs(farm, crops, plan_name)
         render json: { id: result.cultivation_plan.id }, status: :created
-      rescue ActiveRecord::RecordNotFound => e
-        Rails.logger.warn "⚠️ [Api::V1::PlansController#create] Record not found: #{e.message}"
-        render json: { error: I18n.t("plans.errors.not_found") }, status: :not_found
       rescue StandardError => e
         Rails.logger.error "❌ [Api::V1::PlansController#create] Unexpected error: #{e.message}"
         render json: { error: "Internal server error" }, status: :internal_server_error
@@ -78,7 +83,7 @@ module Api
 
       def find_farm
         farm_id = create_params[:farm_id]
-        current_user.farms.find(farm_id)
+        current_user.farms.find_by(id: farm_id)
       end
 
       def find_crops

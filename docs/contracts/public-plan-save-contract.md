@@ -36,14 +36,14 @@
 
 ## 4. 既存サーバー側との関係
 
-- `Domain::CultivationPlan::Interactors::PlanSaveSession`（`lib/domain/cultivation_plan/interactors/plan_save_session.rb`）がオーケストレータ。マスタコピーは `lib/domain/cultivation_plan/mappers/*`、計画コピー・タスクスケジュール複製は `lib/adapters/cultivation_plan/plan_copy_gateway.rb`、ブループリント複製は `lib/adapters/cultivation_plan/crop_task_schedule_blueprint_gateway.rb`、日付計算は `lib/domain/cultivation_plan/calculators/planning_date_calculator.rb`。
-- 上記を `CultivationPlanCreateInteractor.save_from_public_plan_session` 経由で利用する。
-- 既存の HTML 用 `save_plan` / `process_saved_plan`（PublicPlansController）はそのまま維持する。Rails に `post 'public_plans/save_plan'` と `get 'public_plans/process_saved_plan'` のルートが未定義の場合は追加する（ERB フォーム・OAuth コールバック用）。
+- `Domain::CultivationPlan::Interactors::PlanSaveSession`（アダプタ `lib/adapters/cultivation_plan/sessions/plan_save_session.rb`）がオーケストレータ。マスタコピーは `lib/domain/cultivation_plan/mappers/*`、計画コピー・タスクスケジュール複製は `lib/adapters/cultivation_plan/plan_copy_gateway.rb`、ブループリント複製は `lib/adapters/cultivation_plan/crop_task_schedule_blueprint_gateway.rb`、日付計算は `lib/domain/cultivation_plan/calculators/planning_date_calculator.rb`。
+- 保存のユースケース境界は **`Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor`**（`output_port` + `PublicPlanSaveGateway#save_from_session`）。成功・失敗（想定／想定外）は **出力ポート経由**で HTML / API Presenter が HTTP 応答を決める（コントローラの `rescue` で結果を組み立てない）。
+- [docs/contracts/public-plan-save-contract.md](docs/contracts/public-plan-save-contract.md) の API 失敗時は **`{ "success": false, "error": string }`**。400（`plan_id` 欠落）、404（計画なし）、422（保存処理の業務失敗）、500（想定外）を Presenter が付与する。
 
 ## 5. 実装チェックリスト
 
 - [x] Rails: `config/routes.rb` に `post 'public_plans/save_plan'` と `get 'public_plans/process_saved_plan'` を追加（HTML 用）
-- [x] Rails: `POST /api/v1/public_plans/save_plan` を追加（JSON、認証必須）。`CultivationPlanCreateInteractor.save_from_public_plan_session`（内部で `PlanSaveSession`）を呼び出し、JSON で success/error を返す（`Api::V1::PublicPlansController#save_plan`）
+- [x] Rails: `POST /api/v1/public_plans/save_plan` を追加（JSON、認証必須）。`PublicPlanSaveFromSessionInteractor` + `PublicPlanSaveFromSessionApiPresenter` で JSON を返す（`Api::V1::PublicPlansController#save_plan`）
 - [x] Angular: SavePublicPlanUseCase で上記 API を呼ぶ
 - [x] Angular: PublicPlanApiGateway に `savePlan(planId: number)` を追加
 - [x] Angular: 結果画面の `savePlan()` で、ログイン済みなら API 呼び出し→成功時は `/plans` へ遷移＋メッセージ、失敗時はエラー表示

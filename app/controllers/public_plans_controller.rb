@@ -47,13 +47,16 @@ class PublicPlansController < ApplicationController
 
   # Step 2: 農場サイズ選択
   def select_farm_size
-    @farm = Farm.find(params[:farm_id])
+    @farm = Farm.find_by(id: params[:farm_id])
+    unless @farm
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.select_region")
+      return
+    end
+
     @farm_sizes = farm_sizes_with_i18n
 
     session[:public_plan] = { farm_id: @farm.id }
     Rails.logger.debug "✅ [PublicPlans] セッション保存: #{session[:public_plan].inspect}"
-  rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: I18n.t("public_plans.errors.select_region")
   end
 
   # Step 3: 作物選択
@@ -66,7 +69,11 @@ class PublicPlansController < ApplicationController
       redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
     end
 
-    @farm = Farm.find(session_data[:farm_id])
+    @farm = Farm.find_by(id: session_data[:farm_id])
+    unless @farm
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
+    end
+
     @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == params[:farm_size_id] }
 
     unless @farm_size
@@ -81,8 +88,6 @@ class PublicPlansController < ApplicationController
       farm_size_id: @farm_size[:id]
     )
     Rails.logger.debug "✅ [PublicPlans] セッション更新: #{session[:public_plan].inspect}"
-  rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart")
   end
 
   # Step 4: 作付け計画作成（計算開始）
@@ -91,8 +96,10 @@ class PublicPlansController < ApplicationController
       redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
     end
 
-    farm = Farm.find(session_data[:farm_id])
-    total_area = session_data[:total_area]
+    farm = Farm.find_by(id: session_data[:farm_id])
+    unless farm
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
+    end
 
     Rails.logger.debug "🔍 [PublicPlansController] crop_ids: #{crop_ids.inspect}"
     crops = Crop.where(id: crop_ids)
@@ -196,87 +203,84 @@ class PublicPlansController < ApplicationController
   def process_saved_plan
     return unless session[:public_plan_save_data]
 
-    begin
-      result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
-        user: current_user,
-        session_data: session[:public_plan_save_data],
-        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
-      )
-
-      if result.success
-        session.delete(:public_plan_save_data)
-        redirect_to plans_path, notice: I18n.t("public_plans.save.success")
-      else
-        redirect_to public_plans_results_path, alert: result.error_message || I18n.t("public_plans.save.error")
-      end
-    rescue => e
-      Rails.logger.error "❌ [process_saved_plan] Error: #{e.message}"
-      redirect_to public_plans_results_path, alert: I18n.t("public_plans.save.error")
-    end
+    run_public_plan_save_from_session_html(
+      user: current_user,
+      session_data: session[:public_plan_save_data],
+      clear_stashed_save_data_on_success: true
+    )
   end
 
   private
+
+  def run_public_plan_save_from_session_html(user:, session_data:, clear_stashed_save_data_on_success:)
+    presenter = Presenters::Html::PublicPlans::PublicPlanSaveFromSessionHtmlPresenter.new(
+      view: self,
+      clear_stashed_save_data_on_success: clear_stashed_save_data_on_success
+    )
+    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.new(
+      output_port: presenter,
+      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
+      logger: CompositionRoot.logger,
+      translator: CompositionRoot.translator
+    ).call(user: user, session_data: session_data)
+  end
+
+  def public_plan_save_session_data_for(cultivation_plan, farm_id:, crop_ids:)
+    field_data = cultivation_plan.cultivation_plan_fields.map do |field|
+      {
+        name: field.name,
+        area: field.area,
+        coordinates: [ 35.0, 139.0 ]
+      }
+    end
+
+    {
+      plan_id: cultivation_plan.id,
+      farm_id: farm_id,
+      crop_ids: crop_ids,
+      field_data: field_data
+    }
+  end
 
   # API用の保存処理
   def handle_api_save_plan
     Rails.logger.info "🔍 [handle_api_save_plan] Called"
 
-    # 認証チェック
     unless current_user
       Rails.logger.warn "❌ [handle_api_save_plan] User not authenticated"
       render json: { success: false, error: "Authentication required" }, status: :unauthorized
       return
     end
 
-    # JSON body から plan_id を取得
+    presenter = Presenters::Api::PublicPlan::PublicPlanSaveFromSessionApiPresenter.new(view: self)
+    fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailureDto
+
     plan_id = params[:plan_id]
     unless plan_id.present?
       Rails.logger.warn "❌ [handle_api_save_plan] plan_id is missing"
-      render json: { success: false, error: "plan_id is required" }, status: :bad_request
+      presenter.on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID))
       return
     end
 
-    begin
-      # CultivationPlan を取得
-      cultivation_plan = CultivationPlan.find(plan_id)
-
-      # セッションデータを構築（PlanSaveService用）
-      field_data = cultivation_plan.cultivation_plan_fields.map do |field|
-        {
-          name: field.name,
-          area: field.area,
-          coordinates: [ 35.0, 139.0 ] # デフォルト座標
-        }
-      end
-
-      save_data = {
-        plan_id: cultivation_plan.id,
-        farm_id: cultivation_plan.farm_id,
-        crop_ids: cultivation_plan.crops.pluck(:id),
-        field_data: field_data
-      }
-
-      result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
-        user: current_user,
-        session_data: save_data,
-        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
-      )
-
-      if result.success
-        Rails.logger.info "✅ [handle_api_save_plan] Plan saved successfully"
-        render json: { success: true }
-      else
-        Rails.logger.error "❌ [handle_api_save_plan] Save failed: #{result.error_message}"
-        render json: { success: false, error: result.error_message || "Save failed" }, status: :unprocessable_entity
-      end
-    rescue ActiveRecord::RecordNotFound
+    cultivation_plan = CultivationPlan.find_by(id: plan_id)
+    unless cultivation_plan
       Rails.logger.warn "❌ [handle_api_save_plan] Plan not found: #{plan_id}"
-      render json: { success: false, error: "Plan not found" }, status: :not_found
-    rescue => e
-      Rails.logger.error "❌ [handle_api_save_plan] Error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render json: { success: false, error: "Internal server error" }, status: :internal_server_error
+      presenter.on_failure(fdto.new(kind: fdto::KIND_PLAN_NOT_FOUND))
+      return
     end
+
+    save_data = public_plan_save_session_data_for(
+      cultivation_plan,
+      farm_id: cultivation_plan.farm_id,
+      crop_ids: cultivation_plan.crops.pluck(:id)
+    )
+
+    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.new(
+      output_port: presenter,
+      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
+      logger: CompositionRoot.logger,
+      translator: CompositionRoot.translator
+    ).call(user: current_user, session_data: save_data)
   end
 
   # localeから地域コードに変換（/ja → jp, /us → us, /in → in）
@@ -360,12 +364,16 @@ class PublicPlansController < ApplicationController
       return nil
     end
 
-    find_cultivation_plan_scope
+    plan = find_cultivation_plan_scope
       .includes(field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ], task_schedules: :task_schedule_items)
-      .find(plan_id)
-  rescue ActiveRecord::RecordNotFound
-    redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
-    nil
+      .find_by(id: plan_id)
+
+    unless plan
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
+      return nil
+    end
+
+    plan
   end
 
   def select_crop_redirect_path
@@ -413,42 +421,16 @@ class PublicPlansController < ApplicationController
   def save_plan_to_user_account
     Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
 
-    begin
+    save_data = public_plan_save_session_data_for(
+      @cultivation_plan,
+      farm_id: session_data[:farm_id],
+      crop_ids: session_data[:crop_ids]
+    )
 
-      # セッションデータを構築
-      # 圃場データを取得
-      field_data = @cultivation_plan.cultivation_plan_fields.map do |field|
-        {
-          name: field.name,
-          area: field.area,
-          coordinates: [ 35.0, 139.0 ] # デフォルト座標（実際の座標があれば使用）
-        }
-      end
-
-      save_data = {
-        plan_id: @cultivation_plan.id,
-        farm_id: session_data[:farm_id],
-        crop_ids: session_data[:crop_ids],
-        field_data: field_data
-      }
-
-      result = Domain::CultivationPlan::Interactors::CultivationPlanCreateInteractor.save_from_public_plan_session(
-        user: current_user,
-        session_data: save_data,
-        public_plan_save_gateway: CompositionRoot.public_plan_save_gateway
-      )
-
-      if result.success
-        Rails.logger.info "✅ [save_plan_to_user_account] Plan saved successfully"
-        redirect_to plans_path, notice: I18n.t("public_plans.save.success")
-      else
-        Rails.logger.error "❌ [save_plan_to_user_account] Save failed: #{result.error_message}"
-        redirect_to public_plans_results_path, alert: result.error_message || I18n.t("public_plans.save.error")
-      end
-    rescue => e
-      Rails.logger.error "❌ [save_plan_to_user_account] Error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      redirect_to public_plans_results_path, alert: I18n.t("public_plans.save.error")
-    end
+    run_public_plan_save_from_session_html(
+      user: current_user,
+      session_data: save_data,
+      clear_stashed_save_data_on_success: false
+    )
   end
 end

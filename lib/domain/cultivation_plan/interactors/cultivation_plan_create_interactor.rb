@@ -4,12 +4,6 @@ module Domain
   module CultivationPlan
     module Interactors
       class CultivationPlanCreateInteractor < Domain::CultivationPlan::Ports::CultivationPlanCreateInputPort
-        # 公開プラン保存フロー（セッションデータ → ユーザー農場・マスタ・私有計画）。
-        # AR を含む保存ロジックは Domain::CultivationPlan::Gateways::PublicPlanSaveGateway 経由。
-        def self.save_from_public_plan_session(user:, session_data:, public_plan_save_gateway:)
-          public_plan_save_gateway.save_from_session(user: user, session_data: session_data)
-        end
-
         def initialize(output_port:, gateway:, logger:)
           @output_port = output_port
           @gateway = gateway

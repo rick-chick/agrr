@@ -84,7 +84,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 - `**app/controllers/api/v1/`** — JSON API; wires params → DTOs → interactors + API presenters.
 - `**app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
 - `**app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
-- `**app/services/**` — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
+- `**app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
 - `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
 
 ### External agrr integration

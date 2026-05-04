@@ -23,15 +23,17 @@ module Api
 
         def crops
           Rails.logger.info "🌱 [WizardController#crops] Called with farm_id: #{params[:farm_id]}"
-          farm = Farm.find(params[:farm_id])
+          farm = Farm.find_by(id: params[:farm_id])
+          unless farm
+            Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]}"
+            return render json: { error: I18n.t("api.errors.common.farm_not_found"), error_key: "api.errors.common.farm_not_found" }, status: :not_found
+          end
+
           Rails.logger.info "🌱 [WizardController#crops] Found farm: #{farm.id}, region: #{farm.region}"
           presenter = Presenters::Api::PublicPlans::ReferenceCropsPresenter.new(view: self)
           Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: farm.region)
           Rails.logger.info "🌱 [WizardController#crops] Rendered reference crops"
-        rescue ActiveRecord::RecordNotFound => e
-          Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]} - #{e.message}"
-          render json: { error: I18n.t("api.errors.common.farm_not_found"), error_key: "api.errors.common.farm_not_found" }, status: :not_found
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error "❌ [WizardController#crops] Unexpected error: #{e.class} - #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
           render json: { error: I18n.t("api.errors.internal_server_error"), error_key: "api.errors.internal_server_error" }, status: :internal_server_error

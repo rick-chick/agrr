@@ -606,7 +606,7 @@ module AgrrOptimization
         Rails.logger.info "✅ [Adjust] Extended prediction data to cover until #{effective_planning_end}"
       end
 
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "❌ [Adjust] Failed to get weather data: #{e.message}"
       return {
         success: false,
