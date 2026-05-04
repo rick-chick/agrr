@@ -9,12 +9,10 @@ module Domain
           @workbook_payload_gateway = workbook_payload_gateway
         end
 
-        # @param available_crop_rows [Array<Hash>] コントローラで Materialize 済み（認可済み一覧）
-        def call(auth:, plan_id:, available_crop_rows:)
+        def call(auth:, plan_id:)
           result = @workbook_payload_gateway.build(
             auth: auth,
-            plan_id: plan_id,
-            available_crop_rows: available_crop_rows
+            plan_id: plan_id
           )
 
           case result[:kind]

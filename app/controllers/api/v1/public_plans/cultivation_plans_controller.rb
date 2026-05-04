@@ -18,6 +18,13 @@ module Api
 
         # Concernで実装すべきメソッド
 
+        def cultivation_plan_rest_plan_data_available_crop_rows_gateway
+          Adapters::CultivationPlan::Gateways::PlanDataAvailableCropRowsPublicActiveRecordGateway.new(
+            crop_gateway: CompositionRoot.crop_gateway,
+            logger: cultivation_plan_rest_logger
+          )
+        end
+
         def find_api_cultivation_plan
           ::CultivationPlan
             .plan_type_public
@@ -32,13 +39,6 @@ module Api
           ::Crop.find(crop_id)
         end
 
-        def get_available_crops
-          region = @cultivation_plan.farm&.region
-          presenter = Presenters::Api::PublicPlans::AvailableCropsPresenter.new(view: self)
-          Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: region)
-
-          @available_crops || []
-        end
       end
     end
   end

@@ -83,15 +83,13 @@ module Domain
           body = { success: true, data: {}, total_profit: 0, total_revenue: 0, total_cost: 0 }
           @gateway.expects(:build).with(
             auth: @auth,
-            plan_id: 3,
-            available_crop_rows: []
+            plan_id: 3
           ).returns(kind: :success, body: body)
           @output.expects(:on_success).with(body: body)
 
           RetrieveCultivationPlanInteractor.new(output: @output, workbook_payload_gateway: @gateway).call(
             auth: @auth,
-            plan_id: 3,
-            available_crop_rows: []
+            plan_id: 3
           )
         end
       end

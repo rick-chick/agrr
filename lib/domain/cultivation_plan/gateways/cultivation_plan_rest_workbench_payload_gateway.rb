@@ -5,18 +5,18 @@ module Domain
     module Gateways
       # REST GET data: 計画ワークベンチ用 JSON ボディ組み立て（永続読取のみ Gateway 側）。
       class CultivationPlanRestWorkbenchPayloadGateway
-        def initialize(logger:)
+        def initialize(logger:, available_crop_rows_gateway:)
           @logger = logger
+          @available_crop_rows_gateway = available_crop_rows_gateway
         end
 
-        # available_crop_rows: [{ id:, name:, variety:, area_per_unit: }, ...]（認可・一覧解決はコントローラで実施済み）
-        def build(auth:, plan_id:, available_crop_rows:)
+        def build(auth:, plan_id:)
           raise NotImplementedError
         end
 
         protected
 
-        attr_reader :logger
+        attr_reader :logger, :available_crop_rows_gateway
       end
     end
   end

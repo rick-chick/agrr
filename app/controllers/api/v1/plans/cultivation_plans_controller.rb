@@ -32,6 +32,14 @@ module Api
             .find(params[:id])
         end
 
+        def cultivation_plan_rest_plan_data_available_crop_rows_gateway
+          Adapters::CultivationPlan::Gateways::PlanDataAvailableCropRowsPrivateActiveRecordGateway.new(
+            crop_gateway: CompositionRoot.crop_gateway,
+            user_lookup: CompositionRoot.user_lookup,
+            logger: cultivation_plan_rest_logger
+          )
+        end
+
         def get_crop_for_add_crop(crop_id)
           presenter = Presenters::Api::Crop::CropRecordPresenter.new(view: self)
           Domain::Crop::Interactors::CropFindUserNonReferenceRecordInteractor.new(output_port: presenter,
@@ -40,13 +48,6 @@ module Api
           @crop_record
         end
 
-        def get_available_crops
-          presenter = Presenters::Api::Plans::AvailableCropsPresenter.new(view: self)
-          Domain::Crop::Interactors::CropListUserOwnedNonReferenceOrderedInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
-
-          @available_crops || []
-        end
       end
     end
   end

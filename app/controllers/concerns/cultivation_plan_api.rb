@@ -10,8 +10,8 @@
 # - 調整（adjust）
 #
 # 使い方:
-# - find_api_cultivation_planメソッドを実装: 計画を検索する
-# - get_crop_for_add_cropメソッドを実装: add_cropで使用する作物を取得する
+# - cultivation_plan_rest_plan_data_available_crop_rows_gateway を実装: GET data の利用可能作物行
+# - get_crop_for_add_crop メソッドを実装: add_crop で使用する作物を取得する
 module CultivationPlanApi
   extend ActiveSupport::Concern
   include AgrrOptimization
@@ -85,28 +85,13 @@ module CultivationPlanApi
   # GET /api/v1/{plans|public_plans}/cultivation_plans/:id/data
   # 栽培計画データを取得
   def data
-    plan = begin
-      find_api_cultivation_plan
-    rescue ActiveRecord::RecordNotFound
-      Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
-        view: self,
-        translation_scope: api_cultivation_plan_translation_scope
-      ).on_not_found
-      return
-    end
-
-    @cultivation_plan = plan
-    available_crop_rows = Array(get_available_crops).map do |c|
-      { id: c.id, name: c.name, variety: c.variety, area_per_unit: c.area_per_unit }
-    end
-
     Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
       workbook_payload_gateway: cultivation_plan_rest_workbook_payload_gateway
-    ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i, available_crop_rows: available_crop_rows)
+    ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i)
   end
 
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/adjust
@@ -152,8 +137,14 @@ module CultivationPlanApi
 
   def cultivation_plan_rest_workbook_payload_gateway
     Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
-      logger: cultivation_plan_rest_logger
+      logger: cultivation_plan_rest_logger,
+      available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway
     )
+  end
+
+  # Api::V1::Plans と PublicPlans で available_crops の解決規則が異なる
+  def cultivation_plan_rest_plan_data_available_crop_rows_gateway
+    raise NotImplementedError, "#{self.class}#cultivation_plan_rest_plan_data_available_crop_rows_gateway must be implemented"
   end
 
   def cultivation_plan_rest_adjust_gateway
@@ -389,9 +380,4 @@ module CultivationPlanApi
     raise NotImplementedError, "#{self.class}#get_crop_for_add_crop must be implemented"
   end
 
-  # dataアクションで利用可能な作物一覧を取得する
-  # @return [ActiveRecord::Relation<Crop>]
-  def get_available_crops
-    raise NotImplementedError, "#{self.class}#get_available_crops must be implemented"
-  end
 end

@@ -5,12 +5,16 @@ module Adapters
     module Gateways
       class CultivationPlanRestWorkbenchPayloadActiveRecordGateway <
           Domain::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadGateway
-        def initialize(logger:)
-          super(logger: logger)
+        def initialize(logger:, available_crop_rows_gateway:)
+          super(logger: logger, available_crop_rows_gateway: available_crop_rows_gateway)
         end
 
-        def build(auth:, plan_id:, available_crop_rows:)
+        def build(auth:, plan_id:)
           cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          available_crop_rows = available_crop_rows_gateway.rows(
+            auth: auth,
+            farm_region: cultivation_plan.farm&.region
+          )
 
           fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
             {
