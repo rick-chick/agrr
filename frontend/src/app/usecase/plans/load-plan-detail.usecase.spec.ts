@@ -1,4 +1,6 @@
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { LoadPlanDetailUseCase } from './load-plan-detail.usecase';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
@@ -53,5 +55,55 @@ describe('LoadPlanDetailUseCase', () => {
     expect(receivedDto).not.toBeNull();
     expect(receivedDto!.plan).toEqual(plan);
     expect(receivedDto!.planData).toEqual(planData);
+  });
+
+  it('calls onError with i18n key when fetchPlan fails with 401', () => {
+    const planData: CultivationPlanData = {
+      success: true,
+      data: {
+        id: 7,
+        plan_year: 2024,
+        plan_name: 'Plan 7',
+        status: 'completed',
+        total_area: 100,
+        planning_start_date: '2024-01-01',
+        planning_end_date: '2024-12-31',
+        fields: [],
+        crops: [],
+        cultivations: []
+      },
+      total_profit: 0,
+      total_revenue: 0,
+      total_cost: 0
+    };
+
+    const gateway: PlanGateway = {
+      listPlans: () => of([]),
+      fetchPlan: () =>
+        throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' })),
+      fetchPlanData: () => of(planData),
+      getPublicPlanData: () => of(planData),
+      getTaskSchedule: () =>
+        of({
+          plan: {} as never,
+          week: {} as never,
+          milestones: [],
+          fields: [],
+          labels: {},
+          minimap: {}
+        } as TaskScheduleResponse),
+      deletePlan: () => of({} as DeletionUndoResponse)
+    };
+
+    const onError = vi.fn();
+    const outputPort: LoadPlanDetailOutputPort = {
+      present: () => {},
+      onError
+    };
+
+    const useCase = new LoadPlanDetailUseCase(outputPort, gateway);
+    useCase.execute({ planId: 7 });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'common.api_error.unauthorized' });
   });
 });

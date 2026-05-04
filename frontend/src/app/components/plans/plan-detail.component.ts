@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
@@ -34,7 +34,9 @@ const initialControl: PlanDetailViewState = {
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <div class="page-alert-error" role="alert">
+          <p>{{ control.error | translate }}</p>
+        </div>
       } @else if (control.plan) {
         <h2>{{ control.plan.name }}</h2>
         @if (control.planData) {
@@ -79,7 +81,6 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   private readonly useCase = inject(LoadPlanDetailUseCase);
   private readonly presenter = inject(PlanDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
 
   private _control: PlanDetailViewState = initialControl;
   get control(): PlanDetailViewState {
@@ -103,7 +104,7 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('plans.errors.invalid_id')
+        error: 'plans.errors.invalid_id'
       };
       return;
     }

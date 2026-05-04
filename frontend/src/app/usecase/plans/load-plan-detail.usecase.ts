@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadPlanDetailInputDto } from './load-plan-detail.dtos';
 import { LoadPlanDetailInputPort } from './load-plan-detail.input-port';
 import {
@@ -25,8 +26,7 @@ export class LoadPlanDetailUseCase implements LoadPlanDetailInputPort {
           plan: data.plan,
           planData: data.planData
         }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

@@ -6,6 +6,7 @@ import {
   LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT
 } from './load-plan-task-schedule.output-port';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 
 @Injectable()
 export class LoadPlanTaskScheduleUseCase implements LoadPlanTaskScheduleInputPort {
@@ -17,8 +18,7 @@ export class LoadPlanTaskScheduleUseCase implements LoadPlanTaskScheduleInputPor
   execute(dto: LoadPlanTaskScheduleInputDto): void {
     this.planGateway.getTaskSchedule(dto.planId).subscribe({
       next: (schedule) => this.outputPort.present({ schedule }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

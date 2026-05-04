@@ -7,6 +7,10 @@
 
 .login h1 {
   margin: 0 0 var(--space-2) 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
 }
 
 .login p {

@@ -24,13 +24,13 @@
 | #   | pattern                         | PNG                                 | 結果  | 指摘                                                            |
 | --- | ------------------------------- | ----------------------------------- | --- | ------------------------------------------------------------- |
 | 1   | `(home)`                        | `home.png`                          | OK  | なし                                                            |
-| 2   | `*`*                            | `not-found.png`                     | OK  | なし                                                            |
+| 2   | `**`                            | `not-found.png`                     | OK  | なし                                                            |
 | 3   | `about`                         | `about.png`                         | OK  | なし                                                            |
 | 4   | `auth/login`                    | `auth_login.png`                    | OK  | なし                                                            |
 | 5   | `contact`                       | `contact.png`                       | OK  | なし                                                            |
 | 6   | `entry-schedule`                | `entry-schedule.png`                | OK  | なし                                                            |
 | 7   | `entry-schedule/crop/:cropId`   | `entry-schedule_crop_cropId.png`    | OK  | なし                                                            |
-| 8   | `login`                         | `login.png`                         | 注意  | 見出しが欧文セリフ寄りでナビ等のサンセリフとフォントが不一致気味                              |
+| 8   | `login`                         | `login.png`                         | OK  | なし（見出しに `--font-family-base` と見出しトークンを明示）                     |
 | 9   | `privacy`                       | `privacy.png`                       | OK  | なし                                                            |
 | 10  | `public-plans/new`              | `public-plans_new.png`              | OK  | なし                                                            |
 | 11  | `public-plans/optimizing`       | `public-plans_optimizing.png`       | OK  | `planId` 解決修正後はスペック・パス名検証とも整合（固定下部バー付きウィザード UI が期待値）          |
@@ -69,9 +69,9 @@
 | 44  | `pests/:id/edit`                | `pests_id_edit.png`                 | OK  | なし                                                            |
 | 45  | `pests/new`                     | `pests_new.png`                     | OK  | なし                                                            |
 | 46  | `plans`                         | `plans.png`                         | OK  | なし                                                            |
-| 47  | `plans/:id`                     | `plans_id.png`                      | 注意  | API／ID 次第で **401 をプレーンテキスト表示**。エラー UI（コンポーネント・アラートトークン）としては粗い |
+| 47  | `plans/:id`                     | `plans_id.png`                      | OK  | なし（API 失敗時は `common.api_error.*` の文言＋アラート枠で表示）                                      |
 | 48  | `plans/:id/optimizing`          | `plans_id_optimizing.png`           | OK  | 進捗 UI とウィザード枠が崩れていなければよい                                      |
-| 49  | `plans/:id/task_schedule`       | `plans_id_task_schedule.png`        | 注意  | **401 メッセージの生表示**。レイアウトというよりエラー UX の改善余地                      |
+| 49  | `plans/:id/task_schedule`       | `plans_id_task_schedule.png`        | OK  | なし（計画詳細と同様に API エラーは正規化メッセージ＋アラート枠）                                        |
 | 50  | `plans/new`                     | `plans_new.png`                     | OK  | なし                                                            |
 | 51  | `plans/select-crop`             | `plans_select-crop.png`             | OK  | なし                                                            |
 | 52  | `weather`                       | `weather.png`                       | OK  | チャート領域はデータ未取得で空でもカード枠・タイポは一貫                                  |
@@ -84,8 +84,8 @@
 
 | 結果  | 件数  |
 | --- | --- |
-| OK  | 49  |
-| 注意  | 3   |
+| OK  | 52  |
+| 注意  | 0   |
 | 要確認 | 0   |
 
 
@@ -93,19 +93,13 @@
 
 ## 指摘の詳細（任意）
 
-### #8 `login`
-
-- `/login` のカード見出しフォントがアプリ本体のサンセリフと揃っていない可能性。デザイン意図なら問題なし。
-
-### #47 `plans/:id` / #49 `plans/:id/task_schedule`
-
-- **セッションがあっても**対象 ID が無い・API がエラーになると **401 などがプレーンテキスト表示**になり得る。「エラー用コンポーネント／文言／トークン」での統一が未着手なら改善余地あり（CSS トークン監査とは別軸）。
-- **見た目の再確認**は `npm run e2e:capture-for-agent` を開発 Rails・DB とともにやり直す。
+（上記サマリで「注意」は 0 件のため省略）
 
 ---
 
 ## 総評
 
 - **コンポーネント CSS のトークン当て漏れ**は `**npm run audit:css-tokens` が違反なし**であり、PNG レビューでも「色のハードコード断定」は行わない。
-- **PNG レビュー**では、レイアウト崩れ・明らかな重なり・ローディングの異常滞留は見ていない。**ログイン見出しのタイポ**と **計画 API エラー時の生テキスト表示**が気になる程度。
+- **PNG レビュー**で挙がった **ログイン見出しフォント**・**計画詳細／タスクスケジュールの API エラー表示**はコード側で是正済み（再キャプチャで確認可能）。
 - **実データ・本番同等 UI**は開発 DB と API の状態に依存する。キャプチャをやり直すときは `**npm run e2e:capture-for-agent`** を正とする。
+

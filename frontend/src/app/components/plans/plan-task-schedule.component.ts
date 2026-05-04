@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -32,7 +32,9 @@ const initialControl: PlanTaskScheduleViewState = {
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="error">{{ control.error }}</p>
+        <div class="page-alert-error" role="alert">
+          <p>{{ control.error | translate }}</p>
+        </div>
       } @else if (control.schedule) {
         <h2>{{ 'plans.task_schedule.title' | translate: { name: control.schedule.plan.name } }}</h2>
         <app-task-schedule-timeline [fields]="control.schedule.fields" />
@@ -46,7 +48,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -65,7 +66,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     this.presenter.setView(this);
     const planId = this.planId;
     if (!planId) {
-      this.control = { ...initialControl, loading: false, error: this.translate.instant('plans.errors.invalid_id') };
+      this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
     this.load(planId);
