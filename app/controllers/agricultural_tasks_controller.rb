@@ -86,7 +86,11 @@ class AgriculturalTasksController < ApplicationController
     @agricultural_task.reload
     begin
       update_crop_task_templates(selected_crop_ids)
-    rescue StandardError => e
+    rescue ActiveRecord::RecordNotFound,
+           ActiveRecord::RecordInvalid,
+           ActiveRecord::RecordNotDestroyed,
+           ActiveRecord::RecordNotSaved,
+           ActiveRecord::StatementInvalid => e
       @agricultural_task.assign_attributes(
         name: @input_dto&.name || task_attributes[:name],
         description: @input_dto&.description || task_attributes[:description],

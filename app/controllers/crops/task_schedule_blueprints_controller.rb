@@ -43,8 +43,11 @@ module Crops
       else
         render json: { error: @blueprint.errors.full_messages.join(", ") }, status: :unprocessable_entity
       end
-      # HTML/JSON 部分更新の予期せぬ失敗用。モデル化失敗は上の save 分岐で扱う。
-    rescue StandardError => e
+    rescue ActiveRecord::StatementInvalid,
+           ActiveRecord::ConnectionNotEstablished,
+           ActiveRecord::RecordNotDestroyed,
+           JSON::GeneratorError,
+           ActionView::Template::Error => e
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to update position: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       render json: { error: I18n.t("crops.flash.blueprint_update_failed") }, status: :internal_server_error
@@ -79,7 +82,12 @@ module Crops
         format.turbo_stream { render turbo_stream: turbo_stream.remove("blueprint-card-#{params[:id]}") }
         format.json { render json: { error: I18n.t("crops.flash.blueprint_not_found") }, status: :not_found }
       end
-    rescue StandardError => e
+    rescue ActiveRecord::StatementInvalid,
+           ActiveRecord::ConnectionNotEstablished,
+           ActiveRecord::RecordNotDestroyed,
+           ActiveRecord::RecordInvalid,
+           JSON::GeneratorError,
+           ActionView::Template::Error => e
       Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to delete blueprint: #{e.class} #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       respond_to do |format|

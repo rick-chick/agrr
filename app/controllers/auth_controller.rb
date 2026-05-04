@@ -85,9 +85,20 @@ class AuthController < ApplicationController
     rescue OmniAuth::Error => e
       Rails.logger.error "OAuth callback OmniAuth error: #{e.class} #{e.message}"
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")
-    # OAuth コールバックのその他の予期せぬ失敗（DB・セッション等）。RecordInvalid / OmniAuth 以外はここで集約する。
-    rescue StandardError => e
-      Rails.logger.error "OAuth callback error: #{e.message}"
+    rescue ActiveRecord::ConnectionNotEstablished,
+           ActiveRecord::StatementInvalid,
+           ActiveRecord::RecordNotUnique,
+           Net::OpenTimeout,
+           Net::ReadTimeout,
+           Net::WriteTimeout,
+           SocketError,
+           Errno::ECONNRESET,
+           Errno::ETIMEDOUT,
+           Errno::ECONNREFUSED,
+           OpenSSL::SSL::SSLError,
+           EOFError,
+           IOError => e
+      Rails.logger.error "OAuth callback infrastructure error: #{e.class} #{e.message}"
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")
     end
   end

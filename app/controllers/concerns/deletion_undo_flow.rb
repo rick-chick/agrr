@@ -13,7 +13,6 @@ module DeletionUndoFlow
   # @param in_use_message_key [String, nil] 使用中で削除できない場合のI18nキー
   # @param delete_error_message_key [String] その他削除エラー時のI18nキー
   #
-  # 最後の rescue StandardError は、上位で捕捉済み以外の予期せぬ失敗用。HTTP 応答形は render_deletion_failure に集約する。
   def schedule_deletion_with_undo(record:, toast_message:, fallback_location:, in_use_message_key: nil, delete_error_message_key:)
     event = DeletionUndo::Manager.schedule(
       record: record,
@@ -37,12 +36,10 @@ module DeletionUndoFlow
       message: message,
       fallback_location: fallback_location
     )
-  rescue DeletionUndo::Error => e
-    render_deletion_failure(
-      message: I18n.t(delete_error_message_key, message: e.message),
-      fallback_location: fallback_location
-    )
-  rescue StandardError => e
+  rescue DeletionUndo::Error,
+         ActiveRecord::RecordInvalid,
+         ActiveRecord::RecordNotDestroyed,
+         ActiveRecord::RecordNotSaved => e
     render_deletion_failure(
       message: I18n.t(delete_error_message_key, message: e.message),
       fallback_location: fallback_location

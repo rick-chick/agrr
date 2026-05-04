@@ -8,8 +8,7 @@
 # - 交互作用ルールを構築
 # - 最適化結果をデータベースに保存
 #
-# adjust_with_db_weather 内の rescue StandardError は、HTTP ではなく { success:, message:, status: } ハッシュを返す
-# インフラ段階のフォールバック（Controller の broad rescue 主経路とは別）。
+# adjust_with_db_weather 内の失敗は HTTP ではなく { success:, message:, status: } ハッシュを返す（例外は種別ごとに rescue）。
 module AgrrOptimization
   extend ActiveSupport::Concern
 
@@ -378,7 +377,10 @@ module AgrrOptimization
     )
 
     Rails.logger.info "✅ [Action Cable] Broadcast sent successfully"
-  rescue StandardError => e
+  rescue Timeout::Error,
+         IOError,
+         SystemCallError,
+         JSON::GeneratorError => e
     # ブロードキャストの失敗はデータベーストランザクションの成功に影響を与えない
     # データベースへの保存は既に完了しているため、エラーをログに記録するのみ
     Rails.logger.error "❌ [Action Cable] Broadcast failed for plan_id=#{cultivation_plan.id}: #{e.class} - #{e.message}"
@@ -479,7 +481,7 @@ module AgrrOptimization
         message: I18n.t("api.errors.common.invalid_date_format", message: e.message),
         status: :bad_request
       }
-    rescue StandardError => e
+    rescue Date::Error, TypeError, NoMethodError, RangeError, ZeroDivisionError => e
       Rails.logger.error "❌ [Adjust] Failed to calculate planning period: #{e.class.name}: #{e.message}"
       Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
       return {
@@ -609,7 +611,19 @@ module AgrrOptimization
         Rails.logger.info "✅ [Adjust] Extended prediction data to cover until #{effective_planning_end}"
       end
 
-    rescue StandardError => e
+    rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
+           Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError,
+           ArgumentError,
+           ActiveRecord::RecordNotFound,
+           Net::OpenTimeout,
+           Net::ReadTimeout,
+           Net::WriteTimeout,
+           SocketError,
+           SystemCallError,
+           IOError,
+           JSON::ParserError,
+           TypeError,
+           NoMethodError => e
       Rails.logger.error "❌ [Adjust] Failed to get weather data: #{e.message}"
       return {
         success: false,
@@ -644,7 +658,7 @@ module AgrrOptimization
         message: I18n.t("api.errors.common.invalid_date_format", message: e.message),
         status: :bad_request
       }
-    rescue StandardError => e
+    rescue Date::Error, TypeError, NoMethodError, RangeError, ZeroDivisionError => e
       Rails.logger.error "❌ [Adjust] Failed to calculate planning period: #{e.class.name}: #{e.message}"
       Rails.logger.error "❌ [Adjust] Backtrace: #{e.backtrace.first(10).join("\n")}"
       return {

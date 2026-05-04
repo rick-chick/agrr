@@ -21,7 +21,13 @@ module Domain
           )
 
           @output_port.on_success(event)
-        rescue StandardError => e
+        rescue DeletionUndo::Error,
+               ActiveRecord::RecordInvalid,
+               ActiveRecord::RecordNotDestroyed,
+               ActiveRecord::RecordNotSaved,
+               Domain::Shared::Exceptions::AssociationInUse,
+               ActiveRecord::InvalidForeignKey,
+               ActiveRecord::DeleteRestrictionError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

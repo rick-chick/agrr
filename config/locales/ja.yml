@@ -42,6 +42,7 @@ ja:
     messages:
       completed: "最適化が完了しました"
       adjust_completed: "調整が完了しました"
+      adjusted: "調整を反映しました"
 
   controllers:
     api_keys:

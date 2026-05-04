@@ -83,7 +83,9 @@ module JobExecution
 
         Rails.logger.info "✅ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} completed: #{job_instance.class.name}"
 
-      rescue StandardError => e
+      rescue Exception => e
+        raise if e.is_a?(SystemExit) || e.is_a?(SignalException) || e.is_a?(Interrupt)
+
         Rails.logger.error "❌ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} failed: #{job_instance.class.name}"
         Rails.logger.error "   Error: #{e.message}"
         Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"

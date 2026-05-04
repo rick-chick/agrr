@@ -49,6 +49,7 @@ in:
     messages:
       completed: "अनुकूलन पूर्ण हुआ"
       adjust_completed: "समायोजन पूर्ण हुआ"
+      adjusted: "समायोजन लागू हुआ"
 
   # API त्रुटि संदेश (API error messages)
   api:

@@ -86,7 +86,7 @@ module Plans
         event,
         fallback_location: fallback_location
       )
-    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved, ActiveRecord::RecordNotDestroyed => e
       Rails.logger.warn("[Plans::TaskScheduleItemsController] destroy failed: #{e.class} #{e.message}")
       render_deletion_failure(
         message: I18n.t("controllers.plans.task_schedule_items.errors.cancel_failed"),
@@ -99,13 +99,6 @@ module Plans
           "controllers.plans.task_schedule_items.errors.undo_failed",
           message: e.message
         ),
-        fallback_location: fallback_location
-      )
-    # validate!/schedule/render 以外の予期せぬ失敗。モデル化済み経路は上位 rescue。
-    rescue StandardError => e
-      Rails.logger.error("[Plans::TaskScheduleItemsController] unexpected destroy error: #{e.class} #{e.message}")
-      render_deletion_failure(
-        message: I18n.t("controllers.plans.task_schedule_items.errors.cancel_failed"),
         fallback_location: fallback_location
       )
     end

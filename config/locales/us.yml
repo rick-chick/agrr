@@ -55,6 +55,7 @@ us:
     messages:
       completed: "Optimization completed"
       adjust_completed: "Adjustment completed"
+      adjusted: "Adjustment applied"
 
   # API error messages
   api:
