@@ -16,23 +16,11 @@ module Api
 
         private
 
-        # Concernで実装すべきメソッド
-
         def cultivation_plan_rest_plan_data_available_crop_rows_gateway
           Adapters::CultivationPlan::Gateways::PlanDataAvailableCropRowsPublicActiveRecordGateway.new(
             crop_gateway: CompositionRoot.crop_gateway,
             logger: cultivation_plan_rest_logger
           )
-        end
-
-        def find_api_cultivation_plan
-          ::CultivationPlan
-            .plan_type_public
-            .includes(
-              :farm,
-              field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ]
-            )
-            .find(params[:id])
         end
 
         def get_crop_for_add_crop(crop_id)

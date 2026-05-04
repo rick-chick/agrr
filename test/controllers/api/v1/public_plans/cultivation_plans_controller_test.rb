@@ -70,27 +70,6 @@ module Api
           )
         end
 
-        test "find_api_cultivation_plan が正常に動作する（認証不要）" do
-          # Concern のメソッドを直接テストするため、コントローラをインスタンス化
-          controller = Api::V1::PublicPlans::CultivationPlansController.new
-          controller.params = ActionController::Parameters.new(id: @cultivation_plan.id)
-
-          plan = controller.send(:find_api_cultivation_plan)
-
-          assert_not_nil plan
-          assert_equal @cultivation_plan.id, plan.id
-          assert_equal "public", plan.plan_type
-        end
-
-        test "find_api_cultivation_plan で存在しないIDの場合はRecordNotFoundを発生させる" do
-          controller = Api::V1::PublicPlans::CultivationPlansController.new
-          controller.params = ActionController::Parameters.new(id: 99999)
-
-          assert_raises(ActiveRecord::RecordNotFound) do
-            controller.send(:find_api_cultivation_plan)
-          end
-        end
-
         test "data アクションが正常に動作する（認証不要）" do
           # CultivationPlanにplan_typeを設定
           @cultivation_plan.update!(plan_type: "public")
@@ -244,9 +223,9 @@ module Api
           end
         end
 
-      test "adjust should work" do
-        skip "Adjust API test - Action Cable testing requires integration setup"
-      end
+        test "adjust should work" do
+          skip "Adjust API test - Action Cable testing requires integration setup"
+        end
       end
     end
   end

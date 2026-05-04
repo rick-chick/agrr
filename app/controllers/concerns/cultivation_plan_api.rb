@@ -366,14 +366,7 @@ module CultivationPlanApi
     nil
   end
 
-  # サブクラスで実装すべきメソッド
-
-  # 計画を検索する
-  def find_api_cultivation_plan
-    raise NotImplementedError, "#{self.class}#find_api_cultivation_plan must be implemented"
-  end
-
-  # add_cropで使用する作物を取得する
+  # add_crop で使用する作物を取得する（具象コントローラで実装）
   # @param crop_id [String, Integer] 作物ID
   # @return [Crop, nil] 作物オブジェクト
   def get_crop_for_add_crop(crop_id)
