@@ -12,7 +12,7 @@ module Domain
         def call(input_dto)
           raise ArgumentError, "record must be persisted" unless input_dto.record&.persisted?
 
-          input_dto.record.validate!
+          input_dto.record.validate! if input_dto.validate_before_schedule
 
           event = @gateway.schedule(
             record: input_dto.record,

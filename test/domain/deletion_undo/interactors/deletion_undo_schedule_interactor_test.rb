@@ -68,7 +68,7 @@ module Domain
           output_port.verify
         end
 
-        test "maps RecordInvalid to validation_error failure" do
+        test "maps RecordInvalid to validation_error when validate_before_schedule" do
           invalid = ::Farm.new
 
           record = Object.new
@@ -78,7 +78,8 @@ module Domain
           input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
             record: record,
             actor: nil,
-            toast_message: "removed"
+            toast_message: "removed",
+            validate_before_schedule: true
           )
 
           gateway = Minitest::Mock.new
@@ -91,6 +92,38 @@ module Domain
           assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto, received
           assert_equal :validation_error, received.reason
           assert received.detail_message.present?
+        end
+
+        test "skips validate! when validate_before_schedule is false" do
+          record = Object.new
+          record.define_singleton_method(:persisted?) { true }
+          record.define_singleton_method(:validate!) { raise "validate! must not be called" }
+
+          entity = Domain::DeletionUndo::Entities::DeletionUndoEntity.new(
+            id: "evt-1",
+            expires_at: 1.hour.from_now,
+            status: "scheduled",
+            metadata: {}
+          )
+          gateway = Minitest::Mock.new
+          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
+            record: record,
+            actor: nil,
+            toast_message: "removed",
+            validate_before_schedule: false
+          )
+
+          gateway.expect(:schedule, entity) { |kwargs| assert_equal record, kwargs[:record] }
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_success, nil) { |e| received = e }
+
+          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+
+          assert_same entity, received
+          gateway.verify
+          output_port.verify
         end
       end
     end

@@ -82,7 +82,8 @@ module Plans
         toast_message: I18n.t(
           "plans.task_schedule_items.undo.toast",
           name: @task_schedule_item.name
-        )
+        ),
+        validate_before_schedule: true
       )
       CompositionRoot.deletion_undo_schedule_interactor(output_port: presenter).call(input)
     end

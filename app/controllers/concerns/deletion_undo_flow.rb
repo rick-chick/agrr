@@ -14,35 +14,17 @@ module DeletionUndoFlow
   # @param delete_error_message_key [String] その他削除エラー時のI18nキー
   #
   def schedule_deletion_with_undo(record:, toast_message:, fallback_location:, in_use_message_key: nil, delete_error_message_key:)
-    event = DeletionUndo::Manager.schedule(
+    presenter = Presenters::Html::DeletionUndo::DeletionUndoScheduleMastersHtmlPresenter.new(
+      view: self,
+      fallback_location: fallback_location,
+      in_use_message_key: in_use_message_key,
+      delete_error_message_key: delete_error_message_key
+    )
+    input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
       record: record,
       actor: current_user,
       toast_message: toast_message
     )
-
-    render_deletion_undo_response(
-      event,
-      fallback_location: fallback_location
-    )
-  rescue Domain::Shared::Exceptions::AssociationInUse, ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-    message =
-      if in_use_message_key
-        I18n.t(in_use_message_key)
-      else
-        I18n.t(delete_error_message_key, message: I18n.t("errors.messages.restrict_dependent_destroy"))
-      end
-
-    render_deletion_failure(
-      message: message,
-      fallback_location: fallback_location
-    )
-  rescue DeletionUndo::Error,
-         ActiveRecord::RecordInvalid,
-         ActiveRecord::RecordNotDestroyed,
-         ActiveRecord::RecordNotSaved => e
-    render_deletion_failure(
-      message: I18n.t(delete_error_message_key, message: e.message),
-      fallback_location: fallback_location
-    )
+    CompositionRoot.deletion_undo_schedule_interactor(output_port: presenter).call(input)
   end
 end
