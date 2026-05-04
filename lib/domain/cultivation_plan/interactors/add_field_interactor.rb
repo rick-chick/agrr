@@ -4,14 +4,15 @@ module Domain
   module CultivationPlan
     module Interactors
       class AddFieldInteractor
-        def initialize(output:, flow:)
+        def initialize(output:, field_mutation_gateway:)
           @output = output
-          @flow = flow
+          @field_mutation_gateway = field_mutation_gateway
         end
 
-        def call(plan_loader:, field_name:, field_area:, daily_fixed_cost:)
-          result = @flow.add_field_run(
-            plan_loader: plan_loader,
+        def call(auth:, plan_id:, field_name:, field_area:, daily_fixed_cost:)
+          result = @field_mutation_gateway.add_field(
+            auth: auth,
+            plan_id: plan_id,
             field_name: field_name,
             field_area: field_area,
             daily_fixed_cost: daily_fixed_cost

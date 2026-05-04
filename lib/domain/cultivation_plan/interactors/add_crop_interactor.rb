@@ -3,20 +3,22 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # add_crop API: アダプタ層の実行結果を出力ポートへ写す（コントローラでは rescue 主導にしない）。
+      # add_crop REST: Gateway 協調結果を出力ポートへ写す。
       class AddCropInteractor
-        def initialize(output:, flow:)
+        def initialize(output:, add_crop_coordinator_gateway:)
           @output = output
-          @flow = flow
+          @add_crop_coordinator_gateway = add_crop_coordinator_gateway
         end
 
-        # @param plan_loader [#load] find_api_cultivation_plan 相当（RecordNotFound の可能性あり）
-        def call(plan_loader:, crop_id:, field_id:, display_range:)
-          result = @flow.full_run(
-            plan_loader: plan_loader,
+        # @param crop_resolver [#crop_for_add_crop] エッジで実装（Concern の作物解決）。
+        def call(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:)
+          result = @add_crop_coordinator_gateway.run(
+            auth: auth,
+            plan_id: plan_id,
             crop_id: crop_id,
             field_id: field_id,
-            display_range: display_range
+            display_range: display_range,
+            crop_resolver: crop_resolver
           )
 
           case result[:kind]

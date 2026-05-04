@@ -37,12 +37,14 @@ module CultivationPlanApi
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
-      flow: cultivation_plan_api_add_crop_flow
+      add_crop_coordinator_gateway: cultivation_plan_rest_add_crop_coordinator_gateway
     ).call(
-      plan_loader: cultivation_plan_api_plan_loader,
+      auth: cultivation_plan_rest_auth,
+      plan_id: params[:id].to_i,
       crop_id: params[:crop_id],
       field_id: params[:field_id],
-      display_range: display_range
+      display_range: display_range,
+      crop_resolver: cultivation_plan_rest_add_crop_crop_resolver_bridge
     )
   end
 
@@ -54,9 +56,10 @@ module CultivationPlanApi
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
-      flow: cultivation_plan_api_rest_flow
+      field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway
     ).call(
-      plan_loader: cultivation_plan_api_plan_loader,
+      auth: cultivation_plan_rest_auth,
+      plan_id: params[:id].to_i,
       field_name: params[:field_name],
       field_area: params[:field_area],
       daily_fixed_cost: params[:daily_fixed_cost]
@@ -71,9 +74,10 @@ module CultivationPlanApi
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
-      flow: cultivation_plan_api_rest_flow
+      field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway
     ).call(
-      plan_loader: cultivation_plan_api_plan_loader,
+      auth: cultivation_plan_rest_auth,
+      plan_id: params[:id].to_i,
       field_id_param: params[:field_id]
     )
   end
@@ -81,13 +85,28 @@ module CultivationPlanApi
   # GET /api/v1/{plans|public_plans}/cultivation_plans/:id/data
   # 栽培計画データを取得
   def data
+    plan = begin
+      find_api_cultivation_plan
+    rescue ActiveRecord::RecordNotFound
+      Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
+        view: self,
+        translation_scope: api_cultivation_plan_translation_scope
+      ).on_not_found
+      return
+    end
+
+    @cultivation_plan = plan
+    available_crop_rows = Array(get_available_crops).map do |c|
+      { id: c.id, name: c.name, variety: c.variety, area_per_unit: c.area_per_unit }
+    end
+
     Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
         view: self,
         translation_scope: api_cultivation_plan_translation_scope
       ),
-      flow: cultivation_plan_api_rest_flow
-    ).call(plan_loader: cultivation_plan_api_plan_loader)
+      workbook_payload_gateway: cultivation_plan_rest_workbook_payload_gateway
+    ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i, available_crop_rows: available_crop_rows)
   end
 
   # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/adjust
@@ -96,28 +115,67 @@ module CultivationPlanApi
   # このメソッドはDBに保存された天気データを再利用し、
   # 不要な天気予測を実行しないことで高速化されています
   def adjust
+    moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
     Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
       output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self),
-      flow: cultivation_plan_api_rest_flow
+      adjust_gateway: cultivation_plan_rest_adjust_gateway
     ).call(
-      plan_loader: cultivation_plan_api_plan_loader,
-      moves_raw: params[:moves] || []
+      auth: cultivation_plan_rest_auth,
+      plan_id: params[:id].to_i,
+      moves: moves
     )
   end
 
   private
 
-  # lib/domain が具象アダプタを new しないよう、CompositionRoot と同様にエッジで組み立てて注入する
-  def cultivation_plan_api_rest_flow
-    Adapters::CultivationPlan::ApiCultivationPlanRestFlow.new(self)
+  # lib/domain は具象 Gateway を知らず、Concern で組み立てて注入する
+  def cultivation_plan_rest_logger
+    CompositionRoot.logger
   end
 
-  def cultivation_plan_api_add_crop_flow
-    Adapters::CultivationPlan::ApiAddCropFlow.new(self)
+  def cultivation_plan_rest_auth
+    Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.for_api_controller(self)
   end
 
-  def cultivation_plan_api_plan_loader
-    Adapters::CultivationPlan::ApiCultivationPlanControllerPlanLoader.new(self)
+  def cultivation_plan_rest_optimization_events_gateway
+    @cultivation_plan_rest_optimization_events_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanRestOptimizationEventsActionCableGateway.new(
+      logger: cultivation_plan_rest_logger
+    )
+  end
+
+  def cultivation_plan_rest_field_mutation_gateway
+    Adapters::CultivationPlan::Gateways::CultivationPlanRestFieldMutationActiveRecordGateway.new(
+      events_gateway: cultivation_plan_rest_optimization_events_gateway,
+      logger: cultivation_plan_rest_logger
+    )
+  end
+
+  def cultivation_plan_rest_workbook_payload_gateway
+    Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
+      logger: cultivation_plan_rest_logger
+    )
+  end
+
+  def cultivation_plan_rest_adjust_gateway
+    Adapters::CultivationPlan::Gateways::CultivationPlanRestAdjustThroughHostGateway.new(
+      host_controller: self,
+      logger: cultivation_plan_rest_logger
+    )
+  end
+
+  def cultivation_plan_rest_add_crop_optimizer_bridge
+    @cultivation_plan_rest_add_crop_optimizer_bridge ||= Adapters::CultivationPlan::RestAddCropOptimizationHostBridge.new(self)
+  end
+
+  def cultivation_plan_rest_add_crop_crop_resolver_bridge
+    Adapters::CultivationPlan::RestAddCropCropResolverBridge.new(self)
+  end
+
+  def cultivation_plan_rest_add_crop_coordinator_gateway
+    Adapters::CultivationPlan::Gateways::CultivationPlanRestAddCropCoordinatorActiveRecordGateway.new(
+      optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
+      logger: cultivation_plan_rest_logger
+    )
   end
 
   # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
@@ -125,20 +183,6 @@ module CultivationPlanApi
     self.class.name.include?("::PublicPlans::") ? "public_plans" : "plans"
   end
 
-  # @return [nil, Hash] 問題なければ nil。成長段階不足時は Interactor / Flow 用ハッシュ
-  def validate_crops_have_growth_stages_result(cultivation_plan)
-    cultivation_plan.cultivation_plan_crops.each do |plan_crop|
-      crop = plan_crop.crop
-      Rails.logger.info "🔍 [Validate Growth Stages] plan_crop_id=#{plan_crop.id} crop_id=#{crop&.id} crop_stages_loaded=#{crop&.association(:crop_stages)&.loaded? rescue 'n/a'}"
-      Rails.logger.info "🔍 [Validate Growth Stages] crop_stages_count=#{crop&.crop_stages&.size rescue 'n/a'}"
-      if crop.crop_stages.empty?
-        return { kind: :crop_missing_growth_stages, crop_name: crop.name }
-      end
-    end
-    nil
-  end
-
-  # I18n翻訳のヘルパーメソッド
   def i18n_t(key)
     scope = @cultivation_plan&.plan_type == "private" ? "plans" : "public_plans"
     I18n.t("#{scope}.#{key}")

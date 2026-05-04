@@ -4,13 +4,13 @@ module Domain
   module CultivationPlan
     module Interactors
       class RemoveFieldInteractor
-        def initialize(output:, flow:)
+        def initialize(output:, field_mutation_gateway:)
           @output = output
-          @flow = flow
+          @field_mutation_gateway = field_mutation_gateway
         end
 
-        def call(plan_loader:, field_id_param:)
-          result = @flow.remove_field_run(plan_loader: plan_loader, field_id_param: field_id_param)
+        def call(auth:, plan_id:, field_id_param:)
+          result = @field_mutation_gateway.remove_field(auth: auth, plan_id: plan_id, field_id_param: field_id_param)
 
           case result[:kind]
           when :success

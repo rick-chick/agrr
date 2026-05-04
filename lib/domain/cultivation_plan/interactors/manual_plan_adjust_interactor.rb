@@ -4,13 +4,14 @@ module Domain
   module CultivationPlan
     module Interactors
       class ManualPlanAdjustInteractor
-        def initialize(output:, flow:)
+        def initialize(output:, adjust_gateway:)
           @output = output
-          @flow = flow
+          @adjust_gateway = adjust_gateway
         end
 
-        def call(plan_loader:, moves_raw:)
-          result = @flow.adjust_run(plan_loader: plan_loader, moves_raw: moves_raw)
+        # @param moves [Array<Hash>] エッジで AdjustMovesFromRequest.normalize 済み
+        def call(auth:, plan_id:, moves:)
+          result = @adjust_gateway.execute(auth: auth, plan_id: plan_id, moves: moves)
 
           case result[:kind]
           when :crop_missing_growth_stages

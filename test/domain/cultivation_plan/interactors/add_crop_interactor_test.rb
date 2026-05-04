@@ -8,16 +8,19 @@ module Domain
       class AddCropInteractorTest < ActiveSupport::TestCase
         setup do
           @output = mock
-          @flow = mock
-          @plan_loader = mock
+          @coordinator = mock
+          @resolver = mock
+          @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
         end
 
-        test "dispatches success from flow result" do
-          @flow.expects(:full_run).with(
-            plan_loader: @plan_loader,
+        test "dispatches success from gateway result" do
+          @coordinator.expects(:run).with(
+            auth: @auth,
+            plan_id: 9,
             crop_id: "1",
             field_id: "2",
-            display_range: {}
+            display_range: {},
+            crop_resolver: @resolver
           ).returns(
             kind: :success,
             plan_crop_id: 9,
@@ -26,64 +29,57 @@ module Domain
           @output.expects(:on_success).with(plan_crop_id: 9, plan_crop_display_name: "ナス")
           @output.expects(:on_not_found).never
 
-          AddCropInteractor.new(output: @output, flow: @flow).call(
-            plan_loader: @plan_loader,
+          AddCropInteractor.new(output: @output, add_crop_coordinator_gateway: @coordinator).call(
+            auth: @auth,
+            plan_id: 9,
             crop_id: "1",
             field_id: "2",
-            display_range: {}
+            display_range: {},
+            crop_resolver: @resolver
           )
         end
 
         test "dispatches not_found" do
-          @flow.expects(:full_run).with(
-            plan_loader: @plan_loader,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {}
-          ).returns(kind: :not_found)
+          @coordinator.expects(:run).returns(kind: :not_found)
           @output.expects(:on_not_found).once
           @output.expects(:on_success).never
 
-          AddCropInteractor.new(output: @output, flow: @flow).call(
-            plan_loader: @plan_loader,
+          AddCropInteractor.new(output: @output, add_crop_coordinator_gateway: @coordinator).call(
+            auth: @auth,
+            plan_id: 1,
             crop_id: "1",
             field_id: nil,
-            display_range: {}
+            display_range: {},
+            crop_resolver: @resolver
           )
         end
 
         test "dispatches prediction_incomplete" do
-          @flow.expects(:full_run).with(
-            plan_loader: @plan_loader,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {}
-          ).returns(kind: :prediction_incomplete, technical_details: "x")
+          @coordinator.expects(:run).returns(kind: :prediction_incomplete, technical_details: "x")
           @output.expects(:on_prediction_incomplete).with(technical_details: "x")
 
-          AddCropInteractor.new(output: @output, flow: @flow).call(
-            plan_loader: @plan_loader,
+          AddCropInteractor.new(output: @output, add_crop_coordinator_gateway: @coordinator).call(
+            auth: @auth,
+            plan_id: 1,
             crop_id: "1",
             field_id: nil,
-            display_range: {}
+            display_range: {},
+            crop_resolver: @resolver
           )
         end
 
         test "dispatches adjust_failed with payload" do
           payload = { success: false, message: "adj", status: :bad_request }
-          @flow.expects(:full_run).with(
-            plan_loader: @plan_loader,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {}
-          ).returns(kind: :adjust_failed, adjust_payload: payload)
+          @coordinator.expects(:run).returns(kind: :adjust_failed, adjust_payload: payload)
           @output.expects(:on_adjust_failed).with(adjust_payload: payload)
 
-          AddCropInteractor.new(output: @output, flow: @flow).call(
-            plan_loader: @plan_loader,
+          AddCropInteractor.new(output: @output, add_crop_coordinator_gateway: @coordinator).call(
+            auth: @auth,
+            plan_id: 1,
             crop_id: "1",
             field_id: nil,
-            display_range: {}
+            display_range: {},
+            crop_resolver: @resolver
           )
         end
       end

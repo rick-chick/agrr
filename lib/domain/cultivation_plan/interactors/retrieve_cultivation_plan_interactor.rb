@@ -4,13 +4,18 @@ module Domain
   module CultivationPlan
     module Interactors
       class RetrieveCultivationPlanInteractor
-        def initialize(output:, flow:)
+        def initialize(output:, workbook_payload_gateway:)
           @output = output
-          @flow = flow
+          @workbook_payload_gateway = workbook_payload_gateway
         end
 
-        def call(plan_loader:)
-          result = @flow.data_run(plan_loader: plan_loader)
+        # @param available_crop_rows [Array<Hash>] コントローラで Materialize 済み（認可済み一覧）
+        def call(auth:, plan_id:, available_crop_rows:)
+          result = @workbook_payload_gateway.build(
+            auth: auth,
+            plan_id: plan_id,
+            available_crop_rows: available_crop_rows
+          )
 
           case result[:kind]
           when :success
