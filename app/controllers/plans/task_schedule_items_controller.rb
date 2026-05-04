@@ -35,7 +35,8 @@ module Plans
         :amount_unit
       )
       CompositionRoot.task_schedule_item_create_interactor(output_port: task_schedule_item_json_presenter).call(
-        plan: @cultivation_plan,
+        user_id: current_user.id,
+        plan_id: task_schedule_route_plan_id,
         attributes: permitted.to_unsafe_h
       )
     end
@@ -61,7 +62,8 @@ module Plans
         :time_per_sqm
       )
       CompositionRoot.task_schedule_item_update_interactor(output_port: task_schedule_item_json_presenter).call(
-        plan: @cultivation_plan,
+        user_id: current_user.id,
+        plan_id: task_schedule_route_plan_id,
         item_id: params[:id],
         attributes: permitted.to_unsafe_h
       )
@@ -123,7 +125,8 @@ module Plans
         end
 
       CompositionRoot.task_schedule_item_complete_interactor(output_port: task_schedule_item_json_presenter).call(
-        plan: @cultivation_plan,
+        user_id: current_user.id,
+        plan_id: task_schedule_route_plan_id,
         item_id: params[:id],
         actual_date: actual_date,
         actual_notes: permitted[:notes],
@@ -137,8 +140,12 @@ module Plans
       Presenters::Plans::TaskScheduleItemJsonPresenter.new(view: self)
     end
 
+    def task_schedule_route_plan_id
+      params[:plan_id].presence || request.path_parameters[:plan_id]
+    end
+
     def set_cultivation_plan
-      plan_id = params[:plan_id].presence || request.path_parameters[:plan_id]
+      plan_id = task_schedule_route_plan_id
       @cultivation_plan = current_user
         .cultivation_plans
         .plan_type_private

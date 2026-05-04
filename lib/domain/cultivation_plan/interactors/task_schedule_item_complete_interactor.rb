@@ -9,9 +9,10 @@ module Domain
           @gateway = gateway
         end
 
-        def call(plan:, item_id:, actual_date:, actual_notes:, completed_at:)
+        def call(user_id:, plan_id:, item_id:, actual_date:, actual_notes:, completed_at:)
           payload = @gateway.complete_item_for_plan!(
-            plan,
+            user_id,
+            plan_id,
             item_id,
             actual_date: actual_date,
             actual_notes: actual_notes,

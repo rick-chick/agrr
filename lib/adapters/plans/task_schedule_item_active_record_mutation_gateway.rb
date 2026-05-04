@@ -28,9 +28,12 @@ module Adapters
         @logger = logger
       end
 
-      def create_item!(plan, attributes)
+      def create_item!(user_id, plan_id, attributes)
+        user_id = user_id.to_i
+        plan_id = plan_id.to_i
         attrs = attributes.to_h.symbolize_keys
         created = ::TaskScheduleItem.transaction do
+          plan = cultivation_plan_for_user!(user_id, plan_id)
           field_cultivation = plan.field_cultivations.find(attrs[:field_cultivation_id])
           category = "general"
           validate_crop_selection!(field_cultivation, attrs[:cultivation_plan_crop_id])
@@ -57,15 +60,19 @@ module Adapters
         raise Domain::Shared::Exceptions::RecordNotFound
       end
 
-      def update_item_for_plan!(plan, item_id, attributes)
-        item = ar_item_for_plan(plan, item_id)
+      def update_item_for_plan!(user_id, plan_id, item_id, attributes)
+        user_id = user_id.to_i
+        plan_id = plan_id.to_i
+        item = ar_item_for_plan(user_id, plan_id, item_id)
         raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
         update_record_item!(item, attributes)
       end
 
-      def complete_item_for_plan!(plan, item_id, actual_date:, actual_notes:, completed_at:)
-        item = ar_item_for_plan(plan, item_id)
+      def complete_item_for_plan!(user_id, plan_id, item_id, actual_date:, actual_notes:, completed_at:)
+        user_id = user_id.to_i
+        plan_id = plan_id.to_i
+        item = ar_item_for_plan(user_id, plan_id, item_id)
         raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
         complete_record_item!(item, actual_date: actual_date, actual_notes: actual_notes, completed_at: completed_at)
@@ -73,10 +80,23 @@ module Adapters
 
       private
 
-      def ar_item_for_plan(plan, item_id)
+      def cultivation_plan_for_user!(user_id, plan_id)
+        plan = ::CultivationPlan
+          .plan_type_private
+          .find_by(user_id: user_id, id: plan_id)
+        raise Domain::Shared::Exceptions::RecordNotFound if plan.nil?
+
+        plan
+      end
+
+      def ar_item_for_plan(user_id, plan_id, item_id)
         ::TaskScheduleItem
           .joins(task_schedule: :cultivation_plan)
-          .where(task_schedules: { cultivation_plan_id: plan.id })
+          .merge(::CultivationPlan.plan_type_private)
+          .where(
+            task_schedules: { cultivation_plan_id: plan_id },
+            cultivation_plans: { id: plan_id, user_id: user_id }
+          )
           .find_by(id: item_id)
       end
 

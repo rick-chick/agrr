@@ -5,18 +5,20 @@ module Domain
     module Gateways
       # 計画タスク予定 API 用の永続化（Adapter が AR を扱う）
       class TaskScheduleItemMutationGateway
-        # @return [Hash] `serialize_item` 相当のスナップショット（Interactor は AR を受け取らない）
-        def create_item!(plan, attributes)
+        # @param user_id [Integer] 計画の所有者（プライベート計画スコープに使用）
+        # @param plan_id [Integer,#to_i] 対象計画 ID
+        # @return [Hash] `serialize_item` 相当のスナップショット
+        def create_item!(user_id, plan_id, attributes)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
 
-        # @return [Hash] 永続化後のスナップショット。見つからない場合は RecordNotFound（Adapter）
-        def update_item_for_plan!(plan, item_id, attributes)
+        # @return [Hash] 永続化後のスナップショット。計画・アイテムがスコープ外なら RecordNotFound（Adapter）
+        def update_item_for_plan!(user_id, plan_id, item_id, attributes)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
 
-        # @return [Hash] 永続化後のスナップショット。見つからない場合は RecordNotFound（Adapter）
-        def complete_item_for_plan!(plan, item_id, actual_date:, actual_notes:, completed_at:)
+        # @return [Hash] 永続化後のスナップショット。計画・アイテムがスコープ外なら RecordNotFound（Adapter）
+        def complete_item_for_plan!(user_id, plan_id, item_id, actual_date:, actual_notes:, completed_at:)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
       end

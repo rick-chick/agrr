@@ -9,8 +9,8 @@ module Domain
           @gateway = gateway
         end
 
-        def call(plan:, attributes:)
-          @output_port.on_created(@gateway.create_item!(plan, attributes))
+        def call(user_id:, plan_id:, attributes:)
+          @output_port.on_created(@gateway.create_item!(user_id, plan_id, attributes))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
             errors: Domain::Shared::ValidationErrorHash.from(e.errors),
