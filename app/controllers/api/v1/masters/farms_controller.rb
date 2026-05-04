@@ -44,40 +44,13 @@ module Api
 
         # GET /api/v1/masters/farms/:id
         def show
-          Rails.logger.info "Farm show action called with id: #{params[:id]}, current_user: #{current_user&.id}"
-
           input_valid?(:show) || return
-
-          Rails.logger.info "Input validation passed"
 
           presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
 
-          Rails.logger.info "Calling interactor with farm_id: #{params[:id]}"
           interactor.call(params[:id])
-
-          # Presenter の結果をチェック
-          if instance_variable_defined?(:@farm_detail_data) && @farm_detail_data
-            Rails.logger.info "Success: farm_detail_data present"
-            # 成功時: JSON を生成してレスポンス
-            farm_detail_dto = @farm_detail_data
-            farm_json = entity_to_json(farm_detail_dto.farm)
-            fields_json = farm_detail_dto.fields.map { |e| field_entity_to_json(e) }
-            render_response(json: farm_json.merge(fields: fields_json), status: :ok)
-          elsif instance_variable_defined?(:@farm_detail_error) && @farm_detail_error
-            Rails.logger.info "Error: farm_detail_error present - #{@farm_detail_error}"
-            err = @farm_detail_error
-            if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
-              render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
-            else
-              msg = err.respond_to?(:message) ? err.message : err.to_s
-              render_response(json: { error: msg }, status: :not_found)
-            end
-          else
-            Rails.logger.warn "No data or error set by presenter"
-            render_response(json: { error: "Unknown error" }, status: :internal_server_error)
-          end
         end
 
         # POST /api/v1/masters/farms

@@ -9,14 +9,18 @@ module Presenters
         end
 
         def on_success(farm_detail_dto)
-          # 成功データをコントローラーに渡す
-          @view.instance_variable_set("@farm_detail_data", farm_detail_dto)
+          farm_json = entity_to_json(farm_detail_dto.farm)
+          fields_json = farm_detail_dto.fields.map { |e| field_entity_to_json(e) }
+          @view.render_response(json: farm_json.merge(fields: fields_json), status: :ok)
         end
 
-        def on_failure(error_dto)
-          # エラーハンドリングはコントローラーに委ねる
-          # Presenter はデータを返すだけ
-          @view.instance_variable_set("@farm_detail_error", error_dto)
+        def on_failure(err)
+          if err.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.render_response(json: { error: I18n.t("farms.flash.no_permission") }, status: :forbidden)
+          else
+            msg = err.respond_to?(:message) ? err.message : err.to_s
+            @view.render_response(json: { error: msg }, status: :not_found)
+          end
         end
 
         private
