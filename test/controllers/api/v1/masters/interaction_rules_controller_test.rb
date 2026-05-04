@@ -45,6 +45,26 @@ module Api
           assert_not_includes rule_ids, other_rule.id
         end
 
+        test "should return forbidden on index when gateway denies policy" do
+          fake_gw = Object.new
+          def fake_gw.list_index_for_user(_user)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          Api::V1::Masters::InteractionRulesController.any_instance
+            .stubs(:interaction_rule_gateway)
+            .returns(fake_gw)
+
+          get api_v1_masters_interaction_rules_path,
+              headers: {
+                "Accept" => "application/json",
+                "X-API-Key" => @api_key
+              }
+
+          assert_response :forbidden
+          assert_equal I18n.t("interaction_rules.flash.no_permission"), JSON.parse(response.body)["error"]
+        end
+
         test "should show interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user, source_group: "テストグループ")
 

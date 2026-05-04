@@ -18,6 +18,8 @@ module Domain
           reference_rules = rules.select(&:is_reference)
           interaction_rules = rules.reject(&:is_reference)
           @output_port.on_success(interaction_rules: interaction_rules, reference_rules: reference_rules)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
