@@ -18,17 +18,16 @@ alwaysApply: false
 
 ## CA 規律（新規機能でも）
 
-手順の単一の定義は [**緑野節**（`../skills/clean-architecture-violation-fix-workflow/SKILL.md`）](../skills/clean-architecture-violation-fix-workflow/SKILL.md)（範囲は同ファイル **用語**）。**親**はサブ完了報告で終えず、**締め（§2 相当・§4・`test-common` 等）**まで持つ。
+範囲・手順は [`agent-conventions.mdc`](agent-conventions.mdc) 用語表「実装後の Clean Architecture チェック」と [ワークフロー SKILL](../skills/clean-architecture-violation-fix-workflow/SKILL.md)、新規差分の補足は [`greenfield-closure.md`](../skills/clean-architecture-violation-fix-workflow/references/greenfield-closure.md)。
 
-- Phase 2 開始前: 同節の **§1 前（プレフライト）** と、委譲プロンプトへの **「新規でも ARCHITECTURE 違反を増やさない」**。
-- **いつ §4 か**: 同節 **「いつ締めるか」**（Phase 2 のみ区切り → その時点の diff／Phase 3 まで → 累積 diff）。
+- Phase 2 開始前: 新規実装の実装前の確認＋委譲プロンプトに **「新規でも ARCHITECTURE 違反を増やさない」** を含める。
+- **いつセクション4 ゲートに入るか**: Phase 2 のみで区切るなら **その時点の diff**、Phase 3 まで進めるなら **累積 diff**。
 
 ## 共通ルール
 
-- **自分でコーディングしない。** 必ず該当するサブエージェントに委譲する。
-- 単発のバグ修正・局所追加など、要件フルセットではない作業は **`use-skills-on-edit.mdc`** に従う（本ファイルは要件からの機能一式向け）。
-- サブエージェントは **1回の実行の中で並列起動**する。複数回への分割は禁止。
-- すべてのサブエージェントの完了を待ってからレビューする。
+委譲・並列起動の詳細は [`use-skills-on-edit.mdc`](use-skills-on-edit.mdc) に従う。本ルールは要件からの機能一式向けに、それを Phase で束ねる。
+
+- サブエージェントは **1回の実行の中で並列起動**し、全件完了を待ってからレビューする。
 
 ## Phase 1: 契約作成
 
@@ -43,7 +42,7 @@ alwaysApply: false
 - usecase-server サブエージェント（DB マイグレーションが必要なら追加）
 - usecase-frontend サブエージェント
 
-完了後、実装が契約に沿っているかレビューし、問題があれば再度サブエージェントに依頼する。**上記「CA 規律」**に従い、**Phase 2 だけで区切る場合はその時点**、Phase 3 に続ける場合は **Phase 3 完了後**に **緑野の §4** まで親が実施する。Phase 2 完了後、自身の判断で Phase 3 に進む（ただし締めの省略はしない）。
+完了後、実装が契約に沿っているかレビューし、問題があれば再度サブエージェントに依頼する。**Phase 2 だけで区切る場合はその時点**、Phase 3 に続ける場合は **Phase 3 完了後**に **実装後の Clean Architecture チェックにおけるセクション4** まで親が実施する。Phase 2 完了後、自身の判断で Phase 3 に進む（ただし締めの省略はしない）。
 
 ## Phase 3: Adapter 層（並列）
 
@@ -52,4 +51,4 @@ alwaysApply: false
 - presenter-server / gateway-server / controller-server
 - presenter-frontend / gateway-frontend / controller-frontend
 
-完了後、**「CA 規律」**どおり **緑野の §4**（およびコミット方針）を満たしたうえで、レビュー結果をまとめて報告する。
+完了後、**実装後の Clean Architecture チェックにおけるセクション4**（およびコミット方針）を満たしたうえで、レビュー結果をまとめて報告する。
