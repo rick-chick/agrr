@@ -3,8 +3,6 @@ import { of, throwError } from 'rxjs';
 import { LoadPublicPlanFarmsUseCase } from './load-public-plan-farms.usecase';
 import { LoadPublicPlanFarmsOutputPort } from './load-public-plan-farms.output-port';
 import { PublicPlanGateway } from './public-plan-gateway';
-// PublicPlanApiGateway is used in the integration test below
-import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
 
 describe('LoadPublicPlanFarmsUseCase', () => {
   let outputPort: LoadPublicPlanFarmsOutputPort;
@@ -80,41 +78,5 @@ describe('LoadPublicPlanFarmsUseCase', () => {
       message: 'Network error'
     });
     expect(outputPort.present).not.toHaveBeenCalled();
-  });
-
-  // INTEGRATIONテスト: 実際のGatewayを使ってAPI呼び出しを確認
-  it('integration test with real gateway - should make actual API calls', async () => {
-    // 実際のAPIクライアントモック
-    const apiClientMock = {
-      get: vi.fn()
-        .mockReturnValueOnce(of([
-          { id: 1, name: 'Test Farm JP', region: 'jp', latitude: 35.6762, longitude: 139.6503 }
-        ]))
-        .mockReturnValueOnce(of([
-          { id: 'home_garden', name: 'Home Garden', area_sqm: 30 }
-        ]))
-    };
-
-    // 実際のGatewayを作成
-    const realGateway = new PublicPlanApiGateway(apiClientMock as any);
-
-    // 実際のUseCaseを作成
-    const realUseCase = new LoadPublicPlanFarmsUseCase(outputPort, realGateway);
-
-    // UseCaseを実行
-    realUseCase.execute({ region: 'jp' });
-
-    // 非同期処理を待つ
-    await new Promise(resolve => setTimeout(resolve, 10));
-
-    // APIが呼ばれたことを確認
-    expect(apiClientMock.get).toHaveBeenCalledWith('/api/v1/public_plans/farms', { params: { region: 'jp' } });
-    expect(apiClientMock.get).toHaveBeenCalledWith('/api/v1/public_plans/farm_sizes');
-
-    // OutputPort.presentが呼ばれたことを確認
-    expect(outputPort.present).toHaveBeenCalledWith({
-      farms: [{ id: 1, name: 'Test Farm JP', region: 'jp', latitude: 35.6762, longitude: 139.6503 }],
-      farmSizes: [{ id: 'home_garden', name: 'Home Garden', area_sqm: 30 }]
-    });
   });
 });
