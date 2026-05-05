@@ -17,10 +17,12 @@ module Domain
             return @output_port.on_pest_id_missing
           end
 
-          pest_entity = @pest_gateway.find_by_id(pest_id) rescue nil
-          unless pest_entity
-            return @output_port.on_pest_not_found
-          end
+          pest_entity =
+            begin
+              @pest_gateway.find_by_id(pest_id)
+            rescue Domain::Shared::Exceptions::RecordNotFound
+              return @output_port.on_pest_not_found
+            end
 
           user = @user_lookup.find(@user_id)
 
