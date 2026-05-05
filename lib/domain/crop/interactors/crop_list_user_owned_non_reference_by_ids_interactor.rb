@@ -19,6 +19,8 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropListUserOwnedNonReferenceByIdsInteractor] #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @logger.error("[CropListUserOwnedNonReferenceByIdsInteractor] #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

@@ -43,6 +43,8 @@ module Domain
           @output_port.on_success(result)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           bt = e.backtrace&.join("\n").to_s
           @logger.error("[CropToggleTaskTemplateInteractor] #{e.class}: #{e.message}\n#{bt}")

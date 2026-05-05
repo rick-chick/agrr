@@ -13,6 +13,8 @@ module Domain
         def call(input_dto)
           crop_stage = @gateway.update_crop_stage(input_dto.stage_id, input_dto)
           @output_port.on_success(Domain::Crop::Dtos::CropStageOutputDto.new(stage: crop_stage))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

@@ -18,6 +18,8 @@ module Domain
           @output_port.on_success(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

@@ -15,6 +15,8 @@ module Domain
           crops = []
           @gateway.each_reference_crop_for_entry_schedule(region) { |crop| crops << crop }
           @output_port.on_success(crops)
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @logger.error("[CropListReferenceForEntryScheduleInteractor] #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

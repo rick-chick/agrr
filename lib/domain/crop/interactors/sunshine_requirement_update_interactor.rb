@@ -19,6 +19,8 @@ module Domain
           end
 
           @output_port.on_success(Domain::Crop::Dtos::SunshineRequirementOutputDto.new(requirement: requirement))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

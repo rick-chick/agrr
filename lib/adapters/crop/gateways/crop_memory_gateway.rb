@@ -275,7 +275,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user, attrs)
           crop = ::Crop.new(h)
-          raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
+          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.save
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         end
@@ -291,7 +291,7 @@ module Adapters
             crop.attributes.symbolize_keys,
             attrs
           )
-          raise StandardError, crop.errors.full_messages.join(", ") unless crop.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.update(normalized)
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
@@ -345,7 +345,7 @@ module Adapters
           crop_attributes[:crop_stages_attributes] = create_input_dto.crop_stages_attributes if create_input_dto.crop_stages_attributes.present?
 
           crop = ::Crop.new(crop_attributes)
-          raise StandardError, crop.errors.full_messages.join(", ") unless crop.save
+          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.save
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         end
@@ -362,7 +362,7 @@ module Adapters
           attrs[:crop_stages_attributes] = update_input_dto.crop_stages_attributes if update_input_dto.crop_stages_attributes.present?
 
           crop.update(attrs)
-          raise StandardError, crop.errors.full_messages.join(", ") if crop.errors.any?
+          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") if crop.errors.any?
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         rescue ActiveRecord::RecordNotFound
@@ -376,7 +376,7 @@ module Adapters
 
           crop_stage = ::CropStage.new(crop_stage_attributes)
           unless crop_stage.save
-            raise StandardError, crop_stage.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, crop_stage.errors.full_messages.join(", ")
           end
           crop_stage_entity_from_record(crop_stage)
         end
@@ -386,7 +386,7 @@ module Adapters
           attrs = attributes_from_crop_stage_dto(update_dto.payload)
 
           unless crop_stage.update(attrs)
-            raise StandardError, crop_stage.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, crop_stage.errors.full_messages.join(", ")
           end
           crop_stage_entity_from_record(crop_stage.reload)
         rescue ActiveRecord::RecordNotFound
@@ -396,7 +396,7 @@ module Adapters
         def delete_crop_stage(crop_stage_id)
           crop_stage = ::CropStage.find(crop_stage_id)
           unless crop_stage.destroy
-            raise StandardError, crop_stage.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, crop_stage.errors.full_messages.join(", ")
           end
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
@@ -427,7 +427,7 @@ module Adapters
 
           requirement = ::TemperatureRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           temperature_requirement_entity_from_record(requirement)
         end
@@ -437,7 +437,7 @@ module Adapters
           attrs = attributes_from_temperature_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           temperature_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
@@ -457,7 +457,7 @@ module Adapters
 
           requirement = ::ThermalRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           thermal_requirement_entity_from_record(requirement)
         end
@@ -467,7 +467,7 @@ module Adapters
           attrs = attributes_from_thermal_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           thermal_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
@@ -487,7 +487,7 @@ module Adapters
 
           requirement = ::SunshineRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           sunshine_requirement_entity_from_record(requirement)
         end
@@ -497,7 +497,7 @@ module Adapters
           attrs = attributes_from_sunshine_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           sunshine_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
@@ -517,7 +517,7 @@ module Adapters
 
           requirement = ::NutrientRequirement.new(attrs)
           unless requirement.save
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           nutrient_requirement_entity_from_record(requirement)
         end
@@ -527,7 +527,7 @@ module Adapters
           attrs = attributes_from_nutrient_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise StandardError, requirement.errors.full_messages.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
           end
           nutrient_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound

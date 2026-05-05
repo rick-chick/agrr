@@ -27,6 +27,8 @@ module Domain
         rescue Domain::Crop::Exceptions::MissingTaskTemplatesForBlueprintRegeneration,
                Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue StandardError => e
           log_interactor_error(e)
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.task_schedule_blueprints_failed")))
