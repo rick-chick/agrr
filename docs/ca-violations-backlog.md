@@ -6,10 +6,13 @@
 
 1. **Application edge 1 / Sideways escape — `app/controllers/concerns/**` の `ActiveSupport::Concern` によるオーケストレーション共有**
    - レガシー負債。新規判断の追加禁止。段階的に `lib/domain` + 注入へ畳み込む。
-   - **残り（優先）**: `AgrrOptimization` の `ActiveSupport::Concern` 枠・薄いオーケストレーション委譲の段階的整理、および他 API 経路の concern（`cultivation_plan_api` の候補フロー・`Date.current`、`weather_data_management` 等）。
+   - **残り（優先）**: `extend ActiveSupport::Concern` が残る concern（例: `WeatherDataManagement`、`JobExecution`、`CultivationPlanManageable`、`DeletionUndoResponder`）。`CultivationPlanApi` / `AgrrOptimization` は **プレーン module** に整理済み（2026-05-06）。
 
 ## 解消済み（記録）
 
+- **`add_crop` 候補探索 — `FindBestAddCropCandidate` + CompositionRoot 配線**（2026-05-06）: `find_best_candidate_for_crop` 相当のオーケストレーションを `Domain::CultivationPlan::Services::FindBestAddCropCandidate` へ。AR プリロード・天候取得の寛い rescue・`AgrrCandidatesInteractor` 周辺の rescue は `CompositionRoot#find_best_add_crop_candidate_service` の Proc に閉じる。`RestAddCropOptimizationHostBridge` は当該サービスと `adjust_with_db_weather_interactor` を直呼び。`CultivationPlanRestAdjustThroughHostGateway` は `host_controller` 不要化。
+- **`AgrrOptimization` / `CultivationPlanApi` — `ActiveSupport::Concern` 外壳除去**（2026-05-06）: `extend ActiveSupport::Concern` と `include AgrrOptimization`（API 経路）を廃止。モジュールメソッドとしてデリゲーションのみ残す。
+- **`CompositionRoot.calendar_today` — 栽培計画 API / 天気 concern の基準日**（2026-05-06）: `Time.zone.today` の単一路を Composition Root に置き、`cultivation_plan_api`（候補窓・過去候補除外）と `weather_data_management`（取得期間・次年 12/31 基準）の `Date.current` 散乱を除去。Application edge 1 の concern 負債は上記「残り」に継続。
 - **`agrr_optimization` concern — `AgrrOptimizationPayloadBuilder` 配線と死蔵ラッパ削除**（2026-05-06）: `CompositionRoot.agrr_optimization_payload_builder` を追加し `build_*` は `LoggerGateway` 注入で生成（concern 内の `Adapters::*.new`／`Rails.logger` 直参照を廃止）。呼び出し参照のない `calculate_effective_planning_period` を削除（有効期間の算出は `AdjustWithDbWeatherPlanGateway#effective_planning_period` 等に集約済み）。Application edge 1 の残負債は concern 枠と他 concern。
 - **`agrr_optimization#adjust_with_db_weather` 主導線 — Interactor + Plan Gateway + CompositionRoot 配線**（2026-05-06）: オーケストレーションを `Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor` に集約。`AdjustWithDbWeatherPlanGateway` / `AdjustWithDbWeatherPlanActiveRecordGateway` / `AgrrOptimizationPayloadBuilder` でセッション・AR 写像をアダプターに閉じる。concern の `adjust_with_db_weather` は `CompositionRoot.adjust_with_db_weather_interactor` への委譲のみ。非本番デバッグ JSON は `CompositionRoot#adjust_with_db_weather_debug_dump`。
 - **`raise StandardError` の削減 — Crop/Pesticide agrr 連携・削除 Undo アダプター**（2026-05-06）: `Crop#to_agrr_requirement` / `associate_pests_from_agrr_output`、`Pesticide.from_agrr_output` の入力不備は `ArgumentError` に統一。`Farm` / `AgriculturalTask` / `Fertilize` の `destroy` で `DeletionUndo::Error` を `StandardError` に変換せず伝播（Interactor が捕捉）。

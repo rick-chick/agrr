@@ -22,6 +22,11 @@ module CompositionRoot
       @logger ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
     end
 
+    # アプリエッジでの「今日」（テストは Time.zone 旅行と整合）
+    def calendar_today
+      Time.zone.today
+    end
+
     def translator
       @translator ||= Adapters::Translators::RailsTranslator.new
     end
@@ -129,6 +134,13 @@ module CompositionRoot
         )
     end
 
+    def cultivation_plan_rest_field_mutation_gateway
+      Adapters::CultivationPlan::Gateways::CultivationPlanRestFieldMutationActiveRecordGateway.new(
+        events_gateway: cultivation_plan_rest_optimization_events_gateway,
+        logger: logger
+      )
+    end
+
     def adjust_with_db_weather_interactor(clock: Time.zone)
       Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.new(
         logger: logger,
@@ -200,6 +212,112 @@ module CompositionRoot
 
     def agrr_candidates_gateway
       @agrr_candidates_gateway ||= Agrr::CandidatesGateway.new
+    end
+
+    # add_crop 候補探索（旧 CultivationPlanApi#find_best_candidate_for_crop の主導線）
+    def find_best_add_crop_candidate_service(clock: Time.zone)
+      log = logger
+      gw = agrr_candidates_gateway
+
+      plan_loader = lambda do |plan|
+        ::CultivationPlan.includes(
+          :cultivation_plan_fields,
+          { cultivation_plan_crops: :crop },
+          { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: :crop } ] }
+        ).find(plan.id)
+      end
+
+      allocation_configs = lambda do |plan|
+        b = agrr_optimization_payload_builder(plan)
+        {
+          current_allocation: b.build_current_allocation(exclude_ids: []),
+          fields: b.build_fields_config,
+          crops: b.build_crops_config,
+          interaction_rules: b.build_interaction_rules
+        }
+      end
+
+      weather_for_candidates = lambda do |weather_location:, farm:, cultivation_plan:, target_end_date:|
+        wp = weather_prediction_interactor(weather_location: weather_location, farm: farm, clock: clock)
+        log.info "🔍 [Candidates] Weather target end date: #{target_end_date || 'N/A'}"
+        existing = wp.get_existing_prediction(
+          target_end_date: target_end_date,
+          cultivation_plan_weather: cultivation_plan_weather_dto_from(cultivation_plan)
+        )
+
+        weather_prediction_status = nil
+        weather_data = nil
+        if existing
+          weather_prediction_status = "cache_hit"
+          log.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor cache hit (target_end_date=#{target_end_date || 'N/A'})"
+          weather_data = existing[:data]
+        else
+          weather_prediction_status = "requesting_prediction"
+          log.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor cache miss - invoking prediction (target_end_date=#{target_end_date || 'N/A'})"
+          weather_info = wp.predict_for_cultivation_plan(
+            plan_weather: cultivation_plan_weather_dto_from(cultivation_plan),
+            target_end_date: target_end_date
+          )
+          weather_data = weather_info[:data]
+        end
+
+        if weather_data.is_a?(Hash) && weather_data["data"].is_a?(Hash) && weather_data["data"]["data"].is_a?(Array)
+          weather_data = weather_data["data"]
+        end
+
+        data_days = weather_data.is_a?(Hash) ? Array(weather_data["data"]).count : 0
+        log.info "📡 [Candidates] Domain::WeatherData::Interactors::WeatherPredictionInteractor result: status=#{weather_prediction_status} days=#{data_days}"
+        weather_data
+      rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
+             Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
+        log.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
+        raise
+      rescue ActiveRecord::ActiveRecordError \
+             , Agrr::BaseGatewayV2::ExecutionError \
+             , Agrr::BaseGatewayV2::ParseError \
+             , AgrrService::AgrrError \
+             , JSON::ParserError \
+             , JSON::GeneratorError \
+             , SystemCallError \
+             , IOError \
+             , SocketError => e
+        log.error "❌ [Candidates] Failed to get weather data: #{e.message}"
+        nil
+      end
+
+      candidates_invoker = lambda do |current_allocation:, fields:, crops:, crop:, weather_data:, planning_start:, planning_end:, interaction_rules:|
+        interactor = Domain::CultivationPlan::Interactors::AgrrCandidatesInteractor.new(
+          gateway: gw,
+          logger: log
+        )
+        ir = interaction_rules.empty? ? nil : interaction_rules
+        interactor.call(
+          current_allocation: current_allocation,
+          fields: fields,
+          crops: crops,
+          target_crop_id: crop.id,
+          weather_data: weather_data,
+          planning_start: planning_start,
+          planning_end: planning_end,
+          interaction_rules: ir
+        )
+      rescue Agrr::BaseGatewayV2::ExecutionError,
+             Agrr::BaseGatewayV2::ParseError,
+             Agrr::BaseGatewayV2::NoAllocationCandidatesError,
+             JSON::ParserError,
+             SystemCallError => e
+        log.error "❌ [Candidates] Failed to run candidates: #{e.message}"
+        []
+      end
+
+      Domain::CultivationPlan::Services::FindBestAddCropCandidate.new(
+        logger: log,
+        today: -> { clock.today },
+        plan_loader: plan_loader,
+        allocation_configs: allocation_configs,
+        weather_for_candidates: weather_for_candidates,
+        candidates_invoker: candidates_invoker
+      )
     end
 
     # 作物 AI API は作成のみ（update 用アダプタはない）。

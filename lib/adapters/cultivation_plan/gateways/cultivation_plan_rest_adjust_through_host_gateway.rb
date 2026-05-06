@@ -5,9 +5,8 @@ module Adapters
     module Gateways
       # adjust: / AgrrOptimization#adjust_with_db_weather へのブリッジ（単一 Authorized load）。
       class CultivationPlanRestAdjustThroughHostGateway < Domain::CultivationPlan::Gateways::CultivationPlanRestAdjustGateway
-        def initialize(host_controller:, logger:)
+        def initialize(logger:)
           super(logger: logger)
-          @host = host_controller
         end
 
         def execute(auth:, plan_id:, moves:)
@@ -26,10 +25,11 @@ module Adapters
             end
           end
 
-          @host.instance_variable_set(:@cultivation_plan, cultivation_plan)
-
           logger.info "🔧 [Adjust] Processed moves with type conversion: #{moves.inspect}"
-          adjust_hash = @host.adjust_with_db_weather(cultivation_plan, moves)
+          adjust_hash = CompositionRoot.adjust_with_db_weather_interactor.call(
+            plan_id: cultivation_plan.id,
+            moves: moves
+          )
           { kind: :adjust_result, adjust_hash: adjust_hash }
         rescue ActiveRecord::RecordNotFound
           { kind: :not_found }

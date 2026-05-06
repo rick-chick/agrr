@@ -10,9 +10,6 @@
 #
 # adjust_with_db_weather 内の失敗は HTTP ではなく { success:, message:, status: } ハッシュを返す（例外は種別ごとに rescue）。
 module AgrrOptimization
-  extend ActiveSupport::Concern
-
-
   # 現在の割り当てをAGRR形式に構築
   # @param cultivation_plan [CultivationPlan] 栽培計画
   # @param exclude_ids [Array<Integer>] 除外するfield_cultivationのIDリスト（デフォルト: []）
