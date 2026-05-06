@@ -10,14 +10,15 @@ module Presenters
           @fallback_location = fallback_location
           @delete_error_message_key = delete_error_message_key
           @in_use_message_key = in_use_message_key
+          @dual = Presenters::DeletionUndo::DualFormatResponder.new(
+            view: view,
+            fallback_location: fallback_location,
+            logger: view.logger
+          )
         end
 
         def on_success(entity)
-          @view.send(
-            :render_deletion_undo_response,
-            entity,
-            fallback_location: @fallback_location
-          )
+          @dual.render_scheduled_success(entity)
         end
 
         def on_failure(dto)
@@ -38,23 +39,11 @@ module Presenters
                 I18n.t(@delete_error_message_key, message: dto.detail_message.presence || "")
               end
 
-            @view.send(
-              :render_deletion_failure,
-              message: message,
-              fallback_location: @fallback_location
-            )
+            @dual.render_failure(message: message)
           elsif dto.respond_to?(:message)
-            @view.send(
-              :render_deletion_failure,
-              message: dto.message,
-              fallback_location: @fallback_location
-            )
+            @dual.render_failure(message: dto.message)
           else
-            @view.send(
-              :render_deletion_failure,
-              message: dto.to_s,
-              fallback_location: @fallback_location
-            )
+            @dual.render_failure(message: dto.to_s)
           end
         end
       end

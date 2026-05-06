@@ -162,7 +162,7 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     plan = create(:cultivation_plan, user: @user)
     delete plan_path(plan) # デフォルトはHTML
     # DeletionUndoはJSONを返す設計のため、HTMLは失敗時/異常時のフォールバックを検査
-    # 実装では render_deletion_undo_response がHTMLに対応していなければ、失敗ハンドリング側へ落ちる
+    # 実装では DualFormatResponder が HTML に対応していなければ、失敗ハンドリング側へ落ちる
     # ここでは「致命的にエラーにならず、適切なリダイレクトがある」ことのみ確認
     assert_response :redirect
     assert_match %r{/plans}, path

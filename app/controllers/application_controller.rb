@@ -164,54 +164,24 @@ class ApplicationController < ActionController::Base
     ]
   end
 
-  # 削除 Undo の JSON/HTML 応答（旧 DeletionUndoResponder）
-  def render_deletion_undo_response(event, fallback_location:, status: :ok)
-    raise DeletionUndo::Error, "DeletionUndoEvent must be present" unless event
+  # Presenter が controller を明示レシーバで呼ぶための公開フック（それ以外はこのクラスの private ブロックに従う）
+  public
 
-    if event.undo_token.blank?
-      Rails.logger.error("[DeletionUndo] Missing undo_token for #{event.resource_type}##{event.resource_id}")
-      raise DeletionUndo::Error, "Undo token could not be generated"
-    end
-
+  # 削除 Undo: Presenter が組み立てたペイロードをそのまま二形式で返す（業務フィールドの決定は lib/domain）
+  def render_deletion_undo_dual_success(json:, html_notice:, fallback_location:, status: :ok)
     respond_to do |format|
-      format.json do
-        resource_dom_id = resource_dom_id_for(event)
-        render json: {
-          undo_token: event.undo_token,
-          undo_deadline: event.metadata["undo_deadline"],
-          toast_message: event.toast_message,
-          undo_path: undo_deletion_path(undo_token: event.undo_token),
-          auto_hide_after: event.auto_hide_after,
-          resource: event.metadata["resource_label"],
-          redirect_path: fallback_location,
-          resource_dom_id: resource_dom_id
-        }, status: status
-      end
-
+      format.json { render json: json, status: status }
       format.html do
-        redirect_back fallback_location: fallback_location,
-                        notice: I18n.t("deletion_undo.redirect_notice", resource: event.metadata["resource_label"])
+        redirect_back fallback_location: fallback_location, notice: html_notice
       end
     end
   end
 
-  def resource_dom_id_for(event)
-    stored_dom_id = event.metadata["resource_dom_id"]
-    return stored_dom_id if stored_dom_id.present?
-
-    [
-      event.resource_type.demodulize.underscore,
-      event.resource_id
-    ].join("_")
-  end
-
-  def render_deletion_failure(message:, fallback_location:, status: :unprocessable_entity)
+  def render_deletion_undo_dual_failure(json:, html_alert:, fallback_location:, status: :unprocessable_entity)
     respond_to do |format|
-      format.json do
-        render json: { error: message }, status: status
-      end
+      format.json { render json: json, status: status }
       format.html do
-        redirect_back fallback_location: fallback_location, alert: message
+        redirect_back fallback_location: fallback_location, alert: html_alert
       end
     end
   end

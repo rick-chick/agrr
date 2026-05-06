@@ -7,24 +7,20 @@ module Presenters
       class CultivationPlanDestroyHtmlPresenter < Domain::CultivationPlan::Ports::CultivationPlanDestroyOutputPort
         def initialize(view:)
           @view = view
+          @dual = Presenters::DeletionUndo::DualFormatResponder.new(
+            view: view,
+            fallback_location: Rails.application.routes.url_helpers.plans_path,
+            logger: view.logger
+          )
         end
 
         def on_success(destroy_output_dto)
-          @view.send(
-            :render_deletion_undo_response,
-            destroy_output_dto.undo,
-            fallback_location: Rails.application.routes.url_helpers.plans_path
-          )
+          @dual.render_scheduled_success(destroy_output_dto.undo)
         end
 
         def on_failure(error_dto)
           message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          @view.send(
-            :render_deletion_failure,
-            message: message,
-            fallback_location: Rails.application.routes.url_helpers.plans_path,
-            status: failure_status_for(message)
-          )
+          @dual.render_failure(message: message, status: failure_status_for(message))
         end
 
         private
