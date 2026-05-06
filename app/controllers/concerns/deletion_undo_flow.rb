@@ -2,8 +2,6 @@
 
 # マスタ HTML 削除の薄い委譲のみ（ロジックは lib/deletion_undo/html_master_schedule_invoker.rb）。
 module DeletionUndoFlow
-  extend ActiveSupport::Concern
-
   private
 
   # @param record [ActiveRecord::Base] 削除対象（エッジで既に認可済みの前提。Gateway 側で actor と再照合）

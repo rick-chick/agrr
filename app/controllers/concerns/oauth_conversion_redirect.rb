@@ -2,8 +2,6 @@
 
 # Google 広告のコンバージョン計測用（OAuth 取得成功後のみフロントが検知するクエリ）。
 module OauthConversionRedirect
-  extend ActiveSupport::Concern
-
   private
 
   # @param url_string [String] FRONTEND_URL 許可リストに通過した後のオリジン付きフル URL

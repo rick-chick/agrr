@@ -4,8 +4,6 @@ require "digest"
 
 # ETag 付き JSON 応答（エントリ作物スケジュール API 共通）
 module EntryScheduleJsonRendering
-  extend ActiveSupport::Concern
-
   def render_entry_json_with_etag(payload)
     json_str = ActiveSupport::JSON.encode(payload)
     etag = Digest::SHA256.hexdigest(json_str)

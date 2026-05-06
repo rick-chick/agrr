@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module DeletionUndoResponder
-  extend ActiveSupport::Concern
-
   private
 
   def render_deletion_undo_response(event, fallback_location:, status: :ok)

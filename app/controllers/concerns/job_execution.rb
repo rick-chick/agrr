@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module JobExecution
-  extend ActiveSupport::Concern
-
   # NOTE: このモジュールは個別ジョブに依存させない設計とする
   # ジョブ固有の処理（フェーズ更新など）は各ジョブクラス内で実装する
   # このモジュールは汎用的なジョブチェーン実行のみを提供する

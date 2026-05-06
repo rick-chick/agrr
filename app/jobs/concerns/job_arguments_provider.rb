@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
+# プレーン Ruby モジュール（`ActiveSupport::Concern` は不要）
 module JobArgumentsProvider
-  extend ActiveSupport::Concern
-
   # 各ジョブで実装する必要があるメソッド
   # インスタンス変数をハッシュとして返す
   def job_arguments

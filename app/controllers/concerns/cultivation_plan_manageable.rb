@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# PlansControllerとPublicPlansControllerの共通機能を提供するConcern
+# PlansControllerとPublicPlansControllerの共通機能を提供するモジュール（プレーン Ruby）
 #
 # 使い方:
 # - plan_typeを定義: 'private' または 'public'
@@ -8,11 +8,8 @@
 # - redirect_pathを定義: エラー時のリダイレクト先パス
 # - find_cultivation_plan_scopeを実装: 計画を検索するスコープ
 module CultivationPlanManageable
-  extend ActiveSupport::Concern
-
-  included do
-    # サブクラスで定義すべきメソッドの例外
-    class_attribute :plan_type, :session_key, :redirect_path_method
+  def self.included(base)
+    base.class_attribute :plan_type, :session_key, :redirect_path_method
   end
 
   # 栽培計画を検索
