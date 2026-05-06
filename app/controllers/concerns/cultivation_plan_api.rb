@@ -123,9 +123,7 @@ module CultivationPlanApi
   end
 
   def cultivation_plan_rest_optimization_events_gateway
-    @cultivation_plan_rest_optimization_events_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanRestOptimizationEventsActionCableGateway.new(
-      logger: cultivation_plan_rest_logger
-    )
+    CompositionRoot.cultivation_plan_rest_optimization_events_gateway
   end
 
   def cultivation_plan_rest_field_mutation_gateway

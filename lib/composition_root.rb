@@ -118,6 +118,13 @@ module CompositionRoot
       )
     end
 
+    def cultivation_plan_rest_optimization_events_gateway
+      @cultivation_plan_rest_optimization_events_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanRestOptimizationEventsActionCableGateway.new(
+          logger: logger
+        )
+    end
+
     def api_private_plan_job_chain_enqueuer
       @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
         logger: logger,

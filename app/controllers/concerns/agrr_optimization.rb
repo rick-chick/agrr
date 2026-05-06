@@ -132,41 +132,12 @@ module AgrrOptimization
     )
   end
 
-  # Action Cable経由で最適化完了を通知
+  # Action Cable経由で最適化完了を通知（チャンネル選択・ブロードキャストはアダプター）
   def broadcast_optimization_complete(cultivation_plan, status: "completed")
-    Rails.logger.info "📡 [Action Cable] Broadcasting optimization #{status} for plan_id=#{cultivation_plan.id}"
-
-    # チャンネルクラスを決定（plan_typeに基づく）
-    channel_class = if cultivation_plan.plan_type_public?
-                      OptimizationChannel
-    else
-                      PlansOptimizationChannel
-    end
-
-    Rails.logger.info "📡 [Action Cable] Using channel: #{channel_class.name}"
-
-    channel_class.broadcast_to(
-      cultivation_plan,
-      {
-        status: status,
-        message: I18n.t("optimization.messages.#{status}"),
-        total_profit: cultivation_plan.total_profit,
-        total_revenue: cultivation_plan.total_revenue,
-        total_cost: cultivation_plan.total_cost,
-        field_cultivations_count: cultivation_plan.field_cultivations.count
-      }
+    CompositionRoot.cultivation_plan_rest_optimization_events_gateway.broadcast_optimization_complete(
+      plan: cultivation_plan,
+      status: status
     )
-
-    Rails.logger.info "✅ [Action Cable] Broadcast sent successfully"
-  rescue Timeout::Error,
-         IOError,
-         SystemCallError,
-         JSON::GeneratorError => e
-    # ブロードキャストの失敗はデータベーストランザクションの成功に影響を与えない
-    # データベースへの保存は既に完了しているため、エラーをログに記録するのみ
-    Rails.logger.error "❌ [Action Cable] Broadcast failed for plan_id=#{cultivation_plan.id}: #{e.class} - #{e.message}"
-    Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
-    # エラーを再発生させない（データベーストランザクションは成功しているため）
   end
 
 
