@@ -43,9 +43,9 @@ module Adapters
             error_message = new_farm.errors.full_messages.join(", ")
             Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
             if new_farm.errors.details[:user].any? { |e| e[:error] == :farm_limit_exceeded }
-              raise StandardError, I18n.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
+              raise Domain::Shared::Exceptions::RecordInvalid, I18n.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
             end
-            raise StandardError, error_message
+            raise Domain::Shared::Exceptions::RecordInvalid, error_message
           end
 
           Rails.logger.info I18n.t("services.plan_save_service.messages.farm_created", farm_name: new_farm.name)

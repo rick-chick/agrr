@@ -4,6 +4,12 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
+        RELOAD_BUNDLE_RESCUES = [
+          Domain::Shared::Policies::PolicyPermissionDenied,
+          Domain::Shared::Exceptions::RecordNotFound,
+          Domain::Shared::Exceptions::RecordInvalid
+        ].freeze
+
         def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
@@ -34,7 +40,7 @@ module Domain
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != @gateway.find_authorized_for_edit(user, input_dto.pest_id).is_reference && !user.admin?
-              raise StandardError, @translator.t("pests.flash.reference_flag_admin_only")
+              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pests.flash.reference_flag_admin_only"))
             end
             attrs[:is_reference] = is_reference
           end
@@ -47,18 +53,26 @@ module Domain
 
           @logger.info "PestUpdateInteractor: on_success called with pest_entity.id = #{pest_entity.id}"
           @output_port.on_success(pest_entity)
-        rescue StandardError => e
-          reload_bundle = nil
-          if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.pest_id)
-            begin
-              reload_bundle = @gateway.find_authorized_pest_loaded_bundle!(user, input_dto.pest_id.to_i, for_edit: true)
-            rescue StandardError
-              reload_bundle = nil
-            end
-          end
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @output_port.on_failure(e)
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(
-            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle)
+            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto))
           )
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @output_port.on_failure(
+            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto))
+          )
+        end
+
+        private
+
+        def reload_bundle_for_failure(user, input_dto)
+          return nil unless user && !Domain::Shared::ValidationHelpers.blank?(input_dto.pest_id)
+
+          @gateway.find_authorized_pest_loaded_bundle!(user, input_dto.pest_id.to_i, for_edit: true)
+        rescue *RELOAD_BUNDLE_RESCUES
+          nil
         end
       end
     end

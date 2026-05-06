@@ -32,9 +32,13 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Field cultivation not found: #{e.message}")
           @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue StandardError => e
-          @logger.error("[FieldCultivationClimateDataInteractor] Unexpected error: #{e.class}: #{e.message}")
-          @logger.error(e.backtrace.join("\n")) if e.backtrace
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.warn("[FieldCultivationClimateDataInteractor] Record invalid: #{e.message}")
+          @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
+               Domain::FieldCultivation::Errors::NoCultivationPeriodError,
+               Domain::FieldCultivation::Errors::WeatherPayloadInvalidError => e
+          @logger.warn("[FieldCultivationClimateDataInteractor] Climate precondition: #{e.class}: #{e.message}")
           @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
 
@@ -47,22 +51,15 @@ module Domain
               display_start_date: display_start_date,
               display_end_date: display_end_date
             )
-          rescue StandardError => e
-            if fallback_trigger?(e)
-              @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{field_cultivation_id}"
-              @gateway.climate_data_fallback_dto(
-                field_cultivation_id: field_cultivation_id,
-                display_start_date: display_start_date,
-                display_end_date: display_end_date
-              )
-            else
-              raise
-            end
+          rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
+                 Domain::FieldCultivation::Errors::NoCultivationPeriodError => e
+            @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{field_cultivation_id} (#{e.class})"
+            @gateway.climate_data_fallback_dto(
+              field_cultivation_id: field_cultivation_id,
+              display_start_date: display_start_date,
+              display_end_date: display_end_date
+            )
           end
-        end
-
-        def fallback_trigger?(error)
-          error.message.include?("weather_format_invalid") || error.message.include?("no_weather_data") || error.message.include?("no_cultivation_period")
         end
 
         def apply_display_range(climate_data, display_start_date, display_end_date)

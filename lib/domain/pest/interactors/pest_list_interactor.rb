@@ -17,7 +17,7 @@ module Domain
           user = @user_lookup.find(@user_id)
           pests = @gateway.list_index_for_user(user)
           @output_port.on_success(pests)
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

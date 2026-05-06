@@ -33,7 +33,7 @@ module Adapters
           ensure_cultivation_period!(field_cultivation)
 
           crop = fetch_crop(field_cultivation, plan_type_public: plan.plan_type_public?)
-          raise ActiveRecord::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
+          raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("api.errors.crop_not_found") unless crop
 
           weather_payload = fetch_weather_payload(plan, farm, display_start_date: display_start_date, display_end_date: display_end_date, cultivation_period: field_cultivation)
           ensure_weather_payload!(plan, weather_payload)
@@ -68,7 +68,7 @@ module Adapters
             progress_records: progress_records
           )
         rescue PolicyPermissionDenied
-          raise ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         def climate_data_fallback_dto(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
@@ -126,7 +126,7 @@ module Adapters
             progress_records: progress_records
           )
         rescue PolicyPermissionDenied
-          raise ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         private
@@ -173,7 +173,11 @@ module Adapters
         end
 
         def find_authorized_field_cultivation(field_cultivation_id)
-          field_cultivation = ::FieldCultivation.find(field_cultivation_id)
+          field_cultivation = begin
+            ::FieldCultivation.find(field_cultivation_id)
+          rescue ActiveRecord::RecordNotFound
+            raise Domain::Shared::Exceptions::RecordNotFound
+          end
           plan = field_cultivation.cultivation_plan
           if plan.plan_type_public?
             PlanPolicy.find_public!(plan.id)
@@ -186,13 +190,13 @@ module Adapters
         def ensure_weather_location!(farm)
           return if farm&.weather_location
 
-          raise StandardError, @translator.t("api.errors.no_weather_data")
+          raise Domain::FieldCultivation::Errors::NoWeatherLocationError, @translator.t("api.errors.no_weather_data")
         end
 
         def ensure_cultivation_period!(field_cultivation)
           return if field_cultivation.start_date && field_cultivation.completion_date
 
-          raise StandardError, @translator.t("api.errors.no_cultivation_period")
+          raise Domain::FieldCultivation::Errors::NoCultivationPeriodError, @translator.t("api.errors.no_cultivation_period")
         end
 
         def fetch_crop(field_cultivation, plan_type_public:)
@@ -299,7 +303,7 @@ module Adapters
           return if weather_payload && weather_payload["data"]
 
           @logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
-          raise StandardError, @translator.t("controllers.field_cultivations.errors.weather_format_invalid")
+          raise Domain::FieldCultivation::Errors::WeatherPayloadInvalidError, @translator.t("controllers.field_cultivations.errors.weather_format_invalid")
         end
 
         def merge_with_observed_data(cached_weather_payload, weather_location, display_start_date, display_end_date, cultivation_period = nil)

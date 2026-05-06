@@ -24,7 +24,7 @@ module Adapters
             planning_end_date: Date.new(Date.current.year + 1, 12, 31)
           )
           unless result.success?
-            raise StandardError, result.errors.join(", ")
+            raise Domain::Shared::Exceptions::RecordInvalid, result.errors.join(", ")
           end
 
           result
@@ -79,6 +79,12 @@ module Adapters
             entity = Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(ctx.cultivation_plan.reload)
             Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(cultivation_plan: entity, errors: [])
           end
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid.new(
+            e.message,
+            errors: e.record&.errors&.full_messages,
+            record: e.record
+          )
         rescue StandardError => e
           # アダプタ境界: 永続化の例外を Result に畳み、Interactor が on_failure へ載せられるようにする（domain は AR を掴まない）。
           Rails.logger.error "❌ CultivationPlan creation failed: #{e.message}"
@@ -194,7 +200,7 @@ module Adapters
         # @param plan_id [Integer] 削除する計画のID
         # @param user [User] 削除を実行するユーザー（所有権チェックに使用）
         # @return [DeletionUndoEvent] DeletionUndo::Manager.schedule が返すイベント
-        # @raise [StandardError] 削除に失敗した場合（RecordNotFound, InvalidForeignKey, DeleteRestrictionError, DeletionUndo::Error 等）
+        # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, DeletionUndo::Error] 等
         def destroy(plan_id, user)
           plan_model = PlanPolicy.find_private_owned!(user, plan_id)
 
@@ -295,7 +301,7 @@ module Adapters
           return cpc.id if cpc
 
           available = plan.cultivation_plan_crops.pluck(:crop_id, :name)
-          raise StandardError,
+          raise Domain::CultivationPlan::Errors::CultivationPlanCropMissingError,
                 "CultivationPlanCrop not found for crop_id: #{crop_id}. This indicates a data integrity issue. Available CultivationPlanCrops: #{available.inspect}"
         end
 

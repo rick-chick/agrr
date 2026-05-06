@@ -72,6 +72,9 @@ module Adapters
           { kind: :success, field_id: field_id, total_area: cultivation_plan.total_area }
         rescue ActiveRecord::RecordNotFound
           { kind: :not_found }
+        rescue ActiveRecord::RecordInvalid => e
+          logger.error "❌ [Remove Field] Record invalid: #{e.message}"
+          { kind: :record_invalid, message: e.message }
         rescue StandardError => e
           logger.error "❌ [Remove Field] Error: #{e.message}"
           { kind: :unexpected, message: e.message }

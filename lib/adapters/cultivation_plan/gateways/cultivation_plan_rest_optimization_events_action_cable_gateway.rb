@@ -19,6 +19,8 @@ module Adapters
               total_area: total_area
             }
           )
+        rescue ActiveRecord::RecordInvalid => e
+          @logger.error "❌ [Action Cable field_added] plan_id=#{plan&.id} (validation): #{e.message}"
         rescue StandardError => e
           @logger.error "❌ [Action Cable field_added] plan_id=#{plan&.id}: #{e.message}"
         end
@@ -33,6 +35,8 @@ module Adapters
               total_area: total_area
             }
           )
+        rescue ActiveRecord::RecordInvalid => e
+          @logger.error "❌ [Action Cable field_removed] plan_id=#{plan&.id} (validation): #{e.message}"
         rescue StandardError => e
           @logger.error "❌ [Action Cable field_removed] plan_id=#{plan&.id}: #{e.message}"
         end

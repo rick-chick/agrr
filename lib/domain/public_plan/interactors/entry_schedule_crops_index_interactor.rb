@@ -60,8 +60,8 @@ module Domain
           @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.prediction_payload_missing)
         rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
           @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_prediction_failed(e.message))
-        rescue StandardError => e
-          @logger.error("[EntryScheduleCropsIndexInteractor] #{e.class}: #{e.message}")
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.error("[EntryScheduleCropsIndexInteractor] RecordInvalid: #{e.message}")
           @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.internal_error(e.message))
         end
 

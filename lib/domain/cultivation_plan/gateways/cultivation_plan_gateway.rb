@@ -93,7 +93,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement upsert_cultivation_plan_field"
         end
 
-        # @raise [StandardError] 見つからない場合（データ不整合）
+        # @raise [Domain::CultivationPlan::Errors::CultivationPlanCropMissingError] 紐付けが無い場合（データ不整合）
         def find_plan_crop_id_by_crop_id!(plan_id, crop_id)
           raise NotImplementedError, "Subclasses must implement find_plan_crop_id_by_crop_id!"
         end

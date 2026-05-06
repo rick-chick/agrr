@@ -19,7 +19,7 @@ module Domain
           # is_referenceをbooleanに変換
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, @translator.t("pests.flash.reference_only_admin")
+            raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pests.flash.reference_only_admin"))
           end
 
           attrs = {
@@ -45,7 +45,7 @@ module Domain
           end
 
           @output_port.on_success(pest_entity)
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

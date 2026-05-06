@@ -33,7 +33,7 @@ module Adapters
             is_reference: true,
             user_id: nil
           )
-          raise StandardError, fertilize.errors.full_messages.join(", ") unless fertilize.save
+          raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.save
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end

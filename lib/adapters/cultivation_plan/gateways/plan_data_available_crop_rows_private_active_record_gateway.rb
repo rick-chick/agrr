@@ -18,6 +18,9 @@ module Adapters
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PlanDataAvailableCropRowsPrivate] #{e.message}")
           []
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.error("[PlanDataAvailableCropRowsPrivate] record_invalid: #{e.message}")
+          []
         rescue StandardError => e
           @logger.error("[PlanDataAvailableCropRowsPrivate] #{e.message}")
           []

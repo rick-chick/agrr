@@ -72,13 +72,13 @@ module Adapters
                 else
                   error_message = "Pest uniqueness constraint violation but existing pest not found: source_pest_id=#{reference_pest.id}, user_id=#{@ctx.user.id}, error_messages=#{error_messages.join(', ')}"
                   Rails.logger.error "❌ [PlanSaveService] #{error_message}"
-                  raise StandardError, error_message
+                  raise Domain::Shared::Exceptions::RecordInvalid, error_message
                 end
               end
 
               error_message = error_messages.join(", ")
               Rails.logger.error "❌ [PlanSaveService] Pest creation failed: #{error_message} (keys: #{error_keys.inspect})"
-              raise StandardError, error_message
+              raise Domain::Shared::Exceptions::RecordInvalid, error_message
             end
 
             copy_pest_profiles(reference_pest, new_pest)

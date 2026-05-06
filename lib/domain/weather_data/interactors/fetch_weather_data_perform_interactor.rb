@@ -203,7 +203,14 @@ module Domain
         end
 
         def determine_data_source(farm_id, latitude:, longitude:)
-          farm_entity = farm_id && @farm_gateway.find_by_id(farm_id) rescue nil
+          farm_entity =
+            if farm_id
+              begin
+                @farm_gateway.find_by_id(farm_id)
+              rescue Domain::Shared::Exceptions::RecordNotFound
+                nil
+              end
+            end
 
           if farm_entity
             return "jma" if farm_entity.region == "jp"

@@ -33,6 +33,9 @@ module Adapters
           { kind: :adjust_result, adjust_hash: adjust_hash }
         rescue ActiveRecord::RecordNotFound
           { kind: :not_found }
+        rescue ActiveRecord::RecordInvalid => e
+          logger.error "❌ [Adjust] Record invalid: #{e.message}"
+          { kind: :record_invalid, message: e.message }
         rescue StandardError => e
           logger.error "❌ [Adjust] Error: #{e.message}"
           { kind: :unexpected, message: e.message }

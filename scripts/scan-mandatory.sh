@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# 全体スキャン用の固定 rg 呼び出し（.cursor/skills/.../references/mandatory-scan.md の表に準拠）。
+# 全体スキャン用の固定 rg 呼び出し（.cursor/skills/clean-architecture-violation-fix-workflow/SKILL.md セクション0「全体スキャン」の表に準拠）。
 # 使い方:
 #   ./scripts/scan-mandatory.sh           … 全量（デフォルト）
-#   ./scripts/scan-mandatory.sh --paths DIR [DIR ...] … 各 rg の末尾パスを差し替え（増分は agent-operational-canonical / mandatory-scan の条件を満たすときのみ）
+#   ./scripts/scan-mandatory.sh --paths DIR [DIR ...] … 各 rg の末尾パスを差し替え（増分は references/agent-operational-canonical.md#incremental-scan の条件を満たすときのみ）
 # ripgrep: exit 0 = 一致あり, 1 = 一致なし, 2 = エラー。本スクリプトは最後に集計し、rg エラー時のみ非ゼロで終了。
 
 set -u
@@ -41,7 +41,7 @@ rg_scan() {
 
 failed=0
 
-# Rails / backend（mandatory-scan.md の rg 例に準拠）
+# Rails / backend（SKILL.md セクション0「全体スキャン」表の rg 例に準拠）
 rg_scan "rescue StandardError|Exception" 'rescue\s+(StandardError|Exception)\b' lib/domain app/controllers app/jobs app/channels lib/presenters || failed=1
 rg_scan "rescue ActiveRecord::" 'rescue\s+ActiveRecord::' lib/domain app/controllers app/channels app/jobs || failed=1
 rg_scan "rescue_from" '\brescue_from\b' app/controllers || failed=1
@@ -50,7 +50,7 @@ rg_scan "Rails.|Date.current|Time..." '\b(Rails\.|Date\.current|Time\.current|Ti
 rg_scan "AR-style calls in domain" '\b(\.where\(|\.find_by|persisted\?|validate!|save!|update!|destroy!)' lib/domain || failed=1
 rg_scan "ActiveSupport::Concern in app" 'extend\s+ActiveSupport::Concern' app || failed=1
 
-# Frontend（mandatory-scan.md「Frontend」節の姿勢に沿った最低限）
+# Frontend（SKILL.md セクション0「全体スキャン → Frontend」節の姿勢に沿った最低限）
 rg_scan "usecase -> adapters import" "from ['\"].*adapters/" frontend/src/app/usecase || failed=1
 rg_scan "domain HttpClient|@angular" '(HttpClient|@angular/)' frontend/src/app/domain || failed=1
 

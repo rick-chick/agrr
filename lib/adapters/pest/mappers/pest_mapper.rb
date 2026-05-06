@@ -19,6 +19,8 @@ module Adapters
             created_at: record.created_at,
             updated_at: record.updated_at
           )
+        rescue ArgumentError => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
 
         def self.detail_output_dto_from_record(record)

@@ -39,7 +39,7 @@ module Adapters
             unless new_fertilize.save
               error_message = new_fertilize.errors.full_messages.join(", ")
               Rails.logger.error "❌ [PlanSaveService] Fertilize creation failed: #{error_message}"
-              raise StandardError, error_message
+              raise Domain::Shared::Exceptions::RecordInvalid, error_message
             end
 
             user_fertilizes << new_fertilize

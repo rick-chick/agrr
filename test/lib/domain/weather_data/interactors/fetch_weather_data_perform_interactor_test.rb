@@ -118,6 +118,12 @@ module Domain
           assert_equal "noaa", @interactor.send(:determine_data_source, nil, latitude: 37.0, longitude: 127.0)
         end
 
+        test "determine_data_source ignores missing farm record and falls back to coordinates" do
+          @farm_gateway.stubs(:find_by_id).with(1).raises(Domain::Shared::Exceptions::RecordNotFound.new("missing"))
+          assert_equal "jma", @interactor.send(:determine_data_source, 1, latitude: 35.0, longitude: 139.0)
+          assert_equal "noaa", @interactor.send(:determine_data_source, 1, latitude: 37.0, longitude: 127.0)
+        end
+
         test "raises on empty data response" do
           @cultivation_plan_gateway.expects(:update_phase).once # start & complete
           weather_location = mock("weather_location")

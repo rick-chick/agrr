@@ -243,15 +243,13 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure when unexpected error occurs" do
+        test "propagates unexpected error from find_farm_size" do
           farm = create(:farm)
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, nil) { raise StandardError, "Database error" }
 
-          received = nil
           output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) { |arg| received = arg }
 
           interactor = PublicPlanCreateInteractor.new(
             output_port: output_port,
@@ -267,12 +265,11 @@ module Domain
             session_id: "session123"
           )
 
-          interactor.call(input_dto)
+          assert_raises(StandardError, "Database error") do
+            interactor.call(input_dto)
+          end
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
-          assert_includes received.message, "Database error"
           gateway.verify
-          output_port.verify
         end
 
         private

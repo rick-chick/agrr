@@ -78,6 +78,9 @@ module Adapters
         rescue ActiveRecord::RecordInvalid => e
           logger.error "❌ [Add Crop] Record invalid: #{e.message}"
           { kind: :record_invalid, message: e.message }
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          logger.error "❌ [Add Crop] Domain record invalid: #{e.message}"
+          { kind: :record_invalid, message: e.message }
         rescue StandardError => e
           logger.error "❌ [Add Crop] Error: #{e.message}"
           logger.error e.backtrace.join("\n")

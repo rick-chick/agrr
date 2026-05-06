@@ -69,6 +69,8 @@ module Adapters
         def find_by_id(farm_id)
           farm = ::Farm.find(farm_id)
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def create(create_input_dto)
@@ -278,6 +280,8 @@ module Adapters
           { success: true, undo_entity: event, farm_name: farm_name }
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         rescue StandardError => e
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end

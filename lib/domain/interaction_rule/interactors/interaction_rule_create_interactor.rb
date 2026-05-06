@@ -26,7 +26,7 @@ module Domain
           })
 
           @output_port.on_success(rule_entity)
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

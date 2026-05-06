@@ -99,7 +99,7 @@ module Adapters
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
           pest = ::Pest.new(h)
-          raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
+          raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless pest.save
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         end
@@ -121,7 +121,7 @@ module Adapters
                      pest.pest_thermal_requirement&.valid? != false &&
                      pest.pest_control_methods.all? { |method| method.valid? }
           end
-          raise StandardError, pest.errors.full_messages.join(", ") unless success
+          raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless success
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         end
@@ -250,7 +250,7 @@ module Adapters
             occurrence_season: create_input_dto.occurrence_season,
             region: create_input_dto.region
           )
-          raise StandardError, pest.errors.full_messages.join(", ") unless pest.save
+          raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless pest.save
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         end
@@ -267,7 +267,7 @@ module Adapters
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
 
           pest.update(attrs)
-          raise StandardError, pest.errors.full_messages.join(", ") if pest.errors.any?
+          raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") if pest.errors.any?
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         rescue ActiveRecord::RecordNotFound

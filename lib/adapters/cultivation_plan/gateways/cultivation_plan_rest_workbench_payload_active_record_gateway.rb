@@ -77,6 +77,9 @@ module Adapters
           { kind: :success, body: body }
         rescue ActiveRecord::RecordNotFound
           { kind: :not_found }
+        rescue ActiveRecord::RecordInvalid => e
+          logger.error "❌ [Data] Record invalid: #{e.message}"
+          { kind: :record_invalid, message: e.message }
         rescue ActiveRecord::ActiveRecordError => e
           logger.error "❌ [Data] ActiveRecord error: #{e.message}"
           { kind: :unexpected, message: e.message }

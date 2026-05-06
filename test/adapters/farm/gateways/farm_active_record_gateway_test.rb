@@ -55,8 +55,8 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal "テスト農場", entity.name
   end
 
-  test "should raise when farm not found" do
-    assert_raises(ActiveRecord::RecordNotFound) do
+  test "should raise domain RecordNotFound when farm not found" do
+    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
       @gateway.find_by_id(9999)
     end
   end

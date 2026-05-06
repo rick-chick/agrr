@@ -53,7 +53,7 @@ module Adapters
             unless new_task.save
               error_message = new_task.errors.full_messages.join(", ")
               Rails.logger.error "❌ [PlanSaveService] Agricultural task creation failed: #{error_message}"
-              raise StandardError, error_message
+              raise Domain::Shared::Exceptions::RecordInvalid, error_message
             end
 
             copy_agricultural_task_crop_relationships(reference_task, new_task, crop_mapper)

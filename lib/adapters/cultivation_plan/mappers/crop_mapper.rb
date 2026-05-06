@@ -16,7 +16,7 @@ module Adapters
 
         def create_user_crops_from_plan
           plan_id = @ctx.session_data[:plan_id] || @ctx.session_data["plan_id"]
-          raise StandardError, "plan_id is required to derive crops" unless plan_id
+          raise Domain::Shared::Exceptions::RecordInvalid, "plan_id is required to derive crops" unless plan_id
 
           reference_plan = ::CultivationPlan.includes(cultivation_plan_crops: [ crop: { crop_stages: [ :temperature_requirement, :sunshine_requirement, :thermal_requirement ] } ]).find(plan_id)
 

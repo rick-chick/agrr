@@ -34,7 +34,7 @@ module Adapters
             region: create_input_dto.region,
             is_reference: create_input_dto.is_reference
           )
-          raise StandardError, rule.errors.full_messages.join(", ") unless rule.save
+          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.save
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end

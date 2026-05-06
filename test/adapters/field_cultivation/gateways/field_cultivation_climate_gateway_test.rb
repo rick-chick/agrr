@@ -152,7 +152,7 @@ module Adapters
             prediction_gateway: CompositionRoot.prediction_gateway
           )
 
-          assert_raises(ActiveRecord::RecordNotFound) do
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
             gateway.fetch_field_cultivation_climate_data(field_cultivation_id: 999_999)
           end
         end

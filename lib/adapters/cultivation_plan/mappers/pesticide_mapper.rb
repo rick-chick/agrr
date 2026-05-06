@@ -54,7 +54,7 @@ module Adapters
             unless new_pesticide.save
               error_message = new_pesticide.errors.full_messages.join(", ")
               Rails.logger.error "❌ [PlanSaveService] Pesticide creation failed: #{error_message}"
-              raise StandardError, error_message
+              raise Domain::Shared::Exceptions::RecordInvalid, error_message
             end
 
             copy_pesticide_usage_constraint(reference_pesticide, new_pesticide)

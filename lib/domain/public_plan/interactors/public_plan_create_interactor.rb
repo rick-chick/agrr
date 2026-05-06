@@ -75,9 +75,8 @@ module Domain
           # 成功レスポンスを返す
           success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: plan_id)
           @output_port.on_success(success_dto)
-        rescue StandardError => e
-          @logger.error "❌ [PublicPlanCreateInteractor] Unexpected error: #{e.class} - #{e.message}"
-          @logger.error e.backtrace.join("\n")
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.warn "❌ [PublicPlanCreateInteractor] Validation: #{e.message}"
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end
