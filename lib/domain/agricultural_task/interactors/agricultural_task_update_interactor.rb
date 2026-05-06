@@ -41,9 +41,6 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
           false
-        rescue StandardError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-          false
         end
       end
     end
