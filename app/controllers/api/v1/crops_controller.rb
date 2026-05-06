@@ -17,26 +17,31 @@ module Api
           return render json: { error: I18n.t("api.errors.crops.name_required") }, status: :bad_request
         end
 
-        begin
-          # AGRR から作物情報を取得（テストではこのメソッドを差し替えて固定レスポンスを返す）
-          crop_info = fetch_crop_info_from_agrr(crop_name)
-
-          service = CropAiUpsertService.new(
-            user: current_user,
-            create_interactor: @create_interactor,
-            crop_gateway: CompositionRoot.crop_gateway
-          )
-
-          result = service.call(crop_name: crop_name, variety: variety, crop_info: crop_info)
-          render json: result.body, status: result.status
-        rescue AgrrService::AgrrError => e
-          Rails.logger.error "❌ [AI Crop] Error: #{e.message}"
-          Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: I18n.t("api.errors.crops.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
+        crop_info, agrr_failure = fetch_crop_info_from_agrr_with_handled_errors(crop_name)
+        if agrr_failure
+          return render json: { error: agrr_failure.fetch(:message) }, status: agrr_failure.fetch(:status)
         end
+
+        service = CropAiUpsertService.new(
+          user: current_user,
+          create_interactor: @create_interactor,
+          crop_gateway: CompositionRoot.crop_gateway
+        )
+
+        result = service.call(crop_name: crop_name, variety: variety, crop_info: crop_info)
+        render json: result.body, status: result.status
       end
 
       private
+
+      def fetch_crop_info_from_agrr_with_handled_errors(crop_name)
+        [ fetch_crop_info_from_agrr(crop_name), nil ]
+      rescue AgrrService::AgrrError => e
+        Rails.logger.error "❌ [AI Crop] Error: #{e.message}"
+        Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
+        message = I18n.t("api.errors.crops.fetch_failed_with_reason", message: e.message)
+        [ nil, { message: message, status: :internal_server_error } ]
+      end
 
       def set_interactors
         @create_interactor = CompositionRoot.crop_create_for_ai_adapter(user_id: current_user.id)

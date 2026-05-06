@@ -102,7 +102,7 @@ module Api
             render json: { error: result.error }, status: :unprocessable_entity
           end
 
-        rescue AgrrService::AgrrError, ArgumentError, RuntimeError => e
+        rescue AgrrService::AgrrError => e
           Rails.logger.error "❌ [AI Fertilize] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
           render json: { error: I18n.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
@@ -177,7 +177,7 @@ module Api
             render json: { error: result.error }, status: :unprocessable_entity
           end
 
-        rescue AgrrService::AgrrError, ArgumentError, RuntimeError => e
+        rescue AgrrService::AgrrError => e
           Rails.logger.error "❌ [AI Fertilize] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
           render json: { error: I18n.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
