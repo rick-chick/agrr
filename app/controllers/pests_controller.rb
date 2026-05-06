@@ -47,14 +47,6 @@ class PestsController < ApplicationController
 
   # PATCH/PUT /pests/:id
   def update
-    if pest_params.key?(:is_reference) && !current_user.admin?
-      requested = ActiveModel::Type::Boolean.new.cast(pest_params[:is_reference])
-      if requested != @pest.is_reference
-        redirect_to pest_path(@pest), alert: I18n.t("pests.flash.reference_flag_admin_only")
-        return
-      end
-    end
-
     input_dto = Domain::Pest::Dtos::PestUpdateInputDto.from_hash(
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] },
       params[:id]
