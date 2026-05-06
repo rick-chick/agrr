@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InteractionRuleEditComponent } from './interaction-rule-edit.component';
 import { AuthService } from '../../../services/auth.service';
-import { InteractionRuleEditPresenter } from '../../../adapters/interaction-rules/interaction-rule-edit.presenter';
+import { InteractionRuleEditPresenter } from '../../../usecase/interaction-rules/interaction-rule-edit.providers';
 import { LoadInteractionRuleForEditUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-for-edit.usecase';
 import { UpdateInteractionRuleUseCase } from '../../../usecase/interaction-rules/update-interaction-rule.usecase';
 

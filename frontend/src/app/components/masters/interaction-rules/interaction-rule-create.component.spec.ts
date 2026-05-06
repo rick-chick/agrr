@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of } from 'rxjs';
 
 import { InteractionRuleCreateComponent } from './interaction-rule-create.component';
-import { InteractionRuleCreatePresenter } from '../../../adapters/interaction-rules/interaction-rule-create.presenter';
+import { InteractionRuleCreatePresenter } from '../../../usecase/interaction-rules/interaction-rule-create.providers';
 import { CreateInteractionRuleUseCase } from '../../../usecase/interaction-rules/create-interaction-rule.usecase';
 import { CREATE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/create-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';

@@ -8,11 +8,10 @@ import {
 } from './interaction-rule-list.view';
 import { LoadInteractionRuleListUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-list.usecase';
 import { DeleteInteractionRuleUseCase } from '../../../usecase/interaction-rules/delete-interaction-rule.usecase';
-import { InteractionRuleListPresenter } from '../../../adapters/interaction-rules/interaction-rule-list.presenter';
-import { LOAD_INTERACTION_RULE_LIST_OUTPUT_PORT } from '../../../usecase/interaction-rules/load-interaction-rule-list.output-port';
-import { DELETE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/delete-interaction-rule.output-port';
-import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
-import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
+import {
+  InteractionRuleListPresenter,
+  INTERACTION_RULE_LIST_PROVIDERS
+} from '../../../usecase/interaction-rules/interaction-rule-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -26,20 +25,7 @@ const initialControl: InteractionRuleListViewState = {
   selector: 'app-interaction-rule-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    InteractionRuleListPresenter,
-    LoadInteractionRuleListUseCase,
-    DeleteInteractionRuleUseCase,
-    {
-      provide: LOAD_INTERACTION_RULE_LIST_OUTPUT_PORT,
-      useExisting: InteractionRuleListPresenter
-    },
-    {
-      provide: DELETE_INTERACTION_RULE_OUTPUT_PORT,
-      useExisting: InteractionRuleListPresenter
-    },
-    { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
-  ],
+  providers: [...INTERACTION_RULE_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

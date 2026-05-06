@@ -5,11 +5,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { InteractionRuleDetailView, InteractionRuleDetailViewState } from './interaction-rule-detail.view';
 import { LoadInteractionRuleDetailUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-detail.usecase';
 import { DeleteInteractionRuleUseCase } from '../../../usecase/interaction-rules/delete-interaction-rule.usecase';
-import { InteractionRuleDetailPresenter } from '../../../adapters/interaction-rules/interaction-rule-detail.presenter';
-import { LOAD_INTERACTION_RULE_DETAIL_OUTPUT_PORT } from '../../../usecase/interaction-rules/load-interaction-rule-detail.output-port';
-import { DELETE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/delete-interaction-rule.output-port';
-import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
-import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
+import {
+  InteractionRuleDetailPresenter,
+  INTERACTION_RULE_DETAIL_PROVIDERS
+} from '../../../usecase/interaction-rules/interaction-rule-detail.providers';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
@@ -21,14 +20,7 @@ const initialControl: InteractionRuleDetailViewState = {
   selector: 'app-interaction-rule-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    InteractionRuleDetailPresenter,
-    LoadInteractionRuleDetailUseCase,
-    DeleteInteractionRuleUseCase,
-    { provide: LOAD_INTERACTION_RULE_DETAIL_OUTPUT_PORT, useExisting: InteractionRuleDetailPresenter },
-    { provide: DELETE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleDetailPresenter },
-    { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
-  ],
+  providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

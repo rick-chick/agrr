@@ -8,11 +8,10 @@ import { RegionSelectComponent } from '../../shared/region-select/region-select.
 import { InteractionRuleEditView, InteractionRuleEditViewState, InteractionRuleEditFormData } from './interaction-rule-edit.view';
 import { LoadInteractionRuleForEditUseCase } from '../../../usecase/interaction-rules/load-interaction-rule-for-edit.usecase';
 import { UpdateInteractionRuleUseCase } from '../../../usecase/interaction-rules/update-interaction-rule.usecase';
-import { InteractionRuleEditPresenter } from '../../../adapters/interaction-rules/interaction-rule-edit.presenter';
-import { LOAD_INTERACTION_RULE_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/interaction-rules/load-interaction-rule-for-edit.output-port';
-import { UPDATE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/update-interaction-rule.output-port';
-import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
-import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
+import {
+  InteractionRuleEditPresenter,
+  INTERACTION_RULE_EDIT_PROVIDERS
+} from '../../../usecase/interaction-rules/interaction-rule-edit.providers';
 
 const initialFormData: InteractionRuleEditFormData = {
   rule_type: '',
@@ -35,14 +34,7 @@ const initialControl: InteractionRuleEditViewState = {
   selector: 'app-interaction-rule-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    InteractionRuleEditPresenter,
-    LoadInteractionRuleForEditUseCase,
-    UpdateInteractionRuleUseCase,
-    { provide: LOAD_INTERACTION_RULE_FOR_EDIT_OUTPUT_PORT, useExisting: InteractionRuleEditPresenter },
-    { provide: UPDATE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleEditPresenter },
-    { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
-  ],
+  providers: [...INTERACTION_RULE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

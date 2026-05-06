@@ -7,10 +7,10 @@ import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleCreateView, InteractionRuleCreateViewState, InteractionRuleCreateFormData } from './interaction-rule-create.view';
 import { CreateInteractionRuleUseCase } from '../../../usecase/interaction-rules/create-interaction-rule.usecase';
-import { InteractionRuleCreatePresenter } from '../../../adapters/interaction-rules/interaction-rule-create.presenter';
-import { CREATE_INTERACTION_RULE_OUTPUT_PORT } from '../../../usecase/interaction-rules/create-interaction-rule.output-port';
-import { INTERACTION_RULE_GATEWAY } from '../../../usecase/interaction-rules/interaction-rule-gateway';
-import { InteractionRuleApiGateway } from '../../../adapters/interaction-rules/interaction-rule-api.gateway';
+import {
+  InteractionRuleCreatePresenter,
+  INTERACTION_RULE_CREATE_PROVIDERS
+} from '../../../usecase/interaction-rules/interaction-rule-create.providers';
 
 const initialFormData: InteractionRuleCreateFormData = {
   rule_type: 'continuous_cultivation',
@@ -32,12 +32,7 @@ const initialControl: InteractionRuleCreateViewState = {
   selector: 'app-interaction-rule-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    InteractionRuleCreatePresenter,
-    CreateInteractionRuleUseCase,
-    { provide: CREATE_INTERACTION_RULE_OUTPUT_PORT, useExisting: InteractionRuleCreatePresenter },
-    { provide: INTERACTION_RULE_GATEWAY, useClass: InteractionRuleApiGateway }
-  ],
+  providers: [...INTERACTION_RULE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
