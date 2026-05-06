@@ -5,7 +5,7 @@
 ## 修正単位
 
 - **解消済み（2026-05-06）**: `Api::V1::Masters::Crops::AgriculturalTasksController` の `index` / `update` / `destroy` を Interactor + Presenter 経路に統一（Application edge 禁止 3・4）。ゲートウェイ IF は変更なし。
-- （`*.component.ts` の `adapters/` 直 import は 2026-05-06 に一通り解消済み。次回フルスキャンで `ARCHITECTURE.md` の What we require + 禁止 1〜30 を再走査する。）
+- **次イテレーションで先頭に固定する作業**: `ARCHITECTURE.md` の `## What we require` と `## Prohibited practices`（1〜30）による**通し走査**をセクション0として実行し、検出した逸脱をこのファイルの修正単位リストに書き出してから先頭を選ぶ（増分のみの代替は [`references/agent-operational-canonical.md`](../.cursor/skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md) に従う）。
 
 ## スキャン補足
 
@@ -15,7 +15,7 @@
 - 2026-05-06: **Angular 農業タスク新規** — `agricultural-task-create.component.ts` の adapters 直 import を廃止し、`agricultural-task-create.providers.ts` に集約。
 - 2026-05-06: **Angular 農業タスク一覧** — `agricultural-task-list.component.ts` の adapters 直 import を廃止し、`usecase/agricultural-tasks/agricultural-task-list.providers.ts` に DI 配線を集約（Presenter の型用再エクスポートは usecase ファイルのみ）。
 - 2026-05-06: **API 作物 AI** — `CropAiUpsertService` を廃止し、`CropApiAiCreateInteractor` + `Adapters::Crop::CropAiUpsertActiveRecordPersistence`（ポート `CropAiUpsertPersistencePort`）に分割。`ApiJsonResult#success?` を追加。匿名ユーザーは害虫・肥料 AI と同様に 401（テスト追加）。
-- 2026-05-06: **Frontend（Angular）サンプリング** — `ARCHITECTURE.md` の意図は `components → usecase → domain` でアダプタは usecase からのみ参照。`rg` で `frontend/src/app/components/**/*.ts` を確認したところ、**多数のコンポーネントが `adapters/` の Presenter・Gateway を直接 import** している（例: `plan-detail.component.ts`、`farm-list.component.ts`、`public-plan-create.component.ts`）。是正は機能単位で usecase 経由への配線寄せを別イテレーションとする。
+- 2026-05-06: **Frontend（Angular）サンプリング（経過）** — 当初サンプルでは `components/` から `adapters/` への直 import が残っていたが、配線は `usecase/**/*.providers.ts` へ集約済み。**2026-05-06 再確認**: `frontend/src/app/components/**/*.ts` からの `adapters/` 直 import は検出されず。レイヤ境界の維持は引き続き契約テスト・通し走査で確認する。
 - 2026-05-06: **API 害虫・肥料 AI** — `PestsController` / `FertilizesController` の `ai_create` / `ai_update` を `PestApiAiCreateInteractor` / `PestApiAiUpdateInteractor` / `FertilizeApiAiCreateInteractor` / `FertilizeApiAiUpdateInteractor` に集約。agrr 応答の解釈は `PestAiDaemonResponseInterpreter`、肥料ペイロード正規化は `FertilizeAiAgrrPayloadNormalizer`。匿名ユーザー判定は `UserDto#anonymous?`（Mapper で `User` から付与）。作物関連付けは `CompositionRoot` が注入する runner で AR `User` を閉じ込める。
 - 2026-05-06: **Application edge 禁止4（API）** — `app/controllers/api/v1` の AR / ActiveStorage / User 直叩きをゲートウェイ・Interactor・Presenter に寄せた（Plans 一覧・詳細、PublicPlans `save_plan`、Wizard `crops`、公開 cultivation_plans `get_crop_for_add_crop`、マスタ Base のセッション/APIキー解決、作物×農業タスク API、作物×害虫 destroy、API キー生成、Files CRUD、Backdoor users/db_stats、作物 AI の既存検索は Pest/Fertilize ゲートウェイへ）。
 - 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
