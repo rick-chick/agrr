@@ -4,10 +4,11 @@
 
 ## 修正単位
 
-1. **Angular（components → usecase）** — `*.component.ts` が `adapters/` を直接 import している残件を、usecase 側の `*.providers.ts`（またはルート配線）に寄せる。**先頭（辞書順）**: `frontend/src/app/components/masters/agricultural-tasks/agricultural-task-detail.component.ts`（農業タスクの list / create は 2026-05-06 対応済み）。
+1. **Angular（components → usecase）** — `*.component.ts` が `adapters/` を直接 import している残件を、usecase 側の `*.providers.ts`（またはルート配線）に寄せる。**先頭（辞書順）**: `frontend/src/app/components/contact-form/contact-form.component.ts`（農業タスク CRUD 4 画面は 2026-05-06 対応済み）。
 
 ## スキャン補足
 
+- 2026-05-06: **Angular 農業タスク詳細・編集** — detail / edit コンポーネントの adapters 直 import を廃止し、`agricultural-task-detail.providers.ts` / `agricultural-task-edit.providers.ts` に集約（edit の spec は Presenter import を providers 経由に変更）。
 - 2026-05-06: **Angular 農業タスク新規** — `agricultural-task-create.component.ts` の adapters 直 import を廃止し、`agricultural-task-create.providers.ts` に集約。
 - 2026-05-06: **Angular 農業タスク一覧** — `agricultural-task-list.component.ts` の adapters 直 import を廃止し、`usecase/agricultural-tasks/agricultural-task-list.providers.ts` に DI 配線を集約（Presenter の型用再エクスポートは usecase ファイルのみ）。
 - 2026-05-06: **API 作物 AI** — `CropAiUpsertService` を廃止し、`CropApiAiCreateInteractor` + `Adapters::Crop::CropAiUpsertActiveRecordPersistence`（ポート `CropAiUpsertPersistencePort`）に分割。`ApiJsonResult#success?` を追加。匿名ユーザーは害虫・肥料 AI と同様に 401（テスト追加）。
