@@ -110,8 +110,8 @@ module Adapters
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("farms.flash.cannot_delete_in_use")
-        rescue DeletionUndo::Error => e
-          raise StandardError, e.message
+        rescue DeletionUndo::Error
+          raise
         end
 
         def mark_weather_data_failed(farm_id, error_msg)

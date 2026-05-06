@@ -65,14 +65,14 @@ class Crop < ApplicationRecord
 
   # agrr CLI の crop-requirement-file フォーマットに変換（新形式）
   # @return [Hash] agrr CLI が期待する作物要件のハッシュ
-  # @raise [StandardError] 必須データが未設定の場合
+  # @raise [ArgumentError] 必須データが未設定の場合
   def to_agrr_requirement
     # crop_stagesをorderでソート
     sorted_stages = crop_stages.includes(:temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement).order(:order)
 
     # 生育ステージが未設定の場合はエラー
     if sorted_stages.empty?
-      raise StandardError, "Crop '#{name}' has no growth stages. Please add growth stages with temperature and thermal requirements."
+      raise ArgumentError, "Crop '#{name}' has no growth stages. Please add growth stages with temperature and thermal requirements."
     end
 
     # stage_requirements 配列を構築（新形式）
@@ -84,7 +84,7 @@ class Crop < ApplicationRecord
 
       # 必須チェック
       unless temp_req && thermal_req
-        raise StandardError, "Crop '#{name}' stage '#{stage.name}' is missing required temperature or thermal requirements."
+        raise ArgumentError, "Crop '#{name}' stage '#{stage.name}' is missing required temperature or thermal requirements."
       end
 
       stage_hash = {
@@ -152,10 +152,10 @@ class Crop < ApplicationRecord
   # @param pest_output_data [Hash] agrr pest コマンドのJSON出力（data部分）
   # @param is_reference [Boolean] Pestを参照データとして作成するか（デフォルト: true）
   # @return [Array<Pest>] 作成または更新されたPestの配列
-  # @raise [StandardError] 必須データが欠損している場合
+  # @raise [ArgumentError] 必須データが欠損している場合
   def associate_pests_from_agrr_output(pest_output_data:, is_reference: true)
     unless pest_output_data["pests"].is_a?(Array)
-      raise StandardError, "Invalid pest_output_data: 'pests' must be an array"
+      raise ArgumentError, "Invalid pest_output_data: 'pests' must be an array"
     end
 
     associated_pests = []

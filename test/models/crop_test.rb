@@ -244,7 +244,7 @@ class CropTest < ActiveSupport::TestCase
       "pests" => "not an array"
     }
 
-    assert_raises(StandardError, "Invalid pest_output_data: 'pests' must be an array") do
+    assert_raises(ArgumentError, "Invalid pest_output_data: 'pests' must be an array") do
       crop.associate_pests_from_agrr_output(pest_output_data: invalid_data)
     end
   end

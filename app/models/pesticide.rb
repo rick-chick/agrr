@@ -46,7 +46,7 @@ class Pesticide < ApplicationRecord
   # @param pest_id [Integer] 害虫ID（必須）
   # @param is_reference [Boolean] 参照データかどうか（デフォルト: true）
   # @return [Pesticide] 作成または更新されたPesticide
-  # @raise [StandardError] 必須データが欠損している場合
+  # @raise [ArgumentError] 必須データが欠損している場合
   def self.from_agrr_output(pesticide_data:, crop_id:, pest_id:, is_reference: true)
     # pesticide_idが指定されている場合は、idとして解釈して既存レコードを検索
     # 指定されていない場合は新規作成
@@ -58,11 +58,11 @@ class Pesticide < ApplicationRecord
     end
 
     unless crop_id
-      raise StandardError, "crop_id is required"
+      raise ArgumentError, "crop_id is required"
     end
 
     unless pest_id
-      raise StandardError, "pest_id is required"
+      raise ArgumentError, "pest_id is required"
     end
     pesticide.assign_attributes(
       crop_id: crop_id,

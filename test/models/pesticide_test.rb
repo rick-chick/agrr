@@ -460,7 +460,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should raise error when crop_id is missing" do
-    assert_raises(StandardError, "crop_id is required") do
+    assert_raises(ArgumentError, "crop_id is required") do
       Pesticide.from_agrr_output(
         pesticide_data: @pesticide_data,
         crop_id: nil,
@@ -471,7 +471,7 @@ class PesticideTest < ActiveSupport::TestCase
   end
 
   test "from_agrr_output should raise error when pest_id is missing" do
-    assert_raises(StandardError, "pest_id is required") do
+    assert_raises(ArgumentError, "pest_id is required") do
       Pesticide.from_agrr_output(
         pesticide_data: @pesticide_data,
         crop_id: @crop.id,

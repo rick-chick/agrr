@@ -67,8 +67,8 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fertilizes.flash.cannot_delete_in_use")
-        rescue DeletionUndo::Error => e
-          raise StandardError, e.message
+        rescue DeletionUndo::Error
+          raise
         end
 
         def list_index_for_user(user)
