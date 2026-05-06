@@ -133,16 +133,6 @@ class PestsController < ApplicationController
     params.require(:pest).permit(*permitted)
   end
 
-  # 害虫と作物を関連付ける（Service経由）
-  def associate_crops(pest, crop_ids)
-    PestCropAssociationService.associate_crops(pest, crop_ids, user: current_user)
-  end
-
-  # 害虫と作物の関連付けを更新（Service経由）
-  def update_crop_associations(pest, crop_ids)
-    PestCropAssociationService.update_crop_associations(pest, crop_ids, user: current_user)
-  end
-
   public
 
   def render_form(action, status: :ok, locals: {})
