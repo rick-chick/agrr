@@ -58,7 +58,7 @@
 ### Ruby（サーバー）
 
 - PlansController は Rails MVC パターン。JSON は `serialize_plan` で構築。
-- CultivationPlanData は `CultivationPlanApi#data` で返却。
+- CultivationPlanData は `Api::V1::CultivationPlanRestBaseController#data` で返却。
 
 ## 6. 実装チェックリスト
 

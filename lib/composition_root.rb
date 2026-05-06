@@ -231,7 +231,7 @@ module CompositionRoot
       @agrr_candidates_gateway ||= Agrr::CandidatesGateway.new
     end
 
-    # add_crop 候補探索（旧 CultivationPlanApi#find_best_candidate_for_crop の主導線）
+    # add_crop 候補探索（Api::V1::CultivationPlanRestBaseController 経路の主導線）
     def find_best_add_crop_candidate_service(clock: Time.zone)
       log = logger
       gw = agrr_candidates_gateway

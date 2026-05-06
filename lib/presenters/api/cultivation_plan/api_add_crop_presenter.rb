@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module CultivationPlan
-      # JSON 応答（CultivationPlanApi#add_crop）。scope 例: "plans", "public_plans"
+      # JSON 応答（Api::V1::CultivationPlanRestBaseController#add_crop）。scope 例: "plans", "public_plans"
       class ApiAddCropPresenter < Domain::CultivationPlan::Ports::ApiAddCropOutputPort
         def initialize(view:, translation_scope:)
           @view = view

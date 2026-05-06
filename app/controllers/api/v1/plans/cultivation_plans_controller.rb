@@ -8,13 +8,11 @@ module Api
       # - 認証必須
       # - ユーザー自身の計画のみアクセス可能
       # - ユーザー作物・ユーザー農場のみ使用
-      class CultivationPlansController < ApplicationController
-        include CultivationPlanApi
-
+      class CultivationPlansController < Api::V1::CultivationPlanRestBaseController
         before_action :authenticate_user!
         skip_before_action :verify_authenticity_token
 
-        # add_crop, add_field, remove_field, data, adjust はConcernで実装
+        # add_crop, add_field, remove_field, data, adjust は Api::V1::CultivationPlanRestBaseController で実装
 
         private
 

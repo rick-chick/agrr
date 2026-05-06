@@ -4,9 +4,9 @@
 
 ## 修正単位
 
-- [ ] **HTML concerns の残り（CultivationPlanApi・cultivation_plan_manageable 等）** — Application edge 1（Sideways escape・Concern 負債） @ `app/controllers/concerns/`
+- [ ] **HTML concerns の残り（cultivation_plan_manageable 等）** — Application edge 1（Sideways escape・Concern 負債） @ `app/controllers/concerns/`
 
-- [ ] **その他 API の広い rescue（AgrrService+RuntimeError、JSON パース、システムコール等）** — 禁止 3 の意味読みで個別に棚卸し @ `app/controllers/api/v1/fertilizes_controller.rb`, `app/controllers/api/v1/crops_controller.rb`, `app/controllers/concerns/cultivation_plan_api.rb`, 他
+- [ ] **その他 API の広い rescue（AgrrService+RuntimeError、JSON パース、システムコール等）** — 禁止 3 の意味読みで個別に棚卸し @ `app/controllers/api/v1/fertilizes_controller.rb`, `app/controllers/api/v1/crops_controller.rb`, `app/controllers/api/v1/cultivation_plan_rest_base_controller.rb`, 他
 
 ## スキャン補足
 
@@ -16,3 +16,4 @@
 - `AgrrOptimization` controller concern は本番未使用のため削除済み（2026-05-06）。統合テストは `CompositionRoot` 経由。
 - `DeletionUndoFlow` concern は削除済み（2026-05-06）。HTML マスタ削除は各コントローラから `DeletionUndo::HtmlMasterScheduleInvoker.call` を直接呼び出し。
 - `JobExecution` concern を削除し、ジョブチェーン非同期投入は `Adapters::Application::JobChainAsyncDispatcher`（`CompositionRoot.job_chain_async_dispatcher`）へ集約（2026-05-06）。
+- `CultivationPlanApi` モジュールを `Api::V1::CultivationPlanRestBaseController` に置換し `app/controllers/concerns/cultivation_plan_api.rb` を削除（2026-05-06）。
