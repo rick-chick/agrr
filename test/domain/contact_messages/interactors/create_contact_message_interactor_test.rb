@@ -70,7 +70,7 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto on unexpected errors and logs when logger given" do
+        test "propagates StandardError from gateway (no on_failure)" do
           input = Domain::ContactMessages::Dtos::CreateContactMessageInput.new(
             name: "Taro",
             email: "taro@example.com",
@@ -81,26 +81,14 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:create, nil) { raise StandardError, "boom" }
 
-          received = nil
-          output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) { |dto| received = dto }
+          interactor = CreateContactMessageInteractor.new(gateway: gateway)
 
-          logger = Minitest::Mock.new
-          logger.expect(:error, nil) do |msg|
-            assert_kind_of String, msg
-            assert_includes msg, "boom"
+          error = assert_raises(StandardError) do
+            interactor.call(input, output_port: nil)
           end
-
-          interactor = CreateContactMessageInteractor.new(gateway: gateway, logger: logger)
-
-          interactor.call(input, output_port: output_port)
-
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
-          assert_includes received.message, "boom"
+          assert_equal "boom", error.message
 
           gateway.verify
-          output_port.verify
-          logger.verify
         end
       end
     end

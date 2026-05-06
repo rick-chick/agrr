@@ -18,8 +18,7 @@ module Api
 
         presenter = self.class::PRESENTER_CLASS.new(view: self)
         interactor = self.class::INTERACTOR_CLASS.new(
-          gateway: CompositionRoot.contact_message_gateway,
-          logger: CompositionRoot.logger
+          gateway: CompositionRoot.contact_message_gateway
         )
         interactor.call(contact_message_input, output_port: presenter)
       end
