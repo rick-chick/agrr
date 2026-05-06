@@ -1,19 +1,18 @@
 # frozen_string_literal: true
 
-# PlansControllerとPublicPlansControllerの共通機能を提供するモジュール（プレーン Ruby）
+# PlansController と PublicPlansController の共通機能（HTML フロー）
 #
 # 使い方:
-# - plan_typeを定義: 'private' または 'public'
-# - session_keyを定義: セッションで使用するキー（例: :plan_data, :public_plan）
-# - redirect_pathを定義: エラー時のリダイレクト先パス
-# - find_cultivation_plan_scopeを実装: 計画を検索するスコープ
-module CultivationPlanManageable
-  def self.included(base)
-    base.class_attribute :plan_type, :session_key, :redirect_path_method
-  end
+# - plan_type: 'private' または 'public'
+# - session_key: セッションで使用するキー（例: :plan_data, :public_plan）
+# - redirect_path_method: エラー時のリダイレクト先ヘルパー名（シンボル）
+# - find_cultivation_plan_scope を実装: 計画を検索するスコープ
+# - select_crop_redirect_path, optimizing_redirect_path, completion_redirect_path を実装
+class CultivationPlanHtmlBaseController < ApplicationController
+  class_attribute :plan_type, :session_key, :redirect_path_method
 
   # 栽培計画を検索
-  # サブクラスでfind_cultivation_plan_scopeを実装する必要がある
+  # サブクラスで find_cultivation_plan_scope を実装する必要がある
   def find_cultivation_plan
     plan_id = params[:id] || session_data[:plan_id]
 
@@ -42,10 +41,10 @@ module CultivationPlanManageable
 
   # 選択された作物IDを取得
   def crop_ids
-    Rails.logger.debug "🔍 [CultivationPlanManageable] params[:crop_ids]: #{params[:crop_ids].inspect}"
-    Rails.logger.debug "🔍 [CultivationPlanManageable] params keys: #{params.keys.inspect}"
+    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] params[:crop_ids]: #{params[:crop_ids].inspect}"
+    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] params keys: #{params.keys.inspect}"
     result = params[:crop_ids].presence || []
-    Rails.logger.debug "🔍 [CultivationPlanManageable] crop_ids result: #{result.inspect}"
+    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] crop_ids result: #{result.inspect}"
     result
   end
 
@@ -56,13 +55,13 @@ module CultivationPlanManageable
 
   # 最適化進捗画面の共通処理
   def handle_optimizing(force_weather_only:)
-    Rails.logger.info "🔍 [CultivationPlanManageable#handle_optimizing] Finding cultivation plan"
+    Rails.logger.info "🔍 [CultivationPlanHtmlBaseController#handle_optimizing] Finding cultivation plan"
     @cultivation_plan = find_cultivation_plan
     return unless @cultivation_plan
 
-    Rails.logger.info "📊 [CultivationPlanManageable#handle_optimizing] Plan status: #{@cultivation_plan.status}"
+    Rails.logger.info "📊 [CultivationPlanHtmlBaseController#handle_optimizing] Plan status: #{@cultivation_plan.status}"
     if @cultivation_plan.status_completed?
-      Rails.logger.info "✅ [CultivationPlanManageable#handle_optimizing] Plan completed, redirecting to completion page"
+      Rails.logger.info "✅ [CultivationPlanHtmlBaseController#handle_optimizing] Plan completed, redirecting to completion page"
       redirect_to_completion_page
     end
     # 最適化ジョブは計画作成時に既に実行されているため、ここでは何もしない
@@ -74,10 +73,6 @@ module CultivationPlanManageable
     completion_path = completion_redirect_path
     redirect_to send(completion_path, @cultivation_plan)
   end
-
-
-
-  private
 
   # サブクラスで実装すべきメソッド
 

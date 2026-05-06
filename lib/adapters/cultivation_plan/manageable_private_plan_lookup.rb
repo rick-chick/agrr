@@ -2,7 +2,7 @@
 
 module Adapters
   module CultivationPlan
-    # CultivationPlanManageable の find（RecordNotFound をハッシュに正規化）
+    # CultivationPlanHtmlBaseController#find_cultivation_plan 向けの find（RecordNotFound をハッシュに正規化）
     module ManageablePrivatePlanLookup
       module_function
 

@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
-class PlansController < ApplicationController
-  include CultivationPlanManageable
+class PlansController < CultivationPlanHtmlBaseController
   include WeatherDataManagement
 
   before_action :authenticate_user!
   before_action :set_plan, only: [ :optimize, :copy ]
   layout "application"
 
-  # Concern設定
+  # 基底クラス属性
   self.plan_type = "private"
   self.session_key = :plan_data
   self.redirect_path_method = :plans_path
@@ -232,7 +231,7 @@ class PlansController < ApplicationController
     s.to_i
   end
 
-  # Concernで実装すべきメソッド
+  # 基底クラスで要求されるフックの実装
 
   def set_plan
     @plan = PlanPolicy.find_private_owned!(current_user, params[:id])

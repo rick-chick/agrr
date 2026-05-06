@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
-class PublicPlansController < ApplicationController
-  include CultivationPlanManageable
+class PublicPlansController < CultivationPlanHtmlBaseController
   include WeatherDataManagement
 
   skip_before_action :authenticate_user!
   skip_before_action :verify_authenticity_token
   layout "public"
 
-  # Concern設定
+  # 基底クラス属性
   self.plan_type = "public"
   self.session_key = :public_plan
   self.redirect_path_method = :public_plans_path
@@ -300,7 +299,7 @@ class PublicPlansController < ApplicationController
     end
   end
 
-  # Concernで実装すべきメソッド
+  # 基底クラスで要求されるフックの実装
 
   def find_cultivation_plan_scope
     CultivationPlan
