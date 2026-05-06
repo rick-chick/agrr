@@ -2,7 +2,7 @@
 
 module Adapters
   module CultivationPlan
-    # AgrrOptimization concern の build_* と共有する AR→計算機入力の写像（単一ソース）。
+    # AR→最適化ペイロードの写像（ドメイン側 `AgrrOptimizationPayloadBuilder`）。
     class AgrrOptimizationPayloadBuilder
       def initialize(cultivation_plan, logger:)
         @cultivation_plan = cultivation_plan

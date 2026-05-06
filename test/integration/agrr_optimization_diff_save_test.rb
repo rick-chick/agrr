@@ -1,10 +1,6 @@
 require "test_helper"
 
 class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
-  class Saver
-    include AgrrOptimization
-  end
-
   def setup
     @plan = create(:cultivation_plan)
     @field1 = create(:cultivation_plan_field, cultivation_plan: @plan)
@@ -41,7 +37,6 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
     @ts_for_delete = create(:task_schedule, cultivation_plan: @plan, field_cultivation: @fc_delete)
     create(:task_schedule_item, task_schedule: @ts_for_delete)
 
-    @saver = Saver.new
   end
 
   test "diff save updates existing, creates new, and nullifies schedules for deleted" do
@@ -87,7 +82,7 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
 
     assert_difference -> { FieldCultivation.where(cultivation_plan_id: @plan.id).count }, +0 do
       # 全体としては keep(1) + new(1) - delete(1) = 0件差
-      @saver.save_adjusted_result(@plan, result)
+      CompositionRoot.save_adjusted_agrr_result_gateway.save_adjust_result!(plan_id: @plan.id, result: result)
     end
 
     # 更新されたか

@@ -4,10 +4,6 @@ require "test_helper"
 
 # 計画期間外での修正処理で気温データが不足する場合のテスト
 class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
-  class Saver
-    include AgrrOptimization
-  end
-
   def setup
     @user = create(:user)
     @farm = create(:farm, user: @user, latitude: 35.6762, longitude: 139.6503, region: "jp")
@@ -55,7 +51,6 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # weather data creation is skipped because Domain::WeatherData::Interactors::WeatherPredictionInteractor is mocked in these tests
     # (モックを使用するため、DBに大量のWeatherDatumを作成する必要はありません)
 
-    @saver = Saver.new
     stub_all_agrr_commands
   end
 
@@ -102,7 +97,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = @saver.adjust_with_db_weather(@plan, moves)
+      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
       weather_prediction_service.verify
@@ -145,7 +140,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = @saver.adjust_with_db_weather(@plan, moves)
+      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
       weather_prediction_service.verify
@@ -198,7 +193,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = @saver.adjust_with_db_weather(@plan, moves)
+      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}, ステータス: #{result[:status]}"
 
@@ -256,7 +251,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service1) do
-      result1 = @saver.adjust_with_db_weather(@plan, moves1)
+      result1 = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves1)
       assert result1[:success], "1回目の修正処理が成功する必要がある。エラー: #{result1[:message]}, ステータス: #{result1[:status]}"
       weather_prediction_service1.verify
     end
@@ -286,7 +281,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service2) do
-      result2 = @saver.adjust_with_db_weather(@plan, moves2)
+      result2 = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves2)
 
       assert result2[:success], "2回目の修正処理が成功する必要がある。エラー: #{result2[:message]}, ステータス: #{result2[:status]}"
       weather_prediction_service2.verify
