@@ -77,6 +77,35 @@ module Api
         assert_not existing.is_reference
       end
 
+      test "ai_create rejects anonymous user" do
+        cookies.delete(:session_id)
+        Session.delete_all
+        @integration_session.reset! if defined?(@integration_session) && @integration_session.respond_to?(:reset!)
+
+        agrr_response = {
+          "success" => true,
+          "crop" => {
+            "crop_id" => nil,
+            "name" => "匿名作物",
+            "variety" => nil,
+            "area_per_unit" => 1.0,
+            "revenue_per_area" => 1.0,
+            "groups" => []
+          },
+          "stage_requirements" => []
+        }
+
+        with_stubbed_crop_ai_gateway(agrr_response) do
+          assert_no_difference "::Crop.count" do
+            post api_v1_crops_ai_create_path,
+                 params: { name: "匿名作物" },
+                 headers: { "Accept" => "application/json" }
+          end
+        end
+
+        assert_response :unauthorized
+      end
+
       private
 
       def with_stubbed_crop_ai_gateway(crop_info_hash)

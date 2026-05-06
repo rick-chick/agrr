@@ -11,6 +11,10 @@ module Domain
           @status = status
           @body = body
         end
+
+        def success?
+          status == :ok || status == :created
+        end
       end
     end
   end

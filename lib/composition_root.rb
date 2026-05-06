@@ -404,6 +404,23 @@ module CompositionRoot
       )
     end
 
+    def crop_api_ai_create_interactor(current_user:)
+      uid = current_user.id
+      Domain::Crop::Interactors::CropApiAiCreateInteractor.new(
+        user_id: uid,
+        user_lookup: user_lookup,
+        translator: translator,
+        logger: logger,
+        crop_ai_query_gateway: crop_ai_daemon_query_gateway,
+        persistence: Adapters::Crop::CropAiUpsertActiveRecordPersistence.new(
+          crop_gateway: crop_gateway,
+          create_interactor: crop_create_for_ai_adapter(user_id: uid),
+          logger: logger,
+          translator: translator
+        )
+      )
+    end
+
     # create / update で pest_gateway および logger 等を共有する。
     def pest_ai_interactors_for(user_id:)
       gw = pest_gateway
