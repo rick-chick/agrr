@@ -40,13 +40,12 @@ module Domain
               message: @translator.t("public_plans.save.error")
             )
           )
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("❌ [PublicPlanSaveFromSessionInteractor] #{e.class}: #{e.message}")
-          @logger.error(e.backtrace&.first(30)&.join("\n").to_s)
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailureDto.new(
-              kind: Dtos::PublicPlanSaveFailureDto::KIND_UNEXPECTED,
-              message: @translator.t("public_plans.save.error")
+              kind: Dtos::PublicPlanSaveFailureDto::KIND_SAVE_FAILED,
+              message: e.message
             )
           )
         end

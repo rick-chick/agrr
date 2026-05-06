@@ -102,8 +102,16 @@ module Domain
             @logger.error "❌ [Optimizer] AGRR execution failed: #{e.message}"
             @logger.info "🔄 [Optimizer] Re-raising error to job level"
             raise e
-          rescue StandardError => e
-            @logger.error "❌ [Optimizer] Unexpected error at phase: #{@current_phase || 'unknown'}: #{e.message}"
+          rescue WeatherDataNotFoundError => e
+            @logger.error "❌ [Optimizer] Weather data missing: #{e.message}"
+            @logger.info "🔄 [Optimizer] Re-raising error to job level"
+            raise e
+          rescue Domain::CultivationPlan::Errors::CultivationPlanCropMissingError => e
+            @logger.error "❌ [Optimizer] CultivationPlanCrop missing: #{e.message}"
+            @logger.info "🔄 [Optimizer] Re-raising error to job level"
+            raise e
+          rescue Domain::Shared::Exceptions::RecordInvalid => e
+            @logger.error "❌ [Optimizer] Record invalid: #{e.message}"
             @logger.info "🔄 [Optimizer] Re-raising error to job level"
             raise e
           end
@@ -279,7 +287,7 @@ module Domain
           id = @cultivation_plan_gateway.find_plan_crop_id_by_crop_id!(@plan_id, crop_id)
           @logger.debug "♻️ [AGRR] Found existing CultivationPlanCrop: #{crop_name} (Crop ID: #{crop_id})"
           id
-        rescue StandardError => e
+        rescue Domain::CultivationPlan::Errors::CultivationPlanCropMissingError => e
           @logger.error "❌ [AGRR] CultivationPlanCrop not found for crop_id: #{crop_id} (#{crop_name})"
           @logger.error "❌ [AGRR] #{e.message}"
           raise e

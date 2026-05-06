@@ -23,9 +23,9 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
-        rescue StandardError => e
-          @logger.error("[PrivatePlanOptimizingInteractor] #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.restart")))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.error("[PrivatePlanOptimizingInteractor] record_invalid: #{e.class}: #{e.message}")
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end
     end

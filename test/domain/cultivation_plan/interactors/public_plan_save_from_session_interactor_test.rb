@@ -69,21 +69,20 @@ module Domain
           ).call(user: :u, session_data: {})
         end
 
-        test "on_failure unexpected when gateway raises StandardError" do
+        test "propagates StandardError from gateway" do
           @gateway.expects(:save_from_session).raises(StandardError.new("boom"))
           @output_port.expects(:on_success).never
-          @output_port.expects(:on_failure).with do |dto|
-            assert_equal @fdto::KIND_UNEXPECTED, dto.kind
-            assert_equal @translator.t("public_plans.save.error"), dto.message
-            true
-          end
+          @output_port.expects(:on_failure).never
 
-          PublicPlanSaveFromSessionInteractor.new(
-            output_port: @output_port,
-            public_plan_save_gateway: @gateway,
-            logger: @logger,
-            translator: @translator
-          ).call(user: :u, session_data: {})
+          err = assert_raises(StandardError) do
+            PublicPlanSaveFromSessionInteractor.new(
+              output_port: @output_port,
+              public_plan_save_gateway: @gateway,
+              logger: @logger,
+              translator: @translator
+            ).call(user: :u, session_data: {})
+          end
+          assert_equal "boom", err.message
         end
       end
     end

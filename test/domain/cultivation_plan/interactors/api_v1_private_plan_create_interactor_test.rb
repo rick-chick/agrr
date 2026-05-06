@@ -162,7 +162,7 @@ module Domain
           interactor.call(dto)
         end
 
-        test "on_failure internal_server_error when enqueue raises" do
+        test "enqueue_after_create raises StandardError propagates" do
           dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 42, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
@@ -180,12 +180,13 @@ module Domain
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
           @gateway.expects(:initialize_plan_from_selection).returns(result)
           @job_enqueuer.expects(:enqueue_after_create).raises(StandardError, "queue down")
-          @output_port.expects(:on_failure).with do |f|
-            assert_equal :internal_server_error, f.http_status
-            assert_equal @translator.t("api.errors.internal_server_error"), f.message
-            true
+          @output_port.expects(:on_success).never
+          @output_port.expects(:on_failure).never
+
+          err = assert_raises(StandardError) do
+            interactor.call(dto)
           end
-          interactor.call(dto)
+          assert_equal "queue down", err.message
         end
       end
     end

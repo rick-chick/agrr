@@ -102,13 +102,12 @@ module Domain
           @job_chain_enqueuer.enqueue_after_create(cultivation_plan_id: plan_id)
 
           @output_port.on_success(Dtos::ApiPrivatePlanCreateSuccessDto.new(id: plan_id))
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("❌ [ApiV1PrivatePlanCreateInteractor] #{e.class}: #{e.message}")
-          @logger.error(e.backtrace&.first(30)&.join("\n").to_s)
           @output_port.on_failure(
             Dtos::ApiPrivatePlanCreateFailureDto.new(
-              http_status: :internal_server_error,
-              message: @translator.t("api.errors.internal_server_error")
+              http_status: :unprocessable_entity,
+              message: e.message
             )
           )
         end

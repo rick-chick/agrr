@@ -117,7 +117,7 @@ module Domain
           @interactor.call(input_dto)
         end
 
-        test "should handle unexpected errors" do
+        test "propagates StandardError from gateway" do
           farm = create(:farm, user: @user)
           input_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateInputDto.new(
             farm_id: farm.id,
@@ -127,9 +127,12 @@ module Domain
           )
 
           @mock_gateway.expects(:find_farm).with(farm.id, @user).raises(StandardError.new("Database error"))
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
+          @mock_output_port.expects(:on_failure).never
 
-          @interactor.call(input_dto)
+          err = assert_raises(StandardError) do
+            @interactor.call(input_dto)
+          end
+          assert_equal "Database error", err.message
         end
       end
     end

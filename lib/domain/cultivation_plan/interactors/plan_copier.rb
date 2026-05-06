@@ -32,9 +32,8 @@ module Domain
             )
             Result.new(new_plan: new_plan, errors: [])
           end
-        rescue StandardError => e
-          @logger.error "❌ Plan copy failed: #{e.message}"
-          @logger.error e.backtrace.join("\n")
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.error "❌ Plan copy failed (record invalid): #{e.message}"
           Result.new(new_plan: nil, errors: [ e.message ])
         end
       end

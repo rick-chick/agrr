@@ -114,7 +114,7 @@ class PrivatePlanShowInteractorTest < ActiveSupport::TestCase
     ).call
   end
 
-  test "logs and forwards unexpected error to on_failure with restart message" do
+  test "propagates unexpected StandardError from gateway" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
@@ -123,26 +123,22 @@ class PrivatePlanShowInteractorTest < ActiveSupport::TestCase
     gateway.expects(:find_private_cultivation_plan_detail).raises(StandardError.new("internal"))
 
     translator = mock
-    translator.expects(:t).with("plans.errors.restart").returns("やり直し")
-
     logger = mock
-    logger.expects(:error).with(includes("PrivatePlanShowInteractor"))
-
     output = mock
-    output.expects(:on_failure).with do |err|
-      assert_equal "やり直し", err.message
-      true
-    end
+    output.expects(:on_failure).never
 
-    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
-      output_port: output,
-      user_id: 3,
-      plan_id: 10,
-      gateway: gateway,
-      translator: translator,
-      logger: logger,
-      user_lookup: user_lookup
-    ).call
+    err = assert_raises(StandardError) do
+      Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
+        output_port: output,
+        user_id: 3,
+        plan_id: 10,
+        gateway: gateway,
+        translator: translator,
+        logger: logger,
+        user_lookup: user_lookup
+      ).call
+    end
+    assert_equal "internal", err.message
   end
 
   test "re-raises PersistenceFailed after logging" do

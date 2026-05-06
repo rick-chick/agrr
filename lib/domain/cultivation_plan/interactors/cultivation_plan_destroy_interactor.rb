@@ -26,8 +26,8 @@ module Domain
           handle_failure(@translator.t("plans.errors.delete_failed"))
         rescue DeletionUndo::Error => e
           handle_failure(@translator.t("plans.errors.delete_error", message: e.message))
-        rescue StandardError => e
-          handle_failure(e.message.presence || @translator.t("plans.errors.delete_failed"))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          handle_failure(e.message)
         end
 
         private

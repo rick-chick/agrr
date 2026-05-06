@@ -97,7 +97,7 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
     interactor.call
   end
 
-  test "call forwards unexpected StandardError to on_failure with restart message and logs" do
+  test "propagates unexpected StandardError from field_gateway" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(7).returns(user)
@@ -107,16 +107,9 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
 
     crop_gateway = mock
     translator = mock
-    translator.expects(:t).with("plans.errors.restart").returns("最初からやり直してください。")
-
     logger = mock
-    logger.expects(:error).with(includes("PrivatePlanSelectCropContextInteractor"))
-
     output = mock
-    output.expects(:on_failure).with do |err|
-      assert_equal "最初からやり直してください。", err.message
-      true
-    end
+    output.expects(:on_failure).never
 
     interactor = Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
       output_port: output,
@@ -128,6 +121,10 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
       logger: logger,
       user_lookup: user_lookup
     )
-    interactor.call
+
+    err = assert_raises(StandardError) do
+      interactor.call
+    end
+    assert_equal "internal detail", err.message
   end
 end

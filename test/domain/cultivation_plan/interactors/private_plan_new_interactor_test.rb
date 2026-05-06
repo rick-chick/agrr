@@ -37,7 +37,7 @@ class PrivatePlanNewInteractorTest < ActiveSupport::TestCase
     ).call
   end
 
-  test "forwards unexpected errors to on_failure with restart message and logs" do
+  test "propagates unexpected StandardError from farm_gateway" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
@@ -46,29 +46,21 @@ class PrivatePlanNewInteractorTest < ActiveSupport::TestCase
     farm_gateway.expects(:private_plan_new_farm_choices).raises(StandardError.new("db"))
 
     translator = mock
-    translator.expects(:t).with("plans.errors.restart").returns("再開")
-
     logger = mock
-    logger.expects(:error).with do |msg|
-      msg.include?("PrivatePlanNewInteractor") &&
-        msg.include?("db") &&
-        msg.include?("/backtrace:")
-    end
-
     output = mock
-    output.expects(:on_failure).with do |err|
-      assert_equal "再開", err.message
-      true
-    end
+    output.expects(:on_failure).never
 
-    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
-      output_port: output,
-      user_id: 9,
-      farm_gateway: farm_gateway,
-      translator: translator,
-      logger: logger,
-      user_lookup: user_lookup
-    ).call
+    err = assert_raises(StandardError) do
+      Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
+        output_port: output,
+        user_id: 9,
+        farm_gateway: farm_gateway,
+        translator: translator,
+        logger: logger,
+        user_lookup: user_lookup
+      ).call
+    end
+    assert_equal "db", err.message
   end
 
   test "re-raises PersistenceFailed after logging" do

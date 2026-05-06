@@ -105,17 +105,17 @@ module Domain
           @interactor.call(plan_id)
         end
 
-        test "returns generic error when unexpected exception occurs" do
+        test "propagates StandardError from gateway" do
           plan_id = 1
-          error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:destroy).with(plan_id, @user).raises(StandardError.new("Unexpected error"))
-          Domain::Shared::Dtos::ErrorDto
-            .expects(:new).with("Unexpected error").returns(error_dto)
-          @mock_output_port.expects(:on_failure).with(error_dto)
+          @mock_output_port.expects(:on_failure).never
 
-          @interactor.call(plan_id)
+          err = assert_raises(StandardError) do
+            @interactor.call(plan_id)
+          end
+          assert_equal "Unexpected error", err.message
         end
       end
     end

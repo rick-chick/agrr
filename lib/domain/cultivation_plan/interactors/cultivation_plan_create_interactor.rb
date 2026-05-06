@@ -55,7 +55,7 @@ module Domain
           else
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Failed to create cultivation plan"))
           end
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

@@ -36,9 +36,9 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivatePlanShowInteractor] record_not_found: #{e.class}: #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
-        rescue StandardError => e
-          log_interactor_error(e)
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.restart")))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.warn("[PrivatePlanShowInteractor] record_invalid: #{e.class}: #{e.message}")
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
 
         private
