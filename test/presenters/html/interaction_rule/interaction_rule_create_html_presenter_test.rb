@@ -34,4 +34,17 @@ class InteractionRuleCreateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to index when reference data requires admin" do
+    view_mock = mock
+    presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("interaction_rules.flash.reference_only_admin")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.expects(:interaction_rules_path).returns("/interaction_rules")
+    view_mock.expects(:redirect_to).with("/interaction_rules", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

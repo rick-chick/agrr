@@ -19,13 +19,16 @@ module Presenters
             status = :forbidden
           else
             msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-            status = if msg == "InteractionRule not found"
+            status = if msg == I18n.t("interaction_rules.flash.reference_flag_admin_only")
+                       :forbidden
+            elsif msg == "InteractionRule not found"
                        :not_found
             else
                        :unprocessable_entity
             end
           end
-          @view.render_response(json: { error: msg }, status: status)
+          json = (status == :unprocessable_entity) ? { errors: [ msg ] } : { error: msg }
+          @view.render_response(json: json, status: status)
         end
 
         private

@@ -34,12 +34,6 @@ class PesticidesController < ApplicationController
 
   # POST /pesticides
   def create
-    # is_referenceをbooleanに変換してチェック（既存のロジックを維持）
-    is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
-    if is_reference && !admin_user?
-      return redirect_to pesticides_path, alert: I18n.t("pesticides.flash.reference_only_admin")
-    end
-
     input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
     presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: self)
 
@@ -47,19 +41,11 @@ class PesticidesController < ApplicationController
     @pesticide = Pesticide.new(pesticide_params)
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /pesticides/:id
   def update
-    # is_referenceをbooleanに変換してチェック（既存のロジックを維持）
-    if pesticide_params.key?(:is_reference)
-      is_reference = ActiveModel::Type::Boolean.new.cast(pesticide_params[:is_reference]) || false
-      if is_reference != @pesticide.is_reference && !admin_user?
-        return redirect_to pesticide_path(@pesticide), alert: I18n.t("pesticides.flash.reference_flag_admin_only")
-      end
-    end
-
     input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys, params[:id])
     presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: self)
 
@@ -67,7 +53,7 @@ class PesticidesController < ApplicationController
     @pesticide.assign_attributes(pesticide_params)
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /pesticides/:id

@@ -4,16 +4,22 @@ module Domain
   module Pesticide
     module Interactors
       class PesticideCreateInteractor < Domain::Pesticide::Ports::PesticideCreateInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @translator = translator
           @user_lookup = user_lookup
         end
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
+          if is_reference && !user.admin?
+            raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pesticides.flash.reference_only_admin"))
+          end
+
           pesticide_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             active_ingredient: input_dto.active_ingredient,
@@ -21,7 +27,7 @@ module Domain
             crop_id: input_dto.crop_id,
             pest_id: input_dto.pest_id,
             region: input_dto.region,
-            is_reference: input_dto.is_reference
+            is_reference: is_reference
           }.compact)
 
           @output_port.on_success(pesticide_entity)

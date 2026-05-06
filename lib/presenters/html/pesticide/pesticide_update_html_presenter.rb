@@ -19,7 +19,13 @@ module Presenters
             return
           end
 
-          @view.flash.now[:alert] = error_dto.message
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("pesticides.flash.reference_flag_admin_only")
+            @view.redirect_to @view.pesticide_path(@view.params[:id]), alert: msg
+            return
+          end
+
+          @view.flash.now[:alert] = msg
           @view.render_form(:edit, status: :unprocessable_entity)
         end
       end

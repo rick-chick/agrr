@@ -36,7 +36,7 @@ module Api
           end
           presenter = Presenters::Api::Pesticide::PesticideCreatePresenter.new(view: self)
           interactor = Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -45,7 +45,7 @@ module Api
           input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Pesticide::PesticideUpdatePresenter.new(view: self)
           interactor = Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

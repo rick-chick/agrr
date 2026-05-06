@@ -44,17 +44,13 @@ class InteractionRulesController < ApplicationController
 
     @form = InteractionRuleForm.from_params(filtered_params)
 
-    is_reference = ActiveModel::Type::Boolean.new.cast(filtered_params[:is_reference]) || false
-    if is_reference && !admin_user?
-      return redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.reference_only_admin")
-    end
-
     presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       gateway: interaction_rule_gateway,
       logger: logger_adapter,
+      translator: translator,
       user_lookup: user_lookup_adapter
     )
 
@@ -66,10 +62,6 @@ class InteractionRulesController < ApplicationController
 
   # PATCH/PUT /interaction_rules/:id
   def update
-    if interaction_rule_params.key?(:is_reference) && !admin_user?
-      return redirect_to interaction_rule_path(params[:id]), alert: I18n.t("interaction_rules.flash.reference_flag_admin_only")
-    end
-
     filtered_params = interaction_rule_params.to_unsafe_h.symbolize_keys
     filtered_params.delete(:region) unless admin_user?
 
@@ -81,6 +73,7 @@ class InteractionRulesController < ApplicationController
       user_id: current_user.id,
       gateway: interaction_rule_gateway,
       logger: logger_adapter,
+      translator: translator,
       user_lookup: user_lookup_adapter
     )
 

@@ -119,6 +119,50 @@ module Api
           assert_equal false, json_response["is_reference"]
         end
 
+        test "should not create reference interaction_rule as non-admin" do
+          assert_no_difference("@user.interaction_rules.count") do
+            post api_v1_masters_interaction_rules_path,
+                 params: {
+                   interaction_rule: {
+                     rule_type: "continuous_cultivation",
+                     source_group: "S",
+                     target_group: "T",
+                     impact_ratio: 1.0,
+                     is_reference: true
+                   }
+                 },
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          end
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("interaction_rules.flash.reference_only_admin"), json_response["error"]
+        end
+
+        test "should not toggle is_reference as non-admin via API" do
+          rule = create(:interaction_rule, :user_owned, user: @user, is_reference: false)
+
+          patch api_v1_masters_interaction_rule_path(rule),
+                params: {
+                  interaction_rule: {
+                    is_reference: true
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("interaction_rules.flash.reference_flag_admin_only"), json_response["error"]
+          rule.reload
+          assert_equal false, rule.is_reference?
+        end
+
         test "should update interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user, source_group: "元のグループ")
 

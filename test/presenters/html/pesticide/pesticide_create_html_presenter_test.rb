@@ -50,4 +50,17 @@ class PesticideCreateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to index when reference data requires admin" do
+    view_mock = mock
+    presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("pesticides.flash.reference_only_admin")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.expects(:pesticides_path).returns("/pesticides")
+    view_mock.expects(:redirect_to).with("/pesticides", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

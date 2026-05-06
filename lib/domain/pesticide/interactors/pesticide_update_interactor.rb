@@ -4,16 +4,27 @@ module Domain
   module Pesticide
     module Interactors
       class PesticideUpdateInteractor < Domain::Pesticide::Ports::PesticideUpdateInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @translator = translator
           @user_lookup = user_lookup
         end
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+
+          unless input_dto.is_reference.nil?
+            requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
+            requested = false if requested.nil?
+            current_entity = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id)
+            if requested != !!current_entity.is_reference && !user.admin?
+              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pesticides.flash.reference_flag_admin_only"))
+            end
+          end
+
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:active_ingredient] = input_dto.active_ingredient if !input_dto.active_ingredient.nil?
@@ -21,12 +32,15 @@ module Domain
           attrs[:crop_id] = input_dto.crop_id if !input_dto.crop_id.nil?
           attrs[:pest_id] = input_dto.pest_id if !input_dto.pest_id.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
+          attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
 
           pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, attrs)
 
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end

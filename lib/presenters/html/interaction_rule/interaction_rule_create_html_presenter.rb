@@ -14,8 +14,12 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          # 失敗時は新規作成フォームを再表示
           error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if error_message == I18n.t("interaction_rules.flash.reference_only_admin")
+            @view.redirect_to @view.interaction_rules_path, alert: error_message
+            return
+          end
+
           @view.flash.now[:alert] = error_message
           @view.render :new, status: :unprocessable_entity
         end

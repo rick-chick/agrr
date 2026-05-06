@@ -48,6 +48,7 @@ module Api
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
             logger: logger_adapter,
+            translator: translator,
             user_lookup: user_lookup_adapter
           ).call(input_dto)
         end
@@ -62,6 +63,7 @@ module Api
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
             logger: logger_adapter,
+            translator: translator,
             user_lookup: user_lookup_adapter
           ).call(input_dto)
         end

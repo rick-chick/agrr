@@ -50,4 +50,18 @@ class PesticideUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to show when non-admin toggles reference flag" do
+    view_mock = mock
+    presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("pesticides.flash.reference_flag_admin_only")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.stubs(:params).returns(id: "9")
+    view_mock.expects(:pesticide_path).with("9").returns("/pesticides/9")
+    view_mock.expects(:redirect_to).with("/pesticides/9", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

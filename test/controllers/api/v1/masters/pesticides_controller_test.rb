@@ -105,6 +105,50 @@ module Api
           assert_equal false, json_response["is_reference"]
         end
 
+        test "should not create reference pesticide as non-admin" do
+          assert_no_difference("@user.pesticides.count") do
+            post api_v1_masters_pesticides_path,
+                 params: {
+                   pesticide: {
+                     name: "参照農薬",
+                     active_ingredient: "X",
+                     crop_id: @crop.id,
+                     pest_id: @pest.id,
+                     is_reference: true
+                   }
+                 },
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          end
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("pesticides.flash.reference_only_admin"), json_response["error"]
+        end
+
+        test "should not toggle is_reference as non-admin via API" do
+          pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, is_reference: false)
+
+          patch api_v1_masters_pesticide_path(pesticide),
+                params: {
+                  pesticide: {
+                    is_reference: true
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("pesticides.flash.reference_flag_admin_only"), json_response["error"]
+          pesticide.reload
+          assert_equal false, pesticide.is_reference?
+        end
+
         test "should update pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "元の名前")
 

@@ -134,7 +134,7 @@ INJECT = {
   "Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor" =>
     "gateway: CompositionRoot.field_cultivation_climate_gateway_for(CompositionRoot.user_lookup.find(user_id)), logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor" =>
-    "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor" =>
     "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor" =>
@@ -144,7 +144,7 @@ INJECT = {
   "Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor" =>
     "gateway: CompositionRoot.interaction_rule_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor" =>
-    "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.interaction_rule_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Pest::Interactors::CropsNestedPestsCreateInteractor" =>
     "user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway",
   "Domain::Pest::Interactors::CropsNestedPestsIndexInteractor" =>
@@ -174,7 +174,7 @@ INJECT = {
   "Domain::Pesticide::Interactors::MastersCropPesticidesIndexInteractor" =>
     "user_lookup: CompositionRoot.user_lookup, pesticide_gateway: CompositionRoot.pesticide_gateway",
   "Domain::Pesticide::Interactors::PesticideCreateInteractor" =>
-    "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Pesticide::Interactors::PesticideDestroyInteractor" =>
     "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Pesticide::Interactors::PesticideDetailInteractor" =>
@@ -184,7 +184,7 @@ INJECT = {
   "Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor" =>
     "gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup",
   "Domain::Pesticide::Interactors::PesticideUpdateInteractor" =>
-    "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor" =>
     "gateway: CompositionRoot.public_plan_gateway, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger, clock: Time.zone",
   "Domain::WeatherData::Interactors::WeatherPredictionInteractor" =>
