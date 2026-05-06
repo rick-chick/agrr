@@ -26,7 +26,8 @@ module Api
             message: "Weather update jobs enqueued",
             timestamp: Time.current.iso8601
           }
-        rescue StandardError => e
+          # Application edge 3（インフラ・投入境界）
+        rescue ActiveJob::EnqueueError, ActiveRecord::ActiveRecordError => e
           Rails.logger.error "❌ [Scheduler] Failed to trigger weather update: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(5).join("\n   ")}"
           render json: {

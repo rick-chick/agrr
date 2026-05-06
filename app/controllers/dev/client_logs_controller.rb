@@ -7,6 +7,7 @@ module Dev
     skip_before_action :verify_authenticity_token, only: [ :create ]
 
     # ログを受信して Rails.logger に出力
+    # 開発専用: 広い rescue は置かず、想定外は 500 に委ねる（Application edge 3）
     def create
       return head :forbidden unless Rails.env.development?
 
@@ -18,9 +19,6 @@ module Dev
       end
 
       head :ok
-    rescue StandardError => e
-      Rails.logger.error("[CLIENT LOGGER ERROR] Failed to process client log: #{e.message}")
-      head :internal_server_error
     end
 
     private

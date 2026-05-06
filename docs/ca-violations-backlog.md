@@ -6,8 +6,8 @@
 
 1. **Application edge 3 — コントローラの `rescue StandardError` / 広い `rescue` がユースケース結果の主スイッチ**
    - `rescue => e` 撤去済み（コントローラ・jobs 列挙分）。`api/v1/contact_messages` は reCAPTCHA / レート制限を Interactor + Presenter `on_failure` に集約済み（2026-05-06）。
-   - **部分解消（2026-05-06）**: `health_controller#show` は `ConnectionNotEstablished` / `StatementInvalid` / `SQLite3::Exception` のみ捕捉（その他は再 raise）。`api/v1/backdoor#status` のバッククォート周りは `SystemCallError` に縮小。
-   - **残**: `internal/jobs_controller`、`cultivation_plan_api`、`crops`/`pests` リトライ内、`dev/client_logs_controller` 等の `rescue StandardError` の縮小または Interactor + `on_failure`。監査: `docs/ca-controller-rescue-audit.md`。
+   - **部分解消（2026-05-06）**: `health_controller#show`、`backdoor#status`、`internal/jobs/trigger_weather_update`（`EnqueueError` + `ActiveRecord::ActiveRecordError`）、`dev/client_logs#create`（広い rescue 削除）、`cultivation_plan_api#run_candidates`（AGRR / JSON / IO に限定）。
+   - **残**: `cultivation_plan_api#get_or_predict_weather` の `rescue StandardError`（天気取得フォールバック）、`api/v1/crops_controller` / `pests_controller` の agrr リトライ内 `rescue StandardError` 等。監査: `docs/ca-controller-rescue-audit.md`。
 
 2. **Application edge 1 / Sideways escape — `app/controllers/concerns/**` の `ActiveSupport::Concern` によるオーケストレーション共有**
    - レガシー負債。新規判断の追加禁止。段階的に `lib/domain` + 注入へ畳み込む。
@@ -19,6 +19,7 @@
 
 ## 解消済み（記録）
 
+- **`api/v1/internal/jobs#trigger_weather_update` / `dev/client_logs#create` / `cultivation_plan_api#run_candidates`**（2026-05-06）: スケジューラ投入は `ActiveJob::EnqueueError` と `ActiveRecord::ActiveRecordError` のみ。開発ログ受信は広い rescue を削除。候補実行は `Agrr::BaseGatewayV2::*` / `JSON::ParserError` / `SystemCallError` に限定。
 - **`health_controller#show` / `api/v1/backdoor#status` の広い `rescue StandardError`**（2026-05-06）: DB 接続・クエリ由来のみ（`HEALTH_DB_EXCEPTIONS`）、バッククォートは `SystemCallError`。ユースケースの二重分岐ではなくインフラ境界に限定。
 - **`ContactMessages` API — コントローラの `rescue`（reCAPTCHA / レート制限）**（2026-05-06）: `CreateContactMessageInteractor` が `verify` / `track` の結果で `on_failure`（種別: validation / recaptcha / rate_limit）。Presenter が HTTP ステータスを分担。
 - **`app/jobs/**` の `rescue => e`（`optimization_job`, `weather_prediction_job`, `task_schedule_generation_job`, `plan_finalize_job`, `monitor_migration_status_job`, `completion_notification_job`, `chained_job_runner_job`）**（2026-05-06）: `rescue StandardError => e` に明示（挙動は従来どおり `raise` 継続）。

@@ -302,7 +302,11 @@ module CultivationPlanApi
       planning_end: planning_end,
       interaction_rules: interaction_rules.empty? ? nil : interaction_rules
     )
-  rescue StandardError => e
+  rescue Agrr::BaseGatewayV2::ExecutionError,
+         Agrr::BaseGatewayV2::ParseError,
+         Agrr::BaseGatewayV2::NoAllocationCandidatesError,
+         JSON::ParserError,
+         SystemCallError => e
     Rails.logger.error "❌ [Candidates] Failed to run candidates: #{e.message}"
     []
   end

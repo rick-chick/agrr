@@ -83,7 +83,7 @@ module Api
 
         test "should handle errors gracefully" do
           # ジョブのエンキュー時にエラーが発生した場合をシミュレート
-          UpdateReferenceWeatherDataJob.stub(:perform_later, -> { raise StandardError.new("Job error") }) do
+          UpdateReferenceWeatherDataJob.stub(:perform_later, -> { raise ActiveJob::EnqueueError, "Job error" }) do
             post "/api/v1/internal/jobs/trigger_weather_update",
                  headers: { "X-Scheduler-Token" => @token }
 
