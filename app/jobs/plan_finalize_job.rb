@@ -32,9 +32,14 @@ class PlanFinalizeJob < ApplicationJob
     plan.phase_completed!(channel_class)
 
     Rails.logger.info "✅ [PlanFinalizeJob] Finalized CultivationPlan##{plan.id}"
-  rescue StandardError => e
+  rescue *(CultivationPlanJobExceptions::PLAN_FINALIZE_FAILURES) => e
     Rails.logger.error "❌ [PlanFinalizeJob] Failed to finalize plan ##{cultivation_plan_id}: #{e.message}"
-    plan&.phase_failed!("task_schedule_generation", channel_class)
+    CompositionRoot.cultivation_plan_gateway.update_phase(
+      cultivation_plan_id,
+      :phase_failed,
+      "task_schedule_generation",
+      channel_class
+    )
     raise
   end
 end

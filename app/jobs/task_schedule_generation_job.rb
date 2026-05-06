@@ -75,7 +75,7 @@ class TaskScheduleGenerationJob < ApplicationJob
     # トーストはresults画面で表示されるため、ここでは通常の完了通知のみ送信
     cultivation_plan.complete!
     cultivation_plan.phase_completed!(channel_class)
-  rescue StandardError => e
+  rescue *(CultivationPlanJobExceptions::TASK_SCHEDULE_TEMPLATE_COMPLETION_FAILURES) => e
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Failed to handle template missing: #{e.message}"
     # エラーが発生しても計画は完了状態にする
     cultivation_plan.complete! if cultivation_plan

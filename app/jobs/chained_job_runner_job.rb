@@ -19,16 +19,10 @@ class ChainedJobRunnerJob < ApplicationJob
 
     Rails.logger.info "🔗 [ChainedJobRunnerJob] Executing #{index + 1}/#{chain.length}: #{job_class_name} with #{job_args.inspect}"
 
-    begin
-      job_class = job_class_name.constantize
-      # ActiveJobを経由せず直接performを呼ぶことで確実に同期実行し、引数もキーワードで渡す
-      job_class.new.perform(**job_args)
-      Rails.logger.info "✅ [ChainedJobRunnerJob] Completed: #{job_class_name} (#{index + 1}/#{chain.length})"
-    rescue StandardError => e
-      Rails.logger.error "❌ [ChainedJobRunnerJob] Failed at #{job_class_name} (index=#{index}): #{e.message}"
-      Rails.logger.error e.backtrace.first(5).join("\n")
-      raise
-    end
+    job_class = job_class_name.constantize
+    # ActiveJobを経由せず直接performを呼ぶことで確実に同期実行し、引数もキーワードで渡す
+    job_class.new.perform(**job_args)
+    Rails.logger.info "✅ [ChainedJobRunnerJob] Completed: #{job_class_name} (#{index + 1}/#{chain.length})"
 
     # 次のジョブがあれば自身を再度enqueue
     next_index = index + 1

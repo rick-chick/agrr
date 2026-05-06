@@ -15,7 +15,7 @@ class MonitorMigrationStatusJob < ApplicationJob
       primary_status = check_migration_status(:primary)
       results[:primary] = { status: "ok", pending: primary_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Primary database: #{primary_status[:pending]} pending migrations"
-    rescue StandardError => e
+    rescue ActiveRecord::ActiveRecordError => e
       results[:primary] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Primary database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
@@ -26,7 +26,7 @@ class MonitorMigrationStatusJob < ApplicationJob
       cache_status = check_migration_status(:cache)
       results[:cache] = { status: "ok", pending: cache_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Cache database: #{cache_status[:pending]} pending migrations"
-    rescue StandardError => e
+    rescue ActiveRecord::ActiveRecordError => e
       results[:cache] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Cache database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
@@ -49,12 +49,12 @@ class MonitorMigrationStatusJob < ApplicationJob
     when :primary
       # メインデータベースの接続を使用
       pool = ActiveRecord::Base.connection_pool
-      pending = pool.migration_context.pending_migrations
+      pending = pool.migration_context.pending_migration_versions
       { pending: pending.size }
     when :cache
       # キャッシュデータベース（SolidCache::Record が connects_to で接続）
       pool = SolidCache::Record.connection_pool
-      pending = pool.migration_context.pending_migrations
+      pending = pool.migration_context.pending_migration_versions
       { pending: pending.size }
     else
       raise "Unknown database: #{database}"

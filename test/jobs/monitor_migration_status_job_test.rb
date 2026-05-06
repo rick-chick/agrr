@@ -35,90 +35,51 @@ class MonitorMigrationStatusJobTest < ActiveJob::TestCase
   end
 
   test "perform handles database connection errors gracefully" do
-    # データベース接続エラーをシミュレート
-    # パッチを使わずに、実際のエラーケースを再現するため、
-    # データベースファイルを削除して接続を切断し、エラーを発生させる
-    original_db_path = Rails.configuration.database_configuration[Rails.env]["primary"]["database"]
-    db_path = Rails.root.join(original_db_path)
-    backup_path = "#{db_path}.backup"
+    # DB ファイル破壊は他テストとスキーマを汚すため、AR 境界例外をスタブで再現する
+    job = MonitorMigrationStatusJob.new
+    job.stubs(:check_migration_status).with(:primary).raises(ActiveRecord::ConnectionNotEstablished, "simulated")
+    job.stubs(:check_migration_status).with(:cache).returns({ pending: 0 })
 
-    begin
-      # データベースファイルをバックアップして削除
-      if File.exist?(db_path)
-        FileUtils.cp(db_path, backup_path)
-        FileUtils.rm(db_path)
-      end
+    results = job.perform
 
-      # 接続プールを切断
-      ActiveRecord::Base.connection_pool.disconnect!
+    assert results.is_a?(Hash)
+    assert results.key?(:primary)
 
-      results = MonitorMigrationStatusJob.new.perform
+    primary_result = results[:primary]
+    assert primary_result.is_a?(Hash)
+    assert_equal "error", primary_result[:status]
+    assert primary_result.key?(:error)
+    assert primary_result[:error].is_a?(String)
+    assert primary_result[:error].present?
 
-      # 結果が正常に返されることを確認（エラーが発生しても、結果は返される）
-      assert results.is_a?(Hash)
-      assert results.key?(:primary)
-
-      # エラーハンドリングが正しく動作することを確認
-      primary_result = results[:primary]
-      assert primary_result.is_a?(Hash)
-      assert_equal "error", primary_result[:status]
-      assert primary_result.key?(:error)
-      assert primary_result[:error].is_a?(String)
-      assert primary_result[:error].present?
-    ensure
-      # データベースファイルを復元
-      if File.exist?(backup_path)
-        FileUtils.cp(backup_path, db_path)
-        FileUtils.rm(backup_path)
-      end
-      # 接続を再確立
-      ActiveRecord::Base.establish_connection
-    end
+    assert results.key?(:cache)
+    assert_equal "ok", results[:cache][:status]
   end
 
   test "perform logs errors when migration check fails" do
-    # マイグレーション状態確認が失敗した場合のログを確認
     original_logger = Rails.logger
     log_output = StringIO.new
     Rails.logger = Logger.new(log_output)
 
-    original_db_path = Rails.configuration.database_configuration[Rails.env]["primary"]["database"]
-    db_path = Rails.root.join(original_db_path)
-    backup_path = "#{db_path}.backup"
-
     begin
-      # データベースファイルをバックアップして削除
-      if File.exist?(db_path)
-        FileUtils.cp(db_path, backup_path)
-        FileUtils.rm(db_path)
-      end
+      job = MonitorMigrationStatusJob.new
+      job.stubs(:check_migration_status).with(:primary).raises(ActiveRecord::ConnectionNotEstablished, "simulated")
+      job.stubs(:check_migration_status).with(:cache).returns({ pending: 0 })
 
-      # 接続プールを切断
-      ActiveRecord::Base.connection_pool.disconnect!
-
-      results = MonitorMigrationStatusJob.new.perform
+      results = job.perform
 
       log_output.rewind
       log_content = log_output.read
 
-      # エラーハンドリングが正しく動作することを確認
       assert results.is_a?(Hash)
       assert results.key?(:primary)
       assert_equal "error", results[:primary][:status]
       assert results[:primary][:error].present?
 
-      # エラーがログに記録されることを確認
       assert log_content.include?("Primary database check failed"),
         "Expected log to include 'Primary database check failed', got: #{log_content}"
     ensure
       Rails.logger = original_logger
-      # データベースファイルを復元
-      if File.exist?(backup_path)
-        FileUtils.cp(backup_path, db_path)
-        FileUtils.rm(backup_path)
-      end
-      # 接続を再確立
-      ActiveRecord::Base.establish_connection
     end
   end
 

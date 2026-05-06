@@ -32,34 +32,35 @@ class WeatherPredictionJob < ApplicationJob
 
     Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction for plan ##{cultivation_plan_id}"
 
-    begin
-      # 天気予測開始通知
-      Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_predicting_weather! for plan ##{cultivation_plan_id}"
-      cultivation_plan.phase_predicting_weather!(channel_class)
-      Rails.logger.info "🌤️ [WeatherPredictionJob] phase_predicting_weather! completed for plan ##{cultivation_plan_id}"
+    Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_predicting_weather! for plan ##{cultivation_plan_id}"
+    cultivation_plan.phase_predicting_weather!(channel_class)
+    Rails.logger.info "🌤️ [WeatherPredictionJob] phase_predicting_weather! completed for plan ##{cultivation_plan_id}"
 
-      # 天気予測処理
-      Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction service for plan ##{cultivation_plan_id}"
-      weather_location = cultivation_plan.farm&.weather_location
-      unless weather_location
-        raise Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
-              "気象データがありません。農場にWeatherLocationが設定されていません。"
-      end
-      weather_prediction_service = CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: cultivation_plan.farm)
-      weather_prediction_service.predict_for_cultivation_plan(
-        plan_weather: CompositionRoot.cultivation_plan_weather_dto_from(cultivation_plan)
-      )
-
-      # 天気予測完了通知
-      Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_weather_prediction_completed! for plan ##{cultivation_plan_id}"
-      cultivation_plan.phase_weather_prediction_completed!(channel_class)
-
-      Rails.logger.info "✅ [WeatherPredictionJob] Weather prediction completed for plan ##{cultivation_plan_id}"
-
-    rescue StandardError => e
-      Rails.logger.error "❌ [WeatherPredictionJob] Failed to predict weather for plan ##{cultivation_plan_id}: #{e.message}"
-      cultivation_plan.phase_failed!("predicting_weather", channel_class)
-      raise
+    # 天気予測処理
+    Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction service for plan ##{cultivation_plan_id}"
+    weather_location = cultivation_plan.farm&.weather_location
+    unless weather_location
+      raise Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
+            "気象データがありません。農場にWeatherLocationが設定されていません。"
     end
+    weather_prediction_service = CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: cultivation_plan.farm)
+    weather_prediction_service.predict_for_cultivation_plan(
+      plan_weather: CompositionRoot.cultivation_plan_weather_dto_from(cultivation_plan)
+    )
+
+    # 天気予測完了通知
+    Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_weather_prediction_completed! for plan ##{cultivation_plan_id}"
+    cultivation_plan.phase_weather_prediction_completed!(channel_class)
+
+    Rails.logger.info "✅ [WeatherPredictionJob] Weather prediction completed for plan ##{cultivation_plan_id}"
+  rescue *(CultivationPlanJobExceptions::WEATHER_PREDICTION_FAILURES) => e
+    Rails.logger.error "❌ [WeatherPredictionJob] Failed to predict weather for plan ##{cultivation_plan_id}: #{e.message}"
+    CompositionRoot.cultivation_plan_gateway.update_phase(
+      cultivation_plan_id,
+      :phase_failed,
+      "predicting_weather",
+      channel_class
+    )
+    raise
   end
 end
