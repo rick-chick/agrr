@@ -7,17 +7,12 @@ import { AuthService } from '../../../services/auth.service';
 import { PesticideEditView, PesticideEditViewState, PesticideEditFormData } from './pesticide-edit.view';
 import { LoadPesticideForEditUseCase } from '../../../usecase/pesticides/load-pesticide-for-edit.usecase';
 import { UpdatePesticideUseCase } from '../../../usecase/pesticides/update-pesticide.usecase';
-import { PesticideEditPresenter } from '../../../adapters/pesticides/pesticide-edit.presenter';
-import { LOAD_PESTICIDE_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/pesticides/load-pesticide-for-edit.output-port';
-import { UPDATE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/update-pesticide.output-port';
-import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
-import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import {
+  PesticideEditPresenter,
+  PESTICIDE_EDIT_PROVIDERS
+} from '../../../usecase/pesticides/pesticide-edit.providers';
 import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: PesticideEditFormData = {
@@ -40,16 +35,7 @@ const initialControl: PesticideEditViewState = {
   selector: 'app-pesticide-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
-  providers: [
-    PesticideEditPresenter,
-    LoadPesticideForEditUseCase,
-    UpdatePesticideUseCase,
-    { provide: LOAD_PESTICIDE_FOR_EDIT_OUTPUT_PORT, useExisting: PesticideEditPresenter },
-    { provide: UPDATE_PESTICIDE_OUTPUT_PORT, useExisting: PesticideEditPresenter },
-    { provide: PESTICIDE_GATEWAY, useClass: PesticideApiGateway },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PESTICIDE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

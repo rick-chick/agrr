@@ -5,11 +5,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PesticideListView, PesticideListViewState } from './pesticide-list.view';
 import { LoadPesticideListUseCase } from '../../../usecase/pesticides/load-pesticide-list.usecase';
 import { DeletePesticideUseCase } from '../../../usecase/pesticides/delete-pesticide.usecase';
-import { PesticideListPresenter } from '../../../adapters/pesticides/pesticide-list.presenter';
-import { LOAD_PESTICIDE_LIST_OUTPUT_PORT } from '../../../usecase/pesticides/load-pesticide-list.output-port';
-import { DELETE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/delete-pesticide.output-port';
-import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
-import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import {
+  PesticideListPresenter,
+  PESTICIDE_LIST_PROVIDERS
+} from '../../../usecase/pesticides/pesticide-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -23,14 +22,7 @@ const initialControl: PesticideListViewState = {
   selector: 'app-pesticide-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PesticideListPresenter,
-    LoadPesticideListUseCase,
-    DeletePesticideUseCase,
-    { provide: LOAD_PESTICIDE_LIST_OUTPUT_PORT, useExisting: PesticideListPresenter },
-    { provide: DELETE_PESTICIDE_OUTPUT_PORT, useExisting: PesticideListPresenter },
-    { provide: PESTICIDE_GATEWAY, useClass: PesticideApiGateway }
-  ],
+  providers: [...PESTICIDE_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

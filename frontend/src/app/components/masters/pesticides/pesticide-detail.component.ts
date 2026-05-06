@@ -5,17 +5,12 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PesticideDetailView, PesticideDetailViewState } from './pesticide-detail.view';
 import { LoadPesticideDetailUseCase } from '../../../usecase/pesticides/load-pesticide-detail.usecase';
 import { DeletePesticideUseCase } from '../../../usecase/pesticides/delete-pesticide.usecase';
-import { PesticideDetailPresenter } from '../../../adapters/pesticides/pesticide-detail.presenter';
-import { LOAD_PESTICIDE_DETAIL_OUTPUT_PORT } from '../../../usecase/pesticides/load-pesticide-detail.output-port';
-import { DELETE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/delete-pesticide.output-port';
-import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
-import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import {
+  PesticideDetailPresenter,
+  PESTICIDE_DETAIL_PROVIDERS
+} from '../../../usecase/pesticides/pesticide-detail.providers';
 import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
@@ -27,16 +22,7 @@ const initialControl: PesticideDetailViewState = {
   selector: 'app-pesticide-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PesticideDetailPresenter,
-    LoadPesticideDetailUseCase,
-    DeletePesticideUseCase,
-    { provide: LOAD_PESTICIDE_DETAIL_OUTPUT_PORT, useExisting: PesticideDetailPresenter },
-    { provide: DELETE_PESTICIDE_OUTPUT_PORT, useExisting: PesticideDetailPresenter },
-    { provide: PESTICIDE_GATEWAY, useClass: PesticideApiGateway },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PESTICIDE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

@@ -6,17 +6,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideCreateView, PesticideCreateViewState, PesticideCreateFormData } from './pesticide-create.view';
 import { CreatePesticideUseCase } from '../../../usecase/pesticides/create-pesticide.usecase';
-import { PesticideCreatePresenter } from '../../../adapters/pesticides/pesticide-create.presenter';
-import { CREATE_PESTICIDE_OUTPUT_PORT } from '../../../usecase/pesticides/create-pesticide.output-port';
-import { PESTICIDE_GATEWAY } from '../../../usecase/pesticides/pesticide-gateway';
-import { PesticideApiGateway } from '../../../adapters/pesticides/pesticide-api.gateway';
+import {
+  PesticideCreatePresenter,
+  PESTICIDE_CREATE_PROVIDERS
+} from '../../../usecase/pesticides/pesticide-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
 
 const initialFormData: PesticideCreateFormData = {
   name: '',
@@ -37,14 +33,7 @@ const initialControl: PesticideCreateViewState = {
   selector: 'app-pesticide-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
-  providers: [
-    PesticideCreatePresenter,
-    CreatePesticideUseCase,
-    { provide: CREATE_PESTICIDE_OUTPUT_PORT, useExisting: PesticideCreatePresenter },
-    { provide: PESTICIDE_GATEWAY, useClass: PesticideApiGateway },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PESTICIDE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

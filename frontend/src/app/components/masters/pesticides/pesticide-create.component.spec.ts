@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { PesticideCreateComponent } from './pesticide-create.component';
-import { PesticideCreatePresenter } from '../../../adapters/pesticides/pesticide-create.presenter';
+import { PesticideCreatePresenter } from '../../../usecase/pesticides/pesticide-create.providers';
 import { CreatePesticideUseCase } from '../../../usecase/pesticides/create-pesticide.usecase';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';

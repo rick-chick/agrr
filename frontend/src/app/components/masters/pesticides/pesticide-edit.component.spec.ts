@@ -7,7 +7,7 @@ import { PesticideEditComponent } from './pesticide-edit.component';
 import { LoadPesticideForEditUseCase } from '../../../usecase/pesticides/load-pesticide-for-edit.usecase';
 import { UpdatePesticideUseCase } from '../../../usecase/pesticides/update-pesticide.usecase';
 import { PesticideEditViewState } from './pesticide-edit.view';
-import { PesticideEditPresenter } from '../../../adapters/pesticides/pesticide-edit.presenter';
+import { PesticideEditPresenter } from '../../../usecase/pesticides/pesticide-edit.providers';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { AuthService } from '../../../services/auth.service';
