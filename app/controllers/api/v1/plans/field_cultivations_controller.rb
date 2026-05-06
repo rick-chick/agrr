@@ -12,20 +12,7 @@ module Api
         include ::FieldCultivationClimate::MockProgressRecords
 
         def show
-          @field_cultivation = find_field_cultivation
-
-          render json: {
-            id: @field_cultivation.id,
-            field_name: @field_cultivation.field_display_name,
-            crop_name: @field_cultivation.crop_display_name,
-            area: @field_cultivation.area,
-            start_date: @field_cultivation.start_date,
-            completion_date: @field_cultivation.completion_date,
-            cultivation_days: @field_cultivation.cultivation_days,
-            estimated_cost: @field_cultivation.estimated_cost,
-            gdd: @field_cultivation.optimization_result&.dig("raw", "total_gdd"),
-            status: @field_cultivation.status
-          }
+          field_cultivation_api_show_interactor.call(field_cultivation_id: params[:id])
         end
 
         # GET /api/v1/plans/field_cultivations/:id/climate_data
@@ -42,23 +29,14 @@ module Api
 
         # PATCH /api/v1/plans/field_cultivations/:id
         def update
-          @field_cultivation = find_field_cultivation
-
-          if @field_cultivation.update(field_cultivation_params)
-            render json: {
-              success: true,
-              field_cultivation: {
-                id: @field_cultivation.id,
-                start_date: @field_cultivation.start_date,
-                completion_date: @field_cultivation.completion_date
-              }
-            }
-          else
-            render json: {
-              success: false,
-              errors: @field_cultivation.errors.full_messages
-            }, status: :unprocessable_entity
-          end
+          field_cultivation_api_update_interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInputDto.new(
+              field_cultivation_id: params[:id],
+              start_date: field_cultivation_params[:start_date],
+              completion_date: field_cultivation_params[:completion_date],
+              public_plan: false
+            )
+          )
         end
 
         def render_response(json:, status:)
@@ -66,6 +44,26 @@ module Api
         end
 
         private
+
+        def field_cultivation_plan_api_gateway
+          CompositionRoot.field_cultivation_climate_gateway_for(
+            CompositionRoot.user_lookup.find(current_user.id)
+          )
+        end
+
+        def field_cultivation_api_show_interactor
+          Domain::FieldCultivation::Interactors::FieldCultivationApiShowInteractor.new(
+            output_port: Presenters::Api::FieldCultivation::FieldCultivationApiShowPresenter.new(view: self),
+            gateway: field_cultivation_plan_api_gateway
+          )
+        end
+
+        def field_cultivation_api_update_interactor
+          Domain::FieldCultivation::Interactors::FieldCultivationApiUpdateInteractor.new(
+            output_port: Presenters::Api::FieldCultivation::FieldCultivationApiUpdatePresenter.new(view: self),
+            gateway: field_cultivation_plan_api_gateway
+          )
+        end
 
         def field_cultivation_climate_data_interactor
           uid = current_user.id
@@ -80,18 +78,6 @@ module Api
 
         def field_cultivation_id_param
           params.require(:id)
-        end
-
-        def find_field_cultivation
-          field_cultivation = ::FieldCultivation.find(params[:id])
-          cultivation_plan = field_cultivation.cultivation_plan
-
-          # ユーザーの private 計画であることを確認（Policy 経由）
-          PlanPolicy.find_private_owned!(current_user, cultivation_plan.id)
-
-          field_cultivation
-        rescue PolicyPermissionDenied
-          raise ActiveRecord::RecordNotFound
         end
 
         def field_cultivation_params

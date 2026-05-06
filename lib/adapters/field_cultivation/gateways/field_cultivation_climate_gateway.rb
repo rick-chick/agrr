@@ -25,7 +25,7 @@ module Adapters
         end
 
         def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
-          field_cultivation = find_authorized_field_cultivation(field_cultivation_id)
+          field_cultivation = authorized_field_cultivation(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
 
@@ -67,12 +67,10 @@ module Adapters
             filtered_records: filtered_records,
             progress_records: progress_records
           )
-        rescue PolicyPermissionDenied
-          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         def climate_data_fallback_dto(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
-          field_cultivation = find_authorized_field_cultivation(field_cultivation_id)
+          field_cultivation = authorized_field_cultivation(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
           weather_location = farm.weather_location
@@ -125,8 +123,52 @@ module Adapters
             filtered_records: filtered_records,
             progress_records: progress_records
           )
-        rescue PolicyPermissionDenied
-          raise Domain::Shared::Exceptions::RecordNotFound
+        end
+
+        def fetch_api_summary(field_cultivation_id:)
+          fc = authorized_field_cultivation(field_cultivation_id)
+          Domain::FieldCultivation::Dtos::FieldCultivationApiSummaryDto.new(
+            id: fc.id,
+            field_name: fc.field_display_name,
+            crop_name: fc.crop_display_name,
+            area: fc.area,
+            start_date: fc.start_date,
+            completion_date: fc.completion_date,
+            cultivation_days: fc.cultivation_days,
+            estimated_cost: fc.estimated_cost,
+            gdd: fc.optimization_result&.dig("raw", "total_gdd"),
+            status: fc.status
+          )
+        end
+
+        def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, public_plan: false)
+          fc = authorized_field_cultivation(field_cultivation_id)
+          unless fc.update(start_date: start_date, completion_date: completion_date)
+            raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: fc.errors.full_messages)
+          end
+
+          cultivation_days_value = fc.cultivation_days
+          if public_plan && fc.start_date && fc.completion_date
+            days = (fc.completion_date - fc.start_date).to_i + 1
+            fc.update_column(:cultivation_days, days)
+            cultivation_days_value = days
+          end
+
+          if public_plan
+            Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateSuccessDto.new(
+              field_cultivation_id: fc.id,
+              start_date: fc.start_date,
+              completion_date: fc.completion_date,
+              cultivation_days: cultivation_days_value,
+              message: "栽培期間を更新しました"
+            )
+          else
+            Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateSuccessDto.new(
+              field_cultivation_id: fc.id,
+              start_date: fc.start_date,
+              completion_date: fc.completion_date
+            )
+          end
         end
 
         private
@@ -185,6 +227,13 @@ module Adapters
             PlanPolicy.find_private_owned!(@current_user, plan.id)
           end
           field_cultivation
+        end
+
+        # PlanPolicy の拒否をドメインの RecordNotFound に正規化（Controller で rescue しない）
+        def authorized_field_cultivation(field_cultivation_id)
+          find_authorized_field_cultivation(field_cultivation_id)
+        rescue PolicyPermissionDenied
+          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         def ensure_weather_location!(farm)
