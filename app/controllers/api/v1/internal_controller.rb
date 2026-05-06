@@ -15,36 +15,17 @@ module Api
       # POST /api/v1/internal/farms/:farm_id/fetch_weather_data
       # 特定の農場の天気データを取得開始
       def fetch_weather_data
-        lookup = Adapters::Shared::InternalApiFarmLookup.find_farm(params[:farm_id])
-        if lookup[:kind] == :not_found
-          return render json: { error: I18n.t("api.errors.common.farm_not_found") }, status: :not_found
-        end
-
-        farm = lookup[:farm]
-
-        # 既に取得済みの場合はスキップ
-        if farm.weather_location && farm.weather_data_status == "completed"
-          return render json: {
-            success: true,
-            message: I18n.t("api.messages.common.weather_data_already_exists"),
-            farm_id: farm.id,
-            status: farm.weather_data_status,
-            weather_data_count: farm.weather_location.weather_data.count
-          }
-        end
-
-        # 天気データ取得を開始
-        farm.send(:enqueue_weather_data_fetch)
-
-        render json: {
-          success: true,
-          message: I18n.t("api.messages.common.weather_data_fetch_started"),
-          farm_id: farm.id,
-          status: farm.weather_data_status,
-          total_blocks: farm.weather_data_total_years
-        }
-      rescue ActiveJob::EnqueueError, ActiveRecord::RecordInvalid => e
-        render json: { error: e.message }, status: :internal_server_error
+        input_dto = Domain::WeatherData::Dtos::InternalWeatherFetchStartInputDto.new(farm_id: params[:farm_id])
+        presenter = Presenters::Api::Internal::InternalWeatherFetchStartPresenter.new(
+          view: self,
+          translator: CompositionRoot.translator
+        )
+        interactor = Domain::WeatherData::Interactors::InternalWeatherFetchStartInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.internal_weather_fetch_start_gateway,
+          translator: CompositionRoot.translator
+        )
+        interactor.call(input_dto)
       end
 
       # GET /api/v1/internal/farms/:farm_id/weather_status
@@ -114,6 +95,10 @@ module Api
           weather_data: weather_data,
           count: weather_data.count
         }
+      end
+
+      def render_response(json:, status:)
+        render(json: json, status: status)
       end
 
       private

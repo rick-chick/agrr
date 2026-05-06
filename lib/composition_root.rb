@@ -179,6 +179,10 @@ module CompositionRoot
       @weather_data_gateway ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     end
 
+    def internal_weather_fetch_start_gateway
+      @internal_weather_fetch_start_gateway ||= Adapters::WeatherData::Gateways::InternalWeatherFetchStartActiveRecordGateway.new
+    end
+
     def prediction_gateway
       @prediction_gateway ||= Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
     end
