@@ -1,34 +1,26 @@
 # frozen_string_literal: true
 
-class Presenters::Html::Plans::TaskScheduleTimelinePresenter
+class Presenters::Html::Plans::TaskScheduleTimelinePresenter < Domain::CultivationPlan::Ports::TaskScheduleTimelineOutputPort
   WEEK_LENGTH = 6
   CATEGORY_GENERAL = "general"
   CATEGORY_FERTILIZER = "fertilizer"
 
-  def initialize(cultivation_plan, params = {})
-    @cultivation_plan = cultivation_plan
+  def initialize(view:, params: {})
+    @view = view
     @params = params || {}
+    @timeline = nil
   end
 
-  def task_options_for(field_cultivation)
-    crop = field_cultivation&.cultivation_plan_crop&.crop
-    return [] unless crop
+  def on_success(dto)
+    @timeline = dto
+  end
 
-    crop.crop_task_templates
-        .includes(:agricultural_task)
-        .order(:name)
-        .map do |template|
-      {
-        template_id: template.id,
-        name: template.name,
-        task_type: template.task_type || TaskScheduleItem::FIELD_WORK_TYPE,
-        agricultural_task_id: template.agricultural_task_id,
-        description: template.description,
-        weather_dependency: template.weather_dependency,
-        time_per_sqm: template.time_per_sqm&.to_s,
-        required_tools: Array(template.required_tools).presence,
-        skill_level: template.skill_level
-      }.compact
+  def on_failure(error_dto)
+    msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+    if @view.request.format.json?
+      @view.render json: { errors: [ msg ] }, status: :not_found
+    else
+      @view.redirect_to @view.plans_path, alert: msg
     end
   end
 
@@ -45,15 +37,31 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
 
   private
 
-  attr_reader :cultivation_plan, :params
+  attr_reader :timeline, :params
+
+  def task_options_for(field)
+    field.task_options.map do |template|
+      {
+        template_id: template.template_id,
+        name: template.name,
+        task_type: template.task_type,
+        agricultural_task_id: template.agricultural_task_id,
+        description: template.description,
+        weather_dependency: template.weather_dependency,
+        time_per_sqm: template.time_per_sqm&.to_s,
+        required_tools: template.required_tools,
+        skill_level: template.skill_level
+      }.compact
+    end
+  end
 
   def plan_payload
     {
-      id: cultivation_plan.id,
-      name: cultivation_plan.display_name,
-      status: cultivation_plan.status,
-      planning_start_date: cultivation_plan.planning_start_date&.iso8601,
-      planning_end_date: cultivation_plan.planning_end_date&.iso8601,
+      id: timeline.plan.id,
+      name: timeline.plan.display_name,
+      status: timeline.plan.status,
+      planning_start_date: timeline.plan.planning_start_date&.iso8601,
+      planning_end_date: timeline.plan.planning_end_date&.iso8601,
       timeline_generated_at: timeline_generated_at&.iso8601,
       timeline_generated_at_display: timeline_generated_at_display
     }
@@ -144,14 +152,14 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
   end
 
   def fields_payload
-    grouped_schedules.each_with_object([]) do |(field_cultivation, schedules), collection|
-      serialized = serialize_field(field_cultivation, schedules)
+    filtered_fields.each_with_object([]) do |field, collection|
+      serialized = serialize_field(field)
       collection << serialized if serialized
     end
   end
 
-  def serialize_field(field_cultivation, schedules)
-    field_info = field_information(field_cultivation)
+  def serialize_field(field)
+    field_info = field_information(field)
 
     categorized = {
       CATEGORY_GENERAL => [],
@@ -159,10 +167,10 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
       "unscheduled" => []
     }
 
-    schedules.each do |schedule|
+    field.schedules.each do |schedule|
       next unless include_category?(schedule.category)
 
-      schedule.task_schedule_items.each do |item|
+      schedule.items.each do |item|
         serialized_item = serialize_item(item, schedule.category)
         if item.scheduled_date.nil?
           categorized["unscheduled"] << serialized_item
@@ -186,15 +194,15 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
     categorized["unscheduled"].sort_by! { |item| item["name"] }
   end
 
-  def field_information(field_cultivation)
+  def field_information(field)
     {
-      id: field_cultivation&.id,
-      name: field_cultivation&.cultivation_plan_field&.name || I18n.t("plans.task_schedules.plan_level_field"),
-      crop_name: field_cultivation&.cultivation_plan_crop&.name || field_cultivation&.cultivation_plan_crop&.crop&.name,
-      area_sqm: field_cultivation&.area,
-      field_cultivation_id: field_cultivation&.id,
-      crop_id: field_cultivation&.cultivation_plan_crop_id,
-      task_options: task_options_for(field_cultivation)
+      id: field.id,
+      name: field.name || I18n.t("plans.task_schedules.plan_level_field"),
+      crop_name: field.crop_name,
+      area_sqm: field.area_sqm,
+      field_cultivation_id: field.field_cultivation_id,
+      crop_id: field.crop_id,
+      task_options: task_options_for(field)
     }
   end
 
@@ -217,7 +225,7 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
       "amount_unit" => item.amount_unit,
       "status" => derive_status(item),
       "agricultural_task_id" => item.agricultural_task_id,
-      "field_cultivation_id" => item.task_schedule.field_cultivation_id
+      "field_cultivation_id" => item.field_cultivation_id
     }
     payload["details"] = detail_payload(item)
     payload["badge"] = badge_payload(item, category)
@@ -225,7 +233,7 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
   end
 
   def derive_status(item)
-    item.respond_to?(:status) && item.status.present? ? item.status : "planned"
+    item.status.present? ? item.status : "planned"
   end
 
   def detail_payload(item)
@@ -265,7 +273,7 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
       description: task.description,
       time_per_sqm: task.time_per_sqm&.to_s,
       weather_dependency: task.weather_dependency,
-      required_tools: Array(task.required_tools).presence,
+      required_tools: task.required_tools,
       skill_level: task.skill_level,
       task_type: task.task_type
     }.compact
@@ -294,7 +302,7 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
   end
 
   def timeline_generated_at
-    @timeline_generated_at ||= TaskSchedule.where(cultivation_plan: cultivation_plan).maximum(:generated_at)
+    timeline.plan.timeline_generated_at
   end
 
   def days_payload
@@ -302,7 +310,7 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
       {
         date: date.iso8601,
         weekday: date.strftime("%a").downcase,
-        is_today: date == Date.current
+        is_today: date == today
       }
     end
   end
@@ -317,35 +325,6 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
 
   def timeline_generated_at_display
     timeline_generated_at ? I18n.l(timeline_generated_at, format: :long) : nil
-  end
-
-  def grouped_schedules
-    @grouped_schedules ||= begin
-      schedules = base_scope.includes(
-        :task_schedule_items,
-        field_cultivation: [
-          :cultivation_plan_field,
-          {
-            cultivation_plan_crop: {
-              crop: [
-                :agricultural_tasks,
-                { crop_task_templates: :agricultural_task }
-              ]
-            }
-          }
-        ]
-      )
-
-      schedules = schedules.select { |schedule| include_category?(schedule.category) }
-
-      schedules.group_by(&:field_cultivation)
-    end
-  end
-
-  def base_scope
-    scope = TaskSchedule.where(cultivation_plan: cultivation_plan)
-    scope = scope.where(field_cultivation_id: selected_field_id) if selected_field_id
-    scope
   end
 
   def include_category?(category)
@@ -370,6 +349,12 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
     @selected_field_id = params[:field_cultivation_id].presence&.to_i
   end
 
+  def filtered_fields
+    return timeline.fields if selected_field_id.nil?
+
+    timeline.fields.select { |field| field.field_cultivation_id == selected_field_id }
+  end
+
   def week_start
     @week_start ||= begin
       if params[:week_start].present?
@@ -391,20 +376,16 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
   end
 
   def initial_week_start
-    return Date.current.beginning_of_week if minimap_counts.empty?
+    return today.beginning_of_week if minimap_counts.empty?
 
-    today_week = Date.current.beginning_of_week
+    today_week = today.beginning_of_week
     upcoming = minimap_counts.keys.select { |d| d >= today_week }.min
     target = upcoming || minimap_counts.keys.min
-    (target || Date.current).beginning_of_week
+    (target || today).beginning_of_week
   end
 
   def scheduled_dates
-    @scheduled_dates ||= TaskScheduleItem
-                           .joins(:task_schedule)
-                           .where(task_schedules: { cultivation_plan_id: cultivation_plan.id })
-                           .where.not(scheduled_date: nil)
-                           .pluck(:scheduled_date)
+    timeline.scheduled_dates
   end
 
   def minimap_counts
@@ -428,8 +409,8 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
 
   def minimap_range
     @minimap_range ||= begin
-      start_candidates = [ cultivation_plan.planning_start_date, minimap_counts.keys.min, Date.current ].compact
-      finish_candidates = [ cultivation_plan.planning_end_date, minimap_counts.keys.max, Date.current ].compact
+      start_candidates = [ timeline.plan.planning_start_date, minimap_counts.keys.min, today ].compact
+      finish_candidates = [ timeline.plan.planning_end_date, minimap_counts.keys.max, today ].compact
 
       start_date = start_candidates.min.beginning_of_week
       end_date = finish_candidates.max.end_of_week
@@ -448,5 +429,9 @@ class Presenters::Html::Plans::TaskScheduleTimelinePresenter
       current += 1.week
     end
     weeks
+  end
+
+  def today
+    timeline.today
   end
 end

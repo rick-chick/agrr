@@ -125,6 +125,12 @@ module Domain
         def find_private_cultivation_plan_detail(user:, plan_id:)
           raise NotImplementedError, "Subclasses must implement find_private_cultivation_plan_detail"
         end
+
+        # 作業予定タイムライン（認可つき）。読み取り専用スナップショットのみ。
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleTimelineReadModel]
+        def task_schedule_timeline_read_model(user:, plan_id:)
+          raise NotImplementedError, "Subclasses must implement task_schedule_timeline_read_model"
+        end
       end
     end
   end

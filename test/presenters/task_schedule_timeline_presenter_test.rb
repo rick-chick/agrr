@@ -3,67 +3,82 @@
 require "test_helper"
 
 class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
+  ReadModel = Domain::CultivationPlan::Dtos::TaskScheduleTimelineReadModel
+
   setup do
-    @plan = create(:cultivation_plan, :completed)
-    @field = create(:cultivation_plan_field, cultivation_plan: @plan)
-    crop = create(:crop, user: @plan.user)
-    plan_crop = create(:cultivation_plan_crop, cultivation_plan: @plan, crop: crop)
-    @field_cultivation = create(:field_cultivation,
-                                cultivation_plan: @plan,
-                                cultivation_plan_field: @field,
-                                cultivation_plan_crop: plan_crop,
-                                start_date: Date.current - 7,
-                                completion_date: Date.current + 30,
-                                status: "completed")
+    @today = Date.new(2025, 1, 10)
+    @plan = ReadModel::PlanRead.new(
+      id: 12,
+      display_name: "夏野菜計画",
+      status: "completed",
+      planning_start_date: Date.new(2025, 1, 1),
+      planning_end_date: Date.new(2025, 12, 31),
+      timeline_generated_at: Time.new(2025, 1, 5, 9, 30, 0)
+    )
 
-    @agricultural_task = create(:agricultural_task, :user_owned, user: @plan.user,
-                                                       name: "除草作業",
-                                                       description: "雑草を取り除く",
-                                                       required_tools: [ "ホー" ])
-
-    @template = create(
-      :crop_task_template,
-      crop: plan_crop.crop,
-      agricultural_task: @agricultural_task,
-      name: "除草テンプレート",
-      description: "テンプレ説明",
+    @task_master = ReadModel::AgriculturalTaskRead.new(
+      name: "除草作業",
+      description: "雑草を取り除く",
       time_per_sqm: BigDecimal("0.5"),
       weather_dependency: "dry",
       required_tools: [ "ホー" ],
-      skill_level: @agricultural_task.skill_level,
-      task_type: @agricultural_task.task_type,
-      task_type_id: @agricultural_task.task_type_id,
-      is_reference: false
+      skill_level: "beginner",
+      task_type: "field_work"
     )
 
-    @schedule = TaskSchedule.create!(
-      cultivation_plan: @plan,
-      field_cultivation: @field_cultivation,
-      category: "general",
-      status: "active",
-      source: "agrr",
-      generated_at: Time.zone.now
-    )
-
-    TaskScheduleItem.create!(
-      task_schedule: @schedule,
-      task_type: "field_work",
+    @item = ReadModel::ItemRead.new(
+      id: 99,
       name: "除草",
+      task_type: "field_work",
+      scheduled_date: @today,
       stage_name: "初期管理",
       stage_order: 1,
-      gdd_trigger: 120,
-      gdd_tolerance: 10,
-      scheduled_date: Date.current,
+      gdd_trigger: BigDecimal("120.0"),
+      gdd_tolerance: BigDecimal("10.0"),
       priority: 2,
       source: "agrr_schedule",
       weather_dependency: "no_rain_24h",
       time_per_sqm: BigDecimal("0.75"),
-      agricultural_task: @agricultural_task
+      amount: nil,
+      amount_unit: nil,
+      status: nil,
+      agricultural_task_id: 42,
+      field_cultivation_id: 5,
+      agricultural_task: @task_master,
+      actual_date: Date.new(2025, 1, 12),
+      actual_notes: "完了メモ",
+      rescheduled_at: Time.new(2025, 1, 6, 12, 0, 0),
+      cancelled_at: nil,
+      completed_at: Time.new(2025, 1, 12, 17, 0, 0)
+    )
+
+    @schedule = ReadModel::ScheduleRead.new(category: "general", items: [ @item ])
+    @task_option = ReadModel::TaskOptionRead.new(
+      template_id: 123,
+      name: "除草テンプレート",
+      task_type: "field_work",
+      agricultural_task_id: 42,
+      description: "テンプレ説明",
+      weather_dependency: "dry",
+      time_per_sqm: BigDecimal("0.5"),
+      required_tools: [ "ホー" ],
+      skill_level: "beginner"
+    )
+
+    @field = ReadModel::FieldRead.new(
+      id: 5,
+      name: "A-1",
+      crop_name: "にんじん",
+      area_sqm: 120.5,
+      field_cultivation_id: 5,
+      crop_id: 77,
+      task_options: [ @task_option ],
+      schedules: [ @schedule ]
     )
   end
 
   test "provides detail payload for each schedule item" do
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto)
     json = presenter.as_json.deep_symbolize_keys
 
     task = json[:fields].first[:schedules][:general].first
@@ -81,7 +96,7 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
   end
 
   test "includes summary badge info" do
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto)
     json = presenter.as_json.deep_symbolize_keys
 
     task = json[:fields].first[:schedules][:general].first
@@ -91,25 +106,25 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
   end
 
   test "provides task options derived from crop task templates" do
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto)
     json = presenter.as_json.deep_symbolize_keys
 
     options = json[:fields].first[:task_options]
-    template_option = options.find { |option| option[:template_id] == @template.id }
+    template_option = options.find { |option| option[:template_id] == @task_option.template_id }
 
     assert_not_nil template_option
-    assert_equal @template.name, template_option[:name]
-    assert_equal @template.agricultural_task_id, template_option[:agricultural_task_id]
+    assert_equal @task_option.name, template_option[:name]
+    assert_equal @task_option.agricultural_task_id, template_option[:agricultural_task_id]
   end
 
   test "provides minimap weeks with task counts" do
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto)
     json = presenter.as_json.deep_symbolize_keys
 
     minimap = json[:minimap]
     assert minimap[:weeks].any?
 
-    week_start = Date.current.beginning_of_week.iso8601
+    week_start = @today.beginning_of_week.iso8601
     current_week_entry = minimap[:weeks].find { |week| week[:start_date] == week_start }
 
     assert_not_nil current_week_entry
@@ -119,48 +134,15 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
   end
 
   test "minimap excludes weeks without tasks and assigns density levels" do
-    TaskScheduleItem.create!(
-      task_schedule: @schedule,
-      task_type: "field_work",
-      name: "追肥",
-      stage_name: "中期管理",
-      stage_order: 2,
-      gdd_trigger: 200,
-      gdd_tolerance: 15,
-      scheduled_date: Date.current + 7,
-      priority: 3,
-      source: "agrr_schedule"
-    )
+    scheduled_dates = [
+      @today,
+      @today + 7,
+      @today + 14,
+      @today + 15,
+      @today + 16
+    ]
 
-    TaskScheduleItem.create!(
-      task_schedule: @schedule,
-      task_type: "field_work",
-      name: "仕上げ",
-      stage_name: "収穫準備",
-      stage_order: 3,
-      gdd_trigger: 300,
-      gdd_tolerance: 20,
-      scheduled_date: Date.current + 90,
-      priority: 1,
-      source: "agrr_schedule"
-    )
-
-    3.times do |i|
-      TaskScheduleItem.create!(
-        task_schedule: @schedule,
-        task_type: "field_work",
-        name: "集中作業#{i + 1}",
-        stage_name: "集中期",
-        stage_order: 4 + i,
-        gdd_trigger: 350 + (i * 10),
-        gdd_tolerance: 10,
-        scheduled_date: Date.current + 14,
-        priority: 2,
-        source: "agrr_schedule"
-      )
-    end
-
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto(scheduled_dates: scheduled_dates))
     weeks = presenter.as_json.deep_symbolize_keys[:minimap][:weeks]
 
     assert weeks.all? { |week| week[:task_count].positive? }
@@ -170,12 +152,29 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
   end
 
   test "defaults week start to nearest scheduled task when not specified" do
-    @schedule.task_schedule_items.update_all(scheduled_date: Date.current + 10.days)
+    scheduled_dates = [ @today + 10 ]
 
-    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(@plan, {})
+    presenter = presenter_for(build_dto(scheduled_dates: scheduled_dates))
     json = presenter.as_json.deep_symbolize_keys
 
-    expected_start = (Date.current + 10.days).beginning_of_week.iso8601
+    expected_start = (@today + 10).beginning_of_week.iso8601
     assert_equal expected_start, json[:week][:start_date]
+  end
+
+  private
+
+  def build_dto(scheduled_dates: [ @today ])
+    Domain::CultivationPlan::Dtos::TaskScheduleTimelineDto.new(
+      plan: @plan,
+      fields: [ @field ],
+      scheduled_dates: scheduled_dates,
+      today: @today
+    )
+  end
+
+  def presenter_for(dto)
+    presenter = Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(view: Object.new, params: {})
+    presenter.on_success(dto)
+    presenter
   end
 end

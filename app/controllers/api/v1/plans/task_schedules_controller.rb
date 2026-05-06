@@ -5,24 +5,29 @@ module Api
     module Plans
       # GET /api/v1/plans/:id/task_schedule — Angular 作業予定画面と同一 JSON（Html::TaskScheduleTimelinePresenter）
       class TaskSchedulesController < BaseController
-        before_action :set_cultivation_plan
-
         def show
-          render json: timeline_presenter.as_json
+          presenter = timeline_presenter
+          Domain::CultivationPlan::Interactors::TaskScheduleTimelineInteractor.new(
+            output_port: presenter,
+            user_id: current_user.id,
+            plan_id: params[:id],
+            gateway: CompositionRoot.cultivation_plan_gateway,
+            translator: CompositionRoot.translator,
+            logger: CompositionRoot.logger,
+            user_lookup: CompositionRoot.user_lookup,
+            clock: Time.zone
+          ).call
+          return if performed?
+
+          render json: presenter.as_json
         end
 
         private
 
-        def set_cultivation_plan
-          @cultivation_plan = PlanPolicy.find_private_owned!(current_user, params[:id])
-        rescue PolicyPermissionDenied, ActiveRecord::RecordNotFound
-          raise ActiveRecord::RecordNotFound
-        end
-
         def timeline_presenter
           @timeline_presenter ||= Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(
-            @cultivation_plan,
-            timeline_params
+            view: self,
+            params: timeline_params
           )
         end
 
