@@ -48,4 +48,21 @@ class AgriculturalTaskUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to show when non-admin toggles reference flag" do
+    view_mock = mock
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(
+      view: view_mock,
+      form_resubmit: nil
+    )
+
+    msg = I18n.t("agricultural_tasks.flash.reference_flag_admin_only")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.stubs(:params).returns(id: "9")
+    view_mock.expects(:agricultural_task_path).with("9").returns("/agricultural_tasks/9")
+    view_mock.expects(:redirect_to).with("/agricultural_tasks/9", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

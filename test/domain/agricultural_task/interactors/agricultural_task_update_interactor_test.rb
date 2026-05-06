@@ -30,6 +30,7 @@ module Domain
             user_id: user_id,
             gateway: gateway,
             logger: Object.new,
+            translator: Object.new,
             user_lookup: user_lookup
           )
 
@@ -64,6 +65,7 @@ module Domain
             user_id: user_id,
             gateway: gateway,
             logger: Object.new,
+            translator: Object.new,
             user_lookup: user_lookup
           )
 

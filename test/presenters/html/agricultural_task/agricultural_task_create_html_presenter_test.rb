@@ -34,4 +34,17 @@ class AgriculturalTaskCreateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to index when reference data requires admin" do
+    view_mock = mock
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskCreateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("agricultural_tasks.flash.reference_only_admin")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.expects(:agricultural_tasks_path).returns("/agricultural_tasks")
+    view_mock.expects(:redirect_to).with("/agricultural_tasks", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

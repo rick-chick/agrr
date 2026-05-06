@@ -6,7 +6,7 @@ require "pathname"
 
 INJECT = {
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor" =>
-    "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor" =>
     "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor" =>
@@ -18,7 +18,7 @@ INJECT = {
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForViewInteractor" =>
     "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor" =>
-    "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropCreateInteractor" =>
     "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropDestroyInteractor" =>

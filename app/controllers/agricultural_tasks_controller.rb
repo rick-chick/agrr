@@ -48,16 +48,11 @@ class AgriculturalTasksController < ApplicationController
   def create
     task_attributes = build_task_attributes
 
-    is_reference = ActiveModel::Type::Boolean.new.cast(task_attributes[:is_reference]) || false
-    if is_reference && !admin_user?
-      return redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.reference_only_admin")
-    end
-
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash({ agricultural_task: task_attributes })
     presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end
@@ -65,12 +60,6 @@ class AgriculturalTasksController < ApplicationController
   # PATCH/PUT /agricultural_tasks/:id
   def update
     task_attributes = build_task_attributes
-    requested_reference = requested_reference_flag_from(task_attributes)
-    reference_changed = requested_reference != @agricultural_task.is_reference?
-
-    if reference_changed && !admin_user?
-      return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t("agricultural_tasks.flash.reference_flag_admin_only")
-    end
 
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(
       {
@@ -89,7 +78,7 @@ class AgriculturalTasksController < ApplicationController
     )
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end
