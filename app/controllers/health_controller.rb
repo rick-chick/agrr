@@ -5,6 +5,15 @@ class HealthController < ApplicationController
   skip_before_action :authenticate_user!
   skip_before_action :verify_authenticity_token
 
+  # SELECT 1 による接続・クエリで起きうる例外のみを 503 に落とす（ARCHITECTURE.md Application edge 3:
+  # StandardError 一律の rescue は使わない）。それ以外は再 raise し、DB 以外の不具合は 500 で検知できる。
+  HEALTH_DB_EXCEPTIONS = (
+    [
+      ActiveRecord::ConnectionNotEstablished,
+      ActiveRecord::StatementInvalid
+    ] + (defined?(SQLite3::Exception) ? [ SQLite3::Exception ] : [])
+  ).freeze
+
   # GET /up
   # メインデータベースのみを確認する軽量なヘルスチェック
   def show
@@ -16,7 +25,7 @@ class HealthController < ApplicationController
       timestamp: Time.current.iso8601,
       database: "primary"
     }, status: :ok
-  rescue StandardError => e
+  rescue *HEALTH_DB_EXCEPTIONS => e
     msg = e.message.to_s
     if msg.include?("unable to open database file") || msg.include?("database is locked") || msg.include?("no such table")
       Rails.logger.warn "Health check: DB bootstrap in progress or not ready (#{msg})"

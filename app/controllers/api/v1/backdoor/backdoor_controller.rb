@@ -36,7 +36,7 @@ module Api
               if match = daemon_status_output.match(/PID[:\s]+(\d+)/i)
                 daemon_pid = match[1].to_i
               end
-            rescue StandardError => e
+            rescue SystemCallError => e
               Rails.logger.error "Error checking daemon status: #{e.message}"
             end
           end
@@ -56,7 +56,7 @@ module Api
                 memory_mb: memory_mb,
                 uptime: uptime_seconds
               }
-            rescue StandardError => e
+            rescue SystemCallError => e
               Rails.logger.error "Error getting process info: #{e.message}"
             end
           end
