@@ -101,29 +101,38 @@ module AgrrOptimization
 
   # 圃場設定を構築
   def build_fields_config(cultivation_plan)
-    cultivation_plan.cultivation_plan_fields.map do |field|
+    plan_fields = cultivation_plan.cultivation_plan_fields.map do |field|
       {
-        field_id: field.id.to_s,
+        id: field.id.to_s,
         name: field.name,
         area: field.area,
-        daily_fixed_cost: field.daily_fixed_cost || 0.0
+        daily_fixed_cost: field.daily_fixed_cost
       }
     end
+
+    Domain::CultivationPlan::Calculators::AgrrFieldsConfigCalculator.build(plan_fields: plan_fields)
   end
 
   # 作物設定を構築
   # 生育ステージのない作物は最適化に使用できないためスキップする
   def build_crops_config(cultivation_plan)
-    cultivation_plan.cultivation_plan_crops.filter_map do |plan_crop|
+    entries = cultivation_plan.cultivation_plan_crops.map do |plan_crop|
       crop = plan_crop.crop
-      unless crop.crop_stages.exists?
-        Rails.logger.warn "⚠️ [AGRR] Skipping crop '#{crop.name}' (id=#{crop.id}): no growth stages"
-        next
-      end
-      crop_data = crop.to_agrr_requirement
-      crop_data["crop"]["crop_id"] = crop.id.to_s
-      crop_data
+      has_growth_stages = crop.crop_stages.exists?
+      requirement = has_growth_stages ? crop.to_agrr_requirement : nil
+
+      {
+        crop_id: crop.id.to_s,
+        crop_name: crop.name,
+        has_growth_stages: has_growth_stages,
+        requirement: requirement
+      }
     end
+
+    Domain::CultivationPlan::Calculators::AgrrCropsConfigCalculator.build(
+      entries: entries,
+      logger: Rails.logger
+    )
   end
 
   # 交互作用ルールを構築
@@ -138,23 +147,10 @@ module AgrrOptimization
       crop_groups[crop_id] = crop.groups
     end
 
-    # 連作ペナルティルールを作成
-    rules = []
-    crop_groups.each do |crop_id, groups|
-      groups.each do |group|
-        rules << {
-          rule_id: "continuous_#{group}_#{SecureRandom.hex(4)}",
-          rule_type: "continuous_cultivation",
-          source_group: group,
-          target_group: group,
-          impact_ratio: 0.7,
-          is_directional: true,
-          description: "Continuous cultivation penalty for #{group}"
-        }
-      end
-    end
-
-    rules.uniq { |r| [ r[:source_group], r[:target_group] ] }
+    Domain::CultivationPlan::Calculators::AgrrInteractionRulesCalculator.build(
+      crop_groups: crop_groups,
+      random_hex: -> { SecureRandom.hex(4) }
+    )
   end
 
   # 調整結果をデータベースに保存
