@@ -1,11 +1,10 @@
 # CA Violations Backlog
 
-最終通し走査: 未実施 / 直近裏取り: none
+最終通し走査: 未実施 / 直近裏取り: 2026-05-06（API 禁止3）
 
 ## 修正単位
 
 1. **`ARCHITECTURE.md` の `## What we require` と禁止 1〜30 の通し走査** — 全対象レイヤーを `Glob` / `Read` で意味読み照合し、違反を修正単位に切って列挙する（`rg` の一致のみを根拠にしない）。空到達時の裏取りとして必須。
-2. **Application edge 禁止3（`rescue` 主スイッチ）** — `app/controllers/api` に AgrrService・JSON パース・`PolicyPermissionDenied` 相当の広い `rescue` が残るコントローラを、Interactor + Presenter + Gateway 正規化で個別に排除する（代表: `api/v1/pests_controller.rb`, `api/v1/crops_controller.rb`, `api/v1/fertilizes_controller.rb`, `api/v1/cultivation_plan_rest_base_controller.rb`, `api/v1/public_plans/entry_schedule_controller.rb`, `auth_controller.rb` 等。一覧は禁止3の意味読みで都度確定すること）。
 
 ## スキャン補足
 
@@ -19,6 +18,7 @@
 - 2026-05-06: `AuthController` / `Api::V1::AuthController` / `AuthTestController` のセッション Cookie 削除で `request.cookie_domain` を `respond_to?` でガード（`NoMethodError` rescue 撤去）。
 - 2026-05-06: `Api::V1::Backdoor::BackdoorController#status` のバッククォートを `ShellStdoutCaptureGateway`（`CompositionRoot.backdoor_shell_stdout_capture_gateway`）に移し `SystemCallError` を境界で処理。
 - 2026-05-06: `Farms::WeatherDataController` のキャッシュ判定で `predicted_at` / `prediction_start_date` を `Iso8601TimeParse` / `Iso8601CalendarDate` で正規化（行末 `rescue nil`・非検証の `Date.parse` を撤去）。
+- 2026-05-06（裏取り）: `app/controllers/api/**` に `rescue` / `rescue_from` の実装なしを確認。Application edge 禁止3の JSON API エッジは現行ツリーで該当なし（HTML・ヘルス・認証 URI 検証・ジョブ投入などは下記「残置」のとおり別単位）。
 
 ## 残置（意図・別単位）
 
