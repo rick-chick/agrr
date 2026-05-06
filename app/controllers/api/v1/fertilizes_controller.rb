@@ -57,10 +57,9 @@ module Api
           }
 
           # 既存のユーザー肥料を検索（所有者は current_user のみ）
-          existing_fertilize = ::Fertilize.find_by(
-            name: fertilize_name_from_agrr,
-            is_reference: false,
-            user_id: current_user.id
+          existing_fertilize = CompositionRoot.fertilize_gateway.find_user_owned_non_reference_fertilize_record_by_name(
+            user_id: current_user.id,
+            name: fertilize_name_from_agrr
           )
 
           if existing_fertilize

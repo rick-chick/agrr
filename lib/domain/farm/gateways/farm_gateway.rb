@@ -124,6 +124,11 @@ module Domain
         def private_plan_new_farm_choices(user:)
           raise NotImplementedError, "Subclasses must implement private_plan_new_farm_choices"
         end
+
+        # 公開ウィザード等: 農場 id から region を解決（存在しなければ nil）
+        def farm_region_for_wizard_lookup_by_id(farm_id)
+          raise NotImplementedError, "Subclasses must implement farm_region_for_wizard_lookup_by_id"
+        end
       end
     end
   end

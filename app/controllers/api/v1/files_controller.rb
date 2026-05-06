@@ -3,59 +3,42 @@
 module Api
   module V1
     class FilesController < BaseController
-      before_action :set_file, only: [ :show, :destroy ]
+      before_action :authenticate_user!
 
-      # GET /api/v1/files
       def index
-        @files = ActiveStorage::Blob.all.order(created_at: :desc)
-        render json: @files.map { |file| file_attributes(file) }
+        presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        Domain::FileBlob::Interactors::ApiV1FilesIndexInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.api_file_blob_gateway
+        ).call
       end
 
-      # GET /api/v1/files/:id
       def show
-        render json: file_attributes(@file)
+        presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        Domain::FileBlob::Interactors::ApiV1FilesShowInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.api_file_blob_gateway
+        ).call(blob_id: params[:id])
       end
 
-      # POST /api/v1/files
       def create
-        if params[:file].present?
-          blob = ActiveStorage::Blob.create_and_upload!(
-            io: params[:file],
-            filename: params[:file].original_filename,
-            content_type: params[:file].content_type
-          )
-
-          render json: file_attributes(blob), status: :created
-        else
-          render json: { error: I18n.t("api.errors.common.files.no_file") }, status: :unprocessable_entity
-        end
+        presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        Domain::FileBlob::Interactors::ApiV1FilesCreateInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.api_file_blob_gateway
+        ).call(
+          io: params[:file],
+          filename: params[:file]&.original_filename,
+          content_type: params[:file]&.content_type
+        )
       end
 
-      # DELETE /api/v1/files/:id
       def destroy
-        @file.purge
-        head :no_content
-      end
-
-      private
-
-      def set_file
-        @file = ActiveStorage::Blob.find_by(id: params[:id])
-        unless @file
-          render json: { error: I18n.t("api.errors.common.files.not_found") }, status: :not_found
-          return
-        end
-      end
-
-      def file_attributes(blob)
-        {
-          id: blob.id,
-          filename: blob.filename.to_s,
-          content_type: blob.content_type,
-          byte_size: blob.byte_size,
-          created_at: blob.created_at,
-          url: Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: false)
-        }
+        presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        Domain::FileBlob::Interactors::ApiV1FilesDestroyInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.api_file_blob_gateway
+        ).call(blob_id: params[:id])
       end
     end
   end

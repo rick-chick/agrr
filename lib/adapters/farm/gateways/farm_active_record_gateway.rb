@@ -322,6 +322,12 @@ module Adapters
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
+
+        def farm_region_for_wizard_lookup_by_id(farm_id)
+          return nil if farm_id.blank?
+
+          ::Farm.find_by(id: farm_id)&.region
+        end
       end
     end
   end

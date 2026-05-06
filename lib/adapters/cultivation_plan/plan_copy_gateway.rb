@@ -87,11 +87,11 @@ module Adapters
       end
 
       def self.copy_attachments_for_plan_copy(source_plan:, new_plan:)
-        attachments = ActiveStorage::Attachment.where(record: source_plan)
+        attachments = ::ActiveStorage::Attachment.where(record: source_plan)
         attachments_count = attachments.count
 
         attachments.find_each do |attachment|
-          ActiveStorage::Attachment.create!(
+          ::ActiveStorage::Attachment.create!(
             name: attachment.name,
             record: new_plan,
             blob: attachment.blob

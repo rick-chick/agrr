@@ -80,10 +80,9 @@ module Api
         Rails.logger.info "📊 [AI Pest] Retrieved data: name=#{pest_data['name']}, family=#{pest_data['family']}"
 
         # 2. 既存の害虫を検索（AI作成は常にユーザー害虫）
-        existing_pest = ::Pest.find_by(
-          name: pest_data["name"],
-          is_reference: false,
-          user_id: current_user.id
+        existing_pest = CompositionRoot.pest_gateway.find_user_owned_non_reference_pest_record_by_name(
+          user_id: current_user.id,
+          name: pest_data["name"]
         )
 
         # 3. pest_dataを整形（所有者・参照フラグは Policy に委譲）

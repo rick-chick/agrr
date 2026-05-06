@@ -46,7 +46,7 @@ module Api
 
             assert_response :not_found
             json_response = JSON.parse(response.body)
-            assert_equal "Crop not found", json_response["error"]
+            assert_equal I18n.t("api.errors.crop_not_found"), json_response["error"]
           end
 
           test "should create association" do

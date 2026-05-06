@@ -37,6 +37,12 @@ module Adapters
           user_owned_non_reference_scope(user).find_by(id: crop_id)
         end
 
+        def find_reference_crop_record_for_public_plan_add_crop(crop_id)
+          return nil if crop_id.blank?
+
+          ::Crop.reference.find_by(id: crop_id.to_i)
+        end
+
         def list_reference_crop_entities(region: nil)
           scope = ::Crop.reference
           scope = scope.where(region: region) if region.present?
@@ -167,6 +173,27 @@ module Adapters
           build_task_template_create_result(reason: :crop_not_found)
         rescue ActiveRecord::RecordInvalid => e
           raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
+        end
+
+        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+          crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
+        end
+
+        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
+          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i)
+          tpl = bundle.persisted_crop_task_template
+          if tpl.update(attributes)
+            { ok: true, row: masters_crop_task_template_api_row(tpl.reload) }
+          else
+            { ok: false, errors: tpl.errors.full_messages }
+          end
+        end
+
+        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:)
+          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i)
+          bundle.persisted_crop_task_template.destroy!
+          :ok
         end
 
         def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
@@ -630,6 +657,29 @@ module Adapters
             created_at: template.created_at,
             updated_at: template.updated_at
           )
+        end
+
+        def masters_crop_task_template_api_row(template)
+          at = template.agricultural_task
+          {
+            id: template.id,
+            crop_id: template.crop_id,
+            agricultural_task_id: template.agricultural_task_id,
+            name: template.name,
+            description: template.description,
+            time_per_sqm: template.time_per_sqm,
+            weather_dependency: template.weather_dependency,
+            required_tools: template.required_tools || [],
+            skill_level: template.skill_level,
+            agricultural_task: at ? {
+              id: at.id,
+              name: at.name,
+              description: at.description,
+              is_reference: at.is_reference
+            } : nil,
+            created_at: template.created_at,
+            updated_at: template.updated_at
+          }
         end
 
         def available_agricultural_tasks_for_crop(crop)

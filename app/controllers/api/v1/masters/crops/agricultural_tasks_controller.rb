@@ -28,9 +28,6 @@ module Api
         # @note 権限: ユーザーは自分の所有する作物のみアクセス可能です
         # @note 中間テーブル: CropTaskTemplateの属性（name, time_per_sqm, description等）も管理します
         class AgriculturalTasksController < BaseController
-          before_action :set_crop, only: [ :index ]
-          before_action :set_crop_and_template, only: [ :update, :destroy ]
-
           # 作物に紐づく農業タスク一覧を取得
           #
           # @param crop_id [Integer] 作物ID
@@ -39,8 +36,13 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物が見つからない
           def index
-            @templates = @crop.crop_task_templates.includes(:agricultural_task)
-            render json: @templates.map { |template| format_template(template) }
+            rows = CompositionRoot.crop_gateway.masters_crop_agricultural_task_templates_index_rows(
+              user: current_user,
+              crop_id: params[:crop_id]
+            )
+            render json: rows
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            render json: { error: I18n.t("api.errors.crop_not_found") }, status: :not_found
           end
 
           # 作物に農業タスクを関連付け
@@ -98,13 +100,19 @@ module Api
           # @return [404] 作物または関連が見つからない
           # @return [422] バリデーションエラー
           def update
-            update_params = template_params.except(:agricultural_task_id)
-
-            if @template.update(update_params)
-              render json: format_template(@template.reload)
+            result = CompositionRoot.crop_gateway.update_masters_crop_task_template_for_api(
+              user: current_user,
+              crop_id: params[:crop_id],
+              template_id: params[:id],
+              attributes: template_params.except(:agricultural_task_id).to_h
+            )
+            if result[:ok]
+              render json: result[:row]
             else
-              render json: { errors: @template.errors.full_messages }, status: :unprocessable_entity
+              render json: { errors: result[:errors] }, status: :unprocessable_entity
             end
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            render json: { error: "AgriculturalTask association not found" }, status: :not_found
           end
 
           # 作物から農業タスクの関連を削除
@@ -115,8 +123,14 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物または関連が見つからない
           def destroy
-            @template.destroy!
+            CompositionRoot.crop_gateway.destroy_masters_crop_task_template_for_api!(
+              user: current_user,
+              crop_id: params[:crop_id],
+              template_id: params[:id]
+            )
             head :no_content
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            render json: { error: "AgriculturalTask association not found" }, status: :not_found
           end
 
           def render_response(json:, status:)
@@ -125,55 +139,8 @@ module Api
 
           private
 
-          def set_crop
-            presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
-            interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
-              user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-            interactor.call(params[:crop_id])
-          end
-
-          def set_crop_and_template
-            failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(
-              view: self,
-              error_message: "AgriculturalTask association not found"
-            )
-            interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropTaskTemplateInteractor.new(
-              failure_presenter: failure,
-              user_id: current_user.id,
-              gateway: CompositionRoot.crop_gateway,
-              user_lookup: CompositionRoot.user_lookup
-            )
-            bundle = interactor.call(params[:crop_id], params[:id])
-            return if bundle.nil?
-
-            @crop = bundle.persisted_crop
-            @template = bundle.persisted_crop_task_template
-          end
-
           def template_params
             params.permit(:agricultural_task_id, :name, :description, :time_per_sqm, :weather_dependency, :skill_level, required_tools: [])
-          end
-
-          def format_template(template)
-            {
-              id: template.id,
-              crop_id: template.crop_id,
-              agricultural_task_id: template.agricultural_task_id,
-              name: template.name,
-              description: template.description,
-              time_per_sqm: template.time_per_sqm,
-              weather_dependency: template.weather_dependency,
-              required_tools: template.required_tools || [],
-              skill_level: template.skill_level,
-              agricultural_task: template.agricultural_task ? {
-                id: template.agricultural_task.id,
-                name: template.agricultural_task.name,
-                description: template.agricultural_task.description,
-                is_reference: template.agricultural_task.is_reference
-              } : nil,
-              created_at: template.created_at,
-              updated_at: template.updated_at
-            }
           end
         end
       end

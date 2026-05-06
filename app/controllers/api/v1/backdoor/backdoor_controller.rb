@@ -87,27 +87,11 @@ module Api
         # GET /api/v1/backdoor/users
         # Get list of users (excluding anonymous users)
         def users
-          users = User.where(is_anonymous: false).order(created_at: :desc)
-
-          user_data = users.map do |user|
-            {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              google_id: user.google_id,
-              admin: user.admin?,
-              avatar_url: user.avatar_url,
-              created_at: user.created_at.iso8601,
-              updated_at: user.updated_at.iso8601,
-              farms_count: user.farms.count,
-              plans_count: user.cultivation_plans.count
-            }
-          end
-
+          payload = CompositionRoot.backdoor_diagnostics_gateway.users_list_payload
           render json: {
             timestamp: Time.current.iso8601,
-            total_users: users.count,
-            users: user_data
+            total_users: payload[:total_users],
+            users: payload[:users]
           }
         end
 
@@ -115,30 +99,19 @@ module Api
         # Create a new user
         def create_user
           user_params = user_create_params
+          result = CompositionRoot.backdoor_diagnostics_gateway.create_user(user_params.to_h.symbolize_keys)
 
-          user = User.new(user_params)
-          user.is_anonymous = false
-
-          if user.save
+          if result[:ok]
             render json: {
               timestamp: Time.current.iso8601,
               success: true,
-              user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                google_id: user.google_id,
-                admin: user.admin?,
-                avatar_url: user.avatar_url,
-                created_at: user.created_at.iso8601,
-                updated_at: user.updated_at.iso8601
-              }
+              user: result[:user]
             }, status: :created
           else
             render json: {
               timestamp: Time.current.iso8601,
               success: false,
-              errors: user.errors.full_messages
+              errors: result[:errors]
             }, status: :unprocessable_entity
           end
         end
@@ -146,39 +119,25 @@ module Api
         # PATCH/PUT /api/v1/backdoor/users/:id
         # Update an existing user
         def update_user
-          user = User.find_by(id: params[:id])
+          result = CompositionRoot.backdoor_diagnostics_gateway.update_user(params[:id], user_update_params.to_h.symbolize_keys)
 
-          unless user
+          if result[:ok]
+            render json: {
+              timestamp: Time.current.iso8601,
+              success: true,
+              user: result[:user]
+            }
+          elsif result[:error] == :not_found
             render json: {
               timestamp: Time.current.iso8601,
               success: false,
               error: "User not found"
             }, status: :not_found
-            return
-          end
-
-          user_params = user_update_params
-
-          if user.update(user_params)
-            render json: {
-              timestamp: Time.current.iso8601,
-              success: true,
-              user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                google_id: user.google_id,
-                admin: user.admin?,
-                avatar_url: user.avatar_url,
-                created_at: user.created_at.iso8601,
-                updated_at: user.updated_at.iso8601
-              }
-            }
           else
             render json: {
               timestamp: Time.current.iso8601,
               success: false,
-              errors: user.errors.full_messages
+              errors: result[:errors]
             }, status: :unprocessable_entity
           end
         end
@@ -186,20 +145,7 @@ module Api
         # GET /api/v1/backdoor/db/stats
         # Get database statistics before clearing
         def db_stats
-          stats = {
-            users: User.where(is_anonymous: false).count,
-            anonymous_users: User.where(is_anonymous: true).count,
-            farms: Farm.count,
-            fields: Field.count,
-            crops: ::Crop.count,
-            cultivation_plans: CultivationPlan.count,
-            interaction_rules: InteractionRule.count,
-            pesticides: Pesticide.count,
-            pests: Pest.count,
-            fertilizes: Fertilize.count,
-            agricultural_tasks: AgriculturalTask.count,
-            sessions: Session.count
-          }
+          stats = CompositionRoot.backdoor_diagnostics_gateway.db_stats_counts
 
           render json: {
             timestamp: Time.current.iso8601,

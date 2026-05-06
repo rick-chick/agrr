@@ -116,6 +116,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_record"
         end
 
+        # 公開栽培計画 REST add_crop: 参照作物レコードを id で解決（なければ nil）
+        def find_reference_crop_record_for_public_plan_add_crop(crop_id)
+          raise NotImplementedError, "Subclasses must implement find_reference_crop_record_for_public_plan_add_crop"
+        end
+
         def list_reference_crop_entities(region: nil)
           raise NotImplementedError, "Subclasses must implement list_reference_crop_entities"
         end
@@ -183,6 +188,20 @@ module Domain
         # 認可済み作物と CropStage を一度の作物読み込みで束ねる。
         def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
           raise NotImplementedError, "Subclasses must implement find_authorized_crop_with_crop_stage_bundle!"
+        end
+
+        # マスター API: 作物に紐づく農業タスクテンプレート一覧 JSON 行（永続はゲートウェイ内のみ）
+        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
+          raise NotImplementedError, "Subclasses must implement masters_crop_agricultural_task_templates_index_rows"
+        end
+
+        # @return [Hash] { ok: true, row: Hash } | { ok: false, errors: Array<String> }
+        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
+          raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"
+        end
+
+        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:)
+          raise NotImplementedError, "Subclasses must implement destroy_masters_crop_task_template_for_api!"
         end
 
         # 認可済み作物に属する CropTaskScheduleBlueprint を取得。

@@ -134,6 +134,17 @@ module Domain
         def associate_affected_crops_for_ai_pest(pest_id:, affected_crops:, user:, logger:)
           raise NotImplementedError, "Subclasses must implement associate_affected_crops_for_ai_pest"
         end
+
+        # AI API: ユーザー害虫を名前で検索（なければ nil）。戻りは永続 Pest。
+        def find_user_owned_non_reference_pest_record_by_name(user_id:, name:)
+          raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_pest_record_by_name"
+        end
+
+        # マスター API: 作物から害虫の関連を外す（ユーザー作物のみ）
+        # @return [Symbol] :ok / :crop_not_found / :pest_not_found / :not_associated
+        def unlink_pest_from_crop_for_masters(user:, crop_id:, pest_id:)
+          raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop_for_masters"
+        end
       end
     end
   end

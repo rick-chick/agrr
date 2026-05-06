@@ -18,9 +18,10 @@ module Api
         private
 
         def authenticate_api_key_or_session!
+          gw = CompositionRoot.masters_api_session_resolve_gateway
           api_key = extract_api_key
           if api_key.present?
-            user = User.find_by_api_key(api_key)
+            user = gw.user_for_api_key(api_key)
             unless user
               render json: { error: "Invalid API key" }, status: :unauthorized
               return false
@@ -29,8 +30,7 @@ module Api
             return true
           end
 
-          # フォールバック: セッション認証（SPAのWebログインユーザー向け）
-          session_user = resolve_session_user
+          session_user = gw.user_for_session_cookie(cookies[:session_id])
           if session_user && !session_user.anonymous?
             @current_user = session_user
             return true
@@ -38,18 +38,6 @@ module Api
 
           render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
           false
-        end
-
-        def resolve_session_user
-          session_id = cookies[:session_id]
-          return User.anonymous_user unless session_id
-          return User.anonymous_user unless Session.valid_session_id?(session_id)
-
-          session = Session.active.find_by(session_id: session_id)
-          return User.anonymous_user unless session
-
-          session.extend_expiration if session.expires_at < 1.week.from_now
-          session.user
         end
 
         def extract_api_key

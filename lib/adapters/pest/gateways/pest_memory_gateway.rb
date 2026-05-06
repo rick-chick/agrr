@@ -335,6 +335,25 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
+        def find_user_owned_non_reference_pest_record_by_name(user_id:, name:)
+          return nil if name.blank?
+
+          ::Pest.find_by(name: name, is_reference: false, user_id: user_id)
+        end
+
+        def unlink_pest_from_crop_for_masters(user:, crop_id:, pest_id:)
+          crop = ::Crop.user_owned.where(user_id: user.id).find_by(id: crop_id)
+          return :crop_not_found unless crop
+
+          pest = ::Pest.find_by(id: pest_id)
+          return :pest_not_found unless pest
+
+          return :not_associated unless crop.pests.include?(pest)
+
+          crop.pests.delete(pest)
+          :ok
+        end
+
         private
 
         def extract_crop_ids_from_ai_payload(affected_crops)

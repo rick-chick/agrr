@@ -219,6 +219,26 @@ module CompositionRoot
       @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::ShellStdoutCaptureGateway.new(logger: logger)
     end
 
+    def masters_api_session_resolve_gateway
+      @masters_api_session_resolve_gateway ||= Adapters::Api::V1::Masters::MastersApiSessionResolveGateway.new
+    end
+
+    def user_api_key_rotation_gateway
+      @user_api_key_rotation_gateway ||= Adapters::ApiKeys::Gateways::UserApiKeyRotationActiveRecordGateway.new
+    end
+
+    def api_file_blob_gateway
+      @api_file_blob_gateway ||= Adapters::StoredBlobs::Gateways::ApiFileBlobActiveRecordGateway.new(
+        rails_blob_url_generator: lambda do |blob|
+          Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: false)
+        end
+      )
+    end
+
+    def backdoor_diagnostics_gateway
+      @backdoor_diagnostics_gateway ||= Adapters::Backdoor::Gateways::BackdoorDiagnosticsActiveRecordGateway.new
+    end
+
     def scheduler_weather_update_jobs_enqueue_gateway
       @scheduler_weather_update_jobs_enqueue_gateway ||= Adapters::InternalJobs::Gateways::WeatherUpdateJobsEnqueueActiveJobGateway.new(
         logger: logger

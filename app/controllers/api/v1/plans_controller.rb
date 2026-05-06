@@ -6,13 +6,27 @@ module Api
       include Views::Api::CultivationPlan::CultivationPlanDeleteView
 
       def index
-        plans = ::CultivationPlan.plan_type_private.by_user(current_user).order(created_at: :desc)
-        render json: plans.map { |plan| serialize_plan(plan) }
+        presenter = Presenters::Api::Plans::ApiV1PrivatePlansListPresenter.new(view: self, translator: translator)
+        Domain::CultivationPlan::Interactors::ApiV1PrivatePlansListInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          gateway: CompositionRoot.cultivation_plan_gateway,
+          translator: translator,
+          logger: CompositionRoot.logger,
+          user_lookup: CompositionRoot.user_lookup
+        ).call
       end
 
       def show
-        plan = ::CultivationPlan.plan_type_private.by_user(current_user).find(params[:id])
-        render json: serialize_plan(plan)
+        presenter = Presenters::Api::Plans::ApiV1PrivatePlanShowPresenter.new(view: self)
+        Domain::CultivationPlan::Interactors::ApiV1PrivatePlanShowInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          gateway: CompositionRoot.cultivation_plan_gateway,
+          translator: translator,
+          logger: CompositionRoot.logger,
+          user_lookup: CompositionRoot.user_lookup
+        ).call(plan_id: params[:id])
       end
 
       def create
@@ -54,14 +68,6 @@ module Api
       end
 
       private
-
-      def serialize_plan(plan)
-        {
-          id: plan.id,
-          name: plan.display_name,
-          status: plan.status
-        }
-      end
 
       def create_params
         params.require(:plan).permit(:farm_id, :plan_name, crop_ids: [])

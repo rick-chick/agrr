@@ -1,29 +1,20 @@
 # CA Violations Backlog
 
-最終通し走査: 未実施 / 直近裏取り: 2026-05-06（API 禁止3）
+最終通し走査: 2026-05-06（Rails バックエンド中心・禁止条項の要点サンプリング） / 直近補足: 2026-05-06
 
 ## 修正単位
 
-1. **`ARCHITECTURE.md` の `## What we require` と禁止 1〜30 の通し走査** — 全対象レイヤーを `Glob` / `Read` で意味読み照合し、違反を修正単位に切って列挙する（`rg` の一致のみを根拠にしない）。空到達時の裏取りとして必須。
-2. **Application edge 禁止4（API のユースケース直叩き）** — `app/controllers/api/**` に残る ActiveRecord / ActiveStorage の直接参照・リレーション組み立てを、DTO → Interactor → Gateway に寄せる（`rg` の一行一致のみで確定しない）。2026-05-06 時点の探索ヒント: `api/v1/pests_controller.rb`（`::Pest.find_by`）、`api/v1/fertilizes_controller.rb`（`::Fertilize.find_by`）、`api/v1/plans_controller.rb`（`CultivationPlan.*.find`）、`api/v1/public_plans_controller.rb`（`CultivationPlan.find_by`）、`api/v1/public_plans/wizard_controller.rb`（`Farm.find_by`）、`api/v1/public_plans/cultivation_plans_controller.rb`（`::Crop.find`）、`api/v1/masters/base_controller.rb`（`Session.active.find_by`）、`api/v1/masters/crops/agricultural_tasks_controller.rb`（`@crop.*.includes`）、`api/v1/masters/crops/pests_controller.rb`（`Pest.find_by`）、`api/v1/files_controller.rb`（`ActiveStorage::Blob.find_by`）、`api/v1/api_keys_controller.rb`（`current_user.generate_api_key!` 等）、`api/v1/backdoor/backdoor_controller.rb`（`User.*` 集計）。着手順は通し走査完了後、または本項目のみをスコープに固定したときはパス辞書順で先頭から。
+（現時点でバックログに固定する単位なし。次回フルスキャン時に `ARCHITECTURE.md` の What we require + 禁止 1〜30 を先頭から再走査する。）
 
 ## スキャン補足
 
-- 2026-05-06: `InteractionRulesController` destroy を `InteractionRuleDestroyInteractor` + HTML/API Presenter に統一（ゲートウェイ preload・controller `rescue` 撤去）。`InteractionRuleDeletePresenter` の JSON `redirect_path` は HTML コントローラが `interaction_rules_path` を返すフックに変更。
-- 2026-05-06: `PublicPlansController#create` の `create_job_instances_for_public_plans` を削除し、`PublicPlanOptimizationJobChainGateway#enqueue_after_create!`（`redirect_path` 引数）経由に集約。
-- 2026-05-06: `PestsController#destroy` の HTML を `PestDestroyInteractor` + `PestDestroyHtmlPresenter` に統一（`HtmlMasterScheduleInvoker` と `PolicyPermissionDenied` の `rescue` 撤去）。`AgriculturalTasksController#destroy` の JSON からデッドな `rescue PolicyPermissionDenied` を削除。
-- 2026-05-06: `Api::V1::Plans::FieldCultivationsController` / `PublicPlans::FieldCultivationsController` の show・update から `rescue PolicyPermissionDenied` を除去。`FieldCultivationClimateGateway#authorized_field_cultivation` で拒否を `Domain::Shared::Exceptions::RecordNotFound` に正規化し、`FieldCultivationApiShowInteractor` / `FieldCultivationApiUpdateInteractor` + API Presenter に委譲。気象系 `fetch_*` も同ゲートウェイ経由に統一。
-- 2026-05-06: `Api::WeatherController` の historical / forecast から `begin/rescue AgrrService`・`JSON::ParserError` を除去。`Adapters::ApiWeather::Gateways::AgrrServiceWeatherQueryActiveGateway` が `AgrrService` と JSON パースを境界で処理しドメイン例外に写す。`Domain::ApiWeather::Interactors::*` + `Presenters::Api::Weather::*` + `CompositionRoot` 配線。`status` はゲートウェイの `daemon_running?` のみ。
-- 2026-05-06: 作物・害虫・肥料 API の Agrr 呼び出しを `CropAiDaemonQueryGateway` / `PestAiDaemonQueryGateway` / `FertilizeCliGateway` に集約し controller の広い `rescue` を除去。API 結合テストは `CompositionRoot` のゲートウェイを stub。
-- 2026-05-06: `CultivationPlanRestBaseController#parse_display_date` を `Adapters::Shared::Iso8601CalendarDate` に委譲（無効日付は `Date.valid_date?` で nil）。`EntryScheduleController#decode_entry_cursor` を `EntryScheduleCursorDecodeGateway` + `CompositionRoot` に委譲。
-- 2026-05-06: `AuthController` / `Api::V1::AuthController` / `AuthTestController` のセッション Cookie 削除で `request.cookie_domain` を `respond_to?` でガード（`NoMethodError` rescue 撤去）。
-- 2026-05-06: `Api::V1::Backdoor::BackdoorController#status` のバッククォートを `ShellStdoutCaptureGateway`（`CompositionRoot.backdoor_shell_stdout_capture_gateway`）に移し `SystemCallError` を境界で処理。
-- 2026-05-06: `Farms::WeatherDataController` のキャッシュ判定で `predicted_at` / `prediction_start_date` を `Iso8601TimeParse` / `Iso8601CalendarDate` で正規化（行末 `rescue nil`・非検証の `Date.parse` を撤去）。
-- 2026-05-06（裏取り）: `app/controllers/api/**` に `rescue` / `rescue_from` の実装なしを確認。Application edge 禁止3の JSON API エッジは現行ツリーで該当なし（HTML・ヘルス・認証 URI 検証・ジョブ投入などは下記「残置」のとおり別単位）。
-- 2026-05-06（増分）: Application edge **禁止4** について `app/controllers/api/**` を機械探索し AR / Blob 直参照の候補を洗い出し → 修正単位 2 に反映（確定は意味読みと契約テストで行う）。
+- 2026-05-06: **Application edge 禁止4（API）** — `app/controllers/api/v1` の AR / ActiveStorage / User 直叩きをゲートウェイ・Interactor・Presenter に寄せた（Plans 一覧・詳細、PublicPlans `save_plan`、Wizard `crops`、公開 cultivation_plans `get_crop_for_add_crop`、マスタ Base のセッション/APIキー解決、作物×農業タスク API、作物×害虫 destroy、API キー生成、Files CRUD、Backdoor users/db_stats、作物 AI の既存検索は Pest/Fertilize ゲートウェイへ）。
+- 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
+- 2026-05-06: フロントエンド（`frontend/src/app` の依存方向・禁止対応）は本セッションでは未走査。必要時は別イテレーションで Angular 層を `ARCHITECTURE.md` ## Frontend に照合する。
 
 ## 残置（意図・別単位）
 
 - `Farms::WeatherDataController` の `PredictWeatherDataJob.perform_later` 周りの `rescue ActiveJob::EnqueueError`（キュー投入失敗のユーザー向けレスポンス）。
 - `HealthController` の DB 例外のみを拾う `rescue *HEALTH_DB_EXCEPTIONS`（ファイル内コメントのとおり意図的）。
 - `AuthController#allowed_return_to?` 等の `URI::InvalidURIError` rescue（URL 検証の局所ガード）。
+- API の **AI 作成**（pests/fertilizes の `ai_create`）はゲートウェイに既存レコード検索を寄せたが、コントローラ内に Agrr 応答の手続き的分岐が残る（別修正単位で Interactor への集約を検討）。
