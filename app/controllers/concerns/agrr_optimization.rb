@@ -474,6 +474,27 @@ module AgrrOptimization
         current_allocation,
         moves
       )
+    rescue Domain::CultivationPlan::Errors::EffectivePlanningPeriodInvalidDateError => e
+      detail_message = case e.field
+                       when :start_date
+                         I18n.t("controllers.agrr_optimization.errors.start_date_invalid",
+                                value: e.raw_value.inspect,
+                                allocation_id: e.allocation_id)
+                       when :completion_date
+                         I18n.t("controllers.agrr_optimization.errors.completion_date_invalid",
+                                value: e.raw_value.inspect,
+                                allocation_id: e.allocation_id)
+                       when :to_start_date
+                         "不正な移動先開始日付形式です: #{e.raw_value.inspect} (move: #{e.move.inspect})"
+                       else
+                         e.message
+                       end
+      Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{detail_message}"
+      return {
+        success: false,
+        message: I18n.t("api.errors.common.invalid_date_format", message: detail_message),
+        status: :bad_request
+      }
     rescue ArgumentError => e
       Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
       return {
@@ -651,6 +672,27 @@ module AgrrOptimization
         current_allocation,
         moves
       )
+    rescue Domain::CultivationPlan::Errors::EffectivePlanningPeriodInvalidDateError => e
+      detail_message = case e.field
+                       when :start_date
+                         I18n.t("controllers.agrr_optimization.errors.start_date_invalid",
+                                value: e.raw_value.inspect,
+                                allocation_id: e.allocation_id)
+                       when :completion_date
+                         I18n.t("controllers.agrr_optimization.errors.completion_date_invalid",
+                                value: e.raw_value.inspect,
+                                allocation_id: e.allocation_id)
+                       when :to_start_date
+                         "不正な移動先開始日付形式です: #{e.raw_value.inspect} (move: #{e.move.inspect})"
+                       else
+                         e.message
+                       end
+      Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{detail_message}"
+      return {
+        success: false,
+        message: I18n.t("api.errors.common.invalid_date_format", message: detail_message),
+        status: :bad_request
+      }
     rescue ArgumentError => e
       Rails.logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
       return {
@@ -763,75 +805,20 @@ module AgrrOptimization
   # @param moves [Array<Hash>] 移動指示のリスト
   # @return [Array<Date, Date>] [effective_planning_start, effective_planning_end]
   def calculate_effective_planning_period(cultivation_plan, current_allocation, moves)
-    # 現在の作付の日付範囲を取得
-    all_dates = []
-
-    # 現在の割り当てから日付を抽出
-    if current_allocation[:optimization_result] && current_allocation[:optimization_result][:field_schedules]
-      current_allocation[:optimization_result][:field_schedules].each do |field_schedule|
-        field_schedule[:allocations]&.each do |allocation|
-          if allocation[:start_date]
-            begin
-              all_dates << Date.parse(allocation[:start_date])
-            rescue ArgumentError => e
-              Rails.logger.error "❌ [Calculate Planning Period] Invalid start_date format: #{allocation[:start_date].inspect}"
-              raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.start_date_invalid", value: allocation[:start_date].inspect, allocation_id: allocation[:allocation_id])
-            end
-          end
-          if allocation[:completion_date]
-            begin
-              all_dates << Date.parse(allocation[:completion_date])
-            rescue ArgumentError => e
-              Rails.logger.error "❌ [Calculate Planning Period] Invalid completion_date format: #{allocation[:completion_date].inspect}"
-              raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.completion_date_invalid", value: allocation[:completion_date].inspect, allocation_id: allocation[:allocation_id])
-            end
-          end
-        end
-      end
+    cultivation_periods = cultivation_plan.field_cultivations.map do |cultivation|
+      {
+        start_date: cultivation.start_date,
+        completion_date: cultivation.completion_date
+      }
     end
 
-    # 移動指示から新しい日付を抽出
-    moves.each do |move|
-      if move[:to_start_date]
-        begin
-          all_dates << Date.parse(move[:to_start_date])
-        rescue ArgumentError => e
-          Rails.logger.error "❌ [Calculate Planning Period] Invalid to_start_date format: #{move[:to_start_date].inspect}"
-          raise ArgumentError, "不正な移動先開始日付形式です: #{move[:to_start_date].inspect} (move: #{move.inspect})"
-        end
-      end
-    end
-
-    # データベースからも現在の作付の日付を取得（フォールバック）
-    if all_dates.empty?
-      cultivation_plan.field_cultivations.each do |fc|
-        all_dates << fc.start_date if fc.start_date
-        all_dates << fc.completion_date if fc.completion_date
-      end
-    end
-
-    # 日付範囲を計算（余裕を持たせる）
-    if all_dates.any?
-      min_date = all_dates.min
-      max_date = all_dates.max
-      # 前後1年分の余裕を持たせる（計画期間を制約として使用しないため）
-      effective_start = (min_date - 365).beginning_of_year
-      effective_end = (max_date + 365).end_of_year
-    else
-      # 作付がない場合は計画期間を使用（フォールバック）
-      effective_start = cultivation_plan.planning_start_date || Date.current
-
-      # planning_end_dateが設定されている場合はそれを使用
-      # 設定されていない場合は、effective_startを基準に2年後の年末を計算
-      # これにより、effective_startが未来の日付でも常にeffective_start <= effective_endが保証される
-      effective_end = cultivation_plan.planning_end_date || (effective_start + 2.years).end_of_year
-
-      # 念のため、effective_start > effective_endの場合は調整
-      if effective_start > effective_end
-        effective_end = (effective_start + 2.years).end_of_year
-      end
-    end
-
-    [ effective_start, effective_end ]
+    Domain::CultivationPlan::Calculators::EffectivePlanningPeriodCalculator.calculate(
+      current_allocation: current_allocation,
+      moves: moves,
+      cultivation_periods: cultivation_periods,
+      planning_start_date: cultivation_plan.planning_start_date,
+      planning_end_date: cultivation_plan.planning_end_date,
+      as_of: Date.current
+    )
   end
 end
