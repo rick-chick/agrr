@@ -1,10 +1,8 @@
 # CA Violations Backlog
 
-最終全量スキャン: 2026-05-06T00:00:00Z / 直近裏取り: none
+最終全量スキャン: 2026-05-06T00:00:00Z / 直近裏取り: 2026-05-06（AI Pest 作物関連付けは `PestMemoryGateway` へ移管しコントローラから `rescue ActiveRecord::ActiveRecordError` を除去）
 
 ## 修正単位
-
-- [ ] **AI Pest 作物関連付けでの `ActiveRecord::ActiveRecordError` 捕捉** — Application edge 3 の意味読み要（HTTP 主経路ではないが二重境界） @ `app/controllers/api/v1/pests_controller.rb`
 
 - [ ] **複数 Job の `rescue StandardError`** — Application edge 3 の意味読み要（再 raise ありのものは主スイッチ性の評価要） @ `app/jobs/monitor_migration_status_job.rb`, `chained_job_runner_job.rb`, `optimization_job.rb`, `plan_finalize_job.rb`, `weather_prediction_job.rb`, `task_schedule_generation_job.rb`
 
