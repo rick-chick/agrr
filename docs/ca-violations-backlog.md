@@ -1,14 +1,13 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（禁止 1〜30 の全文スキャンは未実施）
+最終通し走査: 未実施 / 直近裏取り: none
 
 ## 修正単位
 
-1. **次優先**: `InteractionRulesController` の rescue をエッジの振る分けに整理する（現状の rescue-as-edge-switch の扱いを契約に沿って見直す）。
-2. `PublicPlansController` の `create_job_instances_for_public_plans` 重複（Wizard 側はゲートウェイへ移済み。HTML 経路の重複は別修正単位）。
-3. `ARCHITECTURE.md` 禁止 1〜30 の全文スキャン未実施（バックログとして残す）。
+1. **`ARCHITECTURE.md` の `## What we require` と禁止 1〜30 の通し走査** — 全対象レイヤーを `Glob` / `Read` で意味読み照合し、違反を修正単位に切って列挙する（`rg` の一致のみを根拠にしない）。空到達時の裏取りとして必須。
 
 ## スキャン補足
 
-- 2026-05-06: HTML `DELETE /farms/:id` の JSON は `FarmDestroyInteractor` + `FarmDestroyJsonPresenter`。`free_crop_plans` ブロックは `FarmActiveRecordGateway#soft_destroy_with_undo` に集約（HTML / JSON 共通）。
-- 2026-05-06: `PublicPlanCreatePresenter` のジョブエンキュー / `Rails.logger` を撤去し、`PublicPlanOptimizationJobChainGateway` + AR アダプタ + Interactor 注入に移行（Presenter 禁止4 解消）。
+- 2026-05-06: `InteractionRulesController` destroy を `InteractionRuleDestroyInteractor` + HTML/API Presenter に統一（ゲートウェイ preload・controller `rescue` 撤去）。`InteractionRuleDeletePresenter` の JSON `redirect_path` は HTML コントローラが `interaction_rules_path` を返すフックに変更。
+- 2026-05-06: `PublicPlansController#create` の `create_job_instances_for_public_plans` を削除し、`PublicPlanOptimizationJobChainGateway#enqueue_after_create!`（`redirect_path` 引数）経由に集約。
+- 探索ヒント（未確定・READ 要）: `app/controllers` に `PolicyPermissionDenied` 等の controller 側 `rescue` が残るアクションがある（例: `agricultural_tasks_controller.rb`, `pests_controller.rb`）。各件は Application edge と禁止 3 の観点で個別に判定すること。
