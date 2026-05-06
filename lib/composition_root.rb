@@ -636,5 +636,25 @@ module CompositionRoot
         predicted_weather_data: farm.predicted_weather_data
       )
     end
+
+    def agrr_service_weather_query_gateway
+      @agrr_service_weather_query_gateway ||= Adapters::ApiWeather::Gateways::AgrrServiceWeatherQueryActiveGateway.new(
+        agrr_service: AgrrService.new
+      )
+    end
+
+    def api_weather_historical_interactor(output_port:)
+      Domain::ApiWeather::Interactors::ApiWeatherHistoricalInteractor.new(
+        output_port: output_port,
+        gateway: agrr_service_weather_query_gateway
+      )
+    end
+
+    def api_weather_forecast_interactor(output_port:)
+      Domain::ApiWeather::Interactors::ApiWeatherForecastInteractor.new(
+        output_port: output_port,
+        gateway: agrr_service_weather_query_gateway
+      )
+    end
   end
 end
