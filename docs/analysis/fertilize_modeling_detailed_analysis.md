@@ -560,6 +560,8 @@ end
 
 #### Interactors
 
+（※ 以下のコードブロックは設計メモ。履歴上 `Domain::Shared::Result` と書かれていたが、リポジトリには該当クラスはない。実装は `OutputPort` / `Domain::Shared::Dtos::ErrorDto` 等と整合させること。）
+
 ```ruby
 # lib/domain/fertilize/interactors/fertilize_list_interactor.rb
 module Domain
@@ -594,9 +596,9 @@ module Domain
             end
           end
           
-          Domain::Shared::Result.success(fertilize_entities)
+          fertilize_entities
         rescue StandardError => e
-          Domain::Shared::Result.failure(e.message)
+          raise e
         end
       end
     end
@@ -935,12 +937,12 @@ module Domain
             }
           end.compact
           
-          Domain::Shared::Result.success({
+          {
             crop: result['crop'],
             recommendations: recommendations
-          })
+          }
         rescue StandardError => e
-          Domain::Shared::Result.failure(e.message)
+          raise e
         ensure
           # 一時ファイルの削除
           File.delete(crop_file) if crop_file && File.exist?(crop_file)
