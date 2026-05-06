@@ -4,10 +4,11 @@
 
 ## 修正単位
 
-1. **Angular（components → usecase）** — `*.component.ts` が `adapters/` を直接 import している残件を、usecase 側の `*.providers.ts`（またはルート配線）に寄せる。**先頭（辞書順）**: `frontend/src/app/components/contact-form/contact-form.component.ts`（農業タスク CRUD 4 画面は 2026-05-06 対応済み）。
+1. **Angular（components → usecase）** — `*.component.ts` が `adapters/` を直接 import している残件を、usecase 側の `*.providers.ts`（またはルート配線）に寄せる。**先頭（辞書順）**: `frontend/src/app/components/masters/crops/crop-create.component.ts`（contact-form・農業タスク CRUD は 2026-05-06 対応済み）。
 
 ## スキャン補足
 
+- 2026-05-06: **Angular お問い合わせフォーム** — `contact-form.component.ts` の `CONTACT_GATEWAY_PROVIDER`（adapters）直 import を廃止し、`usecase/contact/contact-form.providers.ts` に集約（`SEND_CONTACT_MESSAGE_OUTPUT_PORT` の `useExisting: ContactFormComponent` は循環回避のためコンポーネントに残置）。
 - 2026-05-06: **Angular 農業タスク詳細・編集** — detail / edit コンポーネントの adapters 直 import を廃止し、`agricultural-task-detail.providers.ts` / `agricultural-task-edit.providers.ts` に集約（edit の spec は Presenter import を providers 経由に変更）。
 - 2026-05-06: **Angular 農業タスク新規** — `agricultural-task-create.component.ts` の adapters 直 import を廃止し、`agricultural-task-create.providers.ts` に集約。
 - 2026-05-06: **Angular 農業タスク一覧** — `agricultural-task-list.component.ts` の adapters 直 import を廃止し、`usecase/agricultural-tasks/agricultural-task-list.providers.ts` に DI 配線を集約（Presenter の型用再エクスポートは usecase ファイルのみ）。
