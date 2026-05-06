@@ -15,20 +15,11 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
-import { CropEditPresenter } from '../../../adapters/crops/crop-edit.presenter';
-import { LOAD_CROP_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/crops/load-crop-for-edit.output-port';
-import { UPDATE_CROP_OUTPUT_PORT } from '../../../usecase/crops/update-crop.output-port';
-import { CREATE_CROP_STAGE_OUTPUT_PORT } from '../../../usecase/crops/create-crop-stage.output-port';
-import { UPDATE_CROP_STAGE_OUTPUT_PORT } from '../../../usecase/crops/update-crop-stage.output-port';
-import { DELETE_CROP_STAGE_OUTPUT_PORT } from '../../../usecase/crops/delete-crop-stage.output-port';
-import { UPDATE_TEMPERATURE_REQUIREMENT_OUTPUT_PORT } from '../../../usecase/crops/update-temperature-requirement.output-port';
-import { UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT } from '../../../usecase/crops/update-thermal-requirement.output-port';
-import { UPDATE_SUNSHINE_REQUIREMENT_OUTPUT_PORT } from '../../../usecase/crops/update-sunshine-requirement.output-port';
-import { UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT } from '../../../usecase/crops/update-nutrient-requirement.output-port';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
-import { CROP_STAGE_GATEWAY } from '../../../usecase/crops/crop-stage-gateway';
-import { CropStageApiGateway } from '../../../adapters/crops/crop-stage-api.gateway';
+import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import {
+  CropEditPresenter,
+  CROP_EDIT_PROVIDERS
+} from '../../../usecase/crops/crop-edit.providers';
 
 const initialFormData: CropEditFormData = {
   name: '',
@@ -60,29 +51,7 @@ const initialControl: CropEditViewState = {
   selector: 'app-crop-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
-  providers: [
-    CropEditPresenter,
-    LoadCropForEditUseCase,
-    UpdateCropUseCase,
-    CreateCropStageUseCase,
-    UpdateCropStageUseCase,
-    DeleteCropStageUseCase,
-    UpdateTemperatureRequirementUseCase,
-    UpdateThermalRequirementUseCase,
-    UpdateSunshineRequirementUseCase,
-    UpdateNutrientRequirementUseCase,
-    { provide: LOAD_CROP_FOR_EDIT_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_CROP_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: CREATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: DELETE_CROP_STAGE_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_TEMPERATURE_REQUIREMENT_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_SUNSHINE_REQUIREMENT_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT, useExisting: CropEditPresenter },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway },
-    { provide: CROP_STAGE_GATEWAY, useClass: CropStageApiGateway }
-  ],
+  providers: [...CROP_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

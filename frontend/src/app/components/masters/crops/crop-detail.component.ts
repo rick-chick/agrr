@@ -5,11 +5,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CropDetailView, CropDetailViewState } from './crop-detail.view';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
-import { CropDetailPresenter } from '../../../adapters/crops/crop-detail.presenter';
-import { LOAD_CROP_DETAIL_OUTPUT_PORT } from '../../../usecase/crops/load-crop-detail.output-port';
-import { DELETE_CROP_OUTPUT_PORT } from '../../../usecase/crops/delete-crop.output-port';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
+import {
+  CropDetailPresenter,
+  CROP_DETAIL_PROVIDERS
+} from '../../../usecase/crops/crop-detail.providers';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -21,14 +20,7 @@ const initialControl: CropDetailViewState = {
   selector: 'app-crop-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    CropDetailPresenter,
-    LoadCropDetailUseCase,
-    DeleteCropUseCase,
-    { provide: LOAD_CROP_DETAIL_OUTPUT_PORT, useExisting: CropDetailPresenter },
-    { provide: DELETE_CROP_OUTPUT_PORT, useExisting: CropDetailPresenter },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway }
-  ],
+  providers: [...CROP_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

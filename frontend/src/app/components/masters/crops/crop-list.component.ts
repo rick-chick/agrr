@@ -6,11 +6,10 @@ import { AuthService } from '../../../services/auth.service';
 import { CropListView, CropListViewState } from './crop-list.view';
 import { LoadCropListUseCase } from '../../../usecase/crops/load-crop-list.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
-import { CropListPresenter } from '../../../adapters/crops/crop-list.presenter';
-import { LOAD_CROP_LIST_OUTPUT_PORT } from '../../../usecase/crops/load-crop-list.output-port';
-import { DELETE_CROP_OUTPUT_PORT } from '../../../usecase/crops/delete-crop.output-port';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
+import {
+  CropListPresenter,
+  CROP_LIST_PROVIDERS
+} from '../../../usecase/crops/crop-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -24,14 +23,7 @@ const initialControl: CropListViewState = {
   selector: 'app-crop-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    CropListPresenter,
-    LoadCropListUseCase,
-    DeleteCropUseCase,
-    { provide: LOAD_CROP_LIST_OUTPUT_PORT, useExisting: CropListPresenter },
-    { provide: DELETE_CROP_OUTPUT_PORT, useExisting: CropListPresenter },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway }
-  ],
+  providers: [...CROP_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

@@ -7,10 +7,10 @@ import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { CropCreateView, CropCreateViewState, CropCreateFormData } from './crop-create.view';
 import { CreateCropUseCase } from '../../../usecase/crops/create-crop.usecase';
-import { CropCreatePresenter } from '../../../adapters/crops/crop-create.presenter';
-import { CREATE_CROP_OUTPUT_PORT } from '../../../usecase/crops/create-crop.output-port';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { CropApiGateway } from '../../../adapters/crops/crop-api.gateway';
+import {
+  CropCreatePresenter,
+  CROP_CREATE_PROVIDERS
+} from '../../../usecase/crops/crop-create.providers';
 
 const initialFormData: CropCreateFormData = {
   name: '',
@@ -40,12 +40,7 @@ const initialControl: CropCreateViewState = {
   selector: 'app-crop-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    CropCreatePresenter,
-    CreateCropUseCase,
-    { provide: CREATE_CROP_OUTPUT_PORT, useExisting: CropCreatePresenter },
-    { provide: CROP_GATEWAY, useClass: CropApiGateway }
-  ],
+  providers: [...CROP_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

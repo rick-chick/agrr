@@ -20,7 +20,7 @@ const initialFormData = {
   is_reference: false,
   crop_stages: []
 };
-import { CropEditPresenter } from '../../../adapters/crops/crop-edit.presenter';
+import { CropEditPresenter } from '../../../usecase/crops/crop-edit.providers';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { UpdateCropUseCase } from '../../../usecase/crops/update-crop.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
