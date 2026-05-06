@@ -189,6 +189,12 @@ module CompositionRoot
       )
     end
 
+    def scheduler_weather_update_jobs_enqueue_gateway
+      @scheduler_weather_update_jobs_enqueue_gateway ||= Adapters::InternalJobs::Gateways::WeatherUpdateJobsEnqueueActiveJobGateway.new(
+        logger: logger
+      )
+    end
+
     def prediction_gateway
       @prediction_gateway ||= Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
     end

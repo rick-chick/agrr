@@ -4,10 +4,6 @@
 
 ## 修正単位
 
-- [ ] **Backdoor `clear_database` が `ActiveRecord::*` rescue で JSON 応答を決めている** — Application edge 3 @ `app/controllers/api/v1/backdoor/backdoor_controller.rb`
-
-- [ ] **Scheduler internal `trigger_weather_update` の `ActiveRecord::ActiveRecordError` rescue** — Application edge 3（投入境界の設計要） @ `app/controllers/api/v1/internal/jobs_controller.rb`
-
 - [ ] **AI Pest 作物関連付けでの `ActiveRecord::ActiveRecordError` 捕捉** — Application edge 3 の意味読み要（HTTP 主経路ではないが二重境界） @ `app/controllers/api/v1/pests_controller.rb`
 
 - [ ] **複数 Job の `rescue StandardError`** — Application edge 3 の意味読み要（再 raise ありのものは主スイッチ性の評価要） @ `app/jobs/monitor_migration_status_job.rb`, `chained_job_runner_job.rb`, `optimization_job.rb`, `plan_finalize_job.rb`, `weather_prediction_job.rb`, `task_schedule_generation_job.rb`

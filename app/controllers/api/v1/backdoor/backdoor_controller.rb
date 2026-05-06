@@ -252,11 +252,11 @@ module Api
           ).call
         end
 
-        private
-
         def render_response(json:, status:)
           render(json: json, status: status)
         end
+
+        private
 
         def check_backdoor_enabled
           unless ::BackdoorConfig.enabled?

@@ -15,25 +15,15 @@ module Api
         def trigger_weather_update
           Rails.logger.info "🌤️ [Scheduler] Weather update triggered via API"
 
-          # 参照農場の更新
-          UpdateReferenceWeatherDataJob.perform_later
+          presenter = Presenters::Api::Internal::SchedulerWeatherUpdateTriggerPresenter.new(view: self)
+          Domain::InternalJobs::Interactors::SchedulerWeatherUpdateJobsTriggerInteractor.new(
+            output_port: presenter,
+            gateway: CompositionRoot.scheduler_weather_update_jobs_enqueue_gateway
+          ).call
+        end
 
-          # 通常農場の更新
-          UpdateUserFarmsWeatherDataJob.perform_later
-
-          render json: {
-            success: true,
-            message: "Weather update jobs enqueued",
-            timestamp: Time.current.iso8601
-          }
-          # Application edge 3（インフラ・投入境界）
-        rescue ActiveJob::EnqueueError, ActiveRecord::ActiveRecordError => e
-          Rails.logger.error "❌ [Scheduler] Failed to trigger weather update: #{e.message}"
-          Rails.logger.error "   Backtrace: #{e.backtrace.first(5).join("\n   ")}"
-          render json: {
-            success: false,
-            error: e.message
-          }, status: :internal_server_error
+        def render_response(json:, status:)
+          render(json: json, status: status)
         end
 
         private
