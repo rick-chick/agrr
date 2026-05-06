@@ -111,6 +111,13 @@ module CompositionRoot
       )
     end
 
+    def save_adjusted_agrr_result_gateway
+      @save_adjusted_agrr_result_gateway ||= Adapters::CultivationPlan::Gateways::SaveAdjustedAgrrResultActiveRecordGateway.new(
+        logger: logger,
+        clock: Time.zone
+      )
+    end
+
     def api_private_plan_job_chain_enqueuer
       @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
         logger: logger,
