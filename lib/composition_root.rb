@@ -142,6 +142,26 @@ module CompositionRoot
       )
     end
 
+    def cultivation_plan_rest_workbench_payload_gateway(available_crop_rows_gateway:)
+      Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
+        logger: logger,
+        available_crop_rows_gateway: available_crop_rows_gateway
+      )
+    end
+
+    def cultivation_plan_rest_adjust_gateway
+      Adapters::CultivationPlan::Gateways::CultivationPlanRestAdjustThroughHostGateway.new(
+        logger: logger
+      )
+    end
+
+    def cultivation_plan_rest_add_crop_coordinator_gateway(optimization_host:)
+      Adapters::CultivationPlan::Gateways::CultivationPlanRestAddCropCoordinatorActiveRecordGateway.new(
+        optimization_host: optimization_host,
+        logger: logger
+      )
+    end
+
     def adjust_with_db_weather_interactor(clock: Time.zone)
       Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.new(
         logger: logger,

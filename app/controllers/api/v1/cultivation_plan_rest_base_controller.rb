@@ -9,30 +9,20 @@ module Api
       # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_crop
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
-        Rails.logger.info "🌱 [Add Crop] ========== START =========="
-        Rails.logger.info "🌱 [Add Crop] cultivation_plan_id: #{params[:id]}, crop_id: #{params[:crop_id]}, field_id: #{params[:field_id]}"
-
-        display_range = display_range_from_params
-        display_start_date = display_range[:start_date]
-        display_end_date = display_range[:end_date]
-        if display_start_date || display_end_date
-          Rails.logger.info "📅 [Add Crop] Display range from UI: start=#{display_start_date} end=#{display_end_date}"
-        else
-          Rails.logger.info "📅 [Add Crop] Display range from UI: not provided"
-        end
-
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
           output: Presenters::Api::CultivationPlan::ApiAddCropPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
-          add_crop_coordinator_gateway: cultivation_plan_rest_add_crop_coordinator_gateway
+          add_crop_coordinator_gateway: CompositionRoot.cultivation_plan_rest_add_crop_coordinator_gateway(
+            optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge
+          )
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
           crop_id: params[:crop_id],
           field_id: params[:field_id],
-          display_range: display_range,
+          display_range: display_range_from_params,
           crop_resolver: cultivation_plan_rest_add_crop_crop_resolver_bridge
         )
       end
@@ -92,7 +82,7 @@ module Api
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
         Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
           output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self),
-          adjust_gateway: cultivation_plan_rest_adjust_gateway
+          adjust_gateway: CompositionRoot.cultivation_plan_rest_adjust_gateway
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
@@ -102,7 +92,6 @@ module Api
 
       private
 
-      # lib/domain は具象 Gateway を知らず、コントローラで組み立てて注入する
       def cultivation_plan_rest_logger
         CompositionRoot.logger
       end
@@ -111,17 +100,12 @@ module Api
         Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.for_api_controller(self)
       end
 
-      def cultivation_plan_rest_optimization_events_gateway
-        CompositionRoot.cultivation_plan_rest_optimization_events_gateway
-      end
-
       def cultivation_plan_rest_field_mutation_gateway
         CompositionRoot.cultivation_plan_rest_field_mutation_gateway
       end
 
       def cultivation_plan_rest_workbench_payload_gateway
-        Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
-          logger: cultivation_plan_rest_logger,
+        CompositionRoot.cultivation_plan_rest_workbench_payload_gateway(
           available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway
         )
       end
@@ -131,25 +115,12 @@ module Api
         raise NotImplementedError, "#{self.class}#cultivation_plan_rest_plan_data_available_crop_rows_gateway must be implemented"
       end
 
-      def cultivation_plan_rest_adjust_gateway
-        Adapters::CultivationPlan::Gateways::CultivationPlanRestAdjustThroughHostGateway.new(
-          logger: cultivation_plan_rest_logger
-        )
-      end
-
       def cultivation_plan_rest_add_crop_optimizer_bridge
         @cultivation_plan_rest_add_crop_optimizer_bridge ||= Adapters::CultivationPlan::RestAddCropOptimizationHostBridge.new(self)
       end
 
       def cultivation_plan_rest_add_crop_crop_resolver_bridge
         Adapters::CultivationPlan::RestAddCropCropResolverBridge.new(self)
-      end
-
-      def cultivation_plan_rest_add_crop_coordinator_gateway
-        Adapters::CultivationPlan::Gateways::CultivationPlanRestAddCropCoordinatorActiveRecordGateway.new(
-          optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
-          logger: cultivation_plan_rest_logger
-        )
       end
 
       # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
