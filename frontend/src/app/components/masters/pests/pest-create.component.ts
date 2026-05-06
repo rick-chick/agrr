@@ -6,10 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestCreateView, PestCreateViewState, PestCreateFormData } from './pest-create.view';
 import { CreatePestUseCase } from '../../../usecase/pests/create-pest.usecase';
-import { PestCreatePresenter } from '../../../adapters/pests/pest-create.presenter';
-import { CREATE_PEST_OUTPUT_PORT } from '../../../usecase/pests/create-pest.output-port';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { PestCreatePresenter, PEST_CREATE_PROVIDERS } from '../../../usecase/pests/pest-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: PestCreateFormData = {
@@ -32,12 +29,7 @@ const initialControl: PestCreateViewState = {
   selector: 'app-pest-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    PestCreatePresenter,
-    CreatePestUseCase,
-    { provide: CREATE_PEST_OUTPUT_PORT, useExisting: PestCreatePresenter },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PEST_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

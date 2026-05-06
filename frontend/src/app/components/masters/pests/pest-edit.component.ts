@@ -7,11 +7,7 @@ import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
 import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edit.usecase';
 import { UpdatePestUseCase } from '../../../usecase/pests/update-pest.usecase';
-import { PestEditPresenter } from '../../../adapters/pests/pest-edit.presenter';
-import { LOAD_PEST_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/pests/load-pest-for-edit.output-port';
-import { UPDATE_PEST_OUTPUT_PORT } from '../../../usecase/pests/update-pest.output-port';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { PestEditPresenter, PEST_EDIT_PROVIDERS } from '../../../usecase/pests/pest-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: PestEditFormData = {
@@ -35,14 +31,7 @@ const initialControl: PestEditViewState = {
   selector: 'app-pest-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    PestEditPresenter,
-    LoadPestForEditUseCase,
-    UpdatePestUseCase,
-    { provide: LOAD_PEST_FOR_EDIT_OUTPUT_PORT, useExisting: PestEditPresenter },
-    { provide: UPDATE_PEST_OUTPUT_PORT, useExisting: PestEditPresenter },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PEST_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

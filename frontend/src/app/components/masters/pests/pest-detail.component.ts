@@ -5,11 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PestDetailView, PestDetailViewState } from './pest-detail.view';
 import { LoadPestDetailUseCase } from '../../../usecase/pests/load-pest-detail.usecase';
 import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';
-import { PestDetailPresenter } from '../../../adapters/pests/pest-detail.presenter';
-import { LOAD_PEST_DETAIL_OUTPUT_PORT } from '../../../usecase/pests/load-pest-detail.output-port';
-import { DELETE_PEST_OUTPUT_PORT } from '../../../usecase/pests/delete-pest.output-port';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { PestDetailPresenter, PEST_DETAIL_PROVIDERS } from '../../../usecase/pests/pest-detail.providers';
 
 const initialControl: PestDetailViewState = {
   loading: true,
@@ -21,14 +17,7 @@ const initialControl: PestDetailViewState = {
   selector: 'app-pest-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PestDetailPresenter,
-    LoadPestDetailUseCase,
-    DeletePestUseCase,
-    { provide: LOAD_PEST_DETAIL_OUTPUT_PORT, useExisting: PestDetailPresenter },
-    { provide: DELETE_PEST_OUTPUT_PORT, useExisting: PestDetailPresenter },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PEST_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

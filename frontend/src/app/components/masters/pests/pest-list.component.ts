@@ -5,11 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PestListView, PestListViewState } from './pest-list.view';
 import { LoadPestListUseCase } from '../../../usecase/pests/load-pest-list.usecase';
 import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';
-import { PestListPresenter } from '../../../adapters/pests/pest-list.presenter';
-import { LOAD_PEST_LIST_OUTPUT_PORT } from '../../../usecase/pests/load-pest-list.output-port';
-import { DELETE_PEST_OUTPUT_PORT } from '../../../usecase/pests/delete-pest.output-port';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { PestApiGateway } from '../../../adapters/pests/pest-api.gateway';
+import { PestListPresenter, PEST_LIST_PROVIDERS } from '../../../usecase/pests/pest-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -23,14 +19,7 @@ const initialControl: PestListViewState = {
   selector: 'app-pest-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PestListPresenter,
-    LoadPestListUseCase,
-    DeletePestUseCase,
-    { provide: LOAD_PEST_LIST_OUTPUT_PORT, useExisting: PestListPresenter },
-    { provide: DELETE_PEST_OUTPUT_PORT, useExisting: PestListPresenter },
-    { provide: PEST_GATEWAY, useClass: PestApiGateway }
-  ],
+  providers: [...PEST_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">
