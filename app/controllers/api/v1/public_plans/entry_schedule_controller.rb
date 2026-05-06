@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
-
 module Api
   module V1
     module PublicPlans
@@ -75,12 +73,7 @@ module Api
         end
 
         def decode_entry_cursor(raw)
-          return nil if raw.blank?
-
-          json = JSON.parse(Base64.urlsafe_decode64(raw))
-          Integer(json["o"])
-        rescue ArgumentError, JSON::ParserError, TypeError
-          nil
+          CompositionRoot.entry_schedule_cursor_decode_gateway.decode(raw)
         end
 
         def apply_entry_locale

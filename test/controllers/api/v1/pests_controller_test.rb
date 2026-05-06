@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "open3"
-require "ostruct"
 
 module Api
   module V1
@@ -19,8 +17,7 @@ module Api
       end
 
       test "ai_create should create pest with affected crops" do
-        # agrrコマンドが実際に返す形式
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -50,25 +47,20 @@ module Api
             },
             "affected_crops" => []
           }
-        }.to_json
+        }
 
-        # PestsControllerのfetch_pest_info_from_agrrをモック
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) do |pest_name, affected_crops|
-            JSON.parse(agrr_output)
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          assert_difference "Pest.count", +1 do
+            post api_v1_pests_ai_create_path,
+                 params: {
+                   name: "アオムシ",
+                   affected_crops: [
+                     { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
+                     { "crop_id" => @crop2.id.to_s, "crop_name" => "ほうれん草" }
+                   ]
+                 },
+                 headers: { "Accept" => "application/json" }
           end
-        end
-
-        assert_difference "Pest.count", +1 do
-          post api_v1_pests_ai_create_path,
-               params: {
-                 name: "アオムシ",
-                 affected_crops: [
-                   { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
-                   { "crop_id" => @crop2.id.to_s, "crop_name" => "ほうれん草" }
-                 ]
-               },
-               headers: { "Accept" => "application/json" }
         end
 
         assert_response :created
@@ -88,7 +80,7 @@ module Api
       end
 
       test "ai_create should handle reference crops" do
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -111,20 +103,18 @@ module Api
             },
             "affected_crops" => []
           }
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          post api_v1_pests_ai_create_path,
+               params: {
+                 name: "テスター",
+                 affected_crops: [
+                   { "crop_id" => @reference_crop.id.to_s, "crop_name" => "かぼちゃ" }
+                 ]
+               },
+               headers: { "Accept" => "application/json" }
         end
-
-        post api_v1_pests_ai_create_path,
-             params: {
-               name: "テスター",
-               affected_crops: [
-                 { "crop_id" => @reference_crop.id.to_s, "crop_name" => "かぼちゃ" }
-               ]
-             },
-             headers: { "Accept" => "application/json" }
 
         assert_response :created
         json_response = JSON.parse(response.body)
@@ -136,7 +126,7 @@ module Api
       end
 
       test "ai_create should handle empty affected_crops" do
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -153,15 +143,13 @@ module Api
             },
             "affected_crops" => []
           }
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          post api_v1_pests_ai_create_path,
+               params: { name: "テスター2" },
+               headers: { "Accept" => "application/json" }
         end
-
-        post api_v1_pests_ai_create_path,
-             params: { name: "テスター2" },
-             headers: { "Accept" => "application/json" }
 
         assert_response :created
         json_response = JSON.parse(response.body)
@@ -172,19 +160,17 @@ module Api
       end
 
       test "ai_create should handle daemon not running error" do
-        error_output = {
+        agrr_payload = {
           "success" => false,
           "error" => "AGRRサービスが起動していません",
           "code" => "daemon_not_running"
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(error_output) }
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          post api_v1_pests_ai_create_path,
+               params: { name: "アオムシ" },
+               headers: { "Accept" => "application/json" }
         end
-
-        post api_v1_pests_ai_create_path,
-             params: { name: "アオムシ" },
-             headers: { "Accept" => "application/json" }
 
         assert_response :service_unavailable
         json_response = JSON.parse(response.body)
@@ -192,9 +178,7 @@ module Api
       end
 
       test "ai_create は agrr の affected_crops が不正ならエラーを返す" do
-        original_method = Api::V1::PestsController.instance_method(:fetch_pest_info_from_agrr)
-
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -212,32 +196,26 @@ module Api
             # 本来は配列だが、ここでは不正値を返してコントローラの検証を確認する
             "affected_crops" => "invalid-payload"
           }
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) do |_pest_name, _affected_crops|
-            JSON.parse(agrr_output)
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          assert_no_difference "Pest.count" do
+            post api_v1_pests_ai_create_path,
+                 params: { name: "テスト害虫" },
+                 headers: { "Accept" => "application/json" }
           end
-        end
-
-        assert_no_difference "Pest.count" do
-          post api_v1_pests_ai_create_path,
-               params: { name: "テスト害虫" },
-               headers: { "Accept" => "application/json" }
         end
 
         assert_response :unprocessable_entity
         json_response = JSON.parse(response.body)
         assert_includes json_response["error"], "affected_crops"
-      ensure
-        Api::V1::PestsController.define_method(:fetch_pest_info_from_agrr, original_method)
       end
 
       test "ai_create should prevent accessing other user's crops" do
         other_user = create(:user)
         other_crop = create(:crop, user: other_user, name: "他人の作物")
 
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -254,21 +232,19 @@ module Api
             },
             "affected_crops" => []
           }
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) { |pest_name, affected_crops| JSON.parse(agrr_output) }
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          post api_v1_pests_ai_create_path,
+               params: {
+                 name: "テスター3",
+                 affected_crops: [
+                   { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
+                   { "crop_id" => other_crop.id.to_s, "crop_name" => "他人の作物" }
+                 ]
+               },
+               headers: { "Accept" => "application/json" }
         end
-
-        post api_v1_pests_ai_create_path,
-             params: {
-               name: "テスター3",
-               affected_crops: [
-                 { "crop_id" => @crop1.id.to_s, "crop_name" => "ブロッコリー" },
-                 { "crop_id" => other_crop.id.to_s, "crop_name" => "他人の作物" }
-               ]
-             },
-             headers: { "Accept" => "application/json" }
 
         assert_response :created
 
@@ -287,7 +263,7 @@ module Api
         anonymous = User.anonymous_user
         create(:pest, :user_owned, user: anonymous, name: "匿名害虫")
 
-        agrr_output = {
+        agrr_payload = {
           "success" => true,
           "data" => {
             "pest" => {
@@ -304,22 +280,30 @@ module Api
             },
             "affected_crops" => []
           }
-        }.to_json
+        }
 
-        Api::V1::PestsController.class_eval do
-          define_method(:fetch_pest_info_from_agrr) { |_name, _affected_crops| JSON.parse(agrr_output) }
-        end
-
-        assert_no_difference "Pest.count" do
-          post api_v1_pests_ai_create_path,
-               params: { name: "匿名害虫" },
-               headers: { "Accept" => "application/json" }
+        with_stubbed_pest_ai_gateway(agrr_payload) do
+          assert_no_difference "Pest.count" do
+            post api_v1_pests_ai_create_path,
+                 params: { name: "匿名害虫" },
+                 headers: { "Accept" => "application/json" }
+          end
         end
 
         assert_response :unauthorized
 
         # 匿名ユーザーの既存レコードが書き換わらないことを期待（現状は上書きされる）
         assert_equal "匿名害虫", Pest.find_by(name: "匿名害虫", user: anonymous)&.name
+      end
+
+      private
+
+      def with_stubbed_pest_ai_gateway(parsed_hash)
+        fake = Object.new
+        fake.define_singleton_method(:fetch_pest_json) do |_pest_name, _affected_crops = [], max_retries: 3|
+          parsed_hash
+        end
+        CompositionRoot.stub(:pest_ai_daemon_query_gateway, fake) { yield }
       end
     end
   end

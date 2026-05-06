@@ -7,20 +7,46 @@ module Adapters
       class FertilizeCliGateway
         DEFAULT_MAX_RETRIES = 3
 
-        def initialize(logger:)
+        def initialize(logger:, translator:)
           @logger = logger
           @translator = translator
         end
 
         def fetch_for_create(name:, max_retries: DEFAULT_MAX_RETRIES)
           fetch_from_agrr(name: name, max_retries: max_retries)
+        rescue AgrrService::AgrrError => e
+          agrr_failure_payload(e)
+        rescue StandardError => e
+          @logger.error "❌ [AGRR Fertilize] #{e.class}: #{e.message}"
+          @logger.error "   #{e.backtrace&.first(5)&.join("\n   ")}"
+          {
+            "success" => false,
+            "error" => @translator.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message)
+          }
         end
 
         def fetch_for_update(id:, name:, max_retries: DEFAULT_MAX_RETRIES)
           fetch_from_agrr(name: name, max_retries: max_retries)
+        rescue AgrrService::AgrrError => e
+          agrr_failure_payload(e)
+        rescue StandardError => e
+          @logger.error "❌ [AGRR Fertilize] #{e.class}: #{e.message}"
+          @logger.error "   #{e.backtrace&.first(5)&.join("\n   ")}"
+          {
+            "success" => false,
+            "error" => @translator.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message)
+          }
         end
 
         private
+
+        def agrr_failure_payload(error)
+          @logger.error "❌ [AGRR Fertilize] AgrrService error: #{error.message}"
+          {
+            "success" => false,
+            "error" => @translator.t("api.errors.fertilizes.fetch_failed_with_reason", message: error.message)
+          }
+        end
 
         def fetch_from_agrr(name:, max_retries:)
           raise ArgumentError, "name can't be blank" if name.blank?

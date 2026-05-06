@@ -30,34 +30,29 @@ module Api
           daemon_pid = nil
 
           if binary_executable
-            begin
-              daemon_status_output = `#{agrr_bin} daemon status 2>&1`.strip
-              # Try to extract PID from output
+            shell = CompositionRoot.backdoor_shell_stdout_capture_gateway
+            daemon_status_output = shell.capture("#{agrr_bin} daemon status 2>&1")
+            if daemon_status_output.present?
               if match = daemon_status_output.match(/PID[:\s]+(\d+)/i)
                 daemon_pid = match[1].to_i
               end
-            rescue SystemCallError => e
-              Rails.logger.error "Error checking daemon status: #{e.message}"
             end
           end
 
           # Get process information
           process_info = nil
           if daemon_pid
-            begin
-              # Get memory usage
-              memory_kb = `ps -o rss= -p #{daemon_pid}`.to_i
+            shell = CompositionRoot.backdoor_shell_stdout_capture_gateway
+            rss_out = shell.capture("ps -o rss= -p #{daemon_pid}")
+            etime_out = shell.capture("ps -o etime= -p #{daemon_pid}")
+            if rss_out.present? && etime_out.present?
+              memory_kb = rss_out.to_i
               memory_mb = (memory_kb / 1024.0).round(2)
-
-              # Get uptime
-              uptime_seconds = `ps -o etime= -p #{daemon_pid}`.to_s.strip
               process_info = {
                 pid: daemon_pid,
                 memory_mb: memory_mb,
-                uptime: uptime_seconds
+                uptime: etime_out.strip
               }
-            rescue SystemCallError => e
-              Rails.logger.error "Error getting process info: #{e.message}"
             end
           end
 

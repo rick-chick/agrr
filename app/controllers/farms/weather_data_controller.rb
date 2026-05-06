@@ -106,12 +106,14 @@ module Farms
       # 既に予測データが保存されているかチェック
       if @farm.predicted_weather_data.present? && @farm.predicted_weather_data["data"].present?
         prediction_data = @farm.predicted_weather_data
-        predicted_at = Time.zone.parse(prediction_data["predicted_at"]) rescue nil
+        predicted_at = Adapters::Shared::Iso8601TimeParse.parse_in_application_zone(prediction_data["predicted_at"])
+        prediction_start = Adapters::Shared::Iso8601CalendarDate.parse(prediction_data["prediction_start_date"])
 
         # 予測データが古い場合は再予測（24時間以上経過、または予測開始日が過去になった場合）
         is_outdated = predicted_at.nil? ||
                       (Time.current - predicted_at) > 24.hours ||
-                      Date.parse(prediction_data["prediction_start_date"]) < Date.today
+                      prediction_start.nil? ||
+                      prediction_start < Date.today
 
         if is_outdated
           Rails.logger.info "⚠️ [Farm##{@farm.id}] Prediction data is outdated (predicted_at: #{predicted_at}), re-predicting..."

@@ -12,18 +12,17 @@ module Api
 
       # POST /api/v1/fertilizes/ai_create
       # AIで肥料情報を取得して保存
-      def ai_create
-        fertilize_name = params[:name]&.strip
+        def ai_create
+          fertilize_name = params[:name]&.strip
 
-        if current_user.anonymous?
-          return render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
-        end
+          if current_user.anonymous?
+            return render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
+          end
 
-        unless fertilize_name.present?
-          return render json: { error: I18n.t("api.errors.fertilizes.name_required") }, status: :bad_request
-        end
+          unless fertilize_name.present?
+            return render json: { error: I18n.t("api.errors.fertilizes.name_required") }, status: :bad_request
+          end
 
-        begin
           Rails.logger.info "🤖 [AI Fertilize] Querying fertilize info for: #{fertilize_name}"
           fertilize_info = ai_gateway.fetch_for_create(name: fertilize_name)
 
@@ -101,28 +100,21 @@ module Api
             Rails.logger.error "❌ [AI Fertilize] Failed to #{existing_fertilize ? 'update' : 'create'}: #{result.error}"
             render json: { error: result.error }, status: :unprocessable_entity
           end
-
-        rescue AgrrService::AgrrError => e
-          Rails.logger.error "❌ [AI Fertilize] Error: #{e.message}"
-          Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: I18n.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
         end
-      end
 
       # POST /api/v1/fertilizes/:id/ai_update
       # AIで肥料情報を取得して更新（編集時は既存を編集）
-      def ai_update
-        fertilize_name = params[:name]&.strip
+        def ai_update
+          fertilize_name = params[:name]&.strip
 
-        unless fertilize_name.present?
-          return render json: { error: I18n.t("api.errors.fertilizes.name_required") }, status: :bad_request
-        end
+          unless fertilize_name.present?
+            return render json: { error: I18n.t("api.errors.fertilizes.name_required") }, status: :bad_request
+          end
 
-        unless @fertilize
-          return render json: { error: I18n.t("api.errors.fertilizes.not_found", default: "肥料が見つかりません") }, status: :not_found
-        end
+          unless @fertilize
+            return render json: { error: I18n.t("api.errors.fertilizes.not_found", default: "肥料が見つかりません") }, status: :not_found
+          end
 
-        begin
           # agrrコマンドで肥料情報を取得
           Rails.logger.info "🤖 [AI Fertilize] Querying fertilize info for update: #{fertilize_name} (ID: #{@fertilize.id})"
           fertilize_info = ai_gateway.fetch_for_update(id: @fertilize.id, name: fertilize_name)
@@ -176,13 +168,7 @@ module Api
             Rails.logger.error "❌ [AI Fertilize] Failed to update: #{result.error}"
             render json: { error: result.error }, status: :unprocessable_entity
           end
-
-        rescue AgrrService::AgrrError => e
-          Rails.logger.error "❌ [AI Fertilize] Error: #{e.message}"
-          Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-          render json: { error: I18n.t("api.errors.fertilizes.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
         end
-      end
 
       private
 

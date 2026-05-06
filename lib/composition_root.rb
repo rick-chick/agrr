@@ -215,6 +215,10 @@ module CompositionRoot
       )
     end
 
+    def backdoor_shell_stdout_capture_gateway
+      @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::ShellStdoutCaptureGateway.new(logger: logger)
+    end
+
     def scheduler_weather_update_jobs_enqueue_gateway
       @scheduler_weather_update_jobs_enqueue_gateway ||= Adapters::InternalJobs::Gateways::WeatherUpdateJobsEnqueueActiveJobGateway.new(
         logger: logger
@@ -496,6 +500,10 @@ module CompositionRoot
       )
     end
 
+    def entry_schedule_cursor_decode_gateway
+      @entry_schedule_cursor_decode_gateway ||= Adapters::PublicPlans::EntryScheduleCursorDecodeGateway.new
+    end
+
     def entry_schedule_reference_farm_loader
       @entry_schedule_reference_farm_loader ||= lambda do |farm_id|
         raise Domain::Shared::Exceptions::RecordNotFound, "farm_id is required" if farm_id.blank?
@@ -591,6 +599,20 @@ module CompositionRoot
 
     def crop_task_template_toggle_gateway
       @crop_task_template_toggle_gateway ||= Adapters::Crop::Gateways::CropTaskTemplateToggleActiveRecordGateway.new
+    end
+
+    def crop_ai_daemon_query_gateway
+      @crop_ai_daemon_query_gateway ||= Adapters::Agrr::CropAiDaemonQueryGateway.new(
+        logger: logger,
+        translator: translator
+      )
+    end
+
+    def pest_ai_daemon_query_gateway
+      @pest_ai_daemon_query_gateway ||= Adapters::Agrr::PestAiDaemonQueryGateway.new(
+        logger: logger,
+        translator: translator
+      )
     end
 
     private

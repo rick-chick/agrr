@@ -29,10 +29,8 @@ module Api
       def clear_session_cookie
         cookies.delete(:session_id)
 
-        begin
-          cookie_domain = request.cookie_domain.presence
-        rescue NoMethodError
-          cookie_domain = nil
+        cookie_domain = if request.respond_to?(:cookie_domain, true)
+          request.cookie_domain.presence
         end
 
         cookies.delete(:session_id, path: "/")

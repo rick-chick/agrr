@@ -152,12 +152,7 @@ module Api
       end
 
       def parse_display_date(value)
-        return nil unless value.present?
-
-        Date.iso8601(value)
-      rescue ArgumentError => e
-        Rails.logger.warn "⚠️ [Add Crop] 無効な表示範囲日付: #{value.inspect} (#{e.class})"
-        nil
+        Adapters::Shared::Iso8601CalendarDate.parse(value, logger: Rails.logger)
       end
 
       # add_crop で使用する作物を取得する（具象コントローラで実装）

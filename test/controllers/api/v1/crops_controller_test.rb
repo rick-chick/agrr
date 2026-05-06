@@ -22,16 +22,12 @@ module Api
           "stage_requirements" => []
         }
 
-        Api::V1::CropsController.class_eval do
-          define_method(:fetch_crop_info_from_agrr) do |crop_name, max_retries: 3|
-            agrr_response
+        with_stubbed_crop_ai_gateway(agrr_response) do
+          assert_difference "::Crop.count", +1 do
+            post api_v1_crops_ai_create_path,
+                 params: { name: "ブロッコリー" },
+                 headers: { "Accept" => "application/json" }
           end
-        end
-
-        assert_difference "::Crop.count", +1 do
-          post api_v1_crops_ai_create_path,
-               params: { name: "ブロッコリー" },
-               headers: { "Accept" => "application/json" }
         end
 
         assert_response :created
@@ -60,16 +56,12 @@ module Api
           "stage_requirements" => []
         }
 
-        Api::V1::CropsController.class_eval do
-          define_method(:fetch_crop_info_from_agrr) do |crop_name, max_retries: 3|
-            agrr_response
+        with_stubbed_crop_ai_gateway(agrr_response) do
+          assert_no_difference "::Crop.count" do
+            post api_v1_crops_ai_create_path,
+                 params: { name: "トマト" },
+                 headers: { "Accept" => "application/json" }
           end
-        end
-
-        assert_no_difference "::Crop.count" do
-          post api_v1_crops_ai_create_path,
-               params: { name: "トマト" },
-               headers: { "Accept" => "application/json" }
         end
 
         assert_response :ok
@@ -83,6 +75,14 @@ module Api
         assert_equal [ "果菜" ], existing.groups
         assert_equal @user.id, existing.user_id
         assert_not existing.is_reference
+      end
+
+      private
+
+      def with_stubbed_crop_ai_gateway(crop_info_hash)
+        fake = Object.new
+        fake.define_singleton_method(:fetch_crop_json) { |_crop_name| [ crop_info_hash, nil ] }
+        CompositionRoot.stub(:crop_ai_daemon_query_gateway, fake) { yield }
       end
     end
   end

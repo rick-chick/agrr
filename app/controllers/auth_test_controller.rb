@@ -32,10 +32,8 @@ class AuthTestController < ApplicationController
       # Robustly clear session cookie for development/test parity with production behavior
       cookies.delete(:session_id)
       cookies.delete(:session_id, path: "/")
-      begin
-        cookie_domain = request.cookie_domain.presence
-      rescue NoMethodError
-        cookie_domain = nil
+      cookie_domain = if request.respond_to?(:cookie_domain, true)
+        request.cookie_domain.presence
       end
       if cookie_domain
         cookies.delete(:session_id, domain: cookie_domain, path: "/")

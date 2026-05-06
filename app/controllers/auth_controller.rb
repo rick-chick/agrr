@@ -107,10 +107,8 @@ class AuthController < ApplicationController
     cookies.delete(:session_id)
 
     # Ensure deletion when a domain/path is involved (some proxies/CDNs alter host)
-    begin
-      cookie_domain = request.cookie_domain.presence
-    rescue NoMethodError
-      cookie_domain = nil
+    cookie_domain = if request.respond_to?(:cookie_domain, true)
+      request.cookie_domain.presence
     end
 
     # Try explicit path root

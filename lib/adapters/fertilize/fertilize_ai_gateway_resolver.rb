@@ -8,7 +8,10 @@ module Adapters
       end
 
       def resolve
-        @config_gateway || Adapters::Fertilize::Gateways::FertilizeCliGateway.new
+        @config_gateway || Adapters::Fertilize::Gateways::FertilizeCliGateway.new(
+          logger: CompositionRoot.logger,
+          translator: CompositionRoot.translator
+        )
       end
     end
   end
