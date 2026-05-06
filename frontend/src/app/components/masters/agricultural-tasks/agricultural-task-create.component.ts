@@ -10,10 +10,10 @@ import {
   AgriculturalTaskCreateFormData
 } from './agricultural-task-create.view';
 import { CreateAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/create-agricultural-task.usecase';
-import { AgriculturalTaskCreatePresenter } from '../../../adapters/agricultural-tasks/agricultural-task-create.presenter';
-import { CREATE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/create-agricultural-task.output-port';
-import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
-import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
+import {
+  AgriculturalTaskCreatePresenter,
+  AGRICULTURAL_TASK_CREATE_PROVIDERS
+} from '../../../usecase/agricultural-tasks/agricultural-task-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: AgriculturalTaskCreateFormData = {
@@ -37,12 +37,7 @@ const initialControl: AgriculturalTaskCreateViewState = {
   selector: 'app-agricultural-task-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
-  providers: [
-    AgriculturalTaskCreatePresenter,
-    CreateAgriculturalTaskUseCase,
-    { provide: CREATE_AGRICULTURAL_TASK_OUTPUT_PORT, useExisting: AgriculturalTaskCreatePresenter },
-    { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
-  ],
+  providers: [...AGRICULTURAL_TASK_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
