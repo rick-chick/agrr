@@ -6,13 +6,12 @@ import {
   AgriculturalTaskListView,
   AgriculturalTaskListViewState
 } from './agricultural-task-list.view';
+import {
+  AgriculturalTaskListPresenter,
+  AGRICULTURAL_TASK_LIST_PROVIDERS
+} from '../../../usecase/agricultural-tasks/agricultural-task-list.providers';
 import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { DeleteAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/delete-agricultural-task.usecase';
-import { AgriculturalTaskListPresenter } from '../../../adapters/agricultural-tasks/agricultural-task-list.presenter';
-import { LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
-import { DELETE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/delete-agricultural-task.output-port';
-import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
-import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -26,20 +25,7 @@ const initialControl: AgriculturalTaskListViewState = {
   selector: 'app-agricultural-task-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    AgriculturalTaskListPresenter,
-    LoadAgriculturalTaskListUseCase,
-    DeleteAgriculturalTaskUseCase,
-    {
-      provide: LOAD_AGRICULTURAL_TASK_LIST_OUTPUT_PORT,
-      useExisting: AgriculturalTaskListPresenter
-    },
-    {
-      provide: DELETE_AGRICULTURAL_TASK_OUTPUT_PORT,
-      useExisting: AgriculturalTaskListPresenter
-    },
-    { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
-  ],
+  providers: [...AGRICULTURAL_TASK_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">
