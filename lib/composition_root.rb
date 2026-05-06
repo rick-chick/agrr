@@ -22,6 +22,10 @@ module CompositionRoot
       @logger ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
     end
 
+    def job_chain_async_dispatcher
+      @job_chain_async_dispatcher ||= Adapters::Application::JobChainAsyncDispatcher.new(logger: logger)
+    end
+
     # アプリエッジでの「今日」（テストは Time.zone 旅行と整合）
     def calendar_today
       Time.zone.today

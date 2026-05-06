@@ -2,7 +2,6 @@
 
 class PublicPlansController < ApplicationController
   include CultivationPlanManageable
-  include JobExecution
   include WeatherDataManagement
 
   skip_before_action :authenticate_user!
@@ -142,7 +141,11 @@ class PublicPlansController < ApplicationController
 
     # ジョブチェーンを実行（データ取得 → 予測 → 最適化）
     job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
-    execute_job_chain_async(job_instances)
+    CompositionRoot.job_chain_async_dispatcher.enqueue(
+      job_instances,
+      redirect_path: job_completion_redirect_path,
+      caller_label: self.class.name
+    )
 
     # 天気予測実行のためにoptimizing画面にリダイレクト
     redirect_to optimizing_public_plans_path
@@ -392,7 +395,7 @@ class PublicPlansController < ApplicationController
     OptimizationChannel
   end
 
-  # JobExecutionで使用する遷移先パス
+  # ジョブチェーン完了後のリダイレクト先（JobChainAsyncDispatcher に渡す）
   def job_completion_redirect_path
     public_plans_results_path
   end

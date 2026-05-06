@@ -13,10 +13,6 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
       plan_id: 123
     }
 
-    # ジョブチェーン実行メソッドが存在しない場合のモック
-    view_mock.stubs(:respond_to?).with(:create_job_instances_for_public_plans, true).returns(false)
-    view_mock.stubs(:respond_to?).with(:execute_job_chain_async, true).returns(false)
-
     view_mock.expects(:render_response).with(
       json: expected_json,
       status: :ok
@@ -32,27 +28,33 @@ class PublicPlanCreatePresenterTest < ActiveSupport::TestCase
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 456)
 
     view_mock.stubs(:render_response)
-    view_mock.stubs(:respond_to?).with(:create_job_instances_for_public_plans, true).returns(false)
-    view_mock.stubs(:respond_to?).with(:execute_job_chain_async, true).returns(false)
 
     Rails.logger.expects(:info).with(regexp_matches(/PublicPlanCreatePresenter.*Rendering success response with plan_id: 456/))
 
     presenter.on_success(success_dto)
   end
 
-  test "on_success executes job chain when view supports it" do
+  test "on_success enqueues job chain when dispatcher is given and view exposes public_plan_optimization_job_instances" do
+    dispatcher = mock
     view_mock = mock
-    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: view_mock)
+    view_mock.stubs(:class).returns(Api::V1::PublicPlans::WizardController)
+
+    presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(
+      view: view_mock,
+      job_chain_async_dispatcher: dispatcher
+    )
 
     success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: 789)
 
     job_instance_mock = mock
     job_instances = [ job_instance_mock ]
 
-    view_mock.stubs(:respond_to?).with(:create_job_instances_for_public_plans, true).returns(true)
-    view_mock.stubs(:respond_to?).with(:execute_job_chain_async, true).returns(true)
-    view_mock.expects(:create_job_instances_for_public_plans).with(789, ::OptimizationChannel).returns(job_instances)
-    view_mock.expects(:execute_job_chain_async).with(job_instances)
+    view_mock.expects(:public_plan_optimization_job_instances).with(789).returns(job_instances)
+    dispatcher.expects(:enqueue).with(
+      job_instances,
+      redirect_path: nil,
+      caller_label: Api::V1::PublicPlans::WizardController.name
+    )
 
     view_mock.expects(:render_response).with(
       json: { plan_id: 789 },

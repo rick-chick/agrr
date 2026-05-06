@@ -4,7 +4,6 @@ module Api
   module V1
     module PublicPlans
       class WizardController < ApplicationController
-        include JobExecution
         include WeatherDataManagement
         SESSION_MARKER_KEY = :public_plan_wizard_session_marker
 
@@ -48,7 +47,10 @@ module Api
           )
 
           # Presenter と Gateway を準備
-          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
+          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(
+            view: self,
+            job_chain_async_dispatcher: CompositionRoot.job_chain_async_dispatcher
+          )
 
           # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
           interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
@@ -60,6 +62,11 @@ module Api
           )
 
           interactor.call(input_dto)
+        end
+
+        # PublicPlanCreatePresenter / JobChainAsyncDispatcher 用（ジョブ組み立ては private メソッドに委譲）
+        def public_plan_optimization_job_instances(cultivation_plan_id)
+          create_job_instances_for_public_plans(cultivation_plan_id, OptimizationChannel)
         end
 
         def render_response(json:, status:)

@@ -4,8 +4,9 @@ module Presenters
   module Api
     module PublicPlan
       class PublicPlanCreatePresenter < Domain::PublicPlan::Ports::PublicPlanCreateOutputPort
-        def initialize(view:)
+        def initialize(view:, job_chain_async_dispatcher: nil)
           @view = view
+          @job_chain_async_dispatcher = job_chain_async_dispatcher
         end
 
         def on_success(success_dto)
@@ -14,11 +15,14 @@ module Presenters
           # 契約に従い plan_id をログ出力
           Rails.logger.info "🌱 [PublicPlanCreatePresenter] Rendering success response with plan_id: #{plan_id}"
 
-          # ジョブチェーンを実行（既存の動作を維持）
-          if @view.respond_to?(:create_job_instances_for_public_plans, true) &&
-             @view.respond_to?(:execute_job_chain_async, true)
-            job_instances = @view.send(:create_job_instances_for_public_plans, plan_id, ::OptimizationChannel)
-            @view.send(:execute_job_chain_async, job_instances)
+          # ジョブチェーンを実行（既存の動作を維持）。Dispatcher は Controller から注入（CompositionRoot は呼ばない）
+          if @job_chain_async_dispatcher && @view.respond_to?(:public_plan_optimization_job_instances)
+            job_instances = @view.public_plan_optimization_job_instances(plan_id)
+            @job_chain_async_dispatcher.enqueue(
+              job_instances,
+              redirect_path: nil,
+              caller_label: @view.class.name
+            )
           end
 
           @view.render_response(
