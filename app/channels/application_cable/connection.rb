@@ -37,9 +37,7 @@ module ApplicationCable
       return nil unless session
 
       # セッションからユーザーを取得
-      session.user
-    rescue ActiveRecord::RecordNotFound
-      nil
+      User.find_by(id: session.user_id)
     end
   end
 end

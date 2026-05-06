@@ -3,7 +3,12 @@
 # 農場（Farm）のステータス更新をリアルタイムに配信するチャンネル
 class FarmChannel < ApplicationCable::Channel
   def subscribed
-    farm = Farm.find(params[:farm_id])
+    farm = Farm.find_by(id: params[:farm_id])
+    unless farm
+      Rails.logger.warn "🚫 FarmChannel: Farm not found: farm_id=#{params[:farm_id]}"
+      reject
+      return
+    end
 
     # ユーザー認証チェック（管理者は全アクセス可能、一般ユーザーは自分の農場のみ）
     unless authorized?(farm)
@@ -14,9 +19,6 @@ class FarmChannel < ApplicationCable::Channel
 
     stream_for farm
     Rails.logger.info "✅ [FarmChannel#subscribed] Authorized! Streaming for farm_id=#{params[:farm_id]}"
-  rescue ActiveRecord::RecordNotFound
-    Rails.logger.warn "🚫 FarmChannel: Farm not found: farm_id=#{params[:farm_id]}"
-    reject
   end
 
   def unsubscribed

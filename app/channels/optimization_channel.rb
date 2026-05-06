@@ -4,7 +4,12 @@
 # Private Plans（認証ユーザー向け）は PlansOptimizationChannel を使用
 class OptimizationChannel < ApplicationCable::Channel
   def subscribed
-    cultivation_plan = CultivationPlan.find(params[:cultivation_plan_id])
+    cultivation_plan = CultivationPlan.find_by(id: params[:cultivation_plan_id])
+    unless cultivation_plan
+      Rails.logger.warn "🚫 OptimizationChannel: Plan not found: plan_id=#{params[:cultivation_plan_id]}"
+      reject
+      return
+    end
 
     # デバッグ情報をログに出力
     Rails.logger.info "🔍 [OptimizationChannel#subscribed] plan_id=#{params[:cultivation_plan_id]}"
@@ -29,9 +34,6 @@ class OptimizationChannel < ApplicationCable::Channel
     if cultivation_plan.status_completed?
       transmit({ status: "completed", progress: 100 })
     end
-  rescue ActiveRecord::RecordNotFound
-    Rails.logger.warn "🚫 OptimizationChannel: Plan not found: plan_id=#{params[:cultivation_plan_id]}"
-    reject
   end
 
   def unsubscribed
