@@ -7,13 +7,18 @@ module Domain
       class UserDto
         attr_reader :id
 
-        def initialize(id:, admin:)
+        def initialize(id:, admin:, anonymous: false)
           @id = id
           @admin = admin
+          @anonymous = anonymous
         end
 
         def admin?
           @admin
+        end
+
+        def anonymous?
+          @anonymous
         end
       end
     end

@@ -635,6 +635,80 @@ module CompositionRoot
       )
     end
 
+    def fertilize_ai_query_gateway
+      @fertilize_ai_query_gateway ||= Adapters::Fertilize::FertilizeAiGatewayResolver.new(
+        config_gateway: Rails.configuration.x.fertilize_ai_gateway
+      ).resolve
+    end
+
+    def pest_api_ai_create_interactor(current_user:)
+      uid = current_user.id
+      pair = pest_ai_interactors_for(user_id: uid)
+      gw = pest_gateway
+      log = logger
+      Domain::Pest::Interactors::PestApiAiCreateInteractor.new(
+        user_id: uid,
+        user_lookup: user_lookup,
+        pest_gateway: gw,
+        pest_ai_query_gateway: pest_ai_daemon_query_gateway,
+        create_interactor: pair.create_interactor,
+        update_interactor: pair.update_interactor,
+        logger: log,
+        translator: translator,
+        associate_affected_crops_runner: lambda { |pest_id, crops|
+          gw.associate_affected_crops_for_ai_pest(
+            pest_id: pest_id,
+            affected_crops: crops,
+            user: current_user,
+            logger: log
+          )
+        }
+      )
+    end
+
+    def pest_api_ai_update_interactor(current_user:)
+      uid = current_user.id
+      pair = pest_ai_interactors_for(user_id: uid)
+      Domain::Pest::Interactors::PestApiAiUpdateInteractor.new(
+        user_id: uid,
+        user_lookup: user_lookup,
+        pest_gateway: pest_gateway,
+        pest_ai_query_gateway: pest_ai_daemon_query_gateway,
+        update_interactor: pair.update_interactor,
+        logger: logger,
+        translator: translator
+      )
+    end
+
+    def fertilize_api_ai_create_interactor(current_user:)
+      uid = current_user.id
+      pair = fertilize_ai_interactors_for(user_id: uid)
+      Domain::Fertilize::Interactors::FertilizeApiAiCreateInteractor.new(
+        user_id: uid,
+        user_lookup: user_lookup,
+        fertilize_gateway: fertilize_gateway,
+        fertilize_ai_query_gateway: fertilize_ai_query_gateway,
+        create_interactor: pair.create_interactor,
+        update_interactor: pair.update_interactor,
+        logger: logger,
+        translator: translator
+      )
+    end
+
+    def fertilize_api_ai_update_interactor(current_user:)
+      uid = current_user.id
+      pair = fertilize_ai_interactors_for(user_id: uid)
+      Domain::Fertilize::Interactors::FertilizeApiAiUpdateInteractor.new(
+        user_id: uid,
+        user_lookup: user_lookup,
+        fertilize_gateway: fertilize_gateway,
+        fertilize_ai_query_gateway: fertilize_ai_query_gateway,
+        update_interactor: pair.update_interactor,
+        logger: logger,
+        translator: translator
+      )
+    end
+
     private
 
     def adjust_with_db_weather_debug_dump(time_zone)
