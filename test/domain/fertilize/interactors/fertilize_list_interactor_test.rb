@@ -48,7 +48,7 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
     interactor.call
   end
 
-  test "call forwards errors to on_failure" do
+  test "propagates unexpected StandardError from gateway" do
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(mock)
 
@@ -56,10 +56,6 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
     gateway.expects(:list_index_for_user).raises(StandardError.new("boom"))
 
     output = mock
-    output.expects(:on_failure).with do |err|
-      assert_equal "boom", err.message
-      true
-    end
 
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
       output_port: output,
@@ -67,6 +63,8 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
       gateway: gateway,
       user_lookup: user_lookup
     )
-    interactor.call
+    assert_raises(StandardError, "boom") do
+      interactor.call
+    end
   end
 end

@@ -24,7 +24,7 @@ module Domain
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             current_entity = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
             if is_reference != current_entity.is_reference && !user.admin?
-              raise StandardError, @translator.t("fertilizes.flash.reference_flag_admin_only")
+              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_flag_admin_only"))
             end
             attrs[:is_reference] = is_reference
           end
@@ -42,27 +42,40 @@ module Domain
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue StandardError => e
-          form_fertilize = nil
-          if user && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
-            fid = input_dto.fertilize_id.to_i
-            begin
-              bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fid, for_edit: true)
-              form_fertilize = bundle.persisted_fertilize
-            rescue StandardError
-              form_fertilize = nil
-            end
-            if form_fertilize.nil?
-              begin
-                form_fertilize = @gateway.find_authorized_model_for_edit(user, fid)
-              rescue StandardError
-                form_fertilize = nil
-              end
-            end
-          end
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
+          form_fertilize = load_form_fertilize_for_failure(user, input_dto)
           @output_port.on_failure(
             Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, form_fertilize: form_fertilize)
           )
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          form_fertilize = load_form_fertilize_for_failure(user, input_dto)
+          @output_port.on_failure(
+            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, form_fertilize: form_fertilize)
+          )
+        end
+
+        private
+
+        def load_form_fertilize_for_failure(user, input_dto)
+          return nil unless user && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
+
+          fid = input_dto.fertilize_id.to_i
+          begin
+            bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fid, for_edit: true)
+            return bundle.persisted_fertilize
+          rescue Domain::Shared::Policies::PolicyPermissionDenied,
+                 Domain::Shared::Exceptions::RecordNotFound,
+                 Domain::Shared::Exceptions::RecordInvalid
+            # fall through to model_for_edit
+          end
+
+          begin
+            @gateway.find_authorized_model_for_edit(user, fid)
+          rescue Domain::Shared::Policies::PolicyPermissionDenied,
+                 Domain::Shared::Exceptions::RecordNotFound,
+                 Domain::Shared::Exceptions::RecordInvalid
+            nil
+          end
         end
       end
     end

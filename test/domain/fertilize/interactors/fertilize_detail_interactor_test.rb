@@ -31,7 +31,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     interactor.call("99")
   end
 
-  test "call forwards errors to on_failure" do
+  test "propagates unexpected StandardError from gateway" do
     translator = mock
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(mock)
@@ -40,11 +40,6 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     gateway.expects(:find_authorized_for_view).raises(StandardError.new("boom"))
 
     output = mock
-    output.expects(:on_failure).with do |err|
-      assert_instance_of Domain::Shared::Dtos::ErrorDto, err
-      assert_equal "boom", err.message
-      true
-    end
 
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(
       output_port: output,
@@ -53,7 +48,9 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
       translator: translator,
       user_lookup: user_lookup
     )
-    interactor.call("1")
+    assert_raises(StandardError, "boom") do
+      interactor.call("1")
+    end
   end
 
   test "call maps RecordNotFound to translated not_found flash" do

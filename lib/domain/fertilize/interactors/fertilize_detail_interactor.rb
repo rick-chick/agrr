@@ -21,7 +21,7 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("fertilizes.flash.not_found")))
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

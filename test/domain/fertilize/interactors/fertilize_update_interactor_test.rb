@@ -121,7 +121,7 @@ module Domain
           bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
+          @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
@@ -133,30 +133,28 @@ module Domain
           assert_equal persisted, received.form_fertilize
         end
 
-        test "on_failure has nil form_fertilize when user lookup raises" do
+        test "propagates StandardError when user lookup raises" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).raises(StandardError, "no user")
           @mock_gateway.expects(:update_for_user).never
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).never
-          received = nil
-          @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
-          @interactor.call(input_dto)
-
-          assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailureDto, received
-          assert_equal "no user", received.message
-          assert_nil received.form_fertilize
+          assert_raises(StandardError, "no user") do
+            @interactor.call(input_dto)
+          end
         end
 
-        test "on_failure uses model_for_edit fallback when reload bundle raises" do
+        test "on_failure uses model_for_edit fallback when reload bundle raises RecordNotFound" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
           fallback_model = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(StandardError, "reload failed")
+          @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
+            Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
+          )
           @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).returns(fallback_model)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
@@ -172,9 +170,13 @@ module Domain
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:update_for_user).raises(StandardError.new("Update failed"))
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(StandardError, "reload failed")
-          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).raises(StandardError, "edit failed")
+          @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
+            Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
+          )
+          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).raises(
+            Domain::Shared::Exceptions::RecordNotFound.new("edit failed")
+          )
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 

@@ -19,7 +19,7 @@ module Domain
           # is_referenceをbooleanに変換（"0", "false", ""はfalseとして扱う）
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           if is_reference && !user.admin?
-            raise StandardError, @translator.t("fertilizes.flash.reference_only_admin")
+            raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_only_admin"))
           end
 
           fertilize_entity = @gateway.create_for_user(user, {
@@ -36,7 +36,9 @@ module Domain
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordNotFound => e
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

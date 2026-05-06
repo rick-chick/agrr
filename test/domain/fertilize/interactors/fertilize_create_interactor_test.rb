@@ -120,9 +120,10 @@ module Domain
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:create_for_user).raises(StandardError.new("Name can't be blank"))
-          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::ErrorDto))
 
-          @interactor.call(input_dto)
+          assert_raises(StandardError, "Name can't be blank") do
+            @interactor.call(input_dto)
+          end
         end
 
         test "should call on_failure when user lookup raises RecordNotFound" do
