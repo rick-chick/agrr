@@ -4,21 +4,17 @@
 
 ## 修正単位（先頭から処理）
 
-1. **Application edge 3 — コントローラの `rescue StandardError` / 広い `rescue` がユースケース結果の主スイッチ**
-   - `rescue => e` 撤去済み（コントローラ・jobs 列挙分）。`api/v1/contact_messages` は reCAPTCHA / レート制限を Interactor + Presenter `on_failure` に集約済み（2026-05-06）。
-   - **部分解消（2026-05-06）**: `health_controller#show`、`backdoor#status`、`internal/jobs/trigger_weather_update`（`EnqueueError` + `ActiveRecord::ActiveRecordError`）、`dev/client_logs#create`（広い rescue 削除）、`cultivation_plan_api#run_candidates`（AGRR / JSON / IO に限定）。
-   - **残**: `cultivation_plan_api#get_or_predict_weather` の `rescue StandardError`（天気取得フォールバック）、`api/v1/crops_controller` / `pests_controller` の agrr リトライ内 `rescue StandardError` 等。監査: `docs/ca-controller-rescue-audit.md`。
-
-2. **Application edge 1 / Sideways escape — `app/controllers/concerns/**` の `ActiveSupport::Concern` によるオーケストレーション共有**
+1. **Application edge 1 / Sideways escape — `app/controllers/concerns/**` の `ActiveSupport::Concern` によるオーケストレーション共有**
    - レガシー負債。新規判断の追加禁止。段階的に `lib/domain` + 注入へ畳み込む。
 
-3. **`lib/domain` 以外の `raise StandardError`（アダプター・モデル）**
+2. **`lib/domain` 以外の `raise StandardError`（アダプター・モデル）**
    - `lib/adapters/**/gateways/*_active_record_gateway.rb`（境界で `StandardError` にラップ）
    - `app/models/crop.rb`, `app/models/pesticide.rb`
    - 個別照合: ドメイン例外へのマッピング可否。
 
 ## 解消済み（記録）
 
+- **Application edge 3 — `app/controllers/**`（および `app/controllers/concerns/**`）の `rescue StandardError` / 広い `rescue`**（2026-05-06）: `rg 'rescue StandardError' app/controllers` は一致なし。`get_or_predict_weather` はインフラ・アダプター例外のみで `nil` フォールバック。crops/pests の agrr リトライは `SystemCallError`/`IOError`/`SocketError`/`Timeout::Error` のみ。`associate_crops_from_api` は `ActiveRecord::ActiveRecordError` のみ。
 - **`api/v1/internal/jobs#trigger_weather_update` / `dev/client_logs#create` / `cultivation_plan_api#run_candidates`**（2026-05-06）: スケジューラ投入は `ActiveJob::EnqueueError` と `ActiveRecord::ActiveRecordError` のみ。開発ログ受信は広い rescue を削除。候補実行は `Agrr::BaseGatewayV2::*` / `JSON::ParserError` / `SystemCallError` に限定。
 - **`health_controller#show` / `api/v1/backdoor#status` の広い `rescue StandardError`**（2026-05-06）: DB 接続・クエリ由来のみ（`HEALTH_DB_EXCEPTIONS`）、バッククォートは `SystemCallError`。ユースケースの二重分岐ではなくインフラ境界に限定。
 - **`ContactMessages` API — コントローラの `rescue`（reCAPTCHA / レート制限）**（2026-05-06）: `CreateContactMessageInteractor` が `verify` / `track` の結果で `on_failure`（種別: validation / recaptcha / rate_limit）。Presenter が HTTP ステータスを分担。

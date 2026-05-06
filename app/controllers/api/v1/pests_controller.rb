@@ -329,7 +329,8 @@ module Api
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query] JSON parse error: #{e.message}"
             raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
-          rescue StandardError => e
+          rescue SystemCallError, IOError, SocketError, Timeout::Error => e
+            # Application edge 3: 一時的な IO/OS 系のみリトライ対象に限定
             last_error = e
             Rails.logger.warn "⚠️  [AGRR Pest-to-Crop Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
 
@@ -456,10 +457,10 @@ module Api
         end
 
         Rails.logger.info "✅ [AI Pest] Crop association completed: #{associated_count} crops associated"
-      rescue StandardError => e
+      rescue ActiveRecord::ActiveRecordError => e
         Rails.logger.error "❌ [AI Pest] Failed to associate crops: #{e.message}"
         Rails.logger.error "❌ [AI Pest] Backtrace: #{e.backtrace.first(5).join("\n")}"
-        # 関連付けエラーは致命的ではないため、ログ出力のみ
+        # 関連付けエラーは致命的ではないため、ログ出力のみ（永続化境界のみ捕捉）
       end
     end
   end

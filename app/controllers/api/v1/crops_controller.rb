@@ -116,8 +116,8 @@ module Api
             Rails.logger.error "❌ [AGRR Crop Query] JSON parse error: #{e.message}"
             raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
-          rescue StandardError => e
-            # その他の予期しないエラー
+          rescue SystemCallError, IOError, SocketError, Timeout::Error => e
+            # Application edge 3: 一時的な IO/OS 系のみリトライ対象に限定
             last_error = e
             Rails.logger.warn "⚠️  [AGRR Crop Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
 

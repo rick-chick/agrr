@@ -281,7 +281,15 @@ module CultivationPlanApi
   rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError, Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
     Rails.logger.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
     raise
-  rescue StandardError => e
+  rescue ActiveRecord::ActiveRecordError,
+         Agrr::BaseGatewayV2::ExecutionError,
+         Agrr::BaseGatewayV2::ParseError,
+         AgrrService::AgrrError,
+         JSON::ParserError,
+         JSON::GeneratorError,
+         SystemCallError,
+         IOError,
+         SocketError => e
     Rails.logger.error "❌ [Candidates] Failed to get weather data: #{e.message}"
     nil
   end
