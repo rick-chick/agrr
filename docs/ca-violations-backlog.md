@@ -4,7 +4,6 @@
 
 ## 修正単位
 
-- [ ] **OAuth コンバージョンクエリ付与を adapter へ** — `OauthConversionRedirect#append_oauth_conversion_query` は OAuth 計測の振る舞い。adapter（純粋 Ruby の URL ビルダ）に切り出し、controller は注入された adapter を呼ぶだけにする。@ `app/controllers/concerns/oauth_conversion_redirect.rb` — Application edge 1
 - [ ] **その他 API の広い `rescue` 棚卸し** — `AgrrService` + `RuntimeError` / JSON パース / システムコール例外 等を `ARCHITECTURE.md` 禁止 3（Application edge 3）の意味で個別評価。許容となる狭い境界翻訳と、`on_failure` 二重路を区別する。@ `app/controllers/api/v1/fertilizes_controller.rb`, `app/controllers/api/v1/crops_controller.rb`, `app/controllers/api/v1/cultivation_plan_rest_base_controller.rb` 他
 
 ## スキャン補足
@@ -23,3 +22,4 @@
 - `CultivationPlanManageable` を `CultivationPlanHtmlBaseController` に置換し `app/controllers/concerns/cultivation_plan_manageable.rb` を削除（2026-05-06）。
 - `DeletionUndoResponder` を `ApplicationController` のメソッドへインライン化し `app/controllers/concerns/deletion_undo_responder.rb` を削除（2026-05-06）。応答ペイロード組み立ては上記 PayloadInteractor / DualFormatResponder へ後続移管済み。
 - エントリ作物スケジュール API の ETag 応答は `EntryScheduleJsonRendering` concern を廃止し、`Presenters::Api::PublicPlans::EntryScheduleEtagJsonRendering` に集約（2026-05-06）。
+- OAuth 成功リダイレクトの `_agrr_oauth` クエリ付与は `Adapters::Application::OauthConversionUrlAppender`（`CompositionRoot.oauth_conversion_url_appender`）へ集約（2026-05-06）。

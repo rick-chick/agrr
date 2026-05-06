@@ -26,6 +26,10 @@ module CompositionRoot
       @job_chain_async_dispatcher ||= Adapters::Application::JobChainAsyncDispatcher.new(logger: logger)
     end
 
+    def oauth_conversion_url_appender
+      @oauth_conversion_url_appender ||= Adapters::Application::OauthConversionUrlAppender.new
+    end
+
     # アプリエッジでの「今日」（テストは Time.zone 旅行と整合）
     def calendar_today
       Time.zone.today

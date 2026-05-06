@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
-  include OauthConversionRedirect
-
   layout "auth", only: [ :login ]
 
   # Skip CSRF protection for OAuth endpoints
@@ -66,7 +64,7 @@ class AuthController < ApplicationController
       end
 
       if session[:return_to].present?
-        return_to = append_oauth_conversion_query(session.delete(:return_to))
+        return_to = CompositionRoot.oauth_conversion_url_appender.append(session.delete(:return_to))
         redirect_to return_to, allow_other_host: true, notice: I18n.t("auth.flash.login_success")
       else
         redirect_to root_path, notice: I18n.t("auth.flash.login_success")
