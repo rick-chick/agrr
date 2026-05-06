@@ -66,7 +66,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs)
+        # @param selected_crop_ids [Array<Integer>, nil] nil のとき作物テンプレート同期を行わない（API 等）
+        def update_for_user(user, id, attrs, selected_crop_ids = nil)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 

@@ -19,7 +19,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Minitest::Mock.new
-          gateway.expect(:update_for_user, task_entity, [ user, 5, { name: "剪定" } ])
+          gateway.expect(:update_for_user, task_entity, [ user, 5, { name: "剪定" }, nil ])
 
           received = nil
           output_port = Minitest::Mock.new
@@ -51,7 +51,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
-          gateway.define_singleton_method(:update_for_user) do |_u, _id, _attrs|
+          gateway.define_singleton_method(:update_for_user) do |_u, _id, _attrs, _selected = nil|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 

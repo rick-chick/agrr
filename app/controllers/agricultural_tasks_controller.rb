@@ -68,43 +68,31 @@ class AgriculturalTasksController < ApplicationController
     task_attributes = build_task_attributes
     requested_reference = requested_reference_flag_from(task_attributes)
     reference_changed = requested_reference != @agricultural_task.is_reference?
-    selected_crop_ids = selected_crop_ids_from_params
 
     if reference_changed && !admin_user?
       return redirect_to agricultural_task_path(@agricultural_task), alert: I18n.t("agricultural_tasks.flash.reference_flag_admin_only")
     end
 
-    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash({ agricultural_task: task_attributes }, params[:id])
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(view: self)
+    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(
+      {
+        agricultural_task: task_attributes,
+        selected_crop_ids: selected_crop_ids_from_params
+      },
+      params[:id]
+    )
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(
+      view: self,
+      form_resubmit: {
+        dto: @input_dto,
+        task_attributes: task_attributes,
+        selected_crop_ids: selected_crop_ids_from_params
+      }
+    )
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
-    return unless interactor.call(@input_dto)
-
-    # Interactor 成功後は is_reference/user_id が更新済みのため reload してから作物紐付けを行う
-    @agricultural_task.reload
-    begin
-      update_crop_task_templates(selected_crop_ids)
-    rescue ActiveRecord::RecordInvalid,
-           ActiveRecord::RecordNotDestroyed,
-           ActiveRecord::RecordNotSaved,
-           ActiveRecord::StatementInvalid => e
-      @agricultural_task.assign_attributes(
-        name: @input_dto&.name || task_attributes[:name],
-        description: @input_dto&.description || task_attributes[:description],
-        time_per_sqm: @input_dto&.time_per_sqm || task_attributes[:time_per_sqm],
-        weather_dependency: @input_dto&.weather_dependency || task_attributes[:weather_dependency],
-        skill_level: @input_dto&.skill_level || task_attributes[:skill_level],
-        is_reference: @input_dto&.is_reference || task_attributes[:is_reference],
-        required_tools: @input_dto&.required_tools || task_attributes[:required_tools],
-        region: @input_dto&.region || task_attributes[:region]
-      )
-      @agricultural_task.valid? # エラーをセットするためにバリデーションを実行
-      prepare_crop_cards(selected_ids: selected_crop_ids)
-      flash.now[:alert] = e.message
-      render :edit, status: :unprocessable_entity
-    end
+    interactor.call(@input_dto)
   end
 
   # DELETE /agricultural_tasks/:id
@@ -297,43 +285,30 @@ class AgriculturalTasksController < ApplicationController
     casted.nil? ? false : casted
   end
 
-  def update_crop_task_templates(selected_crop_ids)
-    # 現在のタスク（reload 後）に対して許可された作物のみを対象にする
-    allowed_crop_ids = accessible_crops_for_selection(@agricultural_task).where(id: selected_crop_ids).pluck(:id)
-    current_template_crop_ids = CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
-
-    # 追加する作物（allowed_crop_idsにあって、current_template_crop_idsにない）
-    crops_to_add = allowed_crop_ids - current_template_crop_ids
-    crops_to_add.each do |crop_id|
-      crop = Crop.find_by(id: crop_id)
-      next unless crop
-
-      # 既存のテンプレートがない場合のみ作成
-      unless CropTaskTemplate.exists?(crop: crop, agricultural_task: @agricultural_task)
-        crop.crop_task_templates.create!(
-          agricultural_task: @agricultural_task,
-          name: @agricultural_task.name,
-          description: @agricultural_task.description,
-          time_per_sqm: @agricultural_task.time_per_sqm,
-          weather_dependency: @agricultural_task.weather_dependency,
-          required_tools: @agricultural_task.required_tools,
-          skill_level: @agricultural_task.skill_level
-        )
-      end
-    end
-
-    # 削除する作物（current_template_crop_idsにあって、allowed_crop_idsにない）
-    crops_to_remove = current_template_crop_ids - allowed_crop_ids
-    crops_to_remove.each do |crop_id|
-      crop = Crop.find_by(id: crop_id)
-      next unless crop
-
-      template = CropTaskTemplate.find_by(crop: crop, agricultural_task: @agricultural_task)
-      template&.destroy
-    end
-  end
-
   public
+
+  # HTML 更新失敗時に編集フォームへ送信内容を戻す（Presenter からのみ呼ぶ）
+  def apply_agricultural_task_update_form_snapshot(form_resubmit)
+    return unless form_resubmit
+
+    dto = form_resubmit[:dto]
+    task_attributes = form_resubmit[:task_attributes]
+    selected_crop_ids = form_resubmit[:selected_crop_ids]
+    return unless dto && @agricultural_task
+
+    @agricultural_task.assign_attributes(
+      name: dto.name || task_attributes[:name],
+      description: dto.description || task_attributes[:description],
+      time_per_sqm: dto.time_per_sqm || task_attributes[:time_per_sqm],
+      weather_dependency: dto.weather_dependency || task_attributes[:weather_dependency],
+      skill_level: dto.skill_level || task_attributes[:skill_level],
+      is_reference: dto.is_reference.nil? ? task_attributes[:is_reference] : dto.is_reference,
+      required_tools: dto.required_tools || task_attributes[:required_tools],
+      region: dto.region || task_attributes[:region]
+    )
+    @agricultural_task.valid?
+    prepare_crop_cards(selected_ids: selected_crop_ids)
+  end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
   def redirect_to(path, notice: nil, alert: nil)

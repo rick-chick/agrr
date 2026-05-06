@@ -28,7 +28,8 @@ module Domain
             attrs[:is_reference] = false if attrs[:is_reference].nil?
           end
 
-          task_entity = @gateway.update_for_user(user, update_input_dto.id, attrs)
+          sync_ids = update_input_dto.selected_crop_ids
+          task_entity = @gateway.update_for_user(user, update_input_dto.id, attrs, sync_ids)
 
           @output_port.on_success(task_entity)
           true

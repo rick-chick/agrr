@@ -149,20 +149,26 @@ module Adapters
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
 
-        def update_for_user(user, id, attrs)
-          task = find_agricultural_task_model!(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
+        # @param selected_crop_ids [Array<Integer>, nil] nil なら CropTaskTemplate の同期をスキップ
+        def update_for_user(user, id, attrs, selected_crop_ids = nil)
+          ::ActiveRecord::Base.transaction do
+            task = find_agricultural_task_model!(id)
+            unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+              raise Domain::Shared::Policies::PolicyPermissionDenied
+            end
+
+            normalized = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_update(
+              user,
+              task.attributes.symbolize_keys,
+              attrs
+            )
+            raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(normalized)
+
+            task.reload
+            sync_crop_task_templates_for_task!(task, selected_crop_ids) unless selected_crop_ids.nil?
+
+            Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
           end
-
-          normalized = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_update(
-            user,
-            task.attributes.symbolize_keys,
-            attrs
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(normalized)
-
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         end
 
         def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:)
@@ -241,6 +247,58 @@ module Adapters
           ::AgriculturalTask.find(id)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        # HTML 更新フローでコントローラが担っていた作物テンプレート同期（AR は本アダプタに閉じる）
+        def sync_crop_task_templates_for_task!(task, selected_crop_ids)
+          allowed_crop_ids = allowed_crop_ids_for_template_sync(task, selected_crop_ids)
+          current_template_crop_ids = ::CropTaskTemplate.where(agricultural_task: task).pluck(:crop_id)
+
+          crops_to_add = allowed_crop_ids - current_template_crop_ids
+          crops_to_add.each do |crop_id|
+            crop = ::Crop.find_by(id: crop_id)
+            next unless crop
+
+            next if ::CropTaskTemplate.exists?(crop: crop, agricultural_task: task)
+
+            crop.crop_task_templates.create!(
+              agricultural_task: task,
+              name: task.name,
+              description: task.description,
+              time_per_sqm: task.time_per_sqm,
+              weather_dependency: task.weather_dependency,
+              required_tools: task.required_tools,
+              skill_level: task.skill_level
+            )
+          end
+
+          crops_to_remove = current_template_crop_ids - allowed_crop_ids
+          crops_to_remove.each do |crop_id|
+            crop = ::Crop.find_by(id: crop_id)
+            next unless crop
+
+            template = ::CropTaskTemplate.find_by(crop: crop, agricultural_task: task)
+            template&.destroy
+          end
+        rescue ActiveRecord::RecordInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.record.errors.full_messages.join(", ")
+        rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
+        rescue ActiveRecord::StatementInvalid => e
+          raise Domain::Shared::Exceptions::RecordInvalid, e.message
+        end
+
+        def allowed_crop_ids_for_template_sync(task, selected_crop_ids)
+          scope =
+            if task.is_reference?
+              ::Crop.where(is_reference: true)
+            else
+              ::Crop.where(is_reference: false, user_id: task.user_id)
+            end
+
+          scope = scope.where(region: task.region) if task.region.present?
+
+          scope.where(id: Array(selected_crop_ids).map(&:to_i).uniq).pluck(:id)
         end
       end
     end

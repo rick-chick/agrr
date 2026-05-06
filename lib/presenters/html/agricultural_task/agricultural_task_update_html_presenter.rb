@@ -4,8 +4,9 @@ module Presenters
   module Html
     module AgriculturalTask
       class AgriculturalTaskUpdateHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskUpdateOutputPort
-        def initialize(view:)
+        def initialize(view:, form_resubmit: nil)
           @view = view
+          @form_resubmit = form_resubmit
         end
 
         def on_success(task)
@@ -19,6 +20,7 @@ module Presenters
             return
           end
 
+          @view.apply_agricultural_task_update_form_snapshot(@form_resubmit) if @form_resubmit
           @view.flash.now[:alert] = error_dto.message
           @view.render :edit, status: :unprocessable_entity
         end

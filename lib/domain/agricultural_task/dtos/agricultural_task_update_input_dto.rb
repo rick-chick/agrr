@@ -5,10 +5,11 @@ module Domain
     module Dtos
       class AgriculturalTaskUpdateInputDto
         attr_reader :id, :name, :description, :time_per_sqm, :weather_dependency,
-                    :required_tools, :skill_level, :region, :task_type, :is_reference
+                    :required_tools, :skill_level, :region, :task_type, :is_reference, :selected_crop_ids
 
         def initialize(id:, name: nil, description: nil, time_per_sqm: nil, weather_dependency: nil,
-                       required_tools: nil, skill_level: nil, region: nil, task_type: nil, is_reference: nil)
+                       required_tools: nil, skill_level: nil, region: nil, task_type: nil, is_reference: nil,
+                       selected_crop_ids: nil)
           @id = id
           @name = name
           @description = description
@@ -19,10 +20,13 @@ module Domain
           @region = region
           @task_type = task_type
           @is_reference = is_reference
+          @selected_crop_ids = selected_crop_ids
         end
 
         def self.from_hash(hash, task_id)
-          pp = hash[:agricultural_task] || hash
+          h = hash.respond_to?(:deep_symbolize_keys) ? hash.deep_symbolize_keys : hash
+          pp = h[:agricultural_task] || h
+          selected = h.key?(:selected_crop_ids) ? h[:selected_crop_ids] : nil
           new(
             id: task_id,
             name: pp[:name],
@@ -33,7 +37,8 @@ module Domain
             skill_level: pp[:skill_level],
             region: pp[:region],
             task_type: pp[:task_type],
-            is_reference: pp[:is_reference]
+            is_reference: pp[:is_reference],
+            selected_crop_ids: selected
           )
         end
       end
