@@ -51,4 +51,17 @@ class FertilizeCreateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to index when reference data requires admin" do
+    view_mock = mock
+    presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("fertilizes.flash.reference_only_admin")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.expects(:fertilizes_path).returns("/fertilizes")
+    view_mock.expects(:redirect_to).with("/fertilizes", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

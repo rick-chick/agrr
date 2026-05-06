@@ -28,6 +28,13 @@ module Presenters
             @view.redirect_to @view.fertilizes_path
             return
           end
+
+          msg = failure_dto.message
+          if msg == I18n.t("fertilizes.flash.reference_flag_admin_only")
+            @view.redirect_to @view.fertilize_path(@view.params[:id]), alert: msg
+            return
+          end
+
           @fertilize.assign_attributes(@view.params[:fertilize].to_h.symbolize_keys)
           @fertilize.valid?
           @view.instance_variable_set(:@fertilize, @fertilize)

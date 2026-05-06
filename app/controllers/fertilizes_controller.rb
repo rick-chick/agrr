@@ -30,10 +30,6 @@ class FertilizesController < ApplicationController
 
   # POST /fertilizes
   def create
-    if fertilize_params[:is_reference].present? && ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) && !admin_user?
-      redirect_to fertilizes_path, alert: I18n.t("fertilizes.flash.reference_only_admin")
-      return
-    end
     input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
     presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
@@ -42,10 +38,6 @@ class FertilizesController < ApplicationController
 
   # PATCH/PUT /fertilizes/:id
   def update
-    if fertilize_params[:is_reference].present? && ActiveModel::Type::Boolean.new.cast(fertilize_params[:is_reference]) != @fertilize.is_reference && !admin_user?
-      redirect_to fertilize_path(@fertilize), alert: I18n.t("fertilizes.flash.reference_flag_admin_only")
-      return
-    end
     input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,

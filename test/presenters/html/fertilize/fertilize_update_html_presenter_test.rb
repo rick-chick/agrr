@@ -69,4 +69,18 @@ class FertilizeUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects to edit when non-admin toggles reference flag" do
+    view_mock = mock
+    msg = I18n.t("fertilizes.flash.reference_flag_admin_only")
+    fertilize_mock = mock
+    failure_dto = Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: msg, form_fertilize: fertilize_mock)
+    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: view_mock)
+
+    view_mock.stubs(:params).returns(id: "42", fertilize: {})
+    view_mock.expects(:fertilize_path).with("42").returns("/fertilizes/42")
+    view_mock.expects(:redirect_to).with("/fertilizes/42", alert: msg)
+
+    presenter.on_failure(failure_dto)
+  end
 end

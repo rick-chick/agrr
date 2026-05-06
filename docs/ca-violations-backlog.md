@@ -1,11 +1,24 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（Rails バックエンド中心・禁止条項の要点サンプリング） / 直近補足: 2026-05-06（作物 AI・Angular サンプリング）
+最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-06
 
 ## 修正単位
 
 - **解消済み（2026-05-06）**: `Api::V1::Masters::Crops::AgriculturalTasksController` の `index` / `update` / `destroy` を Interactor + Presenter 経路に統一（Application edge 禁止 3・4）。ゲートウェイ IF は変更なし。
-- **次イテレーションで先頭に固定する作業**: `ARCHITECTURE.md` の `## What we require` と `## Prohibited practices`（1〜30）による**通し走査**をセクション0として実行し、検出した逸脱をこのファイルの修正単位リストに書き出してから先頭を選ぶ（増分のみの代替は [`references/agent-operational-canonical.md`](../.cursor/skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md) に従う）。
+- **解消済み（2026-05-06）**: **HTML** `FertilizesController` の `create` / `update` 先頭の参照データ・admin 分岐（`Application edge` 禁止 4）を削除。`FertilizeCreateInteractor` / `FertilizeUpdateInteractor` の既存判定に一本化し、HTML Presenter で当該失敗メッセージ時の `redirect_to`（従来 UX）を再現。
+- **次に先頭で固定する修正単位（未着手）**: 同パターンの **HTML** `AgriculturalTasksController` / `CropsController` / `PestsController` 等の `is_reference` 早期 `redirect_to` を、対応 Interactor + HTML Presenter の modeled failure へ寄せる（1 リソースずつ、テスト付き）。
+
+## セクション0 通し走査メモ（2026-05-06 継続）
+
+`ARCHITECTURE.md` 本文を手動再読しつつ、次を **Glob / Grep / 代表ファイル Read** で照合（1 パス全捕捉ではない。外側ループの再訪を前提）。
+
+| 観点 | 結果（当該イテレーション） |
+|------|---------------------------|
+| `lib/domain` の `Rails.` / `CompositionRoot` / `Adapters::` **実コード参照** | 検出なし（コメント・ポート説明のみ） |
+| `lib/presenters` の `CompositionRoot` / ゲートウェイ再取得 | 検出なし |
+| `app/controllers/api/v1` の `rescue` / `rescue_from` | 該当なし |
+| `frontend` `components/**/*.component.ts` の `adapters/` 直 import | 該当なし |
+| 既知の意図的 `rescue`（天気・Health・Auth） | 下記「残置」のまま |
 
 ## スキャン補足
 
@@ -19,7 +32,7 @@
 - 2026-05-06: **API 害虫・肥料 AI** — `PestsController` / `FertilizesController` の `ai_create` / `ai_update` を `PestApiAiCreateInteractor` / `PestApiAiUpdateInteractor` / `FertilizeApiAiCreateInteractor` / `FertilizeApiAiUpdateInteractor` に集約。agrr 応答の解釈は `PestAiDaemonResponseInterpreter`、肥料ペイロード正規化は `FertilizeAiAgrrPayloadNormalizer`。匿名ユーザー判定は `UserDto#anonymous?`（Mapper で `User` から付与）。作物関連付けは `CompositionRoot` が注入する runner で AR `User` を閉じ込める。
 - 2026-05-06: **Application edge 禁止4（API）** — `app/controllers/api/v1` の AR / ActiveStorage / User 直叩きをゲートウェイ・Interactor・Presenter に寄せた（Plans 一覧・詳細、PublicPlans `save_plan`、Wizard `crops`、公開 cultivation_plans `get_crop_for_add_crop`、マスタ Base のセッション/APIキー解決、作物×農業タスク API、作物×害虫 destroy、API キー生成、Files CRUD、Backdoor users/db_stats、作物 AI の既存検索は Pest/Fertilize ゲートウェイへ）。
 - 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
-- 2026-05-06: フロントの**全ファイル機械走査**は未実施。上記サンプリングでレイヤ逸脱の傾向を記録済み。フルイテレーションでは各 feature の usecase ファサード化と import 境界の修正を検討する。
+- 2026-05-06: フロントの**全 `*.ts` 通し走査**は未実施。`components` から `adapters/` への直 import はスポットでゼロ。必要に応じ `usecase` / `services` / `components` の役割を契約に沿って点検する。
 
 ## 残置（意図・別単位）
 

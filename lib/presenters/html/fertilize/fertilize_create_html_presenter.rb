@@ -22,9 +22,15 @@ module Presenters
             return
           end
 
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("fertilizes.flash.reference_only_admin")
+            @view.redirect_to @view.fertilizes_path, alert: msg
+            return
+          end
+
           @view.instance_variable_set(:@fertilize, ::Fertilize.new(@view.params[:fertilize].to_h.symbolize_keys))
           @view.instance_variable_get(:@fertilize).valid?
-          @view.flash.now[:alert] = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          @view.flash.now[:alert] = msg
           @view.render :new, status: :unprocessable_entity
         end
       end
