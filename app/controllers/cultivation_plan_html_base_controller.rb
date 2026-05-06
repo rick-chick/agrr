@@ -41,11 +41,7 @@ class CultivationPlanHtmlBaseController < ApplicationController
 
   # 選択された作物IDを取得
   def crop_ids
-    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] params[:crop_ids]: #{params[:crop_ids].inspect}"
-    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] params keys: #{params.keys.inspect}"
-    result = params[:crop_ids].presence || []
-    Rails.logger.debug "🔍 [CultivationPlanHtmlBaseController] crop_ids result: #{result.inspect}"
-    result
+    params[:crop_ids].presence || []
   end
 
   # I18nスコープ（plans または public_plans）
@@ -53,26 +49,7 @@ class CultivationPlanHtmlBaseController < ApplicationController
     plan_type == "private" ? "plans" : "public_plans"
   end
 
-  # 最適化進捗画面の共通処理
-  def handle_optimizing(force_weather_only:)
-    Rails.logger.info "🔍 [CultivationPlanHtmlBaseController#handle_optimizing] Finding cultivation plan"
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
-
-    Rails.logger.info "📊 [CultivationPlanHtmlBaseController#handle_optimizing] Plan status: #{@cultivation_plan.status}"
-    if @cultivation_plan.status_completed?
-      Rails.logger.info "✅ [CultivationPlanHtmlBaseController#handle_optimizing] Plan completed, redirecting to completion page"
-      redirect_to_completion_page
-    end
-    # 最適化ジョブは計画作成時に既に実行されているため、ここでは何もしない
-  end
-
   private
-
-  def redirect_to_completion_page
-    completion_path = completion_redirect_path
-    redirect_to send(completion_path, @cultivation_plan)
-  end
 
   # サブクラスで実装すべきメソッド
 

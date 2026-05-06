@@ -118,6 +118,12 @@ module Domain
           raise NotImplementedError, "Subclasses must implement private_plan_optimizing_read_model"
         end
 
+        # 公開（無認可）計画「最適化進捗」HTML 用。`plan_type` が public の計画のみ。
+        # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingReadModel]
+        def public_plan_optimizing_read_model(plan_id:)
+          raise NotImplementedError, "Subclasses must implement public_plan_optimizing_read_model"
+        end
+
         # プライベート計画一覧（HTML index）の行データのみ
         # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto>]
         def private_plan_index_plan_rows(user:)

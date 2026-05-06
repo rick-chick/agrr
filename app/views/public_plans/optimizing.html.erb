@@ -2,7 +2,7 @@
 <div class="public-plans-wrapper pb-0" 
      data-controller="optimizing"
      data-optimizing-container
-     data-cultivation-plan-id="<%= @cultivation_plan.id %>"
+     data-cultivation-plan-id="<%= @public_plan_optimizing.id %>"
      data-channel-name="OptimizationChannel"
      data-redirect-url="<%= public_plans_results_path %>"
      data-error-message="<%= t('.error_message') %>">
@@ -15,7 +15,7 @@
         <span class="status-badge optimizing"><%= t('.status_badge') %></span>
       </div>
       <div class="compact-subtitle">
-        <%= @cultivation_plan.farm.name %> · <%= t('.crops_count', count: @cultivation_plan.cultivation_plan_crops.count, default: "%{count}種類の作物") %>
+        <%= @public_plan_optimizing.farm_display_name %> · <%= t('.crops_count', count: @public_plan_optimizing.cultivation_plan_crops_count, default: "%{count}種類の作物") %>
       </div>
     </div>
     
@@ -32,7 +32,7 @@
         <span class="spinner spinner-sm" id="loading-spinner"></span>
         <div class="progress-info">
           <div class="progress-phase-message" id="phase-message">
-            <%= @cultivation_plan.optimization_phase_message || t('.progress.default_message') %>
+            <%= @public_plan_optimizing.optimization_phase_message || t('.progress.default_message') %>
           </div>
           <div class="progress-duration-hint" id="progress-duration-hint"><%= t('.progress.duration_hint') %></div>
         </div>

@@ -152,7 +152,26 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 5: 最適化進捗画面（広告表示）
   def optimizing
-    handle_optimizing(force_weather_only: false)
+    plan_id = normalize_public_plan_wizard_plan_id
+    presenter = Presenters::Html::PublicPlans::PublicPlanOptimizingHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PublicPlanOptimizingInteractor.new(
+      output_port: presenter,
+      plan_id: plan_id,
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      translator: CompositionRoot.translator,
+      logger: CompositionRoot.logger
+    ).call
+    return if performed?
+
+    dto = @public_plan_optimizing
+    if dto.completed?
+      redirect_to public_plans_results_path
+      return
+    end
+
+    if dto.failed?
+      redirect_to public_plans_results_path, alert: I18n.t("public_plans.optimizing.error.title")
+    end
   end
 
   # Step 6: 結果表示
@@ -358,24 +377,33 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # テスト用のオーバーライド: URLパラメータでplan_idを受け取る
   def find_cultivation_plan
-    # URLパラメータ、クエリパラメータ、セッションデータの順でplan_idを取得
-    plan_id = params[:id] || params[:plan_id] || params[:planId] || session_data[:plan_id]
+    plan_id = normalize_public_plan_wizard_plan_id
+    result = Adapters::CultivationPlan::ManageablePublicPlanLookup.call(
+      plan_id: plan_id,
+      scope: find_cultivation_plan_scope,
+      includes: [
+        field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
+        task_schedules: :task_schedule_items
+      ]
+    )
 
-    unless plan_id
+    case result[:kind]
+    when :missing_plan_id, :not_found
       redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
-      return nil
+      nil
+    else
+      result[:plan]
     end
+  end
 
-    plan = find_cultivation_plan_scope
-      .includes(field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ], task_schedules: :task_schedule_items)
-      .find_by(id: plan_id)
+  def normalize_public_plan_wizard_plan_id
+    raw = params[:id] || params[:plan_id] || params[:planId] || session_data[:plan_id]
+    return nil if raw.blank?
 
-    unless plan
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
-      return nil
-    end
+    i = Integer(raw, exception: false)
+    return nil unless i&.positive?
 
-    plan
+    i
   end
 
   def select_crop_redirect_path

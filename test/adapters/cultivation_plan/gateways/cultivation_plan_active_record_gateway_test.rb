@@ -158,6 +158,39 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     end
   end
 
+  test "public_plan_optimizing_read_model returns read model for public plan" do
+    farm = create(:farm, name: "公開テスト農場")
+    plan = create(:cultivation_plan, :public_plan, farm: farm, status: "optimizing",
+                  optimization_phase_message: "working")
+
+    read = @gateway.public_plan_optimizing_read_model(plan_id: plan.id)
+    dto = Domain::CultivationPlan::Assemblers::PublicPlanOptimizingAssembler.call(read)
+
+    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingReadModel, read
+    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingDto, dto
+    assert_equal plan.id, dto.id
+    assert_equal farm.display_name, dto.farm_display_name
+    assert_equal 0, dto.cultivation_plan_crops_count
+    assert_equal "working", dto.optimization_phase_message
+    assert_equal "optimizing", dto.status
+  end
+
+  test "public_plan_optimizing_read_model raises when plan is private" do
+    user = create(:user)
+    farm = create(:farm, user: user)
+    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
+
+    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+      @gateway.public_plan_optimizing_read_model(plan_id: plan.id)
+    end
+  end
+
+  test "public_plan_optimizing_read_model raises domain RecordNotFound when id missing" do
+    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+      @gateway.public_plan_optimizing_read_model(plan_id: 9_999_999)
+    end
+  end
+
   test "private_plan_index_plan_rows returns empty array when user has no plans" do
     user = create(:user)
 
