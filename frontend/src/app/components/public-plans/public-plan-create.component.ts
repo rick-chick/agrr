@@ -6,14 +6,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
 import { ResetPublicPlanCreationStateUseCase } from '../../usecase/public-plans/reset-public-plan-creation-state.usecase';
-import { PublicPlanCreatePresenter } from '../../adapters/public-plans/public-plan-create.presenter';
-import { LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-farms.output-port';
-import { RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT } from '../../usecase/public-plans/reset-public-plan-creation-state.output-port';
-import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
-import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
+import {
+  PublicPlanCreatePresenter,
+  PUBLIC_PLAN_CREATE_PROVIDERS
+} from '../../usecase/public-plans/public-plan-create.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
-import { PUBLIC_PLAN_SESSION_PORT } from '../../usecase/public-plans/public-plan-session.port';
-import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { detectBrowserRegion } from '../../core/browser-region';
 
@@ -29,16 +26,7 @@ const initialControl: PublicPlanCreateViewState = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, TranslateModule],
-  providers: [
-    LoadPublicPlanFarmsUseCase,
-    ResetPublicPlanCreationStateUseCase,
-    PublicPlanCreatePresenter,
-    { provide: LOAD_PUBLIC_PLAN_FARMS_OUTPUT_PORT, useExisting: PublicPlanCreatePresenter },
-    { provide: RESET_PUBLIC_PLAN_CREATION_STATE_OUTPUT_PORT, useValue: {} },
-    { provide: PUBLIC_PLAN_SESSION_PORT, useExisting: PublicPlanStore },
-    { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway },
-    ApiService
-  ],
+  providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>

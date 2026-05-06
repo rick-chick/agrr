@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanSelectCropComponent } from './plan-select-crop.component';
 import { LoadPrivatePlanSelectCropContextUseCase } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.usecase';
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
-import { PlanSelectCropPresenter } from '../../adapters/plans/plan-select-crop.presenter';
+import { PlanSelectCropPresenter } from '../../usecase/plans/plan-select-crop.providers';
 
 describe('PlanSelectCropComponent', () => {
   let component: PlanSelectCropComponent;

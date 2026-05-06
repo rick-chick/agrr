@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AgriculturalTaskCreateComponent } from './agricultural-task-create.component';
-import { AgriculturalTaskCreatePresenter } from '../../../adapters/agricultural-tasks/agricultural-task-create.presenter';
+import { AgriculturalTaskCreatePresenter } from '../../../usecase/agricultural-tasks/agricultural-task-create.providers';
 import { CreateAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/create-agricultural-task.usecase';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { AuthService } from '../../../services/auth.service';

@@ -3,11 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
-import { PlanNewPresenter } from '../../adapters/plans/plan-new.presenter';
+import { PlanNewPresenter, PLAN_NEW_PROVIDERS } from '../../usecase/plans/plan-new.providers';
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
-import { LOAD_PRIVATE_PLAN_FARMS_OUTPUT_PORT } from '../../usecase/private-plan-create/load-private-plan-farms.output-port';
-import { PRIVATE_PLAN_CREATE_GATEWAY } from '../../usecase/private-plan-create/private-plan-create-gateway';
-import { PrivatePlanCreateApiGateway } from '../../adapters/private-plan-create/private-plan-create-api.gateway';
 
 const initialControl: PlanNewViewState = {
   loading: true,
@@ -19,12 +16,7 @@ const initialControl: PlanNewViewState = {
   selector: 'app-plan-new',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PlanNewPresenter,
-    LoadPrivatePlanFarmsUseCase,
-    { provide: LOAD_PRIVATE_PLAN_FARMS_OUTPUT_PORT, useExisting: PlanNewPresenter },
-    { provide: PRIVATE_PLAN_CREATE_GATEWAY, useClass: PrivatePlanCreateApiGateway }
-  ],
+  providers: [...PLAN_NEW_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

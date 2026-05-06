@@ -5,10 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
-import { PlanOptimizingPresenter } from '../../adapters/plans/plan-optimizing.presenter';
-import { SUBSCRIBE_PLAN_OPTIMIZATION_OUTPUT_PORT } from '../../usecase/plans/subscribe-plan-optimization.output-port';
-import { PLAN_OPTIMIZATION_GATEWAY } from '../../usecase/plans/plan-optimization-gateway';
-import { PlanOptimizationChannelGateway } from '../../adapters/plans/plan-optimization-channel.gateway';
+import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -19,12 +16,7 @@ const initialControl: PlanOptimizingViewState = {
   selector: 'app-plan-optimizing',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PlanOptimizingPresenter,
-    SubscribePlanOptimizationUseCase,
-    { provide: SUBSCRIBE_PLAN_OPTIMIZATION_OUTPUT_PORT, useExisting: PlanOptimizingPresenter },
-    { provide: PLAN_OPTIMIZATION_GATEWAY, useClass: PlanOptimizationChannelGateway }
-  ],
+  providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <section class="page">
       <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>

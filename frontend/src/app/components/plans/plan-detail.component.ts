@@ -6,10 +6,7 @@ import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
-import { PlanDetailPresenter } from '../../adapters/plans/plan-detail.presenter';
-import { LOAD_PLAN_DETAIL_OUTPUT_PORT } from '../../usecase/plans/load-plan-detail.output-port';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
-import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
+import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -22,12 +19,7 @@ const initialControl: PlanDetailViewState = {
   selector: 'app-plan-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, GanttChartComponent, PlanFieldClimateComponent, TranslateModule],
-  providers: [
-    PlanDetailPresenter,
-    LoadPlanDetailUseCase,
-    { provide: LOAD_PLAN_DETAIL_OUTPUT_PORT, useExisting: PlanDetailPresenter },
-    { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
-  ],
+  providers: [...PLAN_DETAIL_PROVIDERS],
   template: `
     <section class="page">
       <a [routerLink]="['/plans']">{{ 'plans.show.back_to_list' | translate }}</a>

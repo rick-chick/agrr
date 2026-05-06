@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 import { PlanListComponent } from './plan-list.component';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
 import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
-import { PlanListPresenter } from '../../adapters/plans/plan-list.presenter';
+import { PlanListPresenter } from '../../usecase/plans/plan-list.providers';
 import { LOAD_PLAN_LIST_OUTPUT_PORT } from '../../usecase/plans/load-plan-list.output-port';
 import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-port';
 import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';

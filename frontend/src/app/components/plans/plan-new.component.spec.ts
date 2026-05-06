@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
-import { PlanNewPresenter } from '../../adapters/plans/plan-new.presenter';
+import { PlanNewPresenter } from '../../usecase/plans/plan-new.providers';
 
 describe('PlanNewComponent', () => {
   let component: PlanNewComponent;

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PublicPlanResultsComponent } from './public-plan-results.component';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
-import { PublicPlanResultsPresenter } from '../../adapters/public-plans/public-plan-results.presenter';
+import { PublicPlanResultsPresenter } from '../../usecase/public-plans/public-plan-results.providers';
 import { LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-results.output-port';
 import { SAVE_PUBLIC_PLAN_OUTPUT_PORT } from '../../usecase/public-plans/save-public-plan.output-port';
 import { PublicPlanResultsViewState } from './public-plan-results.view';

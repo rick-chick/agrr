@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
-import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
+import { PlanFieldClimatePresenter } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanFieldClimateView } from './plan-field-climate.view';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 

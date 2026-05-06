@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import { PlanOptimizingComponent } from './plan-optimizing.component';
 import { PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
-import { PlanOptimizingPresenter } from '../../adapters/plans/plan-optimizing.presenter';
+import { PlanOptimizingPresenter } from '../../usecase/plans/plan-optimizing.providers';
 
 describe('PlanOptimizingComponent', () => {
   let component: PlanOptimizingComponent;

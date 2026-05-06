@@ -26,10 +26,10 @@ import {
 import { PlanFieldClimateView, PlanFieldClimateViewState } from './plan-field-climate.view';
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
-import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
-import { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';
-import { FIELD_CLIMATE_GATEWAY } from '../../usecase/plans/field-climate/field-climate.gateway';
-import { LOAD_FIELD_CLIMATE_OUTPUT_PORT } from '../../usecase/plans/field-climate/load-field-climate.output-port';
+import {
+  PlanFieldClimatePresenter,
+  PLAN_FIELD_CLIMATE_PROVIDERS
+} from '../../usecase/plans/plan-field-climate.providers';
 
 const INITIAL_STATE: PlanFieldClimateViewState = {
   loading: false,
@@ -53,13 +53,7 @@ type StageTemperatureBand = {
   selector: 'app-plan-field-climate',
   standalone: true,
   imports: [CommonModule],
-  providers: [
-    PlanFieldClimatePresenter,
-    LoadFieldClimateUseCase,
-    FieldClimateApiGateway,
-    { provide: LOAD_FIELD_CLIMATE_OUTPUT_PORT, useExisting: PlanFieldClimatePresenter },
-    { provide: FIELD_CLIMATE_GATEWAY, useExisting: FieldClimateApiGateway }
-  ],
+  providers: [...PLAN_FIELD_CLIMATE_PROVIDERS],
   template: `
     <section class="plan-field-climate">
       <header class="plan-field-climate__header">

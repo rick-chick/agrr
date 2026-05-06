@@ -5,11 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
 import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
-import { PlanListPresenter } from '../../adapters/plans/plan-list.presenter';
-import { LOAD_PLAN_LIST_OUTPUT_PORT } from '../../usecase/plans/load-plan-list.output-port';
-import { DELETE_PLAN_OUTPUT_PORT } from '../../usecase/plans/delete-plan.output-port';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
-import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
+import { PlanListPresenter, PLAN_LIST_PROVIDERS } from '../../usecase/plans/plan-list.providers';
 
 const initialControl: PlanListViewState = {
   loading: true,
@@ -21,14 +17,7 @@ const initialControl: PlanListViewState = {
   selector: 'app-plan-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PlanListPresenter,
-    LoadPlanListUseCase,
-    DeletePlanUseCase,
-    { provide: LOAD_PLAN_LIST_OUTPUT_PORT, useExisting: PlanListPresenter },
-    { provide: DELETE_PLAN_OUTPUT_PORT, useExisting: PlanListPresenter },
-    { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
-  ],
+  providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

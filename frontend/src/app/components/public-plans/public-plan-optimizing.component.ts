@@ -12,10 +12,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PublicPlanOptimizingView, PublicPlanOptimizingViewState } from './public-plan-optimizing.view';
 import { SubscribePublicPlanOptimizationUseCase } from '../../usecase/public-plans/subscribe-public-plan-optimization.usecase';
-import { PublicPlanOptimizingPresenter } from '../../adapters/public-plans/public-plan-optimizing.presenter';
-import { SUBSCRIBE_PUBLIC_PLAN_OPTIMIZATION_OUTPUT_PORT } from '../../usecase/public-plans/subscribe-public-plan-optimization.output-port';
-import { PUBLIC_PLAN_OPTIMIZATION_GATEWAY } from '../../usecase/public-plans/public-plan-optimization-gateway';
-import { PublicPlanOptimizationChannelGateway } from '../../adapters/public-plans/public-plan-optimization.gateway';
+import {
+  PublicPlanOptimizingPresenter,
+  PUBLIC_PLAN_OPTIMIZING_PROVIDERS
+} from '../../usecase/public-plans/public-plan-optimizing.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 
 const initialControl: PublicPlanOptimizingViewState = {
@@ -28,18 +28,7 @@ const initialControl: PublicPlanOptimizingViewState = {
   selector: 'app-public-plan-optimizing',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PublicPlanOptimizingPresenter,
-    SubscribePublicPlanOptimizationUseCase,
-    {
-      provide: SUBSCRIBE_PUBLIC_PLAN_OPTIMIZATION_OUTPUT_PORT,
-      useExisting: PublicPlanOptimizingPresenter
-    },
-    {
-      provide: PUBLIC_PLAN_OPTIMIZATION_GATEWAY,
-      useClass: PublicPlanOptimizationChannelGateway
-    }
-  ],
+  providers: [...PUBLIC_PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper pb-0">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>

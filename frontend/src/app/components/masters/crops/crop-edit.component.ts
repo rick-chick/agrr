@@ -15,7 +15,6 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
-import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
 import {
   CropEditPresenter,
   CROP_EDIT_PROVIDERS

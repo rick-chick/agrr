@@ -5,13 +5,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from './public-plan-results.view';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
-import { PublicPlanResultsPresenter } from '../../adapters/public-plans/public-plan-results.presenter';
-import { LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-results.output-port';
-import { SAVE_PUBLIC_PLAN_OUTPUT_PORT } from '../../usecase/public-plans/save-public-plan.output-port';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
-import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
-import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
-import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
+import {
+  PublicPlanResultsPresenter,
+  PUBLIC_PLAN_RESULTS_PROVIDERS
+} from '../../usecase/public-plans/public-plan-results.providers';
 import { GanttChartComponent } from '../plans/gantt-chart.component';
 import { PlanFieldClimateComponent } from '../plans/plan-field-climate.component';
 import { AuthService } from '../../services/auth.service';
@@ -33,15 +30,7 @@ const initialControl: PublicPlanResultsViewState = {
   selector: 'app-public-plan-results',
   standalone: true,
   imports: [CommonModule, GanttChartComponent, PlanFieldClimateComponent, TranslateModule, RouterLink],
-  providers: [
-    PublicPlanResultsPresenter,
-    LoadPublicPlanResultsUseCase,
-    SavePublicPlanUseCase,
-    { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useExisting: PublicPlanResultsPresenter },
-    { provide: SAVE_PUBLIC_PLAN_OUTPUT_PORT, useExisting: PublicPlanResultsPresenter },
-    { provide: PLAN_GATEWAY, useClass: PlanApiGateway },
-    { provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }
-  ],
+  providers: [...PUBLIC_PLAN_RESULTS_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>

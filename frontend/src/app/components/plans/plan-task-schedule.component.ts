@@ -5,10 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
-import { PlanTaskSchedulePresenter } from '../../adapters/plans/plan-task-schedule.presenter';
-import { LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT } from '../../usecase/plans/load-plan-task-schedule.output-port';
-import { PLAN_GATEWAY } from '../../usecase/plans/plan-gateway';
-import { PlanApiGateway } from '../../adapters/plans/plan-api.gateway';
+import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 
 const initialControl: PlanTaskScheduleViewState = {
   loading: true,
@@ -20,12 +17,7 @@ const initialControl: PlanTaskScheduleViewState = {
   selector: 'app-plan-task-schedule',
   standalone: true,
   imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule],
-  providers: [
-    PlanTaskSchedulePresenter,
-    LoadPlanTaskScheduleUseCase,
-    { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
-    { provide: PLAN_GATEWAY, useClass: PlanApiGateway }
-  ],
+  providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
     <section class="page">
       <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>

@@ -6,12 +6,7 @@ import { ApiKeyView, ApiKeyViewState } from './api-key.view';
 import { LoadApiKeyUseCase } from '../../../usecase/api-keys/load-api-key.usecase';
 import { GenerateApiKeyUseCase } from '../../../usecase/api-keys/generate-api-key.usecase';
 import { RegenerateApiKeyUseCase } from '../../../usecase/api-keys/regenerate-api-key.usecase';
-import { ApiKeyPresenter } from '../../../adapters/api-keys/api-key.presenter';
-import { LOAD_API_KEY_OUTPUT_PORT } from '../../../usecase/api-keys/load-api-key.output-port';
-import { GENERATE_API_KEY_OUTPUT_PORT } from '../../../usecase/api-keys/generate-api-key.output-port';
-import { REGENERATE_API_KEY_OUTPUT_PORT } from '../../../usecase/api-keys/regenerate-api-key.output-port';
-import { API_KEY_GATEWAY } from '../../../usecase/api-keys/api-key-gateway';
-import { ApiKeyApiGateway } from '../../../adapters/api-keys/api-key-api.gateway';
+import { ApiKeyPresenter, API_KEY_PROVIDERS } from '../../../usecase/api-keys/api-key.providers';
 
 const initialControl: ApiKeyViewState = {
   loading: true,
@@ -25,16 +20,7 @@ const initialControl: ApiKeyViewState = {
   selector: 'app-api-key',
   standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
-  providers: [
-    ApiKeyPresenter,
-    LoadApiKeyUseCase,
-    GenerateApiKeyUseCase,
-    RegenerateApiKeyUseCase,
-    { provide: LOAD_API_KEY_OUTPUT_PORT, useExisting: ApiKeyPresenter },
-    { provide: GENERATE_API_KEY_OUTPUT_PORT, useExisting: ApiKeyPresenter },
-    { provide: REGENERATE_API_KEY_OUTPUT_PORT, useExisting: ApiKeyPresenter },
-    { provide: API_KEY_GATEWAY, useClass: ApiKeyApiGateway }
-  ],
+  providers: [...API_KEY_PROVIDERS],
   template: `
     <div class="page-content-container">
       <div class="page-header">

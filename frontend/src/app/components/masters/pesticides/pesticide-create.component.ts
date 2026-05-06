@@ -13,6 +13,8 @@ import {
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
+import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
+import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 
 const initialFormData: PesticideCreateFormData = {
   name: '',

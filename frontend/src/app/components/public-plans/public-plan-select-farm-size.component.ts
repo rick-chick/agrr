@@ -2,8 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
-import { PublicPlanApiGateway } from '../../adapters/public-plans/public-plan-api.gateway';
+import { PUBLIC_PLAN_SELECT_FARM_SIZE_PROVIDERS } from '../../usecase/public-plans/public-plan-select-farm-size.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 
@@ -11,7 +10,7 @@ import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
   selector: 'app-public-plan-select-farm-size',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [{ provide: PUBLIC_PLAN_GATEWAY, useClass: PublicPlanApiGateway }],
+  providers: [...PUBLIC_PLAN_SELECT_FARM_SIZE_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>

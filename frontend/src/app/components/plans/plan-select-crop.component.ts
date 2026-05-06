@@ -4,14 +4,10 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LoadPrivatePlanSelectCropContextUseCase } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.usecase';
 import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
-import { PlanSelectCropPresenter } from '../../adapters/plans/plan-select-crop.presenter';
+import { PlanSelectCropPresenter, PLAN_SELECT_CROP_PROVIDERS } from '../../usecase/plans/plan-select-crop.providers';
 import { PlanSelectCropView, PlanSelectCropViewState } from './plan-select-crop.view';
 import { LoadPrivatePlanSelectCropContextInputDto } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.dtos';
 import { CreatePrivatePlanInputDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
-import { LOAD_PRIVATE_PLAN_SELECT_CROP_CONTEXT_OUTPUT_PORT } from '../../usecase/private-plan-create/load-private-plan-select-crop-context.output-port';
-import { CREATE_PRIVATE_PLAN_OUTPUT_PORT } from '../../usecase/private-plan-create/create-private-plan.output-port';
-import { PRIVATE_PLAN_CREATE_GATEWAY } from '../../usecase/private-plan-create/private-plan-create-gateway';
-import { PrivatePlanCreateApiGateway } from '../../adapters/private-plan-create/private-plan-create-api.gateway';
 
 const initialControl: PlanSelectCropViewState = {
   loading: true,
@@ -26,14 +22,7 @@ const initialControl: PlanSelectCropViewState = {
   selector: 'app-plan-select-crop',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    PlanSelectCropPresenter,
-    LoadPrivatePlanSelectCropContextUseCase,
-    CreatePrivatePlanUseCase,
-    { provide: LOAD_PRIVATE_PLAN_SELECT_CROP_CONTEXT_OUTPUT_PORT, useExisting: PlanSelectCropPresenter },
-    { provide: CREATE_PRIVATE_PLAN_OUTPUT_PORT, useExisting: PlanSelectCropPresenter },
-    { provide: PRIVATE_PLAN_CREATE_GATEWAY, useClass: PrivatePlanCreateApiGateway }
-  ],
+  providers: [...PLAN_SELECT_CROP_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">
