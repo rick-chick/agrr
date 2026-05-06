@@ -350,16 +350,15 @@ One-paragraph index to the normative sections: [What we require](#what-we-requir
 
 ## Agent workflow（規約と手順の関係）
 
-本章（**What we require** / **Prohibited practices**）が**内容の正本**である。エディタ支援や違反削減タスクでの**実行手順**（洗い出し、ARCHITECTURE ゲート、全体テスト、リポジトリ横断スキャン）は次を参照する。便宜による境界逸脱は [`.cursor/rules/no-convenience-tech-debt.mdc`](.cursor/rules/no-convenience-tech-debt.mdc) と整合させる。
+本章（**What we require** / **Prohibited practices**）が**規約本体**である。エディタ支援や違反削減タスクでの**実行手順**（洗い出し、ARCHITECTURE ゲート、全体テスト、リポジトリ横断スキャン）は次を参照する。便宜による境界逸脱は [`.cursor/rules/no-convenience-tech-debt.mdc`](.cursor/rules/no-convenience-tech-debt.mdc) と整合させる。
 
 | 参照 | 役割 |
 | --- | --- |
 | [`.cursor/rules/agent-conventions.mdc`](.cursor/rules/agent-conventions.mdc) | 用語（**実装後の Clean Architecture チェック**：親がゲート・test-common を省略しない等）、ワークフローの**セクション番号**とユーザー向け表記 |
 | [`.cursor/skills/clean-architecture-violation-fix-workflow/SKILL.md`](.cursor/skills/clean-architecture-violation-fix-workflow/SKILL.md) | 違反修正の外側・内側ループ（**セクション0**〜**セクション6**） |
-| [`.cursor/rules/ca-violation-fix-architecture-gate.mdc`](.cursor/rules/ca-violation-fix-architecture-gate.mdc) | **セクション4**の ARCHITECTURE.md ゲートの正本（**1 回目・2 回目**、禁止 1–26 との照合、記録の必須出力）。Rails / `frontend/` のみの差分でも同一手順・同一フォーマット |
+| [`.cursor/rules/ca-violation-fix-architecture-gate.mdc`](.cursor/rules/ca-violation-fix-architecture-gate.mdc) | **セクション4**の ARCHITECTURE.md ゲートを定める（**1 回目・2 回目**、禁止 1–26 との照合、記録の必須出力）。Rails / `frontend/` のみの差分でも同一手順・同一フォーマット |
 | [`.cursor/skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md`](.cursor/skills/clean-architecture-violation-fix-workflow/references/agent-operational-canonical.md) | エージェント運用例外の集約（例外・増分・本番断定・シェル報告の境界） |
-| [`.cursor/skills/clean-architecture-violation-fix-workflow/references/mandatory-scan.md`](.cursor/skills/clean-architecture-violation-fix-workflow/references/mandatory-scan.md) | 洗い出し・再洗い出し時の全体スキャン（差分のみでの代替がなぜ足りないか） |
-| [`scripts/scan-mandatory.sh`](scripts/scan-mandatory.sh) | 全体スキャン用の固定 `rg` 呼び出し（デフォルト全量） |
+| [`scripts/scan-mandatory.sh`](scripts/scan-mandatory.sh) | 洗い出し・再洗い出し時の全体スキャンを実行する固定 `rg` 呼び出し（デフォルト全量。パターン表は SKILL.md セクション0「全体スキャン」） |
 | [`.cursor/rules/rails-testing-workflow.mdc`](.cursor/rules/rails-testing-workflow.mdc) | バックエンド／フロント変更時の **test-common** 経由テスト（手元では `rails test` を直接乱発しない） |
 
 ## Additional resources

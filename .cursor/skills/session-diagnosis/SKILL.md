@@ -46,5 +46,5 @@ disable-model-invocation: true
 - [references/INVESTIGATION_FLOW.md](references/INVESTIGATION_FLOW.md) - Phase 1 調査手順
 - [references/SESSION_PATTERNS.md](references/SESSION_PATTERNS.md) - Phase 2 診断パターン集
 - [references/FIX_AND_VERIFY.md](references/FIX_AND_VERIFY.md) - Phase 3 修正・検証手順
-- [test-common](.cursor/skills/test-common/SKILL.md) - テスト実行
-- [error-fix-red-green](.cursor/skills/error-fix-red-green/SKILL.md) - RED/GREEN 修正フロー
+- [test-common](../test-common/SKILL.md) - テスト実行
+- [error-fix-red-green](../error-fix-red-green/SKILL.md) - RED/GREEN 修正フロー
