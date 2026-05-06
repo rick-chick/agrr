@@ -139,19 +139,6 @@ class FarmsController < ApplicationController
           in_use_message_key: nil,
           delete_error_message_key: "farms.flash.delete_error"
         )
-      rescue ActiveRecord::InvalidForeignKey => e
-        message =
-          if e.message.include?("cultivation_plans")
-            I18n.t("farms.flash.cannot_delete_in_use.plan")
-          elsif e.message.include?("fields")
-            I18n.t("farms.flash.cannot_delete_in_use.field")
-          else
-            I18n.t("farms.flash.cannot_delete_in_use.other")
-          end
-
-        render json: { error: message }, status: :unprocessable_entity
-      rescue ActiveRecord::DeleteRestrictionError
-        render json: { error: I18n.t("farms.flash.cannot_delete_in_use.other") }, status: :unprocessable_entity
       end
     end
   end

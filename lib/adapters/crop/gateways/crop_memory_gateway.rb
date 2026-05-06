@@ -226,6 +226,66 @@ module Adapters
           { not_found: true, blueprint_deleted: false, template_deleted: false }
         end
 
+        # Crops::TaskScheduleBlueprintsController 用: 位置更新と priority 再採番（AR 境界例外は本メソッド内で吸収）
+        # @return [Hash] :ok (boolean), :status (Symbol), :payload (Hash on success), :error (String on failure)
+        def update_task_schedule_blueprint_position_mutation(crop:, blueprint:, gdd_trigger:, priority:)
+          blueprint.gdd_trigger = gdd_trigger if gdd_trigger
+          blueprint.priority = priority if priority
+
+          unless blueprint.save
+            return {
+              ok: false,
+              status: :unprocessable_entity,
+              error: blueprint.errors.full_messages.join(", ")
+            }
+          end
+
+          reorder_crop_task_schedule_blueprint_priorities!(crop)
+          blueprint.reload
+
+          {
+            ok: true,
+            status: :ok,
+            payload: {
+              id: blueprint.id,
+              gdd_trigger: blueprint.gdd_trigger.to_f,
+              priority: blueprint.priority,
+              message: I18n.t("crops.flash.blueprint_position_updated")
+            }
+          }
+        rescue ActiveRecord::StatementInvalid,
+               ActiveRecord::ConnectionNotEstablished,
+               ActiveRecord::RecordNotDestroyed,
+               JSON::GeneratorError,
+               ActionView::Template::Error => e
+          Rails.logger.error("❌ [CropMemoryGateway] Failed to update blueprint position: #{e.class} #{e.message}")
+          Rails.logger.error(e.backtrace.join("\n"))
+          { ok: false, status: :internal_server_error, error: I18n.t("crops.flash.blueprint_update_failed") }
+        end
+
+        # ブループリント削除後の crop 再読込と UI 用タスク一覧（レンダリング前の失敗を吸収）
+        def reload_crop_after_task_schedule_blueprint_delete!(crop:, blueprint_id_for_response:)
+          crop.reload
+          available = available_agricultural_tasks_for_crop_record(crop)
+          selected_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
+          {
+            ok: true,
+            crop: crop,
+            available_agricultural_tasks: available,
+            selected_task_ids: selected_ids,
+            blueprint_id_for_response: blueprint_id_for_response
+          }
+        rescue ActiveRecord::StatementInvalid,
+               ActiveRecord::ConnectionNotEstablished,
+               ActiveRecord::RecordNotDestroyed,
+               ActiveRecord::RecordInvalid,
+               JSON::GeneratorError,
+               ActionView::Template::Error => e
+          Rails.logger.error("❌ [CropMemoryGateway] Failed after blueprint delete: #{e.class} #{e.message}")
+          Rails.logger.error(e.backtrace.join("\n"))
+          { ok: false, blueprint_id_for_response: blueprint_id_for_response }
+        end
+
         def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
           find_authorized_crop_loaded_bundle!(user, id, for_edit: for_edit).crop_entity
         end
@@ -719,6 +779,30 @@ module Adapters
           crop
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def reorder_crop_task_schedule_blueprint_priorities!(crop)
+          blueprints = crop.crop_task_schedule_blueprints
+                            .order(:gdd_trigger, :priority, :id)
+          blueprints.each_with_index do |bp, index|
+            bp.update_column(:priority, index + 1) if bp.priority != index + 1
+          end
+        end
+
+        def available_agricultural_tasks_for_crop_record(crop)
+          if !crop.is_reference && crop.user_id.present?
+            tasks = ::AgriculturalTask.user_owned.where(user_id: crop.user_id)
+            tasks = tasks.where(region: crop.region) if crop.region.present?
+            return tasks.order(:name)
+          end
+
+          if crop.is_reference
+            tasks = ::AgriculturalTask.reference
+            tasks = tasks.where(region: crop.region) if crop.region.present?
+            return tasks.order(:name)
+          end
+
+          ::AgriculturalTask.none
         end
       end
     end

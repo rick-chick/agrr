@@ -23,34 +23,19 @@ module Crops
         return render json: { error: "priority must be non-negative" }, status: :bad_request
       end
 
-      # 更新
-      @blueprint.gdd_trigger = gdd_trigger if gdd_trigger
-      @blueprint.priority = priority if priority
+      out = CompositionRoot.crop_gateway.update_task_schedule_blueprint_position_mutation(
+        crop: @crop,
+        blueprint: @blueprint,
+        gdd_trigger: gdd_trigger,
+        priority: priority
+      )
 
-      if @blueprint.save
-        # gdd_triggerとpriorityでソートし直して、priorityを再割り当て
-        reorder_priorities
-
-        # 再読み込みして最新のpriorityを取得
-        @blueprint.reload
-
-        render json: {
-          id: @blueprint.id,
-          gdd_trigger: @blueprint.gdd_trigger.to_f,
-          priority: @blueprint.priority,
-          message: I18n.t("crops.flash.blueprint_position_updated")
-        }
-      else
-        render json: { error: @blueprint.errors.full_messages.join(", ") }, status: :unprocessable_entity
+      unless out[:ok]
+        status = out[:status] == :internal_server_error ? :internal_server_error : :unprocessable_entity
+        return render json: { error: out[:error] }, status: status
       end
-    rescue ActiveRecord::StatementInvalid,
-           ActiveRecord::ConnectionNotEstablished,
-           ActiveRecord::RecordNotDestroyed,
-           JSON::GeneratorError,
-           ActionView::Template::Error => e
-      Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to update position: #{e.class} #{e.message}")
-      Rails.logger.error(e.backtrace.join("\n"))
-      render json: { error: I18n.t("crops.flash.blueprint_update_failed") }, status: :internal_server_error
+
+      render json: out[:payload], status: :ok
     end
 
     # DELETE /crops/:crop_id/task_schedule_blueprints/:id
@@ -75,29 +60,27 @@ module Crops
 
       Rails.logger.info("🗑️ [TaskScheduleBlueprintsController] Deletion result: #{result.inspect}")
 
-      # @cropを再読み込みして、削除後の状態を反映
-      @crop.reload
+      reload = CompositionRoot.crop_gateway.reload_crop_after_task_schedule_blueprint_delete!(
+        crop: @crop,
+        blueprint_id_for_response: @blueprint_id
+      )
 
-      # 利用可能な農業タスクを取得
-      @available_agricultural_tasks = available_agricultural_tasks_for_crop(@crop)
-      @selected_task_ids = selected_task_ids_for_crop(@crop)
+      unless reload[:ok]
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{params[:id]}", partial: "crops/task_schedule_blueprints/error", locals: { error: I18n.t("crops.flash.blueprint_delete_failed") }) }
+          format.json { render json: { error: I18n.t("crops.flash.blueprint_delete_failed") }, status: :internal_server_error }
+        end
+        return
+      end
+
+      @crop = reload[:crop]
+      @available_agricultural_tasks = reload[:available_agricultural_tasks]
+      @selected_task_ids = reload[:selected_task_ids]
 
       respond_to do |format|
         format.html { head :no_content }
         format.turbo_stream
         format.json { render json: { message: I18n.t("crops.flash.blueprint_deleted") } }
-      end
-    rescue ActiveRecord::StatementInvalid,
-           ActiveRecord::ConnectionNotEstablished,
-           ActiveRecord::RecordNotDestroyed,
-           ActiveRecord::RecordInvalid,
-           JSON::GeneratorError,
-           ActionView::Template::Error => e
-      Rails.logger.error("❌ [TaskScheduleBlueprintsController] Failed to delete blueprint: #{e.class} #{e.message}")
-      Rails.logger.error(e.backtrace.join("\n"))
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("blueprint-card-#{params[:id]}", partial: "crops/task_schedule_blueprints/error", locals: { error: I18n.t("crops.flash.blueprint_delete_failed") }) }
-        format.json { render json: { error: I18n.t("crops.flash.blueprint_delete_failed") }, status: :internal_server_error }
       end
     end
 
@@ -140,43 +123,6 @@ module Crops
 
     def can_view_crop?
       @crop.is_reference || @crop.user_id == current_user.id || admin_user?
-    end
-
-    # gdd_triggerとpriorityでソートし直して、priorityを再割り当て
-    def reorder_priorities
-      blueprints = @crop.crop_task_schedule_blueprints
-                        .order(:gdd_trigger, :priority, :id)
-
-      blueprints.each_with_index do |blueprint, index|
-        blueprint.update_column(:priority, index + 1) if blueprint.priority != index + 1
-      end
-    end
-
-    # 作物に利用可能な農業タスクを取得
-    def available_agricultural_tasks_for_crop(crop)
-      # ユーザ作物であればそのユーザの作業のみ
-      if !crop.is_reference && crop.user_id.present?
-        tasks = AgriculturalTask.user_owned.where(user_id: crop.user_id)
-        # 地域が設定されていればその地域も条件に追加
-        tasks = tasks.where(region: crop.region) if crop.region.present?
-        return tasks.order(:name)
-      end
-
-      # 参照作物であれば参照作業のみ
-      if crop.is_reference
-        tasks = AgriculturalTask.reference
-        # 地域が設定されていればその地域も条件に追加
-        tasks = tasks.where(region: crop.region) if crop.region.present?
-        return tasks.order(:name)
-      end
-
-      # どちらでもない場合は空のコレクション
-      AgriculturalTask.none
-    end
-
-    # 作物に既にテンプレートとして登録されているタスクIDを取得
-    def selected_task_ids_for_crop(crop)
-      crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
     end
   end
 end

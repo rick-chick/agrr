@@ -41,64 +41,43 @@ class AuthController < ApplicationController
   end
 
   def google_oauth2_callback
-    begin
-      # Get auth hash from OmniAuth
-      auth_hash = request.env["omniauth.auth"]
+    auth_hash = request.env["omniauth.auth"]
 
-      if auth_hash.nil?
-        redirect_to auth_failure_path, alert: I18n.t("auth.flash.no_data")
-        return
+    if auth_hash.nil?
+      redirect_to auth_failure_path, alert: I18n.t("auth.flash.no_data")
+      return
+    end
+
+    result = CompositionRoot.auth_omniauth_session_gateway.process_google_callback(auth_hash, logger: Rails.logger)
+
+    case result.status
+    when :success
+      user_session = result.session
+      cookies[:session_id] = {
+        value: user_session.session_id,
+        expires: user_session.expires_at,
+        httponly: true,
+        secure: Rails.env.production?,
+        same_site: :lax
+      }
+
+      if session[:public_plan_save_data]
+        redirect_to process_saved_plan_public_plans_path and return
       end
 
-      # Find or create user
-      user = User.from_omniauth(auth_hash)
-
-      if user.persisted?
-        # Create session (avoid shadowing Rails session hash)
-        user_session = Session.create_for_user(user)
-        cookies[:session_id] = {
-          value: user_session.session_id,
-          expires: user_session.expires_at,
-          httponly: true,
-          secure: Rails.env.production?,
-          same_site: :lax
-        }
-
-        # Continue saved-plan flow if present
-        if session[:public_plan_save_data]
-          redirect_to process_saved_plan_public_plans_path and return
-        end
-
-        # Redirect back to frontend (e.g. Angular 4200) if return_to was set
-        if session[:return_to].present?
-          return_to = append_oauth_conversion_query(session.delete(:return_to))
-          redirect_to return_to, allow_other_host: true, notice: I18n.t("auth.flash.login_success")
-        else
-          redirect_to root_path, notice: I18n.t("auth.flash.login_success")
-        end
+      if session[:return_to].present?
+        return_to = append_oauth_conversion_query(session.delete(:return_to))
+        redirect_to return_to, allow_other_host: true, notice: I18n.t("auth.flash.login_success")
       else
-        redirect_to auth_failure_path, alert: I18n.t("auth.flash.create_user_failed")
+        redirect_to root_path, notice: I18n.t("auth.flash.login_success")
       end
-    rescue ActiveRecord::RecordInvalid => e
-      Rails.logger.error "OAuth callback error: #{e.message}"
+    when :user_not_persisted
+      redirect_to auth_failure_path, alert: I18n.t("auth.flash.create_user_failed")
+    when :record_invalid
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.invalid_data")
-    rescue OmniAuth::Error => e
-      Rails.logger.error "OAuth callback OmniAuth error: #{e.class} #{e.message}"
+    when :omniauth_error, :infrastructure_error
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")
-    rescue ActiveRecord::ConnectionNotEstablished,
-           ActiveRecord::StatementInvalid,
-           ActiveRecord::RecordNotUnique,
-           Net::OpenTimeout,
-           Net::ReadTimeout,
-           Net::WriteTimeout,
-           SocketError,
-           Errno::ECONNRESET,
-           Errno::ETIMEDOUT,
-           Errno::ECONNREFUSED,
-           OpenSSL::SSL::SSLError,
-           EOFError,
-           IOError => e
-      Rails.logger.error "OAuth callback infrastructure error: #{e.class} #{e.message}"
+    else
       redirect_to auth_failure_path, alert: I18n.t("auth.flash.unexpected_error")
     end
   end

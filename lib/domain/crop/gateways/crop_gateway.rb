@@ -201,6 +201,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement delete_task_schedule_blueprint_bundle_in_crop!"
         end
 
+        # Crops::TaskScheduleBlueprintsController — 位置更新（実装は AR アダプタで例外を吸収し Hash を返す）
+        def update_task_schedule_blueprint_position_mutation(crop:, blueprint:, gdd_trigger:, priority:)
+          raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_mutation"
+        end
+
+        # Crops::TaskScheduleBlueprintsController — 削除後の crop 再読込と UI 用データ
+        def reload_crop_after_task_schedule_blueprint_delete!(crop:, blueprint_id_for_response:)
+          raise NotImplementedError, "Subclasses must implement reload_crop_after_task_schedule_blueprint_delete!"
+        end
+
         # 認可済み作物を関連プリロード付き CropEntity で返す（詳細フォーム・マスタの親コンテキスト等）。
         # for_edit が真なら編集許可のみ、偽なら参照許可のみで評価する。
         def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)

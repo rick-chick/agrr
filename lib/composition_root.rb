@@ -30,6 +30,10 @@ module CompositionRoot
       @user_lookup ||= Adapters::Shared::Gateways::UserActiveRecordGateway.new
     end
 
+    def auth_omniauth_session_gateway
+      @auth_omniauth_session_gateway ||= Adapters::Shared::Gateways::AuthOmniauthSessionActiveRecordGateway.new
+    end
+
     def deletion_undo_gateway
       @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
     end
