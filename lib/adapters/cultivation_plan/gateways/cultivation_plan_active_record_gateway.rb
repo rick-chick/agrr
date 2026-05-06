@@ -6,12 +6,6 @@ module Adapters
       class CultivationPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::CultivationPlanGateway
         include Adapters::Shared::Concerns::ActiveRecordTransactional
 
-        attr_accessor :translator
-
-        def initialize(translator:)
-          @translator = translator
-        end
-
         def create(create_dto)
           result = initialize_plan_from_selection(
             farm: create_dto.farm,
@@ -82,8 +76,7 @@ module Adapters
         rescue ActiveRecord::RecordInvalid => e
           raise Domain::Shared::Exceptions::RecordInvalid.new(
             e.message,
-            errors: e.record&.errors&.full_messages,
-            record: e.record
+            errors: Domain::Shared::ValidationErrors.from_errors_like(e.record&.errors)
           )
         rescue StandardError => e
           # アダプタ境界: 永続化の例外を Result に畳み、Interactor が on_failure へ載せられるようにする（domain は AR を掴まない）。
@@ -201,20 +194,29 @@ module Adapters
         # @param user [User] 削除を実行するユーザー（所有権チェックに使用）
         # @return [DeletionUndoEvent] DeletionUndo::Manager.schedule が返すイベント
         # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, DeletionUndo::Error] 等
-        def destroy(plan_id, user)
+        def private_owned_plan_display_name(user:, plan_id:)
+          plan_model = PlanPolicy.find_private_owned!(user, plan_id)
+          plan_model.display_name
+        rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
+          raise
+        rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
+        end
+
+        def destroy(plan_id, user, toast_message:)
           plan_model = PlanPolicy.find_private_owned!(user, plan_id)
 
           DeletionUndo::Manager.schedule(
             record: plan_model,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
-            toast_message: @translator.t("plans.undo.toast", name: plan_model.display_name)
+            toast_message: toast_message
           )
         rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
           raise
         rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, @translator.t("plans.errors.not_found")
+          raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("plans.errors.delete_failed")
+          raise Domain::Shared::Exceptions::AssociationInUse, "Cultivation plan delete failed"
         rescue DeletionUndo::Error
           raise
         end

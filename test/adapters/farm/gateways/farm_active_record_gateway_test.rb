@@ -6,8 +6,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
   def setup
     deletion_undo_gateway = mock("deletion_undo_gateway")
     @gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo_gateway,
-      translator: Adapters::Translators::RailsTranslator.new
+      deletion_undo_gateway: deletion_undo_gateway
     )
     @user = create(:user)
     @gateway.user_id = @user.id
@@ -102,7 +101,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     farm = create(:farm, name: "削除農場", user: @user)
 
     assert_difference("::Farm.count", -1) do
-      @gateway.destroy(farm.id)
+      @gateway.destroy(farm.id, toast_message: "test undo toast")
     end
   end
 
@@ -154,7 +153,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal farm.id, rows.first.id
     assert_equal 1, rows.first.field_count
     assert_equal "RowTest", rows.first.display_name
-    assert rows.first.weather_data_status_text.present?
+    assert rows.first.weather_data_status.present?
   end
 
   test "private_plan_new_farm_choices returns empty array when user has no farms" do

@@ -13,7 +13,7 @@
     <p>
       <strong><%= t('farms.card.weather_data') %></strong>
       <span class="weather-status weather-status-<%= farm.weather_data_status %>">
-        <%= farm.weather_data_status_text %>
+        <%= farm_list_row_weather_status_text(farm) %>
       </span>
       <% if farm.fetching? && farm.weather_data_total_years > 0 %>
         <% if farm.weather_data_progress >= 100 %>

@@ -25,7 +25,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement total_field_area_for_farm"
         end
 
-        def destroy(plan_id, user)
+        def private_owned_plan_display_name(user:, plan_id:)
+          raise NotImplementedError, "Subclasses must implement private_owned_plan_display_name"
+        end
+
+        def destroy(plan_id, user, toast_message:)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 

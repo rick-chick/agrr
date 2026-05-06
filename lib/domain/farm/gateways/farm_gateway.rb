@@ -25,7 +25,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(farm_id)
+        def destroy(farm_id, toast_message:)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
@@ -104,7 +104,7 @@ module Domain
         end
 
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, translator:)
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, toast_message:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 

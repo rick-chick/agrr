@@ -128,15 +128,12 @@ class FetchWeatherDataJob < ApplicationJob
 
     def farm_gateway
     @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
-      translator: CompositionRoot.translator
+      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
     )
   end
 
   def cultivation_plan_gateway
-    @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      translator: CompositionRoot.translator
-    )
+    @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
   end
 
   def weather_data_gateway

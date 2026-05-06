@@ -4,8 +4,6 @@
 
 ## 修正単位
 
-- [ ] **Gateway のプレゼン依存（PageDto 等）** — Gateway boundary（presentation-agnostic）/ Rationalizations 22 系 @ `lib/adapters/cultivation_plan/gateways/cultivation_plan_active_record_gateway.rb`, `lib/adapters/farm/gateways/farm_active_record_gateway.rb`（`docs/ca-controller-rescue-audit.md` 参照）
-
 - [ ] **HTML / concerns の横断ロジック（deletion_undo_flow, agrr_optimization 等）** — Application edge 1（Sideways escape・Concern 負債） @ `app/controllers/concerns/`
 
 - [ ] **その他 API の広い rescue（AgrrService+RuntimeError、JSON パース、システムコール等）** — 禁止 3 の意味読みで個別に棚卸し @ `app/controllers/api/v1/fertilizes_controller.rb`, `app/controllers/api/v1/crops_controller.rb`, `app/controllers/concerns/cultivation_plan_api.rb`, 他

@@ -29,7 +29,9 @@ module Domain
           destroy_output_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).returns(undo_response)
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).returns("DN")
+          expected_toast = I18n.t("plans.undo.toast", name: "DN")
+          @mock_gateway.expects(:destroy).with(plan_id, @user, toast_message: expected_toast).returns(undo_response)
           Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto
             .expects(:new).with(undo: undo_response).returns(destroy_output_dto)
           @mock_output_port.expects(:on_success).with(destroy_output_dto)
@@ -42,9 +44,10 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
-            Domain::Shared::Exceptions::RecordNotFound, I18n.t("plans.errors.not_found")
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).raises(
+            Domain::Shared::Exceptions::RecordNotFound, "nf"
           )
+          @mock_gateway.expects(:destroy).never
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.not_found")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 
@@ -56,7 +59,8 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          @mock_gateway.expects(:destroy).never
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.not_found")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
 
@@ -68,8 +72,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
-            Domain::Shared::Exceptions::AssociationInUse, I18n.t("plans.errors.delete_failed")
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).returns("N")
+          @mock_gateway.expects(:destroy).with(plan_id, @user, toast_message: I18n.t("plans.undo.toast", name: "N")).raises(
+            Domain::Shared::Exceptions::AssociationInUse, "x"
           )
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -82,8 +87,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(
-            Domain::Shared::Exceptions::AssociationInUse, I18n.t("plans.errors.delete_failed")
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).returns("N")
+          @mock_gateway.expects(:destroy).with(plan_id, @user, toast_message: I18n.t("plans.undo.toast", name: "N")).raises(
+            Domain::Shared::Exceptions::AssociationInUse, "x"
           )
           Domain::Shared::Dtos::ErrorDto.expects(:new).with(I18n.t("plans.errors.delete_failed")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -96,8 +102,9 @@ module Domain
           error_dto = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).returns("N")
           deletion_error = DeletionUndo::Error.new("Undo error")
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(deletion_error)
+          @mock_gateway.expects(:destroy).with(plan_id, @user, toast_message: I18n.t("plans.undo.toast", name: "N")).raises(deletion_error)
           Domain::Shared::Dtos::ErrorDto
             .expects(:new).with(I18n.t("plans.errors.delete_error", message: "Undo error")).returns(error_dto)
           @mock_output_port.expects(:on_failure).with(error_dto)
@@ -109,7 +116,7 @@ module Domain
           plan_id = 1
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:destroy).with(plan_id, @user).raises(StandardError.new("Unexpected error"))
+          @mock_gateway.expects(:private_owned_plan_display_name).with(user: @user, plan_id: plan_id).raises(StandardError.new("Unexpected error"))
           @mock_output_port.expects(:on_failure).never
 
           err = assert_raises(StandardError) do

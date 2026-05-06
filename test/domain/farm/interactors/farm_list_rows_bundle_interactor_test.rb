@@ -32,7 +32,6 @@ module Domain
             weather_data_status: "pending",
             weather_data_progress: 0,
             weather_data_total_years: 0,
-            weather_data_status_text: "x",
             weather_data_last_error: nil
           )
           bundle = Domain::Farm::Dtos::FarmListRowsBundleDto.new(

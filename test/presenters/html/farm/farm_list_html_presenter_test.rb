@@ -18,7 +18,6 @@ class FarmListHtmlPresenterTest < ActiveSupport::TestCase
       weather_data_status: "pending",
       weather_data_progress: 0,
       weather_data_total_years: 0,
-      weather_data_status_text: "—",
       weather_data_last_error: nil
     )
   end

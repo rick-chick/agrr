@@ -7,11 +7,11 @@ module Domain
       class FarmListRowDto
         attr_reader :id, :display_name, :latitude, :longitude, :region, :user_id, :is_reference,
                     :field_count, :weather_data_status, :weather_data_progress,
-                    :weather_data_total_years, :weather_data_status_text, :weather_data_last_error
+                    :weather_data_total_years, :weather_data_last_error
 
         def initialize(id:, display_name:, latitude:, longitude:, region:, user_id:, is_reference:,
                        field_count:, weather_data_status:, weather_data_progress:,
-                       weather_data_total_years:, weather_data_status_text:, weather_data_last_error:)
+                       weather_data_total_years:, weather_data_last_error:)
           @id = id
           @display_name = display_name
           @latitude = latitude
@@ -23,7 +23,6 @@ module Domain
           @weather_data_status = weather_data_status
           @weather_data_progress = weather_data_progress
           @weather_data_total_years = weather_data_total_years
-          @weather_data_status_text = weather_data_status_text
           @weather_data_last_error = weather_data_last_error
         end
 

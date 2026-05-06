@@ -104,9 +104,7 @@ class TaskScheduleGenerateInteractorTest < ActiveSupport::TestCase
            amount: BigDecimal("4.0"))
 
     @task_schedule_gateway = Adapters::AgriculturalTask::Gateways::TaskScheduleActiveRecordGateway.new
-    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      translator: Adapters::Translators::RailsTranslator.new
-    )
+    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
   end
 
   test "generate! creates schedules from blueprints and skips agrr gateways" do

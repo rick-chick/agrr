@@ -44,9 +44,7 @@ class Domain::CultivationPlan::Interactors::PlanCopierTest < ActiveSupport::Test
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      translator: Adapters::Translators::RailsTranslator.new
-    )
+    gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
     result = Domain::CultivationPlan::Interactors::PlanCopier.new(
       source_cultivation_plan_id: source_plan.id,
       new_year: plan_year + 1,

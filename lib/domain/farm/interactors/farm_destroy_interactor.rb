@@ -15,11 +15,13 @@ module Domain
 
         def call(farm_id)
           user = @user_lookup.find(@user_id)
+          farm_entity = @gateway.find_authorized_for_edit(user, farm_id)
+          toast_message = @translator.t("flash.farms.deleted", name: farm_entity.name)
           result = @gateway.soft_destroy_with_undo(
             user: user,
             farm_id: farm_id,
             auto_hide_after: 5000,
-            translator: @translator
+            toast_message: toast_message
           )
           if result[:success]
             destroy_output_dto = Domain::Farm::Dtos::FarmDestroyOutputDto.new(
@@ -36,6 +38,10 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::AssociationInUse
+          @output_port.on_failure(
+            Domain::Shared::Dtos::ErrorDto.new(@translator.t("farms.flash.cannot_delete_in_use"))
+          )
         end
       end
     end

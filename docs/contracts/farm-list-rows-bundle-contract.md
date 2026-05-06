@@ -19,10 +19,10 @@
 
 - 識別・基本: `id`, `display_name`, `latitude`, `longitude`, `region`, `user_id`, `is_reference`
 - 圃場: `field_count`
-- 天気: `weather_data_status`, `weather_data_progress`, `weather_data_total_years`, `weather_data_status_text`, `weather_data_last_error`
+- 天気: `weather_data_status`, `weather_data_progress`, `weather_data_total_years`, `weather_data_last_error`（ラベル文言はビューで **`FarmsHelper#farm_list_row_weather_status_text`** により生成。キーは `app/models/farm.rb#weather_data_status_text` と揃える）
 - 派生: `has_coordinates?`, `fetching?`, `failed?`, `reference?`
 
-表示名・天気ラベルの i18n キーは **`app/models/farm.rb` の `display_name` / `weather_data_status_text` と揃える**（アダプタ内 `@translator`）。
+`display_name` は永続化された農場名（`farms.name`）を運ぶ（ゲートウェイは i18n ・`@translator` を持たない）。
 
 ## Gateway
 

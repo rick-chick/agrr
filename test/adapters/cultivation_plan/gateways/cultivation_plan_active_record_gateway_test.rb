@@ -4,9 +4,7 @@ require "test_helper"
 
 class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTest < ActiveSupport::TestCase
   def setup
-    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      translator: CompositionRoot.translator
-    )
+    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
   end
 
   test "should create cultivation plan" do

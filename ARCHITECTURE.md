@@ -80,7 +80,7 @@ flowchart TB
 ### API action checklist
 
 1. Strong-params → **input DTO**.
-2. Instantiate gateway(s) (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new(deletion_undo_gateway: …, translator: …)`) and API presenter (output port implementation).
+2. Instantiate gateway(s) (e.g. `Adapters::Farm::Gateways::FarmActiveRecordGateway.new(deletion_undo_gateway: …)`) and API presenter (output port implementation).
 3. `InteractorClass.new(output_port: presenter, …).call(input_dto)` (some interactors take `output_port` on `call`).
 4. Let the interactor finish through the **output port** for both success and modeled failures—do not wrap `interactor.call` in `rescue` for those paths.
 

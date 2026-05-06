@@ -15,7 +15,9 @@ module Domain
 
         def call(plan_id)
           user = @user_lookup.find(@user_id)
-          undo_response = @gateway.destroy(plan_id, user)
+          display_name = @gateway.private_owned_plan_display_name(user: user, plan_id: plan_id)
+          toast_message = @translator.t("plans.undo.toast", name: display_name)
+          undo_response = @gateway.destroy(plan_id, user, toast_message: toast_message)
           destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)
         rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied

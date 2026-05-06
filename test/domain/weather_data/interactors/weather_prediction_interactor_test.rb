@@ -23,12 +23,10 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     @user = create(:user)
     @farm = create(:farm, user: @user, weather_location: @weather_location)
 
-    tr = Adapters::Translators::RailsTranslator.new
     deletion_undo = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
-    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(translator: tr)
+    @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
     @farm_gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo,
-      translator: tr
+      deletion_undo_gateway: deletion_undo
     )
     @weather_data_gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     @prediction_gateway = Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new

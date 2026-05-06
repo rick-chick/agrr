@@ -4,12 +4,10 @@ module Adapters
   module Farm
     module Gateways
       class FarmActiveRecordGateway < Domain::Farm::Gateways::FarmGateway
-        attr_accessor :translator
         attr_accessor :user_id
 
-        def initialize(deletion_undo_gateway:, translator:)
+        def initialize(deletion_undo_gateway:)
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = translator
         end
         def list(input_dto)
           if input_dto.is_admin
@@ -101,15 +99,15 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def destroy(farm_id)
+        def destroy(farm_id, toast_message:)
           farm = ::Farm.find(farm_id)
           DeletionUndo::Manager.schedule(
             record: farm,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(farm.user),
-            toast_message: @translator.t("farms.undo.toast", name: farm.display_name)
+            toast_message: toast_message
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("farms.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse, "Farm is in use and cannot be deleted"
         rescue DeletionUndo::Error
           raise
         end
@@ -180,7 +178,7 @@ module Adapters
               cnt, total_area = stats_by_farm[f.id] || [ 0, 0.0 ]
               Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto.new(
                 id: f.id,
-                display_name: f.display_name,
+                display_name: f.name,
                 latitude: f.latitude.to_f,
                 longitude: f.longitude.to_f,
                 fields_count: cnt,
@@ -263,13 +261,12 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
           farm = find_farm_model!(farm_id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           farm_name = farm.name
-          toast_message = translator.t("flash.farms.deleted", name: farm_name)
           event = @deletion_undo_gateway.schedule(
             resource_type: farm.class.name,
             resource_id: farm.id,
@@ -291,7 +288,7 @@ module Adapters
         def farm_record_to_farm_list_row_dto(record)
           Domain::Farm::Dtos::FarmListRowDto.new(
             id: record.id,
-            display_name: farm_display_name(record),
+            display_name: record.name,
             latitude: record.latitude,
             longitude: record.longitude,
             region: record.region,
@@ -301,29 +298,8 @@ module Adapters
             weather_data_status: record.weather_data_status,
             weather_data_progress: record.weather_data_progress,
             weather_data_total_years: record.weather_data_total_years,
-            weather_data_status_text: farm_weather_status_text(record),
             weather_data_last_error: record.weather_data_last_error
           )
-        end
-
-        # app/models/farm.rb の display_name / weather_data_status_text と同じ i18n キーを用いる（表示の単一性）
-        def farm_display_name(farm)
-          farm.name.presence || @translator.t("models.farm.default_name", id: farm.id)
-        end
-
-        def farm_weather_status_text(farm)
-          case farm.weather_data_status
-          when "pending"
-            @translator.t("models.farm.weather_status.pending")
-          when "fetching"
-            @translator.t("models.farm.weather_status.fetching", progress: farm.weather_data_progress)
-          when "completed"
-            @translator.t("models.farm.weather_status.completed")
-          when "failed"
-            @translator.t("models.farm.weather_status.failed")
-          else
-            @translator.t("models.farm.weather_status.unknown")
-          end
         end
 
         def find_farm_with_fields!(id)

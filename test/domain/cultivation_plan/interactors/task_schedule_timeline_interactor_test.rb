@@ -80,9 +80,7 @@ class TaskScheduleTimelineInteractorTest < ActiveSupport::TestCase
       agricultural_task: @task
     )
 
-    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      translator: Adapters::Translators::RailsTranslator.new
-    )
+    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
     @output_port = StubOutputPort.new
     @clock = Struct.new(:today).new(Date.new(2025, 1, 10))
     @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
