@@ -111,6 +111,10 @@ module CompositionRoot
       )
     end
 
+    def agrr_optimization_payload_builder(cultivation_plan)
+      Adapters::CultivationPlan::AgrrOptimizationPayloadBuilder.new(cultivation_plan, logger: logger)
+    end
+
     def save_adjusted_agrr_result_gateway
       @save_adjusted_agrr_result_gateway ||= Adapters::CultivationPlan::Gateways::SaveAdjustedAgrrResultActiveRecordGateway.new(
         logger: logger,

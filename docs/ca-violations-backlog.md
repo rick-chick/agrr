@@ -6,10 +6,11 @@
 
 1. **Application edge 1 / Sideways escape — `app/controllers/concerns/**` の `ActiveSupport::Concern` によるオーケストレーション共有**
    - レガシー負債。新規判断の追加禁止。段階的に `lib/domain` + 注入へ畳み込む。
-   - **残り（優先）**: `AgrrOptimization` concern の `calculate_effective_planning_period`（`Date.current` 等エッジ依存）・他 API 経路の concern（`cultivation_plan_api` 等）。
+   - **残り（優先）**: `AgrrOptimization` の `ActiveSupport::Concern` 枠・薄いオーケストレーション委譲の段階的整理、および他 API 経路の concern（`cultivation_plan_api` の候補フロー・`Date.current`、`weather_data_management` 等）。
 
 ## 解消済み（記録）
 
+- **`agrr_optimization` concern — `AgrrOptimizationPayloadBuilder` 配線と死蔵ラッパ削除**（2026-05-06）: `CompositionRoot.agrr_optimization_payload_builder` を追加し `build_*` は `LoggerGateway` 注入で生成（concern 内の `Adapters::*.new`／`Rails.logger` 直参照を廃止）。呼び出し参照のない `calculate_effective_planning_period` を削除（有効期間の算出は `AdjustWithDbWeatherPlanGateway#effective_planning_period` 等に集約済み）。Application edge 1 の残負債は concern 枠と他 concern。
 - **`agrr_optimization#adjust_with_db_weather` 主導線 — Interactor + Plan Gateway + CompositionRoot 配線**（2026-05-06）: オーケストレーションを `Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor` に集約。`AdjustWithDbWeatherPlanGateway` / `AdjustWithDbWeatherPlanActiveRecordGateway` / `AgrrOptimizationPayloadBuilder` でセッション・AR 写像をアダプターに閉じる。concern の `adjust_with_db_weather` は `CompositionRoot.adjust_with_db_weather_interactor` への委譲のみ。非本番デバッグ JSON は `CompositionRoot#adjust_with_db_weather_debug_dump`。
 - **`raise StandardError` の削減 — Crop/Pesticide agrr 連携・削除 Undo アダプター**（2026-05-06）: `Crop#to_agrr_requirement` / `associate_pests_from_agrr_output`、`Pesticide.from_agrr_output` の入力不備は `ArgumentError` に統一。`Farm` / `AgriculturalTask` / `Fertilize` の `destroy` で `DeletionUndo::Error` を `StandardError` に変換せず伝播（Interactor が捕捉）。
 - **`agrr_optimization` concern — adjust 時の実測＋予測気象の AGRR 形式化とマージ**（2026-05-06）: 観測行の整形・平均気温算出・日照秒変換・予測 `data` 連結を `Domain::WeatherData::Services::AdjustHistoricalPredictionMerger` に集約。concern は AR 行からプレーン Hash へ写像して委譲。項目 1（concern 本体の他メソッド・`CompositionRoot` 呼び出し等）は継続。
