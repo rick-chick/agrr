@@ -18,7 +18,7 @@ module Dev
       end
 
       head :ok
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("[CLIENT LOGGER ERROR] Failed to process client log: #{e.message}")
       head :internal_server_error
     end

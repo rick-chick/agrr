@@ -212,7 +212,7 @@ module Farms
           },
           status: "processing"
         }
-      rescue => e
+      rescue ActiveJob::EnqueueError => e
         Rails.logger.error "❌ Failed to queue prediction job for Farm##{@farm.id}: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
 

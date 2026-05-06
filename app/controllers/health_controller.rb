@@ -16,7 +16,7 @@ class HealthController < ApplicationController
       timestamp: Time.current.iso8601,
       database: "primary"
     }, status: :ok
-  rescue => e
+  rescue StandardError => e
     msg = e.message.to_s
     if msg.include?("unable to open database file") || msg.include?("database is locked") || msg.include?("no such table")
       Rails.logger.warn "Health check: DB bootstrap in progress or not ready (#{msg})"

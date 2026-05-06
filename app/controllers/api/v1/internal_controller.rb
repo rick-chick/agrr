@@ -43,7 +43,7 @@ module Api
           status: farm.weather_data_status,
           total_blocks: farm.weather_data_total_years
         }
-      rescue => e
+      rescue ActiveJob::EnqueueError, ActiveRecord::RecordInvalid => e
         render json: { error: e.message }, status: :internal_server_error
       end
 

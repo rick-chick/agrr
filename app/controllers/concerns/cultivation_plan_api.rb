@@ -281,7 +281,7 @@ module CultivationPlanApi
   rescue Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError, Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError => e
     Rails.logger.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
     raise
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "❌ [Candidates] Failed to get weather data: #{e.message}"
     nil
   end
@@ -302,7 +302,7 @@ module CultivationPlanApi
       planning_end: planning_end,
       interaction_rules: interaction_rules.empty? ? nil : interaction_rules
     )
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "❌ [Candidates] Failed to run candidates: #{e.message}"
     []
   end

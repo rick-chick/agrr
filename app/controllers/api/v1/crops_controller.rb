@@ -29,7 +29,7 @@ module Api
 
           result = service.call(crop_name: crop_name, variety: variety, crop_info: crop_info)
           render json: result.body, status: result.status
-        rescue => e
+        rescue AgrrService::AgrrError => e
           Rails.logger.error "❌ [AI Crop] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
           render json: { error: I18n.t("api.errors.crops.fetch_failed_with_reason", message: e.message) }, status: :internal_server_error
@@ -86,7 +86,7 @@ module Api
           rescue AgrrService::DaemonNotRunningError => e
             # Daemonが起動していない場合はリトライしない
             Rails.logger.error "❌ [AGRR Crop Query] Daemon not running: #{e.message}"
-            raise "AGRR daemon is not running: #{e.message}"
+            raise AgrrService::DaemonNotRunningError, "AGRR daemon is not running: #{e.message}"
           rescue AgrrService::CommandExecutionError => e
             # コマンド実行エラー
             error_msg = e.message
@@ -110,13 +110,13 @@ module Api
 
             # リトライしないエラー、または最終試行での失敗
             Rails.logger.error "❌ [AGRR Crop Query Error] Command failed: #{error_msg}"
-            raise "Failed to query crop info from agrr: #{error_msg}"
+            raise AgrrService::CommandExecutionError, "Failed to query crop info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             # JSONパースエラー（リトライしても意味がない）
             Rails.logger.error "❌ [AGRR Crop Query] JSON parse error: #{e.message}"
-            raise "Invalid JSON response from agrr: #{e.message}"
+            raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
-          rescue => e
+          rescue StandardError => e
             # その他の予期しないエラー
             last_error = e
             Rails.logger.warn "⚠️  [AGRR Crop Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
@@ -128,15 +128,15 @@ module Api
               next
             end
 
-            raise
+            raise AgrrService::CommandExecutionError, e.message
           end
         end
 
         # 最大リトライ回数を超えた場合
         if last_error
-          raise last_error
+          raise AgrrService::CommandExecutionError, last_error.message
         else
-          raise "Failed to query crop info after #{max_retries} attempts"
+          raise AgrrService::CommandExecutionError, "Failed to query crop info after #{max_retries} attempts"
         end
       end
     end

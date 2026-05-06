@@ -162,7 +162,7 @@ module Api
             render json: { error: result.error }, status: :unprocessable_entity
           end
 
-        rescue => e
+        rescue AgrrService::AgrrError => e
           Rails.logger.error "❌ [AI Pest] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
           render json: { error: I18n.t("api.errors.pests.fetch_failed_with_reason", message: e.message, default: "害虫情報の取得に失敗しました: %{message}") }, status: :internal_server_error
@@ -238,7 +238,7 @@ module Api
             render json: { error: result.error }, status: :unprocessable_entity
           end
 
-        rescue => e
+        rescue AgrrService::AgrrError => e
           Rails.logger.error "❌ [AI Pest] Error: #{e.message}"
           Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
           render json: { error: I18n.t("api.errors.pests.fetch_failed_with_reason", message: e.message, default: "害虫情報の取得に失敗しました: %{message}") }, status: :internal_server_error
@@ -324,12 +324,12 @@ module Api
             end
 
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query Error] Command failed: #{error_msg}"
-            raise "Failed to query pest info from agrr: #{error_msg}"
+            raise AgrrService::CommandExecutionError, "Failed to query pest info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             Rails.logger.error "❌ [AGRR Pest-to-Crop Query] JSON parse error: #{e.message}"
-            raise "Invalid JSON response from agrr: #{e.message}"
+            raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
-          rescue => e
+          rescue StandardError => e
             last_error = e
             Rails.logger.warn "⚠️  [AGRR Pest-to-Crop Query] Unexpected error (attempt #{attempt}/#{max_retries}): #{e.message}"
 
@@ -340,15 +340,15 @@ module Api
               next
             end
 
-            raise
+            raise AgrrService::CommandExecutionError, e.message
           end
         end
 
         # 最大リトライ回数を超えた場合
         if last_error
-          raise last_error
+          raise AgrrService::CommandExecutionError, last_error.message
         else
-          raise "Failed to query pest info after #{max_retries} attempts"
+          raise AgrrService::CommandExecutionError, "Failed to query pest info after #{max_retries} attempts"
         end
       end
 
@@ -456,7 +456,7 @@ module Api
         end
 
         Rails.logger.info "✅ [AI Pest] Crop association completed: #{associated_count} crops associated"
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error "❌ [AI Pest] Failed to associate crops: #{e.message}"
         Rails.logger.error "❌ [AI Pest] Backtrace: #{e.backtrace.first(5).join("\n")}"
         # 関連付けエラーは致命的ではないため、ログ出力のみ

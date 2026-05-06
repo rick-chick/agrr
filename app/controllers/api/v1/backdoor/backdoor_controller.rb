@@ -36,7 +36,7 @@ module Api
               if match = daemon_status_output.match(/PID[:\s]+(\d+)/i)
                 daemon_pid = match[1].to_i
               end
-            rescue => e
+            rescue StandardError => e
               Rails.logger.error "Error checking daemon status: #{e.message}"
             end
           end
@@ -56,7 +56,7 @@ module Api
                 memory_mb: memory_mb,
                 uptime: uptime_seconds
               }
-            rescue => e
+            rescue StandardError => e
               Rails.logger.error "Error getting process info: #{e.message}"
             end
           end
@@ -288,7 +288,7 @@ module Api
               after_stats: after_stats,
               warning: "⚠️ All data has been deleted. This action is irreversible."
             }
-          rescue => e
+          rescue ActiveRecord::ActiveRecordError, ActiveRecord::StatementInvalid => e
             Rails.logger.error "❌ Error clearing database: #{e.message}"
             Rails.logger.error e.backtrace.join("\n")
 
