@@ -29,17 +29,6 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue StandardError => e
-          log_interactor_error(e)
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.task_schedule_blueprints_failed")))
-        end
-
-        private
-
-        def log_interactor_error(error)
-          @logger.error(
-            "[CropRegenerateTaskScheduleBlueprintsInteractor] #{error.class}: #{error.message}\n#{error.full_message}"
-          )
         end
       end
     end

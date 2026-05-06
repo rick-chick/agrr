@@ -31,18 +31,18 @@ module Domain
           @interactor.call(input_dto)
         end
 
-        test "should handle gateway error" do
+        test "propagates StandardError when gateway raises" do
           input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
             crop_id: 1,
             payload: { name: "Seedling", order: 1 }
           )
-          error_dto = mock
 
           @mock_gateway.expects(:create_crop_stage).with(input_dto).raises(StandardError.new("Database error"))
-          Domain::Shared::Dtos::ErrorDto.expects(:new).with("Database error").returns(error_dto)
-          @mock_output_port.expects(:on_failure).with(error_dto)
 
-          @interactor.call(input_dto)
+          err = assert_raises(StandardError) do
+            @interactor.call(input_dto)
+          end
+          assert_includes err.message, "Database error"
         end
       end
     end

@@ -51,19 +51,19 @@ module Domain
           @interactor.call(input_dto)
         end
 
-        test "should handle gateway error" do
+        test "propagates StandardError when gateway raises" do
           input_dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
             crop_id: 1,
             stage_id: 1,
             payload: { base_temperature: 10.0 }
           )
-          error_dto = mock
 
           @mock_gateway.expects(:find_temperature_requirement).with(1).raises(StandardError.new("Database error"))
-          Domain::Shared::Dtos::ErrorDto.expects(:new).with("Database error").returns(error_dto)
-          @mock_output_port.expects(:on_failure).with(error_dto)
 
-          @interactor.call(input_dto)
+          err = assert_raises(StandardError) do
+            @interactor.call(input_dto)
+          end
+          assert_includes err.message, "Database error"
         end
       end
     end

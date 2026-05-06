@@ -36,7 +36,7 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure when gateway raises" do
+        test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
           input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
@@ -50,17 +50,14 @@ module Domain
             raise StandardError, "update failed"
           end
 
-          received = nil
           output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) { |arg| received = arg }
 
           interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
-          interactor.call(input_dto)
-
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
-          assert_includes received.message, "update failed"
+          err = assert_raises(StandardError) do
+            interactor.call(input_dto)
+          end
+          assert_includes err.message, "update failed"
           gateway.verify
-          output_port.verify
         end
       end
     end

@@ -15,8 +15,6 @@ module Domain
           @output_port.on_success(Domain::Crop::Dtos::CropStageOutputDto.new(stage: crop_stage))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue StandardError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end
     end

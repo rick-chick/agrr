@@ -26,25 +26,22 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure when gateway raises" do
+        test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
           gateway.expect(:delete_crop_stage, nil) { raise StandardError, "delete failed" }
 
-          received = nil
           output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) { |arg| received = arg }
 
           interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
           input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
             crop_id: 1,
             stage_id: 1
           )
-          interactor.call(input_dto)
-
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
-          assert_includes received.message, "delete failed"
+          err = assert_raises(StandardError) do
+            interactor.call(input_dto)
+          end
+          assert_includes err.message, "delete failed"
           gateway.verify
-          output_port.verify
         end
       end
     end

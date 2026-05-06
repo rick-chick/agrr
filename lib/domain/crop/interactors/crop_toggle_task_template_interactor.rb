@@ -45,10 +45,6 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue StandardError => e
-          bt = e.backtrace&.join("\n").to_s
-          @logger.error("[CropToggleTaskTemplateInteractor] #{e.class}: #{e.message}\n#{bt}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.toggle_task_template_failed")))
         end
       end
     end

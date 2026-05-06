@@ -19,9 +19,6 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue StandardError => e
-          @logger.error("[CropFindReferenceForEntryScheduleInteractor] #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end
     end
