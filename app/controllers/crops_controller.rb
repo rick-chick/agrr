@@ -36,31 +36,22 @@ class CropsController < ApplicationController
 
   # POST /crops
   def create
-    is_reference = crop_params[:is_reference] || false
-    if is_reference && !admin_user?
-      return redirect_to crops_path, alert: I18n.t("crops.flash.reference_only_admin")
-    end
-
     @input_dto = Domain::Crop::Dtos::CropCreateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys })
     presenter = Presenters::Html::Crop::CropCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end
 
   # PATCH/PUT /crops/:id
   def update
-    if crop_params.key?(:is_reference) && !admin_user?
-      return redirect_to crop_path(@crop), alert: I18n.t("crops.flash.reference_flag_admin_only")
-    end
-
     @input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash({ crop: crop_params.to_h.symbolize_keys }, params[:id])
     presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end

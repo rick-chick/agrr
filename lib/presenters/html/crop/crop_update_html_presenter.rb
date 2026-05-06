@@ -13,7 +13,19 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          @view.flash.now[:alert] = error_dto.message
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.flash[:alert] = I18n.t("crops.flash.no_permission")
+            @view.redirect_to @view.crops_path
+            return
+          end
+
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("crops.flash.reference_flag_admin_only")
+            @view.redirect_to @view.crop_path(@view.params[:id]), alert: msg
+            return
+          end
+
+          @view.flash.now[:alert] = msg
           @view.after_crop_update_failure
           @view.render_form(:edit, status: :unprocessable_entity)
         end

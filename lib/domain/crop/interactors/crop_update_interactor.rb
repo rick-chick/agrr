@@ -4,16 +4,27 @@ module Domain
   module Crop
     module Interactors
       class CropUpdateInteractor < Domain::Crop::Ports::CropUpdateInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @translator = translator
           @user_lookup = user_lookup
         end
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+
+          unless input_dto.is_reference.nil?
+            requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
+            requested = false if requested.nil?
+            current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id)
+            if requested != current_entity.reference? && !user.admin?
+              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("crops.flash.reference_flag_admin_only"))
+            end
+          end
+
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:variety] = input_dto.variety if !input_dto.variety.nil?

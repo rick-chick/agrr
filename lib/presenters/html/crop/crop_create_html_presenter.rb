@@ -13,7 +13,13 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          @view.flash.now[:alert] = error_dto.message
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("crops.flash.reference_only_admin")
+            @view.redirect_to @view.crops_path, alert: msg
+            return
+          end
+
+          @view.flash.now[:alert] = msg
           @view.after_crop_create_failure
           @view.render_form(:new, status: :unprocessable_entity)
         end

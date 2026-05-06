@@ -27,6 +27,11 @@ module Presenters
 
         def on_failure(error_dto)
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("crops.flash.reference_only_admin")
+            @view.render_response(json: { error: msg }, status: :forbidden)
+            return
+          end
+
           @view.render_response(json: { errors: [ msg ] }, status: :unprocessable_entity)
         end
       end

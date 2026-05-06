@@ -8,7 +8,8 @@
 - **解消済み（2026-05-06）**: **HTML** `FertilizesController` の `create` / `update` 先頭の参照データ・admin 分岐（`Application edge` 禁止 4）を削除。`FertilizeCreateInteractor` / `FertilizeUpdateInteractor` の既存判定に一本化し、HTML Presenter で当該失敗メッセージ時の `redirect_to`（従来 UX）を再現。
 - **解消済み（2026-05-06）**: **HTML** `PestsController` の `update` 先頭の `is_reference` / admin 早期 `redirect_to` を削除（`Application edge` 禁止 4）。`PestUpdateInteractor` と既存の `PestUpdateHtmlPresenter`（参照フラグ失敗時のリダイレクト）に一本化。**create** は元々コントローラ二重チェックなし。
 - **解消済み（2026-05-06）**: **HTML** `AgriculturalTasksController` の `create` / `update` 先頭の参照・admin 分岐を削除。`AgriculturalTaskCreateInteractor` / `AgriculturalTaskUpdateInteractor` に `translator` を注入し参照ルールを明示、**create** は `is_reference` をゲートウェイへ渡すよう修正。HTML Presenter で既存のリダイレクト UX を再現。API マスタ `AgriculturalTasksController` も同じ Interactor 引数に合わせる。
-- **次に先頭で固定する修正単位（未着手）**: 同パターンの **HTML** `CropsController` / `PesticidesController` / `InteractionRulesController` 等の `is_reference` 早期 `redirect_to` を確認し、Interactor + HTML Presenter に寄せる（1 リソースずつ）。
+- **解消済み（2026-05-06）**: **HTML** `CropsController` の `create` / `update` 先頭の `is_reference` 早期 `redirect_to` を削除。`CropCreateInteractor` / `CropUpdateInteractor` に `translator` を注入し参照ルールを明示。`Adapters::Crop::CropCreateForAiAdapter`・`Api::V1::Masters::CropsController` も同じ引数に合わせ、HTML / API Presenter で参照失敗時の `redirect_to` または 403（`{ error: ... }`）を再現。
+- **次に先頭で固定する修正単位（未着手）**: 同パターンの **HTML** `PesticidesController` / `InteractionRulesController` 等の `is_reference` 早期 `redirect_to` を確認し、Interactor + HTML Presenter に寄せる（1 リソースずつ）。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

@@ -34,4 +34,33 @@ class CropUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
     presenter.on_failure(error_dto)
   end
+
+  test "on_failure redirects for policy permission denied" do
+    view_mock = mock
+    presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: view_mock)
+
+    error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    flash_mock = mock
+    flash_mock.expects(:[]=).with(:alert, I18n.t("crops.flash.no_permission"))
+    view_mock.expects(:flash).returns(flash_mock)
+    view_mock.expects(:crops_path).returns("/crops")
+    view_mock.expects(:redirect_to).with("/crops")
+
+    presenter.on_failure(error_dto)
+  end
+
+  test "on_failure redirects to show when non-admin toggles reference flag" do
+    view_mock = mock
+    presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: view_mock)
+
+    msg = I18n.t("crops.flash.reference_flag_admin_only")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.stubs(:params).returns(id: "9")
+    view_mock.expects(:crop_path).with("9").returns("/crops/9")
+    view_mock.expects(:redirect_to).with("/crops/9", alert: msg)
+
+    presenter.on_failure(error_dto)
+  end
 end

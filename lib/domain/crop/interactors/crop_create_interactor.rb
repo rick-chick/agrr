@@ -4,16 +4,22 @@ module Domain
   module Crop
     module Interactors
       class CropCreateInteractor < Domain::Crop::Ports::CropCreateInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
           @logger = logger
+          @translator = translator
           @user_lookup = user_lookup
         end
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
+          if is_reference && !user.admin?
+            raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("crops.flash.reference_only_admin"))
+          end
+
           crop_entity = @gateway.create_for_user(user, {
             name: input_dto.name,
             variety: input_dto.variety,
@@ -21,7 +27,7 @@ module Domain
             revenue_per_area: input_dto.revenue_per_area,
             region: input_dto.region,
             groups: input_dto.groups || [],
-            is_reference: input_dto.is_reference
+            is_reference: is_reference
           })
 
           @output_port.on_success(crop_entity)

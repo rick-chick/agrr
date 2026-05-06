@@ -97,6 +97,7 @@ module Adapters
           user_id: @user.id,
           gateway: gateway,
           logger: CompositionRoot.logger,
+          translator: CompositionRoot.translator,
           user_lookup: CompositionRoot.user_lookup
         )
 

@@ -87,6 +87,47 @@ module Api
           assert_equal I18n.t("crops.flash.no_permission"), json_response["error"]
         end
 
+        test "should not create reference crop as non-admin" do
+          assert_no_difference("@user.crops.count") do
+            post api_v1_masters_crops_path,
+                 params: {
+                   crop: {
+                     name: "参照のみ",
+                     is_reference: true
+                   }
+                 },
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          end
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("crops.flash.reference_only_admin"), json_response["error"]
+        end
+
+        test "should not toggle is_reference as non-admin via API" do
+          crop = create(:crop, :user_owned, user: @user, is_reference: false)
+
+          patch api_v1_masters_crop_path(crop),
+                params: {
+                  crop: {
+                    is_reference: true
+                  }
+                },
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :forbidden
+          json_response = JSON.parse(response.body)
+          assert_equal I18n.t("crops.flash.reference_flag_admin_only"), json_response["error"]
+          crop.reload
+          assert_equal false, crop.is_reference?
+        end
+
         test "should create crop" do
           assert_difference("@user.crops.where(is_reference: false).count", 1) do
             post api_v1_masters_crops_path,

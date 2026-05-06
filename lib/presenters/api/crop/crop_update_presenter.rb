@@ -32,6 +32,11 @@ module Presenters
           end
 
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          if msg == I18n.t("crops.flash.reference_flag_admin_only")
+            @view.render_response(json: { error: msg }, status: :forbidden)
+            return
+          end
+
           status = (msg == "Crop not found") ? :not_found : :unprocessable_entity
           json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)

@@ -56,26 +56,18 @@ module Api
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          if input_dto.is_reference && !admin_user?
-            render_response(json: { error: I18n.t("crops.flash.reference_only_admin") }, status: :forbidden)
-            return
-          end
           presenter = Presenters::Api::Crop::CropCreatePresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/crops/:id
         def update
-          if params.dig(:crop, :is_reference).present? && !admin_user?
-            render_response(json: { error: I18n.t("crops.flash.reference_flag_admin_only") }, status: :forbidden)
-            return
-          end
           input_dto = Domain::Crop::Dtos::CropUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::Crop::CropUpdatePresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

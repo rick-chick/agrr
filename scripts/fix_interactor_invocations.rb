@@ -20,7 +20,7 @@ INJECT = {
   "Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor" =>
     "gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropCreateInteractor" =>
-    "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropDestroyInteractor" =>
     "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::CropDetailInteractor" =>
@@ -56,7 +56,7 @@ INJECT = {
   "Domain::Crop::Interactors::CropStageUpdateInteractor" =>
     "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger",
   "Domain::Crop::Interactors::CropUpdateInteractor" =>
-    "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup",
+    "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup",
   "Domain::Crop::Interactors::NutrientRequirementUpdateInteractor" =>
     "gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger",
   "Domain::Crop::Interactors::SunshineRequirementUpdateInteractor" =>
