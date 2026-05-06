@@ -36,13 +36,20 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物が見つからない
           def index
-            rows = CompositionRoot.crop_gateway.masters_crop_agricultural_task_templates_index_rows(
-              user: current_user,
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(
+              user_id: current_user.id,
               crop_id: params[:crop_id]
             )
-            render json: rows
-          rescue Domain::Shared::Exceptions::RecordNotFound
-            render json: { error: I18n.t("api.errors.crop_not_found") }, status: :not_found
+            presenter = Presenters::Api::Crop::CropMastersTaskTemplateIndexPresenter.new(
+              view: self,
+              translator: CompositionRoot.translator
+            )
+            interactor = Domain::Crop::Interactors::CropMastersTaskTemplateIndexInteractor.new(
+              output_port: presenter,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            interactor.call(input_dto)
           end
 
           # 作物に農業タスクを関連付け
@@ -100,19 +107,22 @@ module Api
           # @return [404] 作物または関連が見つからない
           # @return [422] バリデーションエラー
           def update
-            result = CompositionRoot.crop_gateway.update_masters_crop_task_template_for_api(
-              user: current_user,
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInputDto.new(
+              user_id: current_user.id,
               crop_id: params[:crop_id],
               template_id: params[:id],
               attributes: template_params.except(:agricultural_task_id).to_h
             )
-            if result[:ok]
-              render json: result[:row]
-            else
-              render json: { errors: result[:errors] }, status: :unprocessable_entity
-            end
-          rescue Domain::Shared::Exceptions::RecordNotFound
-            render json: { error: "AgriculturalTask association not found" }, status: :not_found
+            presenter = Presenters::Api::Crop::CropMastersTaskTemplateUpdatePresenter.new(
+              view: self,
+              translator: CompositionRoot.translator
+            )
+            interactor = Domain::Crop::Interactors::CropMastersTaskTemplateUpdateInteractor.new(
+              output_port: presenter,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            interactor.call(input_dto)
           end
 
           # 作物から農業タスクの関連を削除
@@ -123,14 +133,21 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物または関連が見つからない
           def destroy
-            CompositionRoot.crop_gateway.destroy_masters_crop_task_template_for_api!(
-              user: current_user,
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+              user_id: current_user.id,
               crop_id: params[:crop_id],
               template_id: params[:id]
             )
-            head :no_content
-          rescue Domain::Shared::Exceptions::RecordNotFound
-            render json: { error: "AgriculturalTask association not found" }, status: :not_found
+            presenter = Presenters::Api::Crop::CropMastersTaskTemplateDestroyPresenter.new(
+              view: self,
+              translator: CompositionRoot.translator
+            )
+            interactor = Domain::Crop::Interactors::CropMastersTaskTemplateDestroyInteractor.new(
+              output_port: presenter,
+              gateway: CompositionRoot.crop_gateway,
+              user_lookup: CompositionRoot.user_lookup
+            )
+            interactor.call(input_dto)
           end
 
           def render_response(json:, status:)

@@ -4,7 +4,8 @@
 
 ## 修正単位
 
-（`*.component.ts` の `adapters/` 直 import は 2026-05-06 に一通り解消済み。次回フルスキャンで `ARCHITECTURE.md` の What we require + 禁止 1〜30 を再走査する。）
+- **解消済み（2026-05-06）**: `Api::V1::Masters::Crops::AgriculturalTasksController` の `index` / `update` / `destroy` を Interactor + Presenter 経路に統一（Application edge 禁止 3・4）。ゲートウェイ IF は変更なし。
+- （`*.component.ts` の `adapters/` 直 import は 2026-05-06 に一通り解消済み。次回フルスキャンで `ARCHITECTURE.md` の What we require + 禁止 1〜30 を再走査する。）
 
 ## スキャン補足
 
