@@ -6,7 +6,8 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
   def setup
     deletion_undo_gateway = mock("deletion_undo_gateway")
     @gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo_gateway
+      deletion_undo_gateway: deletion_undo_gateway,
+      translator: CompositionRoot.translator
     )
     @user = create(:user)
     @gateway.user_id = @user.id
@@ -197,5 +198,23 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal high.id, second.id
     assert_not second.fields_present?
     assert_equal 0, second.fields_count
+  end
+
+  test "soft_destroy_with_undo returns failure without scheduling when free_crop_plans exist" do
+    farm = create(:farm, user: @user, is_reference: false)
+    crop = create(:crop, user: @user)
+    FreeCropPlan.create!(farm: farm, crop: crop, area_sqm: 100, session_id: "sess_gateway_block")
+
+    deletion_undo_gateway = mock("deletion_undo_gateway")
+    deletion_undo_gateway.expects(:schedule).never
+
+    gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
+      deletion_undo_gateway: deletion_undo_gateway,
+      translator: CompositionRoot.translator
+    )
+
+    result = gateway.soft_destroy_with_undo(user: @user, farm_id: farm.id, toast_message: "toast")
+    assert_equal false, result[:success]
+    assert result[:error_dto].message.present?
   end
 end

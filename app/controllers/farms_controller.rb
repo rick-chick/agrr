@@ -137,20 +137,18 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        # API の destroy は既存の API コントローラに委譲するか、既存のロジックを使用
-        if @farm.free_crop_plans.any?
-          return render json: { error: I18n.t("farms.flash.cannot_delete", count: @farm.free_crop_plans.count) }, status: :unprocessable_entity
-        end
-
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
+        presenter = Presenters::Html::Farm::FarmDestroyJsonPresenter.new(
           view: self,
-          actor_id: current_user.id,
-          record: @farm,
-          toast_message: I18n.t("farms.undo.toast", name: @farm.display_name),
-          fallback_location: Rails.application.routes.url_helpers.farms_path,
-          in_use_message_key: nil,
-          delete_error_message_key: "farms.flash.delete_error"
+          fallback_location: farms_path
         )
+        Domain::Farm::Interactors::FarmDestroyInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          translator: translator,
+          gateway: CompositionRoot.farm_gateway,
+          logger: CompositionRoot.logger,
+          user_lookup: CompositionRoot.user_lookup
+        ).call(params[:id])
       end
     end
   end

@@ -37,6 +37,20 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_equal farm.display_name, body.fetch("resource")
   end
 
+  test "destroy as JSON returns 422 when farm has free_crop_plans" do
+    sign_in_as @user
+    farm = create(:farm, user: @user)
+    crop = create(:crop, user: @user)
+    FreeCropPlan.create!(farm: farm, crop: crop, area_sqm: 100, session_id: "sess_block_json")
+
+    assert_no_difference -> { Farm.count } do
+      delete farm_path(farm), as: :json
+    end
+    assert_response :unprocessable_entity
+    body = JSON.parse(@response.body)
+    assert body["error"].present?
+  end
+
   test "undo_endpoint_restores_farm" do
     sign_in_as @user
     farm = create(:farm, user: @user)

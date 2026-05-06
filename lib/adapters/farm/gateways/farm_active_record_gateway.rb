@@ -6,8 +6,9 @@ module Adapters
       class FarmActiveRecordGateway < Domain::Farm::Gateways::FarmGateway
         attr_accessor :user_id
 
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, translator:)
           @deletion_undo_gateway = deletion_undo_gateway
+          @translator = translator
         end
         def list(input_dto)
           if input_dto.is_admin
@@ -265,6 +266,14 @@ module Adapters
           farm = find_farm_model!(farm_id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          if farm.free_crop_plans.any?
+            return {
+              success: false,
+              error_dto: Domain::Shared::Dtos::ErrorDto.new(
+                @translator.t("farms.flash.cannot_delete", count: farm.free_crop_plans.count)
+              )
+            }
           end
           farm_name = farm.name
           event = @deletion_undo_gateway.schedule(

@@ -123,12 +123,13 @@ class FetchWeatherDataJob < ApplicationJob
       logger: logger_gateway
     )
 
-        interactor.execute(input_dto:)
+    interactor.execute(input_dto:)
   end
 
-    def farm_gateway
+  def farm_gateway
     @farm_gateway ||= Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
+      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
+      translator: CompositionRoot.translator
     )
   end
 

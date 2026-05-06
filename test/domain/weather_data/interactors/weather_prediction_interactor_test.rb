@@ -26,7 +26,8 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     deletion_undo = Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
     @cultivation_plan_gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
     @farm_gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo
+      deletion_undo_gateway: deletion_undo,
+      translator: CompositionRoot.translator
     )
     @weather_data_gateway = Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     @prediction_gateway = Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
