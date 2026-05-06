@@ -14,7 +14,7 @@ module Domain
         def call(region)
           farms = @gateway.list_reference_farms_for_region(region)
           @output_port.on_success(farms)
-        rescue StandardError => e
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[FarmListReferenceForRegionInteractor] #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
