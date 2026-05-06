@@ -7,8 +7,6 @@ module Api
     module PublicPlans
       # 作物スケジュール（エントリ）— 参照農場・参照作物・予測気象に基づく植え/まき帯
       class EntryScheduleController < ApplicationController
-        include EntryScheduleJsonRendering
-
         skip_before_action :authenticate_user!
         skip_before_action :verify_authenticity_token
 

@@ -4,7 +4,6 @@
 
 ## 修正単位
 
-- [ ] **エントリ作物スケジュールの ETag 応答を Presenter / 薄い HTTP ヘルパへ** — `EntryScheduleJsonRendering#render_entry_json_with_etag` は payload→ETag→`If-None-Match` 比較を controller mixin で行う。payload 生成は Interactor に置き、ETag 計算と分岐は Presenter または HTTP edge ヘルパに移し、controller は呼び分けない。@ `app/controllers/concerns/entry_schedule_json_rendering.rb` — Application edge 1
 - [ ] **OAuth コンバージョンクエリ付与を adapter へ** — `OauthConversionRedirect#append_oauth_conversion_query` は OAuth 計測の振る舞い。adapter（純粋 Ruby の URL ビルダ）に切り出し、controller は注入された adapter を呼ぶだけにする。@ `app/controllers/concerns/oauth_conversion_redirect.rb` — Application edge 1
 - [ ] **その他 API の広い `rescue` 棚卸し** — `AgrrService` + `RuntimeError` / JSON パース / システムコール例外 等を `ARCHITECTURE.md` 禁止 3（Application edge 3）の意味で個別評価。許容となる狭い境界翻訳と、`on_failure` 二重路を区別する。@ `app/controllers/api/v1/fertilizes_controller.rb`, `app/controllers/api/v1/crops_controller.rb`, `app/controllers/api/v1/cultivation_plan_rest_base_controller.rb` 他
 
@@ -23,3 +22,4 @@
 - 天気取得レンジ／予測日数は `Domain::WeatherData::Policies::{WeatherDataFetchWindowPolicy,WeatherPredictionHorizonPolicy}` に移し、concern は `Time.zone` を clock として注入（2026-05-06）。
 - `CultivationPlanManageable` を `CultivationPlanHtmlBaseController` に置換し `app/controllers/concerns/cultivation_plan_manageable.rb` を削除（2026-05-06）。
 - `DeletionUndoResponder` を `ApplicationController` のメソッドへインライン化し `app/controllers/concerns/deletion_undo_responder.rb` を削除（2026-05-06）。応答ペイロード組み立ては上記 PayloadInteractor / DualFormatResponder へ後続移管済み。
+- エントリ作物スケジュール API の ETag 応答は `EntryScheduleJsonRendering` concern を廃止し、`Presenters::Api::PublicPlans::EntryScheduleEtagJsonRendering` に集約（2026-05-06）。

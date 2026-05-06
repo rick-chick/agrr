@@ -5,13 +5,14 @@ module Presenters
     module PublicPlans
       class EntryScheduleCropsIndexPresenter < Domain::PublicPlan::Ports::EntryScheduleCropsIndexOutputPort
         include EntryScheduleApiFailureRendering
+        include EntryScheduleEtagJsonRendering
 
         def initialize(view:)
           @view = view
         end
 
         def on_success(payload_hash)
-          @view.render_entry_json_with_etag(payload_hash)
+          render_entry_schedule_etag_json(payload_hash)
         end
 
         def on_failure(failure_dto)
