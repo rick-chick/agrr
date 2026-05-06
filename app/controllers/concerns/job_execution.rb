@@ -11,32 +11,6 @@ module JobExecution
     nil
   end
 
-  # ジョブ完了時の遷移制御
-  def handle_job_completion_redirect(cultivation_plan_id, channel_class)
-    redirect_path = job_completion_redirect_path
-    return unless redirect_path
-
-    Rails.logger.info "🔄 [JobExecution] Job completed, redirecting to: #{redirect_path}"
-
-    # チャンネル経由でリダイレクト通知を送信
-    # NOTE: broadcast_to は ActionCable のチャンネルモデルとして AR インスタンスを必要とするため、
-    # ここだけは AR モデルを直接ロードする（`channel_class` がチャンネル契約を保つ責務）。
-    # Domain 例外への翻訳は呼び出し元層では不要（ジョブのインフラ専用）。
-    if channel_class
-      cultivation_plan = ::CultivationPlan.find_by(id: cultivation_plan_id)
-      return unless cultivation_plan
-
-      channel_class.broadcast_to(
-        cultivation_plan,
-        {
-          type: "redirect",
-          redirect_path: redirect_path,
-          message: I18n.t("jobs.weather_prediction.completed")
-        }
-      )
-    end
-  end
-
   # 遷移制御ジョブを必要に応じて追加
   def add_redirect_completion_job_if_needed(job_instances)
     # コントローラーインスタンスが存在する場合のみ遷移制御ジョブを追加
@@ -64,25 +38,6 @@ module JobExecution
 
   private
 
-  # 同期的ジョブチェーン実行（従来の方法）
-  def execute_job_chain(job_instances)
-    Rails.logger.info "🔗 [#{self.class.name}] Executing job chain with #{job_instances.length} jobs"
-    Rails.logger.info "📋 [#{self.class.name}] Job chain: #{job_instances.map(&:class).map(&:name).join(' → ')}"
-
-    # 各ジョブを順次実行（同期的に確実に順次実行）
-    job_instances.each_with_index do |job_instance, index|
-      Rails.logger.info "🚀 [#{self.class.name}] Executing job #{index + 1}/#{job_instances.length}: #{job_instance.class.name}"
-      # ジョブを実行（引数を渡す）
-      job_args = job_instance.job_arguments
-      Rails.logger.info "📦 [#{self.class.name}] Job arguments: #{job_args.inspect}"
-      job_instance.perform(**job_args)
-
-      Rails.logger.info "✅ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} completed: #{job_instance.class.name}"
-    end
-
-    Rails.logger.info "🎉 [#{self.class.name}] All jobs completed successfully"
-  end
-
   # 非同期ジョブチェーン実行（新しい方法）
   def execute_job_chain_async(job_instances)
     Rails.logger.info "🔗 [#{self.class.name}] Executing async job chain (sequential via wrapper) with #{job_instances.length} jobs"
@@ -107,26 +62,5 @@ module JobExecution
     Rails.logger.info "🚀 [#{self.class.name}] Enqueuing ChainedJobRunnerJob with #{chain.length} steps"
     ChainedJobRunnerJob.perform_later(chain: chain, index: 0)
     Rails.logger.info "🎉 [#{self.class.name}] Wrapper enqueued; chain will run sequentially"
-  end
-
-  # ジョブインスタンスから非同期チェーンを実行
-  def execute_job_chain_from_instances(job_instances)
-    Rails.logger.info "🔗 [#{self.class.name}] Converting job instances to async chain"
-
-    # 遷移制御ジョブを最後に追加
-    job_instances = add_redirect_completion_job_if_needed(job_instances)
-
-    # ジョブインスタンスを非同期実行用に変換
-    job_instances.each_with_index do |job_instance, index|
-      Rails.logger.info "🚀 [#{self.class.name}] Enqueuing job #{index + 1}/#{job_instances.length}: #{job_instance.class.name}"
-
-      # ジョブインスタンスのjob_argumentsメソッドを使ってハッシュを取得
-      job_args = job_instance.job_arguments
-      Rails.logger.info "📦 [#{self.class.name}] Job arguments: #{job_args.inspect}"
-
-      job_instance.class.perform_later(**job_args)
-    end
-
-    Rails.logger.info "🎉 [#{self.class.name}] All jobs enqueued for async execution"
   end
 end

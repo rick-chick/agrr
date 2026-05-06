@@ -153,6 +153,39 @@ module Api
           assert_response :success
           json_response = JSON.parse(response.body)
           assert_equal "更新された名前", json_response["name"]
+          assert_equal "更新された名前", farm.reload.name
+        end
+
+        test "should return unprocessable_entity when create farm with invalid params" do
+          post api_v1_masters_farms_path,
+               params: { farm: { name: "" } },
+               as: :json,
+               headers: {
+                 "Accept" => "application/json",
+                 "X-API-Key" => @api_key
+               }
+
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response.key?("errors")
+          assert_kind_of Array, json_response["errors"]
+        end
+
+        test "should return unprocessable_entity when update farm with invalid name" do
+          farm = create(:farm, :user_owned, user: @user)
+
+          patch api_v1_masters_farm_path(farm),
+                params: { farm: { name: "" } },
+                as: :json,
+                headers: {
+                  "Accept" => "application/json",
+                  "X-API-Key" => @api_key
+                }
+
+          assert_response :unprocessable_entity
+          json_response = JSON.parse(response.body)
+          assert json_response.key?("errors")
+          assert_kind_of Array, json_response["errors"]
         end
 
         test "should destroy farm" do

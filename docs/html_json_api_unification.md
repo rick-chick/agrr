@@ -1,5 +1,9 @@
 # HTML API / JSON API 統一方針（Concern / Policy 設計）
 
+> **注記（2026-05）**  
+> **`HtmlCrudResponder` / `ApiCrudResponder` はコードベースから撤去済み**です。マスタ系 HTML / JSON は Interactor + Presenter（Clean Architecture）で統一されています。  
+> 下記に当該 Concern 名が残る箇所は **旧計画・歴史的記録**として読み替えてください。
+
 ## 1. 目的・スコープ
 
 ### 1.1 目的
@@ -90,11 +94,9 @@
 - 対象
   - HTML: HTML系リソースコントローラほぼすべて
   - JSON: `Api::V1::Masters::*`, `Api::V1::*` のCRUDエンドポイント
-- 方針
-  - `ApplicationController` 配下に、レスポンス用Concern（案）:
-    - `HtmlCrudResponder`
-    - `ApiCrudResponder`
-  - もしくはフォーマット非依存な `CrudResponder` + API用BaseControllerでの上書き。
+- 方針（**履歴**・当時の案）
+  - `ApplicationController` 配下に、レスポンス用 Concern（案）として `HtmlCrudResponder` / `ApiCrudResponder` を列挙したが、**最終的には採用せず撤去**し Interactor + Presenter に統一した。
+  - もしくはフォーマット非依存な `CrudResponder` + API用BaseControllerでの上書き、という代替案のメモ。
   - 提供メソッド例:
     - `respond_create(resource, html: {success_path:, failure_template:}, json: {serializer:, status:})`
     - `respond_update(resource, ...)`
@@ -252,12 +254,8 @@
        - `FarmsController`
        - `FieldsController`
      - 既存の詳細なエラーメッセージ分岐が重要な箇所（例: `PlansController`, `Plans::TaskScheduleItemsController`）は、現時点では個別実装を維持。
-3. **CRUD 成功/失敗レスポンスのテンプレート化（HTML/JSON別Concern）** ✅ **完了（2025-11-27）**
-   - APIのレスポンス仕様とHTMLのバリデーションエラー挙動を揃えられる。
-   - 実装状況:
-     - `HtmlCrudResponder` と `ApiCrudResponder` を実装し、すべての対象コントローラに適用済み。
-     - HTML: 8コントローラ、JSON: 8コントローラに適用完了。
-     - 全体テスト通過（993 runs, 5881 assertions, 0 failures）。
+3. **CRUD 成功/失敗レスポンスのテンプレート化（HTML/JSON別Concern）**（**履歴**）
+   - 2025-11-27 時点で Concern 導入を「完了」と記録したが、**後続の Clean Architecture 移行により当該 Concern は撤去**され、Interactor + Presenter で統一された。
 
 ### 4.2 中期的に整理したいポイント
 
@@ -303,16 +301,10 @@
 
 ### 6.1 Concern（プレゼンテーションロジック）
 
-- **CRUDレスポンス系**
-  - `HtmlCrudResponder`
-    - HTML向けの共通レスポンス。
-    - `create` / `update` / `destroy` の成功・失敗時に、リダイレクト先や `render :new/:edit` + `422` をテンプレート化する。
-  - `ApiCrudResponder`
-    - JSON向けの共通レスポンス。
-    - 成功時: `render json: resource, status: ...`
-    - 失敗時: `render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity`
-  - （オプション）`CrudResponder`
-    - 上記2つの共通インタフェースを定義するベースConcern。
+- **CRUDレスポンス系**（**履歴**・当時の想定）
+  - `HtmlCrudResponder` / `ApiCrudResponder` は **未採用・撤去済み**。現状は Interactor + Presenter が相当する責務を担う。
+  - （オプション・**未採用**）`CrudResponder`
+    - フォーマット非依存のベース Concern案のメモ。
   - **主な対象ファイル（想定適用先）**
     - HTML:
       - `app/controllers/crops_controller.rb`
@@ -559,19 +551,8 @@
 
 ### 7.1 実装済みの統一ポイント
 
-- **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入** ✅ **完了（2025-11-27）**
-  - `HtmlCrudResponder`: HTML向けの共通レスポンスConcernを実装
-    - `respond_to_create`, `respond_to_update` を提供
-    - 成功時: `redirect_to` + flashメッセージ、失敗時: `render :new/:edit, status: :unprocessable_entity`
-    - `update_result` パラメータにより、元の動作（`update`メソッドの戻り値で判定）を維持
-  - `ApiCrudResponder`: JSON向けの共通レスポンスConcernを実装
-    - `respond_to_index`, `respond_to_show`, `respond_to_create`, `respond_to_update`, `respond_to_destroy` を提供
-    - 成功時: `render json: resource, status: ...`、失敗時: `render json: { errors: ... }, status: :unprocessable_entity`
-  - 適用済みコントローラ:
-    - HTML: `FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
-    - JSON: `Api::V1::Masters::*` のすべてのコントローラ（8コントローラ）
-  - 各コントローラのテストにConcernの包含確認テストを追加
-  - 全体テスト通過（993 runs, 5881 assertions, 0 failures）
+- **CRUDレスポンス Concern（`HtmlCrudResponder` / `ApiCrudResponder`）**（**履歴**）
+  - 一時的に導入・記録されたが **コードベースから撤去済み**。現状は Interactor + Presenter による CRUD 応答に統一。
 - **削除 + Undo フロー**
   - Concern `DeletionUndoFlow` を実装し、代表的な参照マスタ系HTMLコントローラ（crops, fertilizes, pesticides, pests, interaction_rules, agricultural_tasks, farms, fields）の `destroy` に適用済み。
   - JSON/HTML両方のレスポンス形式は既存の `DeletionUndoResponder` に委譲しつつ、各コントローラではほぼ1〜2行で呼び出せる形に整理。
@@ -830,31 +811,8 @@
 
 ### 7.3 実装済みの統一ポイント（2025-11-27 更新）
 
-- **CRUDレスポンスConcern（`HtmlCrudResponder` / `ApiCrudResponder`）の導入** ✅ **完了**
-  - **実装内容**:
-    - `HtmlCrudResponder`: HTML向けの共通レスポンスConcern
-      - `respond_to_create(resource, notice:, alert:, redirect_path:, render_action:)`
-      - `respond_to_update(resource, notice:, alert:, redirect_path:, render_action:, update_result:)`
-      - 成功時: `redirect_to` + flashメッセージ
-      - 失敗時: `render :new/:edit, status: :unprocessable_entity`
-    - `ApiCrudResponder`: JSON向けの共通レスポンスConcern
-      - `respond_to_index(resources, status:)`
-      - `respond_to_show(resource, status:)`
-      - `respond_to_create(resource, status:, error_serializer:)`
-      - `respond_to_update(resource, status:, error_serializer:, update_result:)`
-      - `respond_to_destroy(resource, status:, error_serializer:, destroy_result:)`
-      - 成功時: `render json: resource, status: ...`
-      - 失敗時: `render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity`
-  - **適用済みコントローラ**:
-    - HTML:
-      - `FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
-    - JSON:
-      - `Api::V1::Masters::FarmsController`, `CropsController`, `FieldsController`, `FertilizesController`, `PesticidesController`, `PestsController`, `AgriculturalTasksController`, `InteractionRulesController`
-  - **実装のポイント**:
-    - `HtmlCrudResponder#respond_to_update` に `update_result` パラメータを追加し、元の動作（`update`メソッドの戻り値で判定）を維持
-    - 各コントローラのテストにConcernの包含確認テストを追加
-    - 全体テスト通過（993 runs, 5881 assertions, 0 failures）
-  - **コミット**: 2025-11-27 完了
+- **CRUDレスポンス Concern（`HtmlCrudResponder` / `ApiCrudResponder`）**（**履歴**）
+  - 当時の詳細仕様の記録は上記と同様、**現状は撤去済み**。マスタ系は Interactor + Presenter に一本化。
 
 ### 7.4 今後の具体的なステップ（優先度順）
 

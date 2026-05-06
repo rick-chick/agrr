@@ -70,9 +70,9 @@
 
 - [x] **Api::V1::Masters::BaseControllerTest#test_should_reject_request_without_API_key**— 解消済み（当時: API key メッセージとログイン案内の期待差）
 
-- [x] **PesticidesControllerTest**（複数）— 解消済み（当時: Entity/HtmlCrudResponder/Policy/JSON vs redirect 等）
+- [x] **PesticidesControllerTest**（複数）— 解消済み（当時: Entity/Policy/JSON vs redirect 等）
 
-- [x] **ApiCrudResponderTest**（4 failures）— 解消済み（当時: FarmsController include・レスポンス形式）
+- [x] **Api::V1::Masters::FarmsControllerTest**（当時別ファイル名の統合テスト）— 解消済み
 
 - [x] **AgriculturalTasksControllerTest**（大半対応済、残り参照フラグ関連も含め解消）
 
@@ -109,7 +109,6 @@
 1. **ルート追加** (optimizing_public_plans_path) → 複数テストに波及
 2. **AgriculturalTasksController** の redirect に id を渡す → 多数の失敗解消
 3. **PesticidesController** の index/Presenter/undo 仕様の整理
-4. **ApiCrudResponder / HtmlCrudResponder** の include とレスポンス
-5. 上記以外の Controller / Integration / Job の個別合わせ
+4. 上記以外の Controller / Integration / Job の個別合わせ
 
 </details>
