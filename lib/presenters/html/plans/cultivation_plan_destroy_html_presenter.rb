@@ -3,7 +3,7 @@
 module Presenters
   module Html
     module Plans
-      # HTML DELETE /plans/:id — CultivationPlanDestroyInteractor の出力（DeletionUndoResponder）
+      # HTML DELETE /plans/:id — CultivationPlanDestroyInteractor の出力（ApplicationController の削除 Undo 応答）
       class CultivationPlanDestroyHtmlPresenter < Domain::CultivationPlan::Ports::CultivationPlanDestroyOutputPort
         def initialize(view:)
           @view = view

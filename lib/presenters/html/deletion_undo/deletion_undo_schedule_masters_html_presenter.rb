@@ -3,7 +3,7 @@
 module Presenters
   module Html
     module DeletionUndo
-      # HTML マスタ削除 — DeletionUndoFlow 経由の schedule_deletion_with_undo（DeletionUndoResponder）
+      # HTML マスタ削除 — `DeletionUndo::HtmlMasterScheduleInvoker` から起動（ApplicationController の削除 Undo 応答）
       class DeletionUndoScheduleMastersHtmlPresenter < Domain::DeletionUndo::Ports::DeletionUndoScheduleOutputPort
         def initialize(view:, fallback_location:, delete_error_message_key:, in_use_message_key: nil)
           @view = view

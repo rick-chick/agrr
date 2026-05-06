@@ -2,7 +2,7 @@
 
 module Presenters
   module Plans
-    # DELETE タスクスケジュール項目 — DeletionUndoScheduleInteractor の出力（DeletionUndoResponder）
+    # DELETE タスクスケジュール項目 — DeletionUndoScheduleInteractor の出力（ApplicationController の削除 Undo 応答）
     class TaskScheduleItemDestroyPresenter < Domain::DeletionUndo::Ports::DeletionUndoScheduleOutputPort
       def initialize(view:, logger:, fallback_location:)
         @view = view
