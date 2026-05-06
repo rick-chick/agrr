@@ -132,7 +132,9 @@ module Domain
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
           @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(empty_data)
-          assert_raises(StandardError, "Weather data missing") { @interactor.execute(input_dto: @input_dto) }
+          assert_raises(FetchWeatherDataPerformInteractor::EmptyWeatherDataNotAllowedError) do
+            @interactor.execute(input_dto: @input_dto)
+          end
         end
 
         test "raises on nil response" do
@@ -140,7 +142,9 @@ module Domain
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
           @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(nil)
-          assert_raises(StandardError, "invalid or missing") { @interactor.execute(input_dto: @input_dto) }
+          assert_raises(FetchWeatherDataPerformInteractor::InvalidWeatherApiResponseError) do
+            @interactor.execute(input_dto: @input_dto)
+          end
         end
 
         test "raises on non-hash response" do
@@ -148,16 +152,32 @@ module Domain
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
           @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns([])
-          assert_raises(StandardError, "invalid or missing") { @interactor.execute(input_dto: @input_dto) }
+          assert_raises(FetchWeatherDataPerformInteractor::InvalidWeatherApiResponseError) do
+            @interactor.execute(input_dto: @input_dto)
+          end
         end
 
         test "raises on missing location" do
           @cultivation_plan_gateway.expects(:update_phase).once
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
           @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
-          bad_data = { "data" => [ { "time" => "2025-01-01", "temperature_2m_max" => 20 } ], "location" => nil }
+          bad_data = {
+            "data" => (1..7).map { |day| {
+              "time" => "2025-01-#{'%02d' % day}",
+              "temperature_2m_max" => 20,
+              "temperature_2m_min" => 10,
+              "temperature_2m_mean" => 15,
+              "precipitation_sum" => 0,
+              "sunshine_hours" => 6,
+              "wind_speed_10m" => 3,
+              "weather_code" => 0
+            } },
+            "location" => nil
+          }
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(bad_data)
-          assert_raises(StandardError, "missing location") { @interactor.execute(input_dto: @input_dto) }
+          assert_raises(FetchWeatherDataPerformInteractor::MissingOrInvalidWeatherLocationError) do
+            @interactor.execute(input_dto: @input_dto)
+          end
         end
 
         test "raises on excessive missing data" do
@@ -166,7 +186,9 @@ module Domain
           @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
           insufficient_data = { "location" => { "latitude" => 35.6762, "longitude" => 139.6503, "elevation" => 50, "timezone" => "Asia/Tokyo" }, "data" => Array.new(2) { |i| { "time" => "2025-01-0#{i+1}", "temperature_2m_max" => 20 } } } # 5/7 missing
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(insufficient_data)
-          assert_raises(StandardError, /exceeds/) { @interactor.execute(input_dto: @input_dto) }
+          assert_raises(FetchWeatherDataPerformInteractor::ExcessiveMissingWeatherDaysError) do
+            @interactor.execute(input_dto: @input_dto)
+          end
         end
 
         test "handles acceptable missing data and upserts" do

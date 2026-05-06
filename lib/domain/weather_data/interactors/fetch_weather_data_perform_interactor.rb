@@ -6,6 +6,12 @@ module Domain
       class FetchWeatherDataPerformInteractor
         include InputPorts::FetchWeatherDataPerformInputPort
 
+        class InvalidWeatherApiResponseError < StandardError; end
+        class InvalidWeatherDataArrayError < StandardError; end
+        class EmptyWeatherDataNotAllowedError < StandardError; end
+        class ExcessiveMissingWeatherDaysError < StandardError; end
+        class MissingOrInvalidWeatherLocationError < StandardError; end
+
         MAX_RETRY_ATTEMPTS = 5
         ALLOWED_MISSING_RATIO = 0.05
         SUFFICIENT_DATA_RATIO = 0.8
@@ -95,12 +101,14 @@ module Domain
           weather_data = fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
 
           unless weather_data.is_a?(Hash)
-            raise StandardError, "Weather data response is invalid or missing"
+            raise InvalidWeatherApiResponseError,
+              "Weather data response is invalid or missing (expected Hash, got #{weather_data.class})"
           end
 
           data_points = weather_data["data"]
           unless data_points.is_a?(Array)
-            raise StandardError, "Weather data response is invalid or missing"
+            raise InvalidWeatherDataArrayError,
+              "Weather data response is invalid or missing (expected Array for \"data\", got #{data_points.class})"
           end
 
           expected_days = (start_date..end_date).count
@@ -109,9 +117,11 @@ module Domain
           allowed_missing_days = (expected_days * ALLOWED_MISSING_RATIO).ceil
 
           if data_points.empty?
-            raise StandardError, "Weather data missing for #{period_str} (0/#{expected_days} days)"
+            raise EmptyWeatherDataNotAllowedError,
+              "Weather data missing for #{period_str} (0/#{expected_days} days)"
           elsif missing_days > allowed_missing_days
-            raise StandardError, "Weather data missing #{missing_days} days exceeds allowed #{allowed_missing_days} days (#{(ALLOWED_MISSING_RATIO * 100).round(1)}%)"
+            raise ExcessiveMissingWeatherDaysError,
+              "Weather data missing #{missing_days} days exceeds allowed #{allowed_missing_days} days (#{(ALLOWED_MISSING_RATIO * 100).round(1)}%)"
           elsif missing_days.positive?
             @presenter.warn "⚠️  #{farm_info} Weather data incomplete for #{period_str}: #{actual_days}/#{expected_days} days (missing #{missing_days}, allowed #{allowed_missing_days})"
           end
@@ -119,7 +129,8 @@ module Domain
           # WeatherLocation作成/取得
           location_data = weather_data["location"]
           unless location_data.is_a?(Hash)
-            raise StandardError, "Weather data is missing location information"
+            raise MissingOrInvalidWeatherLocationError,
+              "Weather data is missing location information (expected Hash, got #{location_data.class})"
           end
           weather_location = @weather_data_gateway.find_or_create_weather_location(
             latitude: location_data["latitude"],
