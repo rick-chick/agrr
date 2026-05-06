@@ -125,6 +125,22 @@ module CompositionRoot
         )
     end
 
+    def adjust_with_db_weather_interactor(clock: Time.zone)
+      Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.new(
+        logger: logger,
+        translator: translator,
+        clock: clock,
+        plan_gateway: Adapters::CultivationPlan::Gateways::AdjustWithDbWeatherPlanActiveRecordGateway.new(logger: logger),
+        weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
+          weather_prediction_interactor(weather_location: weather_location, farm: farm, clock: clock)
+        },
+        agrr_adjust_gateway: agrr_adjust_gateway,
+        save_adjusted_gateway: save_adjusted_agrr_result_gateway,
+        optimization_events_gateway: cultivation_plan_rest_optimization_events_gateway,
+        debug_dump: adjust_with_db_weather_debug_dump(clock)
+      )
+    end
+
     def api_private_plan_job_chain_enqueuer
       @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
         logger: logger,
@@ -406,6 +422,29 @@ module CompositionRoot
     end
 
     private
+
+    def adjust_with_db_weather_debug_dump(time_zone)
+      return nil if Rails.env.production?
+
+      log = logger
+      lambda do |current_allocation:, moves:, fields:, crops:|
+        debug_dir = Rails.root.join("tmp/debug")
+        FileUtils.mkdir_p(debug_dir)
+        ts = time_zone.now.to_i
+        debug_current_allocation_path = debug_dir.join("adjust_current_allocation_#{ts}.json")
+        debug_moves_path = debug_dir.join("adjust_moves_#{ts}.json")
+        debug_fields_path = debug_dir.join("adjust_fields_#{ts}.json")
+        debug_crops_path = debug_dir.join("adjust_crops_#{ts}.json")
+        File.write(debug_current_allocation_path, JSON.pretty_generate(current_allocation))
+        File.write(debug_moves_path, JSON.pretty_generate({ "moves" => moves }))
+        File.write(debug_fields_path, JSON.pretty_generate({ "fields" => fields }))
+        File.write(debug_crops_path, JSON.pretty_generate({ "crops" => crops }))
+        log.info "📁 [Adjust] Debug current_allocation saved to: #{debug_current_allocation_path}"
+        log.info "📁 [Adjust] Debug moves saved to: #{debug_moves_path}"
+        log.info "📁 [Adjust] Debug fields saved to: #{debug_fields_path}"
+        log.info "📁 [Adjust] Debug crops saved to: #{debug_crops_path}"
+      end
+    end
 
     def weather_location_dto_from_active_record(weather_location)
       Domain::WeatherData::Dtos::WeatherLocationDto.new(
