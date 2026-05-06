@@ -8,12 +8,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SendContactMessageUseCase } from '../../usecase/contact/send-contact-message.usecase';
+import { CONTACT_FORM_PROVIDERS } from '../../usecase/contact/contact-form.providers';
 import { SendContactMessageSuccessDto } from '../../usecase/contact/send-contact-message.dtos';
 import {
   SendContactMessageOutputPort,
   SEND_CONTACT_MESSAGE_OUTPUT_PORT
 } from '../../usecase/contact/send-contact-message.output-port';
-import { CONTACT_GATEWAY_PROVIDER } from '../../adapters/contact/http-contact-gateway.service';
 import {
   ContactFormView,
   ContactFormViewState,
@@ -41,8 +41,7 @@ const initialControl: ContactFormViewState = {
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, TranslateModule],
   providers: [
-    SendContactMessageUseCase,
-    CONTACT_GATEWAY_PROVIDER,
+    ...CONTACT_FORM_PROVIDERS,
     { provide: SEND_CONTACT_MESSAGE_OUTPUT_PORT, useExisting: ContactFormComponent }
   ],
   template: `
