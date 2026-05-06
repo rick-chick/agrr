@@ -15,7 +15,7 @@ class MonitorMigrationStatusJob < ApplicationJob
       primary_status = check_migration_status(:primary)
       results[:primary] = { status: "ok", pending: primary_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Primary database: #{primary_status[:pending]} pending migrations"
-    rescue => e
+    rescue StandardError => e
       results[:primary] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Primary database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
@@ -26,7 +26,7 @@ class MonitorMigrationStatusJob < ApplicationJob
       cache_status = check_migration_status(:cache)
       results[:cache] = { status: "ok", pending: cache_status[:pending] }
       Rails.logger.info "[MonitorMigrationStatusJob] Cache database: #{cache_status[:pending]} pending migrations"
-    rescue => e
+    rescue StandardError => e
       results[:cache] = { status: "error", error: e.message }
       Rails.logger.error "[MonitorMigrationStatusJob] Cache database check failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

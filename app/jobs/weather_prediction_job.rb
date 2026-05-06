@@ -56,7 +56,7 @@ class WeatherPredictionJob < ApplicationJob
 
       Rails.logger.info "✅ [WeatherPredictionJob] Weather prediction completed for plan ##{cultivation_plan_id}"
 
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "❌ [WeatherPredictionJob] Failed to predict weather for plan ##{cultivation_plan_id}: #{e.message}"
       cultivation_plan.phase_failed!("predicting_weather", channel_class)
       raise

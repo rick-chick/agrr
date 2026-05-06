@@ -53,7 +53,7 @@ class OptimizationJob < ApplicationJob
 
       Rails.logger.info "✅ [OptimizationJob] Optimization completed for plan ##{cultivation_plan_id}"
 
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "❌ [OptimizationJob] Failed to optimize plan ##{cultivation_plan_id}: #{e.message}"
       cultivation_plan.phase_failed!("optimizing", channel_class)
       raise

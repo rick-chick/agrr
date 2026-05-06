@@ -23,7 +23,7 @@ class CompletionNotificationJob < ApplicationJob
 
       Rails.logger.info "✅ [CompletionNotificationJob] Completion notification sent for plan ##{cultivation_plan_id}"
 
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "❌ [CompletionNotificationJob] Failed to send completion notification for plan ##{cultivation_plan_id}: #{e.message}"
       raise
     end

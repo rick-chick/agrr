@@ -24,7 +24,7 @@ class ChainedJobRunnerJob < ApplicationJob
       # ActiveJobを経由せず直接performを呼ぶことで確実に同期実行し、引数もキーワードで渡す
       job_class.new.perform(**job_args)
       Rails.logger.info "✅ [ChainedJobRunnerJob] Completed: #{job_class_name} (#{index + 1}/#{chain.length})"
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "❌ [ChainedJobRunnerJob] Failed at #{job_class_name} (index=#{index}): #{e.message}"
       Rails.logger.error e.backtrace.first(5).join("\n")
       raise
