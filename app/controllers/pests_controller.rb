@@ -71,17 +71,10 @@ class PestsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          record: @pest,
-          toast_message: I18n.t("pests.undo.toast", name: @pest.name),
-          fallback_location: pests_path,
-          in_use_message_key: "pests.flash.cannot_delete_in_use",
-          delete_error_message_key: "pests.flash.delete_error"
-        )
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to pests_path, alert: I18n.t("pests.flash.not_found")
+        presenter = Presenters::Html::Pest::PestDestroyHtmlPresenter.new(view: self)
+        Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
+          user_id: current_user.id,
+          translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do

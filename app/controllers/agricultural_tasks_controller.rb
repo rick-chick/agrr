@@ -117,8 +117,6 @@ class AgriculturalTasksController < ApplicationController
           in_use_message_key: nil,
           delete_error_message_key: "agricultural_tasks.flash.delete_error"
         )
-      rescue Domain::Shared::Policies::PolicyPermissionDenied
-        redirect_to agricultural_tasks_path, alert: I18n.t("agricultural_tasks.flash.not_found")
       end
     end
   end

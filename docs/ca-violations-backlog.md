@@ -10,4 +10,5 @@
 
 - 2026-05-06: `InteractionRulesController` destroy を `InteractionRuleDestroyInteractor` + HTML/API Presenter に統一（ゲートウェイ preload・controller `rescue` 撤去）。`InteractionRuleDeletePresenter` の JSON `redirect_path` は HTML コントローラが `interaction_rules_path` を返すフックに変更。
 - 2026-05-06: `PublicPlansController#create` の `create_job_instances_for_public_plans` を削除し、`PublicPlanOptimizationJobChainGateway#enqueue_after_create!`（`redirect_path` 引数）経由に集約。
-- 探索ヒント（未確定・READ 要）: `app/controllers` に `PolicyPermissionDenied` 等の controller 側 `rescue` が残るアクションがある（例: `agricultural_tasks_controller.rb`, `pests_controller.rb`）。各件は Application edge と禁止 3 の観点で個別に判定すること。
+- 2026-05-06: `PestsController#destroy` の HTML を `PestDestroyInteractor` + `PestDestroyHtmlPresenter` に統一（`HtmlMasterScheduleInvoker` と `PolicyPermissionDenied` の `rescue` 撤去）。`AgriculturalTasksController#destroy` の JSON からデッドな `rescue PolicyPermissionDenied` を削除。
+- 探索ヒント（未確定・READ 要）: `app/controllers` に `PolicyPermissionDenied` 等の controller 側 `rescue` が残るアクションがある（例: マスタ以外・API の `AgrrService` 周り）。各件は Application edge と禁止 3 の観点で個別に判定すること。
