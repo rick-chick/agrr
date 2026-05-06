@@ -95,6 +95,31 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_includes farm_ids, farm.id
   end
 
+  test "GET show as JSON returns farm fields payload via interactor" do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: "Detail JSON Farm")
+
+    get farm_path(farm, format: :json)
+    assert_response :success
+    body = response.parsed_body
+    assert_equal farm.id, body["id"]
+    assert_equal "Detail JSON Farm", body["name"]
+    assert_kind_of Array, body["fields"]
+  end
+
+  test "PATCH update as JSON updates farm via interactor" do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: "Before Patch")
+
+    patch farm_path(farm, format: :json), params: { farm: { name: "After Patch" } }
+    assert_response :success
+    body = response.parsed_body
+    assert_equal "After Patch", body["name"]
+    assert_equal farm.id, body["id"]
+    farm.reload
+    assert_equal "After Patch", farm.name
+  end
+
   test "GET index HTML lists only current user farms for non-admin" do
     sign_in_as @user
     farm = create(:farm, user: @user, name: "My Listed Farm")

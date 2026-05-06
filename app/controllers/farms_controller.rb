@@ -47,7 +47,15 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        render json: @farm
+        presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
+        Domain::Farm::Interactors::FarmDetailInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          translator: translator,
+          gateway: CompositionRoot.farm_gateway,
+          logger: CompositionRoot.logger,
+          user_lookup: CompositionRoot.user_lookup
+        ).call(params[:id])
       end
     end
   end
@@ -101,12 +109,16 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        update_result = @farm.update(farm_params)
-        if update_result
-          render json: @farm, status: :ok
-        else
-          render json: { errors: @farm.errors }, status: :unprocessable_entity
-        end
+        input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
+        presenter = Presenters::Api::Farm::FarmUpdatePresenter.new(view: self)
+        Domain::Farm::Interactors::FarmUpdateInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          translator: translator,
+          gateway: CompositionRoot.farm_gateway,
+          logger: CompositionRoot.logger,
+          user_lookup: CompositionRoot.user_lookup
+        ).call(input_dto)
       end
     end
   end
