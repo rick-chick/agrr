@@ -14,6 +14,7 @@
 
 ## 解消済み（記録）
 
+- **`agrr_optimization` concern — adjust 時の実測＋予測気象の AGRR 形式化とマージ**（2026-05-06）: 観測行の整形・平均気温算出・日照秒変換・予測 `data` 連結を `Domain::WeatherData::Services::AdjustHistoricalPredictionMerger` に集約。concern は AR 行からプレーン Hash へ写像して委譲。項目 1（concern 本体の他メソッド・`CompositionRoot` 呼び出し等）は継続。
 - **`agrr_optimization` concern — fields / crops / interaction_rules のペイロード組み立て**（2026-05-06）: `build_fields_config`・`build_crops_config`・`build_interaction_rules` を `AgrrFieldsConfigCalculator` / `AgrrCropsConfigCalculator` / `AgrrInteractionRulesCalculator` に委譲。AR・ログ・乱数はエッジで組み立て・注入。`adjust_with_db_weather`・`save_adjusted_result` 等は項目 1 に残る。
 - **`agrr_optimization` concern — `build_current_allocation` の AGRR ペイロード集計**（2026-05-06）: `optimization_result` の純粋組み立てを `Domain::CultivationPlan::Calculators::AgrrCurrentAllocationCalculator` へ。Concern は AR 走査・フィルタ・`field_rows` 組み立てとログ。Interactor テストに相当する振る舞いはドメイン計算機の単体テストで固定。
 - **`agrr_optimization` concern — 有効計画期間の算出**（2026-05-06）: `calculate_effective_planning_period` を `Domain::CultivationPlan::Calculators::EffectivePlanningPeriodCalculator` へ移動。`as_of` 注入・`lib/domain` では `Date.current` / ActiveSupport duration 不使用（禁止 4）。無効日付は `EffectivePlanningPeriodInvalidDateError`、concern で既存 I18n に写像。concern 本体・他 concern はバックログ項目 1 に残る。

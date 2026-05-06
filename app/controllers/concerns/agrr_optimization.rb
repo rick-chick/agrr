@@ -524,45 +524,33 @@ module AgrrOptimization
       else
         Rails.logger.info "✅ [Adjust] Historical weather data loaded: #{historical_weather_data.count} records (#{historical_data_start} to #{historical_data_end})"
 
-        # 実測データをAGRR形式に変換
-        current_year_formatted = {
-          "latitude" => weather_location.latitude.to_f,
-          "longitude" => weather_location.longitude.to_f,
-          "elevation" => (weather_location.elevation || 0.0).to_f,
-          "timezone" => weather_location.timezone,
-          "data" => historical_weather_data.filter_map do |datum|
-            # Skip records with missing temperature data
-            next if datum.temperature_max.nil? || datum.temperature_min.nil?
+        historical_rows = historical_weather_data.filter_map do |datum|
+          next if datum.temperature_max.nil? || datum.temperature_min.nil?
 
-            # Calculate mean from max/min if missing
-            temp_mean = datum.temperature_mean
-            if temp_mean.nil?
-              temp_mean = (datum.temperature_max.to_f + datum.temperature_min.to_f) / 2.0
-            else
-              temp_mean = temp_mean.to_f
-            end
+          {
+            date: datum.date,
+            temperature_max: datum.temperature_max,
+            temperature_min: datum.temperature_min,
+            temperature_mean: datum.temperature_mean,
+            precipitation: datum.precipitation,
+            sunshine_hours: datum.sunshine_hours,
+            wind_speed: datum.wind_speed,
+            weather_code: datum.weather_code
+          }
+        end
 
-            {
-              "time" => datum.date.to_s,
-              "temperature_2m_max" => datum.temperature_max.to_f,
-              "temperature_2m_min" => datum.temperature_min.to_f,
-              "temperature_2m_mean" => temp_mean,
-              "precipitation_sum" => (datum.precipitation || 0.0).to_f,
-              "sunshine_duration" => datum.sunshine_hours ? (datum.sunshine_hours.to_f * 3600.0) : 0.0, # 時間→秒
-              "wind_speed_10m_max" => (datum.wind_speed || 0.0).to_f,
-              "weather_code" => datum.weather_code || 0
-            }
-          end
-        }
+        current_year_formatted = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.build_historical_agrr_series(
+          latitude: weather_location.latitude.to_f,
+          longitude: weather_location.longitude.to_f,
+          elevation: (weather_location.elevation || 0.0).to_f,
+          timezone: weather_location.timezone,
+          rows: historical_rows
+        )
 
-        # 実測データと予測データをマージ
-        weather_data = {
-          "latitude" => current_year_formatted["latitude"],
-          "longitude" => current_year_formatted["longitude"],
-          "elevation" => current_year_formatted["elevation"],
-          "timezone" => current_year_formatted["timezone"],
-          "data" => current_year_formatted["data"] + prediction_data["data"]
-        }
+        weather_data = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.merge_historical_series_with_prediction(
+          current_year_formatted,
+          prediction_data
+        )
         Rails.logger.info "✅ [Adjust] Merged weather data: historical=#{historical_weather_data.count} records, prediction=#{prediction_data['data'].count} records"
       end
 
@@ -587,13 +575,10 @@ module AgrrOptimization
         if historical_weather_data.empty?
           weather_data = extended_prediction_data
         else
-          weather_data = {
-            "latitude" => current_year_formatted["latitude"],
-            "longitude" => current_year_formatted["longitude"],
-            "elevation" => current_year_formatted["elevation"],
-            "timezone" => current_year_formatted["timezone"],
-            "data" => current_year_formatted["data"] + extended_prediction_data["data"]
-          }
+          weather_data = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.merge_historical_series_with_prediction(
+            current_year_formatted,
+            extended_prediction_data
+          )
         end
 
         Rails.logger.info "✅ [Adjust] Extended prediction data to cover until #{effective_planning_end}"
