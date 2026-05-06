@@ -240,6 +240,67 @@ module Adapters
           ::PestCropAssociationService.update_crop_associations_by_pest_id(pest_id, crop_ids, user: user)
         end
 
+        def associate_affected_crops_for_ai_pest(pest_id:, affected_crops:, user:, logger:)
+          logger.info "🔗 [AI Pest] associate_affected_crops_for_ai_pest called with: #{affected_crops.inspect}"
+
+          crop_ids = extract_crop_ids_from_ai_payload(affected_crops)
+          logger.info "🔗 [AI Pest] Extracted crop IDs: #{crop_ids.inspect}"
+          logger.info "🔗 [AI Pest] Current user: #{user&.id || "nil"}, is_admin?: #{user.respond_to?(:admin?) && user.admin?}"
+
+          if crop_ids.empty?
+            crop_ids = crop_ids_from_ai_names_fallback(affected_crops, user: user, logger: logger)
+            crop_ids.uniq!
+            logger.info "🔗 [AI Pest] Crop IDs after fallback: #{crop_ids.inspect}"
+          end
+
+          if crop_ids.empty?
+            logger.warn "⚠️  [AI Pest] No crop IDs extracted from affected_crops"
+            return 0
+          end
+
+          pest = ::Pest.find_by(id: pest_id)
+          unless pest
+            logger.warn "⚠️  [AI Pest] Pest not found: ID=#{pest_id}"
+            return 0
+          end
+
+          associated_count = 0
+          begin
+            crop_ids.each do |crop_id|
+              crop = ::Crop.find_by(id: crop_id)
+              unless crop
+                logger.warn "⚠️  [AI Pest] Crop not found: ID=#{crop_id}"
+                next
+              end
+
+              logger.info "🔗 [AI Pest] Processing crop: #{crop.name} (ID: #{crop.id}, is_reference: #{crop.is_reference}, user_id: #{crop.user_id})"
+
+              can_access = ai_pest_crop_accessible?(crop, pest, user: user)
+
+              logger.info "🔗 [AI Pest] Can access crop #{crop.name}? #{can_access}"
+
+              if can_access
+                if pest.crops.include?(crop)
+                  logger.info "ℹ️  [AI Pest] Crop already associated: #{crop.name}"
+                else
+                  pest.crops << crop
+                  associated_count += 1
+                  logger.info "✅ [AI Pest] Associated crop: #{crop.name} (ID: #{crop.id})"
+                end
+              else
+                logger.warn "⚠️  [AI Pest] Cannot access crop: #{crop.name} (user_id: #{crop.user_id}, current_user: #{user&.id})"
+              end
+            end
+
+            logger.info "✅ [AI Pest] Crop association completed: #{associated_count} crops associated"
+          rescue ActiveRecord::ActiveRecordError => e
+            logger.error "❌ [AI Pest] Failed to associate crops: #{e.message}"
+            logger.error "❌ [AI Pest] Backtrace: #{e.backtrace.first(5).join("\n")}"
+          end
+
+          associated_count
+        end
+
         def create(create_input_dto)
           pest = ::Pest.new(
             name: create_input_dto.name,
@@ -275,6 +336,64 @@ module Adapters
         end
 
         private
+
+        def extract_crop_ids_from_ai_payload(affected_crops)
+          affected_crops.map do |c|
+            if c.is_a?(Hash)
+              c["crop_id"] || c[:crop_id] || c["crop_id".to_sym] || c[:'crop_id']
+            elsif c.respond_to?(:[])
+              c["crop_id"] || c[:crop_id] || c["crop_id".to_sym]
+            elsif c.respond_to?(:crop_id)
+              c.crop_id
+            else
+              nil
+            end
+          end.compact.reject(&:blank?).map(&:to_i)
+        end
+
+        def crop_ids_from_ai_names_fallback(affected_crops, user:, logger:)
+          crop_names = affected_crops.map do |c|
+            if c.is_a?(Hash)
+              c["crop_name"] || c[:crop_name] || c["crop_name".to_sym] || c[:'crop_name']
+            elsif c.respond_to?(:[])
+              c["crop_name"] || c[:crop_name] || c["crop_name".to_sym]
+            elsif c.respond_to?(:crop_name)
+              c.crop_name
+            else
+              nil
+            end
+          end.compact.reject(&:blank?).map(&:to_s)
+
+          logger.info "🔗 [AI Pest] Fallback with crop names: #{crop_names.inspect}"
+
+          ids = []
+          crop_names.each do |name|
+            candidate = ::Crop.reference.find_by(name: name)
+            candidate ||= if user
+              ::Crop.user_owned.where(user_id: user.id).find_by(name: name)
+            else
+              nil
+            end
+
+            if candidate
+              ids << candidate.id
+              logger.info "✅ [AI Pest] Fallback matched crop by name: #{name} -> ID=#{candidate.id}"
+            else
+              logger.warn "⚠️  [AI Pest] Could not match crop by name: #{name}"
+            end
+          end
+          ids
+        end
+
+        def ai_pest_crop_accessible?(crop, pest, user:)
+          if crop.is_reference
+            true
+          elsif user.nil? || (user.respond_to?(:anonymous?) && user.anonymous?)
+            false
+          else
+            PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: user)
+          end
+        end
 
         def index_scope_for_user(user)
           if user.admin?
