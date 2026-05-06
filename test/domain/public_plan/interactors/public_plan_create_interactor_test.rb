@@ -91,8 +91,8 @@ module Domain
 
           sequence = []
           opt_gateway = Object.new
-          opt_gateway.define_singleton_method(:enqueue_after_create!) do |cultivation_plan_id:, caller_label:|
-            sequence << [ :enqueue, cultivation_plan_id, caller_label ]
+          opt_gateway.define_singleton_method(:enqueue_after_create!) do |cultivation_plan_id:, caller_label:, redirect_path: nil|
+            sequence << [ :enqueue, cultivation_plan_id, caller_label, redirect_path ]
           end
 
           received = nil
@@ -120,7 +120,7 @@ module Domain
           interactor.call(input_dto)
 
           assert_equal [
-            [ :enqueue, 123, "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor" ],
+            [ :enqueue, 123, "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor", nil ],
             [ :success, 123 ]
           ], sequence
           assert_instance_of Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto, received

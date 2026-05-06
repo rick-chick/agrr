@@ -44,6 +44,36 @@ module Adapters
             gateway.enqueue_after_create!(cultivation_plan_id: 99, caller_label: "TestCaller")
           end
         end
+
+        test "enqueue_after_create passes redirect_path to dispatcher when given" do
+          dispatcher = mock("dispatcher")
+          logger = mock("logger")
+          logger.expects(:info).at_least_once
+          channel = OptimizationChannel
+
+          weather_location = Struct.new(:latest_weather_date).new(Date.new(2025, 6, 1))
+          farm = Struct.new(:id, :latitude, :longitude, :weather_location).new(42, 35.5, 139.5, weather_location)
+          plan = Struct.new(:farm).new(farm)
+
+          ::CultivationPlan.stub(:find, proc { |_id| plan }) do
+            dispatcher.expects(:enqueue).with do |jobs, **kwargs|
+              kwargs[:redirect_path] == "/results" &&
+                kwargs[:caller_label] == "TestCaller" &&
+                jobs.size == 4
+            end
+
+            gateway = PublicPlanOptimizationJobChainActiveRecordGateway.new(
+              dispatcher: dispatcher,
+              logger: logger,
+              channel_class: channel
+            )
+            gateway.enqueue_after_create!(
+              cultivation_plan_id: 99,
+              caller_label: "TestCaller",
+              redirect_path: "/results"
+            )
+          end
+        end
       end
     end
   end

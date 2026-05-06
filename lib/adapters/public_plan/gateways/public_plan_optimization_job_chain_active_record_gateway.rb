@@ -11,7 +11,7 @@ module Adapters
           @channel_class = channel_class
         end
 
-        def enqueue_after_create!(cultivation_plan_id:, caller_label:)
+        def enqueue_after_create!(cultivation_plan_id:, caller_label:, redirect_path: nil)
           cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm = cultivation_plan.farm
 
@@ -42,7 +42,7 @@ module Adapters
             predict_days: predict_days
           )
 
-          @dispatcher.enqueue(job_instances, redirect_path: nil, caller_label: caller_label)
+          @dispatcher.enqueue(job_instances, redirect_path: redirect_path, caller_label: caller_label)
         end
 
         private

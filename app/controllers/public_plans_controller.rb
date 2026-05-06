@@ -139,11 +139,10 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     Rails.logger.info "💾 [PublicPlansController#create] Saved plan_id: #{cultivation_plan.id} to session"
 
     # ジョブチェーンを実行（データ取得 → 予測 → 最適化）
-    job_instances = create_job_instances_for_public_plans(cultivation_plan.id, OptimizationChannel)
-    CompositionRoot.job_chain_async_dispatcher.enqueue(
-      job_instances,
-      redirect_path: job_completion_redirect_path,
-      caller_label: self.class.name
+    CompositionRoot.public_plan_optimization_job_chain_gateway.enqueue_after_create!(
+      cultivation_plan_id: cultivation_plan.id,
+      caller_label: self.class.name,
+      redirect_path: job_completion_redirect_path
     )
 
     # 天気予測実行のためにoptimizing画面にリダイレクト
@@ -324,58 +323,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     CultivationPlan
   end
 
-  # ジョブインスタンスを作成（public plans用）
-  def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
-    Rails.logger.info "🔧 [PublicPlansController] Creating job instances for plan: #{cultivation_plan_id}"
-
-    # 計画を取得
-    cultivation_plan = CultivationPlan.find(cultivation_plan_id)
-    farm = cultivation_plan.farm
-
-    # 天気データ取得のパラメータを計算
-    weather_params = calculate_weather_data_params(farm.weather_location)
-    predict_days = calculate_predict_days(weather_params[:end_date])
-
-    Rails.logger.info "🌤️ [PublicPlansController] Weather params: #{weather_params}, predict_days: #{predict_days}"
-
-    # ジョブインスタンスを作成
-    job_instances = []
-
-    # 1. 天気データ取得ジョブ
-    fetch_job = FetchWeatherDataJob.new
-    fetch_job.farm_id = farm.id
-    fetch_job.latitude = farm.latitude
-    fetch_job.longitude = farm.longitude
-    fetch_job.start_date = weather_params[:start_date]
-    fetch_job.end_date = weather_params[:end_date]
-    fetch_job.cultivation_plan_id = cultivation_plan_id
-    fetch_job.channel_class = channel_class
-    job_instances << fetch_job
-
-    # 2. 天気予測ジョブ
-    prediction_job = WeatherPredictionJob.new
-    prediction_job.cultivation_plan_id = cultivation_plan_id
-    prediction_job.channel_class = channel_class
-    prediction_job.predict_days = predict_days
-    job_instances << prediction_job
-
-    # 3. 最適化ジョブ
-    optimization_job = OptimizationJob.new
-    optimization_job.cultivation_plan_id = cultivation_plan_id
-    optimization_job.channel_class = channel_class
-    job_instances << optimization_job
-
-    # 4. 作業予定生成ジョブ
-    task_schedule_job = TaskScheduleGenerationJob.new
-    task_schedule_job.cultivation_plan_id = cultivation_plan_id
-    task_schedule_job.channel_class = channel_class
-    job_instances << task_schedule_job
-
-    Rails.logger.info "✅ [PublicPlansController] Created #{job_instances.length} job instances"
-    job_instances
-  end
-
-  # テスト用のオーバーライド: URLパラメータでplan_idを受け取る
+  # CultivationPlan をウィザード文脈で解決する
   def find_cultivation_plan
     plan_id = normalize_public_plan_wizard_plan_id
     result = Adapters::CultivationPlan::ManageablePublicPlanLookup.call(
