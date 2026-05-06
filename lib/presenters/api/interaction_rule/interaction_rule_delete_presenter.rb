@@ -18,7 +18,7 @@ module Presenters
             undo_path: undo_path,
             auto_hide_after: event.auto_hide_after,
             resource: event.metadata["resource_label"],
-            redirect_path: "/",
+            redirect_path: delete_json_redirect_path,
             resource_dom_id: resource_dom_id_for(event)
           }
           @view.render_response(json: json, status: :ok)
@@ -40,6 +40,14 @@ module Presenters
         end
 
         private
+
+        def delete_json_redirect_path
+          if @view.respond_to?(:interaction_rule_destroy_json_redirect_path)
+            @view.interaction_rule_destroy_json_redirect_path
+          else
+            "/"
+          end
+        end
 
         def resource_dom_id_for(event)
           stored = event.metadata["resource_dom_id"]

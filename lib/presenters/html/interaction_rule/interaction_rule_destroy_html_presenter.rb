@@ -18,11 +18,20 @@ module Presenters
         end
 
         def on_failure(error_dto)
-          # 失敗時はエラーメッセージを表示して一覧ページにリダイレクト
-          error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          alert =
+            if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+              I18n.t("interaction_rules.flash.not_found")
+            else
+              msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+              if msg == "InteractionRule not found"
+                I18n.t("interaction_rules.flash.not_found")
+              else
+                msg
+              end
+            end
           @view.redirect_back(
             fallback_location: @view.interaction_rules_path,
-            alert: error_message
+            alert: alert
           )
         end
       end

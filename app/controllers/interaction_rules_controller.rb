@@ -2,7 +2,6 @@
 
 class InteractionRulesController < ApplicationController
   before_action :preload_interaction_rule_entity, only: [ :show, :edit, :update ]
-  before_action :load_interaction_rule_record, only: [ :destroy ]
 
   # GET /interaction_rules
   def index
@@ -94,19 +93,31 @@ class InteractionRulesController < ApplicationController
 
   # DELETE /interaction_rules/:id
   def destroy
-    rule = @interaction_rule_record
-    toast_message = t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
-    DeletionUndo::HtmlMasterScheduleInvoker.call(
-      view: self,
-      actor_id: current_user.id,
-      record: rule,
-      toast_message: toast_message,
-      fallback_location: interaction_rules_path,
-      in_use_message_key: nil,
-      delete_error_message_key: "interaction_rules.flash.destroy_error"
-    )
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
+    respond_to do |format|
+      format.html do
+        destroy_with_presenter(
+          Presenters::Html::InteractionRule::InteractionRuleDestroyHtmlPresenter.new(view: self)
+        )
+      end
+      format.json do
+        destroy_with_presenter(
+          Presenters::Api::InteractionRule::InteractionRuleDeletePresenter.new(view: self)
+        )
+      end
+    end
+  end
+
+  # JSON 削除応答: Presenter が controller を明示レシーバで呼ぶ
+  def render_response(json:, status:)
+    render json: json, status: status
+  end
+
+  def undo_deletion_path(undo_token:)
+    Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
+  end
+
+  def interaction_rule_destroy_json_redirect_path
+    interaction_rules_path
   end
 
   private
@@ -130,15 +141,15 @@ class InteractionRulesController < ApplicationController
     ).call(rule_id: params[:id], for_edit: for_edit)
   end
 
-  # destroy 用に AR レコードを取得する。
-  # HtmlMasterScheduleInvoker は ActiveRecord のレコードを必要とするため、
-  # この経路だけは Adapter Gateway 経由で AR を直接取得する。
-  def load_interaction_rule_record
-    @interaction_rule_record = interaction_rule_gateway.find_authorized_model_for_edit(current_user, params[:id])
-  rescue Domain::Shared::Policies::PolicyPermissionDenied
-    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
-  rescue Domain::Shared::Exceptions::RecordNotFound
-    redirect_to interaction_rules_path, alert: I18n.t("interaction_rules.flash.not_found")
+  def destroy_with_presenter(presenter)
+    Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: interaction_rule_gateway,
+      logger: logger_adapter,
+      translator: translator,
+      user_lookup: user_lookup_adapter
+    ).call(params[:id])
   end
 
   def interaction_rule_params

@@ -39,4 +39,32 @@ class InteractionRuleDestroyHtmlPresenterTest < ActiveSupport::TestCase
     presenter.on_failure(error_dto)
     assert true
   end
+
+  test "on_failure maps PolicyPermissionDenied to not_found flash" do
+    view_mock = mock
+    presenter = Presenters::Html::InteractionRule::InteractionRuleDestroyHtmlPresenter.new(view: view_mock)
+
+    view_mock.expects(:interaction_rules_path).returns("/interaction_rules")
+    view_mock.expects(:redirect_back).with(
+      fallback_location: "/interaction_rules",
+      alert: I18n.t("interaction_rules.flash.not_found")
+    )
+
+    presenter.on_failure(Domain::Shared::Policies::PolicyPermissionDenied.new)
+  end
+
+  test "on_failure maps InteractionRule not found message to not_found flash" do
+    view_mock = mock
+    presenter = Presenters::Html::InteractionRule::InteractionRuleDestroyHtmlPresenter.new(view: view_mock)
+
+    error_dto = Domain::Shared::Dtos::ErrorDto.new("InteractionRule not found")
+
+    view_mock.expects(:interaction_rules_path).returns("/interaction_rules")
+    view_mock.expects(:redirect_back).with(
+      fallback_location: "/interaction_rules",
+      alert: I18n.t("interaction_rules.flash.not_found")
+    )
+
+    presenter.on_failure(error_dto)
+  end
 end
