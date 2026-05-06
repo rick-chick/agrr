@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class FertilizesController < ApplicationController
-  include DeletionUndoFlow
   before_action :set_fertilize, only: [ :edit, :update, :destroy ]
 
   # GET /fertilizes
@@ -64,7 +63,9 @@ class FertilizesController < ApplicationController
       end
 
       format.json do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @fertilize,
           toast_message: I18n.t("fertilizes.undo.toast", name: @fertilize.name),
           fallback_location: fertilizes_path,

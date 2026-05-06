@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class InteractionRulesController < ApplicationController
-  include DeletionUndoFlow
   before_action :preload_interaction_rule_entity, only: [ :show, :edit, :update ]
   before_action :load_interaction_rule_record, only: [ :destroy ]
 
@@ -97,10 +96,13 @@ class InteractionRulesController < ApplicationController
   def destroy
     rule = @interaction_rule_record
     toast_message = t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
-    schedule_deletion_with_undo(
+    DeletionUndo::HtmlMasterScheduleInvoker.call(
+      view: self,
+      actor_id: current_user.id,
       record: rule,
       toast_message: toast_message,
       fallback_location: interaction_rules_path,
+      in_use_message_key: nil,
       delete_error_message_key: "interaction_rules.flash.destroy_error"
     )
   rescue Domain::Shared::Policies::PolicyPermissionDenied
@@ -129,7 +131,7 @@ class InteractionRulesController < ApplicationController
   end
 
   # destroy 用に AR レコードを取得する。
-  # `schedule_deletion_with_undo` は ActiveRecord のレコードを必要とするため、
+  # HtmlMasterScheduleInvoker は ActiveRecord のレコードを必要とするため、
   # この経路だけは Adapter Gateway 経由で AR を直接取得する。
   def load_interaction_rule_record
     @interaction_rule_record = interaction_rule_gateway.find_authorized_model_for_edit(current_user, params[:id])

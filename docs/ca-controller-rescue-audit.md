@@ -11,12 +11,12 @@
 ## API
 
 
-| 場所                                                 | 種別                                   | 分類            | メモ                                                                                                |
-| -------------------------------------------------- | ------------------------------------ | ------------- | ------------------------------------------------------------------------------------------------- |
-| `api/v1/masters/base_controller.rb`                | `rescue_from PolicyPermissionDenied` | **DEAD**      | Masters の各 Interactor が `StandardError` / 明示 rescue で捕捉。`PolicyPermissionDenied < StandardError`。 |
-| `api/v1/public_plans/entry_schedule_controller.rb` | `decode_entry_cursor` の狭い `rescue`    | **ガード**      | 不正カーソルは `nil`。アクションは Interactor + Presenter。                                                           |
-| `api/v1/plans_controller.rb`                       | （該当なし）                           | **—**           | Interactor + Presenter、`rescue` なし（2026-05-06 確認）。                                                          |
-| `api/v1/contact_messages_controller.rb`            | （該当なし）                           | **DEAD**        | reCAPTCHA / レート制限は Interactor + Presenter `on_failure`（2026-05-06）。                                      |
+| 場所                                                 | 種別                                   | 分類       | メモ                                                                                                |
+| -------------------------------------------------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------- |
+| `api/v1/masters/base_controller.rb`                | `rescue_from PolicyPermissionDenied` | **DEAD** | Masters の各 Interactor が `StandardError` / 明示 rescue で捕捉。`PolicyPermissionDenied < StandardError`。 |
+| `api/v1/public_plans/entry_schedule_controller.rb` | `decode_entry_cursor` の狭い `rescue`   | **ガード**  | 不正カーソルは `nil`。アクションは Interactor + Presenter。                                                      |
+| `api/v1/plans_controller.rb`                       | （該当なし）                               | **—**    | Interactor + Presenter、`rescue` なし（2026-05-06 確認）。                                                |
+| `api/v1/contact_messages_controller.rb`            | （該当なし）                               | **DEAD** | reCAPTCHA / レート制限は Interactor + Presenter `on_failure`（2026-05-06）。                               |
 
 
 ## HTML / 一般
@@ -27,7 +27,7 @@
 | `farms_controller.rb` (html index/show/create/update)                                                                                           | **DEAD**      | `Farm*Interactor` が `StandardError` 等を捕捉到達しない。                                    |
 | `crops_controller.rb`, `pests_controller.rb`, `fertilizes_controller.rb`, `agricultural_tasks_controller.rb`, `interaction_rules_controller.rb` | **DEAD 候補**   | 各 `*Interactor#call` が `rescue StandardError` + `on_failure` なら同様。アクションごとに確認して除去。 |
 | `plans_controller.rb`, `crops/task_schedule_blueprints_controller.rb`                                                                           | **要確認**       | Interactor パターン確認後 DEAD または REFACTOR。                                             |
-| `plans/task_schedule_items_controller.rb`                                                                                                       | **DEAD 寄り** | Interactor + Presenter、`rescue` / `rescue_from` なし（2026-05-06 確認）。                    |
+| `plans/task_schedule_items_controller.rb`                                                                                                       | **DEAD 寄り**   | Interactor + Presenter、`rescue` / `rescue_from` なし（2026-05-06 確認）。                |
 | `auth_controller.rb`                                                                                                                            | **要確認**       | 認証フロー。インフラ的 rescue の可能性。                                                          |
 | `concerns/deletion_undo_flow.rb`, `agrr_optimization.rb`                                                                                        | **LIVE / 横断** | 別タスクで個別設計。                                                                        |
 

@@ -78,11 +78,10 @@ module Adapters
             build_entity(event)
           end
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
-          mapped_record = e.respond_to?(:record) ? e.record : nil
+          errors_like = e.respond_to?(:record) && e.record.respond_to?(:errors) ? e.record.errors : nil
           raise Domain::Shared::Exceptions::RecordInvalid.new(
             e.message,
-            errors: mapped_record&.errors,
-            record: mapped_record
+            errors: Domain::Shared::ValidationErrors.from_errors_like(errors_like)
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError => e
           raise Domain::Shared::Exceptions::AssociationInUse, e.message

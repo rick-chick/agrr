@@ -68,8 +68,7 @@ module Domain
           record.valid?
           invalid_exception = Domain::Shared::Exceptions::RecordInvalid.new(
             "Validation failed",
-            errors: record.errors,
-            record: record
+            errors: Domain::Shared::ValidationErrors.from_errors_like(record.errors)
           )
 
           gateway = Minitest::Mock.new
@@ -89,7 +88,11 @@ module Domain
 
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageFailure, received
           assert received.validation?
-          assert_equal record.errors, received.errors
+          assert_instance_of Domain::Shared::ValidationErrors, received.errors
+          assert_equal(
+            Domain::Shared::ValidationErrors.from_errors_like(record.errors).messages,
+            received.errors.messages
+          )
 
           gateway.verify
           output_port.verify

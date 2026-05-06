@@ -335,7 +335,7 @@ module Adapters
         errors = record.errors.to_hash(true).transform_keys(&:to_s)
         errors.transform_values! { |messages| Array(messages).compact }
         msg = message || errors.values.flatten.compact.first
-        raise Domain::Shared::Exceptions::RecordInvalid.new(msg, errors: errors, record: nil)
+        raise Domain::Shared::Exceptions::RecordInvalid.new(msg, errors: errors)
       end
     end
   end

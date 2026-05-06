@@ -9,10 +9,6 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     @user = create(:user)
   end
 
-  test "includes DeletionUndoFlow" do
-    assert_includes FarmsController.included_modules, DeletionUndoFlow
-  end
-
   test "destroy_returns_undo_token_json" do
     sign_in_as @user
     farm = create(:farm, user: @user)

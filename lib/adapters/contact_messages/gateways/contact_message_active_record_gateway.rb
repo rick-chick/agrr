@@ -26,7 +26,7 @@ module Adapters
 
           entity_from_record(record)
         rescue ActiveRecord::RecordInvalid => e
-          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: e.record.errors, record: e.record)
+          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
         end
 
         private

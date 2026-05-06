@@ -166,7 +166,7 @@ module Adapters
         rescue Domain::Shared::Exceptions::RecordNotFound
           build_task_template_create_result(reason: :crop_not_found)
         rescue ActiveRecord::RecordInvalid => e
-          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: e.record.errors.full_messages)
+          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
         end
 
         def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)

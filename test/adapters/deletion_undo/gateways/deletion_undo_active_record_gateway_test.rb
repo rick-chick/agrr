@@ -65,7 +65,7 @@ class Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGatewayTest < Ac
           )
         end
         assert_match("destroy failed", error.message)
-        assert_same record, error.record
+        assert_instance_of Domain::Shared::ValidationErrors, error.errors
       end
     end
   end
@@ -87,7 +87,7 @@ class Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGatewayTest < Ac
           )
         end
         assert_match("save failed", error.message)
-        assert_same record, error.record
+        assert_instance_of Domain::Shared::ValidationErrors, error.errors
       end
     end
   end

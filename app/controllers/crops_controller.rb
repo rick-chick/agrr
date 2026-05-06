@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class CropsController < ApplicationController
-  include DeletionUndoFlow
   before_action :set_crop, only: [ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ]
   before_action :authenticate_admin!, only: [ :generate_task_schedule_blueprints ]
 
@@ -78,7 +77,9 @@ class CropsController < ApplicationController
       end
 
       format.json do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @crop,
           toast_message: I18n.t("crops.undo.toast", name: @crop.name),
           fallback_location: crops_path,

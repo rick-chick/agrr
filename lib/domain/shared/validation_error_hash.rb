@@ -8,6 +8,12 @@ module Domain
 
       def from(errors)
         return errors if errors.is_a?(Hash)
+        return {} if errors.nil?
+
+        if errors.is_a?(Domain::Shared::ValidationErrors)
+          return errors.messages.transform_keys(&:to_s).transform_values { |msgs| Array(msgs).compact }
+        end
+
         return {} unless errors.respond_to?(:to_hash)
 
         hash = errors.to_hash(true).transform_keys(&:to_s)

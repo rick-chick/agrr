@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class AgriculturalTasksController < ApplicationController
-  include DeletionUndoFlow
   before_action :set_agricultural_task, only: [ :show, :edit, :update, :destroy ]
   before_action :load_crop_selection_data, only: [ :edit, :update ]
   before_action :prepare_crop_cards_for_edit, only: [ :edit ]
@@ -109,7 +108,9 @@ class AgriculturalTasksController < ApplicationController
       end
 
       format.json do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @agricultural_task,
           toast_message: I18n.t("agricultural_tasks.undo.toast", name: @agricultural_task.name),
           fallback_location: agricultural_tasks_path,

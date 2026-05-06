@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
-  include DeletionUndoFlow
   before_action :load_pesticide_for_view, only: [ :edit, :update, :destroy ]
 
   # GET /pesticides
@@ -82,7 +81,9 @@ class PesticidesController < ApplicationController
       end
 
       format.json do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @pesticide,
           toast_message: I18n.t("pesticides.undo.toast", name: @pesticide.name),
           fallback_location: pesticides_path,

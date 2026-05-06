@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class FarmsController < ApplicationController
-  include DeletionUndoFlow
   before_action :load_farm_for_edit, only: [ :edit, :update, :destroy ]
 
   # GET /farms
@@ -132,7 +131,9 @@ class FarmsController < ApplicationController
           return render json: { error: I18n.t("farms.flash.cannot_delete", count: @farm.free_crop_plans.count) }, status: :unprocessable_entity
         end
 
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @farm,
           toast_message: I18n.t("farms.undo.toast", name: @farm.display_name),
           fallback_location: Rails.application.routes.url_helpers.farms_path,

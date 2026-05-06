@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class PestsController < ApplicationController
-  include DeletionUndoFlow
   before_action :load_pest_for_edit, only: [ :edit, :update, :destroy ]
 
   # GET /pests
@@ -72,7 +71,9 @@ class PestsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @pest,
           toast_message: I18n.t("pests.undo.toast", name: @pest.name),
           fallback_location: pests_path,
@@ -84,7 +85,9 @@ class PestsController < ApplicationController
       end
 
       format.json do
-        schedule_deletion_with_undo(
+        DeletionUndo::HtmlMasterScheduleInvoker.call(
+          view: self,
+          actor_id: current_user.id,
           record: @pest,
           toast_message: I18n.t("pests.undo.toast", name: @pest.name),
           fallback_location: pests_path,

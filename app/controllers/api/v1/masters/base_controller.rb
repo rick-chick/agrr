@@ -4,8 +4,6 @@ module Api
   module V1
     module Masters
       class BaseController < ApplicationController
-        include DeletionUndoFlow
-
         # API versioning base controller for master data management
         # Skip CSRF verification for API endpoints (use API key auth instead)
         skip_before_action :verify_authenticity_token

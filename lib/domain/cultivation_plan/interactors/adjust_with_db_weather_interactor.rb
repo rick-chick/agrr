@@ -9,7 +9,7 @@ module Domain
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError,
           ArgumentError,
-          ActiveRecord::RecordNotFound,
+          Domain::Shared::Exceptions::RecordNotFound,
           Net::OpenTimeout,
           Net::ReadTimeout,
           Net::WriteTimeout,

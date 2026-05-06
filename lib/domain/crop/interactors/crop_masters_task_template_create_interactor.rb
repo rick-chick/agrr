@@ -31,7 +31,7 @@ module Domain
           @output_port.on_failure(
             Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
               reason: :validation_failed,
-              errors: Array(e.errors)
+              errors: e.flatten_error_messages
             )
           )
         end
