@@ -8,11 +8,10 @@ import { RegionSelectComponent } from '../../shared/region-select/region-select.
 import { FertilizeEditView, FertilizeEditViewState, FertilizeEditFormData } from './fertilize-edit.view';
 import { LoadFertilizeForEditUseCase } from '../../../usecase/fertilizes/load-fertilize-for-edit.usecase';
 import { UpdateFertilizeUseCase } from '../../../usecase/fertilizes/update-fertilize.usecase';
-import { FertilizeEditPresenter } from '../../../adapters/fertilizes/fertilize-edit.presenter';
-import { LOAD_FERTILIZE_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/fertilizes/load-fertilize-for-edit.output-port';
-import { UPDATE_FERTILIZE_OUTPUT_PORT } from '../../../usecase/fertilizes/update-fertilize.output-port';
-import { FERTILIZE_GATEWAY } from '../../../usecase/fertilizes/fertilize-gateway';
-import { FertilizeApiGateway } from '../../../adapters/fertilizes/fertilize-api.gateway';
+import {
+  FertilizeEditPresenter,
+  FERTILIZE_EDIT_PROVIDERS
+} from '../../../usecase/fertilizes/fertilize-edit.providers';
 
 const initialFormData: FertilizeEditFormData = {
   name: '',
@@ -35,14 +34,7 @@ const initialControl: FertilizeEditViewState = {
   selector: 'app-fertilize-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    FertilizeEditPresenter,
-    LoadFertilizeForEditUseCase,
-    UpdateFertilizeUseCase,
-    { provide: LOAD_FERTILIZE_FOR_EDIT_OUTPUT_PORT, useExisting: FertilizeEditPresenter },
-    { provide: UPDATE_FERTILIZE_OUTPUT_PORT, useExisting: FertilizeEditPresenter },
-    { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
-  ],
+  providers: [...FERTILIZE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

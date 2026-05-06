@@ -6,11 +6,10 @@ import { FertilizeListView, FertilizeListViewState } from './fertilize-list.view
 import { Fertilize } from '../../../domain/fertilizes/fertilize';
 import { LoadFertilizeListUseCase } from '../../../usecase/fertilizes/load-fertilize-list.usecase';
 import { DeleteFertilizeUseCase } from '../../../usecase/fertilizes/delete-fertilize.usecase';
-import { FertilizeListPresenter } from '../../../adapters/fertilizes/fertilize-list.presenter';
-import { LOAD_FERTILIZE_LIST_OUTPUT_PORT } from '../../../usecase/fertilizes/load-fertilize-list.output-port';
-import { DELETE_FERTILIZE_OUTPUT_PORT } from '../../../usecase/fertilizes/delete-fertilize.output-port';
-import { FERTILIZE_GATEWAY } from '../../../usecase/fertilizes/fertilize-gateway';
-import { FertilizeApiGateway } from '../../../adapters/fertilizes/fertilize-api.gateway';
+import {
+  FertilizeListPresenter,
+  FERTILIZE_LIST_PROVIDERS
+} from '../../../usecase/fertilizes/fertilize-list.providers';
 
 const initialControl: FertilizeListViewState = {
   loading: true,
@@ -22,14 +21,7 @@ const initialControl: FertilizeListViewState = {
   selector: 'app-fertilize-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    FertilizeListPresenter,
-    LoadFertilizeListUseCase,
-    DeleteFertilizeUseCase,
-    { provide: LOAD_FERTILIZE_LIST_OUTPUT_PORT, useExisting: FertilizeListPresenter },
-    { provide: DELETE_FERTILIZE_OUTPUT_PORT, useExisting: FertilizeListPresenter },
-    { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
-  ],
+  providers: [...FERTILIZE_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

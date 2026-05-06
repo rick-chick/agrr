@@ -6,10 +6,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { FertilizeCreateView, FertilizeCreateViewState, FertilizeCreateFormData } from './fertilize-create.view';
 import { CreateFertilizeUseCase } from '../../../usecase/fertilizes/create-fertilize.usecase';
-import { FertilizeCreatePresenter } from '../../../adapters/fertilizes/fertilize-create.presenter';
-import { CREATE_FERTILIZE_OUTPUT_PORT } from '../../../usecase/fertilizes/create-fertilize.output-port';
-import { FERTILIZE_GATEWAY } from '../../../usecase/fertilizes/fertilize-gateway';
-import { FertilizeApiGateway } from '../../../adapters/fertilizes/fertilize-api.gateway';
+import {
+  FertilizeCreatePresenter,
+  FERTILIZE_CREATE_PROVIDERS
+} from '../../../usecase/fertilizes/fertilize-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: FertilizeCreateFormData = {
@@ -32,12 +32,7 @@ const initialControl: FertilizeCreateViewState = {
   selector: 'app-fertilize-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    FertilizeCreatePresenter,
-    CreateFertilizeUseCase,
-    { provide: CREATE_FERTILIZE_OUTPUT_PORT, useExisting: FertilizeCreatePresenter },
-    { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
-  ],
+  providers: [...FERTILIZE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

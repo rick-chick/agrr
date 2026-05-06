@@ -4,10 +4,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FertilizeDetailView, FertilizeDetailViewState } from './fertilize-detail.view';
 import { LoadFertilizeDetailUseCase } from '../../../usecase/fertilizes/load-fertilize-detail.usecase';
-import { FertilizeDetailPresenter } from '../../../adapters/fertilizes/fertilize-detail.presenter';
-import { LOAD_FERTILIZE_DETAIL_OUTPUT_PORT } from '../../../usecase/fertilizes/load-fertilize-detail.output-port';
-import { FERTILIZE_GATEWAY } from '../../../usecase/fertilizes/fertilize-gateway';
-import { FertilizeApiGateway } from '../../../adapters/fertilizes/fertilize-api.gateway';
+import {
+  FertilizeDetailPresenter,
+  FERTILIZE_DETAIL_PROVIDERS
+} from '../../../usecase/fertilizes/fertilize-detail.providers';
 
 const initialControl: FertilizeDetailViewState = {
   loading: true,
@@ -19,12 +19,7 @@ const initialControl: FertilizeDetailViewState = {
   selector: 'app-fertilize-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    FertilizeDetailPresenter,
-    LoadFertilizeDetailUseCase,
-    { provide: LOAD_FERTILIZE_DETAIL_OUTPUT_PORT, useExisting: FertilizeDetailPresenter },
-    { provide: FERTILIZE_GATEWAY, useClass: FertilizeApiGateway }
-  ],
+  providers: [...FERTILIZE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {
