@@ -101,8 +101,7 @@ module Api
           assert_equal "public", plan.plan_type
           assert_nil plan.user_id, "public plan should not have user_id"
 
-          # ジョブチェーンの実行は Presenter のテストでカバーされているため、
-          # ここでは plan_id が返されることと、適切なステータスコードが返されることを確認する
+          # ジョブチェーンは PublicPlanOptimizationJobChainActiveRecordGateway 経由（Interactor 注入）でエンキューされる
         end
 
         test "create returns 404 when farm not found" do

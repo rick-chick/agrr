@@ -4,7 +4,6 @@ module Api
   module V1
     module PublicPlans
       class WizardController < ApplicationController
-        include WeatherDataManagement
         SESSION_MARKER_KEY = :public_plan_wizard_session_marker
 
         skip_before_action :authenticate_user!
@@ -47,26 +46,19 @@ module Api
           )
 
           # Presenter と Gateway を準備
-          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(
-            view: self,
-            job_chain_async_dispatcher: CompositionRoot.job_chain_async_dispatcher
-          )
+          presenter = Presenters::Api::PublicPlan::PublicPlanCreatePresenter.new(view: self)
 
-          # Interactor を実行（成功時は presenter がジョブ実行と render を処理）
+          # Interactor を実行（成功時は presenter が render、ジョブチェーンは Interactor 経由で注入ゲートウェイが処理）
           interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
             output_port: presenter,
             gateway: CompositionRoot.public_plan_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
             logger: CompositionRoot.logger,
-            clock: Time.zone
+            clock: Time.zone,
+            optimization_job_chain_gateway: CompositionRoot.public_plan_optimization_job_chain_gateway
           )
 
           interactor.call(input_dto)
-        end
-
-        # PublicPlanCreatePresenter / JobChainAsyncDispatcher 用（ジョブ組み立ては private メソッドに委譲）
-        def public_plan_optimization_job_instances(cultivation_plan_id)
-          create_job_instances_for_public_plans(cultivation_plan_id, OptimizationChannel)
         end
 
         def render_response(json:, status:)
@@ -124,44 +116,6 @@ module Api
           else
             "jp"
           end
-        end
-
-        def create_job_instances_for_public_plans(cultivation_plan_id, channel_class)
-          cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
-          farm = cultivation_plan.farm
-
-          weather_params = calculate_weather_data_params(farm.weather_location)
-          predict_days = calculate_predict_days(weather_params[:end_date])
-
-          job_instances = []
-
-          fetch_job = FetchWeatherDataJob.new
-          fetch_job.farm_id = farm.id
-          fetch_job.latitude = farm.latitude
-          fetch_job.longitude = farm.longitude
-          fetch_job.start_date = weather_params[:start_date]
-          fetch_job.end_date = weather_params[:end_date]
-          fetch_job.cultivation_plan_id = cultivation_plan_id
-          fetch_job.channel_class = channel_class
-          job_instances << fetch_job
-
-          prediction_job = WeatherPredictionJob.new
-          prediction_job.cultivation_plan_id = cultivation_plan_id
-          prediction_job.channel_class = channel_class
-          prediction_job.predict_days = predict_days
-          job_instances << prediction_job
-
-          optimization_job = OptimizationJob.new
-          optimization_job.cultivation_plan_id = cultivation_plan_id
-          optimization_job.channel_class = channel_class
-          job_instances << optimization_job
-
-          task_schedule_job = TaskScheduleGenerationJob.new
-          task_schedule_job.cultivation_plan_id = cultivation_plan_id
-          task_schedule_job.channel_class = channel_class
-          job_instances << task_schedule_job
-
-          job_instances
         end
 
       end

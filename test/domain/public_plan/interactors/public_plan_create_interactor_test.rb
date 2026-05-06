@@ -73,6 +73,61 @@ module Domain
           output_port.verify
         end
 
+        test "calls optimization_job_chain_gateway before on_success with plan_id" do
+          farm = create(:farm)
+          farm_size = { id: "home_garden", area_sqm: 30 }
+          crops = [ create(:crop) ]
+          cultivation_plan = create(:cultivation_plan, id: 123, farm: farm)
+
+          creator_result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
+            cultivation_plan: cultivation_plan,
+            errors: []
+          )
+
+          gateway = Minitest::Mock.new
+          gateway.expect(:find_farm, farm, [ farm.id ])
+          gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
+          gateway.expect(:find_crops, crops, [ [ 1 ] ])
+
+          sequence = []
+          opt_gateway = Object.new
+          opt_gateway.define_singleton_method(:enqueue_after_create!) do |cultivation_plan_id:, caller_label:|
+            sequence << [ :enqueue, cultivation_plan_id, caller_label ]
+          end
+
+          received = nil
+          output_port = Object.new
+          output_port.define_singleton_method(:on_success) do |dto|
+            sequence << [ :success, dto.plan_id ]
+            received = dto
+          end
+
+          interactor = PublicPlanCreateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
+            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            clock: FIXED_PUBLIC_PLAN_CLOCK,
+            optimization_job_chain_gateway: opt_gateway
+          )
+          input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
+            farm_id: farm.id,
+            farm_size_id: "home_garden",
+            crop_ids: [ 1 ],
+            session_id: "session123"
+          )
+
+          interactor.call(input_dto)
+
+          assert_equal [
+            [ :enqueue, 123, "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor" ],
+            [ :success, 123 ]
+          ], sequence
+          assert_instance_of Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto, received
+          assert_equal 123, received.plan_id
+          gateway.verify
+        end
+
         test "calls on_failure when farm not found" do
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, nil, [ 999 ])

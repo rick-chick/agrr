@@ -244,6 +244,14 @@ module CompositionRoot
       @public_plan_gateway ||= Adapters::PublicPlan::Gateways::PublicPlanActiveRecordGateway.new
     end
 
+    def public_plan_optimization_job_chain_gateway
+      @public_plan_optimization_job_chain_gateway ||= Adapters::PublicPlan::Gateways::PublicPlanOptimizationJobChainActiveRecordGateway.new(
+        dispatcher: job_chain_async_dispatcher,
+        logger: logger,
+        channel_class: ::OptimizationChannel
+      )
+    end
+
     def contact_message_gateway
       @contact_message_gateway ||= Adapters::ContactMessages::Gateways::ContactMessageActiveRecordGateway.new
     end

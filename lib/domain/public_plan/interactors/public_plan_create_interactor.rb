@@ -5,7 +5,8 @@ module Domain
     module Interactors
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
         # @param clock [#today] CompositionRoot で Time.zone を渡す想定（禁止4）。
-        def initialize(output_port:, gateway:, cultivation_plan_gateway:, logger:, clock:)
+        # @param optimization_job_chain_gateway [Domain::PublicPlan::Gateways::PublicPlanOptimizationJobChainGateway, nil] 成功時にジョブチェーンをエンキューする場合のみ注入
+        def initialize(output_port:, gateway:, cultivation_plan_gateway:, logger:, clock:, optimization_job_chain_gateway: nil)
           raise ArgumentError, "clock must respond to :today" unless clock.respond_to?(:today)
 
           @output_port = output_port
@@ -13,6 +14,7 @@ module Domain
           @gateway = gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
           @clock = clock
+          @optimization_job_chain_gateway = optimization_job_chain_gateway
         end
 
         def call(input_dto)
@@ -72,8 +74,12 @@ module Domain
           # 契約に従い plan_id をログ出力
           @logger.info "🌱 [PublicPlanCreateInteractor] Created new CultivationPlan with plan_id: #{plan_id}"
 
-          # 成功レスポンスを返す
+          # 成功レスポンスを返す（ジョブチェーンは表現層の前にエッジ注入ゲートウェイで実行）
           success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: plan_id)
+          @optimization_job_chain_gateway&.enqueue_after_create!(
+            cultivation_plan_id: plan_id,
+            caller_label: self.class.name
+          )
           @output_port.on_success(success_dto)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn "❌ [PublicPlanCreateInteractor] Validation: #{e.message}"
