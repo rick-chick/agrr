@@ -82,6 +82,19 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notice, flash[:notice]
   end
 
+  test "GET index as JSON returns farms and reference_farms arrays" do
+    sign_in_as @user
+    farm = create(:farm, user: @user, name: "JSON Listed Farm")
+
+    get farms_path(format: :json)
+    assert_response :success
+    body = response.parsed_body
+    assert_kind_of Array, body["farms"]
+    assert_kind_of Array, body["reference_farms"]
+    farm_ids = body["farms"].map { |h| h["id"] }
+    assert_includes farm_ids, farm.id
+  end
+
   test "GET index HTML lists only current user farms for non-admin" do
     sign_in_as @user
     farm = create(:farm, user: @user, name: "My Listed Farm")

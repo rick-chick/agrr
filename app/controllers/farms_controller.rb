@@ -20,16 +20,15 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        if admin_user?
-          # 管理者は自分の農場と参照農場の両方を表示
-          @farms = current_user.farms.recent
-          @reference_farms = Farm.reference
-        else
-          # 通常ユーザーは自分の農場のみ
-          @farms = current_user.farms.recent
-          @reference_farms = []
-        end
-        render json: { farms: @farms, reference_farms: @reference_farms }
+        input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
+        presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: self)
+        Domain::Farm::Interactors::FarmListInteractor.new(
+          output_port: presenter,
+          user_id: current_user.id,
+          gateway: CompositionRoot.farm_gateway,
+          logger: CompositionRoot.logger,
+          translator: CompositionRoot.translator
+        ).call(input_dto)
       end
     end
   end
@@ -163,6 +162,11 @@ class FarmsController < ApplicationController
 
   def farms_path
     Rails.application.routes.url_helpers.farms_path
+  end
+
+  # FarmListJsonPresenter など JSON 用 Presenter が参照する View インターフェース
+  def render_response(json:, status:)
+    render(json: json, status: status)
   end
 
   private
