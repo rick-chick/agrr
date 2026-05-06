@@ -183,6 +183,12 @@ module CompositionRoot
       @internal_weather_fetch_start_gateway ||= Adapters::WeatherData::Gateways::InternalWeatherFetchStartActiveRecordGateway.new
     end
 
+    def backdoor_application_database_clear_gateway
+      @backdoor_application_database_clear_gateway ||= Adapters::Backdoor::Gateways::ApplicationDatabaseClearActiveRecordGateway.new(
+        logger: logger
+      )
+    end
+
     def prediction_gateway
       @prediction_gateway ||= Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
     end

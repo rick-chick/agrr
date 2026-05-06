@@ -244,63 +244,19 @@ module Api
           Rails.logger.error "   Request IP: #{request.remote_ip}"
           Rails.logger.error "   User Agent: #{request.user_agent}"
 
-          begin
-            # Get stats before clearing
-            before_stats = {
-              users: User.where(is_anonymous: false).count,
-              farms: Farm.count,
-              fields: Field.count,
-              crops: ::Crop.count,
-              cultivation_plans: CultivationPlan.count
-            }
-
-            # Clear all data (except anonymous users)
-            ActiveRecord::Base.transaction do
-              # Delete in order to respect foreign key constraints
-              Session.delete_all
-              AgriculturalTask.delete_all
-              Fertilize.delete_all
-              Pest.delete_all
-              Pesticide.delete_all
-              InteractionRule.delete_all
-              CultivationPlan.delete_all
-              ::Crop.delete_all
-              Field.delete_all
-              Farm.delete_all
-              User.where(is_anonymous: false).delete_all
-            end
-
-            after_stats = {
-              users: User.where(is_anonymous: false).count,
-              farms: Farm.count,
-              fields: Field.count,
-              crops: ::Crop.count,
-              cultivation_plans: CultivationPlan.count
-            }
-
-            Rails.logger.error "✅ Database cleared successfully. Before: #{before_stats}, After: #{after_stats}"
-
-            render json: {
-              timestamp: Time.current.iso8601,
-              success: true,
-              message: "Database cleared successfully",
-              before_stats: before_stats,
-              after_stats: after_stats,
-              warning: "⚠️ All data has been deleted. This action is irreversible."
-            }
-          rescue ActiveRecord::ActiveRecordError, ActiveRecord::StatementInvalid => e
-            Rails.logger.error "❌ Error clearing database: #{e.message}"
-            Rails.logger.error e.backtrace.join("\n")
-
-            render json: {
-              timestamp: Time.current.iso8601,
-              success: false,
-              error: "Failed to clear database: #{e.message}"
-            }, status: :internal_server_error
-          end
+          presenter = Presenters::Api::Backdoor::BackdoorClearDatabasePresenter.new(view: self)
+          Domain::Backdoor::Interactors::BackdoorClearDatabaseInteractor.new(
+            output_port: presenter,
+            gateway: CompositionRoot.backdoor_application_database_clear_gateway,
+            logger: CompositionRoot.logger
+          ).call
         end
 
         private
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
 
         def check_backdoor_enabled
           unless ::BackdoorConfig.enabled?
