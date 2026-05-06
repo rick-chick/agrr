@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { FarmCreateComponent } from './farm-create.component';
 import { CreateFarmUseCase } from '../../../usecase/farms/create-farm.usecase';
-import { FarmCreatePresenter } from '../../../adapters/farms/farm-create.presenter';
+import { FarmCreatePresenter } from '../../../usecase/farms/farm-create.providers';
 import { CREATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/create-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FarmCreateViewState } from './farm-create.view';

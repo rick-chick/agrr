@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import { FarmEditComponent } from './farm-edit.component';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
 import { UpdateFarmUseCase } from '../../../usecase/farms/update-farm.usecase';
-import { FarmEditPresenter } from '../../../adapters/farms/farm-edit.presenter';
+import { FarmEditPresenter } from '../../../usecase/farms/farm-edit.providers';
 import { LOAD_FARM_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/farms/load-farm-for-edit.output-port';
 import { UPDATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/update-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';

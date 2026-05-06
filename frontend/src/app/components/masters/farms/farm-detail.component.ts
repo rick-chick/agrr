@@ -13,20 +13,13 @@ import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
 import { CreateFieldUseCase } from '../../../usecase/farms/create-field.usecase';
 import { UpdateFieldUseCase } from '../../../usecase/farms/update-field.usecase';
 import { DeleteFieldUseCase } from '../../../usecase/farms/delete-field.usecase';
-import { FarmDetailPresenter } from '../../../adapters/farms/farm-detail.presenter';
-import { CreateFieldPresenter } from '../../../adapters/farms/create-field.presenter';
-import { UpdateFieldPresenter } from '../../../adapters/farms/update-field.presenter';
-import { DeleteFieldPresenter } from '../../../adapters/farms/delete-field.presenter';
-import { LOAD_FARM_DETAIL_OUTPUT_PORT } from '../../../usecase/farms/load-farm-detail.output-port';
-import { SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT } from '../../../usecase/farms/subscribe-farm-weather.output-port';
-import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';
-import { CREATE_FIELD_OUTPUT_PORT } from '../../../usecase/farms/create-field.output-port';
-import { UPDATE_FIELD_OUTPUT_PORT } from '../../../usecase/farms/update-field.output-port';
-import { DELETE_FIELD_OUTPUT_PORT } from '../../../usecase/farms/delete-field.output-port';
-import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
-import { FARM_WEATHER_GATEWAY } from '../../../usecase/farms/farm-weather-gateway';
-import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
-import { FarmWeatherChannelGateway } from '../../../adapters/farms/farm-weather-channel.gateway';
+import {
+  CreateFieldPresenter,
+  DeleteFieldPresenter,
+  FarmDetailPresenter,
+  FARM_DETAIL_PROVIDERS,
+  UpdateFieldPresenter
+} from '../../../usecase/farms/farm-detail.providers';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -39,26 +32,7 @@ const initialControl: FarmDetailViewState = {
   selector: 'app-farm-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, FarmMapComponent, TranslateModule, FormsModule],
-  providers: [
-    FarmDetailPresenter,
-    LoadFarmDetailUseCase,
-    SubscribeFarmWeatherUseCase,
-    DeleteFarmUseCase,
-    CreateFieldPresenter,
-    CreateFieldUseCase,
-    UpdateFieldPresenter,
-    UpdateFieldUseCase,
-    DeleteFieldPresenter,
-    DeleteFieldUseCase,
-    { provide: LOAD_FARM_DETAIL_OUTPUT_PORT, useExisting: FarmDetailPresenter },
-    { provide: SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT, useExisting: FarmDetailPresenter },
-    { provide: DELETE_FARM_OUTPUT_PORT, useExisting: FarmDetailPresenter },
-    { provide: CREATE_FIELD_OUTPUT_PORT, useExisting: CreateFieldPresenter },
-    { provide: UPDATE_FIELD_OUTPUT_PORT, useExisting: UpdateFieldPresenter },
-    { provide: DELETE_FIELD_OUTPUT_PORT, useExisting: DeleteFieldPresenter },
-    { provide: FARM_GATEWAY, useClass: FarmApiGateway },
-    { provide: FARM_WEATHER_GATEWAY, useClass: FarmWeatherChannelGateway }
-  ],
+  providers: [...FARM_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

@@ -10,10 +10,12 @@ import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
 import { CreateFieldUseCase } from '../../../usecase/farms/create-field.usecase';
 import { UpdateFieldUseCase } from '../../../usecase/farms/update-field.usecase';
 import { DeleteFieldUseCase } from '../../../usecase/farms/delete-field.usecase';
-import { FarmDetailPresenter } from '../../../adapters/farms/farm-detail.presenter';
-import { CreateFieldPresenter } from '../../../adapters/farms/create-field.presenter';
-import { UpdateFieldPresenter } from '../../../adapters/farms/update-field.presenter';
-import { DeleteFieldPresenter } from '../../../adapters/farms/delete-field.presenter';
+import {
+  CreateFieldPresenter,
+  DeleteFieldPresenter,
+  FarmDetailPresenter,
+  UpdateFieldPresenter
+} from '../../../usecase/farms/farm-detail.providers';
 import { LOAD_FARM_DETAIL_OUTPUT_PORT } from '../../../usecase/farms/load-farm-detail.output-port';
 import { SUBSCRIBE_FARM_WEATHER_OUTPUT_PORT } from '../../../usecase/farms/subscribe-farm-weather.output-port';
 import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';

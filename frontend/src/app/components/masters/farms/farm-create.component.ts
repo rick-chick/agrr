@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { FarmCreateView, FarmCreateViewState, FarmCreateFormData } from './farm-create.view';
 import { CreateFarmUseCase } from '../../../usecase/farms/create-farm.usecase';
-import { FarmCreatePresenter } from '../../../adapters/farms/farm-create.presenter';
-import { CREATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/create-farm.output-port';
-import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
-import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
+import {
+  FarmCreatePresenter,
+  FARM_CREATE_PROVIDERS
+} from '../../../usecase/farms/farm-create.providers';
 import { FarmMapComponent } from './farm-map.component';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -35,12 +35,7 @@ const initialControl: FarmCreateViewState = {
   selector: 'app-farm-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule],
-  providers: [
-    FarmCreatePresenter,
-    CreateFarmUseCase,
-    { provide: CREATE_FARM_OUTPUT_PORT, useExisting: FarmCreatePresenter },
-    { provide: FARM_GATEWAY, useClass: FarmApiGateway }
-  ],
+  providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">

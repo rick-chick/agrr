@@ -5,11 +5,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { FarmListView, FarmListViewState } from './farm-list.view';
 import { LoadFarmListUseCase } from '../../../usecase/farms/load-farm-list.usecase';
 import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
-import { FarmListPresenter } from '../../../adapters/farms/farm-list.presenter';
-import { LOAD_FARM_LIST_OUTPUT_PORT } from '../../../usecase/farms/load-farm-list.output-port';
-import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';
-import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
-import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
+import {
+  FarmListPresenter,
+  FARM_LIST_PROVIDERS
+} from '../../../usecase/farms/farm-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 
@@ -23,14 +22,7 @@ const initialControl: FarmListViewState = {
   selector: 'app-farm-list',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    FarmListPresenter,
-    LoadFarmListUseCase,
-    DeleteFarmUseCase,
-    { provide: LOAD_FARM_LIST_OUTPUT_PORT, useExisting: FarmListPresenter },
-    { provide: DELETE_FARM_OUTPUT_PORT, useExisting: FarmListPresenter },
-    { provide: FARM_GATEWAY, useClass: FarmApiGateway }
-  ],
+  providers: [...FARM_LIST_PROVIDERS],
   template: `
     <main class="page-main">
       <header class="page-header">

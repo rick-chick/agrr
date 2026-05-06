@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 import { FarmListComponent } from './farm-list.component';
 import { LoadFarmListUseCase } from '../../../usecase/farms/load-farm-list.usecase';
 import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
-import { FarmListPresenter } from '../../../adapters/farms/farm-list.presenter';
+import { FarmListPresenter } from '../../../usecase/farms/farm-list.providers';
 import { LOAD_FARM_LIST_OUTPUT_PORT } from '../../../usecase/farms/load-farm-list.output-port';
 import { DELETE_FARM_OUTPUT_PORT } from '../../../usecase/farms/delete-farm.output-port';
 import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';

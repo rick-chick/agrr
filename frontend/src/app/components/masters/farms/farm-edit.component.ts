@@ -5,11 +5,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FarmEditView, FarmEditViewState, FarmEditFormData } from './farm-edit.view';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
 import { UpdateFarmUseCase } from '../../../usecase/farms/update-farm.usecase';
-import { FarmEditPresenter } from '../../../adapters/farms/farm-edit.presenter';
-import { LOAD_FARM_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/farms/load-farm-for-edit.output-port';
-import { UPDATE_FARM_OUTPUT_PORT } from '../../../usecase/farms/update-farm.output-port';
-import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
-import { FarmApiGateway } from '../../../adapters/farms/farm-api.gateway';
+import {
+  FarmEditPresenter,
+  FARM_EDIT_PROVIDERS
+} from '../../../usecase/farms/farm-edit.providers';
 import { FarmMapComponent } from './farm-map.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -33,14 +32,7 @@ const initialControl: FarmEditViewState = {
   selector: 'app-farm-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule, RegionSelectComponent],
-  providers: [
-    FarmEditPresenter,
-    LoadFarmForEditUseCase,
-    UpdateFarmUseCase,
-    { provide: LOAD_FARM_FOR_EDIT_OUTPUT_PORT, useExisting: FarmEditPresenter },
-    { provide: UPDATE_FARM_OUTPUT_PORT, useExisting: FarmEditPresenter },
-    { provide: FARM_GATEWAY, useClass: FarmApiGateway }
-  ],
+  providers: [...FARM_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
