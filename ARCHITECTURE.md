@@ -135,7 +135,7 @@ Gateway implementations (e.g. ActiveRecord-backed, in-memory for tests) live und
 
 ### Gateway boundary (presentation-agnostic)
 
-Gateways **must not** depend on HTTP or incidental UI conventions: shapes named for a specific template/partials; Hash layouts driven by `data-*` attributes or route-helper-only keying; or return types / method naming that encode a **screen identifier** (`*_page`, `*_html`, etc.) when the real intent is **view/SPA-specific key arrangement** assembled inside the persistence adapter.
+Gateways **must not** depend on HTTP or incidental UI conventions: shapes named for a specific template/partials; Hash layouts driven by `data-`* attributes or route-helper-only keying; or return types / method naming that encode a **screen identifier** (`*_page`, `*_html`, etc.) when the real intent is **view/SPA-specific key arrangement** assembled inside the persistence adapter.
 
 **Heuristic:** If the gateway’s job is effectively “produce the blob this one HTML partial or Angular screen expects,” the boundary is wrong—lift assembly to the **Interactor** or to a domain **assembler/mapper** under `lib/domain/` (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
 
@@ -150,7 +150,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Rule:** New presenters belong under `lib/presenters/{api,html}/`, not under `app/presenters/` (legacy paths are being retired).
 
-**Boundary:** Presenters implement output ports only (shape HTTP from success/failure payloads). For JSON actions, **modeled outcomes** follow [Rails JSON API: canonical vertical slice → Modeled HTTP outcomes](#modeled-http-outcomes-one-path). No presenter fetch via `CompositionRoot` / `find_model` / gateways; no business rules in presenters. Load in the **Interactor** via gateways; pass **DTOs/entities** on the port. Do not hide `find_model` or gateway calls in **controller-local procs/lambdas** passed into the presenter. `lib/domain` does not reference `Rails.*`; inject from the **composition root at the app edge** (controller/job), not framework singletons.
+**Boundary:** Presenters implement output ports only (shape HTTP from success/failure payloads). For JSON actions, **modeled outcomes** follow [Rails JSON API: canonical vertical slice → Modeled HTTP outcomes](#modeled-http-outcomes-one-path). No presenter fetch via `CompositionRoot` / `find_model` / gateways; no business rules in presenters. Load in the **Interactor** via gateways; pass **DTOs/entities** on the port. Do not hide `find_model` or gateway calls in **controller-local procs/lambdas** passed into the presenter. `lib/domain` does not reference `Rails.`*; inject from the **composition root at the app edge** (controller/job), not framework singletons.
 
 #### Use-case–scoped Output Port contract (how we refactor HTML/API presenters)
 
@@ -171,7 +171,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 - `**app/controllers/api/v1/`** — JSON API; params → DTOs → interactors + API presenters. Flow: [Rails JSON API: canonical vertical slice](#rails-json-api-canonical-vertical-slice).
 - `**app/controllers/*_controller.rb`** — HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
 - `**app/models/`** — ActiveRecord; validations (e.g. resource limits) stay at the model boundary where appropriate.
-- `**app/services/**` — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
+- `**app/services/`** — Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` (see roadmap).
 - `**app/gateways/agrr/`** — HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities.
 
 ### External agrr integration
