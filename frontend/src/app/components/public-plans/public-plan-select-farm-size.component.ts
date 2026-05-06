@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PUBLIC_PLAN_SELECT_FARM_SIZE_PROVIDERS } from '../../usecase/public-plans/public-plan-select-farm-size.providers';
+import { PUBLIC_PLAN_GATEWAY } from '../../usecase/public-plans/public-plan-gateway';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 
