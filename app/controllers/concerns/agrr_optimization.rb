@@ -17,8 +17,6 @@ module AgrrOptimization
   # @param cultivation_plan [CultivationPlan] 栽培計画
   # @param exclude_ids [Array<Integer>] 除外するfield_cultivationのIDリスト（デフォルト: []）
   def build_current_allocation(cultivation_plan, exclude_ids: [])
-    field_schedules = []
-
     Rails.logger.info "🔍 [Build Allocation] field_cultivations count: #{cultivation_plan.field_cultivations.count}"
     Rails.logger.info "🔍 [Build Allocation] exclude_ids: #{exclude_ids.inspect}" if exclude_ids.any?
 
@@ -27,6 +25,7 @@ module AgrrOptimization
 
     Rails.logger.info "🔍 [Build Allocation] cultivations_by_field: #{cultivations_by_field.keys}"
 
+    field_rows = []
     # 全ての圃場を処理（field_cultivationsが0件でも含める）
     cultivation_plan.cultivation_plan_fields.each do |field|
       field_id = field.id
@@ -39,64 +38,36 @@ module AgrrOptimization
       Rails.logger.info "🔍 [Build Allocation] Field #{field_id}: #{cultivations.count} -> #{filtered_cultivations.count} (excluded: #{cultivations.count - filtered_cultivations.count})" if exclude_ids.any?
 
       allocations = filtered_cultivations.map do |fc|
-        # 収益とコストを取得
         revenue = fc.optimization_result&.dig("revenue") || 0.0
         cost = fc.estimated_cost || 0.0
-        # profitはrevenue - costで計算
-        profit = revenue - cost
-
-        # AGRR CLI側のcrop_idはRails側のcrop.idを使用
-        crop_id = fc.cultivation_plan_crop.crop.id.to_s
-
+        growth_days = fc.cultivation_days || (fc.completion_date - fc.start_date).to_i + 1
         {
           allocation_id: fc.id,
-          crop_id: crop_id,
+          crop_id: fc.cultivation_plan_crop.crop.id.to_s,
           crop_name: fc.crop_display_name,
           variety: fc.cultivation_plan_crop.variety,
           area_used: fc.area,
-          # Use safe navigation so nil dates remain nil (avoid empty string "")
-          start_date: fc.start_date&.to_s,
-          completion_date: fc.completion_date&.to_s,
-          growth_days: fc.cultivation_days || (fc.completion_date - fc.start_date).to_i + 1,
+          start_date: fc.start_date,
+          completion_date: fc.completion_date,
+          growth_days: growth_days,
           accumulated_gdd: fc.optimization_result&.dig("accumulated_gdd") || 0.0,
           total_cost: cost,
-          expected_revenue: revenue,
-          profit: profit
+          expected_revenue: revenue
         }
       end
 
-      # 圃場レベルの合計値を計算
-      field_total_cost = allocations.sum { |a| a[:total_cost] }
-      field_total_revenue = allocations.sum { |a| a[:expected_revenue] }
-      field_total_profit = allocations.sum { |a| a[:profit] }
-      field_area_used = allocations.sum { |a| a[:area_used] }
-      field_utilization_rate = field_area_used / field.area.to_f
-
-      field_schedules << {
-        field_id: field.id.to_s,
+      field_rows << {
+        field_id: field.id,
         field_name: field.name,
-        total_cost: field_total_cost,
-        total_revenue: field_total_revenue,
-        total_profit: field_total_profit,
-        utilization_rate: field_utilization_rate,
+        field_area: field.area,
         allocations: allocations
       }
     end
 
-    # 全体レベルの合計値を計算
-    total_cost = field_schedules.sum { |fs| fs[:total_cost] }
-    total_revenue = field_schedules.sum { |fs| fs[:total_revenue] }
-    total_profit = field_schedules.sum { |fs| fs[:total_profit] }
-
-    {
-      optimization_result: {
-        optimization_id: "opt_#{cultivation_plan.id}",
-        total_cost: total_cost,
-        total_revenue: total_revenue,
-        total_profit: total_profit,
-        field_schedules: field_schedules
-      }
-    }
+    Domain::CultivationPlan::Calculators::AgrrCurrentAllocationCalculator.build(
+      cultivation_plan_id: cultivation_plan.id,
+      field_rows: field_rows
+    )
   end
 
   # 圃場設定を構築
