@@ -5,6 +5,7 @@
 ## 修正単位
 
 1. **`ARCHITECTURE.md` の `## What we require` と禁止 1〜30 の通し走査** — 全対象レイヤーを `Glob` / `Read` で意味読み照合し、違反を修正単位に切って列挙する（`rg` の一致のみを根拠にしない）。空到達時の裏取りとして必須。
+2. **Application edge 禁止4（API のユースケース直叩き）** — `app/controllers/api/**` に残る ActiveRecord / ActiveStorage の直接参照・リレーション組み立てを、DTO → Interactor → Gateway に寄せる（`rg` の一行一致のみで確定しない）。2026-05-06 時点の探索ヒント: `api/v1/pests_controller.rb`（`::Pest.find_by`）、`api/v1/fertilizes_controller.rb`（`::Fertilize.find_by`）、`api/v1/plans_controller.rb`（`CultivationPlan.*.find`）、`api/v1/public_plans_controller.rb`（`CultivationPlan.find_by`）、`api/v1/public_plans/wizard_controller.rb`（`Farm.find_by`）、`api/v1/public_plans/cultivation_plans_controller.rb`（`::Crop.find`）、`api/v1/masters/base_controller.rb`（`Session.active.find_by`）、`api/v1/masters/crops/agricultural_tasks_controller.rb`（`@crop.*.includes`）、`api/v1/masters/crops/pests_controller.rb`（`Pest.find_by`）、`api/v1/files_controller.rb`（`ActiveStorage::Blob.find_by`）、`api/v1/api_keys_controller.rb`（`current_user.generate_api_key!` 等）、`api/v1/backdoor/backdoor_controller.rb`（`User.*` 集計）。着手順は通し走査完了後、または本項目のみをスコープに固定したときはパス辞書順で先頭から。
 
 ## スキャン補足
 
@@ -19,6 +20,7 @@
 - 2026-05-06: `Api::V1::Backdoor::BackdoorController#status` のバッククォートを `ShellStdoutCaptureGateway`（`CompositionRoot.backdoor_shell_stdout_capture_gateway`）に移し `SystemCallError` を境界で処理。
 - 2026-05-06: `Farms::WeatherDataController` のキャッシュ判定で `predicted_at` / `prediction_start_date` を `Iso8601TimeParse` / `Iso8601CalendarDate` で正規化（行末 `rescue nil`・非検証の `Date.parse` を撤去）。
 - 2026-05-06（裏取り）: `app/controllers/api/**` に `rescue` / `rescue_from` の実装なしを確認。Application edge 禁止3の JSON API エッジは現行ツリーで該当なし（HTML・ヘルス・認証 URI 検証・ジョブ投入などは下記「残置」のとおり別単位）。
+- 2026-05-06（増分）: Application edge **禁止4** について `app/controllers/api/**` を機械探索し AR / Blob 直参照の候補を洗い出し → 修正単位 2 に反映（確定は意味読みと契約テストで行う）。
 
 ## 残置（意図・別単位）
 
