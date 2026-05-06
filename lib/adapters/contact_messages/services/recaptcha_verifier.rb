@@ -31,6 +31,14 @@ module Adapters
           raise VerificationError, "reCAPTCHA verification error: #{e.message}"
         end
 
+        # Returns :ok or [ :error, message ] — no exception for expected failures (Interactor path).
+        def verify(token:, remote_ip:)
+          verify!(token: token, remote_ip: remote_ip)
+          :ok
+        rescue VerificationError => e
+          [ :error, e.message ]
+        end
+
         private
 
         attr_reader :secret_key

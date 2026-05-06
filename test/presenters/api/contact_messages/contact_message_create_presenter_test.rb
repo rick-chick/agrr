@@ -80,6 +80,34 @@ class ContactMessageCreatePresenterTest < ActiveSupport::TestCase
     presenter.on_failure(failure_dto)
   end
 
+  test "on_failure renders rate limit with too_many_requests" do
+    view_mock = mock
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+
+    failure_dto = Domain::ContactMessages::Dtos::CreateContactMessageFailure.rate_limit
+
+    view_mock.expects(:render_response).with(
+      json: { error: "Too many requests" },
+      status: :too_many_requests
+    )
+
+    presenter.on_failure(failure_dto)
+  end
+
+  test "on_failure renders recaptcha message with forbidden" do
+    view_mock = mock
+    presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)
+
+    failure_dto = Domain::ContactMessages::Dtos::CreateContactMessageFailure.recaptcha(message: "bad token")
+
+    view_mock.expects(:render_response).with(
+      json: { error: "bad token" },
+      status: :forbidden
+    )
+
+    presenter.on_failure(failure_dto)
+  end
+
   test "on_failure renders generic error with internal_server_error" do
     view_mock = mock
     presenter = Presenters::Api::ContactMessages::ContactMessageCreatePresenter.new(view: view_mock)

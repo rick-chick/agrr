@@ -82,7 +82,7 @@ module Api
       test "returns too many requests when rate limit exceeded" do
         rate_limiter = Class.new do
           def initialize(**); end
-          def track!; raise ::Adapters::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded; end
+          def track; :rate_limited; end
         end
 
         with_controller_constants(
@@ -105,7 +105,7 @@ module Api
       test "returns forbidden when recaptcha fails" do
         recaptcha_verifier = Class.new do
           def initialize(**); end
-          def verify!(**); raise ::Adapters::ContactMessages::Services::RecaptchaVerifier::VerificationError, "recaptcha failed"; end
+          def verify(**); [ :error, "recaptcha failed" ]; end
         end
 
         with_controller_constants(
@@ -170,11 +170,13 @@ module Api
       class NoopRateLimiter
         def initialize(**); end
         def track!; true; end
+        def track; :ok; end
       end
 
       class NoopRecaptchaVerifier
         def initialize(**); end
         def verify!(**); true; end
+        def verify(**); :ok; end
       end
     end
   end

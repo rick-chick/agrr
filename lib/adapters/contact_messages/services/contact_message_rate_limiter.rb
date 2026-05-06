@@ -30,6 +30,14 @@ module Adapters
           true
         end
 
+        # Returns :ok or :rate_limited — no exception for expected outcomes (Interactor path).
+        def track
+          track!
+          :ok
+        rescue RateLimitExceeded
+          :rate_limited
+        end
+
         private
 
         attr_reader :request

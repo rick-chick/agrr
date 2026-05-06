@@ -13,12 +13,11 @@ module Api
       skip_before_action :authenticate_api_request, only: [ :create ]
 
       def create
-        return unless verify_recaptcha!
-        return unless enforce_rate_limit!
-
         presenter = self.class::PRESENTER_CLASS.new(view: self)
         interactor = self.class::INTERACTOR_CLASS.new(
-          gateway: CompositionRoot.contact_message_gateway
+          gateway: CompositionRoot.contact_message_gateway,
+          recaptcha_verifier: self.class::RECAPTCHA_VERIFIER_CLASS.new,
+          rate_limiter: self.class::RATE_LIMITER_CLASS.new(request: request)
         )
         interactor.call(contact_message_input, output_port: presenter)
       end
@@ -35,29 +34,15 @@ module Api
           email: contact_message_params[:email],
           subject: contact_message_params[:subject],
           message: contact_message_params[:message],
-          source: contact_message_params[:source]
+          source: contact_message_params[:source],
+          recaptcha_token: params[:recaptcha_token],
+          remote_ip: request.remote_ip
         )
       end
 
       def contact_message_params
         root = params[:contact_message] || params
         root.permit(:name, :email, :subject, :message, :source)
-      end
-
-      def verify_recaptcha!
-        self.class::RECAPTCHA_VERIFIER_CLASS.new.verify!(token: params[:recaptcha_token], remote_ip: request.remote_ip)
-        true
-      rescue ::Adapters::ContactMessages::Services::RecaptchaVerifier::VerificationError => e
-        render_response(json: { error: e.message }, status: :forbidden)
-        false
-      end
-
-      def enforce_rate_limit!
-        self.class::RATE_LIMITER_CLASS.new(request: request).track!
-        true
-      rescue ::Adapters::ContactMessages::Services::ContactMessageRateLimiter::RateLimitExceeded
-        render_response(json: { error: "Too many requests" }, status: :too_many_requests)
-        false
       end
 
     end

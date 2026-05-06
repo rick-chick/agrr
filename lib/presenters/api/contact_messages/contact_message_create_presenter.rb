@@ -23,6 +23,22 @@ module Presenters
 
         # failure_dto may contain ActiveModel::Errors under :errors or be a simple error/message string/object
         def on_failure(failure_dto)
+          if failure_dto.respond_to?(:rate_limit?) && failure_dto.rate_limit?
+            @view.render_response(
+              json: { error: failure_dto.message },
+              status: :too_many_requests
+            )
+            return
+          end
+
+          if failure_dto.respond_to?(:recaptcha?) && failure_dto.recaptcha?
+            @view.render_response(
+              json: { error: failure_dto.message },
+              status: :forbidden
+            )
+            return
+          end
+
           if failure_dto.respond_to?(:errors) && failure_dto.errors.respond_to?(:messages)
             @view.render_response(
               json: { error: "Validation failed", field_errors: failure_dto.errors.messages },
