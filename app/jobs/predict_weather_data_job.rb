@@ -41,12 +41,26 @@ class PredictWeatherDataJob < ApplicationJob
     cultivation_plan_id ||= self.cultivation_plan_id
     channel_class ||= self.channel_class
 
-    farm = Farm.find(farm_id)
+    phase_predicting_weather_started = false
+
+    farm = Farm.find_by(id: farm_id)
+    unless farm
+      error_message = "Farm ##{farm_id} not found"
+      Rails.logger.error "❌ [PredictWeatherDataJob] #{error_message}"
+      raise ActiveRecord::RecordNotFound, error_message
+    end
 
     # 予測開始通知
     if cultivation_plan_id && channel_class
-      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan = CultivationPlan.find_by(id: cultivation_plan_id)
+      unless cultivation_plan
+        error_message = "CultivationPlan ##{cultivation_plan_id} not found for weather prediction start"
+        Rails.logger.error "❌ [PredictWeatherDataJob] #{error_message}"
+        raise ActiveRecord::RecordNotFound, error_message
+      end
+
       cultivation_plan.phase_predicting_weather!(channel_class)
+      phase_predicting_weather_started = true
       Rails.logger.info "🌤️ [PredictWeatherDataJob] Started weather prediction for plan ##{cultivation_plan_id}"
     end
 
@@ -67,19 +81,19 @@ class PredictWeatherDataJob < ApplicationJob
       raise ArgumentError, error_message
     end
 
-      # 過去20年分のデータを取得（予測のための履歴データ）
-      # 長期予測の精度向上のため、十分な学習データを使用
-      # 最新のデータが古い場合も考慮して、利用可能な最新データまでを使用
-      latest_available_date = weather_location.weather_data.maximum(:date)
+    # 過去20年分のデータを取得（予測のための履歴データ）
+    # 長期予測の精度向上のため、十分な学習データを使用
+    # 最新のデータが古い場合も考慮して、利用可能な最新データまでを使用
+    latest_available_date = weather_location.weather_data.maximum(:date)
 
-      if latest_available_date.nil?
-        error_message = "Farm ##{farm_id} has no weather data for prediction"
-        Rails.logger.error "❌ [PredictWeatherDataJob] #{error_message}"
-        raise ArgumentError, error_message
-      end
+    if latest_available_date.nil?
+      error_message = "Farm ##{farm_id} has no weather data for prediction"
+      Rails.logger.error "❌ [PredictWeatherDataJob] #{error_message}"
+      raise ArgumentError, error_message
+    end
 
-      end_date = latest_available_date
-      start_date = end_date - 20.years
+    end_date = latest_available_date
+    start_date = end_date - 20.years
 
     # 予測開始日を決定：今日または履歴データの翌日のいずれか新しい方
     prediction_start_date = [ Date.today, end_date + 1.day ].max
@@ -188,36 +202,42 @@ class PredictWeatherDataJob < ApplicationJob
 
     # 予測完了通知
     if cultivation_plan_id && channel_class
-      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
+      cultivation_plan = CultivationPlan.find_by(id: cultivation_plan_id)
+      unless cultivation_plan
+        error_message = "CultivationPlan ##{cultivation_plan_id} not found for weather prediction completion"
+        Rails.logger.error "❌ [PredictWeatherDataJob] #{error_message}"
+        raise ActiveRecord::RecordNotFound, error_message
+      end
+
       cultivation_plan.phase_weather_prediction_completed!(channel_class)
       Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction completed for plan ##{cultivation_plan_id}"
     end
 
     # WebSocketで完了を通知
     broadcast_completion(farm, prediction_data.count)
-
-  rescue ActiveRecord::RecordNotFound => e
-    Rails.logger.error "❌ [PredictWeatherDataJob] Farm ##{farm_id} not found: #{e.message}"
-    raise
-  rescue Agrr::BaseGateway::ExecutionError => e
-    Rails.logger.error "❌ [PredictWeatherDataJob] AGRR command execution failed for Farm ##{farm_id}: #{e.message}"
-    raise
-  rescue Agrr::BaseGateway::ParseError => e
-    Rails.logger.error "❌ [PredictWeatherDataJob] AGRR output parsing failed for Farm ##{farm_id}: #{e.message}"
-    raise
-  rescue StandardError => e
-    # インフラ・未分類エラー: フェーズ更新後に再 raise（Solid Queue 再試行・DLQ は基盤側）。ドメイン結果の HTTP マッピングとは無関係。
-    Rails.logger.error "❌ [PredictWeatherDataJob] Unexpected error for Farm ##{farm_id}: #{e.class} - #{e.message}"
-    Rails.logger.error "Backtrace:\n#{e.backtrace.first(10).join("\n")}"
-
-    # エラー時の通知
-    if cultivation_plan_id && channel_class
-      cultivation_plan = CultivationPlan.find(cultivation_plan_id)
-      cultivation_plan.phase_failed!("predicting_weather", channel_class)
-      Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction failed for plan ##{cultivation_plan_id}"
+  ensure
+    exception = $!
+    if exception &&
+        phase_predicting_weather_started &&
+        cultivation_plan_id &&
+        channel_class &&
+        !exception.is_a?(ActiveRecord::RecordNotFound) &&
+        !exception.is_a?(Agrr::BaseGateway::ExecutionError) &&
+        !exception.is_a?(Agrr::BaseGateway::ParseError)
+      cp = CultivationPlan.find_by(id: cultivation_plan_id)
+      if cp
+        phase_failed_notified = false
+        suppress(StandardError) do
+          cp.phase_failed!("predicting_weather", channel_class)
+          phase_failed_notified = true
+        end
+        if phase_failed_notified
+          Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction failed for plan ##{cultivation_plan_id}"
+        else
+          Rails.logger.error "❌ [PredictWeatherDataJob] Failed to notify phase failure (see Solid Queue / logs)"
+        end
+      end
     end
-
-    raise
   end
 
   private
@@ -225,21 +245,26 @@ class PredictWeatherDataJob < ApplicationJob
   def broadcast_completion(farm, prediction_count)
     stream_name = "prediction:#{farm.to_gid_param}"
 
-    ActionCable.server.broadcast(
-      stream_name,
-      {
-        type: "prediction_completed",
-        farm_id: farm.id,
-        data_count: prediction_count,
-        prediction_start_date: farm.predicted_weather_data["prediction_start_date"],
-        prediction_end_date: farm.predicted_weather_data["prediction_end_date"],
-        message: "予測が完了しました",
-        message_key: "jobs.prediction.completed"
-      }
-    )
+    broadcast_ok = false
+    suppress(StandardError) do
+      ActionCable.server.broadcast(
+        stream_name,
+        {
+          type: "prediction_completed",
+          farm_id: farm.id,
+          data_count: prediction_count,
+          prediction_start_date: farm.predicted_weather_data["prediction_start_date"],
+          prediction_end_date: farm.predicted_weather_data["prediction_end_date"],
+          message: "予測が完了しました",
+          message_key: "jobs.prediction.completed"
+        }
+      )
+      Rails.logger.info "📡 [PredictWeatherDataJob] Broadcasted completion to #{stream_name}"
+      broadcast_ok = true
+    end
 
-    Rails.logger.info "📡 [PredictWeatherDataJob] Broadcasted completion to #{stream_name}"
-  rescue => e
-    Rails.logger.error "❌ Broadcast completion failed for Farm ##{farm.id}: #{e.message}"
+    return if broadcast_ok
+
+    Rails.logger.error "❌ Broadcast completion failed for Farm ##{farm.id}"
   end
 end

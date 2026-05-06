@@ -74,21 +74,12 @@ module JobExecution
     # 各ジョブを順次実行（同期的に確実に順次実行）
     job_instances.each_with_index do |job_instance, index|
       Rails.logger.info "🚀 [#{self.class.name}] Executing job #{index + 1}/#{job_instances.length}: #{job_instance.class.name}"
+      # ジョブを実行（引数を渡す）
+      job_args = job_instance.job_arguments
+      Rails.logger.info "📦 [#{self.class.name}] Job arguments: #{job_args.inspect}"
+      job_instance.perform(**job_args)
 
-      begin
-        # ジョブを実行（引数を渡す）
-        job_args = job_instance.job_arguments
-        Rails.logger.info "📦 [#{self.class.name}] Job arguments: #{job_args.inspect}"
-        job_instance.perform(**job_args)
-
-        Rails.logger.info "✅ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} completed: #{job_instance.class.name}"
-
-      rescue StandardError => e
-        Rails.logger.error "❌ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} failed: #{job_instance.class.name}"
-        Rails.logger.error "   Error: #{e.message}"
-        Rails.logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-        raise e
-      end
+      Rails.logger.info "✅ [#{self.class.name}] Job #{index + 1}/#{job_instances.length} completed: #{job_instance.class.name}"
     end
 
     Rails.logger.info "🎉 [#{self.class.name}] All jobs completed successfully"
