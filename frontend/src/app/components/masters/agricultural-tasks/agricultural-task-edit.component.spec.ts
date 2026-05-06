@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AgriculturalTaskEditComponent } from './agricultural-task-edit.component';
-import { AgriculturalTaskEditPresenter } from '../../../adapters/agricultural-tasks/agricultural-task-edit.presenter';
+import { AgriculturalTaskEditPresenter } from '../../../usecase/agricultural-tasks/agricultural-task-edit.providers';
 import { LoadAgriculturalTaskForEditUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-for-edit.usecase';
 import { UpdateAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/update-agricultural-task.usecase';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';

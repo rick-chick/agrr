@@ -8,11 +8,10 @@ import {
 } from './agricultural-task-detail.view';
 import { LoadAgriculturalTaskDetailUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-detail.usecase';
 import { DeleteAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/delete-agricultural-task.usecase';
-import { AgriculturalTaskDetailPresenter } from '../../../adapters/agricultural-tasks/agricultural-task-detail.presenter';
-import { LOAD_AGRICULTURAL_TASK_DETAIL_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/load-agricultural-task-detail.output-port';
-import { DELETE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/delete-agricultural-task.output-port';
-import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
-import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
+import {
+  AgriculturalTaskDetailPresenter,
+  AGRICULTURAL_TASK_DETAIL_PROVIDERS
+} from '../../../usecase/agricultural-tasks/agricultural-task-detail.providers';
 
 const initialControl: AgriculturalTaskDetailViewState = {
   loading: true,
@@ -24,14 +23,7 @@ const initialControl: AgriculturalTaskDetailViewState = {
   selector: 'app-agricultural-task-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
-  providers: [
-    AgriculturalTaskDetailPresenter,
-    LoadAgriculturalTaskDetailUseCase,
-    DeleteAgriculturalTaskUseCase,
-    { provide: LOAD_AGRICULTURAL_TASK_DETAIL_OUTPUT_PORT, useExisting: AgriculturalTaskDetailPresenter },
-    { provide: DELETE_AGRICULTURAL_TASK_OUTPUT_PORT, useExisting: AgriculturalTaskDetailPresenter },
-    { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
-  ],
+  providers: [...AGRICULTURAL_TASK_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {

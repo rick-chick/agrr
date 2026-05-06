@@ -11,11 +11,10 @@ import {
 } from './agricultural-task-edit.view';
 import { LoadAgriculturalTaskForEditUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-for-edit.usecase';
 import { UpdateAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/update-agricultural-task.usecase';
-import { AgriculturalTaskEditPresenter } from '../../../adapters/agricultural-tasks/agricultural-task-edit.presenter';
-import { LOAD_AGRICULTURAL_TASK_FOR_EDIT_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/load-agricultural-task-for-edit.output-port';
-import { UPDATE_AGRICULTURAL_TASK_OUTPUT_PORT } from '../../../usecase/agricultural-tasks/update-agricultural-task.output-port';
-import { AGRICULTURAL_TASK_GATEWAY } from '../../../usecase/agricultural-tasks/agricultural-task-gateway';
-import { AgriculturalTaskApiGateway } from '../../../adapters/agricultural-tasks/agricultural-task-api.gateway';
+import {
+  AgriculturalTaskEditPresenter,
+  AGRICULTURAL_TASK_EDIT_PROVIDERS
+} from '../../../usecase/agricultural-tasks/agricultural-task-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 
 const initialFormData: AgriculturalTaskEditFormData = {
@@ -40,14 +39,7 @@ const initialControl: AgriculturalTaskEditViewState = {
   selector: 'app-agricultural-task-edit',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
-  providers: [
-    AgriculturalTaskEditPresenter,
-    LoadAgriculturalTaskForEditUseCase,
-    UpdateAgriculturalTaskUseCase,
-    { provide: LOAD_AGRICULTURAL_TASK_FOR_EDIT_OUTPUT_PORT, useExisting: AgriculturalTaskEditPresenter },
-    { provide: UPDATE_AGRICULTURAL_TASK_OUTPUT_PORT, useExisting: AgriculturalTaskEditPresenter },
-    { provide: AGRICULTURAL_TASK_GATEWAY, useClass: AgriculturalTaskApiGateway }
-  ],
+  providers: [...AGRICULTURAL_TASK_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
