@@ -241,12 +241,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     end
   end
 
-  # 基底クラスで要求されるフックの実装
-
-  def find_cultivation_plan_scope
-    CultivationPlan
-  end
-
   def normalize_public_plan_wizard_plan_id
     raw = params[:id] || params[:plan_id] || params[:planId] || session_data[:plan_id]
     return nil if raw.blank?
@@ -256,6 +250,8 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
     i
   end
+
+  # 基底クラスで要求されるフックの実装
 
   def select_crop_redirect_path
     :select_crop_public_plans_path

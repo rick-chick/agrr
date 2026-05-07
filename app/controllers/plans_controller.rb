@@ -210,10 +210,6 @@ class PlansController < CultivationPlanHtmlBaseController
     @plan = PlanPolicy.find_private_owned!(current_user, params[:id])
   end
 
-  def find_cultivation_plan_scope
-    PlanPolicy.private_scope(current_user)
-  end
-
   def select_crop_redirect_path
     :select_crop_plans_path
   end
