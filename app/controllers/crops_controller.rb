@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CropsController < ApplicationController
-  before_action :set_crop, only: [ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ]
+  before_action :set_crop, only: [ :edit, :update, :generate_task_schedule_blueprints, :toggle_task_template ]
   before_action :authenticate_admin!, only: [ :generate_task_schedule_blueprints ]
 
   # GET /crops
@@ -69,8 +69,9 @@ class CropsController < ApplicationController
         DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
-          record: @crop,
-          toast_message: I18n.t("crops.undo.toast", name: @crop.name),
+          resource_type: "Crop",
+          resource_id: params[:id].to_i,
+          toast_message: nil,
           fallback_location: crops_path,
           in_use_message_key: "crops.flash.cannot_delete_in_use",
           delete_error_message_key: "crops.flash.delete_error"
@@ -141,7 +142,7 @@ class CropsController < ApplicationController
 
   def set_crop
     action = params[:action].to_sym
-    for_edit = action.in?([ :edit, :update, :destroy, :generate_task_schedule_blueprints, :toggle_task_template ])
+    for_edit = action.in?([ :edit, :update, :generate_task_schedule_blueprints, :toggle_task_template ])
     presenter = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
     interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)

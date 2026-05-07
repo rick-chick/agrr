@@ -6,7 +6,18 @@ module DeletionUndo
   module HtmlMasterScheduleInvoker
     module_function
 
-    def call(view:, actor_id:, record:, toast_message:, fallback_location:, in_use_message_key:, delete_error_message_key:)
+    # record は後方互換用。新規呼び出しは resource_type + resource_id（Interactor に AR を載せない）。
+    def call(view:, actor_id:, toast_message:, fallback_location:, in_use_message_key:, delete_error_message_key:, record: nil,
+             resource_type: nil, resource_id: nil)
+      type_name, rid =
+        if record
+          [ record.class.name, record.id ]
+        elsif resource_type.present? && !resource_id.nil?
+          [ resource_type.to_s, resource_id ]
+        else
+          raise ArgumentError, "DeletionUndo::HtmlMasterScheduleInvoker: pass record or resource_type/resource_id"
+        end
+
       presenter = Presenters::Html::DeletionUndo::DeletionUndoScheduleMastersHtmlPresenter.new(
         view: view,
         fallback_location: fallback_location,
@@ -14,8 +25,8 @@ module DeletionUndo
         delete_error_message_key: delete_error_message_key
       )
       input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-        resource_type: record.class.name,
-        resource_id: record.id,
+        resource_type: type_name,
+        resource_id: rid,
         actor_id: actor_id,
         toast_message: toast_message
       )
