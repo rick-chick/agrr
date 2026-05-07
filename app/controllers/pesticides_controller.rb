@@ -19,16 +19,13 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides/new
   def new
-    @pesticide = Pesticide.new
-    @pesticide.build_pesticide_usage_constraint
-    @pesticide.build_pesticide_application_detail
+    @pesticide = CompositionRoot.pesticide_gateway.build_blank_pesticide_for_html_form
     load_crops_and_pests
   end
 
   # GET /pesticides/:id/edit
   def edit
-    @pesticide.build_pesticide_usage_constraint unless @pesticide.pesticide_usage_constraint
-    @pesticide.build_pesticide_application_detail unless @pesticide.pesticide_application_detail
+    CompositionRoot.pesticide_gateway.ensure_nested_associations_for_pesticide_html_form!(@pesticide)
     load_crops_and_pests
   end
 
@@ -38,7 +35,9 @@ class PesticidesController < ApplicationController
     presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: self)
 
     # 失敗時にフォーム再表示するために @pesticide をセット
-    @pesticide = Pesticide.new(pesticide_params)
+    @pesticide = CompositionRoot.pesticide_gateway.build_pesticide_for_create_failure_html_form(
+      pesticide_params.to_unsafe_h.deep_symbolize_keys
+    )
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -50,7 +49,10 @@ class PesticidesController < ApplicationController
     presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: self)
 
     # 失敗時にフォーム再表示するために @pesticide を更新
-    @pesticide.assign_attributes(pesticide_params)
+    CompositionRoot.pesticide_gateway.assign_pesticide_attributes_for_html_form!(
+      @pesticide,
+      pesticide_params.to_unsafe_h.deep_symbolize_keys
+    )
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -95,11 +97,9 @@ class PesticidesController < ApplicationController
   end
 
   def load_crops_and_pests
-    # 作物の選択範囲を決定（Policy経由）
-    @crops = PesticideAssociationPolicy.accessible_crops_scope(current_user)
-
-    # 害虫の選択範囲を決定（Policy経由）
-    @pests = PesticideAssociationPolicy.accessible_pests_scope(current_user)
+    gw = CompositionRoot.pesticide_gateway
+    @crops = gw.accessible_crops_scope_for_pesticide_html_form(user: current_user)
+    @pests = gw.accessible_pests_scope_for_pesticide_html_form(user: current_user)
   end
 
   def pesticide_params

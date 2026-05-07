@@ -158,6 +158,36 @@ module Adapters
           end
         end
 
+        def build_blank_pesticide_for_html_form
+          p = ::Pesticide.new
+          p.build_pesticide_usage_constraint
+          p.build_pesticide_application_detail
+          p
+        end
+
+        def build_pesticide_for_create_failure_html_form(attributes_hash)
+          ::Pesticide.new(attributes_hash || {})
+        end
+
+        def ensure_nested_associations_for_pesticide_html_form!(pesticide)
+          pesticide.build_pesticide_usage_constraint unless pesticide.pesticide_usage_constraint
+          pesticide.build_pesticide_application_detail unless pesticide.pesticide_application_detail
+          pesticide
+        end
+
+        def assign_pesticide_attributes_for_html_form!(pesticide, attributes_hash)
+          pesticide.assign_attributes(attributes_hash || {})
+          pesticide
+        end
+
+        def accessible_crops_scope_for_pesticide_html_form(user:)
+          PesticideAssociationPolicy.accessible_crops_scope(user)
+        end
+
+        def accessible_pests_scope_for_pesticide_html_form(user:)
+          PesticideAssociationPolicy.accessible_pests_scope(user)
+        end
+
         def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
           pesticide = find_pesticide_model!(pesticide_id)
           unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
