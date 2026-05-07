@@ -21,6 +21,12 @@ module Domain
         def complete_item_for_plan!(user_id, plan_id, item_id, actual_date:, actual_notes:, completed_at:)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
+
+        # 削除 Undo スケジュール用に、アイテムの type/id/表示名だけを返す（Interactor に AR を載せない）。
+        # @return [Hash] `:resource_type` (String), `:resource_id` (Integer), `:item_name` (String) の symbol キー
+        def deletion_undo_schedule_row_for_item!(user_id, plan_id, item_id)
+          raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
+        end
       end
     end
   end

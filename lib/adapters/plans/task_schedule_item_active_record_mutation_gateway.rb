@@ -78,6 +78,20 @@ module Adapters
         complete_record_item!(item, actual_date: actual_date, actual_notes: actual_notes, completed_at: completed_at)
       end
 
+      def deletion_undo_schedule_row_for_item!(user_id, plan_id, item_id)
+        user_id = user_id.to_i
+        plan_id = plan_id.to_i
+        item_id = item_id.to_i
+        item = ar_item_for_plan(user_id, plan_id, item_id)
+        raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
+
+        {
+          resource_type: ::TaskScheduleItem.name,
+          resource_id: item.id,
+          item_name: item.name.to_s
+        }.freeze
+      end
+
       private
 
       def cultivation_plan_for_user!(user_id, plan_id)

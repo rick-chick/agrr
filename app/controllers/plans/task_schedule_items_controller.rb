@@ -3,8 +3,6 @@
 module Plans
   class TaskScheduleItemsController < ApplicationController
     before_action :authenticate_user!
-    before_action :set_cultivation_plan
-    before_action :set_task_schedule_item, only: [ :destroy ]
 
     def create
       raw = params[:task_schedule_item]
@@ -70,23 +68,21 @@ module Plans
     end
 
     def destroy
-      fallback_location = plan_task_schedule_path(@cultivation_plan)
+      fallback_location = plan_task_schedule_path(task_schedule_route_plan_id)
       presenter = Presenters::Plans::TaskScheduleItemDestroyPresenter.new(
         view: self,
         logger: CompositionRoot.logger,
         fallback_location: fallback_location
       )
-      input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
-        resource_type: @task_schedule_item.class.name,
-        resource_id: @task_schedule_item.id,
-        actor_id: current_user.id,
-        toast_message: I18n.t(
-          "plans.task_schedule_items.undo.toast",
-          name: @task_schedule_item.name
-        ),
-        validate_before_schedule: true
+      CompositionRoot.task_schedule_item_schedule_deletion_undo_interactor(
+        json_output_port: task_schedule_item_json_presenter,
+        undo_output_port: presenter,
+        translator: CompositionRoot.translator
+      ).call(
+        user_id: current_user.id,
+        plan_id: task_schedule_route_plan_id.to_i,
+        item_id: params[:id].to_i
       )
-      CompositionRoot.deletion_undo_schedule_interactor(output_port: presenter).call(input)
     end
 
     def complete
@@ -122,30 +118,6 @@ module Plans
 
     def task_schedule_route_plan_id
       params[:plan_id].presence || request.path_parameters[:plan_id]
-    end
-
-    def set_cultivation_plan
-      plan_id = task_schedule_route_plan_id
-      @cultivation_plan = current_user
-        .cultivation_plans
-        .plan_type_private
-        .find_by(id: plan_id)
-
-      return if @cultivation_plan
-
-      task_schedule_item_json_presenter.on_not_found
-    end
-
-    def set_task_schedule_item
-      item_id = params[:id].presence || request.path_parameters[:id]
-      @task_schedule_item = TaskScheduleItem
-        .joins(task_schedule: :cultivation_plan)
-        .where(task_schedules: { cultivation_plan_id: @cultivation_plan.id })
-        .find_by(id: item_id)
-
-      return if @task_schedule_item
-
-      task_schedule_item_json_presenter.on_not_found
     end
   end
 end
