@@ -25,7 +25,7 @@ class Farms::WeatherDataControllerTest < ActionDispatch::IntegrationTest
 
     gateway_mock = mock
     def gateway_mock.historical_data_count(weather_location_id:, start_date:, end_date:); 500; end
-    Adapters::WeatherData::WeatherDataGatewayFactory.stub(:resolve, gateway_mock) do
+    CompositionRoot.stub(:weather_data_gateway, gateway_mock) do
       get farm_weather_data_path(@farm, predict: "true"), headers: { "Accept" => "application/json" }
 
       assert_response :unprocessable_entity

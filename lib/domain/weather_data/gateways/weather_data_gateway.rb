@@ -28,6 +28,10 @@ module Domain
           raise NotImplementedError
         end
 
+        def historical_data_count(weather_location_id:, start_date:, end_date:)
+          raise NotImplementedError, "Subclasses must implement historical_data_count"
+        end
+
         def earliest_date(weather_location_id:)
           raise NotImplementedError
         end

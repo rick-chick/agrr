@@ -22,7 +22,8 @@
 - **解消済み（2026-05-07）**: **HTML** `CropsController` の `new` / `edit` / `after_crop_create_failure` / `after_crop_update_failure` にあった **ActiveRecord の直接生成・ネスト補助・assign_attributes** をやめ、`CropGateway` の `build_blank_crop_for_html_form` / `prepare_crop_record_for_edit_html_form!` / `build_new_crop_with_attributes_for_html_form` / `merge_edit_crop_params_for_html_form!` に集約（`Adapters::Crop::Gateways::CropMemoryGateway`）。コントローラはゲートウェイ呼び出しと `@crop.valid?` のみ。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **`CropsController#destroy` の format.json** — `DeletionUndo::HtmlMasterScheduleInvoker` に AR を渡さず `resource_type` / `resource_id` のみ（`DeletionUndoScheduleInputDto` と整合）。`toast_message: nil` で Undo ゲートウェイの `default_toast_message` を利用（文言キーは `crops.undo.toast` から `deletion_undo.toast_message` 側に寄る）。`destroy` を `set_crop` から外し、JSON/HTML とも削除時に事前の作物読込を不要化。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **`DeletionUndo::HtmlMasterScheduleInvoker` の `record:` 依存除去** — HTML `destroy` の **JSON** 枝で、`AgriculturalTasksController` / `PestsController` / `PesticidesController` / `FertilizesController` が作物削除と同様に `resource_type` / `resource_id` のみを渡すよう統一。存在しない ID の HTML 削除では、`soft_destroy_with_undo` の `rescue StandardError` が `Domain::Shared::Exceptions::RecordNotFound` を飲み込まないよう各ゲートウェイで再送出し、DestroyInteractor は `translator.t("*.flash.not_found")` で flash を揃える。
-- **次に先頭で固定する修正単位（未着手）**: **`Farms::WeatherDataController`** の AR 残りを意味読みで backlog 化し、通し走査を継続。
+- **解消済み（2026-05-07）**: **`Farms::WeatherDataController`** — AR 直叩き・`WeatherDataGatewayFactory`・予測分岐の主スイッチを除去。`FarmWeatherDataJsonInteractor` + `FarmWeatherDataJsonPresenter`、`FarmGateway` の所有農場／管理者 id 解決（分岐は Interactor）、`PredictWeatherStandaloneEnqueueActiveJobAdapter` で `ActiveJob::EnqueueError` を modeled 結果へ、`FarmWeatherPredictionPayloadParseAdapter` で時刻・日付境界。`index` の Hash 行はシンボルキー参照に修正。Application edge 禁止 **3**・**4**。`lib/domain` の期間算術は `Date#<<` と秒差（禁止 **4** の duration 回避）。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
@@ -53,7 +54,7 @@
 - 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
 - 2026-05-07: **フロント層境界（機械点検）** — 上記「解消済み（2026-05-07・セクション0）」のとおり。`adapters/**/*.ts` の意味読みは同バックログ項で完了。
 - 2026-05-07: **通し走査（増分・grep）** — `lib/domain` の `Rails.` / `CompositionRoot.` / `ActiveRecord::`（実コード）、`lib/presenters` の `CompositionRoot`、`app/controllers/api` の `rescue` / `rescue_from`。**該当実コードなし**（`lib/domain` の一致はコメントのみ）。禁止 1〜30 の全項の意味読み・Glob 網羅はバックログ先頭の通し走査で継続。
-- 2026-05-07: **通し走査（HTML コントローラ grep）** — `app/controllers/**/*_controller.rb` で `Crop\.|Farm\.|\.cultivation_plans` 等。**債務候補**: `CropsController` の AR フォーム周りは `CropGateway` HTML 用 API で解消（`destroy` の JSON 枝は未）。`Farms::WeatherDataController` の AR（別単位・残置リストの意図と整合を要確認）、`Plans::TaskSchedulesController` は当イテレーションで解消。
+- 2026-05-07: **通し走査（HTML コントローラ grep）** — `app/controllers/**/*_controller.rb` で `Crop\.|Farm\.|\.cultivation_plans` 等。**債務候補**: `CropsController` の AR フォーム周りは `CropGateway` HTML 用 API で解消済み。`Farms::WeatherDataController` は **2026-05-07 解消**（Interactor＋Presenter）。`Plans::TaskSchedulesController` は当イテレーションで解消。
 - 2026-05-06: フロントの**全 `*.ts` 意味読み通し走査**は未完了（当時）。`components` から `adapters/` への直 import はスポットでゼロ。
 
 ## 残置（意図・別単位）

@@ -300,7 +300,30 @@ module Adapters
           ::Farm.find_by(id: farm_id)&.region
         end
 
+        def farm_weather_data_json_context_for_owned_farm(user_id:, farm_id:)
+          record = ::Farm.find_by(id: farm_id, user_id: user_id)
+          farm_weather_data_json_context_from_record(record)
+        end
+
+        def farm_weather_data_json_context_for_admin_farm_lookup(farm_id:)
+          record = ::Farm.find_by(id: farm_id)
+          farm_weather_data_json_context_from_record(record)
+        end
+
         private
+
+        def farm_weather_data_json_context_from_record(record)
+          return nil unless record
+
+          Domain::Farm::Dtos::FarmWeatherDataJsonContextDto.new(
+            farm_id: record.id,
+            display_name: record.display_name,
+            latitude: record.latitude,
+            longitude: record.longitude,
+            weather_location_id: record.weather_location_id,
+            predicted_weather_data: record.predicted_weather_data
+          )
+        end
 
         def farm_record_to_farm_list_row_dto(record)
           Domain::Farm::Dtos::FarmListRowDto.new(

@@ -205,6 +205,28 @@ module CompositionRoot
       @weather_data_gateway ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
     end
 
+    def farm_weather_prediction_payload_parse_gateway
+      @farm_weather_prediction_payload_parse_gateway ||= Adapters::WeatherData::FarmWeatherPredictionPayloadParseAdapter.new
+    end
+
+    def predict_weather_standalone_enqueue_gateway
+      @predict_weather_standalone_enqueue_gateway ||= Adapters::WeatherData::PredictWeatherStandaloneEnqueueActiveJobAdapter.new(
+        logger: logger
+      )
+    end
+
+    def farm_weather_data_json_interactor(output_port:, clock: Time.zone)
+      Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractor.new(
+        output_port: output_port,
+        farm_gateway: farm_gateway,
+        weather_data_gateway: weather_data_gateway,
+        enqueue_port: predict_weather_standalone_enqueue_gateway,
+        prediction_payload_parse: farm_weather_prediction_payload_parse_gateway,
+        logger: logger,
+        clock: clock
+      )
+    end
+
     def internal_weather_fetch_start_gateway
       @internal_weather_fetch_start_gateway ||= Adapters::WeatherData::Gateways::InternalWeatherFetchStartActiveRecordGateway.new
     end
