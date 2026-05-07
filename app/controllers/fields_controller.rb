@@ -22,7 +22,7 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields/new
   def new
-    @field = @farm.fields.build
+    @field = CompositionRoot.field_gateway.build_blank_field_for_html_form!(persisted_farm: @farm)
   end
 
   # GET /farms/:farm_id/fields/:id/edit

@@ -169,6 +169,10 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
+        def build_blank_field_for_html_form!(persisted_farm:)
+          persisted_farm.fields.build
+        end
+
         private
 
         def farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
