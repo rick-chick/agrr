@@ -15,10 +15,8 @@
 | `public.html.erb` | `main.container` | あり | 公開プラン用 |
 | `auth.html.erb` | `main.container` | なし | 認証画面用 |
 | `admin.html.erb` | `div.admin-container` | なし | 管理画面用 |
-| `home/index.html.erb` | **独自HTML構造** | あり | **レイアウトファイル未使用** |
 
 **問題点**:
-- `home/index.html.erb`がレイアウトファイルを使わず、独自のHTML構造を持っている
 - `admin.html.erb`だけ`admin-container`を使用（他のレイアウトは`container`）
 
 ### 1.2 スタイルシート読み込み方法の不統一
@@ -31,10 +29,9 @@
 | `public.html.erb` | `render_core_stylesheets`等のヘルパー使用 |
 | `auth.html.erb` | `render_core_stylesheets`等のヘルパー使用 |
 | `admin.html.erb` | `render_core_stylesheets`等のヘルパー使用 |
-| `home/index.html.erb` | **直接`stylesheet_link_tag`を使用** |
 
 **問題点**:
-- `home/index.html.erb`だけ直接`stylesheet_link_tag`を使用しており、他の画面と異なる
+- （旧Railsランディングは削除済み。ルートは`spa#index`でAngularが担当）
 
 ## 2. ボタンスタイルの不統一
 
@@ -51,13 +48,13 @@
 | `btn btn-info` | 標準画面 | `components/buttons.css` | 標準 |
 | `btn-plans-primary` | Plans関連画面 | `features/plans.css` | **Plans専用** |
 | `btn-plans-secondary` | Plans関連画面 | `features/plans.css` | **Plans専用** |
-| `hero-button` | ホームページ | `features/home.css` | **ホーム専用** |
+| `hero-button` | 公開プラン等（`public`レイアウト＋`features/home.css`） | `features/home.css` | **セクション専用** |
 | `btn-white` | 公開プラン結果画面等 | `features/public-plans.css` | **非標準** |
 | `back-button` | 公開プラン画面 | `features/public-plans.css` | **非標準** |
 
 **問題点**:
 - Plans関連画面で`btn-plans-*`を使用（標準の`btn-*`と重複）
-- ホームページで`hero-button`を使用（標準ボタンと異なる）
+- `hero-button`系が標準の`btn-*`と異なる
 - `btn-white`が定義されているが、標準ボタンシステムに含まれていない
 - `back-button`が個別に定義されている
 
@@ -71,11 +68,6 @@
 **Plans画面での使用例** (`plans/index.html.erb`):
 ```erb
 <%= link_to new_plan_path, class: "btn-plans-primary" do %>
-```
-
-**ホームページでの使用例** (`home/index.html.erb`):
-```erb
-<%= link_to t('.hero.cta_button'), public_plans_path, class: "hero-button" %>
 ```
 
 **公開プラン結果画面での使用例** (`public_plans/results.html.erb`):
@@ -179,7 +171,7 @@
 | `field-card` | Fields画面 | `components/cards.css` |
 | `crop-card` | Crops画面 | `components/cards.css` |
 | `farm-card` | Farms画面 | `components/farm-cards.css` |
-| `feature-card` | ホームページ、Aboutページ | `features/home.css`, `features/pages.css` |
+| `feature-card` | 公開プラン等（`public`レイアウト）、Aboutページ | `features/home.css`, `features/pages.css` |
 | `content-card` | Plans詳細画面 | `features/plans.css` |
 
 **問題点**:
@@ -208,7 +200,7 @@
 
 | セクションタイトルクラス | 使用箇所 | 定義場所 |
 |------------------------|---------|---------|
-| `section-title` | ホームページ | `features/home.css` |
+| `section-title` | `public`レイアウト由来の画面 | `features/home.css` |
 | `section-header` | farms画面 | `features/fields-crops.css` |
 | `page-section-title` | 静的ページ | `features/pages.css` |
 | `gantt-title` | ガントチャート画面 | `features/plans.css` |
@@ -232,7 +224,7 @@
 
 ### 10.1 優先度: 高
 1. **レイアウト構造の統一**
-   - `home/index.html.erb`をレイアウトファイルを使用するように修正
+   - （旧Railsホームは削除。Angular側のランディングとボタン統一を検討）
    - `admin-container`を`container`に統一するか、明確な理由を文書化
 
 2. **ボタンスタイルの統一**
@@ -273,10 +265,10 @@
    - `plans-header` → `page-header`への変更
    - 影響範囲: Plans関連の全画面
 
-2. **ホームページのレイアウト統一**
-   - レイアウトファイルを使用するように変更
-   - `hero-button` → 標準ボタンへの変更
-   - 影響範囲: ホームページ全体
+2. **ランディング（SPA）と公開プラン周りのボタン統一**
+   - Angular 側トップと Rails `public` レイアウトでボタン規約を揃える
+   - `hero-button` → 標準ボタンへの変更（該当テンプレートがある場合）
+   - 影響範囲: フロントのランディング・公開プラン HTML テンプレート
 
 3. **管理画面のコンテナ統一**
    - `admin-container` → `container`への変更

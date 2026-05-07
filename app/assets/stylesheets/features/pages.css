@@ -67,7 +67,7 @@
    - hover効果なし
    - padding: var(--space-5)
    - border-radius: var(--radius-lg)
-   - home/index.html.erbで使用される.feature-cardとは異なるスタイルです */
+   - features/home.css の .feature-card（公開レイアウト由来）とは異なるスタイルです */
 .feature-card {
   background-color: var(--color-gray-50);
   padding: var(--space-5);

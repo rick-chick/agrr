@@ -135,7 +135,7 @@
   margin: 0 auto;
 }
 
-/* Note: .feature-cardはhome/index.html.erb専用のスタイルです
+/* Note: .feature-cardは公開レイアウト（public.html.erb が読み込む home スタイル群）向けです
    - hover効果あり（transform, box-shadow）
    - padding: var(--space-6)
    - border-radius: var(--radius-xl)
