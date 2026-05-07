@@ -130,16 +130,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement farm_region_for_wizard_lookup_by_id"
         end
 
-        # 天気 JSON API 用: 所有農場のみ（Interactor が管理者なら別メソッドを呼ぶ）。
-        # @return [Domain::Farm::Dtos::FarmWeatherDataJsonContextDto, nil]
-        def farm_weather_data_json_context_for_owned_farm(user_id:, farm_id:)
-          raise NotImplementedError, "Subclasses must implement farm_weather_data_json_context_for_owned_farm"
+        # 農場天気参照: 所有農場のみ（Interactor が管理者なら別メソッドを呼ぶ）。
+        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContextDto, nil]
+        def farm_weather_data_access_context_for_owned_farm(user_id:, farm_id:)
+          raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_owned_farm"
         end
 
-        # 天気 JSON API 用: id のみ（管理者ユースケースで Interactor からのみ呼ぶ）。
-        # @return [Domain::Farm::Dtos::FarmWeatherDataJsonContextDto, nil]
-        def farm_weather_data_json_context_for_admin_farm_lookup(farm_id:)
-          raise NotImplementedError, "Subclasses must implement farm_weather_data_json_context_for_admin_farm_lookup"
+        # 農場 id のみ（管理者ユースケースで Interactor からのみ呼ぶ）。
+        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContextDto, nil]
+        def farm_weather_data_access_context_for_admin_lookup(farm_id:)
+          raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_admin_lookup"
         end
       end
     end

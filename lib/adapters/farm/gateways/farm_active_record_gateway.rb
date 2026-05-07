@@ -300,22 +300,22 @@ module Adapters
           ::Farm.find_by(id: farm_id)&.region
         end
 
-        def farm_weather_data_json_context_for_owned_farm(user_id:, farm_id:)
+        def farm_weather_data_access_context_for_owned_farm(user_id:, farm_id:)
           record = ::Farm.find_by(id: farm_id, user_id: user_id)
-          farm_weather_data_json_context_from_record(record)
+          farm_weather_data_access_context_from_record(record)
         end
 
-        def farm_weather_data_json_context_for_admin_farm_lookup(farm_id:)
+        def farm_weather_data_access_context_for_admin_lookup(farm_id:)
           record = ::Farm.find_by(id: farm_id)
-          farm_weather_data_json_context_from_record(record)
+          farm_weather_data_access_context_from_record(record)
         end
 
         private
 
-        def farm_weather_data_json_context_from_record(record)
+        def farm_weather_data_access_context_from_record(record)
           return nil unless record
 
-          Domain::Farm::Dtos::FarmWeatherDataJsonContextDto.new(
+          Domain::Farm::Dtos::FarmWeatherDataAccessContextDto.new(
             farm_id: record.id,
             display_name: record.display_name,
             latitude: record.latitude,

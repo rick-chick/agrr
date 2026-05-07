@@ -3,8 +3,8 @@
 module Domain
   module Farm
     module Dtos
-      # JSON 天気 API 用にゲートウェイが一度だけ組み立てる農場コンテキスト（AR を境界に閉じる）。
-      class FarmWeatherDataJsonContextDto
+      # 農場天気参照用にゲートウェイが一度だけ組み立てる読み取りスナップショット（AR を境界に閉じる）。
+      class FarmWeatherDataAccessContextDto
         attr_reader :farm_id, :display_name, :latitude, :longitude, :weather_location_id, :predicted_weather_data
 
         def initialize(farm_id:, display_name:, latitude:, longitude:, weather_location_id:, predicted_weather_data:)

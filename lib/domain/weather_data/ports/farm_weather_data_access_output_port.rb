@@ -3,7 +3,7 @@
 module Domain
   module WeatherData
     module Ports
-      class FarmWeatherDataJsonOutputPort
+      class FarmWeatherDataAccessOutputPort
         def on_index_success(farm:, period:, data:)
           raise NotImplementedError, "#{self.class} must implement on_index_success"
         end

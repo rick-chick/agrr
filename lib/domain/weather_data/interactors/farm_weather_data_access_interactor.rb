@@ -3,9 +3,9 @@
 module Domain
   module WeatherData
     module Interactors
-      # Farms::WeatherDataController の JSON 応答を domain に集約する。
+      # 農場に紐づく天気データ参照・予測キュー投入（Farms::WeatherDataController）。
       # clock は #today / #now に応答（通常 Time.zone）。
-      class FarmWeatherDataJsonInteractor
+      class FarmWeatherDataAccessInteractor
         def initialize(output_port:,
                        farm_gateway:,
                        weather_data_gateway:,
@@ -23,16 +23,16 @@ module Domain
         end
 
         def call(input_dto)
-          unless input_dto.is_a?(Domain::WeatherData::Dtos::FarmWeatherDataJsonInputDto)
-            raise ArgumentError, "input_dto must be FarmWeatherDataJsonInputDto"
+          unless input_dto.is_a?(Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto)
+            raise ArgumentError, "input_dto must be FarmWeatherDataAccessInputDto"
           end
 
           ctx = if input_dto.is_admin
-                  @farm_gateway.farm_weather_data_json_context_for_admin_farm_lookup(
+                  @farm_gateway.farm_weather_data_access_context_for_admin_lookup(
                     farm_id: input_dto.farm_id
                   )
                 else
-                  @farm_gateway.farm_weather_data_json_context_for_owned_farm(
+                  @farm_gateway.farm_weather_data_access_context_for_owned_farm(
                     user_id: input_dto.user_id,
                     farm_id: input_dto.farm_id
                   )

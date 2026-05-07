@@ -215,8 +215,8 @@ module CompositionRoot
       )
     end
 
-    def farm_weather_data_json_interactor(output_port:, clock: Time.zone)
-      Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractor.new(
+    def farm_weather_data_access_interactor(output_port:, clock: Time.zone)
+      Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractor.new(
         output_port: output_port,
         farm_gateway: farm_gateway,
         weather_data_gateway: weather_data_gateway,

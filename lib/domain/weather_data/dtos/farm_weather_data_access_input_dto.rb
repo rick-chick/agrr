@@ -4,7 +4,7 @@ module Domain
   module WeatherData
     module Dtos
       # Controller エッジで params を意味のある値にした後だけ Interactor に渡す。
-      class FarmWeatherDataJsonInputDto
+      class FarmWeatherDataAccessInputDto
         attr_reader :farm_id, :user_id, :is_admin, :predict, :start_date, :end_date
 
         def initialize(farm_id:, user_id:, is_admin:, predict:, start_date: nil, end_date: nil)

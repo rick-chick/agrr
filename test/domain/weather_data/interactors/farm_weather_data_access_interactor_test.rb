@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < ActiveSupport::TestCase
-  class RecordingOutputPort < Domain::WeatherData::Ports::FarmWeatherDataJsonOutputPort
+class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < ActiveSupport::TestCase
+  class RecordingOutputPort < Domain::WeatherData::Ports::FarmWeatherDataAccessOutputPort
     attr_reader :calls
 
     def initialize
@@ -42,11 +42,11 @@ class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < Acti
   class FakeFarmGateway
     attr_accessor :ctx
 
-    def farm_weather_data_json_context_for_owned_farm(user_id:, farm_id:)
+    def farm_weather_data_access_context_for_owned_farm(user_id:, farm_id:)
       ctx if ctx
     end
 
-    def farm_weather_data_json_context_for_admin_farm_lookup(farm_id:)
+    def farm_weather_data_access_context_for_admin_lookup(farm_id:)
       ctx if ctx
     end
 
@@ -117,7 +117,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < Acti
     @output = RecordingOutputPort.new
     @logger = Logger.new(File::NULL)
     @clock = Time.zone
-    @interactor = Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractor.new(
+    @interactor = Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractor.new(
       output_port: @output,
       farm_gateway: @farm_gateway,
       weather_data_gateway: @weather_gateway,
@@ -129,7 +129,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < Acti
   end
 
   test "index builds temperature_mean from max/min when dto mean is nil (hash keys are symbols)" do
-    ctx = Domain::Farm::Dtos::FarmWeatherDataJsonContextDto.new(
+    ctx = Domain::Farm::Dtos::FarmWeatherDataAccessContextDto.new(
       farm_id: 1,
       display_name: "テスト",
       latitude: 35.0,
@@ -151,7 +151,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < Acti
     )
     @weather_gateway.rows = [ row ]
 
-    input = Domain::WeatherData::Dtos::FarmWeatherDataJsonInputDto.new(
+    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto.new(
       farm_id: 1,
       user_id: 1,
       is_admin: false,
@@ -169,7 +169,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataJsonInteractorTest < Acti
 
   test "returns farm_not_found when gateway returns nil" do
     @farm_gateway.ctx = nil
-    input = Domain::WeatherData::Dtos::FarmWeatherDataJsonInputDto.new(
+    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto.new(
       farm_id: 99,
       user_id: 1,
       is_admin: false,

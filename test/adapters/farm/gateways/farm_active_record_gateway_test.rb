@@ -218,12 +218,12 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert result[:error_dto].message.present?
   end
 
-  test "farm_weather_data_json_context_for_owned_farm returns dto for owner" do
+  test "farm_weather_data_access_context_for_owned_farm returns dto for owner" do
     farm = create(:farm, user: @user)
     wl = create(:weather_location)
     farm.update!(weather_location: wl)
 
-    ctx = @gateway.farm_weather_data_json_context_for_owned_farm(
+    ctx = @gateway.farm_weather_data_access_context_for_owned_farm(
       user_id: @user.id,
       farm_id: farm.id
     )
@@ -232,11 +232,11 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal wl.id, ctx.weather_location_id
   end
 
-  test "farm_weather_data_json_context_for_owned_farm returns nil for other users farm" do
+  test "farm_weather_data_access_context_for_owned_farm returns nil for other users farm" do
     other = create(:user)
     farm = create(:farm, user: other)
 
-    ctx = @gateway.farm_weather_data_json_context_for_owned_farm(
+    ctx = @gateway.farm_weather_data_access_context_for_owned_farm(
       user_id: @user.id,
       farm_id: farm.id
     )
@@ -244,11 +244,11 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_nil ctx
   end
 
-  test "farm_weather_data_json_context_for_admin_farm_lookup returns any farm by id" do
+  test "farm_weather_data_access_context_for_admin_lookup returns any farm by id" do
     other = create(:user)
     farm = create(:farm, user: other)
 
-    ctx = @gateway.farm_weather_data_json_context_for_admin_farm_lookup(
+    ctx = @gateway.farm_weather_data_access_context_for_admin_lookup(
       farm_id: farm.id
     )
 
