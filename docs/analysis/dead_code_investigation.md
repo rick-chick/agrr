@@ -48,11 +48,10 @@
 
 | 項目 | 内容 |
 |------|------|
-| **ARCHITECTURE.md** | 「`agricultural_task` domain code exists but is unused」と記載あり。 |
-| **実態** | **使用されている**。 |
-|  | • `app/controllers/agricultural_tasks_controller.rb` で `AgriculturalTaskListInteractor`, `AgriculturalTaskDetailInteractor`, `AgriculturalTaskCreateInteractor`, `AgriculturalTaskUpdateInteractor`, `AgriculturalTaskDestroyInteractor` を利用。 |
-|  | • `app/controllers/api/v1/masters/agricultural_tasks_controller.rb` でも上記 Interactor を利用。 |
-| **推奨** | **ARCHITECTURE.md の該当 Note を削除または「使用中」に修正**する。 |
+| **過去の調査メモ** | 以前、`ARCHITECTURE.md` に agricultural_task が未使用である旨の記述があったという報告があった。 |
+| **現状（2026-05-07 確認）** | **ROOT の `ARCHITECTURE.md` に該当の「unused」記述はない**。ドメイン一覧では `agricultural_task` が他コンテキストと並列で列挙されているのみ。 |
+| **実態** | **使用されている**。`app/controllers/agricultural_tasks_controller.rb`・`app/controllers/api/v1/masters/agricultural_tasks_controller.rb` 経由で各 AgriculturalTask Interactor が利用されている。 |
+| **対応** | ARCHITECTURE の誤記修正タスクは **不要（解消済み／現行本文と整合）**。 |
 
 ---
 
@@ -71,12 +70,12 @@
 
 ## 5. アクション一覧
 
-| 優先度 | アクション | 対象 |
+| 優先度 | アクション | 状態 |
 |--------|------------|------|
-| 中 | ドキュメント修正 | `ARCHITECTURE.md` の agricultural_task に関する「unused」記述を削除または修正 |
-| 低 | ドキュメント更新 | `docs/analysis/drop_agricultural_task_crops_*.md` 等で CropTaskTemplateBackfillService / Rake を「削除済み」と明記 |
+| ~~中~~ | ~~`ARCHITECTURE.md` の agricultural_task「unused」記述~~ | **完了**（現行本文に該当記述なし・2026-05-07） |
+| 低 | `docs/analysis/drop_agricultural_task_crops_*.md` 等が「これからサービスを削除する」トーンの場合は「削除済み」への同期 | 任意（調査スコープ外のドキュメント棚卸しで対応可） |
 
-**削除済み**: AgriculturalTaskCrop モデル、GenerateFreeCropPlanJob
+**削除済み**: AgriculturalTaskCrop モデル、GenerateFreeCropPlanJob、CropTaskTemplateBackfillService と `lib/tasks/crop_task_templates.rake`（コードベース上ファイルなし）
 
 ---
 
