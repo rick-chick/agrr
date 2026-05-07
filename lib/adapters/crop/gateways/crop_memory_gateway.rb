@@ -113,6 +113,27 @@ module Adapters
           )
         end
 
+        def build_blank_crop_for_html_form
+          ::Crop.new
+        end
+
+        def build_new_crop_with_attributes_for_html_form(attributes:)
+          ::Crop.new(attributes)
+        end
+
+        def prepare_crop_record_for_edit_html_form!(crop)
+          crop.crop_stages.each do |stage|
+            stage.build_nutrient_requirement unless stage.nutrient_requirement
+          end
+        end
+
+        def merge_edit_crop_params_for_html_form!(user:, crop_id:, attributes:)
+          bundle = find_authorized_crop_loaded_bundle!(user, crop_id, for_edit: true)
+          crop = bundle.persisted_crop
+          crop.assign_attributes(attributes)
+          crop
+        end
+
         def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           stage = crop.crop_stages.find(crop_stage_id)

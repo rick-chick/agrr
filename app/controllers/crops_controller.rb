@@ -24,14 +24,12 @@ class CropsController < ApplicationController
 
   # GET /crops/new
   def new
-    @crop = Crop.new
+    @crop = CompositionRoot.crop_gateway.build_blank_crop_for_html_form
   end
 
   # GET /crops/:id/edit
   def edit
-    @crop.crop_stages.each do |stage|
-      stage.build_nutrient_requirement unless stage.nutrient_requirement
-    end
+    CompositionRoot.crop_gateway.prepare_crop_record_for_edit_html_form!(@crop)
   end
 
   # POST /crops
@@ -119,13 +117,20 @@ class CropsController < ApplicationController
   end
 
   def after_crop_create_failure
-    @crop = Crop.new(crop_params.to_h.symbolize_keys)
+    @crop = CompositionRoot.crop_gateway.build_new_crop_with_attributes_for_html_form(
+      attributes: crop_params.to_h.symbolize_keys
+    )
     @crop.valid?
   end
 
   def after_crop_update_failure
-    @crop&.assign_attributes(crop_params.to_h.symbolize_keys)
-    @crop&.valid?
+    user = CompositionRoot.user_lookup.find(current_user.id)
+    @crop = CompositionRoot.crop_gateway.merge_edit_crop_params_for_html_form!(
+      user: user,
+      crop_id: params[:id].to_i,
+      attributes: crop_params.to_h.symbolize_keys
+    )
+    @crop.valid?
   end
 
   def render_form(action, status: :ok, locals: {})

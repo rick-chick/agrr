@@ -160,6 +160,26 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_crop_loaded_bundle!"
         end
 
+        # HTML マスタ: 新規フォーム用の未保存 Crop（永続化しない）
+        def build_blank_crop_for_html_form
+          raise NotImplementedError, "Subclasses must implement build_blank_crop_for_html_form"
+        end
+
+        # HTML マスタ: create 失敗時の再描画用に属性を載せた未保存 Crop（永続化しない）
+        def build_new_crop_with_attributes_for_html_form(attributes:)
+          raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_html_form"
+        end
+
+        # HTML マスタ: edit フォーム表示前にネスト用の空関連を補う（既に認可済みのレコードを変更）
+        def prepare_crop_record_for_edit_html_form!(crop)
+          raise NotImplementedError, "Subclasses must implement prepare_crop_record_for_edit_html_form!"
+        end
+
+        # HTML マスタ: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
+        def merge_edit_crop_params_for_html_form!(user:, crop_id:, attributes:)
+          raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_html_form!"
+        end
+
         # マスター HTML/API: 非参照作物に属する CropStage を取得（子が無い場合は RecordNotFound）。
         def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_masters_crop_stage_in_crop_for_user!"
