@@ -9,12 +9,12 @@
 
 <div class="form-section">
   <h2 class="form-section-title"><%= t('.associate_existing_task') %></h2>
-  <% if @unassociated_agricultural_tasks.any? %>
+  <% if @selectable_agricultural_tasks.any? %>
     <%= form_with url: crop_agricultural_tasks_path(@crop), method: :post, local: true do |f| %>
       <div class="form-group">
         <%= f.label :agricultural_task_id, t('.select_existing_task'), class: 'form-label' %>
         <%= f.select :agricultural_task_id, 
-            options_from_collection_for_select(@unassociated_agricultural_tasks, :id, :name),
+            options_from_collection_for_select(@selectable_agricultural_tasks, :id, :name),
             { include_blank: t('.select_task_placeholder') },
             { class: 'form-control' } %>
       </div>

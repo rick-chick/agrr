@@ -180,6 +180,14 @@ module Adapters
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
         end
 
+        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+          scope = ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
+          existing_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact
+          scope = scope.where.not(id: existing_task_ids) if existing_task_ids.any?
+          scope.recent.map { |t| { id: t.id, name: t.name } }
+        end
+
         def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
           bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i)
           tpl = bundle.persisted_crop_task_template

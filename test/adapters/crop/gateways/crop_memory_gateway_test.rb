@@ -374,6 +374,31 @@ module Adapters
             "expected name validation message, got: #{error.errors.inspect}"
           )
         end
+
+        test "selectable_agricultural_task_picklist_rows_for_nested_templates returns rows excluding already-linked tasks" do
+          user = @crop.user
+          task_linked = create(:agricultural_task, :user_owned, user: user, name: "LinkedPicklist")
+          task_free = create(:agricultural_task, :user_owned, user: user, name: "FreePicklist")
+          create(:crop_task_template, crop: @crop, agricultural_task: task_linked)
+
+          rows = @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(user: user, crop_id: @crop.id)
+
+          ids = rows.map { |r| r[:id] }
+          refute_includes ids, task_linked.id
+          assert_includes ids, task_free.id
+          hit = rows.find { |r| r[:id] == task_free.id }
+          assert_equal task_free.id, hit[:id]
+          assert_equal task_free.name, hit[:name]
+        end
+
+        test "selectable_agricultural_task_picklist_rows_for_nested_templates raises when crop is not user-owned non-reference" do
+          other_crop = create(:crop)
+          user = @crop.user
+
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+            @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(user: user, crop_id: other_crop.id)
+          end
+        end
       end
     end
   end

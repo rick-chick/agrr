@@ -195,6 +195,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement masters_crop_agricultural_task_templates_index_rows"
         end
 
+        # 作物にネストしたタスク関連付け: 未関連付けの農業タスクを picklist 用に id/name の Hash 配列で返す（作物解決は find_user_non_reference_crop_for_masters! と同一）
+        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
+          raise NotImplementedError, "Subclasses must implement selectable_agricultural_task_picklist_rows_for_nested_templates"
+        end
+
         # @return [Hash] { ok: true, row: Hash } | { ok: false, errors: Array<String> }
         def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
           raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"

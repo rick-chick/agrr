@@ -8,15 +8,32 @@ module Crops
 
     # GET /crops/:crop_id/agricultural_tasks
     def index
-      @templates = @crop.crop_task_templates.includes(:agricultural_task).order(:name)
-      @available_agricultural_tasks = selectable_agricultural_tasks
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(
+        user_id: current_user.id,
+        crop_id: params[:crop_id]
+      )
+      presenter = Presenters::Html::Crop::CropMastersTaskTemplateIndexHtmlPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropMastersTaskTemplateIndexInteractor.new(
+        output_port: presenter,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      interactor.call(input_dto)
     end
 
     # GET /crops/:crop_id/agricultural_tasks/new
     def new
-      # 既存の作業を選択する場合
-      @agricultural_task = AgriculturalTask.new
-      @unassociated_agricultural_tasks = selectable_agricultural_tasks
+      input_dto = Domain::Crop::Dtos::CropNestedCropTaskTemplatesNewInputDto.new(
+        user_id: current_user.id,
+        crop_id: params[:crop_id]
+      )
+      presenter = Presenters::Html::Crop::CropNestedCropTaskTemplatesNewHtmlPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropNestedCropTaskTemplatesNewInteractor.new(
+        output_port: presenter,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      interactor.call(input_dto)
     end
 
     def edit
@@ -24,55 +41,60 @@ module Crops
 
     # POST /crops/:crop_id/agricultural_tasks
     def create
-      # 既存の作業を選択して関連付ける場合
-      if params[:agricultural_task_id].present?
-        existing_task = AgriculturalTask.find_by(id: params[:agricultural_task_id])
-        if existing_task
-          # 権限チェック: 選択した作業が利用可能か確認
-          unless can_access_agricultural_task?(existing_task)
-            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t("crops.agricultural_tasks.flash.no_permission")
-            return
-          end
-
-          if template_exists_for?(existing_task)
-            redirect_to crop_agricultural_tasks_path(@crop), alert: I18n.t("crops.agricultural_tasks.flash.template_already_exists")
-            return
-          end
-
-          template = @crop.crop_task_templates.create!(
-            agricultural_task: existing_task,
-            name: existing_task.name,
-            description: existing_task.description,
-            time_per_sqm: existing_task.time_per_sqm,
-            weather_dependency: existing_task.weather_dependency,
-            required_tools: existing_task.required_tools,
-            skill_level: existing_task.skill_level,
-            task_type: existing_task.task_type,
-            task_type_id: existing_task.task_type_id,
-            is_reference: existing_task.is_reference
-          )
-
-          redirect_to crop_agricultural_tasks_path(@crop),
-                      notice: I18n.t("crops.agricultural_tasks.flash.template_created")
-          return
-        end
+      if params[:agricultural_task_id].blank?
+        redirect_to new_agricultural_task_path, notice: I18n.t("crops.agricultural_tasks.flash.redirect_to_create")
+        return
       end
 
-      # 新しい作業を作成する場合は、通常のagricultural_tasksコントローラーにリダイレクト
-      redirect_to new_agricultural_task_path, notice: I18n.t("crops.agricultural_tasks.flash.redirect_to_create")
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+        user_id: current_user.id,
+        crop_id: params[:crop_id],
+        agricultural_task_id: params[:agricultural_task_id],
+        name: nil,
+        description: nil,
+        time_per_sqm: nil,
+        weather_dependency: nil,
+        required_tools: nil,
+        skill_level: nil
+      )
+      presenter = Presenters::Html::Crop::CropMastersTaskTemplateCreateHtmlPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropMastersTaskTemplateCreateInteractor.new(
+        output_port: presenter,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      interactor.call(input_dto)
     end
 
     def update
-      if @template.update(template_params)
-        redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t("crops.agricultural_tasks.flash.template_updated")
-      else
-        render :edit, status: :unprocessable_entity
-      end
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInputDto.new(
+        user_id: current_user.id,
+        crop_id: params[:crop_id],
+        template_id: params[:id],
+        attributes: crop_task_template_update_attributes
+      )
+      presenter = Presenters::Html::Crop::CropMastersTaskTemplateUpdateHtmlPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropMastersTaskTemplateUpdateInteractor.new(
+        output_port: presenter,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      interactor.call(input_dto)
     end
 
     def destroy
-      @template.destroy!
-      redirect_to crop_agricultural_tasks_path(@crop), notice: I18n.t("crops.agricultural_tasks.flash.template_deleted")
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+        user_id: current_user.id,
+        crop_id: params[:crop_id],
+        template_id: params[:id]
+      )
+      presenter = Presenters::Html::Crop::CropMastersTaskTemplateDestroyHtmlPresenter.new(view: self)
+      interactor = Domain::Crop::Interactors::CropMastersTaskTemplateDestroyInteractor.new(
+        output_port: presenter,
+        gateway: CompositionRoot.crop_gateway,
+        user_lookup: CompositionRoot.user_lookup
+      )
+      interactor.call(input_dto)
     end
 
     private
@@ -106,35 +128,27 @@ module Crops
       @template = bundle.persisted_crop_task_template
     end
 
-    def template_params
-      params.require(:crop_task_template).permit(
+    def crop_task_template_update_attributes
+      permitted = params.require(:crop_task_template).permit(
         :name,
         :description,
         :time_per_sqm,
         :weather_dependency,
         :skill_level,
-        required_tools: []
-      )
+        :required_tools
+      ).to_h
+      permitted[:required_tools] = normalize_required_tools(permitted[:required_tools])
+      permitted
     end
 
-    def can_access_agricultural_task?(task)
-      if admin_user?
-        task.is_reference || task.user_id == current_user.id
+    def normalize_required_tools(value)
+      case value
+      when Array
+        value.map(&:to_s).map(&:strip).reject(&:blank?)
+      when String
+        value.split(/\r?\n|,/).map(&:strip).reject(&:blank?)
       else
-        task.user_id == current_user.id && !task.is_reference
-      end
-    end
-
-    def selectable_agricultural_tasks
-      scope = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, current_user.id)
-      existing_task_ids = @crop.crop_task_templates.pluck(:agricultural_task_id).compact
-      scope = scope.where.not(id: existing_task_ids) if existing_task_ids.any?
-      scope.recent
-    end
-
-    def template_exists_for?(task)
-      @crop.crop_task_templates.any? do |template|
-        template.agricultural_task_id.present? && template.agricultural_task_id == task.id
+        []
       end
     end
   end
