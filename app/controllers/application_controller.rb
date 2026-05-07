@@ -101,28 +101,7 @@ class ApplicationController < ActionController::Base
   def current_user
     return @current_user if defined?(@current_user)
 
-    session_id = cookies[:session_id]
-    unless session_id
-      # 未ログインの場合はアノニマスユーザーを返す
-      return @current_user = User.anonymous_user
-    end
-
-    # Validate session ID format for security
-    unless Session.valid_session_id?(session_id)
-      # セッションIDが無効な場合はアノニマスユーザーを返す
-      return @current_user = User.anonymous_user
-    end
-
-    session = Session.active.find_by(session_id: session_id)
-    unless session
-      # セッションが見つからない場合はアノニマスユーザーを返す
-      return @current_user = User.anonymous_user
-    end
-
-    # Extend session if it's close to expiring
-    session.extend_expiration if session.expires_at < 1.week.from_now
-
-    @current_user = session.user
+    @current_user = CompositionRoot.session_cookie_user_gateway.user_for_session_cookie(cookies[:session_id])
   end
 
   def authenticate_user!

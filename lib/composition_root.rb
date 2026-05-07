@@ -302,8 +302,14 @@ module CompositionRoot
       @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::ShellStdoutCaptureGateway.new(logger: logger)
     end
 
+    def session_cookie_user_gateway
+      @session_cookie_user_gateway ||= Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway.new
+    end
+
     def masters_api_session_resolve_gateway
-      @masters_api_session_resolve_gateway ||= Adapters::Api::V1::Masters::MastersApiSessionResolveGateway.new
+      @masters_api_session_resolve_gateway ||= Adapters::Api::V1::Masters::MastersApiSessionResolveGateway.new(
+        session_cookie_resolver: session_cookie_user_gateway
+      )
     end
 
     def user_api_key_rotation_gateway

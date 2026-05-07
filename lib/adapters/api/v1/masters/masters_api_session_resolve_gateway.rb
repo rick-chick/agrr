@@ -6,6 +6,10 @@ module Adapters
       module Masters
         # マスター API の API キー／セッション Cookie から User を解決する（ActiveRecord はこの境界内のみ）。
         class MastersApiSessionResolveGateway
+          def initialize(session_cookie_resolver: Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway.new)
+            @session_cookie_resolver = session_cookie_resolver
+          end
+
           def user_for_api_key(api_key)
             return nil if api_key.blank?
 
@@ -13,14 +17,7 @@ module Adapters
           end
 
           def user_for_session_cookie(session_id)
-            return User.anonymous_user unless session_id
-            return User.anonymous_user unless Session.valid_session_id?(session_id)
-
-            session = Session.active.find_by(session_id: session_id)
-            return User.anonymous_user unless session
-
-            session.extend_expiration if session.expires_at < 1.week.from_now
-            session.user
+            @session_cookie_resolver.user_for_session_cookie(session_id)
           end
         end
       end

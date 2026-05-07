@@ -43,7 +43,8 @@
 - **解消済み（2026-05-08）**: **`AuthTestController` モックログイン** — `User.find_or_create_by` / `Session.create_for_user` / リダイレクト分岐を `AuthTestMockLoginInteractor` + `AuthTestLoginActiveRecordGateway` + `AuthTestMockLoginHtmlPresenter` に移行。コントローラは OmniAuth モックから `AuthTestMockLoginInputDto` を組み立て、`return_to` 許可は既存 `allowed_return_to?`。セッション Cookie は `auth_test_assign_session_cookie!` フック（Rails 8 の private `cookies` 回避）。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `Crops::PestsController#edit`** — `@pest.pest_control_methods.build` を除去。`PestGateway#prepare_crop_nested_pest_for_edit_form!`・`CropsNestedPestsLoadPestInteractor`（`for_edit_form:`）でゲートウェイに集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#copy`** — 無効化リダイレクトのみのため `before_action :set_plan` と `PlanPolicy.find_private_owned!` を除去。Application edge 禁止 **4**。
-- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。**候補**: `application_controller`〜`auth_test_controller`（`api_docs_controller` より前の未サンプリング）および残りの HTML 系。
+- **解消済み（2026-05-08）**: **`ApplicationController#current_user`** の `Session` / `User` 直参照を `Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway` に集約。`CompositionRoot#session_cookie_user_gateway` を追加し、`MastersApiSessionResolveGateway` は同一リゾルバを注入してセッション解決を共有。アダプター層テスト `session_cookie_user_active_record_gateway_test.rb` を追加。Application edge 禁止 **4**。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。**候補**: `agricultural_tasks_controller` 以降（`application_controller` は上記で解消）、`api_docs_controller` より前の未サンプリングおよび残りの HTML 系。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
