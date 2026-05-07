@@ -37,7 +37,7 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/new
   def new
-    @agricultural_task = AgriculturalTask.new
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_blank_agricultural_task_for_html_form(current_user)
   end
 
   # GET /agricultural_tasks/:id/edit
@@ -113,17 +113,10 @@ class AgriculturalTasksController < ApplicationController
 
   def after_agricultural_task_create_failure
     task_attributes = build_task_attributes
-    @agricultural_task = current_user.agricultural_tasks.build(
-      name: task_attributes[:name],
-      description: task_attributes[:description],
-      time_per_sqm: task_attributes[:time_per_sqm],
-      weather_dependency: task_attributes[:weather_dependency],
-      skill_level: task_attributes[:skill_level],
-      is_reference: task_attributes[:is_reference],
-      required_tools: task_attributes[:required_tools],
-      region: task_attributes[:region]
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_after_create_failure_agricultural_task_for_html_form!(
+      user: current_user,
+      attributes: task_attributes
     )
-    @agricultural_task.valid?
   end
 
   private
@@ -198,7 +191,11 @@ class AgriculturalTasksController < ApplicationController
 
     preview_task =
       if params[:action] == "update"
-        build_preview_task_for_selection
+        CompositionRoot.agricultural_task_gateway.preview_agricultural_task_for_edit_crop_selection(
+          base_task: @agricultural_task,
+          user: current_user,
+          agricultural_task_params: params.fetch(:agricultural_task, {})
+        )
       else
         @agricultural_task
       end
@@ -243,29 +240,6 @@ class AgriculturalTasksController < ApplicationController
     normalized_ids.select { |id| @accessible_crop_ids.include?(id) }
   end
 
-  def build_preview_task_for_selection
-    preview = @agricultural_task.dup
-    requested_flag = requested_reference_flag_from(params.fetch(:agricultural_task, {}))
-    if requested_flag != @agricultural_task.is_reference?
-      preview.is_reference = requested_flag
-      preview.user_id = user_id_for(requested_flag)
-    end
-    preview
-  end
-
-  def user_id_for(reference_flag)
-    return nil if reference_flag
-
-    @agricultural_task.user_id.presence || current_user.id
-  end
-
-  def requested_reference_flag_from(attributes)
-    return @agricultural_task.is_reference? unless attributes.respond_to?(:key?) && attributes.key?(:is_reference)
-
-    casted = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
-    casted.nil? ? false : casted
-  end
-
   public
 
   # HTML 更新失敗時に編集フォームへ送信内容を戻す（Presenter からのみ呼ぶ）
@@ -275,19 +249,14 @@ class AgriculturalTasksController < ApplicationController
     dto = form_resubmit[:dto]
     task_attributes = form_resubmit[:task_attributes]
     selected_crop_ids = form_resubmit[:selected_crop_ids]
-    return unless dto && @agricultural_task
+    return unless dto && params[:id]
 
-    @agricultural_task.assign_attributes(
-      name: dto.name || task_attributes[:name],
-      description: dto.description || task_attributes[:description],
-      time_per_sqm: dto.time_per_sqm || task_attributes[:time_per_sqm],
-      weather_dependency: dto.weather_dependency || task_attributes[:weather_dependency],
-      skill_level: dto.skill_level || task_attributes[:skill_level],
-      is_reference: dto.is_reference.nil? ? task_attributes[:is_reference] : dto.is_reference,
-      required_tools: dto.required_tools || task_attributes[:required_tools],
-      region: dto.region || task_attributes[:region]
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.merge_update_form_snapshot_for_html_form!(
+      user: current_user,
+      task_id: params[:id],
+      dto: dto,
+      task_attributes: task_attributes
     )
-    @agricultural_task.valid?
     prepare_crop_cards(selected_ids: selected_crop_ids)
   end
 

@@ -210,6 +210,53 @@ module Adapters
           ::CropTaskTemplate.where(agricultural_task_id: agricultural_task_id.to_i).pluck(:crop_id)
         end
 
+        def build_blank_agricultural_task_for_html_form(user)
+          user.agricultural_tasks.build
+        end
+
+        def build_after_create_failure_agricultural_task_for_html_form!(user:, attributes:)
+          sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
+          task = user.agricultural_tasks.build(
+            name: sym[:name],
+            description: sym[:description],
+            time_per_sqm: sym[:time_per_sqm],
+            weather_dependency: sym[:weather_dependency],
+            skill_level: sym[:skill_level],
+            is_reference: sym[:is_reference],
+            required_tools: sym[:required_tools],
+            region: sym[:region]
+          )
+          task.valid?
+          task
+        end
+
+        def merge_update_form_snapshot_for_html_form!(user:, task_id:, dto:, task_attributes:)
+          task = find_authorized_task_model_for_edit(user, task_id.to_i)
+          ta = task_attributes.respond_to?(:symbolize_keys) ? task_attributes.symbolize_keys : task_attributes.to_h.symbolize_keys
+          task.assign_attributes(
+            name: dto.name || ta[:name],
+            description: dto.description || ta[:description],
+            time_per_sqm: dto.time_per_sqm || ta[:time_per_sqm],
+            weather_dependency: dto.weather_dependency || ta[:weather_dependency],
+            skill_level: dto.skill_level || ta[:skill_level],
+            is_reference: dto.is_reference.nil? ? ta[:is_reference] : dto.is_reference,
+            required_tools: dto.required_tools || ta[:required_tools],
+            region: dto.region || ta[:region]
+          )
+          task.valid?
+          task
+        end
+
+        def preview_agricultural_task_for_edit_crop_selection(base_task:, user:, agricultural_task_params:)
+          preview = base_task.dup
+          requested_flag = preview_requested_reference_flag(base_task, agricultural_task_params)
+          if requested_flag != base_task.is_reference?
+            preview.is_reference = requested_flag
+            preview.user_id = preview_user_id_after_reference_toggle(base_task: base_task, user: user, reference_flag: requested_flag)
+          end
+          preview
+        end
+
         private
 
         def find_authorized_task_model_for_view(user, id)
@@ -307,6 +354,19 @@ module Adapters
           scope = scope.where(region: task.region) if task.region.present?
 
           scope.where(id: Array(selected_crop_ids).map(&:to_i).uniq).pluck(:id)
+        end
+
+        def preview_requested_reference_flag(base_task, attributes)
+          return base_task.is_reference? unless attributes.respond_to?(:key?) && attributes.key?(:is_reference)
+
+          casted = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
+          casted.nil? ? false : casted
+        end
+
+        def preview_user_id_after_reference_toggle(base_task:, user:, reference_flag:)
+          return nil if reference_flag
+
+          base_task.user_id.presence || user.id
         end
       end
     end
