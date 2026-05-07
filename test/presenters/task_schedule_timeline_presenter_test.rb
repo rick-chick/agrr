@@ -13,7 +13,9 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
       status: "completed",
       planning_start_date: Date.new(2025, 1, 1),
       planning_end_date: Date.new(2025, 12, 31),
-      timeline_generated_at: Time.new(2025, 1, 5, 9, 30, 0)
+      timeline_generated_at: Time.new(2025, 1, 5, 9, 30, 0),
+      farm_display_name: "テスト農場",
+      total_area: 1_500.5
     )
 
     @task_master = ReadModel::AgriculturalTaskRead.new(
@@ -159,6 +161,16 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
 
     expected_start = (@today + 10).beginning_of_week.iso8601
     assert_equal expected_start, json[:week][:start_date]
+  end
+
+  test "html_shell_plan は成功 DTO からページヘッダ用シェルを組み立てる" do
+    presenter = presenter_for(build_dto)
+    shell = presenter.html_shell_plan
+
+    assert_equal 12, shell.id
+    assert_equal "夏野菜計画", shell.display_name
+    assert_equal "テスト農場", shell.farm.display_name
+    assert_in_delta 1_500.5, shell.total_area.to_f, 0.001
   end
 
   private

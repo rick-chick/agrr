@@ -1,6 +1,6 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-07（HTML `PublicPlans` / マスタ `AgriculturalTasks` の Application edge 4 解消） / 2026-05-07（フロント `frontend/src/app` 層境界の機械点検）
+最終通し走査: 2026-05-06（セクション0 継続） / 2026-05-07（通し走査増分: `lib/domain`・`lib/presenters`・`app/controllers/api` grep、`Plans::TaskSchedulesController` 修正） / 直近補足: 2026-05-07（フロント adapters 意味読み）
 
 ## 修正単位
 
@@ -18,7 +18,8 @@
 - **解消済み（2026-05-07）**: **HTML** `AgriculturalTasksController` の作物選択データを `CropGateway#list_reference_crop_entities` / `list_non_reference_crops_for_user_id_ordered`、テンプレート紐付け ID を `AgriculturalTaskGateway#linked_crop_ids_for_task_templates` に移行。`CropEntity#is_reference?` をビュー互換のため追加（Application edge 禁止 **4**）。
 - **解消済み（2026-05-07・セクション0）**: フロント `frontend/src/app` の **Angular 層境界の機械点検**（`components`・`services`・`domain` の `adapters/` 直 import、`usecase` の非 `*.providers.ts` からの `adapters/`、`usecase` / `domain` の `HttpClient`）。**違反なし**（`adapters/` 参照は `*.providers.ts` と `app.config.ts` のみ。`gantt-chart.component.ts` の `@angular/common/http` は `HttpErrorResponse` 型のみ）。
 - **解消済み（2026-05-07・セクション0）**: フロント `adapters/**/*.ts` の **意味読み点検**（辞書順で `agricultural-tasks`〜`public-plans` を Read、404→`null` 等の境界変換・複合プレゼンタを確認、`grep` で `usecase/` import がゲートウェイ／出力ポート／DTO に限定されることを確認）。ゲートウェイは HTTP・クエリ組み立て・境界変換に収まり、`PrivatePlanCreateApiGateway#fetchFarm` の `totalArea` は API レスポンスの正規化。プレゼンターは DTO→view・flash／undo／Router／i18n のみ。**ARCHITECTURE.md「Frontend: Angular layers」および Gateway boundary（表現非依存）に照らす新規違反なし**。補足: `PublicPlanResultsPresenter` は `LoadPublicPlanResultsOutputPort` と `SavePublicPlanOutputPort` の両実装のため `present` がユニオン分岐になるが、成功／失敗の判断は各 UseCase 内。
-- **次に先頭で固定する修正単位（未着手）**: バックログ上の個別「未着手」修正単位が尽きたため、ワークフロー **セクション6** に従い **`ARCHITECTURE.md` の `## What we require` と `## Prohibited practices`（1〜30）の通し走査**で backlog を再構築する（外側ループ・スキャン）。機械点検済みの項はスキャン結果にマージし、重複を避ける。
+- **解消済み（2026-05-07・セクション0）**: **HTML** `Plans::TaskSchedulesController` の `before_action :set_cultivation_plan`（`current_user.cultivation_plans.plan_type_private.find`）を除去。認可・読込は既存の `CultivationPlanActiveRecordGateway#task_schedule_timeline_read_model`（`PlanPolicy.private_scope`）に一本化。ページヘッダ用の農場名・総面積は `TaskScheduleTimelineReadModel::PlanRead` に追加し、`TaskScheduleHtmlShellPlan` を HTML プレゼンタが組み立てて `@cultivation_plan` に渡す（AR 非依存）。ルートヘルパは id 明示に変更。Application edge 禁止 **4**。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の続き。**HTML** `CropsController` の `new` / `edit` / `after_crop_create_failure` / `after_crop_update_failure` に残る **ActiveRecord 直操作**（フォーム初期化・失敗時再描画）を、`CropGateway` / Interactor / Presenter 経路へ寄せる（Application edge 禁止 **4**。辞書順では `app/controllers/application_controller.rb` より後だが同一マスタ CRUD 筋で優先）。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
@@ -30,6 +31,7 @@
 | `lib/presenters` の `CompositionRoot` / ゲートウェイ再取得 | 検出なし |
 | `app/controllers/api/v1` の `rescue` / `rescue_from` | 該当なし |
 | `frontend` `components/**/*.component.ts` の `adapters/` 直 import | 該当なし |
+| HTML `Plans::TaskSchedulesController` の `before_action` AR 読込 | **解消**（2026-05-07・上記修正単位） |
 | 既知の意図的 `rescue`（天気・Health・Auth） | 下記「残置」のまま |
 
 ## スキャン補足
@@ -48,6 +50,7 @@
 - 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
 - 2026-05-07: **フロント層境界（機械点検）** — 上記「解消済み（2026-05-07・セクション0）」のとおり。`adapters/**/*.ts` の意味読みは同バックログ項で完了。
 - 2026-05-07: **通し走査（増分・grep）** — `lib/domain` の `Rails.` / `CompositionRoot.` / `ActiveRecord::`（実コード）、`lib/presenters` の `CompositionRoot`、`app/controllers/api` の `rescue` / `rescue_from`。**該当実コードなし**（`lib/domain` の一致はコメントのみ）。禁止 1〜30 の全項の意味読み・Glob 網羅はバックログ先頭の通し走査で継続。
+- 2026-05-07: **通し走査（HTML コントローラ grep）** — `app/controllers/**/*_controller.rb` で `Crop\.|Farm\.|\.cultivation_plans` 等。**債務候補**: `CropsController` の AR フォーム周り、`Farms::WeatherDataController` の AR（別単位・残置リストの意図と整合を要確認）、`Plans::TaskSchedulesController` は当イテレーションで解消。
 - 2026-05-06: フロントの**全 `*.ts` 意味読み通し走査**は未完了（当時）。`components` から `adapters/` への直 import はスポットでゼロ。
 
 ## 残置（意図・別単位）

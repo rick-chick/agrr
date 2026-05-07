@@ -13,15 +13,19 @@ module Domain
         end
 
         class PlanRead
-          attr_reader :id, :display_name, :status, :planning_start_date, :planning_end_date, :timeline_generated_at
+          attr_reader :id, :display_name, :status, :planning_start_date, :planning_end_date, :timeline_generated_at,
+                      :farm_display_name, :total_area
 
-          def initialize(id:, display_name:, status:, planning_start_date:, planning_end_date:, timeline_generated_at:)
+          def initialize(id:, display_name:, status:, planning_start_date:, planning_end_date:, timeline_generated_at:,
+                         farm_display_name:, total_area:)
             @id = id
             @display_name = display_name
             @status = status
             @planning_start_date = planning_start_date
             @planning_end_date = planning_end_date
             @timeline_generated_at = timeline_generated_at
+            @farm_display_name = farm_display_name
+            @total_area = total_area
           end
         end
 

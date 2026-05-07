@@ -4,7 +4,7 @@
   <div class="task-schedule-header">
     <div class="task-schedule-header__left">
       <%= link_to t('plans.task_schedules.back_to_plan'),
-                  plan_path(@cultivation_plan),
+                  plan_path(@cultivation_plan.id),
                   class: "btn btn-secondary btn-sm" %>
       <h1 class="task-schedule-title">
         <%= t('plans.task_schedules.title', name: @cultivation_plan.display_name) %>
@@ -30,13 +30,13 @@
   <div
     class="task-schedule-timeline-wrapper"
     data-controller="task-schedule-timeline"
-    data-task-schedule-timeline-endpoint-value="<%= plan_task_schedule_path(@cultivation_plan, format: :json) %>"
+    data-task-schedule-timeline-endpoint-value="<%= plan_task_schedule_path(@cultivation_plan.id, format: :json) %>"
     data-task-schedule-timeline-initial-state-value="<%= raw(json_escape(@timeline_initial_state.to_json)) %>"
     data-task-schedule-timeline-loading-message-value="<%= t('plans.task_schedules.loading') %>"
     data-task-schedule-timeline-error-message-value="<%= t('plans.task_schedules.fetch_error') %>"
     data-task-schedule-timeline-empty-message-value="<%= t('plans.task_schedules.no_schedules') %>"
     data-task-schedule-timeline-unknown-message-value="<%= t('plans.task_schedules.timeline_generated_unknown') %>"
-    data-task-schedule-timeline-items-endpoint-value="<%= plan_task_schedule_items_path(@cultivation_plan) %>"
+    data-task-schedule-timeline-items-endpoint-value="<%= plan_task_schedule_items_path(@cultivation_plan.id) %>"
   >
           <div class="task-schedule-minimap"
                data-task-schedule-timeline-target="minimap">

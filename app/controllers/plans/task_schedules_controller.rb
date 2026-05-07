@@ -3,14 +3,13 @@
 module Plans
   class TaskSchedulesController < ApplicationController
     before_action :authenticate_user!
-    before_action :set_cultivation_plan
 
     def show
       presenter = timeline_presenter
       Domain::CultivationPlan::Interactors::TaskScheduleTimelineInteractor.new(
         output_port: presenter,
         user_id: current_user.id,
-        plan_id: @cultivation_plan.id,
+        plan_id: params[:plan_id].to_i,
         gateway: CompositionRoot.cultivation_plan_gateway,
         translator: CompositionRoot.translator,
         logger: CompositionRoot.logger,
@@ -22,6 +21,7 @@ module Plans
       payload = presenter.as_json
       respond_to do |format|
         format.html do
+          @cultivation_plan = presenter.html_shell_plan
           @timeline_initial_state = payload.deep_stringify_keys
         end
         format.json do
@@ -31,13 +31,6 @@ module Plans
     end
 
     private
-
-    def set_cultivation_plan
-      @cultivation_plan = current_user
-        .cultivation_plans
-        .plan_type_private
-        .find(params[:plan_id])
-    end
 
     def timeline_presenter
       @timeline_presenter ||= Presenters::Html::Plans::TaskScheduleTimelinePresenter.new(

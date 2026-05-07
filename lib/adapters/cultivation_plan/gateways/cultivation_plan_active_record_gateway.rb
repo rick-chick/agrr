@@ -486,7 +486,9 @@ module Adapters
               status: plan.status,
               planning_start_date: plan.planning_start_date,
               planning_end_date: plan.planning_end_date,
-              timeline_generated_at: timeline_generated_at
+              timeline_generated_at: timeline_generated_at,
+              farm_display_name: plan.farm.display_name,
+              total_area: plan.total_area
             ),
             fields: fields,
             scheduled_dates: scheduled_dates
