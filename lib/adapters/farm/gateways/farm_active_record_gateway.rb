@@ -189,6 +189,12 @@ module Adapters
           end
         end
 
+        def planning_schedule_user_owned_farms(user:)
+          user_owned_records(user).order(:name).map do |f|
+            Domain::Farm::Dtos::FarmIdNameDto.new(id: f.id, name: f.name)
+          end
+        end
+
         def find_authorized_model_for_view(user, id)
           farm = find_farm_model!(id)
           unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)

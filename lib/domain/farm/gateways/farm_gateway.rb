@@ -147,6 +147,12 @@ module Domain
         def farm_weather_data_access_context_for_admin_lookup(farm_id:)
           raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_admin_lookup"
         end
+
+        # 作付計画表: ユーザー所有農場のみ、名前順（HTML 選択 UI）
+        # @return [Array<Domain::Farm::Dtos::FarmIdNameDto>]
+        def planning_schedule_user_owned_farms(user:)
+          raise NotImplementedError, "Subclasses must implement planning_schedule_user_owned_farms"
+        end
       end
     end
   end

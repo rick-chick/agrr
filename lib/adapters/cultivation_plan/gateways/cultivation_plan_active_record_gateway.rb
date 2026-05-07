@@ -497,6 +497,72 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
+        def aggregated_planning_schedule_fields(user:, farm_id:)
+          farm = ::Farm.user_owned.by_user(user).find_by(id: farm_id)
+          return [] unless farm
+
+          plans = ::CultivationPlan
+            .plan_type_private
+            .by_user(user)
+            .where(farm: farm)
+            .includes(:cultivation_plan_fields)
+
+          fields_hash = {}
+          plans.each do |plan|
+            plan.cultivation_plan_fields.each do |plan_field|
+              field_name = plan_field.name
+              unless fields_hash[field_name]
+                fields_hash[field_name] = {
+                  id: field_name.hash.abs,
+                  name: field_name,
+                  area: plan_field.area,
+                  farm_name: farm.name
+                }
+              end
+            end
+          end
+
+          fields_hash.values.sort_by { |f| f[:name] }
+        end
+
+        def planning_schedule_cultivations_for_field(user:, farm_id:, field_name:, period_start:, period_end:)
+          farm = ::Farm.user_owned.by_user(user).find_by(id: farm_id)
+          return [] unless farm
+
+          plans = ::CultivationPlan
+            .plan_type_private
+            .by_user(user)
+            .where(farm: farm)
+            .includes(field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ])
+
+          cultivations = []
+          plans.each do |plan|
+            plan_start = plan.calculated_planning_start_date
+            plan_end = plan.calculated_planning_end_date
+            next unless plan_start && plan_end
+            next unless plan_start <= period_end && plan_end >= period_start
+
+            plan.field_cultivations.each do |field_cultivation|
+              next unless field_cultivation.cultivation_plan_field.name == field_name &&
+                field_cultivation.start_date &&
+                field_cultivation.completion_date &&
+                field_cultivation.start_date <= period_end &&
+                field_cultivation.completion_date >= period_start
+
+              if plan.plan_year.nil? || field_cultivation.start_date.year == plan.plan_year
+                cultivations << {
+                  crop_name: field_cultivation.cultivation_plan_crop.name,
+                  start_date: field_cultivation.start_date,
+                  completion_date: field_cultivation.completion_date,
+                  area: field_cultivation.area
+                }
+              end
+            end
+          end
+
+          cultivations.sort_by { |c| c[:start_date] }
+        end
+
         # 部分 select の列は CultivationPlan#display_name（private）が参照する属性と一致させること
         def private_plan_index_plan_rows(user:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do

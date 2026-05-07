@@ -18,6 +18,15 @@ module Domain
         def t(key, **options)
           translate(key, **options)
         end
+
+        # I18n.l 相当（RailsTranslator で実装）。ドメイン境界では Date 表示のための最小ポート。
+        def localize(date, format: nil, **options)
+          raise NotImplementedError, "#{self.class}##{__method__} が実装されていません"
+        end
+
+        def l(date, format: nil, **options)
+          localize(date, format: format, **options)
+        end
       end
     end
   end
