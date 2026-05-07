@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PestsController < ApplicationController
-  before_action :load_pest_for_edit, only: [ :edit, :update, :destroy ]
+  before_action :load_pest_for_edit, only: [ :edit, :update ]
 
   # GET /pests
   def index
@@ -73,8 +73,9 @@ class PestsController < ApplicationController
         DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
-          record: @pest,
-          toast_message: I18n.t("pests.undo.toast", name: @pest.name),
+          resource_type: "Pest",
+          resource_id: params[:id].to_i,
+          toast_message: nil,
           fallback_location: pests_path,
           in_use_message_key: "pests.flash.cannot_delete_in_use",
           delete_error_message_key: "pests.flash.delete_error"

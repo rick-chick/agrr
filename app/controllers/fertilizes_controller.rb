@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class FertilizesController < ApplicationController
-  before_action :set_fertilize, only: [ :edit, :update, :destroy ]
+  before_action :set_fertilize, only: [ :edit, :update ]
 
   # GET /fertilizes
   def index
@@ -58,8 +58,9 @@ class FertilizesController < ApplicationController
         DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
-          record: @fertilize,
-          toast_message: I18n.t("fertilizes.undo.toast", name: @fertilize.name),
+          resource_type: "Fertilize",
+          resource_id: params[:id].to_i,
+          toast_message: nil,
           fallback_location: fertilizes_path,
           in_use_message_key: nil,
           delete_error_message_key: "fertilizes.flash.delete_error"

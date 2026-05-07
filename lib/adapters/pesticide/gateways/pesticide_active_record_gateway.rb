@@ -176,6 +176,8 @@ module Adapters
           { success: true, undo_entity: event, resource_name: name }
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           raise
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          raise
         rescue StandardError => e
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end

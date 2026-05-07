@@ -34,8 +34,8 @@ module Domain
           end
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("farms.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         rescue Domain::Shared::Exceptions::AssociationInUse

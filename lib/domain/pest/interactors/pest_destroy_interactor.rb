@@ -28,7 +28,7 @@ module Domain
             @output_port.on_failure(result[:error_dto])
           end
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Pest not found"))
+          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e

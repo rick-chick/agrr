@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
-  before_action :load_pesticide_for_view, only: [ :edit, :update, :destroy ]
+  before_action :load_pesticide_for_view, only: [ :edit, :update ]
 
   # GET /pesticides
   def index
@@ -70,8 +70,9 @@ class PesticidesController < ApplicationController
         DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
-          record: @pesticide,
-          toast_message: I18n.t("pesticides.undo.toast", name: @pesticide.name),
+          resource_type: "Pesticide",
+          resource_id: params[:id].to_i,
+          toast_message: nil,
           fallback_location: pesticides_path,
           in_use_message_key: nil,
           delete_error_message_key: "pesticides.flash.delete_error"

@@ -163,6 +163,8 @@ module Adapters
           raise
         rescue Domain::Shared::Exceptions::AssociationInUse
           raise
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          raise
         rescue StandardError => e
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
