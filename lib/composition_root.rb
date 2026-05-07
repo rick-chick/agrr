@@ -183,10 +183,51 @@ module CompositionRoot
       )
     end
 
-    def api_private_plan_job_chain_enqueuer
-      @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
+    def private_plan_optimization_job_chain_builder
+      @private_plan_optimization_job_chain_builder ||= Adapters::CultivationPlan::PrivatePlanOptimizationJobChainBuilder.new(
         logger: logger,
         clock: Time.zone
+      )
+    end
+
+    def api_private_plan_job_chain_enqueuer
+      @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
+        job_chain_builder: private_plan_optimization_job_chain_builder
+      )
+    end
+
+    def private_plan_select_crop_html_context_runner(view:, user_id:)
+      Adapters::CultivationPlan::PrivatePlanSelectCropHtmlContextRunner.new(
+        view: view,
+        user_id: user_id,
+        field_gateway: field_gateway,
+        crop_gateway: crop_gateway,
+        translator: translator,
+        logger: logger,
+        user_lookup: user_lookup
+      )
+    end
+
+    def private_plan_html_post_create_job_chain(routes:, caller_label:)
+      Adapters::CultivationPlan::PrivatePlanHtmlPostCreateJobChain.new(
+        job_chain_builder: private_plan_optimization_job_chain_builder,
+        job_chain_async_dispatcher: job_chain_async_dispatcher,
+        routes: routes,
+        channel_class: PlansOptimizationChannel,
+        caller_label: caller_label
+      )
+    end
+
+    def private_plan_html_create_interactor(output_port:, session_id_generator:, routes:, caller_label:, select_crop_context_runner:)
+      Domain::CultivationPlan::Interactors::PrivatePlanHtmlCreateInteractor.new(
+        output_port: output_port,
+        cultivation_plan_gateway: cultivation_plan_gateway,
+        logger: logger,
+        translator: translator,
+        clock: Time.zone,
+        session_id_generator: session_id_generator,
+        post_create_job_chain: private_plan_html_post_create_job_chain(routes: routes, caller_label: caller_label),
+        select_crop_context_runner: select_crop_context_runner
       )
     end
 

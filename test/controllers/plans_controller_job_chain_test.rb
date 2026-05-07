@@ -35,8 +35,11 @@ class PlansControllerJobChainTest < ActionController::TestCase
     build_crop_for_plan(with_blueprint: true)
     build_crop_for_plan(with_blueprint: true)
 
-    controller = PlansController.new
-    job_instances = controller.send(:create_job_instances_for_plans, @plan.id, PlansOptimizationChannel)
+    builder = Adapters::CultivationPlan::PrivatePlanOptimizationJobChainBuilder.new(
+      logger: Rails.logger,
+      clock: Time.zone
+    )
+    job_instances = builder.build(cultivation_plan_id: @plan.id, channel_class: PlansOptimizationChannel)
 
     # 先頭3つは 天気→予測→最適化
     assert_instance_of FetchWeatherDataJob, job_instances[0]
@@ -52,8 +55,11 @@ class PlansControllerJobChainTest < ActionController::TestCase
     build_crop_for_plan(with_blueprint: true)
     build_crop_for_plan(with_blueprint: false)
 
-    controller = PlansController.new
-    job_instances = controller.send(:create_job_instances_for_plans, @plan.id, PlansOptimizationChannel)
+    builder = Adapters::CultivationPlan::PrivatePlanOptimizationJobChainBuilder.new(
+      logger: Rails.logger,
+      clock: Time.zone
+    )
+    job_instances = builder.build(cultivation_plan_id: @plan.id, channel_class: PlansOptimizationChannel)
 
     # 先頭3つは 天気→予測→最適化
     assert_instance_of FetchWeatherDataJob, job_instances[0]
