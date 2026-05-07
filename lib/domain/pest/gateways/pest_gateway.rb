@@ -104,6 +104,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
         end
 
+        # Mutates the persisted Pest AR for nested-attributes UX (build empty pest_control_methods when none).
+        # 同一 AR を破壊的に変更する（防除方法が 0 件のときに空行を build）。
+        # @param pest_record [Pest]
+        # @return [Pest] pest_record
+        def prepare_crop_nested_pest_for_edit_form!(pest_record)
+          raise NotImplementedError, "Subclasses must implement prepare_crop_nested_pest_for_edit_form!"
+        end
+
         # 新規 Pest フォーム描画用の空インスタンスをビルド（nested 関連付き）。
         # @return [Pest] 未保存の AR レコード（HTML form_with で使う）
         def build_blank_pest_for_form

@@ -2,7 +2,6 @@
 
 class PlansController < CultivationPlanHtmlBaseController
   before_action :authenticate_user!
-  before_action :set_plan, only: [ :copy ]
   layout "application"
 
   # 基底クラス属性
@@ -141,8 +140,6 @@ class PlansController < CultivationPlanHtmlBaseController
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
-    source_plan = @plan
-
     # 新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、
     # コピー機能は無効化されました（通年計画と年度ベースの計画の両方）
     # 既存の年度ベースの計画は後方互換性のために保持されますが、
@@ -205,10 +202,6 @@ class PlansController < CultivationPlanHtmlBaseController
   end
 
   # 基底クラスで要求されるフックの実装
-
-  def set_plan
-    @plan = PlanPolicy.find_private_owned!(current_user, params[:id])
-  end
 
   def select_crop_redirect_path
     :select_crop_plans_path

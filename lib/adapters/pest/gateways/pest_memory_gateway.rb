@@ -234,6 +234,11 @@ module Adapters
           { status: :found, pest_record: pest }
         end
 
+        def prepare_crop_nested_pest_for_edit_form!(pest_record)
+          pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?
+          pest_record
+        end
+
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
           ::PestCropAssociationService.associate_crops_by_pest_id(pest_id, crop_ids, user: user)
         end
