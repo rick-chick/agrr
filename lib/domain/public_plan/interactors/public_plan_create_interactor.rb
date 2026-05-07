@@ -38,10 +38,18 @@ module Domain
             return
           end
 
-          # 作物を取得
-          crops = @gateway.find_crops(input_dto.crop_ids)
+          # 作物を取得（参照作物。地域は公開ウィザード整合のため農場地域で絞る）
+          crops = @gateway.find_crops(input_dto.crop_ids, farm.region)
           if crops.empty?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("No crops selected"))
+            @output_port.on_failure(
+              Domain::PublicPlan::Dtos::PublicPlanCreateFailureDto.new(
+                kind: Domain::PublicPlan::Dtos::PublicPlanCreateFailureDto::KIND_NO_CROPS,
+                message: "No crops selected",
+                farm_id: input_dto.farm_id,
+                farm_size_id: input_dto.farm_size_id,
+                region: farm.region
+              )
+            )
             return
           end
 
@@ -78,7 +86,8 @@ module Domain
           success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: plan_id)
           @optimization_job_chain_gateway&.enqueue_after_create!(
             cultivation_plan_id: plan_id,
-            caller_label: self.class.name
+            caller_label: self.class.name,
+            redirect_path: input_dto.redirect_path
           )
           @output_port.on_success(success_dto)
         rescue Domain::Shared::Exceptions::RecordInvalid => e

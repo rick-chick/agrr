@@ -202,7 +202,15 @@ class AgriculturalTasksController < ApplicationController
         @agricultural_task
       end
 
-    @accessible_crops = accessible_crops_for_selection(preview_task).to_a
+    @accessible_crops =
+      if preview_task.is_reference?
+        CompositionRoot.crop_gateway.list_reference_crop_entities(region: preview_task.region.presence)
+      else
+        CompositionRoot.crop_gateway.list_non_reference_crops_for_user_id_ordered(
+          preview_task.user_id,
+          preview_task.region.presence
+        )
+      end
     @accessible_crop_ids = @accessible_crops.map(&:id)
   end
 
@@ -213,8 +221,8 @@ class AgriculturalTasksController < ApplicationController
   def prepare_crop_cards(selected_ids: nil)
     return unless defined?(@accessible_crops)
 
-    # 作物詳細画面の紐付けが正しいため、CropTaskTemplateから取得
-    selected_ids ||= CropTaskTemplate.where(agricultural_task: @agricultural_task).pluck(:crop_id)
+    # 作物詳細画面の紐付けが正しいため、CropTaskTemplate 由来の ID をゲートウェイで取得
+    selected_ids ||= CompositionRoot.agricultural_task_gateway.linked_crop_ids_for_task_templates(@agricultural_task.id)
     normalized_ids = Array(selected_ids).map(&:to_i).uniq
 
     @selected_crop_ids = normalized_ids
@@ -232,22 +240,6 @@ class AgriculturalTasksController < ApplicationController
     raw_ids = Array(params[:selected_crop_ids]).reject(&:blank?)
     normalized_ids = raw_ids.map(&:to_i)
     normalized_ids.select { |id| @accessible_crop_ids.include?(id) }
-  end
-
-  def accessible_crops_for_selection(task)
-    scope =
-      if task.is_reference?
-        Crop.where(is_reference: true)
-      else
-        owner_id = task.user_id
-        Crop.where(is_reference: false, user_id: owner_id)
-      end
-
-    if task.region.present?
-      scope = scope.where(region: task.region)
-    end
-
-    scope.order(:name)
   end
 
   def build_preview_task_for_selection

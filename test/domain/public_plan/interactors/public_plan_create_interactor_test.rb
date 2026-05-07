@@ -45,7 +45,7 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
-          gateway.expect(:find_crops, crops, [ [ 1 ] ])
+          gateway.expect(:find_crops, crops, [ [ 1 ], farm.region ])
 
           received = nil
           output_port = Minitest::Mock.new
@@ -87,7 +87,7 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
-          gateway.expect(:find_crops, crops, [ [ 1 ] ])
+          gateway.expect(:find_crops, crops, [ [ 1 ], farm.region ])
 
           sequence = []
           opt_gateway = Object.new
@@ -229,7 +229,7 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
-          gateway.expect(:find_crops, [], [ [ 1 ] ])
+          gateway.expect(:find_crops, [], [ [ 1 ], farm.region ])
 
           received = nil
           output_port = Minitest::Mock.new
@@ -251,7 +251,8 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::PublicPlan::Dtos::PublicPlanCreateFailureDto, received
+          assert received.no_crops?
           assert_includes received.message, "No crops selected"
           gateway.verify
           output_port.verify
@@ -270,7 +271,7 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:find_farm, farm, [ farm.id ])
           gateway.expect(:find_farm_size, farm_size, [ "home_garden" ])
-          gateway.expect(:find_crops, crops, [ [ 1 ] ])
+          gateway.expect(:find_crops, crops, [ [ 1 ], farm.region ])
 
           received = nil
           output_port = Minitest::Mock.new

@@ -38,14 +38,28 @@ module Adapters
         end
 
         test "find_crops returns entities for ids" do
-          c1 = create(:crop, :reference)
-          c2 = create(:crop, :reference)
+          c1 = create(:crop, :reference, region: "jp")
+          c2 = create(:crop, :reference, region: "jp")
 
-          entities = @gateway.find_crops([ c1.id, c2.id ])
+          entities = @gateway.find_crops([ c1.id, c2.id ], "jp")
 
           assert_equal 2, entities.size
           ids = entities.map(&:id).sort
           assert_equal [ c1.id, c2.id ].sort, ids
+        end
+
+        test "find_crops excludes non-reference crops" do
+          ref = create(:crop, :reference, region: "jp")
+          non = create(:crop, :user_owned, region: "jp")
+          entities = @gateway.find_crops([ ref.id, non.id ], "jp")
+          assert_equal [ ref.id ], entities.map(&:id)
+        end
+
+        test "find_crops filters by region when provided" do
+          jp = create(:crop, :reference, region: "jp")
+          us = create(:crop, :reference, region: "us")
+          entities = @gateway.find_crops([ jp.id, us.id ], "jp")
+          assert_equal [ jp.id ], entities.map(&:id)
         end
       end
     end

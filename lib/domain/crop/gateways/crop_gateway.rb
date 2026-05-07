@@ -102,6 +102,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_ordered_by_name"
         end
 
+        # 農業作業マスタ編集: 指定ユーザーの非参照作物を名前順で列挙（任意で地域で絞る）
+        def list_non_reference_crops_for_user_id_ordered(user_id, region = nil)
+          raise NotImplementedError, "Subclasses must implement list_non_reference_crops_for_user_id_ordered"
+        end
+
         def list_user_owned_non_reference_crops_by_ids(user, ids)
           raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_by_ids"
         end

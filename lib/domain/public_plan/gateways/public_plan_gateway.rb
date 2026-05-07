@@ -12,7 +12,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_farm_size"
         end
 
-        def find_crops(crop_ids)
+        # @param region [String, nil] 指定時は参照作物かつ当該地域に限定（公開ウィザード用）
+        def find_crops(crop_ids, region = nil)
           raise NotImplementedError, "Subclasses must implement find_crops"
         end
       end

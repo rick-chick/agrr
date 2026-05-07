@@ -21,8 +21,14 @@ module Adapters
           end
         end
 
-        def find_crops(crop_ids)
-          ::Crop.where(id: crop_ids).map { |c| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(c) }
+        def find_crops(crop_ids, region = nil)
+          ids = Array(crop_ids).map(&:to_i).uniq.reject(&:zero?)
+          return [] if ids.empty?
+
+          rel = ::Crop.where(id: ids, is_reference: true)
+          rel = rel.where(region: region) if region.present?
+          by_id = rel.index_by(&:id)
+          ids.filter_map { |id| by_id[id] }.map { |c| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(c) }
         end
       end
     end

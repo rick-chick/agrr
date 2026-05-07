@@ -202,6 +202,12 @@ module Adapters
           visible_scope(user).exists?
         end
 
+        def linked_crop_ids_for_task_templates(agricultural_task_id)
+          return [] if agricultural_task_id.blank?
+
+          ::CropTaskTemplate.where(agricultural_task_id: agricultural_task_id.to_i).pluck(:crop_id)
+        end
+
         private
 
         def find_authorized_task_model_for_view(user, id)

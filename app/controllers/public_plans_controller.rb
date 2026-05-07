@@ -45,39 +45,29 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 2: 農場サイズ選択
   def select_farm_size
-    @farm = Farm.find_by(id: params[:farm_id])
-    unless @farm
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.select_region")
-      return
-    end
+    failure = Presenters::Html::PublicPlans::PublicPlanWizardAlertRedirectPresenter.new(view: self, path_helper: :public_plans_path)
+    farm = Domain::PublicPlan::Interactors::PublicPlanWizardLoadFarmInteractor.new(
+      public_plan_gateway: CompositionRoot.public_plan_gateway,
+      failure_presenter: failure
+    ).call(farm_id: params[:farm_id].to_i, alert_i18n_key: "public_plans.errors.select_region")
+    return if performed?
 
+    @farm = farm
     @farm_sizes = farm_sizes_with_i18n
 
-    session[:public_plan] = { farm_id: @farm.id }
-    Rails.logger.debug "✅ [PublicPlans] セッション保存: #{session[:public_plan].inspect}"
+    session[:public_plan] = { farm_id: farm.id }
   end
 
   # Step 3: 作物選択
   def select_crop
-    Rails.logger.debug "🔍 [PublicPlans] セッション確認: #{session[:public_plan].inspect}"
-    Rails.logger.debug "🔍 [PublicPlans] session_data: #{session_data.inspect}"
-
-    unless session_data[:farm_id]
-      Rails.logger.warn "⚠️  [PublicPlans] farm_id がセッションにありません"
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
-    end
-
-    @farm = Farm.find_by(id: session_data[:farm_id])
-    unless @farm
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
-    end
+    crop_step_presenter = Presenters::Html::PublicPlans::PublicPlanWizardCropStepHtmlPresenter.new(view: self)
+    Domain::PublicPlan::Interactors::PublicPlanWizardPrepareCropStepInteractor.new(
+      public_plan_gateway: CompositionRoot.public_plan_gateway,
+      output_port: crop_step_presenter
+    ).call(farm_id: session_data[:farm_id], farm_size_id: params[:farm_size_id])
+    return if performed?
 
     @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == params[:farm_size_id] }
-
-    unless @farm_size
-      redirect_to select_farm_size_public_plans_path(farm_id: @farm.id),
-                  alert: I18n.t("public_plans.errors.select_farm_size") and return
-    end
 
     presenter = Presenters::Html::PublicPlans::ReferenceCropsPresenter.new(view: self)
     Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: @farm.region)
@@ -85,7 +75,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       total_area: @farm_size[:area_sqm],
       farm_size_id: @farm_size[:id]
     )
-    Rails.logger.debug "✅ [PublicPlans] セッション更新: #{session[:public_plan].inspect}"
   end
 
   # Step 4: 作付け計画作成（計算開始）
@@ -94,59 +83,51 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
     end
 
-    farm = Farm.find_by(id: session_data[:farm_id])
-    unless farm
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart") and return
-    end
-
-    Rails.logger.debug "🔍 [PublicPlansController] crop_ids: #{crop_ids.inspect}"
-    crops = Crop.where(id: crop_ids)
-    Rails.logger.debug "🔍 [PublicPlansController] found crops: #{crops.count}"
-    crops.each { |crop| Rails.logger.debug "  - #{crop.name} (ID: #{crop.id})" }
-
-    if crops.empty?
-      # Turbo対応: フォールバックせず同画面を422で再描画
-      @farm = farm
-      @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == session_data[:farm_size_id] }
-      presenter = Presenters::Html::PublicPlans::ReferenceCropsPresenter.new(view: self)
-      Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: @farm.region)
-      flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
-      return render :select_crop, status: :unprocessable_entity
-    end
-
-    # セッションIDを取得
-    session_id = session.id.to_s
-    Rails.logger.info "🔑 [PublicPlansController#create] Using session_id: #{session_id}"
-
-    # 計画作成パラメータを構築
-    creator_params = {
-      farm: farm,
-      total_area: session_data[:total_area],
-      crops: crops,
+    input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInputDto.new(
+      farm_id: session_data[:farm_id],
+      farm_size_id: session_data[:farm_size_id],
+      crop_ids: crop_ids,
+      session_id: session.id.to_s,
       user: current_user,
-      session_id: session_id,
-      plan_type: "public",
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year
-    }
-
-    # Service で計画作成（最適化はしない）
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
-    cultivation_plan = result.cultivation_plan
-
-    # セッションに計画IDを保存
-    session[:public_plan] = session_data.merge(plan_id: cultivation_plan.id)
-    Rails.logger.info "💾 [PublicPlansController#create] Saved plan_id: #{cultivation_plan.id} to session"
-
-    # ジョブチェーンを実行（データ取得 → 予測 → 最適化）
-    CompositionRoot.public_plan_optimization_job_chain_gateway.enqueue_after_create!(
-      cultivation_plan_id: cultivation_plan.id,
-      caller_label: self.class.name,
       redirect_path: job_completion_redirect_path
     )
 
-    # 天気予測実行のためにoptimizing画面にリダイレクト
-    redirect_to optimizing_public_plans_path
+    presenter = Presenters::Html::PublicPlans::PublicPlanCreateHtmlPresenter.new(view: self)
+
+    Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
+      output_port: presenter,
+      gateway: CompositionRoot.public_plan_gateway,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      logger: CompositionRoot.logger,
+      clock: Time.zone,
+      optimization_job_chain_gateway: CompositionRoot.public_plan_optimization_job_chain_gateway
+    ).call(input_dto)
+  end
+
+  # HTML Presenter から: 作物ゼロ時に select_crop を 422 で再描画する（農場はゲートウェイで再解決）
+  def public_plan_render_create_no_crops_failure!(farm_id:, farm_size_id:, region:)
+    farm_entity = CompositionRoot.public_plan_gateway.find_farm(farm_id)
+    unless farm_entity
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart")
+      return
+    end
+
+    @farm = farm_entity
+    @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id].to_s == farm_size_id.to_s }
+    unless @farm_size
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart")
+      return
+    end
+
+    presenter_crops = Presenters::Html::PublicPlans::ReferenceCropsPresenter.new(view: self)
+    Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(
+      output_port: presenter_crops,
+      gateway: CompositionRoot.crop_gateway,
+      logger: CompositionRoot.logger
+    ).call(region: region.presence || farm_entity.region)
+
+    flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
+    render :select_crop, status: :unprocessable_entity
   end
 
   # Step 5: 最適化進捗画面（広告表示）

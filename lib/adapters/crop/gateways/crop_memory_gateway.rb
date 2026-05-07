@@ -21,6 +21,14 @@ module Adapters
           user_owned_non_reference_scope(user).order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
+        def list_non_reference_crops_for_user_id_ordered(user_id, region = nil)
+          return [] if user_id.blank?
+
+          scope = ::Crop.where(is_reference: false, user_id: user_id)
+          scope = scope.where(region: region) if region.present?
+          scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
+        end
+
         def list_user_owned_non_reference_crops_by_ids(user, ids)
           return [] if ids.blank?
 

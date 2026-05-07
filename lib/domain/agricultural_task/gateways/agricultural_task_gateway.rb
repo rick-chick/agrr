@@ -82,6 +82,11 @@ module Domain
         def soft_destroy_with_undo(user:, task_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
+
+        # 作物選択 UI: 当該農業作業に紐づく CropTaskTemplate の作物 ID 一覧
+        def linked_crop_ids_for_task_templates(agricultural_task_id)
+          raise NotImplementedError, "Subclasses must implement linked_crop_ids_for_task_templates"
+        end
       end
     end
   end

@@ -27,6 +27,10 @@ module Domain
           !!is_reference
         end
 
+        def is_reference?
+          reference?
+        end
+
         def display_name
           [ name, variety ].compact.join(" ")
         end
