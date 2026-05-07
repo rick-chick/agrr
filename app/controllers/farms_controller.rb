@@ -62,7 +62,7 @@ class FarmsController < ApplicationController
 
   # GET /farms/new
   def new
-    @farm = current_user.farms.build
+    @farm = CompositionRoot.farm_gateway.build_blank_farm_for_html_form!(user_id: current_user.id)
   end
 
   # GET /farms/:id/edit

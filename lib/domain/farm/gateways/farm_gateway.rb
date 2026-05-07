@@ -94,6 +94,12 @@ module Domain
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
+        # HTML `farms#new` 用。`User` の `farms` に `build` した未保存 `Farm` を返す（AR はアダプタ内のみ）。
+        # `user_id` はログイン済みユーザー。
+        def build_blank_farm_for_html_form!(user_id:)
+          raise NotImplementedError, "Subclasses must implement build_blank_farm_for_html_form!"
+        end
+
         def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end

@@ -237,6 +237,12 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
 
+        def build_blank_farm_for_html_form!(user_id:)
+          ::User.find(user_id).farms.build
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
         def update_for_user(user, id, attrs)
           farm = find_farm_model!(id)
           unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
