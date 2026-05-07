@@ -8,9 +8,11 @@ module Api
       end
 
       def logout
-        current_user.sessions.destroy_all
-        clear_session_cookie
-        render json: { success: true }
+        presenter = Presenters::Api::V1::Auth::AuthUserLogoutApiPresenter.new(view: self)
+        Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
+          output_port: presenter,
+          session_revocation_gateway: CompositionRoot.user_session_revocation_gateway
+        ).call(authenticated: logged_in?, user_id: current_user.id)
       end
 
       private
@@ -37,6 +39,8 @@ module Api
         cookies.delete(:session_id, domain: cookie_domain, path: "/") if cookie_domain
         cookies.delete(:session_id, domain: :all, path: "/")
       end
+
+      public :clear_session_cookie
     end
   end
 end

@@ -47,6 +47,14 @@ module CompositionRoot
       @auth_omniauth_session_gateway ||= Adapters::Shared::Gateways::AuthOmniauthSessionActiveRecordGateway.new
     end
 
+    def user_session_revocation_gateway
+      @user_session_revocation_gateway ||= Adapters::Shared::Gateways::UserSessionRevocationActiveRecordGateway.new
+    end
+
+    def auth_test_login_gateway
+      @auth_test_login_gateway ||= Adapters::Shared::Gateways::AuthTestLoginActiveRecordGateway.new
+    end
+
     def deletion_undo_gateway
       @deletion_undo_gateway ||= Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
     end

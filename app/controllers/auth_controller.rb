@@ -86,17 +86,11 @@ class AuthController < ApplicationController
   end
 
   def logout
-    if current_user
-      # Destroy all sessions for the user
-      current_user.sessions.destroy_all
-
-      # Clear session cookie (ensure deletion in production as well)
-      clear_session_cookie
-
-      redirect_to auth_login_path, notice: I18n.t("auth.flash.logout_success")
-    else
-      redirect_to auth_login_path, alert: I18n.t("auth.flash.not_logged_in")
-    end
+    presenter = Presenters::Html::Auth::AuthUserLogoutHtmlPresenter.new(view: self)
+    Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
+      output_port: presenter,
+      session_revocation_gateway: CompositionRoot.user_session_revocation_gateway
+    ).call(authenticated: logged_in?, user_id: current_user.id)
   end
 
   private
@@ -185,4 +179,6 @@ class AuthController < ApplicationController
   def build_origin(uri)
     "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
   end
+
+  public :clear_session_cookie
 end
