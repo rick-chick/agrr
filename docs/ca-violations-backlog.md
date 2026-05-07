@@ -1,6 +1,6 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-07（HTML `PublicPlans` / マスタ `AgriculturalTasks` の Application edge 4 解消）
+最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-07（HTML `PublicPlans` / マスタ `AgriculturalTasks` の Application edge 4 解消） / 2026-05-07（フロント `frontend/src/app` 層境界の機械点検）
 
 ## 修正単位
 
@@ -16,7 +16,8 @@
 - **解消済み（2026-05-07・セクション0）**: HTML `app/controllers/crops/*` の再サンプリング — `TaskScheduleBlueprints` / `AgriculturalTasks` / `Pests` に AR 直叩き・参照/admin 早期分岐なし（`agricultural_tasks#create` の `agricultural_task_id` 空ガードは ARCHITECTURE の DTO 成立前ガードとして既知許容）。
 - **解消済み（2026-05-07）**: **HTML** `PublicPlansController` の `select_farm_size` / `select_crop` / `create` から `Farm` / `Crop` の AR 直叩きを除去。ウィザード段は `PublicPlanWizardLoadFarmInteractor` / `PublicPlanWizardPrepareCropStepInteractor` と HTML プレゼンタ、`create` は既存 `PublicPlanCreateInteractor` + `PublicPlanCreateHtmlPresenter` に統一。`PublicPlanCreateInputDto#redirect_path` とジョブチェーン `redirect_path` 引き回し、`PublicPlanActiveRecordGateway#find_crops` で参照作物＋任意地域絞り込み。作物ゼロ時は `PublicPlanCreateFailureDto` + `public_plan_render_create_no_crops_failure!` で 422 再描画（Application edge 禁止 **4**）。
 - **解消済み（2026-05-07）**: **HTML** `AgriculturalTasksController` の作物選択データを `CropGateway#list_reference_crop_entities` / `list_non_reference_crops_for_user_id_ordered`、テンプレート紐付け ID を `AgriculturalTaskGateway#linked_crop_ids_for_task_templates` に移行。`CropEntity#is_reference?` をビュー互換のため追加（Application edge 禁止 **4**）。
-- **次に先頭で固定する修正単位（未着手）**: フロントの**全 `*.ts` 通し走査**は未実施（`components` から `adapters/` 直 import はスポットでゼロ）。`usecase` / `services` / `components` の契約に沿った点検を辞書順ディレクトリで開始する。
+- **解消済み（2026-05-07・セクション0）**: フロント `frontend/src/app` の **Angular 層境界の機械点検**（`components`・`services`・`domain` の `adapters/` 直 import、`usecase` の非 `*.providers.ts` からの `adapters/`、`usecase` / `domain` の `HttpClient`）。**違反なし**（`adapters/` 参照は `*.providers.ts` と `app.config.ts` のみ。`gantt-chart.component.ts` の `@angular/common/http` は `HttpErrorResponse` 型のみ）。
+- **次に先頭で固定する修正単位（未着手）**: フロント `adapters/**/*.ts` の **意味読み点検**（Presenter / Gateway 実装が ARCHITECTURE.md「Frontend: Angular layers」の依存方向と、バックエンド側の Gateway boundary（表現非依存）に照らしてユースケース判断・HTTP 形状以外の責務を持たないか）。辞書順で `frontend/src/app/adapters/` の子ディレクトリから開始する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
@@ -44,7 +45,8 @@
 - 2026-05-06: **API 害虫・肥料 AI** — `PestsController` / `FertilizesController` の `ai_create` / `ai_update` を `PestApiAiCreateInteractor` / `PestApiAiUpdateInteractor` / `FertilizeApiAiCreateInteractor` / `FertilizeApiAiUpdateInteractor` に集約。agrr 応答の解釈は `PestAiDaemonResponseInterpreter`、肥料ペイロード正規化は `FertilizeAiAgrrPayloadNormalizer`。匿名ユーザー判定は `UserDto#anonymous?`（Mapper で `User` から付与）。作物関連付けは `CompositionRoot` が注入する runner で AR `User` を閉じ込める。
 - 2026-05-06: **Application edge 禁止4（API）** — `app/controllers/api/v1` の AR / ActiveStorage / User 直叩きをゲートウェイ・Interactor・Presenter に寄せた（Plans 一覧・詳細、PublicPlans `save_plan`、Wizard `crops`、公開 cultivation_plans `get_crop_for_add_crop`、マスタ Base のセッション/APIキー解決、作物×農業タスク API、作物×害虫 destroy、API キー生成、Files CRUD、Backdoor users/db_stats、作物 AI の既存検索は Pest/Fertilize ゲートウェイへ）。
 - 2026-05-06: `Adapters::ActiveStorage` 名前空間が Rails の `ActiveStorage` と衝突したため、Blob API アダプタは `Adapters::StoredBlobs` に変更。`plan_copy_gateway` の `ActiveStorage::Attachment` 参照は `::ActiveStorage` に明示。
-- 2026-05-06: フロントの**全 `*.ts` 通し走査**は未実施。`components` から `adapters/` への直 import はスポットでゼロ。必要に応じ `usecase` / `services` / `components` の役割を契約に沿って点検する。
+- 2026-05-07: **フロント層境界（機械点検）** — 上記「解消済み（2026-05-07・セクション0）」のとおり。全 `*.ts` の**意味読み**通し走査は次項（`adapters/`）に継続。
+- 2026-05-06: フロントの**全 `*.ts` 意味読み通し走査**は未完了（当時）。`components` から `adapters/` への直 import はスポットでゼロ。
 
 ## 残置（意図・別単位）
 
