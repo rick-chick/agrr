@@ -27,7 +27,8 @@
 - **解消済み（2026-05-07）**: **HTML `AgriculturalTasksController`** の `#new` / 作成失敗フォーム再構築 / 更新失敗スナップショット / 編集時作物リスト用プレビュー — `AgriculturalTask.new`、`build`、`assign_attributes`、`dup`＋参照フラグ試行を `AgriculturalTaskGateway`（`build_blank_agricultural_task_for_html_form`、`build_after_create_failure_agricultural_task_for_html_form!`、`merge_update_form_snapshot_for_html_form!`、`preview_agricultural_task_for_edit_crop_selection`）と `AgriculturalTaskActiveRecordGateway` に集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **HTML `FieldsController#new`** の `@farm.fields.build` を `FieldGateway#build_blank_field_for_html_form!(persisted_farm:)` に寄せる（認可済み農場は従来どおり `set_farm`）。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **HTML `FarmsController#new`** の `current_user.farms.build` を除去。`FarmGateway#build_blank_farm_for_html_form!(user_id:)` と `FarmActiveRecordGateway` 実装に集約（`FieldGateway#build_blank_field_for_html_form!` と同型）。Application edge 禁止 **4**。
-- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。直近の辞書順サンプルで残る例: **`PestsController#new`** の `Pest.new` / `build`、`planning_schedules_controller`、`plans/task_schedule_items_controller`、`public_plans_controller` の一部 AR など（未着手のまま backlog に残す）。
+- **解消済み（2026-05-07）**: **HTML `PestsController#new`** の `Pest.new` と nested `build` を除去し、既存の `PestGateway#build_blank_pest_for_form`（`PestMemoryGateway` 実装）に一本化。Application edge 禁止 **4**。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。直近の辞書順サンプルで残る例: **`planning_schedules_controller`**、`plans/task_schedule_items_controller`、`public_plans_controller` の一部 AR など（未着手のまま backlog に残す）。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

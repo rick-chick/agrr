@@ -21,11 +21,8 @@ class PestsController < ApplicationController
 
   # GET /pests/new
   def new
-    @pest = Pest.new
+    @pest = CompositionRoot.pest_gateway.build_blank_pest_for_form
     prepare_crop_selection_for(@pest, selected_ids: normalize_crop_ids_for(@pest, params[:crop_ids]))
-    @pest.build_pest_temperature_profile
-    @pest.build_pest_thermal_requirement
-    @pest.pest_control_methods.build
   end
 
   # GET /pests/:id/edit
