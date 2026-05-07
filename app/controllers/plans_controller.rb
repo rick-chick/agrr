@@ -2,7 +2,7 @@
 
 class PlansController < CultivationPlanHtmlBaseController
   before_action :authenticate_user!
-  before_action :set_plan, only: [ :optimize, :copy ]
+  before_action :set_plan, only: [ :copy ]
   layout "application"
 
   # 基底クラス属性
@@ -90,13 +90,18 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # 計画の最適化を実行
   def optimize
-    # 既に最適化中の場合はスキップ（完了は許可）
-    if @plan.status_optimizing?
-      redirect_to plan_path(@plan), alert: I18n.t("plans.errors.already_optimized") and return
+    plan_id = parse_positive_route_id(params[:id])
+    unless plan_id
+      redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
     end
 
-    # 最適化は計画作成時に既に実行されているため、進捗画面にリダイレクト
-    redirect_to optimizing_plan_path(@plan.id), notice: I18n.t("plans.messages.optimization_started")
+    presenter = Presenters::Html::Plans::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
+    CompositionRoot.private_plan_optimization_redirect_interactor(
+      output_port: presenter,
+      user_id: current_user.id,
+      plan_id: plan_id
+    ).call
+    return if performed?
   end
 
   # Step 4: 最適化進捗画面
@@ -140,10 +145,6 @@ class PlansController < CultivationPlanHtmlBaseController
       user_lookup: CompositionRoot.user_lookup
     ).call
     return if performed?
-
-    if @private_plan_show.optimizing?
-      redirect_to optimizing_plan_path(@private_plan_show.id) and return
-    end
 
     Rails.logger.debug "📊 [Plans#show] User: #{current_user.id}, Plan: #{@private_plan_show.id}"
   end

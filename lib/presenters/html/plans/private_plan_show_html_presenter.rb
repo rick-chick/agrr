@@ -9,6 +9,10 @@ module Presenters
         end
 
         def on_success(dto)
+          if dto.optimizing?
+            @view.redirect_to @view.optimizing_plan_path(dto.id)
+            return
+          end
           @view.instance_variable_set(:@private_plan_show, dto)
         end
 

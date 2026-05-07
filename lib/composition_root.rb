@@ -231,6 +231,18 @@ module CompositionRoot
       )
     end
 
+    def private_plan_optimization_redirect_interactor(output_port:, user_id:, plan_id:)
+      Domain::CultivationPlan::Interactors::PrivatePlanOptimizationRedirectInteractor.new(
+        output_port: output_port,
+        user_id: user_id,
+        plan_id: plan_id,
+        gateway: cultivation_plan_gateway,
+        translator: translator,
+        logger: logger,
+        user_lookup: user_lookup
+      )
+    end
+
     def plan_allocation_gateway
       @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationGatewayAdapter.new
     end
