@@ -142,16 +142,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       logger: CompositionRoot.logger
     ).call
     return if performed?
-
-    dto = @public_plan_optimizing
-    if dto.completed?
-      redirect_to public_plans_results_path
-      return
-    end
-
-    if dto.failed?
-      redirect_to public_plans_results_path, alert: I18n.t("public_plans.optimizing.error.title")
-    end
   end
 
   # Step 6: 結果表示

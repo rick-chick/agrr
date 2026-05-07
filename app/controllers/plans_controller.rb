@@ -114,17 +114,6 @@ class PlansController < CultivationPlanHtmlBaseController
     Rails.logger.info "🎯 [PlansController#optimizing] Starting optimizing view for plan: #{plan_id}"
     load_private_plan_optimizing(plan_id)
     return if performed?
-
-    dto = @private_plan_optimizing
-    if dto.completed?
-      redirect_to plan_path(dto.id)
-      return
-    end
-
-    if dto.failed?
-      redirect_to plan_path(dto.id), alert: I18n.t("plans.optimizing.error.title")
-      return
-    end
   end
 
   # Step 5: 計画詳細（結果表示）

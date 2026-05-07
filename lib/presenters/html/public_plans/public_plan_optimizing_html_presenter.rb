@@ -9,6 +9,19 @@ module Presenters
         end
 
         def on_success(dto)
+          if dto.completed?
+            @view.redirect_to @view.public_plans_results_path
+            return
+          end
+
+          if dto.failed?
+            @view.redirect_to(
+              @view.public_plans_results_path,
+              alert: I18n.t("public_plans.optimizing.error.title")
+            )
+            return
+          end
+
           @view.instance_variable_set(:@public_plan_optimizing, dto)
         end
 

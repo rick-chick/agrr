@@ -17,10 +17,9 @@
 ## Controller
 
 - **`:id`**: **正の整数**（`/[1-9]\d*/`）のみ受け付け。それ以外は `plans.errors.not_found` で `plans_path` へ。
-- **完了時**: DTO の `status` が **`completed`** のとき **`plan_path(dto.id)`** へリダイレクト（従来 `handle_optimizing` と同旨）。
-- **失敗済み**: **`failed`** のとき **`plan_path(dto.id)`** へ **`plans.optimizing.error.title`** を `alert` 付きでリダイレクト。
+- **完了／失敗時のリダイレクト**: **`PrivatePlanOptimizingHtmlPresenter#on_success`** が DTO の `status` を見て **`completed`** なら **`plan_path(dto.id)`**、**`failed`** なら同パスに **`plans.optimizing.error.title`** を `alert` 付きでリダイレクト（コントローラは Interactor 呼び出し後 **`return if performed?`** のみ）。
 - **注入**: `gateway` / `translator` / `logger` / `user_lookup` は **Interactor のみ**。Presenter に gateway を渡さない。
-- **`on_failure` で redirect した場合**は `performed?` が true になるため、**リダイレクト分岐の前に `return if performed?`** する。
+- **`on_failure` または上記 `on_success` の redirect** 後は `performed?` が true になる。
 
 ## テンプレ（`plans/optimizing`）
 
