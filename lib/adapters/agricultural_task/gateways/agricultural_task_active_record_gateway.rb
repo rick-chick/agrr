@@ -12,10 +12,6 @@ module Adapters
           @translator = translator
         end
 
-        def list
-          ::AgriculturalTask.all.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
-        end
-
         def list_for_index(user:, is_admin:, filter: nil, query: nil)
           scope = if is_admin
             case filter
@@ -38,68 +34,6 @@ module Adapters
           return [] unless is_admin
 
           ::AgriculturalTask.where(is_reference: true).map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
-        end
-
-        def find_by_id(task_id)
-          task = ::AgriculturalTask.find(task_id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
-        end
-
-        def create(create_input_dto)
-          task = ::AgriculturalTask.new(
-            name: create_input_dto.name,
-            description: create_input_dto.description,
-            time_per_sqm: create_input_dto.time_per_sqm,
-            weather_dependency: create_input_dto.weather_dependency,
-            required_tools: create_input_dto.required_tools,
-            skill_level: create_input_dto.skill_level,
-            region: create_input_dto.region,
-            task_type: create_input_dto.task_type
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.save
-
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
-        end
-
-        def update(task_id, update_input_dto)
-          task = ::AgriculturalTask.find(task_id)
-          attrs = {}
-          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
-          attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
-          attrs[:time_per_sqm] = update_input_dto.time_per_sqm if !update_input_dto.time_per_sqm.nil?
-          attrs[:weather_dependency] = update_input_dto.weather_dependency if !update_input_dto.weather_dependency.nil?
-          attrs[:required_tools] = update_input_dto.required_tools if !update_input_dto.required_tools.nil?
-          attrs[:skill_level] = update_input_dto.skill_level if !update_input_dto.skill_level.nil?
-          attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
-          attrs[:task_type] = update_input_dto.task_type if !update_input_dto.task_type.nil?
-
-          task.update(attrs)
-          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") if task.errors.any?
-
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
-        end
-
-        def destroy(task_id)
-          task = ::AgriculturalTask.find(task_id)
-          DeletionUndo::Manager.schedule(
-            record: task,
-            actor: ::User.find(task.user_id),
-            toast_message: @translator.t("agricultural_tasks.undo.toast", name: task.name)
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask not found"
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("agricultural_tasks.flash.cannot_delete_in_use")
-        rescue DeletionUndo::Error
-          raise
-        end
-
-        def find_authorized_for_view(user, id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_view(user, id))
         end
 
         def authorized_agricultural_task_detail_output(user, id)
@@ -193,15 +127,6 @@ module Adapters
           raise
         rescue StandardError => e
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
-        end
-
-        def recent_for_user(user, limit: nil)
-          scope = visible_scope(user).recent
-          limit ? scope.limit(limit).map { |r| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(r) } : scope.map { |r| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(r) }
-        end
-
-        def any_visible_for_user?(user)
-          visible_scope(user).exists?
         end
 
         def linked_crop_ids_for_task_templates(agricultural_task_id)
