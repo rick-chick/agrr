@@ -210,7 +210,7 @@ module Domain
         end
 
         # 認可済み作物に属する CropTaskScheduleBlueprint を取得。
-        # 親作物は view 認可（set_crop と整合）。変更系は can_edit_crop? で別途ゲートする。
+        # 親作物は view 認可（set_crop と整合）。変更系は update/delete 用ゲートウェイが find_authorized_model_for_edit で統一する。
         def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
           raise NotImplementedError, "Subclasses must implement find_authorized_crop_task_schedule_blueprint_in_crop!"
         end
@@ -228,6 +228,11 @@ module Domain
         # Crops::TaskScheduleBlueprintsController — 位置更新（実装は AR アダプタで例外を吸収し Hash を返す）
         def update_task_schedule_blueprint_position_mutation(crop:, blueprint:, gdd_trigger:, priority:)
           raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_mutation"
+        end
+
+        # 編集認可済み作物＋ブループリント ID で位置更新（Interactor は user_id / ID のみ渡す）
+        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
+          raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_for_user"
         end
 
         # Crops::TaskScheduleBlueprintsController — 削除後の crop 再読込と UI 用データ

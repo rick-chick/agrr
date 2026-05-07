@@ -223,7 +223,7 @@ module Adapters
           find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit: for_edit)
         end
 
-        # 親は view 認可（set_crop と整合）。PATCH/DELETE は can_edit_crop? で別途ゲートする。
+        # 親は view 認可（set_crop と整合）。PATCH/DELETE の編集権限は update/delete 用メソッド側で評価する。
         def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
           crop = find_authorized_model_for_view(user, crop_id)
           bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
@@ -296,6 +296,14 @@ module Adapters
           Rails.logger.error("❌ [CropMemoryGateway] Failed to update blueprint position: #{e.class} #{e.message}")
           Rails.logger.error(e.backtrace.join("\n"))
           { ok: false, status: :internal_server_error, error: I18n.t("crops.flash.blueprint_update_failed") }
+        end
+
+        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
+          crop = find_authorized_model_for_edit(user, crop_id.to_i)
+          bp = crop.crop_task_schedule_blueprints.find(blueprint_id.to_i)
+          update_task_schedule_blueprint_position_mutation(crop: crop, blueprint: bp, gdd_trigger: gdd_trigger, priority: priority)
+        rescue ActiveRecord::RecordNotFound
+          { ok: false, status: :not_found, error: I18n.t("crops.flash.blueprint_not_found") }
         end
 
         # ブループリント削除後の crop 再読込と UI 用タスク一覧（レンダリング前の失敗を吸収）

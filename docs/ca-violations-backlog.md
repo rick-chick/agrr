@@ -12,7 +12,8 @@
 - **解消済み（2026-05-06）**: **HTML** `AgriculturalTasksController` の `create` / `update` 先頭の参照・admin 分岐を削除。`AgriculturalTaskCreateInteractor` / `AgriculturalTaskUpdateInteractor` に `translator` を注入し参照ルールを明示、**create** は `is_reference` をゲートウェイへ渡すよう修正。HTML Presenter で既存のリダイレクト UX を再現。API マスタ `AgriculturalTasksController` も同じ Interactor 引数に合わせる。
 - **解消済み（2026-05-06）**: **HTML** `PesticidesController` の `create` / `update` 先頭の `is_reference` 早期 `redirect_to` を削除。`PesticideCreateInteractor` / `PesticideUpdateInteractor` に `translator` を注入し、`PesticideUpdateInputDto` に `is_reference` を追加。HTML / API Presenter で参照失敗時の UX・403 を再現。
 - **解消済み（2026-05-06）**: **HTML** `InteractionRulesController` の `create` / `update` 先頭の参照・admin 早期 `redirect_to` を削除。`InteractionRuleCreateInteractor` / `InteractionRuleUpdateInteractor` に `translator` を注入し、`InteractionRuleUpdateInputDto` に `is_reference` を追加。HTML / API Presenter で参照失敗時の UX・403 を再現。
-- **次に先頭で固定する修正単位（未着手）**: **HTML** `Crops::TaskScheduleBlueprintsController` の `update_position` / `destroy`（`CompositionRoot.crop_gateway` 直呼び、`can_edit_crop?` の `is_reference` / `admin_user?` 分岐、ログ・分岐の塊）。作物ネスト画面の残エッジ肥大としてセクション1 で扱う。
+- **解消済み（2026-05-07）**: **HTML** `Crops::TaskScheduleBlueprintsController` の `update_position` / `destroy` を `CropTaskScheduleBlueprintUpdatePositionInteractor` / `CropTaskScheduleBlueprintDestroyInteractor` と HTML プレゼンタに寄せ、`CompositionRoot` 直呼び・`can_edit_crop?`・`Rails.logger` を除去。`CropGateway#update_task_schedule_blueprint_position_for_user` で編集認可＋ID 解決をゲートウェイに集約（Application edge 禁止 3・4）。
+- **次に先頭で固定する修正単位（未着手）**: セクション0 のサンプリングで HTML 作物ネスト・マスタ周りの残エッジ（`grep` / 代表 Read）を再確認し、検出があれば追記する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
