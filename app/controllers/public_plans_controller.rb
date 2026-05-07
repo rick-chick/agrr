@@ -162,17 +162,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     # まだ完了していない場合は進捗画面へ
     redirect_to optimizing_public_plans_path unless @cultivation_plan.status_completed?
 
-    # 作業予定が空の場合は警告トーストを表示するためのフラグを設定
-    # 計画内の各圃場に対して作業予定が生成されているか確認
-    # テンプレートがない作物がある場合、その圃場には作業予定が生成されない
-    field_cultivations_with_schedules = @cultivation_plan.field_cultivations.select do |fc|
-      @cultivation_plan.task_schedules.where(field_cultivation: fc).any? do |schedule|
-        schedule.task_schedule_items.any?
-      end
-    end
-
-    # 全ての圃場に作業予定が生成されていない場合は警告を表示
-    @show_schedule_warning = field_cultivations_with_schedules.count < @cultivation_plan.field_cultivations.count
+    @show_schedule_warning = CompositionRoot.cultivation_plan_gateway.public_plan_results_schedule_warning?(plan_id: @cultivation_plan.id)
   end
 
   # 保存ボタンクリック時の処理（HTML用）およびAPI用
@@ -226,23 +216,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     ).call(user: user, session_data: session_data)
   end
 
-  def public_plan_save_session_data_for(cultivation_plan, farm_id:, crop_ids:)
-    field_data = cultivation_plan.cultivation_plan_fields.map do |field|
-      {
-        name: field.name,
-        area: field.area,
-        coordinates: [ 35.0, 139.0 ]
-      }
-    end
-
-    {
-      plan_id: cultivation_plan.id,
-      farm_id: farm_id,
-      crop_ids: crop_ids,
-      field_data: field_data
-    }
-  end
-
   # API用の保存処理
   def handle_api_save_plan
     Rails.logger.info "🔍 [handle_api_save_plan] Called"
@@ -254,34 +227,13 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     end
 
     presenter = Presenters::Api::PublicPlan::PublicPlanSaveFromSessionApiPresenter.new(view: self)
-    fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailureDto
-
-    plan_id = params[:plan_id]
-    unless plan_id.present?
-      Rails.logger.warn "❌ [handle_api_save_plan] plan_id is missing"
-      presenter.on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID))
-      return
-    end
-
-    cultivation_plan = CultivationPlan.find_by(id: plan_id)
-    unless cultivation_plan
-      Rails.logger.warn "❌ [handle_api_save_plan] Plan not found: #{plan_id}"
-      presenter.on_failure(fdto.new(kind: fdto::KIND_PLAN_NOT_FOUND))
-      return
-    end
-
-    save_data = public_plan_save_session_data_for(
-      cultivation_plan,
-      farm_id: cultivation_plan.farm_id,
-      crop_ids: cultivation_plan.crops.pluck(:id)
-    )
-
-    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.new(
+    Domain::CultivationPlan::Interactors::PublicPlanApiSavePlanInteractor.new(
       output_port: presenter,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
       public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
       logger: CompositionRoot.logger,
       translator: CompositionRoot.translator
-    ).call(user: current_user, session_data: save_data)
+    ).call(plan_id: params[:plan_id], user: current_user)
   end
 
   # localeから地域コードに変換（/ja → jp, /us → us, /in → in）
@@ -358,21 +310,17 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # セッションに保存データを保存
   def save_plan_data_to_session
-    # 圃場データを取得
-    field_data = @cultivation_plan.cultivation_plan_fields.map do |field|
-      {
-        name: field.name,
-        area: field.area,
-        coordinates: [ 35.0, 139.0 ] # デフォルト座標（実際の座標があれば使用）
-      }
-    end
-
-    session[:public_plan_save_data] = {
+    save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
       plan_id: @cultivation_plan.id,
       farm_id: session_data[:farm_id],
-      crop_ids: session_data[:crop_ids],
-      field_data: field_data
-    }
+      crop_ids: session_data[:crop_ids]
+    )
+    unless save_data
+      Rails.logger.warn "❌ [save_plan_data_to_session] Plan not found for payload: #{@cultivation_plan.id}"
+      return
+    end
+
+    session[:public_plan_save_data] = save_data
     Rails.logger.info "💾 [save_plan_data_to_session] Saved to session: #{session[:public_plan_save_data]}"
   end
 
@@ -380,11 +328,15 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   def save_plan_to_user_account
     Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
 
-    save_data = public_plan_save_session_data_for(
-      @cultivation_plan,
+    save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
+      plan_id: @cultivation_plan.id,
       farm_id: session_data[:farm_id],
       crop_ids: session_data[:crop_ids]
     )
+    unless save_data
+      Rails.logger.warn "❌ [save_plan_to_user_account] Plan not found for payload: #{@cultivation_plan.id}"
+      return
+    end
 
     run_public_plan_save_from_session_html(
       user: current_user,

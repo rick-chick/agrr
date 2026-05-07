@@ -731,6 +731,40 @@ module Adapters
             end
           }
         end
+
+        def public_plan_results_schedule_warning?(plan_id:)
+          plan = ::CultivationPlan.find_by(id: plan_id)
+          return false unless plan
+
+          total_fc = plan.field_cultivations.count
+          return false if total_fc.zero?
+
+          with_items_fc = ::TaskSchedule
+            .where(cultivation_plan_id: plan.id)
+            .joins(:task_schedule_items)
+            .distinct
+            .count(:field_cultivation_id)
+
+          with_items_fc < total_fc
+        end
+
+        def public_plan_html_save_session_payload(plan_id:, farm_id:, crop_ids:)
+          plan = ::CultivationPlan.find_by(id: plan_id)
+          return nil unless plan
+
+          {
+            plan_id: plan.id,
+            farm_id: farm_id,
+            crop_ids: crop_ids,
+            field_data: plan.cultivation_plan_fields.map do |field|
+              {
+                name: field.name,
+                area: field.area,
+                coordinates: [ 35.0, 139.0 ]
+              }
+            end
+          }
+        end
       end
     end
   end

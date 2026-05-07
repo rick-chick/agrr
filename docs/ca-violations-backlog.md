@@ -30,7 +30,8 @@
 - **解消済み（2026-05-07）**: **HTML `PestsController#new`** の `Pest.new` と nested `build` を除去し、既存の `PestGateway#build_blank_pest_for_form`（`PestMemoryGateway` 実装）に一本化。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlanningSchedulesController`** の `CultivationPlan` / `Farm` 直叩き・期間生成・作付集約を `CultivationPlanGateway` / `FarmGateway`、`PlanningScheduleFieldsSelectionInteractor` / `PlanningScheduleMatrixInteractor`、HTML プレゼンタに移行。セッション書き込みはマトリクス成功プレゼンタ、時刻は `Time.zone` 注入。Application edge 禁止 **3**・**4**。
 - **解消済み（2026-05-08）**: **HTML `Plans::TaskScheduleItemsController`** の `before_action` による `CultivationPlan` / `TaskScheduleItem` の AR 読込と、`destroy` の `@task_schedule_item` 依存を除去。`TaskScheduleItemMutationGateway#deletion_undo_schedule_row_for_item!` と `TaskScheduleItemScheduleDeletionUndoInteractor`（Undo へ委譲、`translator` で toast）、`CompositionRoot.task_schedule_item_schedule_deletion_undo_interactor` で配線。Application edge 禁止 **3**・**4**。
-- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。直近の辞書順サンプルで残る例: **`public_plans_controller` の一部 AR**、その他 HTML コントローラの継続サンプリング。
+- **解消済み（2026-05-08）**: **HTML `PublicPlansController`** の `results` での `task_schedules` / `task_schedule_items` 走査、`save_plan` JSON 枝の `CultivationPlan.find_by`・手組み session_data、セーブ用圃場スナップショットのコントローラ内 AR map を除去。`CultivationPlanGateway#public_plan_results_schedule_warning?` / `#public_plan_html_save_session_payload`、`PublicPlanApiSavePlanInteractor`（API コントローラと同経路）に集約。ビューが `@cultivation_plan`（AR）に依存する部分と `ManageablePublicPlanLookup` は別単位の残債。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。**`PublicPlansController`** は結果画面・`find_cultivation_plan` の DTO 化などが残る。**その他 HTML コントローラ**の継続サンプリング。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

@@ -156,6 +156,18 @@ module Domain
         def session_data_for_public_plan_save_from_plan_id(plan_id:)
           raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"
         end
+
+        # 公開プラン結果 HTML: 一部圃場に「アイテム付き作業予定」が無いとき警告トーストを出すか（読み取りスナップショット）。
+        # @return [Boolean]
+        def public_plan_results_schedule_warning?(plan_id:)
+          raise NotImplementedError, "Subclasses must implement public_plan_results_schedule_warning?"
+        end
+
+        # HTML 経由の公開プラン保存: ウィザード session の farm_id / crop_ids と計画 id からセッション保存用ペイロードを組み立てる（計画なしは nil）
+        # @return [Hash, nil] `plan_id`, `farm_id`, `crop_ids`, `field_data`（各 field は `name`, `area`, `coordinates`）
+        def public_plan_html_save_session_payload(plan_id:, farm_id:, crop_ids:)
+          raise NotImplementedError, "Subclasses must implement public_plan_html_save_session_payload"
+        end
       end
     end
   end

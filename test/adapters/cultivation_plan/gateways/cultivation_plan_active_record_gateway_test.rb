@@ -323,4 +323,75 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
       @gateway.find_private_cultivation_plan_detail(user: user, plan_id: 9_999_999)
     end
   end
+
+  test "public_plan_results_schedule_warning? is false when plan missing" do
+    assert_equal false, @gateway.public_plan_results_schedule_warning?(plan_id: 9_999_999)
+  end
+
+  test "public_plan_results_schedule_warning? is false when plan has no field cultivations" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
+
+    assert_equal false, @gateway.public_plan_results_schedule_warning?(plan_id: plan.id)
+  end
+
+  test "public_plan_results_schedule_warning? is false when every field cultivation has schedule with items" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
+    crop = create(:crop, :reference)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: "A", area: 10)
+    fc = create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
+    schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
+    create(:task_schedule_item, task_schedule: schedule)
+
+    assert_equal false, @gateway.public_plan_results_schedule_warning?(plan_id: plan.id)
+  end
+
+  test "public_plan_results_schedule_warning? is true when some field cultivation lacks schedule items" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
+    crop = create(:crop, :reference)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+    field1 = create(:cultivation_plan_field, cultivation_plan: plan, name: "A", area: 10)
+    field2 = create(:cultivation_plan_field, cultivation_plan: plan, name: "B", area: 20)
+    fc1 = create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field1, cultivation_plan_crop: plan_crop)
+    create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field2, cultivation_plan_crop: plan_crop)
+    schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc1)
+    create(:task_schedule_item, task_schedule: schedule)
+
+    assert_equal true, @gateway.public_plan_results_schedule_warning?(plan_id: plan.id)
+  end
+
+  test "public_plan_results_schedule_warning? is true when schedule has no items" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
+    crop = create(:crop, :reference)
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: "A", area: 10)
+    fc = create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
+    create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
+
+    assert_equal true, @gateway.public_plan_results_schedule_warning?(plan_id: plan.id)
+  end
+
+  test "public_plan_html_save_session_payload returns nil when plan missing" do
+    assert_nil @gateway.public_plan_html_save_session_payload(plan_id: 9_999_999, farm_id: 1, crop_ids: [ 2 ])
+  end
+
+  test "public_plan_html_save_session_payload mirrors field_data and passes session ids through" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
+    create(:cultivation_plan_field, cultivation_plan: plan, name: "North", area: 50.5, daily_fixed_cost: 1)
+    payload = @gateway.public_plan_html_save_session_payload(plan_id: plan.id, farm_id: 99, crop_ids: [ 7, 8 ])
+
+    assert_equal plan.id, payload[:plan_id]
+    assert_equal 99, payload[:farm_id]
+    assert_equal [ 7, 8 ], payload[:crop_ids]
+    assert_equal 1, payload[:field_data].size
+    row = payload[:field_data].first
+    assert_equal "North", row[:name]
+    assert_in_delta 50.5, row[:area].to_f, 0.001
+    assert_equal [ 35.0, 139.0 ], row[:coordinates]
+  end
 end
