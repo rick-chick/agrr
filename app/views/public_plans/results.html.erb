@@ -16,19 +16,20 @@
   <div class="cultivation-results-container">
     
     <%# ヘッダー・サマリー %>
-    <%= render 'public_plans/results/header', cultivation_plan: @cultivation_plan %>
+    <%= render 'public_plans/results/header', results_page: @public_plan_results %>
     
     <%# ガントチャート（作物パレットを含む） - 共通パーシャルを使用 %>
     <div data-controller="plans-show">
-    <%= render 'shared/gantt_chart', 
-               cultivation_plan: @cultivation_plan,
+    <% pid = @public_plan_results.plan_id %>
+    <%= render 'shared/gantt_chart',
+               gantt_embed: @gantt_embed,
                show_crop_palette: true,
                plan_type: 'public',
-               data_url: data_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
-               adjust_url: adjust_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
-               add_field_url: add_field_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
-               remove_field_url: remove_field_api_v1_public_plans_cultivation_plan_path(id: @cultivation_plan.id, field_id: 'PLACEHOLDER'),
-               add_crop_url: add_crop_api_v1_public_plans_cultivation_plan_path(@cultivation_plan),
+               data_url: data_api_v1_public_plans_cultivation_plan_path(pid),
+               adjust_url: adjust_api_v1_public_plans_cultivation_plan_path(pid),
+               add_field_url: add_field_api_v1_public_plans_cultivation_plan_path(pid),
+               remove_field_url: remove_field_api_v1_public_plans_cultivation_plan_path(id: pid, field_id: 'PLACEHOLDER'),
+               add_crop_url: add_crop_api_v1_public_plans_cultivation_plan_path(pid),
                optimization_channel: 'OptimizationChannel',
                gantt_title: t('public_plans.results.gantt.title'),
                detail_title: t('public_plans.show.detail.title'),

@@ -394,4 +394,41 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_in_delta 50.5, row[:area].to_f, 0.001
     assert_equal [ 35.0, 139.0 ], row[:coordinates]
   end
+
+  test "public_plan_wizard_plan_exists? is false when id missing or unknown" do
+    assert_equal false, @gateway.public_plan_wizard_plan_exists?(plan_id: nil)
+    assert_equal false, @gateway.public_plan_wizard_plan_exists?(plan_id: 9_999_999_999)
+  end
+
+  test "public_plan_wizard_plan_exists? is true when plan exists" do
+    farm = create(:farm)
+    plan = create(:cultivation_plan, :public_plan, farm: farm)
+
+    assert_equal true, @gateway.public_plan_wizard_plan_exists?(plan_id: plan.id)
+  end
+
+  test "public_plan_results_page_read_model returns nil when plan missing" do
+    assert_nil @gateway.public_plan_results_page_read_model(plan_id: 9_999_999_999)
+  end
+
+  test "public_plan_results_page_read_model returns snapshot with gantt rows and palette" do
+    farm = create(:farm, region: "jp")
+    plan = create(:cultivation_plan, :public_plan, :completed, farm: farm, total_cost: 100, total_revenue: 200, total_profit: 100)
+    crop = create(:crop, :reference, region: "jp", name: "Alpha Crop")
+    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
+    field = create(:cultivation_plan_field, cultivation_plan: plan, name: "Plot1", area: 10)
+    create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
+
+    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    assert_not_nil rm
+    assert_equal plan.id, rm.plan_id
+    assert_equal true, rm.status_completed
+    assert_equal farm.name, rm.farm_name
+    assert_equal 1, rm.field_cultivations_count
+    assert_equal 1, rm.gantt_cultivation_rows.size
+    assert_equal 1, rm.gantt_field_rows.size
+    assert_equal crop.id, rm.crop_palette_embed[:used_crop_ids].first
+    crop_names = rm.crop_palette_embed[:crops].map { |h| h[:name] }
+    assert_includes crop_names, "Alpha Crop"
+  end
 end

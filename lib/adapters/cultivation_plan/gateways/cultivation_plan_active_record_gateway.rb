@@ -736,16 +736,58 @@ module Adapters
           plan = ::CultivationPlan.find_by(id: plan_id)
           return false unless plan
 
-          total_fc = plan.field_cultivations.count
-          return false if total_fc.zero?
+          public_plan_schedule_items_coverage_warning?(plan)
+        end
 
-          with_items_fc = ::TaskSchedule
-            .where(cultivation_plan_id: plan.id)
-            .joins(:task_schedule_items)
-            .distinct
-            .count(:field_cultivation_id)
+        def public_plan_results_page_read_model(plan_id:)
+          plan = ::CultivationPlan.includes(
+            :farm,
+            cultivation_plan_fields: [],
+            field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
+            cultivation_plan_crops: [ :crop ]
+          ).find_by(id: plan_id)
+          return nil unless plan
 
-          with_items_fc < total_fc
+          gantt_cultivation_rows = plan.field_cultivations.map do |fc|
+            Domain::CultivationPlan::GanttChartRowHashes.cultivation_row_from_ar(fc)
+          end
+          gantt_field_rows = plan.cultivation_plan_fields.map do |field|
+            Domain::CultivationPlan::GanttChartRowHashes.field_row_from_ar(field)
+          end
+
+          used_crop_ids = plan.cultivation_plan_crops.map(&:crop_id).compact
+          region = plan.farm&.region
+          crop_rows = if region.present?
+            ::Crop.reference.where(region: region).order(:name).map do |c|
+              { id: c.id, name: c.name, variety: c.variety }
+            end
+          else
+            []
+          end
+          crop_palette_embed = { used_crop_ids: used_crop_ids, crops: crop_rows }
+
+          Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel.new(
+            plan_id: plan.id,
+            status_completed: plan.status_completed?,
+            planning_start_date: plan.planning_start_date,
+            planning_end_date: plan.planning_end_date,
+            farm_name: plan.farm&.name,
+            total_area: plan.total_area,
+            field_cultivations_count: plan.field_cultivations.size,
+            total_cost: plan.total_cost,
+            total_revenue: plan.total_revenue,
+            total_profit: plan.total_profit,
+            gantt_cultivation_rows: gantt_cultivation_rows,
+            gantt_field_rows: gantt_field_rows,
+            crop_palette_embed: crop_palette_embed,
+            show_schedule_warning: public_plan_schedule_items_coverage_warning?(plan)
+          )
+        end
+
+        def public_plan_wizard_plan_exists?(plan_id:)
+          return false if plan_id.blank?
+
+          ::CultivationPlan.find_by(id: plan_id).present?
         end
 
         def public_plan_html_save_session_payload(plan_id:, farm_id:, crop_ids:)
@@ -764,6 +806,22 @@ module Adapters
               }
             end
           }
+        end
+
+        private
+
+        # `public_plan_results_schedule_warning?` と結果ページ ReadModel の `show_schedule_warning` で共有（SQL 条件は同一）
+        def public_plan_schedule_items_coverage_warning?(plan_model)
+          total_fc = plan_model.field_cultivations.count
+          return false if total_fc.zero?
+
+          with_items_fc = ::TaskSchedule
+            .where(cultivation_plan_id: plan_model.id)
+            .joins(:task_schedule_items)
+            .distinct
+            .count(:field_cultivation_id)
+
+          with_items_fc < total_fc
         end
       end
     end

@@ -156,13 +156,12 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 6: 結果表示
   def results
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
-
-    # まだ完了していない場合は進捗画面へ
-    redirect_to optimizing_public_plans_path unless @cultivation_plan.status_completed?
-
-    @show_schedule_warning = CompositionRoot.cultivation_plan_gateway.public_plan_results_schedule_warning?(plan_id: @cultivation_plan.id)
+    presenter = Presenters::Html::PublicPlans::PublicPlanResultsHtmlPresenter.new(view: self)
+    Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
+      output_port: presenter,
+      gateway: CompositionRoot.cultivation_plan_gateway
+    ).call(plan_id: normalize_public_plan_wizard_plan_id)
+    return if performed?
   end
 
   # 保存ボタンクリック時の処理（HTML用）およびAPI用
@@ -175,17 +174,20 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
     # HTML リクエストの場合（既存の処理）
     Rails.logger.info "🔍 [save_plan] Called - logged_in?: #{logged_in?}"
-    @cultivation_plan = find_cultivation_plan
-    return unless @cultivation_plan
+    plan_id = normalize_public_plan_wizard_plan_id
+    unless plan_id&.positive? && CompositionRoot.cultivation_plan_gateway.public_plan_wizard_plan_exists?(plan_id: plan_id)
+      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
+      return
+    end
 
     if logged_in?
       Rails.logger.info "✅ [save_plan] User is logged in, saving to account"
       # ログイン済みの場合、直接保存処理を実行
-      save_plan_to_user_account
+      save_plan_to_user_account(plan_id: plan_id)
     else
       Rails.logger.info "ℹ️ [save_plan] User is not logged in, redirecting to login"
       # 未ログインの場合、セッションに保存してログイン画面へ
-      save_plan_data_to_session
+      save_plan_data_to_session(plan_id: plan_id)
       redirect_to auth_login_path, notice: I18n.t("public_plans.save.login_required")
     end
   end
@@ -256,27 +258,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     CultivationPlan
   end
 
-  # CultivationPlan をウィザード文脈で解決する
-  def find_cultivation_plan
-    plan_id = normalize_public_plan_wizard_plan_id
-    result = Adapters::CultivationPlan::ManageablePublicPlanLookup.call(
-      plan_id: plan_id,
-      scope: find_cultivation_plan_scope,
-      includes: [
-        field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
-        task_schedules: :task_schedule_items
-      ]
-    )
-
-    case result[:kind]
-    when :missing_plan_id, :not_found
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
-      nil
-    else
-      result[:plan]
-    end
-  end
-
   def normalize_public_plan_wizard_plan_id
     raw = params[:id] || params[:plan_id] || params[:planId] || session_data[:plan_id]
     return nil if raw.blank?
@@ -309,14 +290,14 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   end
 
   # セッションに保存データを保存
-  def save_plan_data_to_session
+  def save_plan_data_to_session(plan_id:)
     save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
-      plan_id: @cultivation_plan.id,
+      plan_id: plan_id,
       farm_id: session_data[:farm_id],
       crop_ids: session_data[:crop_ids]
     )
     unless save_data
-      Rails.logger.warn "❌ [save_plan_data_to_session] Plan not found for payload: #{@cultivation_plan.id}"
+      Rails.logger.warn "❌ [save_plan_data_to_session] Plan not found for payload: #{plan_id}"
       return
     end
 
@@ -325,16 +306,16 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   end
 
   # ログイン済みユーザーのアカウントに保存
-  def save_plan_to_user_account
+  def save_plan_to_user_account(plan_id:)
     Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
 
     save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
-      plan_id: @cultivation_plan.id,
+      plan_id: plan_id,
       farm_id: session_data[:farm_id],
       crop_ids: session_data[:crop_ids]
     )
     unless save_data
-      Rails.logger.warn "❌ [save_plan_to_user_account] Plan not found for payload: #{@cultivation_plan.id}"
+      Rails.logger.warn "❌ [save_plan_to_user_account] Plan not found for payload: #{plan_id}"
       return
     end
 
