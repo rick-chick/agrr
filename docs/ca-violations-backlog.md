@@ -44,7 +44,8 @@
 - **解消済み（2026-05-08）**: **HTML `Crops::PestsController#edit`** — `@pest.pest_control_methods.build` を除去。`PestGateway#prepare_crop_nested_pest_for_edit_form!`・`CropsNestedPestsLoadPestInteractor`（`for_edit_form:`）でゲートウェイに集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#copy`** — 無効化リダイレクトのみのため `before_action :set_plan` と `PlanPolicy.find_private_owned!` を除去。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **`ApplicationController#current_user`** の `Session` / `User` 直参照を `Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway` に集約。`CompositionRoot#session_cookie_user_gateway` を追加し、`MastersApiSessionResolveGateway` は同一リゾルバを注入してセッション解決を共有。アダプター層テスト `session_cookie_user_active_record_gateway_test.rb` を追加。Application edge 禁止 **4**。
-- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — `app/controllers/**/*_controller.rb` の HTML エッジで、Interactor 未到達の AR／業務分岐の有無を意味読みで先頭候補から固定（辞書順）。**候補**: `agricultural_tasks_controller` 以降（`application_controller` は上記で解消）、`api_docs_controller` より前の未サンプリングおよび残りの HTML 系。
+- **解消済み（2026-05-08・セクション0 機械点検）**: **`app/controllers` の HTML系（`api/` 配下除外）全 `*_controller.rb`** を辞書順で 1 件ずつ、`Session` / `User` / 主要ドメイン `Model.(find|where|create|new|build|find_by)` 相当のコントローラ直参照 grep。**該当ヒットなし**（`ApplicationController#current_user` は先行コミットでゲートウェイ化済み）。`SitemapsController` は `Dir.glob` のみ。`HealthController` の DB `rescue` は backlog「残置」既知。`AuthController#google_oauth2_callback` の `case` は OmniAuth ゲートウェイ戻り値の HTTP 写像。
+- **次に先頭で固定する修正単位（未着手）**: 通し走査の継続 — 上記 grep に載らない **禁止4相当の意味読み**（`current_user\.` の生スコープ、`before_action` の認可分岐、`respond_to` 内の業務分岐等）を HTML コントローラ先頭から順に固定。または **`app/controllers/api/v1/masters/**` の `save` / `update` / `destroy` 直叩き**（grep で検出済みの熱要求マスタ系）を別修正単位として先頭化。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
