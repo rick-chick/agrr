@@ -1,6 +1,6 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-07
+最終通し走査: 2026-05-06（セクション0 継続: `lib/`・`app/controllers/api/v1`・`frontend` サンプリング） / 直近補足: 2026-05-07（HTML `crops/*` 再サンプリング・`PublicPlansController` / `AgriculturalTasksController` の AR 残置をバックログ化）
 
 ## 修正単位
 
@@ -13,7 +13,9 @@
 - **解消済み（2026-05-06）**: **HTML** `PesticidesController` の `create` / `update` 先頭の `is_reference` 早期 `redirect_to` を削除。`PesticideCreateInteractor` / `PesticideUpdateInteractor` に `translator` を注入し、`PesticideUpdateInputDto` に `is_reference` を追加。HTML / API Presenter で参照失敗時の UX・403 を再現。
 - **解消済み（2026-05-06）**: **HTML** `InteractionRulesController` の `create` / `update` 先頭の参照・admin 早期 `redirect_to` を削除。`InteractionRuleCreateInteractor` / `InteractionRuleUpdateInteractor` に `translator` を注入し、`InteractionRuleUpdateInputDto` に `is_reference` を追加。HTML / API Presenter で参照失敗時の UX・403 を再現。
 - **解消済み（2026-05-07）**: **HTML** `Crops::TaskScheduleBlueprintsController` の `update_position` / `destroy` を `CropTaskScheduleBlueprintUpdatePositionInteractor` / `CropTaskScheduleBlueprintDestroyInteractor` と HTML プレゼンタに寄せ、`CompositionRoot` 直呼び・`can_edit_crop?`・`Rails.logger` を除去。`CropGateway#update_task_schedule_blueprint_position_for_user` で編集認可＋ID 解決をゲートウェイに集約（Application edge 禁止 3・4）。
-- **次に先頭で固定する修正単位（未着手）**: セクション0 のサンプリングで HTML 作物ネスト・マスタ周りの残エッジ（`grep` / 代表 Read）を再確認し、検出があれば追記する。
+- **解消済み（2026-05-07・セクション0）**: HTML `app/controllers/crops/*` の再サンプリング — `TaskScheduleBlueprints` / `AgriculturalTasks` / `Pests` に AR 直叩き・参照/admin 早期分岐なし（`agricultural_tasks#create` の `agricultural_task_id` 空ガードは ARCHITECTURE の DTO 成立前ガードとして既知許容）。
+- **次に先頭で固定する修正単位（未着手）**: **HTML** `PublicPlansController` の `Farm.find_by` / `Crop.where` およびセッション分岐に絡む作物・農場読みを、入力 DTO＋Interactor＋`FarmGateway` / `CropGateway`（および既存の参照作物リスト系Interactorの再利用または拡張）へ移し、コントローラを params→DTO→単一Interactor 呼び出しに限定する（Application edge 禁止 **4**）。対象アクションの優先順: `select_farm_size` → `select_crop` → `create`（辞書順アクション名ではなくウィザード段順）。
+- **未着手（次の次）**: **HTML** `AgriculturalTasksController` の `accessible_crops_for_selection` / `prepare_crop_cards` 内の `Crop.where`・`CropTaskTemplate.where` をゲートウェイ経由の読み取りに寄せ、参照フラグ・地域スコープの分岐を Interactor またはゲートウェイの狭い操作に閉じる（Application edge 禁止 **4**）。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
@@ -29,6 +31,8 @@
 
 ## スキャン補足
 
+- 2026-05-07: **HTML `app/controllers/crops/`** — ネスト作物系コントローラを `grep` / Read で再確認。Interactor＋`CompositionRoot` 注入パターンで Application edge 3・4 の新規違反なし。`Crops::AgriculturalTasksController#create` の空 ID `redirect_to` のみ既知ガード。
+- 2026-05-07: **HTML 公開プラン・農業タスク** — `PublicPlansController`（`Farm.find_by` / `Crop.where`）、`AgriculturalTasksController`（`Crop.where` / `CropTaskTemplate.where`）にコントローラ内 AR 残置を確認。後続の外側ループ用に「修正単位」節へ追記。
 - 2026-05-06: **Angular 全コンポーネント（`components/**/*.component.ts`）** — `adapters/` 直 import を廃止し、各 feature の `usecase/**/\*.providers.ts` に DI 配線を集約（plans / public-plans / api-key / マスタ各種 / 既存の農業タスク・contact 等を含む）。`inject(CROP_GATEWAY)` のように**注入トークン**は引き続き usecase から import。
 - 2026-05-06: **Angular お問い合わせフォーム** — `contact-form.component.ts` の `CONTACT_GATEWAY_PROVIDER`（adapters）直 import を廃止し、`usecase/contact/contact-form.providers.ts` に集約（`SEND_CONTACT_MESSAGE_OUTPUT_PORT` の `useExisting: ContactFormComponent` は循環回避のためコンポーネントに残置）。
 - 2026-05-06: **Angular 農業タスク詳細・編集** — detail / edit コンポーネントの adapters 直 import を廃止し、`agricultural-task-detail.providers.ts` / `agricultural-task-edit.providers.ts` に集約（edit の spec は Presenter import を providers 経由に変更）。
