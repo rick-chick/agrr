@@ -10,55 +10,63 @@ module Api
             before_action :set_crop_and_crop_stage
 
             def show
-              @requirement = @crop_stage.sunshine_requirement
-              if @requirement
-                render json: @requirement
-              else
-                render json: { error: "SunshineRequirement not found" }, status: :not_found
-              end
+              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+
+              interactor = Domain::Crop::Interactors::MastersSunshineRequirementShowInteractor.new(
+                output_port: sunshine_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
             def create
-              if @crop_stage.sunshine_requirement
-                render json: { error: "SunshineRequirement already exists" }, status: :unprocessable_entity
-                return
-              end
+              input_dto = Domain::Crop::Dtos::SunshineRequirementUpdateInputDto.new(
+                crop_id: @crop.id,
+                stage_id: @crop_stage.id,
+                payload: sunshine_requirement_params.to_h.symbolize_keys
+              )
 
-              @requirement = @crop_stage.build_sunshine_requirement(sunshine_requirement_params)
-
-              if @requirement.save
-                render json: @requirement, status: :created
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersSunshineRequirementCreateInteractor.new(
+                output_port: sunshine_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
             def update
-              @requirement = @crop_stage.sunshine_requirement
-              unless @requirement
-                render json: { error: "SunshineRequirement not found" }, status: :not_found
-                return
-              end
+              input_dto = Domain::Crop::Dtos::SunshineRequirementUpdateInputDto.new(
+                crop_id: @crop.id,
+                stage_id: @crop_stage.id,
+                payload: sunshine_requirement_params.to_h.symbolize_keys
+              )
 
-              if @requirement.update(sunshine_requirement_params)
-                render json: @requirement
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersSunshineRequirementUpdateInteractor.new(
+                output_port: sunshine_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
             def destroy
-              @requirement = @crop_stage.sunshine_requirement
-              unless @requirement
-                render json: { error: "SunshineRequirement not found" }, status: :not_found
-                return
-              end
+              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
-              if @requirement.destroy
-                head :no_content
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersSunshineRequirementDestroyInteractor.new(
+                output_port: sunshine_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
+            end
+
+            def render_response(json:, status:)
+              render(json: json, status: status)
+            end
+
+            def render_no_content
+              head :no_content
             end
 
             private
@@ -80,6 +88,10 @@ module Api
 
             def sunshine_requirement_params
               params.require(:sunshine_requirement).permit(:minimum_sunshine_hours, :target_sunshine_hours)
+            end
+
+            def sunshine_requirement_api_presenter
+              @sunshine_requirement_api_presenter ||= Presenters::Api::Crop::MastersSunshineRequirementApiPresenter.new(view: self)
             end
           end
         end

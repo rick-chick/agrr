@@ -16,91 +16,64 @@ module Api
           class TemperatureRequirementsController < BaseController
             before_action :set_crop_and_crop_stage
 
-            # 温度要件を取得
-            #
-            # @param crop_id [Integer] 作物ID
-            # @param crop_stage_id [Integer] 生育ステージID
-            # @return [TemperatureRequirement] 温度要件オブジェクト（存在しない場合は404）
-            # @return [200] 成功
-            # @return [401] APIキーが無効
-            # @return [404] 作物、生育ステージ、または温度要件が見つからない
             def show
-              @requirement = @crop_stage.temperature_requirement
-              if @requirement
-                render json: @requirement
-              else
-                render json: { error: "TemperatureRequirement not found" }, status: :not_found
-              end
+              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+
+              interactor = Domain::Crop::Interactors::MastersTemperatureRequirementShowInteractor.new(
+                output_port: temperature_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
-            # 温度要件を作成
-            #
-            # @param crop_id [Integer] 作物ID
-            # @param crop_stage_id [Integer] 生育ステージID
-            # @param temperature_requirement [Hash] 温度要件のパラメータ
-            # @return [TemperatureRequirement] 作成された温度要件オブジェクト
-            # @return [201] 作成成功
-            # @return [401] APIキーが無効
-            # @return [404] 作物または生育ステージが見つからない
-            # @return [422] バリデーションエラー
             def create
-              if @crop_stage.temperature_requirement
-                render json: { error: "TemperatureRequirement already exists" }, status: :unprocessable_entity
-                return
-              end
+              input_dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
+                crop_id: @crop.id,
+                stage_id: @crop_stage.id,
+                payload: temperature_requirement_params.to_h.symbolize_keys
+              )
 
-              @requirement = @crop_stage.build_temperature_requirement(temperature_requirement_params)
-
-              if @requirement.save
-                render json: @requirement, status: :created
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersTemperatureRequirementCreateInteractor.new(
+                output_port: temperature_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
-            # 温度要件を更新
-            #
-            # @param crop_id [Integer] 作物ID
-            # @param crop_stage_id [Integer] 生育ステージID
-            # @param temperature_requirement [Hash] 更新する温度要件のパラメータ
-            # @return [TemperatureRequirement] 更新された温度要件オブジェクト
-            # @return [200] 更新成功
-            # @return [401] APIキーが無効
-            # @return [404] 作物、生育ステージ、または温度要件が見つからない
-            # @return [422] バリデーションエラー
             def update
-              @requirement = @crop_stage.temperature_requirement
-              unless @requirement
-                render json: { error: "TemperatureRequirement not found" }, status: :not_found
-                return
-              end
+              input_dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
+                crop_id: @crop.id,
+                stage_id: @crop_stage.id,
+                payload: temperature_requirement_params.to_h.symbolize_keys
+              )
 
-              if @requirement.update(temperature_requirement_params)
-                render json: @requirement
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersTemperatureRequirementUpdateInteractor.new(
+                output_port: temperature_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
             end
 
-            # 温度要件を削除
-            #
-            # @param crop_id [Integer] 作物ID
-            # @param crop_stage_id [Integer] 生育ステージID
-            # @return [204] 削除成功
-            # @return [401] APIキーが無効
-            # @return [404] 作物、生育ステージ、または温度要件が見つからない
             def destroy
-              @requirement = @crop_stage.temperature_requirement
-              unless @requirement
-                render json: { error: "TemperatureRequirement not found" }, status: :not_found
-                return
-              end
+              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
-              if @requirement.destroy
-                head :no_content
-              else
-                render json: { errors: @requirement.errors.full_messages }, status: :unprocessable_entity
-              end
+              interactor = Domain::Crop::Interactors::MastersTemperatureRequirementDestroyInteractor.new(
+                output_port: temperature_requirement_api_presenter,
+                gateway: CompositionRoot.crop_gateway,
+                logger: CompositionRoot.logger
+              )
+              interactor.call(input_dto)
+            end
+
+            def render_response(json:, status:)
+              render(json: json, status: status)
+            end
+
+            def render_no_content
+              head :no_content
             end
 
             private
@@ -126,6 +99,10 @@ module Api
                 :low_stress_threshold, :high_stress_threshold,
                 :frost_threshold, :sterility_risk_threshold, :max_temperature
               )
+            end
+
+            def temperature_requirement_api_presenter
+              @temperature_requirement_api_presenter ||= Presenters::Api::Crop::MastersTemperatureRequirementApiPresenter.new(view: self)
             end
           end
         end

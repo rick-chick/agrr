@@ -265,6 +265,74 @@ module Adapters
           assert_equal "updated_region", result.region
         end
 
+        test "destroy_temperature_requirement deletes existing requirement" do
+          crop_stage = create(:crop_stage, crop: @crop)
+          create(:temperature_requirement, crop_stage: crop_stage)
+
+          assert_difference("TemperatureRequirement.count", -1) do
+            @gateway.destroy_temperature_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_temperature_requirement raises RecordNotFound when missing" do
+          crop_stage = create(:crop_stage, crop: @crop)
+
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+            @gateway.destroy_temperature_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_thermal_requirement deletes existing requirement" do
+          crop_stage = create(:crop_stage, crop: @crop)
+          create(:thermal_requirement, crop_stage: crop_stage)
+
+          assert_difference("ThermalRequirement.count", -1) do
+            @gateway.destroy_thermal_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_thermal_requirement raises RecordNotFound when missing" do
+          crop_stage = create(:crop_stage, crop: @crop)
+
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+            @gateway.destroy_thermal_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_sunshine_requirement deletes existing requirement" do
+          crop_stage = create(:crop_stage, crop: @crop)
+          create(:sunshine_requirement, crop_stage: crop_stage)
+
+          assert_difference("SunshineRequirement.count", -1) do
+            @gateway.destroy_sunshine_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_sunshine_requirement raises RecordNotFound when missing" do
+          crop_stage = create(:crop_stage, crop: @crop)
+
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+            @gateway.destroy_sunshine_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_nutrient_requirement deletes existing requirement" do
+          crop_stage = create(:crop_stage, crop: @crop)
+          create(:nutrient_requirement, crop_stage: crop_stage)
+
+          assert_difference("NutrientRequirement.count", -1) do
+            @gateway.destroy_nutrient_requirement(crop_stage.id)
+          end
+        end
+
+        test "destroy_nutrient_requirement raises RecordNotFound when missing" do
+          crop_stage = create(:crop_stage, crop: @crop)
+
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
+            @gateway.destroy_nutrient_requirement(crop_stage.id)
+          end
+        end
+
         test "delete_task_schedule_blueprint_bundle_in_crop! returns not_found when blueprint id does not exist" do
           user = @crop.user
           result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(user, @crop.id, 9_999_999)

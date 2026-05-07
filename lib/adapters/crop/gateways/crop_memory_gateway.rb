@@ -561,7 +561,7 @@ module Adapters
 
           requirement = ::TemperatureRequirement.new(attrs)
           unless requirement.save
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           temperature_requirement_entity_from_record(requirement)
         end
@@ -571,11 +571,22 @@ module Adapters
           attrs = attributes_from_temperature_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           temperature_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "TemperatureRequirement not found"
+        end
+
+        def destroy_temperature_requirement(crop_stage_id)
+          requirement = ::TemperatureRequirement.find_by(crop_stage_id: crop_stage_id)
+          unless requirement
+            raise Domain::Shared::Exceptions::RecordNotFound, "TemperatureRequirement not found"
+          end
+
+          unless requirement.destroy
+            raise_record_invalid_for_model!(requirement)
+          end
         end
 
         # ThermalRequirement methods
@@ -591,7 +602,7 @@ module Adapters
 
           requirement = ::ThermalRequirement.new(attrs)
           unless requirement.save
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           thermal_requirement_entity_from_record(requirement)
         end
@@ -601,11 +612,22 @@ module Adapters
           attrs = attributes_from_thermal_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           thermal_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "ThermalRequirement not found"
+        end
+
+        def destroy_thermal_requirement(crop_stage_id)
+          requirement = ::ThermalRequirement.find_by(crop_stage_id: crop_stage_id)
+          unless requirement
+            raise Domain::Shared::Exceptions::RecordNotFound, "ThermalRequirement not found"
+          end
+
+          unless requirement.destroy
+            raise_record_invalid_for_model!(requirement)
+          end
         end
 
         # SunshineRequirement methods
@@ -621,7 +643,7 @@ module Adapters
 
           requirement = ::SunshineRequirement.new(attrs)
           unless requirement.save
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           sunshine_requirement_entity_from_record(requirement)
         end
@@ -631,11 +653,22 @@ module Adapters
           attrs = attributes_from_sunshine_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           sunshine_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "SunshineRequirement not found"
+        end
+
+        def destroy_sunshine_requirement(crop_stage_id)
+          requirement = ::SunshineRequirement.find_by(crop_stage_id: crop_stage_id)
+          unless requirement
+            raise Domain::Shared::Exceptions::RecordNotFound, "SunshineRequirement not found"
+          end
+
+          unless requirement.destroy
+            raise_record_invalid_for_model!(requirement)
+          end
         end
 
         # NutrientRequirement methods
@@ -651,7 +684,7 @@ module Adapters
 
           requirement = ::NutrientRequirement.new(attrs)
           unless requirement.save
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           nutrient_requirement_entity_from_record(requirement)
         end
@@ -661,14 +694,32 @@ module Adapters
           attrs = attributes_from_nutrient_requirement_dto(requirement_dto.payload)
 
           unless requirement.update(attrs)
-            raise Domain::Shared::Exceptions::RecordInvalid, requirement.errors.full_messages.join(", ")
+            raise_record_invalid_for_model!(requirement)
           end
           nutrient_requirement_entity_from_record(requirement.reload)
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "NutrientRequirement not found"
         end
 
+        def destroy_nutrient_requirement(crop_stage_id)
+          requirement = ::NutrientRequirement.find_by(crop_stage_id: crop_stage_id)
+          unless requirement
+            raise Domain::Shared::Exceptions::RecordNotFound, "NutrientRequirement not found"
+          end
+
+          unless requirement.destroy
+            raise_record_invalid_for_model!(requirement)
+          end
+        end
+
         private
+
+        def raise_record_invalid_for_model!(record)
+          raise Domain::Shared::Exceptions::RecordInvalid.new(
+            record.errors.full_messages.join(", "),
+            errors: Domain::Shared::ValidationErrors.from_errors_like(record.errors)
+          )
+        end
 
         def build_task_template_create_result(reason:)
           Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(

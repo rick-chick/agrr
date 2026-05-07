@@ -54,6 +54,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_temperature_requirement"
         end
 
+        def destroy_temperature_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement destroy_temperature_requirement"
+        end
+
         # ThermalRequirement methods
         def find_thermal_requirement(crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_thermal_requirement"
@@ -65,6 +69,10 @@ module Domain
 
         def update_thermal_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement update_thermal_requirement"
+        end
+
+        def destroy_thermal_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement destroy_thermal_requirement"
         end
 
         # SunshineRequirement methods
@@ -80,6 +88,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_sunshine_requirement"
         end
 
+        def destroy_sunshine_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement destroy_sunshine_requirement"
+        end
+
         # NutrientRequirement methods
         def find_nutrient_requirement(crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_nutrient_requirement"
@@ -91,6 +103,10 @@ module Domain
 
         def update_nutrient_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement update_nutrient_requirement"
+        end
+
+        def destroy_nutrient_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement destroy_nutrient_requirement"
         end
 
         # Policy 連携（永続化は Adapter）。一覧は Entity 配列のみ公開
