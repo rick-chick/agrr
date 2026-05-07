@@ -10,27 +10,19 @@ class ApiKeysController < ApplicationController
 
   # POST /api_keys/generate
   def generate
-    @user = current_user
-
-    if @user.generate_api_key!
-      flash[:notice] = I18n.t("api_keys.flash.generate.success")
-      redirect_to api_keys_path
-    else
-      flash[:alert] = I18n.t("api_keys.flash.generate.failure")
-      redirect_to api_keys_path
-    end
+    presenter = Presenters::Html::ApiKeys::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: false)
+    Domain::ApiKeys::Interactors::ApiUserApiKeyRotateInteractor.new(
+      output_port: presenter,
+      gateway: CompositionRoot.user_api_key_rotation_gateway
+    ).call(user_id: current_user.id, regenerate: false)
   end
 
   # POST /api_keys/regenerate
   def regenerate
-    @user = current_user
-
-    if @user.regenerate_api_key!
-      flash[:notice] = I18n.t("api_keys.flash.regenerate.success")
-      redirect_to api_keys_path
-    else
-      flash[:alert] = I18n.t("api_keys.flash.regenerate.failure")
-      redirect_to api_keys_path
-    end
+    presenter = Presenters::Html::ApiKeys::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: true)
+    Domain::ApiKeys::Interactors::ApiUserApiKeyRotateInteractor.new(
+      output_port: presenter,
+      gateway: CompositionRoot.user_api_key_rotation_gateway
+    ).call(user_id: current_user.id, regenerate: true)
   end
 end
