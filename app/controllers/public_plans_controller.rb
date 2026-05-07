@@ -162,24 +162,23 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       return
     end
 
-    # HTML リクエストの場合（既存の処理）
-    Rails.logger.info "🔍 [save_plan] Called - logged_in?: #{logged_in?}"
     plan_id = normalize_public_plan_wizard_plan_id
-    unless plan_id&.positive? && CompositionRoot.cultivation_plan_gateway.public_plan_wizard_plan_exists?(plan_id: plan_id)
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.not_found")
-      return
-    end
-
-    if logged_in?
-      Rails.logger.info "✅ [save_plan] User is logged in, saving to account"
-      # ログイン済みの場合、直接保存処理を実行
-      save_plan_to_user_account(plan_id: plan_id)
-    else
-      Rails.logger.info "ℹ️ [save_plan] User is not logged in, redirecting to login"
-      # 未ログインの場合、セッションに保存してログイン画面へ
-      save_plan_data_to_session(plan_id: plan_id)
-      redirect_to auth_login_path, notice: I18n.t("public_plans.save.login_required")
-    end
+    presenter = Presenters::Html::PublicPlans::PublicPlanWizardSaveDispatchHtmlPresenter.new(
+      view: self,
+      clear_stashed_save_data_on_success: false
+    )
+    Domain::CultivationPlan::Interactors::PublicPlanWizardSaveDispatchInteractor.new(
+      output_port: presenter,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
+      logger: CompositionRoot.logger,
+      translator: CompositionRoot.translator
+    ).call(
+      plan_id: plan_id,
+      farm_id: session_data[:farm_id],
+      crop_ids: session_data[:crop_ids],
+      user: current_user
+    )
   end
 
   # ログイン後の保存処理
@@ -279,40 +278,4 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     public_plans_results_path
   end
 
-  # セッションに保存データを保存
-  def save_plan_data_to_session(plan_id:)
-    save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
-      plan_id: plan_id,
-      farm_id: session_data[:farm_id],
-      crop_ids: session_data[:crop_ids]
-    )
-    unless save_data
-      Rails.logger.warn "❌ [save_plan_data_to_session] Plan not found for payload: #{plan_id}"
-      return
-    end
-
-    session[:public_plan_save_data] = save_data
-    Rails.logger.info "💾 [save_plan_data_to_session] Saved to session: #{session[:public_plan_save_data]}"
-  end
-
-  # ログイン済みユーザーのアカウントに保存
-  def save_plan_to_user_account(plan_id:)
-    Rails.logger.info "💾 [save_plan_to_user_account] Starting save process for user: #{current_user.id}"
-
-    save_data = CompositionRoot.cultivation_plan_gateway.public_plan_html_save_session_payload(
-      plan_id: plan_id,
-      farm_id: session_data[:farm_id],
-      crop_ids: session_data[:crop_ids]
-    )
-    unless save_data
-      Rails.logger.warn "❌ [save_plan_to_user_account] Plan not found for payload: #{plan_id}"
-      return
-    end
-
-    run_public_plan_save_from_session_html(
-      user: current_user,
-      session_data: save_data,
-      clear_stashed_save_data_on_success: false
-    )
-  end
 end
