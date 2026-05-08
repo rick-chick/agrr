@@ -106,4 +106,5 @@ bundle exec rails db:migrate
 
 - `docs/migration/task.md` - タスク定義と適用作物の詳細
 - `docs/analysis/crop_task_template_usage.md` - CropTaskTemplate の使用方法
-- `docs/analysis/drop_agricultural_task_crops_impact.md` - テーブル削除の影響範囲
+
+`agricultural_task_crops` の削除はマイグレーション `db/migrate/20251111120000_drop_agricultural_task_crops.rb` で完了済み（事前の影響分析メモは削除済み）。

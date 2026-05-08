@@ -31,7 +31,7 @@
 |------|------|
 | **状況** | `app/services/` に **存在しない**（既に削除済み）。 |
 | **参照** | `db/migrate/20251111091500_add_agricultural_task_to_crop_task_templates.rb` のコメント内に「CropTaskTemplateBackfillServiceは移行完了後、削除されました」と記載あり。 |
-| **推奨** | 対応不要。`docs/analysis/drop_agricultural_task_crops_*.md` などで「サービスを削除する」と書いてある場合は、現状に合わせて「削除済み」にドキュメント更新可。 |
+| **推奨** | 対応不要。陳腐化していた `docs/analysis/drop_agricultural_task_crops_*.md` は削除済み（2026-05-08）。 |
 
 ### 2.2 crop_task_templates.rake
 
@@ -73,7 +73,7 @@
 | 優先度 | アクション | 状態 |
 |--------|------------|------|
 | ~~中~~ | ~~`ARCHITECTURE.md` の agricultural_task「unused」記述~~ | **完了**（現行本文に該当記述なし・2026-05-07） |
-| 低 | `docs/analysis/drop_agricultural_task_crops_*.md` 等が「これからサービスを削除する」トーンの場合は「削除済み」への同期 | 任意（調査スコープ外のドキュメント棚卸しで対応可） |
+| ~~低~~ | ~~`docs/analysis/drop_agricultural_task_crops_*.md` の同期~~ | **完了**（ファイル削除・`docs/migration/crop_task_templates.md` 参照更新・2026-05-08） |
 
 **削除済み**: AgriculturalTaskCrop モデル、GenerateFreeCropPlanJob、CropTaskTemplateBackfillService と `lib/tasks/crop_task_templates.rake`（コードベース上ファイルなし）
 
