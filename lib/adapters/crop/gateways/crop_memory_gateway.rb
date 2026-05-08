@@ -922,19 +922,7 @@ module Adapters
         end
 
         def available_agricultural_tasks_for_crop_record(crop)
-          if !crop.is_reference && crop.user_id.present?
-            tasks = ::AgriculturalTask.user_owned.where(user_id: crop.user_id)
-            tasks = tasks.where(region: crop.region) if crop.region.present?
-            return tasks.order(:name)
-          end
-
-          if crop.is_reference
-            tasks = ::AgriculturalTask.reference
-            tasks = tasks.where(region: crop.region) if crop.region.present?
-            return tasks.order(:name)
-          end
-
-          ::AgriculturalTask.none
+          available_agricultural_tasks_for_crop(crop)
         end
       end
     end
