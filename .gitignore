@@ -72,6 +72,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Docker entrypoints rename host .npmrc here during container npm installs
+/.npmrc.bak
+
 # OS-specific files
 .DS_Store
 .DS_Store?
