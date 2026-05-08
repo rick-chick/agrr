@@ -27,8 +27,6 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       )
     end
 
-    puts "Test farm: #{@farm.name} (ID: #{@farm.id})"
-
     @crops = [ Crop.reference.first, Crop.reference.first ] # 参照作物を2回
     if @crops[0].nil?
       @crops = [
