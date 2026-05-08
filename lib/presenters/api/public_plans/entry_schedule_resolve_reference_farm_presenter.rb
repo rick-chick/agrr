@@ -4,7 +4,7 @@ module Presenters
   module Api
     module PublicPlans
       class EntryScheduleResolveReferenceFarmPresenter
-        include EntryScheduleApiFailureRendering
+        include EntryScheduleFailureRendering
 
         def initialize(view:)
           @view = view

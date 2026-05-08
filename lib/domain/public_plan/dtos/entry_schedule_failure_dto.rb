@@ -3,8 +3,8 @@
 module Domain
   module PublicPlan
     module Dtos
-      # 公開 entry_schedule API の明示失敗（Presenter が I18n・HTTP へマッピング）
-      EntryScheduleApiFailureDto = Struct.new(:kind, :detail_message, keyword_init: true) do
+      # 公開 entry_schedule 読み取りの明示失敗（Presenter が I18n・HTTP へマッピング）
+      EntryScheduleFailureDto = Struct.new(:kind, :detail_message, keyword_init: true) do
         def self.record_not_found(message)
           new(kind: :record_not_found, detail_message: message)
         end

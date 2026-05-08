@@ -3,8 +3,8 @@
 module Presenters
   module Api
     module PublicPlans
-      # entry_schedule 系 API Presenter 共通: 失敗 DTO を契約どおりの JSON に載せる
-      module EntryScheduleApiFailureRendering
+      # entry_schedule 系 Presenter 共通: 失敗 DTO を契約どおりの JSON に載せる
+      module EntryScheduleFailureRendering
         private
 
         def render_entry_schedule_failure(dto)

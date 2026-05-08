@@ -58,11 +58,11 @@ module Domain
           )
           @output_port.on_success(dto)
         rescue Domain::PublicPlan::Exceptions::WeatherLocationMissingError
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_location_required)
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_location_required)
         rescue Domain::PublicPlan::Exceptions::PredictionPayloadMissingError
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.prediction_payload_missing)
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.prediction_payload_missing)
         rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_prediction_failed(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_prediction_failed(e.message))
         end
       end
     end

@@ -55,14 +55,14 @@ module Domain
 
           @output_port.on_success(payload)
         rescue Domain::PublicPlan::Exceptions::WeatherLocationMissingError
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_location_required)
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_location_required)
         rescue Domain::PublicPlan::Exceptions::PredictionPayloadMissingError
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.prediction_payload_missing)
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.prediction_payload_missing)
         rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.weather_prediction_failed(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_prediction_failed(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[EntryScheduleCropsIndexInteractor] RecordInvalid: #{e.message}")
-          @output_port.on_failure(Dtos::EntryScheduleApiFailureDto.internal_error(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailureDto.internal_error(e.message))
         end
 
         private

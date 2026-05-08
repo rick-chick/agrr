@@ -4,7 +4,7 @@ module Presenters
   module Api
     module PublicPlans
       class EntryScheduleCropsIndexPresenter < Domain::PublicPlan::Ports::EntryScheduleCropsIndexOutputPort
-        include EntryScheduleApiFailureRendering
+        include EntryScheduleFailureRendering
         include EntryScheduleEtagJsonRendering
 
         def initialize(view:)

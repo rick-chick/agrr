@@ -5,7 +5,7 @@ module Presenters
     module PublicPlans
       # entry_schedule show: Interactor 出力 DTO を ETag 付き JSON に載せるのみ
       class EntryScheduleShowPresenter < Domain::PublicPlan::Ports::EntryScheduleShowOutputPort
-        include EntryScheduleApiFailureRendering
+        include EntryScheduleFailureRendering
         include EntryScheduleEtagJsonRendering
 
         def initialize(view:)
