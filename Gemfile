@@ -96,5 +96,4 @@ group :test do
 
   # Mocking library
   gem "mocha", "= 2.7.1"
-  gem "rspec", "~> 3.13"
 end
