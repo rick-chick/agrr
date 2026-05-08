@@ -62,16 +62,6 @@ module PlanningSchedulesHelper
     rowspan > 1 ? { rowspan: rowspan } : {}
   end
 
-  # rowspan属性をHTML属性文字列に変換
-  # @param rowspan [Integer] rowspanの値
-  # @return [String] HTML属性文字列（例: 'rowspan="3"' または ''）
-  # （未使用のため将来のために残す場合はコメントアウト）
-  # def rowspan_attr_string(rowspan)
-  #   attrs = rowspan_attributes(rowspan)
-  #   return '' if attrs.empty?
-  #   attrs.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
-  # end
-
   # 作付が開始する期間かどうかを判定
   # @param cultivation_info [Hash] 作付情報
   # @param period_index [Integer] 現在の期間のインデックス
