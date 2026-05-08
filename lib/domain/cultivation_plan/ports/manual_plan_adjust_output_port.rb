@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      class ApiPlanAdjustOutputPort
+      class ManualPlanAdjustOutputPort
         def on_crop_missing_growth_stages(crop_name:)
           raise NotImplementedError
         end

@@ -81,7 +81,7 @@ module Api
       def adjust
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
         Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
-          output: Presenters::Api::CultivationPlan::ApiPlanAdjustPresenter.new(view: self),
+          output: Presenters::Api::CultivationPlan::ManualPlanAdjustPresenter.new(view: self),
           adjust_gateway: CompositionRoot.cultivation_plan_rest_adjust_gateway
         ).call(
           auth: cultivation_plan_rest_auth,

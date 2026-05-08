@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module CultivationPlan
-      class ApiPlanAdjustPresenter < Domain::CultivationPlan::Ports::ApiPlanAdjustOutputPort
+      class ManualPlanAdjustPresenter < Domain::CultivationPlan::Ports::ManualPlanAdjustOutputPort
         def initialize(view:)
           @view = view
         end
