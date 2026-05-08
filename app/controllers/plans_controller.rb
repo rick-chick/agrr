@@ -63,18 +63,18 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 3: 計画作成（最適化はしない）
   def create
-    presenter = Presenters::Html::Plans::PrivatePlanHtmlCreatePresenter.new(
+    presenter = Presenters::Html::Plans::PrivatePlanCreateFromSessionPresenter.new(
       view: self,
       session_key: self.class.session_key
     )
-    input_dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+    input_dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
       farm_id: parse_positive_route_id(session_data[:farm_id]),
       crop_ids: crop_ids,
       plan_name: session_data[:plan_name],
       total_area: session_data[:total_area],
       user: current_user
     )
-    CompositionRoot.private_plan_html_create_interactor(
+    CompositionRoot.private_plan_create_from_session_interactor(
       output_port: presenter,
       session_id_generator: -> { session.id.to_s },
       routes: Adapters::Application::PlanPathRoutesFromController.new(self),

@@ -5,7 +5,7 @@ require "test_helper"
 module Domain
   module CultivationPlan
     module Interactors
-      class PrivatePlanHtmlCreateInteractorTest < ActiveSupport::TestCase
+      class PrivatePlanCreateFromSessionInteractorTest < ActiveSupport::TestCase
         setup do
           @user = create(:user)
           @farm_entity = Domain::Farm::Entities::FarmEntity.new(
@@ -47,7 +47,7 @@ module Domain
         end
 
         def interactor
-          PrivatePlanHtmlCreateInteractor.new(
+          PrivatePlanCreateFromSessionInteractor.new(
             output_port: @output_port,
             cultivation_plan_gateway: @gateway,
             logger: @logger,
@@ -60,7 +60,7 @@ module Domain
         end
 
         test "on_missing_session when farm_id blank" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: nil,
             crop_ids: [ 10 ],
             user: @user
@@ -70,7 +70,7 @@ module Domain
         end
 
         test "on_restart when farm missing" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user
@@ -81,7 +81,7 @@ module Domain
         end
 
         test "on_no_crops_selected when crop_ids empty" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [],
             user: @user
@@ -94,7 +94,7 @@ module Domain
         end
 
         test "on_no_crops_selected when crops not resolved" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 99 ],
             user: @user
@@ -108,7 +108,7 @@ module Domain
         end
 
         test "on_existing_plan when plan exists" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user
@@ -139,7 +139,7 @@ module Domain
         end
 
         test "on_success enqueues post-create job chain then notifies presenter" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user,
@@ -187,7 +187,7 @@ module Domain
         end
 
         test "total_area from gateway when omitted in dto" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user,
@@ -236,7 +236,7 @@ module Domain
         end
 
         test "on_initialize_failed when initialize returns errors" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanHtmlCreateInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user

@@ -235,8 +235,8 @@ module CompositionRoot
       )
     end
 
-    def private_plan_html_create_interactor(output_port:, session_id_generator:, routes:, caller_label:, select_crop_context_runner:)
-      Domain::CultivationPlan::Interactors::PrivatePlanHtmlCreateInteractor.new(
+    def private_plan_create_from_session_interactor(output_port:, session_id_generator:, routes:, caller_label:, select_crop_context_runner:)
+      Domain::CultivationPlan::Interactors::PrivatePlanCreateFromSessionInteractor.new(
         output_port: output_port,
         cultivation_plan_gateway: cultivation_plan_gateway,
         logger: logger,

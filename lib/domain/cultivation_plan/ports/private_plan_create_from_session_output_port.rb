@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Ports
-      # HTML 私有計画作成 (`PlansController#create`) の出力コールバック。
-      class PrivatePlanHtmlCreateOutputPort
+      # セッション起点の私有計画作成 (`PlansController#create`) の出力コールバック。
+      class PrivatePlanCreateFromSessionOutputPort
         def on_missing_session
           raise NotImplementedError, "Subclasses must implement on_missing_session"
         end

@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # HTML ウィザード Step3 — `PlansController#create` の入力（セッション + フォーム）。
-      class PrivatePlanHtmlCreateInputDto
+      # ウィザード Step3 — `PlansController#create` の入力（セッション + フォーム）。
+      class PrivatePlanCreateFromSessionInputDto
         attr_reader :farm_id, :crop_ids, :plan_name, :total_area, :user
 
         # @param farm_id [Integer, nil] セッションの farm_id をルート用パーサで正規化した値

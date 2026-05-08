@@ -3,7 +3,7 @@
 module Presenters
   module Html
     module Plans
-      class PrivatePlanHtmlCreatePresenter < Domain::CultivationPlan::Ports::PrivatePlanHtmlCreateOutputPort
+      class PrivatePlanCreateFromSessionPresenter < Domain::CultivationPlan::Ports::PrivatePlanCreateFromSessionOutputPort
         def initialize(
           view:,
           session_key:

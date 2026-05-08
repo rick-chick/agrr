@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # HTML フロー私有計画作成（セッション依存）。API `ApiV1PrivatePlanCreateInteractor` と同 Gateway 経路。
-      class PrivatePlanHtmlCreateInteractor
+      # セッション起点の私有計画作成。API `ApiV1PrivatePlanCreateInteractor` と同 Gateway 経路。
+      class PrivatePlanCreateFromSessionInteractor
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
@@ -73,17 +73,17 @@ module Domain
 
           unless result.success? && result.cultivation_plan
             msg = result.errors.present? ? result.errors.join(", ") : @translator.t("public_plans.save.error")
-            @logger.error("❌ [PrivatePlanHtmlCreateInteractor] Initialize failed: #{msg}")
+            @logger.error("❌ [PrivatePlanCreateFromSessionInteractor] Initialize failed: #{msg}")
             @output_port.on_initialize_failed(message: msg)
             return
           end
 
           plan_id = result.cultivation_plan.id
-          @logger.info("✅ [PrivatePlanHtmlCreateInteractor] CultivationPlan created: #{plan_id}")
+          @logger.info("✅ [PrivatePlanCreateFromSessionInteractor] CultivationPlan created: #{plan_id}")
           @post_create_job_chain.enqueue_for_plan(plan_id: plan_id)
           @output_port.on_success(plan_id: plan_id)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.error("❌ [PrivatePlanHtmlCreateInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PrivatePlanCreateFromSessionInteractor] #{e.class}: #{e.message}")
           @output_port.on_initialize_failed(message: e.message)
         end
 
