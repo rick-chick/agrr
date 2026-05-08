@@ -7,7 +7,7 @@ module Api
 
       def index
         presenter = Presenters::Api::Plans::ApiV1PrivatePlansListPresenter.new(view: self, translator: translator)
-        Domain::CultivationPlan::Interactors::ApiV1PrivatePlansListInteractor.new(
+        Domain::CultivationPlan::Interactors::PrivateOwnedPlansListInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
           gateway: CompositionRoot.cultivation_plan_gateway,
@@ -19,7 +19,7 @@ module Api
 
       def show
         presenter = Presenters::Api::Plans::ApiV1PrivatePlanShowPresenter.new(view: self)
-        Domain::CultivationPlan::Interactors::ApiV1PrivatePlanShowInteractor.new(
+        Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
           gateway: CompositionRoot.cultivation_plan_gateway,
@@ -37,7 +37,7 @@ module Api
           plan_name: create_params[:plan_name],
           user: current_user
         )
-        Domain::CultivationPlan::Interactors::ApiV1PrivatePlanCreateInteractor.new(
+        Domain::CultivationPlan::Interactors::PrivatePlanInitializeFromSelectionInteractor.new(
           output_port: presenter,
           cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
           logger: CompositionRoot.logger,

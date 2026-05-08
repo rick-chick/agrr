@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # GET /api/v1/plans — 認証ユーザーの私有計画一覧（軽量 JSON）
-      class ApiV1PrivatePlansListInteractor
+      # 認証ユーザーに属する単一私有計画のサマリ（id / name / status）。
+      class PrivateOwnedPlanDetailInteractor
         def initialize(output_port:, user_id:, gateway:, translator:, logger:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
@@ -14,20 +14,20 @@ module Domain
           @user_lookup = user_lookup
         end
 
-        def call
+        def call(plan_id:)
           user = @user_lookup.find(@user_id)
-          rows = @gateway.private_plan_index_plan_rows(user: user)
-          @output_port.on_success(rows)
+          detail = @gateway.find_private_cultivation_plan_detail(user: user, plan_id: plan_id.to_i)
+          @output_port.on_success(detail)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @logger.warn("[ApiV1PrivatePlansListInteractor] #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
+          @logger.warn("[PrivateOwnedPlanDetailInteractor] #{e.class}: #{e.message}")
+          @output_port.on_not_found
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
         rescue Domain::Shared::Exceptions::PersistenceFailed => e
-          @logger.error("[ApiV1PrivatePlansListInteractor] #{e.class}: #{e.message}")
+          @logger.error("[PrivateOwnedPlanDetailInteractor] #{e.class}: #{e.message}")
           raise
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.warn("[ApiV1PrivatePlansListInteractor] #{e.class}: #{e.message}")
+          @logger.warn("[PrivateOwnedPlanDetailInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
         end
       end

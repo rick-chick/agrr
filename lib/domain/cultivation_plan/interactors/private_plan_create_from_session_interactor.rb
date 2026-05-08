@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # セッション起点の私有計画作成。API `ApiV1PrivatePlanCreateInteractor` と同 Gateway 経路。
+      # セッション起点の私有計画作成。API `PrivatePlanInitializeFromSelectionInteractor` と同 Gateway 経路。
       class PrivatePlanCreateFromSessionInteractor
         def initialize(
           output_port:,

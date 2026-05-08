@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # POST /api/v1/plans — private-plan-create-contract 準拠（201 / 404 / 422 / 500）。
-      class ApiV1PrivatePlanCreateInteractor
+      # 農場・作物選択から私有計画を初期化し作成（private-plan-create-contract 準拠の分岐）。
+      class PrivatePlanInitializeFromSelectionInteractor
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
@@ -86,7 +86,7 @@ module Domain
 
           unless result.success? && result.cultivation_plan
             msg = result.errors.present? ? result.errors.join(", ") : @translator.t("public_plans.save.error")
-            @logger.error("❌ [ApiV1PrivatePlanCreateInteractor] Initialize failed: #{msg}")
+            @logger.error("❌ [PrivatePlanInitializeFromSelectionInteractor] Initialize failed: #{msg}")
             @output_port.on_failure(
               Dtos::ApiPrivatePlanCreateFailureDto.new(
                 http_status: :unprocessable_entity,
@@ -97,13 +97,13 @@ module Domain
           end
 
           plan_id = result.cultivation_plan.id
-          @logger.info("✅ [ApiV1PrivatePlanCreateInteractor] CultivationPlan created: #{plan_id}")
+          @logger.info("✅ [PrivatePlanInitializeFromSelectionInteractor] CultivationPlan created: #{plan_id}")
 
           @job_chain_enqueuer.enqueue_after_create(cultivation_plan_id: plan_id)
 
           @output_port.on_success(Dtos::ApiPrivatePlanCreateSuccessDto.new(id: plan_id))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.error("❌ [ApiV1PrivatePlanCreateInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PrivatePlanInitializeFromSelectionInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::ApiPrivatePlanCreateFailureDto.new(
               http_status: :unprocessable_entity,

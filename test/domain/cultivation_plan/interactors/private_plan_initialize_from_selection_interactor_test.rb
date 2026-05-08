@@ -5,7 +5,7 @@ require "test_helper"
 module Domain
   module CultivationPlan
     module Interactors
-      class ApiV1PrivatePlanCreateInteractorTest < ActiveSupport::TestCase
+      class PrivatePlanInitializeFromSelectionInteractorTest < ActiveSupport::TestCase
         setup do
           @user = create(:user)
           @farm_entity = Domain::Farm::Entities::FarmEntity.new(
@@ -46,7 +46,7 @@ module Domain
         end
 
         def interactor
-          ApiV1PrivatePlanCreateInteractor.new(
+          PrivatePlanInitializeFromSelectionInteractor.new(
             output_port: @output_port,
             cultivation_plan_gateway: @gateway,
             logger: @logger,
