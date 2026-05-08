@@ -14,8 +14,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementShowInteractor.new(
                 output_port: sunshine_requirement_api_presenter,
-                gateway: CompositionRoot.crop_gateway,
-                logger: CompositionRoot.logger
+                gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
             end
@@ -29,8 +28,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementCreateInteractor.new(
                 output_port: sunshine_requirement_api_presenter,
-                gateway: CompositionRoot.crop_gateway,
-                logger: CompositionRoot.logger
+                gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
             end
@@ -44,8 +42,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementUpdateInteractor.new(
                 output_port: sunshine_requirement_api_presenter,
-                gateway: CompositionRoot.crop_gateway,
-                logger: CompositionRoot.logger
+                gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
             end
@@ -55,8 +52,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementDestroyInteractor.new(
                 output_port: sunshine_requirement_api_presenter,
-                gateway: CompositionRoot.crop_gateway,
-                logger: CompositionRoot.logger
+                gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
             end

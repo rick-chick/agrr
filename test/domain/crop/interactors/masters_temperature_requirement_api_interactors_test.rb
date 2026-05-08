@@ -9,11 +9,9 @@ module Domain
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
           @interactor = MastersTemperatureRequirementShowInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway,
-            logger: @logger
+            gateway: @mock_gateway
           )
         end
 
@@ -41,11 +39,9 @@ module Domain
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
           @interactor = MastersTemperatureRequirementCreateInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway,
-            logger: @logger
+            gateway: @mock_gateway
           )
         end
 
@@ -98,11 +94,9 @@ module Domain
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
           @interactor = MastersTemperatureRequirementUpdateInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway,
-            logger: @logger
+            gateway: @mock_gateway
           )
         end
 
@@ -141,11 +135,9 @@ module Domain
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
           @interactor = MastersTemperatureRequirementDestroyInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway,
-            logger: @logger
+            gateway: @mock_gateway
           )
         end
 

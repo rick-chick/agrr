@@ -4,10 +4,9 @@ module Domain
   module Crop
     module Interactors
       class MastersThermalRequirementDestroyInteractor
-        def initialize(output_port:, gateway:, logger:)
+        def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway
-          @logger = logger
         end
 
         def call(input_dto)
