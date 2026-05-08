@@ -497,7 +497,6 @@ module CompositionRoot
       Adapters::Crop::CropCreateForAiAdapter.new(
         user_id: user_id,
         gateway: crop_gateway,
-        logger: logger,
         translator: translator,
         user_lookup: user_lookup
       )

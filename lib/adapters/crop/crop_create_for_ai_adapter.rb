@@ -4,14 +4,13 @@ module Adapters
   module Crop
     # CropApiAiCreateInteractor / CropAiUpsertActiveRecordPersistence が期待する call(attrs) -> result を提供。
     # 内部で CropCreateInteractor を使用する。
-    # gateway / logger / user_lookup はエッジ（Controller 等）から DI する。
+    # gateway / user_lookup はエッジ（Controller 等）から DI する。
     class CropCreateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway:, logger:, translator:, user_lookup:)
+      def initialize(user_id:, gateway:, translator:, user_lookup:)
         @user_id = user_id
         @gateway = gateway
-        @logger = logger
         @translator = translator
         @user_lookup = user_lookup
       end
@@ -21,7 +20,6 @@ module Adapters
         interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: @logger,
           translator: @translator,
           user_lookup: @user_lookup)
         input_dto = build_input_dto(attrs)

@@ -9,7 +9,7 @@ class CropsController < ApplicationController
     presenter = Presenters::Html::Crop::CropListHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropListInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call
   end
@@ -18,7 +18,7 @@ class CropsController < ApplicationController
   def show
     presenter = Presenters::Html::Crop::CropDetailHtmlPresenter.new(view: self)
     interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
   end
 
@@ -38,7 +38,7 @@ class CropsController < ApplicationController
     presenter = Presenters::Html::Crop::CropCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end
@@ -49,7 +49,7 @@ class CropsController < ApplicationController
     presenter = Presenters::Html::Crop::CropUpdateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
+      user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(@input_dto)
   end
