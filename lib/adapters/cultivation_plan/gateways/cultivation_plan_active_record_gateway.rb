@@ -188,12 +188,12 @@ module Adapters
           Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(m)
         end
 
-        # 栽培計画を削除し、DeletionUndo::Manager を使用して Undo トークンを返す
+        # 栽培計画を削除し、::DeletionUndo::Manager を使用して Undo トークンを返す
         #
         # @param plan_id [Integer] 削除する計画のID
         # @param user [User] 削除を実行するユーザー（所有権チェックに使用）
-        # @return [DeletionUndoEvent] DeletionUndo::Manager.schedule が返すイベント
-        # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, DeletionUndo::Error] 等
+        # @return [DeletionUndoEvent] ::DeletionUndo::Manager.schedule が返すイベント
+        # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, ::DeletionUndo::Error] 等
         def private_owned_plan_display_name(user:, plan_id:)
           plan_model = PlanPolicy.find_private_owned!(user, plan_id)
           plan_model.display_name
@@ -206,7 +206,7 @@ module Adapters
         def destroy(plan_id, user, toast_message:)
           plan_model = PlanPolicy.find_private_owned!(user, plan_id)
 
-          DeletionUndo::Manager.schedule(
+          ::DeletionUndo::Manager.schedule(
             record: plan_model,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
             toast_message: toast_message
@@ -217,7 +217,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, "Cultivation plan delete failed"
-        rescue DeletionUndo::Error
+        rescue ::DeletionUndo::Error
           raise
         end
 

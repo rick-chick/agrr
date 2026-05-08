@@ -68,7 +68,7 @@ module Adapters
         def destroy(field_id, user_id)
           user = ::User.find(user_id)
           field = FieldPolicy.find_owned!(user, field_id)
-          DeletionUndo::Manager.schedule(
+          ::DeletionUndo::Manager.schedule(
             record: field,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
             toast_message: @translator.t("fields.undo.toast", name: field.display_name),

@@ -54,7 +54,7 @@ module Adapters
 
         def destroy(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
-          DeletionUndo::Manager.schedule(
+          ::DeletionUndo::Manager.schedule(
             record: fertilize,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(fertilize.user),
             toast_message: @translator.t("fertilizes.undo.toast", name: fertilize.name)
@@ -63,7 +63,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fertilizes.flash.cannot_delete_in_use")
-        rescue DeletionUndo::Error
+        rescue ::DeletionUndo::Error
           raise
         end
 

@@ -83,14 +83,14 @@ module Adapters
 
         def destroy(farm_id, toast_message:)
           farm = ::Farm.find(farm_id)
-          DeletionUndo::Manager.schedule(
+          ::DeletionUndo::Manager.schedule(
             record: farm,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(farm.user),
             toast_message: toast_message
           )
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
           raise Domain::Shared::Exceptions::AssociationInUse, "Farm is in use and cannot be deleted"
-        rescue DeletionUndo::Error
+        rescue ::DeletionUndo::Error
           raise
         end
 
