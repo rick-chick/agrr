@@ -270,13 +270,9 @@
 
 ### 4.3 既に良い設計が進んでいる部分
 
-- `PlansController` と `Api::V1::Plans::*` / `Api::V1::PublicPlans::*` の間で使われている Concern:
-  - `CultivationPlanManageable`
-  - `CultivationPlanApi`
-  - `WeatherDataManagement`
-  - `JobExecution`
-- これらは「ユースケース共通ロジックをConcernに置き、HTML/APIで再利用する」という設計で、
-  **今回のリファクタ方針と整合している**。他領域もこの方向に寄せていく。
+- **HTML（私有／公開ウィザード）**: `PlansController` と `PublicPlansController` は共通基底 `CultivationPlanHtmlBaseController` を継承し、Interactor + Presenter でフローを統一している。`PublicPlansController` は参照農場・気象まわりで `WeatherDataManagement` を `include` する。
+- **API（私有／公開の計画 REST）**: `Api::V1::PlansController` および `Api::V1::Plans::*` / `Api::V1::PublicPlans::*` は、一覧・詳細・作成などを Interactor + Presenter で処理し、圃場・作物などの変更系は `CultivationPlanRestBaseController` 由来のコントローラで共有している（削除などは `Views::Api::CultivationPlan::CultivationPlanDeleteView` 等の View モジュールで補助）。
+- **履歴**: 旧 `CultivationPlanManageable` Concern や `CultivationPlanApi` / `JobExecution` といった名前の Concern は、後続の CA 移行で基底コントローラ・Interactor 配線に置き換えられており、**現行コードベースには存在しない**。
 
 ---
 
