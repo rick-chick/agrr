@@ -54,13 +54,13 @@ class FieldsController < ApplicationController
       format.html do
         presenter = Presenters::Html::Field::FieldDestroyHtmlPresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway)
         interactor.call(params[:id])
       end
       format.json do
         presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway, logger: CompositionRoot.logger)
+          user_id: current_user.id, gateway: CompositionRoot.field_gateway)
         interactor.call(params[:id])
       end
     end

@@ -57,7 +57,7 @@ module Api
           presenter = Presenters::Api::Fertilize::FertilizeDeletePresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

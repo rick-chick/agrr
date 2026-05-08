@@ -55,7 +55,7 @@ module Api
         presenter = Presenters::Api::CultivationPlan::CultivationPlanDeletePresenter.new(view: self)
         interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+          translator: translator, gateway: CompositionRoot.cultivation_plan_gateway, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])
       end
 

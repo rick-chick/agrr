@@ -56,7 +56,7 @@ module Api
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDeletePresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

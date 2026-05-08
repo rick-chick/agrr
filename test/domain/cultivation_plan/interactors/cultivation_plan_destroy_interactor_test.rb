@@ -17,7 +17,6 @@ module Domain
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             user_id: @user_id,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: @mock_translator,
             user_lookup: Adapters::Shared::Gateways::UserActiveRecordGateway.new
           )

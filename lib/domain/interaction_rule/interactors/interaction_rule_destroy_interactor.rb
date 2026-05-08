@@ -4,11 +4,10 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleDestroyInteractor < Domain::InteractionRule::Ports::InteractionRuleDestroyInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
-          @logger = logger
           @translator = translator
           @user_lookup = user_lookup
         end

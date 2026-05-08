@@ -65,7 +65,7 @@ class PesticidesController < ApplicationController
         presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
         Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+          translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do

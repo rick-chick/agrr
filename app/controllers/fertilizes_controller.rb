@@ -51,7 +51,7 @@ class FertilizesController < ApplicationController
         presenter = Presenters::Html::Fertilize::FertilizeDestroyHtmlPresenter.new(view: self)
         Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+          translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do

@@ -63,7 +63,7 @@ class PestsController < ApplicationController
         presenter = Presenters::Html::Pest::PestDestroyHtmlPresenter.new(view: self)
         Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+          translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do

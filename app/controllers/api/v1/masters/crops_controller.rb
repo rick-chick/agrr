@@ -77,7 +77,7 @@ module Api
           presenter = Presenters::Api::Crop::CropDeletePresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

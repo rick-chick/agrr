@@ -154,7 +154,6 @@ class PlansController < CultivationPlanHtmlBaseController
       output_port: presenter,
       user_id: current_user.id,
       gateway: CompositionRoot.cultivation_plan_gateway,
-      logger: CompositionRoot.logger,
       translator: CompositionRoot.translator,
       user_lookup: CompositionRoot.user_lookup
     ).call(params[:id])

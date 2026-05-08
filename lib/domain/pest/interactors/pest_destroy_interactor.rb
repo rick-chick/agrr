@@ -4,11 +4,10 @@ module Domain
   module Pest
     module Interactors
       class PestDestroyInteractor < Domain::Pest::Ports::PestDestroyInputPort
-        def initialize(output_port:, user_id:, translator:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, translator:, gateway:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
-          @logger = logger
           @translator = translator
           @user_lookup = user_lookup
         end
