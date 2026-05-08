@@ -31,15 +31,12 @@ import ToastNotificationController from "./toast_notification_controller"
 import CopyToClipboardController from "./copy_to_clipboard_controller"
 import CookieConsentController from "./cookie_consent_controller"
 
-console.log('[Controllers] Registering controllers...')
-
 application.register("crop-ai", CropAiController)
 application.register("fertilize-ai", FertilizeAiController)
 application.register("pest-ai", PestAiController)
 application.register("task-schedule-timeline", TaskScheduleTimelineController)
 application.register("undo-delete", UndoDeleteController)
 application.register("plans-show", PlansShowController)
-console.log('[Controllers] PlansShowController registered:', PlansShowController)
 application.register("optimizing", OptimizingController)
 application.register("undo-toast", UndoToastController)
 application.register("crop-selector", CropSelectorController)
@@ -54,8 +51,5 @@ application.register("stop-propagation", StopPropagationController)
 application.register("toast-notification", ToastNotificationController)
 application.register("copy-to-clipboard", CopyToClipboardController)
 application.register("cookie-consent", CookieConsentController)
-
-console.log('[Controllers] Registered controllers:', Object.keys(application.controllers))
-console.log('[Controllers] Check fertilize-ai:', application.getControllerForElementAndIdentifier)
 
 export { application }
