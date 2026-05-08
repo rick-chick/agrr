@@ -37,7 +37,7 @@ module Api
           presenter = Presenters::Api::Fertilize::FertilizeCreatePresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -47,7 +47,7 @@ module Api
           presenter = Presenters::Api::Fertilize::FertilizeUpdatePresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

@@ -33,7 +33,7 @@ class FertilizesController < ApplicationController
     input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
     presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /fertilizes/:id
@@ -41,7 +41,7 @@ class FertilizesController < ApplicationController
     input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
     presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /fertilizes/:id

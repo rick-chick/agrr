@@ -550,21 +550,18 @@ module CompositionRoot
         deletion_undo_gateway: deletion_undo_gateway,
         translator: translator
       )
-      log = logger
       tr = translator
       ul = user_lookup
       FertilizeAiInteractors.new(
         create_interactor: Adapters::Fertilize::FertilizeCreateForAiAdapter.new(
           user_id: user_id,
           gateway: gw,
-          logger: log,
           translator: tr,
           user_lookup: ul
         ),
         update_interactor: Adapters::Fertilize::FertilizeUpdateForAiAdapter.new(
           user_id: user_id,
           gateway: gw,
-          logger: log,
           translator: tr,
           user_lookup: ul
         )

@@ -8,10 +8,9 @@ module Adapters
     class FertilizeCreateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway:, logger:, translator:, user_lookup:)
+      def initialize(user_id:, gateway:, translator:, user_lookup:)
         @user_id = user_id
         @gateway = gateway
-        @logger = logger
         @translator = translator
         @user_lookup = user_lookup
       end
@@ -21,7 +20,7 @@ module Adapters
         interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           user_id: @user_id,
-          logger: @logger, translator: @translator, user_lookup: @user_lookup)
+          translator: @translator, user_lookup: @user_lookup)
         input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(attrs)
         interactor.call(input_dto)
         output_port.result
