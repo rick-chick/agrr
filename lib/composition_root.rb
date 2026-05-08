@@ -708,7 +708,8 @@ module CompositionRoot
     def task_schedule_item_complete_interactor(output_port:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemCompleteInteractor.new(
         output_port: output_port,
-        gateway: task_schedule_item_mutation_gateway
+        gateway: task_schedule_item_mutation_gateway,
+        clock: Time.zone
       )
     end
 

@@ -47,32 +47,4 @@ class PlanningSchedulesController < ApplicationController
 
     render :schedule
   end
-
-  # ヘルパーメソッドとして公開（ビューから呼び出し可能にするため）
-  helper_method :get_crop_color_for_schedule
-
-  # 作物名から一貫した色を取得（スケジュール表示用）
-  def get_crop_color_for_schedule(crop_name)
-    @crop_color_cache ||= {}
-
-    return @crop_color_cache[crop_name] if @crop_color_cache[crop_name]
-
-    color_palette = [
-      { fill: "rgba(154, 230, 180, 0.8)", stroke: "#48bb78", text: "#1a202c" },
-      { fill: "rgba(251, 211, 141, 0.8)", stroke: "#f6ad55", text: "#1a202c" },
-      { fill: "rgba(144, 205, 244, 0.8)", stroke: "#4299e1", text: "#1a202c" },
-      { fill: "rgba(198, 246, 213, 0.8)", stroke: "#2f855a", text: "#1a202c" },
-      { fill: "rgba(254, 235, 200, 0.8)", stroke: "#dd6b20", text: "#1a202c" },
-      { fill: "rgba(254, 178, 178, 0.8)", stroke: "#fc8181", text: "#1a202c" },
-      { fill: "rgba(254, 243, 199, 0.8)", stroke: "#d69e2e", text: "#1a202c" },
-      { fill: "rgba(233, 213, 255, 0.8)", stroke: "#a78bfa", text: "#1a202c" },
-      { fill: "rgba(191, 219, 254, 0.8)", stroke: "#60a5fa", text: "#1a202c" },
-      { fill: "rgba(252, 231, 243, 0.8)", stroke: "#f472b6", text: "#1a202c" }
-    ]
-
-    color_index = crop_name.hash.abs % color_palette.size
-    @crop_color_cache[crop_name] = color_palette[color_index]
-
-    @crop_color_cache[crop_name]
-  end
 end

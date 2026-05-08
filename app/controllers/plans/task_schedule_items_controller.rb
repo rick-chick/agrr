@@ -93,20 +93,12 @@ module Plans
       end
 
       permitted = raw.permit(:actual_date, :notes)
-      actual_date =
-        if permitted[:actual_date].present?
-          Date.parse(permitted[:actual_date])
-        else
-          Date.current
-        end
 
       CompositionRoot.task_schedule_item_complete_interactor(output_port: task_schedule_item_json_presenter).call(
         user_id: current_user.id,
         plan_id: task_schedule_route_plan_id,
         item_id: params[:id],
-        actual_date: actual_date,
-        actual_notes: permitted[:notes],
-        completed_at: Time.current
+        completion_params: permitted.to_unsafe_h
       )
     end
 

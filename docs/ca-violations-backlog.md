@@ -50,7 +50,9 @@
 - **解消済み（2026-05-08）**: **`AgriculturalTasksController#index`** の **`resolve_filter`**（管理者／非管理者の一覧フィルタ正規化）を `AgriculturalTaskListInputDto` の `initialize` に集約。`index` は生の `params[:filter]` を DTO に渡すのみ。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **`FarmsController#index`** の HTML / JSON で **`FarmListInteractor` と `FarmListRowsBundleInteractor` が二重化**していた問題を解消。両形式とも **`FarmListRowsBundleInteractor`** + `FarmListRowsBundleOutputPort`（`FarmListHtmlPresenter` / `FarmListJsonPresenter`）。`FarmListRowDto` に `created_at` / `updated_at` を追加し JSON 契約を維持。Application edge 禁止 **4**・Presenter 契約（同一ユースケース同一 Interactor）に整合。`docs/contracts/farm-list-rows-bundle-contract.md` 更新。
 - **解消済み（2026-05-08）**: **HTML `PestsController#edit`** の `@pest.pest_control_methods.build` を `PestGateway#prepare_top_level_pest_for_edit_form!`（`PestMemoryGateway` で `prepare_crop_nested_pest_for_edit_form!` と共通の `ensure_pest_control_method_row_for_form!`）に集約。Application edge 禁止 **4**。
-- **次に先頭で固定する修正単位（未着手）**: **HTML `Plans::TaskScheduleItemsController#complete`** の `Date.parse` / `Date.current` / `Time.current` を DTO／Interactor＋注入 clock へ。**`PlanningSchedulesController#get_crop_color_for_schedule`** の表示専用ロジックのヘルパー化（必要に応じ分割）。
+- **解消済み（2026-05-08）**: **HTML `Plans::TaskScheduleItemsController#complete`** — `Date.parse` / `Date.current` / `Time.current` をコントローラから除去。`TaskScheduleItemCompleteInputDto`（Strong params＋注入 `clock`）と `TaskScheduleItemCompleteInteractor`、`CompositionRoot` で `clock: Time.zone` を注入。不正日付は `RecordInvalid`→JSON 422。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: **`PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
+- **次に先頭で固定する修正単位（未着手）**: （なし — 次の外側ループでセクション0 再洗い出し）
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

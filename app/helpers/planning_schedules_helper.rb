@@ -5,6 +5,20 @@ module PlanningSchedulesHelper
   CLASS_SCHEDULE_CELL     = "schedule-table-cell".freeze
   CLASS_SCHEDULE_CELL_TOP = "schedule-table-cell--top".freeze
 
+  # 作付け計画表マトリクスで作物名ごとに一貫した色を返す（表示専用）
+  CROP_SCHEDULE_DISPLAY_COLOR_PALETTE = [
+    { fill: "rgba(154, 230, 180, 0.8)", stroke: "#48bb78", text: "#1a202c" },
+    { fill: "rgba(251, 211, 141, 0.8)", stroke: "#f6ad55", text: "#1a202c" },
+    { fill: "rgba(144, 205, 244, 0.8)", stroke: "#4299e1", text: "#1a202c" },
+    { fill: "rgba(198, 246, 213, 0.8)", stroke: "#2f855a", text: "#1a202c" },
+    { fill: "rgba(254, 235, 200, 0.8)", stroke: "#dd6b20", text: "#1a202c" },
+    { fill: "rgba(254, 178, 178, 0.8)", stroke: "#fc8181", text: "#1a202c" },
+    { fill: "rgba(254, 243, 199, 0.8)", stroke: "#d69e2e", text: "#1a202c" },
+    { fill: "rgba(233, 213, 255, 0.8)", stroke: "#a78bfa", text: "#1a202c" },
+    { fill: "rgba(191, 219, 254, 0.8)", stroke: "#60a5fa", text: "#1a202c" },
+    { fill: "rgba(252, 231, 243, 0.8)", stroke: "#f472b6", text: "#1a202c" }
+  ].freeze
+
   # 期間のcolspanを決定
   # @param cultivations_in_period [Array<Hash>] この期間に表示される作付情報の配列
   # @param arranged_cultivations [Array<Hash>] arrangeメソッドで配置された作付情報の配列
@@ -108,5 +122,15 @@ module PlanningSchedulesHelper
       class: "schedule-table-cell",
       colspan: colspan
     )
+  end
+
+  # 作物名から一貫した色を取得（スケジュール表示用）
+  def get_crop_color_for_schedule(crop_name)
+    key = crop_name.to_s
+    @crop_color_cache ||= {}
+    return @crop_color_cache[key] if @crop_color_cache.key?(key)
+
+    color_index = key.hash.abs % CROP_SCHEDULE_DISPLAY_COLOR_PALETTE.size
+    @crop_color_cache[key] = CROP_SCHEDULE_DISPLAY_COLOR_PALETTE[color_index]
   end
 end

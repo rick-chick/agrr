@@ -128,6 +128,25 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "予定通り完了", @task.read_attribute("actual_notes")
   end
 
+  test "作業予定の実績で実施日が不正な文字列のときは422" do
+    post complete_plan_task_schedule_item_path(@plan, @task),
+         params: {
+           completion: {
+             actual_date: "not-a-date",
+             notes: "メモ"
+           }
+         },
+         headers: @headers,
+         as: :json
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(response.body)
+    assert body["errors"].key?("actual_date"), "expected actual_date errors, got #{body.inspect}"
+
+    @task.reload
+    assert_equal TaskScheduleItem::STATUSES[:planned], @task.read_attribute("status")
+  end
+
   test "ユーザーは圃場ごとに作業予定を追加できる" do
     assert_difference("TaskScheduleItem.count", 1) do
       post plan_task_schedule_items_path(@plan),

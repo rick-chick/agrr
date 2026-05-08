@@ -4,19 +4,24 @@ module Domain
   module CultivationPlan
     module Interactors
       class TaskScheduleItemCompleteInteractor
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, clock:)
           @output_port = output_port
           @gateway = gateway
+          @clock = clock
         end
 
-        def call(user_id:, plan_id:, item_id:, actual_date:, actual_notes:, completed_at:)
+        def call(user_id:, plan_id:, item_id:, completion_params:)
+          input = Domain::CultivationPlan::Dtos::TaskScheduleItemCompleteInputDto.from_completion_params(
+            completion_params,
+            clock: @clock
+          )
           payload = @gateway.complete_item_for_plan!(
             user_id,
             plan_id,
             item_id,
-            actual_date: actual_date,
-            actual_notes: actual_notes,
-            completed_at: completed_at
+            actual_date: input.actual_date,
+            actual_notes: input.actual_notes,
+            completed_at: input.completed_at
           )
           @output_port.on_success(payload)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
