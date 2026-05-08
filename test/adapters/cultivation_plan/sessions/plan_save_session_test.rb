@@ -2041,7 +2041,11 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway)
-    assert service.send(:requires_gdd?, item), "sanity check: item should require gdd"
+    result_for_ctx = Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
+    ctx = Adapters::CultivationPlan::Sessions::PlanSaveContext.new(user: user, session_data: session_data, result: result_for_ctx)
+    ctx.crop_stage_copy_gateway = CompositionRoot.crop_stage_copy_gateway
+    mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
+    assert mapper.requires_gdd?(item), "sanity check: item should require gdd"
     error = assert_raises Domain::Shared::Exceptions::InvalidTaskScheduleItem do
       service.call
     end

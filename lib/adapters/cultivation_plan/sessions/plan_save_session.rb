@@ -103,14 +103,6 @@ module Adapters
           @result.error_message = e.message
           @result
         end
-
-        private
-
-        # テスト互換: send(:requires_gdd?, item) 用。実装は AgriculturalTaskMapper に委譲。
-        def requires_gdd?(reference_item)
-          ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
-          Mappers::AgriculturalTaskMapper.new(ctx).requires_gdd?(reference_item)
-        end
       end
     end
   end
