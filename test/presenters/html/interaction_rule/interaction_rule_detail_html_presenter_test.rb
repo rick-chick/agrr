@@ -10,8 +10,9 @@ class InteractionRuleDetailHtmlPresenterTest < ActiveSupport::TestCase
     presenter = Presenters::Html::InteractionRule::InteractionRuleDetailHtmlPresenter.new(view: view_mock)
 
     rule = mock("rule")
+    view_mock.expects(:instance_variable_set).with(:@interaction_rule, rule)
+
     presenter.on_success(rule)
-    assert true
   end
 
   test "on_failure renders error template" do
@@ -24,6 +25,5 @@ class InteractionRuleDetailHtmlPresenterTest < ActiveSupport::TestCase
     view_mock.expects(:render).with(:error, status: :internal_server_error, locals: { error: "Test error" })
 
     presenter.on_failure(error_dto)
-    assert true
   end
 end

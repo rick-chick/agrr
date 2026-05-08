@@ -20,7 +20,6 @@ class InteractionRuleDestroyHtmlPresenterTest < ActiveSupport::TestCase
     )
 
     presenter.on_success(destroy_output_dto)
-    assert true
   end
 
   test "on_failure redirects back with error alert" do
@@ -37,7 +36,6 @@ class InteractionRuleDestroyHtmlPresenterTest < ActiveSupport::TestCase
     )
 
     presenter.on_failure(error_dto)
-    assert true
   end
 
   test "on_failure maps PolicyPermissionDenied to not_found flash" do

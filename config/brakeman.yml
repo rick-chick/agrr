@@ -1,4 +1,3 @@
 ---
-:skip_files:
-  # リポジトリに存在しないパスを Brakeman が列挙した場合のフォールバック（キャッシュ／旧ツール由来）
-  - bin/generate_crop_nutrients_migration.rb
+# 偽陽性のみ列挙する。存在しないパスを置かない（旧ツール用スクリプト由来のスキップは削除済み）。
+:skip_files: []

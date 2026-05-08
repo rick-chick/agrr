@@ -16,7 +16,6 @@ class InteractionRuleUpdateHtmlPresenterTest < ActiveSupport::TestCase
     view_mock.expects(:redirect_to).with("/interaction_rules/1", notice: I18n.t("interaction_rules.flash.updated"))
 
     presenter.on_success(rule_entity)
-    assert true
   end
 
   test "on_failure renders edit template" do
