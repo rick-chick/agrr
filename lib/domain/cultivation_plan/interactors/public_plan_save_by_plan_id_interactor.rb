@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # API `save_plan`: plan_id から session_data を組み立て、`PublicPlanSaveGateway` へ委譲する。
-      class PublicPlanApiSavePlanInteractor
+      # 既存の公開計画 id から保存用ペイロードを組み立て、`PublicPlanSaveGateway` へ委譲する。
+      class PublicPlanSaveByPlanIdInteractor
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
@@ -50,7 +50,7 @@ module Domain
             )
           )
         rescue Domain::Shared::Exceptions::InvalidTaskScheduleItem => e
-          @logger.error("❌ [PublicPlanApiSavePlanInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailureDto.new(
               kind: Dtos::PublicPlanSaveFailureDto::KIND_UNEXPECTED,
@@ -58,7 +58,7 @@ module Domain
             )
           )
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.error("❌ [PublicPlanApiSavePlanInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailureDto.new(
               kind: Dtos::PublicPlanSaveFailureDto::KIND_SAVE_FAILED,
