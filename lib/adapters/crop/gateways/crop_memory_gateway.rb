@@ -8,13 +8,9 @@ module Adapters
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
-        def list(scope = nil)
-          query = scope || ::Crop.all
-          query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
-        end
-
         def list_index_for_user(user)
-          list(index_scope_for_user(user))
+          query = index_scope_for_user(user)
+          query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
         def list_user_owned_non_reference_crops_ordered_by_name(user)
@@ -424,49 +420,6 @@ module Adapters
           raise
         rescue StandardError => e
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
-        end
-
-        def find_by_id(crop_id)
-          crop = ::Crop.find(crop_id)
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "Crop not found"
-        end
-
-        def create(create_input_dto)
-          crop_attributes = {
-            name: create_input_dto.name,
-            variety: create_input_dto.variety,
-            area_per_unit: create_input_dto.area_per_unit,
-            revenue_per_area: create_input_dto.revenue_per_area,
-            region: create_input_dto.region,
-            groups: create_input_dto.groups || []
-          }
-          crop_attributes[:crop_stages_attributes] = create_input_dto.crop_stages_attributes if create_input_dto.crop_stages_attributes.present?
-
-          crop = ::Crop.new(crop_attributes)
-          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.save
-
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-        end
-
-        def update(crop_id, update_input_dto)
-          crop = ::Crop.find(crop_id)
-          attrs = {}
-          attrs[:name] = update_input_dto.name if update_input_dto.name.present?
-          attrs[:variety] = update_input_dto.variety if !update_input_dto.variety.nil?
-          attrs[:area_per_unit] = update_input_dto.area_per_unit if !update_input_dto.area_per_unit.nil?
-          attrs[:revenue_per_area] = update_input_dto.revenue_per_area if !update_input_dto.revenue_per_area.nil?
-          attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
-          attrs[:groups] = update_input_dto.groups if !update_input_dto.groups.nil?
-          attrs[:crop_stages_attributes] = update_input_dto.crop_stages_attributes if update_input_dto.crop_stages_attributes.present?
-
-          crop.update(attrs)
-          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") if crop.errors.any?
-
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "Crop not found"
         end
 
         # CropStage methods
