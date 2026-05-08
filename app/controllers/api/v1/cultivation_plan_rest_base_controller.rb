@@ -65,7 +65,7 @@ module Api
       # 栽培計画データを取得
       def data
         Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor.new(
-          output: Presenters::Api::CultivationPlan::ApiPlanDataPresenter.new(
+          output: Presenters::Api::CultivationPlan::RetrieveCultivationPlanPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
