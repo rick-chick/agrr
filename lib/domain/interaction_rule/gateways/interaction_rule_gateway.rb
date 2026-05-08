@@ -53,10 +53,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
-        def find_model(id)
-          raise NotImplementedError, "Subclasses must implement find_model"
-        end
-
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

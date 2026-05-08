@@ -212,10 +212,6 @@ module Adapters
           )
         end
 
-        def find_model(id)
-          find_farm_model!(id)
-        end
-
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_create(user, attrs)
           farm = ::Farm.new(h)

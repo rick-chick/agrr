@@ -131,10 +131,6 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_edit(user, id))
         end
 
-        def find_model(id)
-          find_interaction_rule_model!(id)
-        end
-
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_create(user, attrs)
           rule = ::InteractionRule.new(h)

@@ -113,10 +113,6 @@ module Adapters
           )
         end
 
-        def find_model(id)
-          find_fertilize_model!(id)
-        end
-
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, attrs)
           fertilize = ::Fertilize.new(h)

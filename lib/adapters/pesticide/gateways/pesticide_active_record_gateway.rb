@@ -116,10 +116,6 @@ module Adapters
           )
         end
 
-        def find_model(id)
-          find_pesticide_model!(id)
-        end
-
         def create_for_user(user, attrs)
           h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
           pesticide = ::Pesticide.new(h)

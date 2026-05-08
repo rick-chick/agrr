@@ -65,10 +65,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         end
 
-        def find_model(id)
-          ::Field.find(id)
-        end
-
         def destroy(field_id, user_id)
           user = ::User.find(user_id)
           field = FieldPolicy.find_owned!(user, field_id)
