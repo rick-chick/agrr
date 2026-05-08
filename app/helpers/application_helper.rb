@@ -48,22 +48,6 @@ module ApplicationHelper
       timeline_crop_required: t("js.timeline.crop_required"),
       timeline_notes_placeholder: t("js.timeline.notes_placeholder"),
 
-      # crop_form.js placeholders
-      js_crop_stage_name_placeholder: t("js.crop_form.stage_name_placeholder"),
-      js_crop_order_placeholder: t("js.crop_form.order_placeholder"),
-      js_crop_base_temperature_placeholder: t("js.crop_form.base_temperature_placeholder"),
-      js_crop_optimal_min_placeholder: t("js.crop_form.optimal_min_placeholder"),
-      js_crop_optimal_max_placeholder: t("js.crop_form.optimal_max_placeholder"),
-      js_crop_low_stress_placeholder: t("js.crop_form.low_stress_placeholder"),
-      js_crop_high_stress_placeholder: t("js.crop_form.high_stress_placeholder"),
-      js_crop_frost_threshold_placeholder: t("js.crop_form.frost_threshold_placeholder"),
-      js_crop_sterility_risk_placeholder: t("js.crop_form.sterility_risk_placeholder"),
-      js_crop_minimum_sunshine_placeholder: t("js.crop_form.minimum_sunshine_placeholder"),
-      js_crop_target_sunshine_placeholder: t("js.crop_form.target_sunshine_placeholder"),
-      js_crop_daily_uptake_n_placeholder: t("js.crop_form.daily_uptake_n_placeholder"),
-      js_crop_daily_uptake_p_placeholder: t("js.crop_form.daily_uptake_p_placeholder"),
-      js_crop_daily_uptake_k_placeholder: t("js.crop_form.daily_uptake_k_placeholder"),
-
       # plans_show.js messages
       js_plans_load_error: t("js.plans.load_error")
     }
