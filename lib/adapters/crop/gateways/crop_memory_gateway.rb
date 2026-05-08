@@ -326,7 +326,7 @@ module Adapters
         # ブループリント削除後の crop 再読込と UI 用タスク一覧（レンダリング前の失敗を吸収）
         def reload_crop_after_task_schedule_blueprint_delete!(crop:, blueprint_id_for_response:)
           crop.reload
-          available = available_agricultural_tasks_for_crop_record(crop)
+          available = available_agricultural_tasks_for_crop(crop)
           selected_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
           {
             ok: true,
@@ -921,9 +921,6 @@ module Adapters
           end
         end
 
-        def available_agricultural_tasks_for_crop_record(crop)
-          available_agricultural_tasks_for_crop(crop)
-        end
       end
     end
   end
