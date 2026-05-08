@@ -1,4 +1,0 @@
-This is a test file for API integration tests.
-Test content line 2.
-Test content line 3.
-
