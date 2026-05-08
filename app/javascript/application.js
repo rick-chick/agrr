@@ -22,7 +22,6 @@ import "./climate_chart"; // Chart.js使用（バンドル必須）
 
 // 以下はpropshaftで直接配信（バンドルしない、レイアウトで個別読み込み）
 // - crop_form.js
-// - crop_selection.js
 // - progress_bar.js
 // - cultivation_results.js
 // - custom_gantt_chart.js
