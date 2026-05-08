@@ -124,24 +124,6 @@ en:
         daily_uptake_k: "Daily Potassium Uptake (kg/ha/day)"
         region: "Region"
 
-    crop_selection:
-      max_crops_message: "Maximum %{max} crop types can be selected"
-      hint_select: "Please select crops"
-    
-    cultivation_results:
-      load_error: "Failed to retrieve data"
-      data_error: "Failed to load data"
-      temp_max_label: "Max Temperature"
-      temp_mean_label: "Mean Temperature"
-      temp_min_label: "Min Temperature"
-      optimal_range_label: "Optimal Temperature Range"
-      date_label: "Date"
-      temp_axis_label: "Temperature (℃)"
-      gdd_label: "Growing Degree Days"
-      gdd_axis_label: "GDD (℃·day)"
-      gdd_target_label: "Target: %{target}℃·day"
-      no_risks: "None ✓"
-    
     temperature_chart:
       no_data: "No data available for the selected period."
       load_failed: "Failed to load data."

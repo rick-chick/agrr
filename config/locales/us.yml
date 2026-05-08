@@ -155,24 +155,6 @@ us:
       daily_uptake_p_placeholder: "e.g., 0.2"
       daily_uptake_k_placeholder: "e.g., 0.8"
     
-    crop_selection:
-      max_crops_message: "You can select up to %{max} crops"
-      hint_select: "Please select crops"
-    
-    cultivation_results:
-      load_error: "Failed to fetch data"
-      data_error: "Failed to load data"
-      temp_max_label: "Max Temperature"
-      temp_mean_label: "Mean Temperature"
-      temp_min_label: "Min Temperature"
-      optimal_range_label: "Optimal Range"
-      date_label: "Date"
-      temp_axis_label: "Temperature (°C)"
-      gdd_label: "Accumulated GDD"
-      gdd_axis_label: "Accumulated GDD (°C·day)"
-      no_risks: "No risks detected"
-      gdd_target_label: "Target GDD: %{target}"
-    
     plans:
       gantt_not_loaded: "Gantt feature was not loaded (script might have failed to load)"
       data_missing: "Required data is missing for loading"

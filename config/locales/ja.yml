@@ -282,24 +282,6 @@ ja:
         daily_uptake_k: "日間カリウム吸収量 (kg/ha/day)"
         region: "地域"
 
-    crop_selection:
-      max_crops_message: "作物は最大%{max}種類まで選択できます"
-      hint_select: "作物を選択してください"
-    
-    cultivation_results:
-      load_error: "データの取得に失敗しました"
-      data_error: "データの読み込みに失敗しました"
-      temp_max_label: "最高気温"
-      temp_mean_label: "平均気温"
-      temp_min_label: "最低気温"
-      optimal_range_label: "最適温度範囲"
-      date_label: "日付"
-      temp_axis_label: "気温 (℃)"
-      gdd_label: "積算温度"
-      gdd_axis_label: "積算温度 (℃日)"
-      gdd_target_label: "目標: %{target}℃日"
-      no_risks: "なし ✓"
-    
     messages:
       jsPlansLoadError: "データの読み込みに失敗しました"
       jsPlansLoadErrorWithMessage: "データの読み込みに失敗しました: %{message}"

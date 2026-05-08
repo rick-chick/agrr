@@ -200,24 +200,6 @@ in:
         daily_uptake_k: "दैनिक पोटैशियम अवशोषण (kg/ha/day)"
         region: "क्षेत्र"
 
-    crop_selection:
-      max_crops_message: "आप अधिकतम %{max} फसलें चुन सकते हैं"
-      hint_select: "कृपया फसलें चुनें"
-    
-    cultivation_results:
-      load_error: "डेटा प्राप्त करने में विफल"
-      data_error: "डेटा लोड करने में विफल"
-      temp_max_label: "अधिकतम तापमान"
-      temp_mean_label: "औसत तापमान"
-      temp_min_label: "न्यूनतम तापमान"
-      optimal_range_label: "इष्टतम सीमा"
-      date_label: "तिथि"
-      temp_axis_label: "तापमान (°C)"
-      gdd_label: "संचयी GDD"
-      gdd_axis_label: "संचयी GDD (°C·दिन)"
-      gdd_target_label: "लक्ष्य: %{target}°C·दिन"
-      no_risks: "कोई जोखिम नहीं ✓"
-    
     temperature_chart:
       no_data: "चयनित अवधि के लिए कोई डेटा उपलब्ध नहीं है।"
       load_failed: "डेटा लोड करने में विफल।"
