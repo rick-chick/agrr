@@ -4,10 +4,6 @@ module Domain
   module Pesticide
     module Gateways
       class PesticideGateway
-        def list
-          raise NotImplementedError, "Subclasses must implement list"
-        end
-
         def find_by_id(pesticide_id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end

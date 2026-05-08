@@ -11,10 +11,6 @@ module Adapters
           @translator = translator
         end
 
-        def list
-          ::Pesticide.all.map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
-        end
-
         def find_by_id(pesticide_id)
           pesticide = ::Pesticide.find(pesticide_id)
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
