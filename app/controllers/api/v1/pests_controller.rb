@@ -11,7 +11,7 @@ module Api
       # POST /api/v1/pests/ai_create
       # AIで害虫情報を取得して保存
       def ai_create
-        result = CompositionRoot.pest_api_ai_create_interactor(current_user: current_user).call(
+        result = CompositionRoot.pest_ai_create_interactor(current_user: current_user).call(
           pest_name: params[:name],
           affected_crops: pest_ai_create_affected_crops_from_params
         )
@@ -21,7 +21,7 @@ module Api
       # POST /api/v1/pests/:id/ai_update
       # AIで害虫情報を取得して更新（編集時は既存を編集）
       def ai_update
-        result = CompositionRoot.pest_api_ai_update_interactor(current_user: current_user).call(
+        result = CompositionRoot.pest_ai_update_interactor(current_user: current_user).call(
           pest_id: params[:id],
           pest_query_name: params[:name]
         )

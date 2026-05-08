@@ -3,8 +3,8 @@
 module Domain
   module Pest
     module Interactors
-      # POST /api/v1/pests/:id/ai_update
-      class PestApiAiUpdateInteractor
+      # 既存害虫を agrr 応答で更新する。
+      class PestAiUpdateInteractor
         def initialize(
           user_id:,
           user_lookup:,

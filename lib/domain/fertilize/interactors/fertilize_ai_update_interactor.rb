@@ -3,14 +3,13 @@
 module Domain
   module Fertilize
     module Interactors
-      # POST /api/v1/fertilizes/ai_create
-      class FertilizeApiAiCreateInteractor
+      # 既存肥料を agrr 応答で更新する。
+      class FertilizeAiUpdateInteractor
         def initialize(
           user_id:,
           user_lookup:,
           fertilize_gateway:,
           fertilize_ai_query_gateway:,
-          create_interactor:,
           update_interactor:,
           logger:,
           translator:
@@ -19,21 +18,14 @@ module Domain
           @user_lookup = user_lookup
           @fertilize_gateway = fertilize_gateway
           @fertilize_ai_query_gateway = fertilize_ai_query_gateway
-          @create_interactor = create_interactor
           @update_interactor = update_interactor
           @logger = logger
           @translator = translator
         end
 
         # @return [Domain::Shared::Dtos::ApiJsonResult]
-        def call(fertilize_query_name:)
+        def call(fertilize_id:, fertilize_query_name:)
           user = @user_lookup.find(@user_id)
-          if user.anonymous?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
-              status: :unauthorized,
-              body: { error: @translator.t("auth.api.login_required") }
-            )
-          end
 
           fertilize_name = fertilize_query_name&.strip
           if fertilize_name.nil? || fertilize_name.empty?
@@ -43,8 +35,16 @@ module Domain
             )
           end
 
-          @logger.info "🤖 [AI Fertilize] Querying fertilize info for: #{fertilize_name}"
-          fertilize_info = @fertilize_ai_query_gateway.fetch_for_create(name: fertilize_name)
+          fertilize_record = load_authorized_fertilize(user, fertilize_id)
+          unless fertilize_record
+            return Domain::Shared::Dtos::ApiJsonResult.new(
+              status: :not_found,
+              body: { error: @translator.t("api.errors.fertilizes.not_found", default: "肥料が見つかりません") }
+            )
+          end
+
+          @logger.info "🤖 [AI Fertilize] Querying fertilize info for update: #{fertilize_name} (ID: #{fertilize_record.id})"
+          fertilize_info = @fertilize_ai_query_gateway.fetch_for_update(id: fertilize_record.id, name: fertilize_name)
 
           if fertilize_info["success"] == false
             error_msg = fertilize_info["error"] || @translator.t("api.errors.fertilizes.fetch_failed")
@@ -53,7 +53,6 @@ module Domain
           end
 
           fertilize_data = Domain::Fertilize::Services::FertilizeAiAgrrPayloadNormalizer.normalize_fertilize_payload(fertilize_info)
-
           unless fertilize_data
             return Domain::Shared::Dtos::ApiJsonResult.new(
               status: :unprocessable_entity,
@@ -63,7 +62,9 @@ module Domain
 
           fertilize_name_from_agrr = fertilize_data["name"]
 
-          base_attrs = {
+          @logger.info "🔄 [AI Fertilize] Updating fertilize##{fertilize_record.id} with latest data from agrr"
+
+          attrs = {
             name: fertilize_name_from_agrr,
             n: fertilize_data["n"],
             p: fertilize_data["p"],
@@ -72,39 +73,18 @@ module Domain
             package_size: fertilize_data["package_size"]
           }
 
-          @logger.info "📊 [AI Fertilize] Retrieved data: name=#{fertilize_name_from_agrr}, n=#{fertilize_data['n']}, p=#{fertilize_data['p']}, k=#{fertilize_data['k']}, package_size=#{fertilize_data['package_size']}"
-
-          existing_fertilize = @fertilize_gateway.find_user_owned_non_reference_fertilize_record_by_name(
-            user_id: @user_id,
-            name: fertilize_name_from_agrr
-          )
-
-          if existing_fertilize
-            @logger.info "🔄 [AI Fertilize] Updating existing fertilize##{existing_fertilize.id}: #{fertilize_name_from_agrr}"
-            result = @update_interactor.call(existing_fertilize.id, base_attrs.symbolize_keys)
-            status_code = :ok
-          else
-            @logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name_from_agrr}"
-            normalized = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, base_attrs)
-            attrs_for_create = base_attrs.merge(
-              user_id: normalized[:user_id],
-              is_reference: normalized[:is_reference]
-            )
-            result = @create_interactor.call(attrs_for_create)
-            status_code = :created
-          end
+          result = @update_interactor.call(fertilize_record.id, attrs.symbolize_keys)
 
           unless result.success?
-            @logger.error "❌ [AI Fertilize] Failed to #{existing_fertilize ? 'update' : 'create'}: #{result.error}"
+            @logger.error "❌ [AI Fertilize] Failed to update: #{result.error}"
             return Domain::Shared::Dtos::ApiJsonResult.new(status: :unprocessable_entity, body: { error: result.error })
           end
 
           fertilize_entity = result.data
-          action = existing_fertilize ? "Updated" : "Created"
-          @logger.info "✅ [AI Fertilize] #{action} fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
+          @logger.info "✅ [AI Fertilize] Updated fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
 
           Domain::Shared::Dtos::ApiJsonResult.new(
-            status: status_code,
+            status: :ok,
             body: {
               success: true,
               fertilize_id: fertilize_entity.id,
@@ -114,9 +94,19 @@ module Domain
               k: fertilize_entity.k,
               description: fertilize_entity.description,
               package_size: fertilize_entity.package_size,
-              message: @translator.t("api.messages.fertilizes.created_by_ai", name: fertilize_entity.name)
+              is_reference: fertilize_entity.is_reference,
+              message: @translator.t("api.messages.fertilizes.updated_by_ai", name: fertilize_entity.name, default: "肥料「%{name}」を更新しました")
             }
           )
+        end
+
+        private
+
+        def load_authorized_fertilize(user, fertilize_id)
+          bundle = @fertilize_gateway.find_authorized_fertilize_loaded_bundle!(user, fertilize_id.to_i, for_edit: true)
+          bundle.persisted_fertilize
+        rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
+          nil
         end
       end
     end

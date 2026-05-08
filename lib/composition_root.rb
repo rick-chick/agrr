@@ -762,12 +762,12 @@ module CompositionRoot
       ).resolve
     end
 
-    def pest_api_ai_create_interactor(current_user:)
+    def pest_ai_create_interactor(current_user:)
       uid = current_user.id
       pair = pest_ai_interactors_for(user_id: uid)
       gw = pest_gateway
       log = logger
-      Domain::Pest::Interactors::PestApiAiCreateInteractor.new(
+      Domain::Pest::Interactors::PestAiCreateInteractor.new(
         user_id: uid,
         user_lookup: user_lookup,
         pest_gateway: gw,
@@ -787,10 +787,10 @@ module CompositionRoot
       )
     end
 
-    def pest_api_ai_update_interactor(current_user:)
+    def pest_ai_update_interactor(current_user:)
       uid = current_user.id
       pair = pest_ai_interactors_for(user_id: uid)
-      Domain::Pest::Interactors::PestApiAiUpdateInteractor.new(
+      Domain::Pest::Interactors::PestAiUpdateInteractor.new(
         user_id: uid,
         user_lookup: user_lookup,
         pest_gateway: pest_gateway,
@@ -801,10 +801,10 @@ module CompositionRoot
       )
     end
 
-    def fertilize_api_ai_create_interactor(current_user:)
+    def fertilize_ai_create_interactor(current_user:)
       uid = current_user.id
       pair = fertilize_ai_interactors_for(user_id: uid)
-      Domain::Fertilize::Interactors::FertilizeApiAiCreateInteractor.new(
+      Domain::Fertilize::Interactors::FertilizeAiCreateInteractor.new(
         user_id: uid,
         user_lookup: user_lookup,
         fertilize_gateway: fertilize_gateway,
@@ -816,10 +816,10 @@ module CompositionRoot
       )
     end
 
-    def fertilize_api_ai_update_interactor(current_user:)
+    def fertilize_ai_update_interactor(current_user:)
       uid = current_user.id
       pair = fertilize_ai_interactors_for(user_id: uid)
-      Domain::Fertilize::Interactors::FertilizeApiAiUpdateInteractor.new(
+      Domain::Fertilize::Interactors::FertilizeAiUpdateInteractor.new(
         user_id: uid,
         user_lookup: user_lookup,
         fertilize_gateway: fertilize_gateway,

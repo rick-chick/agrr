@@ -3,8 +3,8 @@
 module Domain
   module Pest
     module Interactors
-      # POST /api/v1/pests/ai_create の取得〜保存〜作物関連付けまで（エッジの runner で AR User を閉じ込める）。
-      class PestApiAiCreateInteractor
+      # agrr 取得〜保存〜作物関連付けまで（エッジの runner で AR User を閉じ込める）。
+      class PestAiCreateInteractor
         def initialize(
           user_id:,
           user_lookup:,

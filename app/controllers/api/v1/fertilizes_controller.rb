@@ -11,7 +11,7 @@ module Api
       # POST /api/v1/fertilizes/ai_create
       # AIで肥料情報を取得して保存
       def ai_create
-        result = CompositionRoot.fertilize_api_ai_create_interactor(current_user: current_user).call(
+        result = CompositionRoot.fertilize_ai_create_interactor(current_user: current_user).call(
           fertilize_query_name: params[:name]
         )
         render json: result.body, status: result.status
@@ -20,7 +20,7 @@ module Api
       # POST /api/v1/fertilizes/:id/ai_update
       # AIで肥料情報を取得して更新（編集時は既存を編集）
       def ai_update
-        result = CompositionRoot.fertilize_api_ai_update_interactor(current_user: current_user).call(
+        result = CompositionRoot.fertilize_ai_update_interactor(current_user: current_user).call(
           fertilize_id: params[:id],
           fertilize_query_name: params[:name]
         )
