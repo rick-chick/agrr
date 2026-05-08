@@ -2,8 +2,7 @@
 
 class AgriculturalTasksController < ApplicationController
   before_action :set_agricultural_task, only: [ :show, :edit, :update ]
-  before_action :load_crop_selection_data, only: [ :edit, :update ]
-  before_action :prepare_crop_cards_for_edit, only: [ :edit ]
+  before_action :load_edit_form_crop_selection, only: [ :edit, :update ]
 
   # GET /agricultural_tasks
   def index
@@ -186,58 +185,38 @@ class AgriculturalTasksController < ApplicationController
     params.require(:agricultural_task).permit(*permitted)
   end
 
-  def load_crop_selection_data
+  def load_edit_form_crop_selection
     return unless action_requires_edit_permission?
 
-    preview_task =
-      if params[:action] == "update"
-        CompositionRoot.agricultural_task_gateway.preview_agricultural_task_for_edit_crop_selection(
-          base_task: @agricultural_task,
-          user: current_user,
-          agricultural_task_params: params.fetch(:agricultural_task, {})
-        )
-      else
-        @agricultural_task
-      end
+    preview_attrs = agricultural_task_attributes_hash_for_crop_preview
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInputDto.new(
+      user_id: current_user.id,
+      agricultural_task_id: params[:id].to_i,
+      controller_action: params[:action].to_s,
+      agricultural_task_attributes_for_preview: preview_attrs,
+      raw_selected_crop_ids: params[:selected_crop_ids],
+      include_crop_cards: params[:action].to_s == "edit"
+    )
 
-    @accessible_crops =
-      if preview_task.is_reference?
-        CompositionRoot.crop_gateway.list_reference_crop_entities(region: preview_task.region.presence)
-      else
-        CompositionRoot.crop_gateway.list_non_reference_crops_for_user_id_ordered(
-          preview_task.user_id,
-          preview_task.region.presence
-        )
-      end
-    @accessible_crop_ids = @accessible_crops.map(&:id)
+    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
+    interactor = CompositionRoot.agricultural_task_edit_form_crop_selection_load_interactor(
+      output_port: presenter,
+      user_id: current_user.id
+    )
+
+    interactor.call(input_dto)
   end
 
-  def prepare_crop_cards_for_edit
-    prepare_crop_cards
-  end
+  def agricultural_task_attributes_hash_for_crop_preview
+    raw = params[:agricultural_task]
+    return {} if raw.nil?
+    return raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h)
 
-  def prepare_crop_cards(selected_ids: nil)
-    return unless defined?(@accessible_crops)
-
-    # 作物詳細画面の紐付けが正しいため、CropTaskTemplate 由来の ID をゲートウェイで取得
-    selected_ids ||= CompositionRoot.agricultural_task_gateway.linked_crop_ids_for_task_templates(@agricultural_task.id)
-    normalized_ids = Array(selected_ids).map(&:to_i).uniq
-
-    @selected_crop_ids = normalized_ids
-    @crop_cards = @accessible_crops.map do |crop|
-      {
-        crop: crop,
-        selected: normalized_ids.include?(crop.id)
-      }
-    end
+    raw.to_h
   end
 
   def selected_crop_ids_from_params
-    return [] unless defined?(@accessible_crop_ids)
-
-    raw_ids = Array(params[:selected_crop_ids]).reject(&:blank?)
-    normalized_ids = raw_ids.map(&:to_i)
-    normalized_ids.select { |id| @accessible_crop_ids.include?(id) }
+    Array(@filtered_selected_crop_ids_from_crop_selection_load)
   end
 
   public
@@ -257,7 +236,14 @@ class AgriculturalTasksController < ApplicationController
       dto: dto,
       task_attributes: task_attributes
     )
-    prepare_crop_cards(selected_ids: selected_crop_ids)
+    return unless defined?(@accessible_crops)
+
+    normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
+    @selected_crop_ids = normalized_ids
+    @crop_cards = Domain::AgriculturalTask::Services::EditFormCropSelectionCards.build(
+      accessible_crops: @accessible_crops,
+      selected_ids: normalized_ids
+    )
   end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
