@@ -11,14 +11,6 @@ module Domain
           @stage_id = stage_id
           @payload = payload
         end
-
-        def self.from_hash(hash)
-          new(
-            crop_id: hash[:crop_id],
-            stage_id: hash[:stage_id],
-            payload: hash[:payload] || {}
-          )
-        end
       end
     end
   end
