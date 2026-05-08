@@ -3,8 +3,8 @@
 module Domain
   module Shared
     module Dtos
-      # API 境界向け: { status: Symbol, body: Hash } をドメインからコントローラへ返すための値オブジェクト。
-      class ApiJsonResult
+      # HTTP JSON 応答向け: { status: Symbol, body: Hash } をドメインからアプリケーションエッジへ返す値オブジェクト。
+      class HttpJsonEnvelope
         attr_reader :status, :body
 
         def initialize(status:, body:)

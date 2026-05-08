@@ -29,11 +29,11 @@ module Domain
 
         # @param pest_name [String, nil]
         # @param affected_crops [Array<Hash>] crop_id / crop_name を含む素のハッシュ（コントローラで Parameters を除去済み）
-        # @return [Domain::Shared::Dtos::ApiJsonResult]
+        # @return [Domain::Shared::Dtos::HttpJsonEnvelope]
         def call(pest_name:, affected_crops:)
           user = @user_lookup.find(@user_id)
           if user.anonymous?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :unauthorized,
               body: { error: @translator.t("auth.api.login_required") }
             )
@@ -41,7 +41,7 @@ module Domain
 
           pn = pest_name&.strip
           if pn.nil? || pn.empty?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :bad_request,
               body: { error: @translator.t("api.errors.pests.name_required", default: "害虫名を入力してください") }
             )
@@ -102,7 +102,7 @@ module Domain
 
           unless result.success?
             @logger.error "❌ [AI Pest] Failed to #{existing_pest ? 'update' : 'create'}: #{result.error}"
-            return Domain::Shared::Dtos::ApiJsonResult.new(status: :unprocessable_entity, body: { error: result.error })
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: result.error })
           end
 
           pest_entity = result.data
@@ -124,7 +124,7 @@ module Domain
             @logger.warn "⚠️  [AI Pest] Skipping crop association: affected_crops is empty or not an array"
           end
 
-          Domain::Shared::Dtos::ApiJsonResult.new(
+          Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: status_code,
             body: {
               success: true,

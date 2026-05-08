@@ -24,7 +24,7 @@ module Domain
         def call(crop_name:, variety: nil)
           user = @user_lookup.find(@user_id)
           if user.anonymous?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :unauthorized,
               body: { error: @translator.t("auth.api.login_required") }
             )
@@ -32,7 +32,7 @@ module Domain
 
           cn = crop_name&.strip
           if cn.nil? || cn.empty?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :bad_request,
               body: { error: @translator.t("api.errors.crops.name_required") }
             )
@@ -43,7 +43,7 @@ module Domain
 
           crop_info, agrr_failure = @crop_ai_query_gateway.fetch_crop_json(cn)
           if agrr_failure
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: agrr_failure.fetch(:status),
               body: { error: agrr_failure.fetch(:message) }
             )

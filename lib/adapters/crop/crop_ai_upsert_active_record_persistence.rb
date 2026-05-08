@@ -21,7 +21,7 @@ module Adapters
         unless dummy_crop.valid?
           validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
           if validation_error
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :unprocessable_entity,
               body: { error: validation_error }
             )
@@ -30,7 +30,7 @@ module Adapters
 
         if crop_info["success"] == false
           error_msg = crop_info["error"] || @translator.t("api.errors.crops.fetch_failed")
-          return Domain::Shared::Dtos::ApiJsonResult.new(
+          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: :unprocessable_entity,
             body: { error: error_msg }
           )
@@ -40,7 +40,7 @@ module Adapters
         stage_requirements = crop_info["stage_requirements"]
 
         unless crop_data
-          return Domain::Shared::Dtos::ApiJsonResult.new(
+          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: :unprocessable_entity,
             body: { error: @translator.t("api.errors.crops.invalid_payload") }
           )
@@ -59,7 +59,7 @@ module Adapters
       rescue StandardError => e
         @logger.error "❌ [AI Crop] Error in persistence: #{e.message}"
         @logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-        Domain::Shared::Dtos::ApiJsonResult.new(
+        Domain::Shared::Dtos::HttpJsonEnvelope.new(
           status: :internal_server_error,
           body: { error: @translator.t("api.errors.crops.fetch_failed_with_reason", message: e.message) }
         )
@@ -105,7 +105,7 @@ module Adapters
           end
         end
 
-        Domain::Shared::Dtos::ApiJsonResult.new(
+        Domain::Shared::Dtos::HttpJsonEnvelope.new(
           status: :ok,
           body: {
             success: true,
@@ -161,7 +161,7 @@ module Adapters
         end
 
         unless result&.success?
-          return Domain::Shared::Dtos::ApiJsonResult.new(
+          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: :unprocessable_entity,
             body: { error: result&.error }
           )
@@ -172,7 +172,7 @@ module Adapters
           @logger.info "🌱 [AI Crop] Saved #{saved_stages} stages for crop##{crop_entity.id}"
         end
 
-        Domain::Shared::Dtos::ApiJsonResult.new(
+        Domain::Shared::Dtos::HttpJsonEnvelope.new(
           status: :created,
           body: {
             success: true,

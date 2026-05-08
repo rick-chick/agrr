@@ -23,13 +23,13 @@ module Domain
           @translator = translator
         end
 
-        # @return [Domain::Shared::Dtos::ApiJsonResult]
+        # @return [Domain::Shared::Dtos::HttpJsonEnvelope]
         def call(fertilize_id:, fertilize_query_name:)
           user = @user_lookup.find(@user_id)
 
           fertilize_name = fertilize_query_name&.strip
           if fertilize_name.nil? || fertilize_name.empty?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :bad_request,
               body: { error: @translator.t("api.errors.fertilizes.name_required") }
             )
@@ -37,7 +37,7 @@ module Domain
 
           fertilize_record = load_authorized_fertilize(user, fertilize_id)
           unless fertilize_record
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :not_found,
               body: { error: @translator.t("api.errors.fertilizes.not_found", default: "肥料が見つかりません") }
             )
@@ -49,12 +49,12 @@ module Domain
           if fertilize_info["success"] == false
             error_msg = fertilize_info["error"] || @translator.t("api.errors.fertilizes.fetch_failed")
             status_code = fertilize_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
-            return Domain::Shared::Dtos::ApiJsonResult.new(status: status_code, body: { error: error_msg })
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: status_code, body: { error: error_msg })
           end
 
           fertilize_data = Domain::Fertilize::Services::FertilizeAiAgrrPayloadNormalizer.normalize_fertilize_payload(fertilize_info)
           unless fertilize_data
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :unprocessable_entity,
               body: { error: @translator.t("api.errors.fertilizes.invalid_payload") }
             )
@@ -77,13 +77,13 @@ module Domain
 
           unless result.success?
             @logger.error "❌ [AI Fertilize] Failed to update: #{result.error}"
-            return Domain::Shared::Dtos::ApiJsonResult.new(status: :unprocessable_entity, body: { error: result.error })
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: result.error })
           end
 
           fertilize_entity = result.data
           @logger.info "✅ [AI Fertilize] Updated fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
 
-          Domain::Shared::Dtos::ApiJsonResult.new(
+          Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: :ok,
             body: {
               success: true,

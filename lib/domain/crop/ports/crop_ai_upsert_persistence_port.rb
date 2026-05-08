@@ -7,7 +7,7 @@ module Domain
       # 実装: {Adapters::Crop::CropAiUpsertActiveRecordPersistence}
       #
       # @!method upsert(user_dto:, crop_name:, variety:, crop_info:)
-      #   @return [Domain::Shared::Dtos::ApiJsonResult]
+      #   @return [Domain::Shared::Dtos::HttpJsonEnvelope]
       module CropAiUpsertPersistencePort
       end
     end

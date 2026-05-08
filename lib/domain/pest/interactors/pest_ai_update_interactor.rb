@@ -23,13 +23,13 @@ module Domain
           @translator = translator
         end
 
-        # @return [Domain::Shared::Dtos::ApiJsonResult]
+        # @return [Domain::Shared::Dtos::HttpJsonEnvelope]
         def call(pest_id:, pest_query_name:)
           user = @user_lookup.find(@user_id)
 
           pn = pest_query_name&.strip
           if pn.nil? || pn.empty?
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :bad_request,
               body: { error: @translator.t("api.errors.pests.name_required", default: "害虫名を入力してください") }
             )
@@ -37,7 +37,7 @@ module Domain
 
           pest_record = load_authorized_pest(user, pest_id)
           unless pest_record
-            return Domain::Shared::Dtos::ApiJsonResult.new(
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :not_found,
               body: { error: @translator.t("api.errors.pests.not_found", default: "害虫が見つかりません") }
             )
@@ -73,13 +73,13 @@ module Domain
 
           unless result.success?
             @logger.error "❌ [AI Pest] Failed to update: #{result.error}"
-            return Domain::Shared::Dtos::ApiJsonResult.new(status: :unprocessable_entity, body: { error: result.error })
+            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: result.error })
           end
 
           pest_entity = result.data
           @logger.info "✅ [AI Pest] Updated pest##{pest_entity.id}: #{pest_entity.name}"
 
-          Domain::Shared::Dtos::ApiJsonResult.new(
+          Domain::Shared::Dtos::HttpJsonEnvelope.new(
             status: :ok,
             body: {
               success: true,

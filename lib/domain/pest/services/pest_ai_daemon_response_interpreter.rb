@@ -11,7 +11,7 @@ module Domain
           def interpret(pest_info, translator:, validate_affected_crops_shape:)
             if pest_info["error_response"]
               return Interpretation.new(
-                error_result: Domain::Shared::Dtos::ApiJsonResult.new(
+                error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(
                   status: pest_info["http_status"],
                   body: { error: pest_info["message"] }
                 ),
@@ -24,7 +24,7 @@ module Domain
               error_msg = pest_info["error"] || translator.t("api.errors.pests.fetch_failed", default: "害虫情報の取得に失敗しました")
               status_code = pest_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
               return Interpretation.new(
-                error_result: Domain::Shared::Dtos::ApiJsonResult.new(status: status_code, body: { error: error_msg }),
+                error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(status: status_code, body: { error: error_msg }),
                 pest_data: nil,
                 affected_crops_from_agrr: nil
               )
@@ -33,7 +33,7 @@ module Domain
             pest_data = pest_info["data"]&.dig("pest")
             unless pest_data
               return Interpretation.new(
-                error_result: Domain::Shared::Dtos::ApiJsonResult.new(
+                error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(
                   status: :unprocessable_entity,
                   body: { error: translator.t("api.errors.pests.invalid_payload", default: "不正なデータ形式です") }
                 ),
@@ -49,7 +49,7 @@ module Domain
                 default: "agrr応答のaffected_cropsが不正です"
               )
               return Interpretation.new(
-                error_result: Domain::Shared::Dtos::ApiJsonResult.new(status: :unprocessable_entity, body: { error: message }),
+                error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: message }),
                 pest_data: nil,
                 affected_crops_from_agrr: nil
               )
