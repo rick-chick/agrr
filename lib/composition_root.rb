@@ -90,8 +90,7 @@ module CompositionRoot
 
     def pest_gateway
       @pest_gateway ||= Adapters::Pest::Gateways::PestMemoryGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway,
-        translator: translator
+        deletion_undo_gateway: deletion_undo_gateway
       )
     end
 
