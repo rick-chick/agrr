@@ -163,12 +163,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"
         end
 
-        # 公開プラン結果 HTML: 一部圃場に「アイテム付き作業予定」が無いとき警告トーストを出すか（読み取りスナップショット）。
-        # @return [Boolean]
-        def public_plan_results_schedule_warning?(plan_id:)
-          raise NotImplementedError, "Subclasses must implement public_plan_results_schedule_warning?"
-        end
-
         # 公開ウィザード「結果」HTML 用の読み取りスナップショット（存在しなければ nil）
         # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel, nil]
         def public_plan_results_page_read_model(plan_id:)

@@ -743,13 +743,6 @@ module Adapters
           }
         end
 
-        def public_plan_results_schedule_warning?(plan_id:)
-          plan = ::CultivationPlan.find_by(id: plan_id)
-          return false unless plan
-
-          public_plan_schedule_items_coverage_warning?(plan)
-        end
-
         def public_plan_results_page_read_model(plan_id:)
           plan = ::CultivationPlan.includes(
             :farm,
@@ -821,7 +814,7 @@ module Adapters
 
         private
 
-        # `public_plan_results_schedule_warning?` と結果ページ ReadModel の `show_schedule_warning` で共有（SQL 条件は同一）
+        # 結果ページ ReadModel の `show_schedule_warning` 用（SQL 条件は同一）
         def public_plan_schedule_items_coverage_warning?(plan_model)
           total_fc = plan_model.field_cultivations.count
           return false if total_fc.zero?
