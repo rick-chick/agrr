@@ -4,11 +4,10 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleListInteractor < Domain::InteractionRule::Ports::InteractionRuleListInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
-          @logger = logger
           @user_lookup = user_lookup
         end
 

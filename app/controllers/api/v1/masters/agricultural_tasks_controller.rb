@@ -14,7 +14,7 @@ module Api
         def index
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskListPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -23,7 +23,7 @@ module Api
           input_valid?(:show) || return
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskDetailPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -36,7 +36,7 @@ module Api
           end
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskCreatePresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -46,7 +46,7 @@ module Api
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Presenters::Api::AgriculturalTask::AgriculturalTaskUpdatePresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

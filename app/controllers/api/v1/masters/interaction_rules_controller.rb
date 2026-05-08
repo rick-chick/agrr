@@ -17,7 +17,6 @@ module Api
             output_port: presenter,
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
-            logger: logger_adapter,
             user_lookup: user_lookup_adapter
           ).call
         end
@@ -30,7 +29,6 @@ module Api
             output_port: presenter,
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
-            logger: logger_adapter,
             user_lookup: user_lookup_adapter
           ).call(params[:id])
         end
@@ -47,7 +45,6 @@ module Api
             output_port: presenter,
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
-            logger: logger_adapter,
             translator: translator,
             user_lookup: user_lookup_adapter
           ).call(input_dto)
@@ -62,7 +59,6 @@ module Api
             output_port: presenter,
             user_id: current_user.id,
             gateway: interaction_rule_gateway,
-            logger: logger_adapter,
             translator: translator,
             user_lookup: user_lookup_adapter
           ).call(input_dto)

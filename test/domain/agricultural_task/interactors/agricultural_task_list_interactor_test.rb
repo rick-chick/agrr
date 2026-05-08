@@ -30,7 +30,6 @@ module Domain
             output_port: output,
             user_id: 1,
             gateway: gateway,
-            logger: mock,
             user_lookup: user_lookup
           )
           interactor.call
@@ -53,7 +52,6 @@ module Domain
             output_port: output,
             user_id: 1,
             gateway: gateway,
-            logger: mock,
             user_lookup: user_lookup
           )
           interactor.call
@@ -77,7 +75,6 @@ module Domain
             output_port: output,
             user_id: 1,
             gateway: gateway,
-            logger: mock,
             user_lookup: user_lookup
           )
           interactor.call

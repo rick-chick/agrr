@@ -26,7 +26,6 @@ module Domain
             output_port: output_port,
             user_id: user_id,
             gateway: gateway,
-            logger: Object.new,
             user_lookup: user_lookup
           )
 
@@ -59,7 +58,6 @@ module Domain
             output_port: output_port,
             user_id: user_id,
             gateway: gateway,
-            logger: Object.new,
             user_lookup: user_lookup
           )
 
