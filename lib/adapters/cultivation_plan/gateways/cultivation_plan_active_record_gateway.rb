@@ -743,7 +743,7 @@ module Adapters
           }
         end
 
-        def public_plan_results_page_read_model(plan_id:)
+        def public_plan_results_read_model(plan_id:)
           plan = ::CultivationPlan.includes(
             :farm,
             cultivation_plan_fields: [],
@@ -794,7 +794,7 @@ module Adapters
           ::CultivationPlan.find_by(id: plan_id).present?
         end
 
-        def public_plan_html_save_session_payload(plan_id:, farm_id:, crop_ids:)
+        def public_plan_wizard_save_session_payload(plan_id:, farm_id:, crop_ids:)
           plan = ::CultivationPlan.find_by(id: plan_id)
           return nil unless plan
 

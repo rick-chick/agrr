@@ -22,7 +22,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
     )
 
     gateway = mock
-    gateway.expects(:public_plan_results_page_read_model).with(plan_id: 5).returns(read_model)
+    gateway.expects(:public_plan_results_read_model).with(plan_id: 5).returns(read_model)
 
     output = mock
     output.expects(:on_success).with(read_model)
@@ -35,7 +35,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
 
   test "call invokes on_not_found when plan_id is nil" do
     gateway = mock
-    gateway.expects(:public_plan_results_page_read_model).never
+    gateway.expects(:public_plan_results_read_model).never
 
     output = mock
     output.expects(:on_not_found)
@@ -48,7 +48,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
 
   test "call invokes on_not_found when plan_id is not positive" do
     gateway = mock
-    gateway.expects(:public_plan_results_page_read_model).never
+    gateway.expects(:public_plan_results_read_model).never
 
     output = mock
     output.expects(:on_not_found)
@@ -61,7 +61,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
 
   test "call invokes on_not_found when gateway returns nil" do
     gateway = mock
-    gateway.expects(:public_plan_results_page_read_model).with(plan_id: 9).returns(nil)
+    gateway.expects(:public_plan_results_read_model).with(plan_id: 9).returns(nil)
 
     output = mock
     output.expects(:on_not_found)
@@ -91,7 +91,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
     )
 
     gateway = mock
-    gateway.expects(:public_plan_results_page_read_model).with(plan_id: 3).returns(read_model)
+    gateway.expects(:public_plan_results_read_model).with(plan_id: 3).returns(read_model)
 
     output = mock
     output.expects(:redirect_to_optimizing)

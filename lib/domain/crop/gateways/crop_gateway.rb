@@ -157,23 +157,23 @@ module Domain
         end
 
         # HTML マスタ: 新規フォーム用の未保存 Crop（永続化しない）
-        def build_blank_crop_for_html_form
-          raise NotImplementedError, "Subclasses must implement build_blank_crop_for_html_form"
+        def build_blank_crop_for_master_form
+          raise NotImplementedError, "Subclasses must implement build_blank_crop_for_master_form"
         end
 
         # HTML マスタ: create 失敗時の再描画用に属性を載せた未保存 Crop（永続化しない）
-        def build_new_crop_with_attributes_for_html_form(attributes:)
-          raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_html_form"
+        def build_new_crop_with_attributes_for_master_form(attributes:)
+          raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_master_form"
         end
 
         # HTML マスタ: edit フォーム表示前にネスト用の空関連を補う（既に認可済みのレコードを変更）
-        def prepare_crop_record_for_edit_html_form!(crop)
-          raise NotImplementedError, "Subclasses must implement prepare_crop_record_for_edit_html_form!"
+        def prepare_crop_record_for_edit_master_form!(crop)
+          raise NotImplementedError, "Subclasses must implement prepare_crop_record_for_edit_master_form!"
         end
 
         # HTML マスタ: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
-        def merge_edit_crop_params_for_html_form!(user:, crop_id:, attributes:)
-          raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_html_form!"
+        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)
+          raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_master_form!"
         end
 
         # マスター: 作物と CropStage を一度の作物読み込みで束ねる（before_action 二重取得の回避）。

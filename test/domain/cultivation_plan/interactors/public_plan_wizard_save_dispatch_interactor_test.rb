@@ -42,7 +42,7 @@ module Domain
 
         test "on_save_payload_unavailable when gateway returns nil payload" do
           @cultivation_gateway.expects(:public_plan_wizard_plan_exists?).with(plan_id: 9).returns(true)
-          @cultivation_gateway.expects(:public_plan_html_save_session_payload).returns(nil)
+          @cultivation_gateway.expects(:public_plan_wizard_save_session_payload).returns(nil)
           @output_port.expects(:on_save_payload_unavailable).with(plan_id: 9).once
 
           PublicPlanWizardSaveDispatchInteractor.new(
@@ -57,7 +57,7 @@ module Domain
         test "on_requires_login when user is nil" do
           payload = { "plan_id" => 9 }
           @cultivation_gateway.expects(:public_plan_wizard_plan_exists?).returns(true)
-          @cultivation_gateway.expects(:public_plan_html_save_session_payload).returns(payload)
+          @cultivation_gateway.expects(:public_plan_wizard_save_session_payload).returns(payload)
           @output_port.expects(:on_requires_login).with(session_data: payload).once
 
           PublicPlanWizardSaveDispatchInteractor.new(
@@ -76,7 +76,7 @@ module Domain
           end
           payload = { "plan_id" => 9 }
           @cultivation_gateway.expects(:public_plan_wizard_plan_exists?).returns(true)
-          @cultivation_gateway.expects(:public_plan_html_save_session_payload).returns(payload)
+          @cultivation_gateway.expects(:public_plan_wizard_save_session_payload).returns(payload)
 
           inner = mock("save_from_session")
           inner.expects(:call).with(user: user, session_data: payload)

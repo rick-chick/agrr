@@ -29,7 +29,7 @@ module Domain
             return
           end
 
-          payload = @cultivation_plan_gateway.public_plan_html_save_session_payload(
+          payload = @cultivation_plan_gateway.public_plan_wizard_save_session_payload(
             plan_id: plan_id,
             farm_id: farm_id,
             crop_ids: crop_ids

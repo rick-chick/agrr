@@ -16,7 +16,7 @@ module Domain
             return
           end
 
-          read_model = @gateway.public_plan_results_page_read_model(plan_id: plan_id)
+          read_model = @gateway.public_plan_results_read_model(plan_id: plan_id)
           if read_model.nil?
             @output_port.on_not_found
             return

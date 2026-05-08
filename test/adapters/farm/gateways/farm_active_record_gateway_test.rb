@@ -232,17 +232,17 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal farm.id, ctx.farm_id
   end
 
-  test "build_blank_farm_for_html_form! returns new unsaved farm for user" do
-    farm = @gateway.build_blank_farm_for_html_form!(user_id: @user.id)
+  test "build_blank_farm_for_master_form! returns new unsaved farm for user" do
+    farm = @gateway.build_blank_farm_for_master_form!(user_id: @user.id)
 
     assert_instance_of ::Farm, farm
     assert farm.new_record?
     assert_equal @user.id, farm.user_id
   end
 
-  test "build_blank_farm_for_html_form! raises domain RecordNotFound when user missing" do
+  test "build_blank_farm_for_master_form! raises domain RecordNotFound when user missing" do
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.build_blank_farm_for_html_form!(user_id: 999_999_999)
+      @gateway.build_blank_farm_for_master_form!(user_id: 999_999_999)
     end
   end
 end

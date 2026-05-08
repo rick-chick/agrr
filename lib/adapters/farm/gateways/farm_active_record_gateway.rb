@@ -220,7 +220,7 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
 
-        def build_blank_farm_for_html_form!(user_id:)
+        def build_blank_farm_for_master_form!(user_id:)
           ::User.find(user_id).farms.build
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message

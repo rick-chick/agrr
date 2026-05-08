@@ -19,13 +19,13 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides/new
   def new
-    @pesticide = CompositionRoot.pesticide_gateway.build_blank_pesticide_for_html_form
+    @pesticide = CompositionRoot.pesticide_gateway.build_blank_pesticide_for_master_form
     load_crops_and_pests
   end
 
   # GET /pesticides/:id/edit
   def edit
-    CompositionRoot.pesticide_gateway.ensure_nested_associations_for_pesticide_html_form!(@pesticide)
+    CompositionRoot.pesticide_gateway.ensure_nested_associations_for_pesticide_master_form!(@pesticide)
     load_crops_and_pests
   end
 
@@ -35,7 +35,7 @@ class PesticidesController < ApplicationController
     presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: self)
 
     # 失敗時にフォーム再表示するために @pesticide をセット
-    @pesticide = CompositionRoot.pesticide_gateway.build_pesticide_for_create_failure_html_form(
+    @pesticide = CompositionRoot.pesticide_gateway.build_pesticide_for_create_failure_master_form(
       pesticide_params.to_unsafe_h.deep_symbolize_keys
     )
 
@@ -49,7 +49,7 @@ class PesticidesController < ApplicationController
     presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: self)
 
     # 失敗時にフォーム再表示するために @pesticide を更新
-    CompositionRoot.pesticide_gateway.assign_pesticide_attributes_for_html_form!(
+    CompositionRoot.pesticide_gateway.assign_pesticide_attributes_for_master_form!(
       @pesticide,
       pesticide_params.to_unsafe_h.deep_symbolize_keys
     )
@@ -98,8 +98,8 @@ class PesticidesController < ApplicationController
 
   def load_crops_and_pests
     gw = CompositionRoot.pesticide_gateway
-    @crops = gw.accessible_crops_scope_for_pesticide_html_form(user: current_user)
-    @pests = gw.accessible_pests_scope_for_pesticide_html_form(user: current_user)
+    @crops = gw.accessible_crops_scope_for_pesticide_master_form(user: current_user)
+    @pests = gw.accessible_pests_scope_for_pesticide_master_form(user: current_user)
   end
 
   def pesticide_params

@@ -35,7 +35,7 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/new
   def new
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_blank_agricultural_task_for_html_form(current_user)
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_blank_agricultural_task_for_master_form(current_user)
   end
 
   # GET /agricultural_tasks/:id/edit
@@ -111,7 +111,7 @@ class AgriculturalTasksController < ApplicationController
 
   def after_agricultural_task_create_failure
     task_attributes = build_task_attributes
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_after_create_failure_agricultural_task_for_html_form!(
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_after_create_failure_agricultural_task_for_master_form!(
       user: current_user,
       attributes: task_attributes
     )
@@ -220,7 +220,7 @@ class AgriculturalTasksController < ApplicationController
     selected_crop_ids = form_resubmit[:selected_crop_ids]
     return unless dto && params[:id]
 
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.merge_update_form_snapshot_for_html_form!(
+    @agricultural_task = CompositionRoot.agricultural_task_gateway.merge_update_form_snapshot_for_master_form!(
       user: current_user,
       task_id: params[:id],
       dto: dto,

@@ -135,11 +135,11 @@ module Adapters
           ::CropTaskTemplate.where(agricultural_task_id: agricultural_task_id.to_i).pluck(:crop_id)
         end
 
-        def build_blank_agricultural_task_for_html_form(user)
+        def build_blank_agricultural_task_for_master_form(user)
           user.agricultural_tasks.build
         end
 
-        def build_after_create_failure_agricultural_task_for_html_form!(user:, attributes:)
+        def build_after_create_failure_agricultural_task_for_master_form!(user:, attributes:)
           sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
           task = user.agricultural_tasks.build(
             name: sym[:name],
@@ -155,7 +155,7 @@ module Adapters
           task
         end
 
-        def merge_update_form_snapshot_for_html_form!(user:, task_id:, dto:, task_attributes:)
+        def merge_update_form_snapshot_for_master_form!(user:, task_id:, dto:, task_attributes:)
           task = find_authorized_task_model_for_edit(user, task_id.to_i)
           ta = task_attributes.respond_to?(:symbolize_keys) ? task_attributes.symbolize_keys : task_attributes.to_h.symbolize_keys
           task.assign_attributes(

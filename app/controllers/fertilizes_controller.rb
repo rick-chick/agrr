@@ -21,7 +21,7 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes/new
   def new
-    @fertilize = CompositionRoot.fertilize_gateway.build_blank_fertilize_for_html_form
+    @fertilize = CompositionRoot.fertilize_gateway.build_blank_fertilize_for_master_form
   end
 
   # GET /fertilizes/:id/edit

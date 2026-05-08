@@ -56,7 +56,7 @@ class FarmsController < ApplicationController
 
   # GET /farms/new
   def new
-    @farm = CompositionRoot.farm_gateway.build_blank_farm_for_html_form!(user_id: current_user.id)
+    @farm = CompositionRoot.farm_gateway.build_blank_farm_for_master_form!(user_id: current_user.id)
   end
 
   # GET /farms/:id/edit

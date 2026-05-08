@@ -163,7 +163,7 @@ module Adapters
           ::Fertilize.find_by(name: name, is_reference: false, user_id: user_id)
         end
 
-        def build_blank_fertilize_for_html_form
+        def build_blank_fertilize_for_master_form
           ::Fertilize.new
         end
 

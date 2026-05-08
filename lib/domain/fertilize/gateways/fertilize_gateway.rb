@@ -58,8 +58,8 @@ module Domain
         end
 
         # HTML フォーム用の未保存肥料レコード（保存しない）。
-        def build_blank_fertilize_for_html_form
-          raise NotImplementedError, "Subclasses must implement build_blank_fertilize_for_html_form"
+        def build_blank_fertilize_for_master_form
+          raise NotImplementedError, "Subclasses must implement build_blank_fertilize_for_master_form"
         end
       end
     end

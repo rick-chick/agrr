@@ -165,8 +165,8 @@ module Domain
 
         # 公開ウィザード「結果」HTML 用の読み取りスナップショット（存在しなければ nil）
         # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel, nil]
-        def public_plan_results_page_read_model(plan_id:)
-          raise NotImplementedError, "Subclasses must implement public_plan_results_page_read_model"
+        def public_plan_results_read_model(plan_id:)
+          raise NotImplementedError, "Subclasses must implement public_plan_results_read_model"
         end
 
         # ウィザード文脈で計画 id が参照可能か（`CultivationPlan` 全体からの存在）
@@ -177,8 +177,8 @@ module Domain
 
         # HTML 経由の公開プラン保存: ウィザード session の farm_id / crop_ids と計画 id からセッション保存用ペイロードを組み立てる（計画なしは nil）
         # @return [Hash, nil] `plan_id`, `farm_id`, `crop_ids`, `field_data`（各 field は `name`, `area`, `coordinates`）
-        def public_plan_html_save_session_payload(plan_id:, farm_id:, crop_ids:)
-          raise NotImplementedError, "Subclasses must implement public_plan_html_save_session_payload"
+        def public_plan_wizard_save_session_payload(plan_id:, farm_id:, crop_ids:)
+          raise NotImplementedError, "Subclasses must implement public_plan_wizard_save_session_payload"
         end
       end
     end

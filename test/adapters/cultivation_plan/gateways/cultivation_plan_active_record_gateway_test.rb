@@ -324,16 +324,16 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     end
   end
 
-  test "public_plan_results_page_read_model show_schedule_warning is false when plan has no field cultivations" do
+  test "public_plan_results_read_model show_schedule_warning is false when plan has no field cultivations" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
 
-    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
     assert_not_nil rm
     assert_equal false, rm.show_schedule_warning
   end
 
-  test "public_plan_results_page_read_model show_schedule_warning is false when every field cultivation has schedule with items" do
+  test "public_plan_results_read_model show_schedule_warning is false when every field cultivation has schedule with items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -343,12 +343,12 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
     create(:task_schedule_item, task_schedule: schedule)
 
-    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
     assert_not_nil rm
     assert_equal false, rm.show_schedule_warning
   end
 
-  test "public_plan_results_page_read_model show_schedule_warning is true when some field cultivation lacks schedule items" do
+  test "public_plan_results_read_model show_schedule_warning is true when some field cultivation lacks schedule items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -360,12 +360,12 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc1)
     create(:task_schedule_item, task_schedule: schedule)
 
-    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
     assert_not_nil rm
     assert_equal true, rm.show_schedule_warning
   end
 
-  test "public_plan_results_page_read_model show_schedule_warning is true when schedule has no items" do
+  test "public_plan_results_read_model show_schedule_warning is true when schedule has no items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -374,20 +374,20 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     fc = create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
     create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
 
-    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
     assert_not_nil rm
     assert_equal true, rm.show_schedule_warning
   end
 
-  test "public_plan_html_save_session_payload returns nil when plan missing" do
-    assert_nil @gateway.public_plan_html_save_session_payload(plan_id: 9_999_999, farm_id: 1, crop_ids: [ 2 ])
+  test "public_plan_wizard_save_session_payload returns nil when plan missing" do
+    assert_nil @gateway.public_plan_wizard_save_session_payload(plan_id: 9_999_999, farm_id: 1, crop_ids: [ 2 ])
   end
 
-  test "public_plan_html_save_session_payload mirrors field_data and passes session ids through" do
+  test "public_plan_wizard_save_session_payload mirrors field_data and passes session ids through" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     create(:cultivation_plan_field, cultivation_plan: plan, name: "North", area: 50.5, daily_fixed_cost: 1)
-    payload = @gateway.public_plan_html_save_session_payload(plan_id: plan.id, farm_id: 99, crop_ids: [ 7, 8 ])
+    payload = @gateway.public_plan_wizard_save_session_payload(plan_id: plan.id, farm_id: 99, crop_ids: [ 7, 8 ])
 
     assert_equal plan.id, payload[:plan_id]
     assert_equal 99, payload[:farm_id]
@@ -411,11 +411,11 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_equal true, @gateway.public_plan_wizard_plan_exists?(plan_id: plan.id)
   end
 
-  test "public_plan_results_page_read_model returns nil when plan missing" do
-    assert_nil @gateway.public_plan_results_page_read_model(plan_id: 9_999_999_999)
+  test "public_plan_results_read_model returns nil when plan missing" do
+    assert_nil @gateway.public_plan_results_read_model(plan_id: 9_999_999_999)
   end
 
-  test "public_plan_results_page_read_model returns snapshot with gantt rows and palette" do
+  test "public_plan_results_read_model returns snapshot with gantt rows and palette" do
     farm = create(:farm, region: "jp")
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm, total_cost: 100, total_revenue: 200, total_profit: 100)
     crop = create(:crop, :reference, region: "jp", name: "Alpha Crop")
@@ -423,7 +423,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     field = create(:cultivation_plan_field, cultivation_plan: plan, name: "Plot1", area: 10)
     create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
 
-    rm = @gateway.public_plan_results_page_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
     assert_not_nil rm
     assert_equal plan.id, rm.plan_id
     assert_equal true, rm.status_completed

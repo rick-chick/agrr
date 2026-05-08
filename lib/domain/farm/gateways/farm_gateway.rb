@@ -92,8 +92,8 @@ module Domain
 
         # HTML `farms#new` 用。`User` の `farms` に `build` した未保存 `Farm` を返す（AR はアダプタ内のみ）。
         # `user_id` はログイン済みユーザー。
-        def build_blank_farm_for_html_form!(user_id:)
-          raise NotImplementedError, "Subclasses must implement build_blank_farm_for_html_form!"
+        def build_blank_farm_for_master_form!(user_id:)
+          raise NotImplementedError, "Subclasses must implement build_blank_farm_for_master_form!"
         end
 
         def update_for_user(user, id, attrs)
