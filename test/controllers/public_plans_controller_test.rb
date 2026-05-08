@@ -165,7 +165,6 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # Step 6: 最適化処理の実行（バックグラウンドジョブ）
     # 注意: 実際の最適化処理は複雑な依存関係があるため、ここではスキップ
     # 代わりに、最適化画面が表示されることを確認
-    # OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: 'OptimizationChannel')
 
     # Step 7: 結果画面の表示（完了済みの場合）
     if cultivation_plan.status == "completed"

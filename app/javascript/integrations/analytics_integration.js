@@ -2,15 +2,11 @@
  * 既存のJavaScriptファイルにGA4トラッキングを統合
  */
 
-import { 
+import {
   trackGanttCropClick,
   trackClimateDataView,
   trackPlanCreationStart,
-  trackFarmSizeSelection,
-  trackCropSelection,
-  trackOptimizationStart,
-  trackPlanCompleted,
-  trackAICropInfoRequest
+  trackFarmSizeSelection
 } from '../analytics.js';
 
 /**
