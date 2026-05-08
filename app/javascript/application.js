@@ -7,7 +7,7 @@ import "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./cable_subscription"; // Action Cable サブスクリプション
 
-// Chart.jsをグローバルに登録（cultivation_results.jsとtemperature_chart.jsで使用）
+// Chart.jsをグローバルに登録（temperature_chart.js / climate_chart.js で使用）
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
@@ -22,8 +22,6 @@ import "./climate_chart"; // Chart.js使用（バンドル必須）
 
 // 以下はpropshaftで直接配信（バンドルしない、レイアウトで個別読み込み）
 // - crop_form.js
-// - progress_bar.js
-// - cultivation_results.js
 // - custom_gantt_chart.js
 // - optimizing.js (ActionCableはグローバルで利用可能)
 

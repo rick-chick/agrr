@@ -64,19 +64,6 @@ module ApplicationHelper
       js_crop_daily_uptake_p_placeholder: t("js.crop_form.daily_uptake_p_placeholder"),
       js_crop_daily_uptake_k_placeholder: t("js.crop_form.daily_uptake_k_placeholder"),
 
-      # cultivation_results.js messages
-      js_cultivation_load_error: t("js.cultivation_results.load_error"),
-      js_cultivation_data_error: t("js.cultivation_results.data_error"),
-      js_cultivation_temp_max_label: t("js.cultivation_results.temp_max_label"),
-      js_cultivation_temp_mean_label: t("js.cultivation_results.temp_mean_label"),
-      js_cultivation_temp_min_label: t("js.cultivation_results.temp_min_label"),
-      js_cultivation_optimal_range_label: t("js.cultivation_results.optimal_range_label"),
-      js_cultivation_date_label: t("js.cultivation_results.date_label"),
-      js_cultivation_temp_axis_label: t("js.cultivation_results.temp_axis_label"),
-      js_cultivation_gdd_label: t("js.cultivation_results.gdd_label"),
-      js_cultivation_gdd_axis_label: t("js.cultivation_results.gdd_axis_label"),
-      js_cultivation_no_risks: t("js.cultivation_results.no_risks"),
-
       # plans_show.js messages
       js_plans_load_error: t("js.plans.load_error")
     }
@@ -90,10 +77,7 @@ module ApplicationHelper
 
       # custom_gantt_chart.js templates
       js_gantt_confirm_delete_field: t("js.gantt.confirm_delete_field", field_name: "__FIELD_NAME__"),
-      js_gantt_confirm_delete_crop: t("js.gantt.confirm_delete_crop", crop_name: "__CROP_NAME__"),
-
-      # cultivation_results.js templates
-      js_cultivation_gdd_target_label: t("js.cultivation_results.gdd_target_label", target: "__TARGET__")
+      js_gantt_confirm_delete_crop: t("js.gantt.confirm_delete_crop", crop_name: "__CROP_NAME__")
     }
   end
 
