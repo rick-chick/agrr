@@ -10,7 +10,7 @@ module Api
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
-          output: Presenters::Api::CultivationPlan::ApiAddCropPresenter.new(
+          output: Presenters::Api::CultivationPlan::AddCropPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),

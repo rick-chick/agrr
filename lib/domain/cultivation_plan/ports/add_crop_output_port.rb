@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      class ApiAddCropOutputPort
+      class AddCropOutputPort
         def on_success(plan_crop_id:, plan_crop_display_name:)
           raise NotImplementedError
         end
