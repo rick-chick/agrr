@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Plans
-      class ApiV1PrivatePlansListPresenter
+      class PrivateOwnedPlansListPresenter
         def initialize(view:, translator:)
           @view = view
           @translator = translator

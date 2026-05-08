@@ -6,7 +6,7 @@ module Api
       include Views::Api::CultivationPlan::CultivationPlanDeleteView
 
       def index
-        presenter = Presenters::Api::Plans::ApiV1PrivatePlansListPresenter.new(view: self, translator: translator)
+        presenter = Presenters::Api::Plans::PrivateOwnedPlansListPresenter.new(view: self, translator: translator)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlansListInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
