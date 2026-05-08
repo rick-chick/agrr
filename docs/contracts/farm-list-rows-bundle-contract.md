@@ -29,7 +29,6 @@
 ## Gateway
 
 - **`farm_list_rows_bundle(input_dto)`** → `FarmListRowsBundleDto`（`includes(:fields)` で圃場件数取得、**list + 再 fetch の二重化を避ける**）
-- **補助**: `farm_list_rows_from_entities` — entity 順で行 DTO を再構築。DB に無い id は **`Rails.logger.warn`** のうえスキップ
 
 ## Controller
 

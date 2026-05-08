@@ -119,12 +119,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement farm_list_rows_bundle"
         end
 
-        # カード用の行 DTO（entities の順を維持。AR はアダプタ内のみ）。
-        # 可能なら farm_list_rows_bundle を使う（こちらは補助・他用途向け）。
-        def farm_list_rows_from_entities(entities)
-          raise NotImplementedError, "Subclasses must implement farm_list_rows_from_entities"
-        end
-
         # プライベート計画ウィザード「農場選択」HTML 用の農場選択肢のみ（PageDto は Assembler 側）
         # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto>]
         def private_plan_new_farm_choices(user:)

@@ -134,29 +134,6 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_includes main_ids, ref.id
   end
 
-  test "farm_list_rows_from_entities maps field count and presentation fields" do
-    farm = create(:farm, user: @user, is_reference: false, name: "RowTest")
-    create(:field, farm: farm)
-    entity = Domain::Farm::Entities::FarmEntity.from_hash(
-      id: farm.id,
-      name: farm.name,
-      latitude: farm.latitude,
-      longitude: farm.longitude,
-      region: farm.region,
-      user_id: farm.user_id,
-      created_at: farm.created_at,
-      updated_at: farm.updated_at,
-      is_reference: farm.is_reference
-    )
-
-    rows = @gateway.farm_list_rows_from_entities([ entity ])
-    assert_equal 1, rows.size
-    assert_equal farm.id, rows.first.id
-    assert_equal 1, rows.first.field_count
-    assert_equal "RowTest", rows.first.display_name
-    assert rows.first.weather_data_status.present?
-  end
-
   test "private_plan_new_farm_choices returns empty array when user has no farms" do
     other = create(:user)
     create(:farm, user: other, is_reference: false)

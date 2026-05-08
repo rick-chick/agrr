@@ -40,25 +40,6 @@ module Adapters
           )
         end
 
-        def farm_list_rows_from_entities(entities)
-          return [] if entities.blank?
-
-          ids = entities.map(&:id)
-          records = ::Farm.where(id: ids).includes(:fields)
-          by_id = records.index_by(&:id)
-          entities.filter_map do |entity|
-            record = by_id[entity.id]
-            unless record
-              Rails.logger.warn(
-                "[#{self.class.name}] farm_list_rows_from_entities: Farm id=#{entity.id} missing (stale entity?)"
-              )
-              next nil
-            end
-
-            farm_record_to_farm_list_row_dto(record)
-          end
-        end
-
         def reference_farms_for_admin_list(is_admin:)
           return [] unless is_admin
 
