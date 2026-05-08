@@ -3,15 +3,17 @@
 module Presenters
   module Html
     module Farm
-      class FarmListJsonPresenter < Domain::Farm::Ports::FarmListOutputPort
+      class FarmListJsonPresenter < Domain::Farm::Ports::FarmListRowsBundleOutputPort
         def initialize(view:)
           @view = view
         end
 
-        def on_success(farms, reference_farms: [])
-          farm_rows = farms.is_a?(Array) ? farms.map { |e| farm_entity_to_json(e) } : []
-          ref_rows = reference_farms.is_a?(Array) ? reference_farms.map { |e| farm_entity_to_json(e) } : []
-          @view.render_response(json: { farms: farm_rows, reference_farms: ref_rows }, status: :ok)
+        def on_success(rows_bundle_dto)
+          farm_rows = rows_bundle_dto.farm_rows.is_a?(Array) ? rows_bundle_dto.farm_rows : []
+          ref_rows = rows_bundle_dto.reference_farm_rows.is_a?(Array) ? rows_bundle_dto.reference_farm_rows : []
+          farms = farm_rows.map { |row| farm_list_row_to_json(row) }
+          reference_farms = ref_rows.map { |row| farm_list_row_to_json(row) }
+          @view.render_response(json: { farms: farms, reference_farms: reference_farms }, status: :ok)
         end
 
         def on_failure(err)
@@ -25,17 +27,17 @@ module Presenters
 
         private
 
-        def farm_entity_to_json(entity)
+        def farm_list_row_to_json(row)
           {
-            id: entity.id,
-            name: entity.name,
-            latitude: entity.latitude,
-            longitude: entity.longitude,
-            region: entity.region,
-            user_id: entity.user_id,
-            created_at: entity.created_at,
-            updated_at: entity.updated_at,
-            is_reference: entity.is_reference
+            id: row.id,
+            name: row.display_name,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            region: row.region,
+            user_id: row.user_id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            is_reference: row.is_reference
           }
         end
       end

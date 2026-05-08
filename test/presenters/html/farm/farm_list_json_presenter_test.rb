@@ -3,9 +3,6 @@
 require "test_helper"
 
 class FarmListJsonPresenterTest < ActiveSupport::TestCase
-  FarmStub = Struct.new(:id, :name, :latitude, :longitude, :region, :user_id, :created_at, :updated_at, :is_reference,
-    keyword_init: true)
-
   class FakeView
     attr_reader :json, :status
 
@@ -15,39 +12,38 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
     end
   end
 
-  test "on_success renders farms and reference_farms with ok" do
+  def build_row(id:, name:, is_reference: false, created_at: nil, updated_at: nil)
+    Domain::Farm::Dtos::FarmListRowDto.new(
+      id: id,
+      display_name: name,
+      latitude: 35.0,
+      longitude: 139.0,
+      region: "jp",
+      user_id: 10,
+      is_reference: is_reference,
+      field_count: 0,
+      weather_data_status: "pending",
+      weather_data_progress: 0,
+      weather_data_total_years: 0,
+      weather_data_last_error: nil,
+      created_at: created_at,
+      updated_at: updated_at
+    )
+  end
+
+  test "on_success renders farms and reference_farms from rows bundle with ok" do
     view = FakeView.new
     presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: view)
 
     t = Time.zone.parse("2024-01-15 12:00:00")
-    farms = [
-      FarmStub.new(
-        id: 1,
-        name: "A",
-        latitude: 35.0,
-        longitude: 139.0,
-        region: "jp",
-        user_id: 10,
-        created_at: t,
-        updated_at: t,
-        is_reference: false
-      )
-    ]
-    reference_farms = [
-      FarmStub.new(
-        id: 2,
-        name: "Ref",
-        latitude: 36.0,
-        longitude: 140.0,
-        region: "jp",
-        user_id: 11,
-        created_at: t,
-        updated_at: t,
-        is_reference: true
-      )
-    ]
+    row_main = build_row(id: 1, name: "A", created_at: t, updated_at: t)
+    row_ref = build_row(id: 2, name: "Ref", is_reference: true, created_at: t, updated_at: t)
+    bundle = Domain::Farm::Dtos::FarmListRowsBundleDto.new(
+      farm_rows: [ row_main ],
+      reference_farm_rows: [ row_ref ]
+    )
 
-    presenter.on_success(farms, reference_farms: reference_farms)
+    presenter.on_success(bundle)
 
     assert_equal :ok, view.status
     assert_equal 2, view.json.keys.size
@@ -74,10 +70,10 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
       {
         id: 2,
         name: "Ref",
-        latitude: 36.0,
-        longitude: 140.0,
+        latitude: 35.0,
+        longitude: 139.0,
         region: "jp",
-        user_id: 11,
+        user_id: 10,
         created_at: t,
         updated_at: t,
         is_reference: true
@@ -86,48 +82,48 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
     )
   end
 
-  test "on_success defaults reference_farms to empty when keyword omitted" do
+  test "on_success defaults missing rows to empty arrays" do
     view = FakeView.new
     presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: view)
 
-    t = Time.zone.parse("2024-01-15 12:00:00")
-    farms = [
-      FarmStub.new(
-        id: 1,
-        name: "A",
-        latitude: 35.0,
-        longitude: 139.0,
-        region: "jp",
-        user_id: 10,
-        created_at: t,
-        updated_at: t,
-        is_reference: false
-      )
-    ]
+    bundle = Domain::Farm::Dtos::FarmListRowsBundleDto.new(
+      farm_rows: [],
+      reference_farm_rows: []
+    )
 
-    presenter.on_success(farms)
+    presenter.on_success(bundle)
 
     assert_equal :ok, view.status
     assert_equal [], view.json[:reference_farms]
-    assert_equal 1, view.json[:farms].size
+    assert_equal [], view.json[:farms]
   end
 
-  test "on_success treats non-array farms as empty farms" do
+  test "on_success treats non-array farm_rows as empty farms" do
     view = FakeView.new
     presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: view)
 
-    presenter.on_success(nil, reference_farms: [])
+    bundle = Domain::Farm::Dtos::FarmListRowsBundleDto.new(
+      farm_rows: nil,
+      reference_farm_rows: []
+    )
+
+    presenter.on_success(bundle)
 
     assert_equal :ok, view.status
     assert_equal [], view.json[:farms]
     assert_equal [], view.json[:reference_farms]
   end
 
-  test "on_success treats non-array reference_farms as empty" do
+  test "on_success treats non-array reference_farm_rows as empty" do
     view = FakeView.new
     presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: view)
 
-    presenter.on_success([], reference_farms: nil)
+    bundle = Domain::Farm::Dtos::FarmListRowsBundleDto.new(
+      farm_rows: [],
+      reference_farm_rows: nil
+    )
+
+    presenter.on_success(bundle)
 
     assert_equal :ok, view.status
     assert_equal [], view.json[:reference_farms]

@@ -5,29 +5,24 @@ class FarmsController < ApplicationController
 
   # GET /farms
   def index
+    input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
     respond_to do |format|
       format.html do
-        input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
         presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
+        Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
           gateway: CompositionRoot.farm_gateway
-        )
-
-        interactor.call(input_dto)
+        ).call(input_dto)
       end
 
       format.json do
-        input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
         presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: self)
-        Domain::Farm::Interactors::FarmListInteractor.new(
+        Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
-          gateway: CompositionRoot.farm_gateway,
-          logger: CompositionRoot.logger,
-          translator: CompositionRoot.translator
+          gateway: CompositionRoot.farm_gateway
         ).call(input_dto)
       end
     end

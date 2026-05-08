@@ -350,7 +350,9 @@ module Adapters
             weather_data_status: record.weather_data_status,
             weather_data_progress: record.weather_data_progress,
             weather_data_total_years: record.weather_data_total_years,
-            weather_data_last_error: record.weather_data_last_error
+            weather_data_last_error: record.weather_data_last_error,
+            created_at: record.created_at,
+            updated_at: record.updated_at
           )
         end
 
