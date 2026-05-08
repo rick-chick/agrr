@@ -121,10 +121,10 @@ module Adapters
           transplant_stage_id: tr_st&.id,
           weather_end_date: extract_weather_end
         )
-      rescue AgrrService::DaemonNotRunningError => e
+      rescue ::Agrr::DaemonClient::DaemonNotRunningError => e
         Rails.logger.warn("[EntryScheduleOptimizationGateway] daemon: #{e.message}")
         failed_result(:daemon_unavailable)
-      rescue ::Agrr::BaseGatewayV2::ExecutionError, AgrrService::CommandExecutionError => e
+      rescue ::Agrr::BaseGatewayV2::ExecutionError, ::Agrr::DaemonClient::CommandExecutionError => e
         Rails.logger.warn("[EntryScheduleOptimizationGateway] execution: #{e.class}: #{e.message}")
         failed_result(:execution_failed)
       rescue ::Agrr::BaseGatewayV2::ParseError, ArgumentError, Date::Error, TypeError, JSON::ParserError => e

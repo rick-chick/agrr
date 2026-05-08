@@ -134,7 +134,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
     assert_equal @ref_farm.name, result.cultivation_plan.plan_name, "Plan name should be farm name"
   end
 
-  test "should handle FieldsAllocator with various crop area_per_unit values" do
+  test "should handle FieldsAllocation with various crop area_per_unit values" do
     # 異なるarea_per_unit値を持つ作物でテスト
     crops_with_various_areas = [
       Crop.create!(
@@ -185,7 +185,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
 
     # FieldsAllocatorが正しく動作しているか確認
     assert result.cultivation_plan.cultivation_plan_fields_count > 0,
-      "Should create CultivationPlanFields with FieldsAllocator"
+      "Should create CultivationPlanFields with FieldsAllocation"
 
     # 各圃場の面積が正しく設定されているか確認（集計は AR 再読込）
     plan_ar = ::CultivationPlan.find(result.cultivation_plan.id)

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CropTaskScheduleBlueprintGeneratorFertilizeTest < ActiveSupport::TestCase
+class AdaptersCropTaskScheduleBlueprintGeneratorFertilizeTest < ActiveSupport::TestCase
   def setup
     @crop = create(:crop, :with_stages, name: "トマト", variety: "一般")
   end
@@ -13,7 +13,7 @@ class CropTaskScheduleBlueprintGeneratorFertilizeTest < ActiveSupport::TestCase
       ]
     }
 
-    generator = CropTaskScheduleBlueprintGenerator.new(crop: @crop)
+    generator = Adapters::Crop::TaskScheduleBlueprintGenerator.new(crop: @crop)
     blueprints = generator.build_from_responses(schedule_response: { "task_schedules" => [] }, fertilize_response: fertilize_response)
     fert_blueprints = blueprints.select { |b| b[:source] == "agrr_fertilize_plan" }
 

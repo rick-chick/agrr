@@ -2,9 +2,9 @@
 
 require "test_helper"
 
-class AgrrServiceTest < ActiveSupport::TestCase
+class AgrrDaemonClientTest < ActiveSupport::TestCase
   def setup
-    @service = AgrrService.new
+    @service = ::Agrr::DaemonClient.new
   end
 
   test "fertilize_plan appends --max-applications with default 2" do
@@ -48,7 +48,7 @@ class AgrrServiceTest < ActiveSupport::TestCase
       File.stub(:socket?, false) do
         # Short-circuit daemon auto-start to avoid slow polling in tests
         @service.stub(:start_daemon_if_not_running, false) do
-          assert_raises(AgrrService::DaemonNotRunningError) do
+          assert_raises(::Agrr::DaemonClient::DaemonNotRunningError) do
             @service.weather(location: "35.6762,139.6503")
           end
         end
@@ -251,7 +251,7 @@ class AgrrServiceTest < ActiveSupport::TestCase
             raise "unexpected command: #{args.inspect}"
           end
         end) do
-          assert_raises(AgrrService::DaemonNotRunningError) do
+          assert_raises(::Agrr::DaemonClient::DaemonNotRunningError) do
             @service.send(:execute_command, [ "weather", "--location", "35.0,139.0" ])
           end
         end
@@ -285,7 +285,7 @@ class AgrrServiceTest < ActiveSupport::TestCase
           stderr = "Traceback (most recent call last):\nValueError: something went wrong\n"
           [ stdout, stderr, status ]
         end) do
-          assert_raises(AgrrService::CommandExecutionError) do
+          assert_raises(::Agrr::DaemonClient::CommandExecutionError) do
             @service.forecast(location: "35.0,139.0")
           end
         end

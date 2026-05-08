@@ -37,7 +37,7 @@ module Adapters
             use_harvest_start: true
           )
 
-          generator = CropTaskScheduleBlueprintGenerator.new(crop: crop, templates: templates)
+          generator = ::Adapters::Crop::TaskScheduleBlueprintGenerator.new(crop: crop, templates: templates)
           blueprints = generator.build_from_responses(
             schedule_response: schedule_response,
             fertilize_response: fertilize_response

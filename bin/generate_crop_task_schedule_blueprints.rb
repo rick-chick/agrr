@@ -214,7 +214,7 @@ def fetch_crops(options)
 end
 
 def generator_for(crop, templates)
-  CropTaskScheduleBlueprintGenerator.new(crop: crop, templates: templates)
+  Adapters::Crop::TaskScheduleBlueprintGenerator.new(crop: crop, templates: templates)
 end
 
 def build_blueprints(crop, schedule_gateway, fertilize_gateway)

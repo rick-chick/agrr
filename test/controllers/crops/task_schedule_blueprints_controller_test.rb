@@ -35,7 +35,7 @@ module Crops
 
     test "作業予定を削除すると、対応するテンプレートも削除される" do
       # Controller-level test: 削除ロジックはサービスに委譲しているためサービス呼び出しをモックして検証
-      Crops::TaskScheduleBlueprintDeletionService.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
+      Adapters::Crop::TaskScheduleBlueprintDeletion.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
 
       delete crop_task_schedule_blueprint_path(@crop, @blueprint),
              headers: @headers
@@ -54,13 +54,13 @@ module Crops
                            source: "manual",
                            priority: 2)
       # 1つ目のblueprintを削除（テンプレートは残る） - サービスをモック
-      Crops::TaskScheduleBlueprintDeletionService.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: false })
+      Adapters::Crop::TaskScheduleBlueprintDeletion.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: false })
       delete crop_task_schedule_blueprint_path(@crop, @blueprint),
              headers: @headers
       assert_response :success
 
       # 2つ目のblueprintを削除（テンプレートも削除される） - サービスをモック
-      Crops::TaskScheduleBlueprintDeletionService.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
+      Adapters::Crop::TaskScheduleBlueprintDeletion.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
       delete crop_task_schedule_blueprint_path(@crop, blueprint2),
              headers: @headers
       assert_response :success
@@ -68,7 +68,7 @@ module Crops
 
     test "作業予定削除後、利用可能な作業テンプレートの選択状態が更新される" do
       # サービスをモックして、コントローラが正常に応答することを確認する
-      Crops::TaskScheduleBlueprintDeletionService.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
+      Adapters::Crop::TaskScheduleBlueprintDeletion.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
       delete crop_task_schedule_blueprint_path(@crop, @blueprint),
              headers: @headers
       assert_response :success
@@ -100,7 +100,7 @@ module Crops
                                    source: "manual",
                                    priority: 1)
 
-      Crops::TaskScheduleBlueprintDeletionService.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
+      Adapters::Crop::TaskScheduleBlueprintDeletion.any_instance.expects(:call).returns({ blueprint_deleted: true, template_deleted: true })
       delete crop_task_schedule_blueprint_path(reference_crop, reference_blueprint),
              headers: headers
       assert_response :success

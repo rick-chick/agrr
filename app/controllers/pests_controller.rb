@@ -139,7 +139,11 @@ class PestsController < ApplicationController
 
   # Presenter の on_failure から呼ばれるため public
   def normalize_crop_ids_for(pest, raw_ids)
-    PestCropAssociationService.normalize_crop_ids(pest, raw_ids, user: current_user)
+    CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
+      pest_model: pest,
+      raw_crop_ids: raw_ids,
+      user: current_user
+    )
   end
 
   def prepare_crop_selection_for(pest, selected_ids: nil)

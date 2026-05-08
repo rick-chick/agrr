@@ -96,6 +96,8 @@
 
 .card-list__item {
   margin: 0;
+  display: flex;
+  min-width: 0;
 }
 
 /* パターンA: カード全体がリンク（従来・他一覧で使用） */
@@ -124,7 +126,10 @@ a.item-card:focus-visible {
 article.item-card {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--color-surface);
@@ -173,6 +178,7 @@ article.item-card:hover {
   flex-shrink: 0;
   gap: var(--space-3);
   align-items: center;
+  align-self: center;
 }
 
 /* 一覧行内のアクション（従来・list-item-actions 使用箇所で互換） */

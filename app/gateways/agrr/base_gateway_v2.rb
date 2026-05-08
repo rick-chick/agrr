@@ -9,7 +9,7 @@ module Agrr
     class NoAllocationCandidatesError < StandardError; end
 
     def initialize
-      @agrr_service = AgrrService.new
+      @agrr_service = ::Agrr::DaemonClient.new
     end
 
     private
@@ -59,10 +59,10 @@ module Agrr
           result
         end
 
-      rescue AgrrService::DaemonNotRunningError => e
+      rescue ::Agrr::DaemonClient::DaemonNotRunningError => e
         Rails.logger.error "❌ [AGRR] Daemon not running: #{e.message}"
         raise ExecutionError, "AGRR daemon is not running: #{e.message}"
-      rescue AgrrService::CommandExecutionError => e
+      rescue ::Agrr::DaemonClient::CommandExecutionError => e
         Rails.logger.error "❌ [AGRR] Command execution failed: #{e.message}"
 
         # Check for specific error patterns

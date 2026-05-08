@@ -1,5 +1,7 @@
 # de-rails-complete-remaining ベースライン (t20)
 
+**歴史的スナップショット**: 実行日 2026-04-30 の rg ベースライン。2026-05 以降のリファクタで **`app/controllers/concerns/agrr_optimization.rb`・`deletion_undo_flow.rb`・`cultivation_plan_api.rb`・`cultivation_plan_manageable.rb` 等は撤去済み**。本文のファイルパスは当時の検出結果であり、現リポジトリに無いパスを追わないこと。
+
 実行日: 2026-04-30
 基線テスト: `run-test-rails.sh` → `1613 runs, 8070 assertions, 0 failures, 0 errors, 9 skips` (緑)
 

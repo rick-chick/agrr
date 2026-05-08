@@ -447,7 +447,7 @@ module CompositionRoot
       rescue ActiveRecord::ActiveRecordError \
              , Agrr::BaseGatewayV2::ExecutionError \
              , Agrr::BaseGatewayV2::ParseError \
-             , AgrrService::AgrrError \
+             , ::Agrr::DaemonClient::AgrrError \
              , JSON::ParserError \
              , JSON::GeneratorError \
              , SystemCallError \
@@ -876,7 +876,7 @@ module CompositionRoot
 
     def agrr_service_weather_query_gateway
       @agrr_service_weather_query_gateway ||= Adapters::ApiWeather::Gateways::AgrrServiceWeatherQueryActiveGateway.new(
-        agrr_service: AgrrService.new
+        agrr_service: ::Agrr::DaemonClient.new
       )
     end
 

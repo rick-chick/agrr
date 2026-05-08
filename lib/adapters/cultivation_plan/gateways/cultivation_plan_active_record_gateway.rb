@@ -111,7 +111,12 @@ module Adapters
           end
 
           def fields_allocation
-            @fields_allocation ||= ::FieldsAllocator.new(@total_area, @crops).allocate
+            @fields_allocation ||= begin
+              if @total_area <= 0 || @crops.empty?
+                Rails.logger.warn "⚠️ [FieldsAllocation] Invalid parameters detected (total_area: #{@total_area}, crops: #{@crops.count}). Creating default field."
+              end
+              Domain::CultivationPlan::FieldsAllocation.new(@total_area, @crops).allocate
+            end
           end
 
           def calculate_daily_cost(area)

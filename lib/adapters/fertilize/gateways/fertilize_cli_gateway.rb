@@ -14,7 +14,7 @@ module Adapters
 
         def fetch_for_create(name:, max_retries: DEFAULT_MAX_RETRIES)
           fetch_from_agrr(name: name, max_retries: max_retries)
-        rescue AgrrService::AgrrError => e
+        rescue ::Agrr::DaemonClient::AgrrError => e
           agrr_failure_payload(e)
         rescue StandardError => e
           @logger.error "❌ [AGRR Fertilize] #{e.class}: #{e.message}"
@@ -27,7 +27,7 @@ module Adapters
 
         def fetch_for_update(id:, name:, max_retries: DEFAULT_MAX_RETRIES)
           fetch_from_agrr(name: name, max_retries: max_retries)
-        rescue AgrrService::AgrrError => e
+        rescue ::Agrr::DaemonClient::AgrrError => e
           agrr_failure_payload(e)
         rescue StandardError => e
           @logger.error "❌ [AGRR Fertilize] #{e.class}: #{e.message}"

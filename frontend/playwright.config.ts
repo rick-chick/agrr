@@ -37,7 +37,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  /** Agent 用フルページ PNG は並列で `Page.captureScreenshot` が失敗し得るため 1 ワーカーに固定 */
+  workers: useDevSession ? 1 : process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [['html'], ['line']] : 'html',
   ...(useDevSession ? { globalSetup: './e2e/global-setup-dev-session.ts' } : {}),
   use: {

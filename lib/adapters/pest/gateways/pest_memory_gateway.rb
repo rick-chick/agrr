@@ -229,12 +229,35 @@ module Adapters
           ensure_pest_control_method_row_for_form!(pest_record)
         end
 
+        def normalize_crop_ids_for_pest_form(pest_model:, raw_crop_ids:, user:)
+          allowed_ids = PestCropAssociationPolicy.accessible_crops_scope(pest_model, user: user).pluck(:id)
+          Array(raw_crop_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
+        end
+
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
-          ::PestCropAssociationService.associate_crops_by_pest_id(pest_id, crop_ids, user: user)
+          pest = ::Pest.find(pest_id)
+          associate_crops_for_pest_record(pest, crop_ids, user: user)
         end
 
         def update_pest_crop_associations(pest_id:, crop_ids:, user:)
-          ::PestCropAssociationService.update_crop_associations_by_pest_id(pest_id, crop_ids, user: user)
+          pest = ::Pest.find(pest_id)
+          new_ids = Array(crop_ids).map(&:to_i).uniq
+          current_ids = pest.crop_ids
+
+          to_remove = current_ids - new_ids
+          removed_count = 0
+          to_remove.each do |crop_id|
+            crop = ::Crop.find_by(id: crop_id)
+            next unless crop
+
+            pest.crops.delete(crop)
+            removed_count += 1
+          end
+
+          to_add = new_ids - current_ids
+          added_count = associate_crops_for_pest_record(pest, to_add, user: user)
+
+          { added: added_count, removed: removed_count }
         end
 
         def associate_affected_crops_for_ai_pest(pest_id:, affected_crops:, user:, logger:)
@@ -352,6 +375,20 @@ module Adapters
         end
 
         private
+
+        def associate_crops_for_pest_record(pest, crop_ids, user:)
+          associated_count = 0
+          Array(crop_ids).each do |crop_id|
+            crop = ::Crop.find_by(id: crop_id)
+            next unless crop
+            next unless PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: user)
+            next if pest.crops.include?(crop)
+
+            pest.crops << crop
+            associated_count += 1
+          end
+          associated_count
+        end
 
         def ensure_pest_control_method_row_for_form!(pest_record)
           pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?

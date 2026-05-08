@@ -122,7 +122,13 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_pests_for_crop_filtered"
         end
 
-        # PestCropAssociationService の置換。Pest 作成後に作物群と関連付け。
+        # HTML フォーム: 生の crop_ids パラメータを、ユーザーが選択可能な作物 ID に正規化する。
+        # @param pest_model [::Pest] フォーム対象の永続害虫
+        def normalize_crop_ids_for_pest_form(pest_model:, raw_crop_ids:, user:)
+          raise NotImplementedError, "Subclasses must implement normalize_crop_ids_for_pest_form"
+        end
+
+        # Pest 作成後に作物群と関連付け。
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
           raise NotImplementedError, "Subclasses must implement associate_crops_with_pest_id"
         end

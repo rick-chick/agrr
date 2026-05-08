@@ -92,9 +92,6 @@ export async function buildResolvedCaptureIds(
   if (farmId != null) {
     cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
   }
-  if (cropId == null) {
-    cropId = masters['crops'] ?? null;
-  }
 
   const publicPlanId = await probePublicPlanId(api, base);
 
@@ -124,9 +121,17 @@ export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCapt
   }
 
   if (pattern === 'entry-schedule/crop/:cropId') {
-    const c = ids.cropId ?? 1;
     const f = ids.farmId ?? 1;
-    return `/entry-schedule/crop/${c}?farmId=${f}`;
+    if (ids.cropId != null) {
+      return `/entry-schedule/crop/${ids.cropId}?farmId=${f}`;
+    }
+    return url;
+  }
+
+  if (pattern === 'plans/select-crop') {
+    if (ids.farmId == null) return url;
+    const pathOnly = url.split('?')[0] ?? url;
+    return `${pathOnly}?farmId=${ids.farmId}`;
   }
 
   if (pattern.startsWith('plans/')) {

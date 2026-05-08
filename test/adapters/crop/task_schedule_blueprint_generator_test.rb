@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
+class AdaptersCropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
   setup do
     @crop = create(:crop, :with_stages, name: "トマト", variety: "一般")
     @soil_task = create(:agricultural_task, :soil_preparation)
@@ -21,7 +21,7 @@ class CropTaskScheduleBlueprintGeneratorTest < ActiveSupport::TestCase
   end
 
   test "builds blueprint attributes from agrr schedule responses" do
-    generator = CropTaskScheduleBlueprintGenerator.new(crop: @crop)
+    generator = Adapters::Crop::TaskScheduleBlueprintGenerator.new(crop: @crop)
 
     schedule_response = {
       "task_schedules" => [

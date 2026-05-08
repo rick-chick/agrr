@@ -2,20 +2,20 @@
 
 module Adapters
   module Agrr
-    # API 害虫 AI で AgrrService.pest_to_crop を叩く処理とリトライ
+    # API 害虫 AI で ::Agrr::DaemonClient.pest_to_crop を叩く処理とリトライ
     class PestAiDaemonQueryGateway
       DEFAULT_MAX_RETRIES = 3
 
       def initialize(logger:, translator:, agrr_service: nil)
         @logger = logger
         @translator = translator
-        @agrr_service = agrr_service || AgrrService.new
+        @agrr_service = agrr_service || ::Agrr::DaemonClient.new
       end
 
       # @return [Hash] agrr の JSON 応答（success false のハッシュを含む）
       def fetch_pest_json(pest_name, affected_crops = [], max_retries: DEFAULT_MAX_RETRIES)
         fetch_pest_info_inner(pest_name, affected_crops, max_retries: max_retries)
-      rescue AgrrService::AgrrError => e
+      rescue ::Agrr::DaemonClient::AgrrError => e
         @logger.error "❌ [AI Pest] Error: #{e.message}"
         @logger.error "   Backtrace: #{e.backtrace&.first(3)&.join("\n   ")}"
         {
@@ -56,14 +56,14 @@ module Adapters
 
             return parsed_data
 
-          rescue AgrrService::DaemonNotRunningError => e
+          rescue ::Agrr::DaemonClient::DaemonNotRunningError => e
             @logger.error "❌ [AGRR Pest-to-Crop Query] Daemon not running: #{e.message}"
             return {
               "success" => false,
               "error" => @translator.t("api.errors.pests.daemon_not_running", default: "AGRRサービスが起動していません。サービスを起動してから再度お試しください。"),
               "code" => "daemon_not_running"
             }
-          rescue AgrrService::CommandExecutionError => e
+          rescue ::Agrr::DaemonClient::CommandExecutionError => e
             error_msg = e.message
 
             if error_msg.include?("decompressing") ||
@@ -82,10 +82,10 @@ module Adapters
             end
 
             @logger.error "❌ [AGRR Pest-to-Crop Query Error] Command failed: #{error_msg}"
-            raise AgrrService::CommandExecutionError, "Failed to query pest info from agrr: #{error_msg}"
+            raise ::Agrr::DaemonClient::CommandExecutionError, "Failed to query pest info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             @logger.error "❌ [AGRR Pest-to-Crop Query] JSON parse error: #{e.message}"
-            raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
+            raise ::Agrr::DaemonClient::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
           rescue SystemCallError, IOError, SocketError, Timeout::Error => e
             last_error = e
@@ -98,14 +98,14 @@ module Adapters
               next
             end
 
-            raise AgrrService::CommandExecutionError, e.message
+            raise ::Agrr::DaemonClient::CommandExecutionError, e.message
           end
         end
 
         if last_error
-          raise AgrrService::CommandExecutionError, last_error.message
+          raise ::Agrr::DaemonClient::CommandExecutionError, last_error.message
         else
-          raise AgrrService::CommandExecutionError, "Failed to query pest info after #{max_retries} attempts"
+          raise ::Agrr::DaemonClient::CommandExecutionError, "Failed to query pest info after #{max_retries} attempts"
         end
       end
     end

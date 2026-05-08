@@ -249,7 +249,7 @@ module Adapters
           crop = find_authorized_model_for_edit(user, crop_id)
           bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
           blueprint_id_for_response = bp.id
-          result = ::Crops::TaskScheduleBlueprintDeletionService.new(crop: crop, blueprint: bp).call
+          result = ::Adapters::Crop::TaskScheduleBlueprintDeletion.new(crop: crop, blueprint: bp).call
           crop.reload
           result.merge(crop: crop, blueprint_id_for_response: blueprint_id_for_response)
         rescue ActiveRecord::RecordNotFound

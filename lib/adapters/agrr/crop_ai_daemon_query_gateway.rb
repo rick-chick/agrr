@@ -2,21 +2,21 @@
 
 module Adapters
   module Agrr
-    # API 作物 AI 作成で AgrrService.crop を叩く処理とリトライ（Controller の rescue を不要にする）
+    # API 作物 AI 作成で ::Agrr::DaemonClient.crop を叩く処理とリトライ（Controller の rescue を不要にする）
     class CropAiDaemonQueryGateway
       DEFAULT_MAX_RETRIES = 3
 
       def initialize(logger:, translator:, agrr_service: nil)
         @logger = logger
         @translator = translator
-        @agrr_service = agrr_service || AgrrService.new
+        @agrr_service = agrr_service || ::Agrr::DaemonClient.new
       end
 
       # @return [Array(Hash, nil)] 成功時 [parsed_data, nil]
       # @return [Array(nil, Hash)] 失敗時 [nil, { message:, status: }]
       def fetch_crop_json(crop_name)
         [ fetch_crop_info_inner(crop_name), nil ]
-      rescue AgrrService::AgrrError => e
+      rescue ::Agrr::DaemonClient::AgrrError => e
         @logger.error "❌ [AI Crop] Error: #{e.message}"
         @logger.error "   Backtrace: #{e.backtrace&.first(3)&.join("\n   ")}"
         msg = @translator.t("api.errors.crops.fetch_failed_with_reason", message: e.message)
@@ -57,10 +57,10 @@ module Adapters
 
             return parsed_data
 
-          rescue AgrrService::DaemonNotRunningError => e
+          rescue ::Agrr::DaemonClient::DaemonNotRunningError => e
             @logger.error "❌ [AGRR Crop Query] Daemon not running: #{e.message}"
-            raise AgrrService::DaemonNotRunningError, "AGRR daemon is not running: #{e.message}"
-          rescue AgrrService::CommandExecutionError => e
+            raise ::Agrr::DaemonClient::DaemonNotRunningError, "AGRR daemon is not running: #{e.message}"
+          rescue ::Agrr::DaemonClient::CommandExecutionError => e
             error_msg = e.message
 
             if error_msg.include?("decompressing") ||
@@ -79,10 +79,10 @@ module Adapters
             end
 
             @logger.error "❌ [AGRR Crop Query Error] Command failed: #{error_msg}"
-            raise AgrrService::CommandExecutionError, "Failed to query crop info from agrr: #{error_msg}"
+            raise ::Agrr::DaemonClient::CommandExecutionError, "Failed to query crop info from agrr: #{error_msg}"
           rescue JSON::ParserError => e
             @logger.error "❌ [AGRR Crop Query] JSON parse error: #{e.message}"
-            raise AgrrService::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
+            raise ::Agrr::DaemonClient::CommandExecutionError, "Invalid JSON response from agrr: #{e.message}"
 
           rescue SystemCallError, IOError, SocketError, Timeout::Error => e
             last_error = e
@@ -95,14 +95,14 @@ module Adapters
               next
             end
 
-            raise AgrrService::CommandExecutionError, e.message
+            raise ::Agrr::DaemonClient::CommandExecutionError, e.message
           end
         end
 
         if last_error
-          raise AgrrService::CommandExecutionError, last_error.message
+          raise ::Agrr::DaemonClient::CommandExecutionError, last_error.message
         else
-          raise AgrrService::CommandExecutionError, "Failed to query crop info after #{max_retries} attempts"
+          raise ::Agrr::DaemonClient::CommandExecutionError, "Failed to query crop info after #{max_retries} attempts"
         end
       end
     end

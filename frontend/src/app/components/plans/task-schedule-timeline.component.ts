@@ -1,21 +1,22 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { TranslateModule } from '@ngx-translate/core';
 import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedule';
 
 @Component({
   selector: 'app-task-schedule-timeline',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule, DragDropModule, TranslateModule],
   template: `
     <div class="timeline">
       @if (fields.length > 0) {
         <div *ngFor="let field of fields" class="field-section">
           <h3>{{ field.name }} ({{ field.crop_name }})</h3>
-          
+
           <div class="schedule-columns">
             <div class="column">
-              <h4>General</h4>
+              <h4>{{ 'plans.task_schedule.timeline_column_general' | translate }}</h4>
               <div
                 cdkDropList
                 [cdkDropListData]="field.schedules.general"
@@ -30,7 +31,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
             </div>
 
             <div class="column">
-              <h4>Fertilizer</h4>
+              <h4>{{ 'plans.task_schedule.timeline_column_fertilizer' | translate }}</h4>
               <div
                 cdkDropList
                 [cdkDropListData]="field.schedules.fertilizer"
@@ -45,7 +46,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
           </div>
         </div>
       } @else {
-        <p>No fields found in this plan.</p>
+        <p>{{ 'plans.task_schedule.timeline_empty' | translate }}</p>
       }
     </div>
   `,

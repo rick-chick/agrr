@@ -29,7 +29,7 @@
 | `plans_controller.rb`, `crops/task_schedule_blueprints_controller.rb`                                                                           | **要確認**       | Interactor パターン確認後 DEAD または REFACTOR。                                             |
 | `plans/task_schedule_items_controller.rb`                                                                                                       | **DEAD 寄り**   | Interactor + Presenter、`rescue` / `rescue_from` なし（2026-05-06 確認）。                |
 | `auth_controller.rb`                                                                                                                            | **要確認**       | 認証フロー。インフラ的 rescue の可能性。                                                          |
-| `concerns/deletion_undo_flow.rb`, `agrr_optimization.rb`                                                                                        | **LIVE / 横断** | 別タスクで個別設計。                                                                        |
+| ~~`concerns/deletion_undo_flow.rb`~~, ~~`agrr_optimization.rb`~~                                                                                  | **撤去済み**    | 2026-05 時点でリポジトリに存在しない。削除 Undo は Interactor + Presenter / [`application_controller.rb`](../app/controllers/application_controller.rb) の `render_deletion_undo_*`、agrr は `CompositionRoot`・[`app/gateways/agrr/`](../app/gateways/agrr/) 経由。禁止 17 の追加監査は現行コントローラを対象にする。 |
 
 
 ## Gateway 境界（禁止 PageDto 参照）

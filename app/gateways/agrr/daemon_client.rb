@@ -3,7 +3,8 @@
 require "open3"
 require "tempfile"
 
-class AgrrService
+module Agrr
+  class DaemonClient
   class AgrrError < StandardError; end
   class DaemonNotRunningError < AgrrError; end
   class CommandExecutionError < AgrrError; end
@@ -377,5 +378,6 @@ class AgrrService
 
     # 緯度: 20-46, 経度: 122-154
     lat.between?(20.0, 46.0) && lon.between?(122.0, 154.0)
+  end
   end
 end

@@ -20,9 +20,9 @@ module Adapters
           JSON.parse(raw)
         rescue JSON::ParserError
           raise Domain::ApiWeather::Errors::InvalidJsonResponse
-        rescue AgrrService::DaemonNotRunningError
+        rescue ::Agrr::DaemonClient::DaemonNotRunningError
           raise Domain::ApiWeather::Errors::DaemonUnavailable
-        rescue AgrrService::CommandExecutionError => e
+        rescue ::Agrr::DaemonClient::CommandExecutionError => e
           raise Domain::ApiWeather::Errors::CommandFailed, e.message
         end
 
@@ -31,9 +31,9 @@ module Adapters
           JSON.parse(raw)
         rescue JSON::ParserError
           raise Domain::ApiWeather::Errors::InvalidJsonResponse
-        rescue AgrrService::DaemonNotRunningError
+        rescue ::Agrr::DaemonClient::DaemonNotRunningError
           raise Domain::ApiWeather::Errors::DaemonUnavailable
-        rescue AgrrService::CommandExecutionError => e
+        rescue ::Agrr::DaemonClient::CommandExecutionError => e
           raise Domain::ApiWeather::Errors::CommandFailed, e.message
         end
 

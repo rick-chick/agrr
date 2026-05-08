@@ -8,9 +8,9 @@ puts "Testing AGRR Integration..."
 puts "=" * 50
 
 # Test 1: Service initialization
-puts "1. Testing AgrrService initialization..."
-service = AgrrService.new
-puts "   ✓ AgrrService created successfully"
+puts "1. Testing ::Agrr::DaemonClient initialization..."
+service = ::Agrr::DaemonClient.new
+puts "   ✓ ::Agrr::DaemonClient created successfully"
 
 # Test 2: Daemon status check
 puts "\n2. Testing daemon status..."
@@ -48,9 +48,9 @@ begin
     puts "   ⚠ Weather command executed but returned empty data"
     puts "   This might be due to network issues or API timeouts"
   end
-rescue AgrrService::DaemonNotRunningError
+rescue ::Agrr::DaemonClient::DaemonNotRunningError
   puts "   ✗ Daemon not running"
-rescue AgrrService::CommandExecutionError => e
+rescue ::Agrr::DaemonClient::CommandExecutionError => e
   puts "   ✗ Command execution failed: #{e.message}"
 rescue => e
   puts "   ✗ Unexpected error: #{e.message}"
@@ -67,9 +67,9 @@ begin
   else
     puts "   ⚠ Forecast command executed but returned empty data"
   end
-rescue AgrrService::DaemonNotRunningError
+rescue ::Agrr::DaemonClient::DaemonNotRunningError
   puts "   ✗ Daemon not running"
-rescue AgrrService::CommandExecutionError => e
+rescue ::Agrr::DaemonClient::CommandExecutionError => e
   puts "   ✗ Command execution failed: #{e.message}"
 rescue => e
   puts "   ✗ Unexpected error: #{e.message}"
