@@ -163,7 +163,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"
         end
 
-        # 公開ウィザード「結果」HTML 用の読み取りスナップショット（存在しなければ nil）
+        # 公開プラン結果フロー用の読み取りスナップショット（存在しなければ nil）
         # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel, nil]
         def public_plan_results_read_model(plan_id:)
           raise NotImplementedError, "Subclasses must implement public_plan_results_read_model"
@@ -175,7 +175,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement public_plan_wizard_plan_exists?"
         end
 
-        # HTML 経由の公開プラン保存: ウィザード session の farm_id / crop_ids と計画 id からセッション保存用ペイロードを組み立てる（計画なしは nil）
+        # 公開プラン保存ウィザード: session の farm_id / crop_ids と計画 id からセッション保存用ペイロードを組み立てる（計画なしは nil）
         # @return [Hash, nil] `plan_id`, `farm_id`, `crop_ids`, `field_data`（各 field は `name`, `area`, `coordinates`）
         def public_plan_wizard_save_session_payload(plan_id:, farm_id:, crop_ids:)
           raise NotImplementedError, "Subclasses must implement public_plan_wizard_save_session_payload"

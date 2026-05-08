@@ -67,22 +67,22 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_for_crop_with_user"
         end
 
-        # HTML 新規フォーム用の空レコード（ネストした constraint / application_detail を build）
+        # マスタCRUD 新規フォーム用の空レコード（ネストした constraint / application_detail を build）
         def build_blank_pesticide_for_master_form
           raise NotImplementedError, "Subclasses must implement build_blank_pesticide_for_master_form"
         end
 
-        # HTML create 失敗時のフォーム再表示用（未保存）
+        # マスタCRUD create 失敗時のフォーム再表示用（未保存）
         def build_pesticide_for_create_failure_master_form(attributes_hash)
           raise NotImplementedError, "Subclasses must implement build_pesticide_for_create_failure_master_form"
         end
 
-        # HTML edit / update 失敗時にネストが欠けていれば build
+        # マスタCRUD edit / update 失敗時にネストが欠けていれば build
         def ensure_nested_associations_for_pesticide_master_form!(pesticide)
           raise NotImplementedError, "Subclasses must implement ensure_nested_associations_for_pesticide_master_form!"
         end
 
-        # HTML update 失敗時の再表示用
+        # マスタCRUD update 失敗時の再表示用
         def assign_pesticide_attributes_for_master_form!(pesticide, attributes_hash)
           raise NotImplementedError, "Subclasses must implement assign_pesticide_attributes_for_master_form!"
         end

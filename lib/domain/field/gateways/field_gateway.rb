@@ -52,7 +52,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 
-        # HTML new 画面: 認可済み農場 AR に紐づく未保存圃場（コントローラで association.build しない）
+        # マスタCRUD 新規: 認可済み農場 AR に紐づく未保存圃場（コントローラで association.build しない）
         def build_blank_field_for_master_form!(persisted_farm:)
           raise NotImplementedError, "Subclasses must implement build_blank_field_for_master_form!"
         end
