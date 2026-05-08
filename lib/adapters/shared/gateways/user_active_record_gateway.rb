@@ -16,7 +16,4 @@ module Adapters
       end
     end
   end
-
-  # CompositionRoot から {UserActiveRecordGateway} を渡すこと。
-  IdentityUserActiveRecordGateway = Shared::Gateways::UserActiveRecordGateway
 end
