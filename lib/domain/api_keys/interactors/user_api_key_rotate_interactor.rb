@@ -3,7 +3,7 @@
 module Domain
   module ApiKeys
     module Interactors
-      class ApiUserApiKeyRotateInteractor
+      class UserApiKeyRotateInteractor
         def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway
