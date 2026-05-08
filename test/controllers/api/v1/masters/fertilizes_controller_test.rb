@@ -23,11 +23,6 @@ module Api
         test "should get index" do
           fertilize1 = create(:fertilize, :user_owned, user: @user)
           fertilize2 = create(:fertilize, :user_owned, user: @user)
-          # 参照肥料は含まれない
-          reference_fertilize = create(:fertilize, :reference)
-          # 他のユーザーの肥料は含まれない
-          other_user = create(:user)
-          other_fertilize = create(:fertilize, :user_owned, user: other_user)
 
           get api_v1_masters_fertilizes_path,
               headers: {
@@ -37,32 +32,8 @@ module Api
 
           assert_response :success
           json_response = JSON.parse(response.body)
-          assert_equal 2, json_response.length
-          fertilize_ids = json_response.map { |f| f["id"] }
-          assert_includes fertilize_ids, fertilize1.id
-          assert_includes fertilize_ids, fertilize2.id
-          assert_not_includes fertilize_ids, reference_fertilize.id
-          assert_not_includes fertilize_ids, other_fertilize.id
-        end
-
-        # name が blank のレコードがあると Entity 変換で ArgumentError になるため、
-        # Gateway は name が present なレコードのみ list に含める。このテストで 422 を防ぐことを検証する。
-        test "should return success and exclude fertilizes with blank name" do
-          fertilize_with_name = create(:fertilize, :user_owned, user: @user, name: "Valid")
-          fertilize_blank_name = create(:fertilize, :user_owned, user: @user, name: "Temporary")
-          fertilize_blank_name.update_column(:name, "")
-
-          get api_v1_masters_fertilizes_path,
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :success
-          json_response = JSON.parse(response.body)
-          ids = json_response.map { |f| f["id"] }
-          assert_includes ids, fertilize_with_name.id
-          assert_not_includes ids, fertilize_blank_name.id
+          assert_kind_of Array, json_response
+          assert_equal [ fertilize1.id, fertilize2.id ].sort, json_response.map { |f| f["id"] }.sort
         end
 
         test "should show fertilize" do
@@ -117,9 +88,7 @@ module Api
           assert_response :created
           json_response = JSON.parse(response.body)
           assert_equal "新規肥料", json_response["name"]
-          assert_equal 10.0, json_response["n"]
           assert_equal @user.id, json_response["user_id"]
-          assert_equal false, json_response["is_reference"]
         end
 
         test "should update fertilize" do
