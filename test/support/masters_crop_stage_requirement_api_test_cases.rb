@@ -3,11 +3,15 @@
 # 作物ステージ配下の単一リソース（*Requirement）REST API の統合テストを定義する。
 # 各コントローラは `setup` で @user, @api_key, @crop, @crop_stage を用意し、
 # `MastersCropStageRequirementApiTestCases.define(self, config)` を呼ぶ。
+#
+# config[:matrix] — :full（省略時）で show/create/update/destroy の失敗経路を含む。
+# :smoke は認証付きの成功経路と invalid create のみ（Interactor 単体で分岐を表明する前提）。
 module MastersCropStageRequirementApiTestCases
   module_function
 
   def define(test_class, config)
     c = Config.new(config)
+    full = c.matrix == :full
 
     test_class.class_eval do
       define_method(:requirement_api_headers) do
@@ -26,23 +30,25 @@ module MastersCropStageRequirementApiTestCases
         instance_exec(json, requirement, &c.assert_show_json)
       end
 
-      test "should return not found when #{c.resource_label} does not exist" do
-        get c.path.call(self, @crop, @crop_stage), headers: requirement_api_headers
+      if full
+        test "should return not found when #{c.resource_label} does not exist" do
+          get c.path.call(self, @crop, @crop_stage), headers: requirement_api_headers
 
-        assert_response :not_found
-        json = JSON.parse(response.body)
-        assert_equal "#{c.singular_name} not found", json["error"]
-      end
+          assert_response :not_found
+          json = JSON.parse(response.body)
+          assert_equal "#{c.singular_name} not found", json["error"]
+        end
 
-      test "should not show #{c.resource_label} for other user's crop" do
-        other_user = create(:user)
-        other_crop = create(:crop, :user_owned, user: other_user)
-        other_crop_stage = create(:crop_stage, crop: other_crop)
-        create(c.factory, crop_stage: other_crop_stage)
+        test "should not show #{c.resource_label} for other user's crop" do
+          other_user = create(:user)
+          other_crop = create(:crop, :user_owned, user: other_user)
+          other_crop_stage = create(:crop_stage, crop: other_crop)
+          create(c.factory, crop_stage: other_crop_stage)
 
-        get c.path.call(self, other_crop, other_crop_stage), headers: requirement_api_headers
+          get c.path.call(self, other_crop, other_crop_stage), headers: requirement_api_headers
 
-        assert_response :not_found
+          assert_response :not_found
+        end
       end
 
       test "should create #{c.resource_label}" do
@@ -57,18 +63,20 @@ module MastersCropStageRequirementApiTestCases
         instance_exec(json, &c.assert_create_json)
       end
 
-      test "should not create #{c.resource_label} if already exists" do
-        create(c.factory, crop_stage: @crop_stage)
+      if full
+        test "should not create #{c.resource_label} if already exists" do
+          create(c.factory, crop_stage: @crop_stage)
 
-        assert_no_difference("#{c.model.name}.count") do
-          post c.path.call(self, @crop, @crop_stage),
-               params: { c.param_key => c.duplicate_create_params },
-               headers: requirement_api_headers
+          assert_no_difference("#{c.model.name}.count") do
+            post c.path.call(self, @crop, @crop_stage),
+                 params: { c.param_key => c.duplicate_create_params },
+                 headers: requirement_api_headers
+          end
+
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          assert_equal "#{c.singular_name} already exists", json["error"]
         end
-
-        assert_response :unprocessable_entity
-        json = JSON.parse(response.body)
-        assert_equal "#{c.singular_name} already exists", json["error"]
       end
 
       test "should not create #{c.resource_label} with invalid params" do
@@ -98,18 +106,20 @@ module MastersCropStageRequirementApiTestCases
         instance_exec(requirement, &c.assert_update_persisted)
       end
 
-      test "should not update #{c.resource_label} for other user's crop" do
-        other_user = create(:user)
-        other_crop = create(:crop, :user_owned, user: other_user)
-        other_crop_stage = create(:crop_stage, crop: other_crop)
-        requirement = create(c.factory, crop_stage: other_crop_stage, **c.other_user_factory_attrs)
+      if full
+        test "should not update #{c.resource_label} for other user's crop" do
+          other_user = create(:user)
+          other_crop = create(:crop, :user_owned, user: other_user)
+          other_crop_stage = create(:crop_stage, crop: other_crop)
+          requirement = create(c.factory, crop_stage: other_crop_stage, **c.other_user_factory_attrs)
 
-        patch c.path.call(self, other_crop, other_crop_stage),
-              params: { c.param_key => c.other_user_update_params },
-              headers: requirement_api_headers
+          patch c.path.call(self, other_crop, other_crop_stage),
+                params: { c.param_key => c.other_user_update_params },
+                headers: requirement_api_headers
 
-        assert_response :not_found
-        instance_exec(requirement, &c.assert_other_user_unchanged)
+          assert_response :not_found
+          instance_exec(requirement, &c.assert_other_user_unchanged)
+        end
       end
 
       test "should destroy #{c.resource_label}" do
@@ -125,14 +135,17 @@ module MastersCropStageRequirementApiTestCases
   end
 
   class Config
+    # matrix: :full (default) — 境界の網羅。:smoke — HTTP 契約の最小（Interactor 単体で分岐を表明済みのとき）
     attr_reader :resource_label, :model, :factory, :param_key, :singular_name, :path,
                 :show_factory_attrs, :assert_show_json,
                 :create_params, :assert_create_json, :duplicate_create_params,
                 :invalid_param_key, :invalid_param_value,
                 :update_factory_attrs, :update_params, :assert_update_json, :assert_update_persisted,
-                :other_user_factory_attrs, :other_user_update_params, :assert_other_user_unchanged
+                :other_user_factory_attrs, :other_user_update_params, :assert_other_user_unchanged,
+                :matrix
 
     def initialize(hash)
+      @matrix = hash.fetch(:matrix, :full)
       @resource_label = hash.fetch(:resource_label)
       @model = hash.fetch(:model)
       @factory = hash.fetch(:factory)

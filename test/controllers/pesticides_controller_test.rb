@@ -3,6 +3,9 @@
 require "test_helper"
 require "time"
 
+# 参照農薬の閲覧制限などは Pesticide*Interactor の認可と重なるが、
+# ここでは index の表示フィルタと nested 作成の永続化挙動（Interactor 外の境界）を優先する。
+
 class PesticidesControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
   setup do

@@ -17,6 +17,7 @@ module Api
             end
 
             MastersCropStageRequirementApiTestCases.define(self, {
+              matrix: :smoke,
               resource_label: "nutrient_requirement",
               model: NutrientRequirement,
               factory: :nutrient_requirement,

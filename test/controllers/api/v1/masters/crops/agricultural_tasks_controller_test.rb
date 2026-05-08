@@ -2,6 +2,10 @@
 
 require "test_helper"
 
+# 分岐網羅（missing task / duplicate / forbidden 等）は
+# test/domain/crop/interactors/crop_masters_task_template_*_interactor_test.rb に寄せる。
+# ここでは HTTP・JSON 契約と認証付きの成功経路のみを残す。
+
 module Api
   module V1
     module Masters
@@ -99,78 +103,6 @@ module Api
             assert_equal "デフォルト説明", json_response["description"]
           end
 
-          test "should not create association without agricultural_task_id" do
-            assert_no_difference("@crop.crop_task_templates.count") do
-              post api_v1_masters_crop_agricultural_tasks_path(@crop),
-                   params: {},
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-            end
-
-            assert_response :unprocessable_entity
-            json_response = JSON.parse(response.body)
-            assert_equal "agricultural_task_id is required", json_response["error"]
-          end
-
-          test "should not create association with non-existent task" do
-            assert_no_difference("@crop.crop_task_templates.count") do
-              post api_v1_masters_crop_agricultural_tasks_path(@crop),
-                   params: {
-                     agricultural_task_id: 99999
-                   },
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-            end
-
-            assert_response :not_found
-            json_response = JSON.parse(response.body)
-            assert_equal "AgriculturalTask not found", json_response["error"]
-          end
-
-          test "should not create association with other user's task" do
-            other_user = create(:user)
-            other_task = create(:agricultural_task, :user_owned, user: other_user)
-
-            assert_no_difference("@crop.crop_task_templates.count") do
-              post api_v1_masters_crop_agricultural_tasks_path(@crop),
-                   params: {
-                     agricultural_task_id: other_task.id
-                   },
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-            end
-
-            assert_response :forbidden
-            json_response = JSON.parse(response.body)
-            assert_equal "You do not have permission to associate this agricultural task", json_response["error"]
-          end
-
-          test "should not create duplicate association" do
-            task = create(:agricultural_task, :user_owned, user: @user)
-            create(:crop_task_template, crop: @crop, agricultural_task: task)
-
-            assert_no_difference("@crop.crop_task_templates.count") do
-              post api_v1_masters_crop_agricultural_tasks_path(@crop),
-                   params: {
-                     agricultural_task_id: task.id
-                   },
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-            end
-
-            assert_response :unprocessable_entity
-            json_response = JSON.parse(response.body)
-            assert_equal "AgriculturalTask is already associated with this crop", json_response["error"]
-          end
-
           test "should update template" do
             task = create(:agricultural_task, :user_owned, user: @user)
             template = create(:crop_task_template, crop: @crop, agricultural_task: task, name: "元の名前", time_per_sqm: 0.5)
@@ -195,24 +127,6 @@ module Api
             assert_equal 0.8, template.time_per_sqm
           end
 
-          test "should not update template for other user's crop" do
-            other_user = create(:user)
-            other_crop = create(:crop, :user_owned, user: other_user)
-            task = create(:agricultural_task, :user_owned, user: other_user)
-            template = create(:crop_task_template, crop: other_crop, agricultural_task: task)
-
-            patch api_v1_masters_crop_agricultural_task_path(other_crop, template),
-                  params: {
-                    name: "変更しようとした名前"
-                  },
-                  headers: {
-                    "Accept" => "application/json",
-                    "X-API-Key" => @api_key
-                  }
-
-            assert_response :not_found
-          end
-
           test "should destroy association" do
             task = create(:agricultural_task, :user_owned, user: @user)
             template = create(:crop_task_template, crop: @crop, agricultural_task: task)
@@ -226,23 +140,6 @@ module Api
             end
 
             assert_response :no_content
-          end
-
-          test "should not destroy association for other user's crop" do
-            other_user = create(:user)
-            other_crop = create(:crop, :user_owned, user: other_user)
-            task = create(:agricultural_task, :user_owned, user: other_user)
-            template = create(:crop_task_template, crop: other_crop, agricultural_task: task)
-
-            assert_no_difference("CropTaskTemplate.count") do
-              delete api_v1_masters_crop_agricultural_task_path(other_crop, template),
-                     headers: {
-                       "Accept" => "application/json",
-                       "X-API-Key" => @api_key
-                     }
-            end
-
-            assert_response :not_found
           end
         end
       end

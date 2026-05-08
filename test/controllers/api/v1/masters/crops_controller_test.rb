@@ -2,6 +2,9 @@
 
 require "test_helper"
 
+# 他ユーザーの作物の show / destroy での認可拒否は CropDetailInteractor / CropDestroyInteractor の単体に寄せ、
+# ここでは HTTP 契約（成功レスポンス・JSON 形・使用中削除 422）を優先する。
+
 module Api
   module V1
     module Masters
@@ -70,21 +73,6 @@ module Api
           assert_equal 1, json_response["crop_stages"].length
           assert_equal crop_stage.id, json_response["crop_stages"][0]["id"]
           assert_equal "発芽期", json_response["crop_stages"][0]["name"]
-        end
-
-        test "should not show other user's crop" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user)
-
-          get api_v1_masters_crop_path(other_crop),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("crops.flash.no_permission"), json_response["error"]
         end
 
         test "should not create reference crop as non-admin" do
@@ -231,21 +219,6 @@ module Api
           assert json["undo"].present?, "Expected response to include undo key"
           assert json["undo"]["undo_token"].present?
           assert json["undo"]["undo_path"].present?
-        end
-
-        test "should not destroy other user's crop" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user)
-
-          assert_no_difference("::Crop.count") do
-            delete api_v1_masters_crop_path(other_crop),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :forbidden
         end
 
         test "should return 422 when destroying crop that is in use (cultivation_plan_crops)" do

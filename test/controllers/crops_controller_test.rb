@@ -14,6 +14,7 @@ class BlueprintRegenerationGatewayDouble
   end
 end
 
+# 他ユーザーの作物の edit GET 拒否は show 拒否と同一の認可経路のため省略（CropDetailInteractor 単体で表明）。
 class CropsControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
   setup do
@@ -179,14 +180,6 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   test "一般ユーザーは参照作物をeditできない" do
     sign_in_as @user
     get edit_crop_path(@reference_crop)
-
-    assert_redirected_to crops_path
-    assert_equal I18n.t("crops.flash.no_permission"), flash[:alert]
-  end
-
-  test "一般ユーザーは他のユーザーの作物をeditできない" do
-    sign_in_as @user
-    get edit_crop_path(@other_user_crop)
 
     assert_redirected_to crops_path
     assert_equal I18n.t("crops.flash.no_permission"), flash[:alert]

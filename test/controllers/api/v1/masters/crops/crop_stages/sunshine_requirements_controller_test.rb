@@ -17,6 +17,7 @@ module Api
             end
 
             MastersCropStageRequirementApiTestCases.define(self, {
+              matrix: :smoke,
               resource_label: "sunshine_requirement",
               model: SunshineRequirement,
               factory: :sunshine_requirement,

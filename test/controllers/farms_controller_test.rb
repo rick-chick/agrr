@@ -2,6 +2,7 @@
 
 require "test_helper"
 
+# destroy の undo JSON と使用中 422 は境界契約。認可拒否の網羅は FarmDestroyInteractor 等の単体に寄せる。
 class FarmsControllerTest < ActionDispatch::IntegrationTest
   include Rails.application.routes.url_helpers
   include ActionView::RecordIdentifier

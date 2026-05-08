@@ -3,6 +3,9 @@
 require "test_helper"
 require "time"
 
+# 他ユーザーのリソースの GET 拒否は FertilizeDetailInteractor 等の認可と重なるが、
+# HTML の redirect / flash 契約は show の拒否 1 本で代表し、edit の他ユーザー拒否は省略する。
+
 class FertilizesControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
   setup do
@@ -98,14 +101,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
   test "一般ユーザーは参照肥料をeditできない" do
     sign_in_as @user
     get edit_fertilize_path(@reference_fertilize)
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-  end
-
-  test "一般ユーザーは他のユーザーの肥料をeditできない" do
-    sign_in_as @user
-    get edit_fertilize_path(@other_user_fertilize)
 
     assert_redirected_to fertilizes_path
     assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
