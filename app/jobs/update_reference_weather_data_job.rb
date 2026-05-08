@@ -46,9 +46,6 @@ class UpdateReferenceWeatherDataJob < ApplicationJob
     Rails.logger.error "❌ [UpdateReferenceWeatherDataJob] すべてのリトライが失敗しました"
     Rails.logger.error "   エラー: #{exception.class} - #{exception.message}"
     Rails.logger.error "   Backtrace: #{exception.backtrace.first(5).join("\n   ")}"
-
-    # 将来的にはここで管理者通知を実装
-    # AdminNotifier.job_failed(job.class.name, exception).deliver_later
   end
 
   def perform

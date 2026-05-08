@@ -46,7 +46,6 @@ if ENV.fetch("COVERAGE", "true") != "false"
     add_group "Views", "app/views"
     add_group "Helpers", "app/helpers"
     add_group "Jobs", "app/jobs"
-    add_group "Mailers", "app/mailers"
 
     minimum_coverage 10
   end
