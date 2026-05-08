@@ -223,4 +223,35 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
     copied = ActiveStorage::Attachment.where(record: new_plan, name: "attachments")
     assert_equal 1, copied.count
   end
+
+  test "copy_private_plan_for_year keeps attachments after source plan destroyed" do
+    user = unique_test_user
+    ref_farm = ensure_reference_farm
+    ref_crop = build_reference_crop(name: "DesCp#{SecureRandom.hex(4)}")
+    source_plan, = build_public_plan_with_field_cultivation(
+      farm: ref_farm,
+      ref_crop: ref_crop,
+      plan_name: "DesPlan#{SecureRandom.hex(4)}"
+    )
+
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("dummy pdf data"),
+      filename: "plan.pdf",
+      content_type: "application/pdf"
+    )
+    ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
+
+    new_entity = ::Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year(
+      source_cultivation_plan_id: source_plan.id,
+      new_year: Date.current.year + 2,
+      user_id: user.id,
+      logger: CapturingLogger.new
+    )
+    new_plan = ::CultivationPlan.find(new_entity.id)
+
+    source_plan.destroy!
+    assert_equal 1,
+                 ActiveStorage::Attachment.where(record: new_plan, name: "attachments").count,
+                 "元プラン削除後もコピー先の添付が参照可能であること"
+  end
 end

@@ -414,7 +414,7 @@ end
 ### 優先度: 高
 1. ✅ Phase 1: データモデル変更
 2. ⚠️ `PlanningSchedulesController`の変更（設計書に未記載）
-3. ⚠️ `PlanCopier`の変更（設計書に未記載）
+3. ✅ `PlanCopier` interactor 削除・Gateway 集約（2026-05）
 4. ⚠️ `PlanSaveService#find_existing_private_plan`の変更（追加）
 5. ⚠️ `PlansController`のセッション管理の変更（追加）
 6. ⚠️ `Plans::IndexPresenter#plans_by_year`の変更（追加）

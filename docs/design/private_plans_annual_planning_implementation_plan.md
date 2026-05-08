@@ -222,7 +222,9 @@ end
 
 ---
 
-### 2.4 PlanCopierの変更 🟠
+### 2.4 計画コピー（PlanCopyGateway）の変更 🟠
+
+（歴史的見出し名「PlanCopier」。ドメイン interactor は削除済み、Gateway に集約）
 
 **優先度**: 高  
 **依存関係**: Phase 1完了後  
@@ -238,7 +240,7 @@ end
 
 #### 関連ファイル
 - `app/controllers/plans_controller.rb`（`copy`メソッド）
-- `lib/domain/cultivation_plan/interactors/plan_copier.rb` / `Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year`
+- `Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year`（旧 `PlanCopier` interactor は削除済み）
 
 ---
 
@@ -432,7 +434,7 @@ function isMovable(cultivation) {
 - Day 5: Phase 2.3 PlanningSchedulesController変更
 
 ### Week 3: ビジネスロジック層（続き）
-- Day 1: Phase 2.4 PlanCopier変更
+- Day 1: Phase 2.4 PlanCopyGateway / 計画コピー関連
 - Day 2: Phase 2.5 APIレスポンス変更
 - Day 3-4: Phase 2.6 コントローラー・Presenterテスト
 

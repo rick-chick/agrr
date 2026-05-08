@@ -11,6 +11,6 @@
 | `crops/task_schedule_blueprint_deletion_service.rb` | **A Interactor** | `lib/domain/crop/interactors/` | 低 | 削除フローは Presenter + Interactor に寄せる |
 | `fields_allocator.rb` | **A Interactor** | `lib/domain/cultivation_plan/interactors/`（配置はドメインルール） | 高 | agrr 連携あり。Gateway（optimization / allocation）と整合 |
 | `pest_crop_association_service.rb` | **A Interactor** | `lib/domain/pest/interactors/` または `crop` ドメイン | 中 | マスタ関連付け。API コントローラから直接呼ばない |
-| `plan_copier.rb` | **A Interactor** | `lib/domain/cultivation_plan/interactors/` | 中 | `PlanSaveSession` と重複・再利用箇所を整理 |
+| （旧）`plan_copier` | **削除済み** | 年度コピーは `Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year` に集約（2026-05: `PlanCopier` interactor 除去） | — | app/services 昇格案は歴史的記録 |
 
 **分類凡例**: A = Interactor 昇格、B = Gateway、C = Orchestrator（本 8 本では C は採用しない）。

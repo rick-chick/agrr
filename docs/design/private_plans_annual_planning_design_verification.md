@@ -103,6 +103,8 @@ end
 
 ### 3. **`PlanCopier`サービスの変更** ⚠️⚠️
 
+**注記（2026-05）**: ドメインの `PlanCopier` interactor は削除し、私有計画の年度コピーは `Adapters::CultivationPlan::PlanCopyGateway.copy_private_plan_for_year` に集約した。以下は調査当時のコード参照。
+
 **重要度: 高**
 
 ```138:166:app/controllers/plans_controller.rb
@@ -179,7 +181,7 @@ end
 
 **問題点:**
 - 設計書では「後方互換性のため残す」と記載されているが、新規作成時は使用しない
-- `CultivationPlanCreator`や`PlanCopier`で使用されている
+- `CultivationPlanCreator`等で使用されている（旧 `PlanCopier` は削除済み）
 
 **必要な対応:**
 - 既存データの互換性のため残す（設計書通り）
@@ -354,7 +356,9 @@ end
 - [ ] `field_cultivation.start_date.year == plan.plan_year`の重複防止ロジックを変更
 - [ ] 通年計画（`plan_year`が`null`）の対応
 
-#### 5.2 `PlanCopier`サービスの変更
+#### 5.2 計画コピー（`PlanCopyGateway`）の変更
+
+（旧 `PlanCopier` interactor は 2026-05 に削除し Gateway に集約済み）
 - [ ] 通年計画の場合のコピー機能の扱いを決定
 - [ ] `copy`メソッドで`plan_year`が`null`の場合のエラーハンドリング
 
@@ -401,7 +405,7 @@ end
 ### 優先度: 高
 1. ✅ Phase 1: データモデル変更
 2. ⚠️ `PlanningSchedulesController`の変更（設計書に未記載）
-3. ⚠️ `PlanCopier`の変更（設計書に未記載）
+3. ✅ `PlanCopier` interactor 削除・Gateway 集約（2026-05）
 4. ⚠️ テストコードの更新（設計書に未記載）
 
 ### 優先度: 中
