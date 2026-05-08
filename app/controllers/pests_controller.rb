@@ -27,7 +27,7 @@ class PestsController < ApplicationController
 
   # GET /pests/:id/edit
   def edit
-    @pest.pest_control_methods.build if @pest.pest_control_methods.empty?
+    CompositionRoot.pest_gateway.prepare_top_level_pest_for_edit_form!(@pest)
     prepare_crop_selection_for(@pest)
   end
 

@@ -112,6 +112,13 @@ module Domain
           raise NotImplementedError, "Subclasses must implement prepare_crop_nested_pest_for_edit_form!"
         end
 
+        # HTML トップレベル編集（`/pests/:id/edit`）用。防除方法が 0 件なら空行を build。
+        # @param pest_record [Pest]
+        # @return [Pest] pest_record
+        def prepare_top_level_pest_for_edit_form!(pest_record)
+          raise NotImplementedError, "Subclasses must implement prepare_top_level_pest_for_edit_form!"
+        end
+
         # 新規 Pest フォーム描画用の空インスタンスをビルド（nested 関連付き）。
         # @return [Pest] 未保存の AR レコード（HTML form_with で使う）
         def build_blank_pest_for_form

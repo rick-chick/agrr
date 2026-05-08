@@ -235,8 +235,11 @@ module Adapters
         end
 
         def prepare_crop_nested_pest_for_edit_form!(pest_record)
-          pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?
-          pest_record
+          ensure_pest_control_method_row_for_form!(pest_record)
+        end
+
+        def prepare_top_level_pest_for_edit_form!(pest_record)
+          ensure_pest_control_method_row_for_form!(pest_record)
         end
 
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
@@ -362,6 +365,11 @@ module Adapters
         end
 
         private
+
+        def ensure_pest_control_method_row_for_form!(pest_record)
+          pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?
+          pest_record
+        end
 
         def extract_crop_ids_from_ai_payload(affected_crops)
           affected_crops.map do |c|
