@@ -378,12 +378,4 @@ class AgrrService
     # 緯度: 20-46, 経度: 122-154
     lat.between?(20.0, 46.0) && lon.between?(122.0, 154.0)
   end
-
-  # 気象データのフォーマットを正規化（古いネスト形式を解消）
-  def self.normalize_weather_data(data)
-    if Domain::WeatherData::Services::OpenMeteoWeatherPayload.legacy_nested_open_meteo_payload?(data)
-      Rails.logger.warn "⚠️ [AgrrService] Old nested weather format detected, extracting inner data"
-    end
-    Domain::WeatherData::Services::OpenMeteoWeatherPayload.normalize_raw_payload(data)
-  end
 end

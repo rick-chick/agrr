@@ -96,12 +96,6 @@ class GcsWeatherDataGatewayTest < ActiveSupport::TestCase
     assert_equal 10.0, dtos.first.temperature_max
   end
 
-  test "normalize_weather_data calls AgrrService" do
-    raw_data = { "data" => { "data" => [] } }
-    result = @gateway.normalize_weather_data(raw_data: raw_data)
-    assert_kind_of Hash, result
-  end
-
   test "format_for_agrr formats DTOs to AGRR hash" do
     dto = Domain::WeatherData::Dtos::WeatherDataDto.new(date: Date.new(2023, 1, 1), temperature_max: 10.0)
     location = OpenStruct.new(latitude: 35.0, longitude: 139.0, elevation: 0.0, timezone: "UTC")

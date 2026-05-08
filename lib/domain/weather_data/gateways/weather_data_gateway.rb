@@ -12,10 +12,6 @@ module Domain
           raise NotImplementedError
         end
 
-        def normalize_weather_data(raw_data:)
-          raise NotImplementedError
-        end
-
         def format_for_agrr(weather_data_dtos:, weather_location:)
           raise NotImplementedError
         end

@@ -35,10 +35,6 @@ module Adapters
           dtos.sort_by(&:date)
         end
 
-        def normalize_weather_data(raw_data:)
-          AgrrService.normalize_weather_data(raw_data)
-        end
-
         def format_for_agrr(weather_data_dtos:, weather_location:)
           wl = weather_location
           Domain::WeatherData::Services::OpenMeteoWeatherPayload.format_for_agrr(
