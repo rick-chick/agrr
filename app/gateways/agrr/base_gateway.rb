@@ -106,15 +106,6 @@ module Agrr
       json_part[0..end_index]
     end
 
-    def agrr_path
-      @agrr_path ||= begin
-        # 環境変数で指定されたパスを優先
-        # Docker環境では /app/lib/core/agrr (volumeマウント経由のローカルバイナリ)
-        # 本番環境では環境変数で明示的に指定
-        ENV["AGRR_BIN_PATH"] || Rails.root.join("lib/core/agrr").to_s
-      end
-    end
-
     def write_temp_file(data, prefix: "agrr_data")
       file = Tempfile.new([ prefix, ".json" ])
       file.write(data.to_json)
