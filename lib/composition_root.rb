@@ -213,8 +213,8 @@ module CompositionRoot
       )
     end
 
-    def private_plan_select_crop_html_context_runner(view:, user_id:)
-      Adapters::CultivationPlan::PrivatePlanSelectCropHtmlContextRunner.new(
+    def private_plan_select_crop_context_runner(view:, user_id:)
+      Adapters::CultivationPlan::PrivatePlanSelectCropContextRunner.new(
         view: view,
         user_id: user_id,
         field_gateway: field_gateway,
@@ -225,8 +225,8 @@ module CompositionRoot
       )
     end
 
-    def private_plan_html_post_create_job_chain(routes:, caller_label:)
-      Adapters::CultivationPlan::PrivatePlanHtmlPostCreateJobChain.new(
+    def private_plan_post_create_job_chain(routes:, caller_label:)
+      Adapters::CultivationPlan::PrivatePlanPostCreateJobChain.new(
         job_chain_builder: private_plan_optimization_job_chain_builder,
         job_chain_async_dispatcher: job_chain_async_dispatcher,
         routes: routes,
@@ -243,7 +243,7 @@ module CompositionRoot
         translator: translator,
         clock: Time.zone,
         session_id_generator: session_id_generator,
-        post_create_job_chain: private_plan_html_post_create_job_chain(routes: routes, caller_label: caller_label),
+        post_create_job_chain: private_plan_post_create_job_chain(routes: routes, caller_label: caller_label),
         select_crop_context_runner: select_crop_context_runner
       )
     end

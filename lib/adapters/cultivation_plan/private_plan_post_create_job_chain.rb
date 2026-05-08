@@ -2,8 +2,8 @@
 
 module Adapters
   module CultivationPlan
-    # HTML 私有計画作成成功後のジョブチェーン起動（Interactor から注入。Presenter は HTTP 表現のみ）。
-    class PrivatePlanHtmlPostCreateJobChain
+    # 私有計画作成成功後の最適化ジョブチェーン起動（Interactor から注入。Presenter は HTTP 表現のみ）。
+    class PrivatePlanPostCreateJobChain
       def initialize(job_chain_builder:, job_chain_async_dispatcher:, routes:, channel_class:, caller_label:)
         @job_chain_builder = job_chain_builder
         @job_chain_async_dispatcher = job_chain_async_dispatcher

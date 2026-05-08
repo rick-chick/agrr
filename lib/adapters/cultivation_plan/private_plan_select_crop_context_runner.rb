@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     # `PlansController#load_private_plan_select_crop_context` と同等の呼び出しをカプセル化（Controller から AR・二重取得を排除）。
-    class PrivatePlanSelectCropHtmlContextRunner
+    class PrivatePlanSelectCropContextRunner
       def initialize(view:, user_id:, field_gateway:, crop_gateway:, translator:, logger:, user_lookup:)
         @view = view
         @user_id = user_id

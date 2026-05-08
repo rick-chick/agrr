@@ -20,11 +20,12 @@
 ### B. `lib/composition_root.rb` と `lib/adapters/cultivation_plan/` — 私有計画まわりの `html`
 
 
-| 識別子                                            | 所在                                                                         |
-| ---------------------------------------------- | -------------------------------------------------------------------------- |
-| `private_plan_html_post_create_job_chain`      | `CompositionRoot`                                                          |
-| `PrivatePlanHtmlPostCreateJobChain`            | `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb` |
-| `private_plan_select_crop_html_context_runner` | `CompositionRoot`                                                          |
+| 識別子                                       | 所在                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------- |
+| `private_plan_post_create_job_chain`      | `CompositionRoot`                                                         |
+| `PrivatePlanPostCreateJobChain`           | `lib/adapters/cultivation_plan/private_plan_post_create_job_chain.rb`     |
+| `private_plan_select_crop_context_runner` | `CompositionRoot`                                                         |
+| `PrivatePlanSelectCropContextRunner`      | `lib/adapters/cultivation_plan/private_plan_select_crop_context_runner.rb` |
 
 
 ### C. `lib/adapters` — 表現由来パラメータ
@@ -60,8 +61,7 @@
 
 - **解消済み（2026-05-08）**: **cultivation_plan: ポート／DTO から Html・Json・Page チャネル語を除去** — `PublicPlanResultsHtmlOutputPort`→`PublicPlanResultsOutputPort`、`PublicPlanResultsPageReadModel`→`PublicPlanResultsReadModel`、`TaskScheduleHtmlShellPlan`→`TaskScheduleTimelineShellPlan`、`TaskScheduleItemJsonOutputPort`→`TaskScheduleItemMutationOutputPort`；`TaskScheduleItemJsonPresenter`→`TaskScheduleItemMutationPresenter`；`TaskScheduleItemScheduleDeletionUndoInteractor` の `json_output_port`→`mutation_output_port`。Interactors 禁止 **4**。
 
-- [ ] **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — 禁止 **4** @ Application edge（配線名）および `lib/adapters`
-  - 主なファイル: `lib/composition_root.rb`, `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb`, `app/controllers/plans_controller.rb`、`grep private_plan_html_post_create_job_chain` / `private_plan_select_crop_html` の全参照
+- **解消済み（2026-05-08）**: **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — `PrivatePlanHtmlPostCreateJobChain`→`PrivatePlanPostCreateJobChain`、`private_plan_html_post_create_job_chain`→`private_plan_post_create_job_chain`、`PrivatePlanSelectCropHtmlContextRunner`→`PrivatePlanSelectCropContextRunner`、`private_plan_select_crop_html_context_runner`→`private_plan_select_crop_context_runner`（ファイル名同様）。Interactors 禁止 **4** @ Application edge / `lib/adapters`。
 
 - [ ] **FarmMapper の `for_html_detail` を表現非依存パラメータへ** — 禁止 **4** / Gateway boundary @ `lib/adapters`
   - 主なファイル: `lib/adapters/farm/mappers/farm_mapper.rb` と `farm_entity_from_record` / `for_html_detail` 呼び出し元
@@ -120,7 +120,7 @@
 - **解消済み（2026-05-08）**: `**PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
 - **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を `[docs/adr/0009-gateway-interface-naming-presentation-agnostic.md](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md)` に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
 - **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を `***_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**私有計画: CompositionRoot / Adapter の `html` 命名**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**FarmMapper の `for_html_detail`**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

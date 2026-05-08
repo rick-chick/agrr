@@ -79,7 +79,7 @@ class PlansController < CultivationPlanHtmlBaseController
       session_id_generator: -> { session.id.to_s },
       routes: Adapters::Application::PlanPathRoutesFromController.new(self),
       caller_label: self.class.name,
-      select_crop_context_runner: CompositionRoot.private_plan_select_crop_html_context_runner(
+      select_crop_context_runner: CompositionRoot.private_plan_select_crop_context_runner(
         view: self,
         user_id: current_user.id
       )
