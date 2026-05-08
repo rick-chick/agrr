@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      class ApiPrivatePlanCreateSuccessDto
+      class PrivatePlanInitializeFromSelectionSuccessDto
         attr_reader :id
 
         def initialize(id:)

@@ -58,7 +58,7 @@ module Domain
         end
 
         test "on_failure unprocessable when crop_ids empty" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [], user: @user)
           @output_port.expects(:on_failure).with do |f|
             assert_equal :unprocessable_entity, f.http_status
             assert_equal @translator.t("plans.errors.select_crop"), f.message
@@ -68,7 +68,7 @@ module Domain
         end
 
         test "on_failure not_found when farm missing" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 99, crop_ids: [ 10 ], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 99, crop_ids: [ 10 ], user: @user)
           @gateway.expects(:find_farm).with(99, @user).returns(nil)
           @output_port.expects(:on_failure).with do |f|
             assert_equal :not_found, f.http_status
@@ -78,7 +78,7 @@ module Domain
         end
 
         test "on_failure not_found when no crops resolved" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           @gateway.expects(:find_farm).returns(@farm_entity)
           @gateway.expects(:find_crops).returns([])
           @output_port.expects(:on_failure).with do |f|
@@ -89,7 +89,7 @@ module Domain
         end
 
         test "on_failure unprocessable when plan exists" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           existing = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 99, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
             plan_year: nil, plan_name: "x",
@@ -109,7 +109,7 @@ module Domain
         end
 
         test "on_success enqueues jobs and returns id" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user, plan_name: "P")
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user, plan_name: "P")
           created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 42, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
             plan_year: nil, plan_name: "P",
@@ -146,7 +146,7 @@ module Domain
         end
 
         test "on_failure unprocessable when initialize returns errors" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ "boom" ])
           @gateway.expects(:find_farm).returns(@farm_entity)
           @gateway.expects(:find_crops).returns([ @crop_entity ])
@@ -163,7 +163,7 @@ module Domain
         end
 
         test "enqueue_after_create raises StandardError propagates" do
-          dto = Dtos::ApiPrivatePlanCreateInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          dto = Dtos::PrivatePlanInitializeFromSelectionInputDto.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 42, farm_id: 1, user_id: @user.id, total_area: 1.0, plan_type: "private",
             plan_year: nil, plan_name: "P",

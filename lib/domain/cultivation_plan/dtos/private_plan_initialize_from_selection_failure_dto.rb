@@ -4,7 +4,7 @@ module Domain
   module CultivationPlan
     module Dtos
       # Presenter が Symbol ステータスで render_response するための失敗ペイロード
-      class ApiPrivatePlanCreateFailureDto
+      class PrivatePlanInitializeFromSelectionFailureDto
         attr_reader :http_status, :message
 
         def initialize(http_status:, message:)

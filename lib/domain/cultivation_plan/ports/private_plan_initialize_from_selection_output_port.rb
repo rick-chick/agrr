@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      module ApiPrivatePlanCreateOutputPort
+      module PrivatePlanInitializeFromSelectionOutputPort
         def on_success(dto)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end

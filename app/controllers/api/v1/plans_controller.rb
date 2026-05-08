@@ -30,8 +30,8 @@ module Api
       end
 
       def create
-        presenter = Presenters::Api::Plans::ApiPrivatePlanCreatePresenter.new(view: self)
-        input_dto = Domain::CultivationPlan::Dtos::ApiPrivatePlanCreateInputDto.new(
+        presenter = Presenters::Api::Plans::PrivatePlanInitializeFromSelectionPresenter.new(view: self)
+        input_dto = Domain::CultivationPlan::Dtos::PrivatePlanInitializeFromSelectionInputDto.new(
           farm_id: create_params[:farm_id],
           crop_ids: create_params[:crop_ids] || [],
           plan_name: create_params[:plan_name],

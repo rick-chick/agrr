@@ -3,7 +3,8 @@
 module Presenters
   module Api
     module Plans
-      class ApiPrivatePlanCreatePresenter
+      class PrivatePlanInitializeFromSelectionPresenter
+        include Domain::CultivationPlan::Ports::PrivatePlanInitializeFromSelectionOutputPort
         def initialize(view:)
           @view = view
         end

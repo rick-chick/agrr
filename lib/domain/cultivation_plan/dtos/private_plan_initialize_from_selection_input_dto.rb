@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # POST /api/v1/plans（個人計画新規）の入力。Controller が strong params から組み立てる。
-      class ApiPrivatePlanCreateInputDto
+      # 個人計画を農場・作物選択から初期化する API の入力。Controller が strong params から組み立てる。
+      class PrivatePlanInitializeFromSelectionInputDto
         attr_reader :farm_id, :crop_ids, :plan_name, :user
 
         def initialize(farm_id:, crop_ids:, user:, plan_name: nil)
