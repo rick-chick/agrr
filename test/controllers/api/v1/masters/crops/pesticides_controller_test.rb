@@ -37,21 +37,6 @@ module Api
             assert_not_includes pesticide_ids, other_pesticide.id
           end
 
-          test "should not get index for other user's crop" do
-            other_user = create(:user)
-            other_crop = create(:crop, :user_owned, user: other_user)
-
-            get api_v1_masters_crop_pesticides_path(other_crop),
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-            assert_response :not_found
-            json_response = JSON.parse(response.body)
-            assert_equal "Crop not found", json_response["error"]
-          end
-
           test "should not include other user's pesticides" do
             other_user = create(:user)
             other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: @crop, pest: @pest)

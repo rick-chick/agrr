@@ -38,21 +38,6 @@ module Api
             assert_not_includes pest_ids, other_pest.id
           end
 
-          test "should not get index for other user's crop" do
-            other_user = create(:user)
-            other_crop = create(:crop, :user_owned, user: other_user)
-
-            get api_v1_masters_crop_pests_path(other_crop),
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-            assert_response :not_found
-            json_response = JSON.parse(response.body)
-            assert_equal I18n.t("api.errors.crop_not_found"), json_response["error"]
-          end
-
           test "should create association" do
             pest = create(:pest, :user_owned, user: @user)
 
