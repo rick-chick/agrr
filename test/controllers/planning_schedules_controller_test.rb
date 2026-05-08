@@ -507,12 +507,9 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
       field_cells = row.css("td.schedule-table-cell")
       period_label = row.css(".schedule-table-period-cell").first&.text || "行#{row_index + 1}"
 
-      # デバッグ用: すべての行の詳細を出力
-      puts "\n[DEBUG] 期間: #{period_label}, セル数: #{field_cells.count}"
       field_cells.each_with_index do |cell, cell_index|
         rowspan = cell["rowspan"] || "なし"
         content = cell.text.strip.gsub(/\s+/, " ")[0..100]
-        puts "  [DEBUG] セル#{cell_index + 1}: rowspan=#{rowspan}, 内容=#{content}"
       end
 
       # 実装仕様: 降順・rowspan運用により、継続行は0セル、同期間に2作付けが存在する場合は2セルになることがある
@@ -612,19 +609,13 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, august_cell_count,
                  "8月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{august_cell_count}"
 
-    # デバッグ出力: 8月のセル内容を確認
-    puts "\n[DEBUG] 8月のセル数: #{august_cells.count}"
     august_cells.each_with_index do |cell, index|
       rowspan = cell["rowspan"] || "なし"
       colspan = cell["colspan"] || "なし"
       content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-      puts "  [DEBUG] 8月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
     end
 
-    # 8月の行全体のHTMLを確認
     august_row_html = august_row.to_html
-    puts "\n[DEBUG] 8月の行全体のHTML:"
-    puts august_row_html[0..1000]
 
     # 10月の行でrowspan=3の開始セルが描画されていることを確認
     october_row = rows.find { |r|
@@ -651,19 +642,13 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
       june_cells = june_row.css("td.schedule-table-cell")
       june_cell_content = june_cells.map { |cell| cell.text.strip }.join(" ")
 
-      # デバッグ出力: 6月のセル内容を確認
-      puts "\n[DEBUG] 6月のセル数: #{june_cells.count}"
       june_cells.each_with_index do |cell, index|
         rowspan = cell["rowspan"] || "なし"
         colspan = cell["colspan"] || "なし"
         content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-        puts "  [DEBUG] 6月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
       end
 
-      # 6月の行全体のHTMLを確認
       june_row_html = june_row.to_html
-      puts "\n[DEBUG] 6月の行全体のHTML:"
-      puts june_row_html[0..1000]
 
       # 6月に作付が表示されていないことを確認
       assert_not june_cell_content.include?("ほうれん草"),
@@ -801,125 +786,18 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, june_cell_count,
                  "6月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{june_cell_count}、行HTML: #{june_row_html[0..500]}"
 
-    # デバッグ出力: 6月のセル内容を確認
-    puts "\n[DEBUG] 6月のセル数: #{june_cells.count}"
-    june_cells.each_with_index do |cell, index|
-      rowspan = cell["rowspan"] || "なし"
-      colspan = cell["colspan"] || "なし"
-      content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-      puts "  [DEBUG] 6月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
-    end
-
-    # デバッグ出力: 7月のセル内容を確認
-    puts "\n[DEBUG] 7月のセル数: #{july_cells.count}"
-    july_cells.each_with_index do |cell, index|
-      rowspan = cell["rowspan"] || "なし"
-      colspan = cell["colspan"] || "なし"
-      content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-      puts "  [DEBUG] 7月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
-    end
-
-    # 6月の行全体のHTMLを確認
-    june_row_html = june_row.to_html
-    puts "\n[DEBUG] 6月の行全体のHTML:"
-    puts june_row_html[0..1000]
-
-    # 実際のperiodsとarrange結果を確認（デバッグ用）
-    # 6月のperiod_indexを確認
-    june_period_index = nil
-    rows.each_with_index do |row, idx|
-      period_cell = row.css(".schedule-table-period-cell").first
-      if period_cell && period_cell.text.include?("#{test_year}年06月")
-        june_period_index = idx
-        break
-      end
-    end
-
-    puts "\n[DEBUG] 6月のperiod_index: #{june_period_index}"
-
-    # 実際のperiodsとarrange結果を確認するため、ビューから取得
-    # テストでは直接コントローラーのインスタンス変数にアクセスできないため、
-    # リクエストの後に再度取得する必要がある
-
-    # 実際のperiodsを確認（リクエスト後のコントローラーから取得できないため、再度計算）
-    # テスト用の年度を設定
-    current_year = Date.current.year
-    next_year = current_year + 1
-    start_year = next_year - PlanningSchedulesController::DEFAULT_YEARS_RANGE + 1
-    period_start = Date.new(start_year, 1, 1)
-    period_end = Date.new(start_year + PlanningSchedulesController::DEFAULT_YEARS_RANGE - 1, 12, 31)
-
-    # 期間の行を生成（月単位、降順）
-    periods_asc = []
-    current = period_start
-    while current <= period_end
-      period_end_date = [ current.end_of_month, period_end ].min
-      periods_asc << {
-        label: I18n.l(current, format: "%Y年%m月"),
-        start_date: current,
-        end_date: period_end_date
-      }
-      current = current.next_month.beginning_of_month
-    end
-    periods = periods_asc.reverse
-
-    puts "\n[DEBUG] 実際のperiods（降順）:"
-    periods.each_with_index do |period, idx|
-      if period[:label].include?("#{test_year}年06月") || period[:label].include?("#{test_year}年07月") || period[:label].include?("#{test_year}年08月") || period[:label].include?("#{test_year}年09月") || period[:label].include?("#{test_year}年10月")
-        puts "  [#{idx}] #{period[:label]}: #{period[:start_date]} - #{period[:end_date]}"
-      end
-    end
-
-    # 実際のarrange結果を確認
-    field_name = "1ほ場"
-    cultivations = plan.field_cultivations.map do |fc|
-      {
-        crop_name: fc.cultivation_plan_crop.name,
-        start_date: fc.start_date,
-        completion_date: fc.completion_date,
-        area: fc.area
-      }
-    end
-
-    arranged_cultivations = Presenters::Html::Plans::ScheduleTableFieldArranger.arrange(
-      cultivations: cultivations,
-      periods: periods
-    )
-
-    arranged_cultivations.each do |c|
-      if c[:cultivation][:start_date] == Date.new(test_year, 6, 8)
-        puts "\n[DEBUG] 6月8日から始まる作付のarrange結果:"
-        puts "  start_period_index: #{c[:start_period_index]}"
-        puts "  start_period: #{periods[c[:start_period_index]][:label] if c[:start_period_index] && periods[c[:start_period_index]]}"
-        puts "  rowspan: #{c[:rowspan]}"
-        puts "  periods: #{c[:periods].map { |p| p[:label] }.join(', ')}"
-      elsif c[:cultivation][:start_date] == Date.new(test_year, 8, 30)
-        puts "\n[DEBUG] 8月30日から始まる作付のarrange結果:"
-        puts "  start_period_index: #{c[:start_period_index]}"
-        puts "  start_period: #{periods[c[:start_period_index]][:label] if c[:start_period_index] && periods[c[:start_period_index]]}"
-        puts "  rowspan: #{c[:rowspan]}"
-        puts "  periods: #{c[:periods].map { |p| p[:label] }.join(', ')}"
-      end
-    end
-
     # 6月に8月30日から始まる作付が表示されていないことを確認
     june_row_content_for_check = june_row.to_html
     assert_not june_row_content_for_check.include?("08/30"),
                "6月に開始日（08/30）が表示されていますが、8月30日から始まる作付なので6月には表示されるべきではありません。行HTML: #{june_row_content_for_check[0..500]}"
 
-    # デバッグ出力: 7月のセル内容を確認
-    puts "\n[DEBUG] 7月のセル数: #{july_cells.count}"
     july_cells.each_with_index do |cell, index|
       rowspan = cell["rowspan"] || "なし"
       colspan = cell["colspan"] || "なし"
       content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-      puts "  [DEBUG] 7月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
     end
 
-    # 7月の行全体のHTMLを確認
     july_row_html = july_row.to_html
-    puts "\n[DEBUG] 7月の行全体のHTML:"
-    puts july_row_html[0..1000]
 
     # 8月の行を取得
     august_row = rows.find { |r|
@@ -967,19 +845,13 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, august_cell_count,
                  "8月の行にセルが描画されていますが、rowspanでマージされるため、セルを描画する必要はありません。セル数: #{august_cell_count}、行HTML: #{august_row_html[0..500]}"
 
-    # デバッグ出力: 8月のセル内容を確認
-    puts "\n[DEBUG] 8月のセル数: #{august_cells.count}"
     august_cells.each_with_index do |cell, index|
       rowspan = cell["rowspan"] || "なし"
       colspan = cell["colspan"] || "なし"
       content = cell.text.strip.gsub(/\s+/, " ")[0..200]
-      puts "  [DEBUG] 8月セル#{index + 1}: rowspan=#{rowspan}, colspan=#{colspan}, 内容=#{content}"
     end
 
-    # 8月の行全体のHTMLを確認
     august_row_html = august_row.to_html
-    puts "\n[DEBUG] 8月の行全体のHTML:"
-    puts august_row_html[0..1000]
 
     # 8月に6月8日から始まる作付が表示されていないことを確認
     august_row_content_for_check = august_row.to_html
