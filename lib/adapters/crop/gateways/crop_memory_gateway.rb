@@ -358,10 +358,6 @@ module Adapters
           { ok: false, blueprint_id_for_response: blueprint_id_for_response }
         end
 
-        def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
-          find_authorized_crop_loaded_bundle!(user, id, for_edit: for_edit).crop_entity
-        end
-
         def find_authorized_crop_show_detail(user, crop_id)
           crop = authorized_crop_record_with_association_preloads!(user, crop_id, for_edit: false)
           task_schedule_blueprints = crop.crop_task_schedule_blueprints

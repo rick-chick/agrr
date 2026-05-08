@@ -3,27 +3,9 @@
 module Domain
   module WeatherData
     module Services
-      # 気象ペイロードの正規化と WeatherDataDto から agrr 入力用 Hash を組み立てる（Rails に依存しない）
+      # WeatherDataDto から agrr 入力用 Hash を組み立てる（Rails に依存しない）
       module OpenMeteoWeatherPayload
         module_function
-
-        def blankish?(data)
-          return true if data.nil?
-          return true if data.is_a?(String) && data.strip.empty?
-          data.respond_to?(:empty?) && data.empty?
-        end
-
-        def legacy_nested_open_meteo_payload?(data)
-          data.is_a?(Hash) && data["data"].is_a?(Hash) && data["data"]["data"].is_a?(Array)
-        end
-
-        # 旧ネスト形式なら内側の Hash を返す。空入力は nil。
-        def normalize_raw_payload(data)
-          return nil if blankish?(data)
-          return data["data"] if legacy_nested_open_meteo_payload?(data)
-
-          data
-        end
 
         def format_for_agrr(weather_data_dtos:, latitude:, longitude:, elevation:, timezone:)
           {

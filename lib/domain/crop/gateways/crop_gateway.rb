@@ -281,12 +281,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement reload_crop_after_task_schedule_blueprint_delete!"
         end
 
-        # 認可済み作物を関連プリロード付き CropEntity で返す（詳細フォーム・マスタの親コンテキスト等）。
-        # for_edit が真なら編集許可のみ、偽なら参照許可のみで評価する。
-        def find_authorized_crop_entity_with_association_preloads(user, id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_entity_with_association_preloads"
-        end
-
         def find_model(id)
           raise NotImplementedError, "Subclasses must implement find_model"
         end
