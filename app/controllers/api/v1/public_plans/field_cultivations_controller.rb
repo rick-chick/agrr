@@ -68,10 +68,8 @@ module Api
           uid = current_user.id
           Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
             output_port: Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: self),
-            user_id: uid,
             gateway: CompositionRoot.field_cultivation_climate_gateway_for(CompositionRoot.user_lookup.find(uid)),
-            logger: CompositionRoot.logger,
-            user_lookup: CompositionRoot.user_lookup
+            logger: CompositionRoot.logger
           )
         end
 

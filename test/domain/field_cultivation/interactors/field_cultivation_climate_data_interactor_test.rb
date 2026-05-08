@@ -36,10 +36,8 @@ module Domain
 
           interactor = FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
-            user_id: 1,
             gateway: gateway,
-            logger: logger,
-            user_lookup: Object.new
+            logger: logger
           )
 
           input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
@@ -71,8 +69,7 @@ module Domain
           FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
             gateway: gateway,
-            logger: logger,
-            user_lookup: Object.new
+            logger: logger
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
               field_cultivation_id: fc_id
@@ -100,8 +97,7 @@ module Domain
           FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
             gateway: gateway,
-            logger: logger,
-            user_lookup: Object.new
+            logger: logger
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
               field_cultivation_id: fc_id
