@@ -3,7 +3,7 @@
 module Domain
   module FileBlob
     module Interactors
-      class ApiV1FilesCreateInteractor
+      class FileBlobCreateInteractor
         def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway

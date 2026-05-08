@@ -7,7 +7,7 @@ module Api
 
       def index
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
-        Domain::FileBlob::Interactors::ApiV1FilesIndexInteractor.new(
+        Domain::FileBlob::Interactors::FileBlobListInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.api_file_blob_gateway
         ).call
@@ -15,7 +15,7 @@ module Api
 
       def show
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
-        Domain::FileBlob::Interactors::ApiV1FilesShowInteractor.new(
+        Domain::FileBlob::Interactors::FileBlobShowInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.api_file_blob_gateway
         ).call(blob_id: params[:id])
@@ -23,7 +23,7 @@ module Api
 
       def create
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
-        Domain::FileBlob::Interactors::ApiV1FilesCreateInteractor.new(
+        Domain::FileBlob::Interactors::FileBlobCreateInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.api_file_blob_gateway
         ).call(
@@ -35,7 +35,7 @@ module Api
 
       def destroy
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
-        Domain::FileBlob::Interactors::ApiV1FilesDestroyInteractor.new(
+        Domain::FileBlob::Interactors::FileBlobDestroyInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.api_file_blob_gateway
         ).call(blob_id: params[:id])

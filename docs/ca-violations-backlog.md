@@ -40,7 +40,7 @@
 
 `Domain::ApiWeather`（`lib/domain/api_weather/`**）および一部 `api_keys` は **BC／製品名**として `Api` が付く可能性があり、**機械一致＝違反としない**。それ以外の grep ヒット例（抜粋・重複あり）:
 
-- `file_blob/interactors/api_v1_files_*.rb`（index/show/create/destroy）
+- （解消・2026-05-08）`file_blob/interactors/` — `ApiV1Files*` → `FileBlobListInteractor` / `FileBlobShowInteractor` / `FileBlobCreateInteractor` / `FileBlobDestroyInteractor`
 - `cultivation_plan/interactors/api_v1_private_plan_*.rb`, `public_plan_api_save_plan_interactor.rb`
 - `cultivation_plan/ports/api_*`, `cultivation_plan/dtos/api_private_plan_create_*.rb`
 - `crop/ports/masters_*_requirement_api_output_port.rb`（temperature / thermal / sunshine / nutrient）
@@ -65,8 +65,10 @@
 
 - **解消済み（2026-05-08）**: **FarmMapper の `for_html_detail` を `include_weather_data_fields` へ** — 農場エンティティへの気象同期メタの付与をチャネル語から分離。禁止 **4** / Gateway boundary @ `lib/adapters`。
 
-- [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）** — 禁止 **4** @ Interactors・ports・dtos
-  - 主なファイル: 洗い出し **D** の束。**1 イテレーションではサブバッチに分割**（例: `file_blob` の `ApiV1*` のみ、のように先頭サブバッチを backlog 行内で明示してから着手）
+- **解消済み（2026-05-08）**: **file_blob: `ApiV1Files*` Interactors のチャネル語除去** — `ApiV1FilesIndexInteractor`→`FileBlobListInteractor`、`ApiV1FilesShowInteractor`→`FileBlobShowInteractor`、`ApiV1FilesCreateInteractor`→`FileBlobCreateInteractor`、`ApiV1FilesDestroyInteractor`→`FileBlobDestroyInteractor`（`app/controllers/api/v1/files_controller.rb` 参照更新）。`ApiV1FilesJsonPresenter` は本サブバッチ対象外。Interactors 禁止 **4**。
+
+- [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）— 残サブバッチ** — 禁止 **4** @ Interactors・ports・dtos
+  - **次サブバッチ（先頭固定）**: `lib/domain/cultivation_plan/interactors/api_v1_private_plan_*.rb` のみ（`public_plan_api_save_plan_interactor.rb` は別バッチ）
   - 補足: `Domain::ApiWeather::*` は除外方針を意味読みで固定してからリネーム有無を判断
 - **解消済み（2026-05-07）**: **HTML** `Crops::AgriculturalTasksController` の `index` / `new` / `create` / `update` / `destroy` から AR 直叩き・コントローラ内業務分岐を除去。`CropMastersTaskTemplateIndex/Create/Update/DestroyInteractor` を API マスタと共有、`CropNestedCropTaskTemplatesNewInteractor` と `CropGateway#selectable_agricultural_task_picklist_rows_for_nested_templates` を追加。`create` で `agricultural_task_id` が空のときの `redirect_to` のみコントローラに残置（DTO 成立前のガード）。Application edge 禁止 3・4。
 - **解消済み（2026-05-07・セクション0）**: バックログ先頭の「HTML/API マスタで参照・admin 早期分岐の再サンプリング」— 列挙済みマスタに同パターンの残りなし。上記 `Crops::AgriculturalTasksController` は別種のエッジ肥大（AR）として扱い解消。
@@ -119,7 +121,7 @@
 - **解消済み（2026-05-08）**: `**PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
 - **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を `[docs/adr/0009-gateway-interface-naming-presentation-agnostic.md](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md)` に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
 - **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を `***_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**`lib/domain` の `Api` / `ApiV1` 型名**）をワークフロー セクション0 のスコープに固定する。バックログ **D** のとおり **1 イテレーションではサブバッチ 1 件**（本ラウンド先頭サブバッチ: **`file_blob` の `ApiV1Files*` interactors のみ**）に限定して着手する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**`cultivation_plan/interactors/api_v1_private_plan_*.rb` サブバッチ**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

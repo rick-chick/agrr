@@ -3,19 +3,19 @@
 module Domain
   module FileBlob
     module Interactors
-      class ApiV1FilesDestroyInteractor
+      class FileBlobShowInteractor
         def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway
         end
 
         def call(blob_id:)
-          ok = @gateway.purge!(blob_id)
-          unless ok
+          row = @gateway.find_row_by_id(blob_id)
+          unless row
             @output_port.on_not_found
             return
           end
-          @output_port.on_deleted
+          @output_port.on_show_success(row: row)
         end
       end
     end
