@@ -18,4 +18,20 @@ class CropUpdatePresenterTest < ActiveSupport::TestCase
 
     view_mock.verify
   end
+
+  test "on_failure renders forbidden with message for reference_flag_admin_only error dto" do
+    view_mock = Minitest::Mock.new
+    presenter = Presenters::Api::Crop::CropUpdatePresenter.new(view: view_mock)
+    msg = I18n.t("crops.flash.reference_flag_admin_only")
+    error_dto = Domain::Shared::Dtos::ErrorDto.new(msg)
+
+    view_mock.expect(:render_response, nil) do |json:, status:|
+      assert_equal :forbidden, status
+      assert_equal({ error: msg }, json)
+    end
+
+    presenter.on_failure(error_dto)
+
+    view_mock.verify
+  end
 end

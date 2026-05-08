@@ -40,23 +40,8 @@ module Api
           assert_not_includes crop_ids, other_crop.id
         end
 
-        test "should show crop" do
+        test "should show crop with name and crop_stages in json" do
           crop = create(:crop, :user_owned, user: @user, name: "テスト作物")
-
-          get api_v1_masters_crop_path(crop),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :success
-          json_response = JSON.parse(response.body)
-          assert_equal crop.id, json_response["id"]
-          assert_equal "テスト作物", json_response["name"]
-        end
-
-        test "should show crop with crop_stages" do
-          crop = create(:crop, :user_owned, user: @user)
           crop_stage = create(:crop_stage, crop: crop, name: "発芽期", order: 1)
 
           get api_v1_masters_crop_path(crop),
@@ -68,7 +53,7 @@ module Api
           assert_response :success
           json_response = JSON.parse(response.body)
           assert_equal crop.id, json_response["id"]
-          # RED: crop_stages should be included but currently missing
+          assert_equal "テスト作物", json_response["name"]
           assert json_response["crop_stages"].present?, "crop_stages should be included in crop response"
           assert_equal 1, json_response["crop_stages"].length
           assert_equal crop_stage.id, json_response["crop_stages"][0]["id"]
@@ -93,27 +78,6 @@ module Api
           assert_response :forbidden
           json_response = JSON.parse(response.body)
           assert_equal I18n.t("crops.flash.reference_only_admin"), json_response["error"]
-        end
-
-        test "should not toggle is_reference as non-admin via API" do
-          crop = create(:crop, :user_owned, user: @user, is_reference: false)
-
-          patch api_v1_masters_crop_path(crop),
-                params: {
-                  crop: {
-                    is_reference: true
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("crops.flash.reference_flag_admin_only"), json_response["error"]
-          crop.reload
-          assert_equal false, crop.is_reference?
         end
 
         test "should create crop" do
