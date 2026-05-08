@@ -27,8 +27,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      gateway: gateway
     )
     interactor.call(5)
   end
@@ -47,8 +46,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      gateway: gateway
     )
     interactor.call(5)
   end

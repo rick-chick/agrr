@@ -27,8 +27,7 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      gateway: gateway
     )
     interactor.call(10)
   end
@@ -47,8 +46,7 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      gateway: gateway
     )
     interactor.call(10)
   end
@@ -64,8 +62,7 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
+      gateway: gateway
     )
     interactor.call(10)
   end

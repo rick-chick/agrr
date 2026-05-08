@@ -4,11 +4,10 @@ module Domain
   module Field
     module Interactors
       class FieldListInteractor < Domain::Field::Ports::FieldListInputPort
-        def initialize(output_port:, user_id:, gateway:, logger:)
+        def initialize(output_port:, user_id:, gateway:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
-          @logger = logger
         end
 
         def call(farm_id)

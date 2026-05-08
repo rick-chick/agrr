@@ -36,7 +36,7 @@ class FarmsController < ApplicationController
 
         interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(params[:id])
       end
@@ -48,7 +48,6 @@ class FarmsController < ApplicationController
           user_id: current_user.id,
           translator: translator,
           gateway: CompositionRoot.farm_gateway,
-          logger: CompositionRoot.logger,
           user_lookup: CompositionRoot.user_lookup
         ).call(params[:id])
       end
@@ -74,7 +73,7 @@ class FarmsController < ApplicationController
 
         interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
       end
@@ -84,7 +83,7 @@ class FarmsController < ApplicationController
         input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
         Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
       end
     end
   end
@@ -98,7 +97,7 @@ class FarmsController < ApplicationController
 
         interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
           user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
         interactor.call(@input_dto)
       end
@@ -111,7 +110,6 @@ class FarmsController < ApplicationController
           user_id: current_user.id,
           translator: translator,
           gateway: CompositionRoot.farm_gateway,
-          logger: CompositionRoot.logger,
           user_lookup: CompositionRoot.user_lookup
         ).call(input_dto)
       end

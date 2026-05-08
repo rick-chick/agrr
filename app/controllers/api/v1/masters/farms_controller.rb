@@ -20,7 +20,7 @@ module Api
 
           presenter = Presenters::Api::Farm::FarmListPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator)
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator)
           interactor.call(input_dto)
         end
 
@@ -30,7 +30,7 @@ module Api
 
           presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
 
           interactor.call(params[:id])
         end
@@ -44,7 +44,7 @@ module Api
           end
           presenter = Presenters::Api::Farm::FarmCreatePresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -54,7 +54,7 @@ module Api
           presenter = Presenters::Api::Farm::FarmUpdatePresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
