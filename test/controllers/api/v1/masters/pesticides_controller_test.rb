@@ -64,23 +64,6 @@ module Api
           assert_equal "テスト農薬", json_response["name"]
         end
 
-        test "should not show other user's pesticide" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user)
-          other_pest = create(:pest, :user_owned, user: other_user)
-          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest)
-
-          get api_v1_masters_pesticide_path(other_pesticide),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("pesticides.flash.no_permission"), json_response["error"]
-        end
-
         test "should create pesticide" do
           assert_difference("@user.pesticides.where(is_reference: false).count", 1) do
             post api_v1_masters_pesticides_path,

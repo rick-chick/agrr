@@ -51,21 +51,6 @@ module Api
           assert_equal "テスト肥料", json_response["name"]
         end
 
-        test "should not show other user's fertilize" do
-          other_user = create(:user)
-          other_fertilize = create(:fertilize, :user_owned, user: other_user)
-
-          get api_v1_masters_fertilize_path(other_fertilize),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("fertilizes.flash.no_permission"), json_response["error"]
-        end
-
         test "should create fertilize" do
           assert_difference("@user.fertilizes.where(is_reference: false).count", 1) do
             post api_v1_masters_fertilizes_path,

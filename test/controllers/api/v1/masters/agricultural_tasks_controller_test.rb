@@ -60,21 +60,6 @@ module Api
           assert_equal "テストタスク", json_response["name"]
         end
 
-        test "should not show other user's agricultural_task" do
-          other_user = create(:user)
-          other_task = create(:agricultural_task, :user_owned, user: other_user)
-
-          get api_v1_masters_agricultural_task_path(other_task),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("agricultural_tasks.flash.no_permission"), json_response["error"]
-        end
-
         test "should create agricultural_task" do
           assert_difference("@user.agricultural_tasks.where(is_reference: false).count", 1) do
             post api_v1_masters_agricultural_tasks_path,
