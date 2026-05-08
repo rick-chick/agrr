@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module CultivationPlan
-      class ApiRemoveFieldPresenter < Domain::CultivationPlan::Ports::ApiRemoveFieldOutputPort
+      class RemoveFieldPresenter < Domain::CultivationPlan::Ports::RemoveFieldOutputPort
         def initialize(view:, translation_scope:)
           @view = view
           @translation_scope = translation_scope

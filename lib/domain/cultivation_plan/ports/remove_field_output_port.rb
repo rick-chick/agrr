@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      class ApiRemoveFieldOutputPort
+      class RemoveFieldOutputPort
         def on_success(field_id:, total_area:)
           raise NotImplementedError
         end

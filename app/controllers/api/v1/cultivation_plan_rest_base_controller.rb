@@ -49,7 +49,7 @@ module Api
       # 圃場を削除
       def remove_field
         Domain::CultivationPlan::Interactors::RemoveFieldInteractor.new(
-          output: Presenters::Api::CultivationPlan::ApiRemoveFieldPresenter.new(
+          output: Presenters::Api::CultivationPlan::RemoveFieldPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
