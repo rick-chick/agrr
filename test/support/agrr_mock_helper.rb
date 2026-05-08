@@ -34,7 +34,7 @@ module AgrrMockHelper
   end
 
   # Weather情報取得のモック (Minitest用) - 新しいJSON構造
-  def stub_fetch_weather_data(latitude: nil, longitude: nil, start_date: nil, end_date: nil)
+  def stub_fetch_weather_data
     Agrr::WeatherGateway.class_eval do
       define_method(:fetch_by_date_range) do |latitude:, longitude:, start_date:, end_date:, data_source: nil|
         resolved_data_source = data_source || ENV["WEATHER_DATA_SOURCE"] || "noaa"
@@ -81,7 +81,7 @@ module AgrrMockHelper
   end
 
   # Crop情報取得のモック (Minitest用) - 新しいJSON構造
-  def stub_fetch_crop_info(crop_name = nil)
+  def stub_fetch_crop_info
     Api::V1::CropsController.class_eval do
       define_method(:fetch_crop_info_from_agrr) do |name|
         # 新しい構造でモックデータを返す
@@ -218,7 +218,4 @@ module AgrrMockHelper
     stub_weather_prediction
     mock_agrr_adjust_success
   end
-
-  # Alias for convenience
-  alias_method :mock_agrr_cli_success, :mock_agrr_adjust_success
 end
