@@ -18,7 +18,7 @@ module Api
       end
 
       def show
-        presenter = Presenters::Api::Plans::ApiV1PrivatePlanShowPresenter.new(view: self)
+        presenter = Presenters::Api::Plans::PrivateOwnedPlanDetailPresenter.new(view: self)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
