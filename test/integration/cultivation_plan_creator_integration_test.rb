@@ -50,7 +50,6 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
   test "should create cultivation plan with string crop_ids" do
     # 文字列の作物IDを準備（実際のリクエストパラメータと同じ形式）
     crop_ids_strings = @ref_crops.map(&:id).map(&:to_s)
-    puts "Testing with crop_ids: #{crop_ids_strings}"
 
     # 整数に変換して作物を取得（修正後のロジックと同じ）
     crops = Crop.where(id: crop_ids_strings.map(&:to_i))
@@ -85,9 +84,6 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
     assert result.cultivation_plan.cultivation_plan_fields_count > 0,
       "Should create CultivationPlanFields"
 
-    puts "✅ Successfully created CultivationPlan ID: #{result.cultivation_plan.id}"
-    puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops_count}"
-    puts "   - CultivationPlanFields: #{result.cultivation_plan.cultivation_plan_fields_count}"
   end
 
   test "should handle empty crops array gracefully" do
@@ -196,10 +192,6 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
     total_field_area = plan_ar.cultivation_plan_fields.sum(:area)
     assert_equal 2000.0, total_field_area, "Total field area should match total_area"
 
-    puts "✅ FieldsAllocator test passed"
-    puts "   - Total area: 2000.0"
-    puts "   - Fields created: #{result.cultivation_plan.cultivation_plan_fields_count}"
-    puts "   - Total field area: #{total_field_area}"
   end
 
   test "should handle crop_ids parameter conversion from strings to integers" do
@@ -217,24 +209,17 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       assert_equal @ref_crops[index].name, crop.name, "Crop name should match"
     end
 
-    puts "✅ Crop ID conversion test passed"
-    puts "   - Input crop_ids: #{crop_ids_strings}"
-    puts "   - Converted to integers: #{crop_ids_strings.map(&:to_i)}"
-    puts "   - Found crops: #{crops.count}"
   end
 
   test "should reproduce the original error scenario and verify fix" do
     # 元のエラーシナリオを再現
     crop_ids_strings = [ "127", "126", "114", "123", "125" ]
-    puts "Reproducing original error scenario with crop_ids: #{crop_ids_strings}"
 
     # 修正前のロジック（エラーが発生する）
     crops_old_logic = Crop.where(id: crop_ids_strings, is_reference: true)
-    puts "Old logic result: #{crops_old_logic.count} crops found"
 
     # 修正後のロジック（正常に動作する）
     crops_new_logic = Crop.where(id: crop_ids_strings.map(&:to_i), is_reference: true)
-    puts "New logic result: #{crops_new_logic.count} crops found"
 
     # 文字列と整数の変換が正しく動作することを確認
     assert_equal crops_old_logic.count, crops_new_logic.count,
@@ -259,14 +244,10 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       assert result.success?, "CultivationPlanInitializeInteractor should succeed with fixed logic"
       assert_not_nil result.cultivation_plan, "CultivationPlan should be created"
 
-      puts "✅ Original error scenario fixed successfully"
-      puts "   - CultivationPlan ID: #{result.cultivation_plan.id}"
-      puts "   - CultivationPlanCrops: #{result.cultivation_plan.cultivation_plan_crops_count}"
     else
       # 作物が見つからない場合でも、変換ロジックが正しく動作することを確認
       assert_equal 0, crops_old_logic.count, "Old logic should find 0 crops"
       assert_equal 0, crops_new_logic.count, "New logic should find 0 crops"
-      puts "⚠️ No crops found with the given IDs, but conversion logic works correctly"
     end
   end
 end
