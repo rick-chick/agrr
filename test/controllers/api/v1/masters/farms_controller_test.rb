@@ -209,6 +209,8 @@ module Api
           assert json_response["undo"].key?("auto_hide_after")
         end
 
+        # 他ユーザー農場への拒否は Detail / Update / Destroy の Interactor で同一の policy 失敗を表明済み。
+        # アダプターでは HTTP 403 とエラー本文の契約を show で代表する。
         test "cannot access other user's farm" do
           farm = create(:farm, :user_owned, user: create(:user))
 
@@ -218,23 +220,7 @@ module Api
                 "X-API-Key" => @api_key
               }
           assert_response :forbidden
-
-          patch api_v1_masters_farm_path(farm),
-                params: {
-                  farm: { name: "更新されない" }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-          assert_response :forbidden
-
-          delete api_v1_masters_farm_path(farm),
-                 headers: {
-                   "Accept" => "application/json",
-                   "X-API-Key" => @api_key
-                 }
-          assert_response :forbidden
+          assert_equal I18n.t("farms.flash.no_permission"), JSON.parse(response.body)["error"]
         end
       end
     end
