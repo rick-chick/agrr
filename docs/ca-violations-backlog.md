@@ -1,8 +1,70 @@
 # CA Violations Backlog
 
-最終通し走査: 2026-05-06（セクション0 継続） / 2026-05-07（通し走査増分） / 2026-05-08（CA 対応計画: Gateway 命名リネーム＋裏取り grep/read） / **2026-05-08（計画通し走査）**: `ARCHITECTURE.md` `## What we require` と禁止 1〜30 を再読し、`lib/domain`・`lib/presenters`・`app/controllers/api`・`frontend/src/app/components` を対象に Glob/grep による意味読み。**ブロッキング級の新規逸脱なし**（既存の許容 `rescue` は backlog「残置」のまま）。**2026-05-08（空 backlog 裏取り）**: 未処理キュー空を契機に走査し、`PrivatePlanHtmlCreateInteractor` 等の **Interactor/DTO/OutputPort 名の `Html`** を検出 → `PrivatePlanCreateFromSession*` にリネーム（Interactors 禁止 **4**）。
+最終通し走査: 2026-05-06（セクション0 継続） / 2026-05-07（通し走査増分） / 2026-05-08（CA 対応計画: Gateway 命名リネーム＋裏取り grep/read） / **2026-05-08（計画通し走査）**: `ARCHITECTURE.md` `## What we require` と禁止 1〜30 を再読し、`lib/domain`・`lib/presenters`・`app/controllers/api`・`frontend/src/app/components` を対象に Glob/grep による意味読み。**ブロッキング級の新規逸脱なし**（既存の許容 `rescue` は backlog「残置」のまま）。**2026-05-08（空 backlog 裏取り）**: 未処理キュー空を契機に走査し、`PrivatePlanHtmlCreateInteractor` 等の **Interactor/DTO/OutputPort 名の `Html`** を検出 → `PrivatePlanCreateFromSession*` にリネーム（Interactors 禁止 **4**）。**2026-05-08（チャネル語 grep 洗い出し）**: 下記「洗い出し一覧」と未処理 `[ ]` を追記（通し走査の代替ではなく候補一覧）。
+
+## 洗い出し一覧（機械探索・2026-05-08）
+
+根拠: `ARCHITECTURE.md` **Prohibited practices → Interactors** 項 **4**（チャネル／画面形状を interactor・gateway の**名前・メソッド名**、およびポートを跨ぐ **DTO/型名** に載せない）。**`rg` の一致のみを違反認定にしない**—本一覧は探索ログ。除外は意味読みで各イテレーションに記録する。
+
+### A. `lib/domain` — 型名に `Html` / `Json` / `Page`（ポート・DTO）
+
+| 語 | ファイル |
+|----|-----------|
+| `Html` | `cultivation_plan/ports/public_plan_results_html_output_port.rb` |
+| `Html` | `cultivation_plan/dtos/task_schedule_html_shell_plan.rb` |
+| `Json` | `cultivation_plan/ports/task_schedule_item_json_output_port.rb` |
+| `Page` | `cultivation_plan/dtos/public_plan_results_page_read_model.rb` |
+
+### B. `lib/composition_root.rb` と `lib/adapters/cultivation_plan/` — 私有計画まわりの `html`
+
+| 識別子 | 所在 |
+|--------|------|
+| `private_plan_html_post_create_job_chain` | `CompositionRoot` |
+| `PrivatePlanHtmlPostCreateJobChain` | `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb` |
+| `private_plan_select_crop_html_context_runner` | `CompositionRoot` |
+
+### C. `lib/adapters` — 表現由来パラメータ
+
+| パターン | ファイル |
+|----------|----------|
+| `for_html_detail:` | `lib/adapters/farm/mappers/farm_mapper.rb` |
+
+### D. `lib/domain` — 型名に `Api` / `ApiV1`（チャネル想起の**要レビュー**）
+
+`Domain::ApiWeather`（`lib/domain/api_weather/**`）および一部 `api_keys` は **BC／製品名**として `Api` が付く可能性があり、**機械一致＝違反としない**。それ以外の grep ヒット例（抜粋・重複あり）:
+
+- `file_blob/interactors/api_v1_files_*.rb`（index/show/create/destroy）
+- `cultivation_plan/interactors/api_v1_private_plan_*.rb`, `public_plan_api_save_plan_interactor.rb`
+- `cultivation_plan/ports/api_*`, `cultivation_plan/dtos/api_private_plan_create_*.rb`
+- `crop/ports/masters_*_requirement_api_output_port.rb`（temperature / thermal / sunshine / nutrient）
+- `field_cultivation/interactors/field_cultivation_api_*`, `dtos/field_cultivation_api_*`, `ports/field_cultivation_api_*`
+- `crop|fertilize|pest/interactors/*_api_ai_*_interactor.rb`
+- `shared/dtos/api_json_result.rb`
+- `public_plan/dtos/entry_schedule_api_failure_dto.rb`
+- `crop/dtos/masters_crop_task_template_masters_api_failure_dto.rb`
+- `api_keys/interactors/api_user_api_key_rotate_interactor.rb`, `api_keys/gateways/user_api_key_rotation_gateway.rb`
+
+### E. `lib/presenters/html/**` — `*HtmlPresenter`
+
+慣習命名。**禁止4の主戦場はドメイン側ポート**（例: A の `PublicPlanResultsHtmlOutputPort`）。プレゼンタの `Html` 接尾辞は本バックログでは**任意の後段**（ドメインリネームと同時に触るかはイテレーションで決める）。
+
+---
 
 ## 修正単位
+
+- [ ] **cultivation_plan: ポート／DTO から Html・Json・Page チャネル語を除去** — ARCHITECTURE.md 禁止 **4** @ Interactors（型名・ポート契約）
+  - 主なファイル: `lib/domain/cultivation_plan/ports/public_plan_results_html_output_port.rb`, `lib/domain/cultivation_plan/ports/task_schedule_item_json_output_port.rb`, `lib/domain/cultivation_plan/dtos/public_plan_results_page_read_model.rb`, `lib/domain/cultivation_plan/dtos/task_schedule_html_shell_plan.rb`、および参照する Interactor / HTML Presenter / Gateway / テスト
+  - 補足: `Presenters::Html::PublicPlans::PublicPlanResultsHtmlPresenter` はドメイン `*Html*` ポートに依存するため、**同一修正単位**で参照を切らない
+
+- [ ] **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — 禁止 **4** @ Application edge（配線名）および `lib/adapters`
+  - 主なファイル: `lib/composition_root.rb`, `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb`, `app/controllers/plans_controller.rb`、`grep private_plan_html_post_create_job_chain` / `private_plan_select_crop_html` の全参照
+
+- [ ] **FarmMapper の `for_html_detail` を表現非依存パラメータへ** — 禁止 **4** / Gateway boundary @ `lib/adapters`
+  - 主なファイル: `lib/adapters/farm/mappers/farm_mapper.rb` と `farm_entity_from_record` / `for_html_detail` 呼び出し元
+
+- [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）** — 禁止 **4** @ Interactors・ports・dtos
+  - 主なファイル: 洗い出し **D** の束。**1 イテレーションではサブバッチに分割**（例: `file_blob` の `ApiV1*` のみ、のように先頭サブバッチを backlog 行内で明示してから着手）
+  - 補足: `Domain::ApiWeather::*` は除外方針を意味読みで固定してからリネーム有無を判断
 
 - **解消済み（2026-05-07）**: **HTML** `Crops::AgriculturalTasksController` の `index` / `new` / `create` / `update` / `destroy` から AR 直叩き・コントローラ内業務分岐を除去。`CropMastersTaskTemplateIndex/Create/Update/DestroyInteractor` を API マスタと共有、`CropNestedCropTaskTemplatesNewInteractor` と `CropGateway#selectable_agricultural_task_picklist_rows_for_nested_templates` を追加。`create` で `agricultural_task_id` が空のときの `redirect_to` のみコントローラに残置（DTO 成立前のガード）。Application edge 禁止 3・4。
 - **解消済み（2026-05-07・セクション0）**: バックログ先頭の「HTML/API マスタで参照・admin 早期分岐の再サンプリング」— 列挙済みマスタに同パターンの残りなし。上記 `Crops::AgriculturalTasksController` は別種のエッジ肥大（AR）として扱い解消。
@@ -55,7 +117,7 @@
 - **解消済み（2026-05-08）**: **`PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
 - **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を [`docs/adr/0009-gateway-interface-naming-presentation-agnostic.md`](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md) に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
 - **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を **`*_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: （なし — 次回 backlog の未処理キューが空のときに通し走査を再実行）
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**cultivation_plan: ポート／DTO から Html・Json・Page…**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
